@@ -35,6 +35,12 @@ export const meta = {
     { term: 'existing occupancy', source_lesson_id: 'T04.L04' },
     { term: 'make-ready flag', source_lesson_id: 'T04.L04' },
   ],
+  learning_objectives: [
+    'Apply 47 CFR Part 32 plant account codes to categorize OSP construction costs (cable plant, pole plant, conduit plant, attachment, make-ready) in the project ledger',
+    'Understand cost-pool allocation rules (direct assignment where feasible, allocation by engineering judgment for shared assets like joint-use poles) and document the allocation basis for RUS audit',
+    'Maintain construction cost records, photo logs, and pole audit data in a form that satisfies RUS Bulletin 1755-A 5-year retention requirement and supports post-project cost reconciliation',
+    'Explain why accurate plant accounting matters to RUS borrowers: prevents over-capitalization, supports rate cases, and creates an asset inventory that drives maintenance scheduling and depreciation',
+  ],
   estimated_minutes: 20,
   key_terms: [
   {

@@ -64,6 +64,12 @@ export const meta = {
     { term: 'RUS contract forms', source_lesson_id: 'T04.L09' },
     { term: 'construction package', source_lesson_id: 'T04.L09' },
   ],
+  learning_objectives: [
+    'Apply the complete T04 route survey and pre-engineering workflow: site walk → LiDAR/drone data collection → GIS landbase assembly → pole audit → route alternatives analysis → handoff to design',
+    'Integrate hazard identification, utility coordination, permitting research, constructability constraints, and cost-effectiveness reasoning into a single route recommendation backed by quantitative evidence',
+    'Explain when and why to escalate decisions (datum mismatch, make-ready complexity, right-of-way ambiguity, environmental sensitivity) and what information to provide to the design engineer or project manager',
+    'Evaluate the completeness of a survey handoff package and identify gaps that would delay design or create change-order risk during construction',
+  ],
   estimated_minutes: 30,
 };
 

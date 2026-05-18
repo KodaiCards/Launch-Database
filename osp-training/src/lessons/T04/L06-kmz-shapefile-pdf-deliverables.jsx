@@ -37,6 +37,12 @@ export const meta = {
     { term: 'coordinate system', source_lesson_id: 'T04.L03' },
     { term: 'datum', source_lesson_id: 'T04.L03' },
   ],
+  learning_objectives: [
+    'Choose the correct file format (KMZ, SHP, GeoTIFF, DWG, PDF/A) based on recipient software capability and intended use (field viewing, GIS editing, construction staking, archival)',
+    'Package survey deliverables (drone orthomosaic, LiDAR, pole audit, utility locate, permitting zones) into a versioned, coordinate-system-documented package that the design team can ingest',
+    'Explain the trade-offs between editable formats (SHP, GeoTIFF) and delivery-frozen formats (PDF/A, KMZ) and when to use each in a client handoff or RUS-program audit',
+    'Validate a deliverable package for completeness (all promised layers, metadata documents, version stamps, coordinate system documentation) before handing off to design engineering',
+  ],
   estimated_minutes: 20,
   key_terms: [
     {

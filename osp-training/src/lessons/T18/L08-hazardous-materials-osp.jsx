@@ -40,6 +40,12 @@ export const meta = {
     { term: 'hazard recognition', source_lesson_id: 'T18.L01' },
     { term: 'hierarchy of controls', source_lesson_id: 'T18.L01' },
   ],
+  learning_objectives: [
+    'Read an OSHA-compliant SDS (16-section GHS format) and extract hazard information, control measures, and emergency response steps for a chemical used on an OSP job',
+    'Distinguish between OSHA PELs (legally enforceable 8-hr TWA limits) and ACGIH TLVs (recommended best-practice limits) and explain why TLVs are often more conservative',
+    'Identify common OSP hazardous materials (splice-case fill gel HDPE fumes, silica dust from pole treatment, battery acid from backup power pedestals, diesel fuel from generators) and describe engineering controls that reduce exposure',
+    'Calculate exposure risk when a material with a known PEL or TLV is used in an open work area, and recommend ventilation, PPE, or substitution strategies to control airborne concentration below the limit',
+  ],
   estimated_minutes: 20,
 };
 

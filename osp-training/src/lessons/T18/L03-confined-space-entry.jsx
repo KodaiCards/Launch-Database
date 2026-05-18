@@ -54,6 +54,12 @@ export const meta = {
     { term: 'LOTO', source_lesson_id: 'T18.L02' },
     { term: 'energy isolating device', source_lesson_id: 'T18.L02' },
   ],
+  learning_objectives: [
+    'Distinguish between confined spaces (limited entry/exit, not designed for habitation) and permit-required confined spaces (with hazardous atmosphere or other recognized hazard) and explain when 1910.146 applies',
+    'Perform pre-entry atmospheric testing using a multi-gas monitor and interpret readings for oxygen levels (19.5–23.5% normal), combustible gases (≤10% LEL acceptable), and toxic gases (per SDS)',
+    'Explain the role of a designated attendant (remains outside the confined space, monitors entrant safety, calls for rescue) and contrast with entry supervisor (issues permit, oversees operation) and rescuer role',
+    'Evaluate an OSP confined space entry scenario (manhole, vault, pedestal base) and recommend control measures: ventilation first, retrieval equipment second, rescue plan third',
+  ],
   estimated_minutes: 30,
 };
 

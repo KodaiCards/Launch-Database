@@ -65,6 +65,12 @@ export const meta = {
     { term: 'RUS', source_lesson_id: 'T01.L01' },
     { term: 'NESC', source_lesson_id: 'T01.L02' },
   ],
+  learning_objectives: [
+    'Recognize common OSP work hazards (overhead power lines, underground utilities, confined spaces, chemical/gas exposure, fall risks) using the OSHA general duty clause framing',
+    'Apply the hierarchy of controls (elimination → substitution → engineering controls → administrative controls → PPE) to evaluate options for removing or controlling an identified hazard',
+    'Explain 29 CFR 1910.268 (Telecommunications) requirements and describe when it applies vs. other OSHA standards (fall protection, confined space, hazmat)',
+    'Assess whether a crew member qualifies as "competent" for a given task under 1910.268 or related standards, and identify when a "qualified" person or outside contractor is required',
+  ],
   estimated_minutes: 20,
 };
 

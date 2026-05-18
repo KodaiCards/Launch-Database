@@ -39,6 +39,12 @@ export const meta = {
     { term: 'cross-connect', source_lesson_id: 'T19.L07' },
     { term: 'trunk cable', source_lesson_id: 'T19.L07' },
   ],
+  learning_objectives: [
+    'Explain the demarcation point between OSP scope (fiber delivery to the headend / FDH) and ISP scope (ISP equipment procurement, internal provisioning, customer service delivery) using physical reference points (patch panel, LIU, FOSC location)',
+    'Determine responsibility boundaries for specific equipment (splitter, patch panel, cross-connect, LIU internals) using a decision tree when the demarcation point is ambiguous or contractually disputed',
+    'Plan an OSP↔ISP handoff scenario: OSP completes fiber termination into a patch panel, ISP provisioning team confirms signal acceptance test (light levels, BER, jitter), and cross-connect assignment happens on ISP side',
+    'Identify where handoff errors commonly occur (unknown fiber count, uncertified fiber, splitter insertion loss unvalidated, LIU provisioning delay waiting for OSP to term a new fiber) and recommend preventive communication / sign-off protocols',
+  ],
   estimated_minutes: 40,
 };
 

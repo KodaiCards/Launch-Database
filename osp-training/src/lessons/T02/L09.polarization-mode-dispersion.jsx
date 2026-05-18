@@ -31,6 +31,12 @@ export const meta = {
     { term: 'SMF', source_lesson_id: 'T01.L08' },
     { term: 'dB', source_lesson_id: 'T02.L05' },
   ],
+  learning_objectives: [
+    'Explain the physical mechanism of Polarization Mode Dispersion (PMD) and how birefringence in real fiber causes two orthogonal polarization modes to travel at different speeds',
+    'Calculate Differential Group Delay (DGD) using the PMD coefficient and link length, and interpret DGD values in context of bit period and signal degradation',
+    'Distinguish between chromatic dispersion (wavelength-dependent) and PMD (polarization-dependent) impairments and explain why both limit long-distance transmission at high bit rates',
+    'Apply PMD specifications (G.652.D max 0.2 ps/√km) to evaluate whether a pre-engineered link meets requirements for 40G/100G transmission without PMD-limiting margin loss',
+  ],
   estimated_minutes: 20,
 };
 

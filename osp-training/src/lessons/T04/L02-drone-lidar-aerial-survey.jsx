@@ -67,6 +67,12 @@ export const meta = {
     { term: 'photo log', source_lesson_id: 'T04.L01' },
     { term: 'hazard identification', source_lesson_id: 'T04.L01' },
   ],
+  learning_objectives: [
+    'Explain how LiDAR and drone photogrammetry collect elevation and planimetric data, and describe the point-cloud classification layers used in OSP corridor analysis',
+    'Interpret a LiDAR point cloud and planimetric map to identify terrain, vegetation, structures, and pole/utility locations for route planning',
+    'Apply RTK GNSS accuracy specs (±2–3 cm) to assess whether drone survey data meets design tolerances for pole attachment and conduit bore placement',
+    'Evaluate the trade-offs between drone survey (fast, data-rich, weather-dependent, FAA-regulated) and ground-based site walks (slower, real-time hazard spotting, no regulatory gate)',
+  ],
   estimated_minutes: 25,
 };
 

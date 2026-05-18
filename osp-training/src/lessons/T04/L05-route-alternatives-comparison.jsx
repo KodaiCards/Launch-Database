@@ -61,6 +61,12 @@ export const meta = {
     { term: 'landbase', source_lesson_id: 'T04.L03' },
     { term: 'coordinate system', source_lesson_id: 'T04.L03' },
   ],
+  learning_objectives: [
+    'Compare aerial vs. underground routing on basis of construction cost, long-term maintenance burden, environmental impact, and service reliability',
+    'Apply route-scoring frameworks (weighted factors: cost, permitting risk, constructability, environmental impact, O&M burden) to rank multiple route alternatives',
+    'Identify constructability constraints (terrain, equipment staging, right-of-way width, river crossings, boring substrate) and assess their effect on feasibility and schedule',
+    'Recommend a single preferred route backed by quantitative scoring, or escalate tied scores to Carter for final business decision',
+  ],
   estimated_minutes: 25,
 };
 

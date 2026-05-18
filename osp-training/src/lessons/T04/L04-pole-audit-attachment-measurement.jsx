@@ -71,6 +71,12 @@ export const meta = {
     { term: 'PPE', source_lesson_id: 'T18.L05' },
     { term: '1910.268', source_lesson_id: 'T18.L01' },
   ],
+  learning_objectives: [
+    'Measure pole circumference, existing attachment locations, and available attachment space to assess capacity for new OSP cable and associated hardware',
+    'Read pole nameplate data (class, height, wood type, date) and cross-reference with manufacturer tables to determine bending moment capacity and load rating',
+    'Document pole conditions (leaning, rot, previous attachment damage, burn marks) that affect design decisions such as treatment cost, pole-replacement recommendation, or alternate routing',
+    'Apply RUS Bulletin 1751F-630 attachment spacing rules and NESC Rule 232 clearance requirements to verify existing pole attachments and plan new attachment points without violations',
+  ],
   estimated_minutes: 30,
 };
 

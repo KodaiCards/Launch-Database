@@ -59,6 +59,12 @@ export const meta = {
     { term: 'hierarchy of controls', source_lesson_id: 'T18.L01' },
     { term: '1910.268', source_lesson_id: 'T18.L01' },
   ],
+  learning_objectives: [
+    'Explain the difference between Positioning Systems (body belt + pole strap, prevents falling while working at height) and Personal Fall Arrest Systems (PFAS: harness + lanyard/SRL, arrests a fall in progress)',
+    'Apply 29 CFR 1910.268(g) fall protection requirements and calculate 100% tie-off scenarios using twin-leg lanyards to maintain continuous protection during transitions between anchor points',
+    'Evaluate fall arrest forces (lanyard = 1,800 lbf max, self-retracting lifeline = ~500 lbf) and explain why SRLs are preferred for long pole climbs despite higher equipment cost',
+    'Inspect aerial lifts (boom lifts, scissor lifts, personnel baskets) against ANSI A92.2 / 1910.67 baseline and identify hazards (guardrail height, platform size, overhang clearance) that workers must address',
+  ],
   estimated_minutes: 25,
 };
 

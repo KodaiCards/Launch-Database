@@ -59,6 +59,12 @@ export const meta = {
     { term: 'hierarchy of controls', source_lesson_id: 'T18.L01' },
     { term: '1910.268', source_lesson_id: 'T18.L01' },
   ],
+  learning_objectives: [
+    'Select rubber insulating gloves by PPG class based on maximum voltage exposure (Class 0 ≤1,000V, Class 1 ≤7,500V, Class 2 ≤17,000V) and explain why over-classification (thicker gloves) reduces dexterity',
+    'Identify hard hats by ANSI Z89.1 rating and explain why Class E (electrical protection up to 20kV phase-to-ground) is required for joint-use pole work near distribution power lines',
+    'Explain why dielectric boots (insulating soles rated ≥20kV) protect against ground-path shock and stray voltage, and when they are mandatory vs. recommended',
+    'Apply OSHA 1910.132 fit-test requirements: workers must be fit-tested for glove size, and hard hats must be inspected for suspension damage before each shift',
+  ],
   estimated_minutes: 20,
 };
 

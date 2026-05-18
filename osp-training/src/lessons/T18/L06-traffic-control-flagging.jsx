@@ -58,6 +58,12 @@ export const meta = {
     { term: 'hazard recognition', source_lesson_id: 'T18.L01' },
     { term: 'hi-vis vest', source_lesson_id: 'T18.L05' },
   ],
+  learning_objectives: [
+    'Read a MUTCD Part 6 work-zone diagram and identify buffer zones, taper lengths, advance warning signs, and lane control strategies for safe traffic flow around an OSP work site',
+    'Design a simple Traffic Control Plan (TCP) for a roadside pole installation: advance warning sign placement, lane closure geometry (if required), flagger positions, and vehicle staging area',
+    'Explain state-specific flagger certification requirements (ATSSA, ACCES, or state DOT training) and describe when a flagger is required vs. optional based on traffic speed and volume',
+    'Evaluate a roadway work zone for MUTCD compliance: are buffer zones adequate, are signs visible at night, is the taper length correct, and is the flagger trained and positioned correctly',
+  ],
   estimated_minutes: 25,
 };
 

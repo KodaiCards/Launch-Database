@@ -37,6 +37,12 @@ export const meta = {
     { term: 'Davis-Bacon', source_lesson_id: 'T20.L09' },
   ],
   estimated_minutes: 45,
+  learning_objectives: [
+    'Diagram the call-order decision tree for RUS compliance escalation: state office loan officer (routine questions, construction status, schedule), RUS national office (policy interpretation, modification requests, waiver requests)',
+    'Identify GAGAS audit triggers (loan amount >threshold, environmental sensitivity, prior audit findings, federal pass-through funds, Davis-Bacon involvement) and explain when a full GAGAS audit is mandatory vs. limited scope',
+    'Plan when and how to request a loan modification (project scope change, cost overrun >threshold, timeline slip, environmental discovery) and what documentation RUS requires before approval',
+    'Explain NEPA compliance responsibility boundaries: RUS approves EA/EIS; state DOT may require separate environmental sign-off; project manager ensures all required permits are obtained before construction NTP',
+  ],
 };
 
 // ────────────────────────────────────────────────────────────────────────────

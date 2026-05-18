@@ -48,6 +48,12 @@ export const meta = {
     { term: 'versioning', source_lesson_id: 'T04.L06' },
     { term: 'plant accounting', source_lesson_id: 'T04.L07' },
   ],
+  learning_objectives: [
+    'Assemble a complete survey handoff package (photo log, GIS layers, drone orthomosaic, LiDAR point cloud, pole audit, utility locate, ROW documentation, alternative route analysis) with version numbers and coordinate system metadata',
+    'Conduct a quality-gate review of the handoff package: verify all deliverables are present, coordinate systems are consistent, and data quality meets design engineer expectations for accuracy and completeness',
+    'Identify gaps (missing pole audits, unclear ROW limits, incomplete utility locate coverage) and escalate to survey lead for rework BEFORE design begins, avoiding change-order surprises downstream',
+    'Document design constraints (constructability issues, environmental sensitivities, permitting risks, make-ready requirements) discovered during the survey and communicate them explicitly to the design engineer',
+  ],
   estimated_minutes: 20,
   key_terms: [
   {

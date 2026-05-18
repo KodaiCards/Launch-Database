@@ -61,6 +61,12 @@ export const meta = {
     { term: '1910.268', source_lesson_id: 'T18.L01' },
   ],
   estimated_minutes: 25,
+  learning_objectives: [
+    'Execute a structured site walk procedure: document existing utilities, identify hazards, and capture photo logs in a format that feeds design work',
+    'Spot environmental and physical hazards (overhead power lines, confined spaces, unstable ground, traffic exposure) and recommend avoidance or mitigation strategies',
+    'Explain how site walk findings drive design decisions and how gaps in documentation cascade into construction problems and safety risks',
+    'Apply the hazard identification framework (personal hazard recognition discipline + PPE requirements per 1910.268) to prepare a crew for field reconnaissance',
+  ],
 };
 
 export default function T04L01_SiteWalkHazardRecon() {

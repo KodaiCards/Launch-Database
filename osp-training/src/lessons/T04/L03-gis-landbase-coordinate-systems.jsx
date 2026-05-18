@@ -71,6 +71,12 @@ export const meta = {
     { term: 'planimetric', source_lesson_id: 'T04.L02' },
     { term: 'RTK GNSS', source_lesson_id: 'T04.L02' },
   ],
+  learning_objectives: [
+    'Assemble a multi-layer GIS landbase by combining aerial imagery, LiDAR planimetric data, parcel boundaries, road networks, and utility locate results into a coherent reference map',
+    'Diagnose and correct coordinate system and datum mismatches that cause GPS points, survey data, or imported CAD drawings to shift misaligned on the basemap',
+    'Explain the difference between geographic coordinates (lat/lon, degree-based) and projected coordinates (UTM, meter-based) and when to use each in an OSP design workflow',
+    'Validate GIS topology (closed parcels, non-overlapping features, continuous road networks) to prevent data errors that corrupt subsequent design and permitting decisions',
+  ],
   estimated_minutes: 25,
 };
 

@@ -45,6 +45,12 @@ export const meta = {
     { term: 'design constraints', source_lesson_id: 'T04.L08' },
     { term: 'gap analysis', source_lesson_id: 'T04.L08' },
   ],
+  learning_objectives: [
+    'Assemble a RUS-program construction package: contract forms (RUS Forms 220, 221, 308, 521), field engineering data sheets, bill of materials, construction unit codes, and cost estimates organized per RUS Bulletin 1751F-630 specifications',
+    'Complete RUS field engineering data sheets with pole locations (coordinates + mile-marker callouts), attachment heights, conduit sizes, cable types, and unit quantities (each pole, feet of cable, conduit, splices) in RUS-standard format',
+    'Apply RUS construction unit codes (e.g., 5205 = fiber cable outside plant, aerial, per-mile cost; 5410 = make-ready labor, per-pole) to structure the construction estimate in a format RUS loan reviewers expect',
+    'Understand RUS document-submission gates: environmental review clearance (NEPA), state utility commission approval (where required), bid opening, and notice-to-proceed (NTP) sequencing for a formal construction contract',
+  ],
   estimated_minutes: 20,
   key_terms: [
   {

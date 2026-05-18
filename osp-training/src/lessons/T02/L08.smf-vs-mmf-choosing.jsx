@@ -35,6 +35,12 @@ export const meta = {
     { term: 'attenuation', source_lesson_id: 'T02.L02' },
     { term: 'wavelength window', source_lesson_id: 'T02.L07' },
   ],
+  learning_objectives: [
+    'Compare the key physical and performance differences between single-mode (OS2) and multimode (OM3/OM4/OM5) fiber types',
+    'Apply reach tables and bandwidth calculations to determine whether SMF or MMF is appropriate for a given distance and data rate',
+    'Identify the modal dispersion tradeoff and explain why OM3/OM4 are inadequate for spans exceeding 400 m at gigabit speeds',
+    'Select the correct OM grade (OM1, OM2, OM3, OM4, or OM5) and SMF grade (OS2/G.652.D) based on application distance, speed, and cost constraints',
+  ],
   estimated_minutes: 25,
 };
 

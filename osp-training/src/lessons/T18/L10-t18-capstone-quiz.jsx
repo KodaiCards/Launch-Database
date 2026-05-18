@@ -60,6 +60,12 @@ export const meta = {
     { term: 'near-miss', source_lesson_id: 'T18.L09' },
     { term: 'DART', source_lesson_id: 'T18.L09' },
   ],
+  learning_objectives: [
+    'Integrate hazard recognition, OSHA standards (1910.268, 1910.146, 1910.147, 1910.67), and the hierarchy of controls to assess risk and recommend safe work procedures for a complete OSP work scenario',
+    'Evaluate a multi-hazard situation (joint-use pole work + energized power lines + confined space entry + traffic control) and identify the applicable OSHA standard(s), required certifications (flagger, PRCS entry supervisor), and control hierarchy ranking',
+    'Apply PPE selection rules (glove class, hard hat class, dielectric boots, hi-vis), fall protection (positioning vs. PFAS), and atmospheric testing to a field work scenario',
+    'Recommend when to escalate a job (qualified person required, outside contractor needed, engineering controls insufficient, SDS hazard review required) vs. when a trained crew can execute with given controls',
+  ],
   estimated_minutes: 30,
 };
 
