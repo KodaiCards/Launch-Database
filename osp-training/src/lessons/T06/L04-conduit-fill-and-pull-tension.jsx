@@ -548,10 +548,18 @@ export default function T06L04_ConduitFillAndPullTension() {
       </section>
 
       {/* ── TYING IT TOGETHER ──────────────────────────────────────────── */}
-      <section className="mt-8">
-        <h3 className="font-semibold text-blue-300">Tying It Together</h3>
-        <p className="mt-2 text-slate-300/90">
-          Fill calculations and pull-tension analysis bridge the conduit-selection choice from L03 to the field reality of pulling cable. When you choose a conduit size and material in L03, you are implicitly accepting the pull tensions and fill limits that come with it. Tomorrow, when you're staking a route or managing construction crews, these formulas will tell you whether a cable can be pulled safely or whether you need mid-assist, extra-lubricant, or a different conduit path. The math protects both the fiber and the budget.
+      <section className="mt-8 p-5 border-l-4 border-blue-500 bg-slate-800/40 rounded">
+        <h3 className="text-blue-300 text-lg font-semibold mb-3">Tying It Together</h3>
+        <p className="text-slate-200 mb-3">
+          Fill calculations and pull-tension analysis bridge multiple prior and downstream topics:
+        </p>
+        <ul className="space-y-2 text-slate-300 text-sm list-disc ml-5">
+          <li><strong>T06.L03 Conduit and Innerduct Selection</strong> — the conduit size and schedule you chose there directly determines the maximum cable count and pull-tension limits you calculate here; wrong schedule choice cascades into impossible pull conditions</li>
+          <li><strong>T06.L01 HDD vs. Open-Cut vs. Plowing</strong> — HDPE conduit has lower friction than PVC, reducing pull tensions; this affects whether a plowing method is feasible under a given cable load</li>
+          <li><strong>T06.L08 Riser/Pedestal Placement</strong> — the conduit routing and rise angles you design there create the pull-path geometry; steep angles and long runs amplify pull tensions, forcing you back to recalculate fill or downsize cables</li>
+        </ul>
+        <p className="text-slate-200 mt-3 text-sm italic">
+          The 40% fill rule and pull-tension math are not academic — they tell you in design whether a specific route is constructible, before the crew spends $10K on mobilization and discovers mid-pull that a cable is stuck.
         </p>
       </section>
 

@@ -488,6 +488,22 @@ export default function T06L02_BurialDepthRules() {
         </div>
       </section>
 
+      {/* ── TYING IT TOGETHER ──────────────────────────────────────────────── */}
+      <section className="mt-8 p-5 border-l-4 border-blue-500 bg-slate-800/40 rounded">
+        <h3 className="text-blue-300 text-lg font-semibold mb-3">Tying It Together</h3>
+        <p className="text-slate-200 mb-3">
+          The burial depth rules you apply here cascade through the entire underground design:
+        </p>
+        <ul className="space-y-2 text-slate-300 text-sm list-disc ml-5">
+          <li><strong>T06.L01 HDD vs. Open-Cut vs. Plowing</strong> — shallow-soil jurisdictions with low frost lines and shallow utility clearances may eliminate plowing entirely, forcing HDD or open-cut; depth rules are a hard constraint on method choice</li>
+          <li><strong>T06.L05 Manhole/Handhole/Vault Sizing</strong> — the depth you bury conduit at directly determines the vault depth needed for access; H-20 vs. H-25 loading requirements change with vault depth and surface type</li>
+          <li><strong>T05.L02 NESC Rules</strong> — the 1751F-635 and NEC 830.47 rules you verify here are the SAME rules you cited during site survey in T04; they're constraints on the design before you ever purchase a shovel</li>
+        </ul>
+        <p className="text-slate-200 mt-3 text-sm italic">
+          Burial depth is the bridge between abstract regulations and physical construction — get it wrong in design and the contractor digs too shallow, hits a water main, and you're writing change orders at $15K/day delay cost.
+        </p>
+      </section>
+
       {/* ── QUIZ ─────────────────────────────────────────────────────────── */}
       <section className="mt-8">
         <h2>Check Your Understanding</h2>

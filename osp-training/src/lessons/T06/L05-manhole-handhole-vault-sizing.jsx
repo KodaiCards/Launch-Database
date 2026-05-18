@@ -446,6 +446,22 @@ export default function T06L05_ManholeHanhholeVaultSizing() {
         </div>
       </section>
 
+      {/* ── TYING IT TOGETHER ──────────────────────────────────────────────── */}
+      <section className="mt-8 p-5 border-l-4 border-blue-500 bg-slate-800/40 rounded">
+        <h3 className="text-blue-300 text-lg font-semibold mb-3">Tying It Together</h3>
+        <p className="text-slate-200 mb-3">
+          The sizing and safety discipline you apply here connects to multiple upstream and downstream decisions:
+        </p>
+        <ul className="space-y-2 text-slate-300 text-sm list-disc ml-5">
+          <li><strong>T06.L02 Burial Depth Rules</strong> — the depth you bury conduit directly determines vault depth; shallower burial means smaller vault dimensions, but may violate minimum-cover rules or freeze-line requirements, forcing you back to redesign</li>
+          <li><strong>T06.L04 Conduit Fill and Pull Tension</strong> — the vault interior dimensions you design here must allow cable-pull equipment (reel stands, winches, pulling heads) to operate safely; undersized vaults mean extra cost for smaller-diameter spools or extended pull routes</li>
+          <li><strong>T18.L03 Confined Space Entry (Safety)</strong> — the H-20 / H-25 loading and atmospheric-testing rules you follow here are the SAME confined-space + atmospheric rules taught in T18; vault entry is a confined-space hazard, period</li>
+        </ul>
+        <p className="text-slate-200 mt-3 text-sm italic">
+          Vault sizing is not a spreadsheet exercise — it's the interface between design spec and field-worker safety; wrong sizing creates either a too-small access opening (worker injury) or a too-large vault (wasted excavation cost and easier flooding).
+        </p>
+      </section>
+
       {/* ── QUIZ ─────────────────────────────────────────────────────────── */}
       <section className="mt-8">
         <h2>Check Your Understanding</h2>

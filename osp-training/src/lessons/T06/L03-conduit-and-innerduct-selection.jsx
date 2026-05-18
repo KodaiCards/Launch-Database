@@ -461,6 +461,22 @@ export default function T06L03_ConduitAndInnerductSelection() {
         </div>
       </section>
 
+      {/* ── TYING IT TOGETHER ──────────────────────────────────────────────── */}
+      <section className="mt-8 p-5 border-l-4 border-blue-500 bg-slate-800/40 rounded">
+        <h3 className="text-blue-300 text-lg font-semibold mb-3">Tying It Together</h3>
+        <p className="text-slate-200 mb-3">
+          Your conduit selection here shapes constraints downstream:
+        </p>
+        <ul className="space-y-2 text-slate-300 text-sm list-disc ml-5">
+          <li><strong>T06.L01 HDD vs. Open-Cut vs. Plowing</strong> — HDPE conduit is nearly mandatory for HDD due to flexibility and lower cost; PVC Schedule 40 is plowing-friendly but Schedule 80 is too stiff to plow without rod-lock risk</li>
+          <li><strong>T06.L04 Conduit Fill and Pull Tension</strong> — the conduit size and stiffness you select here directly determine the maximum cable count and pull-tension limits; undersizing conduit forces expensive re-runs</li>
+          <li><strong>T06.L08 Riser/Pedestal/NIU Placement</strong> — above-grade risers demand UV-stabilized HDPE or protected PVC; buried conduit doesn't, saving cost; these placement choices drive material selection</li>
+        </ul>
+        <p className="text-slate-200 mt-3 text-sm italic">
+          Choosing the wrong conduit schedule for the application means either over-engineering (wasted cost) or under-engineering (premature field failure) — the consequences are expensive either way.
+        </p>
+      </section>
+
       {/* ── QUIZ ─────────────────────────────────────────────────────────── */}
       <section className="mt-8">
         <h2>Check Your Understanding</h2>

@@ -587,6 +587,22 @@ export default function T06L01_HDDvsOpenCutvsPlowing() {
         </div>
       </section>
 
+      {/* ── TYING IT TOGETHER ──────────────────────────────────────────────── */}
+      <section className="mt-8 p-5 border-l-4 border-blue-500 bg-slate-800/40 rounded">
+        <h3 className="text-blue-300 text-lg font-semibold mb-3">Tying It Together</h3>
+        <p className="text-slate-200 mb-3">
+          The underground construction method you choose here doesn't stand alone — it interlocks with:
+        </p>
+        <ul className="space-y-2 text-slate-300 text-sm list-disc ml-5">
+          <li><strong>T04.L02 Make-Ready Scope & Estimate</strong> — ROW assessment during site survey directly constrains which methods are permissible; sites with multiple crossings require HDD vs. open-cut trade-offs you quantify in the estimate</li>
+          <li><strong>T03.L03 Cable Selection & Routing</strong> — the cable type (direct-buried vs. conduit-protected) influences which construction method you choose; conduit requires more space, favoring plowing in open areas but HDD for congested crossings</li>
+          <li><strong>T05.L02 Burial Depth Rules</strong> — NESC §32 and RUS 1751F-635 define minimum cover depths that make certain methods impossible in shallow soil; your method decision is constrained by the depth rules governing that jurisdiction</li>
+        </ul>
+        <p className="text-slate-200 mt-3 text-sm italic">
+          In the field, method selection is the single largest cost driver — a $188K difference between plowing and open-cut on a 5-mile rural route is real money that flows directly to the project's bottom line.
+        </p>
+      </section>
+
       {/* ── QUIZ ─────────────────────────────────────────────────────────── */}
       <section className="mt-8">
         <h2>Check Your Understanding</h2>
