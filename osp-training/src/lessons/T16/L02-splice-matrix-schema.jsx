@@ -31,9 +31,9 @@ export const meta = {
     'CMMS (Computerized Maintenance Management System)',
   ],
   vocabulary_assumed: [
-    { term: 'buffer tube', source_lesson_id: 'T03.L01' },
+    { term: 'buffer tube', source_lesson_id: 'T01.L03' },
     { term: 'fiber count', source_lesson_id: 'T03.L01' },
-    { term: 'splice tray', source_lesson_id: 'T11.L11' },
+    { term: 'splice tray', source_lesson_id: 'T01.L04' },
     { term: 'buffer tube routing', source_lesson_id: 'T11.L11' },
     { term: 'express loop', source_lesson_id: 'T11.L11' },
     { term: 'splice loss (dB)', source_lesson_id: 'T11.L03' },
