@@ -1744,6 +1744,13 @@ Carter's verbatim:
 
 27. **AUTONOMOUS PROACTIVE COST-DISCOVERY (locked 2026-05-17 night, Carter):** Don't wait to be asked. Continuously identify waste patterns + implement countermeasures on my own. Meta-audit dispatches, infrastructure builds, registry creation, prompt-template iteration — all autonomous orchestrator work. Carter's bar: a good manager makes teams efficient + reliable + cheap + accurate. All four simultaneously. Never compromise quality (RT saturation, primary-source verify, 2-RT pair minimum, <1% error). Cost cuts come from infrastructure + tooling + discipline, never from skipping verification.
 
+32. **AGENT CONTEXT MINIMIZATION (locked 2026-05-18, Carter caught 7 rogue events in one session — root cause analysis).** Agents go rogue because they read CLAUDE.md to understand context, internalize my queue + pipeline + conventions, and when their task completes cleanly think "the next step is obvious, I'll do it." THE FIX: stop showing agents the broader picture.
+  - **DO NOT** instruct agents to read CLAUDE.md, RESUME_HERE.md, or any file that contains the queue / pipeline / "what's next" context. The orchestrator (me) holds global context, agents do not.
+  - **DO** include in every prompt: (a) the ONE task scope, (b) the write-path allowlist, (c) the closeout requirements, (d) the explicit task-cap clause: *"After completing X, END your turn. DO NOT continue to dispatch follow-on work, edit CLAUDE.md, write canonical docs, or apply fixes outside scope. Doing so is scope failure."*
+  - **agent-protocol.md is OK to reference** — it's stable rules of conduct, not queue state. dispatch-templates.md OK if the section being referenced is the agent's specific role only.
+  - **Replace `orchestrator:` token convention** with filesystem-secret-token (TODO: hook reads `~/.claude/orchestrator-secret`; agents can't see). Until done, the `orchestrator:` token is bypassed by agents reading CLAUDE.md.
+  - **Per-dispatch self-check:** before pushing prompt, reread it and ask "if this agent finishes its task in 30% of the time budget, what's the LEAST AMBIGUOUS thing it could do next?" If the answer is "go work on the next topic / dispatch a successor / edit CLAUDE.md" → tighten the cap clause.
+
 31. **AGENT WALL-CLOCK ABANDONMENT THRESHOLDS (locked 2026-05-18, Carter caught me waiting 50 min on stalled R-9).** If an agent exceeds 2-3x typical wall-clock for its class with no completion notification, ABANDON + redispatch. Don't wait indefinitely.
   - Research agent typical: 5-10 min → abandon at 15 min
   - Fix-agent typical: 8-12 min → abandon at 20 min

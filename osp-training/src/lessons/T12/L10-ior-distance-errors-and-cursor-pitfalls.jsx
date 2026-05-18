@@ -171,7 +171,7 @@ export default function T12L10_IORDistanceErrors() {
         <p>
           <strong>Field reality:</strong> on most routine splice acceptance tests, multi-reel IOR
           variation is within measurement noise and can be ignored. It becomes important only when
-          doing precise fault localization on long (>20 km) spans where the fiber record is
+          doing precise fault localization on long (&gt;20 km) spans where the fiber record is
           incomplete or the contractor didn't document individual reel IORs.
         </p>
 
