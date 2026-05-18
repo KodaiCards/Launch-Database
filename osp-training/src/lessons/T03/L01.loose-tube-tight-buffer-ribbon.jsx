@@ -375,6 +375,11 @@ export default function T03L01_LooseTubeTightBufferRibbon() {
             front: 'What is ICEA S-87-640 and why does it matter on RUS projects?',
             back: 'ICEA S-87-640 is the Insulated Cable Engineers Association construction standard for OSP fiber optic cable. It specifies buffer tube dimensions, jacket thickness, tensile ratings, armor requirements, and water-blocking performance. All cable on RUS-financed projects must meet ICEA S-87-640 as incorporated by 7 CFR 1755.902. [confirm current edition]',
           },
+          {
+            id: 'T03-L01-fc-fiber-count',
+            front: 'What is fiber count in a cable?',
+            back: 'The total number of optical fibers contained within a single cable. Common counts in OSP: 4F (4 fibers) for small feeder runs, 12F (12 fibers), 24F, 48F, 96F, 144F, 288F, and 432F for large trunk cables. Expressed as "XF" where X is the number. Fiber count is a primary selection criterion when choosing cable for a splice point — the case capacity must match or exceed the cable fiber count plus room for future adds.',
+          },
         ]}
       />
 
