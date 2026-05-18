@@ -48,6 +48,11 @@ export default function T02L03_DispersionWhySignalsBlur() {
       {/* ── FOUNDATIONS ─────────────────────────────────────────────────── */}
       <section data-tier="foundations">
         <h2>In Plain English</h2>
+
+        <div className="mb-4 p-3 bg-amber-900/20 border-l-4 border-amber-500 rounded text-amber-100 text-sm">
+          <strong>Quick refresher:</strong> In <strong>T02.L01</strong>, you learned how light travels through fiber via total internal reflection. In <strong>T02.L02</strong>, you learned attenuation (loss per km). This lesson tackles a different problem: even when enough light arrives, it may be smeared and unreadable. That smearing is dispersion.
+        </div>
+
         <p>
           Attenuation (from T02.L02) tells you how much signal power you lose over distance.
           But there's a second problem: even if enough light arrives at the far end, it might

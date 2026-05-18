@@ -48,6 +48,11 @@ export default function T02L10_FiberCharacterizationTesting() {
       {/* ── FOUNDATIONS ─────────────────────────────────────────────────── */}
       <section data-tier="foundations">
         <h2>In Plain English</h2>
+
+        <div className="mb-4 p-3 bg-amber-900/20 border-l-4 border-amber-500 rounded text-amber-100 text-sm">
+          <strong>Quick refresher:</strong> In <strong>T02.L02</strong> you learned attenuation (loss per km). In <strong>T02.L03</strong> you learned chromatic dispersion. In <strong>T02.L09</strong> you learned PMD. This lesson answers: how do you actually measure these fiber properties in the field to validate fiber health?
+        </div>
+
         <p>
           You've learned what attenuation, chromatic dispersion (CD), and PMD are. Now:
           how do you actually <em>measure</em> these properties on installed fiber?

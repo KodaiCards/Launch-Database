@@ -47,6 +47,11 @@ export default function T02L06_LinkBudgetWorkedExample() {
       {/* ── FOUNDATIONS ─────────────────────────────────────────────────── */}
       <section data-tier="foundations">
         <h2>In Plain English</h2>
+
+        <div className="mb-4 p-3 bg-amber-900/20 border-l-4 border-amber-500 rounded text-amber-100 text-sm">
+          <strong>Quick refresher:</strong> In <strong>T02.L02</strong>, you learned that attenuation is signal loss (measured in dB/km). In <strong>T02.L05</strong>, you learned how decibels (dB) work — so you can add losses together instead of multiplying fractions. This lesson brings those concepts together in a single calculation that tells you if a link actually works.
+        </div>
+
         <p>
           A <strong>link budget</strong> is the central calculation that answers the question:
           "Will this fiber connection actually work?" It's a simple accounting exercise:

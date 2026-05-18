@@ -47,6 +47,11 @@ export default function T02L09_PolarizationModeDispersion() {
       {/* ── FOUNDATIONS ─────────────────────────────────────────────────── */}
       <section data-tier="foundations">
         <h2>In Plain English</h2>
+
+        <div className="mb-4 p-3 bg-amber-900/20 border-l-4 border-amber-500 rounded text-amber-100 text-sm">
+          <strong>Quick refresher:</strong> In <strong>T02.L03</strong>, you learned chromatic dispersion — the blurring that happens when different wavelengths travel at different speeds. This lesson covers a sibling problem: when the same wavelength's two polarization modes travel at different speeds (PMD). Both mechanisms blur signals; both limit link distance at high bit rates.
+        </div>
+
         <p>
           This is an advanced lesson. If you're working on standard OSP splicing, testing, or
           construction, you can skip this lesson for now — PMD rarely affects day-to-day field

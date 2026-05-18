@@ -57,6 +57,11 @@ export default function T02L07_WavelengthWindows() {
       {/* ── FOUNDATIONS ─────────────────────────────────────────────────── */}
       <section data-tier="foundations">
         <h2>In Plain English</h2>
+
+        <div className="mb-4 p-3 bg-amber-900/20 border-l-4 border-amber-500 rounded text-amber-100 text-sm">
+          <strong>Quick refresher:</strong> In <strong>T02.L02</strong>, you learned that different wavelengths have different attenuation rates (loss per km). In <strong>T02.L03</strong>, you learned that wavelength affects chromatic dispersion. This lesson explains which specific wavelengths (1310 nm, 1550 nm, etc.) are actually used in the field — and why.
+        </div>
+
         <p>
           Not all light behaves the same in fiber. Glass lets some wavelengths pass with very
           little loss, and absorbs or scatters others heavily. The wavelengths where loss is

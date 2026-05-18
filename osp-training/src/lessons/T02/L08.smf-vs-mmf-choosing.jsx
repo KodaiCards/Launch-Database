@@ -51,6 +51,11 @@ export default function T02L08_SMFvsMMFChoosing() {
       {/* ── FOUNDATIONS ─────────────────────────────────────────────────── */}
       <section data-tier="foundations">
         <h2>In Plain English</h2>
+
+        <div className="mb-4 p-3 bg-amber-900/20 border-l-4 border-amber-500 rounded text-amber-100 text-sm">
+          <strong>Quick refresher:</strong> In <strong>T02.L02</strong> you learned attenuation limits distance by loss. In <strong>T02.L03</strong> you learned dispersion (modal + chromatic) also limits distance. In <strong>T02.L07</strong> you learned different wavelengths have different properties. This lesson applies all those concepts to answer: why do some projects use single-mode fiber (SMF) and others use multimode (MMF)?
+        </div>
+
         <p>
           You've been hearing "SMF" (single-mode fiber) and "MMF" (multimode fiber) since T01.
           Now that you know the physics (total internal reflection, attenuation, dispersion,

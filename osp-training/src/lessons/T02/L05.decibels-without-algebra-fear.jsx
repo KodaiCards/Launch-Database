@@ -43,6 +43,11 @@ export default function T02L05_DecibelsWithoutAlgebraFear() {
       {/* ── FOUNDATIONS ─────────────────────────────────────────────────── */}
       <section data-tier="foundations">
         <h2>In Plain English</h2>
+
+        <div className="mb-4 p-3 bg-amber-900/20 border-l-4 border-amber-500 rounded text-amber-100 text-sm">
+          <strong>Quick refresher:</strong> In <strong>T02.L02</strong>, you learned that attenuation is signal loss as light travels through fiber, measured in <strong>dB/km</strong>. This lesson explains what "dB" actually means — the unit itself, and how to use dB math to predict power levels in a link.
+        </div>
+
         <p>
           You've heard the word "decibel" — probably in audio (speaker loudness) or cell signal
           bars. In fiber optics, decibels (dB) are how we measure optical power loss. And
