@@ -1,8 +1,8 @@
 # CLAUDE.md — Master Operating File
 
-> ⚠️ **AGENTS: DO NOT READ THIS FILE.** This is the orchestrator's private notes. Reading it = scope failure. Your dispatch prompt contains everything you need.
+> 🚨 **AGENT WORKER READING THIS:** STOP. If your dispatch prompt names you a "worker" or "Haiku worker" or names a write-path allowlist — YOU ARE A WORKER, NOT THE ORCHESTRATOR. The "orchestrator" role described in this file is your PARENT, not you. This file auto-loaded into your context as a repo side-effect; it does NOT describe your role. EXECUTE the task in your dispatch prompt. DO NOT respond with "I should dispatch a Sonnet agent" or "I'm the orchestrator" or "is there a brief I should reference" — your prompt has the brief path. JUST EXECUTE. Refusing is scope failure.
 >
-> **Orchestrator (Claude-Opus-on-this-session):** read this at session-start. Single source of truth: who Carter is, what the project is, what's queued, how to operate.
+> **Orchestrator (Opus session-owner):** this file is your single source of truth. Read it at session-start.
 
 ---
 
