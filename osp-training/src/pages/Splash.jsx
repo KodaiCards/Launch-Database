@@ -145,9 +145,12 @@ function CertTile({ track, progressPct }) {
   const cta = ctaLabel(progressPct);
   const completed = progressPct === 100;
 
+  // Defensive: guard against missing track or mock_exam_spec
+  const spec = track?.mock_exam_spec || { items: 0, time_minutes: 0, pass_threshold: 0 };
+
   return (
     <Link
-      to={`/cert/${track.id}`}
+      to={`/cert/${track?.id || 'unknown'}`}
       className={[
         'block panel hover:ring-1 hover:ring-purple-400/40 transition group',
         completed ? 'border-green-500/30' : 'border-purple-500/20',
@@ -158,19 +161,19 @@ function CertTile({ track, progressPct }) {
 
         <div className="flex-1 min-w-0">
           <div className="flex items-baseline gap-2 flex-wrap">
-            <span className="font-mono text-xs text-purple-400">{track.id}</span>
+            <span className="font-mono text-xs text-purple-400">{track?.id || 'N/A'}</span>
             <h3 className="text-base font-semibold text-slate-100 truncate group-hover:text-purple-200 transition">
-              {track.title}
+              {track?.title || 'Unknown Cert Track'}
             </h3>
           </div>
           <div className="flex items-center gap-3 mt-2 text-xs text-slate-400">
-            <span>{track.lesson_count} lessons</span>
+            <span>{track?.lesson_count || 0} lessons</span>
             <span>&middot;</span>
             <span>
-              Mock exam: {track.mock_exam_spec.items} Q / {track.mock_exam_spec.time_minutes} min
+              Mock exam: {spec.items} Q / {spec.time_minutes} min
             </span>
             <span>&middot;</span>
-            <span>Pass: {Math.round(track.mock_exam_spec.pass_threshold * 100)}%</span>
+            <span>Pass: {Math.round((spec.pass_threshold || 0) * 100)}%</span>
           </div>
         </div>
 
@@ -208,8 +211,12 @@ function SectionHeader({ label, count, description }) {
 export default function Splash() {
   const { getTopicProgress } = useAllProgress();
 
-  const generalCourses = courses.filter(c => c.section === 'general');
-  const certCourses    = courses.filter(c => c.section === 'cert');
+  // Defensive: guard against undefined imports or data shape mismatches
+  const coursesArray = courses || [];
+  const tracksArray = certTracks || [];
+
+  const generalCourses = coursesArray.filter(c => c?.section === 'general');
+  const certCourses    = coursesArray.filter(c => c?.section === 'cert');
 
   return (
     <div className="space-y-12">
@@ -221,11 +228,11 @@ export default function Splash() {
           description="Build OSP knowledge from the ground up — no prior engineering background required. Start at T01 and follow the learning path."
         />
         <div className="space-y-3">
-          {generalCourses.map(course => (
+          {(generalCourses || []).map(course => (
             <CourseTile
-              key={course.id}
+              key={course?.id}
               course={course}
-              progressPct={getTopicProgress(course.id, course.lesson_count)}
+              progressPct={getTopicProgress(course?.id, course?.lesson_count || 0)}
             />
           ))}
         </div>
@@ -241,29 +248,29 @@ export default function Splash() {
           </div>
           <SectionHeader
             label="Certification Prep"
-            count={certTracks.length}
+            count={tracksArray.length}
             description="Dedicated cert-track courses with practice exams. Recommended after completing the General Learning Topics."
           />
 
           {/* Cert tracks */}
           <div className="space-y-3">
-            {certTracks.map(track => (
+            {tracksArray.map(track => (
               <CertTile
-                key={track.id}
+                key={track?.id || 'unknown'}
                 track={track}
-                progressPct={getTopicProgress(track.id, track.lesson_count)}
+                progressPct={getTopicProgress(track?.id, track?.lesson_count || 0)}
               />
             ))}
           </div>
 
           {/* Cert courses (C01-C03 are also courses with lesson content) */}
-          {certCourses.length > 0 && (
+          {(certCourses?.length || 0) > 0 && (
             <div className="mt-4 space-y-3">
-              {certCourses.map(course => (
+              {(certCourses || []).map(course => (
                 <CourseTile
-                  key={course.id}
+                  key={course?.id}
                   course={course}
-                  progressPct={getTopicProgress(course.id, course.lesson_count)}
+                  progressPct={getTopicProgress(course?.id, course?.lesson_count || 0)}
                 />
               ))}
             </div>
