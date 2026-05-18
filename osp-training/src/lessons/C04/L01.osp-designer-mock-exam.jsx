@@ -457,6 +457,566 @@ const ospDesignerQuestions = [
     explanation:
       'Poles: 5 miles @ 130-ft spacing ≈ 200 poles × $2,000 = $400,000. Cable: 5 × $8,500 = $42,500. Labor: 5 × $12,000 = $60,000. Engineering: $15,000. Total: $400,000 + $42,500 + $60,000 + $15,000 = $517,500. The closest answer ($172,500) does not match; recalculate or verify pole count. (Note: This discrepancy suggests the answer options may have errors; accept the calculated total.)',
   },
+  {
+    id: 'c04-osp-031',
+    domain: 'Fiber Physics',
+    stem: 'What phenomenon causes multimode dispersion in OM1 multimode fiber at 850 nm?',
+    choices: [
+      'Attenuation of lower-order modes',
+      'Different propagation delays for different modes traveling the same distance',
+      'Wavelength-dependent scattering',
+      'Macrobending of the fiber core',
+    ],
+    answerIndex: 1,
+    explanation:
+      'Modal dispersion occurs when multiple modes travel the same distance but at different velocities, arriving at different times. This limits bandwidth and distance in multimode systems. SMF avoids this by supporting only one mode. (Source: ITU-T G.651; T02.L08)',
+  },
+  {
+    id: 'c04-osp-032',
+    domain: 'NESC Clearances',
+    stem: 'What is the horizontal clearance required between a fiber cable and a power line at the same attachment height per NESC Rule 234B1?',
+    choices: [
+      '6 inches (152 mm)',
+      '12 inches (305 mm)',
+      '24 inches (610 mm)',
+      '36 inches (914 mm)',
+    ],
+    answerIndex: 1,
+    explanation:
+      'NESC Rule 234B1 specifies a 12-inch horizontal separation between communication and power conductors at the same attachment height. If clearance cannot be maintained, vertical separation of 30 inches (Rule 215) is substituted. (Source: NESC C2-2023 Rule 234; T05.L01)',
+  },
+  {
+    id: 'c04-osp-033',
+    domain: 'Pole Loading',
+    stem: 'A pole attachment quote includes "rotten wood replacement" as a make-ready item. What depth of rot typically triggers replacement per utility standards?',
+    choices: [
+      'Any visible rot, even if surface-only',
+      'Rot penetrating ≥3/4 inch into the pole circumference',
+      'Rot reaching the structural core',
+      'Rot exceeding 10% of the pole cross-section area',
+    ],
+    answerIndex: 1,
+    explanation:
+      'Utility engineering practice and IEEE Std 1415 define significant rot as penetration ≥3/4 inch. Shallow surface rot can be treated; deep penetration compromises structural integrity and mandates replacement. (Source: IEEE Std 1415; T08.L02)',
+  },
+  {
+    id: 'c04-osp-034',
+    domain: 'Splicing',
+    stem: 'A fusion splicer displays a predicted loss of 0.18 dB for a pair of G.657.A2 fibers. The actual measured loss post-fusion is 0.08 dB. What is the likely cause?',
+    choices: [
+      'The splicer overestimated due to microbend sensitivity of G.657.A2',
+      'The actual fibers have better MFD matching than the splicer assumed',
+      'The test light attenuation is incorrect',
+      'The splice is defective despite the low measured loss',
+    ],
+    answerIndex: 1,
+    explanation:
+      'G.657.A2 fibers have tighter MFD specifications (8.2–9.5 µm) than G.652.D. If two A2 fibers have excellent MFD matching, splice loss can beat the splicer\'s nominal prediction. Lower-than-predicted loss is not a failure mode; it\'s a favorable outcome. Verify with OTDR confirmation. (Source: T11.L04)',
+  },
+  {
+    id: 'c04-osp-035',
+    domain: 'Testing',
+    stem: 'An OTDR test is performed on a 10-km span at 1550 nm with 200-meter pulse width. Why would a fusion splice at 5 km not be visible in the trace?',
+    choices: [
+      'The splice is outside the OTDR range',
+      'The 200-meter pulse width creates a dead zone larger than the splice loss',
+      'The splice is perfect (0.0 dB) and leaves no signature',
+      'The 1550 nm window does not support splices',
+    ],
+    answerIndex: 1,
+    explanation:
+      'A 200-meter pulse width creates a dead zone of ~200 meters. A discrete event (splice) within the dead zone is not resolved in the OTDR trace. To detect the splice, use a shorter pulse width (e.g., 10–50 meters) despite the tradeoff in range/noise. (Source: T12.L04)',
+  },
+  {
+    id: 'c04-osp-036',
+    domain: 'Design Fundamentals',
+    stem: 'An aerial FTTH network spans from a CO 8 miles away. If each PON (Passive Optical Network) split is 1:64 and the maximum acceptable link loss is 30 dB, is a single PON span feasible?',
+    choices: [
+      'Yes, easily; fiber loss alone is ~3.86 dB, splitter loss is ~18 dB, leaving margin',
+      'No; total loss (fiber + splitter + connectors) will exceed 30 dB',
+      'Yes, but only if using low-loss ribbon splices',
+      'Cannot determine without knowing the transceiver power budget',
+    ],
+    answerIndex: 0,
+    explanation:
+      '8 miles = 12.87 km. Fiber loss: 12.87 km × 0.30 dB/km ≈ 3.86 dB. 1:64 splitter loss ≈ 18 dB. Splice loss: ~0.2 dB. Connector loss: ~0.5 dB. Total: ~22.56 dB, leaving ~7.4 dB margin. Feasible. (Source: T17.L03)',
+  },
+  {
+    id: 'c04-osp-037',
+    domain: 'Permitting',
+    stem: 'A route crosses private property without explicit written permission. The landowner verbally approved installation. Is a formal written easement required before construction?',
+    choices: [
+      'No; verbal approval is sufficient for temporary routing during construction',
+      'Yes; RUS and most utilities require a recorded easement for permanent cable',
+      'Only if the property is in a federally designated area',
+      'It depends on the state; some states recognize verbal easements',
+    ],
+    answerIndex: 1,
+    explanation:
+      'RUS-funded projects require recorded easements or right-of-way agreements for all permanent infrastructure. Verbal approval is insufficient and creates legal exposure. A recorded easement in the county deed office is non-negotiable before construction begins. (Source: T09.L02)',
+  },
+  {
+    id: 'c04-osp-038',
+    domain: 'Cable Selection',
+    stem: 'A cable is specified as "12 single-mode, stranded, ICEA S-87-640, RUS-listed, gel-filled, armored." What does "stranded" mean in this context?',
+    choices: [
+      'The fibers are twisted together like electrical wire strands',
+      'Individual fibers are arranged in a loose-tube structure within a stranded strength member',
+      'The cable jacket is braided or woven for added protection',
+      'The phrase is meaningless; cable specifications do not use "stranded" terminology',
+    ],
+    answerIndex: 1,
+    explanation:
+      '"Stranded" in OSP cable specs refers to the loose-tube fiber structure or a stranded (multi-wire) strength member, not the fibers themselves. The full spec describes a 12-fiber loose-tube cable with a stranded steel strength member and gel-filled tubes. (Source: T03.L01)',
+  },
+  {
+    id: 'c04-osp-039',
+    domain: 'Joint-Use Coordination',
+    stem: 'A power utility insists on attaching fiber cable to the TOP of a joint-use pole despite a lower attachment slot being available. What is the design engineer\'s primary concern?',
+    choices: [
+      'Fiber cable should not be placed above power lines due to gravity risk if the cable breaks',
+      'Proximity to power lines increases EMI (electromagnetic interference) on the fiber',
+      'NESC Rule 215A requires telecom cables to be BELOW power lines for safety clearance',
+      'Top attachment increases wind loading and requires higher pole rating',
+    ],
+    answerIndex: 2,
+    explanation:
+      'NESC Rule 215A places communication cables BELOW power lines to prevent a falling power line from damaging telecom. Top attachment violates this rule. The engineer must specify a lower position or document a compelling reason (like pole saturation) to request an exception. (Source: T06.L02)',
+  },
+  {
+    id: 'c04-osp-040',
+    domain: 'Cable Selection',
+    stem: 'Why would a non-gel-filled aerial cable be selected over gel-filled in a high-maintenance area with frequent repair access?',
+    choices: [
+      'Gel-filled cables cost 40% more with no performance benefit',
+      'Non-gel fibers are easier to splice in the field due to lower residue',
+      'Gel-filled cables are slower to splice, and maintenance crews prefer faster repairs',
+      'Gel fills are not approved in aerial environments per NESC',
+    ],
+    answerIndex: 2,
+    explanation:
+      'Gel-filled cables protect from moisture but require heated tools and careful handling during field splicing. In high-access areas where repairs are frequent, non-gel loose-tube designs trade water-blocking for faster crew turnaround. This is a maintenance-vs-longevity tradeoff. (Source: T03.L02)',
+  },
+  {
+    id: 'c04-osp-041',
+    domain: 'Fiber Physics',
+    stem: 'At what wavelength does standard G.652.D fiber exhibit ZERO chromatic dispersion?',
+    choices: [
+      '1310 nm (C-band, minimum loss window)',
+      '1255 nm (L-band edge)',
+      '1550 nm (minimum dispersion slope)',
+      '850 nm (multimode shorthand)',
+    ],
+    answerIndex: 0,
+    explanation:
+      'ITU-T G.652.D is designed with zero chromatic dispersion at 1310 nm (the zero-dispersion wavelength). At 1550 nm, dispersion is ~17 ps/(nm·km). This is why older systems used 1310 nm and modern systems use 1550 nm with management. (Source: T02.L03)',
+  },
+  {
+    id: 'c04-osp-042',
+    domain: 'NESC Clearances',
+    stem: 'An existing distribution line on a pole is sagging beyond its design clearance to a lower communication line. What is the first step in the design process?',
+    choices: [
+      'Ignore the existing sagging; the new design must work within the existing conditions',
+      'Perform make-ready to re-tension or replace the sagging distribution line',
+      'Reposition the communication cable lower, accepting reduced clearance',
+      'Document the condition and request a waiver from the utility pole owner',
+    ],
+    answerIndex: 1,
+    explanation:
+      'Existing clearance violations are not acceptable as a baseline for new design. Make-ready (retensioning, replacement, or repositioning) is the standard corrective action per NESC Rule 257. The engineer must restore compliance, not work around it. (Source: T05.L04)',
+  },
+  {
+    id: 'c04-osp-043',
+    domain: 'Pole Loading',
+    stem: 'A 40-foot wooden pole is rated for 1,500 pounds at 2 feet from the top. It currently carries power and cable TV, with a combined side force of 1,400 pounds. Adding a fiber strand (100 pounds) would bring the total to 1,500 pounds. Can the engineer proceed?',
+    choices: [
+      'Yes; the total equals the pole rating',
+      'No; safety margin below the pole rating is required per NESC',
+      'Yes, but only if the fiber strand is positioned at a lower attachment height',
+      'Maybe; it depends on the age and condition of the pole',
+    ],
+    answerIndex: 1,
+    explanation:
+      'NESC Rule 257 requires that combined loads do NOT exceed the pole rating. Additionally, prudent engineering allows a safety margin (typically 10–20% below rated capacity) to account for wind, ice, and equipment interaction. Operating at or above the pole rating is a violation. (Source: T08.L01)',
+  },
+  {
+    id: 'c04-osp-044',
+    domain: 'Underground Cable Route',
+    stem: 'Which of the following is NOT required when designing an underground cable route in a Right-of-Way (ROW)?',
+    choices: [
+      'Locating existing utilities via call-811 and private locates',
+      'Recording the conduit depth on as-built drawings',
+      'Obtaining written consent from EVERY adjacent property owner',
+      'Maintaining minimum separation from gas and water lines per code',
+    ],
+    answerIndex: 2,
+    explanation:
+      'While landowner permission is required for the primary route, written consent from every adjacent property owner is not standard practice (consent is needed only for properties crossed by the cable). Call-811 locates, as-built recording, and separation distances are all mandatory. (Source: T06.L03)',
+  },
+  {
+    id: 'c04-osp-045',
+    domain: 'Design Fundamentals',
+    stem: 'A hybrid aerial-underground route crosses into a congested downtown area. What is the primary advantage of the transition?',
+    choices: [
+      'Underground cable is cheaper than aerial',
+      'Underground avoids visual clutter and protects cable from weather and vehicle damage',
+      'Underground reduces the need for pole agreements',
+      'The cost advantage makes the project feasible despite higher labor',
+    ],
+    answerIndex: 1,
+    explanation:
+      'Underground routing avoids visual impact, reduces vandalism/weather damage, and eliminates pole-attachment conflicts in congested areas. Cost is higher but the tradeoff is justified in urban environments. (Source: T06.L01)',
+  },
+  {
+    id: 'c04-osp-046',
+    domain: 'Splicing',
+    stem: 'Why might a technician choose mechanical splices over fusion splices at a temporary restoration site?',
+    choices: [
+      'Mechanical splices have lower loss than fusion splices',
+      'Fusion splices require electrical power and alignment equipment, which may not be available in the field',
+      'Mechanical splices are more permanent',
+      'Fusion splicers cannot operate in cold weather',
+    ],
+    answerIndex: 1,
+    explanation:
+      'Mechanical splices are quick, require no power, and work in any weather. Fusion splices are superior long-term but need heated alignment tools and proper fiber prep. For emergency restoration, a technician might use mechanical splices as a temporary fix. (Source: T11.L06)',
+  },
+  {
+    id: 'c04-osp-047',
+    domain: 'Testing',
+    stem: 'An OLTS (Optical Loss Test Set) measurement on a newly installed link shows 25.5 dB loss. The design budget allows 25.0 dB. What is the appropriate response?',
+    choices: [
+      'Reject the installation; loss exceeds budget by 0.5 dB',
+      'Accept; the 0.5 dB variance is within typical measurement error (±0.5 dB)',
+      'Investigate the source of excess loss (splice quality, connector contact, fiber defects) before accepting with variance',
+      'Request a retest 24 hours later, as temperature changes can affect loss readings',
+    ],
+    answerIndex: 2,
+    explanation:
+      'A 0.5 dB exceedance is measurable and requires investigation, not dismissal as "error margin." The engineer must identify the loss source and determine if the link can operate safely with the variance. (Source: T12.L03)',
+  },
+  {
+    id: 'c04-osp-048',
+    domain: 'Inspection & QA',
+    stem: 'An RUS Form 219 inspector finds a fusion splice with documented loss of 0.35 dB, exceeding the design budget of 0.20 dB. The cable is otherwise clean. What is the correct disposition?',
+    choices: [
+      'Accept with a written variance note',
+      'Require re-splicing until the loss meets the design budget',
+      'Accept if the overall link loss (all splices + fiber) remains within the link budget',
+      'Accept; individual splice loss is not a regulatory requirement',
+    ],
+    answerIndex: 2,
+    explanation:
+      'Per RUS Form 219 and FCC standards, the acceptance criterion is that the overall link meets performance specifications, not that every individual splice meets a specific loss target. If the total link loss is within acceptable limits, the installation can be approved. (Source: T13.L02)',
+  },
+  {
+    id: 'c04-osp-049',
+    domain: 'Safety',
+    stem: 'A technician is splicing fiber at a dead-end pole when an aerial power line breaks and falls nearby. What is the first action?',
+    choices: [
+      'Continue splicing; the power line is not on the fiber cable',
+      'De-energize the dead-end pole and evacuate the area immediately',
+      'Assume the fiber cable is now energized and do not touch it until inspected',
+      'Call the utility and wait for clearance',
+    ],
+    answerIndex: 1,
+    explanation:
+      'A fallen power line creates an immediate hazard. The technician must assume the entire pole structure (including fiber cable attached to the pole) is potentially energized. Evacuation and contacting emergency services is the only safe response. (Source: T18.L03)',
+  },
+  {
+    id: 'c04-osp-050',
+    domain: 'Bonding & Grounding',
+    stem: 'A fiber cable is attached to a pole with a composite strand (non-conductive). What bonding requirement applies at the pole top?',
+    choices: [
+      'No bonding; composite strands do not conduct electricity',
+      'The composite strand must be bonded to the pole-top ground via a jumper wire',
+      'Bonding is only required if the pole is within 100 feet of a power source',
+      'Composite strands are not allowed in joint-use environments',
+    ],
+    answerIndex: 1,
+    explanation:
+      'Even non-conductive composite strands must be bonded to ground at the pole top per TIA-607 and NESC Rule 092. This prevents voltage buildup due to induction. A continuous bonding path from the cable to earth is required regardless of strand material. (Source: T14.L04)',
+  },
+  {
+    id: 'c04-osp-051',
+    domain: 'Cost Estimation',
+    stem: 'A project manager estimates a 10-mile underground FTTH route at $850,000. She includes $50,000 for contingency and $100,000 for engineering. What is the unit cost per mile (direct work only)?',
+    choices: [
+      '$85,000/mile',
+      '$79,000/mile',
+      '$70,000/mile',
+      '$95,000/mile',
+    ],
+    answerIndex: 2,
+    explanation:
+      'Total: $850,000. Subtract engineering ($100,000) and contingency ($50,000): $850,000 - $150,000 = $700,000. Divide by 10 miles: $700,000 ÷ 10 = $70,000/mile direct work cost. (Source: T17.L04)',
+  },
+  {
+    id: 'c04-osp-052',
+    domain: 'RUS Forms',
+    stem: 'When should RUS Form 219 (Close-Out Report) be submitted?',
+    choices: [
+      'Before construction begins, as a project plan',
+      'Upon completion of all construction and final testing, certifying compliance with design',
+      'Six months after project completion',
+      'Only if the project exceeds the RUS loan amount',
+    ],
+    answerIndex: 1,
+    explanation:
+      'RUS Form 219 is the final inspector\'s certification that the project is complete, tested, and compliant with all design, NESC, and RUS requirements. It is the close-out document submitted AFTER construction and acceptance testing. (Source: T16.L05)',
+  },
+  {
+    id: 'c04-osp-053',
+    domain: 'Environmental Compliance',
+    stem: 'A route crosses a federally protected wetland boundary. Which is the first regulatory step?',
+    choices: [
+      'Proceed with design; wetland crossing is minor if cable is overhead',
+      'Notify USACE and consult NEPA requirements for a Section 404 permit',
+      'Obtain a Section 106 NHPA clearance from SHPO',
+      'Reroute to avoid the wetland entirely (always required)',
+    ],
+    answerIndex: 1,
+    explanation:
+      'Any activity affecting jurisdictional wetlands requires USACE Section 404 consultation under the Clean Water Act. NEPA environmental review is the first step to determine permit type. Section 106 (NHPA) is a parallel process for historic properties. (Source: T09.L03)',
+  },
+  {
+    id: 'c04-osp-054',
+    domain: 'Design Fundamentals',
+    stem: 'A customer requests a PON split of 1:128 at the remote node to serve a low-density rural area. What is the primary concern?',
+    choices: [
+      'The 1:128 split adds complexity but increases subscriber capacity',
+      'Link loss for a 1:128 split (~21 dB splitter loss) may exceed typical link budgets, limiting span distance significantly',
+      'A 1:128 split is not possible with current technology',
+      'Customer density is too low; use 1:64 instead',
+    ],
+    answerIndex: 1,
+    explanation:
+      'A 1:128 splitter has ~21 dB loss. Combined with fiber loss over distance, this severely constrains span length. This is why 1:128 is rare in OSP and usually cascaded (1:32 + 1:4) instead. (Source: T17.L02)',
+  },
+  {
+    id: 'c04-osp-055',
+    domain: 'Splicing',
+    stem: 'A technician is mass-splicing two ribbon cables (12-fiber × 2 = 24 fibers total). How many fusion splices are required?',
+    choices: [
+      '12 splices (one per fiber)',
+      '2 splices (one per ribbon)',
+      '24 splices (one per fiber)',
+      'It depends on the ribbon structure; some ribbons allow edge-fusion',
+    ],
+    answerIndex: 1,
+    explanation:
+      'Modern fusion splicers can align and fuse entire 12-fiber ribbons as a unit, completing one ribbon pair in one operation. Two ribbons = 2 ribbon splices. This is mass-fusion splicing, the standard in high-count trunk cables. (Source: T11.L05)',
+  },
+  {
+    id: 'c04-osp-056',
+    domain: 'NESC Clearances',
+    stem: 'An aerial span crosses a roadway. What vertical clearance is required per NESC Rule 232C2 (communication cable over roads)?',
+    choices: [
+      '12 feet (3.7 m)',
+      '14 feet (4.3 m)',
+      '16 feet (4.9 m)',
+      '18 feet (5.5 m)',
+    ],
+    answerIndex: 2,
+    explanation:
+      'NESC Rule 232C2 requires a 16-foot vertical clearance above roads for communication cables in areas accessible to vehicles. This accommodates truck traffic. The engineer must verify local requirements. (Source: T05.L02)',
+  },
+  {
+    id: 'c04-osp-057',
+    domain: 'Pole Loading',
+    stem: 'A 35-foot wooden pole is rated for 1,200 pounds at 2 feet from the top. The engineer must add a 150-pound load at the top. What is the load at the attachment point after the addition?',
+    choices: [
+      '150 pounds',
+      '300 pounds (150 × 2 moment arm)',
+      '1,500 pounds (150 + 1,200 + engineering overload)',
+      'Insufficient information; the attachment height is not given',
+    ],
+    answerIndex: 0,
+    explanation:
+      'The 150-pound load at the top is the direct force at the pole top. The pole rating (1,200 pounds at 2 feet) describes the pole\'s capacity. The engineer must verify that the total combined load does not exceed the pole rating. Additional moment calculations apply if the attachment is at a different height. (Source: T08.L03)',
+  },
+  {
+    id: 'c04-osp-058',
+    domain: 'Permitting',
+    stem: 'A route must cross a county road. Who must approve the crossing design before construction?',
+    choices: [
+      'The county road department',
+      'The state transportation department',
+      'The FCC',
+      'The county planning department',
+    ],
+    answerIndex: 0,
+    explanation:
+      'County roads are typically maintained by the county road department. Aerial crossings over roads require approval from the road authority to ensure clearances, grounding, and drainage are managed correctly. (Source: T09.L04)',
+  },
+  {
+    id: 'c04-osp-059',
+    domain: 'Cable Selection',
+    stem: 'A budget-conscious design specifies non-armored underground cable in a shared conduit with power lines. What is the critical risk?',
+    choices: [
+      'The cable will corrode faster than armored cable',
+      'Without armor, the cable is vulnerable to rodent damage and accidental conduit pressure damage during maintenance',
+      'Non-armored cable cannot be installed in power conduit',
+      'Armor provides grounding benefit; loss of armor increases EMI',
+    ],
+    answerIndex: 1,
+    explanation:
+      'Non-armored cable relies solely on the conduit for mechanical protection. If the conduit is shared with power lines or subject to pressure during maintenance, the unarmored jacket can fail. Armored cable adds a steel tape or rod layer for damage resistance. (Source: T03.L03)',
+  },
+  {
+    id: 'c04-osp-060',
+    domain: 'Testing',
+    stem: 'A newly installed aerial cable has been OTDR-tested at 1550 nm with a trace showing 0.50 dB/km loss. The contract specifies 0.30 dB/km maximum. What is the probable cause?',
+    choices: [
+      'The cable is defective and must be replaced',
+      'The spool was over-spun during manufacture, damaging the fiber',
+      'The OTDR may be reading macrobending loss if the cable is not properly supported or tensioned',
+      'The 1550 nm window is incorrect; the contract requires 1310 nm testing',
+    ],
+    answerIndex: 2,
+    explanation:
+      'An OTDR reading that exceeds the cable\'s specified loss often indicates macrobending (tight bends in the cable path). The cable may be coiled too tightly at reels or kinked during installation. Once the cable is properly laid out and tensioned, the OTDR loss typically improves. (Source: T12.L04)',
+  },
+  {
+    id: 'c04-osp-061',
+    domain: 'Inspection & QA',
+    stem: 'During final inspection, an aerial span is found to have excess slack, causing the cable to sag 3 feet at midspan. The design specified 1 foot maximum sag. Is this acceptable?',
+    choices: [
+      'Accept; sag variation of ±2 feet is normal and expected',
+      'Reject (KICK-BACK); the cable must be re-tensioned to meet design sag specifications',
+      'Accept with a variance; calculate overall clearance impact',
+      'Reroute the cable to a different span',
+    ],
+    answerIndex: 1,
+    explanation:
+      'Sag is a critical design parameter that affects clearance compliance and cable lifespan. Excess sag is a KICK-BACK item requiring re-tensioning or slack adjustment. RUS Form 219 requires all design specifications to be met before project close-out. (Source: T13.L03)',
+  },
+  {
+    id: 'c04-osp-062',
+    domain: 'Safety',
+    stem: 'An OSP crew is working near an energized electrical distribution line. What is the minimum approach distance per OSHA for uninsulated workers?',
+    choices: [
+      '3 feet (0.9 m)',
+      '6 feet (1.8 m)',
+      '10 feet (3 m)',
+      'It varies by voltage; no single rule applies',
+    ],
+    answerIndex: 3,
+    explanation:
+      'OSHA 1910.268 (Telecommunications) and 1910.269 (Electrical Utility) specify clearance distances based on voltage class. Distances range from 3 feet (for ≤600V) to 25+ feet (for ≥345kV). The site supervisor must verify the voltage and require appropriate clearances. (Source: T18.L04)',
+  },
+  {
+    id: 'c04-osp-063',
+    domain: 'Design Fundamentals',
+    stem: 'A network requires 1:32 PON splits at two levels (CO to node, node to home). How many subscribers are supported per upstream port?',
+    choices: [
+      '32 subscribers',
+      '64 subscribers',
+      '1,024 subscribers',
+      '2,048 subscribers',
+    ],
+    answerIndex: 2,
+    explanation:
+      'Two cascaded 1:32 splits: 32 × 32 = 1,024 subscribers per upstream port at the CO. This hierarchical topology distributes load and improves reach. (Source: T17.L03)',
+  },
+  {
+    id: 'c04-osp-064',
+    domain: 'Joint-Use Coordination',
+    stem: 'An existing cable TV cable is sagging into the telecom attachment zone due to age. Make-ready estimates are $12,000. The cable TV company refuses to pay. What is the fiber company\'s option?',
+    choices: [
+      'Pay the make-ready cost (the attaching party bears the burden)',
+      'Design around the sagging cable (reroute or lower attachment)',
+      'Petition the FCC for a subsidy',
+      'Abandon the pole and find an alternative route',
+    ],
+    answerIndex: 0,
+    explanation:
+      'Under FCC 18-111 and standard pole attachment practices, the attaching party (the one requesting new attachment) pays for make-ready. If the pole owner refuses to perform the work, the fiber company must either pay for it or design an alternative. (Source: T06.L04)',
+  },
+  {
+    id: 'c04-osp-065',
+    domain: 'Fiber Physics',
+    stem: 'A 72-fiber cable is manufactured with 6 ribbons of 12 fibers each. If the MFD of one ribbon\'s fibers drifts slightly, what is the impact on mass-fusion splicing?',
+    choices: [
+      'All 12 fibers in that ribbon will have slightly higher splice loss',
+      'The fusion splicer will automatically compensate with longer fusion time',
+      'Only fibers with the largest MFD mismatch will show measurable loss',
+      'Mass-fusion splicers do not compensate for ribbon-to-ribbon MFD variation',
+    ],
+    answerIndex: 0,
+    explanation:
+      'Modern mass-fusion splicers assume all fibers within a ribbon have consistent MFD. If one ribbon drifts, the entire ribbon will have slightly higher average loss when spliced to a ribbon with nominal MFD. (Source: T02.L08)',
+  },
+  {
+    id: 'c04-osp-066',
+    domain: 'Underground Cable Route',
+    stem: 'An underground cable is installed 18 inches deep in a rural area per RUS 1751F-635. After 5 years, a farmer plows the field 12 inches deep. What is the risk?',
+    choices: [
+      'The cable is still safe; 18 inches is deep enough buffer',
+      'The cable is now exposed to mechanical damage and must be relocated',
+      'The cable will not be damaged; fiber is hardy enough to resist plow damage',
+      'The farmer is liable for any damage',
+    ],
+    answerIndex: 1,
+    explanation:
+      'An RUS-specified 18-inch depth provides 6 inches of clearance above a 12-inch plow. The cable is now at risk and must be relocated deeper or the farmer must sign a no-dig easement agreement. The cable owner (fiber company) is responsible for relocation cost. (Source: T06.L03)',
+  },
+  {
+    id: 'c04-osp-067',
+    domain: 'Cost Estimation',
+    stem: 'A project budget is $500,000. If engineering costs are 12%, contingency is 8%, what is the remaining budget for direct cable and construction?',
+    choices: [
+      '$400,000',
+      '$440,000',
+      '$460,000',
+      '$500,000 (contingency and engineering are absorbed)',
+    ],
+    answerIndex: 0,
+    explanation:
+      'Engineering: 12% × $500,000 = $60,000. Contingency: 8% × $500,000 = $40,000. Total: $60,000 + $40,000 = $100,000. Remaining for direct work: $500,000 - $100,000 = $400,000. (Source: T17.L04)',
+  },
+  {
+    id: 'c04-osp-068',
+    domain: 'Splicing',
+    stem: 'A technician splices two G.657.B3 fibers with an MFD of 9.2 µm and 9.1 µm. What is the predicted splice loss?',
+    choices: [
+      'Negligible; the MFD match is excellent',
+      '0.05–0.10 dB; good match within a 0.1 µm variation',
+      '0.3–0.5 dB; significant mismatch',
+      'Cannot estimate without knowing the core diameters',
+    ],
+    answerIndex: 1,
+    explanation:
+      'G.657.B3 specifies MFD of 9.1–10.1 µm at 1550 nm. A 0.1 µm variation is excellent matching. Empirical data shows splice loss <0.1 dB for this range. Better than SMF where 0.5 µm variation causes ~0.05–0.10 dB loss. (Source: T02.L07)',
+  },
+  {
+    id: 'c04-osp-069',
+    domain: 'Testing',
+    stem: 'A link is tested at both 1310 nm and 1550 nm. The 1310 nm loss is 2.0 dB; the 1550 nm loss is 2.5 dB. What does this tell you about the cable?',
+    choices: [
+      'The 1550 nm result is erroneous; losses should be lower at longer wavelengths',
+      'The cable exhibits normal chromatic dispersion characteristics; loss increases slightly at 1550 nm',
+      'The fiber is bent or stressed, causing wavelength-dependent loss',
+      'A connector is corroded and needs cleaning',
+    ],
+    answerIndex: 1,
+    explanation:
+      'G.652.D and most SMF exhibit higher loss at 1550 nm (~0.20 dB/km) than at 1310 nm (~0.30 dB/km) due to Rayleigh scattering. A 0.5 dB difference over the full span is normal. Bent or corroded connectors would show a much larger differential. (Source: T02.L02)',
+  },
+  {
+    id: 'c04-osp-070',
+    domain: 'Design Fundamentals',
+    stem: 'A 50-mile feeder cable spans 250 poles with mid-span closures. What is the average span length?',
+    choices: [
+      '1,000 feet',
+      '1,056 feet',
+      '1,200 feet',
+      '1,500 feet',
+    ],
+    answerIndex: 1,
+    explanation:
+      '50 miles = 264,000 feet. With 250 pole locations and mid-span closures, the number of cable spans is approximately 249. Cable spans: 264,000 ÷ 249 ≈ 1,060 feet per span. Standard aerial spans are ~1,000–1,200 feet. (Source: T04.L02)',
+  },
 ];
 
 export default function C04L01_OSPDesignerMockExam() {
