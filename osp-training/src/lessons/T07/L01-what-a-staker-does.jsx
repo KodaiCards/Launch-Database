@@ -462,6 +462,21 @@ export default function T07L01_WhatAStakerDoes() {
         ]}
       />
 
+
+      <section className="mt-8 p-5 border-l-4 border-blue-500 bg-slate-800/40 rounded">
+        <h3 className="text-blue-300 text-lg font-semibold mb-3">Tying It Together</h3>
+        <p className="text-slate-200 mb-3">
+          The staking data you learned here doesn't stand alone — it interlocks with:
+        </p>
+        <ul className="space-y-2 text-slate-300 text-sm list-disc ml-5">
+    <li><strong>T01.L02 Pole Anatomy & Field Measurements</strong> — The span, attachment, and clearance measurements you learned there are what stakers verify in the field.</li>
+    <li><strong>T01.L02 Pole Anatomy & Field Measurements</strong> — The span, attachment, and clearance measurements you learned there are what stakers verify in the field.</li>
+    <li><strong>T01.L02 Pole Anatomy & Field Measurements</strong> — The span, attachment, and clearance measurements you learned there are what stakers verify in the field.</li>
+        </ul>
+        <p className="text-slate-200 mt-3 text-sm italic">
+          Accurate staking is the bridge between design intent and field reality — every downstream crew depends on it.
+        </p>
+      </section>
     </LessonLayout>
   );
 }
