@@ -1,0 +1,371 @@
+// T13.L04 — Underground Construction Inspection
+// ASTM D1557; CGA Best Practices §4.4; 29 CFR 1910.268(o); ASCE 38-22; IEEE 81-2012
+// H-09: clamp-on ground resistance HOW; H-13: confined space cross-ref; H-20: GPS/ASCE 38; H-23: §250.56; H-24: proctor density
+
+import React from 'react';
+import LessonLayout from '../../components/LessonLayout.jsx';
+import Quiz from '../../components/primitives/Quiz.jsx';
+import Flashcard from '../../components/Flashcard.jsx';
+import WorkedExample from '../../components/primitives/WorkedExample.jsx';
+import BranchingScenario from '../../components/primitives/BranchingScenario.jsx';
+
+export const meta = {
+  id: 'T13.L04',
+  course_id: 'T13',
+  title: 'Underground Construction Inspection',
+  order: 6,
+  lesson_type: 'technical',
+  prerequisites: ['T13.L03', 'T18.L03'],
+  learning_objectives: [
+    'Apply the five-step clamp-on ground resistance measurement procedure per IEEE 81-2012',
+    'Execute the pedestal access sequential inspection checklist in the correct order',
+    'State three confined-space prerequisites from T18.L03 that must be confirmed before any vault descent',
+    'Verify GPS accuracy against ASCE 38-22 Quality Levels for as-built record acceptance',
+    'Identify the correct NEC section (§250.56, not §250.53) for the 25Ω ground resistance threshold',
+  ],
+  estimated_minutes: 38,
+  vocabulary_introduced: [
+    'clamp-on ground resistance measurement procedure',
+    'ASTM D1557 Modified Proctor',
+  ],
+  key_terms: [
+    {
+      term: 'clamp-on ground resistance measurement procedure',
+      definition:
+        'The step-by-step IEEE 81-2012 §7 method for measuring a grounding electrode\'s resistance using a clamp-on earth resistance tester. The clamp encircles the grounding conductor (not the conductor and pipe together). Method: (1) Confirm a closed current path exists (clamp method requires a loop through the earth). (2) Clamp around the grounding conductor lead, not around the bonding conductor. (3) Verify EM interference is low (trigger the interference check mode on the meter). (4) Read the resistance — must be ≤25Ω per NEC §250.56 for a single driven rod. (5) Record: meter model, serial number, calibration date, measurement reading, GPS location. Note: for bond strap resistance measurements ≤0.1Ω, the clamp-on DMM approach is inadequate — a 4-wire Kelvin (DLRO) measurement is required because the DMM\'s test-lead resistance exceeds the measurement target.',
+    },
+    {
+      term: 'ASTM D1557 Modified Proctor',
+      definition:
+        'The ASTM standard test method for determining the maximum dry density and optimum moisture content of soil (Modified Proctor Compaction Test). Establishes the 100% compaction baseline for a specific soil. Trench backfill compaction acceptance is specified as a percentage of Proctor density (e.g., "95% Modified Proctor in roadway"). This term was introduced in T10.L08. In T13, we verify that compaction TESTING was performed and that field measurements meet the project-specified percentage — we do not re-derive the Proctor baseline.',
+    },
+  ],
+  vocabulary_assumed: [
+    { term: 'inspector (OSP)', source_lesson_id: 'T01.L06' },
+    { term: 'inspection segment', source_lesson_id: 'T13.L01' },
+    { term: 'acceptance criteria document', source_lesson_id: 'T13.L02' },
+    { term: 'RUS Form 565 (Inspector\'s Daily Report)', source_lesson_id: 'T13.L11' },
+    { term: 'confined space, atmospheric testing, attendant', source_lesson_id: 'T18.L03' },
+    { term: 'proctor density', source_lesson_id: 'T10.L08' },
+    { term: 'depth probe', source_lesson_id: 'T10.L04' },
+    { term: 'cover card', source_lesson_id: 'T10.L04' },
+    { term: 'Call-811, locate ticket', source_lesson_id: 'T10.L01' },
+    { term: 'ground resistance threshold (25Ω, NEC §250.56)', source_lesson_id: 'T14.L06' },
+    { term: 'MUTCD traffic control', source_lesson_id: 'T10.L03' },
+    { term: 'PPE (general)', source_lesson_id: 'T18.L01' },
+  ],
+};
+
+export const vocabulary_introduced = meta.vocabulary_introduced;
+export const key_terms = meta.key_terms;
+
+export default function T13L04UndergroundInspection() {
+  const groundResistanceWorked = {
+    title: 'Clamp-On Ground Resistance Measurement — IEEE 81-2012 Procedure',
+    description:
+      'You need to verify that a new 5/8-inch × 8-foot driven ground rod at a terminal pedestal meets the NEC §250.56 acceptance threshold of 25Ω.',
+    variables: [
+      { symbol: 'R_threshold', name: 'NEC §250.56 maximum resistance', value: '25', unit: 'Ω' },
+      { symbol: 'R_measured', name: 'Clamp-on meter reading', value: 'to be measured', unit: 'Ω' },
+    ],
+    steps: [
+      {
+        label: 'Step 1: Verify closed current loop',
+        content: 'The clamp-on method requires a closed current loop through the earth. Confirm: the grounding conductor from the rod runs up to the equipment enclosure AND back to a neutral or a second earth reference. Without a loop, the clamp method gives an error reading. If no loop exists, use the fall-of-potential (3-pin) method instead.',
+      },
+      {
+        label: 'Step 2: Check for EM interference',
+        content: 'Before clamping, put the meter in interference-check mode (most modern clamp ground meters have this). High stray current from nearby power conductors, broadcast towers, or cathodic protection rectifiers will cause false readings. If interference exceeds the meter\'s tolerance, note it and consider testing at a different time of day.',
+      },
+      {
+        label: 'Step 3: Position the clamp',
+        content: 'Clamp ONLY around the bare grounding conductor lead between the terminal lug and the driven rod. Do NOT include the bonding conductor in the clamp jaw — that would measure a parallel combination of the rod plus the bonding network, which underestimates the rod\'s individual resistance. The clamp encircles one conductor only.',
+      },
+      {
+        label: 'Step 4: Read and record',
+        content: 'Read the display. Example: meter reads 18.4Ω. NEC §250.56 threshold = 25Ω. 18.4 < 25 → PASS. Record on Form 565: "Ground rod at pedestal X — clamp-on measurement 18.4Ω (Fluke 1630-2, S/N XXXXXXXX, cal current 12/2025). Pass (≤25Ω per NEC §250.56)."',
+      },
+      {
+        label: 'Step 5: Borderline results',
+        content: 'If the reading is within 5% of 25Ω (i.e., between 23.75Ω and 26.25Ω), take a second measurement using the fall-of-potential 3-pin method as confirmation. Document both readings. Do not accept a 24Ω clamp-on reading as a pass without a fall-of-potential verification — measurement uncertainty near the threshold requires a second method.',
+      },
+    ],
+    sanityCheck: 'A reading of 18.4Ω means the driven rod provides a path to earth with resistance that would limit a 120V fault current to 120/18.4 = 6.5 amperes — enough to trip a standard 15A breaker under the right conditions. The 25Ω NEC §250.56 limit ensures enough fault current flows to operate protective devices.',
+  };
+
+  const vaultEntryScenario = {
+    id: 'vault-entry',
+    title: 'Vault Descent for Splice Inspection',
+    description:
+      'The contractor\'s crew needs to descend into a below-grade fiber splice vault to splice the final section of cable. You are the inspector. The vault has a cast-iron lid that has been sealed for approximately 18 months since the previous splice session.',
+    startNode: 'start',
+    nodes: {
+      start: {
+        text: 'The crew foreman says the atmospheric testing equipment was left at the shop — "we\'ll just crack the lid and let it air out for 5 minutes, then go in." What do you do?',
+        choices: [
+          { label: 'Allow it — the 5-minute air-out is standard practice', nextNode: 'wrong_airout' },
+          { label: 'Stop work. No vault entry without atmospheric testing, attendant, and rescue equipment per T18.L03 and 29 CFR 1910.268(o).', nextNode: 'correct_stop' },
+          { label: 'Lower just the splicer in for 30 seconds to "test the air" by feel', nextNode: 'wrong_human' },
+        ],
+      },
+      wrong_airout: {
+        text: '❌ "Let it air out for 5 minutes" is not an atmospheric test. A sealed vault can contain fatal concentrations of methane (from organic decomposition), carbon monoxide, hydrogen sulfide, or oxygen-deficient atmosphere — none of which have adequate odor warning. Methane is odorless at low concentrations. H₂S paralyzes olfactory nerves so it appears odorless at dangerous levels. "5 minutes of air-out" does not substitute for instrument testing. Multiple workers have died from exactly this scenario.',
+        choices: [{ label: 'Try again', nextNode: 'start' }],
+      },
+      correct_stop: {
+        text: '✅ Stop work. Per 29 CFR 1910.268(o) (telecommunications work) and T18.L03 confined space protocol: before any worker enters a below-grade vault, enclosure, or confined space, the following must be confirmed: (1) Atmospheric testing performed (O₂, CO, H₂S, LEL/combustible gas) by a competent person with a calibrated multi-gas detector. (2) Results within safe limits: O₂ 19.5–23.5%, CO <35 ppm (OSHA PEL), H₂S <10 ppm (OSHA ceiling), LEL <10% of LEL. (3) Trained attendant stationed OUTSIDE the vault, in continuous communication. (4) Rescue equipment on-site (retrieval tripod and harness, or equivalent). Document on Form 565: "Vault entry suspended 0930 — atmospheric testing equipment not on site. Contractor directed to obtain equipment before proceeding." The crew must return with the equipment before any entry.',
+        choices: [{ label: 'Continue', nextNode: 'lesson' }],
+      },
+      wrong_human: {
+        text: '❌ Using a human as the "canary" to test air quality is potentially a fatal decision. H₂S at 100 ppm (the NIOSH IDLH) can cause rapid incapacitation and death within minutes — long before the victim can signal distress. This is exactly why modern atmospheric testing replaced the canary practice. Never lower a human into an untested space.',
+        choices: [{ label: 'Try again', nextNode: 'start' }],
+      },
+      lesson: {
+        text: 'The inspector\'s role in confined-space situations is not to conduct the atmospheric test (that\'s the contractor\'s responsibility) — it is to confirm the test was done and document it on Form 565 before any entry begins. If the test wasn\'t done, work stops. Period.',
+        choices: [],
+      },
+    },
+  };
+
+  const quizQuestions = [
+    {
+      id: 'q1',
+      question: 'NEC §250.56 specifies:',
+      type: 'multiple-choice',
+      options: [
+        'The installation method and burial depth for grounding electrodes',
+        'The 25Ω maximum resistance for a single driven ground rod',
+        'The bonding requirements for metallic conduit',
+        'The equipment grounding conductor sizing table',
+      ],
+      correct: 1,
+      explanation:
+        'NEC §250.56 specifies the ground resistance threshold: a single ground rod must have a resistance of 25Ω or less to earth. If the single rod exceeds 25Ω, a second rod must be installed. NEC §250.53 covers installation method and burial depth — a different section entirely. Always cite §250.56 for the resistance threshold, not §250.53.',
+    },
+    {
+      id: 'q2',
+      question: 'Before directing any depth probing at an underground inspection visit, the inspector must confirm:',
+      type: 'multiple-choice',
+      options: [
+        'The compaction test results are available',
+        'An active CGA Best Practices §4.4 locate ticket is in effect for that location',
+        'The contractor has signed Form 565 for the day',
+        'The surface is dry enough for the probe to penetrate',
+      ],
+      correct: 1,
+      explanation:
+        'Per CGA Best Practices §4.4, before any ground probing, excavation, or potholing, an active 811 locate ticket must be in effect. The inspector must confirm the locate ticket is valid (not expired — typically 10 business days in most states) before directing or allowing any probing. This prevents accidental contact with existing underground utilities during inspection activities.',
+    },
+    {
+      id: 'q3',
+      question: 'For bond strap resistance measurements that must be ≤0.1Ω, the correct measurement method is:',
+      type: 'multiple-choice',
+      options: [
+        'Clamp-on earth resistance meter — same as ground rod measurement',
+        'Standard DMM (digital multimeter) on the 200Ω range',
+        '4-wire Kelvin (DLRO) measurement, because standard DMM lead resistance exceeds the measurement target',
+        'Fall-of-potential 3-pin method per IEEE 81',
+      ],
+      correct: 2,
+      explanation:
+        'At 0.1Ω, the measurement target is smaller than the resistance of standard DMM test leads (typically 0.1–0.5Ω per lead pair). A standard DMM will read its own lead resistance plus the bond strap, giving a false high reading. The 4-wire Kelvin method (DLRO — Digital Low Resistance Ohmmeter) eliminates lead resistance by using separate current-injection and voltage-sense leads. This is the only reliable method for bond resistance measurements below approximately 1Ω.',
+    },
+    {
+      id: 'q4',
+      question: 'ASCE 38-22 Quality Level QL-A means:',
+      type: 'multiple-choice',
+      options: [
+        'Location from utility records only — no physical verification',
+        'Location from surface geophysical methods',
+        'Location and depth verified by potholing (excavation to expose the facility) — the highest accuracy level',
+        'Location inferred from design drawings',
+      ],
+      correct: 2,
+      explanation:
+        'ASCE 38-22 defines Quality Levels for subsurface utility information: QL-D = utility records only (lowest confidence), QL-C = surface methods (magnetic, GPR), QL-B = surface geophysical with utility confirmation, QL-A = potholing/exposure (highest confidence — physical verification of location, depth, and size). For as-built records accepted by the inspector, the GPS accuracy must match the QL specified in the project documents. QL-A verified data is required for road crossings where future excavation is most likely.',
+    },
+    {
+      id: 'q5',
+      question: 'The pedestal access sequential inspection checklist begins with:',
+      type: 'multiple-choice',
+      options: [
+        'Terminal connections — verify all fibers terminated',
+        'Exterior visual inspection — door hardware, weatherseal condition, physical damage',
+        'Ground connection verification',
+        'Interior clearance check',
+      ],
+      correct: 1,
+      explanation:
+        'The pedestal access inspection follows an outside-in sequence: (1) exterior visual — door hardware, weatherseal condition, physical damage; (2) door hardware — opens freely, hinges not corroded, lock functional; (3) interior clearance — adequate space for access; (4) rodent seal — entry points sealed; (5) terminal connections — fibers properly routed and terminated; (6) grounding wire — bonded correctly. Starting with the exterior ensures you identify any damage to the enclosure before opening it.',
+    },
+  ];
+
+  return (
+    <LessonLayout meta={meta}>
+
+      {/* ── FOUNDATIONS ────────────────────────────────────────────────── */}
+      <section data-tier="foundations">
+        <h2>In Plain English</h2>
+        <p>
+          Underground inspection is slower than aerial inspection — you can't see most of what
+          you're evaluating because it's buried. That's what makes it critical to inspect at
+          the right time: before the trench is backfilled, before the vault lid is sealed, before
+          the as-built is signed. Once it's buried, your only option is rework.
+        </p>
+        <p>
+          This lesson covers three main activities: measuring burial depth and compaction,
+          verifying grounding (with the specific steps to do it correctly), and inspecting
+          below-grade vaults — which requires confirming confined space safety procedures
+          before anyone goes in.
+        </p>
+      </section>
+
+      {/* ── Flashcards ─────────────────────────────────────────────────── */}
+      <section data-tier="foundations">
+        <h2>Key Terms</h2>
+        <div style={{ display: 'flex', flexWrap: 'wrap', gap: '1rem' }}>
+          {meta.key_terms.map((kt) => (
+            <Flashcard key={kt.term} term={kt.term} definition={kt.definition} />
+          ))}
+        </div>
+      </section>
+
+      {/* ── WORKING ────────────────────────────────────────────────────── */}
+      <section data-tier="working">
+        <h2>Confined Space: Before Any Vault Descent</h2>
+        <p>
+          A below-grade fiber splice vault or handhole is a confined space under 29 CFR
+          1910.268(o) (telecommunications) and potentially a permit-required confined space
+          under 1910.146. Before any worker or inspector descends:
+        </p>
+        <ul>
+          <li>
+            <strong>Atmospheric testing</strong> (covered in T18.L03): O₂, CO, H₂S, LEL
+            measured by a competent person with a calibrated multi-gas meter. Results within
+            safe ranges before anyone enters.
+          </li>
+          <li>
+            <strong>Attendant:</strong> A trained person stationed outside the vault in
+            continuous communication, with authority to initiate rescue. The attendant does
+            NOT enter — they stay outside to summon help.
+          </li>
+          <li>
+            <strong>Rescue equipment:</strong> Tripod and harness or equivalent retrieval
+            system on-site. If you can't get someone OUT, you can't put someone IN.
+          </li>
+        </ul>
+        <p>
+          <strong>The inspector's specific role:</strong> confirm all three prerequisites are
+          met BEFORE entry. Document on Form 565: meter model, calibration date, gas readings,
+          attendant name, rescue equipment staged. If any prerequisite is missing — no entry.
+          The inspector does not conduct the atmospheric test (contractor's responsibility), but
+          must confirm it happened.
+        </p>
+      </section>
+
+      {/* ── Vault Entry Scenario ──────────────────────────────────────── */}
+      <section data-tier="working">
+        <h2>Scenario: Vault Entry Decision</h2>
+        <BranchingScenario scenario={vaultEntryScenario} />
+      </section>
+
+      {/* ── Ground Resistance Worked Example ────────────────────────── */}
+      <section data-tier="working">
+        <h2>Ground Resistance Measurement: IEEE 81-2012 Procedure</h2>
+        <WorkedExample example={groundResistanceWorked} />
+      </section>
+
+      {/* ── ADVANCED ───────────────────────────────────────────────────── */}
+      <section data-tier="advanced">
+        <h2>Underground Depth/Cover and As-Built GPS Accuracy</h2>
+        <p>
+          Depth probing and as-built GPS coordinates are two different inspection tasks that
+          are often treated as one. They are not.
+        </p>
+        <p>
+          <strong>Depth probing</strong> verifies the cable or conduit meets the minimum burial
+          depth at the time of inspection. Method: insert a thin probe at 90° to the cable run
+          at 100-foot intervals (or closer where depth is marginal). Record depth to top of
+          conduit/cable, location (GPS or station reference), and compare to project specification.
+          Remember: probing requires an active 811 locate ticket (CGA Best Practices §4.4) — you
+          are probing into the ground where other utilities may exist.
+        </p>
+        <p>
+          <strong>As-built GPS accuracy</strong> is a separate requirement per ASCE 38-22. The
+          as-built records that go into the borrower's GIS system (and ultimately feed the 811
+          locate database) must accurately represent where the cable actually is. The inspector's
+          role at close-out: verify the GPS collection equipment met the accuracy specification.
+        </p>
+        <table style={{ width: '100%', borderCollapse: 'collapse', margin: '1rem 0' }}>
+          <thead>
+            <tr style={{ background: '#f8f9fa' }}>
+              <th style={{ border: '1px solid #dee2e6', padding: '8px', textAlign: 'left' }}>ASCE 38-22 Quality Level</th>
+              <th style={{ border: '1px solid #dee2e6', padding: '8px', textAlign: 'left' }}>What It Means</th>
+              <th style={{ border: '1px solid #dee2e6', padding: '8px', textAlign: 'left' }}>OSP Application</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td style={{ border: '1px solid #dee2e6', padding: '8px' }}>QL-D</td>
+              <td style={{ border: '1px solid #dee2e6', padding: '8px' }}>Utility records only — no field verification</td>
+              <td style={{ border: '1px solid #dee2e6', padding: '8px' }}>NOT acceptable for new construction as-builts</td>
+            </tr>
+            <tr>
+              <td style={{ border: '1px solid #dee2e6', padding: '8px' }}>QL-C</td>
+              <td style={{ border: '1px solid #dee2e6', padding: '8px' }}>Surface geophysical methods (GPR, magnetic)</td>
+              <td style={{ border: '1px solid #dee2e6', padding: '8px' }}>Acceptable for existing locate records</td>
+            </tr>
+            <tr>
+              <td style={{ border: '1px solid #dee2e6', padding: '8px' }}>QL-B</td>
+              <td style={{ border: '1px solid #dee2e6', padding: '8px' }}>Geophysical methods with utility confirmation</td>
+              <td style={{ border: '1px solid #dee2e6', padding: '8px' }}>Standard for new construction as-builts in open field</td>
+            </tr>
+            <tr>
+              <td style={{ border: '1px solid #dee2e6', padding: '8px' }}>QL-A</td>
+              <td style={{ border: '1px solid #dee2e6', padding: '8px' }}>Physical exposure — potholed and measured</td>
+              <td style={{ border: '1px solid #dee2e6', padding: '8px' }}>Required for road crossings and congested utility corridors</td>
+            </tr>
+          </tbody>
+        </table>
+        <p>
+          Before accepting the contractor's as-built GPS records at close-out, confirm:
+          (1) the GPS equipment specification meets the project QL requirement, (2) the
+          equipment was calibrated, and (3) the accuracy log (or HDOP/PDOP values) demonstrates
+          the required accuracy was achieved during data collection. Document GPS equipment
+          model, firmware version, and accuracy verification on Form 565.
+        </p>
+
+        <h3>Compaction Verification</h3>
+        <p>
+          Compaction requirements for trench backfill (proctor density — T10.L08) are
+          typically specified as a percentage of Modified Proctor maximum dry density (ASTM
+          D1557). Common requirements: 95% Modified Proctor in roadways, 90% in open field.
+        </p>
+        <p>
+          The inspector verifies: (1) a nuclear densometer or sand-cone compaction test was
+          performed at the required frequency (typically every 500 linear feet of trench, per
+          project spec), (2) test results meet the specified percentage, (3) test results and
+          locations are documented. The inspector does NOT perform the nuclear densometer
+          test (that requires a state license in most jurisdictions), but must confirm the
+          licensed technician performed tests at the required frequency.
+        </p>
+        <p>
+          <strong>Road crossing deviation:</strong> If depth is found below the permit-required
+          minimum at a road crossing, Option C (accept with an engineer note) is NOT appropriate.
+          Below-permit depth at a road crossing is a permit violation — the permit is a legal
+          document with the road authority. The only acceptable path is a Design Site Change (DSC)
+          with written approval from the engineer AND written acceptance from the road authority.
+          Document the deviation on Form 565, issue a punch-list entry, stop boring until the
+          deviation is formally processed.
+        </p>
+      </section>
+
+      {/* ── QUIZ ───────────────────────────────────────────────────────── */}
+      <section data-tier="assessment">
+        <h2>Lesson Quiz</h2>
+        <Quiz questions={quizQuestions} />
+      </section>
+
+    </LessonLayout>
+  );
+}
