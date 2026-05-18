@@ -1,5 +1,5 @@
 // T13.L02 — Pre-Construction Acceptance Baseline
-// Standards: RUS Form 515 §3(a) [confirm edition]; 7 CFR §1753.8; FHWA CPMI; AIA A201-2017
+// Standards: RUS Form 515 §3(a) [confirm edition]; 7 CFR §1753.8; FHWA CPMI; AIA A201 [confirm edition]
 // H-14: pre-construction conference checklist; H-15: inspection cadence models
 
 import React from 'react';

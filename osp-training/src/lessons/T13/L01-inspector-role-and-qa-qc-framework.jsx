@@ -1,7 +1,7 @@
 // T13.L01 — Inspector Role, Authority, and Documentation Framework
 // Teaching position: 1 of 12 — introduces QA/QC distinction, inspector-arrival workflow,
 // waiver-by-conduct doctrine, inspection segment definition, Form 565 as daily record
-// Standards: 7 CFR §1753.19, §1753.21; RUS Form 219; OSHA 29 CFR 1910.268
+// Standards: 7 CFR §1753.19, §1753.21; RUS Form 219; OSHA 29 CFR 1910.268; AIA A201 [confirm edition]
 
 import React from 'react';
 import LessonLayout from '../../components/LessonLayout.jsx';
@@ -433,6 +433,17 @@ export default function T13L01InspectorRole() {
           defaults, the owner has less financial leverage to hire a new contractor to complete
           the work. The risk of too-high retainage: the contractor may slow-walk the job if
           the retained amount grows large relative to remaining work.
+        </p>
+        <p>
+          <strong>Field Reality — Leverage Asymmetry:</strong> In practice, rural cooperative borrowers
+          operate at lower financial capacity than large contractors. A contractor can weather 6–9 months
+          of retainage; a cooperative may not. This creates a real asymmetry: the contractor has stronger
+          cash-flow resilience to delay completion; the borrower has weaker financial position to hold firm
+          on retainage thresholds. Understanding this dynamic shapes the inspector's role. Retainage is only
+          effective leverage if the owner has the financial resolve to withhold it against pressure. If the
+          cooperative is cash-constrained and the contractor knows it, low retainage becomes a risk-transfer
+          toward the owner. This is why precise daily documentation (Form 565) and clear punch-list discipline
+          matter — they are your only countermeasure when financial leverage is asymmetrical.
         </p>
         <p>
           <strong>Inspector's personal field notebook is discoverable evidence.</strong> Under

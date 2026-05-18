@@ -1,5 +1,5 @@
 // T13.L09 — Contractor Relations and Dispute Resolution
-// 7 CFR §1753.47(d); AIA A201-2017 §15; H-06: waiver; M-20: DSC; M-21: retainage; M-22: re-inspection cost
+// 7 CFR §1753.47(d); AIA A201 [confirm edition] §15; H-06: waiver; M-20: DSC; M-21: retainage; M-22: re-inspection cost
 
 import React from 'react';
 import LessonLayout from '../../components/LessonLayout.jsx';
@@ -57,7 +57,7 @@ export const meta = {
     { term: 'RUS Form 565 (Inspector\'s Daily Report)', source_lesson_id: 'T13.L11' },
     { term: 'construction advance chain', source_lesson_id: 'T13.L11' },
     { term: 'Form 219 certification scope', source_lesson_id: 'T13.L07' },
-    { term: 'NEPA', source_lesson_id: 'T09' },
+    { term: 'NEPA', source_lesson_id: 'T09.L02' },
   ],
 };
 
