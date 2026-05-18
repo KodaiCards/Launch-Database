@@ -22,6 +22,7 @@ export const meta = {
   ],
   estimated_minutes: 25,
   vocabulary_introduced: [
+    'DFR (Daily Field Report)',
     'SOR file',
     'loss report',
     'test report components',

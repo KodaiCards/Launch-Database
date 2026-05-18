@@ -24,6 +24,7 @@ export const meta = {
   ],
   estimated_minutes: 25,
   vocabulary_introduced: [
+    'splice case types',
     'butt-splice (inline/horizontal) closure',
     'wall-mount/pedestal closure',
     'heat-shrink vs. cold-seal entry port',
@@ -32,6 +33,11 @@ export const meta = {
     'case capacity (tray count)',
   ],
   key_terms: [
+    {
+      term: 'splice case types',
+      definition:
+        'The main categories of splice protective enclosures: dome/ovoid closure (direct-buried, soil-pressure self-sealing), butt-splice/inline closure (aerial lashing), wall-mount/pedestal closure (building entry or vault-mounted), and rack-mount closure (inside data center or equipment room). Selection is driven by environment (aerial vs. buried vs. indoor), re-entry requirements, fiber count, and cable entry configuration.',
+    },
     {
       term: 'dome closure',
       definition:
