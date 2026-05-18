@@ -1,4 +1,5 @@
 import React from 'react';
+import LessonLayout from '../../components/LessonLayout.jsx';
 import Quiz from '../../components/primitives/Quiz.jsx';
 import Flashcard from '../../components/Flashcard.jsx';
 import BranchingScenario from '../../components/primitives/BranchingScenario.jsx';
@@ -385,7 +386,7 @@ const CAPSTONE_QUIZ = [
 
 export default function L10T15CapstonQuiz() {
   return (
-    <div className="lesson-container">
+    <LessonLayout meta={meta}>
       <h1>T15 Capstone — Restoration &amp; Outage Response</h1>
 
       <section className="lesson-section foundations">
@@ -425,6 +426,6 @@ export default function L10T15CapstonQuiz() {
       </section>
 
       {/* ── NOTE: no flashcards for capstone — all terms introduced in L01-L09 ── */}
-    </div>
+    </LessonLayout>
   );
 }

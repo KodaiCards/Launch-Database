@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import LessonLayout from '../../components/LessonLayout.jsx';
 import Quiz from '../../components/primitives/Quiz.jsx';
 import Flashcard from '../../components/Flashcard.jsx';
 import BranchingScenario from '../../components/primitives/BranchingScenario.jsx';
@@ -244,7 +245,7 @@ export default function L04TemporaryVsPermanentRepair() {
   const [scenarioDone, setScenarioDone] = useState(false);
 
   return (
-    <div className="lesson-container">
+    <LessonLayout meta={meta}>
       <h1>T15.L04 — Temporary vs. Permanent Repair</h1>
 
       {/* ── FOUNDATIONS ─────────────────────────────────────────────────── */}
@@ -508,6 +509,6 @@ export default function L04TemporaryVsPermanentRepair() {
         <h2>Lesson Quiz</h2>
         <Quiz questions={QUIZ_QUESTIONS} lessonId={meta.id} />
       </section>
-    </div>
+    </LessonLayout>
   );
 }
