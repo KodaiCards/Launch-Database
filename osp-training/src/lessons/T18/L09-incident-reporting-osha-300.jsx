@@ -14,6 +14,14 @@ export const meta = {
   order: 9,
   lesson_type: 'foundation',
   prerequisites: ['T18.L01'],
+  learning_objectives: [
+    'Define OSHA recordability under 29 CFR 1904.7 and distinguish recordable incidents from first-aid-only events',
+    'Explain the purpose of OSHA Form 300 and the annual summary Form 300A posting requirements',
+    'Describe the near-miss reporting philosophy and its value as a leading safety indicator',
+    'Identify the DART rate formula and explain what it measures for employer benchmarking',
+    'List the criteria that make an incident a "severe incident" requiring OSHA notification within 24 hours',
+  ],
+  estimated_minutes: 22,
   vocabulary_introduced: [
     'OSHA 300 log',
     'recordable incident',

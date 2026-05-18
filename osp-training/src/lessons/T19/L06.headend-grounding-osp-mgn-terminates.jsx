@@ -15,6 +15,14 @@ export const meta = {
   order: 6,
   lesson_type: 'working',
   prerequisites: ['T19.L05'],
+  learning_objectives: [
+    'Explain where the OSP multi-grounded neutral (MGN) terminates when entering a headend building and what happens to it at the IBT-entry',
+    'Describe the purpose of a primary protector at the building cable entry and what voltages it is designed to clamp',
+    'Define TMGB and TGB in TIA-607 and explain how the telecommunications bonding backbone (TBB) connects them',
+    'Explain the GES tie-in requirement from NEC Art. 250.94 (IBT) and its role in the OSP-to-ISP grounding handoff',
+    'Describe the field-awareness checks an OSP engineer should perform at a headend entry when commissioning a new feeder route',
+  ],
+  estimated_minutes: 24,
   key_terms: [
     {
       term: 'primary protector',

@@ -16,6 +16,14 @@ export const meta = {
   order: 9,
   lesson_type: 'working',
   prerequisites: ['T19.L08'],
+  learning_objectives: [
+    'Describe the internal structure of an FDH (Fiber Distribution Hub) beyond its external enclosure: modular bays, splitter cassettes, and connector fields',
+    'Explain the role of the demarc point inside an FDH and how it separates the OSP distribution side from the drop side',
+    'Describe what a splitter cassette contains and how its port count and split ratio affect subscriber capacity per FDH',
+    'Explain the relationship between the connector field on the FDH distribution side and the feeder fiber coming from the headend or CO',
+    'Identify what information an OSP engineer needs to record about FDH internals for accurate as-built documentation',
+  ],
+  estimated_minutes: 22,
   vocabulary_introduced: [
     'FDH',
     'modular bay',

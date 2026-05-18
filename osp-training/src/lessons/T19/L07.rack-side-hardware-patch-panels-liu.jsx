@@ -15,6 +15,14 @@ export const meta = {
   order: 7,
   lesson_type: 'working',
   prerequisites: ['T19.L06'],
+  learning_objectives: [
+    'Distinguish between a patch panel and a LIU (Light Interface Unit) and explain the role of each in a rack-side fiber termination environment',
+    'Explain the difference between an interconnect architecture and a cross-connect architecture in a telecom rack context',
+    'Describe what an ODF (Optical Distribution Frame) rack is and why OSP feeder fibers terminate there before reaching active OLT equipment',
+    'Identify the function of a splice organizer tray in a LIU and explain its role when OSP cables enter the headend with ribbon or loose-tube fiber',
+    'Explain how fiber count planning for OSP feeder routes is affected by the rack-space and LIU-port capacity at the headend',
+  ],
+  estimated_minutes: 22,
   vocabulary_introduced: [
     'patch panel',
     'LIU',

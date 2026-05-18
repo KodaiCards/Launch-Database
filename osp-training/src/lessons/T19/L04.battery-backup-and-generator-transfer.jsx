@@ -15,6 +15,14 @@ export const meta = {
   order: 4,
   lesson_type: 'working',
   prerequisites: ['T19.L03'],
+  learning_objectives: [
+    'Describe the purpose of an ATS (Automatic Transfer Switch) and the sequence of events during a utility power failure',
+    'Explain what generator runtime means in a headend context and how it is calculated from fuel capacity and load',
+    'Define transfer time and explain why it matters for continuous telecommunications equipment operation during a power event',
+    'Describe load testing as a maintenance procedure and explain what it verifies that routine monitoring cannot',
+    'Explain what fuel polishing is and why it matters for generator reliability in remote headend locations',
+  ],
+  estimated_minutes: 20,
   vocabulary_introduced: [
     'ATS',
     'generator',

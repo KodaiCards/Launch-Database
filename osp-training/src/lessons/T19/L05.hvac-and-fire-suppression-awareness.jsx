@@ -15,6 +15,14 @@ export const meta = {
   order: 5,
   lesson_type: 'foundation',
   prerequisites: ['T19.L04'],
+  learning_objectives: [
+    'Explain what CRAC (Computer Room Air Conditioning) units do and why telecom equipment rooms use dedicated precision cooling rather than general HVAC',
+    'Define sensible heat and explain how equipment heat loads are calculated for headend HVAC sizing',
+    'Describe clean-agent suppression systems and explain why they are preferred over water-based sprinklers in equipment rooms',
+    'Explain the purpose of pre-action sprinkler systems and the conditions that activate them',
+    'Identify the ASHRAE thermal envelope recommended for telecommunications equipment rooms and why OSP feeder additions affect headend heat load',
+  ],
+  estimated_minutes: 18,
   vocabulary_introduced: [
     'CRAC',
     'sensible heat',

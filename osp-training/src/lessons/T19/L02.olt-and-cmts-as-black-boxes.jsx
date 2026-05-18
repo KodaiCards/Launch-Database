@@ -15,6 +15,14 @@ export const meta = {
   order: 2,
   lesson_type: 'foundation',
   prerequisites: ['T19.L01'],
+  learning_objectives: [
+    'Explain the function of an OLT (Optical Line Terminal) at the headend as the GPON/XGS-PON line-card host',
+    'Describe the function of a CMTS in a hybrid fiber-coax network and contrast it with an OLT in a fiber-only network',
+    'Define upstream and downstream in the context of PON architecture and the OLT-to-ONT signal path',
+    'Explain what DOCSIS is at a conceptual level and why an OSP designer may encounter CMTS environments',
+    'Identify the optical port count and service-area implications of a single OLT card for OSP feeder design',
+  ],
+  estimated_minutes: 20,
   vocabulary_introduced: [
     'OLT',
     'CMTS',

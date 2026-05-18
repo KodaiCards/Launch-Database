@@ -14,6 +14,14 @@ export const meta = {
   order: 1,
   lesson_type: 'foundation',
   prerequisites: ['T01.L01', 'T05.L01', 'T06.L01', 'T18.L01'],
+  learning_objectives: [
+    'Distinguish between a CO, an OLT hut, and a headend in terms of size, function, and deployment context',
+    'Explain the role of the MDF (or ODF) as the OSP-to-ISP handoff point in a fiber building',
+    'Describe the typical floor-plan zones in a telecom building: equipment bay, battery room, MDF room, and HVAC space',
+    'Identify the OSP termination point in a headend and explain what happens to feeder fiber at that boundary',
+    'Explain why OSP engineers need to understand headend layout when designing feeder plant',
+  ],
+  estimated_minutes: 24,
   vocabulary_introduced: [
     'CO',
     'hut',

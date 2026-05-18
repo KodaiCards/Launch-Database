@@ -15,6 +15,14 @@ export const meta = {
   order: 8,
   lesson_type: 'working',
   prerequisites: ['T19.L07'],
+  learning_objectives: [
+    'Describe the function of a FOSC (Fiber Optic Splice Closure) when used inside a headend rack environment versus its outdoor use in OSP',
+    'Explain the difference between a rack-mount FOSC and a dome-style outdoor closure and why headend environments require different mechanical protection',
+    'Define express fiber and split fiber and explain how they relate to the mid-span access fiber design that routes through a headend',
+    'Describe what a gel-free splice enclosure is and why gel-free designs are preferred in headend environments',
+    'Explain the organizer tray function in a rack-mount FOSC and its relationship to bend-radius compliance inside equipment racks',
+  ],
+  estimated_minutes: 20,
   vocabulary_introduced: [
     'FOSC',
     'rack-mount FOSC',

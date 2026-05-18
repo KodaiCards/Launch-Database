@@ -15,6 +15,14 @@ export const meta = {
   order: 3,
   lesson_type: 'working',
   prerequisites: ['T19.L02'],
+  learning_objectives: [
+    'Explain why telecom equipment uses –48VDC rather than 120/240VAC and the safety advantages of that choice',
+    'Describe the role of rectifiers in converting AC utility power to regulated –48VDC for equipment bays',
+    'Define battery string, float voltage, and distribution bus in a telecom power plant context',
+    'Explain why OSP designers must account for power plant capacity when designing feeder route additions to a headend',
+    'Identify VRLA vs. lithium battery technologies and the basic maintenance implications of each',
+  ],
+  estimated_minutes: 22,
   vocabulary_introduced: [
     '–48VDC',
     'rectifier',
