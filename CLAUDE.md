@@ -8,6 +8,40 @@
 
 ## TL;DR (read this first; rest is depth)
 
+## 🚨 SESSION END 2026-05-18 — REMEDIATION BACKLOG (resume here)
+
+**Status:** OSP rewrite is structurally complete + production-deployed BUT 20-agent verification swarm (reports V1-V20 under `audit-output/osp-retroactive-audit/`) surfaced material gaps. Carter capped on usage; PAUSED before side-channel audits per his "stop before side Channel" directive.
+
+**Remediation queue (highest priority first — pick up next session):**
+
+1. **CRITICAL — V12: T06-T10 Flashcards 8-25% coverage; ~470+ Flashcard components missing.** Lessons define `key_terms` but never render `<Flashcard>` components inline. Violates directive 18 mandatory flashcard requirement. Fix-wave: bulk-add Flashcard renders matching each lesson's `key_terms` export. Cost estimate: ~5 Haiku agents (1 per topic T06/T07/T08/T09/T10), ~150K each.
+
+2. **HIGH — V19: 28 lessons FAIL schema (`learning_objectives` missing).** 224/252 PASS. Specific gaps flagged in V14 (6 T18 + 1 T19) + V15 (T20.L10) + V9 (T19.L11) — others scattered. Fix-wave: one bulk Haiku agent + schema validator, ~100K.
+
+3. **HIGH — V1: T01 RUS Forms Landscape table missing.** L09 only mentions Form 219; directive requires 8-form table (307/740/740c/219/565/524/1744/1755-A) + Flashcards. ~200 lines + 5 Flashcards.
+
+4. **MED — V17: "Tying It Together" mostly pro-forma.** Only 1/15 sampled lessons substantive. Polish wave to retrofit Advanced-tier sections with explicit cross-topic synthesis framing.
+
+5. **MED — V13/V18/V20: callback density 21.5% T11-T15 + T02 refresher placement 4/12 + T02 pedagogy 50% callback coverage.** Bulk spaced-rep gap-fill. SpacedRep H (T11-T15) + I (T16-T19) were partial — finish what they started.
+
+6. **MED — V9: T19.L11 missing learning_objectives + 5 of 9 key_terms lack Flashcard renders.** ~5-min polish.
+
+7. **LOW — V2: T09.L02 multi-circumstance agency sequencing missing.** Polish addition.
+
+8. **LOW — V14: 8 unverified vocabulary pointers in dag-registry.** 4 are true curriculum gaps (DFR, fiber count, splice loss dB, splice case types). Author or move source pointers.
+
+9. **LOW — V3: T17.L07 WorkedExample string-vs-number type contract mismatch.** Cosmetic — won't break runtime.
+
+**After remediation:** rebuild + production cut v2 → blind learner re-run (strict no-research) → CLAUDE.md status update → THEN side-channel audits.
+
+**Failed/cap-out:** V11 (T01-05 callbacks) + V16 (cross-topic DAG) returned cap-out before producing real reports — re-dispatch next session as Haiku, 60K each.
+
+**Sessionwide token note:** Carter explicitly flagged 17% over-burn before session start. This session burned heavily through swarm dispatching + multiple full audits. Carter capped. Resume after 7:10pm UTC reset.
+
+---
+
+
+
 **Carter Trantham** — Launch Fiber Services, Macon GA. Solo founder. Engineering services firm; primary client PSC on RUS engineering contracts. Quality bar: **million-dollar grade, <1% error**. Friends-not-boss register, explicit language welcome, push back when warranted. He ASKS, never orders.
 
 **The project:** internal multi-portal operations platform (Express + vanilla JS + Postgres). Active build = **OSP Training Rewrite** — replace Moodle with a Vite SPA served at `/training/` behind `requireAuth()`. 22 topics (T01..T22), ~245 lessons total. Branch isolation since 2026-05-18 — agents work on `agent/<task-id>` branches; orchestrator merges to main.
