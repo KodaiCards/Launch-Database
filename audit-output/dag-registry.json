@@ -1,6 +1,6 @@
 {
-  "generated_at": "2026-05-18T08:46:29.614Z",
-  "lesson_count": 221,
+  "generated_at": "2026-05-18T14:41:34.137Z",
+  "lesson_count": 230,
   "vocabulary_introduced_by_lesson": {
     "T01.L01": [
       "OSP",
@@ -1391,7 +1391,6 @@
     "T16.L09": [
       "topology canvas (fiber)",
       "in-service fiber",
-      "dark fiber",
       "test fiber (spare)",
       "POP (Point of Presence)",
       "FDH (Fiber Distribution Hub)"
@@ -1409,7 +1408,6 @@
       "lashed aerial cable",
       "ADSS (All-Dielectric Self-Supporting)",
       "bore cost",
-      "pavement restoration",
       "force account labor"
     ],
     "T17.L03": [
@@ -1622,7 +1620,22 @@
       "demarc",
       "drop fiber"
     ],
-    "T19.L10": []
+    "T19.L10": [],
+    "T20.L01": [
+      "RUS Borrower",
+      "RUS Loan Program",
+      "RUS Loan Drawdown",
+      "Cost-per-Mile Allowance",
+      "RUS Covenant"
+    ],
+    "T20.L02": [],
+    "T20.L03": [],
+    "T20.L04": [],
+    "T20.L05": [],
+    "T20.L06": [],
+    "T20.L07": [],
+    "T20.L08": [],
+    "T20.L09": []
   },
   "all_vocabulary_introduced": {
     "osp": [
@@ -2297,8 +2310,7 @@
       "T03.L08"
     ],
     "dark fiber": [
-      "T03.L08",
-      "T16.L09"
+      "T03.L08"
     ],
     "growth margin": [
       "T03.L08"
@@ -2802,8 +2814,7 @@
       "T06.L01"
     ],
     "pavement restoration": [
-      "T06.L01",
-      "T17.L02"
+      "T06.L01"
     ],
     "decision matrix": [
       "T06.L01"
@@ -5104,6 +5115,21 @@
     ],
     "demarc": [
       "T19.L09"
+    ],
+    "rus borrower": [
+      "T20.L01"
+    ],
+    "rus loan program": [
+      "T20.L01"
+    ],
+    "rus loan drawdown": [
+      "T20.L01"
+    ],
+    "cost-per-mile allowance": [
+      "T20.L01"
+    ],
+    "rus covenant": [
+      "T20.L01"
     ]
   },
   "duplicate_introductions": [
@@ -5335,13 +5361,6 @@
       ]
     },
     {
-      "term": "dark fiber",
-      "introduced_by": [
-        "T03.L08",
-        "T16.L09"
-      ]
-    },
-    {
       "term": "make-ready flag",
       "introduced_by": [
         "T04.L04",
@@ -5402,13 +5421,6 @@
       "introduced_by": [
         "T05.L12",
         "T19.L09"
-      ]
-    },
-    {
-      "term": "pavement restoration",
-      "introduced_by": [
-        "T06.L01",
-        "T17.L02"
       ]
     },
     {
@@ -14027,6 +14039,26 @@
       "verified": true
     },
     {
+      "from_lesson": "T13.L12",
+      "term": "NEPA",
+      "claimed_source": "T09.L02",
+      "verified": true
+    },
+    {
+      "from_lesson": "T13.L12",
+      "term": "ESA §7 consultation",
+      "claimed_source": "T09.L04",
+      "verified": false,
+      "reason": "'ESA §7 consultation' is not introduced by any lesson in the curriculum"
+    },
+    {
+      "from_lesson": "T13.L12",
+      "term": "Section 106 (NHPA)",
+      "claimed_source": "T09.L03",
+      "verified": false,
+      "reason": "'Section 106 (NHPA)' is not introduced by any lesson in the curriculum"
+    },
+    {
       "from_lesson": "T14.L01",
       "term": "OSP",
       "claimed_source": "T01.L01",
@@ -15821,6 +15853,18 @@
       "verified": true
     },
     {
+      "from_lesson": "T16.L09",
+      "term": "dark fiber",
+      "claimed_source": "T03.L08",
+      "verified": true
+    },
+    {
+      "from_lesson": "T17.L02",
+      "term": "pavement restoration",
+      "claimed_source": "T06.L01",
+      "verified": true
+    },
+    {
       "from_lesson": "T18.L01",
       "term": "OSP",
       "claimed_source": "T01.L01",
@@ -16984,40 +17028,105 @@
       "term": "drop fiber",
       "claimed_source": "T19.L09",
       "verified": true
-    }
-  ],
-  "verified_pointers_count": 1708,
-  "broken_pointers_count": 179,
-  "missing_source_lesson_pointers": [
+    },
     {
-      "from_lesson": "T13.L12",
+      "from_lesson": "T20.L01",
+      "term": "OSP",
+      "claimed_source": "T01.L01",
+      "verified": true
+    },
+    {
+      "from_lesson": "T20.L01",
+      "term": "fiber",
+      "claimed_source": "T01.L02",
+      "verified": false,
+      "reason": "'fiber' is introduced by T01.L03, not T01.L02"
+    },
+    {
+      "from_lesson": "T20.L01",
+      "term": "feeder",
+      "claimed_source": "T01.L07",
+      "verified": true
+    },
+    {
+      "from_lesson": "T20.L01",
+      "term": "FTTH",
+      "claimed_source": "T01.L01",
+      "verified": false,
+      "reason": "'FTTH' is introduced by T01.L08, not T01.L01"
+    },
+    {
+      "from_lesson": "T20.L02",
+      "term": "NESC",
+      "claimed_source": "T05.L01",
+      "verified": true
+    },
+    {
+      "from_lesson": "T20.L02",
+      "term": "grounding",
+      "claimed_source": "T14.L01",
+      "verified": true
+    },
+    {
+      "from_lesson": "T20.L03",
+      "term": "construction",
+      "claimed_source": "T10.L01",
+      "verified": false,
+      "reason": "'construction' is introduced by T01.L05, not T10.L01"
+    },
+    {
+      "from_lesson": "T20.L04",
+      "term": "cost",
+      "claimed_source": "T04.L01",
+      "verified": false,
+      "reason": "'cost' is not introduced by any lesson in the curriculum"
+    },
+    {
+      "from_lesson": "T20.L06",
       "term": "NEPA",
-      "claimed_source": "T09",
-      "reason": "Source lesson T09 not found in curriculum"
+      "claimed_source": "T09.L01",
+      "verified": false,
+      "reason": "'NEPA' is introduced by T01.L08, T09.L02, not T09.L01"
     },
     {
-      "from_lesson": "T13.L12",
-      "term": "ESA §7 consultation",
-      "claimed_source": "T09",
-      "reason": "Source lesson T09 not found in curriculum"
+      "from_lesson": "T20.L06",
+      "term": "permitting",
+      "claimed_source": "T09.L01",
+      "verified": false,
+      "reason": "'permitting' is not introduced by any lesson in the curriculum"
     },
     {
-      "from_lesson": "T13.L12",
-      "term": "Section 106 (NHPA)",
-      "claimed_source": "T09",
-      "reason": "Source lesson T09 not found in curriculum"
+      "from_lesson": "T20.L07",
+      "term": "NESC",
+      "claimed_source": "T05.L01",
+      "verified": true
+    },
+    {
+      "from_lesson": "T20.L07",
+      "term": "TIA-607",
+      "claimed_source": "T14.L01",
+      "verified": false,
+      "reason": "'TIA-607' is not introduced by any lesson in the curriculum"
+    },
+    {
+      "from_lesson": "T20.L09",
+      "term": "contractor",
+      "claimed_source": "T10.L01",
+      "verified": false,
+      "reason": "'contractor' is not introduced by any lesson in the curriculum"
     }
   ],
+  "verified_pointers_count": 1716,
+  "broken_pointers_count": 186,
+  "missing_source_lesson_pointers": [],
   "lessons_with_no_vocabulary_assumed": [
     "T01.L01",
     "T13.L10",
     "T16.L06",
     "T16.L07",
     "T16.L08",
-    "T16.L09",
     "T16.L10",
     "T17.L01",
-    "T17.L02",
     "T17.L03",
     "T17.L04",
     "T17.L05",
@@ -17025,7 +17134,9 @@
     "T17.L07",
     "T17.L08",
     "T17.L09",
-    "T17.L10"
+    "T17.L10",
+    "T20.L05",
+    "T20.L08"
   ],
   "vocabulary_assumed_without_source_id": []
 }
