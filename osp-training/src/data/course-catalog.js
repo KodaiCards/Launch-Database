@@ -262,6 +262,42 @@ export const courses = [
     description:
       'Cost data realities, aerial-vs-underground ratios, productivity modeling, contract types (lump-sum/T&M/GMP), change orders, contingency, CPHP/CPHC/FTTH KPIs, RFP/RFQ/BOM basics.',
   },
+  // ── Teaching position 20 ─────────────────────────────────────────────────
+  {
+    id: 'T20',
+    title: 'RUS Compliance & Federal Programs',
+    section: 'general',
+    available: true,
+    estimated_minutes: 215,   // 9 lessons × ~24 min avg
+    lesson_count: 9,
+    prerequisites: ['T01', 'T05', 'T06', 'T19'],
+    description:
+      'RUS borrower programs (1737, 1738, 1740E), engineering standards, form 290 design certification, USOA accounting, federal permitting integration, RUS project lifecycle vs. commercial projects.',
+  },
+  // ── Teaching position 21 ─────────────────────────────────────────────────
+  {
+    id: 'T21',
+    title: 'FOA CFOS/O Cert Prep',
+    section: 'general',
+    available: true,
+    estimated_minutes: 250,   // 10 lessons × ~25 min avg
+    lesson_count: 10,
+    prerequisites: ['T01', 'T02', 'T11', 'T12', 'T18'],
+    description:
+      'FOA Certified Fiber Optic Specialist—Outside Plant exam preparation. Comprehensive review of all OSP fundamentals + field practices. Requires 2 years field experience (advisory only) + CFOT cert.',
+  },
+  // ── Teaching position 22 ─────────────────────────────────────────────────
+  {
+    id: 'T22',
+    title: 'FOA CFOT Cert Prep',
+    section: 'general',
+    available: true,
+    estimated_minutes: 215,   // 9 lessons × ~24 min avg
+    lesson_count: 9,
+    prerequisites: ['T01', 'T02', 'T11', 'T12', 'T18'],
+    description:
+      'FOA Certified Fiber Optic Technician exam preparation. Intensive review of fiber physics, splicing, testing standards, and hands-on field scenarios. 60 MC / 25 matching / 15 true-false format.',
+  },
   // ── Cert-prep topics C01–C03 — MIGRATED TO FUTURE ISP COURSE ────────────
   // Per Carter 2026-05-16: C01/C02/C03 are NOT authored in OSP-RW.
   // They will be authored when the ISP course is scoped and initiated.
@@ -308,14 +344,26 @@ export const courses = [
   // C04-RCDD certTrack REMOVED per Carter 2026-05-16. Retained: OSP Designer + CFOT + CFOS/O.
   {
     id: 'C04',
-    title: 'Practice Exam Bank',
+    title: 'BICSI OSP Designer Mock Exam',
     section: 'cert',
-    available: false,
-    estimated_minutes: 300,   // 12 lessons × ~25 min avg
-    lesson_count: 12,
-    prerequisites: [],         // access controlled per certTracks[].required_topics, not course-level prereqs
+    available: true,
+    estimated_minutes: 300,   // 1 lesson × 100-question exam, ~120 min
+    lesson_count: 1,
+    prerequisites: ['T01','T02','T03','T04','T05','T06','T07','T08','T09','T10','T11','T12','T13','T14','T15','T16','T17','T18','T19'],
     description:
-      'Exam strategy, per-domain content reviews (OSP Designer, CFOT, CFOS/O), timed practice rounds, scoring analysis, and final mock exams. RCDD mock exam removed — moved to future ISP course. Full lesson set authored in OSP-RW.5.',
+      '100-question mock exam aligned to BICSI OSP Designer certification blueprint. Covers 9 job-task competencies across design, construction, testing, and project management. Timed, randomized, with per-domain scoring.',
+  },
+  // ── Final exam ─────────────────────────────────────────────────────────────
+  {
+    id: 'C05',
+    title: 'OSP Course Final Exam',
+    section: 'general',
+    available: true,
+    estimated_minutes: 90,    // 60-question timed exam
+    lesson_count: 1,
+    prerequisites: ['T01','T02','T03','T04','T05','T06','T07','T08','T09','T10','T11','T12','T13','T14','T15','T16','T17','T18','T19','T20'],
+    description:
+      '60-question comprehensive final exam covering all general OSP topics T01–T20. Passing threshold: 80%. Fixed-answer assessment to confirm mastery before certification prep tracks.',
   },
 ];
 
