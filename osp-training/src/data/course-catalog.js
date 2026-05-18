@@ -220,8 +220,8 @@ export const courses = [
     title: 'Inspection & Quality Assurance',
     section: 'general',
     available: false,
-    estimated_minutes: 250,   // 10 lessons × ~25 min avg
-    lesson_count: 10,
+    estimated_minutes: 360,   // 12 lessons × ~30 min avg
+    lesson_count: 12,
     prerequisites: ['T01', 'T05', 'T10', 'T12', 'T18'],
     description:
       'Walking constructed plant: visual vs. instrument inspection, pole-top inspection, attachment compliance, depth/cover verification, slack at pedestals, punch-list vs. kick-back triggers, RUS Form 219 close-out workflow.',
