@@ -28,6 +28,12 @@ export const meta = {
     { term: 'microbend', source_lesson_id: 'T02.L04' },
     { term: 'link budget', source_lesson_id: 'T02.L06' },
     { term: 'optical headroom', source_lesson_id: 'T02.L06' },
+  ],
+  learning_objectives: [
+    'Explain why textbook fiber specs (nominal values) differ from field-measured values',
+    'Apply field-specific rules: add 0.5–1.5 dB margin above theoretical loss to account for aging and temperature stress',
+    'Distinguish spec-sheet maximums (guaranteed worst-case) from typical field experience',
+    'Develop realistic link budgets by using conservative field numbers rather than best-case textbook numbers',
     { term: 'safety margin', source_lesson_id: 'T02.L06' },
     { term: 'G.657', source_lesson_id: 'T02.L04' },
     { term: 'SMF', source_lesson_id: 'T01.L08' },

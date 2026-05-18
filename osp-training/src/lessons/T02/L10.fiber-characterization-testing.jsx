@@ -33,6 +33,12 @@ export const meta = {
     { term: 'SMF', source_lesson_id: 'T01.L08' },
   ],
   estimated_minutes: 20,
+  learning_objectives: [
+    'Use an OLTS (optical light source + power meter) to measure attenuation on a link',
+    'Interpret OTDR traces: distance-to-event, loss signatures for splices/macrobends/breaks',
+    'Apply RUS measurement procedures (multiple wavelengths, directional measurements) to validate fiber health',
+    'Recommend remediation (re-fusion, re-termination, cable replacement) when measurements violate acceptance criteria',
+  ],
 };
 
 export default function T02L10_FiberCharacterizationTesting() {

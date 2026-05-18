@@ -18,6 +18,12 @@ export const meta = {
     'T02.L09', 'T02.L10', 'T02.L11',
   ],
   vocabulary_introduced: [],
+  learning_objectives: [
+    'Synthesize fiber-physics knowledge to build a complete link budget from optical source to receiver',
+    'Select appropriate fiber type (SMF grade, wavelength, span) given a distance and bit-rate requirement',
+    'Verify that splice/connector/macrobend losses plus attenuation leave positive link margin',
+    'Apply the full toolkit (dB math, PMD specs, MFD matching, field-adjustment rules) to justify design recommendations',
+  ],
   vocabulary_assumed: [
     { term: 'total internal reflection', source_lesson_id: 'T02.L01' },
     { term: 'core', source_lesson_id: 'T02.L01' },
