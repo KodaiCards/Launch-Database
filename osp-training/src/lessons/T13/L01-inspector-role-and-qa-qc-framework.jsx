@@ -282,6 +282,10 @@ export default function T13L01InspectorRole() {
           that is a QA failure.
         </p>
 
+        <p className="text-slate-400 text-sm mb-3 mt-6 p-3 border-l-4 border-slate-500">
+          <strong>Callback:</strong> Recall from <strong>T12.L13 Acceptance Testing — What Passes</strong> — acceptance testing is the final QC step. The field inspector's job is QC during construction; the tester's job is QC at the end. Both are part of the same QA program that catches defects before the network goes live.
+        </p>
+
         <h3>What the Inspector Can and Cannot Do</h3>
         <p>
           This is where new inspectors get in trouble. The inspector has significant authority, but
