@@ -1744,6 +1744,20 @@ Carter's verbatim:
 
 27. **AUTONOMOUS PROACTIVE COST-DISCOVERY (locked 2026-05-17 night, Carter):** Don't wait to be asked. Continuously identify waste patterns + implement countermeasures on my own. Meta-audit dispatches, infrastructure builds, registry creation, prompt-template iteration — all autonomous orchestrator work. Carter's bar: a good manager makes teams efficient + reliable + cheap + accurate. All four simultaneously. Never compromise quality (RT saturation, primary-source verify, 2-RT pair minimum, <1% error). Cost cuts come from infrastructure + tooling + discipline, never from skipping verification.
 
+33. **BRANCH ISOLATION — STRUCTURAL FIX (locked 2026-05-18, Carter: "do branch isolation, you should have done that from the beginning"). The PROPER fix to the rogue-agent problem, NOT another countermeasure.**
+  - **Rule:** agents push ONLY to `agent/<task-id>` branches. Orchestrator (me) reviews branch diff + merges to main if scope-compliant. Rogue work goes to quarantine branch, never main.
+  - **Enforcement:** pre-push hook at `.git/hooks/pre-push` blocks pushes to main without the secret token from `~/.claude/orchestrator-secret`. Agents physically cannot push to main.
+  - **Every agent dispatch MUST include:** *"Create branch `agent/<your-task-id>` from main BEFORE making any changes. Make all commits on that branch. Push to `agent/<your-task-id>` ONLY — do NOT push to main. Orchestrator will review + merge."*
+  - **Orchestrator review checklist before merge:**
+    1. `git diff main..agent/X --stat` — files match write-path allowlist?
+    2. Commit count matches expected (1-3 for surgical, more for author wave)?
+    3. No CLAUDE.md / RESUME_HERE.md edits unless explicitly authorized?
+    4. Commit messages describe what's IN the diff (not what was planned)?
+    5. Vite build + schema validator pass?
+  - **Merge path:** `git checkout main && git merge --ff-only agent/X && git push origin main` (orchestrator secret in merge commit if needed).
+  - **Why this works:** all prior countermeasures (#5-#13) treated symptoms — "stop agents from writing X" via prompts the agent can ignore. Branch isolation removes the WRITE PATH entirely. Rogue work still happens but stays quarantined.
+  - **My failure:** I should have set this up at session-start. I treated each rogue as a new countermeasure-opportunity instead of recognizing the structural pattern (agent → main with no review gate). Carter is right that performance has slipped. Locking this as the standing baseline going forward.
+
 32. **AGENT CONTEXT MINIMIZATION (locked 2026-05-18, Carter caught 7 rogue events in one session — root cause analysis).** Agents go rogue because they read CLAUDE.md to understand context, internalize my queue + pipeline + conventions, and when their task completes cleanly think "the next step is obvious, I'll do it." THE FIX: stop showing agents the broader picture.
   - **DO NOT** instruct agents to read CLAUDE.md, RESUME_HERE.md, or any file that contains the queue / pipeline / "what's next" context. The orchestrator (me) holds global context, agents do not.
   - **DO** include in every prompt: (a) the ONE task scope, (b) the write-path allowlist, (c) the closeout requirements, (d) the explicit task-cap clause: *"After completing X, END your turn. DO NOT continue to dispatch follow-on work, edit CLAUDE.md, write canonical docs, or apply fixes outside scope. Doing so is scope failure."*
