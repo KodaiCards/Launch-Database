@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-05-18T15:19:59.989Z",
+  "generated_at": "2026-05-18T15:41:09.309Z",
   "lesson_count": 249,
   "vocabulary_introduced_by_lesson": {
     "T01.L01": [
@@ -1715,8 +1715,6 @@
       "Single-mode fiber (SMF)",
       "Multimode fiber (MMF)",
       "Core diameter",
-      "Cladding",
-      "Modal dispersion",
       "Attenuation (dB/km)",
       "G.652.D (standard single-mode)",
       "OM3, OM4, OM5 (multimode grades)",
@@ -1724,19 +1722,15 @@
     ],
     "T22.L03": [
       "fusion splicer",
-      "cleave",
       "stripper",
-      "splice loss",
       "ARC time",
       "oven mode",
       "real-time monitor",
       "heat-shrink sleeve",
-      "splice protector sleeve",
-      "mechanical splice"
+      "splice protector sleeve"
     ],
     "T22.L04": [
       "OTDR (Optical Time-Domain Reflectometer)",
-      "launch cable",
       "dead zone",
       "backscatter coefficient",
       "acceptance test",
@@ -1757,11 +1751,9 @@
       "polishing pad"
     ],
     "T22.L06": [
-      "PPE (Personal Protective Equipment)",
       "OSHA 1910.147 (Lockout-Tagout)",
       "OSHA 1910.1200 (GHS)",
       "confined space",
-      "grounding",
       "fall protection",
       "incident report",
       "competent person"
@@ -2160,8 +2152,7 @@
       "T02.L01"
     ],
     "cladding": [
-      "T02.L01",
-      "T22.L02"
+      "T02.L01"
     ],
     "na": [
       "T02.L01"
@@ -2210,8 +2201,7 @@
       "T02.L03"
     ],
     "modal dispersion": [
-      "T02.L03",
-      "T22.L02"
+      "T02.L03"
     ],
     "pmd": [
       "T02.L03",
@@ -3897,8 +3887,7 @@
       "T11.L04"
     ],
     "cleave": [
-      "T11.L04",
-      "T22.L03"
+      "T11.L04"
     ],
     "align": [
       "T11.L04"
@@ -3962,8 +3951,7 @@
       "T11.L07"
     ],
     "mechanical splice": [
-      "T11.L08",
-      "T22.L03"
+      "T11.L08"
     ],
     "index-matching gel": [
       "T11.L08"
@@ -4119,8 +4107,7 @@
       "T12.L04"
     ],
     "launch cable": [
-      "T12.L04",
-      "T22.L04"
+      "T12.L04"
     ],
     "receive cable": [
       "T12.L04"
@@ -4372,8 +4359,7 @@
       "T13.L12"
     ],
     "grounding": [
-      "T14.L01",
-      "T22.L06"
+      "T14.L01"
     ],
     "bonding": [
       "T14.L01"
@@ -5407,8 +5393,7 @@
       "T21.L07"
     ],
     "ppe (personal protective equipment)": [
-      "T21.L07",
-      "T22.L06"
+      "T21.L07"
     ],
     "tool inspection and maintenance": [
       "T21.L07"
@@ -5480,9 +5465,6 @@
       "T22.L03"
     ],
     "stripper": [
-      "T22.L03"
-    ],
-    "splice loss": [
       "T22.L03"
     ],
     "arc time": [
@@ -5808,24 +5790,10 @@
       ]
     },
     {
-      "term": "cladding",
-      "introduced_by": [
-        "T02.L01",
-        "T22.L02"
-      ]
-    },
-    {
       "term": "cd",
       "introduced_by": [
         "T02.L03",
         "T12.L12"
-      ]
-    },
-    {
-      "term": "modal dispersion",
-      "introduced_by": [
-        "T02.L03",
-        "T22.L02"
       ]
     },
     {
@@ -5991,38 +5959,10 @@
       ]
     },
     {
-      "term": "cleave",
-      "introduced_by": [
-        "T11.L04",
-        "T22.L03"
-      ]
-    },
-    {
       "term": "arc calibration",
       "introduced_by": [
         "T11.L06",
         "T15.L05"
-      ]
-    },
-    {
-      "term": "mechanical splice",
-      "introduced_by": [
-        "T11.L08",
-        "T22.L03"
-      ]
-    },
-    {
-      "term": "launch cable",
-      "introduced_by": [
-        "T12.L04",
-        "T22.L04"
-      ]
-    },
-    {
-      "term": "grounding",
-      "introduced_by": [
-        "T14.L01",
-        "T22.L06"
       ]
     },
     {
@@ -6058,13 +5998,6 @@
       "introduced_by": [
         "T21.L01",
         "T22.L01"
-      ]
-    },
-    {
-      "term": "ppe (personal protective equipment)",
-      "introduced_by": [
-        "T21.L07",
-        "T22.L06"
       ]
     }
   ],
@@ -15615,7 +15548,7 @@
       "term": "mechanical splice",
       "claimed_source": "T11.L02",
       "verified": false,
-      "reason": "'mechanical splice' is introduced by T11.L08, T22.L03, not T11.L02"
+      "reason": "'mechanical splice' is introduced by T11.L08, not T11.L02"
     },
     {
       "from_lesson": "T15.L04",
@@ -17590,9 +17523,8 @@
     {
       "from_lesson": "T20.L01",
       "term": "fiber",
-      "claimed_source": "T01.L02",
-      "verified": false,
-      "reason": "'fiber' is introduced by T01.L03, not T01.L02"
+      "claimed_source": "T01.L03",
+      "verified": true
     },
     {
       "from_lesson": "T20.L01",
@@ -17603,9 +17535,9 @@
     {
       "from_lesson": "T20.L01",
       "term": "FTTH",
-      "claimed_source": "T01.L01",
+      "claimed_source": "T07.L01",
       "verified": false,
-      "reason": "'FTTH' is introduced by T01.L08, not T01.L01"
+      "reason": "'FTTH' is introduced by T01.L08, not T07.L01"
     },
     {
       "from_lesson": "T20.L02",
@@ -17670,7 +17602,7 @@
     {
       "from_lesson": "T21.L01",
       "term": "fiber optics",
-      "claimed_source": "T01.L02",
+      "claimed_source": "T02.L01",
       "verified": false,
       "reason": "'fiber optics' is not introduced by any lesson in the curriculum"
     },
@@ -17690,14 +17622,14 @@
     {
       "from_lesson": "T21.L01",
       "term": "splice",
-      "claimed_source": "T11.L01",
+      "claimed_source": "T11.L02",
       "verified": false,
       "reason": "'splice' is not introduced by any lesson in the curriculum"
     },
     {
       "from_lesson": "T21.L02",
       "term": "fiber optic",
-      "claimed_source": "T01.L02",
+      "claimed_source": "T02.L01",
       "verified": false,
       "reason": "'fiber optic' is not introduced by any lesson in the curriculum"
     },
@@ -17732,7 +17664,7 @@
     {
       "from_lesson": "T21.L02",
       "term": "numerical aperture",
-      "claimed_source": "T01.L03",
+      "claimed_source": "T02.L02",
       "verified": false,
       "reason": "'numerical aperture' is not introduced by any lesson in the curriculum"
     },
@@ -17766,28 +17698,26 @@
     {
       "from_lesson": "T21.L03",
       "term": "splice case",
-      "claimed_source": "T01.L03",
-      "verified": false,
-      "reason": "'splice case' is introduced by T01.L04, not T01.L03"
+      "claimed_source": "T01.L04",
+      "verified": true
     },
     {
       "from_lesson": "T21.L04",
       "term": "buffer tube",
-      "claimed_source": "T03.L01",
-      "verified": false,
-      "reason": "'buffer tube' is introduced by T01.L03, not T03.L01"
+      "claimed_source": "T01.L03",
+      "verified": true
     },
     {
       "from_lesson": "T21.L04",
       "term": "fiber stripping",
-      "claimed_source": "T01.L05",
+      "claimed_source": "T04.L01",
       "verified": false,
       "reason": "'fiber stripping' is not introduced by any lesson in the curriculum"
     },
     {
       "from_lesson": "T21.L04",
       "term": "splice",
-      "claimed_source": "T11.L01",
+      "claimed_source": "T11.L02",
       "verified": false,
       "reason": "'splice' is not introduced by any lesson in the curriculum"
     },
@@ -17931,14 +17861,14 @@
     {
       "from_lesson": "T22.L01",
       "term": "fiber optics",
-      "claimed_source": "T01.L01",
+      "claimed_source": "T02.L01",
       "verified": false,
       "reason": "'fiber optics' is not introduced by any lesson in the curriculum"
     },
     {
       "from_lesson": "T22.L01",
       "term": "splice",
-      "claimed_source": "T11.L01",
+      "claimed_source": "T11.L02",
       "verified": false,
       "reason": "'splice' is not introduced by any lesson in the curriculum"
     },
@@ -17958,28 +17888,28 @@
     {
       "from_lesson": "T22.L02",
       "term": "fiber optic",
-      "claimed_source": "T01.L01",
+      "claimed_source": "T02.L01",
       "verified": false,
       "reason": "'fiber optic' is not introduced by any lesson in the curriculum"
     },
     {
       "from_lesson": "T22.L02",
       "term": "wavelength",
-      "claimed_source": "T01.L02",
+      "claimed_source": "T02.L02",
       "verified": false,
       "reason": "'wavelength' is not introduced by any lesson in the curriculum"
     },
     {
       "from_lesson": "T22.L02",
       "term": "dB (decibel)",
-      "claimed_source": "T01.L03",
+      "claimed_source": "T02.L03",
       "verified": false,
       "reason": "'dB (decibel)' is not introduced by any lesson in the curriculum"
     },
     {
       "from_lesson": "T22.L02",
       "term": "refraction",
-      "claimed_source": "T01.L02",
+      "claimed_source": "T02.L02",
       "verified": false,
       "reason": "'refraction' is not introduced by any lesson in the curriculum"
     },
@@ -18012,16 +17942,16 @@
     {
       "from_lesson": "T22.L03",
       "term": "fusion splice",
-      "claimed_source": "T01.L04",
+      "claimed_source": "T11.L02",
       "verified": false,
-      "reason": "'fusion splice' is introduced by T11.L04, not T01.L04"
+      "reason": "'fusion splice' is introduced by T11.L04, not T11.L02"
     },
     {
       "from_lesson": "T22.L03",
       "term": "splice loss",
       "claimed_source": "T11.L01",
       "verified": false,
-      "reason": "'splice loss' is introduced by T22.L03, not T11.L01"
+      "reason": "'splice loss' is not introduced by any lesson in the curriculum"
     },
     {
       "from_lesson": "T22.L03",
@@ -18039,7 +17969,7 @@
     {
       "from_lesson": "T22.L04",
       "term": "loss",
-      "claimed_source": "T11.L01",
+      "claimed_source": "T11.L02",
       "verified": false,
       "reason": "'loss' is not introduced by any lesson in the curriculum"
     },
@@ -18053,7 +17983,7 @@
     {
       "from_lesson": "T22.L04",
       "term": "splice",
-      "claimed_source": "T11.L01",
+      "claimed_source": "T11.L02",
       "verified": false,
       "reason": "'splice' is not introduced by any lesson in the curriculum"
     },
@@ -18146,8 +18076,8 @@
       "reason": "'CFOT' is introduced by T01.L08, not T22.L01"
     }
   ],
-  "verified_pointers_count": 1728,
-  "broken_pointers_count": 244,
+  "verified_pointers_count": 1731,
+  "broken_pointers_count": 241,
   "missing_source_lesson_pointers": [],
   "lessons_with_no_vocabulary_assumed": [
     "T01.L01",
