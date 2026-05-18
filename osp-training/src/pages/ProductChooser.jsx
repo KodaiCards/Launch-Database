@@ -1,0 +1,72 @@
+/**
+ * ProductChooser — Top-level product selection (v3).
+ *
+ * Three tiles: OSP Course (main product), ISP Course (coming soon), Cert Tracks (optional).
+ */
+
+import React from 'react';
+import { Link } from 'react-router-dom';
+
+function ProductTile({ icon, title, description, cta, to, disabled }) {
+  const Wrapper = disabled ? 'div' : Link;
+  const wrapperProps = disabled
+    ? { className: 'block panel opacity-50 cursor-not-allowed select-none', role: 'article', 'aria-disabled': 'true' }
+    : { to, className: 'block panel hover:ring-1 hover:ring-amber-400/40 transition group' };
+
+  return (
+    <Wrapper {...wrapperProps}>
+      <div className="flex items-start gap-4">
+        <div className="text-3xl shrink-0">{icon}</div>
+        <div className="flex-1">
+          <h3 className="text-lg font-semibold">{title}</h3>
+          <p className="text-sm text-slate-400 mt-1 line-clamp-2">{description}</p>
+          {!disabled && (
+            <button className="mt-3 text-sm font-semibold text-amber-300 group-hover:text-amber-200 transition">
+              {cta} →
+            </button>
+          )}
+          {disabled && (
+            <div className="mt-2 text-xs font-semibold text-slate-500">Coming in 2026 Q3</div>
+          )}
+        </div>
+      </div>
+    </Wrapper>
+  );
+}
+
+export default function ProductChooser() {
+  return (
+    <div className="space-y-8">
+      <div>
+        <h1 className="text-3xl font-bold mb-2">OSP Training</h1>
+        <p className="text-slate-400">Choose your learning path</p>
+      </div>
+
+      <div className="grid gap-4">
+        <ProductTile
+          icon="📚"
+          title="OSP Course"
+          description="Build comprehensive Outside Plant engineering knowledge from fundamentals through construction, testing, and final certification."
+          cta="Start Learning"
+          to="/training/osp"
+        />
+
+        <ProductTile
+          icon="🏢"
+          title="Inside Plant (ISP) Course"
+          description="Deep Inside Plant training with CO/headend architecture, structured cabling, data center standards, and RCDD certification prep."
+          cta="Learn More"
+          disabled
+        />
+
+        <ProductTile
+          icon="🎓"
+          title="Certification Tracks"
+          description="Accelerated specialized courses: BICSI OSP Designer, FOA CFOS-O, BICSI RCDD. For those pursuing formal credentials."
+          cta="Browse Exams"
+          to="/training/cert"
+        />
+      </div>
+    </div>
+  );
+}
