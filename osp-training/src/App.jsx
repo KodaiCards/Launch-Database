@@ -20,6 +20,7 @@ import {
 } from 'react-router-dom';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 
+import ErrorBoundary from './components/ErrorBoundary.jsx';
 import Splash      from './pages/Splash.jsx';
 import CourseView  from './pages/CourseView.jsx';
 import LessonRouter from './pages/LessonRouter.jsx';
@@ -107,10 +108,12 @@ function AppLayout() {
 
 export default function App() {
   return (
-    <QueryClientProvider client={queryClient}>
-      <HashRouter>
-        <AppLayout />
-      </HashRouter>
-    </QueryClientProvider>
+    <ErrorBoundary>
+      <QueryClientProvider client={queryClient}>
+        <HashRouter>
+          <AppLayout />
+        </HashRouter>
+      </QueryClientProvider>
+    </ErrorBoundary>
   );
 }

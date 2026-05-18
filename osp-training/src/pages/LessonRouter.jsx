@@ -13,6 +13,7 @@
 import React, { useState, useEffect } from 'react';
 import { Link, useParams } from 'react-router-dom';
 import { lessonFileIndex } from '../data/course-catalog.js';
+import ErrorBoundary from '../components/ErrorBoundary.jsx';
 
 // Vite processes this glob at build time, producing code-split chunks for every
 // lesson file. Browser never resolves a runtime-relative path — Vite handles it.
@@ -133,6 +134,6 @@ export default function LessonRouter() {
 
   if (loading) return <LessonSkeleton />;
   if (notFound) return <LessonPlaceholder courseId={courseId} lessonOrder={lessonOrder} />;
-  if (LessonComponent) return <LessonComponent />;
+  if (LessonComponent) return <ErrorBoundary><LessonComponent /></ErrorBoundary>;
   return <LessonPlaceholder courseId={courseId} lessonOrder={lessonOrder} />;
 }
