@@ -183,7 +183,7 @@ export default function T15L02FaultLocateOTDR() {
         'Exactly 10,000 ft — IOR only affects dispersion, not distance',
         'Slightly FARTHER than 10,000 ft because higher actual IOR means light travels slower',
         'Exactly the same — OTDR compensates for IOR automatically',
-        'Slightly CLOSER than 10,000 ft because lower set IOR means the OTDR underestimates distance',
+        'Slightly CLOSER than 10,000 ft because lower set IOR causes the OTDR to overestimate distance (assumes faster propagation than actual)',
       ],
       correct: 3,
       explanation:
