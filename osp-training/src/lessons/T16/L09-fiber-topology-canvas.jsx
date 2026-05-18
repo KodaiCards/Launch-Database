@@ -1,0 +1,459 @@
+// T16.L09 — Fiber Topology Canvas — Reading and Updating
+// RUS Bulletin 1751F-630 §10 — fiber count and routing documentation
+// ANSI/TIA-606-C (2018) §6.2 — link records and pathways
+// Industry practice: GPON/FTTP topology notation conventions
+
+import React from 'react';
+import LessonLayout from '../../components/LessonLayout.jsx';
+import Flashcard from '../../components/Flashcard.jsx';
+import Quiz from '../../components/primitives/Quiz.jsx';
+import TopologyCanvas from '../../components/TopologyCanvas.jsx';
+
+export const meta = {
+  id: 'T16.L09',
+  course_id: 'T16',
+  title: 'Fiber Topology Canvas — Reading and Updating',
+  order: 9,
+  lesson_type: 'working',
+  prerequisites: ['T16.L01', 'T16.L02', 'T16.L03'],
+  learning_objectives: [
+    'Read a fiber topology diagram and identify POP, FDH, splice closures, and customer endpoints',
+    'Distinguish between in-service, dark, and test fiber designations on a topology canvas',
+    'Apply the correct notation when updating a topology canvas after a splice change or re-route',
+    'Explain how the topology canvas relates to the splice matrix and administration records',
+    'Use the interactive topology tool to sketch a basic OSP fiber path from POP to customer',
+  ],
+  estimated_minutes: 32,
+  vocabulary_introduced: [
+    'topology canvas (fiber)',
+    'in-service fiber',
+    'dark fiber',
+    'test fiber (spare)',
+    'POP (Point of Presence)',
+    'FDH (Fiber Distribution Hub)',
+  ],
+  vocabulary_assumed: [
+    'as-built record',
+    'splice matrix',
+    'splice record (entry)',
+    'fiber path (express vs. active splice)',
+    'from-closure / to-closure',
+    'link record',
+    'pathway record',
+    'location record',
+    'administration record (completed entry)',
+    'ANSI/TIA-606-C',
+  ],
+};
+
+const key_terms = [
+  {
+    term: 'Topology Canvas (Fiber)',
+    definition:
+      'A schematic diagram — paper, CAD layer, or interactive tool — that shows the logical and physical layout of a fiber optic network: where the POP is, where each FDH or splice closure is, how many fibers run between each node, and which fibers are in-service vs. dark. The topology canvas is the "big picture" view that the splice matrix fills in at the fiber-pair level. Together they form the complete as-built record for the distribution plant.',
+  },
+  {
+    term: 'In-Service Fiber',
+    definition:
+      'A fiber strand that is currently carrying live traffic (active transmission). On a topology canvas, in-service fibers are typically shown in solid color (often blue or green) with a service label (GPON wavelength, CWDM channel, or customer identifier). In-service fibers must not be cut, re-spliced, or tested with high-power OTDR without taking the service down and coordinating with the NOC.',
+  },
+  {
+    term: 'Dark Fiber',
+    definition:
+      'A fiber strand that is physically installed and spliced through the network but not carrying any active transmission — no light injected, no active equipment on either end. On a topology canvas, dark fibers are shown in a neutral or dashed style. Dark fibers are reserved capacity; they become in-service when activated for a new customer or service.',
+  },
+  {
+    term: 'Test Fiber (Spare)',
+    definition:
+      'A fiber strand designated for optical testing and verification — typically used to run OTDR traces through an end-to-end span to verify loss performance without disturbing in-service fibers. Some companies call these "spare fibers" when held for future use. Notation convention: test/spare fibers are often marked with a "T" or "SP" designation on the topology canvas.',
+  },
+  {
+    term: 'POP (Point of Presence)',
+    definition:
+      'Point of Presence — the central facility (building, equipment hut, or rack enclosure) that houses the active headend equipment (OLT, CMTS, optical amplifiers) that connects the OSP fiber network to the backbone. In GPON/FTTP OSP topology, the POP is the root node from which feeder cables radiate outward to FDHs and splitter cabinets.',
+  },
+  {
+    term: 'FDH (Fiber Distribution Hub)',
+    definition:
+      'Fiber Distribution Hub — a passive outdoor cabinet (pedestal or aerial) that houses one or more passive optical splitters, distributing the feeder fiber from the POP into multiple distribution fibers serving individual premises. The FDH is the key mid-network node in GPON topologies. In some networks the same function is served by a "splice cabinet" or "distribution cabinet."',
+  },
+];
+
+export default function L09() {
+  return (
+    <LessonLayout meta={meta}>
+      {/* ── FOUNDATIONS ─────────────────────────────────────────── */}
+      <section className="lesson-section foundations">
+        <h2>What Is a Topology Canvas?</h2>
+
+        <p>
+          Imagine you are a technician who just got a trouble ticket: "Customer at 4218 Elm Street
+          has no service." To troubleshoot, you need to know: which POP serves that customer? Which
+          FDH? Which splice closure on the feeder? What fiber numbers carry that customer's signal?
+          A topology canvas answers all of those questions at a glance.
+        </p>
+
+        <p>
+          A <strong>topology canvas</strong> is the schematic map of the fiber network — it shows
+          nodes (POP, FDH, splice closures, customer endpoints) and connections (feeder spans,
+          distribution spans, drop fibers), labeled with fiber counts. Where the splice matrix
+          tells you exactly what is spliced to what at the fiber-pair level, the topology canvas
+          tells you how everything fits together at the network level.
+        </p>
+
+        <p>
+          The two records are designed to work together. A technician reads the topology canvas to
+          find the right splice closure, then opens the splice matrix for that closure to find the
+          specific fiber pairs. Without both, restoration and change work takes far longer than it
+          should — and risks hitting in-service fibers.
+        </p>
+
+        <h3>The Color-and-Symbol Language</h3>
+
+        <p>
+          Topology canvas notation is not universally standardized the way TIA-606-C administration
+          records are, but the following conventions are widely used in RUS/FTTP network
+          documentation:
+        </p>
+
+        <table className="standard-table">
+          <thead>
+            <tr>
+              <th>Fiber Status</th>
+              <th>Common Notation</th>
+              <th>What It Means</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>In-service</td>
+              <td>Solid colored line (blue or green); service label</td>
+              <td>
+                Carrying live traffic — do NOT cut or test with OTDR without NOC coordination
+              </td>
+            </tr>
+            <tr>
+              <td>Dark fiber</td>
+              <td>Dashed or gray line; "DARK" label</td>
+              <td>Spliced through but no active equipment — available for new service</td>
+            </tr>
+            <tr>
+              <td>Test / spare</td>
+              <td>"T" or "SP" designation; distinct color or lighter dashed</td>
+              <td>Reserved for OTDR testing or future service activation</td>
+            </tr>
+            <tr>
+              <td>Out of service (broken)</td>
+              <td>Red or orange line; "OOS" or "BREAK" label; date noted</td>
+              <td>Known fault — fiber is not functional; requires repair</td>
+            </tr>
+            <tr>
+              <td>Express fiber</td>
+              <td>Arrow bypassing a node; "XPRS" label; no splice at that closure</td>
+              <td>
+                Fiber passes through the closure without active splice — only recorded, not
+                connected to tray
+              </td>
+            </tr>
+          </tbody>
+        </table>
+
+        <p>
+          Your company may use different color conventions, but the underlying principle is the
+          same: anyone reading the canvas should immediately know the service status of every fiber
+          span without opening the splice matrix first.
+        </p>
+      </section>
+
+      {/* ── WORKING ──────────────────────────────────────────────── */}
+      <section className="lesson-section working">
+        <h2>Reading a Topology Canvas</h2>
+
+        <p>
+          A typical GPON/FTTP topology canvas for a rural OSP build might show:
+        </p>
+
+        <ul>
+          <li>
+            <strong>POP at the hub site</strong> — one box at the top labeled with the POP ID
+            (e.g., POP-MACON-01). The feeder fiber originates here, running from the OLT's optics
+            through the route to the FDHs.
+          </li>
+          <li>
+            <strong>Feeder span annotations</strong> — a line from POP to FDH labeled with fiber
+            count ("144F"), cable type ("96SM-G.652.D"), span length ("3.2 mi"), and loss
+            ("1.94 dB @ 1310 nm").
+          </li>
+          <li>
+            <strong>Intermediate splice closures</strong> — diamond or circle symbols on the
+            feeder span, each labeled with a closure ID and splice count. Inline closures that
+            contain express fibers show a pass-through arrow alongside the splice symbol.
+          </li>
+          <li>
+            <strong>FDH cabinet</strong> — a box labeled with FDH ID (e.g., FDH-SR42-01),
+            splitter ratio (e.g., 1:32), and the count of active ports vs. available dark ports.
+          </li>
+          <li>
+            <strong>Distribution spans</strong> — lines from FDH to customer tap/NID, labeled
+            with fiber count and service status (in-service / dark).
+          </li>
+        </ul>
+
+        <p>
+          When you receive a topology canvas as part of the as-built record, the first thing to
+          verify is that every node on the canvas has a corresponding administration record in the
+          TIA-606-C system and every splice closure node has entries in the splice matrix.
+          Mismatches between the canvas and the administration records are the most common
+          documentation deficiency found during RUS plant audits.
+        </p>
+
+        <h3>Updating the Topology Canvas</h3>
+
+        <p>
+          The topology canvas is a living document. It must be updated whenever the physical plant
+          changes:
+        </p>
+
+        <table className="standard-table">
+          <thead>
+            <tr>
+              <th>Field Event</th>
+              <th>Canvas Update Required</th>
+              <th>Also Update</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>New customer activated</td>
+              <td>Change dark fiber → in-service on the drop span</td>
+              <td>Splice matrix (if new splice created), administration record</td>
+            </tr>
+            <tr>
+              <td>Fiber break repaired with a splice</td>
+              <td>Remove OOS notation; add new splice symbol at repair location</td>
+              <td>
+                Splice matrix (new entry for repair splice), TIA-606-C link record (new loss
+                reading), OTDR trace file reference
+              </td>
+            </tr>
+            <tr>
+              <td>New cable segment added (system extension)</td>
+              <td>Add new nodes and spans to canvas; label fiber count and length</td>
+              <td>GIS (new cable and pathway features), administration records, Form 219 update</td>
+            </tr>
+            <tr>
+              <td>Dark fiber leased to third party</td>
+              <td>Change dark → in-service with lessee label and effective date</td>
+              <td>IRU/lease agreement, administration record note field</td>
+            </tr>
+            <tr>
+              <td>Splice re-done (loss reduction)</td>
+              <td>Update loss annotation at that closure</td>
+              <td>Splice matrix (update loss value), link record (update loss)</td>
+            </tr>
+          </tbody>
+        </table>
+
+        <p>
+          A good rule: if you touched a fiber physically, the topology canvas changed. Update it
+          within 5 business days of the field event. The longer the gap between the field change
+          and the canvas update, the more likely a technician will make a decision based on
+          outdated records.
+        </p>
+
+        <h3>Topology Canvas vs. Splice Matrix vs. GIS — Which Comes First?</h3>
+
+        <p>
+          Field technicians often ask: "If I only have time to update one record after a change,
+          which should it be?" The honest answer is you should update all three — but if you must
+          triage:
+        </p>
+
+        <ol className="step-list">
+          <li>
+            <strong>Splice matrix first (safety-critical).</strong> If the splice matrix is wrong,
+            the next technician looking for a specific fiber pair will find the wrong one — and
+            possibly cut a live service. Splice matrix accuracy protects in-service traffic.
+          </li>
+          <li>
+            <strong>GIS second (811/one-call critical).</strong> If the GIS does not show the new
+            splice location or cable segment, excavation contractors will not know it is there. That
+            is a buried infrastructure damage risk.
+          </li>
+          <li>
+            <strong>Topology canvas third (operations reference).</strong> The canvas is the planning
+            and high-level operations tool — important, but an outdated canvas causes confusion, not
+            immediate safety or service risk.
+          </li>
+        </ol>
+
+        <p>
+          In practice: update all three records the same day. In a crisis: splice matrix first,
+          then GIS, then canvas.
+        </p>
+      </section>
+
+      {/* ── INTERACTIVE TOOL ─────────────────────────────────────── */}
+      <section className="lesson-section interactive">
+        <h2>Practice: Build a Topology Canvas</h2>
+
+        <p>
+          Use the interactive canvas below to sketch a basic OSP fiber path. Try this exercise:
+        </p>
+
+        <ol className="step-list">
+          <li>
+            Add a <strong>POP / Hut</strong> node — this is your central office.
+          </li>
+          <li>
+            Add two <strong>Splice Closure</strong> nodes — these are inline closures on your
+            feeder span.
+          </li>
+          <li>
+            Add an <strong>FDH Cabinet</strong> node — this is the end of your feeder run and
+            the start of the distribution plant.
+          </li>
+          <li>
+            Click the POP node, then click the first Splice Closure to draw the first feeder
+            segment. Set strand count to 144.
+          </li>
+          <li>
+            Connect Splice Closure 1 → Splice Closure 2 → FDH Cabinet to complete the feeder path.
+          </li>
+          <li>
+            Add two <strong>Customer ONT</strong> nodes and connect them to the FDH to represent
+            two drops in the distribution plant.
+          </li>
+        </ol>
+
+        <p>
+          This canvas is saved in your browser — your sketch will persist between sessions.
+        </p>
+
+        <TopologyCanvas />
+
+        <p className="lesson-note">
+          <strong>Field reality check:</strong> The tool above is a teaching aid that shows the
+          core concept — nodes connected by labeled spans. Real-world OSP topology management
+          systems (Esri ArcFM, OSPInsight, VETRO FiberMap) integrate the topology canvas directly
+          with the GIS database, the splice matrix, and OTDR trace references. The principle is
+          the same; the production tool has more attributes and validation rules.
+        </p>
+      </section>
+
+      {/* ── ADVANCED ─────────────────────────────────────────────── */}
+      <section className="lesson-section advanced">
+        <h2>Topology Canvas Notation for GPON Passive Splits</h2>
+
+        <p>
+          In a GPON/FTTP architecture, the split ratios at each FDH (typically 1:32 or two-stage
+          1:4 × 1:8) are critical information that must appear on the topology canvas. The notation
+          convention is:
+        </p>
+
+        <ul>
+          <li>
+            <strong>Splitter symbol:</strong> A triangle or box with the split ratio labeled
+            (e.g., "1:32 splitter" inside the FDH box).
+          </li>
+          <li>
+            <strong>Port utilization:</strong> "16/32 active" or "50% utilized" annotation on the
+            FDH symbol tells the operations team how much capacity remains before a new feeder
+            segment is needed.
+          </li>
+          <li>
+            <strong>Two-stage splits:</strong> Show both stages — the 1:4 splitter at the first
+            node (sometimes in the POP or an intermediate closure), then the 1:8 splitter at the
+            FDH. Total split ratio = 1:32 (4 × 8 = 32). Each stage gets its own symbol on the
+            canvas.
+          </li>
+        </ul>
+
+        <p>
+          Why does this matter for as-built records? Because when a customer complaint comes in
+          that 30 homes in one neighborhood have degraded signal, the topology canvas with
+          accurate split notation immediately points to the 1:32 splitter serving that FDH as the
+          likely common point — it shows up in the topology before you ever open the splice matrix.
+          An as-built canvas without accurate split notation turns that 10-minute diagnosis into
+          an hour-long investigation.
+        </p>
+      </section>
+
+      {/* ── KEY TERMS ────────────────────────────────────────────── */}
+      <section className="lesson-section key-terms">
+        <h2>Key Terms</h2>
+        <div className="flashcard-row">
+          {key_terms.map((kt) => (
+            <Flashcard key={kt.term} term={kt.term} definition={kt.definition} />
+          ))}
+        </div>
+      </section>
+
+      {/* ── QUIZ ─────────────────────────────────────────────────── */}
+      <Quiz
+        questions={[
+          {
+            id: 'T16L09-Q1',
+            type: 'multiple_choice',
+            question:
+              'A topology canvas shows a fiber span labeled "DARK" between an FDH and a customer NID. A technician receives a work order to activate that customer. Which record should the technician update FIRST after completing the splice work?',
+            options: [
+              'The topology canvas — change the "DARK" label to "IN-SERVICE"',
+              'The splice matrix — record the new splice entry before updating any other record',
+              'The GIS layer — add the new drop feature to the cable plant database',
+              'Form 219 — update the plant inventory to reflect the new active port',
+            ],
+            correct: 1,
+            explanation:
+              'The splice matrix should be updated first because it is safety-critical — the next technician who accesses that closure needs accurate splice records to avoid cutting a live service. Splice matrix accuracy directly protects in-service traffic. The topology canvas should be updated second, and the GIS is also important for 811/one-call accuracy. Form 219 is updated at close-out, not after individual service activations.',
+          },
+          {
+            id: 'T16L09-Q2',
+            type: 'multiple_choice',
+            question:
+              'On a GPON topology canvas, what does a "1:32 splitter" notation inside an FDH symbol indicate?',
+            options: [
+              'The FDH cabinet has 32 fiber count cable connected to it',
+              'Each input fiber entering the FDH is passively split into 32 output fibers, distributing one feeder signal to up to 32 customers',
+              'The FDH is located 32 feet from the feeder cable splice point',
+              'The FDH requires 32 watts of power supply from the nearest pedestal',
+            ],
+            correct: 1,
+            explanation:
+              'A 1:32 splitter is a passive optical device that splits a single input fiber into 32 output fibers, distributing the OLT\'s downstream signal from the POP to up to 32 customer ONT endpoints. This is the core function of a GPON FDH. The split ratio introduces approximately 15.5 dB of passive insertion loss (10×log₁₀(32) ≈ 15.05 dB) that must be included in the link loss budget. The topology canvas shows this ratio so operations staff can immediately see how many ports are available without opening the splice matrix.',
+          },
+          {
+            id: 'T16L09-Q3',
+            type: 'multiple_choice',
+            question:
+              'A fiber on the topology canvas is labeled "XPRS" (Express) at a splice closure symbol. What does this mean?',
+            options: [
+              'The fiber is a high-priority emergency service circuit that requires express SLA response',
+              'The fiber passes through the closure without being spliced at that location — it is recorded but not connected to a tray',
+              'The fiber is express-routed through a separate innerduct with no accessible splice point',
+              'The closure is express-accessed — it can be opened without requiring a bucket truck',
+            ],
+            correct: 1,
+            explanation:
+              'Express fiber notation (XPRS) on a topology canvas means the fiber passes through the splice closure physically but is NOT spliced at that closure — no splice tray connection is made. The fiber is simply routed through the closure\'s buffer tube storage without termination. Express fibers must still be recorded in the splice matrix as express entries (not omitted) because their presence in the closure affects fiber accounting and restoration planning. The TIA-606-C link record for express fibers shows no splice loss at that location.',
+          },
+          {
+            id: 'T16L09-Q4',
+            type: 'multiple_choice',
+            question:
+              'After a fiber break repair, a splice was added at a location that was not previously on the topology canvas. Which records must be updated to reflect this change?',
+            options: [
+              'Only the topology canvas — add a splice symbol at the repair location',
+              'Only the splice matrix — add the new repair splice entry',
+              'Topology canvas (add splice symbol, remove OOS notation), splice matrix (new repair splice entry), TIA-606-C link record (updated loss reading), and GIS (new splice closure feature if a new enclosure was installed)',
+              'Form 219 only — the repair splice changes the plant inventory and must be reported to RUS',
+            ],
+            correct: 2,
+            explanation:
+              'A fiber break repair that adds a new splice location requires coordinated updates across multiple records: (1) topology canvas — add the new splice symbol at the repair location and remove the OOS notation; (2) splice matrix — add a new entry for the repair splice (splice type, loss, date, technician); (3) TIA-606-C link record — update the link loss reading to reflect the new splice insertion loss; (4) GIS — if a new splice closure enclosure was installed at the repair location, add it as a new location feature in the GIS database. All four records represent the same physical change and must remain consistent.',
+          },
+        ]}
+      />
+    </LessonLayout>
+  );
+}
