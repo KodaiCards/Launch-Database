@@ -552,7 +552,7 @@ export default function T04L07_47CFR32RecordKeeping() {
             ],
             answerIndex: 2,
             explanation:
-              'Plant Under Construction (§ 32.2230) is the correct temporary account for all survey and engineering costs during the project development phase. It accumulates costs until the plant is placed in service, at which point the accounting team transfers costs to the permanent plant accounts (§ 32.2410 for cable and wire facilities, § 32.2411 for poles, § 32.2111 for land, etc.). Cable and Wire Facilities (§ 32.2410) and Poles (§ 32.2411) are permanent plant accounts for installed infrastructure, not for pre-construction survey costs. Note: §32.2210 is Central office—switching — not cable; §32.2420 does not exist in Part 32.',
+              'Plant Under Construction (§ 32.2230) is the correct temporary account for all survey and engineering costs during the project development phase. It accumulates costs until the plant is placed in service, at which point the accounting team transfers costs to the permanent plant accounts (§ 32.2410 for cable and wire facilities, § 32.2411 for poles, § 32.2111 for land, etc.). Cable and Wire Facilities (§ 32.2410) and Poles (§ 32.2411) are permanent plant accounts for installed infrastructure, not for pre-construction survey costs. Note: §32.2210 is Central office—switching — not cable; §32.2420 is the parent-category heading "Cable and Wire Facilities" (see T13.L10 and T16.L08 for detailed account hierarchy).',
             citation: '47 CFR 32 § 32.2230 (Telecommunications Plant Under Construction); FCC USOA (ecfr.gov/current/title-47/chapter-I/subchapter-B/part-32).',
           },
           {

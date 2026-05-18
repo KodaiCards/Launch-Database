@@ -106,21 +106,21 @@ const budgetWorkedExample = {
     },
     {
       label: 'Step 4 — Calculate escalation multiplier',
-      expression: 'Multiplier = (1 + 0.035)^1.5 = 1.035^1.5 ≈ 1.0527',
+      expression: 'Multiplier = (1 + 0.035)^1.5 = 1.035^1.5 ≈ 1.05271',
       explanation:
-        'Escalation compounds annually. At 3.5%/year over 1.5 years: (1.035)^1.5 = 1.0527 — prices are expected to be 5.27% higher at construction start than at estimate date.',
+        'Escalation compounds annually. At 3.5%/year over 1.5 years: ln(1.035) = 0.034398; 1.5 × 0.034398 = 0.051597; e^0.051597 = 1.05271 — prices are expected to be 5.271% higher at construction start than at estimate date.',
     },
     {
       label: 'Step 5 — Calculate escalation dollar amount',
-      expression: 'Escalation = (Base + Contingency) × (Multiplier − 1) = $2,576,000 × 0.0530 = $136,417',
+      expression: 'Escalation = (Base + Contingency) × (Multiplier − 1) = $2,576,000 × 0.05271 = $135,934',
       explanation:
-        'Escalation applies to the contingency-inclusive total of $2,576,000, not just the base. Reason: if the contingency reserve sits unused for 18 months before construction completes, those contingency dollars also buy less in the future. Conservative practice applies escalation to the full reserve, not just the base cost. $2,576,000 × (1.0530 − 1) = $2,576,000 × 0.0530 = $136,417.',
+        'Escalation applies to the contingency-inclusive total of $2,576,000, not just the base. Reason: if the contingency reserve sits unused for 18 months before construction completes, those contingency dollars also buy less in the future. Conservative practice applies escalation to the full reserve, not just the base cost. $2,576,000 × (1.05271 − 1) = $2,576,000 × 0.05271 = $135,934.',
     },
     {
       label: 'Step 6 — Total project budget',
-      expression: 'Total Budget = Base + Contingency + Escalation = $2,240,000 + $336,000 + $136,417 = $2,712,417',
+      expression: 'Total Budget = Base + Contingency + Escalation = $2,240,000 + $336,000 + $135,934 = $2,711,934',
       explanation:
-        'The total project budget is $2,712,417 — 21.1% above the base estimate ($472,417 in reserves). Presenting a budget without these allowances as "the project cost" and then watching it climb 21% during execution is how projects get labeled as cost overruns when they were actually under-estimated from the start.',
+        'The total project budget is $2,711,934 — 21.0% above the base estimate ($471,934 in reserves). Presenting a budget without these allowances as "the project cost" and then watching it climb 21% during execution is how projects get labeled as cost overruns when they were actually under-estimated from the start.',
     },
     {
       label: 'Step 7 — Sanity check: does this match RUS guidance?',

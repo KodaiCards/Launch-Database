@@ -78,6 +78,14 @@ export const key_terms = [
       'Fiber Distribution Hub — a passive outdoor cabinet (pedestal or aerial) that houses one or more passive optical splitters, distributing the feeder fiber from the POP into multiple distribution fibers serving individual premises. The FDH is the key mid-network node in GPON topologies. In some networks the same function is served by a "splice cabinet" or "distribution cabinet."',
   },
 ];
+export const vocabulary_introduced = [
+  'topology canvas (fiber)',
+  'in-service fiber',
+  'dark fiber',
+  'test fiber (spare)',
+  'POP (Point of Presence)',
+  'FDH (Fiber Distribution Hub)',
+];
 
 export default function L09() {
   return (

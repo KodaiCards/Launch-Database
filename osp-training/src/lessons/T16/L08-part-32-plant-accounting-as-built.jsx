@@ -71,6 +71,13 @@ export const key_terms = [
       'The cost of telecommunications infrastructure that is added to the plant ledger as an asset, as opposed to expensed immediately. Under 47 CFR §32.2001, plant costs that are expected to provide service for more than one year and meet the unit-of-property threshold are capitalized. Capitalized costs must be supported by as-built records showing what was installed, where, and at what cost.',
   },
 ];
+export const vocabulary_introduced = [
+  'unit of property (47 CFR §32.2001)',
+  '47 CFR Part 32 plant account',
+  'Uniform System of Accounts (USOA)',
+  'Form 1755-A (Statement of Materials Used)',
+  'capitalized plant cost',
+];
 
 export default function L08() {
   return (

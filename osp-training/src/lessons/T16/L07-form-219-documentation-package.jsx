@@ -73,6 +73,13 @@ export const key_terms = [
       'A signed document from the prime contractor certifying that all work under the construction contract has been completed in accordance with the plans and specifications. Required in the close-out package and must reference the final as-built drawing set by date and revision level.',
   },
 ];
+export const vocabulary_introduced = [
+  'Form 219 (RUS)',
+  'telecommunications plant inventory',
+  'final advance (RUS loan)',
+  'close-out package',
+  'construction contract completion certificate',
+];
 
 const closingScenario = {
   id: 'T16L07-SCENARIO',

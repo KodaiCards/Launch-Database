@@ -75,6 +75,7 @@ export const meta = {
     'FDH (Fiber Distribution Hub)',
   ],
 };
+export const vocabulary_introduced = [];
 
 export default function L10() {
   return (

@@ -74,6 +74,13 @@ export const key_terms = [
       'A discrepancy found during a Rural Development or OIG audit where field-verified conditions do not match the as-built records submitted with the loan/grant. Can result in disallowance of construction costs, required remediation, or loan acceleration in severe cases.',
   },
 ];
+export const vocabulary_introduced = [
+  'redline drawing',
+  'reconciliation (as-built)',
+  'field change order (FCO)',
+  'engineer of record sign-off',
+  'RUS audit discrepancy',
+];
 
 export default function L06() {
   return (

@@ -153,7 +153,7 @@ export default function T15L01OutageResponseFirst30() {
       ],
       correct: 1,
       explanation:
-        'MTTR is a historical average — it means 50% of outages resolved faster, 50% resolved slower. An MTTR of 3.2 hours means roughly half the outages are close to or exceed 4 hours already. The RTO is the target for every individual outage. Using "MTTR < RTO" as a reason to reduce urgency is a category error that leads to SLA breaches.',
+        'MTTR (Mean Time To Repair) is the mathematical average across all past incidents — it is the sum of all repair times divided by the number of incidents. An MTTR of 3.2 hours means some outages resolved faster than 3.2 hours and some slower; you cannot assume any individual outage will come in at or below the average. The RTO is the target for EVERY individual outage. Using "MTTR < RTO" as a reason to reduce urgency is a category error that leads to SLA breaches.',
     },
     {
       id: 'q2',
