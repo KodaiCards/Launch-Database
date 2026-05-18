@@ -147,6 +147,20 @@ export default function T15L03PhysicalRouteWalk() {
       explanation:
         'NESC Part 4 Rule 420-435 governs worker approach to electrical conductors. If the vehicle strike or ice loading that damaged the fiber also displaced or damaged other attachments on the joint-use pole, energized conductors may be within the Minimum Approach Distance (MAD) introduced in T18.L07. OSP crews may NOT approach until the electric utility has confirmed the work zone is safe. "30 minutes without visible activity" is not an electrical safety protocol — induced voltage from overhead transmission can exist without visible arcing.',
     },
+    {
+      id: 'q4',
+      question: 'The as-built drawing shows a water main running parallel to the fiber route at 4-foot depth, 18 inches from the fiber centerline. The emergency locate ticket has been filed and the water main is marked. At what approach to the marked water main must hand-excavation begin?',
+      type: 'multiple-choice',
+      options: [
+        '6 inches from the marked line — tolerance is reduced on emergency tickets',
+        '24 inches from the marked line — the 811 tolerance zone applies to ALL facilities including water mains, regardless of emergency status',
+        '12 inches — standard tolerance for water mains is less than for gas',
+        '18 inches — the actual measured offset from the as-built drawing',
+      ],
+      correct: 1,
+      explanation:
+        'The 811 tolerance zone (18–24 inches, varies by state — most states use 24 inches) applies to ALL marked facilities: gas, water, electric, telecom. The emergency exception under OSHA 1926.651(b)(2) reduces the pre-excavation WAIT TIME — it does not reduce the hand-dig tolerance zone. Once utilities are marked, mechanical excavation stops at 24 inches from the mark; hand-dig (or vacuum excavation) takes over. Using the as-built drawing\'s 18-inch offset as the hand-dig trigger instead of the 24-inch mark is a violation — the mark is the legal reference, not the as-built measurement.',
+    },
   ];
 
   return (

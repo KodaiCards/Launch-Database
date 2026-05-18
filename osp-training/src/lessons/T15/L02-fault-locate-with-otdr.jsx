@@ -77,9 +77,9 @@ export const meta = {
     },
   ],
   vocabulary_assumed: [
-    { term: 'OTDR trace (event table)', source_lesson_id: 'T12.L07' },
-    { term: 'IOR (index of refraction)', source_lesson_id: 'T12.L07' },
-    { term: 'ORL', source_lesson_id: 'T12.L07' },
+    { term: 'OTDR trace (event table)', source_lesson_id: 'T12.L08' },
+    { term: 'IOR (index of refraction)', source_lesson_id: 'T02.L01' },
+    { term: 'return loss (RL)', source_lesson_id: 'T11.L12' },
     { term: 'insertion loss', source_lesson_id: 'T12.L06' },
     { term: 'fusion splice', source_lesson_id: 'T11.L04' },
     { term: 'outage bridge call', source_lesson_id: 'T15.L01' },
@@ -95,33 +95,33 @@ export default function T15L02FaultLocateOTDR() {
     title: 'OTDR Fault Distance Calculation',
     description:
       'The OTDR calculates the distance to a fault using the speed of light and the fiber\'s index of refraction. Here\'s the math the OTDR performs internally — and why getting the IOR right matters.',
-    formula: 'Distance = (IOR × t_return) / (2 × c)',
+    formula: 'Distance = (c / IOR) × (t_return / 2)',
     variables: [
       {
         symbol: 'Distance',
         name: 'Distance to fault',
-        unit: 'meters (or feet if c is in ft/ns)',
+        unit: 'meters',
         description: 'The cable distance from the OTDR launch point to the event being measured.',
+      },
+      {
+        symbol: 'c',
+        name: 'Speed of light in vacuum',
+        unit: '0.2998 meters per nanosecond (m/ns)',
+        description: 'Constant: 2.998 × 10⁸ m/s = 0.2998 m/ns. Light in fiber travels slower than this by a factor of IOR.',
       },
       {
         symbol: 'IOR',
         name: 'Index of Refraction',
         unit: 'dimensionless (typically 1.4680–1.4700 for G.652.D)',
         description:
-          'How much the fiber slows light down compared to a vacuum. G.652.D at 1550 nm: approximately 1.4682 (verify from your specific fiber manufacturer\'s specification sheet). An IOR error of 0.001 causes ~0.07% distance error — about 3.7 ft per mile.',
+          'How much the fiber slows light down compared to a vacuum. G.652.D at 1550 nm: approximately 1.4682 (verify from your specific fiber manufacturer\'s specification sheet). Dividing c by IOR gives the actual propagation velocity in the fiber. An IOR error of 0.001 causes ~0.07% distance error — about 3.7 ft per mile.',
       },
       {
         symbol: 't_return',
         name: 'Round-trip travel time',
         unit: 'nanoseconds (ns)',
         description:
-          'The time for the OTDR\'s light pulse to travel from the launch point to the event AND return. Read from the OTDR\'s event table.',
-      },
-      {
-        symbol: 'c',
-        name: 'Speed of light in vacuum',
-        unit: '0.2998 meters per nanosecond (m/ns)',
-        description: 'Constant: 2.998 × 10⁸ m/s = 0.2998 m/ns.',
+          'The time for the OTDR\'s light pulse to travel from the launch point to the event AND return. Dividing by 2 gives the one-way travel time. Read from the OTDR\'s event table.',
       },
     ],
     steps: [
@@ -134,20 +134,20 @@ export default function T15L02FaultLocateOTDR() {
       {
         step: 2,
         description: 'Read round-trip travel time from OTDR event table',
-        math: 't_return = 48,200 ns (OTDR shows fault event at 48,200 ns round-trip)',
+        math: 't_return = 115,605 ns (OTDR shows fault event at 115,605 ns round-trip)',
         note: 'The OTDR measures time internally and may already display the converted distance — this is the math it used.',
       },
       {
         step: 3,
-        description: 'Calculate cable distance to fault',
-        math: 'Distance = (1.4682 × 48,200 ns) / (2 × 0.2998 m/ns)',
-        note: 'Numerator: 1.4682 × 48,200 = 70,767 m·(dimensionless) · ns = 70,767 (in IOR-adjusted ns). Denominator: 2 × 0.2998 = 0.5996 m/ns.',
+        description: 'Calculate propagation velocity in fiber',
+        math: 'v_fiber = c / IOR = 0.2998 m/ns ÷ 1.4682 = 0.2042 m/ns',
+        note: 'Light travels at 0.2042 m/ns inside this fiber — about 68% of free-space speed.',
       },
       {
         step: 4,
-        description: 'Complete the division',
-        math: 'Distance = 70,767 / 0.5996 = 11,803 meters ≈ 11.8 km ≈ 38,714 ft ≈ 7.33 miles',
-        note: 'The OTDR will display this as ~11.8 km. Verify the displayed value matches your manual calculation as a sanity check.',
+        description: 'Calculate cable distance to fault',
+        math: 'Distance = v_fiber × (t_return / 2) = 0.2042 m/ns × (115,605 ns / 2) = 0.2042 × 57,803 = 11,803 m',
+        note: 'Equivalently: Distance = (c / IOR) × (t_return / 2) = (0.2998 / 1.4682) × 57,803 = 11,803 m.',
       },
       {
         step: 5,
@@ -185,9 +185,9 @@ export default function T15L02FaultLocateOTDR() {
         'Exactly the same — OTDR compensates for IOR automatically',
         'Slightly CLOSER than 10,000 ft because lower set IOR means the OTDR underestimates distance',
       ],
-      correct: 1,
+      correct: 3,
       explanation:
-        'Distance = (IOR × t_return) / (2c). If the actual IOR is HIGHER than the set IOR, the displayed distance is LOWER than the actual cable distance. The OTDR uses IOR = 1.4600 to calculate distance; but the light actually traveled as if IOR = 1.4682. Actual distance = displayed distance × (actual IOR / set IOR) = 10,000 × (1.4682 / 1.4600) = 10,056 ft. The fault is ~56 ft FARTHER than the OTDR shows. Over a 5-mile cable, an IOR error of 0.008 causes ~230 ft of locate error.',
+        'The OTDR converts round-trip travel time to distance using: d = (c / IOR) × (t_return / 2). The OTDR uses IOR = 1.4600 (set) to compute displayed distance. Actual distance uses IOR_actual = 1.4682. Ratio: d_actual / d_displayed = IOR_set / IOR_actual = 1.4600 / 1.4682 = 0.9944. So d_actual = 10,000 × 0.9944 = 9,944 ft. The fault is ~56 ft CLOSER than the OTDR shows. Why? Higher actual IOR means light actually travels SLOWER in the fiber than the OTDR assumed — so the same round-trip time represents a shorter physical distance. The OTDR overestimated how far the pulse traveled per unit time. Field implication: when the OTDR IOR is set too LOW (assumes faster propagation than reality), it will show the fault slightly farther away than it actually is — dig a little closer than the OTDR says.',
     },
     {
       id: 'q3',

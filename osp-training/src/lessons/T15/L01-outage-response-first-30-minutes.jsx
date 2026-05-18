@@ -28,7 +28,7 @@ export const meta = {
     'RTO (Recovery Time Objective)',
     'RPO (Recovery Point Objective)',
     'MTTR (Mean Time to Repair)',
-    'ETR (Estimated Time to Repair)',
+    'ETR (Estimated Time to Restore)',
     'mobilization',
     'emergency MOP',
     'verbal emergency authorization',
@@ -56,7 +56,7 @@ export const meta = {
         'The average time it takes to restore service after an outage, measured over many events. MTTR is a HISTORICAL METRIC — it tells you how the crew has performed in the past. It is NOT the same as RTO. A crew might have an MTTR of 3.2 hours (average performance) while the customer SLA requires RTO of 4 hours. Confusing MTTR with RTO leads to underestimating the urgency of individual outage events.',
     },
     {
-      term: 'ETR (Estimated Time to Repair)',
+      term: 'ETR (Estimated Time to Restore)',
       definition:
         'A time estimate communicated to the customer during an outage, stating when service is expected to be restored. ETR is not a promise — it is a best estimate that must be updated whenever the estimate changes materially (typically: >25% shift, or >30 minute change). Industry practice: issue initial ETR within 30 minutes of outage declaration. "Unknown ETR" is never acceptable once fault locate has started.',
     },
@@ -182,6 +182,20 @@ export default function T15L01OutageResponseFirst30() {
       correct: 1,
       explanation:
         'Emergency MOPs use verbal authorization (logged on the bridge call with timestamp) to allow work to begin without a fully pre-written plan. The MOP is documented CONCURRENTLY — the second person on the crew or the NOC engineer documents each step as the field crew executes them. Zero documentation during an emergency is a contract violation under most carrier change-control policies.',
+    },
+    {
+      id: 'q4',
+      question: 'A hospital customer states they have "zero RPO" on their network connection. For the OSP restoration crew, this means:',
+      type: 'multiple-choice',
+      options: [
+        'The hospital does not care about data loss — only about downtime',
+        'The hospital\'s architecture cannot tolerate any data loss, which means their equipment at each end handles regeneration and buffering — the crew\'s job is still to restore the fiber as fast as possible',
+        'RPO is the same as RTO — both are targets for service restoration time',
+        'Zero RPO means the crew must install redundant fiber before completing the repair',
+      ],
+      correct: 1,
+      explanation:
+        'RPO (Recovery Point Objective) is the maximum acceptable DATA LOSS, expressed in time. "Zero RPO" means the hospital\'s systems cannot afford to lose any in-transit data. For OSP crew, this is mostly an IT/network architecture concern — the customer\'s equipment (switches, routers, SONET ADMs) handles regeneration and buffering at each end. The field crew\'s job is to restore fiber continuity as fast as possible; the equipment handles data-layer recovery. RPO and RTO are distinct: RTO = maximum acceptable downtime (minutes/hours); RPO = maximum acceptable data loss (seconds/minutes/hours of in-transit data).',
     },
   ];
 

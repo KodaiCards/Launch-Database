@@ -1,4 +1,5 @@
 import React from 'react';
+import LessonLayout from '../../components/LessonLayout.jsx';
 import Quiz from '../../components/primitives/Quiz.jsx';
 import Flashcard from '../../components/Flashcard.jsx';
 
@@ -187,7 +188,7 @@ const MOP_ELEMENTS = [
 
 export default function L08MethodOfProcedure() {
   return (
-    <div className="lesson-container">
+    <LessonLayout meta={meta}>
       <h1>T15.L08 — Method of Procedure (MOP)</h1>
 
       {/* ── FOUNDATIONS ─────────────────────────────────────────────────── */}
@@ -381,6 +382,6 @@ export default function L08MethodOfProcedure() {
         <h2>Lesson Quiz</h2>
         <Quiz questions={QUIZ_QUESTIONS} lessonId={meta.id} />
       </section>
-    </div>
+    </LessonLayout>
   );
 }

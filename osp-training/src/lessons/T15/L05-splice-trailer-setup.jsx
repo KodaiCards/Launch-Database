@@ -1,4 +1,5 @@
 import React from 'react';
+import LessonLayout from '../../components/LessonLayout.jsx';
 import Quiz from '../../components/primitives/Quiz.jsx';
 import Flashcard from '../../components/Flashcard.jsx';
 import WorkedExample from '../../components/primitives/WorkedExample.jsx';
@@ -135,7 +136,7 @@ const QUIZ_QUESTIONS = [
 
 export default function L05SpliceTrailerSetup() {
   return (
-    <div className="lesson-container">
+    <LessonLayout meta={meta}>
       <h1>T15.L05 — Splice Trailer Setup</h1>
 
       {/* ── FOUNDATIONS ─────────────────────────────────────────────────── */}
@@ -435,6 +436,6 @@ export default function L05SpliceTrailerSetup() {
         <h2>Lesson Quiz</h2>
         <Quiz questions={QUIZ_QUESTIONS} lessonId={meta.id} />
       </section>
-    </div>
+    </LessonLayout>
   );
 }

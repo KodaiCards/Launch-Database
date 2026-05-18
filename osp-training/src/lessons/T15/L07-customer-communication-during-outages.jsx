@@ -1,4 +1,5 @@
 import React from 'react';
+import LessonLayout from '../../components/LessonLayout.jsx';
 import Quiz from '../../components/primitives/Quiz.jsx';
 import Flashcard from '../../components/Flashcard.jsx';
 import BranchingScenario from '../../components/primitives/BranchingScenario.jsx';
@@ -195,7 +196,7 @@ const QUIZ_QUESTIONS = [
 
 export default function L07CustomerCommunicationDuringOutages() {
   return (
-    <div className="lesson-container">
+    <LessonLayout meta={meta}>
       <h1>T15.L07 — Customer Communication During Outages</h1>
 
       {/* ── FOUNDATIONS ─────────────────────────────────────────────────── */}
@@ -404,6 +405,6 @@ export default function L07CustomerCommunicationDuringOutages() {
         <h2>Lesson Quiz</h2>
         <Quiz questions={QUIZ_QUESTIONS} lessonId={meta.id} />
       </section>
-    </div>
+    </LessonLayout>
   );
 }

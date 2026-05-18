@@ -1,4 +1,5 @@
 import React from 'react';
+import LessonLayout from '../../components/LessonLayout.jsx';
 import Quiz from '../../components/primitives/Quiz.jsx';
 import Flashcard from '../../components/Flashcard.jsx';
 
@@ -114,7 +115,7 @@ const QUIZ_QUESTIONS = [
 
 export default function L09PostRestorationAsBuiltUpdate() {
   return (
-    <div className="lesson-container">
+    <LessonLayout meta={meta}>
       <h1>T15.L09 — Post-Restoration As-Built Update</h1>
 
       {/* ── FOUNDATIONS ─────────────────────────────────────────────────── */}
@@ -347,6 +348,6 @@ export default function L09PostRestorationAsBuiltUpdate() {
         <h2>Lesson Quiz</h2>
         <Quiz questions={QUIZ_QUESTIONS} lessonId={meta.id} />
       </section>
-    </div>
+    </LessonLayout>
   );
 }
