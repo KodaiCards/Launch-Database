@@ -98,6 +98,10 @@ export default function T14L03_MessengerBondingRules() {
           no metal at all and therefore needs no bond.
         </p>
 
+        <p className="text-slate-400 text-sm mb-3 p-3 border-l-4 border-slate-500 mt-4">
+          <strong>Callback:</strong> Recall from <strong>T14.L02 Multi-Grounded Neutral</strong> — the neutral wire is grounded at frequent intervals (every pole) to keep it near earth potential. <strong>T14.L01 Why We Ground</strong> — bonding creates equipotential so no voltage differences cause arcing or shocking. This lesson operationalizes those principles: the messenger bond clamp + downlead assembly is how you achieve bonding of your metallic messenger to the MGN system at every splice closure.
+        </p>
+
         <h3 className="mt-4 font-semibold">Acronyms in this lesson</h3>
         <table className="w-full text-sm border border-white/10 rounded-lg mt-2">
           <thead className="bg-white/5 text-slate-200">

@@ -67,6 +67,10 @@ export default function T14L11_NESCGroundsPerMile() {
           interval. The stricter requirement always controls.
         </p>
 
+        <p className="text-slate-400 text-sm mb-3 p-3 border-l-4 border-slate-500 mt-4">
+          <strong>Callback:</strong> Recall from <strong>T14.L02 MGN</strong> — the distribution neutral is grounded at frequent intervals. <strong>T14.L03 Messenger Bonding Rules</strong> — your messenger bonds at every splice closure. This lesson sets the complementary requirement on the communications side: NESC Section 09 minimum grounds-per-mile interval for the communications messenger independent of splice locations.
+        </p>
+
         <h3 className="mt-4 font-semibold">Acronyms in this lesson</h3>
         <table className="w-full text-sm border border-white/10 rounded-lg mt-2">
           <thead className="bg-white/5 text-slate-200">

@@ -100,6 +100,10 @@ export default function T14L09_CathodicProtectionBasics() {
           and isolation hardware prevent this.
         </p>
 
+        <p className="text-slate-400 text-sm mb-3 p-3 border-l-4 border-slate-500 mt-4">
+          <strong>Callback:</strong> Recall from <strong>T14.L02 MGN</strong> — the grounded neutral and your bonded messenger sit at near-earth potential. <strong>T14.L05 GES</strong> — facility grounds create equipotential. When buried metallic conduit is bonded to different ground electrodes at different locations, voltage differences exist between them — creating corrosion cells. This lesson explains cathodic protection: how to prevent that difference from destroying your conduit.
+        </p>
+
         <h3 className="mt-4 font-semibold">Acronyms in this lesson</h3>
         <table className="w-full text-sm border border-white/10 rounded-lg mt-2">
           <thead className="bg-white/5 text-slate-200">

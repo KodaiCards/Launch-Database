@@ -96,6 +96,10 @@ export default function T14L07_SurgeArrestersLightning() {
           and at every building entry.
         </p>
 
+        <p className="text-slate-400 text-sm mb-3 p-3 border-l-4 border-slate-500 mt-4">
+          <strong>Callback:</strong> Recall from <strong>T14.L01 Why We Ground</strong> — grounding provides a safe path for unwanted electrical energy into the earth. This lesson shows surge arresters — the devices that detect lightning surges and divert them to ground. The arrester's ground path connects to the GES and ground ring covered in T14.L05-L06.
+        </p>
+
         <h3 className="mt-4 font-semibold">Acronyms in this lesson</h3>
         <table className="w-full text-sm border border-white/10 rounded-lg mt-2">
           <thead className="bg-white/5 text-slate-200">

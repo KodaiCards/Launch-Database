@@ -100,6 +100,10 @@ export default function T14L04_NEC250Electrodes() {
           soil conditions.
         </p>
 
+        <p className="text-slate-400 text-sm mb-3 p-3 border-l-4 border-slate-500 mt-4">
+          <strong>Callback:</strong> Recall from <strong>T14.L01 Why We Ground</strong> — grounding provides a low-impedance path to earth for fault current. This lesson details NEC Article 250.52 electrode types you'll select and install at building entrance and facility sites — the specific hardware options that create that path to earth.
+        </p>
+
         <h3 className="mt-4 font-semibold">Acronyms in this lesson</h3>
         <table className="w-full text-sm border border-white/10 rounded-lg mt-2">
           <thead className="bg-white/5 text-slate-200">

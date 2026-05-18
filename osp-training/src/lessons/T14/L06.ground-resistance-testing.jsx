@@ -93,6 +93,10 @@ export default function T14L06_GroundResistanceTesting() {
           and you have the ground resistance. Compare to the 25 Ω NEC threshold (or 5 Ω at FDH
           sites) and you know whether the electrode passes or whether you need to add another rod.
         </p>
+
+        <p className="text-slate-400 text-sm mb-3 p-3 border-l-4 border-slate-500 mt-4">
+          <strong>Callback:</strong> Recall from <strong>T14.L05 IBT and GES</strong> — a GES must meet NEC §250.56 (25Ω) or RUS GR-1275 (5Ω) threshold. <strong>T14.L04 NEC §250 Electrodes</strong> — you select and install electrodes. This lesson teaches you the IEEE 81 test method to verify your installed electrode actually achieves the required resistance before you sign off.
+        </p>
         <p className="mt-2">
           This lesson walks through the test step by step with numbers so you know exactly
           what you're doing when you set up the equipment in the field.

@@ -112,6 +112,10 @@ export default function T14L02_MGNMultiGroundedNeutral() {
             </tr>
           </tbody>
         </table>
+
+        <p className="text-slate-400 text-sm mb-3 p-3 border-l-4 border-slate-500 mt-4">
+          <strong>Callback:</strong> Recall from <strong>T01.L02 Joint-Use and Utility Coordination</strong> — joint-use poles host multiple utilities in specific grade-of-construction zones (supply space, communications space). <strong>T14.L01 Why We Ground</strong> — grounding provides a low-impedance path for fault current. This lesson explains how the distribution utility's grounding strategy (MGN) on the power side affects the safety of your communications-side plant and bonding strategy.
+        </p>
       </section>
 
       {/* ── WORKING ─────────────────────────────────────────────────────── */}

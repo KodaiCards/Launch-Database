@@ -120,6 +120,10 @@ export default function T14L01_WhyWeGround() {
           </tbody>
         </table>
 
+        <p className="text-slate-400 text-sm mb-3 p-3 border-l-4 border-slate-500 mt-4">
+          <strong>Callback:</strong> Recall from <strong>T01.L02 Joint-Use and Utility Coordination</strong> — the messenger wire and cable armor are communication company assets on a shared pole with power and other utilities. T01.L03 introduced cable sheath and metallic components. This lesson now explains why those metallic components must be electrically connected to ground — the safety mechanism that protects crew members.
+        </p>
+
         <h3 className="mt-5 font-semibold">The sink-drain analogy</h3>
         <p className="mt-2">
           Think of stray electrical energy the way you think of water in a sink. If the drain

@@ -77,6 +77,10 @@ export default function T14L10_RUSBondingGrounding() {
           the Form 219 close-out section expects.
         </p>
 
+        <p className="text-slate-400 text-sm mb-3 p-3 border-l-4 border-slate-500 mt-4">
+          <strong>Callback:</strong> Recall from <strong>T14.L06 Ground Resistance Testing</strong> — IEEE 81 test method measures and verifies electrode resistance. <strong>T14.L05 GES</strong> — you design and install a grounding electrode system. This lesson explains how RUS captures that design and test data: the bonding schedule (what equipment bonds where) and ground test log (what resistance was measured + when).
+        </p>
+
         <h3 className="mt-4 font-semibold">Acronyms in this lesson</h3>
         <table className="w-full text-sm border border-white/10 rounded-lg mt-2">
           <thead className="bg-white/5 text-slate-200">

@@ -89,6 +89,10 @@ export default function T14L05_IBTandGES() {
           building entry. (Source: NEC NFPA 70-2023 §250.94.)
         </p>
 
+        <p className="text-slate-400 text-sm mb-3 p-3 border-l-4 border-slate-500 mt-4">
+          <strong>Callback:</strong> Recall from <strong>T14.L04 NEC §250 Electrodes</strong> — electrode types are the hardware. <strong>T14.L01 Why We Ground</strong> — grounding provides a path for fault current + GPR. This lesson explains why all incoming services (fiber, power, cable TV, etc.) must bond to ONE common electrode system (GES), and how the IBT device makes that bonding connection at every building entry.
+        </p>
+
         <h3 className="mt-4 font-semibold">Acronyms in this lesson</h3>
         <table className="w-full text-sm border border-white/10 rounded-lg mt-2">
           <thead className="bg-white/5 text-slate-200">
