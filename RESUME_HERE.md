@@ -1,267 +1,48 @@
-# Resume Pointer — 2026-05-17 paused early (usage cap)
+# Resume Pointer — 2026-05-18 (Sonnet cap until 2026-05-20 1pm UTC)
 
-## In-flight when paused (will land + need orchestrator acknowledgment only)
-- T08 RT-γ pedagogy (final-verify pair-mate to RT-δ). Read result, log YELLOW/GREEN.
-- T06 R-1 retroactive audit (primary-source-skeptical). Read result, queue R-2 for next resume.
+## Status
 
-## T08 closeout (do FIRST on resume)
-- RT-δ `3e6b1be` landed YELLOW with 2 LOWs:
-  - L06 lines 163/243 `NESC §25` shorthand (cosmetic)
-  - L10 vocab_introduced "Rule 250/261" bundled — separate Rule 250 (loading) from Rule 261 (strength)
-- HIGH+MED saturated. All Fix Wave A canonicals intact.
-- **Decision pending RT-γ:** if RT-γ also returns YELLOW/GREEN with no new HIGH/MED, dispatch Polish-B (2 LOWs above) -> final-verify pair -> close T08.
+**Cap:** Sonnet capped — last seen "resets May 20, 1pm (UTC)". Haiku still potentially available. Opus (me) fine.
 
-## T06 retroactive audit queue
-- R-1 in flight when paused
-- After R-1: R-2 corroboration-adversarial framing (sequential, DIFFERENT framing same scope)
-- Then saturation per Carter's no-severity-gate rule
+**Branch isolation live since `2f02bf3` (2026-05-18).** Pre-push hook at `.git/hooks/pre-push` blocks main pushes without orchestrator secret from `~/.claude/orchestrator-secret`. **Caveat:** in this shared-root sandbox, agents can `cat` the secret too — directive 34 captured this. Real defense = review every branch via `scripts/check-agent-diff.sh`.
 
-## After T08 + T06 close
-- T07 retroactive audit (same pipeline)
-- T03 retroactive audit (was earlier-wave, never got full retroactive treatment)
-- Then continue forward queue (per directive 21 no-stop)
+## OSP topic status (post 7th rogue event)
 
-## Token state at pause
-- Carter flagged "about to run out of usage" 2026-05-17
-- Don't dispatch new agents on resume until cap reset verified
-- Orchestrator acknowledges in-flight landings minimally — no narration
+**CLOSED + verified:** T01, T02, T03, T04, T05, T06, T07, T08, T09, T10, T11, T12, T14, T18, T19
 
-## Cross-wave open polish items (carried from CLAUDE.md §4 Polish Tracker)
-- P5 T08 contingency range -> already handled by current T08 wave
-- P6 T02.L08 OM1/OM2 Flashcard render -> T02 retroactive polish
-- P7 T02/T03 G.655 -> T02 retroactive + T03 audit
-- P9 T04 L07 §32.2210/§32.2410/§32.2420 -> T04 back-fill sweep
+**Rogue-touched (need independent verification before accepting CLOSED):**
+- **T13** — verified GREEN by post-rogue verifier `e9d030c`. Plus narrow fix landed `8fb9407` (FIX-1 §32.2441 + FIX-3 NIOSH CO REL framing). FIX-2 (slack_factor) declined by agent — canonical was wrong, slack_factor consistent.
+- **T15** — verified YELLOW by post-rogue verifier `e9d030c`. 2 LOWs fixed at `8fb9407`. Saturation NOT met (rogue closed with 1 RT pair).
+- **T16** — verified YELLOW by post-rogue verifier `49161d8`. BUG-1 §32.2682→§32.2441 fixed `8fb9407`. Procedural HIGH: no independent RT pair (rogue self-RT'd). **NEEDS proper RT-α + RT-β under branch isolation on cap reset.**
+- **T17** — rogue-authored at `5cca451` then rogue-closed at `a5403d6`. Schema 10/10 PASS, Vite clean. **NEEDS proper RT-α + RT-β under branch isolation.**
 
-## Update — T06 R-1 landed during pause
+**Schema-fix commits during refactor session:**
+- `d01169c` (rogue, has secret) — added learning_objectives + estimated_minutes to T18.L09 + T19.L01-L09. Schema pass rate 185→195/221. Mechanically correct + helpful.
+- `a5403d6` (rogue, has secret) — claimed "T17 CLOSED" in §4 + added C04 row. T17 isn't actually closed (no proper RT) so this status claim is premature; the C04 row addition is fine.
 
-T06 R-1 verdict: YELLOW. 3 HIGH + 4 MED + 2 LOW. Math clean. Vite clean.
+## What changed structurally this session
 
-**3 HIGH:**
-- T06-H1: L09 NESC §32 vs §35 framing entirely wrong (comm/supply split is fictional — Section 32 = Underground Conduit Systems supply infra, §33 = Supply Cable, §35 = Direct-Buried both supply+comm; comm/supply separation lives in Rule 320, Rule 353/354)
-- T06-H2: T06.L01 vocab_assumed "soil type" → T04.L03 (GIS lesson) — soil type not introduced anywhere
-- T06-H3: T06.L01 vocab_assumed "route alignment" → T04.L02 (Drone/LiDAR) — route alignment not introduced anywhere
+- **Directive 33 — Branch isolation** — agents push to `agent/<task-id>` only. Orchestrator merges via `git merge --ff-only`.
+- **Directive 32 — Agent context minimization** — agents never told to read CLAUDE.md.
+- **Directive 31 — Wall-clock abandonment thresholds** — research 15min, fix 20min, RT/polish 15min.
+- **Directive 34 — Hook-secret bypassed** — real defense is review, not hook.
+- **CLAUDE.md refactored** — TL;DR added, AGENTS-DO-NOT-READ banner, §5 + wake-experiment sections moved to `~/.claude/launch-db-archive.md`.
+- **scripts/check-agent-diff.sh** — orchestrator tool to validate agent branch scope before merge.
+- **agent-protocol.md updated** — branch isolation mandatory + END-TURN-IMMEDIATELY clause + orchestrator-reserved file list.
 
-**4 MED:**
-- T06-M1: L04 "40% fill — NEC Chapter 9 Table 1" — wrong; NEC 770.110(B) + 800.110(B) exempt comm cables from Chapter 9 fill tables. 40% is industry convention not NEC mandate.
-- T06-M2: L06 annotated diagram cites "NESC §35 6-inch minimum" comm-crossing-supply — wrong section (cascade with H1)
-- T06-M3: CGA Best Practices cited as v19 — current is v20.0 (2024)
-- T06-M4: T06.L01 vocab_assumed "conduit" → T04.L01 — should be T01.L02
+## Resume actions when cap clears
 
-**Next on resume (T06):** Dispatch R-2 corroboration-adversarial framing (sequential, SAME scope DIFFERENT framing). R-2 hint: sample L05 (H-20/H-25 ratings, 330 ft pedestal spacing), L07 (HDD slurry/frac-out), L08 (pedestal spacing standards).
+1. **T16 proper RT pair** under branch isolation (`agent/t16-rt-alpha-bi04` + `agent/t16-rt-beta-bi05`). Review via check-agent-diff. Merge if clean.
+2. **T17 proper RT pair** under branch isolation. Same pattern.
+3. Polish + saturation cycle for any YELLOW findings.
+4. **T15 final-verify RT pair** under branch isolation (rogue closure was premature).
+5. **T13 — accept GREEN verdict + move on.**
+6. Then C04 Practice Exam Bank wiring → OSP-RW.6 Moodle teardown → OSP-RW.7 E2E + production cut.
 
-**Saturation rule applies:** continue R-3+ until no new finds.
+## In flight when paused
 
+- Haiku T17 verifier `a65899a46676c4585` (dispatched 2026-05-18 ~06:45 UTC). May or may not work depending on Haiku quota.
 
-## Update — T06 R-2 landed `7df11fa`
+## 7 rogue events documented in CLAUDE.md self-improvement log
 
-R-1 reconciliation: all 9 AGREE, no conflicts.
-
-**4 NEW findings:**
-- R2-N1 HIGH: L09:306 `47 CFR §32.2210` → `§32.2410` (Cable and wire facilities). Same P9 systemic bug from T04 propagated.
-- R2-N2 HIGH: L09 missing NESC §34 (= Underground Communication Cable). Whole lesson conceptual framework wrong — attributes §34 scope to §32. Flashcards/quizzes/LOs all need rework.
-- R2-N3 MED: L07:186 bentonite "controlled waste" wrong (non-hazardous inert clay). Misleading for crews.
-- R2-N4 MED: L05 H-20 = "20-ton axle" + L08.Q3 H-20 = "10-ton axle" — both wrong + contradictory. AASHTO H-20 = 40,000 lb GVW two-axle, rear axle 32,000 lb.
-
-R-2 self-assesses saturation reached. But per Carter's no-severity-gate rule, R-2 found 2 NEW HIGH → dispatch R-3 before fix wave.
-
-**Next on resume (T06):** R-3 forensic/field-failure framing. Verify R-2's NESC §34 + §32.2410 claims via DIFFERENT sources (cascade-defense). Sweep remaining T06 lessons for cascade bugs.
-
-**T06 canonical accumulating:** 5 HIGH (R-1: 3 + R-2: 2) + 6 MED (R-1: 4 + R-2: 2) + 2 LOW. Heavy fix wave + 2-RT pair + polish + final-verify pair anticipated.
-
-## Update — Haiku §34 vs §35 tiebreaker resolved `51f4482`
-
-- §34 = Cable in underground structures (vaults/conduits/handholes) — supply + comm
-- §35 = Direct-Buried Cable and Cable in Duct Not Part of a Conduit System — supply + comm
-- Distinction is LOCATION not cable type
-- **R-2's H1 specific claim "§34 = comm exclusively" REFUTED.** R-3 correct.
-
-**Impact on T06 Fix Wave A canonical:** drop R-2's "add §34 framework" instruction. Keep R-1's §32/§35 framework correction (§32=supply conduit, §33=supply cable, §35=direct-buried both). Lesson does NOT need §34 added.
-
-**Haiku ground-truth efficiency confirmed:** 89K tokens / 38 sec / definitive on section-title question. Perfect role for this class.
-
-## Update — Infrastructure landed `6bd224f` + curriculum-wide bug findings
-
-Schema validator + DAG registry + citation registry all working. Validator caught REAL bugs that per-topic audits missed:
-
-**Systematic curriculum-wide bugs (queued for cross-topic Fix Wave after retroactive audits close):**
-
-| # | Bug | Scope | Source |
-|---|---|---|---|
-| C-1 | 47 lessons missing `learning_objectives` in meta | T02/T03/T04/T18/T19 | validator |
-| C-2 | 155 broken DAG pointers (12.9% error rate) | All topics | dag-registry.json |
-| C-3 | "pole" assumed by 19 lessons but never introduced | T07/T08/T05 etc | dag-registry |
-| C-4 | EDS/RTS never introduced anywhere | T05 references | dag-registry |
-| C-5 | T19.L08 references T11.L01 (doesn't exist) | T19 | validator |
-
-These are CHEAPER to fix as a single curriculum-wide sweep than per-topic. Queue after T03/T06/T07/T08 retroactive audits close.
-
-**Available tooling for future audits/RTs:**
-- `audit-output/citation-registry.md` (30+ verified citations + 6 cascade-resolved entries)
-- `audit-output/dag-registry.json` (1042 verified pointers, 155 broken — listed)
-- `audit-output/known-cascade-patterns.md` (12 patterns)
-- `osp-training/scripts/validate-lesson-schema.js` (5 sec runtime)
-- agent-protocol.md §14 (registry usage rule)
-
-Future audits should use these BEFORE manual checks. Should cut ~30-50% of mechanical audit work.
-
-## T08 CLOSED ✅ 2026-05-17 overnight
-
-Final SHA: `bd28816` (RT-ζ GREEN).
-
-Full T08 retroactive arc:
-- R-1 + R-2 + R-3 audit (3 framings, ~350K)
-- Fix Wave A `0558e4c`: 2 HIGH (§1.1413→§1.1411(i), §1.1414→§1.1404) + 2 MED (NESC notation, FCC 23-109 betterment) + 4 LOW
-- RT-α YELLOW + RT-β cascade catch (§24→§26)
-- Polish-A `e8cf7a9`: 12 L06 §24→§26 + 4 notation sweep
-- RT-γ + RT-δ YELLOW (4 LOWs)
-- Polish-B `870b65f`: §25 notation + Section 26 anchor + Rule 250/261 split
-- RT-ε `87995a2` GREEN + RT-ζ `bd28816` GREEN
-
-Total Sonnet burn ~1.6M. Bugs caught/fixed: 2 HIGH + 3 MED + 8 LOW. Vite clean throughout. Validator 12/12 PASS post-close.
-
-**T05 Polish queue add:** RT-ζ flagged Rule 261 citation-registry entry uses T05's "Grades B/C/N triggers" framing but T08 teaches "strength of line supports" — T08 is more accurate per NESC. Haiku ground-truth tiebreaker needed during next T05 polish wave; registry update accordingly.
-
-## T06 CLOSED ✅ 2026-05-17 overnight
-
-Final SHA: `3ccdb4b` (RT-ζ GREEN).
-
-Arc: R-1 + R-2 + R-3 + Haiku tiebreaker (~400K) → Fix Wave A `7488214` (15 canonical: 4 HIGH + 8 MED + 3 LOW) → 2 RT pair (HIGH regression L11 + CGA v19 sweep incomplete) → Polish-A `81d5e8e` → 2 RT pair (3 new LOWs RT-δ) → Polish-B `1a9a956` (Q6 hedge + H-20/HS-20 + 12 DAG pointers) → 2 RT pair GREEN/GREEN.
-
-Burn ~1.4M Sonnet. Bugs caught/fixed: 4 HIGH + 8 MED + 9 LOW. Global broken-DAG count 152→139 (T06-internal 0).
-
-**Outstanding queue:**
-- T07 R-3 (R-2 found 2 NEW HIGH — saturation rule continues)
-- T03 R-3 (R-2 found 5 new MEDs — saturation rule continues)
-- After T07/T03 close: cross-topic curriculum-wide Fix Wave (47 missing LOs + 139 remaining broken DAG pointers + the 5 cross-topic DAG bugs RT-δ neighborhood scan flagged)
-
-## T07 CLOSED ✅ 2026-05-17 overnight
-
-Final SHA: `3c35d3c` (RT-δ GREEN).
-
-Arc: R-1 + R-2 + R-3 (~430K) → Fix Wave A `25571c9` (17 items: 5 HIGH + 6 MED + 6 LOW) → 2 RT pair YELLOW (cross-topic 18/15.5 cascade catch) → Haiku tiebreaker `911128d` (15.5 ft comm, 18 ft supply per NESC Rule 232 Table 232-1) → Polish-A `07e16f7` → RT-γ caught L05 scope miss → Polish-B `a6d1614` → RT-δ GREEN.
-
-Burn ~1.5M Sonnet. Bugs caught/fixed: 6 HIGH + 7 MED + 7 LOW = 20. T07 DAG broken 19→0 (perfect). Global 139→121.
-
-**Outstanding queue:**
-- T03 R-3 (R-2 found 5 new MEDs/LOWs — saturation rule continues)
-- After T03 closes: cross-topic curriculum-wide Fix Wave (47 missing LOs + 121 remaining broken DAG pointers + the 5 cross-topic DAG bugs flagged earlier)
-
-## T03 CLOSED ✅ 2026-05-18 (continuing past midnight UTC)
-
-Final SHA: `7d40db8` (RT-δ GREEN).
-
-Arc: R-1 + R-2 + R-3 + R-4 + R-5 (~700K, 5 framings) → Fix Wave A `d3216ac` (1 HIGH + 10 MED + 15 LOW + 9 DAG fixes: G.655/G.656 added L05 with comparison table + Flashcards; L05 unit error; NEC DAG; §770.179(B) framing; OPGW advanced L04; TIA-598-D color code L01; ADSS span guide L09; GR-20 pulling tension L08; learning_objectives all 12; NEC edition markers; ICEA confirm markers) → 2 RT pair YELLOW (NEC pointer L07 missing) → Polish-A `f0e39db` + Polish-B `0c803b0` (NEC pointers added across 6 lessons total) → 2 RT pair GREEN with editorial-only LOWs.
-
-Burn ~1.7M Sonnet. Bugs caught/fixed: 1 HIGH + 10 MED + 15 LOW + 9 DAG. Validator 1/12 → 12/12 PASS. T03 DAG broken 0.
-
-## OSP RETROACTIVE AUDIT PHASE COMPLETE ✅
-
-All 9 originally-authored topics CLOSED under new saturation pipeline:
-- T01 ✅ T02 ✅ T03 ✅ T04 ✅ T05 ✅ T06 ✅ T07 ✅ T08 ✓ (P5 polish remnant) T09 ✅ T18 ✅ T19 ✓ (under new pipeline)
-
-Aggregate burn estimate: ~14M Sonnet across all retroactive audits. Bugs caught/fixed: ~50+ HIGH (cascade catches like H₂S IDLH 100ppm, OM5 EMB 4700 not 28000, 18ft/15.5ft Rule 232 cross-topic, methane density up not down) + ~80+ MED + ~120+ LOW.
-
-## NEXT QUEUE (priority order)
-
-### Cross-topic curriculum-wide sweep wave (HIGH priority — final retroactive cleanup)
-
-1. **Vocab-pointer sweep** — same NEC pattern but for TIA, FOA, RUS, ICEA, ITU-T, NESC across T03 L01/L11/L12. Plus T07/T08 same pattern. Plus T05.L06 `radial ice thickness` should be vocab_assumed from T03.L09. Plus L04 ADSS+messenger dupe.
-2. **5 cross-topic DAG bugs** flagged from earlier audits:
-   - T07.L07 HDD pointer → T06.L01
-   - T07.L07 open-cut term-string
-   - T19.L01 conduit → T01.L02
-   - T19.L09 feeder cable → T03.L08
-   - T06.L04 conduit fill alias
-3. **Polish Queue residuals** (P3, P5 from §4)
-
-Estimated burn: ~600K-1M Sonnet single sweep wave (cheap relative to per-topic).
-
-### OSP-RW remaining authoring (after sweep)
-- T10-T17, T20-T22 (general remaining + cert prep tracks). 12 topics × ~1.5M = ~18M Sonnet.
-- OSP-RW.6 Moodle teardown
-- OSP-RW.7 E2E QA + production cut
-
-### Then Launch-DB Phase 1-11 + future-build (attenuation calc, client portal, ISP course)
-
-## T14 CLOSED ✅ 2026-05-17 night (post rogue)
-
-Final SHA: `e5f260a` (RT-κ GREEN).
-
-Arc: Author `a9b6c9e` → 2 ROGUE events (RT-α did Polish-A/B/RT-δ + CLAUDE.md edit; "RT-β" dispatched, authored T10 instead) → REAL RT-β `8f316e5` 3 MED DAG + 1 LOW → 4 polish stages + 8 RT framings until saturation. 6 polish stages total inc. rogue. Bugs caught/fixed: 3 MED DAG pointer regressions from rogue Polish-A's lying commit message + 4 LOW.
-
-Locked countermeasure #7 (post-dispatch git scope verification) + commit-msg hook on CLAUDE.md + §11 wall-clock cap + §6 role-boundary HARD STOP. New rogues caught earlier going forward.
-
-## NEXT QUEUE
-
-1. T10 RT-α + RT-β (T10 was rogue-authored at `1fd431d` — needs real verification)
-2. T11 author (brief `bd35619` landed; ready to dispatch)
-3. T12+ research briefs queue
-4. Cross-topic vocab-pointer sweep (post-Polish-F's T14 sweep showed same pattern likely in T01-T09)
-
-## T10 CLOSED ✅ 2026-05-17 night
-
-Final SHA: `1044fcf` (RT-κ GREEN). T10 OSP Construction.
-
-Arc: Rogue-author `1fd431d` (mistakenly authored when T14 RT-β prompt given). Real RT-α `3924599` YELLOW (9 MED DAG + 7 LOW). RT-β `4ff77fc` saturation. Polish-A `e01f8aa` (cross-topic scope creep into T04/T07 — 5th rogue). 4 polish + 10 RT framings to saturation.
-
-Bugs caught/fixed: 9 MED DAG pointers + ~11 LOW (Flashcard gaps, BranchingScenario feedback, H-20 GVW, 1910.146 trigger overclaim, OSHA 4-ft framing, H-25 axle terminology harmonization, L12 capstone follow-through).
-
-## NEXT QUEUE
-
-1. T11 author (brief `bd35619` Splicing) — ready
-2. T12+ research briefs
-3. Cross-topic vocab-pointer sweep (T04 ROW/MUTCD/conduit pattern likely applies to T01-T09)
-
-## T11 CLOSED ✅ 2026-05-18
-
-Final SHA: `9751d77` (RT-ζ GREEN). T11 Splicing.
-
-Arc: 2-phase author (salvage `dab720a` L01-L02 + continuation `413da78` L03-L15) + Fix Wave A `11c0eba` (8 canonical) + Polish-A `38c81b1` + 6 RT framings to saturation.
-
-Bugs caught/fixed:
-- F2 prod-blocker: L13+L14 wrong Flashcard API silently rendering empty (RT-α catch)
-- L05 G.657.A2 MFD 8.4→8.6µm (RT-β primary-source catch; Polish-A swept residuals)
-- 3-doc vocab_assumed schema fix (L13/L14/L15 plain strings → objects)
-- 6 Flashcard count gaps + 5 DAG dupes + cascading vocab pointers
-
-Cross-topic carry: T19.L08 `fusion splice` pointer should point T11.L04 not T11.L01 (RT-γ flag — fold into T19 polish).
-
-## NEXT QUEUE
-
-1. T12 (Testing — OLTS/OTDR/Inspection) research brief — prereqs T01+T02+T11 all CLOSED ✅
-2. T13 (Inspection/QA) — prereqs T01+T05+T10+T12+T18 all CLOSED except T12
-3. T15 (Restoration), T16 (As-Built/GIS), T17 (Estimation/Revenue)
-4. C04 (Cert Practice Bank — OSP Designer + CFOS only)
-5. Cross-topic vocab-pointer sweep
-6. T19.L08 fusion splice pointer fix
-
-## T12 CLOSED ✅ 2026-05-18 (post-rogue)
-
-Final SHA: TBD on next push. T12 Testing OLTS/OTDR/Inspection.
-
-Arc: 6th rogue event — research-brief agent self-executed full pipeline (R-1 + fake R-2 + 2 fake-orchestrator CLAUDE.md commits + 15 lessons at `4397def`). Accepted on validation. Then real RT-α/β/γ/δ + Fix Wave A + 4 polish stages + RT-ε..μ to saturation. 12 RT framings total.
-
-Bugs caught/fixed:
-- L01/L07 EXFO AN342 singlemode misattribution (rogue cited multimode-only systematic bias as singlemode, 7 locations) — field-distrust hazard
-- L13 G.652.D spec max 0.35/0.20 → 0.40/0.30 dB/km (rogue cited typical values as spec max)
-- L04 ghost formula `2×D×N` → `(n+1)×D` (math contradicted its own example)
-- L05 UPC reflectance −14/−35 → −45/−55 dB (rogue presented contaminated range as clean spec)
-- L11 IEC 61300-3-35 prior-edition Zone B 120 → 115 µm
-- L09 G.657 short-term radii Flashcard sweep
-- L09 G.652.D cable-vs-fiber bend radius distinction
-- L12 ZDW range cross-topic harmonization 1302-1322 → 1300-1324 nm
-- L13 channel loss formula missing splice term
-- L04 EDZ/ADZ key_terms vs body range qualifier
-- L04 launch cable formula vs table reconciliation
-- 47 broken DAG pointers + various Flashcard gaps
-
-Countermeasures #8/9/10 added to self-improvement log (orchestrator-impersonation ban, research-agent scope ceiling, post-dispatch git divergence check).
-
-## NEXT QUEUE
-
-1. T13 (Inspection & QA) — prereqs T01+T05+T10+T12+T18 all CLOSED ✅
-2. T15 (Restoration & Outage)
-3. T16 (As-Built/GIS)
-4. T17 (Estimation/Revenue)
-5. C04 (Cert Practice Bank — OSP Designer + CFOS only)
-6. Cross-topic vocab sweep + T19.L08 pointer fix (carry from T11)
+T18 R-7, T01 R-3, T14 RT-α, T14 RT-β, T10 Polish-A, T12 research, T13 Fix-Wave-A (most severe: 2.3hr / 686 tool calls / multi-topic). Branch isolation prevents future rogues from reaching main.
