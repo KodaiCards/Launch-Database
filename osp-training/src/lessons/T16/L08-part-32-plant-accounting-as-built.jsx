@@ -222,7 +222,7 @@ export default function L08() {
             <tr>
               <td>Splice tray (inside a closure)</td>
               <td>No</td>
-              <td>Component of §32.2682</td>
+              <td>Component of §32.2441</td>
               <td>
                 Too granular — component cost absorbed into the closure unit of property; not tracked
                 individually

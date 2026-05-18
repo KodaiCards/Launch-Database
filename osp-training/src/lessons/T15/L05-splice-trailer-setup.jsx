@@ -77,7 +77,7 @@ const CO_WORKED = {
     'A typical 5 kW generator produces ~40–100 ppm CO at 20 feet downwind in calm air (NIOSH data). At 10 feet, CO concentration can be 4–10× higher due to the inverse-square relationship between distance and plume dilution.',
     'NIOSH DHHS Publication 96-118 sets the minimum generator separation at 20 feet with exhaust directed away from all air intakes. This is not a comfort standard — CO at 200 ppm causes headache and dizziness within 2 hours; at 400 ppm, life-threatening symptoms within 3 hours (NIOSH IDLH = 1,200 ppm).',
     'The 20-foot rule assumes calm-to-light wind and a standard 5–10 kW portable generator. In enclosed valleys, against building faces, or with higher-output generators, additional separation or exhaust extensions are required.',
-    'Sanity check: at 20 feet in an open field with light wind, a typical 5 kW generator\'s exhaust plume disperses to below the NIOSH 35 ppm ceiling exposure limit. At 10 feet in calm air, it does not.',
+    'Sanity check: at 20 feet in an open field with light wind, a typical 5 kW generator\'s exhaust plume disperses to below the NIOSH 35 ppm REL (8-hr TWA). At 10 feet in calm air, it does not.',
   ],
   result: '20 ft minimum — NIOSH recommendation for portable generators near enclosed workspaces. This is the engineering separation distance, not an administrative preference.',
 };
