@@ -18,7 +18,7 @@
 | `GIS` introduced in T04.L03 | T04.L06 vocab_assumed points to T04.L03 | T04.L06 vocabulary_assumed | VERIFIED |
 | `shapefile` introduced in T04.L06 | Lesson file vocabulary_introduced grep | T04.L06 vocabulary_introduced | VERIFIED |
 | `KMZ` introduced in T04.L06 | T04.L06 key_terms includes KMZ | T04.L06 key_terms | VERIFIED |
-| `KML` introduced in T04.L06 (prose/table) | T04.L06 table entry for KML | T04.L06 lesson body | VERIFIED (in table, not key_terms — may need verify in vocab_introduced) |
+| `KML` — NOT in T04.L06 vocabulary_introduced | T04.L06 vocabulary_introduced array confirmed: KMZ, .SHP, geotiff, PDF/A, DWG, deliverable package, versioning — KML absent | T04.L06 | CONFIRMED ABSENT — T16 must introduce KML (or T04.L06 needs retro-patch) |
 | `47 CFR 32` introduced in T04.L07 | Lesson file vocabulary_introduced grep | T04.L07 vocabulary_introduced | VERIFIED |
 | `Form 219 certification scope` introduced in T13.L07 | T13.L07 vocabulary_introduced | T13.L07 | VERIFIED |
 | `post-restoration as-built` introduced in T15.L09 | T15.L09 vocabulary_introduced | T15.L09 | VERIFIED |
@@ -145,9 +145,9 @@
 
 3. **Splice matrix field requirements in RUS context** — Does any RUS bulletin specify required fields for a splice record? Or is it purely industry practice? R-2 should check RUS 1753F-401 (splicing) and 1751F-630 §9 (testing/records).
 
-4. **`KML` in T04.L06 vocabulary_introduced** — Haiku ground-truth: read T04.L06 vocabulary_introduced array exactly and confirm whether 'KML' is listed. Currently only confirmed in table/prose. This determines whether T16 needs to formally introduce KML.
+4. **`KML` — CONFIRMED ABSENT from T04.L06 vocabulary_introduced** — T04.L06 vocabulary_introduced array contains: KMZ, .SHP, geotiff, PDF/A, DWG, deliverable package, versioning — KML is NOT listed. KML is mentioned in table and prose only. R-2 should recommend: (a) T04.L06 retro-patch adds KML to vocabulary_introduced, OR (b) T16.L05 formally introduces KML. Option (a) is preferred to keep GIS formats consolidated in T04.L06.
 
-5. **ASCE 38-22 QL levels — T13.L04 vocabulary status** — T13.L04 vocabulary_introduced contains only `clamp-on ground resistance measurement procedure` (confirmed). ASCE 38-22 QL levels are used in T13.L04 prose. This means T16.L05 (GIS accuracy discussion) may need to either (a) formally introduce QL-A/B/C/D as vocabulary, or (b) confirm T13.L04 prose introduction is sufficient. R-2 verifies T13.L04 vocabulary_assumed for ASCE.
+5. **ASCE 38-22 QL levels — CONFIRMED NOT in T13.L04 vocabulary_introduced or vocabulary_assumed** — T13.L04 vocabulary_assumed confirmed: inspector, inspection segment, acceptance criteria, Form 565, confined space, proctor density, ASTM D1557, depth probe, cover card, Call-811, ground resistance 25Ω, MUTCD, PPE. No ASCE QL entry anywhere. Used in T13.L04 prose only. R-2 recommends: (a) T13.L04 retro-patch adds ASCE 38-22 QL-A/B/C/D to vocabulary_introduced, OR (b) T16.L05 introduces QL-A/B/C/D as it covers GIS accuracy for as-built records. Option (b) may be correct teaching sequence since as-built GPS precision is T16 topic.
 
 ---
 
