@@ -22,6 +22,12 @@ export const meta = {
     { term: 'typical datasheet value', definition: 'What a specific manufacturer\'s fiber actually measures in a production run. Significantly better than the spec maximum — this is what you get when you pull a reel out of the box.' },
     { term: 'designer planning value', definition: 'A round number, slightly above the typical datasheet value, that OSP designers use as their working assumption. It leaves a small margin for aging, temperature variation, and procurement uncertainty.' },
   ],
+  learning_objectives: [
+    'Identify the three attenuation sources in fiber (absorption, scattering, macrobend/microbend)',
+    'Quantify attenuation in dB per kilometer for different wavelengths and fiber types',
+    'Apply RUS 7 CFR 1755.902 attenuation limits to verify cable suitability for a planned link distance',
+    'Predict system link margin by subtracting total attenuation from source-receiver optical power specifications',
+  ],
   vocabulary_assumed: [
     { term: 'total internal reflection', source_lesson_id: 'T02.L01' },
     { term: 'core', source_lesson_id: 'T02.L01' },

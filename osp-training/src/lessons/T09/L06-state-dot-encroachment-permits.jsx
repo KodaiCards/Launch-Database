@@ -173,6 +173,11 @@ export default function T09L06_StateDOTEncroachmentPermits() {
               back: 'A financial guarantee, typically required by state DOTs for encroachment permits, assuring that the contractor will complete the work and restore the ROW to pre-construction condition. If the contractor fails to restore the ROW, the DOT can draw on the bond to cover restoration costs. Bond amounts are set by the DOT based on the scope of work and potential restoration cost.',
             },
             {
+              id: 'T09-L06-fc-roe',
+              front: 'What is right-of-entry?',
+              back: 'Permission granted by the property or ROW owner for a contractor to enter and work on the property. For state DOT encroachment, the right-of-entry is granted as part of the encroachment permit. A contractor who enters state highway ROW without an encroachment permit (and therefore without right-of-entry) is trespassing on state property and subject to civil and potentially criminal liability.',
+            },
+            {
               id: 'T09-L06-fc-plan-profile',
               front: 'What is a plan-and-profile drawing?',
               back: 'An engineering drawing format that shows both the horizontal plan view (top-down view of the alignment) and the vertical profile view (cross-sectional view showing depths, elevations, and clearances) of a proposed installation. State DOTs typically require plan-and-profile drawings for encroachment permit applications, showing conduit depth, bore alignment, clearances from utilities, and road crossing geometry.',

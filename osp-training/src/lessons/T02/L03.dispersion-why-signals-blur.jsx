@@ -33,6 +33,12 @@ export const meta = {
     { term: 'MMF', source_lesson_id: 'T01.L08' },
   ],
   estimated_minutes: 25,
+  learning_objectives: [
+    'Define chromatic dispersion and modal dispersion, and recognize why each blurs signals at long distances',
+    'Distinguish mode-field diameter (MFD) mismatch loss from wavelength-dependent loss',
+    'Apply the G.652.D and G.657.A1 dispersion specifications to a link budget calculation',
+    'Evaluate whether a given bit rate and distance violates dispersion limits for a selected fiber type',
+  ],
 };
 
 export default function T02L03_DispersionWhySignalsBlur() {

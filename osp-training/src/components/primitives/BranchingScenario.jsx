@@ -110,7 +110,7 @@ export default function BranchingScenario({
         <div className="rounded-lg bg-black/30 border border-white/10 p-4">
           <p className="text-sm font-semibold text-slate-300 mb-2">Your decision path:</p>
           <ol className="space-y-2">
-            {history.map((h, i) => (
+            {(history ?? []).map((h, i) => (
               <li key={i} className="flex gap-3 text-sm">
                 <span className="text-slate-300/50 shrink-0 w-5 text-right">{i + 1}.</span>
                 <span className={h.isOptimal ? 'text-ospgreen' : 'text-slate-200'}>
@@ -168,7 +168,7 @@ export default function BranchingScenario({
       {/* Progress breadcrumb */}
       {history.length > 0 && (
         <div className="text-xs text-slate-300/50">
-          Step {history.length + 1} — {history.map(h => h.choiceLabel).join(' → ')}
+          Step {history.length + 1} — {(history ?? []).map(h => h.choiceLabel).join(' → ')}
         </div>
       )}
 

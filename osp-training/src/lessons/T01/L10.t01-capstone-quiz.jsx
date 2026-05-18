@@ -17,6 +17,12 @@ export const meta = {
     'T01.L05', 'T01.L06', 'T01.L07', 'T01.L08', 'T01.L09',
   ],
   vocabulary_introduced: [],
+  learning_objectives: [
+    'Identify and distinguish all 30+ vocabulary terms introduced across T01 lessons',
+    'Match each acronym to its full expansion and explain its role in OSP field work',
+    'Apply knowledge of pole anatomy, cable components, and splice-case internals to scenario questions',
+    'Demonstrate mastery of foundational OSP concepts through a cumulative 15-question assessment',
+  ],
   vocabulary_assumed: [
     { term: 'OSP', source_lesson_id: 'T01.L01' },
     { term: 'ISP', source_lesson_id: 'T01.L01' },

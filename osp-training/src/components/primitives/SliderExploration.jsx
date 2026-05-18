@@ -82,7 +82,7 @@ export default function SliderExploration({
 
       {/* Sliders */}
       <div className="space-y-5 mb-6">
-        {variables.map(v => {
+        {(variables ?? []).map(v => {
           const val   = values[v.key];
           const pct   = ((val - v.min) / (v.max - v.min)) * 100;
           const display = v.format ? v.format(val) : val.toFixed(
@@ -137,7 +137,7 @@ export default function SliderExploration({
         {/* Reference annotations */}
         {annotations.length > 0 && (
           <div className="mt-3 border-t border-white/10 pt-3 flex flex-wrap gap-3">
-            {annotations.map((ann, i) => (
+            {(annotations ?? []).map((ann, i) => (
               <span key={i} className="text-xs text-slate-300/70">
                 <span
                   className="inline-block w-2 h-2 rounded-full mr-1 align-middle"

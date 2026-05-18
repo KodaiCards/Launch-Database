@@ -25,6 +25,12 @@ export const meta = {
     { term: 'G.652.D', definition: 'The ITU-T standard designation for the most common single-mode optical fiber used in OSP networks worldwide. Full name: "Characteristics of a single-mode optical fibre and cable." The ".D" suffix is the current sub-category specifying tight tolerances on chromatic dispersion, low water-peak attenuation (low-water-peak fiber), and MFD. When someone says "standard SMF," they almost always mean G.652.D. (Source: ITU-T G.652.D)' },
     { term: 'MFD', definition: 'Mode Field Diameter — the effective diameter of the light beam traveling through a single-mode fiber, measured at the 1/e² intensity point. MFD is slightly larger than the physical core diameter because the evanescent field extends a short distance into the cladding. G.652.D specifies MFD at 1310 nm as 8.8–9.6 µm (9.2 ± 0.4 µm nominal). MFD mismatch between two fibers being spliced causes additional splice loss even when both are G.652.D — manufacturing tolerance matters. (Source: ITU-T G.652.D; 7 CFR 1755.902)' },
   ],
+  learning_objectives: [
+    'Explain total internal reflection (TIR) and recognize it as the mechanism that confines light inside fiber',
+    'Differentiate core, cladding, and their index-of-refraction relationship',
+    'Calculate or predict critical angle and numerical aperture (NA) for a given fiber type',
+    'Identify G.652.D as the standard single-mode fiber and recognize the consequence of MFD mismatch',
+  ],
   vocabulary_assumed: [
     { term: 'OSP', source_lesson_id: 'T01.L01' },
     { term: 'SMF', source_lesson_id: 'T01.L08' },

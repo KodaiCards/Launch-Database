@@ -32,6 +32,12 @@ export const meta = {
     { term: 'SMF', source_lesson_id: 'T01.L08' },
   ],
   estimated_minutes: 35,
+  learning_objectives: [
+    'Build a complete link budget for a 40-mile span: OLT output → SMF attenuation → splice/connector losses → FDH equipment → ONT input',
+    'Verify margin (signal at receiver minus minimum required) is positive and exceeds 6 dB safety threshold',
+    'Adjust design variables (fiber type, wavelength, span distance) to recover margin when a baseline budget fails',
+    'Present the link-budget calculation to a designer using standard dB notation for sign-off',
+  ],
 };
 
 export default function T02L06_LinkBudgetWorkedExample() {

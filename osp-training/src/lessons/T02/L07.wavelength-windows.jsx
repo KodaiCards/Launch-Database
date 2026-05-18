@@ -42,6 +42,12 @@ export const meta = {
     { term: 'GPON', source_lesson_id: 'T01.L08' },
   ],
   estimated_minutes: 25,
+  learning_objectives: [
+    'Identify the three main OSP wavelengths (1310 nm, 1490 nm, 1550 nm) and their attenuation + dispersion profiles',
+    'Distinguish WDM multiplexing (sending multiple wavelengths on same fiber) from long-haul coherent optics context',
+    'Apply wavelength selection rules: choose 1310 nm for new feeder routes; use 1490 nm or 1550 nm for mature aerial plants with PON overlay',
+    'Reason about wavelength tradeoffs (e.g., 1550 nm lower attenuation vs. higher dispersion) to justify design choices',
+  ],
 };
 
 export default function T02L07_WavelengthWindows() {

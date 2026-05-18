@@ -70,7 +70,7 @@ export default function AnnotatedDiagram({
         />
 
         {/* Hot-point pins */}
-        {hotPoints.map(hp => {
+        {(hotPoints ?? []).map(hp => {
           const isActive = active === hp.id;
           return (
             <button
@@ -100,7 +100,7 @@ export default function AnnotatedDiagram({
 
       {/* Legend — shows all labels; active one is highlighted */}
       <div className="mt-3 flex flex-wrap gap-2">
-        {hotPoints.map(hp => (
+        {(hotPoints ?? []).map(hp => (
           <button
             key={hp.id}
             onClick={() => toggle(hp.id, hp.type ?? 'click')}

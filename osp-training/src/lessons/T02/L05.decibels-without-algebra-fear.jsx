@@ -28,6 +28,12 @@ export const meta = {
     { term: 'SMF', source_lesson_id: 'T01.L08' },
   ],
   estimated_minutes: 30,
+  learning_objectives: [
+    'Convert between absolute power (mW, µW) and relative power (dB, dBm) using the dB formula',
+    'Interpret attenuation and gain specifications in decibels to predict signal levels in a link',
+    'Apply dB math to a worked example: source power (dBm) minus attenuation (dB) minus margin (dB) equals received power (dBm)',
+    'Use decibel understanding to explain why link-budget calculations prioritize dB values over mW values',
+  ],
 };
 
 export default function T02L05_DecibelsWithoutAlgebraFear() {

@@ -112,7 +112,7 @@ export default function TimelineSequence({
           className="flex items-start gap-0 min-w-max relative"
           style={{ minWidth: `${order.length * 9}rem` }}
         >
-          {order.map((ev, i) => {
+          {(order ?? []).map((ev, i) => {
             const correctPos  = correctOrder.indexOf(ev.id);
             const inPlace     = submitted && i === correctPos;
             const outOfPlace  = submitted && i !== correctPos;

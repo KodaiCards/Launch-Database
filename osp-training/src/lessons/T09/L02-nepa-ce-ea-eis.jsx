@@ -209,6 +209,11 @@ export default function T09L02_NepaTypes() {
               front: 'What is CE C-8 and who uses it?',
               back: 'CE C-8 is a USDA/RUS categorical exclusion designation (7 CFR Part 1b, formerly 7 CFR Part 1970) covering aerial or buried utility and communications construction within or adjacent to existing rights-of-way. It is RUS nomenclature — NTIA did not adopt CE C-8 for BEAD; NTIA uses Commerce Department-level CEs instead. For RUS-financed fiber projects, CE C-8 eliminates the need for an EA or EIS provided no extraordinary circumstances are present. Verify the applicable CE designation with the lead federal agency at time of project.',
             },
+            {
+              id: 'T09-L02-fc-esaptt',
+              front: 'What is ESAPTT?',
+              back: 'Endangered Species Act — Programmatic Threatened and Endangered species consultation, sometimes abbreviated ESAPTT in BEAD environmental documentation. Refers to the process of conducting a programmatic (program-wide) Section 7 consultation with USFWS rather than a project-by-project consultation. Not all BEAD programs use this approach — verify with the NTIA-approved state NEPA process at time of project.',
+            },
           ]}
         />
       </section>

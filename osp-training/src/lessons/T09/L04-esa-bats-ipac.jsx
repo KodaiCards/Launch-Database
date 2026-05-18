@@ -168,6 +168,16 @@ export default function T09L04_ESABatsIPaC() {
               back: 'T&E species — the two categories of federal protection under the ESA. "Threatened" means likely to become endangered in the foreseeable future throughout all or a significant portion of its range. "Endangered" means in danger of extinction throughout all or a significant portion of its range. Both categories trigger Section 7 consultation for federal actions. [Species listing status is dynamic — always verify at fws.gov/species at time of project.]',
             },
             {
+              id: 'T09-L04-fc-threatened',
+              front: 'What does "Threatened" status mean under the ESA?',
+              back: 'A species that is likely to become endangered in the foreseeable future throughout all or a significant portion of its range. Threatened status triggers Section 7 consultation obligations for federal actions in the species\' range, but "take" rules may vary from those for Endangered species. For bats, both Threatened and Endangered listings require ESA analysis during fiber permitting.',
+            },
+            {
+              id: 'T09-L04-fc-endangered',
+              front: 'What does "Endangered" status mean under the ESA?',
+              back: 'A species that is in danger of extinction throughout all or a significant portion of its range. Endangered status triggers the full Section 7 consultation and "take" prohibition under the ESA (16 USC §1538). For fiber permitting, the Northern Long-Eared Bat (NLEB) was reclassified from Threatened to Endangered by final rule published November 30, 2022 (87 FR 73488); the effective date was extended to March 31, 2023 per 88 FR 5528. [Confirm current listing status at fws.gov/species at time of project.]',
+            },
+            {
               id: 'T09-L04-fc-ipac',
               front: 'What is IPaC DKey and how is it used in fiber permitting?',
               back: 'Information for Planning and Consultation — Decision Key tool, available at ipac.ecosphere.fws.gov. A free USFWS web tool that allows project applicants to define a project footprint and receive a report of federally listed species and designated critical habitat potentially present in the area. The IPaC DKey also provides activity-specific guidance (e.g., tree-clearing, aerial construction) and avoidance recommendations. Running IPaC is the standard first step in ESA screening for fiber projects.',

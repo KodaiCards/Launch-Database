@@ -90,7 +90,7 @@ export default function HotSpot({
           draggable={false}
         />
 
-        {regions.map(r => {
+        {(regions ?? []).map(r => {
           const isClicked  = clicked.has(r.id);
           const isCorrect  = r.isCorrect;
           const showResult = isClicked || resolved;
@@ -137,7 +137,7 @@ export default function HotSpot({
       {/* Feedback for clicked regions */}
       {clickedRegions.length > 0 && (
         <div className="mt-3 space-y-2">
-          {clickedRegions.map(r => (
+          {(clickedRegions ?? []).map(r => (
             <div
               key={r.id}
               className={[

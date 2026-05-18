@@ -190,6 +190,11 @@ export default function T09L05_USACEWetlandsNWP57() {
               back: 'Section 404 of the Clean Water Act (33 USC §1344) — grants the U.S. Army Corps of Engineers (USACE) authority to regulate the discharge of dredged or fill material into waters of the United States (WOTUS), including wetlands. For fiber projects, any bore, trench, or conduit installation that discharges fill material into a jurisdictional wetland or navigable waterway triggers Section 404.',
             },
             {
+              id: 'T09-L05-fc-sec10',
+              front: 'What is Section 10 (RHA) and how does it differ from Section 404?',
+              back: 'Section 10 of the Rivers and Harbors Act of 1899 (33 USC §403) — requires USACE authorization for any obstruction or alteration of a navigable waterway. For fiber crossings of navigable rivers (not just wetlands), Section 10 applies in addition to (or instead of) Section 404. Many USACE permits, including NWP 57, cover both Section 404 and Section 10 activities in a single authorization.',
+            },
+            {
               id: 'T09-L05-fc-wotus',
               front: 'What does WOTUS mean and why is it important to verify post-2023?',
               back: 'Waters of the United States — the jurisdictional scope of USACE Section 404 authority. The 2023 Supreme Court decision in Sackett v. EPA narrowed the WOTUS definition, particularly for wetlands not continuously connected to navigable waters. WOTUS scope is actively litigated and subject to regulatory change — verify current scope with the relevant USACE district before assuming jurisdiction or non-jurisdiction.',
@@ -208,6 +213,11 @@ export default function T09L05_USACEWetlandsNWP57() {
               id: 'T09-L05-fc-individual-permit',
               front: 'What is an individual permit and when is it required instead of NWP 57?',
               back: 'A project-specific USACE permit issued after a full public interest review when a nationwide permit (NWP) is not available or when a project\'s impacts exceed NWP thresholds. Individual permits typically take 6–12 months to process, compared to 45 days for a PCN under an NWP. Required when a project will impact more than the NWP threshold acreage of wetlands or when the USACE district determines NWP 57 is not appropriate.',
+            },
+            {
+              id: 'T09-L05-fc-33cfr330',
+              front: 'What is 33 CFR Part 330 and what does it cover?',
+              back: 'Title 33 of the Code of Federal Regulations, Part 330 — the regulatory framework governing USACE nationwide permits, including general conditions, PCN requirements, and the 5-year reissuance cycle. 33 CFR §330.5 lists the general nationwide permit conditions that apply to all NWPs including NWP 57.',
             },
             {
               id: 'T09-L05-fc-jd',

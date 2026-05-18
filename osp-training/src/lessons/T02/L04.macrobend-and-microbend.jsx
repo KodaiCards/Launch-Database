@@ -31,6 +31,12 @@ export const meta = {
     { term: 'SMF', source_lesson_id: 'T01.L08' },
   ],
   estimated_minutes: 20,
+  learning_objectives: [
+    'Distinguish macrobend (>5 mm radius) from microbend (<5 mm, often invisible to the eye)',
+    'Apply bend-radius formulas from G.657.A1 to determine safe minimum radius during installation',
+    'Recognize macrobend and microbend failure signatures in OTDR traces',
+    'Plan installation routes and specify bend-limiter hardware using the geometric constraints from fiber specs',
+  ],
 };
 
 export default function T02L04_MacrobendAndMicrobend() {

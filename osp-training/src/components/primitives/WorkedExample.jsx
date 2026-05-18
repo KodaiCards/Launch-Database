@@ -134,7 +134,7 @@ export default function WorkedExample({
 
           {showSteps && (
             <div className="mt-3 rounded-lg bg-black/30 border border-white/10 p-4 font-mono text-sm text-slate-200 space-y-1.5">
-              {derivationSteps.map((step, i) => (
+              {(derivationSteps ?? []).map((step, i) => (
                 <div key={i} className="flex items-baseline gap-3">
                   <span className="text-slate-300/40 text-xs select-none w-5 text-right shrink-0">
                     {i + 1}.
