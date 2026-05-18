@@ -104,6 +104,7 @@
 | Citation | Description | Source | Last Verified | Verified By | Notes |
 |---|---|---|---|---|---|
 | **GR-63-CORE** (Telcordia) | Fiber Optic Connector Standards | https://telecom-info.telcordia.com/ | 2026-05-17 | Haiku ground-truth | **PAYWALLED.** 16 citations. Connector geometry, loss spec. |
+| **GR-196-CORE** (Telcordia/Ericsson) | Generic Requirements for Optical Time Domain Reflectometer (OTDR) Type Equipment | https://telecom-info.telcordia.com/ | 2026-05-18 | T12 Polish-B (RT-ε/RT-ζ cross-verified via EXFO + VIAVI + FOA) | **PAYWALLED.** Defines EDZ, ADZ, and dynamic range requirements for OTDR equipment. EDZ spec: distance from start of reflection to point where trace recovers within 0.5 dB of backscatter baseline. Cited in T12.L04 (dead zones) and T12.L05 (ghost reflections). Cross-confirmed by EXFO AN194, VIAVI OTDR Reference Guide, FOA field practice documentation. |
 | **CGA G-4.1** | Compressed Gas Association — Ammonia Handling | https://www.cganet.com/ | 2026-05-17 | Haiku ground-truth | 36 citations. NH₃ handling, storage. Cited in T18 (cryogenic hazards). |
 | **NFPA 110** | Emergency and Standby Power Generation | https://www.nfpa.org/codes-and-standards | 2026-05-17 | Haiku ground-truth | 9 citations. Backup generator installation. |
 

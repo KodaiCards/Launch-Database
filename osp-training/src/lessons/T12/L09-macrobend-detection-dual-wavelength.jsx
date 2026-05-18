@@ -145,20 +145,40 @@ export default function T12L09_MacrobendDetection() {
         </p>
         <table>
           <thead>
-            <tr><th>Fiber type</th><th>Min. bend radius (short-term, installation)</th><th>Min. bend radius (long-term, installed)</th></tr>
+            <tr>
+              <th>Fiber type</th>
+              <th>Min. bend radius (short-term, installation) ¹</th>
+              <th>Min. bend radius (long-term, installed) ¹</th>
+            </tr>
           </thead>
           <tbody>
-            <tr><td>G.652.D (standard singlemode)</td><td>30 mm (3 cm) — 20× cable diameter rule for 1.6 mm fiber</td><td>40 mm long-term; 30 mm OK for fixed routes</td></tr>
+            <tr>
+              <td>G.652.D (standard singlemode)</td>
+              <td>30 mm bare fiber (IEC 60793-2-50); OSP cable: typically 240–320 mm (20× OD for 12–16 mm cable) ²</td>
+              <td>40 mm bare fiber; OSP cable: per cable spec sheet ²</td>
+            </tr>
             <tr><td>G.657.A1 (enhanced bend-insensitive)</td><td>15 mm</td><td>10 mm long-term</td></tr>
             <tr><td>G.657.A2 (higher bend-insensitive)</td><td>10 mm</td><td>7.5 mm long-term</td></tr>
             <tr><td>G.657.B3 (extreme bend-insensitive)</td><td>7.5 mm</td><td>5 mm long-term</td></tr>
           </tbody>
         </table>
         <p>
-          <strong>Field note:</strong> The cable OD matters, not just the fiber type. A G.652.D
-          fiber inside a 2.0 mm drop cable has a different effective minimum bend radius than in
-          a 0.9 mm tight-buffer. Most spec sheets give minimum bend radius for the cable assembly,
-          not just the bare fiber. Always reference the cable spec sheet, not just the fiber spec.
+          ¹ Values for G.657 variants are bare-fiber specs per ITU-T G.657 Table 1 (short-term) and Table 2
+          (long-term), which match typical cable assembly specs for FTTx drop cables.
+        </p>
+        <p>
+          ² <strong>G.652.D cable vs. bare-fiber distinction:</strong> The 30 mm / 40 mm values in the table
+          are the IEC 60793-2-50 <em>bare-fiber</em> mandrel test specs — they describe the minimum bend
+          radius the glass strand itself can tolerate. An OSP cable assembly (loose-tube, 12–18 mm OD) has a
+          much larger minimum bend radius: typically 20× the cable outer diameter during installation
+          (e.g., 20 × 12 mm = 240 mm) and 10× OD for permanently routed cable. Always reference the
+          cable spec sheet — not the bare-fiber spec — when routing OSP cable in manholes, handholes,
+          or conduit risers.
+        </p>
+        <p>
+          <strong>Field note:</strong> A G.652.D fiber inside a 2.0 mm drop cable has a different
+          effective minimum bend radius than in a 0.9 mm tight-buffer. Most spec sheets give minimum
+          bend radius for the cable assembly, not just the bare fiber.
         </p>
 
         <h3>Using 1625 nm for in-service macrobend investigation</h3>

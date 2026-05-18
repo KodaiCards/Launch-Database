@@ -252,11 +252,18 @@ export default function T12L04_DeadZones() {
 
         <h3>Ghost distance formula</h3>
         <p>
-          Ghost distance = 2 × (distance from OTDR port to primary reflector) × N, where N = 1, 2, 3...
+          Ghost distance = (n + 1) × D, where D = distance from OTDR port to the primary reflector,
+          and n = 1, 2, 3... (the ghost number).
         </p>
+        <ul>
+          <li>1st ghost (n = 1): (1 + 1) × D = <strong>2 × D</strong></li>
+          <li>2nd ghost (n = 2): (2 + 1) × D = <strong>3 × D</strong></li>
+          <li>3rd ghost (n = 3): (3 + 1) × D = <strong>4 × D</strong></li>
+        </ul>
         <p>
           Example: OTDR port connector at 0 m, Connector A at 120 m.
-          Ghost 1 = 2 × 120 m = 240 m. Ghost 2 = 3 × 120 m = 360 m (if high enough reflectance).
+          Ghost 1 = 2 × 120 m = <strong>240 m</strong>. Ghost 2 = 3 × 120 m = <strong>360 m</strong>.
+          Ghost 3 = 4 × 120 m = 480 m (if reflectance is high enough).
         </p>
       </section>
 
