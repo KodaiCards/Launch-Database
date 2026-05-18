@@ -74,8 +74,13 @@ const FoundationsSection = () => (
     <ul>
       <li><Flashcard term="demarcation point" definition="The physical location (usually a patch panel, LIU, or connector field) where OSP-terminated fiber meets ISP equipment or ISP-managed infrastructure." /></li>
       <li><Flashcard term="demarc responsibility" definition="The party responsible for testing, maintenance, and troubleshooting on either side of the demarcation point. OSP owns the fiber path to the demarc; ISP owns everything downstream." /></li>
+      <li><Flashcard term="OSP fiber termination" definition="The process of bringing fiber optic cable from the outside plant to a termination point (connector, LIU, or patch panel) inside the CO or headend building where it can be tested, documented, and handed off to the ISP." /></li>
       <li><Flashcard term="provisioning request" definition="The ISP's formal request to activate service on a specific fiber path, which triggers ISP technician provisioning (patching, configuring ports, power-on sequencing)." /></li>
       <li><Flashcard term="signal acceptance testing" definition="The ISP's process of verifying that the signal arriving at the OLT input meets power and jitter specifications before declaring service active." /></li>
+      <li><Flashcard term="patch-panel boundary" definition="The demarcation point where OSP fiber connectors terminate on a centralized optical patch panel and ISP technicians patch trunk cables from that panel to their active equipment (OLT, transponders, regenerators)." /></li>
+      <li><Flashcard term="rack-side handoff" definition="The physical location and procedural point where OSP-delivered fiber (usually at a demarcation patch panel or LIU mounted in a rack) transitions responsibility from the OSP crew to the ISP provisioning team." /></li>
+      <li><Flashcard term="ISP provisioning scope" definition="The range of activities the ISP is responsible for after fiber handoff, including patching fibers to equipment, configuring optical and protocol-layer parameters, running signal acceptance tests, and managing subscriber provisioning." /></li>
+      <li><Flashcard term="fiber alignment" definition="The precise positioning and routing of fiber connections at the demarcation point to ensure connectors are clean, properly seated, and accessible for patching without excessive bend radius or strain." /></li>
     </ul>
   </div>
 );

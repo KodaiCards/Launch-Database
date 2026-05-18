@@ -253,7 +253,7 @@ const finalExamQuestions = [
     ],
     answerIndex: 1,
     explanation:
-      'NESC §35 (Underground Supply and Communication) Rule 354 specifies that communication cables crossing other utilities require 6-12 inches vertical separation (typical at crossings) and 12-24 inches horizontal separation (along parallel runs). At a water main crossing, 6-12 inches vertical is the standard. Direct coordination with the water utility is required to confirm actual depths and route conflicts. (Source: T06.L09, NESC Rule 354)',
+      'NESC §35 (Underground Supply and Communication) Rule 354 applies to communication cables crossing supply utilities (including water mains, gas lines, and electrical lines). It specifies 6-12 inches vertical separation (typical at crossings) and 12-24 inches horizontal separation (along parallel runs). At a water main crossing, 6-12 inches vertical is the standard. Direct coordination with the water utility is required to confirm actual depths and route conflicts. (Source: T06.L09, NESC Rule 354)',
   },
   {
     id: 'c05-final-016',
@@ -585,7 +585,7 @@ const finalExamQuestions = [
     ],
     answerIndex: 3,
     explanation:
-      'OSHA 1910.269 (Electrical Workers) and 1910.268 (Telecommunications) classify OSP crews as unqualified to work on or near power lines. The curriculum teaches: (1) Maintain Minimum Approach Distance (MAD) determined by voltage; (2) Never assume de-energization without visible, independent verification (voltmeter test); (3) Request utility assistance or qualified electrical worker presence if work must approach the power line. Rubber glove classes (ANSI D120) are for qualified electrical workers, not for OSP crews. (Source: T18.L03, OSHA 1910.269)',
+      'OSHA 1910.269 (Electrical Workers) and 1910.268 (Telecommunications) classify OSP crews as unqualified to work on or near power lines. The curriculum teaches: (1) Maintain Minimum Approach Distance (MAD) determined by voltage; (2) Never assume de-energization without visible, independent verification (voltmeter test); (3) Request utility assistance or qualified electrical worker presence if work must approach the power line. Rubber glove classes (ANSI D120) are for qualified electrical workers, not for OSP crews. (Source: T18.L07, OSHA 1910.269)',
   },
   {
     id: 'c05-final-038',
@@ -650,7 +650,7 @@ const finalExamQuestions = [
   {
     id: 'c05-final-042',
     topic: 'T02',
-    stem: 'Chromatic dispersion in a 10-km G.652.D span at 1550 nm is approximately 170 ps. How does this affect a 10-Gbps signal?',
+    stem: 'Chromatic dispersion in a 10-km G.652.D span at 1550 nm with a 0.1-nm spectral width is approximately 170 ps. How does this affect a 10-Gbps signal?',
     choices: [
       'Dispersion is negligible; 10 Gbps can tolerate 0.17 ns',
       'Dispersion limits the span to ~5 km; regeneration is required at 10 km',
