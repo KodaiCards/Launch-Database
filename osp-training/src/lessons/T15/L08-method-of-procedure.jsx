@@ -23,6 +23,9 @@ export const meta = {
     'change-control window',
     'emergency MOP authorization authority',
     'concurrent documentation',
+    'RUS emergency authorization',
+    'RUS Form 319',
+    'emergency change (Telcordia category)',
   ],
   vocabulary_assumed: [
     { term: 'emergency MOP', source_lesson_id: 'T15.L01' },
@@ -54,6 +57,14 @@ export const meta = {
     {
       term: 'concurrent documentation',
       definition: 'The practice of recording MOP steps in real time during an emergency restoration rather than reconstructing the record after completion — capturing actual times, deviations from the planned procedure, and decisions made during the work. Concurrent documentation produces an accurate incident record; post-hoc reconstruction produces a sanitized approximation.',
+    },
+    {
+      term: 'RUS emergency authorization',
+      definition: 'The Rural Utilities Service (RUS) process for approving emergency fiber restoration on RUS-funded broadband projects. Includes verbal authorization to begin work immediately plus post-restoration filing of RUS Form 319 or equivalent within 24–48 hours. RUS may require dual approval from project manager and RUS state office depending on project agreement.',
+    },
+    {
+      term: 'RUS Form 319',
+      definition: 'The RUS form (or equivalent program-specific form) documenting emergency change authorization on RUS-funded projects. Filed post-restoration within the project record to maintain RUS audit compliance. Specific form varies by RUS program (BIP, Community Connect, etc.) — check the project agreement exhibits.',
     },
   ],
 };
@@ -365,6 +376,83 @@ export default function L08MethodOfProcedure() {
           this framing helps when interacting with carrier change-control systems that use this
           three-category model.
         </p>
+      </section>
+
+      {/* ── RUS EMERGENCY AUTHORIZATION ──────────────────────────────────── */}
+      <section className="lesson-section advanced">
+        <h2>RUS Emergency Authorization for OSP Restoration</h2>
+        <p>
+          For Rural Utilities Service (RUS) program projects, emergency restoration of fiber on OSP routes
+          follows a similar verbal-authorization model to carrier change control, with specific RUS forms
+          and documentation requirements. When an outage occurs on an RUS-funded rural broadband project,
+          the restoration process must balance speed (get service back quickly) with documentation
+          (maintain RUS audit compliance).
+        </p>
+        <h3>RUS Emergency Authorization Workflow</h3>
+        <ol>
+          <li>
+            <strong>Outage declaration and field verification</strong>: Once the outage location is
+            confirmed via OTDR or field investigation, the field supervisor notifies the carrier's
+            project manager (or RUS-funded entity's equivalent) and RUS (if required by the project's
+            emergency-escalation matrix).
+          </li>
+          <li>
+            <strong>Emergency authorization request</strong>: The field crew or supervisor initiates an
+            emergency authorization request through the carrier's change-control system or directly to
+            the RUS program contact (depending on project structure). The request includes: outage
+            description, affected fiber count, proposed restoration method (temporary patch vs. permanent
+            repair), estimated cost, and proposed timeline.
+          </li>
+          <li>
+            <strong>Verbal authorization (typical)</strong>: For most RUS projects, verbal emergency
+            authorization is granted to begin restoration work immediately. The authorization is documented
+            in a concurrent MOP (per Telcordia SR-4422 / Carrier-specific procedures). Full written
+            emergency authorization documents are filed post-restoration within 24–48 hours.
+          </li>
+          <li>
+            <strong>RUS Form 319 or equivalent approval</strong>: Depending on the RUS program (Broadband
+            Initiatives Program, Community Connect, etc.), specific RUS forms may be required within the
+            post-incident window (typically 5–10 business days). Forms vary by program; check the project's
+            RUS-agreement exhibits for the specific emergency-change form required.
+          </li>
+          <li>
+            <strong>Invoice and cost documentation</strong>: RUS-funded projects require documented costs
+            tied to the outage ticket and emergency authorization. Field labor, materials, equipment use,
+            and subcontractor costs are itemized in the restoration invoice. Costs must be consistent with
+            the original emergency-authorization estimate or require RUS prior approval for overages.
+          </li>
+          <li>
+            <strong>Reimbursement timeline</strong>: RUS reimbursement for emergency restoration typically
+            follows the project's standard quarterly (or monthly) invoicing cycle. However, emergency
+            restorations may be prioritized in RUS processing. Expect 30–60 days from invoice submission
+            to reimbursement clearance.
+          </li>
+        </ol>
+        <h3>RUS vs. Commercial Carrier Authorization: Key Differences</h3>
+        <p>
+          While both RUS and commercial carriers use verbal authorization for emergency restoration,
+          there are important process differences:
+        </p>
+        <ul>
+          <li>
+            <strong>Approval chain:</strong> Commercial carriers typically have a single NOC supervisor
+            or network manager as the emergency authority. RUS projects may require dual approval from
+            both the project manager and the RUS state office (depending on project agreement). This
+            can extend authorization time — don't skip the RUS escalation if required.
+          </li>
+          <li>
+            <strong>Documentation depth:</strong> RUS projects require Form 319 (or equivalent) filed
+            as a formal change-control document within the project record. Commercial carriers may accept
+            post-hoc MOP documentation for audit purposes. RUS expects contemporaneous forms in the
+            project file.
+          </li>
+          <li>
+            <strong>Cost pre-approval:</strong> RUS often requires emergency-cost approval before work
+            begins (or within 24 hours after). Commercial carriers typically handle cost approval as part
+            of the invoice-and-reimbursement cycle. Check the project agreement to confirm the RUS cost-approval
+            process.
+          </li>
+        </ul>
       </section>
 
       {/* ── FLASHCARDS ────────────────────────────────────────────────────── */}

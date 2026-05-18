@@ -24,6 +24,8 @@ export const meta = {
     'major outage escalation',
     'post-restoration notification',
     '48-hour verification window',
+    'FCC Part 4 NORS reporting',
+    '911 service impact notification',
   ],
   vocabulary_assumed: [
     { term: 'outage bridge call', source_lesson_id: 'T15.L01' },
@@ -52,6 +54,14 @@ export const meta = {
     {
       term: '48-hour verification window',
       definition: 'The period following an emergency restoration during which the NOC and crew remain on watch for anomalies that may indicate an incomplete repair — elevated splice loss, intermittent signal, or secondary damage not identified during the initial restoration. A repair that tests clean but fails within 48 hours indicates a hidden problem.',
+    },
+    {
+      term: 'FCC Part 4 NORS reporting',
+      definition: 'The FCC\'s Network Outage Reporting System (NORS) mandate in 47 CFR §4.9 and §4.13 requiring telecommunications carriers to report outages affecting 911 emergency service to the federal government. Initial report required within 120 minutes (2 hours) of outage detection; final report within 30 days of outage end. NORS reports are part of the public record.',
+    },
+    {
+      term: '911 service impact notification',
+      definition: 'Immediate notification to the carrier\'s NOC when an outage affects 911 emergency call routing, Public Safety Answering Points (PSAPs), emergency dispatch centers, or 911 backup circuits. This notification triggers automatic FCC Part 4 NORS compliance protocols and elevated escalation independent of customer SLA timelines. Field crews must flag 911 impact at first report — this is a regulatory obligation, not optional.',
     },
   ],
 };
@@ -388,6 +398,61 @@ export default function L07CustomerCommunicationDuringOutages() {
           complete documentation. The business and legal exposure from a poorly communicated outage
           can significantly exceed the technical cost of the repair.
         </p>
+      </section>
+
+      {/* ── FCC PART 4 NORS ──────────────────────────────────────────────── */}
+      <section className="lesson-section advanced">
+        <h2>Regulatory Notification: FCC Part 4 NORS Reporting</h2>
+        <p>
+          The FCC's Network Outage Reporting System (NORS) requires telecommunications carriers to
+          report certain categories of outages directly to the federal government. The primary trigger
+          is <strong>911 service impact</strong>. When a fiber cut affects a 911 emergency call center,
+          emergency dispatch line, or 911 backup circuit, the carrier has a mandatory federal reporting obligation
+          independent of customer outage coordination.
+        </p>
+        <h3>FCC Part 4 Reporting Thresholds and Timelines</h3>
+        <p>
+          Per 47 CFR §4.9 and §4.13, the following outages require FCC notification:
+        </p>
+        <ul>
+          <li>
+            <strong>911 service interruption</strong>: any outage that prevents 911 calls from reaching
+            the Public Safety Answering Point (PSAP), backup routes, or emergency dispatch centers. This
+            includes circuits used for emergency call routing, regardless of customer SLA timelines.
+          </li>
+          <li>
+            <strong>Initial report timeline: within 120 minutes (2 hours)</strong> of outage discovery.
+            This report includes: outage start time, number of 911 call centers affected, services affected
+            (E911, text-to-911, backup routing), estimated impact duration, and root cause if known.
+          </li>
+          <li>
+            <strong>Final report timeline: within 30 days</strong> of outage end. The final report includes
+            actual impact duration, root cause analysis, corrective actions taken to prevent recurrence,
+            and post-incident timeline (when each corrective action was completed).
+          </li>
+        </ul>
+        <h3>Field Crew Responsibility</h3>
+        <p>
+          The field crew's responsibility is to immediately alert the NOC if the outage affects 911 service
+          or a 911 backup route — this information flows into the carrier's compliance reporting. The NOC
+          manages the actual FCC filing and compliance timeline. However, crews must understand that:
+        </p>
+        <ul>
+          <li>
+            A 911-impacting outage has a federal reporting obligation separate from contractual SLA credits.
+            Speed and communication are not optional.
+          </li>
+          <li>
+            The 2-hour initial report means the carrier must have a preliminary incident summary ready
+            within 120 minutes of detection — this drives the escalation to carrier management independent
+            of customer escalation.
+          </li>
+          <li>
+            FCC NORS reports become part of the public record. A report that shows "crew failed to notify
+            911 PSAP until 4 hours into the outage" has regulatory and reputational consequences beyond
+            SLA credits.
+          </li>
+        </ul>
       </section>
 
       {/* ── FLASHCARDS ────────────────────────────────────────────────────── */}

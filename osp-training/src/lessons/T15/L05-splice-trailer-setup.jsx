@@ -50,7 +50,7 @@ export const meta = {
     },
     {
       term: 'fusion splicer cleave angle',
-      definition: 'The angular deviation of a cleaved fiber end face from perfect perpendicular (90°). Maximum acceptable cleave angle for low-loss singlemode fusion splicing is typically ≤0.5° — measured by the fusion splicer\'s internal vision system before arc initiation.',
+      definition: 'The angular deviation of a cleaved fiber end face from perfect perpendicular (90°). Target cleave angle for low-loss singlemode fusion splicing is ≤0.5°. Maximum acceptable cleave angle in emergency restoration scenarios is ≤1.0° per splicer specifications. In emergency restoration, getting service back quickly may trump perfection — a splice at 0.7° cleave that meets the splicer\'s acceptance criteria goes into service temporarily and may be replaced with a permanent re-do per service continuity plan. Measured by the fusion splicer\'s internal vision system before arc initiation.',
     },
     {
       term: 'arc calibration',
