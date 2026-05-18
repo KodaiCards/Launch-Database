@@ -27,7 +27,6 @@ export const meta = {
   vocabulary_introduced: [
     'topology canvas (fiber)',
     'in-service fiber',
-    'dark fiber',
     'test fiber (spare)',
     'POP (Point of Presence)',
     'FDH (Fiber Distribution Hub)',
@@ -43,6 +42,7 @@ export const meta = {
     'location record',
     'administration record (completed entry)',
     'ANSI/TIA-606-C',
+    { term: 'dark fiber', source_lesson_id: 'T03.L08' },
   ],
 };
 

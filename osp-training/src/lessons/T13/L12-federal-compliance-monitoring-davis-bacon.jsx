@@ -100,9 +100,9 @@ export const meta = {
     { term: 'RUS Form 565 (Inspector\'s Daily Report)', source_lesson_id: 'T13.L11' },
     { term: '7 CFR §1753 inspection obligation [confirm current section]', source_lesson_id: 'T13.L11' },
     { term: 'construction advance chain', source_lesson_id: 'T13.L11' },
-    { term: 'NEPA', source_lesson_id: 'T09' },
-    { term: 'ESA §7 consultation', source_lesson_id: 'T09' },
-    { term: 'Section 106 (NHPA)', source_lesson_id: 'T09' },
+    { term: 'NEPA', source_lesson_id: 'T09.L02' },
+    { term: 'ESA §7 consultation', source_lesson_id: 'T09.L04' },
+    { term: 'Section 106 (NHPA)', source_lesson_id: 'T09.L03' },
   ],
 };
 

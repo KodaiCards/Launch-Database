@@ -1,6 +1,6 @@
 {
-  "generated_at": "2026-05-18T04:25:45.330Z",
-  "lesson_count": 191,
+  "generated_at": "2026-05-18T08:46:29.614Z",
+  "lesson_count": 221,
   "vocabulary_introduced_by_lesson": {
     "T01.L01": [
       "OSP",
@@ -335,6 +335,7 @@
     ],
     "T04.L06": [
       "KMZ",
+      "KML",
       ".SHP",
       "geotiff",
       "PDF/A",
@@ -508,6 +509,8 @@
       "HDD",
       "open-cut trench",
       "plowing",
+      "bore",
+      "pavement restoration",
       "decision matrix",
       "ROW",
       "bore pit",
@@ -1138,7 +1141,8 @@
       "go/no-go decision (pole condition)"
     ],
     "T13.L04": [
-      "clamp-on ground resistance measurement procedure"
+      "clamp-on ground resistance measurement procedure",
+      "ASCE 38-22 Quality Level (QL-A through QL-D)"
     ],
     "T13.L05": [],
     "T13.L06": [
@@ -1257,6 +1261,215 @@
       "grounding interval"
     ],
     "T14.L12": [],
+    "T15.L01": [
+      "outage bridge call",
+      "RTO (Recovery Time Objective)",
+      "RPO (Recovery Point Objective)",
+      "MTTR (Mean Time to Repair)",
+      "ETR (Estimated Time to Restore)",
+      "mobilization",
+      "emergency MOP",
+      "verbal emergency authorization",
+      "NOC (Network Operations Center)"
+    ],
+    "T15.L02": [
+      "fault locate (cable-distance)",
+      "event dead zone (EDZ)",
+      "attenuation dead zone (ADZ)",
+      "slack factor",
+      "break signature",
+      "ORL change (no-loss event)",
+      "cable identification (multi-conduit)",
+      ".sor file format"
+    ],
+    "T15.L03": [
+      "probe rod (non-metallic)",
+      "hand-dig zone (24-inch tolerance zone)"
+    ],
+    "T15.L04": [
+      "temporary patch",
+      "permanent restoration",
+      "fiber type confirmation",
+      "splice closure reinstallation",
+      "mismatched fiber splice"
+    ],
+    "T15.L05": [
+      "splice trailer",
+      "field generator separation",
+      "IEC protection class (IP rating)",
+      "fusion splicer cleave angle",
+      "arc calibration"
+    ],
+    "T15.L06": [
+      "emergency excavation exception",
+      "vacuum excavation (soft dig)",
+      "shoring (emergency trench)",
+      "Type C soil",
+      "trench box"
+    ],
+    "T15.L07": [
+      "ETR (Estimated Time to Restore)",
+      "ETR revision",
+      "major outage escalation",
+      "post-restoration notification",
+      "48-hour verification window",
+      "FCC Part 4 NORS reporting",
+      "911 service impact notification"
+    ],
+    "T15.L08": [
+      "MOP (Method of Procedure)",
+      "rollback plan",
+      "change-control window",
+      "emergency MOP authorization authority",
+      "concurrent documentation",
+      "RUS emergency authorization",
+      "RUS Form 319",
+      "emergency change (Telcordia category)"
+    ],
+    "T15.L09": [
+      "post-restoration as-built",
+      ".sor file (OTDR standard format)",
+      "OTDR trace file naming convention",
+      "MTTR calculation",
+      "post-incident RCA (Root Cause Analysis)"
+    ],
+    "T15.L10": [],
+    "T16.L01": [
+      "as-built record",
+      "ANSI/TIA-606-C",
+      "administration (fiber infrastructure)",
+      "GIS record of record",
+      "GIS"
+    ],
+    "T16.L02": [
+      "splice matrix",
+      "splice record (entry)",
+      "from-closure / to-closure",
+      "fiber path (express vs. active splice)",
+      "CMMS (Computerized Maintenance Management System)"
+    ],
+    "T16.L03": [
+      "TIA-606-C administration class (A/B/C/D)",
+      "link record",
+      "pathway record",
+      "location record",
+      "media record",
+      "identifier (TIA-606-C label)"
+    ],
+    "T16.L04": [
+      "administration record (completed entry)",
+      "cross-reference (TIA-606-C)"
+    ],
+    "T16.L05": [
+      "as-built GIS package",
+      "NAD83 datum",
+      "coordinate system (State Plane vs. geographic)",
+      "GIS layer (point, line, polygon)",
+      "coverage map (USDA ReConnect)"
+    ],
+    "T16.L06": [
+      "redline drawing",
+      "reconciliation (as-built)",
+      "field change order (FCO)",
+      "engineer of record sign-off",
+      "RUS audit discrepancy"
+    ],
+    "T16.L07": [
+      "Form 219 (RUS)",
+      "telecommunications plant inventory",
+      "final advance (RUS loan)",
+      "close-out package",
+      "construction contract completion certificate"
+    ],
+    "T16.L08": [
+      "unit of property (47 CFR §32.2001)",
+      "47 CFR Part 32 plant account",
+      "Uniform System of Accounts (USOA)",
+      "Form 1755-A (Statement of Materials Used)",
+      "capitalized plant cost"
+    ],
+    "T16.L09": [
+      "topology canvas (fiber)",
+      "in-service fiber",
+      "dark fiber",
+      "test fiber (spare)",
+      "POP (Point of Presence)",
+      "FDH (Fiber Distribution Hub)"
+    ],
+    "T16.L10": [],
+    "T17.L01": [
+      "unit cost (construction)",
+      "cost per foot (CPFT)",
+      "scope of work (SOW)",
+      "direct cost",
+      "indirect cost / overhead"
+    ],
+    "T17.L02": [
+      "make-ready cost",
+      "lashed aerial cable",
+      "ADSS (All-Dielectric Self-Supporting)",
+      "bore cost",
+      "pavement restoration",
+      "force account labor"
+    ],
+    "T17.L03": [
+      "crew productivity rate",
+      "crew-day",
+      "labor burden",
+      "production unit",
+      "crew loading",
+      "productivity factor (efficiency factor)"
+    ],
+    "T17.L04": [
+      "bill of materials (BOM)",
+      "waste factor",
+      "spare ratio",
+      "splitter (passive optical)",
+      "material lead time",
+      "take-off quantity"
+    ],
+    "T17.L05": [
+      "lump-sum contract",
+      "unit-price contract",
+      "time-and-materials contract (T&M)",
+      "not-to-exceed (NTE)",
+      "guaranteed maximum price (GMP)",
+      "competitive sealed bid (RUS)",
+      "7 CFR Part 1788"
+    ],
+    "T17.L06": [
+      "change order",
+      "change order request (COR)",
+      "owner-directed change",
+      "constructive change",
+      "differing site condition",
+      "change order log"
+    ],
+    "T17.L07": [
+      "contingency allowance",
+      "escalation allowance",
+      "price escalation clause",
+      "design contingency",
+      "construction contingency",
+      "allowance item"
+    ],
+    "T17.L08": [
+      "cost per home passed (CPHP)",
+      "cost per home connected (CPHC)",
+      "homes passed",
+      "take rate",
+      "subscriber penetration rate",
+      "addressable location"
+    ],
+    "T17.L09": [
+      "ARPU (Average Revenue Per User)",
+      "monthly recurring revenue (MRR)",
+      "service tier",
+      "tier mix",
+      "payback period",
+      "net revenue (simplified)"
+    ],
+    "T17.L10": [],
     "T18.L01": [
       "general duty clause",
       "1910.268",
@@ -1701,7 +1914,8 @@
       "T09.L01"
     ],
     "gis": [
-      "T01.L08"
+      "T01.L08",
+      "T16.L01"
     ],
     "lidar": [
       "T01.L08",
@@ -2083,7 +2297,8 @@
       "T03.L08"
     ],
     "dark fiber": [
-      "T03.L08"
+      "T03.L08",
+      "T16.L09"
     ],
     "growth margin": [
       "T03.L08"
@@ -2201,6 +2416,9 @@
       "T04.L05"
     ],
     "kmz": [
+      "T04.L06"
+    ],
+    "kml": [
       "T04.L06"
     ],
     ".shp": [
@@ -2579,6 +2797,13 @@
     ],
     "plowing": [
       "T06.L01"
+    ],
+    "bore": [
+      "T06.L01"
+    ],
+    "pavement restoration": [
+      "T06.L01",
+      "T17.L02"
     ],
     "decision matrix": [
       "T06.L01"
@@ -3547,7 +3772,8 @@
       "T11.L06"
     ],
     "arc calibration": [
-      "T11.L06"
+      "T11.L06",
+      "T15.L05"
     ],
     "arc power": [
       "T11.L06"
@@ -3885,6 +4111,9 @@
     "clamp-on ground resistance measurement procedure": [
       "T13.L04"
     ],
+    "asce 38-22 quality level (ql-a through ql-d)": [
+      "T13.L04"
+    ],
     "material lot traceability": [
       "T13.L06"
     ],
@@ -4124,6 +4353,448 @@
     ],
     "grounding interval": [
       "T14.L11"
+    ],
+    "outage bridge call": [
+      "T15.L01"
+    ],
+    "rto (recovery time objective)": [
+      "T15.L01"
+    ],
+    "rpo (recovery point objective)": [
+      "T15.L01"
+    ],
+    "mttr (mean time to repair)": [
+      "T15.L01"
+    ],
+    "etr (estimated time to restore)": [
+      "T15.L01",
+      "T15.L07"
+    ],
+    "mobilization": [
+      "T15.L01"
+    ],
+    "emergency mop": [
+      "T15.L01"
+    ],
+    "verbal emergency authorization": [
+      "T15.L01"
+    ],
+    "noc (network operations center)": [
+      "T15.L01"
+    ],
+    "fault locate (cable-distance)": [
+      "T15.L02"
+    ],
+    "event dead zone (edz)": [
+      "T15.L02"
+    ],
+    "attenuation dead zone (adz)": [
+      "T15.L02"
+    ],
+    "slack factor": [
+      "T15.L02"
+    ],
+    "break signature": [
+      "T15.L02"
+    ],
+    "orl change (no-loss event)": [
+      "T15.L02"
+    ],
+    "cable identification (multi-conduit)": [
+      "T15.L02"
+    ],
+    ".sor file format": [
+      "T15.L02"
+    ],
+    "probe rod (non-metallic)": [
+      "T15.L03"
+    ],
+    "hand-dig zone (24-inch tolerance zone)": [
+      "T15.L03"
+    ],
+    "temporary patch": [
+      "T15.L04"
+    ],
+    "permanent restoration": [
+      "T15.L04"
+    ],
+    "fiber type confirmation": [
+      "T15.L04"
+    ],
+    "splice closure reinstallation": [
+      "T15.L04"
+    ],
+    "mismatched fiber splice": [
+      "T15.L04"
+    ],
+    "splice trailer": [
+      "T15.L05"
+    ],
+    "field generator separation": [
+      "T15.L05"
+    ],
+    "iec protection class (ip rating)": [
+      "T15.L05"
+    ],
+    "fusion splicer cleave angle": [
+      "T15.L05"
+    ],
+    "emergency excavation exception": [
+      "T15.L06"
+    ],
+    "vacuum excavation (soft dig)": [
+      "T15.L06"
+    ],
+    "shoring (emergency trench)": [
+      "T15.L06"
+    ],
+    "type c soil": [
+      "T15.L06"
+    ],
+    "trench box": [
+      "T15.L06"
+    ],
+    "etr revision": [
+      "T15.L07"
+    ],
+    "major outage escalation": [
+      "T15.L07"
+    ],
+    "post-restoration notification": [
+      "T15.L07"
+    ],
+    "48-hour verification window": [
+      "T15.L07"
+    ],
+    "fcc part 4 nors reporting": [
+      "T15.L07"
+    ],
+    "911 service impact notification": [
+      "T15.L07"
+    ],
+    "mop (method of procedure)": [
+      "T15.L08"
+    ],
+    "rollback plan": [
+      "T15.L08"
+    ],
+    "change-control window": [
+      "T15.L08"
+    ],
+    "emergency mop authorization authority": [
+      "T15.L08"
+    ],
+    "concurrent documentation": [
+      "T15.L08"
+    ],
+    "rus emergency authorization": [
+      "T15.L08"
+    ],
+    "rus form 319": [
+      "T15.L08"
+    ],
+    "emergency change (telcordia category)": [
+      "T15.L08"
+    ],
+    "post-restoration as-built": [
+      "T15.L09"
+    ],
+    ".sor file (otdr standard format)": [
+      "T15.L09"
+    ],
+    "otdr trace file naming convention": [
+      "T15.L09"
+    ],
+    "mttr calculation": [
+      "T15.L09"
+    ],
+    "post-incident rca (root cause analysis)": [
+      "T15.L09"
+    ],
+    "as-built record": [
+      "T16.L01"
+    ],
+    "ansi/tia-606-c": [
+      "T16.L01"
+    ],
+    "administration (fiber infrastructure)": [
+      "T16.L01"
+    ],
+    "gis record of record": [
+      "T16.L01"
+    ],
+    "splice matrix": [
+      "T16.L02"
+    ],
+    "splice record (entry)": [
+      "T16.L02"
+    ],
+    "from-closure / to-closure": [
+      "T16.L02"
+    ],
+    "fiber path (express vs. active splice)": [
+      "T16.L02"
+    ],
+    "cmms (computerized maintenance management system)": [
+      "T16.L02"
+    ],
+    "tia-606-c administration class (a/b/c/d)": [
+      "T16.L03"
+    ],
+    "link record": [
+      "T16.L03"
+    ],
+    "pathway record": [
+      "T16.L03"
+    ],
+    "location record": [
+      "T16.L03"
+    ],
+    "media record": [
+      "T16.L03"
+    ],
+    "identifier (tia-606-c label)": [
+      "T16.L03"
+    ],
+    "administration record (completed entry)": [
+      "T16.L04"
+    ],
+    "cross-reference (tia-606-c)": [
+      "T16.L04"
+    ],
+    "as-built gis package": [
+      "T16.L05"
+    ],
+    "nad83 datum": [
+      "T16.L05"
+    ],
+    "coordinate system (state plane vs. geographic)": [
+      "T16.L05"
+    ],
+    "gis layer (point, line, polygon)": [
+      "T16.L05"
+    ],
+    "coverage map (usda reconnect)": [
+      "T16.L05"
+    ],
+    "redline drawing": [
+      "T16.L06"
+    ],
+    "reconciliation (as-built)": [
+      "T16.L06"
+    ],
+    "field change order (fco)": [
+      "T16.L06"
+    ],
+    "engineer of record sign-off": [
+      "T16.L06"
+    ],
+    "rus audit discrepancy": [
+      "T16.L06"
+    ],
+    "form 219 (rus)": [
+      "T16.L07"
+    ],
+    "telecommunications plant inventory": [
+      "T16.L07"
+    ],
+    "final advance (rus loan)": [
+      "T16.L07"
+    ],
+    "close-out package": [
+      "T16.L07"
+    ],
+    "construction contract completion certificate": [
+      "T16.L07"
+    ],
+    "unit of property (47 cfr §32.2001)": [
+      "T16.L08"
+    ],
+    "47 cfr part 32 plant account": [
+      "T16.L08"
+    ],
+    "uniform system of accounts (usoa)": [
+      "T16.L08"
+    ],
+    "form 1755-a (statement of materials used)": [
+      "T16.L08"
+    ],
+    "capitalized plant cost": [
+      "T16.L08"
+    ],
+    "topology canvas (fiber)": [
+      "T16.L09"
+    ],
+    "in-service fiber": [
+      "T16.L09"
+    ],
+    "test fiber (spare)": [
+      "T16.L09"
+    ],
+    "pop (point of presence)": [
+      "T16.L09"
+    ],
+    "fdh (fiber distribution hub)": [
+      "T16.L09"
+    ],
+    "unit cost (construction)": [
+      "T17.L01"
+    ],
+    "cost per foot (cpft)": [
+      "T17.L01"
+    ],
+    "scope of work (sow)": [
+      "T17.L01"
+    ],
+    "direct cost": [
+      "T17.L01"
+    ],
+    "indirect cost / overhead": [
+      "T17.L01"
+    ],
+    "make-ready cost": [
+      "T17.L02"
+    ],
+    "lashed aerial cable": [
+      "T17.L02"
+    ],
+    "adss (all-dielectric self-supporting)": [
+      "T17.L02"
+    ],
+    "bore cost": [
+      "T17.L02"
+    ],
+    "force account labor": [
+      "T17.L02"
+    ],
+    "crew productivity rate": [
+      "T17.L03"
+    ],
+    "crew-day": [
+      "T17.L03"
+    ],
+    "labor burden": [
+      "T17.L03"
+    ],
+    "production unit": [
+      "T17.L03"
+    ],
+    "crew loading": [
+      "T17.L03"
+    ],
+    "productivity factor (efficiency factor)": [
+      "T17.L03"
+    ],
+    "bill of materials (bom)": [
+      "T17.L04"
+    ],
+    "waste factor": [
+      "T17.L04"
+    ],
+    "spare ratio": [
+      "T17.L04"
+    ],
+    "splitter (passive optical)": [
+      "T17.L04"
+    ],
+    "material lead time": [
+      "T17.L04"
+    ],
+    "take-off quantity": [
+      "T17.L04"
+    ],
+    "lump-sum contract": [
+      "T17.L05"
+    ],
+    "unit-price contract": [
+      "T17.L05"
+    ],
+    "time-and-materials contract (t&m)": [
+      "T17.L05"
+    ],
+    "not-to-exceed (nte)": [
+      "T17.L05"
+    ],
+    "guaranteed maximum price (gmp)": [
+      "T17.L05"
+    ],
+    "competitive sealed bid (rus)": [
+      "T17.L05"
+    ],
+    "7 cfr part 1788": [
+      "T17.L05"
+    ],
+    "change order": [
+      "T17.L06"
+    ],
+    "change order request (cor)": [
+      "T17.L06"
+    ],
+    "owner-directed change": [
+      "T17.L06"
+    ],
+    "constructive change": [
+      "T17.L06"
+    ],
+    "differing site condition": [
+      "T17.L06"
+    ],
+    "change order log": [
+      "T17.L06"
+    ],
+    "contingency allowance": [
+      "T17.L07"
+    ],
+    "escalation allowance": [
+      "T17.L07"
+    ],
+    "price escalation clause": [
+      "T17.L07"
+    ],
+    "design contingency": [
+      "T17.L07"
+    ],
+    "construction contingency": [
+      "T17.L07"
+    ],
+    "allowance item": [
+      "T17.L07"
+    ],
+    "cost per home passed (cphp)": [
+      "T17.L08"
+    ],
+    "cost per home connected (cphc)": [
+      "T17.L08"
+    ],
+    "homes passed": [
+      "T17.L08"
+    ],
+    "take rate": [
+      "T17.L08"
+    ],
+    "subscriber penetration rate": [
+      "T17.L08"
+    ],
+    "addressable location": [
+      "T17.L08"
+    ],
+    "arpu (average revenue per user)": [
+      "T17.L09"
+    ],
+    "monthly recurring revenue (mrr)": [
+      "T17.L09"
+    ],
+    "service tier": [
+      "T17.L09"
+    ],
+    "tier mix": [
+      "T17.L09"
+    ],
+    "payback period": [
+      "T17.L09"
+    ],
+    "net revenue (simplified)": [
+      "T17.L09"
     ],
     "general duty clause": [
       "T18.L01"
@@ -4566,6 +5237,13 @@
       ]
     },
     {
+      "term": "gis",
+      "introduced_by": [
+        "T01.L08",
+        "T16.L01"
+      ]
+    },
+    {
       "term": "lidar",
       "introduced_by": [
         "T01.L08",
@@ -4657,6 +5335,13 @@
       ]
     },
     {
+      "term": "dark fiber",
+      "introduced_by": [
+        "T03.L08",
+        "T16.L09"
+      ]
+    },
+    {
       "term": "make-ready flag",
       "introduced_by": [
         "T04.L04",
@@ -4717,6 +5402,13 @@
       "introduced_by": [
         "T05.L12",
         "T19.L09"
+      ]
+    },
+    {
+      "term": "pavement restoration",
+      "introduced_by": [
+        "T06.L01",
+        "T17.L02"
       ]
     },
     {
@@ -4795,6 +5487,20 @@
       "introduced_by": [
         "T10.L09",
         "T18.L06"
+      ]
+    },
+    {
+      "term": "arc calibration",
+      "introduced_by": [
+        "T11.L06",
+        "T15.L05"
+      ]
+    },
+    {
+      "term": "etr (estimated time to restore)",
+      "introduced_by": [
+        "T15.L01",
+        "T15.L07"
       ]
     }
   ],
@@ -7754,16 +8460,14 @@
     {
       "from_lesson": "T05.L01",
       "term": "RUS",
-      "claimed_source": "T01.L09",
-      "verified": false,
-      "reason": "'RUS' is introduced by T01.L01, not T01.L09"
+      "claimed_source": "T01.L01",
+      "verified": true
     },
     {
       "from_lesson": "T05.L01",
       "term": "TIA",
-      "claimed_source": "T01.L09",
-      "verified": false,
-      "reason": "'TIA' is introduced by T01.L08, not T01.L09"
+      "claimed_source": "T01.L08",
+      "verified": true
     },
     {
       "from_lesson": "T05.L02",
@@ -7823,9 +8527,8 @@
     {
       "from_lesson": "T05.L03",
       "term": "Rule 232",
-      "claimed_source": "T05.L02",
-      "verified": false,
-      "reason": "'Rule 232' is introduced by T05.L01, not T05.L02"
+      "claimed_source": "T05.L01",
+      "verified": true
     },
     {
       "from_lesson": "T05.L03",
@@ -7879,9 +8582,8 @@
     {
       "from_lesson": "T05.L04",
       "term": "Rule 232",
-      "claimed_source": "T05.L02",
-      "verified": false,
-      "reason": "'Rule 232' is introduced by T05.L01, not T05.L02"
+      "claimed_source": "T05.L01",
+      "verified": true
     },
     {
       "from_lesson": "T05.L04",
@@ -8021,9 +8723,8 @@
     {
       "from_lesson": "T05.L06",
       "term": "EDS",
-      "claimed_source": "T03.L09",
-      "verified": false,
-      "reason": "'EDS' is introduced by T03.L04, not T03.L09"
+      "claimed_source": "T03.L04",
+      "verified": true
     },
     {
       "from_lesson": "T05.L06",
@@ -8076,9 +8777,8 @@
     {
       "from_lesson": "T05.L07",
       "term": "Rule 232",
-      "claimed_source": "T05.L02",
-      "verified": false,
-      "reason": "'Rule 232' is introduced by T05.L01, not T05.L02"
+      "claimed_source": "T05.L01",
+      "verified": true
     },
     {
       "from_lesson": "T05.L07",
@@ -8137,9 +8837,8 @@
     {
       "from_lesson": "T05.L08",
       "term": "Rule 232",
-      "claimed_source": "T05.L02",
-      "verified": false,
-      "reason": "'Rule 232' is introduced by T05.L01, not T05.L02"
+      "claimed_source": "T05.L01",
+      "verified": true
     },
     {
       "from_lesson": "T05.L08",
@@ -8272,9 +8971,8 @@
     {
       "from_lesson": "T05.L10",
       "term": "Rule 232",
-      "claimed_source": "T05.L02",
-      "verified": false,
-      "reason": "'Rule 232' is introduced by T05.L01, not T05.L02"
+      "claimed_source": "T05.L01",
+      "verified": true
     },
     {
       "from_lesson": "T05.L10",
@@ -8482,9 +9180,8 @@
     {
       "from_lesson": "T05.L13",
       "term": "Rule 232",
-      "claimed_source": "T05.L02",
-      "verified": false,
-      "reason": "'Rule 232' is introduced by T05.L01, not T05.L02"
+      "claimed_source": "T05.L01",
+      "verified": true
     },
     {
       "from_lesson": "T05.L13",
@@ -8519,9 +9216,8 @@
     {
       "from_lesson": "T05.L14",
       "term": "Rule 232",
-      "claimed_source": "T05.L02",
-      "verified": false,
-      "reason": "'Rule 232' is introduced by T05.L01, not T05.L02"
+      "claimed_source": "T05.L01",
+      "verified": true
     },
     {
       "from_lesson": "T05.L14",
@@ -8642,9 +9338,8 @@
     {
       "from_lesson": "T05.L15",
       "term": "Rule 232",
-      "claimed_source": "T05.L02",
-      "verified": false,
-      "reason": "'Rule 232' is introduced by T05.L01, not T05.L02"
+      "claimed_source": "T05.L01",
+      "verified": true
     },
     {
       "from_lesson": "T05.L15",
@@ -9853,7 +10548,7 @@
     {
       "from_lesson": "T08.L01",
       "term": "pole attachment",
-      "claimed_source": "T05.L08",
+      "claimed_source": "T01.L02",
       "verified": false,
       "reason": "'pole attachment' is not introduced by any lesson in the curriculum"
     },
@@ -9916,9 +10611,9 @@
     {
       "from_lesson": "T08.L02",
       "term": "pole owner",
-      "claimed_source": "T05.L03",
+      "claimed_source": "T01.L02",
       "verified": false,
-      "reason": "'pole owner' is introduced by T05.L08, not T05.L03"
+      "reason": "'pole owner' is introduced by T05.L08, not T01.L02"
     },
     {
       "from_lesson": "T08.L02",
@@ -9936,9 +10631,9 @@
     {
       "from_lesson": "T08.L03",
       "term": "pole owner",
-      "claimed_source": "T05.L03",
+      "claimed_source": "T01.L02",
       "verified": false,
-      "reason": "'pole owner' is introduced by T05.L08, not T05.L03"
+      "reason": "'pole owner' is introduced by T05.L08, not T01.L02"
     },
     {
       "from_lesson": "T08.L03",
@@ -10444,7 +11139,7 @@
       "term": "GIS",
       "claimed_source": "T04.L03",
       "verified": false,
-      "reason": "'GIS' is introduced by T01.L08, not T04.L03"
+      "reason": "'GIS' is introduced by T01.L08, T16.L01, not T04.L03"
     },
     {
       "from_lesson": "T09.L02",
@@ -10628,7 +11323,7 @@
       "term": "GIS",
       "claimed_source": "T04.L03",
       "verified": false,
-      "reason": "'GIS' is introduced by T01.L08, not T04.L03"
+      "reason": "'GIS' is introduced by T01.L08, T16.L01, not T04.L03"
     },
     {
       "from_lesson": "T09.L07",
@@ -13258,6 +13953,12 @@
       "verified": true
     },
     {
+      "from_lesson": "T13.L09",
+      "term": "NEPA",
+      "claimed_source": "T09.L02",
+      "verified": true
+    },
+    {
       "from_lesson": "T13.L11",
       "term": "inspector (OSP)",
       "claimed_source": "T01.L06",
@@ -14176,6 +14877,950 @@
       "verified": true
     },
     {
+      "from_lesson": "T15.L01",
+      "term": "inspector (OSP)",
+      "claimed_source": "T01.L06",
+      "verified": false,
+      "reason": "'inspector (OSP)' is not introduced by any lesson in the curriculum"
+    },
+    {
+      "from_lesson": "T15.L01",
+      "term": "as-built drawings",
+      "claimed_source": "T10.L11",
+      "verified": false,
+      "reason": "'as-built drawings' is not introduced by any lesson in the curriculum"
+    },
+    {
+      "from_lesson": "T15.L01",
+      "term": "fusion splice",
+      "claimed_source": "T11.L04",
+      "verified": true
+    },
+    {
+      "from_lesson": "T15.L01",
+      "term": "OTDR trace (event table)",
+      "claimed_source": "T12.L07",
+      "verified": false,
+      "reason": "'OTDR trace (event table)' is not introduced by any lesson in the curriculum"
+    },
+    {
+      "from_lesson": "T15.L01",
+      "term": "RUS Form 565 (Inspector's Daily Report)",
+      "claimed_source": "T13.L11",
+      "verified": true
+    },
+    {
+      "from_lesson": "T15.L01",
+      "term": "Form 219",
+      "claimed_source": "T13.L07",
+      "verified": false,
+      "reason": "'Form 219' is not introduced by any lesson in the curriculum"
+    },
+    {
+      "from_lesson": "T15.L02",
+      "term": "OTDR trace (event table)",
+      "claimed_source": "T12.L08",
+      "verified": false,
+      "reason": "'OTDR trace (event table)' is not introduced by any lesson in the curriculum"
+    },
+    {
+      "from_lesson": "T15.L02",
+      "term": "IOR (index of refraction)",
+      "claimed_source": "T02.L01",
+      "verified": false,
+      "reason": "'IOR (index of refraction)' is not introduced by any lesson in the curriculum"
+    },
+    {
+      "from_lesson": "T15.L02",
+      "term": "return loss (RL)",
+      "claimed_source": "T11.L12",
+      "verified": true
+    },
+    {
+      "from_lesson": "T15.L02",
+      "term": "insertion loss",
+      "claimed_source": "T12.L06",
+      "verified": false,
+      "reason": "'insertion loss' is not introduced by any lesson in the curriculum"
+    },
+    {
+      "from_lesson": "T15.L02",
+      "term": "fusion splice",
+      "claimed_source": "T11.L04",
+      "verified": true
+    },
+    {
+      "from_lesson": "T15.L02",
+      "term": "outage bridge call",
+      "claimed_source": "T15.L01",
+      "verified": true
+    },
+    {
+      "from_lesson": "T15.L02",
+      "term": "mobilization",
+      "claimed_source": "T15.L01",
+      "verified": true
+    },
+    {
+      "from_lesson": "T15.L03",
+      "term": "fault locate (cable-distance)",
+      "claimed_source": "T15.L02",
+      "verified": true
+    },
+    {
+      "from_lesson": "T15.L03",
+      "term": "slack factor",
+      "claimed_source": "T15.L02",
+      "verified": true
+    },
+    {
+      "from_lesson": "T15.L03",
+      "term": "event dead zone (EDZ)",
+      "claimed_source": "T15.L02",
+      "verified": true
+    },
+    {
+      "from_lesson": "T15.L03",
+      "term": "as-built drawings",
+      "claimed_source": "T10.L11",
+      "verified": false,
+      "reason": "'as-built drawings' is not introduced by any lesson in the curriculum"
+    },
+    {
+      "from_lesson": "T15.L03",
+      "term": "locate ticket",
+      "claimed_source": "T10.L01",
+      "verified": true
+    },
+    {
+      "from_lesson": "T15.L03",
+      "term": "MAD, MAB",
+      "claimed_source": "T18.L07",
+      "verified": false,
+      "reason": "'MAD, MAB' is not introduced by any lesson in the curriculum"
+    },
+    {
+      "from_lesson": "T15.L03",
+      "term": "PPE (general)",
+      "claimed_source": "T18.L01",
+      "verified": false,
+      "reason": "'PPE (general)' is not introduced by any lesson in the curriculum"
+    },
+    {
+      "from_lesson": "T15.L03",
+      "term": "MUTCD traffic control",
+      "claimed_source": "T10.L03",
+      "verified": false,
+      "reason": "'MUTCD traffic control' is not introduced by any lesson in the curriculum"
+    },
+    {
+      "from_lesson": "T15.L04",
+      "term": "OTDR trace",
+      "claimed_source": "T12.L07",
+      "verified": false,
+      "reason": "'OTDR trace' is not introduced by any lesson in the curriculum"
+    },
+    {
+      "from_lesson": "T15.L04",
+      "term": "fusion splice",
+      "claimed_source": "T11.L04",
+      "verified": true
+    },
+    {
+      "from_lesson": "T15.L04",
+      "term": "mechanical splice",
+      "claimed_source": "T11.L02",
+      "verified": false,
+      "reason": "'mechanical splice' is introduced by T11.L08, not T11.L02"
+    },
+    {
+      "from_lesson": "T15.L04",
+      "term": "IOR",
+      "claimed_source": "T12.L07",
+      "verified": false,
+      "reason": "'IOR' is not introduced by any lesson in the curriculum"
+    },
+    {
+      "from_lesson": "T15.L04",
+      "term": "fault locate",
+      "claimed_source": "T15.L02",
+      "verified": false,
+      "reason": "'fault locate' is not introduced by any lesson in the curriculum"
+    },
+    {
+      "from_lesson": "T15.L04",
+      "term": "slack factor",
+      "claimed_source": "T15.L02",
+      "verified": true
+    },
+    {
+      "from_lesson": "T15.L04",
+      "term": "EDZ",
+      "claimed_source": "T15.L02",
+      "verified": false,
+      "reason": "'EDZ' is introduced by T12.L04, not T15.L02"
+    },
+    {
+      "from_lesson": "T15.L04",
+      "term": "emergency MOP",
+      "claimed_source": "T15.L01",
+      "verified": true
+    },
+    {
+      "from_lesson": "T15.L04",
+      "term": "RTO",
+      "claimed_source": "T15.L01",
+      "verified": false,
+      "reason": "'RTO' is not introduced by any lesson in the curriculum"
+    },
+    {
+      "from_lesson": "T15.L04",
+      "term": "as-built drawings",
+      "claimed_source": "T10.L11",
+      "verified": false,
+      "reason": "'as-built drawings' is not introduced by any lesson in the curriculum"
+    },
+    {
+      "from_lesson": "T15.L05",
+      "term": "fusion splice",
+      "claimed_source": "T11.L04",
+      "verified": true
+    },
+    {
+      "from_lesson": "T15.L05",
+      "term": "OTDR trace",
+      "claimed_source": "T12.L07",
+      "verified": false,
+      "reason": "'OTDR trace' is not introduced by any lesson in the curriculum"
+    },
+    {
+      "from_lesson": "T15.L05",
+      "term": "temporary patch",
+      "claimed_source": "T15.L04",
+      "verified": true
+    },
+    {
+      "from_lesson": "T15.L05",
+      "term": "permanent restoration",
+      "claimed_source": "T15.L04",
+      "verified": true
+    },
+    {
+      "from_lesson": "T15.L05",
+      "term": "fiber type confirmation",
+      "claimed_source": "T15.L04",
+      "verified": true
+    },
+    {
+      "from_lesson": "T15.L05",
+      "term": "mobilization",
+      "claimed_source": "T15.L01",
+      "verified": true
+    },
+    {
+      "from_lesson": "T15.L05",
+      "term": "PPE (general)",
+      "claimed_source": "T18.L01",
+      "verified": false,
+      "reason": "'PPE (general)' is not introduced by any lesson in the curriculum"
+    },
+    {
+      "from_lesson": "T15.L05",
+      "term": "LOTO",
+      "claimed_source": "T18.L05",
+      "verified": false,
+      "reason": "'LOTO' is introduced by T01.L08, T18.L02, not T18.L05"
+    },
+    {
+      "from_lesson": "T15.L06",
+      "term": "fault locate",
+      "claimed_source": "T15.L02",
+      "verified": false,
+      "reason": "'fault locate' is not introduced by any lesson in the curriculum"
+    },
+    {
+      "from_lesson": "T15.L06",
+      "term": "hand-dig zone (24-inch tolerance zone)",
+      "claimed_source": "T15.L03",
+      "verified": true
+    },
+    {
+      "from_lesson": "T15.L06",
+      "term": "locate ticket",
+      "claimed_source": "T10.L01",
+      "verified": true
+    },
+    {
+      "from_lesson": "T15.L06",
+      "term": "MUTCD traffic control",
+      "claimed_source": "T10.L03",
+      "verified": false,
+      "reason": "'MUTCD traffic control' is not introduced by any lesson in the curriculum"
+    },
+    {
+      "from_lesson": "T15.L06",
+      "term": "PPE (general)",
+      "claimed_source": "T18.L01",
+      "verified": false,
+      "reason": "'PPE (general)' is not introduced by any lesson in the curriculum"
+    },
+    {
+      "from_lesson": "T15.L06",
+      "term": "confined space",
+      "claimed_source": "T18.L03",
+      "verified": true
+    },
+    {
+      "from_lesson": "T15.L06",
+      "term": "PRCS (permit-required confined space)",
+      "claimed_source": "T18.L03",
+      "verified": false,
+      "reason": "'PRCS (permit-required confined space)' is not introduced by any lesson in the curriculum"
+    },
+    {
+      "from_lesson": "T15.L07",
+      "term": "outage bridge call",
+      "claimed_source": "T15.L01",
+      "verified": true
+    },
+    {
+      "from_lesson": "T15.L07",
+      "term": "RTO",
+      "claimed_source": "T15.L01",
+      "verified": false,
+      "reason": "'RTO' is not introduced by any lesson in the curriculum"
+    },
+    {
+      "from_lesson": "T15.L07",
+      "term": "NOC",
+      "claimed_source": "T15.L01",
+      "verified": false,
+      "reason": "'NOC' is not introduced by any lesson in the curriculum"
+    },
+    {
+      "from_lesson": "T15.L07",
+      "term": "mobilization",
+      "claimed_source": "T15.L01",
+      "verified": true
+    },
+    {
+      "from_lesson": "T15.L07",
+      "term": "MTTR",
+      "claimed_source": "T15.L01",
+      "verified": false,
+      "reason": "'MTTR' is not introduced by any lesson in the curriculum"
+    },
+    {
+      "from_lesson": "T15.L08",
+      "term": "emergency MOP",
+      "claimed_source": "T15.L01",
+      "verified": true
+    },
+    {
+      "from_lesson": "T15.L08",
+      "term": "verbal emergency authorization",
+      "claimed_source": "T15.L01",
+      "verified": true
+    },
+    {
+      "from_lesson": "T15.L08",
+      "term": "NOC",
+      "claimed_source": "T15.L01",
+      "verified": false,
+      "reason": "'NOC' is not introduced by any lesson in the curriculum"
+    },
+    {
+      "from_lesson": "T15.L08",
+      "term": "ETR",
+      "claimed_source": "T15.L07",
+      "verified": false,
+      "reason": "'ETR' is not introduced by any lesson in the curriculum"
+    },
+    {
+      "from_lesson": "T15.L08",
+      "term": "post-restoration notification",
+      "claimed_source": "T15.L07",
+      "verified": true
+    },
+    {
+      "from_lesson": "T15.L08",
+      "term": "as-built drawings",
+      "claimed_source": "T10.L11",
+      "verified": false,
+      "reason": "'as-built drawings' is not introduced by any lesson in the curriculum"
+    },
+    {
+      "from_lesson": "T15.L08",
+      "term": "splice closure reinstallation",
+      "claimed_source": "T15.L04",
+      "verified": true
+    },
+    {
+      "from_lesson": "T15.L08",
+      "term": "temporary patch",
+      "claimed_source": "T15.L04",
+      "verified": true
+    },
+    {
+      "from_lesson": "T15.L09",
+      "term": "as-built drawings",
+      "claimed_source": "T10.L11",
+      "verified": false,
+      "reason": "'as-built drawings' is not introduced by any lesson in the curriculum"
+    },
+    {
+      "from_lesson": "T15.L09",
+      "term": "OTDR trace",
+      "claimed_source": "T12.L07",
+      "verified": false,
+      "reason": "'OTDR trace' is not introduced by any lesson in the curriculum"
+    },
+    {
+      "from_lesson": "T15.L09",
+      "term": "concurrent documentation",
+      "claimed_source": "T15.L08",
+      "verified": true
+    },
+    {
+      "from_lesson": "T15.L09",
+      "term": "MOP (Method of Procedure)",
+      "claimed_source": "T15.L08",
+      "verified": true
+    },
+    {
+      "from_lesson": "T15.L09",
+      "term": "splice closure reinstallation",
+      "claimed_source": "T15.L04",
+      "verified": true
+    },
+    {
+      "from_lesson": "T15.L09",
+      "term": "MTTR",
+      "claimed_source": "T15.L01",
+      "verified": false,
+      "reason": "'MTTR' is not introduced by any lesson in the curriculum"
+    },
+    {
+      "from_lesson": "T15.L09",
+      "term": "RTO",
+      "claimed_source": "T15.L01",
+      "verified": false,
+      "reason": "'RTO' is not introduced by any lesson in the curriculum"
+    },
+    {
+      "from_lesson": "T15.L09",
+      "term": "ETR",
+      "claimed_source": "T15.L07",
+      "verified": false,
+      "reason": "'ETR' is not introduced by any lesson in the curriculum"
+    },
+    {
+      "from_lesson": "T15.L10",
+      "term": "outage bridge call",
+      "claimed_source": "T15.L01",
+      "verified": true
+    },
+    {
+      "from_lesson": "T15.L10",
+      "term": "RTO",
+      "claimed_source": "T15.L01",
+      "verified": false,
+      "reason": "'RTO' is not introduced by any lesson in the curriculum"
+    },
+    {
+      "from_lesson": "T15.L10",
+      "term": "MTTR",
+      "claimed_source": "T15.L01",
+      "verified": false,
+      "reason": "'MTTR' is not introduced by any lesson in the curriculum"
+    },
+    {
+      "from_lesson": "T15.L10",
+      "term": "NOC",
+      "claimed_source": "T15.L01",
+      "verified": false,
+      "reason": "'NOC' is not introduced by any lesson in the curriculum"
+    },
+    {
+      "from_lesson": "T15.L10",
+      "term": "mobilization",
+      "claimed_source": "T15.L01",
+      "verified": true
+    },
+    {
+      "from_lesson": "T15.L10",
+      "term": "emergency MOP",
+      "claimed_source": "T15.L01",
+      "verified": true
+    },
+    {
+      "from_lesson": "T15.L10",
+      "term": "verbal emergency authorization",
+      "claimed_source": "T15.L01",
+      "verified": true
+    },
+    {
+      "from_lesson": "T15.L10",
+      "term": "fault locate",
+      "claimed_source": "T15.L02",
+      "verified": false,
+      "reason": "'fault locate' is not introduced by any lesson in the curriculum"
+    },
+    {
+      "from_lesson": "T15.L10",
+      "term": "EDZ",
+      "claimed_source": "T15.L02",
+      "verified": false,
+      "reason": "'EDZ' is introduced by T12.L04, not T15.L02"
+    },
+    {
+      "from_lesson": "T15.L10",
+      "term": "ADZ",
+      "claimed_source": "T15.L02",
+      "verified": false,
+      "reason": "'ADZ' is introduced by T12.L04, not T15.L02"
+    },
+    {
+      "from_lesson": "T15.L10",
+      "term": "slack factor",
+      "claimed_source": "T15.L02",
+      "verified": true
+    },
+    {
+      "from_lesson": "T15.L10",
+      "term": ".sor file format",
+      "claimed_source": "T15.L02",
+      "verified": true
+    },
+    {
+      "from_lesson": "T15.L10",
+      "term": "hand-dig zone (24-inch tolerance zone)",
+      "claimed_source": "T15.L03",
+      "verified": true
+    },
+    {
+      "from_lesson": "T15.L10",
+      "term": "probe rod (non-metallic)",
+      "claimed_source": "T15.L03",
+      "verified": true
+    },
+    {
+      "from_lesson": "T15.L10",
+      "term": "temporary patch",
+      "claimed_source": "T15.L04",
+      "verified": true
+    },
+    {
+      "from_lesson": "T15.L10",
+      "term": "permanent restoration",
+      "claimed_source": "T15.L04",
+      "verified": true
+    },
+    {
+      "from_lesson": "T15.L10",
+      "term": "fiber type confirmation",
+      "claimed_source": "T15.L04",
+      "verified": true
+    },
+    {
+      "from_lesson": "T15.L10",
+      "term": "splice closure reinstallation",
+      "claimed_source": "T15.L04",
+      "verified": true
+    },
+    {
+      "from_lesson": "T15.L10",
+      "term": "mismatched fiber splice",
+      "claimed_source": "T15.L04",
+      "verified": true
+    },
+    {
+      "from_lesson": "T15.L10",
+      "term": "splice trailer",
+      "claimed_source": "T15.L05",
+      "verified": true
+    },
+    {
+      "from_lesson": "T15.L10",
+      "term": "field generator separation",
+      "claimed_source": "T15.L05",
+      "verified": true
+    },
+    {
+      "from_lesson": "T15.L10",
+      "term": "arc calibration",
+      "claimed_source": "T15.L05",
+      "verified": true
+    },
+    {
+      "from_lesson": "T15.L10",
+      "term": "fusion splicer cleave angle",
+      "claimed_source": "T15.L05",
+      "verified": true
+    },
+    {
+      "from_lesson": "T15.L10",
+      "term": "emergency excavation exception",
+      "claimed_source": "T15.L06",
+      "verified": true
+    },
+    {
+      "from_lesson": "T15.L10",
+      "term": "vacuum excavation (soft dig)",
+      "claimed_source": "T15.L06",
+      "verified": true
+    },
+    {
+      "from_lesson": "T15.L10",
+      "term": "shoring (emergency trench)",
+      "claimed_source": "T15.L06",
+      "verified": true
+    },
+    {
+      "from_lesson": "T15.L10",
+      "term": "Type C soil",
+      "claimed_source": "T15.L06",
+      "verified": true
+    },
+    {
+      "from_lesson": "T15.L10",
+      "term": "trench box",
+      "claimed_source": "T15.L06",
+      "verified": true
+    },
+    {
+      "from_lesson": "T15.L10",
+      "term": "ETR (Estimated Time to Restore)",
+      "claimed_source": "T15.L07",
+      "verified": true
+    },
+    {
+      "from_lesson": "T15.L10",
+      "term": "ETR revision",
+      "claimed_source": "T15.L07",
+      "verified": true
+    },
+    {
+      "from_lesson": "T15.L10",
+      "term": "post-restoration notification",
+      "claimed_source": "T15.L07",
+      "verified": true
+    },
+    {
+      "from_lesson": "T15.L10",
+      "term": "48-hour verification window",
+      "claimed_source": "T15.L07",
+      "verified": true
+    },
+    {
+      "from_lesson": "T15.L10",
+      "term": "MOP (Method of Procedure)",
+      "claimed_source": "T15.L08",
+      "verified": true
+    },
+    {
+      "from_lesson": "T15.L10",
+      "term": "rollback plan",
+      "claimed_source": "T15.L08",
+      "verified": true
+    },
+    {
+      "from_lesson": "T15.L10",
+      "term": "concurrent documentation",
+      "claimed_source": "T15.L08",
+      "verified": true
+    },
+    {
+      "from_lesson": "T15.L10",
+      "term": "emergency MOP authorization authority",
+      "claimed_source": "T15.L08",
+      "verified": true
+    },
+    {
+      "from_lesson": "T15.L10",
+      "term": "post-restoration as-built",
+      "claimed_source": "T15.L09",
+      "verified": true
+    },
+    {
+      "from_lesson": "T15.L10",
+      "term": "OTDR trace file naming convention",
+      "claimed_source": "T15.L09",
+      "verified": true
+    },
+    {
+      "from_lesson": "T15.L10",
+      "term": "post-incident RCA",
+      "claimed_source": "T15.L09",
+      "verified": false,
+      "reason": "'post-incident RCA' is not introduced by any lesson in the curriculum"
+    },
+    {
+      "from_lesson": "T16.L01",
+      "term": "as-built",
+      "claimed_source": "T01.L05",
+      "verified": true
+    },
+    {
+      "from_lesson": "T16.L01",
+      "term": "as-built redline",
+      "claimed_source": "T10.L10",
+      "verified": true
+    },
+    {
+      "from_lesson": "T16.L01",
+      "term": "as-designed",
+      "claimed_source": "T04.L08",
+      "verified": true
+    },
+    {
+      "from_lesson": "T16.L01",
+      "term": "RUS Form 219",
+      "claimed_source": "T01.L05",
+      "verified": true
+    },
+    {
+      "from_lesson": "T16.L01",
+      "term": "Form 219 certification scope",
+      "claimed_source": "T13.L07",
+      "verified": true
+    },
+    {
+      "from_lesson": "T16.L01",
+      "term": "post-restoration as-built",
+      "claimed_source": "T15.L09",
+      "verified": true
+    },
+    {
+      "from_lesson": "T16.L01",
+      "term": "DFR (Daily Field Report)",
+      "claimed_source": "T10.L10",
+      "verified": false,
+      "reason": "'DFR (Daily Field Report)' is not introduced by any lesson in the curriculum"
+    },
+    {
+      "from_lesson": "T16.L01",
+      "term": "deviation log",
+      "claimed_source": "T10.L10",
+      "verified": true
+    },
+    {
+      "from_lesson": "T16.L02",
+      "term": "buffer tube",
+      "claimed_source": "T01.L03",
+      "verified": true
+    },
+    {
+      "from_lesson": "T16.L02",
+      "term": "fiber count",
+      "claimed_source": "T03.L01",
+      "verified": false,
+      "reason": "'fiber count' is not introduced by any lesson in the curriculum"
+    },
+    {
+      "from_lesson": "T16.L02",
+      "term": "splice tray",
+      "claimed_source": "T01.L04",
+      "verified": true
+    },
+    {
+      "from_lesson": "T16.L02",
+      "term": "buffer tube routing",
+      "claimed_source": "T11.L11",
+      "verified": true
+    },
+    {
+      "from_lesson": "T16.L02",
+      "term": "express loop",
+      "claimed_source": "T11.L11",
+      "verified": true
+    },
+    {
+      "from_lesson": "T16.L02",
+      "term": "splice loss (dB)",
+      "claimed_source": "T11.L03",
+      "verified": false,
+      "reason": "'splice loss (dB)' is not introduced by any lesson in the curriculum"
+    },
+    {
+      "from_lesson": "T16.L02",
+      "term": "splice case types",
+      "claimed_source": "T11.L09",
+      "verified": false,
+      "reason": "'splice case types' is not introduced by any lesson in the curriculum"
+    },
+    {
+      "from_lesson": "T16.L02",
+      "term": "OTDR trace",
+      "claimed_source": "T12.L07",
+      "verified": false,
+      "reason": "'OTDR trace' is not introduced by any lesson in the curriculum"
+    },
+    {
+      "from_lesson": "T16.L02",
+      "term": "as-built record",
+      "claimed_source": "T16.L01",
+      "verified": true
+    },
+    {
+      "from_lesson": "T16.L02",
+      "term": "GIS record of record",
+      "claimed_source": "T16.L01",
+      "verified": true
+    },
+    {
+      "from_lesson": "T16.L03",
+      "term": "ANSI/TIA-606-C",
+      "claimed_source": "T16.L01",
+      "verified": true
+    },
+    {
+      "from_lesson": "T16.L03",
+      "term": "administration (fiber infrastructure)",
+      "claimed_source": "T16.L01",
+      "verified": true
+    },
+    {
+      "from_lesson": "T16.L03",
+      "term": "GIS record of record",
+      "claimed_source": "T16.L01",
+      "verified": true
+    },
+    {
+      "from_lesson": "T16.L03",
+      "term": "splice matrix",
+      "claimed_source": "T16.L02",
+      "verified": true
+    },
+    {
+      "from_lesson": "T16.L03",
+      "term": "as-built record",
+      "claimed_source": "T16.L01",
+      "verified": true
+    },
+    {
+      "from_lesson": "T16.L03",
+      "term": "splice case types",
+      "claimed_source": "T11.L09",
+      "verified": false,
+      "reason": "'splice case types' is not introduced by any lesson in the curriculum"
+    },
+    {
+      "from_lesson": "T16.L04",
+      "term": "TIA-606-C administration class (A/B/C/D)",
+      "claimed_source": "T16.L03",
+      "verified": true
+    },
+    {
+      "from_lesson": "T16.L04",
+      "term": "link record",
+      "claimed_source": "T16.L03",
+      "verified": true
+    },
+    {
+      "from_lesson": "T16.L04",
+      "term": "pathway record",
+      "claimed_source": "T16.L03",
+      "verified": true
+    },
+    {
+      "from_lesson": "T16.L04",
+      "term": "location record",
+      "claimed_source": "T16.L03",
+      "verified": true
+    },
+    {
+      "from_lesson": "T16.L04",
+      "term": "media record",
+      "claimed_source": "T16.L03",
+      "verified": true
+    },
+    {
+      "from_lesson": "T16.L04",
+      "term": "identifier (TIA-606-C label)",
+      "claimed_source": "T16.L03",
+      "verified": true
+    },
+    {
+      "from_lesson": "T16.L04",
+      "term": "splice matrix",
+      "claimed_source": "T16.L02",
+      "verified": true
+    },
+    {
+      "from_lesson": "T16.L04",
+      "term": "as-built record",
+      "claimed_source": "T16.L01",
+      "verified": true
+    },
+    {
+      "from_lesson": "T16.L04",
+      "term": "ASCE 38-22 Quality Level (QL-A through QL-D)",
+      "claimed_source": "T13.L04",
+      "verified": true
+    },
+    {
+      "from_lesson": "T16.L05",
+      "term": "GIS",
+      "claimed_source": "T01.L08",
+      "verified": true
+    },
+    {
+      "from_lesson": "T16.L05",
+      "term": "shapefile (.shp/.shx/.dbf/.prj)",
+      "claimed_source": "T04.L03",
+      "verified": false,
+      "reason": "'shapefile (.shp/.shx/.dbf/.prj)' is not introduced by any lesson in the curriculum"
+    },
+    {
+      "from_lesson": "T16.L05",
+      "term": "geodatabase",
+      "claimed_source": "T04.L03",
+      "verified": true
+    },
+    {
+      "from_lesson": "T16.L05",
+      "term": "KMZ",
+      "claimed_source": "T04.L06",
+      "verified": true
+    },
+    {
+      "from_lesson": "T16.L05",
+      "term": "KML",
+      "claimed_source": "T04.L06",
+      "verified": true
+    },
+    {
+      "from_lesson": "T16.L05",
+      "term": ".SHP",
+      "claimed_source": "T04.L06",
+      "verified": true
+    },
+    {
+      "from_lesson": "T16.L05",
+      "term": "ASCE 38-22 Quality Level (QL-A through QL-D)",
+      "claimed_source": "T13.L04",
+      "verified": true
+    },
+    {
+      "from_lesson": "T16.L05",
+      "term": "as-built record",
+      "claimed_source": "T16.L01",
+      "verified": true
+    },
+    {
+      "from_lesson": "T16.L05",
+      "term": "GIS record of record",
+      "claimed_source": "T16.L01",
+      "verified": true
+    },
+    {
+      "from_lesson": "T16.L05",
+      "term": "location record",
+      "claimed_source": "T16.L03",
+      "verified": true
+    },
+    {
       "from_lesson": "T18.L01",
       "term": "OSP",
       "claimed_source": "T01.L01",
@@ -14899,9 +16544,8 @@
     {
       "from_lesson": "T19.L08",
       "term": "fusion splice",
-      "claimed_source": "T11.L01",
-      "verified": false,
-      "reason": "'fusion splice' is introduced by T11.L04, not T11.L01"
+      "claimed_source": "T11.L04",
+      "verified": true
     },
     {
       "from_lesson": "T19.L09",
@@ -15342,15 +16986,9 @@
       "verified": true
     }
   ],
-  "verified_pointers_count": 1596,
-  "broken_pointers_count": 142,
+  "verified_pointers_count": 1708,
+  "broken_pointers_count": 179,
   "missing_source_lesson_pointers": [
-    {
-      "from_lesson": "T13.L09",
-      "term": "NEPA",
-      "claimed_source": "T09",
-      "reason": "Source lesson T09 not found in curriculum"
-    },
     {
       "from_lesson": "T13.L12",
       "term": "NEPA",
@@ -15372,7 +17010,22 @@
   ],
   "lessons_with_no_vocabulary_assumed": [
     "T01.L01",
-    "T13.L10"
+    "T13.L10",
+    "T16.L06",
+    "T16.L07",
+    "T16.L08",
+    "T16.L09",
+    "T16.L10",
+    "T17.L01",
+    "T17.L02",
+    "T17.L03",
+    "T17.L04",
+    "T17.L05",
+    "T17.L06",
+    "T17.L07",
+    "T17.L08",
+    "T17.L09",
+    "T17.L10"
   ],
   "vocabulary_assumed_without_source_id": []
 }

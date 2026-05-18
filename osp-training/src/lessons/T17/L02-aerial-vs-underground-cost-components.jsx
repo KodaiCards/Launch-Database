@@ -23,7 +23,6 @@ export const meta = {
     'lashed aerial cable',
     'ADSS (All-Dielectric Self-Supporting)',
     'bore cost',
-    'pavement restoration',
     'force account labor',
   ],
   vocabulary_assumed: [
@@ -38,6 +37,7 @@ export const meta = {
     'splice closure',
     'NESC loading district',
     'joint-use pole',
+    { term: 'pavement restoration', source_lesson_id: 'T06.L01' },
   ],
 };
 
