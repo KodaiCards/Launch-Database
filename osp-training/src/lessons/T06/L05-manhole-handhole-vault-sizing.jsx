@@ -295,16 +295,14 @@ export default function T06L05_ManholeHanhholeVaultSizing() {
           Sizes sourced from OFS IP-079 [VERIFIED-public-source] as vendor reference; not a normative standard. Confirm with project spec and RUS 1751F-635 §7 for RUS-funded projects.
         </p>
 
-        <div className="mt-6 grid gap-4 sm:grid-cols-2">
-          {key_terms.slice(0, 4).map((kt) => (
-            <Flashcard key={kt.term} term={kt.term} definition={kt.definition} />
-          ))}
-        </div>
-        <div className="mt-4 grid gap-4 sm:grid-cols-2">
-          {key_terms.slice(4).map((kt) => (
-            <Flashcard key={kt.term} term={kt.term} definition={kt.definition} />
-          ))}
-        </div>
+        <Flashcard
+          deckId="T06-L05"
+          cards={key_terms.map((kt, idx) => ({
+            id: `T06-L05-fc-${idx}`,
+            front: `What is ${kt.term}?`,
+            back: kt.definition,
+          }))}
+        />
       </section>
 
       {/* ── WORKING ─────────────────────────────────────────────────────── */}

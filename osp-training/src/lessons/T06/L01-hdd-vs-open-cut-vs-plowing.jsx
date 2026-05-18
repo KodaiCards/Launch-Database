@@ -306,21 +306,22 @@ export default function T06L01_HDDvsOpenCutvsPlowing() {
           let alone which tool is cost-effective.
         </p>
 
-        <div className="mt-6 grid gap-4 sm:grid-cols-3">
-          {key_terms.slice(0, 3).map((kt) => (
-            <Flashcard key={kt.term} term={kt.term} definition={kt.definition} />
-          ))}
-        </div>
-        <div className="mt-4 grid gap-4 sm:grid-cols-2">
-          {key_terms.slice(3, 7).map((kt) => (
-            <Flashcard key={kt.term} term={kt.term} definition={kt.definition} />
-          ))}
-        </div>
-        <div className="mt-4 grid gap-4 sm:grid-cols-2">
-          {key_terms.slice(7).map((kt) => (
-            <Flashcard key={kt.term} term={kt.term} definition={kt.definition} />
-          ))}
-        </div>
+        <Flashcard
+          deckId="T06-L01"
+          cards={[
+            { id: 'T06-L01-fc-hdd', front: 'What is HDD?', back: key_terms[0].definition },
+            { id: 'T06-L01-fc-opencut', front: 'What is open-cut trench?', back: key_terms[1].definition },
+            { id: 'T06-L01-fc-plow', front: 'What is vibratory plowing?', back: key_terms[2].definition },
+            { id: 'T06-L01-fc-bore', front: 'What is a bore?', back: key_terms[3].definition },
+            { id: 'T06-L01-fc-pavement', front: 'What is pavement restoration?', back: key_terms[4].definition },
+            { id: 'T06-L01-fc-matrix', front: 'What is a decision matrix?', back: key_terms[5].definition },
+            { id: 'T06-L01-fc-row', front: 'What is ROW?', back: key_terms[6].definition },
+            { id: 'T06-L01-fc-borepit', front: 'What is a bore pit?', back: key_terms[7].definition },
+            { id: 'T06-L01-fc-slurry', front: 'What is slurry?', back: key_terms[8].definition },
+            { id: 'T06-L01-fc-soil', front: 'What is soil type?', back: key_terms[9].definition },
+            { id: 'T06-L01-fc-alignment', front: 'What is route alignment?', back: key_terms[10].definition },
+          ]}
+        />
       </section>
 
       {/* ── WORKING ─────────────────────────────────────────────────────── */}

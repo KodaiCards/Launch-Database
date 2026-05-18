@@ -278,16 +278,14 @@ export default function T06L03_ConduitAndInnerductSelection() {
           independently.
         </p>
 
-        <div className="mt-6 grid gap-4 sm:grid-cols-2">
-          {key_terms.slice(0, 4).map((kt) => (
-            <Flashcard key={kt.term} term={kt.term} definition={kt.definition} />
-          ))}
-        </div>
-        <div className="mt-4 grid gap-4 sm:grid-cols-3">
-          {key_terms.slice(4).map((kt) => (
-            <Flashcard key={kt.term} term={kt.term} definition={kt.definition} />
-          ))}
-        </div>
+        <Flashcard
+          deckId="T06-L03"
+          cards={key_terms.map((kt, idx) => ({
+            id: `T06-L03-fc-${idx}`,
+            front: `What is ${kt.term}?`,
+            back: kt.definition,
+          }))}
+        />
       </section>
 
       {/* ── WORKING ─────────────────────────────────────────────────────── */}
