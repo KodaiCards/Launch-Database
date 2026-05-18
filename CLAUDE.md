@@ -1719,6 +1719,14 @@ Carter's verbatim:
 
 27. **AUTONOMOUS PROACTIVE COST-DISCOVERY (locked 2026-05-17 night, Carter):** Don't wait to be asked. Continuously identify waste patterns + implement countermeasures on my own. Meta-audit dispatches, infrastructure builds, registry creation, prompt-template iteration — all autonomous orchestrator work. Carter's bar: a good manager makes teams efficient + reliable + cheap + accurate. All four simultaneously. Never compromise quality (RT saturation, primary-source verify, 2-RT pair minimum, <1% error). Cost cuts come from infrastructure + tooling + discipline, never from skipping verification.
 
+31. **AGENT WALL-CLOCK ABANDONMENT THRESHOLDS (locked 2026-05-18, Carter caught me waiting 50 min on stalled R-9).** If an agent exceeds 2-3x typical wall-clock for its class with no completion notification, ABANDON + redispatch. Don't wait indefinitely.
+  - Research agent typical: 5-10 min → abandon at 15 min
+  - Fix-agent typical: 8-12 min → abandon at 20 min
+  - RT-pair-mate typical: 5-7 min → abandon at 15 min
+  - Polish agent typical: 5-8 min → abandon at 15 min
+  - No-notification ≠ still working — can mean stalled silent failure.
+  - Carter's verbatim 2026-05-18: *"That's 5x+ the normal time taken. You should've cut it sooner."*
+
 28. **17% OVER-BURN RECOVERY TARGET (locked 2026-05-17 night, Carter):** Pre-changes, single-agent throttle burn rate = 117% of sustainable (caps before 5-hr window resets). Changes I'm implementing this session MUST recover ≥17% to stay within 100% sustainable. Infrastructure budget:
 - Agent-protocol slim references → ~300-400 Opus saved per dispatch (~25-40% prompt-write Opus reduction)
 - Schema validator + DAG registry → ~34M Sonnet saved across remaining ~12 topics per meta-audit
