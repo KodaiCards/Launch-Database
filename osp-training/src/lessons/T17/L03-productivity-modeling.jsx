@@ -368,6 +368,21 @@ export default function L03ProductivityModeling() {
           The productivity model doesn't replace the subcontractor's knowledge of their own crew and equipment.
           But it gives you a benchmark to ask intelligent questions and spot quotes that don't add up.
         </p>
+
+        <section className="mt-8 p-5 border-l-4 border-blue-500 bg-slate-800/40 rounded">
+          <h3 className="text-blue-300 text-lg font-semibold mb-3">Tying It Together</h3>
+          <p className="text-slate-200 mb-3">
+            Productivity modeling is your second layer of cost control after direct-unit-cost estimation:
+          </p>
+          <ul className="space-y-2 text-slate-300 text-sm list-disc ml-5">
+            <li><strong>T17.L01 (Estimating Mindset)</strong> — established the four cost drivers. This lesson quantifies labor cost, which is typically 35–50% of direct cost. A wrong productivity model is a 10–30% estimate error.</li>
+            <li><strong>T02.L03 (Fiber Splice — Splicing Labor)</strong> — splicing productivity (splices per day per fusion splicer) is a specific case of the general productivity principle. Field data from real splice work feeds your benchmarks for future estimates.</li>
+            <li><strong>T17.L04 (Bill of Materials)</strong> — labor hours from your productivity model become the crew-hours line item in the BOM. That crew-hours quantity × your crew rate = your labor cost for the contract.</li>
+          </ul>
+          <p className="text-slate-200 mt-3 text-sm italic">
+            The most dangerous estimates are those that use unit costs from old projects but apply them to new crew compositions. A productivity model is your defense against accidentally bidding a job that should cost $50K as if it will only cost $20K.
+          </p>
+        </section>
       </section>
 
       {/* ── FLASHCARDS ── */}

@@ -415,6 +415,21 @@ export default function L04BillOfMaterials() {
           cost but shows $6 installed cost, the installation labor is implausibly low — handholes require excavation,
           leveling, backfill, and compaction. A ratio below 30% (material fraction) should raise questions.
         </p>
+
+        <section className="mt-8 p-5 border-l-4 border-blue-500 bg-slate-800/40 rounded">
+          <h3 className="text-blue-300 text-lg font-semibold mb-3">Tying It Together</h3>
+          <p className="text-slate-200 mb-3">
+            A BOM is the bridge between design decisions and cost:
+          </p>
+          <ul className="space-y-2 text-slate-300 text-sm list-disc ml-5">
+            <li><strong>T03.L05 (Cable Selection)</strong> — specifies cable type, fiber count, and jacket. That selection becomes a line item in your BOM with a unit price from the supplier and a total material cost.</li>
+            <li><strong>T07.L09 (Fiber Topology Canvas)</strong> — the topology diagram determines span counts, structure locations, and handhole counts. Those quantities feed directly into your BOM structure count and hardware line items.</li>
+            <li><strong>T17.L03 (Productivity Modeling)</strong> — labor productivity tells you how many crew-hours to assign to each BOM line item. Cable termination labor = unit termination time × BOM termination count.</li>
+          </ul>
+          <p className="text-slate-200 mt-3 text-sm italic">
+            An incomplete BOM is the leading cause of estimate underruns and change orders. If your BOM doesn't account for splicing, termination, testing, or restoration, your estimate is missing 10–20% of the real cost.
+          </p>
+        </section>
       </section>
 
       {/* ── FLASHCARDS ── */}

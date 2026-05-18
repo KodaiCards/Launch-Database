@@ -350,6 +350,21 @@ export default function L07ContingencyAndEscalation() {
           been estimated, what's been allowed (placeholder), and what's the contingency reserve on top of both.
           When the survey comes back, replace the allowance with the real number and adjust the budget accordingly.
         </p>
+
+        <section className="mt-8 p-5 border-l-4 border-blue-500 bg-slate-800/40 rounded">
+          <h3 className="text-blue-300 text-lg font-semibold mb-3">Tying It Together</h3>
+          <p className="text-slate-200 mb-3">
+            Contingency and escalation are the tools that make an estimate robust to the real world:
+          </p>
+          <ul className="space-y-2 text-slate-300 text-sm list-disc ml-5">
+            <li><strong>T17.L01 (Estimating Mindset)</strong> — teaches you to build an estimate from first principles. Contingency is the buffer you add on top because first principles never capture everything that could go wrong.</li>
+            <li><strong>T17.L06 (Change Orders)</strong> — if actual conditions exceed your contingency buffer, change orders are how you renegotiate. Contingency is your cushion; change orders are your formal escalation when the cushion isn't enough.</li>
+            <li><strong>T17.L09 (Revenue Modeling & ARPU)</strong> — project budget (estimated cost + contingency + escalation) is the numerator in your project-unit economics. If you underestimate contingency, project profitability gets compressed on the downside.</li>
+          </ul>
+          <p className="text-slate-200 mt-3 text-sm italic">
+            Contingency is not a sign of a weak estimate — it's a sign of an honest estimate. Projects that are estimated with zero contingency are usually projects that will surprise you with cost overruns later.
+          </p>
+        </section>
       </section>
 
       {/* ── FLASHCARDS ── */}

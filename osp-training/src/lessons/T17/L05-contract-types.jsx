@@ -410,6 +410,21 @@ export default function L05ContractTypes() {
           may use RFQ or RFP for the design portion, but the construction contract itself should follow IFB
           procedures per Part 1788.
         </p>
+
+        <section className="mt-8 p-5 border-l-4 border-blue-500 bg-slate-800/40 rounded">
+          <h3 className="text-blue-300 text-lg font-semibold mb-3">Tying It Together</h3>
+          <p className="text-slate-200 mb-3">
+            Contract type determines how your estimate will be used and what flexibility you have if conditions change:
+          </p>
+          <ul className="space-y-2 text-slate-300 text-sm list-disc ml-5">
+            <li><strong>T17.L01 (Estimating Mindset)</strong> — teaches you how to build an estimate. The contract type determines whether you will be paid for that estimate as-is, or whether you'll be exposed to risk if conditions change.</li>
+            <li><strong>T17.L06 (Change Orders)</strong> — change orders are the mechanism for adjusting lump-sum contracts when unexpected conditions arise. Cost-plus contracts avoid change orders but expose the owner to open-ended cost.</li>
+            <li><strong>T17.L07 (Contingency & Escalation)</strong> — your contingency buffer is only valuable under certain contract types. In a fixed-price contract with no contingency, contingency IS your risk. In cost-plus with contingency, you're managing owner funds, not your own margin.</li>
+          </ul>
+          <p className="text-slate-200 mt-3 text-sm italic">
+            The best estimators match their contract pricing strategy to the project's known uncertainties. High-uncertainty underground work is bid cost-plus or T&amp;M with a cap. Low-uncertainty aerial work is bid lump-sum.
+          </p>
+        </section>
       </section>
 
       {/* ── FLASHCARDS ── */}

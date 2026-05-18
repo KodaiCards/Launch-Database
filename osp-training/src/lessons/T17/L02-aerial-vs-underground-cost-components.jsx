@@ -528,6 +528,21 @@ export default function L02AerialVsUndergroundCostComponents() {
           line items — not as a single "underground cost." This lets you track which component is driving cost and
           allows the contractor to adjust quantities without re-pricing the entire job.
         </p>
+
+        <section className="mt-8 p-5 border-l-4 border-blue-500 bg-slate-800/40 rounded">
+          <h3 className="text-blue-300 text-lg font-semibold mb-3">Tying It Together</h3>
+          <p className="text-slate-200 mb-3">
+            The choice between aerial and underground doesn't exist in isolation — it cascades across every phase of the project:
+          </p>
+          <ul className="space-y-2 text-slate-300 text-sm list-disc ml-5">
+            <li><strong>T05.L02 (Pole Loading and Sag)</strong> — determining whether poles can accept aerial construction is the first prerequisite. If the pole owner will not approve aerial attachment or the poles cannot meet loading requirements, underground becomes the default.</li>
+            <li><strong>T08.L07 (Contingency & Make-Ready)</strong> — aerial contingency is low (rope, hardware). Underground contingency is high (rock surcharge, utility conflicts, discovery of existing conduit at crossing). Aerial projects are more predictable; underground projects require larger contingency buffers.</li>
+            <li><strong>T17.L04 (Bill of Materials)</strong> — the choice between aerial and underground determines which line items appear in your BOM. Aerial = strand, ADSS, mid-span clamps. Underground = conduit, pull tape, directional bore rig, structures.</li>
+          </ul>
+          <p className="text-slate-200 mt-3 text-sm italic">
+            The most expensive underground projects are those where aerial was initially feasible but excluded for regulatory or cosmetic reasons — always confirm the constraint before building a $30/ft+ underground estimate.
+          </p>
+        </section>
       </section>
 
       {/* ── FLASHCARDS ── */}

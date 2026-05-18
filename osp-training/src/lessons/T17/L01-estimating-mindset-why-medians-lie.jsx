@@ -397,6 +397,21 @@ export default function L01() {
           a request for additional justification. If it is significantly below, expect a question
           about whether you have adequately covered all work items.
         </p>
+
+        <section className="mt-8 p-5 border-l-4 border-blue-500 bg-slate-800/40 rounded">
+          <h3 className="text-blue-300 text-lg font-semibold mb-3">Tying It Together</h3>
+          <p className="text-slate-200 mb-3">
+            Cost estimation doesn't stand alone — it interlocks with earlier stages of project design and later project execution:
+          </p>
+          <ul className="space-y-2 text-slate-300 text-sm list-disc ml-5">
+            <li><strong>T16.L07 (Form 219 Documentation)</strong> — the close-out documentation becomes your historical cost data. Every project you close-out produces the unit costs for your next estimate.</li>
+            <li><strong>T03.L05 (Cable Selection)</strong> — material cost per foot starts here. Your BOM quantities and material specifications feed directly into the material line items of this estimate.</li>
+            <li><strong>T08.L10 (Pole Attachment Fees)</strong> — make-ready and attachment costs are a significant cost driver. A project with pole replacements (T08) is fundamentally more expensive than one without.</li>
+          </ul>
+          <p className="text-slate-200 mt-3 text-sm italic">
+            A good estimate is not a number in a spreadsheet — it is a record of decisions about scope, site conditions, crew productivity, and risk. When the project is built, your close-out records become the data that improves your next estimate.
+          </p>
+        </section>
       </section>
 
       {/* ── KEY TERMS ────────────────────────────────────────────── */}

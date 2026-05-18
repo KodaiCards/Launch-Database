@@ -324,6 +324,21 @@ export default function L09RevenueModelingArpu() {
           operating cost schedules. But the mechanics are the same: MRR = ARPU × Subscribers, Net Revenue = MRR × (1
           - OpEx%), and the question is whether Net Revenue × 12 months covers the loan payment with margin.
         </p>
+
+        <section className="mt-8 p-5 border-l-4 border-blue-500 bg-slate-800/40 rounded">
+          <h3 className="text-blue-300 text-lg font-semibold mb-3">Tying It Together</h3>
+          <p className="text-slate-200 mb-3">
+            Revenue modeling closes the loop from engineering to business case — your estimates are only useful if the project can actually make money:
+          </p>
+          <ul className="space-y-2 text-slate-300 text-sm list-disc ml-5">
+            <li><strong>T17.L01 (Estimating Mindset) + L08 (CPHP/CPHC KPIs)</strong> — your cost estimate (CPHP) sets the floor. Your ARPU calculation has to be above that floor, and typically 2–3× above to leave room for OpEx, debt service, and margin. If CPHP = $800 and your addressable ARPU = $600, the project does not work.</li>
+            <li><strong>T16 (As-Built Documentation)</strong> — historical revenue data from completed projects is as critical as historical cost data. ARPU benchmarks that don't come from your own deployments are likely to be wrong for your market.</li>
+            <li><strong>T05 (RUS Program Fundamentals)</strong> — RUS loan approval depends on demonstrating that Net Revenue covers the annual debt service + operating costs. Your revenue model is the evidence that the borrower can service the loan.</li>
+          </ul>
+          <p className="text-slate-200 mt-3 text-sm italic">
+            The most expensive lesson in FTTH is building a technically perfect network where nobody can afford to buy the service. Revenue modeling is how you prevent that. Cost estimates that ignore revenue are engineering documents, not business plans.
+          </p>
+        </section>
       </section>
 
       {/* ── FLASHCARDS ── */}

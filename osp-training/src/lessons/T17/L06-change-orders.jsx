@@ -357,6 +357,21 @@ export default function L06ChangeOrders() {
           the same documentation requirements apply — per 7 CFR Part 1788 and 7 CFR §1755 force account
           requirements (covered in L02). The documentation is what makes the cost reimbursable under the RUS loan.
         </p>
+
+        <section className="mt-8 p-5 border-l-4 border-blue-500 bg-slate-800/40 rounded">
+          <h3 className="text-blue-300 text-lg font-semibold mb-3">Tying It Together</h3>
+          <p className="text-slate-200 mb-3">
+            Change orders are the safety mechanism for fixed-price contracts when conditions diverge from the estimate:
+          </p>
+          <ul className="space-y-2 text-slate-300 text-sm list-disc ml-5">
+            <li><strong>T17.L05 (Contract Types)</strong> — defines the relationship between the estimate and the actual contract. Lump-sum contracts bear risk if conditions change; change orders are how that risk gets renegotiated.</li>
+            <li><strong>T17.L07 (Contingency & Escalation)</strong> — your contingency buffer is your hidden change-order protection. If conditions are better than estimated, contingency isn't spent. If worse, you can either absorb within contingency or file a formal change order.</li>
+            <li><strong>T13.L02 (Inspection — As-Built vs As-Designed)</strong> — discovery of divergence between the as-designed specifications and actual site conditions is the most common trigger for change orders. The inspection record becomes the evidence for the claim.</li>
+          </ul>
+          <p className="text-slate-200 mt-3 text-sm italic">
+            A well-documented change-order package is your lifeline when a project costs 20% more than estimated. Without the documentation trail, you're left defending the cost increase in negotiations instead of being reimbursed for a legitimate change.
+          </p>
+        </section>
       </section>
 
       {/* ── FLASHCARDS ── */}

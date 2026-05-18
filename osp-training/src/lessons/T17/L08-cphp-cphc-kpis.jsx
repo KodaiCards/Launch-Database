@@ -389,6 +389,21 @@ export default function L08CphpCphcKpis() {
           cost-reasonable. A CPHP significantly above the FBA benchmark range for the market type will draw
           scrutiny — the borrower should be prepared to explain why their build cost is higher than the benchmark.
         </p>
+
+        <section className="mt-8 p-5 border-l-4 border-blue-500 bg-slate-800/40 rounded">
+          <h3 className="text-blue-300 text-lg font-semibold mb-3">Tying It Together</h3>
+          <p className="text-slate-200 mb-3">
+            CPHP and CPHC are the RUS program's tools for controlling cost across the industry:
+          </p>
+          <ul className="space-y-2 text-slate-300 text-sm list-disc ml-5">
+            <li><strong>T17.L01 (Estimating Mindset)</strong> — shows you how to build an estimate. CPHP is the answer you'll get when you build well: reasonable cost on reasonable scope for the conditions you have.</li>
+            <li><strong>T17.L09 (Revenue Modeling)</strong> — your per-household revenue (ARPU, monthly recurring revenue) has to stay above per-household cost (CPHP) for the project to be viable. CPHP is the floor beneath which project economics break down.</li>
+            <li><strong>T05.L14 (RUS Program Fundamentals)</strong> — RUS uses CPHP benchmarks as a gating criterion for loan approval. Projects with CPHP above the benchmark benchmark get harder scrutiny. Understanding CPHP is how you explain to the RUS lender why your project costs what it costs.</li>
+          </ul>
+          <p className="text-slate-200 mt-3 text-sm italic">
+            The gap between CPHP benchmarks and actual costs in high-challenge territories (extremely rural, very sparse deployment, long aerial routes) is where many FTTH projects struggle. Communicating that gap clearly to RUS (and to your financial partners) is a critical skill for the build-out manager.
+          </p>
+        </section>
       </section>
 
       {/* ── FLASHCARDS ── */}
