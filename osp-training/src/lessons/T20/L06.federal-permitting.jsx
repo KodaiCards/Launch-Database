@@ -36,8 +36,8 @@ export default function T20L06_FederalPermitting() {
         <h3 className="mt-4 font-semibold">Three main federal overlays</h3>
         <div className="space-y-3 mt-3 text-sm">
           <div className="rounded bg-white/5 p-3">
-            <p className="font-semibold text-blue-300">NEPA (7 CFR Part 1970 — RUS rule)</p>
-            <p className="text-slate-300/90 mt-1">Applies to RUS projects 300K or higher or in sensitive environmental areas. RUS environmental worksheet required. If project affects wetlands, water quality, endangered species, historic sites: deeper environmental assessment needed.</p>
+            <p className="font-semibold text-blue-300">NEPA (7 CFR Part 1b — RUS environmental review)</p>
+            <p className="text-slate-300/90 mt-1">Applies to RUS projects 300K or higher or in sensitive environmental areas. RUS environmental worksheet required. If project affects wetlands, water quality, endangered species, historic sites: deeper environmental assessment needed. [confirm edition]</p>
           </div>
           <div className="rounded bg-white/5 p-3">
             <p className="font-semibold text-green-300">Section 106 (54 USC 306108)</p>

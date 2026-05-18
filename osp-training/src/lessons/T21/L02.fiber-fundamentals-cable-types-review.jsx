@@ -309,7 +309,7 @@ export default function T21L02_FiberFundamentalsReview() {
               { key: 'c', text: '84%' },
               { key: 'd', text: '96%' },
             ],
-            correct: 'c',
+            correct: 'a',
           },
           {
             id: 'T21-L02-Q3',
