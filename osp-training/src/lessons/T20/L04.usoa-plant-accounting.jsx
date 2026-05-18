@@ -1,0 +1,112 @@
+import React from 'react';
+import LessonLayout from '../../components/LessonLayout.jsx';
+import Quiz from '../../components/primitives/Quiz.jsx';
+
+export const meta = {
+  id: 'T20.L04',
+  course_id: 'T20',
+  title: 'Uniform System of Accounts (USOA) & Plant Account Mapping',
+  order: 4,
+  prerequisites: ['T04.L01', 'T09.L01'],
+  learning_objectives: [
+    'Identify 47 CFR Part 32 plant accounts (Cable & Wire, Poles, Conduit, Land)',
+    'Explain cost allocation to RUS-eligible vs. non-eligible components',
+    'Understand cost-per-mile accounting for RUS borrower reporting',
+  ],
+  estimated_minutes: 25,
+  vocabulary_introduced: [],
+  vocabulary_assumed: [
+    { term: 'cost', source_lesson_id: 'T04.L01' },
+  ],
+};
+
+export const key_terms = [];
+
+export default function T20L04_USOA() {
+  return (
+    <LessonLayout meta={meta}>
+      <section data-tier="foundations">
+        <h2>In Plain English</h2>
+        <p>Every dollar spent on an RUS project must be tracked in a plant account. Plant accounts are FCC-mandated categories (47 CFR Part 32): Cable & Wire, Poles, Conduit, Land, Labor, etc. Borrower submits Form 307 with costs broken down by account. RUS auditors verify the accounting is correct. Your job: spec materials and construction so that costs can be clearly assigned to the right accounts.</p>
+
+        <h3 className="mt-4 font-semibold">Main plant accounts (47 CFR Part 32)</h3>
+        <table className="w-full text-xs border border-white/10 rounded mt-3">
+          <thead className="bg-white/5">
+            <tr>
+              <th className="px-2 py-2 text-left">Account</th>
+              <th className="px-2 py-2 text-left">Section</th>
+              <th className="px-2 py-2 text-left">What goes here</th>
+            </tr>
+          </thead>
+          <tbody className="text-slate-300/90">
+            <tr className="border-t border-white/10">
+              <td className="px-2 py-2 font-mono">Cable & Wire</td>
+              <td className="px-2 py-2">§32.2210</td>
+              <td className="px-2 py-2">Fiber optic cable, copper cable, GPON splitters, closures</td>
+            </tr>
+            <tr className="border-t border-white/10">
+              <td className="px-2 py-2 font-mono">Poles</td>
+              <td className="px-2 py-2">§32.2420</td>
+              <td className="px-2 py-2">Wood/concrete poles, reinforcement, hardware</td>
+            </tr>
+            <tr className="border-t border-white/10">
+              <td className="px-2 py-2 font-mono">Conduit / Duct</td>
+              <td className="px-2 py-2">§32.2480</td>
+              <td className="px-2 py-2">PVC/HDPE duct, concrete duct, handholes, vaults</td>
+            </tr>
+            <tr className="border-t border-white/10">
+              <td className="px-2 py-2 font-mono">Land</td>
+              <td className="px-2 py-2">§32.2220</td>
+              <td className="px-2 py-2">Right-of-way acquisition, easement costs</td>
+            </tr>
+          </tbody>
+        </table>
+
+        <h3 className="mt-4 font-semibold">Cost-per-mile allowance mapping</h3>
+        <p className="mt-2">RUS says: "50 miles aerial = $50,000 per mile allowance = $2.5M total." That $2.5M is broken down by account: poles $X, cable $Y, labor $Z. If actual costs exceed allowance, borrower overages the difference (or requests amendment).</p>
+      </section>
+
+      <section data-tier="working">
+        <h2>Book vs. Field: USOA Tracking</h2>
+        <div className="rounded bg-amber-900/30 p-3 mt-3 text-sm">
+          <p className="font-semibold text-amber-300">Book</p>
+          <p className="text-slate-300/90 mt-1">Every invoice coded to plant account per 47 CFR §32. Detailed ledger showing cable cost separate from pole cost separate from labor.</p>
+        </div>
+        <div className="rounded bg-green-900/30 p-3 mt-3 text-sm">
+          <p className="font-semibold text-green-300">Field</p>
+          <p className="text-slate-300/90 mt-1">Contractor invoices often lump "Materials + Labor" per phase. Borrower uses spreadsheet to back-allocate based on spec (e.g., "this phase = 50 mi cable → 50 × $price/mi → account 32.2210"). RUS accepts if allocation methodology is documented and auditable.</p>
+        </div>
+      </section>
+
+      <h3 className="mt-6 font-semibold">Lesson Quiz</h3>
+      <Quiz
+        questions={[
+          {
+            id: 'T20-L04-Q1',
+            type: 'mc',
+            prompt: 'What does 47 CFR Part 32 define?',
+            options: [
+              { key: 'a', text: 'Uniform System of Accounts (USOA) for telecom carriers' },
+              { key: 'b', text: 'Engineering standards for poles' },
+              { key: 'c', text: 'NESC clearance rules' },
+              { key: 'd', text: 'RUS loan interest rates' },
+            ],
+            correct: 'a',
+          },
+          {
+            id: 'T20-L04-Q2',
+            type: 'mc',
+            prompt: 'Fiber optic cable costs go into which plant account?',
+            options: [
+              { key: 'a', text: 'Poles (§32.2420)' },
+              { key: 'b', text: 'Cable & Wire (§32.2210)' },
+              { key: 'c', text: 'Conduit (§32.2480)' },
+              { key: 'd', text: 'Land (§32.2220)' },
+            ],
+            correct: 'b',
+          },
+        ]}
+      />
+    </LessonLayout>
+  );
+}
