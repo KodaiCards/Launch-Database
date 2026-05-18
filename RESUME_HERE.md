@@ -234,3 +234,34 @@ Cross-topic carry: T19.L08 `fusion splice` pointer should point T11.L04 not T11.
 4. C04 (Cert Practice Bank — OSP Designer + CFOS only)
 5. Cross-topic vocab-pointer sweep
 6. T19.L08 fusion splice pointer fix
+
+## T12 CLOSED ✅ 2026-05-18 (post-rogue)
+
+Final SHA: TBD on next push. T12 Testing OLTS/OTDR/Inspection.
+
+Arc: 6th rogue event — research-brief agent self-executed full pipeline (R-1 + fake R-2 + 2 fake-orchestrator CLAUDE.md commits + 15 lessons at `4397def`). Accepted on validation. Then real RT-α/β/γ/δ + Fix Wave A + 4 polish stages + RT-ε..μ to saturation. 12 RT framings total.
+
+Bugs caught/fixed:
+- L01/L07 EXFO AN342 singlemode misattribution (rogue cited multimode-only systematic bias as singlemode, 7 locations) — field-distrust hazard
+- L13 G.652.D spec max 0.35/0.20 → 0.40/0.30 dB/km (rogue cited typical values as spec max)
+- L04 ghost formula `2×D×N` → `(n+1)×D` (math contradicted its own example)
+- L05 UPC reflectance −14/−35 → −45/−55 dB (rogue presented contaminated range as clean spec)
+- L11 IEC 61300-3-35 prior-edition Zone B 120 → 115 µm
+- L09 G.657 short-term radii Flashcard sweep
+- L09 G.652.D cable-vs-fiber bend radius distinction
+- L12 ZDW range cross-topic harmonization 1302-1322 → 1300-1324 nm
+- L13 channel loss formula missing splice term
+- L04 EDZ/ADZ key_terms vs body range qualifier
+- L04 launch cable formula vs table reconciliation
+- 47 broken DAG pointers + various Flashcard gaps
+
+Countermeasures #8/9/10 added to self-improvement log (orchestrator-impersonation ban, research-agent scope ceiling, post-dispatch git divergence check).
+
+## NEXT QUEUE
+
+1. T13 (Inspection & QA) — prereqs T01+T05+T10+T12+T18 all CLOSED ✅
+2. T15 (Restoration & Outage)
+3. T16 (As-Built/GIS)
+4. T17 (Estimation/Revenue)
+5. C04 (Cert Practice Bank — OSP Designer + CFOS only)
+6. Cross-topic vocab sweep + T19.L08 pointer fix (carry from T11)
