@@ -194,11 +194,8 @@ app.use((req, res, next) => {
 // canAccessPortal(user, portalMode) from auth.js is the source of truth for
 // splice/design/permitting access (it uses teamsForUser internally).
 
-// Training tile URL: defaults to the bundled Vite SPA at /training/.
-// When Moodle is live, set TRAINING_URL=https://training.launchfiber.com
-// in Railway Variables on the launch-database service; the tile will redirect
-// there automatically. No code change needed — just the env var.
-const TRAINING_URL = process.env.TRAINING_URL || '/training/';
+// Training tile URL: served as a bundled Vite SPA at /training/ behind requireAuth().
+const TRAINING_URL = '/training/';
 
 const PORTAL_DEFS = [
   {
@@ -341,15 +338,6 @@ function pageRequiresAuth(reqPath) {
   // Stakeholders click a share link; the token in the path is the auth.
   if (reqPath.startsWith('/splice/view/')) return false;
   if (reqPath.startsWith('/api/splice/view/')) return false;
-  // OAuth2 SSO bridge — all three endpoints manage their own auth internally:
-  //   GET  /oauth2/authorize  → validates client_id/redirect_uri THEN redirects
-  //                             to /login if unauthenticated (oauth2.js:168)
-  //   POST /oauth2/token      → server-to-server, no session cookie
-  //   GET  /oauth2/userinfo   → validates Bearer access token itself
-  // The global auth middleware must NOT intercept these or it returns a 302
-  // before oauth2.js can validate the client_id/redirect_uri params, causing
-  // oauth2.test.js assertions (expecting 400 on bad client_id) to see 302.
-  if (reqPath.startsWith('/oauth2/')) return false;
   // Block everything else (HTML pages and API endpoints) until logged in
   return true;
 }
@@ -727,14 +715,6 @@ app.get('/api/config/mapbox', requireAuth(), (req, res) => {
 });
 
 
-// ─────────────────────────────────────────────────────────────────────────────
-// OAUTH2 SSO BRIDGE — Authorization Code flow for Moodle auth_oauth2 plugin.
-// Three endpoints: GET /oauth2/authorize, POST /oauth2/token, GET /oauth2/userinfo.
-// Secrets via env vars: OAUTH2_CLIENT_ID, OAUTH2_CLIENT_SECRET,
-//   OAUTH2_ALLOWED_REDIRECT_URIS (comma-separated).
-// See routes/oauth2.js for full implementation notes.
-// ─────────────────────────────────────────────────────────────────────────────
-require('./routes/oauth2')(app, pool, { requireAuth, signToken, verifyToken, rateLimitOk });
 
 // ─────────────────────────────────────────────────────────────────────────────
 // API ERROR HANDLER — catches anything thrown out of an /api/* route AND
