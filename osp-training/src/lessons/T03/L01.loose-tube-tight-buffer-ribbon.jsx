@@ -26,6 +26,7 @@ export const meta = {
     'tight-buffered',
     'ribbon',
     'rollable ribbon',
+    'fiber count',
     'TIA-598-D',
     'ICEA S-87-640',
   ],
@@ -66,6 +67,11 @@ export const meta = {
       term: 'TIA-598-D',
       definition:
         'TIA-598 — Optical Fiber Cable Color Coding. Defines the 12-color fiber identification sequence (Blue, Orange, Green, Brown, Slate, White, Red, Black, Yellow, Violet, Rose, Aqua) used in OSP cables. [confirm current edition against tiaonline.org]',
+    },
+    {
+      term: 'fiber count',
+      definition:
+        'The total number of optical fibers contained within a single cable. Common counts in OSP: 4F (4 fibers) for small feeder runs, 12F (12 fibers), 24F, 48F, 96F, 144F, 288F, and 432F for large trunk cables. Expressed as "XF" where X is the number. Fiber count is a primary selection criterion when choosing cable for a splice point — the case capacity must match or exceed the cable fiber count plus room for future adds.',
     },
     {
       term: 'ICEA S-87-640',

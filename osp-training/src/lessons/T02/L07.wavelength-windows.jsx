@@ -73,6 +73,9 @@ export default function T02L07_WavelengthWindows() {
           frequency. Fiber systems choose wavelengths in the same way — pick the "station" that
           gives the lowest noise (attenuation) and best range for the job.
         </p>
+        <p className="mt-3 italic text-slate-400">
+          (Quick refresher: from T02.L02, <strong>attenuation</strong> is the loss rate in dB/km — the reason we pick 1550 nm over other wavelengths is that G.652.D SMF has the lowest attenuation there. From T02.L03, <strong>chromatic dispersion</strong> is pulse spreading — 1550 nm has MORE dispersion than 1310 nm, so longer links need compensation.)
+        </p>
 
         <h3 className="mt-5 font-semibold">Acronyms in this lesson</h3>
         <table className="w-full text-sm border border-white/10 rounded-lg mt-2">

@@ -130,6 +130,9 @@ export default function T02L06_LinkBudgetWorkedExample() {
           an 18 km single-mode OSP fiber run at 1550 nm, with 6 fusion splices,
           4 connector pairs, and standard planning values.
         </p>
+        <p className="text-sm text-slate-400 italic">
+          (This brings together attenuation from T02.L02, dB notation from T02.L05, and the wavelength choice from T02.L07.)
+        </p>
 
         <h3 className="mt-5 font-semibold">Step 1: Identify the optical budget</h3>
         <div className="rounded-lg bg-black/30 border border-white/10 p-4 font-mono text-sm leading-7 text-slate-200 my-3">
