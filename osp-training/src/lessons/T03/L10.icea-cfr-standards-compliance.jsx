@@ -307,6 +307,20 @@ export default function T03L10_StandardsCompliance() {
           shipment, including OTDR testing at 1310 and 1550 nm on all reels, and verification
           that measured attenuation doesn't exceed the cable's specified maximum.
         </p>
+        <section className="mt-8 p-5 border-l-4 border-blue-500 bg-slate-800/40 rounded">
+          <h3 className="text-blue-300 text-lg font-semibold mb-3">Tying It Together</h3>
+          <p className="text-slate-200 mb-3">
+            Standards compliance is not a paperwork box — it's the legal requirement for RUS funding:
+          </p>
+          <ul className="space-y-2 text-slate-300 text-sm list-disc ml-5">
+            <li><strong>T04.L09 RUS-Eligible Projects &amp; Funding</strong> — All RUS-funded cable must meet ICEA S-87-640 as incorporated in 7 CFR 1755.902. Non-compliant cable makes the entire project ineligible for RUS reimbursement — a six-figure financial hit.</li>
+            <li><strong>T13.L05 Material &amp; Hardware Acceptance Testing</strong> — During construction, every cable spool is verified against ICEA S-87-640 specs. Tensile strength, jacket thickness, water-blocking performance testing confirms compliance before installation.</li>
+            <li><strong>T19.L10 Project Closeout &amp; Certification</strong> — Final as-built paperwork includes cable certifications (ICEA compliance + fiber-count + attenuation verification). The RUS inspector reviews these to sign off on project completion and trigger reimbursement.</li>
+          </ul>
+          <p className="text-slate-200 mt-3 text-sm italic">
+            One non-compliant cable spool can disqualify millions of dollars in RUS funding. Standards are the safety net for your project economics.
+          </p>
+        </section>
       </section>
 
       {/* FLASHCARDS */}

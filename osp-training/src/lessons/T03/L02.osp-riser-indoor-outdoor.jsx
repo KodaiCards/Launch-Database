@@ -330,6 +330,21 @@ export default function T03L02_OSPRiserIndoorOutdoor() {
           whether it passes the relevant UL test. When a spec says "LSZH," confirm whether
           it also requires OFNR or OFNP listing. The two are not the same thing.
         </p>
+
+        <section className="mt-8 p-5 border-l-4 border-blue-500 bg-slate-800/40 rounded">
+          <h3 className="text-blue-300 text-lg font-semibold mb-3">Tying It Together</h3>
+          <p className="text-slate-200 mb-3">
+            The fire ratings you learned here connect to your broader design practice:
+          </p>
+          <ul className="space-y-2 text-slate-300 text-sm list-disc ml-5">
+            <li><strong>T04.L05 Indoor Cable Routing</strong> — When you design the interior portion of a project (cables entering the CO/hut), fire ratings determine which cables you can run through plenums vs. riser shafts vs. conduit in open areas.</li>
+            <li><strong>T06.L02 Underground Cable Fill &amp; Conduit</strong> — Underground cable selection parallels the indoor logic: the protection method (direct bury vs. conduit) influences cost and NEC compliance categories.</li>
+            <li><strong>T08.L07 Make-Ready &amp; Pole Attachment</strong> — On joint-use poles, cable routing around power and telephone lines comes with specific clearance rules and fire-rating implications if the plant is near structures.</li>
+          </ul>
+          <p className="text-slate-200 mt-3 text-sm italic">
+            Fire ratings are not theoretical — they're the legal boundary between a code-compliant design and a safety liability.
+          </p>
+        </section>
       </section>
 
       {/* ── SORTABLE: fire rating hierarchy ─────────────────────────────── */}

@@ -396,6 +396,21 @@ export default function T03L04_MessengerLashedVsADSS() {
           higher-EDS ADSS installations. Skipping them to save cost often results in
           premature jacket cracking and fiber degradation.
         </p>
+
+        <section className="mt-8 p-5 border-l-4 border-blue-500 bg-slate-800/40 rounded">
+          <h3 className="text-blue-300 text-lg font-semibold mb-3">Tying It Together</h3>
+          <p className="text-slate-200 mb-3">
+            The choice between messenger-lashed and ADSS cables drives multiple downstream decisions:
+          </p>
+          <ul className="space-y-2 text-slate-300 text-sm list-disc ml-5">
+            <li><strong>T05.L03 Pole Loading &amp; Design Wind Speed</strong> — ADSS cable has engineered EDS (Equivalent Diameter for Wind Load); design wind speed determines whether you can exceed 250 m ADSS spans safely. Messenger-lashed is more forgiving for high-wind locations because the messenger carries the load, not the cable itself.</li>
+            <li><strong>T07.L02 Staking Requirements</strong> — ADSS installations in high-EDS environments require dampers; those dampers add staking labor and cost. Messenger-lashed cable doesn't require dampers, reducing field labor.</li>
+            <li><strong>T08.L04 Make-Ready &amp; Pole Bond Requirements</strong> — ADSS cable is dielectric (no metallic messenger), so NO grounding/bonding required at poles. Messenger-lashed requires bonding of the metallic messenger to ground per NEC 770.48 — that's labor and ongoing maintenance cost every pole.</li>
+          </ul>
+          <p className="text-slate-200 mt-3 text-sm italic">
+            ADSS is more expensive per-foot, but the elimination of bonding labor and damper cost often makes it cheaper overall on large projects.
+          </p>
+        </section>
       </section>
 
       {/* ── KEY TERMS FLASHCARDS ──────────────────────────────────────────── */}

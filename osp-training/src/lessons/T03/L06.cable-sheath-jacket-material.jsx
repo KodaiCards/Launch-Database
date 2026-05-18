@@ -329,6 +329,21 @@ export default function T03L06_CableSheathJacketMaterial() {
           calls out "non-petroleum gel," substitute carefully and verify compatibility
           with the splice case manufacturer's materials.
         </p>
+
+        <section className="mt-8 p-5 border-l-4 border-blue-500 bg-slate-800/40 rounded">
+          <h3 className="text-blue-300 text-lg font-semibold mb-3">Tying It Together</h3>
+          <p className="text-slate-200 mb-3">
+            Jacket material specifications cascade through environmental and performance analysis:
+          </p>
+          <ul className="space-y-2 text-slate-300 text-sm list-disc ml-5">
+            <li><strong>T04.L07 Environmental Factors &amp; Temperature Extremes</strong> — MDPE vs. HDPE choice depends on the deployment: MDPE for aerial where cold-temperature flexibility matters; HDPE for buried where crush resistance is the constraint. The material properties directly affect real-world failure modes.</li>
+            <li><strong>T08.L02 Pole Loading &amp; Cable Sag</strong> — Jacket stiffness (HDPE is stiffer) affects how the cable hangs on a span. Stiffer jackets reduce initial sag but can increase micro-bend loss if the fiber inside is over-bent. Flex-favorable designs (MDPE) may require larger sag allowances.</li>
+            <li><strong>T13.L06 Material &amp; Hardware Acceptance</strong> — During construction closeout, you verify that received cable matches spec — HDPE vs. MDPE is a first-sight inspection item, and gel type (petroleum vs. non-petroleum) matters if the splice case or heat-shrink has specific material compatibility requirements.</li>
+          </ul>
+          <p className="text-slate-200 mt-3 text-sm italic">
+            Jacket material is not a fine-print detail — it's a performance and compatibility lever that affects decades of field behavior.
+          </p>
+        </section>
       </section>
 
       {/* ── KEY TERMS FLASHCARDS ──────────────────────────────────────────── */}

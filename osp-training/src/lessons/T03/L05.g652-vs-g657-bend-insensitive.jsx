@@ -387,6 +387,21 @@ export default function T03L05_G652VsG657BendInsensitive() {
           matters (long high-loss-budget links), B3 to G.652.D splices need to be
           measured and budgeted individually.
         </p>
+
+        <section className="mt-8 p-5 border-l-4 border-blue-500 bg-slate-800/40 rounded">
+          <h3 className="text-blue-300 text-lg font-semibold mb-3">Tying It Together</h3>
+          <p className="text-slate-200 mb-3">
+            The bend-insensitive fiber choice directly impacts two downstream design phases:
+          </p>
+          <ul className="space-y-2 text-slate-300 text-sm list-disc ml-5">
+            <li><strong>T04.L06 Conduit &amp; Duct Sizing</strong> — Bend-insensitive fiber (G.657.A1/A2) enables tighter conduit bends, which may allow smaller/cheaper duct in congested underground runs. Tight bends with G.652.D = unacceptable loss, forcing larger/more-expensive duct.</li>
+            <li><strong>T11.L03 Fusion Splicing Margins</strong> — G.657.B3 has a slightly different MFD than G.652.D. When splicing mixed cable types (legacy G.652 + new G.657 at a distribution point), you must measure each splice; the trench-assisted profile changes attenuation by up to 0.1 dB per splice.</li>
+            <li><strong>T06.L09 Drop Cable Design</strong> — FTTH drop cables are almost always G.657.A1 or A2 because the customer's drop terminal inside the home tolerates only 5–10 mm bends. Standard G.652.D drops would guarantee damage at those radii.</li>
+          </ul>
+          <p className="text-slate-200 mt-3 text-sm italic">
+            The choice between G.652 and G.657 is not a fiber specification technicality — it drives duct cost, splicing labor, and field reliability.
+          </p>
+        </section>
       </section>
 
       {/* ── KEY TERMS FLASHCARDS ──────────────────────────────────────────── */}

@@ -329,6 +329,21 @@ export default function T03L11_DatasheetReading() {
           documentation requirements above represent the full standard — know them even if you
           don't always exercise all of them.
         </p>
+
+        <section className="mt-8 p-5 border-l-4 border-blue-500 bg-slate-800/40 rounded">
+          <h3 className="text-blue-300 text-lg font-semibold mb-3">Tying It Together</h3>
+          <p className="text-slate-200 mb-3">
+            Reading a datasheet correctly is the bridge between design and procurement:
+          </p>
+          <ul className="space-y-2 text-slate-300 text-sm list-disc ml-5">
+            <li><strong>T04.L10 RUS Cable Specifications &amp; Submittal</strong> — The design engineer must read the datasheet, extract attenuation/dispersion/PMD, and submit it to RUS for approval. Misreading attenuation (e.g., confusing dB/km at 1310 nm with 1550 nm) invalidates the link budget and entire project approval.</li>
+            <li><strong>T11.L02 Fusion Splicing &amp; MFD Matching</strong> — MFD and core-diameter tolerances from the datasheet determine splice loss. A 4.5 dB difference in MFD between cable A and cable B appears as 0.1–0.3 dB per splice. Reading that detail from the datasheet ahead of time prevents field surprises.</li>
+            <li><strong>T13.L02 Acceptance Testing &amp; Verification</strong> — The construction inspector compares received cable against the datasheet specs. Tensile strength, jacket dimensions, attenuation — all must match the approved submittal, or the cable is rejected and returned.</li>
+          </ul>
+          <p className="text-slate-200 mt-3 text-sm italic">
+            The datasheet is your contract. Every number matters — in design, in splicing, and in project acceptance.
+          </p>
+        </section>
       </section>
 
       {/* FLASHCARDS */}

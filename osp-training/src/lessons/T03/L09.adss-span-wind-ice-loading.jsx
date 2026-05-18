@@ -482,6 +482,20 @@ export default function T03L09_ADSSSpanWindIceLoading() {
           Always use the district-specific table for your project geography, not the
           generic "maximum span" headline number on the product page.
         </p>
+        <section className="mt-8 p-5 border-l-4 border-blue-500 bg-slate-800/40 rounded">
+          <h3 className="text-blue-300 text-lg font-semibold mb-3">Tying It Together</h3>
+          <p className="text-slate-200 mb-3">
+            Wind and ice loading analysis is the foundation for safe pole design:
+          </p>
+          <ul className="space-y-2 text-slate-300 text-sm list-disc ml-5">
+            <li><strong>T05.L02 NESC Loading District Selection</strong> — Light / Medium / Heavy districts define design wind speed (88 / 100 / 120 mph) and ice load (0.5 / 1.0 / 2.0 in). Your ADSS cable choice must match the district. Heavy-district ADSS requires heavier strength members or shorter spans than Light-district ADSS.</li>
+            <li><strong>T05.L03 Pole Strength Calculation</strong> — ADSS span tensioning (determined by wind/ice loads) feeds into pole selection. The pole must support the cable tension PLUS all the guys and other cables. Wrong load assumption = under-specified pole = failure risk.</li>
+            <li><strong>T07.L01 Staking &amp; Guy Specification</strong> — High-EDS ADSS in windy/icy regions requires multiple guys on certain poles. Load analysis determines how many guys and at what angles. Under-guying = cable sag increase + potential splice-closure movement.</li>
+          </ul>
+          <p className="text-slate-200 mt-3 text-sm italic">
+            Weather loading is not a theory exercise — it's the physical basis for whether your plant survives the next ice storm or high-wind event.
+          </p>
+        </section>
       </section>
 
       {/* ── KEY TERMS FLASHCARDS ──────────────────────────────────────────── */}
