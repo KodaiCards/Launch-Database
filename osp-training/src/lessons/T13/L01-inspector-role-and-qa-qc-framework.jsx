@@ -1,0 +1,475 @@
+// T13.L01 — Inspector Role, Authority, and Documentation Framework
+// Teaching position: 1 of 12 — introduces QA/QC distinction, inspector-arrival workflow,
+// waiver-by-conduct doctrine, inspection segment definition, Form 565 as daily record
+// Standards: 7 CFR §1753.19, §1753.21; RUS Form 219; OSHA 29 CFR 1910.268
+
+import React from 'react';
+import LessonLayout from '../../components/LessonLayout.jsx';
+import Quiz from '../../components/primitives/Quiz.jsx';
+import Flashcard from '../../components/Flashcard.jsx';
+import BranchingScenario from '../../components/primitives/BranchingScenario.jsx';
+import TimelineSequence from '../../components/primitives/TimelineSequence.jsx';
+
+export const meta = {
+  id: 'T13.L01',
+  course_id: 'T13',
+  title: 'Inspector Role, Authority, and Documentation Framework',
+  order: 1,
+  lesson_type: 'foundation',
+  prerequisites: ['T01.L06', 'T10.L11'],
+  learning_objectives: [
+    'Distinguish Quality Assurance (QA) from Quality Control (QC) and state which role the field inspector primarily performs',
+    'Execute the six-step inspector-arrival daily workflow without reference',
+    'Explain how "waiver by course of conduct" can void an owner\'s right to reject defective work, and state the countermeasure',
+    'Define an inspection segment and state the ≥3-deficiency kick-back threshold',
+    'Identify RUS Form 565 as the primary daily inspection record and explain its role in the federal loan-advance chain',
+  ],
+  estimated_minutes: 30,
+  vocabulary_introduced: [
+    'QA/QC',
+    'material deficiency',
+    'rework',
+    'retainage',
+    'inspection segment',
+    'inspector-arrival workflow',
+  ],
+  key_terms: [
+    {
+      term: 'QA/QC',
+      definition:
+        'Quality Assurance (QA) is the set of planned, systematic activities — processes, procedures, checklists — put in place BEFORE and DURING construction to prevent defects from occurring. Quality Control (QC) is the measurement and inspection activity that DETECTS defects after they have occurred. In OSP construction the field inspector is primarily doing QC work (measuring, observing, comparing to spec) but operates within the owner\'s QA program (the plan, checklists, and documentation requirements). The distinction matters: when a defect slips through inspection, that is a QC failure. When the inspection program lacks a process to catch a whole class of defects, that is a QA failure.',
+    },
+    {
+      term: 'material deficiency',
+      definition:
+        'Any physical condition of installed construction work that does not conform to the contract documents, project specifications, or the applicable governing standard (NESC, RUS bulletin, NEC). Examples: burial depth 2 inches short of specification, lashing pitch outside the contracted range, a splice with OTDR-measured loss above the contract maximum. A material deficiency triggers a written punch-list entry and contractor notification. Do not confuse with cosmetic or administrative issues — a material deficiency directly affects performance, safety, or regulatory compliance.',
+    },
+    {
+      term: 'rework',
+      definition:
+        'The act of correcting a material deficiency by redoing the work to specification. Rework is at the contractor\'s expense unless the deficiency resulted from an approved change in project conditions. Distinguish rework (fixing non-conforming work) from a change order (compensable change in scope directed by the owner). An inspector documenting a deficiency as "requiring rework" must include: location, deficiency description, applicable spec clause violated, and the required corrective action.',
+    },
+    {
+      term: 'retainage',
+      definition:
+        'A percentage of each progress payment withheld by the owner from the contractor (typically 5–10% on RUS-financed projects) as financial leverage to ensure satisfactory completion and punch-list closeout. Retainage is released at substantial completion (typically 50% of withheld amount) and final completion. The inspector\'s acceptance of the close-out package (Form 219 signature) directly triggers retainage-release eligibility. Wrongly withholding retainage after legitimate substantial completion exposes the owner to contractor delay-damage claims.',
+    },
+    {
+      term: 'inspection segment',
+      definition:
+        'A defined unit of construction used to evaluate punch-list and kick-back thresholds. For OSP aerial and underground projects, a segment is typically a continuous span between two splice points or structures, or a contract phase unit defined in the project specifications. The kick-back rule: if ≥3 material deficiencies are found within a single inspection segment, the entire segment is returned to the contractor for correction before any portion is accepted. The inspector does not cherry-pick individual items — the whole segment goes back.',
+    },
+    {
+      term: 'inspector-arrival workflow',
+      definition:
+        'The six-step sequence an OSP field inspector executes at the start of every inspection day: (1) Review Form 565 from the prior day and list all open punch items. (2) Check the contractor\'s schedule for work planned today. (3) Arrive at the site — confirm contractor representative is present before any work proceeds. (4) Assess environmental conditions (temperature, wind, precipitation, frozen ground). (5) Open Form 565 for today — record date, weather, crew size, and open-items carry-forward. (6) Conduct inspection; at end of day complete Form 565 and log any outstanding items.',
+    },
+  ],
+  vocabulary_assumed: [
+    { term: 'inspector (OSP)', source_lesson_id: 'T01.L06' },
+    { term: 'acceptance walk', source_lesson_id: 'T10.L11' },
+    { term: 'punch list', source_lesson_id: 'T10.L11' },
+    { term: 'kick-back authority', source_lesson_id: 'T10.L11' },
+    { term: 'field inspector', source_lesson_id: 'T10.L11' },
+    { term: 'substantial completion', source_lesson_id: 'T10.L11' },
+    { term: 'RUS Form 219', source_lesson_id: 'T01.L05' },
+  ],
+};
+
+export const vocabulary_introduced = meta.vocabulary_introduced;
+export const key_terms = meta.key_terms;
+
+export default function T13L01InspectorRole() {
+  const dailyWorkflowSteps = [
+    {
+      id: 'step1',
+      label: 'Review Yesterday',
+      description: 'Read Form 565 from prior day. List every open punch item. Know what is unresolved before you pull into the site.',
+    },
+    {
+      id: 'step2',
+      label: 'Check Today\'s Schedule',
+      description: 'Review the contractor\'s look-ahead schedule. Know which segment is being built, which crew is on site, which inspections are required.',
+    },
+    {
+      id: 'step3',
+      label: 'Site Arrival Check-In',
+      description: 'Confirm contractor representative is physically present before work starts. If no representative is present, work cannot proceed — document the absence on Form 565.',
+    },
+    {
+      id: 'step4',
+      label: 'Environmental Conditions',
+      description: 'Temperature, wind speed, precipitation, frozen ground, daylight availability. Record all on Form 565. Certain operations (epoxy splices, concrete encasement) have temperature minimums.',
+    },
+    {
+      id: 'step5',
+      label: 'Open Today\'s Form 565',
+      description: 'Record date, weather, crew size, equipment on site, and carry-forward of open punch items from yesterday\'s Form 565.',
+    },
+    {
+      id: 'step6',
+      label: 'Inspect + End-of-Day Close',
+      description: 'Conduct inspection per today\'s scope. At end of day: complete Form 565, log any new deficiencies, confirm contractor acknowledgment signature, retain original.',
+    },
+  ];
+
+  const waiverScenario = {
+    id: 'waiver-conduct',
+    title: 'Day 3: The Contractor Skips a Step Again',
+    description:
+      'You are inspecting aerial lashing on a rural route. The spec requires 60-inch lashing pitch maximum. Yesterday you noticed several spans at 72 inches and said nothing — you figured you\'d bring it up later. Today is Day 3 and you see it again on a new mile of cable. You mention it to the contractor\'s foreman.',
+    startNode: 'start',
+    nodes: {
+      start: {
+        text: 'The foreman says: "You\'ve been walking this job for three days and never said a word about pitch. That\'s our standard. If it were a problem you would have flagged it Day 1." What do you do?',
+        choices: [
+          { label: 'Agree — I didn\'t flag it before, so I can\'t reject it now', nextNode: 'waived' },
+          { label: 'Issue a formal written punch-list entry today, citing spec clause and NESC Rule 235 lashing requirements', nextNode: 'correct' },
+          { label: 'Ignore it — pitch is a cosmetic issue', nextNode: 'wrong_cosmetic' },
+        ],
+      },
+      waived: {
+        text: '⚠️ This is exactly "waiver by course of conduct." By silently accepting the over-pitch for two days, you have given the contractor a legitimate argument that the owner waived strict compliance. AIA A201-2017 §3.3.1 recognizes this doctrine — an inspector\'s silence can imply acceptance. You have weakened the owner\'s position. Going forward, your only option is to issue the punch item NOW (late is still better than never) and document that you are reclassifying previously unaddressed work. But the contractor may claim compensable change-order entitlement for any rework on the prior two miles.',
+        choices: [{ label: 'Continue', nextNode: 'lesson' }],
+      },
+      correct: {
+        text: '✅ Correct. Issue the punch-list entry in writing TODAY with: (1) location (station/structure numbers), (2) specific deficiency (lashing pitch measured at X inches, spec maximum 60 inches), (3) spec clause cited (project spec §Y and NESC Rule 235), (4) required corrective action (re-lash to ≤60-inch pitch). Also document in your personal field notebook: "Prior days: pitch deviation not formally documented — error corrected today by formal punch-list entry." You have preserved the owner\'s rejection rights going forward. For the prior two miles, your position is weaker — discuss with the engineer of record.',
+        choices: [{ label: 'Continue', nextNode: 'lesson' }],
+      },
+      wrong_cosmetic: {
+        text: '❌ Lashing pitch is NOT cosmetic. It affects cable support under ice/wind loading (NESC Rule 235 prescribes maximum intervals), long-term cable sag, and RUS acceptance. Ignoring it compounds the waiver problem and is a material deficiency in a safety-related standard. Issue the punch-list entry.',
+        choices: [{ label: 'Try again', nextNode: 'start' }],
+      },
+      lesson: {
+        text: 'Key rule: your written objection preserves the owner\'s rights. Your silence may waive them. Write it down every time, every deficiency, every day. The AIA A201-2017 §3.3.1 waiver-by-conduct doctrine is a real legal risk on every project.',
+        choices: [],
+      },
+    },
+  };
+
+  const quizQuestions = [
+    {
+      id: 'q1',
+      question: 'An inspector measures burial depth at 36 inches on a road crossing specified at 42 inches. This is best classified as:',
+      type: 'multiple-choice',
+      options: [
+        'A cosmetic issue — depth is close enough',
+        'A material deficiency — document on Form 565, issue written punch-list entry',
+        'A rework order — immediately direct the contractor to dig and re-install',
+        'An administrative discrepancy — update the as-built drawing',
+      ],
+      correct: 1,
+      explanation:
+        'A 6-inch burial shortfall on a road crossing is a material deficiency — it does not conform to the project specification. The inspector documents it on Form 565 and issues a formal written punch-list entry. The inspector does NOT directly order rework (that is the engineer\'s directive after review). Updating the as-built without correcting the work would falsify the record.',
+    },
+    {
+      id: 'q2',
+      question: 'What is the primary difference between QA and QC?',
+      type: 'multiple-choice',
+      options: [
+        'QA measures finished work; QC designs the inspection plan',
+        'QA is proactive (prevents defects through planned processes); QC is reactive (detects defects through measurement)',
+        'QA is the contractor\'s responsibility; QC is the inspector\'s responsibility',
+        'QA applies only to materials; QC applies only to installed work',
+      ],
+      correct: 1,
+      explanation:
+        'QA = planned systematic activities to PREVENT defects (proactive). QC = inspection and measurement to DETECT defects (reactive). The field inspector primarily does QC work within the owner\'s QA program. Both are the owner\'s responsibility; the contractor may have their own QA/QC obligations in the contract.',
+    },
+    {
+      id: 'q3',
+      question: 'An inspector has silently passed lashing pitch violations for two weeks. On week three, they issue a written punch list for the same violation. Under AIA A201-2017 §3.3.1, the owner\'s position is:',
+      type: 'multiple-choice',
+      options: [
+        'Fully preserved — the written notice restores all rights retroactively',
+        'Weakened for the prior two weeks of work — waiver-by-conduct doctrine applies',
+        'Unaffected — the inspector has the right to flag issues at any time',
+        'Forfeited entirely — the owner cannot reject any lashing on this project',
+      ],
+      correct: 1,
+      explanation:
+        'Waiver by course of conduct: silence implies acceptance under AIA A201-2017 §3.3.1. The written punch-list preserves rights going FORWARD from week three, but the prior two weeks of silently accepted work is legally weakened. The contractor can argue the owner accepted those spans. Rights are NOT fully retroactively restored, and they are NOT entirely forfeited — the situation is nuanced. The lesson: write it down every time.',
+    },
+    {
+      id: 'q4',
+      question: 'An inspection segment has 5 material deficiencies. Per the kick-back rule:',
+      type: 'multiple-choice',
+      options: [
+        'Correct the 5 items individually; do not return the segment',
+        'Return the entire segment to the contractor — ≥3 deficiencies in a segment triggers kick-back',
+        'Return only the 5 deficient spans; accept the rest of the segment',
+        'Accept the segment with a conditional punch list',
+      ],
+      correct: 1,
+      explanation:
+        'The kick-back rule: ≥3 material deficiencies in a single inspection segment = the entire segment goes back to the contractor. The inspector does not cherry-pick individual items within the segment. The entire segment must be corrected and re-inspected.',
+    },
+    {
+      id: 'q5',
+      question: 'Step 3 of the inspector-arrival workflow requires confirming:',
+      type: 'multiple-choice',
+      options: [
+        'The contractor has paid all invoices',
+        'The engineer of record is on-site',
+        'A contractor representative is physically present before any work proceeds',
+        'The daily weather forecast matches the approved construction schedule',
+      ],
+      correct: 2,
+      explanation:
+        'Step 3: site arrival check-in — confirm contractor representative is physically present BEFORE work starts. If no representative is present, work cannot proceed and you document the absence on Form 565. The inspector cannot supervise work in progress without a contractor representative who has authority to direct the crew.',
+    },
+    {
+      id: 'q6',
+      question: 'RUS Form 565 serves which primary function in the RUS loan-advance chain?',
+      type: 'multiple-choice',
+      options: [
+        'It authorizes contractor payment directly from the RUS',
+        'It is the daily inspection report — the evidentiary basis for federal loan advance authorization',
+        'It replaces Form 219 as the close-out certification document',
+        'It is used only when deficiencies are found',
+      ],
+      correct: 1,
+      explanation:
+        'Form 565 is the Inspector\'s Daily Report — required by 7 CFR §1753.19. It documents daily construction progress and inspection findings. The Form 565 chain feeds Form 7d (advance authorization) and ultimately Form 219 (close-out certification). Missing Form 565 weeks can cause the GFR to suspend loan advance draws — directly impacting the borrower\'s cash flow. Form 565 is filled out every day, not just when deficiencies occur.',
+    },
+  ];
+
+  return (
+    <LessonLayout meta={meta}>
+
+      {/* ── FOUNDATIONS ────────────────────────────────────────────────── */}
+      <section data-tier="foundations">
+        <h2>In Plain English</h2>
+        <p>
+          Think of the OSP field inspector as the owner's eyes on the ground. When the RUS borrower
+          — a rural electric cooperative or telephone company — hires a contractor to build a fiber
+          network, they can't afford to send an engineer to stand there every minute. So they assign
+          a qualified inspector whose job is to watch the work happen, compare it to what the
+          contract says, and write everything down. If the work is wrong, the inspector documents
+          it. If it's right, the inspector documents that too. Either way, the documentation is the
+          product.
+        </p>
+        <p>
+          This lesson lays the foundation for the entire T13 topic: what authority the inspector
+          has, how to organize a workday, why writing things down protects the owner, and what
+          "quality assurance" actually means in the field.
+        </p>
+
+        <h3>QA vs. QC — Two Different Things</h3>
+        <p>
+          You'll hear "QA/QC" used as one word on job sites, but they describe two different
+          activities. Understanding the difference helps you know what you're actually doing when
+          you inspect.
+        </p>
+        <ul>
+          <li>
+            <strong>Quality Assurance (QA):</strong> The plan. Before construction starts, the
+            owner and engineer create specifications, checklists, inspection cadence plans, and
+            documentation requirements. These are designed to PREVENT defects from happening.
+            QA is proactive.
+          </li>
+          <li>
+            <strong>Quality Control (QC):</strong> The measurement. During construction, the
+            inspector goes to the site, measures burial depth, checks lashing pitch, witnesses
+            splice testing. QC DETECTS defects that occurred despite the QA plan. QC is reactive.
+          </li>
+        </ul>
+        <p>
+          The field inspector is doing QC work — measuring, observing, comparing to spec. But they
+          operate within the owner's QA program. When a defect slips through inspection undetected,
+          that is a QC failure. When the inspection program has no process to catch a whole class
+          of defects (like failing to include ground resistance testing in the inspection checklist),
+          that is a QA failure.
+        </p>
+
+        <h3>What the Inspector Can and Cannot Do</h3>
+        <p>
+          This is where new inspectors get in trouble. The inspector has significant authority, but
+          it is specifically bounded:
+        </p>
+        <ul>
+          <li>
+            <strong>Inspector CAN:</strong> Document deficiencies, issue punch-list entries, reject
+            work that does not conform to spec, direct work to stop if a safety violation is
+            observed, recommend kick-back of an entire segment, recommend acceptance.
+          </li>
+          <li>
+            <strong>Inspector CANNOT:</strong> Approve deviations from the contract documents
+            (that requires the Engineer of Record in writing — 7 CFR §1753.47(d)), authorize
+            additional work, release retainage, sign off on final payment, or waive any contract
+            requirement on behalf of the owner.
+          </li>
+        </ul>
+        <p>
+          If a contractor asks you to approve a change — "Can we go a little shallower here
+          because of the rock?" — your answer is: "I can document the field condition. The
+          engineer of record needs to approve any spec deviation in writing."
+        </p>
+      </section>
+
+      {/* ── Flashcards ─────────────────────────────────────────────────── */}
+      <section data-tier="foundations">
+        <h2>Key Terms</h2>
+        <div style={{ display: 'flex', flexWrap: 'wrap', gap: '1rem' }}>
+          {meta.key_terms.map((kt) => (
+            <Flashcard key={kt.term} term={kt.term} definition={kt.definition} />
+          ))}
+        </div>
+      </section>
+
+      {/* ── WORKING ────────────────────────────────────────────────────── */}
+      <section data-tier="working">
+        <h2>The Inspector-Arrival Daily Workflow</h2>
+        <p>
+          The six steps below are the professional standard for how an OSP inspector starts every
+          single field day. This is not optional on RUS-program work — 7 CFR §1753.19 requires
+          "competent resident inspection at all times" during construction, which means continuous
+          presence AND consistent documentation. The inspector-arrival workflow is how you achieve
+          that documentation requirement day after day.
+        </p>
+
+        <TimelineSequence
+          items={dailyWorkflowSteps}
+          prompt="Arrange these six steps in the correct inspector-arrival order:"
+          correctOrder={['step1', 'step2', 'step3', 'step4', 'step5', 'step6']}
+        />
+
+        <p>
+          <strong>Why Step 3 matters:</strong> If you arrive at the site and the contractor's
+          representative is not present, work cannot legally proceed under 7 CFR §1753.19 on
+          RUS-financed projects. Your Form 565 entry for that day: "Contractor representative
+          absent at 0730 arrival. [Name/Company] notified by phone at 0732. Work held until
+          0815 when representative [Name] arrived." That entry protects the owner if there is
+          later a dispute about work quality during that window.
+        </p>
+
+        <h3>The Inspection Segment and the Kick-Back Threshold</h3>
+        <p>
+          An <strong>inspection segment</strong> is the unit by which you evaluate the kick-back
+          threshold. For aerial work it is typically a continuous run between two splice points.
+          For underground work it might be a block section or a contract phase as defined in the
+          project specifications.
+        </p>
+        <p>
+          The kick-back rule: if you find <strong>≥3 material deficiencies</strong> within a
+          single inspection segment, the entire segment is returned to the contractor for
+          correction before any portion is accepted. You do not cherry-pick the five good spans
+          and reject the three bad ones — the whole segment goes back. This threshold is designed
+          to incentivize the contractor to get quality right the first time rather than gambling
+          on partial acceptance.
+        </p>
+        <p>
+          Document every deficiency individually. On a segment with 5 deficiencies, you have 5
+          separate punch-list entries, each with location, description, spec violation, and
+          required correction. The kick-back applies to the segment unit; the entries apply to
+          individual items.
+        </p>
+
+        <h3>RUS Form 565 — The Foundation of the Advance Chain</h3>
+        <p>
+          On RUS-financed projects, the inspector's daily record is <strong>RUS Form 565</strong>{' '}
+          (Inspector's Daily Report), required by 7 CFR §1753.19. Think of Form 565 as the raw
+          evidence that eventually justifies every dollar of federal loan money the borrower draws.
+          Here's why that matters to you personally as the inspector:
+        </p>
+        <p>
+          The federal loan advance chain works like this: your Form 565 records document daily
+          progress → those records feed into RUS Form 7d (advance authorization) → Form 7d
+          authorizes the borrower to request a loan advance from the GFR (Government Field
+          Representative) → at close-out, you sign Form 219 (the final certification). If the
+          GFR audits the project and finds two weeks of missing Form 565s, they can suspend all
+          advance requests until the documentation deficiency is resolved. The borrower doesn't
+          get their draw. That is a cash-flow crisis for a small rural cooperative. Your daily
+          paperwork keeps their money flowing.
+        </p>
+        <p>
+          We will cover Form 565 in depth in L11. For now, understand that Form 565 is the primary
+          tool you use every single day, not just when something goes wrong.
+        </p>
+      </section>
+
+      {/* ── Branching: Waiver by Course of Conduct ─────────────────────── */}
+      <section data-tier="working">
+        <h2>Scenario: Waiver by Course of Conduct</h2>
+        <p>
+          One of the most dangerous legal traps for an OSP inspector is "waiver by course of
+          conduct." The doctrine, recognized in AIA A201-2017 §3.3.1, works like this: if the
+          owner's representative (you) repeatedly accepts non-conforming work without objection,
+          the contractor can argue that the owner has waived the right to enforce that
+          specification requirement.
+        </p>
+        <p>
+          Plain English: if you walk past the same deficiency for two weeks without writing it up,
+          you have given the contractor ammunition to say "you already accepted this work." Your
+          written objection preserves the owner's rights. Your silence may forfeit them.
+        </p>
+        <BranchingScenario scenario={waiverScenario} />
+      </section>
+
+      {/* ── ADVANCED ───────────────────────────────────────────────────── */}
+      <section data-tier="advanced">
+        <h2>Material Deficiency, Rework, and Retainage — The Triangle</h2>
+        <p>
+          Three terms work together in the inspector's vocabulary: a <strong>material
+          deficiency</strong> triggers required <strong>rework</strong>, and until rework is
+          complete, <strong>retainage</strong> is the financial lever. Understanding how they
+          connect gives you context for why your documentation matters beyond paperwork.
+        </p>
+        <p>
+          When you document a material deficiency and issue a punch-list entry, you are triggering
+          a contractual obligation. The contractor must correct it at their own cost. When a
+          segment is corrected and passes re-inspection, that deficiency is closed. When ALL
+          deficiencies are closed (or formally accepted with conditions), the project reaches
+          substantial completion. At substantial completion, the owner typically releases 50% of
+          withheld retainage. At final completion (all punch-list items closed, final OTDR
+          records delivered, Form 219 signed), the remaining retainage is released.
+        </p>
+        <p>
+          <strong>Book vs. Field Practice — Retainage Rates:</strong> Textbook RUS contract
+          language typically provides for 5–10% retainage. In the field, many rural cooperative
+          projects negotiate lower retainage (3–5%) because contractors know the cooperative's
+          financial capacity is limited and full 10% retainage can strain contractor cash flow.
+          Both are legally permissible. The risk of too-low retainage: if the contractor
+          defaults, the owner has less financial leverage to hire a new contractor to complete
+          the work. The risk of too-high retainage: the contractor may slow-walk the job if
+          the retained amount grows large relative to remaining work.
+        </p>
+        <p>
+          <strong>Inspector's personal field notebook is discoverable evidence.</strong> Under
+          FRCP Rule 34, any document you create in connection with a project — including your
+          personal notebook — can be subpoenaed if there is litigation. Write in your field
+          notebook as if opposing counsel will read it at deposition. Describe facts, not
+          opinions about contractor personnel. "String line measured 78 inches at Station 45+20"
+          is a fact. "Crew seemed lazy" is an opinion that will embarrass you in court.
+        </p>
+      </section>
+
+      {/* ── L01 → L02 Transition Bridge ────────────────────────────────── */}
+      <section data-tier="working">
+        <h2>Before You Start: What Must Be in Place?</h2>
+        <p>
+          Think about your first day on a new project. The contractor is ready to mobilize.
+          What has to be confirmed BEFORE construction begins? This is the bridge from the
+          inspector's role (this lesson) to the pre-construction work (L02).
+        </p>
+        <p>
+          Ask yourself: Do you have written acceptance criteria — specific, measurable pass/fail
+          thresholds — signed by the borrower, contractor, and engineer? Do you know which
+          inspection cadence (continuous, milestone, sampling) applies to each phase of work?
+          Do you have blank Form 565s, your field notebook, and your reference standards?
+        </p>
+        <p>
+          If the answer to any of those is "no," you are not ready for Day 1 of construction.
+          L02 covers exactly what must be established before the first shovel moves.
+        </p>
+      </section>
+
+      {/* ── QUIZ ───────────────────────────────────────────────────────── */}
+      <section data-tier="assessment">
+        <h2>Lesson Quiz</h2>
+        <Quiz questions={quizQuestions} />
+      </section>
+
+    </LessonLayout>
+  );
+}
