@@ -509,6 +509,21 @@ export default function T08L01_OTMRvsMultiParty() {
         ]}
       />
 
+
+      <section className="mt-8 p-5 border-l-4 border-blue-500 bg-slate-800/40 rounded">
+        <h3 className="text-blue-300 text-lg font-semibold mb-3">Tying It Together</h3>
+        <p className="text-slate-200 mb-3">
+          Make-ready work you learned here integrates with:
+        </p>
+        <ul className="space-y-2 text-slate-300 text-sm list-disc ml-5">
+    <li><strong>T01.L02 Pole Anatomy & Field Measurements</strong> — The pole anatomy and attachment concepts define what make-ready work needs to address.</li>
+    <li><strong>T07.L06 T07.L06</strong> — Feeds into the broader OSP workflow.</li>
+    <li><strong>T05.L08 T05.L08</strong> — Feeds into the broader OSP workflow.</li>
+        </ul>
+        <p className="text-slate-200 mt-3 text-sm italic">
+          Make-ready is the preparation work that clears the way for construction — every dollar invested here saves five during fiber installation.
+        </p>
+      </section>
     </LessonLayout>
   );
 }
