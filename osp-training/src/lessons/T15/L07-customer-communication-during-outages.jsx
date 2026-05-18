@@ -29,10 +29,10 @@ export const meta = {
   ],
   vocabulary_assumed: [
     { term: 'outage bridge call', source_lesson_id: 'T15.L01' },
-    { term: 'RTO', source_lesson_id: 'T15.L01' },
-    { term: 'NOC', source_lesson_id: 'T15.L01' },
+    { term: 'RTO (Recovery Time Objective)', source_lesson_id: 'T15.L01' },
+    { term: 'NOC (Network Operations Center)', source_lesson_id: 'T15.L01' },
     { term: 'mobilization', source_lesson_id: 'T15.L01' },
-    { term: 'MTTR', source_lesson_id: 'T15.L01' },
+    { term: 'MTTR (Mean Time to Repair)', source_lesson_id: 'T15.L01' },
   ],
   key_terms: [
     {

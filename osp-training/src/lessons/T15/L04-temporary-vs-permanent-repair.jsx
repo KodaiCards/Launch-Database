@@ -29,14 +29,11 @@ export const meta = {
   vocabulary_assumed: [
     { term: 'OTDR trace', source_lesson_id: 'T12.L07' },
     { term: 'fusion splice', source_lesson_id: 'T11.L04' },
-    { term: 'mechanical splice', source_lesson_id: 'T11.L02' },
-    { term: 'IOR', source_lesson_id: 'T12.L07' },
-    { term: 'fault locate', source_lesson_id: 'T15.L02' },
+    { term: 'fault locate (cable-distance)', source_lesson_id: 'T15.L02' },
     { term: 'slack factor', source_lesson_id: 'T15.L02' },
-    { term: 'EDZ', source_lesson_id: 'T15.L02' },
+    { term: 'event dead zone (EDZ)', source_lesson_id: 'T15.L02' },
     { term: 'emergency MOP', source_lesson_id: 'T15.L01' },
-    { term: 'RTO', source_lesson_id: 'T15.L01' },
-    { term: 'as-built drawings', source_lesson_id: 'T10.L11' },
+    { term: 'RTO (Recovery Time Objective)', source_lesson_id: 'T15.L01' },
   ],
   key_terms: [
     {

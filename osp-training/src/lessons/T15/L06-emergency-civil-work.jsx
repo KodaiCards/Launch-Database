@@ -26,7 +26,7 @@ export const meta = {
     'trench box',
   ],
   vocabulary_assumed: [
-    { term: 'fault locate', source_lesson_id: 'T15.L02' },
+    { term: 'fault locate (cable-distance)', source_lesson_id: 'T15.L02' },
     { term: 'hand-dig zone (24-inch tolerance zone)', source_lesson_id: 'T15.L03' },
     { term: 'locate ticket', source_lesson_id: 'T10.L01' },
     { term: 'MUTCD traffic control', source_lesson_id: 'T10.L03' },

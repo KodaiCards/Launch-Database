@@ -30,8 +30,7 @@ export const meta = {
   vocabulary_assumed: [
     { term: 'emergency MOP', source_lesson_id: 'T15.L01' },
     { term: 'verbal emergency authorization', source_lesson_id: 'T15.L01' },
-    { term: 'NOC', source_lesson_id: 'T15.L01' },
-    { term: 'ETR', source_lesson_id: 'T15.L07' },
+    { term: 'ETR (Estimated Time to Restore)', source_lesson_id: 'T15.L07' },
     { term: 'post-restoration notification', source_lesson_id: 'T15.L07' },
     { term: 'as-built drawings', source_lesson_id: 'T10.L11' },
     { term: 'splice closure reinstallation', source_lesson_id: 'T15.L04' },

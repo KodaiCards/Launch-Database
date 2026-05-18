@@ -30,9 +30,9 @@ export const meta = {
     { term: 'concurrent documentation', source_lesson_id: 'T15.L08' },
     { term: 'MOP (Method of Procedure)', source_lesson_id: 'T15.L08' },
     { term: 'splice closure reinstallation', source_lesson_id: 'T15.L04' },
-    { term: 'MTTR', source_lesson_id: 'T15.L01' },
-    { term: 'RTO', source_lesson_id: 'T15.L01' },
-    { term: 'ETR', source_lesson_id: 'T15.L07' },
+    { term: 'MTTR (Mean Time to Repair)', source_lesson_id: 'T15.L01' },
+    { term: 'RTO (Recovery Time Objective)', source_lesson_id: 'T15.L01' },
+    { term: 'ETR (Estimated Time to Restore)', source_lesson_id: 'T15.L07' },
   ],
   key_terms: [
     {
