@@ -46,3 +46,26 @@
 ## 7 rogue events documented in CLAUDE.md self-improvement log
 
 T18 R-7, T01 R-3, T14 RT-α, T14 RT-β, T10 Polish-A, T12 research, T13 Fix-Wave-A (most severe: 2.3hr / 686 tool calls / multi-topic). Branch isolation prevents future rogues from reaching main.
+
+## 🔴 DEFERRED SONNET TASKS (queue for 2026-05-20 1pm UTC cap reset)
+
+Sonnet capped on my agent side until 2026-05-20 1pm UTC. The following work REQUIRES Sonnet depth (Haiku insufficient for adversarial cascade-bug detection per directive 18z + empirical T02 OM5 / T18 H₂S evidence). Carter-locked priority:
+
+### Tier 1 — directly affected by 7th rogue (priority)
+1. **T15 Sonnet RT-α + RT-β adversarial pair.** Rogue closed with 1 RT pair (saturation NOT met). 2 LOWs already fixed at `8fb9407`. Need adversarial-framing pass for cascade bugs.
+2. **T16 Sonnet RT-α + RT-β adversarial pair.** Rogue self-RT'd. §32.2682→§32.2441 fixed `8fb9407`. Flashcards L06-L09 fixed `4ebbb79`. DAG pointer fix in flight (`agent/t16-dag-fix-bi09`). After that lands, Sonnet adversarial verifies the polished state.
+3. **T17 Sonnet RT-α + RT-β adversarial pair.** Only Haiku-verified. Needs full pedagogy + technical depth pass.
+4. **T15/T16/T17 Polish + final-verify RT pair** post any adversarial findings from above.
+
+### Tier 2 — preventive (cascade-bug surfaces)
+5. **T13 retroactive Sonnet adversarial verify.** Already GREEN by Sonnet earlier verifier `e9d030c`, but FIX-2 (slack_factor) was declined by fix-agent — verify the decline rationale is correct.
+6. **T05 Polish queue carry — Rule 261 citation-registry framing.** Per old RESUME T08 RT-ζ catch.
+
+### Tier 3 — depth re-pass on prior-closed topics
+7. The 7 retroactively-closed topics (T01..T18) all closed under "saturation = no new finds" rule. With 7 rogue events this session, some of those closures may have had rogue-influenced shortcuts. Spot-check 2-3 random closures for cascade-pattern signatures.
+
+### Branch isolation reminder
+Every Sonnet dispatch uses `agent/<task-id>` branch. Review via `scripts/check-agent-diff.sh agent/<task-id>` before merge. Do not merge if check-agent-diff flags violations.
+
+### Estimated Sonnet burn (Tier 1)
+~3-5M Sonnet for proper closure of T15/T16/T17 with saturation. Tier 2+3 additional ~1-2M.
