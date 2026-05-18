@@ -26,12 +26,18 @@ export const meta = {
   estimated_minutes: 38,
   vocabulary_introduced: [
     'clamp-on ground resistance measurement procedure',
+    'ASCE 38-22 Quality Level (QL-A through QL-D)',
   ],
   key_terms: [
     {
       term: 'clamp-on ground resistance measurement procedure',
       definition:
         'The step-by-step IEEE 81-2012 §7 [confirm section] method for measuring a grounding electrode\'s resistance using a clamp-on earth resistance tester. The clamp encircles the grounding conductor (not the conductor and pipe together). Method: (1) Confirm a closed current path exists (clamp method requires a loop through the earth). (2) Clamp around the grounding conductor lead, not around the bonding conductor. (3) Verify EM interference is low (trigger the interference check mode on the meter). (4) Read the resistance — must be ≤25Ω per NEC §250.56 for a single driven rod. (5) Record: meter model, serial number, calibration date, measurement reading, GPS location. Note: for bond strap resistance measurements ≤0.1Ω, the clamp-on DMM approach is inadequate — a 4-wire Kelvin (DLRO) measurement is required because the DMM\'s test-lead resistance exceeds the measurement target.',
+    },
+    {
+      term: 'ASCE 38-22 Quality Level (QL-A through QL-D)',
+      definition:
+        'The ASCE 38-22 standard (Standard Guideline for Collecting Subsurface Utility Engineering Data) defines four Quality Levels for the confidence level of subsurface utility location data. QL-D: utilities identified from existing records only — lowest confidence, no field verification. QL-C: surface surveying methods (electromagnetic or ground-penetrating radar) used to detect utilities — location approximate. QL-B: surface geophysical methods with utility-location confirmation, horizontal accuracy improved — depth still uncertain. QL-A: physical exposure (potholing, vacuum excavation) to directly verify the utility\'s horizontal location, vertical depth, and size — highest confidence, required for critical crossings. For as-built GPS records on new OSP construction: QL-B or better is required for open-field segments; QL-A is required for road crossings and locations where future excavation is most likely.',
     },
   ],
   vocabulary_assumed: [

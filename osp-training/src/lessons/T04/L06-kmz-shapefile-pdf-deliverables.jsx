@@ -16,6 +16,7 @@ export const meta = {
   prerequisites: ['T04.L02', 'T04.L03'],
   vocabulary_introduced: [
     'KMZ',
+    'KML',
     '.SHP',
     'geotiff',
     'PDF/A',
@@ -42,6 +43,11 @@ export const meta = {
       term: 'KMZ',
       definition:
         'A compressed file format (a zipped KML) used to share geographic data — routes, points, polygons — in Google Earth and many GIS applications. KMZ files are easy to email, open on a phone or tablet, and overlay on satellite imagery. They are ideal for field-crew communication and client presentations, but they lose attribute data precision compared to a shapefile.',
+    },
+    {
+      term: 'KML',
+      definition:
+        'Keyhole Markup Language — an uncompressed XML text file that stores geographic features (points, lines, polygons) and their descriptive data for display in Google Earth or compatible GIS platforms. KML is the file inside a KMZ archive; it can also be shared and opened directly as a plain text file. KML is human-readable with a text editor, which makes it useful for troubleshooting display issues, but it is larger than KMZ and contains no embedded images. When Google Earth Mobile opens a KMZ, it decompresses it to KML internally.',
     },
     {
       term: '.SHP',
