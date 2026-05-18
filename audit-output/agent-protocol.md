@@ -1,24 +1,25 @@
-# Agent Protocol — `kodaicards/launch-database` (current as of 2026-05-17)
+# Agent Protocol — `kodaicards/launch-database` (current as of 2026-05-18)
 
 > Reference this file from agent prompts instead of re-inlining boilerplate.
-> Every agent reads this once at start of run.
-> Working branch is **`main`** (post-2026-05-15-evening lock).
->
-> **Companion file:** `audit-output/dispatch-templates.md` has reusable scope blocks per agent role.
-> Orchestrator's dispatch prompts reference template names; standing scope lives in the template file.
 
-## 1. Setup
+## 1. Setup — BRANCH ISOLATION MANDATORY (locked 2026-05-18 per directive 33)
 
-1. GitHub access via env. Working branch: **`main`**.
-2. `git fetch origin main && git -c commit.gpgsign=false merge FETCH_HEAD --no-edit` before every push (signing-wrapper-safe; do NOT use `git pull --rebase`).
-3. Confirm HEAD matches dispatching prompt; if not, ask before proceeding.
+1. The orchestrator includes a branch name in your dispatch prompt: `agent/<task-id>`. Use exactly that name. If absent, ask.
+2. Before any changes: `git fetch origin main && git checkout -b agent/<task-id> origin/main`
+3. Make ALL commits on `agent/<task-id>`. NEVER on `main`.
+4. Push ONLY to your branch: `git push origin agent/<task-id>`. NEVER `git push origin main`.
+5. Orchestrator reviews your branch + merges to main. You do not merge.
+6. If your push is blocked by hook, you are likely pushing to main — switch to your branch.
 
 ## 2. Universal hard rules
 
-- **Push policy.** Signing wrapper returns 400. Unsigned commits are working norm. Use `git -c commit.gpgsign=false commit ...`. Never `--no-verify`. Never amend published commits.
+- **Push policy.** Push ONLY to your `agent/<task-id>` branch. Pushes to main are blocked by hook + result in scope failure. Signing wrapper returns 400 — unsigned OK. Use `git -c commit.gpgsign=false commit ...`. Never `--no-verify`. Never amend published commits.
 - **STOP and surface** on safety-net failures (lint/type-check/test/pre-commit). Do NOT bypass — orchestrator decides.
-- **No scope creep.** Implement only items in prompt. Surface adjacent observations as report notes, never as additional commits or findings.
-- **Branch discipline.** Push only to `main`. Never push elsewhere.
+- **NO SCOPE CREEP.** Implement only items in prompt. Adjacent observations → report notes, never additional commits.
+- **DO NOT TOUCH ORCHESTRATOR-ONLY FILES.** Never edit `CLAUDE.md`, `RESUME_HERE.md`. Never write commit messages starting with `orchestrator:`. Never write `*_CANONICAL.md` files.
+- **DO NOT DISPATCH OTHER AGENTS.** Worker, not orchestrator. If follow-on needed → report it; orchestrator decides.
+- **DO NOT WORK ON OTHER TOPICS.** Stay in the lessons/files/scope your prompt names.
+- **AFTER COMPLETING YOUR TASK: END YOUR TURN IMMEDIATELY.** Do not continue to "obvious next steps."
 - **No PR creation** unless prompt explicitly says to.
 
 ## 3. Signing-wrapper workaround
