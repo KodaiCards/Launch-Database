@@ -30,11 +30,17 @@ export default function SideBySide({
   description,
   leftTitle,
   rightTitle,
+  leftLabel,
+  rightLabel,
   comparisonRows,
+  rows,
   highlight,
   leftColor  = 'text-sky-300',
   rightColor = 'text-amber-300',
 }) {
+  const headerLeft  = leftTitle  ?? leftLabel  ?? '';
+  const headerRight = rightTitle ?? rightLabel ?? '';
+  const data = comparisonRows ?? rows ?? [];
   return (
     <div className="panel">
       <h3 className="text-lg font-semibold mb-1">{title}</h3>
@@ -50,16 +56,18 @@ export default function SideBySide({
                 Category
               </th>
               <th className={`py-2 px-4 text-left font-semibold ${leftColor} w-[38%]`}>
-                {leftTitle}
+                {headerLeft}
               </th>
               <th className={`py-2 pl-4 text-left font-semibold ${rightColor} w-[38%]`}>
-                {rightTitle}
+                {headerRight}
               </th>
             </tr>
           </thead>
           <tbody>
-            {comparisonRows.map((row, i) => {
+            {data.map((row, i) => {
               const isHighlighted = row.label === highlight;
+              const leftCell  = row.leftValue  ?? row.left  ?? '';
+              const rightCell = row.rightValue ?? row.right ?? '';
               return (
                 <React.Fragment key={i}>
                   <tr
@@ -77,10 +85,10 @@ export default function SideBySide({
                       {row.label}
                     </td>
                     <td className={`py-3 px-4 align-top leading-relaxed ${isHighlighted ? 'text-slate-100' : 'text-slate-200'}`}>
-                      {row.leftValue}
+                      {leftCell}
                     </td>
                     <td className={`py-3 pl-4 align-top leading-relaxed ${isHighlighted ? 'text-slate-100' : 'text-slate-200'}`}>
-                      {row.rightValue}
+                      {rightCell}
                     </td>
                   </tr>
                   {row.note && (
