@@ -147,7 +147,7 @@ export const courses = [
     id: 'T14',
     title: 'Bonding, Grounding & Electrical Protection',
     section: 'general',
-    available: false,
+    available: true,
     estimated_minutes: 310,   // 12 lessons × ~26 min avg
     lesson_count: 12,
     prerequisites: ['T01', 'T02', 'T05', 'T06', 'T18', 'T19'],  // T19 added: T14.L05 assumes primary protector/IBT-entry/GES-tie-in from T19.L06
@@ -183,7 +183,7 @@ export const courses = [
     id: 'T10',
     title: 'OSP Construction',
     section: 'general',
-    available: false,
+    available: true,
     estimated_minutes: 315,   // 12 lessons × ~26 min avg
     lesson_count: 12,
     prerequisites: ['T01', 'T06', 'T07', 'T08', 'T18'],
@@ -195,7 +195,7 @@ export const courses = [
     id: 'T11',
     title: 'Splicing',
     section: 'general',
-    available: false,
+    available: true,
     estimated_minutes: 400,   // 15 lessons × ~27 min avg
     lesson_count: 15,
     prerequisites: ['T01', 'T02', 'T03', 'T10'],
@@ -207,7 +207,7 @@ export const courses = [
     id: 'T12',
     title: 'Testing — OLTS, OTDR, Inspection',
     section: 'general',
-    available: false,
+    available: true,
     estimated_minutes: 415,   // 15 lessons × ~28 min avg
     lesson_count: 15,
     prerequisites: ['T01', 'T02', 'T11'],
@@ -219,7 +219,7 @@ export const courses = [
     id: 'T13',
     title: 'Inspection & Quality Assurance',
     section: 'general',
-    available: false,
+    available: true,
     estimated_minutes: 360,   // 12 lessons × ~30 min avg
     lesson_count: 12,
     prerequisites: ['T01', 'T05', 'T10', 'T12', 'T18'],
@@ -231,7 +231,7 @@ export const courses = [
     id: 'T15',
     title: 'Restoration & Outage Response',
     section: 'general',
-    available: false,
+    available: true,
     estimated_minutes: 250,   // 10 lessons × ~25 min avg
     lesson_count: 10,
     prerequisites: ['T01', 'T11', 'T12', 'T13'],
@@ -243,7 +243,7 @@ export const courses = [
     id: 'T16',
     title: 'As-Built Documentation & GIS',
     section: 'general',
-    available: false,
+    available: true,
     estimated_minutes: 255,   // 10 lessons × ~25 min avg
     lesson_count: 10,
     prerequisites: ['T01', 'T10', 'T11', 'T13', 'T15'],
@@ -255,7 +255,7 @@ export const courses = [
     id: 'T17',
     title: 'Project Estimation & Revenue',
     section: 'general',
-    available: false,
+    available: true,
     estimated_minutes: 265,   // 10 lessons × ~26 min avg
     lesson_count: 10,
     prerequisites: ['T01', 'T05', 'T06', 'T08', 'T10', 'T16'],
