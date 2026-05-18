@@ -322,7 +322,88 @@ export default function T01L09_OspStandardsLandscape() {
 
       {/* ── ADVANCED ────────────────────────────────────────────────────── */}
       <section data-tier="advanced">
-        <h2>Going Deeper — When Standards Conflict</h2>
+        <h2>RUS Forms Landscape — Documentation in RUS-Funded Projects</h2>
+        <p>
+          RUS-funded projects require specific administrative forms at different stages of the
+          project lifecycle. Understanding which form applies when, and who fills it out, is
+          critical for project close-out and audit compliance. The following 8 forms form the
+          RUS documentation landscape:
+        </p>
+        <table className="w-full text-sm border border-white/10 rounded-lg mt-3 mb-6">
+          <thead className="bg-white/5 text-slate-200">
+            <tr>
+              <th className="px-3 py-2 text-left">Form Number</th>
+              <th className="px-3 py-2 text-left">Title</th>
+              <th className="px-3 py-2 text-left">When Used</th>
+              <th className="px-3 py-2 text-left">Who Fills It Out</th>
+              <th className="px-3 py-2 text-left">Purpose</th>
+            </tr>
+          </thead>
+          <tbody className="text-slate-300/90">
+            <tr className="border-t border-white/10">
+              <td className="px-3 py-2 font-mono">Form 307</td>
+              <td className="px-3 py-2">Bid Bond</td>
+              <td className="px-3 py-2">During bidding / contract award</td>
+              <td className="px-3 py-2">Contractor or bonding company</td>
+              <td className="px-3 py-2">Security that the contractor will enter into the RUS construction contract at the bid price if awarded. Standard surety requirement for federal contracts.</td>
+            </tr>
+            <tr className="border-t border-white/10">
+              <td className="px-3 py-2 font-mono">Form 524</td>
+              <td className="px-3 py-2">Construction Contract</td>
+              <td className="px-3 py-2">At contract execution</td>
+              <td className="px-3 py-2">RUS borrower and contractor (both sign)</td>
+              <td className="px-3 py-2">The legal construction agreement between borrower and contractor. Incorporates RUS requirements, labor standards, and payment terms. The master document binding all parties to the project.</td>
+            </tr>
+            <tr className="border-t border-white/10">
+              <td className="px-3 py-2 font-mono">Form 740</td>
+              <td className="px-3 py-2">Construction Inventory Schedule</td>
+              <td className="px-3 py-2">Throughout construction and at close-out</td>
+              <td className="px-3 py-2">Contractor (or borrower with contractor input)</td>
+              <td className="px-3 py-2">Cumulative listing of all materials and equipment used on the project. Tracks what was purchased, received, and incorporated into the plant. Used to reconcile invoice charges against actual deliverables and to verify materials comply with RUS-accepted products lists.</td>
+            </tr>
+            <tr className="border-t border-white/10">
+              <td className="px-3 py-2 font-mono">Form 740c</td>
+              <td className="px-3 py-2">Construction Inventory Schedule — Continuation</td>
+              <td className="px-3 py-2">When Form 740 exceeds one page</td>
+              <td className="px-3 py-2">Contractor (continuation of Form 740)</td>
+              <td className="px-3 py-2">Additional pages for Form 740 when the material/equipment list extends beyond one page. Numbered sequentially (740c, 740cc, etc.) to maintain continuity of the inventory.</td>
+            </tr>
+            <tr className="border-t border-white/10">
+              <td className="px-3 py-2 font-mono">Form 565</td>
+              <td className="px-3 py-2">Construction Inspection Daily Report (DIR)</td>
+              <td className="px-3 py-2">Daily during construction</td>
+              <td className="px-3 py-2">RUS inspector or third-party inspector hired by borrower</td>
+              <td className="px-3 py-2">Field record of daily construction progress, weather conditions, crew size, materials received, work accomplished, and any discrepancies or non-conformances noted. The paper trail proving construction was inspected daily and confirming what was actually built vs. what was contracted. Essential for audit trail and dispute resolution.</td>
+            </tr>
+            <tr className="border-t border-white/10">
+              <td className="px-3 py-2 font-mono">Form 1744</td>
+              <td className="px-3 py-2">Architect / Engineer Agreement</td>
+              <td className="px-3 py-2">At the start of design and engineering</td>
+              <td className="px-3 py-2">RUS borrower and A/E firm (both sign)</td>
+              <td className="px-3 py-2">The contract between borrower and the architectural/engineering firm that designs the project. Specifies scope of design work, fee structure, deliverables (design, specifications, drawings, close-out documentation), and compliance with RUS design bulletins. The A/E remains responsible for design compliance even after construction begins.</td>
+            </tr>
+            <tr className="border-t border-white/10">
+              <td className="px-3 py-2 font-mono">Form 1755-A</td>
+              <td className="px-3 py-2">Right-of-Way Easement</td>
+              <td className="px-3 py-2">Before construction (may be before or after design, depending on land ownership)</td>
+              <td className="px-3 py-2">Property owner and borrower/operator (both sign)</td>
+              <td className="px-3 py-2">The legal easement document granting the borrower the right to access, construct, and operate the telecom plant on private land. Standard RUS form incorporating typical terms: duration (perpetual or term), maintenance rights, liability, abandonment obligations. Critical for any off-highway buried or overhead plant on private ROW.</td>
+            </tr>
+            <tr className="border-t border-white/10">
+              <td className="px-3 py-2 font-mono">Form 219</td>
+              <td className="px-3 py-2">Inventory of Work Orders</td>
+              <td className="px-3 py-2">At close-out (final accounting)</td>
+              <td className="px-3 py-2">Contractor and borrower (final certification by A/E)</td>
+              <td className="px-3 py-2">Final inventory of all work orders executed and materials incorporated. The definitive list of what was actually built vs. what was contracted and invoiced. Cross-checked against Form 740 (construction inventory) and all invoices. Signed by contractor and certified by A/E, this form closes out the contract and triggers final loan advancement by RUS. The most critical form for RUS close-out.</td>
+            </tr>
+          </tbody>
+        </table>
+
+        <p className="text-sm text-slate-300/90 mb-4">
+          <strong>Book vs. Field:</strong> The textbook sequence is: Form 1744 (A/E agreement) → Form 524 (construction contract) → Form 307 (bid bond) → Forms 565 &amp; 740 (daily inspection and inventory during construction) → Form 1755-A (easement, usually already obtained) → Form 219 (final close-out). In practice, easement acquisition and design can overlap with bidding, timelines compress, and a single delay in any one form can halt project funding. The PE and borrower's project manager spend as much time managing paper as managing the work itself.
+        </p>
+
+        <h3 className="mt-6 font-semibold">When Standards Conflict</h3>
         <p>
           Occasionally two applicable standards will specify different things. The general
           resolution hierarchy for OSP:
