@@ -21,11 +21,7 @@ export const meta = {
     'signal degradation',
     'splice loss spike',
   ],
-  vocabulary_assumed: [
-    { term: 'OTDR', source_lesson_id: 'T12.L01' },
-    { term: 'splice', source_lesson_id: 'T11.L01' },
-    { term: 'attenuation', source_lesson_id: 'T02.L06' },
-  ],
+  vocabulary_assumed: [],
   estimated_minutes: 20,
   learning_objectives: [
     'Diagnose common field failures using OTDR and non-destructive tests',

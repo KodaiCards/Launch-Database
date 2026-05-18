@@ -25,9 +25,6 @@ export const meta = {
   ],
   vocabulary_assumed: [
     { term: 'fiber', source_lesson_id: 'T01.L03' },
-    { term: 'aerial cable', source_lesson_id: 'T03.L01' },
-    { term: 'underground cable', source_lesson_id: 'T06.L01' },
-    { term: 'splice case', source_lesson_id: 'T01.L04' },
   ],
   estimated_minutes: 22,
   learning_objectives: [

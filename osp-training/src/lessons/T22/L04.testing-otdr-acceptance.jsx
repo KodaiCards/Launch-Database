@@ -24,13 +24,7 @@ export const meta = {
     'event',
     'passive test',
   ],
-  vocabulary_assumed: [
-    { term: 'attenuation', source_lesson_id: 'T02.L06' },
-    { term: 'loss', source_lesson_id: 'T11.L02' },
-    { term: 'OLTS', source_lesson_id: 'T12.L04' },
-    { term: 'splice', source_lesson_id: 'T11.L02' },
-    { term: 'connector', source_lesson_id: 'T02.L04' },
-  ],
+  vocabulary_assumed: [],
   estimated_minutes: 25,
   learning_objectives: [
     'Operate an OTDR to measure cable loss, identify splices, and detect faults',

@@ -21,11 +21,7 @@ export const meta = {
     'incident report',
     'competent person',
   ],
-  vocabulary_assumed: [
-    { term: 'electrical hazard', source_lesson_id: 'T18.L01' },
-    { term: 'safety glasses', source_lesson_id: 'T18.L02' },
-    { term: 'OSHA', source_lesson_id: 'T18.L01' },
-  ],
+  vocabulary_assumed: [],
   estimated_minutes: 24,
   learning_objectives: [
     'Select appropriate PPE for fiber-splicing and installation environments',

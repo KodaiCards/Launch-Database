@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-05-18T15:41:09.309Z",
+  "generated_at": "2026-05-18T15:52:29.748Z",
   "lesson_count": 249,
   "vocabulary_introduced_by_lesson": {
     "T01.L01": [
@@ -15545,24 +15545,9 @@
     },
     {
       "from_lesson": "T15.L04",
-      "term": "mechanical splice",
-      "claimed_source": "T11.L02",
-      "verified": false,
-      "reason": "'mechanical splice' is introduced by T11.L08, not T11.L02"
-    },
-    {
-      "from_lesson": "T15.L04",
-      "term": "IOR",
-      "claimed_source": "T12.L07",
-      "verified": false,
-      "reason": "'IOR' is not introduced by any lesson in the curriculum"
-    },
-    {
-      "from_lesson": "T15.L04",
-      "term": "fault locate",
+      "term": "fault locate (cable-distance)",
       "claimed_source": "T15.L02",
-      "verified": false,
-      "reason": "'fault locate' is not introduced by any lesson in the curriculum"
+      "verified": true
     },
     {
       "from_lesson": "T15.L04",
@@ -15572,10 +15557,9 @@
     },
     {
       "from_lesson": "T15.L04",
-      "term": "EDZ",
+      "term": "event dead zone (EDZ)",
       "claimed_source": "T15.L02",
-      "verified": false,
-      "reason": "'EDZ' is introduced by T12.L04, not T15.L02"
+      "verified": true
     },
     {
       "from_lesson": "T15.L04",
@@ -15585,17 +15569,9 @@
     },
     {
       "from_lesson": "T15.L04",
-      "term": "RTO",
+      "term": "RTO (Recovery Time Objective)",
       "claimed_source": "T15.L01",
-      "verified": false,
-      "reason": "'RTO' is not introduced by any lesson in the curriculum"
-    },
-    {
-      "from_lesson": "T15.L04",
-      "term": "as-built drawings",
-      "claimed_source": "T10.L11",
-      "verified": false,
-      "reason": "'as-built drawings' is not introduced by any lesson in the curriculum"
+      "verified": true
     },
     {
       "from_lesson": "T15.L05",
@@ -15650,10 +15626,9 @@
     },
     {
       "from_lesson": "T15.L06",
-      "term": "fault locate",
+      "term": "fault locate (cable-distance)",
       "claimed_source": "T15.L02",
-      "verified": false,
-      "reason": "'fault locate' is not introduced by any lesson in the curriculum"
+      "verified": true
     },
     {
       "from_lesson": "T15.L06",
@@ -15702,17 +15677,15 @@
     },
     {
       "from_lesson": "T15.L07",
-      "term": "RTO",
+      "term": "RTO (Recovery Time Objective)",
       "claimed_source": "T15.L01",
-      "verified": false,
-      "reason": "'RTO' is not introduced by any lesson in the curriculum"
+      "verified": true
     },
     {
       "from_lesson": "T15.L07",
-      "term": "NOC",
+      "term": "NOC (Network Operations Center)",
       "claimed_source": "T15.L01",
-      "verified": false,
-      "reason": "'NOC' is not introduced by any lesson in the curriculum"
+      "verified": true
     },
     {
       "from_lesson": "T15.L07",
@@ -15722,10 +15695,9 @@
     },
     {
       "from_lesson": "T15.L07",
-      "term": "MTTR",
+      "term": "MTTR (Mean Time to Repair)",
       "claimed_source": "T15.L01",
-      "verified": false,
-      "reason": "'MTTR' is not introduced by any lesson in the curriculum"
+      "verified": true
     },
     {
       "from_lesson": "T15.L08",
@@ -15741,17 +15713,9 @@
     },
     {
       "from_lesson": "T15.L08",
-      "term": "NOC",
-      "claimed_source": "T15.L01",
-      "verified": false,
-      "reason": "'NOC' is not introduced by any lesson in the curriculum"
-    },
-    {
-      "from_lesson": "T15.L08",
-      "term": "ETR",
+      "term": "ETR (Estimated Time to Restore)",
       "claimed_source": "T15.L07",
-      "verified": false,
-      "reason": "'ETR' is not introduced by any lesson in the curriculum"
+      "verified": true
     },
     {
       "from_lesson": "T15.L08",
@@ -15812,24 +15776,21 @@
     },
     {
       "from_lesson": "T15.L09",
-      "term": "MTTR",
+      "term": "MTTR (Mean Time to Repair)",
       "claimed_source": "T15.L01",
-      "verified": false,
-      "reason": "'MTTR' is not introduced by any lesson in the curriculum"
+      "verified": true
     },
     {
       "from_lesson": "T15.L09",
-      "term": "RTO",
+      "term": "RTO (Recovery Time Objective)",
       "claimed_source": "T15.L01",
-      "verified": false,
-      "reason": "'RTO' is not introduced by any lesson in the curriculum"
+      "verified": true
     },
     {
       "from_lesson": "T15.L09",
-      "term": "ETR",
+      "term": "ETR (Estimated Time to Restore)",
       "claimed_source": "T15.L07",
-      "verified": false,
-      "reason": "'ETR' is not introduced by any lesson in the curriculum"
+      "verified": true
     },
     {
       "from_lesson": "T15.L10",
@@ -15839,24 +15800,21 @@
     },
     {
       "from_lesson": "T15.L10",
-      "term": "RTO",
+      "term": "RTO (Recovery Time Objective)",
       "claimed_source": "T15.L01",
-      "verified": false,
-      "reason": "'RTO' is not introduced by any lesson in the curriculum"
+      "verified": true
     },
     {
       "from_lesson": "T15.L10",
-      "term": "MTTR",
+      "term": "MTTR (Mean Time to Repair)",
       "claimed_source": "T15.L01",
-      "verified": false,
-      "reason": "'MTTR' is not introduced by any lesson in the curriculum"
+      "verified": true
     },
     {
       "from_lesson": "T15.L10",
-      "term": "NOC",
+      "term": "NOC (Network Operations Center)",
       "claimed_source": "T15.L01",
-      "verified": false,
-      "reason": "'NOC' is not introduced by any lesson in the curriculum"
+      "verified": true
     },
     {
       "from_lesson": "T15.L10",
@@ -15878,24 +15836,21 @@
     },
     {
       "from_lesson": "T15.L10",
-      "term": "fault locate",
+      "term": "fault locate (cable-distance)",
       "claimed_source": "T15.L02",
-      "verified": false,
-      "reason": "'fault locate' is not introduced by any lesson in the curriculum"
+      "verified": true
     },
     {
       "from_lesson": "T15.L10",
-      "term": "EDZ",
+      "term": "event dead zone (EDZ)",
       "claimed_source": "T15.L02",
-      "verified": false,
-      "reason": "'EDZ' is introduced by T12.L04, not T15.L02"
+      "verified": true
     },
     {
       "from_lesson": "T15.L10",
-      "term": "ADZ",
+      "term": "attenuation dead zone (ADZ)",
       "claimed_source": "T15.L02",
-      "verified": false,
-      "reason": "'ADZ' is introduced by T12.L04, not T15.L02"
+      "verified": true
     },
     {
       "from_lesson": "T15.L10",
@@ -16067,10 +16022,9 @@
     },
     {
       "from_lesson": "T15.L10",
-      "term": "post-incident RCA",
+      "term": "post-incident RCA (Root Cause Analysis)",
       "claimed_source": "T15.L09",
-      "verified": false,
-      "reason": "'post-incident RCA' is not introduced by any lesson in the curriculum"
+      "verified": true
     },
     {
       "from_lesson": "T16.L01",
@@ -17535,9 +17489,8 @@
     {
       "from_lesson": "T20.L01",
       "term": "FTTH",
-      "claimed_source": "T07.L01",
-      "verified": false,
-      "reason": "'FTTH' is introduced by T01.L08, not T07.L01"
+      "claimed_source": "T01.L08",
+      "verified": true
     },
     {
       "from_lesson": "T20.L02",
@@ -17859,61 +17812,6 @@
       "reason": "'CFOS-O exam blueprint' is not introduced by any lesson in the curriculum"
     },
     {
-      "from_lesson": "T22.L01",
-      "term": "fiber optics",
-      "claimed_source": "T02.L01",
-      "verified": false,
-      "reason": "'fiber optics' is not introduced by any lesson in the curriculum"
-    },
-    {
-      "from_lesson": "T22.L01",
-      "term": "splice",
-      "claimed_source": "T11.L02",
-      "verified": false,
-      "reason": "'splice' is not introduced by any lesson in the curriculum"
-    },
-    {
-      "from_lesson": "T22.L01",
-      "term": "OTDR",
-      "claimed_source": "T12.L01",
-      "verified": true
-    },
-    {
-      "from_lesson": "T22.L01",
-      "term": "safety",
-      "claimed_source": "T18.L01",
-      "verified": false,
-      "reason": "'safety' is not introduced by any lesson in the curriculum"
-    },
-    {
-      "from_lesson": "T22.L02",
-      "term": "fiber optic",
-      "claimed_source": "T02.L01",
-      "verified": false,
-      "reason": "'fiber optic' is not introduced by any lesson in the curriculum"
-    },
-    {
-      "from_lesson": "T22.L02",
-      "term": "wavelength",
-      "claimed_source": "T02.L02",
-      "verified": false,
-      "reason": "'wavelength' is not introduced by any lesson in the curriculum"
-    },
-    {
-      "from_lesson": "T22.L02",
-      "term": "dB (decibel)",
-      "claimed_source": "T02.L03",
-      "verified": false,
-      "reason": "'dB (decibel)' is not introduced by any lesson in the curriculum"
-    },
-    {
-      "from_lesson": "T22.L02",
-      "term": "refraction",
-      "claimed_source": "T02.L02",
-      "verified": false,
-      "reason": "'refraction' is not introduced by any lesson in the curriculum"
-    },
-    {
       "from_lesson": "T22.L03",
       "term": "fiber",
       "claimed_source": "T01.L03",
@@ -17926,140 +17824,10 @@
       "verified": true
     },
     {
-      "from_lesson": "T22.L03",
-      "term": "single-mode fiber",
-      "claimed_source": "T02.L01",
-      "verified": false,
-      "reason": "'single-mode fiber' is not introduced by any lesson in the curriculum"
-    },
-    {
-      "from_lesson": "T22.L03",
-      "term": "multimode fiber",
-      "claimed_source": "T02.L02",
-      "verified": false,
-      "reason": "'multimode fiber' is not introduced by any lesson in the curriculum"
-    },
-    {
-      "from_lesson": "T22.L03",
-      "term": "fusion splice",
-      "claimed_source": "T11.L02",
-      "verified": false,
-      "reason": "'fusion splice' is introduced by T11.L04, not T11.L02"
-    },
-    {
-      "from_lesson": "T22.L03",
-      "term": "splice loss",
-      "claimed_source": "T11.L01",
-      "verified": false,
-      "reason": "'splice loss' is not introduced by any lesson in the curriculum"
-    },
-    {
-      "from_lesson": "T22.L03",
-      "term": "OTDR",
-      "claimed_source": "T12.L01",
-      "verified": true
-    },
-    {
-      "from_lesson": "T22.L04",
-      "term": "attenuation",
-      "claimed_source": "T02.L06",
-      "verified": false,
-      "reason": "'attenuation' is introduced by T02.L02, not T02.L06"
-    },
-    {
-      "from_lesson": "T22.L04",
-      "term": "loss",
-      "claimed_source": "T11.L02",
-      "verified": false,
-      "reason": "'loss' is not introduced by any lesson in the curriculum"
-    },
-    {
-      "from_lesson": "T22.L04",
-      "term": "OLTS",
-      "claimed_source": "T12.L04",
-      "verified": false,
-      "reason": "'OLTS' is introduced by T01.L08, T12.L01, not T12.L04"
-    },
-    {
-      "from_lesson": "T22.L04",
-      "term": "splice",
-      "claimed_source": "T11.L02",
-      "verified": false,
-      "reason": "'splice' is not introduced by any lesson in the curriculum"
-    },
-    {
-      "from_lesson": "T22.L04",
-      "term": "connector",
-      "claimed_source": "T02.L04",
-      "verified": false,
-      "reason": "'connector' is not introduced by any lesson in the curriculum"
-    },
-    {
       "from_lesson": "T22.L05",
       "term": "fiber",
       "claimed_source": "T01.L03",
       "verified": true
-    },
-    {
-      "from_lesson": "T22.L05",
-      "term": "aerial cable",
-      "claimed_source": "T03.L01",
-      "verified": false,
-      "reason": "'aerial cable' is not introduced by any lesson in the curriculum"
-    },
-    {
-      "from_lesson": "T22.L05",
-      "term": "underground cable",
-      "claimed_source": "T06.L01",
-      "verified": false,
-      "reason": "'underground cable' is not introduced by any lesson in the curriculum"
-    },
-    {
-      "from_lesson": "T22.L05",
-      "term": "splice case",
-      "claimed_source": "T01.L04",
-      "verified": true
-    },
-    {
-      "from_lesson": "T22.L06",
-      "term": "electrical hazard",
-      "claimed_source": "T18.L01",
-      "verified": false,
-      "reason": "'electrical hazard' is not introduced by any lesson in the curriculum"
-    },
-    {
-      "from_lesson": "T22.L06",
-      "term": "safety glasses",
-      "claimed_source": "T18.L02",
-      "verified": false,
-      "reason": "'safety glasses' is not introduced by any lesson in the curriculum"
-    },
-    {
-      "from_lesson": "T22.L06",
-      "term": "OSHA",
-      "claimed_source": "T18.L01",
-      "verified": false,
-      "reason": "'OSHA' is not introduced by any lesson in the curriculum"
-    },
-    {
-      "from_lesson": "T22.L07",
-      "term": "OTDR",
-      "claimed_source": "T12.L01",
-      "verified": true
-    },
-    {
-      "from_lesson": "T22.L07",
-      "term": "splice",
-      "claimed_source": "T11.L01",
-      "verified": false,
-      "reason": "'splice' is not introduced by any lesson in the curriculum"
-    },
-    {
-      "from_lesson": "T22.L07",
-      "term": "attenuation",
-      "claimed_source": "T02.L06",
-      "verified": false,
-      "reason": "'attenuation' is introduced by T02.L02, not T02.L06"
     },
     {
       "from_lesson": "T22.L08",
@@ -18076,8 +17844,8 @@
       "reason": "'CFOT' is introduced by T01.L08, not T22.L01"
     }
   ],
-  "verified_pointers_count": 1731,
-  "broken_pointers_count": 241,
+  "verified_pointers_count": 1746,
+  "broken_pointers_count": 195,
   "missing_source_lesson_pointers": [],
   "lessons_with_no_vocabulary_assumed": [
     "T01.L01",
@@ -18096,7 +17864,12 @@
     "T17.L09",
     "T17.L10",
     "T20.L05",
-    "T20.L08"
+    "T20.L08",
+    "T22.L01",
+    "T22.L02",
+    "T22.L04",
+    "T22.L06",
+    "T22.L07"
   ],
   "vocabulary_assumed_without_source_id": []
 }

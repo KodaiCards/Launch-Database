@@ -27,12 +27,7 @@ export const meta = {
     'OM3, OM4, OM5 (multimode grades)',
     'Cutoff wavelength (λc)',
   ],
-  vocabulary_assumed: [
-    { term: 'fiber optic', source_lesson_id: 'T02.L01' },
-    { term: 'wavelength', source_lesson_id: 'T02.L02' },
-    { term: 'dB (decibel)', source_lesson_id: 'T02.L03' },
-    { term: 'refraction', source_lesson_id: 'T02.L02' },
-  ],
+  vocabulary_assumed: [],
 };
 
 export const key_terms = meta.vocabulary_introduced;

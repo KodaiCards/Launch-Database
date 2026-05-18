@@ -25,11 +25,6 @@ export const meta = {
   vocabulary_assumed: [
     { term: 'fiber', source_lesson_id: 'T01.L03' },
     { term: 'buffer tube', source_lesson_id: 'T01.L03' },
-    { term: 'single-mode fiber', source_lesson_id: 'T02.L01' },
-    { term: 'multimode fiber', source_lesson_id: 'T02.L02' },
-    { term: 'fusion splice', source_lesson_id: 'T11.L02' },
-    { term: 'splice loss', source_lesson_id: 'T11.L01' },
-    { term: 'OTDR', source_lesson_id: 'T12.L01' },
   ],
   estimated_minutes: 28,
   learning_objectives: [

@@ -27,12 +27,7 @@ export const meta = {
     'Pass rate (percentage required to pass)',
     'Credential maintenance (renewal requirements)',
   ],
-  vocabulary_assumed: [
-    { term: 'fiber optics', source_lesson_id: 'T02.L01' },
-    { term: 'splice', source_lesson_id: 'T11.L02' },
-    { term: 'OTDR', source_lesson_id: 'T12.L01' },
-    { term: 'safety', source_lesson_id: 'T18.L01' },
-  ],
+  vocabulary_assumed: [],
 };
 
 export const key_terms = meta.vocabulary_introduced;
