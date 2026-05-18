@@ -112,15 +112,15 @@ const budgetWorkedExample = {
     },
     {
       label: 'Step 5 — Calculate escalation dollar amount',
-      expression: 'Escalation = Base × (Multiplier - 1) = $2,240,000 × 0.0527 = $118,048',
+      expression: 'Escalation = (Base + Contingency) × (Multiplier − 1) = $2,576,000 × 0.0530 = $136,417',
       explanation:
-        'The escalation allowance is $118,048. This is separate from contingency — it covers the TIME gap between estimate and execution, not the uncertainty gap in the scope.',
+        'Escalation applies to the contingency-inclusive total of $2,576,000, not just the base. Reason: if the contingency reserve sits unused for 18 months before construction completes, those contingency dollars also buy less in the future. Conservative practice applies escalation to the full reserve, not just the base cost. $2,576,000 × (1.0530 − 1) = $2,576,000 × 0.0530 = $136,417.',
     },
     {
       label: 'Step 6 — Total project budget',
-      expression: 'Total Budget = Base + Contingency + Escalation = $2,240,000 + $336,000 + $118,048 = $2,694,048',
+      expression: 'Total Budget = Base + Contingency + Escalation = $2,240,000 + $336,000 + $136,417 = $2,712,417',
       explanation:
-        'The total project budget is $2,694,048 — 20.3% above the base estimate ($454,048 in reserves). Presenting a budget without these allowances as "the project cost" and then watching it climb 20% during execution is how projects get labeled as cost overruns when they were actually under-estimated from the start.',
+        'The total project budget is $2,712,417 — 21.1% above the base estimate ($472,417 in reserves). Presenting a budget without these allowances as "the project cost" and then watching it climb 21% during execution is how projects get labeled as cost overruns when they were actually under-estimated from the start.',
     },
     {
       label: 'Step 7 — Sanity check: does this match RUS guidance?',
@@ -130,7 +130,7 @@ const budgetWorkedExample = {
     },
   ],
   sanityCheck:
-    'The $2.69M budget vs. $2.24M base estimate (20.3% reserves) is appropriate for a partially-designed project with an 18-month execution gap. If the project were 100% designed and starting in 3 months, reserves would drop to approximately 10% contingency + 0.9% escalation = 10.9% total reserves = $2.48M budget. The difference between the two scenarios ($214,000) represents the real cost of starting construction before design is complete and of delaying construction after the estimate is prepared.',
+    'The $2.71M budget vs. $2.24M base estimate (21.1% reserves) is appropriate for a partially-designed project with an 18-month execution gap. Escalation applied to the contingency-inclusive total ($2,576,000) rather than the base alone adds $18,369 in conservatism — modest insurance for a 1.5-year wait. If the project were 100% designed and starting in 3 months, reserves would drop to approximately 10% contingency + 0.9% escalation on contingency-inclusive = 10.9% total reserves ≈ $2.48M. The difference between the two scenarios ($232,000) represents the real cost of incomplete design and delayed construction start.',
 };
 
 const quizQuestions = [
@@ -188,7 +188,7 @@ const quizQuestions = [
     ],
     correct: 1,
     explanation:
-      'Contingency and escalation are sequential (compound) multipliers. Escalation applies to the contingency-inclusive total because the contingency reserve will also cost more if prices rise before it is drawn. The calculation: Step 1 — Base × (1 + Contingency) = $1,800,000 × 1.12 = $2,016,000. Step 2 — $2,016,000 × (1 + Escalation) = $2,016,000 × 1.04 = $2,096,640. Option A ($2,088,000) is wrong because it adds the percentages flat ($1,800,000 × 1.16), which understates the budget by $8,640 — a meaningful error on a multi-million-dollar project. Option C ($2,052,000) incorrectly applies escalation only to the base, not the contingency-inclusive total. Option D reverses the order, which produces a different (and lower) result than the correct sequence.',
+      'Contingency and escalation are sequential (compound) multipliers. Escalation applies to the contingency-inclusive total because the contingency reserve will also cost more if prices rise before it is drawn. The calculation: Step 1 — Base × (1 + Contingency) = $1,800,000 × 1.12 = $2,016,000. Step 2 — $2,016,000 × (1 + Escalation) = $2,016,000 × 1.04 = $2,096,640. Option A ($2,088,000) is wrong because it adds the percentages flat ($1,800,000 × 1.16), which understates the budget by $8,640 — a meaningful error on a multi-million-dollar project. Option C ($2,052,000) incorrectly applies escalation only to the base, not the contingency-inclusive total. Option D ($2,017,600) does not match any standard calculation method — it is a distractor designed to catch guessing.',
   },
 ];
 

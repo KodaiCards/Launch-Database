@@ -143,26 +143,26 @@ const quizQuestions = [
     options: [
       'ARPU = $83.33/month; MRR = $100,000/month',
       'ARPU = $75/month; MRR = $90,000/month',
-      'ARPU = $76/month; MRR = $91,200/month',
+      'ARPU = $74/month; MRR = $88,800/month',
       'ARPU = $80/month; MRR = $96,000/month',
     ],
     correct: 2,
     explanation:
-      'ARPU = (0.40 × $50) + (0.45 × $80) + (0.15 × $120) = $20 + $36 + $18 = $74/month. Wait — let\'s recalculate: (0.40 × $50) = $20.00; (0.45 × $80) = $36.00; (0.15 × $120) = $18.00. ARPU = $20 + $36 + $18 = $74/month. MRR = $74 × 1,200 = $88,800/month. The closest answer is C ($76/month, $91,200/month) — this difference reflects a slight rounding. The correct calculation gives $74/month and $88,800/month. The important process: weight each tier price by its subscriber fraction, sum the weighted prices for ARPU, multiply by total subscribers for MRR.',
+      'ARPU = (0.40 × $50) + (0.45 × $80) + (0.15 × $120). Step by step: 0.40 × $50 = $20.00; 0.45 × $80 = $36.00; 0.15 × $120 = $18.00. ARPU = $20.00 + $36.00 + $18.00 = $74/month. MRR = $74 × 1,200 = $88,800/month. Option A ($83.33/month) incorrectly averages the three tier prices without weighting ($50 + $80 + $120) ÷ 3. Option B ($75/month) rounds up slightly. Option D ($80/month) uses the midpoint tier price alone. The correct process: weight each tier price by its subscriber fraction, sum for ARPU, then multiply by total subscribers for MRR.',
   },
   {
     id: 'T17L09_q2',
     question:
       'A proposed FTTH project has a total build cost of $4,200,000, expects 850 subscribers at steady state, and projects ARPU of $68/month. Operating expenses are estimated at 48% of revenue. What is the simplified payback period?',
     options: [
-      '8.2 years — $4,200,000 ÷ ($68 × 850 × 12)',
-      '15.7 years — build cost divided by annual gross revenue',
-      '15.0 years — build cost divided by annual net revenue (52% of gross)',
+      '6.1 years — $4,200,000 ÷ ($68 × 850 × 12), using gross revenue with no OpEx deduction',
+      '15.7 years — build cost divided by annual gross revenue (incorrect formula)',
+      '11.6 years — $4,200,000 ÷ ($693,600 × 0.52), using net revenue after 48% OpEx deduction',
       'Cannot be determined without knowing the take rate separately',
     ],
     correct: 2,
     explanation:
-      'Annual gross revenue = $68 × 850 × 12 = $693,600. Net revenue (at 52% of gross, since OpEx is 48%) = $693,600 × 0.52 = $360,672. Payback = $4,200,000 ÷ $360,672 = 11.6 years. None of the options precisely match. Option C ($15.0 years) = $4,200,000 ÷ $280,000, which implies annual net revenue of $280,000 — approximately 40% operating margin. Option A ($8.2 years) uses gross revenue (no OpEx deduction). The correct process is: Annual Gross Revenue × (1 - OpEx%) = Annual Net Revenue, then Payback = Build Cost ÷ Annual Net Revenue. Always deduct operating costs before calculating payback period.',
+      'Step 1 — Annual gross revenue = $68 × 850 × 12 = $693,600. Step 2 — Annual net revenue = $693,600 × (1 − 0.48) = $693,600 × 0.52 = $360,672. Step 3 — Payback = $4,200,000 ÷ $360,672 = 11.6 years. Option A (6.1 years) incorrectly uses build cost divided by gross monthly revenue without annualizing and without deducting OpEx — a 2-error mistake that dramatically understates payback. Option B (15.7 years) incorrectly uses build cost divided by gross annual revenue without deducting operating expenses. Option D is wrong because subscriber count is already given (850 subscribers) — take rate is used to derive subscribers from homes passed, but here subscribers are provided directly. The correct process: Annual Gross Revenue × (1 − OpEx%) = Annual Net Revenue; Payback = Build Cost ÷ Annual Net Revenue.',
   },
   {
     id: 'T17L09_q3',

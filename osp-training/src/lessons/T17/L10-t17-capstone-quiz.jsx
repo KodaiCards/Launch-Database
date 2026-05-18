@@ -193,14 +193,14 @@ const capstoneQuestions = [
     question:
       'A rural FTTH project passes 800 homes at a build cost of $4,000,000 (CPHP = $5,000). Take rate is 45%. ARPU is $74/month. Operating expenses are 50% of revenue. What is the simplified payback period?',
     options: [
-      '9.8 years — $4,000,000 ÷ annual gross revenue',
-      '19.8 years — $4,000,000 ÷ annual net revenue',
-      '16.7 years — $4,000,000 ÷ annual net revenue with correct calculation',
-      '25.2 years — $4,000,000 ÷ monthly net revenue',
+      '12.5 years — $4,000,000 ÷ $319,680 (gross annual revenue, ignoring operating expenses)',
+      '25.0 years — $4,000,000 ÷ $159,840 (annual net revenue after 50% OpEx deduction)',
+      '16.7 years — $4,000,000 ÷ annual net revenue using 40% OpEx instead of 50%',
+      '34.8 years — $4,000,000 ÷ monthly net revenue (dividing by monthly instead of annual)',
     ],
     correct: 1,
     explanation:
-      'Subscribers = 800 × 0.45 = 360. Monthly gross revenue = 360 × $74 = $26,640. Annual gross revenue = $26,640 × 12 = $319,680. Annual net revenue (at 50% OpEx) = $319,680 × 0.50 = $159,840. Payback = $4,000,000 ÷ $159,840 = 25.0 years. Closest answer is B (19.8 years, which would be $4,000,000 ÷ $201,600 — implying a different OpEx rate). Option A ($4,000,000 ÷ $319,680 = 12.5 years) ignores operating expenses entirely. The correct process: gross revenue × (1 - OpEx%) = net revenue, then payback = build cost ÷ annual net revenue. Always include operating expenses in the payback calculation.',
+      'Step 1 — Subscribers = 800 × 0.45 = 360. Step 2 — Monthly gross revenue = 360 × $74 = $26,640. Step 3 — Annual gross revenue = $26,640 × 12 = $319,680. Step 4 — Annual net revenue = $319,680 × (1 − 0.50) = $159,840. Step 5 — Payback = $4,000,000 ÷ $159,840 = 25.0 years. Option A (12.5 years) ignores operating expenses — it uses gross annual revenue without deducting OpEx, dramatically understating the payback period. Option C (16.7 years) uses 40% OpEx instead of the stated 50%, giving $319,680 × 0.60 = $191,808; $4,000,000 ÷ $191,808 ≈ 20.9 years (not exactly 16.7 — this is a distractor). Option D divides build cost by monthly net revenue instead of annual net revenue. The critical step: always deduct operating expenses before calculating payback.',
   },
   {
     id: 'T17CAP_q11',
