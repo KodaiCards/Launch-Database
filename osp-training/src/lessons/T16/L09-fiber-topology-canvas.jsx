@@ -420,7 +420,7 @@ export default function L09() {
             ],
             correct: 1,
             explanation:
-              'A 1:32 splitter is a passive optical device that splits a single input fiber into 32 output fibers, distributing the OLT\'s downstream signal from the POP to up to 32 customer ONT endpoints. This is the core function of a GPON FDH. The split ratio introduces approximately 15.5 dB of passive insertion loss (10×log₁₀(32) ≈ 15.05 dB) that must be included in the link loss budget. The topology canvas shows this ratio so operations staff can immediately see how many ports are available without opening the splice matrix.',
+              'A 1:32 splitter is a passive optical device that splits a single input fiber into 32 output fibers, distributing the OLT\'s downstream signal from the POP to up to 32 customer ONT endpoints. This is the core function of a GPON FDH. The split ratio introduces approximately 15.0–17.0 dB of passive insertion loss (theoretical minimum: 10×log₁₀(32) = 15.05 dB; real-world planar waveguide splitters add 0.5–2 dB excess loss) that must be included in the link loss budget. The topology canvas shows this ratio so operations staff can immediately see how many ports are available without opening the splice matrix.',
           },
           {
             id: 'T16L09-Q3',

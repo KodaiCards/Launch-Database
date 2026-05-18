@@ -82,13 +82,13 @@ export default function T16L02SpliceMatrix() {
     variables: [
       { symbol: 'Cable', name: 'Feeder cable ID', value: 'F-144-01', unit: '' },
       { symbol: 'Fiber', name: 'Fiber number', value: '73', unit: '' },
-      { symbol: 'Tube', name: 'Buffer tube', value: '7', unit: '(TIA-598: blue)' },
+      { symbol: 'Tube', name: 'Buffer tube', value: '7', unit: '(TIA-598: red)' },
       { symbol: 'Fiber in tube', name: 'Fiber within tube', value: '1', unit: '(TIA-598: blue)' },
     ],
     steps: [
       {
         label: "Step 1: Identify the fiber's buffer tube and color",
-        content: 'Fiber 73 in a 144F loose-tube cable with 12 tubes × 12 fibers: Tube = CEIL(73/12) = 7 (TIA-598: blue tube). Fiber within tube = 73 − (6 × 12) = 73 − 72 = 1 (TIA-598: blue fiber). So fiber 73 = Tube 7 (blue), Fiber 1 (blue). This is the TIA-598 color code from T11.L02.',
+        content: 'Fiber 73 in a 144F loose-tube cable with 12 tubes × 12 fibers: Tube = CEIL(73/12) = 7 (TIA-598 position 7 = red tube). Fiber within tube = 73 − (6 × 12) = 73 − 72 = 1 (TIA-598 position 1 = blue fiber). So fiber 73 = Tube 7 (red), Fiber 1 (blue). This is the TIA-598 12-color sequence from T11.L02.',
       },
       {
         label: 'Step 2: Find the entry in CO-SC-01',
