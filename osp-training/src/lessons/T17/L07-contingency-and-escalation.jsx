@@ -181,14 +181,14 @@ const quizQuestions = [
     question:
       'An estimator builds a base estimate of $1,800,000, adds 12% contingency, then adds 4% escalation to the contingency-inclusive total. What is the project budget?',
     options: [
-      '$2,088,000 — base × (1 + 0.12 + 0.04) = base × 1.16',
-      '$2,116,800 — base × 1.12 for contingency, then × 1.04 for escalation',
-      '$2,052,000 — contingency on base only, escalation calculated separately then added',
-      '$2,017,600 — escalation calculated first, then contingency applied on top',
+      '$2,088,000 — base × (1 + 0.12 + 0.04) = base × 1.16, adding percentages flat',
+      '$2,096,640 — base × 1.12 for contingency, then × 1.04 for escalation as compound multipliers',
+      '$2,052,000 — contingency on base only, escalation calculated separately on base then added',
+      '$2,017,600 — escalation calculated first on base, then contingency applied on top',
     ],
     correct: 1,
     explanation:
-      'Contingency and escalation are sequential multipliers when escalation applies to the contingency-inclusive amount (which it should — contingency funds are also subject to price escalation if unused): Base × (1 + Contingency) × (1 + Escalation) = $1,800,000 × 1.12 × 1.04 = $2,016,000 × 1.04 = $2,096,640. Wait — let me recalculate: $1,800,000 × 1.12 = $2,016,000. $2,016,000 × 1.04 = $2,096,640. Option B says $2,116,800, which equals $1,800,000 × 1.12 × 1.052 — that would be 5.2% escalation, not 4%. Let\'s check option A: $1,800,000 × 1.16 = $2,088,000 (adding percentages flat, not compound). The technically correct answer is compound application: $2,096,640. Since none of the options match exactly, the closest is B ($2,116,800) — but the real takeaway is: contingency and escalation should be applied as compound multipliers, not added as a flat percentage total.',
+      'Contingency and escalation are sequential (compound) multipliers. Escalation applies to the contingency-inclusive total because the contingency reserve will also cost more if prices rise before it is drawn. The calculation: Step 1 — Base × (1 + Contingency) = $1,800,000 × 1.12 = $2,016,000. Step 2 — $2,016,000 × (1 + Escalation) = $2,016,000 × 1.04 = $2,096,640. Option A ($2,088,000) is wrong because it adds the percentages flat ($1,800,000 × 1.16), which understates the budget by $8,640 — a meaningful error on a multi-million-dollar project. Option C ($2,052,000) incorrectly applies escalation only to the base, not the contingency-inclusive total. Option D reverses the order, which produces a different (and lower) result than the correct sequence.',
   },
 ];
 
