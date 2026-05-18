@@ -24,7 +24,6 @@ export const meta = {
   estimated_minutes: 30,
   vocabulary_introduced: [
     'bulk IOR',
-    'EIOR',
     'distance error',
     'multi-reel IOR variation',
   ],

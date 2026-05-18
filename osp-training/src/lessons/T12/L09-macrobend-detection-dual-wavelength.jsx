@@ -50,12 +50,12 @@ export const meta = {
     {
       term: '1625 nm in-service window',
       definition:
-        'The wavelength range around 1625 nm used for OTDR measurement of live fiber carrying traffic at 1310 nm and 1550 nm. Since 1625 nm is outside the primary DWDM C-band and L-band traffic windows, an OTDR can inject 1625 nm test pulses into a live fiber without disrupting traffic. Particularly useful for macrobend detection because macrobend loss is most severe at longer wavelengths, making bends highly visible at 1625 nm even when barely visible at 1310 nm.',
+        'The wavelength range around 1625 nm used for OTDR measurement of live fiber carrying traffic at 1310 nm and 1550 nm. Per ITU-T G.664, 1625 nm sits at the upper boundary of the L-band (1565–1625 nm) — above the C-band (1530–1565 nm) and above populated DWDM traffic channels — so OTDR test pulses at 1625 nm do not disrupt traffic on normally provisioned systems. Particularly useful for macrobend detection because macrobend loss is most severe at longer wavelengths, making bends highly visible at 1625 nm even when barely visible at 1310 nm.',
     },
     {
       term: 'G.657 macrobend-insensitive fiber',
       definition:
-        'A family of ITU-T standard singlemode fiber types with an enhanced macrobend tolerance compared to G.652.D. G.657.A1 minimum bend radius: 10 mm (1 cm). G.657.A2: 7.5 mm. G.657.B2: 7.5 mm. G.657.B3: 5 mm. Used in FTTx drop cables, MDU risers, and any installation where tight bends are unavoidable. Still subject to excessive loss at very small bend radii — "bend-insensitive" does not mean "bend-proof."',
+        'A family of ITU-T standard singlemode fiber types with an enhanced macrobend tolerance compared to G.652.D. Minimum bend radii (short-term/installation → long-term/permanent): G.657.A1: 15 mm → 10 mm. G.657.A2: 10 mm → 7.5 mm. G.657.B3: 7.5 mm → 5 mm. Short-term (installation/pull) radius is larger because fiber is under dynamic stress during the pull; long-term (permanently installed) radius is tighter. Used in FTTx drop cables, MDU risers, and any installation where tight bends are unavoidable. Still subject to excessive loss at very small bend radii — "bend-insensitive" does not mean "bend-proof."',
     },
   ],
 };
@@ -164,9 +164,10 @@ export default function T12L09_MacrobendDetection() {
         <h3>Using 1625 nm for in-service macrobend investigation</h3>
         <p>
           When a span is carrying live 1310/1550 nm traffic, you can use a 1625 nm OTDR to test
-          for macrobends without interrupting service. The 1625 nm wavelength sits outside the
-          C-band (1530–1565 nm) and L-band (1565–1625 nm) DWDM windows, so test pulses don't
-          interfere with traffic. The OTDR injects 1625 nm pulses; a wavelength-selective coupler
+          for macrobends without interrupting service. The 1625 nm wavelength sits at the upper
+          boundary of the L-band (ITU-T G.664 defines L-band as 1565–1625 nm) — above the C-band
+          (1530–1565 nm) and above populated L-band DWDM traffic channels — so test pulses at
+          1625 nm do not interfere with traffic on normally provisioned DWDM systems. The OTDR injects 1625 nm pulses; a wavelength-selective coupler
           (WDM coupler) at each end separates test wavelengths from traffic.
         </p>
         <p>
@@ -248,7 +249,7 @@ export default function T12L09_MacrobendDetection() {
                 { id: 'd', text: 'It has the same sensitivity as 1550 nm but can be used in both singlemode and multimode fiber' },
               ],
               correct: 'b',
-              explanation: '1625 nm is outside the C-band (1530–1565 nm) and L-band (1565–1625 nm) windows where DWDM traffic runs, so OTDR test pulses do not interfere with live channels. Additionally, 1625 nm light has a larger effective MFD than 1550 nm, making it the most sensitive wavelength for macrobend detection — bends that are barely visible at 1550 nm show clearly at 1625 nm.',
+              explanation: '1625 nm sits at the upper boundary of the L-band (ITU-T G.664: 1565–1625 nm) and above the C-band (1530–1565 nm). Because it is above populated DWDM traffic channels, OTDR test pulses at 1625 nm do not interfere with live channels on normally provisioned systems. Additionally, 1625 nm light has a larger effective MFD than 1550 nm, making it the most sensitive wavelength for macrobend detection — bends that are barely visible at 1550 nm show clearly at 1625 nm.',
             },
           ]}
         />

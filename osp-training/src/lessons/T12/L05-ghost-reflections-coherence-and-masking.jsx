@@ -151,12 +151,13 @@ export default function T12L05_GhostReflections() {
         <ol>
           <li>
             <strong>Use APC connectors where possible.</strong> APC connectors (8° angled end-face)
-            reflect only −60 to −65 dB, compared to −14 to −35 dB for UPC. The lower the reflectance,
-            the smaller the dead zone and the less likely masking occurs.
+            reflect only −60 to −65 dB, compared to −45 to −55 dB for a clean UPC. The lower
+            the reflectance, the smaller the dead zone and the less likely masking occurs.
           </li>
           <li>
-            <strong>Clean the offending connector.</strong> A contaminated UPC connector can go from
-            −30 dB to −14 dB reflectance. Clean it and the masking shrinks dramatically.
+            <strong>Clean the offending connector.</strong> A contaminated UPC connector can degrade
+            from its clean −45 to −55 dB spec down to −14 to −30 dB reflectance. Clean it and the
+            masking shrinks dramatically.
           </li>
           <li>
             <strong>Use a shorter pulse width.</strong> Shorter pulse → shorter dead zone → less
@@ -264,13 +265,13 @@ export default function T12L05_GhostReflections() {
               type: 'multiple-choice',
               text: 'Which type of connector produces the lowest reflectance and is therefore the best choice for minimizing source masking at an OTDR launch connection?',
               options: [
-                { id: 'a', text: 'UPC (Ultra Physical Contact) — flat polish, −14 to −35 dB reflectance' },
+                { id: 'a', text: 'UPC (Ultra Physical Contact) — flat polish, −45 to −55 dB reflectance (clean)' },
                 { id: 'b', text: 'PC (Physical Contact) — standard flat polish, −25 to −40 dB reflectance' },
                 { id: 'c', text: 'APC (Angled Physical Contact) — 8° angled polish, −60 to −65 dB reflectance' },
                 { id: 'd', text: 'Air gap (bare fiber adapter) — minimal Fresnel reflection' },
               ],
               correct: 'c',
-              explanation: 'APC connectors have an 8° angled end-face that deflects the reflected beam away from the fiber core at an angle, dramatically reducing back-reflection to −60 to −65 dB. UPC and PC connectors reflect −14 to −40 dB — orders of magnitude more energy back toward the OTDR. APC is the standard choice for OTDR launch cables on singlemode measurement.',
+              explanation: 'APC connectors have an 8° angled end-face that deflects the reflected beam away from the fiber core at an angle, dramatically reducing back-reflection to −60 to −65 dB. A clean UPC connector typically reflects −45 to −55 dB; contamination can degrade that to −14 to −30 dB. APC is the standard choice for OTDR launch cables on singlemode measurement because even a clean UPC reflects ~10–15 dB more than APC.',
             },
           ]}
         />

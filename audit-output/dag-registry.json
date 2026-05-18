@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-05-18T00:02:46.275Z",
+  "generated_at": "2026-05-18T00:17:06.987Z",
   "lesson_count": 179,
   "vocabulary_introduced_by_lesson": {
     "T01.L01": [
@@ -1091,7 +1091,6 @@
     ],
     "T12.L10": [
       "bulk IOR",
-      "EIOR",
       "distance error",
       "multi-reel IOR variation"
     ],
@@ -3655,8 +3654,7 @@
       "T12.L03"
     ],
     "eior": [
-      "T12.L03",
-      "T12.L10"
+      "T12.L03"
     ],
     "edz": [
       "T12.L04"
@@ -4607,13 +4605,6 @@
       "introduced_by": [
         "T10.L09",
         "T18.L06"
-      ]
-    },
-    {
-      "term": "eior",
-      "introduced_by": [
-        "T12.L03",
-        "T12.L10"
       ]
     }
   ],
