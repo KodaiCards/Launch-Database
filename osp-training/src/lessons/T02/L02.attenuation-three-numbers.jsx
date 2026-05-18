@@ -53,6 +53,11 @@ export default function T02L02_AttenuationThreeNumbers() {
           you the framework to keep them straight.
         </p>
 
+        <h3 className="mt-5 font-semibold">Building on T02.L01 and T01 fundamentals</h3>
+        <p className="text-sm text-slate-300/90">
+          In T02.L01, you learned how light travels through a fiber <strong>core</strong> via <strong>total internal reflection</strong>, and how the <strong>cladding</strong> around it confines the light. This lesson explains what happens when some of that light is <em>not</em> confined — it gets absorbed or scattered, causing <strong>attenuation</strong>. The <strong>fiber</strong> types (like <strong>SMF</strong>, introduced in T01.L08) have different attenuation rates. Attenuation is the foundation of link-budget calculations you'll use in T02.L06.
+        </p>
+
         <h3 className="mt-5 font-semibold">Acronyms in this lesson</h3>
         <table className="w-full text-sm border border-white/10 rounded-lg mt-2">
           <thead className="bg-white/5 text-slate-200">
@@ -371,6 +376,14 @@ export default function T02L02_AttenuationThreeNumbers() {
           },
         ]}
       />
+
+      {/* ── TYING IT TOGETHER ─────────────────────────────────────────── */}
+      <div className="lesson-callout mt-8 bg-blue-400/5 border border-blue-400/30">
+        <h4>Tying It Together: Three Numbers, One Fiber</h4>
+        <p className="text-sm text-slate-300/90">
+          Attenuation is the signal loss rate built into the fiber material itself. A standards body publishes a spec maximum (the worst fiber allowed to pass). A vendor publishes a typical value (what they actually ship). A designer chooses a planning value (a margin above typical, below spec-max) to use in link-budget calculations. Mixing these three up is one of the fastest ways to fail a link-budget: using spec-max in the math makes the budget look ten times worse than reality. Next lesson (T02.L03) you'll add dispersion to this picture, and then T02.L05–L06 will show you how to build a full link budget with both attenuation and dispersion together.
+        </p>
+      </div>
 
     </LessonLayout>
   );

@@ -59,6 +59,11 @@ export default function T01L03_PartsOfACable() {
           thinner than a human hair — carry the light. Every layer earns its place.
         </p>
 
+        <h3 className="mt-5 font-semibold">Building on earlier lessons</h3>
+        <p className="text-sm text-slate-300/90">
+          In T01.L01, you learned what <strong>OSP</strong> (Outside Plant) and <strong>ISP</strong> (Inside Plant) are. In T01.L02, you saw how fiber attaches between poles across a <strong>span</strong>. Now we zoom in even closer: what is the actual fiber cable made of, and why does each layer matter?
+        </p>
+
         <h3 className="mt-5 font-semibold">Acronyms and terms in this lesson</h3>
         <table className="w-full text-sm border border-white/10 rounded-lg mt-2">
           <thead className="bg-white/5 text-slate-200">
@@ -371,6 +376,14 @@ export default function T01L03_PartsOfACable() {
           },
         ]}
       />
+
+      {/* ── TYING IT TOGETHER ─────────────────────────────────────────── */}
+      <div className="lesson-callout mt-8 bg-blue-400/5 border border-blue-400/30">
+        <h4>Tying It Together: Why Cable Anatomy Matters for OSP Design</h4>
+        <p className="text-sm text-slate-300/90">
+          You now understand the building blocks of OSP fiber: poles (T01.L02) and cables (this lesson). The layers in a fiber cable aren't decorative — sheath protects against weather, buffer tubes protect fibers from bending, armor protects against rodents and dig-in damage in buried routes. Each layer is a trade-off: more armor = more weight to tension on the span. The messenger wire you learned about here is the critical link to T01.L02's pole attachment story. A sag of 2 feet at midspan is only possible because the messenger, not the fiber, carries the weight. Splicing, permitting, and construction all depend on this knowledge.
+        </p>
+      </div>
 
     </LessonLayout>
   );

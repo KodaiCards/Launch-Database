@@ -61,6 +61,17 @@ export default function T20L03_RUSForms() {
         </div>
       </section>
 
+      {/* ── TYING IT TOGETHER ──────────────────────────────────────────────────── */}
+      <section className="mt-8 rounded-lg bg-slate-800/40 border border-slate-700 p-4">
+        <h3 className="font-semibold text-slate-200">Tying It Together</h3>
+        <p className="text-sm text-slate-300/90 mt-2">
+          Your work on <strong>construction</strong> (T10) and <strong>project estimation</strong> (T17) directly feeds into RUS Form 307.
+          When you estimate costs in T17 and then oversee construction in the field, you're gathering the data that goes into Form 307.
+          Forms are the bridge between engineering work (design, inspection) and RUS finance (drawdown, loan covenants).
+          Accurate, timely forms = borrower gets paid on schedule. Sloppy forms = project stalls. That's why understanding RUS Forms matters beyond just paperwork — they're how construction actually gets funded.
+        </p>
+      </section>
+
       <h3 className="mt-6 font-semibold">Lesson Quiz</h3>
       <Quiz
         questions={[

@@ -296,6 +296,55 @@ export default function T02L08_SMFvsMMFChoosing() {
           batches. This is why installed system testing (insertion loss + OTDR, and sometimes
           bandwidth verification) is required on high-density data center deployments.
         </p>
+
+        <h3 className="mt-5 font-semibold">Fiber-Grade Selection Decision Tree</h3>
+        <p className="text-sm mt-2">
+          Fiber selection isn't just about distance. Application, cost budget, expected upgrades, and customer
+          network class all influence the choice. Use this decision tree:
+        </p>
+        <div className="mt-3 p-4 border border-emerald-400/30 bg-emerald-400/5 rounded-lg text-sm space-y-3">
+          <div className="flex items-start">
+            <span className="font-semibold text-emerald-300 mr-2 flex-shrink-0">Q1.</span>
+            <div className="flex-grow">
+              <p><strong>Is this an OSP (outside plant) run?</strong></p>
+              <p className="text-xs text-slate-400 mt-1">→ YES: Use <strong>OS2 SMF</strong>.</p>
+              <p className="text-xs text-slate-400">→ NO: Go to Q2.</p>
+            </div>
+          </div>
+          <div className="flex items-start">
+            <span className="font-semibold text-emerald-300 mr-2 flex-shrink-0">Q2.</span>
+            <div className="flex-grow">
+              <p><strong>Is the run longer than 400 m?</strong></p>
+              <p className="text-xs text-slate-400 mt-1">→ YES: Use <strong>OS2 SMF</strong>. (MMF max ~550 m.)</p>
+              <p className="text-xs text-slate-400">→ NO: Go to Q3.</p>
+            </div>
+          </div>
+          <div className="flex items-start">
+            <span className="font-semibold text-emerald-300 mr-2 flex-shrink-0">Q3.</span>
+            <div className="flex-grow">
+              <p><strong>Will this ever need 100G+?</strong></p>
+              <p className="text-xs text-slate-400 mt-1">→ YES: Use <strong>OS2 SMF</strong>. (Exception: OM5 SWDM4 at ≤150 m.)</p>
+              <p className="text-xs text-slate-400">→ NO: Go to Q4.</p>
+            </div>
+          </div>
+          <div className="flex items-start">
+            <span className="font-semibold text-emerald-300 mr-2 flex-shrink-0">Q4.</span>
+            <div className="flex-grow">
+              <p><strong>Customer is carrier/ISP/government (RUS/BEAD)?</strong></p>
+              <p className="text-xs text-slate-400 mt-1">→ YES: Use <strong>OS2 SMF</strong>. (Standard, future-proof.)</p>
+              <p className="text-xs text-slate-400">→ NO: Go to Q5.</p>
+            </div>
+          </div>
+          <div className="flex items-start">
+            <span className="font-semibold text-emerald-300 mr-2 flex-shrink-0">Q5.</span>
+            <div className="flex-grow">
+              <p><strong>Data center/campus, &lt;400 m?</strong></p>
+              <p className="text-xs text-slate-400 mt-1">→ OM3 (aqua): 1G/10G up to 300 m, lowest cost.</p>
+              <p className="text-xs text-slate-400">→ OM4 (aqua/magenta): 10GbE up to 400 m.</p>
+              <p className="text-xs text-slate-400">→ OM5 (lime): 100G SWDM4 up to 150 m.</p>
+            </div>
+          </div>
+        </div>
       </section>
 
       {/* ── SIDE BY SIDE ─────────────────────────────────────────────────── */}

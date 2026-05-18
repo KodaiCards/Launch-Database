@@ -268,6 +268,18 @@ export default function T20L01_RUSProgramStructures() {
         </p>
       </section>
 
+      {/* ── TYING IT TOGETHER ──────────────────────────────────────────────────── */}
+      <section className="mt-8 rounded-lg bg-slate-800/40 border border-slate-700 p-4">
+        <h3 className="font-semibold text-slate-200">Tying It Together</h3>
+        <p className="text-sm text-slate-300/90 mt-2">
+          You've learned the OSP design process (T04–T10), the make-ready requirements (T08), and how to estimate project costs (T17).
+          Now you're adding the financial context: RUS doesn't just pay for plant — it constrains your design through cost allowances,
+          requires specific documentation (Forms 307, 219), and audits your work years later. The <strong>cost-per-mile allowance</strong> concept
+          you see here directly ties back to the <strong>project estimation</strong> methods in T17 — you estimate per-mile cost from engineering,
+          then compare to the RUS allowance to see if your design fits the budget or needs revision. That's the engineer's balancing act in RUS projects.
+        </p>
+      </section>
+
       {/* ── QUIZ ───────────────────────────────────────────────────────── */}
       <h3 className="mt-6 font-semibold">Lesson Quiz</h3>
       <Quiz

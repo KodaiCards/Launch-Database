@@ -87,7 +87,7 @@ export const key_terms = meta.key_terms;
 // ---------------------------------------------------------------------------
 const fillWorkedExample = {
   title: 'Conduit Fill Calculation: 12 Fibers in Schedule 40 PVC',
-  introduction: `You need to pull a single 12-fiber loose-tube cable (OD = 0.51 inches) plus a second 48-fiber cable (OD = 0.75 inches) into a 2-inch Schedule 40 PVC conduit (ID = 2.067 inches). Does this installation meet the 40% fill rule?`,
+  introduction: `You need to pull a single 12-fiber loose-tube cable (OD = 0.51 inches) plus a second 48-fiber cable (OD = 0.75 inches) into a 2-inch Schedule 40 PVC conduit (ID = 2.067 inches). (Remember from L03, Schedule 40 has thinner walls than Schedule 80, giving a larger interior diameter for the same trade size.) Does this installation meet the 40% fill rule?`,
   steps: [
     {
       label: 'Step 1 — Calculate each cable\'s cross-sectional area',
@@ -546,6 +546,14 @@ export default function T06L04_ConduitFillAndPullTension() {
           (not the cable's — the conduit is usually weaker). The swivel shears before the
           conduit parts at a mid-bore point (which would require abandoning the bore).
           [Per PPI MAB HDD Tensile Loads, Corning SRP-005-011, OCC 206-2]
+        </p>
+      </section>
+
+      {/* ── TYING IT TOGETHER ──────────────────────────────────────────── */}
+      <section className="mt-8">
+        <h3 className="font-semibold text-blue-300">Tying It Together</h3>
+        <p className="mt-2 text-slate-300/90">
+          Fill calculations and pull-tension analysis bridge the conduit-selection choice from L03 to the field reality of pulling cable. When you choose a conduit size and material in L03, you are implicitly accepting the pull tensions and fill limits that come with it. Tomorrow, when you're staking a route or managing construction crews, these formulas will tell you whether a cable can be pulled safely or whether you need mid-assist, extra-lubricant, or a different conduit path. The math protects both the fiber and the budget.
         </p>
       </section>
 

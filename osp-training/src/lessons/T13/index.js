@@ -1,6 +1,6 @@
 // T13 — Inspection & Quality Assurance
-// Exports all 12 lessons in teaching order (DAG-compliant)
-// Teaching order: L01 → L11 → L12 → L02 → L03 → L04 → L05 → L06 → L07 → L08 → L09 → L10
+// Exports all 13 lessons in teaching order (DAG-compliant)
+// Teaching order: L01 → L11 → L12 → L02 → L03 → L04 → L05 → L06 → L07 → L08 → L09 → L10 → L13
 
 export { default as T13L01, meta as T13L01Meta } from './L01-inspector-role-and-qa-qc-framework.jsx';
 export { default as T13L02, meta as T13L02Meta } from './L02-pre-construction-acceptance-baseline.jsx';
@@ -14,3 +14,4 @@ export { default as T13L09, meta as T13L09Meta } from './L09-contractor-relation
 export { default as T13L10, meta as T13L10Meta } from './L10-capstone-quiz.jsx';
 export { default as T13L11, meta as T13L11Meta } from './L11-daily-inspection-records-rus-form-565.jsx';
 export { default as T13L12, meta as T13L12Meta } from './L12-federal-compliance-monitoring-davis-bacon.jsx';
+export { default as T13L13, meta as T13L13Meta } from './L13-inspection-day-field-decision-workflow.jsx';

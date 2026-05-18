@@ -166,6 +166,9 @@ export default function T11L03_SpliceLossFourNumbers() {
       {/* ── WORKING ──────────────────────────────────────────────────── */}
       <section data-tier="working">
         <h2>The Four Numbers — One Table</h2>
+        <p className="text-slate-400 text-sm mb-3 p-3 border-l-4 border-slate-500">
+          <strong>Callback:</strong> Remember from <strong>T02.L06, the link budget</strong> is the total power margin available over the entire fiber link. Every splice loss you accept eats into that budget. That's why acceptance thresholds matter — they prevent cumulative loss from exhausting the budget.
+        </p>
         <p>
           Every splice you make gets evaluated against these four reference points. Memorize
           this table — you will use it every day on a splice job.
@@ -363,6 +366,12 @@ export default function T11L03_SpliceLossFourNumbers() {
           your running average climbs above 0.15 dB, stop and investigate — don't wait until
           you've made 200 more splices at that level. Clean technique is cheaper than
           re-splicing. Build it right the first time.
+        </p>
+
+        <hr className="my-6 border-slate-600/40" />
+        <h3 className="font-semibold text-amber-300">Tying It Together</h3>
+        <p className="mt-3 text-slate-300">
+          Splice loss is not an abstract number. It is the direct consequence of fiber preparation (T01.L04), color discipline (T11.L01), cleave angle (T11.L06), and alignment technique (T11.L05). Every splice you make represents a choice: invest 30 seconds in contamination control and cleave inspection, or spend 30 minutes re-splicing and wasting fiber. The four numbers in this lesson are your acceptance criteria — use them professionally to build reliable plants, not just to pass contract inspection.
         </p>
       </section>
 

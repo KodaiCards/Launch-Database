@@ -57,6 +57,17 @@ export default function T20L02_RUSEngineeringStandards() {
         <p className="mt-2">On RUS-funded projects: RUS takes precedence. If NESC, BICSI, and RUS diverge, follow RUS. Example: NESC doesn't require optical fiber testing. RUS requires OLTS test before acceptance. On RUS project: do the test.</p>
       </section>
 
+      {/* ── TYING IT TOGETHER ──────────────────────────────────────────────────── */}
+      <section className="mt-8 rounded-lg bg-slate-800/40 border border-slate-700 p-4">
+        <h3 className="font-semibold text-slate-200">Tying It Together</h3>
+        <p className="text-sm text-slate-300/90 mt-2">
+          Earlier you learned about <strong>NESC</strong> (T05), <strong>grounding</strong> (T14), and <strong>safety protocols</strong> (T18).
+          RUS takes those base standards and tightens them. Form 219 grounding testing exemplifies this: NESC sets the pole loading rules,
+          RUS says "plus measured ground-rod verification." The RUS Bulletins (1751F-630/635/810) are essentially "NESC + RUS additions."
+          When you're designing an RUS project, you're not abandoning NESC — you're meeting NESC PLUS the RUS-specific requirements on top.
+        </p>
+      </section>
+
       <h3 className="mt-6 font-semibold">Lesson Quiz</h3>
       <Quiz
         questions={[

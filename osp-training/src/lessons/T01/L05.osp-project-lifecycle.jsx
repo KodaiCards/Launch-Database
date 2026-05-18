@@ -49,7 +49,17 @@ export default function T01L05_OspProjectLifecycle() {
 
       {/* ── FOUNDATIONS ─────────────────────────────────────────────────── */}
       <section data-tier="foundations">
-        <h3 className="font-semibold">Acronyms in this lesson</h3>
+        <h2>In Plain English</h2>
+        <p>
+          No OSP fiber project builds itself. From the first day a design engineer walks the route to the moment a splicer closes the last splice case, there are seven distinct stages. Each stage has different people doing different work, different deliverables, and different risks. Understanding the sequence — and what happens if one stage fails — is what separates a field crew that knows their job from one that just shows up.
+        </p>
+
+        <h3 className="font-semibold">Building on T01.L01–L04</h3>
+        <p className="text-sm text-slate-300/90">
+          You've learned what <strong>OSP</strong> means, how poles are structured, what cables are made of, and how fibers are spliced in <strong>splice cases</strong>. You know about <strong>attachments</strong> on poles and the signal path from <strong>OLT</strong> at the headend to <strong>ONT</strong> at the customer. Now you'll see how all those pieces fit together in a real project timeline.
+        </p>
+
+        <h3 className="mt-5 font-semibold">Acronyms in this lesson</h3>
         <table className="w-full text-sm border border-white/10 rounded-lg mt-2 mb-4">
           <thead className="bg-white/5 text-slate-200">
             <tr>
@@ -422,6 +432,14 @@ export default function T01L05_OspProjectLifecycle() {
           },
         ]}
       />
+
+      {/* ── TYING IT TOGETHER ─────────────────────────────────────────── */}
+      <div className="lesson-callout mt-8 bg-blue-400/5 border border-blue-400/30">
+        <h4>Tying It Together: The Seven Stages Frame Every OSP Job</h4>
+        <p className="text-sm text-slate-300/90">
+          You now know the seven stages: survey → design → permit → make-ready → construction → testing → as-built/close-out. Every person in the OSP field — designer, staker, splicer, inspector — works within this framework. A project manager oversees the timeline and risk; a designer makes choices about pole attachment and cable routing; a make-ready crew clears the pole per the design spec; a splicer executes the design. When something goes wrong (a permit denial, a NESC clearance violation, a cable break in testing), the whole sequence can slip. Understanding why each stage exists and what comes before and after it is what separates guesswork from professional execution.
+        </p>
+      </div>
 
     </LessonLayout>
   );

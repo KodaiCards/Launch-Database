@@ -245,6 +245,10 @@ export default function T16L01WhatIsAnAsBuilt() {
       <section className="lesson-section advanced">
         <h2>Organizational Roles — Who Creates, Owns, and Maintains the As-Built?</h2>
 
+        <p className="text-sm italic bg-blue-50 p-3 rounded mb-4">
+          <strong>Callback to T10.L10 — Daily Field Report (DFR):</strong> Recall from T10 that field crews document deviations in the DFR from the moment they occur. That DFR is the raw material the as-built process converts into permanent records.
+        </p>
+
         <p>
           The as-built is a business record that spans multiple roles and departments. Without clarity on who is responsible for what, ownership becomes orphaned and the record deteriorates. Here is how responsibility should be distributed:
         </p>
@@ -328,6 +332,14 @@ export default function T16L01WhatIsAnAsBuilt() {
         </p>
         <p>
           <strong>Risk of the field practice window:</strong> If an excavation or emergency event occurs during the update-pending window, the as-built is stale. The organization bears locate liability for that period. Best practice is to update the GIS record within 48 hours of any plant change — not when time permits.
+        </p>
+      </section>
+
+      {/* ── TYING IT TOGETHER ──────────────────────────────────────────── */}
+      <section className="lesson-section tying-together" style={{ background: '#f9fafb', padding: '16px', borderRadius: '8px', marginTop: '24px' }}>
+        <h2>Tying It Together</h2>
+        <p>
+          The as-built is where every prior lesson's work converges. The cable you selected (T03), the route you staked (T07), the splices you installed (T11), the test data you collected (T12), the restoration you completed (T15) — all of these are captured and organized in the as-built record. The as-built is the single source of truth that replaces design drawings the moment construction closes out. From that moment forward, every excavator, every restoration crew, every future designer, and every RUS auditor depends on your as-built being accurate. That dependency is not optional — it is legal liability, safety, and network reliability rolled into one document.
         </p>
       </section>
 

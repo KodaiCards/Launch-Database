@@ -248,6 +248,10 @@ export default function T16L02SpliceMatrix() {
 
         {/* Worked Example */}
         <WorkedExample {...fiberTraceExample} />
+
+        <div className="text-sm italic bg-yellow-50 p-3 rounded mt-4">
+          <strong>Refresher (3+ lessons back, T11.L03):</strong> <em>Splice loss</em> is the power loss measured across a fusion joint, recorded in dB via OTDR. Every splice in your matrix must have a measured loss value.
+        </div>
       </section>
 
       {/* ── ADVANCED ─────────────────────────────────────────────────────── */}
@@ -273,6 +277,14 @@ export default function T16L02SpliceMatrix() {
         </p>
         <p>
           <strong>Correct practice:</strong> every fiber in every cable gets an entry in the splice matrix at every closure it passes through — active splice or express. A 288F feeder cable passing through 6 inline closures should generate 288 × 6 = 1,728 matrix entries before any branching is considered. That is the cost of a complete splice matrix. It is worth it.
+        </p>
+      </section>
+
+      {/* ── TYING IT TOGETHER ──────────────────────────────────────────── */}
+      <section className="lesson-section tying-together" style={{ background: '#f9fafb', padding: '16px', borderRadius: '8px', marginTop: '24px' }}>
+        <h2>Tying It Together</h2>
+        <p>
+          The splice matrix is where your construction crew's work (T11 splicing), your test technician's OTDR data (T12 testing), and your engineer's topology design (T07 staking) all come together in one authoritative record. Every fiber, every splice loss, every path through the network — documented in eight fields that outlive the project team and serve the plant for its entire life.
         </p>
       </section>
 

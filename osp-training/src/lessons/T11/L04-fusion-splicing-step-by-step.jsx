@@ -196,6 +196,10 @@ export default function T11L04_FusionSplicingStepByStep() {
       <section data-tier="working">
         <h2>The 8-Step Fusion Splice Workflow</h2>
 
+        <p className="text-slate-400 text-sm mb-3 p-3 border-l-4 border-slate-500">
+          <strong>Callback:</strong> Recall from <strong>T11.L03, the four splice loss numbers</strong> — your goal is ≤0.10 dB per splice. Each of these 8 steps directly impacts whether you hit that target. Skip the cleaning or get a bad cleave, and you're immediately above 0.10 dB.
+        </p>
+
         <h3 className="mt-4 font-semibold">Before you start: thread the splice protector</h3>
         <p className="mt-1 p-3 bg-amber-900/30 border border-amber-500/40 rounded-lg text-amber-200 text-sm">
           <strong>Do this first, every time:</strong> slide the heat-shrink splice protector

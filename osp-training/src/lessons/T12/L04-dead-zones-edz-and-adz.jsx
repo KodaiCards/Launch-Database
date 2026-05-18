@@ -202,6 +202,43 @@ export default function T12L04_DeadZones() {
           measurements, 150–300 m is adequate. If you're documenting the far-end connection loss for
           an acceptance test (required on RUS builds), a receive cable is not optional.
         </p>
+
+        <h3 className="mt-5 font-semibold">OTDR Dead-Zone Calculator</h3>
+        <p className="text-sm mt-2">
+          Use this calculator to determine the minimum launch cable length for your pulse width,
+          and verify that your cable reel clears the Attenuation Dead Zone:
+        </p>
+
+        <WorkedExample
+          title="Estimate ADZ and minimum launch cable length"
+          formula="ADZ ≈ pulse_width_ns × 0.10 m/ns; min_launch_cable ≈ ADZ × 10 (real-world safety margin)"
+          variables={[
+            {
+              symbol: 'pulse_width_ns',
+              label: 'Pulse width (enter your OTDR setting)',
+              value: 100,
+              unit: 'ns',
+              help: 'Typical values: 5–30 ns (short), 100–500 ns (campus), 1000–3000 ns (metro), 10000–20000 ns (long-haul)'
+            },
+          ]}
+          steps={[
+            'Step 1: Estimate the Attenuation Dead Zone (conservative, single-wavelength singlemode): ADZ ≈ pulse_width_ns × 0.10 m/ns',
+            'Step 2: Multiply ADZ by 10× for real-world safety margin (accounts for connector reflectance variation, trace settling, alignment tolerance)',
+            'Step 3: Round UP to the nearest standard reel size you carry (100 m, 150 m, 300 m, 500 m, 1000 m, 2500 m)',
+          ]}
+          answer="Minimum launch cable (with safety margin)"
+          sanityCheck="The 0.10 m/ns factor is a conservative upper bound for singlemode based on empirical IEC 61746 data. Narrower pulses (5–30 ns) produce ADZ ≈ 0.5–2 m; wider pulses (1–10 µs) produce ADZ ≈ 50–100 m. The 10× multiplier ensures that: (a) connector reflectance jitter doesn't push you back into the ADZ if the OTDR's receiver is slightly more sluggish than specified, (b) you have enough dynamic range for multiple averaging passes on the first connector event, and (c) you can consistently measure the first connector loss to ±0.3 dB, which is the OSP acceptance spec. Using a smaller launch cable means guessing whether the first connector loss is real or buried in the dead zone — unacceptable for RUS or TIA acceptance testing."
+        />
+
+        <div className="mt-4 p-3 border border-amber-400/30 bg-amber-400/5 rounded-lg text-sm">
+          <p className="font-semibold text-amber-300 mb-2">Field Checklist</p>
+          <ul className="list-disc pl-5 space-y-1 text-slate-300/90">
+            <li><strong>Short premises runs (&lt;500 m, 5–30 ns pulse):</strong> Minimum 150 m launch cable</li>
+            <li><strong>Campus / access (≤10 km, 100–500 ns pulse):</strong> Minimum 500 m launch cable</li>
+            <li><strong>Metro OSP (10–40 km, 1–3 µs pulse):</strong> Minimum 1 km (1,000 m) launch cable</li>
+            <li><strong>Long-haul (&gt;40 km, 10–20 µs pulse):</strong> Minimum 2.5 km launch cable</li>
+          </ul>
+        </div>
       </section>
 
       {/* ── ADVANCED ── */}

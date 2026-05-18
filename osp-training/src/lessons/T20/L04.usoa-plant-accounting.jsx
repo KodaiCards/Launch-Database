@@ -78,6 +78,17 @@ export default function T20L04_USOA() {
         </div>
       </section>
 
+      {/* ── TYING IT TOGETHER ──────────────────────────────────────────────────── */}
+      <section className="mt-8 rounded-lg bg-slate-800/40 border border-slate-700 p-4">
+        <h3 className="font-semibold text-slate-200">Tying It Together</h3>
+        <p className="text-sm text-slate-300/90 mt-2">
+          When you designed the <strong>site survey</strong> (T04) and estimated <strong>costs per mile</strong> (T17), you were implicitly assigning items to USOA accounts.
+          Cable costs go to §32.2210, pole costs to §32.2420, duct to §32.2480. Now you see the formalization: RUS requires every cost tracked per account
+          so auditors can reconcile total spend against the cost-per-mile allowance by category. Your design spec → cost estimate → USOA account mapping → RUS audit trail.
+          It's a connected chain where precision at the design stage saves headaches during accounting.
+        </p>
+      </section>
+
       <h3 className="mt-6 font-semibold">Lesson Quiz</h3>
       <Quiz
         questions={[

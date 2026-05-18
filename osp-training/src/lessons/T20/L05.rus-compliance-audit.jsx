@@ -68,6 +68,16 @@ export default function T20L05_RUSCompliance() {
         </div>
       </section>
 
+      {/* ── TYING IT TOGETHER ──────────────────────────────────────────────────── */}
+      <section className="mt-8 rounded-lg bg-slate-800/40 border border-slate-700 p-4">
+        <h3 className="font-semibold text-slate-200">Tying It Together</h3>
+        <p className="text-sm text-slate-300/90 mt-2">
+          Everything you learned in <strong>permitting</strong> (T09), <strong>construction</strong> (T10), and <strong>as-built documentation</strong> (T16) comes back in RUS compliance audits.
+          The audit trail is the lens through which RUS verifies your design met standards. Audit covenants require design compliance (T05 NESC standards, T14 grounding, T18 safety).
+          That's why documenting your work as you go — not retroactively — is critical. Five years later when RUS auditors knock, you need the design decision trail intact to prove compliance.
+        </p>
+      </section>
+
       <h3 className="mt-6 font-semibold">Lesson Quiz</h3>
       <Quiz
         questions={[

@@ -61,6 +61,11 @@ export default function T01L02_PartsOfAPole() {
           you need to know the pole's anatomy cold. This lesson builds that picture.
         </p>
 
+        <h3 className="mt-5 font-semibold">Building on T01.L01</h3>
+        <p className="text-sm text-slate-300/90">
+          In T01.L01, we learned that <strong>OSP (Outside Plant)</strong> is all fiber infrastructure between buildings. Now we're zooming in on one of the most critical OSP structures: the utility pole itself.
+        </p>
+
         <h3 className="mt-5 font-semibold">Acronyms in this lesson</h3>
         <table className="w-full text-sm border border-white/10 rounded-lg mt-2">
           <thead className="bg-white/5 text-slate-200">
@@ -391,6 +396,14 @@ export default function T01L02_PartsOfAPole() {
           },
         ]}
       />
+
+      {/* ── TYING IT TOGETHER ─────────────────────────────────────────── */}
+      <div className="lesson-callout mt-8 bg-blue-400/5 border border-blue-400/30">
+        <h4>Tying It Together: From OSP Concept to Pole Reality</h4>
+        <p className="text-sm text-slate-300/90">
+          In T01.L01 we established what OSP means — all fiber outside buildings. In this lesson, you've learned the anatomy of the primary structure that carries OSP fiber in aerial networks: the utility pole. The three zones (supply, climbing, communication), the sag formula, and the NESC clearance rules are the foundation for everything that comes next in fiber design, permitting, and construction. Before staking a route or designing a single span, a field crew must see a pole and instantly know where fiber can attach, what make-ready work is needed, and why clearance matters. That's what this lesson builds.
+        </p>
+      </div>
 
     </LessonLayout>
   );
