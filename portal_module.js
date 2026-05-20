@@ -149,9 +149,17 @@ async function ensureRollupChain(pool, { client_id, concentrator_id, service_are
   // free-text label (non-PSC). If neither, skip this level.
   let areaKey = null, areaLabel = null;
   if (concentrator_id) {
-    const con = await pool.query('SELECT area_name FROM concentrators WHERE id = $1', [concentrator_id]);
-    areaKey = concentrator_id;
-    areaLabel = con.rows[0]?.area_name || 'Service Area';
+    // Try ec_service_areas first (new EC-scoped path)
+    const ecsa = await pool.query('SELECT name FROM ec_service_areas WHERE id = $1', [concentrator_id]);
+    if (ecsa.rows.length) {
+      areaKey = concentrator_id;
+      areaLabel = ecsa.rows[0].name;
+    } else {
+      // Fallback to concentrators (legacy path)
+      const con = await pool.query('SELECT area_name FROM concentrators WHERE id = $1', [concentrator_id]);
+      areaKey = concentrator_id;
+      areaLabel = con.rows[0]?.area_name || 'Service Area';
+    }
   } else if (service_area_label && service_area_label.trim()) {
     const trimmed = service_area_label.trim();
     areaKey = client_id + '|' + trimmed.toLowerCase();  // scoped to client to avoid cross-client collisions
@@ -882,10 +890,22 @@ function installPortalExtensions(app, pool, PORTAL_MODE, authHelpers) {
         if (con.rows.length) concentrator_id = con.rows[0].id;
       }
 
+      // 2.5. Derive engineering_contract_id from contract_id when not explicitly
+      // supplied. This ensures every project that has a billing contract also
+      // carries the direct EC FK — enabling rollup-scope billing queries.
+      let engineering_contract_id = null;
+      if (contract_id) {
+        const ecRow = await pool.query(
+          `SELECT engineering_contract_id FROM contracts WHERE id = $1`,
+          [contract_id]
+        );
+        engineering_contract_id = ecRow.rows[0]?.engineering_contract_id || null;
+      }
+
       // 3. Build the rollup chain. Either concentrator_id (PSC) or
       // service_area_label (non-PSC) gets you a Service Area folder.
       const parent_id = await ensureRollupChain(pool, {
-        client_id, concentrator_id, service_area_label, job_id
+        client_id, concentrator_id, service_area_label, job_id, engineering_contract_id
       });
 
       // 4. Duplicate check (against siblings under the team rollup)
@@ -945,8 +965,8 @@ function installPortalExtensions(app, pool, PORTAL_MODE, authHelpers) {
           status, billing_type, billing_rate,
           footage, miles, expected_hours, expected_revenue,
           start_date, notes, parent_id, concentrator_id,
-          permitting_hours_per_mile, billing_cadence
-        ) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18,$19,$20)
+          permitting_hours_per_mile, billing_cadence, engineering_contract_id
+        ) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18,$19,$20,$21)
         RETURNING *
       `, [
         String(name).trim(), client_id, contract_id || null, work_order_number || null,
@@ -955,7 +975,8 @@ function installPortalExtensions(app, pool, PORTAL_MODE, authHelpers) {
         projFootage, miles, expectedHours, expectedRevenue,
         start_date || null, notes || null, parent_id, concentrator_id,
         isPermitting ? 27.5 : null,
-        job.name === 'Inspection' ? 'monthly' : 'one_time'
+        job.name === 'Inspection' ? 'monthly' : 'one_time',
+        engineering_contract_id
       ]);
 
       // Auto-create permit/design stage (matches admin endpoint behavior)
