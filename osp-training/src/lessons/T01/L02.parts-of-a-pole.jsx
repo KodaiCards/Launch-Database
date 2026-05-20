@@ -15,6 +15,7 @@ export const meta = {
   lesson_type: 'foundation',
   prerequisites: ['T01.L01'],
   vocabulary_introduced: [
+    'pole',
     'NESC',
     'attachment',
     'span',
@@ -285,6 +286,7 @@ export default function T01L02_PartsOfAPole() {
       <Flashcard
         deckId="T01-L02"
         cards={[
+          { id: 'T01-L02-FC-pole', front: 'Pole (utility pole)', back: 'A wooden, concrete, or steel vertical structure (typically 30–60 feet tall) that supports overhead utility lines including electric power, telecom, and fiber optic cable. Most poles in the US are jointly owned by the electric utility (owner) and shared with telecom attachers who pay annual fees. Poles are classified by strength (Class 1–10) and must comply with NESC loading, clearance, and attachment requirements.' },
           { id: 'T01-L02-FC-nesc', front: 'NESC', back: 'National Electrical Safety Code — IEEE-published code (adopted by most states) that sets vertical clearance, loading, and attachment rules for overhead utility lines including fiber.' },
           { id: 'T01-L02-FC-attachment', front: 'Attachment', back: 'Any cable, equipment, or hardware bolted or clamped to a utility pole. Each attachment occupies vertical space on the pole. Fiber companies must hold a pole attachment agreement to install a new attachment.' },
           { id: 'T01-L02-FC-span', front: 'Span', back: 'The horizontal distance between two poles that a cable crosses through the air. Typically 150–300 ft in suburban areas, up to 600+ ft in rural areas.' },

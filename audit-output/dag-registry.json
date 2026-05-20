@@ -1,6 +1,6 @@
 {
-  "generated_at": "2026-05-18T15:52:29.748Z",
-  "lesson_count": 249,
+  "generated_at": "2026-05-20T17:16:05.997Z",
+  "lesson_count": 252,
   "vocabulary_introduced_by_lesson": {
     "T01.L01": [
       "OSP",
@@ -15,6 +15,7 @@
       "BICSI"
     ],
     "T01.L02": [
+      "pole",
       "NESC",
       "attachment",
       "span",
@@ -229,6 +230,7 @@
       "tight-buffered",
       "ribbon",
       "rollable ribbon",
+      "fiber count",
       "TIA-598-D",
       "ICEA S-87-640"
     ],
@@ -946,7 +948,9 @@
       "ITU-T L.400 design target",
       "RUS contract maximum",
       "concern threshold",
-      "per-splice budget allocation"
+      "per-splice budget allocation",
+      "splice loss (dB)",
+      "splice loss acceptance threshold"
     ],
     "T11.L04": [
       "fusion splice",
@@ -988,6 +992,7 @@
       "crimp-and-cleave splice"
     ],
     "T11.L09": [
+      "splice case types",
       "butt-splice (inline/horizontal) closure",
       "wall-mount/pedestal closure",
       "heat-shrink vs. cold-seal entry port",
@@ -1117,6 +1122,7 @@
       "dual-wavelength baseline"
     ],
     "T12.L14": [
+      "DFR (Daily Field Report)",
       "SOR file",
       "loss report",
       "test report components",
@@ -1187,6 +1193,14 @@
       "environmental compliance monitoring log",
       "2 CFR §200.334 records retention",
       "non-Federal entity obligation"
+    ],
+    "T13.L13": [
+      "defect categorization (HIGH/MED/LOW)",
+      "segment-level kick-back rule",
+      "material vs cosmetic deficiency",
+      "deficiency state machine",
+      "halt-work authority",
+      "punch-list disposition"
     ],
     "T14.L01": [
       "grounding",
@@ -1621,6 +1635,17 @@
       "drop fiber"
     ],
     "T19.L10": [],
+    "T19.L11": [
+      "demarcation point",
+      "demarc responsibility",
+      "ISP provisioning scope",
+      "OSP fiber termination",
+      "rack-side handoff",
+      "patch-panel boundary",
+      "provisioning request",
+      "signal acceptance testing",
+      "fiber alignment"
+    ],
     "T20.L01": [
       "RUS Borrower",
       "RUS Loan Program",
@@ -1636,6 +1661,19 @@
     "T20.L07": [],
     "T20.L08": [],
     "T20.L09": [],
+    "T20.L10": [
+      "RUS state office",
+      "RUS national office",
+      "RUS loan officer",
+      "GAGAS audit",
+      "Generally Accepted Government Auditing Standards",
+      "audit trigger threshold",
+      "compliance deviation",
+      "loan modification request",
+      "rural broadband funds",
+      "environmental assessment",
+      "NEPA review"
+    ],
     "T21.L01": [
       "CFOS-O (Certified Fiber Optic Specialist, Outside Plant)",
       "KSAs (Knowledge, Skills, Abilities)",
@@ -1793,7 +1831,8 @@
       "T01.L01"
     ],
     "demarcation point": [
-      "T01.L01"
+      "T01.L01",
+      "T19.L11"
     ],
     "headend": [
       "T01.L01",
@@ -1811,6 +1850,9 @@
     ],
     "bicsi": [
       "T01.L01"
+    ],
+    "pole": [
+      "T01.L02"
     ],
     "nesc": [
       "T01.L02",
@@ -2359,6 +2401,9 @@
       "T03.L01"
     ],
     "rollable ribbon": [
+      "T03.L01"
+    ],
+    "fiber count": [
       "T03.L01"
     ],
     "tia-598-d": [
@@ -3874,6 +3919,12 @@
     "per-splice budget allocation": [
       "T11.L03"
     ],
+    "splice loss (db)": [
+      "T11.L03"
+    ],
+    "splice loss acceptance threshold": [
+      "T11.L03"
+    ],
     "fusion splice": [
       "T11.L04"
     ],
@@ -3961,6 +4012,9 @@
     ],
     "crimp-and-cleave splice": [
       "T11.L08"
+    ],
+    "splice case types": [
+      "T11.L09"
     ],
     "butt-splice (inline/horizontal) closure": [
       "T11.L09"
@@ -4217,6 +4271,9 @@
     "dual-wavelength baseline": [
       "T12.L13"
     ],
+    "dfr (daily field report)": [
+      "T12.L14"
+    ],
     "sor file": [
       "T12.L14"
     ],
@@ -4357,6 +4414,24 @@
     ],
     "non-federal entity obligation": [
       "T13.L12"
+    ],
+    "defect categorization (high/med/low)": [
+      "T13.L13"
+    ],
+    "segment-level kick-back rule": [
+      "T13.L13"
+    ],
+    "material vs cosmetic deficiency": [
+      "T13.L13"
+    ],
+    "deficiency state machine": [
+      "T13.L13"
+    ],
+    "halt-work authority": [
+      "T13.L13"
+    ],
+    "punch-list disposition": [
+      "T13.L13"
     ],
     "grounding": [
       "T14.L01"
@@ -5262,6 +5337,30 @@
     "demarc": [
       "T19.L09"
     ],
+    "demarc responsibility": [
+      "T19.L11"
+    ],
+    "isp provisioning scope": [
+      "T19.L11"
+    ],
+    "osp fiber termination": [
+      "T19.L11"
+    ],
+    "rack-side handoff": [
+      "T19.L11"
+    ],
+    "patch-panel boundary": [
+      "T19.L11"
+    ],
+    "provisioning request": [
+      "T19.L11"
+    ],
+    "signal acceptance testing": [
+      "T19.L11"
+    ],
+    "fiber alignment": [
+      "T19.L11"
+    ],
     "rus borrower": [
       "T20.L01"
     ],
@@ -5276,6 +5375,39 @@
     ],
     "rus covenant": [
       "T20.L01"
+    ],
+    "rus state office": [
+      "T20.L10"
+    ],
+    "rus national office": [
+      "T20.L10"
+    ],
+    "rus loan officer": [
+      "T20.L10"
+    ],
+    "gagas audit": [
+      "T20.L10"
+    ],
+    "generally accepted government auditing standards": [
+      "T20.L10"
+    ],
+    "audit trigger threshold": [
+      "T20.L10"
+    ],
+    "compliance deviation": [
+      "T20.L10"
+    ],
+    "loan modification request": [
+      "T20.L10"
+    ],
+    "rural broadband funds": [
+      "T20.L10"
+    ],
+    "environmental assessment": [
+      "T20.L10"
+    ],
+    "nepa review": [
+      "T20.L10"
     ],
     "cfos-o (certified fiber optic specialist, outside plant)": [
       "T21.L01"
@@ -5583,6 +5715,13 @@
     ]
   },
   "duplicate_introductions": [
+    {
+      "term": "demarcation point",
+      "introduced_by": [
+        "T01.L01",
+        "T19.L11"
+      ]
+    },
     {
       "term": "headend",
       "introduced_by": [
@@ -6999,24 +7138,6 @@
       "verified": true
     },
     {
-      "from_lesson": "T02.L11",
-      "term": "safety margin",
-      "claimed_source": "T02.L06",
-      "verified": true
-    },
-    {
-      "from_lesson": "T02.L11",
-      "term": "G.657",
-      "claimed_source": "T02.L04",
-      "verified": true
-    },
-    {
-      "from_lesson": "T02.L11",
-      "term": "SMF",
-      "claimed_source": "T01.L08",
-      "verified": true
-    },
-    {
       "from_lesson": "T02.L12",
       "term": "total internal reflection",
       "claimed_source": "T02.L01",
@@ -7926,8 +8047,7 @@
       "from_lesson": "T04.L01",
       "term": "pole",
       "claimed_source": "T01.L02",
-      "verified": false,
-      "reason": "'pole' is not introduced by any lesson in the curriculum"
+      "verified": true
     },
     {
       "from_lesson": "T04.L01",
@@ -8107,8 +8227,7 @@
       "from_lesson": "T04.L04",
       "term": "pole",
       "claimed_source": "T01.L02",
-      "verified": false,
-      "reason": "'pole' is not introduced by any lesson in the curriculum"
+      "verified": true
     },
     {
       "from_lesson": "T04.L04",
@@ -8204,8 +8323,7 @@
       "from_lesson": "T04.L05",
       "term": "pole",
       "claimed_source": "T01.L02",
-      "verified": false,
-      "reason": "'pole' is not introduced by any lesson in the curriculum"
+      "verified": true
     },
     {
       "from_lesson": "T04.L05",
@@ -8331,8 +8449,7 @@
       "from_lesson": "T04.L07",
       "term": "pole",
       "claimed_source": "T01.L02",
-      "verified": false,
-      "reason": "'pole' is not introduced by any lesson in the curriculum"
+      "verified": true
     },
     {
       "from_lesson": "T04.L07",
@@ -8530,8 +8647,7 @@
       "from_lesson": "T04.L09",
       "term": "pole",
       "claimed_source": "T01.L02",
-      "verified": false,
-      "reason": "'pole' is not introduced by any lesson in the curriculum"
+      "verified": true
     },
     {
       "from_lesson": "T04.L09",
@@ -8927,8 +9043,7 @@
       "from_lesson": "T05.L01",
       "term": "pole",
       "claimed_source": "T01.L02",
-      "verified": false,
-      "reason": "'pole' is not introduced by any lesson in the curriculum"
+      "verified": true
     },
     {
       "from_lesson": "T05.L01",
@@ -8988,8 +9103,7 @@
       "from_lesson": "T05.L02",
       "term": "pole",
       "claimed_source": "T01.L02",
-      "verified": false,
-      "reason": "'pole' is not introduced by any lesson in the curriculum"
+      "verified": true
     },
     {
       "from_lesson": "T05.L02",
@@ -9049,8 +9163,7 @@
       "from_lesson": "T05.L03",
       "term": "pole",
       "claimed_source": "T01.L02",
-      "verified": false,
-      "reason": "'pole' is not introduced by any lesson in the curriculum"
+      "verified": true
     },
     {
       "from_lesson": "T05.L03",
@@ -9098,8 +9211,7 @@
       "from_lesson": "T05.L04",
       "term": "pole",
       "claimed_source": "T01.L02",
-      "verified": false,
-      "reason": "'pole' is not introduced by any lesson in the curriculum"
+      "verified": true
     },
     {
       "from_lesson": "T05.L04",
@@ -9135,8 +9247,7 @@
       "from_lesson": "T05.L05",
       "term": "pole",
       "claimed_source": "T01.L02",
-      "verified": false,
-      "reason": "'pole' is not introduced by any lesson in the curriculum"
+      "verified": true
     },
     {
       "from_lesson": "T05.L05",
@@ -12938,8 +13049,7 @@
       "from_lesson": "T11.L04",
       "term": "splice loss acceptance threshold",
       "claimed_source": "T11.L03",
-      "verified": true,
-      "reason": "splice loss acceptance threshold is introduced by T11.L03"
+      "verified": true
     },
     {
       "from_lesson": "T11.L05",
@@ -13048,8 +13158,7 @@
       "from_lesson": "T11.L08",
       "term": "splice loss acceptance threshold",
       "claimed_source": "T11.L03",
-      "verified": true,
-      "reason": "splice loss acceptance threshold is introduced by T11.L03"
+      "verified": true
     },
     {
       "from_lesson": "T11.L08",
@@ -14544,6 +14653,51 @@
       "reason": "'Section 106 (NHPA)' is not introduced by any lesson in the curriculum"
     },
     {
+      "from_lesson": "T13.L13",
+      "term": "material deficiency",
+      "claimed_source": "T13.L01",
+      "verified": true
+    },
+    {
+      "from_lesson": "T13.L13",
+      "term": "inspector-arrival workflow",
+      "claimed_source": "T13.L01",
+      "verified": true
+    },
+    {
+      "from_lesson": "T13.L13",
+      "term": "RUS Form 565",
+      "claimed_source": "T13.L11",
+      "verified": false,
+      "reason": "'RUS Form 565' is not introduced by any lesson in the curriculum"
+    },
+    {
+      "from_lesson": "T13.L13",
+      "term": "inspection segment",
+      "claimed_source": "T13.L01",
+      "verified": true
+    },
+    {
+      "from_lesson": "T13.L13",
+      "term": "punch list",
+      "claimed_source": "T10.L11",
+      "verified": true
+    },
+    {
+      "from_lesson": "T13.L13",
+      "term": "NESC §01C",
+      "claimed_source": "T05.L01",
+      "verified": false,
+      "reason": "'NESC §01C' is not introduced by any lesson in the curriculum"
+    },
+    {
+      "from_lesson": "T13.L13",
+      "term": "deficiency",
+      "claimed_source": "T13.L01",
+      "verified": false,
+      "reason": "'deficiency' is not introduced by any lesson in the curriculum"
+    },
+    {
       "from_lesson": "T14.L01",
       "term": "OSP",
       "claimed_source": "T01.L01",
@@ -14595,8 +14749,7 @@
       "from_lesson": "T14.L01",
       "term": "pole",
       "claimed_source": "T01.L02",
-      "verified": false,
-      "reason": "'pole' is not introduced by any lesson in the curriculum"
+      "verified": true
     },
     {
       "from_lesson": "T14.L02",
@@ -16066,8 +16219,8 @@
       "from_lesson": "T16.L01",
       "term": "DFR (Daily Field Report)",
       "claimed_source": "T10.L10",
-      "verified": true,
-      "reason": "DFR is introduced by T10.L10"
+      "verified": false,
+      "reason": "'DFR (Daily Field Report)' is introduced by T12.L14, not T10.L10"
     },
     {
       "from_lesson": "T16.L01",
@@ -16085,8 +16238,7 @@
       "from_lesson": "T16.L02",
       "term": "fiber count",
       "claimed_source": "T03.L01",
-      "verified": true,
-      "reason": "fiber count is introduced by T03.L01"
+      "verified": true
     },
     {
       "from_lesson": "T16.L02",
@@ -16110,15 +16262,13 @@
       "from_lesson": "T16.L02",
       "term": "splice loss (dB)",
       "claimed_source": "T11.L03",
-      "verified": true,
-      "reason": "splice loss (dB) is introduced by T11.L03"
+      "verified": true
     },
     {
       "from_lesson": "T16.L02",
       "term": "splice case types",
       "claimed_source": "T11.L09",
-      "verified": true,
-      "reason": "splice case types is introduced by T11.L09"
+      "verified": true
     },
     {
       "from_lesson": "T16.L02",
@@ -16173,8 +16323,7 @@
       "from_lesson": "T16.L03",
       "term": "splice case types",
       "claimed_source": "T11.L09",
-      "verified": true,
-      "reason": "splice case types is introduced by T11.L09"
+      "verified": true
     },
     {
       "from_lesson": "T16.L04",
@@ -16440,7 +16589,7 @@
       "term": "pole",
       "claimed_source": "T01.L01",
       "verified": false,
-      "reason": "'pole' is not introduced by any lesson in the curriculum"
+      "reason": "'pole' is introduced by T01.L02, not T01.L01"
     },
     {
       "from_lesson": "T18.L08",
@@ -17469,6 +17618,54 @@
       "verified": true
     },
     {
+      "from_lesson": "T19.L11",
+      "term": "OSP",
+      "claimed_source": "T01.L01",
+      "verified": true
+    },
+    {
+      "from_lesson": "T19.L11",
+      "term": "OLT",
+      "claimed_source": "T19.L02",
+      "verified": true
+    },
+    {
+      "from_lesson": "T19.L11",
+      "term": "patch panel",
+      "claimed_source": "T19.L07",
+      "verified": true
+    },
+    {
+      "from_lesson": "T19.L11",
+      "term": "LIU",
+      "claimed_source": "T19.L07",
+      "verified": true
+    },
+    {
+      "from_lesson": "T19.L11",
+      "term": "FOSC",
+      "claimed_source": "T19.L08",
+      "verified": true
+    },
+    {
+      "from_lesson": "T19.L11",
+      "term": "FDH",
+      "claimed_source": "T19.L09",
+      "verified": true
+    },
+    {
+      "from_lesson": "T19.L11",
+      "term": "cross-connect",
+      "claimed_source": "T19.L07",
+      "verified": true
+    },
+    {
+      "from_lesson": "T19.L11",
+      "term": "trunk cable",
+      "claimed_source": "T19.L07",
+      "verified": true
+    },
+    {
       "from_lesson": "T20.L01",
       "term": "OSP",
       "claimed_source": "T01.L01",
@@ -17551,6 +17748,34 @@
       "claimed_source": "T10.L01",
       "verified": false,
       "reason": "'contractor' is not introduced by any lesson in the curriculum"
+    },
+    {
+      "from_lesson": "T20.L10",
+      "term": "RUS",
+      "claimed_source": "T20.L01",
+      "verified": false,
+      "reason": "'RUS' is introduced by T01.L01, not T20.L01"
+    },
+    {
+      "from_lesson": "T20.L10",
+      "term": "borrower",
+      "claimed_source": "T20.L01",
+      "verified": false,
+      "reason": "'borrower' is not introduced by any lesson in the curriculum"
+    },
+    {
+      "from_lesson": "T20.L10",
+      "term": "Form 740",
+      "claimed_source": "T20.L09",
+      "verified": false,
+      "reason": "'Form 740' is not introduced by any lesson in the curriculum"
+    },
+    {
+      "from_lesson": "T20.L10",
+      "term": "Davis-Bacon",
+      "claimed_source": "T20.L09",
+      "verified": false,
+      "reason": "'Davis-Bacon' is not introduced by any lesson in the curriculum"
     },
     {
       "from_lesson": "T21.L01",
@@ -17638,8 +17863,7 @@
       "from_lesson": "T21.L03",
       "term": "pole",
       "claimed_source": "T01.L02",
-      "verified": false,
-      "reason": "'pole' is not introduced by any lesson in the curriculum"
+      "verified": true
     },
     {
       "from_lesson": "T21.L03",
@@ -17693,7 +17917,7 @@
       "term": "fiber alignment",
       "claimed_source": "T11.L01",
       "verified": false,
-      "reason": "'fiber alignment' is not introduced by any lesson in the curriculum"
+      "reason": "'fiber alignment' is introduced by T19.L11, not T11.L01"
     },
     {
       "from_lesson": "T21.L05",
@@ -17705,9 +17929,9 @@
     {
       "from_lesson": "T21.L05",
       "term": "splice case",
-      "claimed_source": "T01.L04",
-      "verified": true,
-      "reason": "splice case is introduced by T01.L04 (not T01.L03)"
+      "claimed_source": "T01.L03",
+      "verified": false,
+      "reason": "'splice case' is introduced by T01.L04, not T01.L03"
     },
     {
       "from_lesson": "T21.L06",
@@ -17774,8 +17998,7 @@
       "from_lesson": "T21.L08",
       "term": "pole",
       "claimed_source": "T01.L02",
-      "verified": false,
-      "reason": "'pole' is not introduced by any lesson in the curriculum"
+      "verified": true
     },
     {
       "from_lesson": "T21.L08",
@@ -17844,8 +18067,8 @@
       "reason": "'CFOT' is introduced by T01.L08, not T22.L01"
     }
   ],
-  "verified_pointers_count": 1746,
-  "broken_pointers_count": 195,
+  "verified_pointers_count": 1774,
+  "broken_pointers_count": 183,
   "missing_source_lesson_pointers": [],
   "lessons_with_no_vocabulary_assumed": [
     "T01.L01",
