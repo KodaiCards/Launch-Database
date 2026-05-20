@@ -223,6 +223,10 @@ export default function T13L09ContractorRelations() {
           The core principle: the inspector documents and recommends. The engineer approves or
           rejects deviations. The contractor executes corrections. No one skips their role.
         </p>
+
+        <p className="text-slate-400 text-sm mb-3 p-3 border-l-4 border-slate-500 mt-4">
+          <strong>Callback:</strong> From <strong>T13.L01 Inspector Role, Authority, and Documentation Framework</strong>, you learned the defined terms that govern everything in this lesson — material deficiency (any non-conforming physical condition), rework (correction at contractor's expense), retainage (withheld payment released at substantial completion), and inspection segment (the unit of work that triggers kick-back when ≥3 deficiencies are found). From <strong>T13.L08 Joint-Use and Clearance Compliance</strong>, you encountered the three-step material verification procedure — this lesson explains what happens when that procedure results in a finding the contractor disputes.
+        </p>
       </section>
 
       {/* ── Flashcards ─────────────────────────────────────────────────── */}

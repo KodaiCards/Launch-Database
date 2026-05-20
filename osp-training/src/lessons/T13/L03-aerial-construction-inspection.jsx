@@ -237,6 +237,10 @@ export default function T13L03AerialInspection() {
           drip loop, lashing pitch), and how to do those checks safely when there are energized
           joint-use conductors nearby.
         </p>
+
+        <p className="text-slate-400 text-sm mb-3 p-3 border-l-4 border-slate-500 mt-4">
+          <strong>Callback:</strong> From <strong>T13.L02 Pre-Construction Acceptance Baseline</strong>, you established quantified pass/fail thresholds — lashing pitch range, sag tolerance, drip-loop minimum — in the acceptance criteria document signed before Day 1. This lesson is where you measure against those thresholds in the field. From <strong>T18.L04 Fall Protection</strong>, you learned the fall-arrest requirements (full body harness, anchor-point load) that govern climbing; the pre-climb go/no-go assessment in this lesson is the checkpoint that confirms those protections are sufficient before a lineman ascends.
+        </p>
       </section>
 
       {/* ── Flashcards ─────────────────────────────────────────────────── */}

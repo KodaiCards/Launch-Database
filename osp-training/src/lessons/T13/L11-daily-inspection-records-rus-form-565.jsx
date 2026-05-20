@@ -224,6 +224,10 @@ export default function T13L11DailyInspectionRecords() {
           cooperative's cash flow until the documentation gap is resolved. Understanding WHY
           Form 565 matters makes it much easier to fill it out every day without exception.
         </p>
+
+        <p className="text-slate-400 text-sm mb-3 p-3 border-l-4 border-slate-500 mt-4">
+          <strong>Callback:</strong> From <strong>T13.L01 Inspector Role, Authority, and Documentation Framework</strong>, you learned the six-step inspector-arrival workflow and the QA/QC distinction. Every step of that arrival workflow — weather conditions, crew check-in, environmental assessment, open punch items — feeds directly into a Form 565 field. This lesson shows you what the form looks like and why every item you record on it has a specific downstream consequence in the federal loan-advance chain.
+        </p>
       </section>
 
       {/* ── Flashcards ─────────────────────────────────────────────────── */}
