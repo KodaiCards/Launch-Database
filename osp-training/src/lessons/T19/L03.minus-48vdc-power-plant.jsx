@@ -201,6 +201,11 @@ export default function T19L03_Minus48VDCPowerPlant() {
               back: 'Valve-Regulated Lead-Acid — a sealed lead-acid battery that is maintenance-free (no water topping) and spill-proof. AGM subtype is most common. Can be installed in equipment bays without a dedicated battery room. Rated life 5–10 years depending on temperature.',
             },
             {
+              id: 'T19-L03-fc-distribution-bus',
+              front: 'What is the distribution bus in a CO power plant?',
+              back: 'The copper busbar or distribution panel inside the CO power plant that distributes DC power from the rectifiers and batteries to the equipment. The distribution bus has fuse or breaker positions for each equipment load. OSP engineers see the distribution bus when reviewing headend power drawings — each OLT shelf draws current from a fused position on the bus.',
+            },
+            {
               id: 'T19-L03-fc-power-plant',
               front: 'What does "power plant" mean in a telecom CO context?',
               back: 'The complete DC power infrastructure: rectifiers, battery strings, distribution bus, fusing, and monitoring. Always means DC infrastructure in telecom context — NOT a generator (which is AC standby that feeds the rectifiers).',

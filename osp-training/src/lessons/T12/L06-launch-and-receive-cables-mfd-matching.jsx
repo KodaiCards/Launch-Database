@@ -274,15 +274,7 @@ export default function T12L06_LaunchReceiveMFD() {
       <section className="mt-8 p-5 border-l-4 border-blue-500 bg-slate-800/40 rounded">
         <h3 className="text-blue-300 text-lg font-semibold mb-3">Tying It Together</h3>
         <p className="text-slate-200 mb-3">
-          This lesson builds on:
-        </p>
-        <ul className="space-y-2 text-slate-300 text-sm list-disc ml-5">
-    <li><strong>T02.L01</strong> — Part of the broader OSP workflow.</li>
-    <li><strong>T12.L04</strong> — Part of the broader OSP workflow.</li>
-    <li><strong>T12.L04</strong> — Part of the broader OSP workflow.</li>
-        </ul>
-        <p className="text-slate-200 mt-3 text-sm italic">
-          Each step in the OSP process feeds into the next — understanding these connections strengthens your grasp of the whole system.
+          This lesson directly applies fiber properties from <strong>T02.L01 Fiber Types and Properties</strong>: the MFD specifications (G.652.D is 8.2–8.6 µm @ 1310 nm) exist because different fiber types have inherently different mode field distributions. Your launch cable MFD must match the plant fiber MFD because a mismatch means launching light into the wrong spatial mode, introducing measurement error that will propagate through your entire test report. The dead-zone limitations explained in <strong>T12.L04 Dead Zones — EDZ and ADZ</strong> extend even to your launch cable end — choosing a cable with the right MFD and low reflectance connector shrinks the source-end dead zone and improves visibility of near-end events. Together, these lessons explain why launch cable selection is not cosmetic; it directly constrains what events you can reliably measure.
         </p>
       </section>
     </LessonLayout>

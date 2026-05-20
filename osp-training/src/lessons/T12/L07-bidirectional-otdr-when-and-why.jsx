@@ -301,15 +301,7 @@ export default function T12L07_BidirectionalOTDR() {
       <section className="mt-8 p-5 border-l-4 border-blue-500 bg-slate-800/40 rounded">
         <h3 className="text-blue-300 text-lg font-semibold mb-3">Tying It Together</h3>
         <p className="text-slate-200 mb-3">
-          This lesson builds on:
-        </p>
-        <ul className="space-y-2 text-slate-300 text-sm list-disc ml-5">
-    <li><strong>T12.L06</strong> — Part of the broader OSP workflow.</li>
-    <li><strong>T12.L06</strong> — Part of the broader OSP workflow.</li>
-    <li><strong>T01.L08</strong> — Part of the broader OSP workflow.</li>
-        </ul>
-        <p className="text-slate-200 mt-3 text-sm italic">
-          Each step in the OSP process feeds into the next — understanding these connections strengthens your grasp of the whole system.
+          MFD mismatches between your launch cable and plant fiber — the problem explained in <strong>T12.L06 Launch and Receive Cables — MFD Matching</strong> — are precisely why bidirectional testing is mandatory in professional OTDR measurement. A directional bias from MFD mismatch appears as negative loss (a gainer) in one direction and an inflated loss in the other. Averaging these two measurements cancels the bias algebraically and recovers the true splice loss. Your choice of launch cables (covered in <strong>T01.L08 Launch and Receive Cable Selection</strong>) affects your ability to execute this averaging: mismatched cables create larger directional errors, making bidirectional averaging the structural safeguard that protects against bad cable choices. Together, these three lessons teach you that bidirectional OTDR is not optional on singlemode plant — it is the engineered solution to a systematic measurement bias that unidirectional testing would hide.
         </p>
       </section>
     </LessonLayout>

@@ -303,15 +303,7 @@ export default function T12L05_GhostReflections() {
       <section className="mt-8 p-5 border-l-4 border-blue-500 bg-slate-800/40 rounded">
         <h3 className="text-blue-300 text-lg font-semibold mb-3">Tying It Together</h3>
         <p className="text-slate-200 mb-3">
-          This lesson builds on:
-        </p>
-        <ul className="space-y-2 text-slate-300 text-sm list-disc ml-5">
-    <li><strong>T12.L04</strong> — Part of the broader OSP workflow.</li>
-    <li><strong>T12.L04</strong> — Part of the broader OSP workflow.</li>
-    <li><strong>T12.L04</strong> — Part of the broader OSP workflow.</li>
-        </ul>
-        <p className="text-slate-200 mt-3 text-sm italic">
-          Each step in the OSP process feeds into the next — understanding these connections strengthens your grasp of the whole system.
+          Both ghost reflections and source masking are consequences of the dead zones explained in <strong>T12.L04 Dead Zones — EDZ and ADZ</strong>. A strong reflector's ADZ extends for many meters in both directions — a ghost reflects within that zone and the OTDR displays it as a false event. The workaround (test from both ends) succeeds because testing backward places the false event in a different ADZ region, allowing you to cross-reference real vs. phantom peaks. Understanding that ghosts are artifacts living within dead-zone regions (not measurement errors) is the conceptual bridge between recognizing the OTDR's limitations and knowing when to trust its output. This is why OTDR is Tier 2 (diagnostic only) and why simultaneous OLTS certification exists in the first place.
         </p>
       </section>
     </LessonLayout>

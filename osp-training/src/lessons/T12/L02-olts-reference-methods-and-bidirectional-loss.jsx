@@ -339,15 +339,7 @@ export default function T12L02_OLTSReferenceMethods() {
       <section className="mt-8 p-5 border-l-4 border-blue-500 bg-slate-800/40 rounded">
         <h3 className="text-blue-300 text-lg font-semibold mb-3">Tying It Together</h3>
         <p className="text-slate-200 mb-3">
-          This lesson builds on:
-        </p>
-        <ul className="space-y-2 text-slate-300 text-sm list-disc ml-5">
-    <li><strong>T01.L08</strong> — Part of the broader OSP workflow.</li>
-    <li><strong>T11.L12</strong> — Part of the broader OSP workflow.</li>
-    <li><strong>T02.L02</strong> — Part of the broader OSP workflow.</li>
-        </ul>
-        <p className="text-slate-200 mt-3 text-sm italic">
-          Each step in the OSP process feeds into the next — understanding these connections strengthens your grasp of the whole system.
+          The three-cord method introduced here connects directly to the cable preparation discipline taught in <strong>T01.L08 Launch and Receive Cable Selection</strong> — choosing the right test cables (with known loss values) is prerequisite to the method working. Your understanding of <strong>T11.L12 Insertion Loss and Return Loss</strong> explains why each measurement direction potentially yields a different result and why bidirectional averaging is essential to canceling out directional asymmetries in the cable plant. And from <strong>T02.L02 Attenuation — Three Numbers (dB/km)</strong>, you recognize that the dB values in your reference method loss tables are fundamentally measurements of optical power ratio at different wavelengths — understanding that ratio principle is what makes the math behind TIA-526 reference loss correction intelligible, not just something you memorize off a chart.
         </p>
       </section>
     </LessonLayout>

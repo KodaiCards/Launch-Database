@@ -170,6 +170,16 @@ export default function T11L03_SpliceLossFourNumbers() {
                 front: 'What is per-splice budget allocation and how is it calculated?',
                 back: 'The portion of total link budget assigned to splice losses: (total splice count) × (estimated average splice loss). Example: 500 splices × 0.10 dB = 50 dB total splice loss allocation. This is planned before the build begins as part of the optical link budget.',
               },
+              {
+                id: 'T11-L03-fc-splice-loss-db',
+                front: 'What is splice loss (dB) and what are typical values for well-executed fusion splices?',
+                back: 'The optical insertion loss introduced by a single splice joint, measured in decibels (dB). Typical values for well-executed fusion splices on G.652.D fiber: 0.05–0.15 dB per splice. Poor technique or contamination can produce 0.25–0.50+ dB. All splices in a build contribute to the total link budget loss.',
+              },
+              {
+                id: 'T11-L03-fc-acceptance-threshold',
+                front: 'What is the splice loss acceptance threshold and what happens when a splice exceeds it?',
+                back: 'The maximum acceptable loss for a single splice, defined by contract or standard. RUS Bulletin 1753F-401 specifies ≤0.30 dB as the contract maximum for RUS-financed builds. Any single splice exceeding this threshold must be re-spliced before the case is closed. The threshold is a pass/fail boundary, not a quality target.',
+              },
             ]}
           />
         </div>

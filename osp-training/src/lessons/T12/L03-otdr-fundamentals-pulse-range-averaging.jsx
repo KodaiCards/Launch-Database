@@ -322,15 +322,7 @@ export default function T12L03_OTDRFundamentals() {
       <section className="mt-8 p-5 border-l-4 border-blue-500 bg-slate-800/40 rounded">
         <h3 className="text-blue-300 text-lg font-semibold mb-3">Tying It Together</h3>
         <p className="text-slate-200 mb-3">
-          This lesson builds on:
-        </p>
-        <ul className="space-y-2 text-slate-300 text-sm list-disc ml-5">
-    <li><strong>T01.L08</strong> — Part of the broader OSP workflow.</li>
-    <li><strong>T02.L02</strong> — Part of the broader OSP workflow.</li>
-    <li><strong>T02.L01</strong> — Part of the broader OSP workflow.</li>
-        </ul>
-        <p className="text-slate-200 mt-3 text-sm italic">
-          Each step in the OSP process feeds into the next — understanding these connections strengthens your grasp of the whole system.
+          OTDR fundamentals depend on understanding the physical measurement chain. From <strong>T01.L08 Launch and Receive Cable Selection</strong>, you know that the launch cable's modal distribution affects how light enters the fiber being tested — this directly impacts what backscatter signature the OTDR receives on the front end. From <strong>T02.L02 Attenuation — Three Numbers</strong>, you recognize that Rayleigh backscatter itself is an attenuation phenomenon — it's the wavelength-dependent loss mechanism this lesson exploits to measure distance. And from <strong>T02.L01 Fiber Types and Properties</strong>, you understand that different fiber types scatter light at different rates per unit distance — this is why your OTDR must be calibrated for the specific fiber type (G.652.D vs. G.657.A2) to produce accurate loss estimates. Without those prerequisites, OTDR would just be knob-turning; with them, it becomes a systematic measurement tool.
         </p>
       </section>
     </LessonLayout>

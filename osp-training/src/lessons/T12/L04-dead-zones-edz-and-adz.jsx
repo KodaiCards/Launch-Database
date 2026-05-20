@@ -377,15 +377,7 @@ export default function T12L04_DeadZones() {
       <section className="mt-8 p-5 border-l-4 border-blue-500 bg-slate-800/40 rounded">
         <h3 className="text-blue-300 text-lg font-semibold mb-3">Tying It Together</h3>
         <p className="text-slate-200 mb-3">
-          This lesson builds on:
-        </p>
-        <ul className="space-y-2 text-slate-300 text-sm list-disc ml-5">
-    <li><strong>T01.L08</strong> — Part of the broader OSP workflow.</li>
-    <li><strong>T12.L03</strong> — Part of the broader OSP workflow.</li>
-    <li><strong>T12.L03</strong> — Part of the broader OSP workflow.</li>
-        </ul>
-        <p className="text-slate-200 mt-3 text-sm italic">
-          Each step in the OSP process feeds into the next — understanding these connections strengthens your grasp of the whole system.
+          Dead zones exist precisely because of the pulse-propagation physics explained in <strong>T12.L03 OTDR Fundamentals</strong> — the OTDR cannot measure what happens at distances shorter than its pulse width allows. This lesson explains what you CANNOT see with the OTDR and why. Your launch cable choice (from <strong>T01.L08 Launch and Receive Cable Selection</strong>) directly affects the EDZ length because the OTDR's dead zone starts where the light source's reflective signature ends. Understanding both the instrument limitations (this lesson) and the upstream physical constraints (T12.L03 + T01.L08) prevents you from making OTDR conclusions that ignore hidden defects in the EDZ — the unseen zone where splices and macrobends can hide.
         </p>
       </section>
     </LessonLayout>
