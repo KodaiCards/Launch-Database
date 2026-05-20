@@ -275,15 +275,7 @@ export default function T11L08_MechanicalSplicing() {
       <section className="mt-8 p-5 border-l-4 border-blue-500 bg-slate-800/40 rounded">
         <h3 className="text-blue-300 text-lg font-semibold mb-3">Tying It Together</h3>
         <p className="text-slate-200 mb-3">
-          This lesson builds on:
-        </p>
-        <ul className="space-y-2 text-slate-300 text-sm list-disc ml-5">
-    <li><strong>T11.L04</strong> — Part of the broader OSP workflow.</li>
-    <li><strong>T11.L03</strong> — Part of the broader OSP workflow.</li>
-    <li><strong>T11.L06</strong> — Part of the broader OSP workflow.</li>
-        </ul>
-        <p className="text-slate-200 mt-3 text-sm italic">
-          Each step in the OSP process feeds into the next — understanding these connections strengthens your grasp of the whole system.
+          Mechanical splicing sits at the intersection of immediate economic pressure and long-term network reliability risk — understanding both dimensions requires connecting this lesson to material science (T02), field hygiene (L14), and testing interpretation (T12). T02.L04 (attenuation mechanisms) introduced Rayleigh scattering and introduced the concept that any discontinuity in the refractive index profile increases loss; a mechanical splice relies on index-matching gel with a target refractive index of approximately 1.47 to bridge the two fiber end-faces, suppressing the Fresnel reflection that would otherwise occur at an air gap. The gel degradation timeline (5–10 years for most formulations) means that a mechanical splice installed in an emergency under T15 (restoration) conditions is an accepted temporary solution — but a mechanical splice left in a permanent splice closure is a scheduled maintenance item; T13 inspection procedures include mechanical splice identification and gel condition assessment as part of closure audit. L04's 8-step fusion workflow taught the cleave-last-before-loading discipline — the same discipline applies here but the tolerance window is wider (≤0.5 dB typical vs. ≤0.1 dB for fusion), which is why mechanical splicing is acceptable for emergency restoration but not for building a link budget that was designed around fusion-splice loss values. In T12 (testing), a technician who sees a 0.4 dB OTDR event at a known splice point in a previously-fusion-spliced plant should suspect either a bad fusion or an emergency mechanical splice installed during an unreported outage — mechanical splices have a characteristic OTDR signature of higher loss combined with a small reflectance peak from residual gel-glass interface, distinguishable from the near-zero reflectance of a clean fusion splice.
         </p>
       </section>
     </LessonLayout>

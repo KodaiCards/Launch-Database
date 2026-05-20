@@ -423,15 +423,7 @@ export default function T11L04_FusionSplicingStepByStep() {
       <section className="mt-8 p-5 border-l-4 border-blue-500 bg-slate-800/40 rounded">
         <h3 className="text-blue-300 text-lg font-semibold mb-3">Tying It Together</h3>
         <p className="text-slate-200 mb-3">
-          This lesson builds on:
-        </p>
-        <ul className="space-y-2 text-slate-300 text-sm list-disc ml-5">
-    <li><strong>T02.L02</strong> — Part of the broader OSP workflow.</li>
-    <li><strong>T02.L01</strong> — Part of the broader OSP workflow.</li>
-    <li><strong>T02.L04</strong> — Part of the broader OSP workflow.</li>
-        </ul>
-        <p className="text-slate-200 mt-3 text-sm italic">
-          Each step in the OSP process feeds into the next — understanding these connections strengthens your grasp of the whole system.
+          The 8-step fusion splice workflow synthesizes physics, chemistry, and mechanical precision concepts introduced across multiple prior topics. T02.L02 (single-mode fiber geometry) established that the light-carrying core is 8–9 µm in diameter — a human hair is roughly 70 µm, making the cleave and alignment tolerances here not figurative precision but mandatory precision; a 1 µm lateral offset produces measurable insertion loss. T02.L04 (attenuation mechanisms) explains why the strip-and-clean steps are not optional: organic contamination on the fiber end-face creates a lossy interface that no arc temperature can correct after the fact, which is why the dry-first rule for gel removal (covered in L14) exists as a prerequisite to this workflow. The proof-test at 1–2 N — step 7 of the 8-step sequence — is the mechanical validation rooted in T02.L06 (fiber tensile properties and dynamic fatigue): a splice that fails the proof-test would have failed in the field under thermal cycling, aerial vibration, or burial settling, and the splicer's loss estimate display is not a substitute for the proof-test result nor for the OTDR verification in T12. In T13 (inspection and QA), the inspector cross-checks the splicer's log (alignment method, arc count, estimated loss, protector serial) against the OTDR event file for every splice point — that cross-check is only meaningful because this lesson established what each field means; a splicer log entry showing "core-align, 0.03 dB" but an OTDR event showing 0.18 dB at that location is an inspection flag requiring root-cause investigation, not a shrug.
         </p>
       </section>
     </LessonLayout>

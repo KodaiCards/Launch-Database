@@ -460,15 +460,7 @@ export default function L13SplicerMaintenanceSchedule() {
       <section className="mt-8 p-5 border-l-4 border-blue-500 bg-slate-800/40 rounded">
         <h3 className="text-blue-300 text-lg font-semibold mb-3">Tying It Together</h3>
         <p className="text-slate-200 mb-3">
-          This lesson builds on:
-        </p>
-        <ul className="space-y-2 text-slate-300 text-sm list-disc ml-5">
-    <li><strong>T11.L04</strong> — Part of the broader OSP workflow.</li>
-    <li><strong>T11.L06</strong> — Part of the broader OSP workflow.</li>
-    <li><strong>T11.L06</strong> — Part of the broader OSP workflow.</li>
-        </ul>
-        <p className="text-slate-200 mt-3 text-sm italic">
-          Each step in the OSP process feeds into the next — understanding these connections strengthens your grasp of the whole system.
+          Splicer maintenance is the operational discipline that determines whether the physics principles established in T02, the workflow discipline of L04, and the arc quality standards of L06 actually translate to consistent low-loss splices in the field. L04's 8-step workflow assumes the splicer is producing a consistent arc at the calibrated power and duration — but that assumption is only valid when the electrodes are within their service life and the arc calibration has been performed at the start of the current work session. L06 taught that arc calibration should fire at start-of-day, on fiber type change, and after electrode replacement; this lesson provides the quantitative maintenance framework that determines when those electrode replacements occur: at the arc counter threshold (1,500–3,000 arcs, model-specific per manufacturer documentation) rather than at failure, because a degraded electrode produces subtle arc instability that increases average splice loss by 0.05–0.10 dB per splice without triggering a hard fault. The worked example here — 2,500 arc threshold ÷ 150 arcs per day = 16 working days — is the kind of pre-project calculation that belongs in T04 (site survey planning): a crew deploying to splice a 576-fiber cable (576 individual fiber splices) on a machine with 400 arcs remaining on the counter should bring spare electrodes or expect a mid-job interruption. In T12 (testing), when the OTDR reveals a systematic pattern of elevated splice loss across an entire run — not random outliers, but consistently 0.08–0.12 dB rather than the expected 0.02–0.04 dB — the most common root cause is a degraded electrode that was not replaced at its counter limit; correlating the OTDR data to the splicer maintenance log is the diagnostic path that confirms or rules out equipment condition as the cause.
         </p>
       </section>
     </LessonLayout>

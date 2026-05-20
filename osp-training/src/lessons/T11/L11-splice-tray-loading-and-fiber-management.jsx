@@ -268,15 +268,7 @@ export default function T11L11_SpliceTrayLoadingAndFiberManagement() {
       <section className="mt-8 p-5 border-l-4 border-blue-500 bg-slate-800/40 rounded">
         <h3 className="text-blue-300 text-lg font-semibold mb-3">Tying It Together</h3>
         <p className="text-slate-200 mb-3">
-          This lesson builds on:
-        </p>
-        <ul className="space-y-2 text-slate-300 text-sm list-disc ml-5">
-    <li><strong>T01.L04</strong> — Part of the broader OSP workflow.</li>
-    <li><strong>T01.L03</strong> — Part of the broader OSP workflow.</li>
-    <li><strong>T01.L04</strong> — Part of the broader OSP workflow.</li>
-        </ul>
-        <p className="text-slate-200 mt-3 text-sm italic">
-          Each step in the OSP process feeds into the next — understanding these connections strengthens your grasp of the whole system.
+          Splice tray loading and fiber management translate the abstract TIA-598 color sequence (L01, L02) and bend-radius physics (T02.L06) into the physical reality of a completed closure that a future technician will need to navigate safely. The express loop bend-radius hierarchy — ≥30 mm for G.652.D, ≥15 mm for G.657.A1, ≥7.5 mm for G.657.A2 — maps directly back to T02.L06's macrobend attenuation threshold data and T03.L01's fiber selection decisions; if the closure was designed for G.652.D fiber but the network was later upgraded to G.657.A2 using the smaller minimum bend radius, the 1.0–1.5 m slack storage coil that was previously compliant may now be routed too tightly at the coil guide edges. T01.L04 (network architecture) introduced the concept of express fiber — fibers that pass through a closure without being spliced — and this lesson operationalizes that concept into the express loop channel as a physically separate routing path that keeps express glass isolated from the splice work area, preventing an accidental nick during tray loading from severing a through fiber that serves a different service area. In T12 (testing), the OTDR technician correlating a splice event to a specific tray position depends entirely on the labeling conventions established here — tray face labels, buffer tube stubs, and case exterior markings are the physical bridge between the OTDR trace event at a given distance and the fiber color record in the splice documentation. For T15 (restoration), when a crew re-enters a closure to re-splice one damaged fiber, proper fiber management — routed slack in the coil, labeled trays, clear express vs. splice separation — is what allows them to work on one fiber without disturbing 287 others; a closure with poor fiber management forces the restoration crew to unload and re-route every fiber just to access the damaged one, turning a 2-hour restoration into an 8-hour job.
         </p>
       </section>
     </LessonLayout>

@@ -311,15 +311,7 @@ export default function T11L06_CleaveAngleAndArcQuality() {
       <section className="mt-8 p-5 border-l-4 border-blue-500 bg-slate-800/40 rounded">
         <h3 className="text-blue-300 text-lg font-semibold mb-3">Tying It Together</h3>
         <p className="text-slate-200 mb-3">
-          This lesson builds on:
-        </p>
-        <ul className="space-y-2 text-slate-300 text-sm list-disc ml-5">
-    <li><strong>T11.L04</strong> — Part of the broader OSP workflow.</li>
-    <li><strong>T11.L04</strong> — Part of the broader OSP workflow.</li>
-    <li><strong>T11.L04</strong> — Part of the broader OSP workflow.</li>
-        </ul>
-        <p className="text-slate-200 mt-3 text-sm italic">
-          Each step in the OSP process feeds into the next — understanding these connections strengthens your grasp of the whole system.
+          Cleave angle and arc quality are the two variables that separate a 0.02 dB splice from a 0.3 dB splice, and both are governed by physics and maintenance practices introduced across prior lessons. T11.L04 (fusion splice step-by-step) placed cleave as step 3 of the 8-step workflow and stated the ≤0.5° target, but this lesson explains the mechanism: a non-perpendicular end-face creates an air gap at the fusion interface where the two silica surfaces cannot be drawn together cleanly by surface tension during the arc, leaving voids that scatter and absorb light. T02.L02 (fiber glass composition and refractive index profile) underlies arc calibration: when the splicer measures the pre-fuse arc and adjusts current, it is compensating for the silica viscosity at the softening temperature, which is a material property of the specific fiber formulation — this is why arc recalibration is required when switching between fiber types (G.652 vs. G.657) as established in L13. Blade replacement at the counter trigger rather than at visible damage is a maintenance discipline that connects to T13.L03 (inspection tooling calibration records): the blade replacement log is an auditable quality record, and an inspector reviewing a splice closure should be able to verify that the blade counter was within specification for the entire run — a blade used beyond its counter limit produces a statistically elevated rate of bad cleaves that may not be individually visible but will show up as a cluster of high-loss splices in the T12 OTDR data. In T15 (restoration), understanding arc calibration triggers prevents a common emergency-splice failure mode: a crew that skips the start-of-day calibration in a rush to restore service may run 40 splices on drifted arc parameters, then discover during the T12 post-restoration OTDR sweep that 20% of their splices exceed the 0.1 dB per-splice budget and must be re-done — costing more time than the calibration would have.
         </p>
       </section>
     </LessonLayout>

@@ -290,15 +290,7 @@ export default function T11L07_RibbonMassFusionSplicing() {
       <section className="mt-8 p-5 border-l-4 border-blue-500 bg-slate-800/40 rounded">
         <h3 className="text-blue-300 text-lg font-semibold mb-3">Tying It Together</h3>
         <p className="text-slate-200 mb-3">
-          This lesson builds on:
-        </p>
-        <ul className="space-y-2 text-slate-300 text-sm list-disc ml-5">
-    <li><strong>T11.L04</strong> — Part of the broader OSP workflow.</li>
-    <li><strong>T11.L06</strong> — Part of the broader OSP workflow.</li>
-    <li><strong>T11.L04</strong> — Part of the broader OSP workflow.</li>
-        </ul>
-        <p className="text-slate-200 mt-3 text-sm italic">
-          Each step in the OSP process feeds into the next — understanding these connections strengthens your grasp of the whole system.
+          Ribbon mass fusion splicing is the convergence of cable selection (T03), color code arithmetic (L02), single-fiber fusion discipline (L04), and arc calibration (L06) applied simultaneously across 12 fibers. T03.L01 (cable selection) is where the decision to deploy ribbon cable rather than loose-tube cable is made — that decision is driven by fiber count, conduit fill economics, and splice closure size constraints; a 144F ribbon cable in a 1.25-inch conduit occupies roughly the same cross-section as a 96F loose-tube cable, which is the kind of trade-off T03 teaches. L02's TIA-598 arithmetic applies here without the tube-counting step: ribbon cables replace tube-level organization with ribbon-position counting (ribbon 1 = fibers 1–12, ribbon 2 = fibers 13–24), so a splicer working a 144F ribbon must keep a 12-fiber color sequence in mind across 12 ribbons simultaneously. L06's arc calibration is more critical for mass fusion than for single-fiber fusion because a miscalibrated arc that produces a 0.15 dB loss penalty on a single fiber now produces that penalty on all 12 simultaneously — 12 re-splices instead of one. In T12 (testing), the OTDR operator running a 144F ribbon closure will see 12 splice events at the same distance on the trace if all 12 fibers were spliced at the same time; uniform event loss across all 12 at ≤0.1 dB each confirms the mass fusion run was consistent, while a single outlier fiber at 0.3 dB flags one electrode contact problem or one bad cleave within the ribbon that requires re-do on that fiber only.
         </p>
       </section>
     </LessonLayout>

@@ -327,15 +327,7 @@ export default function T11L05_CoreAlignVsCladdingAlign() {
       <section className="mt-8 p-5 border-l-4 border-blue-500 bg-slate-800/40 rounded">
         <h3 className="text-blue-300 text-lg font-semibold mb-3">Tying It Together</h3>
         <p className="text-slate-200 mb-3">
-          This lesson builds on:
-        </p>
-        <ul className="space-y-2 text-slate-300 text-sm list-disc ml-5">
-    <li><strong>T02.L03</strong> — Part of the broader OSP workflow.</li>
-    <li><strong>T02.L01</strong> — Part of the broader OSP workflow.</li>
-    <li><strong>T02.L04</strong> — Part of the broader OSP workflow.</li>
-        </ul>
-        <p className="text-slate-200 mt-3 text-sm italic">
-          Each step in the OSP process feeds into the next — understanding these connections strengthens your grasp of the whole system.
+          The LID/PAS core-align versus cladding-align decision connects fiber physics directly to splicing economics. T02.L03 (mode field diameter and single-mode propagation) established that light travels in the core and that the Gaussian intensity profile extends slightly into the cladding; this lesson applies that physics concretely — core-alignment using LID imaging minimizes the geometric overlap mismatch between two cores, while PAS cladding-alignment assumes the cladding is a reliable proxy for core position, an assumption that breaks down when the core is eccentric. When T03.L01 covered fiber selection (G.652.D vs. G.657.A1/A2 for bend-insensitive applications in tight-space cable plants), it set the stage for the G.652.D-to-G.657.A2 cross-splice penalty modeled here: MFD mismatch of 9.2 µm to 8.6 µm produces approximately 0.02 dB theoretical loss by the Gaussian approximation, but cladding-align adds a further 0.06 dB penalty because the core eccentricity between these two fiber types exceeds what PAS can compensate. In T12 (OTDR testing), a technician who sees an asymmetric OTDR event — lower apparent loss in one direction than the other at the same splice point — is observing the directional signature of MFD mismatch; understanding this lesson allows them to correctly identify the event as a cross-type splice rather than a bad fusion or a connector reflection, which prevents a costly unnecessary re-splice. For T04 (site survey), understanding which fiber types are deployed in the existing plant — particularly whether the network has mixed G.652.D and G.657 sections — is a prerequisite survey task before specifying alignment mode in the splice plan.
         </p>
       </section>
     </LessonLayout>

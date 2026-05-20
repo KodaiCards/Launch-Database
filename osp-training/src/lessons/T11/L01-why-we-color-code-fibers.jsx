@@ -394,15 +394,7 @@ export default function T11L01_WhyWeColorCodeFibers() {
       <section className="mt-8 p-5 border-l-4 border-blue-500 bg-slate-800/40 rounded">
         <h3 className="text-blue-300 text-lg font-semibold mb-3">Tying It Together</h3>
         <p className="text-slate-200 mb-3">
-          This lesson builds on:
-        </p>
-        <ul className="space-y-2 text-slate-300 text-sm list-disc ml-5">
-    <li><strong>T01.L03</strong> — Part of the broader OSP workflow.</li>
-    <li><strong>T01.L03</strong> — Part of the broader OSP workflow.</li>
-    <li><strong>T03.L01</strong> — Part of the broader OSP workflow.</li>
-        </ul>
-        <p className="text-slate-200 mt-3 text-sm italic">
-          Each step in the OSP process feeds into the next — understanding these connections strengthens your grasp of the whole system.
+          TIA-598 color code mastery is the thread that runs through every downstream splicing and testing task. When T01.L03 introduced OSP cable anatomy — buffer tubes, loose-tube construction, central member — it established that cables are organized in layers; TIA-598 is the naming convention that makes those layers navigable in the field. The cable selection decisions you made in T03.L01 (loose-tube vs. ribbon, gel-fill vs. dry, tube count) determine which TIA-598 counting pattern you use on a specific project: a 288F loose-tube cable may have 24 12-fiber tubes, while a 144F ribbon cable organizes the same fiber count into 12-fiber ribbons with a different positional scheme. In L04 (fusion splicing step-by-step), step one of the 8-step workflow is identifying and confirming each fiber by color before you ever strip a buffer tube — an error here propagates through every subsequent step and can require re-splicing a completed closure. In T12 (testing), when an OTDR event appears at a known splice point, the technician identifies which fiber is affected by counting color position back from the reference end; without TIA-598 fluency, localizing a high-loss splice in a 288F ribbon plant is guesswork. In T13 (inspection and QA), the splice record — fiber-by-fiber loss table, tray assignment, tube and fiber colors — is the auditable deliverable that proves every fiber was spliced in the right physical location.
         </p>
       </section>
     </LessonLayout>

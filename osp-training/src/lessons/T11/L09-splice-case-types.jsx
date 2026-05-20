@@ -311,15 +311,7 @@ export default function T11L09_SpliceCaseTypes() {
       <section className="mt-8 p-5 border-l-4 border-blue-500 bg-slate-800/40 rounded">
         <h3 className="text-blue-300 text-lg font-semibold mb-3">Tying It Together</h3>
         <p className="text-slate-200 mb-3">
-          This lesson builds on:
-        </p>
-        <ul className="space-y-2 text-slate-300 text-sm list-disc ml-5">
-    <li><strong>T01.L04</strong> — Part of the broader OSP workflow.</li>
-    <li><strong>T01.L04</strong> — Part of the broader OSP workflow.</li>
-    <li><strong>T01.L03</strong> — Part of the broader OSP workflow.</li>
-        </ul>
-        <p className="text-slate-200 mt-3 text-sm italic">
-          Each step in the OSP process feeds into the next — understanding these connections strengthens your grasp of the whole system.
+          Splice case selection is where T04 site survey data, T03 cable selection, and T05 NESC loading requirements converge into a physical hardware decision that must be made before the splice crew ever deploys to the field. T04.L01 (site survey) established that the surveyor records installation environment — buried, aerial lashed, building entry, central office — and that record drives directly to closure type: dome closures per GR-763-CORE for buried direct-buried or conduit work, butt-splice inline closures for aerial lashed cable where the messenger carries the mechanical load and the closure must not introduce a sagging low-point. T05.L04 (NESC aerial loading) connects here because an aerial splice case adds weight to the lashing point — the splice location must be at or near a pole to keep sag calculations valid; a mid-span aerial closure adds distributed weight that the span loading calculation in T05 did not account for, a design error that T04 should flag during staking. T01.L04 (OSP network architecture) introduced the concept of splice points as planned network nodes, not improvised field decisions: a GR-763 dome closure installed buried direct is an environmental seal rated for 40 years under ground pressure, which is why re-entering it for a future branch splice requires a scheduled outage rather than a quick field action. In T14 (bonding and grounding), the closure's bonding provision — the metallic bond point on the closure end plate — must be connected to the cable's metallic strength member and to the bonding and grounding infrastructure introduced in T14.L02; a closure installed without bonding the metallic members creates a discontinuity in the equipotential plane that T14 teaches is a lightning-induced voltage accumulation point.
         </p>
       </section>
     </LessonLayout>

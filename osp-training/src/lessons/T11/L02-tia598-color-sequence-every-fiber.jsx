@@ -337,15 +337,7 @@ export default function T11L02_TIA598ColorSequenceEveryFiber() {
       <section className="mt-8 p-5 border-l-4 border-blue-500 bg-slate-800/40 rounded">
         <h3 className="text-blue-300 text-lg font-semibold mb-3">Tying It Together</h3>
         <p className="text-slate-200 mb-3">
-          This lesson builds on:
-        </p>
-        <ul className="space-y-2 text-slate-300 text-sm list-disc ml-5">
-    <li><strong>T11.L01</strong> — Part of the broader OSP workflow.</li>
-    <li><strong>T11.L01</strong> — Part of the broader OSP workflow.</li>
-    <li><strong>T01.L03</strong> — Part of the broader OSP workflow.</li>
-        </ul>
-        <p className="text-slate-200 mt-3 text-sm italic">
-          Each step in the OSP process feeds into the next — understanding these connections strengthens your grasp of the whole system.
+          L01 gave you the 12-color cycle and tube-level organization; this lesson extends that to per-fiber arithmetic and the connector-polish convention that determines physical compatibility. The fiber-within-tube position formula (global position = [(tube − 1) × 12] + fiber position within tube) depends directly on T01.L03's cable anatomy — you must know how many fibers per tube and how tubes are layered before the arithmetic makes sense. The APC (green, ≥60 dB return loss) versus UPC (blue, ≥55 dB return loss) color distinction introduced here carries forward into T12 (testing): when running OLTS or OTDR measurements, the test technician uses connector color as the first sanity check before mating cords — mating APC to UPC physically damages the angled end-face ferrule and introduces 3–5 dB of insertion loss that will fail every budget calculation. In T13 (inspection and QA), the splice record cross-references both physical tube/fiber color position and the connector polish type at each termination point; a splice record that misidentifies fiber 37 of a 288F cable or mislabels an APC port as UPC creates a permanent documentation error that will misdirect every future technician troubleshooting that span. For 288-fiber and larger cables using binder groups, the grouping hierarchy (12 fibers × 24 tubes) must be mastered here before L07 ribbon splicing — ribbon construction collapses the tube layer entirely, replacing it with ribbon-position counting that follows the same 12-color underlying sequence.
         </p>
       </section>
     </LessonLayout>

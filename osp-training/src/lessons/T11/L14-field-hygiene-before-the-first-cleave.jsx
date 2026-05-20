@@ -535,15 +535,7 @@ export default function L14FieldHygieneBeforeTheFirstCleave() {
       <section className="mt-8 p-5 border-l-4 border-blue-500 bg-slate-800/40 rounded">
         <h3 className="text-blue-300 text-lg font-semibold mb-3">Tying It Together</h3>
         <p className="text-slate-200 mb-3">
-          This lesson builds on:
-        </p>
-        <ul className="space-y-2 text-slate-300 text-sm list-disc ml-5">
-    <li><strong>T11.L04</strong> — Part of the broader OSP workflow.</li>
-    <li><strong>T11.L06</strong> — Part of the broader OSP workflow.</li>
-    <li><strong>T11.L12</strong> — Part of the broader OSP workflow.</li>
-        </ul>
-        <p className="text-slate-200 mt-3 text-sm italic">
-          Each step in the OSP process feeds into the next — understanding these connections strengthens your grasp of the whole system.
+          Field hygiene is the prerequisite discipline that makes every other T11 lesson's quality standards achievable — without it, the physics of a clean fusion splice (T02), the 8-step workflow (L04), and the arc calibration (L06) all fail at the contamination step before the splice begins. T02.L04 (attenuation mechanisms) established that anything other than silica glass at the fusion interface introduces scattering and absorption loss; the dry-first rule for buffer tube gel, followed by the IPA wipe sequence, exists because gel contamination on a fiber end-face cannot be resolved by arc temperature — the heat volatilizes some gel components but leaves a carbonized residue that is optically worse than the original contamination. L04's step 2 (clean and prepare) assumed the fiber end was clean before the cleave; this lesson is the detailed protocol that fulfills that assumption, and the IEC 61300-3-35 Zone A/B/C/D end-face inspection standard is the objective measurement tool that confirms compliance: a Zone A contamination — scratches or particles within the 5 µm core region — is always a reject regardless of particle size or type, because even a sub-micron particle at the core produces a repeatable OTDR event that appears as a high-reflectance splice point in T12. The controlled-environment discipline (field tent, fiber cleaner, contamination disposal protocol) connects to T18 (safety) through the silica particle hazard: cleaved fiber fragments are biologically inert but mechanically dangerous, capable of embedding in skin and eyes, and a proper hygiene protocol includes a collection and disposal step that T18.L02's PPE requirements address. In T13 (inspection), the end-face inspection image captured by a fiber microscope is an auditable quality record; an inspector reviewing a splice package that lacks pre-splice end-face images — or that shows Zone A contamination in images labeled "accepted" — has grounds to reject the entire splice run as a process control failure.
         </p>
       </section>
     </LessonLayout>
