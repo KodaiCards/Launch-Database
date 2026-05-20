@@ -81,17 +81,17 @@ const budgetWorkedExample = {
   description:
     'A 9-mile rural FTTH project estimated today with construction starting in 18 months. Apply contingency and escalation correctly.',
   variables: [
-    { key: 'Base', label: 'Base estimate (direct cost + overhead + profit)', units: '$', default: 2240000 },
-    { key: 'Design_pct', label: 'Design maturity at estimate time', units: '%', default: 70 },
-    { key: 'Contingency_pct', label: 'Contingency percentage', units: '%', default: 15 },
-    { key: 'Escalation_rate', label: 'Annual escalation rate', units: '%/year', default: 3.5 },
-    { key: 'Time_to_construction', label: 'Time to construction start', units: 'months', default: 18 },
+    { key: 'Base', label: 'Base estimate (direct cost + overhead + profit)', units: '$', default: 2240000, type: 'number' },
+    { key: 'Design_pct', label: 'Design maturity at estimate time', units: '%', default: 70, type: 'number' },
+    { key: 'Contingency_pct', label: 'Contingency percentage', units: '%', default: 15, type: 'number' },
+    { key: 'Escalation_rate', label: 'Annual escalation rate', units: '%/year', default: 3.5, type: 'number' },
+    { key: 'Time_to_construction', label: 'Time to construction start', units: 'months', default: 18, type: 'number' },
   ],
   formula: (values) => {
-    const base = values.Base;
-    const contingency_pct = values.Contingency_pct / 100;
-    const escalation_rate = values.Escalation_rate / 100;
-    const time_years = values.Time_to_construction / 12;
+    const base = Number(values.Base);
+    const contingency_pct = Number(values.Contingency_pct) / 100;
+    const escalation_rate = Number(values.Escalation_rate) / 100;
+    const time_years = Number(values.Time_to_construction) / 12;
 
     const contingency_amt = base * contingency_pct;
     const contingency_inclusive = base + contingency_amt;
@@ -99,13 +99,13 @@ const budgetWorkedExample = {
     const escalation_amt = contingency_inclusive * (escalation_multiplier - 1);
     const total_budget = contingency_inclusive + escalation_amt;
 
-    return total_budget;
+    return Number(total_budget);
   },
   steps: (values, result) => {
-    const base = values.Base;
-    const contingency_pct = values.Contingency_pct / 100;
-    const escalation_rate = values.Escalation_rate / 100;
-    const time_years = values.Time_to_construction / 12;
+    const base = Number(values.Base);
+    const contingency_pct = Number(values.Contingency_pct) / 100;
+    const escalation_rate = Number(values.Escalation_rate) / 100;
+    const time_years = Number(values.Time_to_construction) / 12;
 
     const contingency_amt = base * contingency_pct;
     const contingency_inclusive = base + contingency_amt;
@@ -146,9 +146,12 @@ const budgetWorkedExample = {
     ];
   },
   sanityCheck: (result, values) => {
-    const base = values.Base;
-    const pct_over_base = ((result - base) / base * 100).toFixed(1);
-    return `Total project budget of $${result.toFixed(0)} represents a ${pct_over_base}% reserve over the base estimate of $${base.toFixed(0)} — appropriate for a project with ${values.Design_pct}% design maturity and ${values.Time_to_construction}-month construction delay.`;
+    const base = Number(values.Base);
+    const result_num = Number(result);
+    const design_pct = Number(values.Design_pct);
+    const time_to_construction = Number(values.Time_to_construction);
+    const pct_over_base = ((result_num - base) / base * 100).toFixed(1);
+    return `Total project budget of $${result_num.toFixed(0)} represents a ${pct_over_base}% reserve over the base estimate of $${base.toFixed(0)} — appropriate for a project with ${design_pct}% design maturity and ${time_to_construction}-month construction delay.`;
   },
   resultLabel: 'Total Project Budget',
   resultUnit: '$',
