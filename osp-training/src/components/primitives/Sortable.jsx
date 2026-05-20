@@ -20,28 +20,42 @@ import React, { useRef, useState } from 'react';
 export default function Sortable({
   title,
   prompt,
-  items,
+  items: rawItems,
   correctOrder,
   explanation,
   citation,
   fieldNote,
 }) {
+  // ── Defensive normalization ───────────────────────────────────────────────
+  // Normalize items: each entry may be a string or {id, label} object.
+  const items = (rawItems ?? []).map((item, i) =>
+    typeof item === 'string'
+      ? { id: String(i), label: item }
+      : { id: item.id ?? String(i), label: item.label ?? item.text ?? String(item) },
+  );
+
+  // Guard: if correctOrder is absent, render as a practice-only drag list
+  // (no validation, no Check button crash).
+  const hasAnswerKey = Array.isArray(correctOrder) && correctOrder.length > 0;
+
   // Scramble initial order (Fisher-Yates, seeded by id sort so it's deterministic)
-  const initial = [...items].sort((a, b) => {
-    const ai = correctOrder.indexOf(a.id);
-    const bi = correctOrder.indexOf(b.id);
-    // Simple scramble: interleave by putting even-indexed correct items first half, odd second half
-    const aScrambled = ai % 2 === 0 ? ai + items.length : ai;
-    const bScrambled = bi % 2 === 0 ? bi + items.length : bi;
-    return aScrambled - bScrambled;
-  });
+  const initial = hasAnswerKey
+    ? [...items].sort((a, b) => {
+        const ai = correctOrder.indexOf(a.id);
+        const bi = correctOrder.indexOf(b.id);
+        // Simple scramble: interleave by putting even-indexed correct items first half, odd second half
+        const aScrambled = ai % 2 === 0 ? ai + items.length : ai;
+        const bScrambled = bi % 2 === 0 ? bi + items.length : bi;
+        return aScrambled - bScrambled;
+      })
+    : [...items]; // no answer key → leave in original order
 
   const [order, setOrder]       = useState(initial);
   const [submitted, setSubmit]  = useState(false);
   const [dragIdx, setDragIdx]   = useState(null);
   const [overIdx, setOverIdx]   = useState(null);
 
-  const isCorrect = submitted &&
+  const isCorrect = submitted && hasAnswerKey &&
     order.every((item, i) => item.id === correctOrder[i]);
 
   // ── HTML5 drag-and-drop handlers ──
@@ -91,9 +105,9 @@ export default function Sortable({
 
       <ul className="space-y-2 select-none">
         {order.map((item, i) => {
-          const correctPos  = correctOrder.indexOf(item.id);
-          const inPlace     = submitted && i === correctPos;
-          const outOfPlace  = submitted && i !== correctPos;
+          const correctPos  = hasAnswerKey ? correctOrder.indexOf(item.id) : -1;
+          const inPlace     = submitted && hasAnswerKey && i === correctPos;
+          const outOfPlace  = submitted && hasAnswerKey && i !== correctPos;
           const isDragging  = dragIdx === i;
           const isOver      = overIdx === i && dragIdx !== null && dragIdx !== i;
 
@@ -126,7 +140,7 @@ export default function Sortable({
               <span className="flex-1 text-sm text-slate-200">{item.label}</span>
 
               {/* Post-submit indicator */}
-              {submitted && (
+              {submitted && hasAnswerKey && (
                 <span className={`text-xs font-semibold shrink-0 ${inPlace ? 'text-ospgreen' : 'text-rose-300'}`}>
                   {inPlace ? '✓' : `→ ${correctOrder.indexOf(item.id) + 1}`}
                 </span>
@@ -142,18 +156,26 @@ export default function Sortable({
 
       {!submitted ? (
         <div className="mt-4">
-          <button className="btn-primary" onClick={() => setSubmit(true)}>
-            Check order
-          </button>
+          {hasAnswerKey ? (
+            <button className="btn-primary" onClick={() => setSubmit(true)}>
+              Check order
+            </button>
+          ) : (
+            <p className="text-xs text-slate-300/50 italic">
+              Practice only — no answer key for this exercise.
+            </p>
+          )}
           <span className="ml-3 text-xs text-slate-300/50">Drag to rearrange.</span>
         </div>
       ) : (
         <div className="mt-4 space-y-3">
-          <p className={`text-sm font-semibold ${isCorrect ? 'text-ospgreen' : 'text-rose-300'}`}>
-            {isCorrect
-              ? '✓ Correct order.'
-              : '✗ Not quite — the numbers on the right show the correct positions.'}
-          </p>
+          {hasAnswerKey && (
+            <p className={`text-sm font-semibold ${isCorrect ? 'text-ospgreen' : 'text-rose-300'}`}>
+              {isCorrect
+                ? '✓ Correct order.'
+                : '✗ Not quite — the numbers on the right show the correct positions.'}
+            </p>
+          )}
 
           {explanation && (
             <p className="text-sm text-slate-200 leading-relaxed">

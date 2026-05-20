@@ -32,7 +32,14 @@ export default function InteractiveQuiz({ title, questions, onComplete }) {
   const [revealed, setRevealed] = useState(false);
   const [done, setDone] = useState(false);
 
-  const q = questions[idx];
+  const rawQ = questions[idx];
+  // Defensive normalization: accept both old (question/options/correct) and new (prompt/choices/answerIndex) shapes
+  const q = {
+    ...rawQ,
+    prompt: rawQ.prompt ?? rawQ.text ?? rawQ.question ?? '',
+    choices: rawQ.choices ?? rawQ.options ?? [],
+    answerIndex: rawQ.answerIndex ?? rawQ.correct ?? rawQ.correctIndex ?? 0,
+  };
   const score = useMemo(
     () => Object.values(answers).filter(a => a.correct).length,
     [answers],

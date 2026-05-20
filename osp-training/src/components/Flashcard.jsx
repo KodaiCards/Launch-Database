@@ -48,7 +48,38 @@ function sm2(prev, q) {
   return { ef, interval, reps, dueAt };
 }
 
-export default function Flashcard({ deckId, cards }) {
+export default function Flashcard(props) {
+  // ── Defensive prop normalization ─────────────────────────────────────────
+  // Accept BOTH new API (deckId, cards=[{front,back,...}])
+  // AND old API (term="..." definition="..." — single-card inline usage).
+  // Also normalize card objects: accept both {front,back} and {term,definition}.
+  let { deckId, cards } = props;
+
+  if (!cards) {
+    // Old single-card usage: <Flashcard term="X" definition="Y" />
+    const front = props.front ?? props.term;
+    const back  = props.back  ?? props.definition;
+    if (front || back) {
+      cards = [{ id: deckId ?? 'single-card', front: front ?? '', back: back ?? '' }];
+    } else {
+      cards = [];
+    }
+  } else {
+    // Normalize each card in the deck: {term,definition} → {front,back}
+    cards = cards.map((c, i) => ({
+      ...c,
+      id:    c.id    ?? `card-${i}`,
+      front: c.front ?? c.term       ?? '',
+      back:  c.back  ?? c.definition ?? '',
+    }));
+  }
+
+  // Use a stable deckId fallback so SM-2 state persists even for inline single-cards
+  deckId = deckId ?? (props.term ? `inline-${props.term.slice(0, 20).replace(/\s+/g, '-')}` : 'flashcard-deck');
+
+  // Graceful render when cards list is empty
+  if (!cards.length) return null;
+
   const [state, setState] = useState(() => loadState());
   const [showBack, setShowBack] = useState(false);
 

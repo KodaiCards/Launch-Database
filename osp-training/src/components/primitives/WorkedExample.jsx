@@ -34,17 +34,46 @@ import React, { useMemo, useState } from 'react';
  * @param {string}   [resultUnit]   - Units for the final result.
  * @param {number}   [resultDecimals] - Decimal places for result display (default 2).
  */
-export default function WorkedExample({
-  title,
-  description,
-  variables,
-  formula,
-  steps,
-  sanityCheck,
-  resultLabel = 'Result',
-  resultUnit = '',
-  resultDecimals = 2,
-}) {
+export default function WorkedExample(props) {
+  // ── Defensive prop normalization ─────────────────────────────────────────
+  // Accept BOTH flat props (new API) AND a single wrapped `example` prop (old API):
+  //   New: <WorkedExample title="..." variables={[...]} formula={fn} ... />
+  //   Old: <WorkedExample example={{ title, variables, formula, ... }} />
+  const data = props.example ?? props;
+  const {
+    title,
+    description,
+    formula,
+    steps,
+    sanityCheck,
+    resultLabel  = 'Result',
+    resultUnit   = '',
+    resultDecimals = 2,
+  } = data;
+
+  // Normalize variables array: accept both new ({key, label, default, units})
+  // and old ({symbol, name, value, unit}) key names.
+  const rawVariables = data.variables ?? [];
+  const variables = rawVariables.map(vr => ({
+    key:   vr.key   ?? vr.symbol ?? vr.name   ?? String(vr),
+    label: vr.label ?? vr.name   ?? vr.key    ?? '',
+    default: Number(vr.default ?? vr.value ?? 0),
+    units: vr.units ?? vr.unit ?? '',
+    min:   vr.min,
+    max:   vr.max,
+    step:  vr.step,
+  }));
+
+  // Graceful fallback if variables or formula are still missing
+  if (!variables.length || typeof formula !== 'function') {
+    return (
+      <div className="panel">
+        <h3 className="text-lg font-semibold mb-1">{title ?? 'Worked Example'}</h3>
+        <p className="text-sm text-slate-300/60">(Worked example data not available for this lesson.)</p>
+      </div>
+    );
+  }
+
   const initialValues = Object.fromEntries(variables.map(v => [v.key, v.default]));
   const [values, setValues] = useState(initialValues);
   const [showSteps, setShowSteps] = useState(false);

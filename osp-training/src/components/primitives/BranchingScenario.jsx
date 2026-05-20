@@ -37,13 +37,76 @@ import React, { useCallback, useEffect, useRef, useState } from 'react';
  *     }
  *   }
  */
-export default function BranchingScenario({
-  scenarioId,
-  title,
-  description,
-  startNodeId,
-  nodes,
-}) {
+export default function BranchingScenario(props) {
+  // ── Defensive prop normalization ────────────────────────────────────────
+  // Accept BOTH new API (scenarioId, startNodeId, nodes) AND old API (scenario={obj}).
+  // Old shape: <BranchingScenario scenario={{ scenarioId, title, startNodeId, nodes, ... }} />
+  // New shape: <BranchingScenario scenarioId="..." startNodeId="..." nodes={{...}} />
+  let {
+    scenarioId,
+    title,
+    description,
+    startNodeId,
+    nodes,
+    // Legacy single-prop passthrough
+    scenario,
+    // Even older shape: opening={node} + states={nodeMap}
+    opening,
+    id: legacyId,
+  } = props;
+
+  // Unwrap scenario={obj} wrapper (most common old-API pattern)
+  if (scenario && !nodes) {
+    scenarioId  = scenario.scenarioId ?? scenario.id ?? scenarioId;
+    title       = scenario.title ?? title;
+    description = scenario.description ?? description;
+    startNodeId = scenario.startNodeId ?? scenario.startNode ?? startNodeId;
+    nodes       = scenario.nodes ?? scenario.states;
+  }
+
+  // Unwrap opening={} + states={} (oldest shape)
+  if (!nodes && opening) {
+    const openId = opening.id ?? 'start';
+    nodes = { [openId]: opening, ...(props.states || {}) };
+    startNodeId = startNodeId ?? openId;
+  }
+
+  // Fallback for id prop (used in oldest lessons as scenarioId)
+  scenarioId = scenarioId ?? legacyId ?? 'unknown';
+
+  // Graceful render when nodes is still missing
+  if (!nodes) {
+    return (
+      <div className="panel">
+        <p className="text-rose-300 text-sm">
+          Scenario error: no nodes provided. Check the &ldquo;nodes&rdquo; prop.
+        </p>
+      </div>
+    );
+  }
+
+  // Normalize each node: support both node.prompt and node.text for the body,
+  // and both choice.nextId and choice.nextNode / choice.target for navigation.
+  const normalizedNodes = Object.fromEntries(
+    Object.entries(nodes).map(([nodeId, node]) => {
+      const normalizedChoices = (node.choices ?? []).map(c => ({
+        ...c,
+        label:       c.label ?? c.text ?? c.title ?? '',
+        consequence: c.consequence ?? c.feedback ?? c.result ?? '',
+        nextId:      c.nextId ?? c.nextNode ?? c.target ?? c.next ?? 'END',
+      }));
+      return [
+        nodeId,
+        {
+          ...node,
+          prompt:  node.prompt ?? node.text ?? node.body ?? node.description ?? '',
+          context: node.context ?? node.hint ?? undefined,
+          choices: normalizedChoices,
+        },
+      ];
+    }),
+  );
+
   const storageKey = `osp-scenario-${scenarioId}`;
 
   function loadSaved() {
@@ -67,7 +130,7 @@ export default function BranchingScenario({
     } catch { /* ignore quota errors */ }
   }, [currentNodeId, history, done, storageKey]);
 
-  const node = nodes[currentNodeId];
+  const node = normalizedNodes[currentNodeId];
 
   function makeChoice(choice) {
     const entry = { nodeId: currentNodeId, choiceLabel: choice.label, isOptimal: choice.isOptimal };
@@ -79,7 +142,7 @@ export default function BranchingScenario({
   function advance() {
     const nextId = pendingChoice?.nextId;
     setPendingChoice(null);
-    if (!nextId || nextId === 'END' || nodes[nextId]?.isEnd) {
+    if (!nextId || nextId === 'END' || normalizedNodes[nextId]?.isEnd) {
       setDone(true);
       if (nextId && nextId !== 'END') setCurrentNodeId(nextId);
     } else {
@@ -98,7 +161,7 @@ export default function BranchingScenario({
   const optimalCount = history.filter(h => h.isOptimal).length;
 
   if (done) {
-    const endNode = nodes[currentNodeId];
+    const endNode = normalizedNodes[currentNodeId];
     return (
       <div className="panel space-y-4">
         <h3 className="text-lg font-semibold">{title} — Complete</h3>
