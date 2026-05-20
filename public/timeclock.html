@@ -135,6 +135,11 @@ html[data-theme="dark"] .clock-card{background:linear-gradient(135deg,#1E3A5C 0%
 .pre-clock-form label{display:block;font-size:12px;font-weight:600;color:rgba(255,255,255,.85);margin-bottom:4px;text-transform:uppercase;letter-spacing:.5px}
 .pre-clock-form select,.pre-clock-form input{width:100%;padding:10px 12px;border-radius:6px;border:1px solid rgba(255,255,255,.25);background:rgba(255,255,255,.95);color:var(--text);font-size:14px}
 .pre-clock-form select:focus,.pre-clock-form input:focus{outline:2px solid #fff;outline-offset:1px;border-color:#fff;background:#fff}
+.pre-clock-form select:disabled,.pre-clock-form input:disabled{opacity:.45;cursor:not-allowed}
+.cascade-hint{font-size:11px;color:rgba(255,255,255,.65);margin-top:3px}
+.cascade-error{font-size:11px;color:#fca5a5;margin-top:3px}
+.form-group .cascade-error{color:var(--danger)}
+.form-group input:disabled,.form-group select:disabled{opacity:.45;cursor:not-allowed;background:var(--gray-light)}
 
 /* Week navigator */
 .week-nav{display:flex;justify-content:space-between;align-items:center;padding:0 8px;gap:10px;flex-wrap:wrap}
@@ -343,20 +348,26 @@ html[data-theme="dark"] .tag-team-construction,html[data-theme="dark"] .tag-team
     <div class="modal-body">
       <input type="hidden" id="entry-id">
       <input type="hidden" id="entry-pending-request-id">
+      <input type="hidden" id="entry-resolved-project-id">
       <div class="form-group">
         <label for="entry-client">Client *</label>
-        <select id="entry-client" onchange="entryClientChanged()"><option value="">— All clients —</option></select>
+        <select id="entry-client" onchange="cascadeChanged('entry','client')"><option value="">— Select client —</option></select>
       </div>
       <div class="form-group">
-        <label for="entry-project">Project *
+        <label for="entry-program">Program *</label>
+        <select id="entry-program" disabled onchange="cascadeChanged('entry','program')"><option value="">— Select client first —</option></select>
+      </div>
+      <div class="form-group">
+        <label for="entry-sa">Service Area *</label>
+        <select id="entry-sa" disabled onchange="cascadeChanged('entry','sa')"><option value="">— Select program first —</option></select>
+      </div>
+      <div class="form-group">
+        <label for="entry-job">Job *
           <button type="button" class="btn btn-secondary btn-sm" style="float:right;font-size:11px;padding:2px 8px" onclick="openRequestNewProjectModal()" title="Request a new project — admin must approve before it merges into the project list"><i class="fa-solid fa-plus" aria-hidden="true"></i> Add New</button>
         </label>
-        <select id="entry-project" onchange="entryProjectChanged()"><option value="">Loading…</option></select>
+        <input type="text" id="entry-job" list="entry-job-list" disabled placeholder="— Select service area first —" autocomplete="off" oninput="cascadeJobInput('entry')">
+        <datalist id="entry-job-list"></datalist>
         <div id="entry-pending-banner" style="display:none;margin-top:6px;padding:6px 10px;background:var(--warning-light);color:var(--warning-text);border:1px solid var(--warning);border-radius:6px;font-size:11px"><i class="fa-solid fa-clock" aria-hidden="true"></i> Pending project request — time will be held until admin approves.</div>
-      </div>
-      <div class="form-group">
-        <label for="entry-job">Job</label>
-        <select id="entry-job"><option value="">— Select project first —</option></select>
       </div>
       <div class="form-row">
         <div class="form-group">
@@ -851,19 +862,28 @@ function renderClockCard(){
       <div id="quick-clock-row"></div>
       <div class="pre-clock-form">
         <div class="form-group">
-          <label for="ci-project">Project *</label>
-          <select id="ci-project" onchange="ciProjectChanged()"><option value="">— Select project —</option></select>
+          <label for="ci-client">Client *</label>
+          <select id="ci-client" onchange="cascadeChanged('ci','client')"><option value="">— Select client —</option></select>
         </div>
         <div class="form-group">
-          <label for="ci-job">Job</label>
-          <select id="ci-job"><option value="">— Select a job —</option></select>
+          <label for="ci-program">Program *</label>
+          <select id="ci-program" disabled onchange="cascadeChanged('ci','program')"><option value="">— Select client first —</option></select>
+        </div>
+        <div class="form-group">
+          <label for="ci-sa">Service Area *</label>
+          <select id="ci-sa" disabled onchange="cascadeChanged('ci','sa')"><option value="">— Select program first —</option></select>
+        </div>
+        <div class="form-group">
+          <label for="ci-job">Job *</label>
+          <input type="text" id="ci-job" list="ci-job-list" disabled placeholder="— Select service area first —" autocomplete="off" oninput="cascadeJobInput('ci')">
+          <datalist id="ci-job-list"></datalist>
         </div>
       </div>
       <div class="clock-controls" style="margin-top:18px">
         <button class="btn btn-xl clock-in-btn" onclick="clockIn()"><i class="fa-solid fa-play"></i> Clock In</button>
       </div>
     `;
-    populateProjectSelect(document.getElementById('ci-project'));
+    mountCascade('ci', { includeCompleted: false });
     renderQuickClockButtons();
   }
 }
@@ -920,19 +940,20 @@ async function quickClockIn(projectId, jobId, jobTitle){
   }
 }
 
-async function ciProjectChanged(){
-  const pid = document.getElementById('ci-project').value;
-  await populateJobSelect(document.getElementById('ci-job'), pid);
-}
-
 async function clockIn(){
-  const project_id = document.getElementById('ci-project').value;
-  const job_id = document.getElementById('ci-job').value || null;
-  if (!project_id){ alert('Please select a project before clocking in.'); return; }
+  let project_id;
   try {
-    await api('/api/timeclock/clock-in', 'POST', { project_id, job_id });
+    const resolved = await resolveOrCreateFromCascade('ci');
+    project_id = resolved.id;
+  } catch(e){
+    alert(e.message || 'Please complete all fields before clocking in.');
+    return;
+  }
+  try {
+    const job_title = document.getElementById('ci-job')?.value?.trim() || null;
+    await api('/api/timeclock/clock-in', 'POST', { project_id, job_title });
     await loadActiveSession();
-    await loadWeek();  // reflect new session immediately
+    await loadWeek();
   } catch(e){
     alert('Clock in failed: ' + e.message);
   }
@@ -966,12 +987,21 @@ function openSwitchModal(){
           <i class="fa-solid fa-circle-info"></i> Your current session will close and a new one will start. The hours so far will be saved as a time entry.
         </div>
         <div class="form-group">
-          <label for="switch-project">New Project *</label>
-          <select id="switch-project" onchange="switchProjectChanged()"><option value="">— Select project —</option></select>
+          <label for="sw-client">Client *</label>
+          <select id="sw-client" onchange="cascadeChanged('sw','client')"><option value="">— Select client —</option></select>
         </div>
         <div class="form-group">
-          <label for="switch-job">Job</label>
-          <select id="switch-job"><option value="">— Default —</option></select>
+          <label for="sw-program">Program *</label>
+          <select id="sw-program" disabled onchange="cascadeChanged('sw','program')"><option value="">— Select client first —</option></select>
+        </div>
+        <div class="form-group">
+          <label for="sw-sa">Service Area *</label>
+          <select id="sw-sa" disabled onchange="cascadeChanged('sw','sa')"><option value="">— Select program first —</option></select>
+        </div>
+        <div class="form-group">
+          <label for="sw-job">Job *</label>
+          <input type="text" id="sw-job" list="sw-job-list" disabled placeholder="— Select service area first —" autocomplete="off" oninput="cascadeJobInput('sw')">
+          <datalist id="sw-job-list"></datalist>
         </div>
       </div>
       <div class="modal-footer">
@@ -981,19 +1011,21 @@ function openSwitchModal(){
     </div>
   `;
   document.body.appendChild(overlay);
-  populateProjectSelect(document.getElementById('switch-project'));
+  mountCascade('sw', { includeCompleted: false });
   overlay.addEventListener('click', e => { if (e.target === overlay) overlay.remove(); });
 }
-async function switchProjectChanged(){
-  const pid = document.getElementById('switch-project').value;
-  await populateJobSelect(document.getElementById('switch-job'), pid);
-}
 async function doSwitch(){
-  const project_id = document.getElementById('switch-project').value;
-  const job_id = document.getElementById('switch-job').value || null;
-  if (!project_id){ alert('Please pick a project to switch to.'); return; }
+  let project_id;
   try {
-    await api('/api/timeclock/switch', 'POST', { project_id, job_id });
+    const resolved = await resolveOrCreateFromCascade('sw');
+    project_id = resolved.id;
+  } catch(e){
+    alert(e.message || 'Please complete all fields before switching.');
+    return;
+  }
+  try {
+    const job_title = document.getElementById('sw-job')?.value?.trim() || null;
+    await api('/api/timeclock/switch', 'POST', { project_id, job_title });
     document.getElementById('switch-modal').remove();
     await loadActiveSession();
     await loadWeek();
@@ -1104,45 +1136,46 @@ function _openEntryModalCommon() {
 }
 
 function openManualEntryModal(){
-  _entryModalIsEdit = false;  // New entries don't need the completed-projects cache.
+  _entryModalIsEdit = false;
   document.getElementById('entry-modal-title').textContent = 'Add Time Entry';
   document.getElementById('entry-id').value = '';
   document.getElementById('entry-pending-request-id').value = '';
+  document.getElementById('entry-resolved-project-id').value = '';
   document.getElementById('entry-date').value = new Date().toISOString().slice(0,10);
   document.getElementById('entry-hours').value = '';
   document.getElementById('entry-notes').value = '';
-  populateClientSelect(document.getElementById('entry-client'));
-  populateProjectSelect(document.getElementById('entry-project'));
-  populateJobSelect(document.getElementById('entry-job'), null);
   document.getElementById('entry-pending-banner').style.display = 'none';
   document.getElementById('entry-edit-warning').style.display = 'none';
   document.getElementById('entry-delete-btn').style.display = 'none';
+  mountCascade('entry', { includeCompleted: false });
   _openEntryModalCommon();
 }
 
 function openEditEntryModal(id){
   const e = weekData?.entries.find(x => String(x.id) === String(id));
   if (!e){ alert('Entry not found in current view'); return; }
-  _entryModalIsEdit = true;  // Signal entryClientChanged() to use completed cache.
+  _entryModalIsEdit = true;
   document.getElementById('entry-modal-title').textContent = 'Edit Time Entry';
   document.getElementById('entry-id').value = e.id;
   document.getElementById('entry-pending-request-id').value = e.pending_project_request_id || '';
+  document.getElementById('entry-resolved-project-id').value = e.project_id || '';
   document.getElementById('entry-date').value = String(e.entry_date).slice(0,10);
   document.getElementById('entry-hours').value = e.hours;
   document.getElementById('entry-notes').value = e.notes || '';
-  // Pre-select the entry's client; search the completed-inclusive cache so a
-  // project that has since been marked completed is still found (Carter Q4 lock).
-  const editCache = projectsCacheWithCompleted.length ? projectsCacheWithCompleted : projectsCache;
-  const proj = editCache.find(p => String(p.id) === String(e.project_id));
-  const cid = proj?.client_id || '';
-  populateClientSelect(document.getElementById('entry-client'), cid);
-  // useCompleted: true surfaces completed projects in the edit-entry picker for
-  // back-fill against completed work.
-  populateProjectSelect(document.getElementById('entry-project'), e.project_id, { client_id: cid || null, useCompleted: true });
-  populateJobSelect(document.getElementById('entry-job'), e.project_id, null);
   document.getElementById('entry-pending-banner').style.display = e.pending_project_request_id ? '' : 'none';
   document.getElementById('entry-edit-warning').style.display = '';
   document.getElementById('entry-delete-btn').style.display = '';
+  // prefill: cascade will restore client+program+sa from the project row;
+  // job_name populates the text input after SA loads.
+  mountCascade('entry', {
+    includeCompleted: true,
+    prefill: {
+      client_id: e.client_id || null,
+      program: e.program || null,
+      job_name: e.project_name || null,
+      project_id: e.project_id || null,
+    },
+  });
   _openEntryModalCommon();
 }
 
@@ -1152,24 +1185,6 @@ function closeEntryModal(){
   if (_entryModalTrap) { _entryModalTrap.release(); _entryModalTrap = null; }
 }
 
-async function entryProjectChanged(){
-  const pid = document.getElementById('entry-project').value;
-  await populateJobSelect(document.getElementById('entry-job'), pid);
-  // A real project selection clears any pending-request state.
-  if (pid) {
-    document.getElementById('entry-pending-request-id').value = '';
-    document.getElementById('entry-pending-banner').style.display = 'none';
-  }
-}
-
-// Client filter narrows the project list. Empty resets to all leaves.
-// In edit mode (_entryModalIsEdit) pass useCompleted:true so completed
-// projects remain visible for back-fill.
-function entryClientChanged(){
-  const cid = document.getElementById('entry-client').value || null;
-  populateProjectSelect(document.getElementById('entry-project'), null, { client_id: cid, useCompleted: _entryModalIsEdit });
-  populateJobSelect(document.getElementById('entry-job'), null);
-}
 
 function populateRnpAreaDropdown() {
   const sel = document.getElementById('rnp-area');

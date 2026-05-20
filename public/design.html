@@ -436,17 +436,36 @@ fetch('/api/auth/me', { credentials: 'include' })
             <select id="proj-contract" onchange="contractChanged()"><option value="">None / N/A</option></select>
           </div>
         </div>
-        <!-- Existing-project lookup: once a client is chosen, surface
-             matching leaf projects (with WO# inline). Picking one swaps
-             the modal into Edit mode for that project; leaving blank keeps
-             this as a fresh create. Helps the team avoid duplicating a
-             project that's already in the system. -->
-        <div class="form-row" id="proj-existing-wrap" style="display:none">
-          <div class="form-group span2">
-            <label for="proj-existing">Existing Project for this Client <span style="font-weight:400;color:var(--text-muted)">(optional — pick to edit instead of creating new)</span></label>
-            <select id="proj-existing" onchange="existingProjectPicked(this.value)"><option value="">— Create new below —</option></select>
-            <span class="form-hint" id="proj-existing-hint">Showing existing leaf projects under this client — with WO# in label when applicable.</span>
+        <!-- Cascade picker (create mode only): Client → Program → Service Area → Job.
+             Hidden in edit mode. Replaces the old flat "Existing Project" dropdown. -->
+        <div id="dp-cascade-wrap" style="display:none">
+          <div class="form-row">
+            <div class="form-group">
+              <label for="proj-ptype">Program *</label>
+              <select id="proj-ptype" onchange="dpProgramChanged()" disabled>
+                <option value="">— Select program —</option>
+                <option value="rus">RUS</option>
+                <option value="bau">BAU</option>
+                <option value="gfr">GF(R)</option>
+                <option value="other">Other</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label for="dp-service-area">Service Area *</label>
+              <select id="dp-service-area" disabled aria-label="Service area" onchange="dpSaChanged()">
+                <option value="">— Select program first —</option>
+              </select>
+            </div>
           </div>
+          <div class="form-row">
+            <div class="form-group span2">
+              <label for="dp-job-input">Job Name *</label>
+              <input type="text" id="dp-job-input" list="dp-job-list" placeholder="Type a job name or pick existing" disabled autocomplete="off">
+              <datalist id="dp-job-list"></datalist>
+              <span class="form-hint" id="dp-job-hint">Select a service area first</span>
+            </div>
+          </div>
+          <div id="dp-cascade-error" style="display:none;color:var(--danger);font-size:13px;margin-top:4px"></div>
         </div>
         <!-- Parent Project + Concentrator removed — server auto-nests under
              Client → Team → Service Area → Project. PSC clients drive Service
@@ -467,11 +486,7 @@ fetch('/api/auth/me', { credentials: 'include' })
             <input type="text" id="proj-service-area" placeholder="e.g. Buford, Sugar Hill, etc.">
             <span class="form-hint">Free text — projects with the same service area get grouped together under this client + team.</span>
           </div>
-          <div class="form-group" id="proj-ptype-wrap" style="display:none">
-            <label for="proj-ptype">Project Type</label>
-            <select id="proj-ptype" onchange="ptypeChanged()"><option value="">— Select —</option></select>
-            <span class="form-hint">PSC only</span>
-          </div>
+          <!-- proj-ptype select now lives inside #dp-cascade-wrap (cascade create mode) -->
         </div>
         <div class="form-row">
           <div class="form-group">
@@ -807,6 +822,10 @@ async function openProjectModal(){
   populateProjectFormDropdowns();
   document.getElementById('proj-amount-hint').textContent = 'Pick a job to see the right unit';
   document.getElementById('proj-amount-label').innerHTML = 'Footage / Hours <span style="font-weight:400;color:var(--text-muted)">(optional)</span>';
+  // Create mode: show cascade, hide legacy job row (cascade drives project resolution).
+  dpEnterCreateMode();
+  // Restore sessionStorage selections if available.
+  dpRestoreSession();
   om('project-modal');
 }
 
@@ -815,6 +834,8 @@ async function editProject(id){
   // the user still sees the modal (with whatever fields did populate) instead
   // of clicking the edit button and seeing nothing happen.
   document.getElementById('proj-modal-title').textContent = 'Edit Project';
+  // Edit mode: hide cascade, restore legacy project fields.
+  dpEnterEditMode();
   om('project-modal');
 
   try { await ensureCachesLoaded(); } catch (e) { console.error('caches load failed:', e); }
@@ -891,16 +912,7 @@ function populateProjectFormDropdowns(){
   // ECs at the time clientChanged fires.
   const cl = document.getElementById('proj-client');
   cl.innerHTML = '<option value="">Select...</option>' + clientsCache.map(c => `<option value="${c.id}" data-show-contract="${c.show_contract?1:0}" data-show-wo="${c.show_work_order?1:0}">${esc(c.name)}</option>`).join('');
-  // Project types — Phase 3b: fixed program enum (rus|bau|gfr|other).
-  // The legacy projectTypesCache still gets fetched (the /api/project-types
-  // shim now returns the same enum), but we ignore it here and render a
-  // static list so the codepath is decoupled from the deprecated table.
-  const pt = document.getElementById('proj-ptype');
-  pt.innerHTML = '<option value="">— Select —</option>' +
-    `<option value="rus">RUS</option>` +
-    `<option value="bau">BAU</option>` +
-    `<option value="gfr">GF(R)</option>` +
-    `<option value="other">Other</option>`;
+  // proj-ptype options are now hardcoded in HTML inside #dp-cascade-wrap — no render needed here.
   // Jobs (will be re-filtered by client when a client is picked; empty list until then is fine)
   refilterJobsDropdown();
 }
@@ -1026,8 +1038,7 @@ function applyPortalProjectModalFieldGating() {
   // explicitly selected (effective=null) — not when program is BAU or Other.
   const showContract = clientId && (usesRusInfra || (!effective && opt?.dataset.showContract === '1'));
 
-  const ptypeWrap = document.getElementById('proj-ptype-wrap');
-  if (ptypeWrap) ptypeWrap.style.display = clientId ? '' : 'none';
+  // proj-ptype-wrap removed — Program select moved to cascade UI (#dp-cascade-wrap)
 
   const contractWrap = document.getElementById('proj-contract-wrap');
   if (contractWrap) {
@@ -1180,10 +1191,9 @@ async function clientChanged(preserveJobId){
   // 2) Refilter jobs dropdown
   await refilterJobsDropdown();
 
-  // 2b) Load existing leaf projects for this client into the optional
-  //     pick-to-edit dropdown. Helps avoid duplicates and matches the
-  //     "Client → Type → Existing Project (with WO#) → Job" cascade.
-  await loadExistingProjectsForClient();
+  // 2b) In create mode, populate the Program dropdown from the ECs available
+  //     for this client, then reset downstream cascade selects.
+  dpClientChanged();
 
   // 3) Refresh contracts dropdown — de-dupe by display label so repeats
   //    don't pile up. The contracts table can accumulate duplicate rows
@@ -1262,6 +1272,245 @@ function existingProjectPicked(id) {
   editProject(id);
 }
 
+// ─── Design cascade picker (Phase B2a) ───────────────────────────────────────
+// Client → Program → Service Area → Job (combo with datalist)
+// Shows in create mode; hidden in edit mode.
+// sessionStorage keys: lf_dp_cascade_client, lf_dp_cascade_program,
+//                      lf_dp_cascade_sa, lf_dp_cascade_job
+
+const _dpSaCache = {}; // ecId → [{id, name}]
+
+function dpEnterCreateMode() {
+  const cascadeWrap = document.getElementById('dp-cascade-wrap');
+  if (cascadeWrap) cascadeWrap.style.display = '';
+  // Hide the legacy job row in create mode — cascade drives project resolution.
+  const jobRow = document.getElementById('proj-job')?.closest('.form-row');
+  if (jobRow) jobRow.style.display = 'none';
+  // Reset cascade state.
+  dpResetSaAndJob();
+  const ptSel = document.getElementById('proj-ptype');
+  if (ptSel) { ptSel.value = ''; ptSel.disabled = true; }
+}
+
+function dpEnterEditMode() {
+  const cascadeWrap = document.getElementById('dp-cascade-wrap');
+  if (cascadeWrap) cascadeWrap.style.display = 'none';
+  // Show the legacy job row for edit mode.
+  const jobRow = document.getElementById('proj-job')?.closest('.form-row');
+  if (jobRow) jobRow.style.display = '';
+  dpClearError();
+}
+
+function dpResetSaAndJob() {
+  const saSel = document.getElementById('dp-service-area');
+  if (saSel) { saSel.innerHTML = '<option value="">— Select program first —</option>'; saSel.disabled = true; }
+  const jobIn = document.getElementById('dp-job-input');
+  if (jobIn) { jobIn.value = ''; jobIn.disabled = true; }
+  const dl = document.getElementById('dp-job-list');
+  if (dl) dl.innerHTML = '';
+  const hint = document.getElementById('dp-job-hint');
+  if (hint) hint.textContent = 'Select a service area first';
+  dpClearError();
+}
+
+function dpClearError() {
+  const errEl = document.getElementById('dp-cascade-error');
+  if (errEl) { errEl.style.display = 'none'; errEl.textContent = ''; }
+}
+
+function dpShowError(msg) {
+  const errEl = document.getElementById('dp-cascade-error');
+  if (!errEl) return;
+  errEl.textContent = msg;
+  errEl.style.display = '';
+}
+
+// Called when client select changes in create mode.
+function dpClientChanged() {
+  const clientId = document.getElementById('proj-client')?.value;
+  const ptSel = document.getElementById('proj-ptype');
+  if (!ptSel) return;
+  dpResetSaAndJob();
+  if (!clientId) {
+    ptSel.value = '';
+    ptSel.disabled = true;
+    return;
+  }
+  // Enable program select, populate with programs that have active ECs for this client.
+  const ecs = (window.engineeringContractsCache || []).filter(e => e.client_id === clientId);
+  const programs = [...new Set(ecs.map(e => e.program).filter(Boolean))];
+  ptSel.innerHTML = '<option value="">— Select program —</option>' +
+    [['rus','RUS'],['bau','BAU'],['gfr','GF(R)'],['other','Other']]
+      .filter(([v]) => !programs.length || programs.includes(v))
+      .map(([v,l]) => `<option value="${esc(v)}">${esc(l)}</option>`)
+      .join('');
+  ptSel.disabled = false;
+  sessionStorage.setItem('lf_dp_cascade_client', clientId);
+  sessionStorage.removeItem('lf_dp_cascade_program');
+  sessionStorage.removeItem('lf_dp_cascade_sa');
+  sessionStorage.removeItem('lf_dp_cascade_job');
+}
+
+// Called when program (proj-ptype) changes in create mode.
+async function dpProgramChanged() {
+  // In edit mode, cascade is hidden — use old ptypeChanged behavior.
+  const cascadeWrap = document.getElementById('dp-cascade-wrap');
+  if (!cascadeWrap || cascadeWrap.style.display === 'none') {
+    return ptypeChanged();
+  }
+  const clientId = document.getElementById('proj-client')?.value;
+  const program = document.getElementById('proj-ptype')?.value;
+  dpResetSaAndJob();
+  if (!clientId || !program) return;
+
+  sessionStorage.setItem('lf_dp_cascade_program', program);
+  sessionStorage.removeItem('lf_dp_cascade_sa');
+  sessionStorage.removeItem('lf_dp_cascade_job');
+
+  // Find the EC for this client + program.
+  const ec = (window.engineeringContractsCache || []).find(e => e.client_id === clientId && e.program === program);
+  if (!ec) {
+    dpShowError('No engineering contract found for this client + program. Ask admin to create one.');
+    return;
+  }
+  const saSel = document.getElementById('dp-service-area');
+  if (!saSel) return;
+  saSel.innerHTML = '<option value="">Loading service areas...</option>';
+  saSel.disabled = true;
+  try {
+    let sas = _dpSaCache[ec.id];
+    if (!sas) {
+      sas = await api('/api/engineering-contracts/' + ec.id + '/service-areas');
+      _dpSaCache[ec.id] = sas;
+    }
+    if (!sas.length) {
+      saSel.innerHTML = '<option value="">No service areas — ask admin to add</option>';
+      return;
+    }
+    saSel.innerHTML = '<option value="">— Select service area —</option>' +
+      sas.map(sa => `<option value="${esc(sa.id)}">${esc(sa.name)}</option>`).join('');
+    saSel.disabled = false;
+  } catch (e) {
+    saSel.innerHTML = '<option value="">Failed to load service areas</option>';
+    dpShowError('Could not load service areas: ' + (e.message || 'server error'));
+  }
+}
+
+// Called when service area changes.
+async function dpSaChanged() {
+  const saId = document.getElementById('dp-service-area')?.value;
+  const jobIn = document.getElementById('dp-job-input');
+  const dl = document.getElementById('dp-job-list');
+  const hint = document.getElementById('dp-job-hint');
+  dpClearError();
+  if (!saId) {
+    if (jobIn) { jobIn.disabled = true; jobIn.value = ''; }
+    if (dl) dl.innerHTML = '';
+    if (hint) hint.textContent = 'Select a service area first';
+    return;
+  }
+  sessionStorage.setItem('lf_dp_cascade_sa', saId);
+  sessionStorage.removeItem('lf_dp_cascade_job');
+  if (jobIn) { jobIn.disabled = true; }
+  if (hint) hint.textContent = 'Loading existing jobs...';
+  try {
+    const leaves = await api('/api/projects?parent_id=' + encodeURIComponent(saId) + '&leaves_only=true&status=active&limit=all');
+    if (dl) {
+      dl.innerHTML = (leaves || [])
+        .map(p => `<option value="${esc(p.name)}"></option>`)
+        .join('');
+    }
+    if (jobIn) { jobIn.disabled = false; jobIn.value = ''; }
+    if (hint) hint.textContent = leaves.length ? `${leaves.length} existing job${leaves.length !== 1 ? 's' : ''} available` : 'No existing jobs — type a name to create one';
+  } catch (e) {
+    if (jobIn) { jobIn.disabled = false; }
+    if (hint) hint.textContent = 'Type a job name';
+    dpShowError('Could not load existing jobs: ' + (e.message || 'server error'));
+  }
+}
+
+// Submit the cascade form: resolve-or-create the leaf project.
+async function dpSubmitCascade() {
+  const clientId = document.getElementById('proj-client')?.value;
+  const program = document.getElementById('proj-ptype')?.value;
+  const saId = document.getElementById('dp-service-area')?.value;
+  const jobName = document.getElementById('dp-job-input')?.value.trim();
+  const name = document.getElementById('proj-name').value.trim();
+
+  dpClearError();
+
+  if (!clientId) return alert('Client is required');
+  if (!program) return alert('Program is required');
+  if (!saId) return alert('Service Area is required');
+  if (!jobName) return alert('Job name is required');
+  // proj-name is optional in cascade mode — default to job name if blank.
+  const projectName = name || jobName;
+
+  const payload = { client_id: clientId, program, service_area_id: saId, job_name: jobName };
+  try {
+    const result = await api('/api/projects/resolve-or-create', 'POST', payload);
+    const created = result.created !== false;
+    // Persist sessionStorage on successful submit.
+    sessionStorage.setItem('lf_dp_cascade_client', clientId);
+    sessionStorage.setItem('lf_dp_cascade_program', program);
+    sessionStorage.setItem('lf_dp_cascade_sa', saId);
+    sessionStorage.setItem('lf_dp_cascade_job', jobName);
+    if (created) {
+      // Show a brief toast if the job was newly created.
+      dpShowToast('Created new job: ' + jobName);
+    }
+    cm('project-modal');
+    loadProjects();
+    loadPipeline();
+  } catch (e) {
+    if (e.message && e.message.includes('admin must initialize service area')) {
+      dpShowError('Service area not initialized — ask admin to set up the project folder.');
+    } else if (e.message && e.message.includes('No active engineering contract')) {
+      dpShowError('No engineering contract for this client + program. Ask admin.');
+    } else {
+      dpShowError('Submit failed: ' + (e.message || 'server error'));
+    }
+  }
+}
+
+// Restore cascade selections from sessionStorage after modal open.
+async function dpRestoreSession() {
+  const storedClient = sessionStorage.getItem('lf_dp_cascade_client');
+  const storedProgram = sessionStorage.getItem('lf_dp_cascade_program');
+  const storedSa = sessionStorage.getItem('lf_dp_cascade_sa');
+  const storedJob = sessionStorage.getItem('lf_dp_cascade_job');
+  if (!storedClient) return;
+  const clientSel = document.getElementById('proj-client');
+  if (!clientSel) return;
+  // Ensure the cached client is still available.
+  if (![...clientSel.options].some(o => o.value === storedClient)) return;
+  clientSel.value = storedClient;
+  dpClientChanged();
+  if (!storedProgram) return;
+  const ptSel = document.getElementById('proj-ptype');
+  if (!ptSel) return;
+  ptSel.value = storedProgram;
+  await dpProgramChanged();
+  if (!storedSa) return;
+  const saSel = document.getElementById('dp-service-area');
+  if (!saSel || saSel.disabled) return;
+  if (![...saSel.options].some(o => o.value === storedSa)) return;
+  saSel.value = storedSa;
+  await dpSaChanged();
+  if (!storedJob) return;
+  const jobIn = document.getElementById('dp-job-input');
+  if (jobIn && !jobIn.disabled) jobIn.value = storedJob;
+}
+
+function dpShowToast(msg) {
+  const t = document.createElement('div');
+  t.textContent = msg;
+  t.style.cssText = 'position:fixed;bottom:24px;right:24px;background:var(--success);color:#fff;padding:10px 18px;border-radius:8px;font-size:13px;z-index:9999;box-shadow:0 2px 8px rgba(0,0,0,.18)';
+  document.body.appendChild(t);
+  setTimeout(() => t.remove(), 3000);
+}
+// ─── End design cascade picker ────────────────────────────────────────────────
+
 // When the job changes, swap the Footage/Hours label & hint.
 function jobChanged(){
   const opt = document.getElementById('proj-job').selectedOptions[0];
@@ -1284,6 +1533,15 @@ function jobChanged(){
 }
 
 async function saveProject(){
+  const id = document.getElementById('proj-id').value;
+  const isEdit = !!id;
+
+  if (!isEdit) {
+    // CREATE mode — use cascade resolve-or-create.
+    return dpSubmitCascade();
+  }
+
+  // EDIT mode — existing project, PATCH it directly.
   const name = document.getElementById('proj-name').value.trim();
   const client_id = document.getElementById('proj-client').value;
   const job_id = document.getElementById('proj-job').value;
@@ -1291,12 +1549,10 @@ async function saveProject(){
   if (!client_id) return alert('Client is required');
   if (!job_id) return alert('Job is required');
 
-  // Map the single Footage/Hours field to the right backend field
   const opt = document.getElementById('proj-job').selectedOptions[0];
   const isFootage = opt && (opt.dataset.permit === '1' || opt.dataset.bt === 'footage');
   const amount = parseFloat(document.getElementById('proj-amount').value);
 
-  // Derive legacy project_type from job name — required NOT NULL column on projects.
   let legacyType = 'other';
   if (opt) {
     const jn = (opt.text || '').toLowerCase();
@@ -1311,8 +1567,7 @@ async function saveProject(){
     contract_id: document.getElementById('proj-contract').value || null,
     concentrator_id: document.getElementById('proj-concentrator').value || null,
     project_type: legacyType,
-    // Phase 3b: project_type_id was dropped; ptype dropdown holds program enum.
-    program: document.getElementById('proj-ptype').value || null,
+    program: document.getElementById('proj-ptype')?.value || null,
     work_order_number: document.getElementById('proj-wo').value.trim() || null,
     service_area_label: document.getElementById('proj-service-area').value.trim() || null,
     status: document.getElementById('proj-status').value,
@@ -1324,10 +1579,8 @@ async function saveProject(){
     else           payload.hours_estimate = amount;
   }
 
-  const id = document.getElementById('proj-id').value;
   try {
-    if (id) await api('/api/projects/' + id, 'PUT', payload);
-    else    await api('/api/projects', 'POST', payload);
+    await api('/api/projects/' + id, 'PUT', payload);
     cm('project-modal');
     loadProjects();
     loadPipeline();

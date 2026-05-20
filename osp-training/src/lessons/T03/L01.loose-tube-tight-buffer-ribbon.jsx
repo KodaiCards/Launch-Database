@@ -312,7 +312,18 @@ export default function T03L01_LooseTubeTightBufferRibbon() {
       <section data-tier="advanced">
         <h2>Going Deeper</h2>
 
-        <h3 className="mt-4 font-semibold">Rollable ribbon mechanical design</h3>
+        <h3 className="mt-4 font-semibold">How construction type shapes your entire field workflow</h3>
+        <p>
+          The cable construction you choose here in L01 doesn't exist in isolation. It interlocks with the physics you learned in T02 (fiber bend sensitivity + thermal behavior), the splicing techniques you'll learn in T11 (individual fusion vs. mass-fusion), and the inspection procedures you'll follow in T13. A designer or crew lead must know these connections cold: the construction decision drives the splice schedule, the labor hours, and the field reliability.
+        </p>
+        <p className="mt-2">
+          Consider a concrete field scenario: you're assigned to build a 288-fiber feeder route with a tight 3-week schedule. T02 taught you that macrobend loss grows worse at 1550 nm (the long-wavelength you transmit on). T03.L01 taught you that loose-tube cable dominates OSP trunks. Now, here's the decision point: do you spec loose-tube individual fibers (288 splice cycles at 1.5 min each = 7+ hours of continuous fusion splicing) or do you spec ribbon cable (24 ribbons at 3 min per cycle = roughly 1.5 hours of fusion splicing)? The construction choice from this lesson maps directly to the splicing labor from T11. Over a 3-week timeline with crew costs, that's tens of thousands of dollars. And the inspection acceptance criteria from T13 will check the visible cable construction on-site to verify the spec was delivered.
+        </p>
+        <p className="mt-2">
+          This Advanced section goes deeper into the mechanics of each construction type so you understand the tradeoffs at a level that feeds real project decisions.
+        </p>
+
+        <h3 className="mt-5 font-semibold">Rollable ribbon mechanical design</h3>
         <p>
           The key innovation in rollable ribbon is intermittent bonding: instead of a continuous
           matrix bond running the full length of the ribbon, the bonding agent is applied in
