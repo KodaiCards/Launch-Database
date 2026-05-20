@@ -333,6 +333,98 @@ export default function T09L02_NepaTypes() {
           NEPA analysis.
         </p>
 
+        <h3 className="mt-5 font-semibold">Multi-Agency Sequencing — When You Need Multiple Permits in Sequence</h3>
+        <p>
+          Even a single fiber route often requires approvals from more than one authority. A route
+          that crosses a navigable stream needs a USACE permit. If it runs across state forest land,
+          the state forestry agency must approve. If it follows a county road, the county road manager
+          must grant the encroachment. And if it approaches a Native American reservation boundary or
+          tribal lands, a Section 106 (NHPA) consultation may trigger.
+        </p>
+        <p className="mt-2">
+          The key principle: <strong>some permits GATE others</strong> — meaning you cannot formally
+          apply for one until another is in hand. Getting the sequence wrong wastes months. Here is
+          the typical federal-to-local order:
+        </p>
+
+        <div className="overflow-x-auto mt-3">
+          <table className="w-full text-sm border border-white/10 rounded-lg">
+            <thead className="bg-white/5 text-slate-200">
+              <tr>
+                <th className="px-3 py-2 text-left">Tier</th>
+                <th className="px-3 py-2 text-left">Authority</th>
+                <th className="px-3 py-2 text-left">Typical Gating Rule</th>
+                <th className="px-3 py-2 text-left">Timeline</th>
+              </tr>
+            </thead>
+            <tbody className="text-slate-300/90">
+              <tr className="border-t border-white/10">
+                <td className="px-3 py-2 font-semibold">1 (Federal)</td>
+                <td className="px-3 py-2"><strong>USACE</strong> (U.S. Army Corps of Engineers) for water crossings</td>
+                <td className="px-3 py-2">Required FIRST if your route crosses streams, wetlands, or floodplains. NWP or Individual Permit is the gating approval for any downstream state/local permits.</td>
+                <td className="px-3 py-2">10–20 biz days (NWP); 6–12 mo (IP)</td>
+              </tr>
+              <tr className="border-t border-white/10">
+                <td className="px-3 py-2 font-semibold">2 (Federal)</td>
+                <td className="px-3 py-2"><strong>USFWS</strong> (U.S. Fish &amp; Wildlife Service) for ESA §7 consultation</td>
+                <td className="px-3 py-2">Must conclude BEFORE NEPA can be cleared if T&amp;E species habitat is in the project footprint. Informal or formal Section 7 concurrence is a prerequisite to the lead federal agency (RUS/NTIA) issuing environmental clearance (CE or FONSI).</td>
+                <td className="px-3 py-2">30–90 days (informal); 6–12 mo (formal)</td>
+              </tr>
+              <tr className="border-t border-white/10">
+                <td className="px-3 py-2 font-semibold">3 (State)</td>
+                <td className="px-3 py-2"><strong>State DOT or State Highway Authority</strong> (if route follows state highway)</td>
+                <td className="px-3 py-2">Requires encroachment permit for any work in the state highway right-of-way. Many states require the USACE water-crossing permit to be in hand BEFORE the state DOT will issue encroachment approval (encroachment permit gating rule). If USACE has already cleared, state permit is faster.</td>
+                <td className="px-3 py-2">4–12 weeks</td>
+              </tr>
+              <tr className="border-t border-white/10">
+                <td className="px-3 py-2 font-semibold">4 (Local)</td>
+                <td className="px-3 py-2"><strong>County or Municipal Public Works / Road Manager</strong> (if route uses county/local roads)</td>
+                <td className="px-3 py-2">County road permit often gates on state DOT approval. Municipalities may also require a local encroachment permit or right-of-way-use agreement in addition to state approval.</td>
+                <td className="px-3 py-2">2–8 weeks</td>
+              </tr>
+              <tr className="border-t border-white/10">
+                <td className="px-3 py-2 font-semibold">5 (Special)</td>
+                <td className="px-3 py-2"><strong>Tribal Government</strong> (if project is on or near Indian lands) or <strong>SHPO</strong> (State Historic Preservation Office) for NHPA §106 consultation</td>
+                <td className="px-3 py-2">Section 106 (NHPA) consultation for historic properties in the project Area of Potential Effect (APE). Tribal consultation (if applicable) often runs in parallel with SHPO. Both must conclude BEFORE the lead federal agency (RUS/NTIA) can issue environmental clearance. Some BEAD programs add a government-to-government consultation step if the project is on or near tribal lands.</td>
+                <td className="px-3 py-2">4–12 weeks (SHPO); 6–12 mo (formal MOA negotiations)</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <h4 className="mt-4 font-semibold text-sm">Why sequencing matters: a concrete example</h4>
+        <div className="mt-3 p-3 border border-cyan-400/30 bg-cyan-400/5 rounded-lg text-sm">
+          <p className="text-slate-300/90 mb-2">
+            <strong>Scenario:</strong> Your 10-mile BEAD fiber route crosses 3 water bodies (so USACE involvement),
+            runs 6 miles on a state highway, and 2 miles on county roads. It also has documented Northern
+            Long-Eared Bat habitat (so USFWS Section 7 consultation).
+          </p>
+          <p className="text-slate-300/90 mt-2">
+            <strong>Wrong order:</strong> You apply to state DOT for the encroachment permit first (hoping
+            to move fast), then approach USACE. State DOT says "we'll issue your permit once you provide
+            proof of water-crossing clearance from USACE." You're back to USACE. You also skipped the
+            USFWS consultation. Timeline result: State DOT won't commit until USACE finishes (10–20 biz days
+            best case); USFWS takes another 30–90 days minimum once triggered. Total: 4–5 months, and you've
+            had permits sitting in agency in-boxes waiting.
+          </p>
+          <p className="text-slate-300/90 mt-2">
+            <strong>Right order:</strong> Month 1: Initiate USFWS Section 7 consultation (informal pathway
+            preferred if impact is minimal) AND submit USACE NWP application for water crossings in parallel.
+            USACE issues NWP in 10–20 days. Attach NWP to your state DOT encroachment application (Month 2).
+            State DOT, seeing USACE clearance in hand, issues encroachment permit within 4–6 weeks. County
+            road permit follows (Month 3). USFWS informal concurrence arrives by Month 2–3. Lead federal
+            agency (RUS/NTIA) bundles all three into the CE or FONSI. Total: 2–3 months, permits flow smoothly,
+            and you hit the construction schedule.
+          </p>
+        </div>
+
+        <p className="mt-3 text-sm text-slate-300/70">
+          <strong>Field best practice:</strong> Before you even finish route design (end of T04), contact
+          each regulatory authority (USACE, state DOT, county) to understand their specific encroachment
+          process and gating rules. Regulatory timelines vary by region and project specifics. Early
+          coordination prevents the "we needed that permit first" delays that blow project schedules.
+        </p>
+
         <div className="mt-4 p-4 border border-amber-400/30 bg-amber-400/5 rounded-lg text-sm">
           <p className="font-semibold text-amber-300 mb-2">Book vs. Field</p>
           <p className="text-slate-300/90">
