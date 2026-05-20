@@ -24,6 +24,14 @@ export const meta = {
     'CFR',
     'ANSI',
     'code adoption',
+    'Form 307',
+    'Form 740',
+    'Form 740c',
+    'Form 219',
+    'Form 565',
+    'Form 524',
+    'Form 1744',
+    'Form 1755-A',
   ],
   vocabulary_assumed: [
     { term: 'OSP', source_lesson_id: 'T01.L01' },
@@ -47,6 +55,26 @@ export const meta = {
     'Describe what to do when two applicable standards conflict and explain which authority (AHJ) determines which code prevails',
   ],
 };
+
+export const key_terms = [
+  { term: 'IEEE', definition: 'Institute of Electrical and Electronics Engineers — publishes the NESC (C2), the code governing aerial utility line clearances, loading, and construction for OSP work.' },
+  { term: 'NFPA', definition: 'National Fire Protection Association — publishes the NEC (NFPA 70), which governs electrical installations including cable entries into buildings, grounding, and bonding. Adopted by most jurisdictions.' },
+  { term: 'ITU-T', definition: 'International Telecommunication Union – Telecommunication Standardization Sector — publishes the G-series fiber standards used globally (G.652.D for SMF, G.984 for GPON). International body; TIA aligns with ITU-T specs for North American use.' },
+  { term: 'ICEA', definition: 'Insulated Cable Engineers Association — publishes cable construction standards including ICEA S-87-640 (OSP fiber cable construction). Not a regulatory body but widely cited in cable specifications and RUS material lists.' },
+  { term: 'FCC', definition: 'Federal Communications Commission — regulates pole attachment rates and processes (47 CFR Part 1.1411), the one-touch make-ready (OTMR) rules, and spectrum licensing. Critical authority for any project attaching to utility poles.' },
+  { term: 'USACE', definition: 'U.S. Army Corps of Engineers — administers Section 404 permits for work disturbing waters of the United States. Key permit for fiber work: NWP 57 pre-authorizes telecommunications line crossings including fiber conduit HDD bores under navigable waterways.' },
+  { term: 'CFR', definition: 'Code of Federal Regulations — the official body of federal rules. OSP-relevant: 47 CFR (FCC telecom/pole attachment), 7 CFR Parts 1737/1738/1740 (RUS program), 29 CFR (OSHA safety), 33 CFR Part 330 (Corps Nationwide Permit program).' },
+  { term: 'ANSI', definition: 'American National Standards Institute — coordinates voluntary standards accreditation in the US. ANSI O5.1 governs wood utility pole specifications. Many TIA and IEEE standards are also ANSI-accredited.' },
+  { term: 'code adoption', definition: 'The process by which a state or jurisdiction officially incorporates a standards document into law. Until adopted, a standard is voluntary; after adoption it is legally enforceable in that jurisdiction.' },
+  { term: 'Form 307', definition: 'Bid Bond. Required surety submitted with a bid on a RUS construction contract — guarantees the contractor will enter into the construction contract at the bid price if awarded.' },
+  { term: 'Form 740', definition: 'Construction Contract. Awarded construction agreement between RUS borrower and contractor — establishes scope, schedule, payment terms, and RUS oversight rights. The master document binding all parties to the project.' },
+  { term: 'Form 740c', definition: 'Contractor Closeout. Contractor declares work complete and releases borrower from contractor claims — final contractor certification before RUS final inspection. Reconciles all change orders against the original contract.' },
+  { term: 'Form 219', definition: 'Final Inspection Report. RUS field inspector certifies as-built meets approved plans and RUS requirements. Cross-checked against all invoices. Signed by contractor and certified by A/E, triggers final RUS loan advancement.' },
+  { term: 'Form 565', definition: 'Compliance Statement. Borrower certifies project complied with all approved requirements, standards, and RUS conditions — the final compliance affidavit confirming all loan and design conditions were met.' },
+  { term: 'Form 524', definition: 'Plans + Specifications Approval Request. Plans and specifications submitted to RUS for review and approval before construction — RUS must approve design before construction begins. Carries PE stamp and RUS approval signature.' },
+  { term: 'Form 1744', definition: 'Loan Agreement Certifications. Borrower certifies loan-agreement-specific compliance items at advance — certifies the borrower has met all loan preconditions before RUS advances funds for construction.' },
+  { term: 'Form 1755-A', definition: 'Materials Approval. Pre-approved materials list and materials acceptance certification — RUS approves cable type, conduit, poles, and other long-lead items before procurement. Ensures materials comply with RUS standards.' },
+];
 
 export default function T01L09_OspStandardsLandscape() {
   return (
@@ -426,10 +454,13 @@ export default function T01L09_OspStandardsLandscape() {
           { id: 'T01-L09-FC-cfr', front: 'CFR', back: 'Code of Federal Regulations — the official body of federal rules. OSP-relevant: 47 CFR (FCC telecom/pole attachment), 7 CFR Parts 1737/1738/1740 (RUS program), 29 CFR (OSHA safety), 33 CFR Part 330 (Corps of Engineers Nationwide Permit program — pre-authorizes standard categories of work in waters of the US, including NWP 57 for telecom line crossings), 33 CFR Part 323 (individual Section 404 permits for specific dredge/fill projects). Note: 36 CFR is National Park Service / NHPA Section 106 historic preservation — not the Corps permitting authority.' },
           { id: 'T01-L09-FC-ansi', front: 'ANSI', back: 'American National Standards Institute — coordinates voluntary standards accreditation in the US. ANSI O5.1 governs wood utility pole specifications. Many TIA and IEEE standards are also ANSI-accredited.' },
           { id: 'T01-L09-FC-code-adoption', front: 'Code adoption', back: 'The process by which a state or jurisdiction officially incorporates a standards document into law. Example: most states adopt the NEC and NESC by reference in their electrical codes. Until adopted, a standard is voluntary; after adoption it is legally enforceable in that jurisdiction.' },
+          { id: 'T01-L09-FC-form-307', front: 'Form 307', back: 'Bid Bond. Required surety submitted with a bid on a RUS construction contract — guarantees the contractor will enter into the construction contract at the bid price if awarded. Standard federal procurement requirement.' },
           { id: 'T01-L09-FC-form-740', front: 'Form 740', back: 'Construction Contract. Awarded construction agreement between RUS borrower and contractor — establishes scope, schedule, payment terms, and RUS oversight rights. The master document binding all parties to the project.' },
           { id: 'T01-L09-FC-form-740c', front: 'Form 740c', back: 'Contractor Closeout. Contractor declares work complete and releases borrower from contractor claims — final contractor certification before RUS final inspection. Reconciles all change orders and extras against the original contract.' },
           { id: 'T01-L09-FC-form-219', front: 'Form 219', back: 'Final Inspection Report. RUS field inspector certifies as-built meets approved plans and RUS requirements. Cross-checked against all invoices. Signed by contractor and certified by A/E, triggers final RUS loan advancement.' },
           { id: 'T01-L09-FC-form-524', front: 'Form 524', back: 'Plans + Specifications Approval Request. Plans and specifications submitted to RUS for review and approval before construction — RUS must approve design before construction begins. The formal design document carrying PE stamp and RUS approval signature.' },
+          { id: 'T01-L09-FC-form-565', front: 'Form 565', back: 'Compliance Statement. Borrower certifies project complied with all approved requirements, standards, and RUS conditions — the final compliance affidavit confirming all loan and design conditions were met. Foundation of RUS audit defensibility.' },
+          { id: 'T01-L09-FC-form-1744', front: 'Form 1744', back: 'Loan Agreement Certifications. Borrower certifies loan-agreement-specific compliance items at advance — certifies the borrower has met all loan preconditions before RUS advances funds for construction. May be submitted multiple times as milestones are reached.' },
           { id: 'T01-L09-FC-form-1755', front: 'Form 1755-A', back: 'Materials Approval. Pre-approved materials list and materials acceptance certification — RUS approves the cable type, conduit, poles, and other long-lead items before the contractor procures them. Ensures materials comply with RUS standards.' },
         ]}
       />
