@@ -163,6 +163,10 @@ export default function L01() {
 
       {/* ── WORKING ──────────────────────────────────────────────── */}
       <section className="lesson-section working">
+        <div className="border-l-4 border-blue-400/30 bg-blue-400/5 p-3 my-3">
+          <strong className="text-blue-600 dark:text-blue-300">Quick Recall:</strong> This lesson references several construction methods and cost components. <strong>Bore</strong> is the directional drilling technique for underground conduit; <strong>make-ready</strong> is the cost to prepare poles before attaching cable; <strong>pavement restoration</strong> is the cost to repair roads or surfaces damaged during underground work; and <strong>conduit</strong> is the plastic or plastic tubing that houses underground fiber. These are introduced in earlier OSP lessons (T02–T06); we reference them here as cost drivers in your estimate.
+        </div>
+
         <h2>The Four Primary Cost Drivers</h2>
 
         <p>

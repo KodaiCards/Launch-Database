@@ -309,6 +309,10 @@ export default function L07ContingencyAndEscalation() {
 
       {/* ── WORKED EXAMPLE ── */}
       <section className="lesson-section working">
+        <div className="border-l-4 border-blue-400/30 bg-blue-400/5 p-3 my-3">
+          <strong className="text-blue-600 dark:text-blue-300">Quick Recall:</strong> <strong>Bill of materials (BOM)</strong> is the itemized material list (from T04); <strong>make-ready cost</strong> is pole preparation expense (from T02); <strong>bore cost</strong> is directional drilling (from T06); <strong>direct cost</strong> is traceable construction expense (from T01); and <strong>indirect cost/overhead</strong> is non-traceable project support (from T01).
+        </div>
+
         <h2>Building a Project Budget With Contingency and Escalation</h2>
         <WorkedExample {...budgetWorkedExample} />
       </section>

@@ -295,6 +295,10 @@ export default function L04BillOfMaterials() {
 
       {/* ── WORKING ── */}
       <section className="lesson-section working">
+        <div className="border-l-4 border-blue-400/30 bg-blue-400/5 p-3 my-3">
+          <strong className="text-blue-600 dark:text-blue-300">Quick Recall:</strong> <strong>Splice closure</strong> is the enclosure for fiber splices (from T04); <strong>handhole</strong> is the underground access point for conduit (from T03 and T06); <strong>conduit</strong> is the plastic tubing protecting buried fiber (from T03); <strong>innerduct</strong> is smaller plastic tubing inside conduit for easier pulls (from T03); and <strong>FDH (Fiber Distribution Hub)</strong> is the outdoor cabinet terminating fiber to subscribers (from T10).
+        </div>
+
         <h2>Waste Factors and Spare Ratios — Don't Underorder</h2>
 
         <p>

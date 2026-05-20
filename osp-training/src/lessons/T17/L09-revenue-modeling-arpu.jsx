@@ -292,6 +292,10 @@ export default function L09RevenueModelingArpu() {
 
       {/* ── WORKED EXAMPLE ── */}
       <section className="lesson-section working">
+        <div className="border-l-4 border-blue-400/30 bg-blue-400/5 p-3 my-3">
+          <strong className="text-blue-600 dark:text-blue-300">Quick Recall:</strong> <strong>Cost per home passed (CPHP)</strong> is build cost per addressable location (from T08); <strong>contingency allowance</strong> is risk reserve (from T07); <strong>escalation allowance</strong> is inflation buffer (from T07); <strong>direct cost</strong> is traceable expense (from T01); <strong>indirect cost/overhead</strong> is non-traceable support (from T01); and <strong>RUS (Rural Utilities Service)</strong> is the federal agency funding rural broadband (from T01).
+        </div>
+
         <h2>Revenue Model and Payback Period — Step by Step</h2>
         <WorkedExample {...revenueWorkedExample} />
       </section>

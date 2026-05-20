@@ -234,6 +234,10 @@ export default function L06ChangeOrders() {
 
       {/* ── WORKING ── */}
       <section className="lesson-section working">
+        <div className="border-l-4 border-blue-400/30 bg-blue-400/5 p-3 my-3">
+          <strong className="text-blue-600 dark:text-blue-300">Quick Recall:</strong> <strong>7 CFR Part 1788</strong> governs RUS construction procurement (from T05); <strong>force account labor</strong> is owner-employee work with documented time (from T02); <strong>bore cost</strong> is directional drilling (from T06); and <strong>make-ready cost</strong> is pole preparation (from T02).
+        </div>
+
         <h2>Calculating Change Order Cost Impact</h2>
 
         <p>

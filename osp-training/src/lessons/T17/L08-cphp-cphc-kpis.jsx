@@ -345,6 +345,10 @@ export default function L08CphpCphcKpis() {
 
       {/* ── WORKED EXAMPLE ── */}
       <section className="lesson-section working">
+        <div className="border-l-4 border-blue-400/30 bg-blue-400/5 p-3 my-3">
+          <strong className="text-blue-600 dark:text-blue-300">Quick Recall:</strong> <strong>Direct cost</strong> is traceable construction expense (from T01); <strong>indirect cost/overhead</strong> is non-traceable project support (from T01); <strong>contingency allowance</strong> is risk reserve set aside (from T07); <strong>FDH (Fiber Distribution Hub)</strong> is the outdoor termination cabinet (from T10); and <strong>GPON</strong> is the standard passive optical network architecture (from T10).
+        </div>
+
         <h2>CPHP and CPHC — Step-by-Step with Sensitivity Analysis</h2>
         <WorkedExample {...cphpWorkedExample} />
       </section>
