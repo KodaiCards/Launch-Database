@@ -334,67 +334,58 @@ export default function T01L09_OspStandardsLandscape() {
             <tr>
               <th className="px-3 py-2 text-left">Form Number</th>
               <th className="px-3 py-2 text-left">Title</th>
-              <th className="px-3 py-2 text-left">When Used</th>
-              <th className="px-3 py-2 text-left">Who Fills It Out</th>
               <th className="px-3 py-2 text-left">Purpose</th>
+              <th className="px-3 py-2 text-left">Triggering Phase</th>
             </tr>
           </thead>
           <tbody className="text-slate-300/90">
             <tr className="border-t border-white/10">
               <td className="px-3 py-2 font-mono">Form 307</td>
               <td className="px-3 py-2">Bid Bond</td>
-              <td className="px-3 py-2">During bidding / contract award</td>
-              <td className="px-3 py-2">Contractor or bonding company</td>
-              <td className="px-3 py-2">Security that the contractor will enter into the RUS construction contract at the bid price if awarded. Standard surety requirement for federal contracts.</td>
-            </tr>
-            <tr className="border-t border-white/10">
-              <td className="px-3 py-2 font-mono">Form 524</td>
-              <td className="px-3 py-2">Construction Contract</td>
-              <td className="px-3 py-2">At contract execution</td>
-              <td className="px-3 py-2">RUS borrower and contractor (both sign)</td>
-              <td className="px-3 py-2">The legal construction agreement between borrower and contractor. Incorporates RUS requirements, labor standards, and payment terms. The master document binding all parties to the project.</td>
+              <td className="px-3 py-2">Required surety with bid submission — guarantees the contractor will enter into the construction contract at the bid price if awarded. Standard federal procurement requirement.</td>
+              <td className="px-3 py-2">Bid phase</td>
             </tr>
             <tr className="border-t border-white/10">
               <td className="px-3 py-2 font-mono">Form 740</td>
-              <td className="px-3 py-2">Construction Inventory Schedule</td>
-              <td className="px-3 py-2">Throughout construction and at close-out</td>
-              <td className="px-3 py-2">Contractor (or borrower with contractor input)</td>
-              <td className="px-3 py-2">Cumulative listing of all materials and equipment used on the project. Tracks what was purchased, received, and incorporated into the plant. Used to reconcile invoice charges against actual deliverables and to verify materials comply with RUS-accepted products lists.</td>
+              <td className="px-3 py-2">Construction Contract</td>
+              <td className="px-3 py-2">Awarded construction agreement between borrower and contractor — establishes scope, schedule, payment terms, and RUS oversight rights. The master document binding all parties to the project.</td>
+              <td className="px-3 py-2">Pre-construction phase</td>
             </tr>
             <tr className="border-t border-white/10">
               <td className="px-3 py-2 font-mono">Form 740c</td>
-              <td className="px-3 py-2">Construction Inventory Schedule — Continuation</td>
-              <td className="px-3 py-2">When Form 740 exceeds one page</td>
-              <td className="px-3 py-2">Contractor (continuation of Form 740)</td>
-              <td className="px-3 py-2">Additional pages for Form 740 when the material/equipment list extends beyond one page. Numbered sequentially (740c, 740cc, etc.) to maintain continuity of the inventory.</td>
-            </tr>
-            <tr className="border-t border-white/10">
-              <td className="px-3 py-2 font-mono">Form 565</td>
-              <td className="px-3 py-2">Construction Inspection Daily Report (DIR)</td>
-              <td className="px-3 py-2">Daily during construction</td>
-              <td className="px-3 py-2">RUS inspector or third-party inspector hired by borrower</td>
-              <td className="px-3 py-2">Field record of daily construction progress, weather conditions, crew size, materials received, work accomplished, and any discrepancies or non-conformances noted. The paper trail proving construction was inspected daily and confirming what was actually built vs. what was contracted. Essential for audit trail and dispute resolution.</td>
-            </tr>
-            <tr className="border-t border-white/10">
-              <td className="px-3 py-2 font-mono">Form 1744</td>
-              <td className="px-3 py-2">Architect / Engineer Agreement</td>
-              <td className="px-3 py-2">At the start of design and engineering</td>
-              <td className="px-3 py-2">RUS borrower and A/E firm (both sign)</td>
-              <td className="px-3 py-2">The contract between borrower and the architectural/engineering firm that designs the project. Specifies scope of design work, fee structure, deliverables (design, specifications, drawings, close-out documentation), and compliance with RUS design bulletins. The A/E remains responsible for design compliance even after construction begins.</td>
-            </tr>
-            <tr className="border-t border-white/10">
-              <td className="px-3 py-2 font-mono">Form 1755-A</td>
-              <td className="px-3 py-2">Right-of-Way Easement</td>
-              <td className="px-3 py-2">Before construction (may be before or after design, depending on land ownership)</td>
-              <td className="px-3 py-2">Property owner and borrower/operator (both sign)</td>
-              <td className="px-3 py-2">The legal easement document granting the borrower the right to access, construct, and operate the telecom plant on private land. Standard RUS form incorporating typical terms: duration (perpetual or term), maintenance rights, liability, abandonment obligations. Critical for any off-highway buried or overhead plant on private ROW.</td>
+              <td className="px-3 py-2">Contractor Closeout</td>
+              <td className="px-3 py-2">Contractor declares work complete and releases borrower from contractor claims — final contractor certification before RUS final inspection. Reconciles all change orders and extras against the original Form 740 contract.</td>
+              <td className="px-3 py-2">Closeout phase</td>
             </tr>
             <tr className="border-t border-white/10">
               <td className="px-3 py-2 font-mono">Form 219</td>
-              <td className="px-3 py-2">Inventory of Work Orders</td>
-              <td className="px-3 py-2">At close-out (final accounting)</td>
-              <td className="px-3 py-2">Contractor and borrower (final certification by A/E)</td>
-              <td className="px-3 py-2">Final inventory of all work orders executed and materials incorporated. The definitive list of what was actually built vs. what was contracted and invoiced. Cross-checked against Form 740 (construction inventory) and all invoices. Signed by contractor and certified by A/E, this form closes out the contract and triggers final loan advancement by RUS. The most critical form for RUS close-out.</td>
+              <td className="px-3 py-2">Final Inspection Report</td>
+              <td className="px-3 py-2">RUS field inspector certifies as-built meets approved plans and RUS requirements — the definitive list of what was actually built vs. what was contracted. Cross-checked against all invoices. Signed by contractor and certified by A/E, triggers final RUS loan advancement.</td>
+              <td className="px-3 py-2">Final phase</td>
+            </tr>
+            <tr className="border-t border-white/10">
+              <td className="px-3 py-2 font-mono">Form 565</td>
+              <td className="px-3 py-2">Compliance Statement</td>
+              <td className="px-3 py-2">Borrower certifies project complied with all approved requirements, standards, and RUS conditions — the final compliance affidavit confirming the project met all loan and design conditions. Foundation of RUS audit defensibility.</td>
+              <td className="px-3 py-2">Closeout phase</td>
+            </tr>
+            <tr className="border-t border-white/10">
+              <td className="px-3 py-2 font-mono">Form 524</td>
+              <td className="px-3 py-2">Plans + Specifications Approval Request</td>
+              <td className="px-3 py-2">Plans and specifications submitted to RUS for review and approval before construction — RUS must approve design before construction begins. The formal design document carrying PE stamp and RUS approval signature.</td>
+              <td className="px-3 py-2">Pre-construction phase</td>
+            </tr>
+            <tr className="border-t border-white/10">
+              <td className="px-3 py-2 font-mono">Form 1744</td>
+              <td className="px-3 py-2">Loan Agreement Certifications</td>
+              <td className="px-3 py-2">Borrower certifies loan-agreement-specific compliance items at advance — certifies the borrower has met all loan preconditions before RUS advances funds for construction. May be submitted multiple times as milestones are reached.</td>
+              <td className="px-3 py-2">Construction phase</td>
+            </tr>
+            <tr className="border-t border-white/10">
+              <td className="px-3 py-2 font-mono">Form 1755-A</td>
+              <td className="px-3 py-2">Materials Approval</td>
+              <td className="px-3 py-2">Pre-approved materials list and materials acceptance certification — RUS approves the cable type, conduit, poles, and other long-lead items BEFORE the contractor procures them. Ensures materials comply with RUS standards and approved products lists.</td>
+              <td className="px-3 py-2">Pre-construction phase</td>
             </tr>
           </tbody>
         </table>
@@ -435,11 +426,11 @@ export default function T01L09_OspStandardsLandscape() {
           { id: 'T01-L09-FC-cfr', front: 'CFR', back: 'Code of Federal Regulations — the official body of federal rules. OSP-relevant: 47 CFR (FCC telecom/pole attachment), 7 CFR Parts 1737/1738/1740 (RUS program), 29 CFR (OSHA safety), 33 CFR Part 330 (Corps of Engineers Nationwide Permit program — pre-authorizes standard categories of work in waters of the US, including NWP 57 for telecom line crossings), 33 CFR Part 323 (individual Section 404 permits for specific dredge/fill projects). Note: 36 CFR is National Park Service / NHPA Section 106 historic preservation — not the Corps permitting authority.' },
           { id: 'T01-L09-FC-ansi', front: 'ANSI', back: 'American National Standards Institute — coordinates voluntary standards accreditation in the US. ANSI O5.1 governs wood utility pole specifications. Many TIA and IEEE standards are also ANSI-accredited.' },
           { id: 'T01-L09-FC-code-adoption', front: 'Code adoption', back: 'The process by which a state or jurisdiction officially incorporates a standards document into law. Example: most states adopt the NEC and NESC by reference in their electrical codes. Until adopted, a standard is voluntary; after adoption it is legally enforceable in that jurisdiction.' },
-          { id: 'T01-L09-FC-form-219', front: 'RUS Form 219', back: 'Inventory of Work Orders — the final close-out document certifying what was actually built. Cross-checked against all invoices and the construction inventory. Signed by contractor and certified by A/E; triggers final RUS loan advancement.' },
-          { id: 'T01-L09-FC-form-565', front: 'RUS Form 565', back: 'Construction Inspection Daily Report (DIR) — field inspection record completed each construction day. Documents crew, materials, work accomplished, weather, and non-conformances. The audit trail proving daily inspection occurred and the foundation of project defensibility.' },
-          { id: 'T01-L09-FC-form-740', front: 'RUS Form 740', back: 'Construction Inventory Schedule — cumulative list of all materials and equipment delivered and incorporated into the project. Cross-checked against Form 219 (close-out) and invoices to verify RUS material acceptance.' },
-          { id: 'T01-L09-FC-form-307', front: 'RUS Form 307', back: 'Bid Bond — security posted by contractor during bidding, guaranteeing the contractor will execute the construction contract (Form 524) if awarded. Standard federal procurement requirement.' },
-          { id: 'T01-L09-FC-form-1755', front: 'RUS Form 1755-A', back: 'Right-of-Way Easement — legal easement granting borrower the right to construct and operate telecom plant on private land. Standard RUS form; perpetual term; governs maintenance rights, liability, and abandonment.' },
+          { id: 'T01-L09-FC-form-740', front: 'Form 740', back: 'Construction Contract. Awarded construction agreement between RUS borrower and contractor — establishes scope, schedule, payment terms, and RUS oversight rights. The master document binding all parties to the project.' },
+          { id: 'T01-L09-FC-form-740c', front: 'Form 740c', back: 'Contractor Closeout. Contractor declares work complete and releases borrower from contractor claims — final contractor certification before RUS final inspection. Reconciles all change orders and extras against the original contract.' },
+          { id: 'T01-L09-FC-form-219', front: 'Form 219', back: 'Final Inspection Report. RUS field inspector certifies as-built meets approved plans and RUS requirements. Cross-checked against all invoices. Signed by contractor and certified by A/E, triggers final RUS loan advancement.' },
+          { id: 'T01-L09-FC-form-524', front: 'Form 524', back: 'Plans + Specifications Approval Request. Plans and specifications submitted to RUS for review and approval before construction — RUS must approve design before construction begins. The formal design document carrying PE stamp and RUS approval signature.' },
+          { id: 'T01-L09-FC-form-1755', front: 'Form 1755-A', back: 'Materials Approval. Pre-approved materials list and materials acceptance certification — RUS approves the cable type, conduit, poles, and other long-lead items before the contractor procures them. Ensures materials comply with RUS standards.' },
         ]}
       />
 
