@@ -98,8 +98,8 @@ export default function LessonRouter() {
     // Look up the lesson file path from the catalog index.
     // Keys are relative to src/data/ (e.g. "../lessons/T02/L01.fiber-vocabulary.jsx")
     // which also matches the glob keys produced by import.meta.glob above.
-    // Note: lessonOrder is unpadded (1, 2, ..., 15) to match lessonFileIndex keys
-    const key = `${courseId}.L${lessonOrder}`;
+    // Note: lessonOrder from URL is padded (01, 02, ..., 15) to match lessonFileIndex keys
+    const key = `${courseId}.L${String(lessonOrder).padStart(2, '0')}`;
     const filePath = lessonFileIndex[key];
 
     if (!filePath) {

@@ -43,14 +43,15 @@ export default function CourseView() {
   const lessonCount = course.lesson_count || 0;
   const lessons = Array.from({ length: lessonCount }, (_, i) => {
     const order = i + 1;
-    const lessonId = `${courseId}.L${order}`;  // Unpadded: matches lessonFileIndex keys
+    const paddedOrder = String(order).padStart(2, '0');
+    const lessonId = `${courseId}.L${paddedOrder}`;  // Padded: matches lessonFileIndex keys
     const entry = store[lessonId];
     return {
       order,
       lessonId,
       status: entry?.status || 'not_started',
       bestScore: entry?.best_score ?? null,
-      path: `/course/${courseId}/lesson/${order}`,  // Unpadded for route consistency
+      path: `/course/${courseId}/lesson/${paddedOrder}`,  // Padded to match LessonRouter key lookup
     };
   });
 

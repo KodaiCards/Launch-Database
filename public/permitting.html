@@ -1201,7 +1201,7 @@ async function loadExistingProjectsForClient() {
     sel.innerHTML = '<option value="">— Create new below —</option>';
     return;
   }
-  let url = '/api/projects?client_id=' + encodeURIComponent(clientId) + '&status=active';
+  let url = '/api/projects?client_id=' + encodeURIComponent(clientId) + '&status=active&leaves_only=true&limit=all';
   const ptype = document.getElementById('proj-ptype')?.value;
   if (ptype) url += '&project_type=' + encodeURIComponent(ptype);
   try {
