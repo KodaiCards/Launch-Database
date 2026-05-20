@@ -457,7 +457,398 @@ export default function T09L02_NepaTypes() {
       <section data-tier="advanced">
         <h2>Going Deeper</h2>
 
-        <h3 className="mt-4 font-semibold">EA vs. EIS — where the line falls</h3>
+        {/* ── MULTI-CIRCUMSTANCE AGENCY SEQUENCING WORKED EXAMPLES ─────── */}
+        <h3 className="mt-4 font-semibold">Multi-Circumstance Agency Sequencing — Worked Scenarios</h3>
+        <p>
+          In Plain English: real OSP projects rarely hit just one agency. A single route can
+          simultaneously require a state DOT encroachment permit, a pole-attachment (joint-use)
+          agreement with a utility owner, a USACE Section 404 wetland authorization, a railroad
+          crossing agreement, NHPA Section 106 tribal and SHPO consultation, and municipal ROW
+          permits — all before the first shovel hits the ground. The sequencing of these approvals
+          is not arbitrary. Some permits legally gate others. Some agencies won't even open your
+          application until you show proof that another approval is in hand. Getting the order
+          wrong means permits sit in in-boxes waiting, and your construction schedule bleeds months.
+        </p>
+        <p className="mt-2">
+          The three scenarios below walk through representative real-world call-orders. Each names
+          the specific statutes and regulations involved, identifies which approvals gate which, and
+          shows the schedule impact of getting the order right versus wrong.
+        </p>
+
+        {/* ── SCENARIO A ──────────────────────────────────────────────── */}
+        <div className="mt-5 p-4 border border-white/15 rounded-xl bg-white/[0.02]">
+          <h4 className="font-semibold text-cyan-300 mb-3">
+            Scenario A — Aerial Build: State DOT ROW + Joint-Use Pole Owner + Tribal Land
+          </h4>
+          <p className="text-sm text-slate-300/90 mb-3">
+            <strong>Project description:</strong> 7-mile aerial fiber route. 5 miles follow a
+            state highway ROW, 1.5 miles attach to poles owned by an investor-owned electric utility
+            (IOU), and 0.5 miles cross or run adjacent to tribal trust land owned by a federally
+            recognized tribe. Federal nexus: BEAD funding (NTIA/state broadband office as lead federal
+            agency). No T&E species in IPaC results. No wetlands.
+          </p>
+
+          <p className="text-sm font-semibold text-slate-200 mb-1">Agencies involved and their authority:</p>
+          <ul className="list-disc pl-5 space-y-1 text-sm text-slate-300/90 mb-3">
+            <li>
+              <strong>State DOT</strong> — encroachment permit for the 5 miles in state highway ROW.
+              Authority: state highway code (varies by state; consult state DOT utility accommodation
+              policy). The state DOT does not control federal NEPA, but many states require NEPA
+              clearance to be in process before they will schedule a field review for the encroachment permit.
+            </li>
+            <li>
+              <strong>Investor-owned electric utility (pole owner)</strong> — joint-use agreement and
+              make-ready authorization for the 1.5-mile pole-attachment segment. Authority: 47 USC §224
+              (Pole Attachment Act; applies to cable operators and telecom providers attaching to utility
+              poles) and state PUC utility accommodation tariffs. IMPORTANT: joint-use approval is
+              independent of all NEPA approvals — the pole owner's process is entirely separate from
+              federal environmental review. Joint-use processing does NOT wait for NEPA to clear; you
+              can (and should) submit the joint-use application simultaneously with NEPA.
+            </li>
+            <li>
+              <strong>Tribal Historic Preservation Officer (THPO)</strong> — NHPA Section 106
+              (54 USC §306108) consultation for the segment on or adjacent to tribal trust land.
+              Authority: National Historic Preservation Act §106 (54 USC §306108); 36 CFR Part 800
+              (implementing regulations). Where a tribe has its own THPO (replacing SHPO for tribal lands),
+              consultation is directly with the THPO. Where the tribe does not have its own THPO, the
+              SHPO handles the consultation but the tribe must still be invited as a consulting party
+              (36 CFR §800.2(c)(2)). Section 106 also triggers government-to-government consultation
+              with the tribal government itself — a legally distinct obligation from the THPO technical
+              review (Executive Order 13175; 36 CFR §800.2(c)(2)(ii)).
+            </li>
+          </ul>
+
+          <p className="text-sm font-semibold text-slate-200 mb-1">What blocks what:</p>
+          <div className="overflow-x-auto mb-3">
+            <table className="w-full text-xs border border-white/10 rounded-lg">
+              <thead className="bg-white/5 text-slate-200">
+                <tr>
+                  <th className="px-2 py-2 text-left">Approval needed</th>
+                  <th className="px-2 py-2 text-left">Gated by</th>
+                  <th className="px-2 py-2 text-left">Notes</th>
+                </tr>
+              </thead>
+              <tbody className="text-slate-300/90">
+                <tr className="border-t border-white/10">
+                  <td className="px-2 py-2">NEPA clearance (CE or FONSI)</td>
+                  <td className="px-2 py-2">Section 106 (THPO/SHPO) must conclude first</td>
+                  <td className="px-2 py-2">Lead federal agency (NTIA/state) cannot issue CE until §106 closes; 54 USC §306108 requires §106 consultation prior to approving the undertaking</td>
+                </tr>
+                <tr className="border-t border-white/10">
+                  <td className="px-2 py-2">State DOT encroachment permit</td>
+                  <td className="px-2 py-2">NEPA clearance in process (or in hand)</td>
+                  <td className="px-2 py-2">Most state DOTs require proof that the federal environmental review has been initiated before scheduling field review; some require NEPA to be cleared before final permit issuance</td>
+                </tr>
+                <tr className="border-t border-white/10">
+                  <td className="px-2 py-2">Joint-use / pole attachment agreement</td>
+                  <td className="px-2 py-2">INDEPENDENT — not gated by NEPA or state DOT</td>
+                  <td className="px-2 py-2">Process runs on its own track; utility's make-ready survey, attachment application, and agreement execution do not depend on government permits. Start this on Day 1. It is often the longest track (3–6 months for complex make-ready) and is the most commonly delayed start.</td>
+                </tr>
+                <tr className="border-t border-white/10">
+                  <td className="px-2 py-2">Construction authorization</td>
+                  <td className="px-2 py-2">All four: NEPA clearance + state DOT encroachment permit + joint-use agreement + THPO/tribal consultation concluded</td>
+                  <td className="px-2 py-2">The last approval in hand unlocks construction. Often the joint-use agreement is the slowest track and is the actual construction gating item.</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+
+          <p className="text-sm font-semibold text-slate-200 mb-1">Correct call-order and schedule:</p>
+          <ol className="list-decimal pl-5 space-y-1 text-sm text-slate-300/90">
+            <li>
+              <strong>Day 1 — Initiate simultaneously:</strong> (a) Submit joint-use application to the
+              IOU (utility company) with make-ready survey request; (b) Submit Notice of Applicability
+              to THPO/SHPO for Section 106 under 36 CFR Part 800; (c) Initiate government-to-government
+              tribal consultation letter (Executive Order 13175); (d) Submit state DOT encroachment
+              permit pre-application or inquiry so the DOT is aware and can schedule field review.
+            </li>
+            <li>
+              <strong>Weeks 2–6:</strong> THPO reviews the 0.5-mile tribal land segment (APE).
+              If no historic properties are present: THPO issues a "No Historic Properties Affected"
+              finding — Section 106 concludes. State DOT uses this period for internal review.
+              Utility begins make-ready survey.
+            </li>
+            <li>
+              <strong>Weeks 4–8:</strong> NEPA CE issued by lead federal agency once Section 106 concludes
+              (assuming no extraordinary circumstances found). State DOT encroachment permit issued within
+              30–60 days of NEPA clearance (or concurrent with NEPA if the DOT process allows).
+            </li>
+            <li>
+              <strong>Months 3–6:</strong> Joint-use agreement executed after make-ready estimate accepted
+              and make-ready work completed by the utility. This is usually the critical-path item — not
+              NEPA, not the state DOT.
+            </li>
+            <li>
+              <strong>Construction authorized</strong> when joint-use agreement is fully executed and all
+              government permits are in hand.
+            </li>
+          </ol>
+
+          <div className="mt-3 p-3 border border-amber-400/30 bg-amber-400/5 rounded-lg text-xs">
+            <p className="font-semibold text-amber-300 mb-1">Book vs. Field — joint-use as the hidden critical path</p>
+            <p className="text-slate-300/90">
+              <strong>Book (47 USC §224):</strong> The Pole Attachment Act requires utilities to provide
+              non-discriminatory access to their poles for cable operators and telecom providers at regulated
+              rates. Utilities have a defined timeframe to respond to attachment applications.
+            </p>
+            <p className="text-slate-300/90 mt-1">
+              <strong>Field:</strong> In practice, utilities are under no obligation to rush. Make-ready
+              surveys can take 30–90 days; make-ready construction by the utility's own crews can take
+              another 60–120 days before you are allowed to attach. BEAD subgrantees who start joint-use
+              applications AFTER their NEPA and state DOT permits are in hand have already burned 3–5 months
+              of avoidable delay. Start joint-use Day 1 — every month of parallel processing is a month
+              saved at the back end.
+            </p>
+          </div>
+          <p className="mt-2 text-xs text-slate-400">
+            Citations: 47 USC §224 (Pole Attachment Act); 54 USC §306108 (NHPA §106);
+            36 CFR Part 800 (§106 implementing regs); Executive Order 13175 (tribal consultation);
+            36 CFR §800.2(c)(2) (tribal consulting party requirements).
+          </p>
+        </div>
+
+        {/* ── SCENARIO B ──────────────────────────────────────────────── */}
+        <div className="mt-5 p-4 border border-white/15 rounded-xl bg-white/[0.02]">
+          <h4 className="font-semibold text-cyan-300 mb-3">
+            Scenario B — Underground Bore: USACE Wetland + Railroad Crossing + Municipal ROW
+          </h4>
+          <p className="text-sm text-slate-300/90 mb-3">
+            <strong>Project description:</strong> 4-mile underground directional bore route in a
+            semi-urban area. The route (a) passes through 0.08 acres of jurisdictional wetland (confirmed
+            by NWI map + field delineation), (b) crosses a Class I railroad at-grade via horizontal
+            directional drill (HDD) under the tracks, and (c) runs for 2 miles in a city street ROW under
+            a municipal encroachment permit. Federal nexus: RUS loan (RUS as lead federal agency).
+          </p>
+
+          <p className="text-sm font-semibold text-slate-200 mb-1">Agencies and their authority:</p>
+          <ul className="list-disc pl-5 space-y-1 text-sm text-slate-300/90 mb-3">
+            <li>
+              <strong>USACE</strong> — CWA Section 404 permit (33 USC §1344) for the 0.08-acre wetland impact.
+              At 0.08 acres, the project MAY qualify for Nationwide Permit (NWP) 12 — "Utility Line
+              Activities" — which covers utility-line construction in waters of the U.S. provided total
+              impacts are at or below NWP 12's threshold (verify current NWP 12 thresholds in the most
+              recent USACE NWP reissuance — 2021 reissuance was current as of 2026; confirm with your
+              USACE district office at time of project). If NWP 12 applies, USACE issues a Pre-Construction
+              Notification (PCN) response within 45 days (33 CFR §330.6). If impacts exceed NWP thresholds
+              or the USACE district adds conditions, an Individual Permit (IP) is required (6–12 months).
+            </li>
+            <li>
+              <strong>Railroad (Class I carrier)</strong> — Railroad crossing agreement for the HDD under
+              the tracks. Authority: the railroad company's standard crossing-agreement process (no single
+              federal statute governs private railroad crossing agreements — the authority derives from
+              property rights). The Federal Railroad Administration (FRA) may require a crossing permit
+              or license depending on the railroad's status; 49 CFR Part 213 governs track safety but
+              does not directly issue crossing agreements. The railroad may require a flagging service
+              (railroad employee safety oversight during bore operations) at the applicant's cost, which
+              adds $500–$2,000/day in field costs. Some Class I railroads require 90–180 days to process
+              a crossing agreement application; they are not bound by a statutory review timeline.
+            </li>
+            <li>
+              <strong>Municipality (Public Works or Engineering Department)</strong> — ROW encroachment
+              permit for the 2-mile city street segment. Authority: local municipal code. Most municipalities
+              require the USACE permit to be in hand before they will finalize the encroachment permit for
+              any segment with a Section 404 wetland connection (the municipal permit depends on knowing that
+              the federal water-body crossing is authorized).
+            </li>
+          </ul>
+
+          <p className="text-sm font-semibold text-slate-200 mb-1">The NEPA → USACE NWP gating sequence:</p>
+          <p className="text-sm text-slate-300/90 mb-2">
+            Under RUS NEPA procedures (7 CFR Part 1b, eff. April 3, 2026), the lead federal agency (RUS)
+            coordinates the NEPA review. The USACE Section 404 wetland permit is required before construction
+            in any jurisdictional water of the U.S. — but the NEPA categorical exclusion (CE C-8 for this
+            underground bore in existing ROW) can be evaluated in parallel with the USACE NWP application,
+            not sequentially. The CE can be issued while the NWP PCN is in process, but <strong>construction
+            cannot begin on the wetland segment until BOTH the CE AND the NWP authorization are in hand</strong>.
+            The USACE Section 404 permit is NOT a prerequisite for the CE — they are parallel tracks with
+            different issuing authorities.
+          </p>
+
+          <p className="text-sm font-semibold text-slate-200 mb-1">Correct call-order and schedule:</p>
+          <ol className="list-decimal pl-5 space-y-1 text-sm text-slate-300/90">
+            <li>
+              <strong>Day 1:</strong> Submit USACE NWP 12 Pre-Construction Notification (PCN) for the
+              0.08-acre wetland impact. Also initiate the RUS NEPA CE C-8 checklist with the extraordinary-
+              circumstances documentation (the wetland presence is the extraordinary circumstance; NWP PCN
+              submission demonstrates you are addressing it). Also submit railroad crossing application to
+              the Class I carrier.
+            </li>
+            <li>
+              <strong>Days 10–45:</strong> USACE reviews NWP 12 PCN. If the district issues no additional
+              conditions and the project qualifies, USACE issues NWP 12 authorization. Attach NWP
+              authorization to the municipal ROW encroachment permit application — municipal Engineering
+              Department now knows the Section 404 issue is resolved and will process the encroachment permit.
+            </li>
+            <li>
+              <strong>Days 14–30 (concurrent with USACE):</strong> RUS issues CE C-8 once extraordinary-
+              circumstance analysis confirms NWP coverage of the wetland. CE clearance and NWP can land
+              within days of each other.
+            </li>
+            <li>
+              <strong>Weeks 4–8:</strong> Municipal encroachment permit issued once USACE NWP is in hand.
+            </li>
+            <li>
+              <strong>Months 3–6:</strong> Railroad crossing agreement issued by the railroad company after
+              their internal engineering review. THIS is typically the critical-path item — railroads are
+              slow, not bound by statutory timelines, and may require multiple rounds of plan revisions.
+              Start the railroad application on Day 1. Budget 90–180 days minimum.
+            </li>
+            <li>
+              <strong>Construction authorized</strong> when USACE NWP + CE + municipal encroachment permit
+              + railroad crossing agreement are all in hand.
+            </li>
+          </ol>
+
+          <div className="mt-3 p-3 border border-amber-400/30 bg-amber-400/5 rounded-lg text-xs">
+            <p className="font-semibold text-amber-300 mb-1">Book vs. Field — railroad crossings are the wildcard</p>
+            <p className="text-slate-300/90">
+              <strong>Book:</strong> Horizontal Directional Drilling (HDD) under railroad tracks is a
+              well-established method for utility crossings. AREMA (American Railway Engineering and
+              Maintenance-of-Way Association) Manual Chapter 1 (Roadway and Ballast) and Chapter 2
+              (Tunnels) describe clearance requirements for bored crossings. The bore depth must provide
+              adequate clearance below the bottom of ties (typically 5 ft minimum, but verify with the
+              specific railroad's engineering standards).
+            </p>
+            <p className="text-slate-300/90 mt-1">
+              <strong>Field:</strong> Each Class I railroad (BNSF, UP, CSX, Norfolk Southern, CN/IC, CPKC)
+              has its own Fiber Optic Liaison or Engineering Services department that handles crossing
+              applications. They are not AREMA references — they are individual corporate entities with
+              individual review processes, fees, and timelines. CSX crossing agreements can take 6 months;
+              BNSF has a formal "Fiber Optic Application" process with a designated fee schedule. Missing the
+              railroad application by even 30 days while you finish other permits can push your entire
+              project 90 days right. Start the railroad crossing application the same day you mobilize on
+              any other permit.
+            </p>
+          </div>
+          <p className="mt-2 text-xs text-slate-400">
+            Citations: 33 USC §1344 (CWA §404); 33 CFR Part 330 (USACE NWP program);
+            NWP 12 "Utility Line Activities" — verify current thresholds against most recent
+            USACE NWP reissuance at time of project; 7 CFR Part 1b (eff. April 3, 2026;
+            replaced 7 CFR Part 1970); AREMA Manual Ch. 1 (Roadway and Ballast).
+          </p>
+        </div>
+
+        {/* ── SCENARIO C ──────────────────────────────────────────────── */}
+        <div className="mt-5 p-4 border border-white/15 rounded-xl bg-white/[0.02]">
+          <h4 className="font-semibold text-cyan-300 mb-3">
+            Scenario C — Mixed Aerial/Underground Urban: Utility Coordination and Re-Route Decisions
+          </h4>
+          <p className="text-sm text-slate-300/90 mb-3">
+            <strong>Project description:</strong> 6-mile mixed urban route. Planned as aerial
+            for 4 miles (attaching to existing utility poles in a congested urban street corridor)
+            and underground HDD for 2 miles where the aerial corridor is not available. The project
+            has BEAD funding (federal nexus). During the make-ready survey, the IOU pole owner
+            reports that 1.8 miles of poles require major make-ready work (rearrangement or
+            replacement) that the IOU is unwilling to perform within the project schedule — they
+            will not grant attachment authorization for those poles. A re-route decision is required.
+          </p>
+
+          <p className="text-sm font-semibold text-slate-200 mb-1">The re-route decision tree and its permit implications:</p>
+          <p className="text-sm text-slate-300/90 mb-2">
+            When a pole owner denies or delays aerial attachment, you have three options:
+          </p>
+          <div className="overflow-x-auto mb-3">
+            <table className="w-full text-xs border border-white/10 rounded-lg">
+              <thead className="bg-white/5 text-slate-200">
+                <tr>
+                  <th className="px-2 py-2 text-left">Re-route option</th>
+                  <th className="px-2 py-2 text-left">New permits triggered</th>
+                  <th className="px-2 py-2 text-left">NEPA impact</th>
+                  <th className="px-2 py-2 text-left">Schedule impact</th>
+                </tr>
+              </thead>
+              <tbody className="text-slate-300/90">
+                <tr className="border-t border-white/10">
+                  <td className="px-2 py-2"><strong>A. Convert to underground HDD</strong> on the denied segment (stay in the same street corridor, go underground instead)</td>
+                  <td className="px-2 py-2">New HDD encroachment permit from municipality or state DOT (if state highway). May trigger USACE Section 404 if segment crosses any jurisdictional waters not previously in scope.</td>
+                  <td className="px-2 py-2">If still within existing street ROW: CE C-8 still applies (same corridor, different construction method). Extraordinary-circumstances checklist re-run for the underground footprint (utility crossings, groundwater, contaminated soils). No NEPA restart if CE still fits.</td>
+                  <td className="px-2 py-2">+60–90 days for underground encroachment permit; potentially +45 days if new USACE NWP PCN required. Fastest option if NEPA fits.</td>
+                </tr>
+                <tr className="border-t border-white/10">
+                  <td className="px-2 py-2"><strong>B. Alternate aerial route</strong> on different streets or utility corridors with cooperative pole owners</td>
+                  <td className="px-2 py-2">New joint-use application(s) to different pole owner(s). New state DOT or municipal encroachment permit for the alternate street corridor. Possible new NHPA §106 APE if the alternate route moves into a different historic district or near tribal lands.</td>
+                  <td className="px-2 py-2">Alternate route = new project footprint. CE C-8 checklist re-run on the new footprint — extraordinary-circumstances check must cover the NEW APE, NEW T&E habitat, NEW wetland footprint. If the alternate route enters new environmental resources, NEPA analysis must expand. This can restart the §106 and USFWS consultations for the new footprint segments.</td>
+                  <td className="px-2 py-2">+90–180 days or more if NEPA and §106 must be re-scoped. Most disruptive option if the alternate route is substantially different.</td>
+                </tr>
+                <tr className="border-t border-white/10">
+                  <td className="px-2 py-2"><strong>C. Dispute the pole owner's make-ready cost or denial via FCC §224 process</strong></td>
+                  <td className="px-2 py-2">FCC complaint under 47 USC §224 if the pole owner's rates or attachment terms are unreasonable. State PUC complaint if a state PUC has pole-attachment jurisdiction (varies: some states pre-empted by FCC jurisdiction, others maintain state jurisdiction).</td>
+                  <td className="px-2 py-2">NEPA review is independent of the §224 dispute — environmental permits do not wait for the FCC complaint to resolve. However, construction cannot begin until both the §224 dispute resolves AND environmental/ROW permits are in hand.</td>
+                  <td className="px-2 py-2">FCC complaint resolution: 6–18 months. Use this only when the denied attachment is essential to the route and no practical alternate exists. Typically combined with Option A or B as the fallback construction path.</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+
+          <p className="text-sm font-semibold text-slate-200 mb-1">Sequencing discipline when re-routes occur mid-permitting:</p>
+          <p className="text-sm text-slate-300/90">
+            Mid-project re-routes are the most disruptive sequencing event because they can
+            invalidate permits already in hand. The rule: <strong>before submitting any permit
+            application, confirm that the route is stable and all segments have a viable
+            right-of-entry path</strong>. Specifically:
+          </p>
+          <ul className="list-disc pl-5 space-y-1 text-sm text-slate-300/90 mt-2">
+            <li>
+              <strong>Joint-use make-ready survey BEFORE final route lock.</strong> The make-ready
+              survey is the earliest signal of whether an aerial attachment path is viable. Initiate
+              the make-ready survey before you begin detailed permitting — if the pole owner signals
+              major problems at survey, you can re-route BEFORE the NEPA and state DOT applications
+              are in flight. Changing the NEPA footprint mid-process can require restarting the §106
+              and T&E consultations.
+            </li>
+            <li>
+              <strong>Underground option assessment in parallel.</strong> For any urban mixed route,
+              assess the underground HDD option simultaneously with the aerial option. Having a
+              pre-scoped underground alternative means that if aerial is denied, you can execute the
+              alternative without losing permit time.
+            </li>
+            <li>
+              <strong>NEPA footprint definition must be conservative (buffer the APE).</strong> Define
+              the Area of Potential Effect (APE) for §106 and the extraordinary-circumstances boundary
+              for the CE to include likely re-route corridors, not just the current centerline. A slightly
+              larger initial APE avoids restarting the §106 consultation if the route shifts by 200 feet
+              within the same general corridor.
+            </li>
+            <li>
+              <strong>Underground in existing ROW doesn't automatically re-trigger NEPA.</strong> If you
+              convert an aerial segment to underground HDD within the same street corridor already covered
+              by your CE C-8 documentation, the CE generally still applies — you haven't expanded the
+              environmental footprint, you've changed the construction method within the same corridor.
+              Document the method change in an addendum to the CE checklist and confirm with the lead
+              federal agency that no extraordinary circumstances were introduced by the underground work
+              (contaminated soils, groundwater impacts, utility crossings).
+            </li>
+          </ul>
+
+          <div className="mt-3 p-3 border border-amber-400/30 bg-amber-400/5 rounded-lg text-xs">
+            <p className="font-semibold text-amber-300 mb-1">Book vs. Field — the APE buffer strategy</p>
+            <p className="text-slate-300/90">
+              <strong>Book (36 CFR §800.16(d)):</strong> The Area of Potential Effect (APE) for
+              NHPA §106 is defined as the geographic area within which an undertaking may directly
+              or indirectly cause alterations in the character or use of historic properties. The APE
+              is defined by the lead federal agency, not the applicant.
+            </p>
+            <p className="text-slate-300/90 mt-1">
+              <strong>Field:</strong> Engineers routinely define the APE as a tight buffer around the
+              planned centerline (e.g., 50-foot corridor each side). If the route shifts 75 feet due to
+              a make-ready denial, the new footprint is outside the original APE — the §106 consultation
+              must be re-scoped or restarted. Experienced OSP engineers buffer the APE to 150–200 feet
+              each side of the centerline in urban or historic areas, accepting a slightly longer initial
+              §106 review in exchange for insurance against route changes. This is not required by
+              36 CFR Part 800, but it is established field practice for routes with complex ownership
+              or make-ready uncertainty.
+            </p>
+          </div>
+          <p className="mt-2 text-xs text-slate-400">
+            Citations: 47 USC §224 (Pole Attachment Act); 36 CFR §800.16(d) (APE definition);
+            54 USC §306108 (NHPA §106); 7 CFR Part 1b (eff. April 3, 2026; replaced 7 CFR Part 1970);
+            33 USC §1344 (CWA §404 for underground segments with wetland crossings).
+          </p>
+        </div>
+
+        {/* ── END WORKED SCENARIOS ──────────────────────────────────────── */}
+
+        <h3 className="mt-5 font-semibold">EA vs. EIS — where the line falls</h3>
         <p>
           When a CE cannot be used (extraordinary circumstances exist), the lead federal
           agency has to decide: is an EA sufficient, or does the project require a full EIS?
