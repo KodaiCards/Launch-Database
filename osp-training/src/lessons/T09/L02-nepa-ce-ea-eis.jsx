@@ -597,6 +597,57 @@ export default function T09L02_NepaTypes() {
         ]}
       />
 
+      {/* ── MULTI-TRIGGER BRANCHING SCENARIO ────────────────────────────── */}
+      <BranchingScenario
+        title="Multi-Trigger Agency Call Order"
+        description="When multiple extraordinary circumstances occur together, federal agency call order determines your timeline. Walk through a three-agency scenario."
+        scenarioId="T09-L02-multi-agency"
+        initialNodeId="start-multi"
+        nodes={[
+          {
+            id: 'start-multi',
+            text: 'Your site survey for a 12-mile BEAD aerial fiber route identifies THREE extraordinary circumstances: (1) Northern Long-Eared Bat (T&E species) documented in the corridor, (2) a historic railroad grade with cultural significance in the APE (Area of Potential Effect), and (3) a 0.4-mile perennial stream crossing. Which federal agency consultation MUST complete first to unblock construction?',
+            choices: [
+              { label: 'USFWS Section 7 (T&E species) is highest stakes — start USFWS first', nextId: 'usfws-first-wrong' },
+              { label: 'SHPO Section 106 (historic properties) has the longest fixed procedural clock — start SHPO first', nextId: 'shpo-first-correct' },
+              { label: 'USACE Section 404 (wetlands permit) is the legal gate for water work — start USACE first', nextId: 'usace-first-wrong' },
+            ],
+          },
+          {
+            id: 'usfws-first-wrong',
+            text: 'USFWS Section 7 is required and important, but it does NOT have the longest procedural timeline. Section 7 informal consultation takes 30–90 days. However, NHPA Section 106 (historic properties) has a fixed 30-day SHPO review window, and if SHPO objects, MOA negotiations can extend the clock by 6–12 months. Section 106 is the critical path. Try again.',
+            isTerminal: false,
+            choices: [{ label: 'Go back', nextId: 'start-multi' }],
+          },
+          {
+            id: 'usace-first-wrong',
+            text: 'USACE Section 404 (wetlands) and NWP/Individual Permit is required, and it IS a gate for water-crossing work. However, the Section 404 timeline (10–20 business days for NWP, 6–12 months for Individual Permit) is faster than NHPA Section 106. When you have multiple agency requirements, the slowest-clock item drives the critical path. That\'s Section 106 (NHPA). Try again.',
+            isTerminal: false,
+            choices: [{ label: 'Go back', nextId: 'start-multi' }],
+          },
+          {
+            id: 'shpo-first-correct',
+            text: 'Correct. NHPA Section 106 consultation with the State Historic Preservation Office (SHPO) has a 30-day statutory review window from when the SHPO receives the Notice of Applicability (NOA). If SHPO has no objections, that\'s 30 days. If SHPO objects, Memoranda of Agreement (MOA) negotiations begin, and those can take 3–12 months depending on mitigation complexity. Section 106 becomes the critical-path item that determines when the lead federal agency (RUS or NTIA) can issue environmental clearance. The USFWS Section 7 consultation and USACE Section 404 permit can run in parallel with Section 106, but they all must complete before the CE/FONSI is issued. Your response?',
+            choices: [
+              { label: 'Initiate all three (SHPO §106 + USFWS §7 + USACE §404) on Day 1, run in parallel, track Section 106 as the critical-path gating item', nextId: 'multi-parallel-correct' },
+              { label: 'Wait for USACE Section 404 to clear first, then approach SHPO, then USFWS', nextId: 'multi-sequential-wrong' },
+            ],
+          },
+          {
+            id: 'multi-parallel-correct',
+            text: 'Correct. All three consultations START simultaneously (Day 1). You send the NOA to SHPO, submit the NWP pre-application to USACE, and submit the IPaC results + ESA consultation package to USFWS. Each agency reviews on their own timeline. USFWS likely finishes first (30–90 days). USACE NWP follows (10–20 biz days if no complications, or 6–12 months for Individual Permit). SHPO review is 30 days to initial response, but potential MOA negotiations extend the clock to 3–12 months. By running all three in parallel, you compress the overall timeline to the longest single track (Section 106) rather than stacking them sequentially (which would add 9–18+ months of delays). Typical timeline when all run in parallel: 4–6 months best case (no MOA); 9–18 months worst case (full MOA negotiation on historic mitigation). Result: FONSI/CE cleared when all three close.',
+            isTerminal: true,
+            outcome: 'COMPLETED: All three agency consultations run in parallel from Day 1. SHPO Section 106 is the critical-path gating item (longest clock). USFWS §7 and USACE §404 must also conclude before environmental clearance, but can proceed in parallel. Timeline: 4–6 months best case; up to 18 months if MOA negotiations are complex. Lesson: when multiple extraordinary circumstances exist, identify the agency with the longest procedural clock, make that the scheduling anchor, and launch all other consultations simultaneously to compress the overall timeline.',
+          },
+          {
+            id: 'multi-sequential-wrong',
+            text: 'Sequential approval (USACE → SHPO → USFWS) stacks the timelines and burns 9–18 months of delay. USACE Section 404 clears in 10–20 days (best case) to 6–12 months (worst case). Then you approach SHPO — another 30 days to 6–12 months (if MOA). Then USFWS — another 30–90 days. Total: you\'ve added 6–18 months of sequential waiting. The correct approach is to launch all three simultaneously and let them proceed in parallel. That way, the overall timeline is driven by the slowest single track (SHPO), not the sum of all tracks.',
+            isTerminal: false,
+            choices: [{ label: 'Go back', nextId: 'shpo-first-correct' }],
+          },
+        ]}
+      />
+
       {/* ── PER-LESSON QUIZ ──────────────────────────────────────────────── */}
       <Quiz
         title="T09.L02 Check — NEPA: CE, EA, and EIS"
@@ -665,6 +716,22 @@ export default function T09L02_NepaTypes() {
             explanation:
               'CE C-8 specifically covers aerial or buried utility and communications construction within or adjacent to existing rights-of-way. It applies to both aerial (pole-mounted fiber) and buried (direct-buried or conduit) construction in existing utility corridors. It does NOT apply to any federally-funded project generally — the project type must match the CE\'s scope, and extraordinary circumstances must still be checked. [Confirm current CE C-8 language against NTIA and 7 CFR Part 1b (eff. April 3, 2026; replaced 7 CFR Part 1970) at time of project.]',
             citation: '7 CFR Part 1b (eff. April 3, 2026; replaced 7 CFR §1970.54); NTIA BEAD NEPA procedures.',
+          },
+          {
+            id: 'T09-L02-Q5',
+            type: 'mc',
+            prompt:
+              'A BEAD fiber project triggers THREE extraordinary circumstances simultaneously: historic properties in the APE (Section 106), threatened and endangered species habitat (Section 7), and wetlands (Section 404). Which agency consultation MUST complete first to unblock the project from proceeding?',
+            choices: [
+              'USFWS Section 7 (ESA) — T&E species are the highest biological priority',
+              'USACE Section 404 (CWA) — water permits are the legal prerequisite for any water crossing',
+              'SHPO Section 106 (NHPA) — historic property consultation has the longest fixed procedural clock',
+              'All three must be completed simultaneously in any order',
+            ],
+            answerIndex: 2,
+            explanation:
+              'When multiple extraordinary circumstances trigger multiple agency consultations, the critical-path item is the one with the longest procedural timeline. NHPA Section 106 consultation with SHPO has a statutory 30-day review window (if no objections) but can extend 3–12 months or longer if Memoranda of Agreement (MOA) negotiations are required for historic mitigation. In contrast, USFWS Section 7 informal consultation is typically 30–90 days, and USACE Section 404 NWP authorization is 10–20 business days (or 6–12 months for Individual Permit if NWP doesn\'t apply). All three must conclude before environmental clearance, but they should START simultaneously to compress the overall timeline to the longest single track. The orchestration: Day 1, issue NOA to SHPO, submit IPaC/ESA package to USFWS, submit NWP application to USACE. They proceed in parallel. Section 106 becomes the schedule anchor because its clock can stretch longest.',
+            citation: 'NHPA §106 procedure per 54 USC §306108; ESA §7 consultation per 16 USC §1536; CWA §404 permitting per 33 USC §1344; 7 CFR Part 1b (eff. April 3, 2026; replaced 7 CFR Part 1970).',
           },
         ]}
       />

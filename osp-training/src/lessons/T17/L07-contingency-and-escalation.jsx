@@ -81,11 +81,11 @@ const budgetWorkedExample = {
   description:
     'A 9-mile rural FTTH project estimated today with construction starting in 18 months. Apply contingency and escalation correctly.',
   variables: [
-    { key: 'Base', label: 'Base estimate (direct cost + overhead + profit)', units: '$', default: 2240000, min: 100000, max: 10000000 },
-    { key: 'Design_pct', label: 'Design maturity at estimate time', units: '%', default: 70, min: 10, max: 100 },
-    { key: 'Contingency_pct', label: 'Contingency percentage', units: '%', default: 15, min: 5, max: 50 },
-    { key: 'Escalation_rate', label: 'Annual escalation rate', units: '%/year', default: 3.5, min: 0, max: 10 },
-    { key: 'Time_to_construction', label: 'Time to construction start', units: 'months', default: 18, min: 1, max: 60 },
+    { key: 'Base', label: 'Base estimate (direct cost + overhead + profit)', units: '$', default: 2240000 },
+    { key: 'Design_pct', label: 'Design maturity at estimate time', units: '%', default: 70 },
+    { key: 'Contingency_pct', label: 'Contingency percentage', units: '%', default: 15 },
+    { key: 'Escalation_rate', label: 'Annual escalation rate', units: '%/year', default: 3.5 },
+    { key: 'Time_to_construction', label: 'Time to construction start', units: 'months', default: 18 },
   ],
   formula: (values) => {
     const base = values.Base;
