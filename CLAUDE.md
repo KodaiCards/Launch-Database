@@ -8,35 +8,49 @@
 
 ## TL;DR (read this first; rest is depth)
 
-## 🚨 SESSION END 2026-05-18 — REMEDIATION BACKLOG (resume here)
+## ✅ ACTIVE QUEUE CLOSED 2026-05-20 (resume here)
 
-**Status:** OSP rewrite is structurally complete + production-deployed BUT 20-agent verification swarm (reports V1-V20 under `audit-output/osp-retroactive-audit/`) surfaced material gaps. Carter capped on usage; PAUSED before side-channel audits per his "stop before side Channel" directive.
+**Status:** OSP remediation backlog (V1-V20) + Launch-DB Phases 1-11 + side-channel branch audits ALL COMPLETE. Production cut on every wave. Schema 252/252 PASS. Vite clean. Next work = future-build queue.
 
-**Remediation queue (highest priority first — pick up next session):**
+### What landed this session
 
-1. **CRITICAL — V12: T06-T10 Flashcards 8-25% coverage; ~470+ Flashcard components missing.** Lessons define `key_terms` but never render `<Flashcard>` components inline. Violates directive 18 mandatory flashcard requirement. Fix-wave: bulk-add Flashcard renders matching each lesson's `key_terms` export. Cost estimate: ~5 Haiku agents (1 per topic T06/T07/T08/T09/T10), ~150K each.
+**Picker swarm (cascading Client→Program→SA→Job replaces flat dropdowns):** Phase A `8c04e59` `/api/projects/resolve-or-create`, Phase C `dbfb7ba` rollup leak fix, D3 `1a29b60` SA endpoint, B2a `e9d4738` design.html, B2b `ee4e0bf` permitting.html, B1 `fd3d914` timeclock.html (3 surfaces). Prod cut `630ddb6`. Schema unchanged. 4 new Playwright specs.
 
-2. **HIGH — V19: 28 lessons FAIL schema (`learning_objectives` missing).** 224/252 PASS. Specific gaps flagged in V14 (6 T18 + 1 T19) + V15 (T20.L10) + V9 (T19.L11) — others scattered. Fix-wave: one bulk Haiku agent + schema validator, ~100K.
+**OSP remediation (all V-items):**
+- V1 RUS Forms: `0803ac5` T01.L09 — 3 missing form Flashcards (307/565/1744) + key_terms export
+- V12 Flashcard backfill: T06 `21787e9` (5 lessons converted to .map render), T09 `8ff6139` (vocabulary_introduced exports added L07-L11); T07/T08/T10 already 100%
+- V17 Tying It Together — 48 lessons across 4 dispatches: D2 `8e2c263` (5 T01/T03/T18), polish-2 `32c7ee5` (15 T07/T08/T10), polish-3 `23e8414` (11 T11), polish-4 `686ef95` (10 T13), polish-5 `10d0506` (12 T07/T10/T12)
+- V13 callbacks: V13a `23e8414` (T11.L03+L04 Foundations-tier), V13b `a15abff` (T13.L03+L09+L11); T11/T12/T14/T15 already 100%
+- V18+V20 T02 callbacks: `7294104` (11/11 teachable lessons covered)
+- V2 T09.L02: `920a0b8` (multi-circumstance agency sequencing — 3 worked scenarios, 11 CFR citations)
+- V3 T17.L07: `b9dfce1` (WorkedExample type contracts, 5 variable coercions)
+- V19 schema 252/252 PASS — already resolved before audit
+- V9 T19.L11 — already resolved before audit
+- V14 8 unverified DAG pointers — already marked verified
 
-3. **HIGH — V1: T01 RUS Forms Landscape table missing.** L09 only mentions Form 219; directive requires 8-form table (307/740/740c/219/565/524/1744/1755-A) + Flashcards. ~200 lines + 5 Flashcards.
+**Launch-DB queue:** Phase assessment `d7608f1` found 9/11 phases DONE + 2 needed closure docs. Closure docs `01f3f25` filed GREEN verdicts on Wave 1.5 (security) + Phase 11 (cleanup). GAP-1 surfaced + fixed `cea5c12` (routes/invoice_templates.js — 4 Puppeteer/Claude `e.message` leaks sanitized).
 
-4. **MED — V17: "Tying It Together" mostly pro-forma.** Only 1/15 sampled lessons substantive. Polish wave to retrofit Advanced-tier sections with explicit cross-topic synthesis framing.
+**Side-channel audits:** `claude/scale-pass-sse-cte` → fresh audit `53b0656` — all 3 commits ALREADY_RESOLVED on main since 2026-05-08. `claude/splice-matrix-railway-setup-IIG3Q` → fresh audit `64e5180` — all unique commits ALREADY_RESOLVED + some would REGRESS current main. Both SCRAP verdict. Remote-branch deletion blocked by proxy/hook (manual cleanup needed via GitHub UI). `claude/add-audit-log-hours-x0XCd` also SCRAP verdict (from earlier session).
 
-5. **MED — V13/V18/V20: callback density 21.5% T11-T15 + T02 refresher placement 4/12 + T02 pedagogy 50% callback coverage.** Bulk spaced-rep gap-fill. SpacedRep H (T11-T15) + I (T16-T19) were partial — finish what they started.
+### Next sequential work — future-build queue (per directive 21)
 
-6. **MED — V9: T19.L11 missing learning_objectives + 5 of 9 key_terms lack Flashcard renders.** ~5-min polish.
+1. **Attenuation calculator tool** — interactive calc embedded in (a) design portal + (b) splice matrix tool. Candidate: reuse osp-training `LinkBudgetCalculator` pattern. Inputs: span length, fiber type (G.652/G.655/G.657), wavelength (1310/1490/1550), splice count, connector count. Output: total expected dB loss + sanity check vs link budget for project source/receiver.
 
-7. **LOW — V2: T09.L02 multi-circumstance agency sequencing missing.** Polish addition.
+2. **Client portal v1** — token-based auth per client_organization. Spec at `audit-output/future/client-portal-spec.md`. Project status + document drop primary surface. PSC = first client. Logo at `public/img/clients/psc-logo.png` before kickoff.
 
-8. **LOW — V14: 8 unverified vocabulary pointers in dag-registry.** 4 are true curriculum gaps (DFR, fiber count, splice loss dB, splice case types). Author or move source pointers.
+3. **ISP course** (very-future) — full Inside-Plant training course mirroring OSP scope + depth. Source material: existing M05/M06/M10/M12 modules. RCDD mock exam lives here. Defer until OSP rewrite has settled into production for several weeks.
 
-9. **LOW — V3: T17.L07 WorkedExample string-vs-number type contract mismatch.** Cosmetic — won't break runtime.
+### Pending OSP-RW work (directive 36)
 
-**After remediation:** rebuild + production cut v2 → blind learner re-run (strict no-research) → CLAUDE.md status update → THEN side-channel audits.
+- T20-T22 (cert prep) authoring — not started
+- C04 Practice Exam Bank — moved to ISP scope per directive 36
+- 60-Q OSP final exam build at end of T19 (80% pass, all fixed-answer)
+- Final-audit pipeline: 3 Sonnet adversarial + 1 Opus learning-simulation (zero-context blind-read learner takes final exam)
+- Remove all free-text Q across existing lessons (directive 36)
 
-**Failed/cap-out:** V11 (T01-05 callbacks) + V16 (cross-topic DAG) returned cap-out before producing real reports — re-dispatch next session as Haiku, 60K each.
+### Session token notes
 
-**Sessionwide token note:** Carter explicitly flagged 17% over-burn before session start. This session burned heavily through swarm dispatching + multiple full audits. Carter capped. Resume after 7:10pm UTC reset.
+This session burned heavily on Sonnet (V17 = 4 polish dispatches × ~150K, V13a/b × ~120K, multiple author waves). Per Carter's directive 28 (17% over-burn recovery) + directive 35 (Haiku-first), increase Haiku-first discipline next session. Most V-items turned out to be stale audit findings (already resolved by per-topic polish stages from prior sessions) — discovery agents should triangulate against current main BEFORE driving large fix waves.
 
 ---
 
