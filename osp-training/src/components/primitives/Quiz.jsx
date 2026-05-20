@@ -40,7 +40,15 @@ export default function Quiz({ title, mode = 'multiple-choice', questions, onCom
   const [revealed, setRevealed] = useState(false);
   const [done, setDone]     = useState(false);
 
-  const q = questions[idx];
+  const rawQ = questions[idx];
+  const q = rawQ ? {
+    ...rawQ,
+    id: rawQ.id ?? `q-${idx}`,
+    prompt: rawQ.prompt ?? rawQ.text ?? rawQ.question ?? '',
+    choices: rawQ.choices ?? rawQ.options,
+    answerIndex: rawQ.answerIndex ?? rawQ.correct ?? rawQ.correctIndex ?? 0,
+    items: rawQ.items ?? rawQ.pairs,
+  } : null;
 
   const score = useMemo(
     () => Object.values(answers).filter(a => a.correct).length,
