@@ -203,6 +203,14 @@ export default function T18L06_TrafficControlFlagging() {
       <section data-tier="working">
         <h2>The Flagger's Role — What MUTCD Chapter 6E Requires</h2>
 
+        <div className="border-l-4 border-blue-400/30 bg-blue-400/5 p-3 my-3 text-sm">
+          <p className="font-semibold text-blue-300 mb-1">Refresher from T18</p>
+          <ul className="text-slate-300/90 space-y-1 list-disc pl-5">
+            <li><strong>Hazard recognition:</strong> (from L01) identifying dangers before they cause harm</li>
+            <li><strong>Hi-vis vest:</strong> (from L05) bright orange or yellow safety garment that makes you visible to drivers in poor light or from distance</li>
+          </ul>
+        </div>
+
         <p>
           A <strong>flagger</strong> is the person stationed at the work zone's merge point to
           control one-way alternating traffic — stopping one direction while the other passes,

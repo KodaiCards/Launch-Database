@@ -179,6 +179,15 @@ export default function T19L05_HvacAndFireSuppressionAwareness() {
       <section data-tier="working">
         <h2>HVAC Selection and Fire Suppression — What to Specify</h2>
 
+        <div className="border-l-4 border-blue-400/30 bg-blue-400/5 p-3 my-3">
+          <p className="font-semibold text-blue-300 text-sm mb-2">Quick Refresher: Building and Power Context from T19.L01–L04</p>
+          <ul className="text-sm text-slate-300/90 space-y-1">
+            <li><strong>CO / hut (from T19.L01):</strong> The facility you're specifying. HVAC cools the equipment room in that building.</li>
+            <li><strong>OLT and load (from T19.L02–L03):</strong> The equipment that generates heat. OLT shelf draws X kW; that becomes the heat load the HVAC must remove.</li>
+            <li><strong>Power plant location (from T19.L04):</strong> The generator may be in the same building — its heat output should be considered in the HVAC design.</li>
+          </ul>
+        </div>
+
         {/* SIDE BY SIDE: CRAC vs Mini-Split */}
         <SideBySide
           title="CRAC Unit vs. Mini-Split — Which Cooling System for Which Building?"

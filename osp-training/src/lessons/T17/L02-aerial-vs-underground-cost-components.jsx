@@ -335,6 +335,10 @@ export default function L02AerialVsUndergroundCostComponents() {
 
       {/* ── WORKED EXAMPLE ── */}
       <section className="lesson-section working">
+        <div className="border-l-4 border-blue-400/30 bg-blue-400/5 p-3 my-3">
+          <strong className="text-blue-600 dark:text-blue-300">Quick Recall:</strong> <strong>Make-ready cost</strong> is money paid to prepare poles before cable installation (from T02); <strong>splice closure</strong> is the enclosure protecting fiber splices (from T04); <strong>NESC loading district</strong> determines the wind/ice loads poles must withstand (from T02); <strong>joint-use pole</strong> hosts multiple utilities including telecom (from T02); and <strong>pavement restoration</strong> is the cost to repair paved surfaces damaged by construction (from T06).
+        </div>
+
         <h2>Aerial Cost Breakdown — Step by Step</h2>
         <WorkedExample {...aerialWorkedExample} />
       </section>

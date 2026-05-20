@@ -241,11 +241,21 @@ export default function T19L01_CoHutHeadendLayout() {
       <section data-tier="working">
         <h2>Floor Plan Anatomy — Room by Room</h2>
 
+        <div className="border-l-4 border-blue-400/30 bg-blue-400/5 p-3 my-3">
+          <p className="font-semibold text-blue-300 text-sm mb-2">Quick Refresher: Key Terms from Earlier Lessons</p>
+          <ul className="text-sm text-slate-300/90 space-y-1">
+            <li><strong>Feeder fiber (from T01.L07):</strong> The cable that runs from the service area distribution point to the CO or headend.</li>
+            <li><strong>Conduit (from T01.L02):</strong> The protective PVC, steel, or HDPE tube that carries fiber or copper cables underground or in structures.</li>
+            <li><strong>FDH (from T01.L07):</strong> Final Distribution Hub — a passive cross-connect point where feeder fiber is broken out to distribution fiber toward premises.</li>
+          </ul>
+        </div>
+
         <p>
           A CO or headend isn't just one open room of equipment. It's organized into
           functional zones. Understanding these zones helps the OSP engineer specify
           where the conduit should terminate, where the primary protector goes, and
-          how to label the cable for the ISP team.
+          how to label the cable for the ISP team. Remember from T01.L07, the <strong>feeder</strong> is
+          that cable coming from the outside plant distribution area. Here's where it lands inside the building.
         </p>
 
         <h3 className="mt-4 font-semibold">Standard zones in a full CO</h3>
@@ -295,7 +305,8 @@ export default function T19L01_CoHutHeadendLayout() {
 
         <h3 className="mt-5 font-semibold">Where the conduit lands</h3>
         <p className="mt-2">
-          The OSP conduit bank enters the building below grade (or through a wall sleeve
+          The OSP <strong>conduit</strong> (recall from T01.L02: the protective tube carrying cables underground or in structures)
+          bank enters the building below grade (or through a wall sleeve
           for above-grade entry). It terminates in the MEF. The cable is then routed
           inside the building — typically on cable tray or J-hooks — from the MEF to
           the MDF. This inside-building run is usually 5–50 feet; it's interior to the

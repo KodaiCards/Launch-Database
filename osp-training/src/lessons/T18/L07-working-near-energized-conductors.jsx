@@ -140,6 +140,17 @@ export default function T18L07_WorkingNearEnergizedConductors() {
       <section data-tier="working">
         <h2>The MAD — How It's Calculated (Not a Simple Lookup)</h2>
 
+        <div className="border-l-4 border-blue-400/30 bg-blue-400/5 p-3 my-3 text-sm">
+          <p className="font-semibold text-blue-300 mb-1">Refresher from T18 and T01</p>
+          <ul className="text-slate-300/90 space-y-1 list-disc pl-5">
+            <li><strong>Hazard recognition:</strong> (from L01) identifying dangers before they cause harm</li>
+            <li><strong>Hierarchy of controls:</strong> (from L01) the order of hazard management: elimination first, PPE last</li>
+            <li><strong>PPG glove class:</strong> (from L05) electrical protection rating (0, 1, 2, 3, 4) for rubber insulating gloves based on voltage</li>
+            <li><strong>ANSI Z89.1 Class E:</strong> (from L05) hard hat rating that provides electrical protection up to 20,000 volts</li>
+            <li><strong>Pole:</strong> (from T01) the wooden or concrete support structure for overhead OSP fiber and power lines</li>
+          </ul>
+        </div>
+
         <p>
           The most common mistake in safety training is teaching a fixed MAD number — "2 ft 2 in
           for distribution voltage" — and calling it done. The 2014 OSHA revision to 29 CFR

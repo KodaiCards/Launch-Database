@@ -188,6 +188,14 @@ export default function T18L09_IncidentReportingOSHA300() {
       <section data-tier="working">
         <h2>Recordable vs. Not Recordable — The Line That Matters</h2>
 
+        <div className="border-l-4 border-blue-400/30 bg-blue-400/5 p-3 my-3 text-sm">
+          <p className="font-semibold text-blue-300 mb-1">Refresher from T18</p>
+          <ul className="text-slate-300/90 space-y-1 list-disc pl-5">
+            <li><strong>Hazard recognition:</strong> (from L01) identifying dangers before they cause harm</li>
+            <li><strong>1910.268:</strong> (from L01) OSHA's telecommunications standard — the primary federal rule for OSP field work</li>
+          </ul>
+        </div>
+
         <p>
           The single most common confusion in OSHA recordkeeping is the boundary between
           "first aid" (not recordable) and "medical treatment beyond first aid" (recordable).

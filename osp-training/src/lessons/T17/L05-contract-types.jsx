@@ -275,6 +275,10 @@ export default function L05ContractTypes() {
 
       {/* ── SCENARIO ── */}
       <section className="lesson-section working">
+        <div className="border-l-4 border-blue-400/30 bg-blue-400/5 p-3 my-3">
+          <strong className="text-blue-600 dark:text-blue-300">Quick Recall:</strong> <strong>Bill of materials (BOM)</strong> is the itemized list of materials needed (from T04); <strong>force account labor</strong> is work done by the owner's own employees with documented time (from T02); <strong>bore cost</strong> is directional drilling expense (from T06); and <strong>make-ready cost</strong> is the cost to prepare poles (from T02).
+        </div>
+
         <h2>Scenario: Choosing the Right Contract for a RUS Project</h2>
         <BranchingScenario {...contractScenario} />
       </section>

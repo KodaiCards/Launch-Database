@@ -237,6 +237,14 @@ export default function T19L06_HeadendGroundingOspMgnTerminates() {
       <section data-tier="working">
         <h2>The Building-Entry Grounding Path — Step by Step</h2>
 
+        <div className="border-l-4 border-blue-400/30 bg-blue-400/5 p-3 my-3">
+          <p className="font-semibold text-blue-300 text-sm mb-2">Quick Refresher: Building Entry from T19.L01</p>
+          <ul className="text-sm text-slate-300/90 space-y-1">
+            <li><strong>MEF / Main Entrance Facility (from T19.L01):</strong> The location where your OSP cable enters the building. This is where the primary protector and IBT-entry bond go — at the building wall.</li>
+            <li><strong>MGN / Messenger Ground (from this lesson):</strong> The aerial messenger wire bonded at every pole along the outdoor route. Lightning-induced voltage travels via this path TO the building.</li>
+          </ul>
+        </div>
+
         <p>
           Here's the complete grounding path from the OSP feeder cable to the building's
           GES. Every element must be present, and the OSP engineer specifies all elements

@@ -333,6 +333,10 @@ export default function L03ProductivityModeling() {
 
       {/* ── WORKED EXAMPLE ── */}
       <section className="lesson-section working">
+        <div className="border-l-4 border-blue-400/30 bg-blue-400/5 p-3 my-3">
+          <strong className="text-blue-600 dark:text-blue-300">Quick Recall:</strong> <strong>Bore cost</strong> is the expense of directional drilling underground (from T06); <strong>pavement restoration</strong> is the cost to repair paved surfaces (from T06); <strong>lashed aerial cable</strong> is fiber installed on a separate messenger strand (from T02); <strong>ADSS</strong> is self-supporting aerial cable with no separate strand (from T02); and <strong>make-ready cost</strong> is the expense to prepare poles (from T02).
+        </div>
+
         <h2>Productivity Model — Lashing Estimate Step by Step</h2>
         <WorkedExample {...productivityWorkedExample} />
       </section>
