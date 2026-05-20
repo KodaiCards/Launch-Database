@@ -4,7 +4,6 @@
 
 import React from 'react';
 import LessonLayout from '../../components/LessonLayout.jsx';
-import AnnotatedDiagram from '../../components/primitives/AnnotatedDiagram.jsx';
 import Quiz from '../../components/primitives/Quiz.jsx';
 import Flashcard from '../../components/Flashcard.jsx';
 
@@ -458,13 +457,7 @@ export default function T06L06_SeparationFromForeignUtilities() {
 
         {/* Annotated Diagram */}
         <h3 className="mt-6 font-semibold">Bore-Pit Cross-Section — Utility Separation Diagram</h3>
-        <AnnotatedDiagram
-          title={utilityBoreDiagram.title}
-          description={utilityBoreDiagram.description}
-          regions={utilityBoreDiagram.regions}
-          textFallback={utilityBoreDiagram.textFallback}
-        />
-      </section>
+        </section>
 
       {/* ── ADVANCED ─────────────────────────────────────────────────────── */}
       <section data-tier="advanced" className="mt-8">

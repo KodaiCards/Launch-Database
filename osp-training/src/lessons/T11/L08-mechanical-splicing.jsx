@@ -5,7 +5,6 @@
 import React from 'react';
 import LessonLayout from '../../components/LessonLayout.jsx';
 import Quiz from '../../components/primitives/Quiz.jsx';
-import AnnotatedDiagram from '../../components/primitives/AnnotatedDiagram.jsx';
 import Flashcard from '../../components/Flashcard.jsx';
 
 export const meta = {
@@ -172,21 +171,7 @@ export default function T11L08_MechanicalSplicing() {
         {/* AnnotatedDiagram — mechanical splice cross-section */}
         <div className="mt-6">
           <h3 className="font-semibold mb-3">Mechanical Splice Cross-Section</h3>
-          <AnnotatedDiagram
-            imageUrl={null}
-            alt="Ceramic-sleeve mechanical splice cross-section diagram"
-            width={700}
-            height={200}
-            annotations={[
-              { id: 'left-fiber', x: 80, y: 100, label: 'Left fiber', description: 'Stripped, cleaned, cleaved fiber from the left. The bare 125 µm cladding is inserted into the alignment sleeve from this end.' },
-              { id: 'right-fiber', x: 620, y: 100, label: 'Right fiber', description: 'Stripped, cleaned, cleaved fiber from the right. The bare cladding is inserted from the other end until both fiber ends make contact in the center of the sleeve.' },
-              { id: 'gel-port', x: 350, y: 60, label: 'Index-matching gel port', description: 'The gel port where index-matching fluid is injected. The gel fills any gap between the two fiber end-faces, reducing Fresnel back-reflection. In factory-assembled crimp-and-cleave units, the gel is pre-filled at the factory.' },
-              { id: 'alignment-sleeve', x: 350, y: 140, label: 'Precision alignment sleeve / ferrule', description: 'The 125 µm ± 1 µm precision bore that aligns both fiber ends laterally. In ceramic-sleeve designs, the bore is ground ceramic. In crimp-and-cleave designs, it\'s a precision-machined metal V-groove or tube.' },
-              { id: 'crimp-collar', x: 500, y: 160, label: 'Crimp collar / lock mechanism', description: 'The mechanical locking element that holds the right fiber in position after adjustment. In crimp designs: apply once with the crimp tool — not re-adjustable. In some ceramic-sleeve designs: a locking screw allows re-adjustment.' },
-              { id: 'body', x: 200, y: 170, label: 'Splice body / housing', description: 'The outer protective housing, typically a 60–80 mm plastic body. Holds the alignment sleeve in position and provides the surface for the locking mechanism.' },
-            ]}
-          />
-          <p className="text-sm text-slate-400 mt-2">
+              <p className="text-sm text-slate-400 mt-2">
             Ceramic-sleeve mechanical splice cross-section. The two fiber ends meet at the center of the precision bore, with index-matching gel at the interface. Source: FOA CFOS-S technical reference; generic design — consult manufacturer datasheet for specific product dimensions.
           </p>
         </div>

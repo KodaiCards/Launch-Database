@@ -3,7 +3,6 @@
 
 import React from 'react';
 import LessonLayout from '../../components/LessonLayout.jsx';
-import AnnotatedDiagram from '../../components/primitives/AnnotatedDiagram.jsx';
 import Quiz from '../../components/primitives/Quiz.jsx';
 import Flashcard from '../../components/Flashcard.jsx';
 
@@ -169,62 +168,7 @@ export default function T14L05_IBTandGES() {
           </li>
         </ol>
 
-        <AnnotatedDiagram
-          title="Building Entry — IBT and GES Bonding Path"
-          description="Click each component to see its function and the NEC section that governs it."
-          src="/training/assets/diagrams/t14-building-entry-ibt.svg"
-          alt="Diagram of building entry showing fiber cable, entrance conduit, primary protector, IBT, GES connection, duct seal, and ground rod"
-          aspectRatio={4 / 3}
-          hotPoints={[
-            {
-              id: 'entrance_conduit',
-              x: 15,
-              y: 20,
-              label: 'Entrance Conduit',
-              explanation:
-                'The metallic or PVC conduit that carries the OSP fiber cable through the building wall. Must be sealed with an approved duct seal at the building entry to prevent water and gas intrusion. If metallic conduit is used, it is also bonded to the GES. (Sources: NEC Art. 770; NESC C2-2023.)',
-              type: 'click',
-            },
-            {
-              id: 'primary_protector',
-              x: 35,
-              y: 40,
-              label: 'Primary Protector',
-              explanation:
-                'A listed surge protective device (UL 497B) installed at the point where the OSP fiber cable enters the building. Clamps voltage surges (from lightning or fault induction) before they reach the inside equipment. Must be bonded to the building GES per NEC §770.93 and §770.100. (Sources: NEC §770.93; NEC §770.100.)',
-              type: 'click',
-            },
-            {
-              id: 'bonding_conductor',
-              x: 50,
-              y: 55,
-              label: 'Bonding Conductor',
-              explanation:
-                'The conductor from the protector\'s bonding terminal to the IBT. Must be as short and straight as possible (minimum bends) to reduce impedance during a fast surge event. Size per NEC §250.66 based on the service entrance conductor, or per TIA-607-D for telecom runs.',
-              type: 'click',
-            },
-            {
-              id: 'ibt',
-              x: 65,
-              y: 65,
-              label: 'IBT',
-              explanation:
-                'Intersystem Bonding Termination (NEC §250.94). The hardware device that provides a listed connection point for all incoming communication service ground conductors. Multiple services (fiber, cable TV, telephone, satellite) all terminate here. The IBT is connected to the building GES via a bonding conductor. Must be accessible. (Source: NEC §250.94.)',
-              type: 'click',
-            },
-            {
-              id: 'ges',
-              x: 80,
-              y: 80,
-              label: 'GES',
-              explanation:
-                'Grounding Electrode System — the network of all electrodes at the building bonded together: the power service\'s grounding electrode conductor, any driven rods, the Ufer (if concrete slab), the water pipe (if metallic), and a ring electrode (if installed). All bonded to each other and to the IBT. This is the "one common ground" that prevents dangerous voltage differences between services during GPR events. (Source: NEC Art. 250.)',
-              type: 'click',
-            },
-          ]}
-        />
-
-        <h3 className="mt-6 font-semibold">PBB and SBB — the telecom bonding backbone</h3>
+          <h3 className="mt-6 font-semibold">PBB and SBB — the telecom bonding backbone</h3>
         <p className="mt-2">
           In buildings with telecom rooms or larger facilities (CO, headend, data center annex),
           the IBT at the building entry connects to a PBB (primary bonding busbar). The PBB is

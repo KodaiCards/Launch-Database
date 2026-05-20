@@ -11,7 +11,7 @@ export const meta = {
   id: 'T13.L06',
   course_id: 'T13',
   title: 'Material and Hardware Acceptance',
-  order: 8,
+  order: 6,
   lesson_type: 'technical',
   prerequisites: ['T13.L05'],
   learning_objectives: [

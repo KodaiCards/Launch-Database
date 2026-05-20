@@ -6,7 +6,6 @@ import React from 'react';
 import LessonLayout from '../../components/LessonLayout.jsx';
 import Quiz from '../../components/primitives/Quiz.jsx';
 import Flashcard from '../../components/Flashcard.jsx';
-import AnnotatedDiagram from '../../components/primitives/AnnotatedDiagram.jsx';
 
 export const meta = {
   id: 'T10.L11',
@@ -292,14 +291,7 @@ export default function T10L11_FieldQAInspectorInterface() {
           to document overall condition. This is the acceptance walk that generates the punch list:
         </p>
 
-        <AnnotatedDiagram
-          imageUrl={null}
-          alt="Acceptance walk checkpoint diagram: depth probe, slack coil check, frame and cover elevation, as-built redline review, surface restoration"
-          annotations={acceptanceAnnotations}
-          caption="Figure 11-1 — Acceptance Walk: Five Key Checkpoint Categories (Inspector Verification)"
-        />
-
-        <h4>The Five Checkpoint Categories</h4>
+          <h4>The Five Checkpoint Categories</h4>
         <ol>
           <li>
             <strong>Buried depth verification:</strong> spot-check depth probes at any location that

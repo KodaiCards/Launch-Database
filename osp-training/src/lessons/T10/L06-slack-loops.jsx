@@ -5,7 +5,6 @@
 import React from 'react';
 import LessonLayout from '../../components/LessonLayout.jsx';
 import Quiz from '../../components/primitives/Quiz.jsx';
-import AnnotatedDiagram from '../../components/primitives/AnnotatedDiagram.jsx';
 import Flashcard from '../../components/Flashcard.jsx';
 
 export const meta = {
@@ -206,50 +205,7 @@ export default function T10L06_SlackLoops() {
         {/* AnnotatedDiagram — slack loop inside handhole */}
         <div className="mt-6">
           <h3 className="font-semibold mb-3">Slack Loop Storage Inside a Handhole</h3>
-          <AnnotatedDiagram
-            imageUrl={null}
-            alt="Slack loop storage coil inside an underground handhole"
-            width={600}
-            height={340}
-            annotations={[
-              {
-                id: 'coil',
-                x: 300,
-                y: 170,
-                label: 'Storage coil',
-                description: 'The slack cable is coiled in a circle at minimum bend radius (10× cable OD for long-term storage). Coil diameter typically 18–24 inches for standard OSP cable.',
-              },
-              {
-                id: 'hooks',
-                x: 120,
-                y: 240,
-                label: 'Cable hooks / brackets',
-                description: 'Cable hooks or cable brackets mounted to the handhole wall secure the coil. Prevent the coil from resting on the structure floor where it can be damaged during water entry.',
-              },
-              {
-                id: 'conduit-entry',
-                x: 50,
-                y: 100,
-                label: 'Conduit entry',
-                description: 'Cable enters from the underground conduit. The section from conduit entry to the start of the storage coil is the "stub" — keep stubs short to maximize usable slack.',
-              },
-              {
-                id: 'conduit-exit',
-                x: 550,
-                y: 100,
-                label: 'Conduit exit',
-                description: 'Cable exits to the next conduit section. At splice-point structures, this is where the splice case sits — the slack loop feeds cable to the splice truck during splicing operations.',
-              },
-              {
-                id: 'label',
-                x: 300,
-                y: 310,
-                label: 'Cable label / tag',
-                description: 'Every coil must be labeled with: cable ID, fiber count, and destination. Critical for future identification — the handhole may contain multiple cables from different routes.',
-              },
-            ]}
-          />
-        </div>
+            </div>
 
         <h3 className="mt-6 font-semibold">Expansion loop vs. slack loop — different purposes</h3>
         <p>

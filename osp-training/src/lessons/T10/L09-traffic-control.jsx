@@ -5,7 +5,6 @@
 import React from 'react';
 import LessonLayout from '../../components/LessonLayout.jsx';
 import Quiz from '../../components/primitives/Quiz.jsx';
-import AnnotatedDiagram from '../../components/primitives/AnnotatedDiagram.jsx';
 import Flashcard from '../../components/Flashcard.jsx';
 
 export const meta = {
@@ -189,64 +188,7 @@ export default function T10L09_TrafficControl() {
         {/* AnnotatedDiagram — work-zone layout */}
         <div className="mt-6">
           <h3 className="font-semibold mb-3">Work-Zone Layout — One-Lane Two-Way Operation</h3>
-          <AnnotatedDiagram
-            imageUrl={null}
-            alt="Work zone layout with advance warning area, transition taper, activity area, and termination taper"
-            width={700}
-            height={200}
-            annotations={[
-              {
-                id: 'advance',
-                x: 80,
-                y: 100,
-                label: 'Advance warning signs',
-                description: 'Road Work Ahead → One Lane Road Ahead → Be Prepared to Stop. Spacing per MUTCD Table 6C-4 based on posted speed.',
-              },
-              {
-                id: 'taper',
-                x: 230,
-                y: 100,
-                label: 'Transition taper',
-                description: 'Cones or drums guide traffic out of the closed lane. Length: L = WS/60 ft. At 45 mph with 12-ft lane: 9 ft minimum.',
-              },
-              {
-                id: 'buffer',
-                x: 380,
-                y: 100,
-                label: 'Buffer space',
-                description: 'Empty distance between taper end and work crew. Protects workers if a vehicle overruns the taper. MUTCD specifies minimum buffer lengths by speed.',
-              },
-              {
-                id: 'activity',
-                x: 500,
-                y: 100,
-                label: 'Activity area (work space)',
-                description: 'Where the crew and equipment work. No workers should be in the transition taper or advance warning area.',
-              },
-              {
-                id: 'termination',
-                x: 630,
-                y: 100,
-                label: 'Termination taper',
-                description: 'Guides traffic back to original lanes. Typically 100 ft with cones at 40-ft spacing (or closer for higher speeds).',
-              },
-              {
-                id: 'flagger1',
-                x: 200,
-                y: 50,
-                label: 'Flagger station (upstream)',
-                description: 'Certified flagger holds SLOW paddle toward approaching traffic. Positioned at the beginning of the taper, visible from 500+ ft upstream.',
-              },
-              {
-                id: 'flagger2',
-                x: 600,
-                y: 150,
-                label: 'Flagger station (downstream)',
-                description: 'Second flagger at the far end for two-way traffic control. Both flaggers communicate by radio — hand signals across a long work zone are unreliable.',
-              },
-            ]}
-          />
-        </div>
+            </div>
 
         <h3 className="mt-6 font-semibold">The TCP requirement — why MUTCD diagrams aren't enough</h3>
         <p>

@@ -12,7 +12,7 @@ export const meta = {
   id: 'T13.L02',
   course_id: 'T13',
   title: 'Pre-Construction Acceptance Baseline',
-  order: 4,
+  order: 2,
   lesson_type: 'foundation',
   prerequisites: ['T13.L12'],
   learning_objectives: [

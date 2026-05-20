@@ -5,7 +5,6 @@
 import React from 'react';
 import LessonLayout from '../../components/LessonLayout.jsx';
 import Quiz from '../../components/primitives/Quiz.jsx';
-import AnnotatedDiagram from '../../components/primitives/AnnotatedDiagram.jsx';
 import BranchingScenario from '../../components/primitives/BranchingScenario.jsx';
 import Flashcard from '../../components/Flashcard.jsx';
 
@@ -163,21 +162,7 @@ export default function T11L09_SpliceCaseTypes() {
       <section data-tier="working">
         <h2>Four Case Types — Side by Side</h2>
 
-        <AnnotatedDiagram
-          imageUrl={null}
-          alt="Four splice case types side by side comparison"
-          width={720}
-          height={280}
-          annotations={[
-            { id: 'dome', x: 90, y: 110, label: 'Dome closure', description: 'Round dome shape. All cable entries at the base. Opens by lifting the dome off the base. Self-sealing under ground pressure. Application: direct buried, vault floor, handhole. Mount: directly on sand bed in handhole, no hardware required for burial.' },
-            { id: 'inline', x: 270, y: 110, label: 'Inline / butt-splice', description: 'Cylindrical body with cable entries from each end. Opens along the longitudinal axis. Application: aerial (lashed to messenger strand), vault hanging, pedestal (inside on shelf). NOT for direct burial — O-ring seals at each end fail under lateral soil pressure.' },
-            { id: 'wallmount', x: 450, y: 110, label: 'Wall-mount / pedestal', description: 'Box-shaped enclosure with mounting flanges and a hinged or latch cover. Cable entries at bottom or sides via compression grommet fittings. Application: building entry, inside pedestal, equipment shelter wall, CO/headend rack-adjacent. NOT for direct burial.' },
-            { id: 'rackmount', x: 630, y: 110, label: 'Rack-mount (LIU/patch panel)', description: 'Rack-unit form factor (1U–4U) designed to mount in a 19-inch or 23-inch equipment rack in a CO or headend. Holds splice trays or pigtails, with front-panel access to connectors. Application: CO incoming cable termination, headend fiber management. Not an outdoor case — indoor use only.' },
-            { id: 'seal-dome', x: 90, y: 230, label: 'Gel-seal base (dome)', description: 'The dome base has a gel-filled groove that the cables seat into when the dome is pressed down. The gel conforms to the cable jacket shape and seals against moisture. Ground pressure increases the seal quality over time.' },
-            { id: 'seal-inline', x: 270, y: 230, label: 'O-ring port seal (inline)', description: 'Compression O-ring at each cable entry port. Relies on radial clamping force of the port fitting against the cable jacket. Vulnerable to soil pressure in buried applications — soil shifts laterally and can open the O-ring interface.' },
-          ]}
-        />
-        <p className="text-sm text-slate-400 mt-2">
+          <p className="text-sm text-slate-400 mt-2">
           Four splice case types and their differentiating features. Source: Telcordia GR-763-CORE [confirm edition] for environmental performance classifications; FOA OSP Design Reference for field application guidance.
         </p>
 

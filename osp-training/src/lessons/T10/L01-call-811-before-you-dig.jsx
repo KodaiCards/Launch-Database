@@ -5,7 +5,6 @@
 import React from 'react';
 import LessonLayout from '../../components/LessonLayout.jsx';
 import Quiz from '../../components/primitives/Quiz.jsx';
-import AnnotatedDiagram from '../../components/primitives/AnnotatedDiagram.jsx';
 import Flashcard from '../../components/Flashcard.jsx';
 
 export const meta = {
@@ -218,71 +217,7 @@ export default function T10L01_Call811BeforeYouDig() {
         {/* AnnotatedDiagram — APWA color map */}
         <div className="mt-6">
           <h3 className="font-semibold mb-3">APWA Utility Color Code</h3>
-          <AnnotatedDiagram
-            imageUrl={null}
-            alt="APWA utility color code diagram"
-            width={700}
-            height={380}
-            annotations={[
-              {
-                id: 'white',
-                x: 48,
-                y: 30,
-                label: 'White',
-                description: 'Proposed excavation area — marks where YOUR work will occur so locate crews know where to check.',
-              },
-              {
-                id: 'pink',
-                x: 48,
-                y: 70,
-                label: 'Pink',
-                description: 'Temporary survey markings — reference points set by surveyors, not utility marks.',
-              },
-              {
-                id: 'red',
-                x: 48,
-                y: 110,
-                label: 'Red',
-                description: 'Electric power lines and lighting cables. Striking these can cause electrocution and arc-flash explosions.',
-              },
-              {
-                id: 'yellow',
-                x: 48,
-                y: 150,
-                label: 'Yellow',
-                description: 'Gas, oil, steam, and petroleum products. These are the ones that explode or burn. Treat yellow marks with extreme caution.',
-              },
-              {
-                id: 'orange',
-                x: 390,
-                y: 30,
-                label: 'Orange',
-                description: 'Communications: fiber optic, cable TV, telephone, alarm systems. This is your fiber cable. Orange marks can be from the utility that owns the existing plant.',
-              },
-              {
-                id: 'blue',
-                x: 390,
-                y: 70,
-                label: 'Blue',
-                description: 'Potable water lines. Striking these causes flooding, erosion, and service disruption.',
-              },
-              {
-                id: 'purple',
-                x: 390,
-                y: 110,
-                label: 'Purple',
-                description: 'Reclaimed water, irrigation, or slurry lines. Not potable but still a pressurized hazard.',
-              },
-              {
-                id: 'green',
-                x: 390,
-                y: 150,
-                label: 'Green',
-                description: 'Sewer and drain lines. Striking these causes sewage spills, regulatory violations, and health hazards.',
-              },
-            ]}
-          />
-          <p className="text-sm text-slate-400 mt-2">
+              <p className="text-sm text-slate-400 mt-2">
             Source: CGA Marking Standards Manual v10; APWA Uniform Color Code for Temporary Marking of Underground Facilities.
           </p>
         </div>

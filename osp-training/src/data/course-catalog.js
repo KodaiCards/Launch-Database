@@ -298,6 +298,48 @@ export const courses = [
     description:
       'FOA Certified Fiber Optic Technician exam preparation. Intensive review of fiber physics, splicing, testing standards, and hands-on field scenarios. 60 MC / 25 matching / 15 true-false format.',
   },
+  // ── Cert-prep topics C01–C03 — MIGRATED TO FUTURE ISP COURSE ────────────
+  // Per Carter 2026-05-16: C01/C02/C03 are NOT authored in OSP-RW.
+  // They will be authored when the ISP course is scoped and initiated.
+  // Retained as catalog entries (section: 'cert') so routing doesn't break,
+  // but lesson_count = 0 and a 'migrated' flag is set for the splash page
+  // to render a "Coming in ISP Course" CTA instead of "Start" / "Continue".
+  {
+    id: 'C01',
+    title: 'Networking Blueprints (RCDD prep)',
+    section: 'cert',
+    available: false,
+    estimated_minutes: 200,
+    lesson_count: 0,           // NOT authored in OSP-RW — migrated to future ISP course
+    migrated: true,            // splash page renders "Coming in ISP Course" tile
+    prerequisites: ['T01', 'T02', 'T19'],  // T19 added — seeds ISP vocabulary
+    description:
+      'MIGRATED TO FUTURE ISP COURSE per Carter 2026-05-16. ISP/TIA-568/569/606/607: four telecom spaces, backbone vs. horizontal, TIA-606-D administration, TIA-607 PBB/SBB bonding and grounding for inside plant.',
+  },
+  {
+    id: 'C02',
+    title: 'RCDD Core',
+    section: 'cert',
+    available: false,
+    estimated_minutes: 200,
+    lesson_count: 0,           // NOT authored in OSP-RW — migrated to future ISP course
+    migrated: true,
+    prerequisites: ['C01'],
+    description:
+      'MIGRATED TO FUTURE ISP COURSE per Carter 2026-05-16. Firestopping (UL 1479), EMC/FCC Part 15, power/telecom separation, ICT distribution, RCDD design checklist.',
+  },
+  {
+    id: 'C03',
+    title: 'Data Center Standards',
+    section: 'cert',
+    available: false,
+    estimated_minutes: 200,
+    lesson_count: 0,           // NOT authored in OSP-RW — migrated to future ISP course
+    migrated: true,
+    prerequisites: ['C01', 'C02'],
+    description:
+      'MIGRATED TO FUTURE ISP COURSE per Carter 2026-05-16. TIA-942-C Rated 1–4, Uptime Tier I–IV, MPO/MTP Base-8/Base-12, hot/cold aisle containment, BICSI 002-2024 vs TIA-942-C scope.',
+  },
   // ── Certification exam preparation (C04) ─────────────────────────────────
   // C04-RCDD certTrack REMOVED per Carter 2026-05-16. Retained: OSP Designer + CFOT + CFOS/O.
   {

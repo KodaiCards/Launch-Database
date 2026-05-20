@@ -6,7 +6,6 @@ import React from 'react';
 import LessonLayout from '../../components/LessonLayout.jsx';
 import Quiz from '../../components/primitives/Quiz.jsx';
 import WorkedExample from '../../components/primitives/WorkedExample.jsx';
-import AnnotatedDiagram from '../../components/primitives/AnnotatedDiagram.jsx';
 import Flashcard from '../../components/Flashcard.jsx';
 
 export const meta = {
@@ -92,18 +91,7 @@ export default function T12L04_DeadZones() {
           (EDZ)</strong> and the <strong>Attenuation Dead Zone (ADZ)</strong>.
         </p>
 
-        <AnnotatedDiagram
-          imageUrl="/diagrams/T12/dead-zones-schematic.svg"
-          alt="OTDR dead zone diagram showing reflection peak, EDZ region, ADZ region, and recovered backscatter"
-          annotations={[
-            { x: 15, y: 45, label: 'Reflection peak', description: 'High-reflectance event (connector). Saturates the OTDR receiver.' },
-            { x: 30, y: 60, label: 'EDZ', description: 'Event Dead Zone — OTDR cannot detect a second event here. Range: 1–5 m singlemode (0.5–2 m for narrow 5–30 ns pulses).' },
-            { x: 50, y: 70, label: 'ADZ', description: 'Attenuation Dead Zone — OTDR cannot accurately measure loss here. Range: 3–10 m singlemode (3–8 m for narrow 5–30 ns pulses). Always larger than EDZ.' },
-            { x: 75, y: 55, label: 'Recovered backscatter', description: 'Trace has settled flat. Valid loss and event measurements resume here.' },
-          ]}
-        />
-
-        <h3>EDZ vs. ADZ — the key difference</h3>
+          <h3>EDZ vs. ADZ — the key difference</h3>
         <p>
           The <strong>EDZ</strong> is the shorter one. Within the EDZ, the OTDR cannot even
           <em> detect</em> a second event — if there's a splice 2 m after a connector, the OTDR won't

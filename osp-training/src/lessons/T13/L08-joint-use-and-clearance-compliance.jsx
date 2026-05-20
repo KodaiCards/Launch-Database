@@ -12,7 +12,7 @@ export const meta = {
   id: 'T13.L08',
   course_id: 'T13',
   title: 'Joint-Use and Clearance Compliance',
-  order: 10,
+  order: 8,
   lesson_type: 'technical',
   prerequisites: ['T13.L07', 'T05.L02'],
   learning_objectives: [

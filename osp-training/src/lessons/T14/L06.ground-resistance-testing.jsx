@@ -4,7 +4,6 @@
 import React from 'react';
 import LessonLayout from '../../components/LessonLayout.jsx';
 import WorkedExample from '../../components/primitives/WorkedExample.jsx';
-import AnnotatedDiagram from '../../components/primitives/AnnotatedDiagram.jsx';
 import Quiz from '../../components/primitives/Quiz.jsx';
 import Flashcard from '../../components/Flashcard.jsx';
 
@@ -168,43 +167,7 @@ export default function T14L06_GroundResistanceTesting() {
           </li>
         </ol>
 
-        <AnnotatedDiagram
-          title="Fall-of-Potential Test Setup"
-          description="Probe placement for a standard 8-ft ground rod using the IEEE 81 three-terminal method. Click each probe position to see the placement rule."
-          src="/training/assets/diagrams/t14-fall-of-potential.svg"
-          alt="Diagram showing ground rod under test, potential probe at 62% position, and current probe at 5x rod-length, with resistance curve illustration"
-          aspectRatio={16 / 7}
-          hotPoints={[
-            {
-              id: 'rod',
-              x: 10,
-              y: 50,
-              label: 'Ground Rod (C1/E)',
-              explanation:
-                'The electrode under test. For an 8-ft rod: minimum current probe spacing = 5 × 8 ft = 40 ft. This is terminal C1 (or E) on the ground resistance meter.',
-              type: 'click',
-            },
-            {
-              id: 'potential_probe',
-              x: 38,
-              y: 50,
-              label: 'Potential Probe P2 (62% = 24.8 ft)',
-              explanation:
-                '62% of 40 ft = 24.8 ft from the electrode. This is the 62% rule position. At this distance, the probe is in the "flat zone" of the resistance curve — far enough from the electrode\'s resistance zone that the reading is stable. (Source: IEEE 81-2012 §9.3.)',
-              type: 'click',
-            },
-            {
-              id: 'current_probe',
-              x: 90,
-              y: 50,
-              label: 'Current Probe C2 (≥40 ft)',
-              explanation:
-                'Minimum 5 × rod length = 40 ft from the electrode for an 8-ft rod. Must be far enough that its resistance zone does not overlap the electrode\'s zone. If the ±10% validation test fails, move this probe farther out. (Source: IEEE 81-2012 §9.3.)',
-              type: 'click',
-            },
-          ]}
-        />
-      </section>
+        </section>
 
       {/* ── WORKED EXAMPLE ───────────────────────────────────────────────── */}
       <section data-tier="working" className="mt-6">

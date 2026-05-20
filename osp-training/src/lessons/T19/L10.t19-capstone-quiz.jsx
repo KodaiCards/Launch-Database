@@ -3,7 +3,6 @@
 
 import React from 'react';
 import LessonLayout from '../../components/LessonLayout.jsx';
-import AnnotatedDiagram from '../../components/primitives/AnnotatedDiagram.jsx';
 import WorkedExample from '../../components/primitives/WorkedExample.jsx';
 import Quiz from '../../components/primitives/Quiz.jsx';
 
@@ -462,12 +461,7 @@ export default function T19L10_CapstoneQuiz() {
           Before the quiz, review the GPON signal chain from OLT to ONT. Click each labeled element to read
           a one-paragraph description of its role. Several quiz questions reference this chain.
         </p>
-        <AnnotatedDiagram
-          diagramContent={signalChainSvg}
-          hotpoints={signalChainHotpoints}
-          title="T19 Signal Chain: OLT → ODF → FOSC → FDH → ONT"
-        />
-      </section>
+        </section>
 
       {/* ── Battery sizing worked example ────────────────────────────────── */}
       <section data-tier="foundations">

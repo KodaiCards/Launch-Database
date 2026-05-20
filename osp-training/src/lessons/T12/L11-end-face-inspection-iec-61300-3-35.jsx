@@ -6,7 +6,6 @@
 import React from 'react';
 import LessonLayout from '../../components/LessonLayout.jsx';
 import Quiz from '../../components/primitives/Quiz.jsx';
-import AnnotatedDiagram from '../../components/primitives/AnnotatedDiagram.jsx';
 import Flashcard from '../../components/Flashcard.jsx';
 
 export const meta = {
@@ -92,17 +91,7 @@ export default function T12L11_EndFaceInspection() {
 
         <h3>The IEC 61300-3-35:2022 zone map</h3>
 
-        <AnnotatedDiagram
-          imageUrl="/diagrams/T12/iec-61300-3-35-zones.svg"
-          alt="IEC 61300-3-35 connector end-face zone diagram showing Zone A (core, 0-25 µm), Zone B (cladding, 25-110 µm), and informational Zones C and D"
-          annotations={[
-            { x: 50, y: 50, label: 'Zone A (core)', description: '0 to 25 µm diameter — the fiber core + immediate surrounding area. Any defect here causes direct light path obstruction. Strictest criteria apply. Must be completely free of contamination and most defect types for Grade A.' },
-            { x: 50, y: 70, label: 'Zone B (cladding)', description: '25 to 110 µm outer boundary (IEC 61300-3-35:2022 Ed.3). The cladding area surrounding the core. Contamination here can still cause loss if material migrates to the core during mating. Mandatory inspection zone.' },
-            { x: 50, y: 82, label: 'Zones C/D (informational)', description: 'Outer ferrule areas. Removed from mandatory pass/fail criteria in the 2022 Edition 3. Present in the zone map for reference but not part of the pass/fail determination under the current standard.' },
-          ]}
-        />
-
-        <p>
+          <p>
           <strong>Important edition note:</strong> Earlier editions (pre-2022) included Zone C
           and Zone D in mandatory pass/fail criteria and defined Zone B outer boundary as
           115 µm (per IEC 61300-3-35 prior editions). The current 2022 Edition 3 defines:

@@ -5,7 +5,6 @@
 import React from 'react';
 import LessonLayout from '../../components/LessonLayout.jsx';
 import Quiz from '../../components/primitives/Quiz.jsx';
-import AnnotatedDiagram from '../../components/primitives/AnnotatedDiagram.jsx';
 import Flashcard from '../../components/Flashcard.jsx';
 
 export const meta = {
@@ -140,21 +139,7 @@ export default function T11L11_SpliceTrayLoadingAndFiberManagement() {
 
         {/* AnnotatedDiagram */}
         <div className="mt-4">
-          <AnnotatedDiagram
-            imageUrl={null}
-            alt="Labeled splice tray interior showing express loop and splice area"
-            width={720}
-            height={320}
-            annotations={[
-              { id: 'entry', x: 40, y: 160, label: 'Buffer tube entry', description: 'The buffer tube from Cable A enters the tray from this side. The tube jacket is stripped back to this point, exposing 12 individual 250 µm coated fibers. The tube stub is labeled "Cable A, Tube 4 (Brown)" at this entry point.' },
-              { id: 'express-channel', x: 180, y: 80, label: 'Express loop channel', description: 'The dedicated express fiber routing channel at the top of the tray. Fibers 1–6 (Blue through White) that do not have splices at this location are looped here. The loop must maintain ≥30 mm bend radius for G.652.D (≥15 mm for G.657.A1). A separate label marks: "Fibers 1-6 express to Splice Point 3."' },
-              { id: 'splice-area', x: 360, y: 220, label: 'Splice protector retention slots', description: 'Six retention slots hold the six splice protectors for fibers 7–12. Each slot is sized for one 40–60 mm heat-shrink splice protector. The protectors clip into the slots — do not force them; a protector that requires forcing has been positioned incorrectly.' },
-              { id: 'slack-coil', x: 580, y: 180, label: 'Slack storage coil', description: '1.0–1.5 m of fiber slack per tube stored as a figure-8 coil in this area of the tray. The coil provides working length if any of the six splices needs to be re-made. Do not over-coil — tight figure-8 coils at the turns can approach minimum bend radius.' },
-              { id: 'incoming-tube', x: 650, y: 60, label: 'Incoming fibers from Cable B', description: 'The six splice-side fibers from Cable B enter from this side after being stripped and prepared. These are the fibers being joined to fibers 7–12 from Cable A. The Cable B tube stub is labeled on the tray: "Cable B, Tube 7 (Red)."' },
-              { id: 'tray-label', x: 360, y: 290, label: 'Tray label location', description: 'The tray face label identifies this tray: "Tray 4 — Cable A Tube 4 (Brown) to Cable B Tube 7 (Red), Fibers 7–12, Splice Point 2, Date: YYYY-MM-DD." Label is applied on the front edge of the tray, visible without opening the case.' },
-            ]}
-          />
-          <p className="text-sm text-slate-400 mt-2">
+              <p className="text-sm text-slate-400 mt-2">
             Standard 12F splice tray loaded with 6 express fibers (top channel) and 6 spliced fibers (retention slots). Source: FOA CFOS-S fiber management reference; generic tray design — consult manufacturer for specific tray routing instructions.
           </p>
         </div>

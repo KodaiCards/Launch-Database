@@ -5,7 +5,6 @@
 import React from 'react';
 import LessonLayout from '../../components/LessonLayout.jsx';
 import WorkedExample from '../../components/primitives/WorkedExample.jsx';
-import AnnotatedDiagram from '../../components/primitives/AnnotatedDiagram.jsx';
 import Quiz from '../../components/primitives/Quiz.jsx';
 import Flashcard from '../../components/Flashcard.jsx';
 
@@ -491,14 +490,7 @@ export default function T06L04_ConduitFillAndPullTension() {
           </p>
         </div>
 
-        <AnnotatedDiagram
-          title={pullDiagram.title}
-          description={pullDiagram.description}
-          regions={pullDiagram.regions}
-          textFallback={pullDiagram.textFallback}
-        />
-
-        <h3 className="mt-6 font-semibold">Worked Example 2: Pull Tension Calculation</h3>
+          <h3 className="mt-6 font-semibold">Worked Example 2: Pull Tension Calculation</h3>
         <WorkedExample
           title={tensionWorkedExample.title}
           introduction={tensionWorkedExample.introduction}

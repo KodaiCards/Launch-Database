@@ -5,7 +5,6 @@
 import React from 'react';
 import LessonLayout from '../../components/LessonLayout.jsx';
 import Quiz from '../../components/primitives/Quiz.jsx';
-import AnnotatedDiagram from '../../components/primitives/AnnotatedDiagram.jsx';
 import Flashcard from '../../components/Flashcard.jsx';
 
 export const meta = {
@@ -98,19 +97,7 @@ export default function T12L08_ReadingOTDRTrace() {
           that straight slope.
         </p>
 
-        <AnnotatedDiagram
-          imageUrl="/diagrams/T12/otdr-trace-anatomy.svg"
-          alt="Full OTDR trace showing launch ramp, backscatter slope, splice step-downs, connector reflection spikes, and end-of-fiber"
-          annotations={[
-            { x: 8, y: 30, label: 'Launch ramp', description: 'Initial saturated region where the OTDR port connector reflection overwhelms the detector. Distance = 0 to the launch cable length.' },
-            { x: 20, y: 50, label: 'First in-line connector', description: 'Reflection spike (Fresnel) + small loss step-down. This connector is visible because the launch cable pushed it beyond the dead zone.' },
-            { x: 35, y: 65, label: 'Backscatter slope', description: 'The straight downward-sloping region between events. Slope = fiber attenuation in dB/km. Steeper = higher attenuation.' },
-            { x: 55, y: 72, label: 'Splice (loss event)', description: 'A step-down with no spike. Loss magnitude = vertical drop. Typical fusion splice: 0.02–0.10 dB.' },
-            { x: 75, y: 82, label: 'End-of-fiber marker', description: 'Large reflection spike at the far-end connector or cleaved end-face. Trace drops to noise floor after this point.' },
-          ]}
-        />
-
-        <h3>The six zones of a standard OSP OTDR trace</h3>
+          <h3>The six zones of a standard OSP OTDR trace</h3>
         <ol>
           <li><strong>Launch ramp:</strong> the dead zone at the start. Corresponds to the OTDR port's own reflection. Extends to the end of the launch cable.</li>
           <li><strong>Launch cable backscatter:</strong> the clean straight slope of the launch reel. Used to verify the reel is in good condition.</li>

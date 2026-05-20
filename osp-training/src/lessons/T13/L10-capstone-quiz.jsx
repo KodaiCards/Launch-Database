@@ -10,7 +10,7 @@ export const meta = {
   id: 'T13.L10',
   course_id: 'T13',
   title: 'Capstone Quiz: Inspection & Quality Assurance',
-  order: 12,
+  order: 10,
   lesson_type: 'capstone-quiz',
   prerequisites: [
     'T13.L01', 'T13.L02', 'T13.L03', 'T13.L04', 'T13.L05',

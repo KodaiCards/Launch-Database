@@ -4,7 +4,6 @@
 
 import React from 'react';
 import LessonLayout from '../../components/LessonLayout.jsx';
-import AnnotatedDiagram from '../../components/primitives/AnnotatedDiagram.jsx';
 import Quiz from '../../components/primitives/Quiz.jsx';
 import Flashcard from '../../components/Flashcard.jsx';
 
@@ -364,14 +363,7 @@ export default function T06L05_ManholeHanhholeVaultSizing() {
 
         {/* Annotated Diagram */}
         <h3 className="mt-6 font-semibold">Access Structure Cross-Section Comparison</h3>
-        <AnnotatedDiagram
-          title={accessStructureDiagram.title}
-          description={accessStructureDiagram.description}
-          regions={accessStructureDiagram.regions}
-          textFallback={accessStructureDiagram.textFallback}
-        />
-
-        {/* Book vs Field */}
+          {/* Book vs Field */}
         <div className="mt-5 bg-blue-900/20 border border-blue-500/30 rounded-lg p-4 text-sm">
           <p className="font-semibold text-blue-300">Book practice (vault sizing checklist from OFS IP-079 and RUS 1751F-635):</p>
           <ol className="mt-1 list-decimal pl-4 space-y-1 text-slate-300/90">

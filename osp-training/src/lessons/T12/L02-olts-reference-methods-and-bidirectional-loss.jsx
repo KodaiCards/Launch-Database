@@ -7,7 +7,6 @@ import React from 'react';
 import LessonLayout from '../../components/LessonLayout.jsx';
 import Quiz from '../../components/primitives/Quiz.jsx';
 import WorkedExample from '../../components/primitives/WorkedExample.jsx';
-import AnnotatedDiagram from '../../components/primitives/AnnotatedDiagram.jsx';
 import Flashcard from '../../components/Flashcard.jsx';
 
 export const meta = {
@@ -160,19 +159,7 @@ export default function T12L02_OLTSReferenceMethods() {
           connectors get counted in the link loss measurement.
         </p>
 
-        <AnnotatedDiagram
-          title="Three OLTS Reference Methods — What Each Includes"
-          description="Conceptual diagram showing which connector pairs are included (IN MEASUREMENT) vs. excluded (IN REFERENCE) for each method"
-          src=""
-          alt="Three OLTS reference method wiring diagrams showing one-cord, two-cord, and three-cord configurations"
-          annotations={[
-            { x: 20, y: 30, label: 'One-cord: Launch cord only in reference. ALL cable-under-test connectors are measured.' },
-            { x: 50, y: 55, label: 'Two-cord: Launch + receive in reference. One connector pair excluded from measurement.' },
-            { x: 80, y: 75, label: 'Three-cord: Launch + interconnect + receive. Two connector pairs excluded.' },
-          ]}
-        />
-
-        <div className="mt-4 rounded-xl border border-white/10 overflow-hidden">
+          <div className="mt-4 rounded-xl border border-white/10 overflow-hidden">
           <table className="w-full text-sm">
             <thead className="bg-white/5 text-slate-200">
               <tr>

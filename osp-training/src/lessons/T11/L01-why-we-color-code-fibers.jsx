@@ -5,7 +5,6 @@
 import React from 'react';
 import LessonLayout from '../../components/LessonLayout.jsx';
 import Quiz from '../../components/primitives/Quiz.jsx';
-import AnnotatedDiagram from '../../components/primitives/AnnotatedDiagram.jsx';
 import Flashcard from '../../components/Flashcard.jsx';
 
 export const meta = {
@@ -201,27 +200,7 @@ export default function T11L01_WhyWeColorCodeFibers() {
         {/* AnnotatedDiagram — color tube/fiber map */}
         <div className="mt-6">
           <h3 className="font-semibold mb-3">TIA-598 Color Position Map</h3>
-          <AnnotatedDiagram
-            imageUrl={null}
-            alt="TIA-598 12-color fiber position diagram"
-            width={700}
-            height={300}
-            annotations={[
-              { id: 'c1', x: 60, y: 60, label: '1 — Blue', description: 'Position 1. Blue fiber. The reference fiber and starting point for all counting. In any buffer tube, Blue is always position 1.' },
-              { id: 'c2', x: 130, y: 60, label: '2 — Orange', description: 'Position 2. Orange fiber. Immediately clockwise (or next in sequence) after Blue.' },
-              { id: 'c3', x: 200, y: 60, label: '3 — Green', description: 'Position 3. Green fiber. Note: do not confuse Green fiber with Green connector (APC connector), which is a different thing taught in L02.' },
-              { id: 'c4', x: 270, y: 60, label: '4 — Brown', description: 'Position 4. Brown fiber. A darker, warm-toned color — not to be confused with Orange (position 2).' },
-              { id: 'c5', x: 340, y: 60, label: '5 — Slate', description: 'Position 5. Slate fiber. A medium gray. Distinct from Black (position 8) — Slate is lighter.' },
-              { id: 'c6', x: 410, y: 60, label: '6 — White', description: 'Position 6. White fiber. Sometimes the hardest to see in a dirty field environment — keep splice areas clean.' },
-              { id: 'c7', x: 60, y: 180, label: '7 — Red', description: 'Position 7. Red fiber. This is the second half of the sequence. Red = 7 is a reliable anchor point: if you\'re at Red, you\'re at position 7.' },
-              { id: 'c8', x: 130, y: 180, label: '8 — Black', description: 'Position 8. Black fiber. Darker than Slate (position 5). In high-fiber-count cables, Black fibers are common because the sequence repeats across multiple tubes.' },
-              { id: 'c9', x: 200, y: 180, label: '9 — Yellow', description: 'Position 9. Yellow fiber. Bright and distinctive — hard to confuse with other colors.' },
-              { id: 'c10', x: 270, y: 180, label: '10 — Violet', description: 'Position 10. Violet (purple) fiber.' },
-              { id: 'c11', x: 340, y: 180, label: '11 — Rose', description: 'Position 11. Rose (pink) fiber. Lighter than Violet, distinct from Red.' },
-              { id: 'c12', x: 410, y: 180, label: '12 — Aqua', description: 'Position 12. Aqua (light blue/teal) fiber. The last position in the 12-count. Distinguishable from Blue (position 1) by its greenish-blue tint vs. pure blue.' },
-            ]}
-          />
-          <p className="text-sm text-slate-400 mt-2">
+              <p className="text-sm text-slate-400 mt-2">
             Source: TIA-598-D Optical Fiber Cable Color Coding. Color positions are the same in every North American OSP cable.
           </p>
         </div>

@@ -6,7 +6,6 @@
 import React from 'react';
 import LessonLayout from '../../components/LessonLayout.jsx';
 import Quiz from '../../components/primitives/Quiz.jsx';
-import AnnotatedDiagram from '../../components/primitives/AnnotatedDiagram.jsx';
 import Flashcard from '../../components/Flashcard.jsx';
 
 export const meta = {
@@ -408,13 +407,7 @@ export default function L14FieldHygieneBeforeTheFirstCleave() {
             The IEC 61300-3-35 standard defines four concentric inspection zones on a fiber end-face. Click each
             annotation to understand the zone boundaries and acceptance criteria.
           </p>
-          <AnnotatedDiagram
-            title="Fiber End-Face Inspection Zones (IEC 61300-3-35)"
-            description="Concentric zone map from core (Zone A) outward to the ferrule rim (Zone D). Zone A defects are always reject — no exceptions."
-            imagePlaceholder="Fiber end-face diagram showing four concentric zones: Zone A (core center), Zone B (cladding ring), Zone C (contact/epoxy ring), Zone D (outer ferrule rim). Example defects (scratch, pit) shown in Zones A and B."
-            annotations={endFaceAnnotations}
-          />
-        </div>
+            </div>
 
         {/* Four contamination types table */}
         <div className="mb-8">

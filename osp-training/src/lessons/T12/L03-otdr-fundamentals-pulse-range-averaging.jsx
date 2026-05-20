@@ -6,7 +6,6 @@ import React from 'react';
 import LessonLayout from '../../components/LessonLayout.jsx';
 import Quiz from '../../components/primitives/Quiz.jsx';
 import WorkedExample from '../../components/primitives/WorkedExample.jsx';
-import AnnotatedDiagram from '../../components/primitives/AnnotatedDiagram.jsx';
 import Flashcard from '../../components/Flashcard.jsx';
 
 export const meta = {
@@ -183,21 +182,7 @@ export default function T12L03_OTDRFundamentals() {
           </table>
         </div>
 
-        <AnnotatedDiagram
-          title="OTDR Trace Anatomy"
-          description="A typical OTDR trace from left to right: launch ramp → connector spike → downward slope (Rayleigh backscatter) → splice step → macrobend event → Fresnel reflection at fiber end. The slope rate equals the fiber's attenuation coefficient in dB/km."
-          src=""
-          alt="OTDR trace diagram showing launch ramp, connector spike, backscatter slope, splice step-down, macrobend step-down, and end Fresnel reflection"
-          annotations={[
-            { x: 10, y: 20, label: 'Launch ramp: OTDR oversaturated by launch connector reflection — dead zone region' },
-            { x: 28, y: 55, label: 'Connector spike + step-down: reflective event (connector) then loss step' },
-            { x: 55, y: 68, label: 'Normal backscatter slope: fiber attenuation in dB/km — trace falls linearly' },
-            { x: 65, y: 75, label: 'Splice step-down: non-reflective loss event — step with no spike' },
-            { x: 90, y: 85, label: 'End reflection: Fresnel reflection at fiber end or break — spike at far end' },
-          ]}
-        />
-
-        <h2 className="mt-8">Setting the EIOR Before Every Test</h2>
+          <h2 className="mt-8">Setting the EIOR Before Every Test</h2>
         <p className="mt-2">
           The OTDR cannot directly measure distance — it measures time. To convert time to
           distance it uses this formula:

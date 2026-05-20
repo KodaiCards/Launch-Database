@@ -5,7 +5,6 @@
 import React from 'react';
 import LessonLayout from '../../components/LessonLayout.jsx';
 import Quiz from '../../components/primitives/Quiz.jsx';
-import AnnotatedDiagram from '../../components/primitives/AnnotatedDiagram.jsx';
 import Flashcard from '../../components/Flashcard.jsx';
 
 export const meta = {
@@ -191,57 +190,7 @@ export default function T10L07_ManholeHandholeInstallation() {
         {/* AnnotatedDiagram — manhole cross-section */}
         <div className="mt-6">
           <h3 className="font-semibold mb-3">Manhole Assembly — Cross-Section</h3>
-          <AnnotatedDiagram
-            imageUrl={null}
-            alt="Manhole cross-section showing structural components"
-            width={580}
-            height={360}
-            annotations={[
-              {
-                id: 'frame-cover',
-                x: 290,
-                y: 30,
-                label: 'Frame and cover',
-                description: 'Cast iron frame seated in vault wall; cover rests in frame. H-25 rated for roadway use. Grade rings under the frame adjust the cover to finished pavement elevation.',
-              },
-              {
-                id: 'grade-rings',
-                x: 290,
-                y: 75,
-                label: 'Grade rings / risers',
-                description: 'Concrete rings placed between the cone section and the frame to adjust the cover height to finished grade. Required when pavement is overlaid after installation.',
-              },
-              {
-                id: 'cone',
-                x: 290,
-                y: 130,
-                label: 'Cone section',
-                description: 'The tapered upper section of the manhole that transitions from the full-width barrel to the smaller lid opening. Provides access from the surface.',
-              },
-              {
-                id: 'barrel',
-                x: 290,
-                y: 220,
-                label: 'Barrel section(s)',
-                description: 'The cylindrical working section where cable racks, conduit entries, and the crew work. Height determined by conduit count, cable rack requirements, and clearance for personnel.',
-              },
-              {
-                id: 'conduit-entries',
-                x: 100,
-                y: 260,
-                label: 'Conduit entries',
-                description: 'Conduit enters through knock-outs in the barrel walls. Entry ports must be sealed with couplings and mastic or waterproofing compound after conduit installation to prevent groundwater infiltration.',
-              },
-              {
-                id: 'base',
-                x: 290,
-                y: 330,
-                label: 'Base / slab',
-                description: 'The bottom of the manhole. May have a sump depression for water collection. Groundwater infiltration through the conduit entries collects here — a working pump or sump-out is required before crew entry in high-water-table areas.',
-              },
-            ]}
-          />
-        </div>
+            </div>
 
         <h3 className="mt-6 font-semibold">Traffic loading: H-20 vs. H-25</h3>
         <p>

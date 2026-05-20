@@ -4,7 +4,6 @@
 
 import React, { useState } from 'react';
 import LessonLayout from '../../components/LessonLayout.jsx';
-import AnnotatedDiagram from '../../components/primitives/AnnotatedDiagram.jsx';
 import BranchingScenario from '../../components/primitives/BranchingScenario.jsx';
 import Quiz from '../../components/primitives/Quiz.jsx';
 import Flashcard from '../../components/Flashcard.jsx';
@@ -379,12 +378,7 @@ export default function T19L09_FDHInternals() {
       {/* ── ANNOTATED DIAGRAM ─────────────────────────────────────────── */}
       <section data-tier="foundations">
         <h3>FDH Cabinet Interior — Click Each Zone</h3>
-        <AnnotatedDiagram
-          diagramContent={fdhDiagramSvg}
-          hotpoints={fdhDiagramHotpoints}
-          title="FDH Interior Layout (Simplified Schematic)"
-        />
-        <p style={{ fontSize: '0.85rem', color: '#666', marginTop: '0.5rem' }}>
+          <p style={{ fontSize: '0.85rem', color: '#666', marginTop: '0.5rem' }}>
           Click each labeled point to read a description of that FDH zone. Left to right: feeder entry → modular bays →
           connector field → drop exits.
         </p>

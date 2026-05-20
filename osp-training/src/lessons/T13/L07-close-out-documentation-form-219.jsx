@@ -11,7 +11,7 @@ export const meta = {
   id: 'T13.L07',
   course_id: 'T13',
   title: 'Close-Out Documentation: Form 219 and the RUS Form Chain',
-  order: 9,
+  order: 7,
   lesson_type: 'standards',
   prerequisites: ['T13.L06'],
   learning_objectives: [

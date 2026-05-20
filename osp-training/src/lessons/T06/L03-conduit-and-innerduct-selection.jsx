@@ -4,7 +4,6 @@
 
 import React, { useState } from 'react';
 import LessonLayout from '../../components/LessonLayout.jsx';
-import AnnotatedDiagram from '../../components/primitives/AnnotatedDiagram.jsx';
 import Quiz from '../../components/primitives/Quiz.jsx';
 import Flashcard from '../../components/Flashcard.jsx';
 
@@ -392,14 +391,7 @@ export default function T06L03_ConduitAndInnerductSelection() {
 
         {/* Annotated Diagram */}
         <h3 className="mt-6 font-semibold">Conduit Stack — Cross-Section Diagram</h3>
-        <AnnotatedDiagram
-          title={conduitStackDiagram.title}
-          description={conduitStackDiagram.description}
-          regions={conduitStackDiagram.regions}
-          textFallback={conduitStackDiagram.textFallback}
-        />
-
-        <h3 className="mt-6 font-semibold">Conduit Size Selection</h3>
+          <h3 className="mt-6 font-semibold">Conduit Size Selection</h3>
         <p className="mt-2">
           Conduit size (trade size) is driven by the fiber cable count, cable OD, and the
           40% fill rule (covered in detail in L04). At the design stage, size selection
