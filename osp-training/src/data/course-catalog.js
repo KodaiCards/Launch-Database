@@ -136,8 +136,8 @@ export const courses = [
     title: 'Headend / CO + Rack-Side Hardware Basics',
     section: 'general',
     available: true,
-    estimated_minutes: 230,   // 10 lessons × ~23 min avg
-    lesson_count: 10,
+    estimated_minutes: 253,   // 11 lessons × ~23 min avg
+    lesson_count: 11,
     prerequisites: ['T01', 'T05', 'T06', 'T18'],
     description:
       'CO/hut/headend layout, OLT/CMTS as black boxes, –48VDC power plant, battery backup, HVAC/fire-suppression awareness, headend grounding boundary (OSP MGN to HGER/TGB — introduces primary protector, IBT-entry, GES-tie-in with forward-references to T14), rack-side hardware (patch panels, LIU, FOSC, interconnect vs. cross-connect), and FDH internals. Depth ceiling: enough for an OSP engineer to design the OSP↔ISP handoff and communicate with ISP technicians. ISP-side depth defers to future ISP course.',
@@ -297,48 +297,6 @@ export const courses = [
     prerequisites: ['T01', 'T02', 'T11', 'T12', 'T18'],
     description:
       'FOA Certified Fiber Optic Technician exam preparation. Intensive review of fiber physics, splicing, testing standards, and hands-on field scenarios. 60 MC / 25 matching / 15 true-false format.',
-  },
-  // ── Cert-prep topics C01–C03 — MIGRATED TO FUTURE ISP COURSE ────────────
-  // Per Carter 2026-05-16: C01/C02/C03 are NOT authored in OSP-RW.
-  // They will be authored when the ISP course is scoped and initiated.
-  // Retained as catalog entries (section: 'cert') so routing doesn't break,
-  // but lesson_count = 0 and a 'migrated' flag is set for the splash page
-  // to render a "Coming in ISP Course" CTA instead of "Start" / "Continue".
-  {
-    id: 'C01',
-    title: 'Networking Blueprints (RCDD prep)',
-    section: 'cert',
-    available: false,
-    estimated_minutes: 200,
-    lesson_count: 0,           // NOT authored in OSP-RW — migrated to future ISP course
-    migrated: true,            // splash page renders "Coming in ISP Course" tile
-    prerequisites: ['T01', 'T02', 'T19'],  // T19 added — seeds ISP vocabulary
-    description:
-      'MIGRATED TO FUTURE ISP COURSE per Carter 2026-05-16. ISP/TIA-568/569/606/607: four telecom spaces, backbone vs. horizontal, TIA-606-D administration, TIA-607 PBB/SBB bonding and grounding for inside plant.',
-  },
-  {
-    id: 'C02',
-    title: 'RCDD Core',
-    section: 'cert',
-    available: false,
-    estimated_minutes: 200,
-    lesson_count: 0,           // NOT authored in OSP-RW — migrated to future ISP course
-    migrated: true,
-    prerequisites: ['C01'],
-    description:
-      'MIGRATED TO FUTURE ISP COURSE per Carter 2026-05-16. Firestopping (UL 1479), EMC/FCC Part 15, power/telecom separation, ICT distribution, RCDD design checklist.',
-  },
-  {
-    id: 'C03',
-    title: 'Data Center Standards',
-    section: 'cert',
-    available: false,
-    estimated_minutes: 200,
-    lesson_count: 0,           // NOT authored in OSP-RW — migrated to future ISP course
-    migrated: true,
-    prerequisites: ['C01', 'C02'],
-    description:
-      'MIGRATED TO FUTURE ISP COURSE per Carter 2026-05-16. TIA-942-C Rated 1–4, Uptime Tier I–IV, MPO/MTP Base-8/Base-12, hot/cold aisle containment, BICSI 002-2024 vs TIA-942-C scope.',
   },
   // ── Certification exam preparation (C04) ─────────────────────────────────
   // C04-RCDD certTrack REMOVED per Carter 2026-05-16. Retained: OSP Designer + CFOT + CFOS/O.
@@ -579,6 +537,7 @@ export const lessonFileIndex = {
   'T19.L08': '../lessons/T19/L08.fosc-and-splice-enclosures-in-headend.jsx',
   'T19.L09': '../lessons/T19/L09.fdh-internals-beyond-the-box.jsx',
   'T19.L10': '../lessons/T19/L10.t19-capstone-quiz.jsx',
+  'T19.L11': '../lessons/T19/L11.osp-to-isp-handoff-walkthrough.jsx',
 
   // ── T10 OSP Construction ─────────────────────────────────────────────────
   'T10.L01': '../lessons/T10/L01-call-811-before-you-dig.jsx',
