@@ -8,6 +8,13 @@ import { Link, useParams } from 'react-router-dom';
 import { courses, certTracks } from '../data/course-catalog.js';
 import { useAllProgress } from '../hooks/useProgress.js';
 
+// Map course section → back-link info
+const SECTION_BACK = {
+  general: { to: '/osp',  label: 'OSP Course' },
+  cert:    { to: '/cert', label: 'Cert Tracks' },
+  isp:     { to: '/isp',  label: 'ISP Course'  },
+};
+
 const STATUS_CONFIG = {
   completed:   { label: 'Done',        badge: 'bg-green-800/20 text-green-300 border-green-500/30' },
   in_progress: { label: 'In progress', badge: 'bg-amber-800/20 text-amber-300 border-amber-500/30' },
@@ -65,9 +72,16 @@ export default function CourseView() {
         <div className="flex items-start justify-between gap-4 flex-wrap">
           <div>
             <div className="text-xs uppercase tracking-widest text-slate-300/60 mb-1">
-              <Link to="/" className="hover:text-amber-300 transition">All courses</Link>
-              {' → '}
-              <span className="font-mono">{courseId}</span>
+              {(() => {
+                const back = SECTION_BACK[course.section] || { to: '/', label: 'Courses' };
+                return (
+                  <>
+                    <Link to={back.to} className="hover:text-amber-300 transition">{back.label}</Link>
+                    {' → '}
+                    <span className="font-mono">{courseId}</span>
+                  </>
+                );
+              })()}
             </div>
             <h1 className="text-2xl font-bold text-slate-50">{course.title}</h1>
             {course.description && (
@@ -149,9 +163,14 @@ export default function CourseView() {
 
       {/* ── Back link ─────────────────────────────────────────────── */}
       <div className="text-sm">
-        <Link to="/" className="text-slate-400 hover:text-amber-300 transition">
-          ← All courses
-        </Link>
+        {(() => {
+          const back = SECTION_BACK[course.section] || { to: '/', label: 'Courses' };
+          return (
+            <Link to={back.to} className="text-slate-400 hover:text-amber-300 transition">
+              ← {back.label}
+            </Link>
+          );
+        })()}
       </div>
     </div>
   );
