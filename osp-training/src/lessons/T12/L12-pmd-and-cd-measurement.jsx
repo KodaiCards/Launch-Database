@@ -128,6 +128,16 @@ export default function T12L12_PMDandCD() {
           fiber with very low PMD.
         </p>
 
+        <div className="mt-4 p-4 border border-blue-400/30 bg-blue-400/5 rounded-lg text-sm">
+          <p className="font-semibold text-blue-300 mb-2">Refresher: Prerequisites for this lesson</p>
+          <ul className="text-slate-300/90 space-y-1 list-disc pl-5">
+            <li><strong>CD (Chromatic Dispersion):</strong> Wavelength-dependent pulse broadening; scales linearly with distance (from T02.L03, T02.L08)</li>
+            <li><strong>PMD (Polarization Mode Dispersion):</strong> Random birefringence causing pulse splitting; scales with √distance (from T02.L08)</li>
+            <li><strong>Fiber specifications:</strong> Every fiber grade has max CD and PMD coefficients in datasheets (from T02.L01, T02.L07)</li>
+            <li><strong>Link budget:</strong> Total dispersion must be within system receiver tolerance (from T02.L06, T02.L08)</li>
+          </ul>
+        </div>
+
         <p className="text-slate-400 text-sm mb-3 mt-6 p-3 border-l-4 border-slate-500">
           <strong>Callback:</strong> Recall from <strong>T02.L08 Dispersion</strong> — chromatic dispersion (CD) and polarization mode dispersion (PMD) both limit the distance you can go without regeneration. Testing for both is part of the complete acceptance package on long links.
         </p>

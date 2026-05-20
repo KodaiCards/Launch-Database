@@ -94,6 +94,16 @@ export default function T12L09_MacrobendDetection() {
           wavelength that most DWDM traffic uses.
         </p>
 
+        <div className="mt-4 p-4 border border-blue-400/30 bg-blue-400/5 rounded-lg text-sm">
+          <p className="font-semibold text-blue-300 mb-2">Refresher: Prerequisites for this lesson</p>
+          <ul className="text-slate-300/90 space-y-1 list-disc pl-5">
+            <li><strong>Wavelength windows:</strong> Different wavelengths (1310 nm, 1550 nm, 1625 nm) have different attenuation & bend sensitivity (from T02.L07)</li>
+            <li><strong>Macrobend loss:</strong> Wavelength-dependent loss that increases with wavelength (from T02.L04, T04 Cable Selection)</li>
+            <li><strong>OTDR trace reading:</strong> How to identify loss events vs reflection events on the backscatter plot (from T12.L08)</li>
+            <li><strong>Dual-wavelength acceptance:</strong> Testing at both 1310 nm + 1550 nm is mandatory for OSP (from T12.L01)</li>
+          </ul>
+        </div>
+
         <p className="text-slate-400 text-sm mb-3 mt-6 p-3 border-l-4 border-slate-500">
           <strong>Callback:</strong> Recall from <strong>T02.L07 Wavelength Windows</strong> — different wavelengths have different characteristics in the same fiber. That's why dual-wavelength testing is mandatory for OSP acceptance. What you miss at 1310 nm will hurt you at 1550 nm.
         </p>

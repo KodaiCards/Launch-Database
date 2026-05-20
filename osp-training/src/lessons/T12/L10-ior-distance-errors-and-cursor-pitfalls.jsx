@@ -101,6 +101,16 @@ export default function T12L10_IORDistanceErrors() {
           error. That matters when you're trying to locate a fault and you're digging.
         </p>
 
+        <div className="mt-4 p-4 border border-blue-400/30 bg-blue-400/5 rounded-lg text-sm">
+          <p className="font-semibold text-blue-300 mb-2">Refresher: Prerequisites for this lesson</p>
+          <ul className="text-slate-300/90 space-y-1 list-disc pl-5">
+            <li><strong>EIOR:</strong> The effective refractive index the OTDR uses to convert time to distance (from T12.L03)</li>
+            <li><strong>Pulse travel:</strong> Time measurement → distance conversion via d = (c × t) / (2 × n) (from T12.L03)</li>
+            <li><strong>Manual cursor placement:</strong> Requires precise positioning of measurement boundaries on the trace (from T12.L08)</li>
+            <li><strong>Attenuation slope measurement:</strong> Fitting backscatter curves to calculate loss requires flat, undisturbed trace (from T12.L08)</li>
+          </ul>
+        </div>
+
         <p className="text-slate-400 text-sm mb-3 mt-6 p-3 border-l-4 border-slate-500">
           <strong>Callback:</strong> Recall from <strong>T12.L03 OTDR Fundamentals</strong> — EIOR is the value the OTDR uses to convert time to distance. Getting EIOR wrong is one of the most common field mistakes that leads to location errors on fault finding. Always verify the cable datasheet EIOR before testing.
         </p>

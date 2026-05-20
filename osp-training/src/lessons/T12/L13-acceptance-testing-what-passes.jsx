@@ -86,6 +86,16 @@ export default function T12L13_AcceptanceTesting() {
           before testing, and evaluate every result against those thresholds.
         </p>
 
+        <div className="mt-4 p-4 border border-blue-400/30 bg-blue-400/5 rounded-lg text-sm">
+          <p className="font-semibold text-blue-300 mb-2">Refresher: Prerequisites for this lesson</p>
+          <ul className="text-slate-300/90 space-y-1 list-disc pl-5">
+            <li><strong>Link budget:</strong> The contract-specified maximum loss from source to receiver (from T02.L06, T02.L07)</li>
+            <li><strong>Attenuation & loss budget:</strong> Fiber loss per km, connector loss per mating, splice loss per event (from T02.L02, T11.L12)</li>
+            <li><strong>OLTS measurement:</strong> Direct end-to-end power measurement that validates link budget compliance (from T12.L01, T12.L02)</li>
+            <li><strong>OTDR characterization:</strong> Event-by-event diagnosis to identify cause of excessive loss (from T12.L01, T12.L08)</li>
+          </ul>
+        </div>
+
         <p className="text-slate-400 text-sm mb-3 mt-6 p-3 border-l-4 border-slate-500">
           <strong>Callback:</strong> Recall from <strong>T02.L06 Link Budget</strong> — the optical budget sets the maximum allowed loss. Acceptance testing validates that the built plant meets that budget. Understanding what standard applies (RUS, TIA, carrier-specific, or federal) is the first step of any acceptance job.
         </p>

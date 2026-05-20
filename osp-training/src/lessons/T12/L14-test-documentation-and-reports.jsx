@@ -89,6 +89,16 @@ export default function T12L14_TestDocumentation() {
           payment and fewer disputes.
         </p>
 
+        <div className="mt-4 p-4 border border-blue-400/30 bg-blue-400/5 rounded-lg text-sm">
+          <p className="font-semibold text-blue-300 mb-2">Refresher: Prerequisites for this lesson</p>
+          <ul className="text-slate-300/90 space-y-1 list-disc pl-5">
+            <li><strong>OTDR event table:</strong> The software-generated list of distance, loss, and reflectance for every detected event (from T12.L08)</li>
+            <li><strong>Acceptance criteria:</strong> The specific pass/fail thresholds defined by the contract and standard (from T12.L13)</li>
+            <li><strong>OLTS and OTDR results:</strong> Both measurements combined form a complete test package (from T12.L01, T12.L02)</li>
+            <li><strong>Bidirectional averaging:</strong> A→B and B→A splices must be matched by distance and averaged (from T12.L07)</li>
+          </ul>
+        </div>
+
         <p className="text-slate-400 text-sm mb-3 mt-6 p-3 border-l-4 border-slate-500">
           <strong>Callback:</strong> Recall from <strong>T12.L13 Acceptance Testing — What Passes</strong> — once you've tested the fiber, the documentation you submit is what the customer actually receives. Incomplete or poorly organized reports trigger re-tests and delays payment. Thoroughness at the documentation stage is what separates professional work from amateur work.
         </p>

@@ -107,6 +107,16 @@ export default function T12L11_EndFaceInspection() {
           slightly different criteria.
         </p>
 
+        <div className="mt-4 p-4 border border-blue-400/30 bg-blue-400/5 rounded-lg text-sm">
+          <p className="font-semibold text-blue-300 mb-2">Refresher: Prerequisites for this lesson</p>
+          <ul className="text-slate-300/90 space-y-1 list-disc pl-5">
+            <li><strong>End-face zones:</strong> Zone A (core, 0–25 µm) and Zone B (cladding, 25–110 µm) with different cleanliness rules (from T11.L14)</li>
+            <li><strong>Insertion loss:</strong> Contamination and scratches cause power loss at connector mating (from T11.L12)</li>
+            <li><strong>OLTS measurement:</strong> Dirty connectors add unmeasured loss to the first event reading (from T12.L02)</li>
+            <li><strong>OTDR reflectance:</strong> A contaminated connector may show excessive reflectance or gainer artifacts (from T12.L06)</li>
+          </ul>
+        </div>
+
         <p className="text-slate-400 text-sm mb-3 mt-6 p-3 border-l-4 border-slate-500">
           <strong>Callback:</strong> Recall from <strong>T11.L14 Field Hygiene</strong> — IEC 61300-3-35 is the standard for inspecting connector end-faces before fusion. The same zone map and grade criteria apply when you're testing with OLTS or OTDR. End-face cleanliness directly affects your test results and the plant's long-term performance.
         </p>
