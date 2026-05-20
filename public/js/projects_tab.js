@@ -49,7 +49,7 @@
     const status = document.getElementById('proj-status-filter')?.value || '';
     const clientId = document.getElementById('proj-client-filter')?.value || '';
     const type = document.getElementById('proj-type-filter')?.value || '';
-    let q = '/api/projects?';
+    let q = '/api/projects?leaves_only=true&';
     if (status) q += `status=${status}&`;
     if (clientId) q += `client_id=${clientId}&`;
     if (type) q += `type=${type}&`;

@@ -739,7 +739,7 @@ function setStab(name){
 // ═══════════════════════════════════════════════════════════════════════════
 async function loadProjects(){
   const status = document.getElementById('proj-status-filter')?.value || '';
-  const url = '/api/projects' + (status ? '?status=' + encodeURIComponent(status) : '');
+  const url = '/api/projects' + (status ? '?status=' + encodeURIComponent(status) + '&leaves_only=true' : '?leaves_only=true');
   try {
     projectsCache = await api(url);
     renderProjects(projectsCache);
