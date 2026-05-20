@@ -108,6 +108,18 @@ export default function InteractiveQuiz({ title, questions, onComplete }) {
 function MultipleChoice({ q, revealed, onAnswer }) {
   const [picked, setPicked] = useState(null);
 
+  // Defensive normalization: support both `choices` and `options` keys.
+  const choices = q.choices || q.options || [];
+
+  if (!choices || choices.length === 0) {
+    console.warn(`[InteractiveQuiz] MultipleChoice: no options provided for question "${q.id || '(unknown)'}"`, q);
+    return (
+      <div className="rounded-lg border border-rose-400/30 bg-rose-400/5 p-3 text-sm text-rose-300">
+        (no options provided)
+      </div>
+    );
+  }
+
   function pick(i) {
     if (revealed) return;
     setPicked(i);
@@ -116,7 +128,7 @@ function MultipleChoice({ q, revealed, onAnswer }) {
 
   return (
     <ul className="space-y-2">
-      {q.choices.map((c, i) => {
+      {choices.map((c, i) => {
         const isPicked  = picked === i;
         const isCorrect = i === q.answerIndex;
         let cls = 'border-white/15 hover:border-white/40';
