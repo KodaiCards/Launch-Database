@@ -1302,7 +1302,7 @@ function computeResults(answers) {
 async function persistCertAttempt(results, timeTaken) {
   try {
     const body = {
-      cert_track:         'OSP-Designer',
+      cert_track:         'osp-general',
       score:              results.pct,
       passed:             results.passed,
       time_taken_seconds: Math.round(timeTaken),

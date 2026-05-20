@@ -144,7 +144,7 @@ module.exports = function installTrainingRoutes(app, pool, { requireAuth }) {
     const { cert_track, score, passed, time_taken_seconds, domain_scores,
             total_items, correct_items } = req.body || {};
 
-    const validTracks = ['OSP-Designer', 'RCDD', 'CFOT', 'CFOS-O'];
+    const validTracks = ['osp-general', 'OSP-Designer', 'RCDD', 'CFOT', 'CFOS-O'];
     if (!cert_track || !validTracks.includes(cert_track)) {
       return res.status(400).json({ error: `cert_track must be one of: ${validTracks.join(', ')}` });
     }
