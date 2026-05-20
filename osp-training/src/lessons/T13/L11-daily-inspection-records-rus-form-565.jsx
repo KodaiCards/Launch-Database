@@ -238,6 +238,15 @@ export default function T13L11DailyInspectionRecords() {
 
       {/* ── WORKING ────────────────────────────────────────────────────── */}
       <section data-tier="working">
+        <div className="border-l-4 border-blue-400/30 bg-blue-400/5 p-3 my-3">
+          <h3 className="text-blue-900 font-semibold mb-2">Quick Refresher</h3>
+          <ul className="text-sm space-y-1">
+            <li><strong>Inspector (OSP):</strong> The owner's authorized field representative responsible for daily documentation and conformance verification.</li>
+            <li><strong>Material deficiency:</strong> Any condition that does not conform to the contract documents, specifications, or applicable standards.</li>
+            <li><strong>Punch list:</strong> A written record of all deficiencies found during inspection requiring correction before acceptance.</li>
+          </ul>
+        </div>
+
         <h2>Required Fields on RUS Form 565</h2>
         <p>
           Form 565 is a structured document. Every line has a purpose. The following fields are

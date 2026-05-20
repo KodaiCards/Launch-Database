@@ -275,6 +275,15 @@ export default function T13L12FederalComplianceMonitoring() {
 
       {/* ── WORKING ────────────────────────────────────────────────────── */}
       <section data-tier="working">
+        <div className="border-l-4 border-blue-400/30 bg-blue-400/5 p-3 my-3">
+          <h3 className="text-blue-900 font-semibold mb-2">Quick Refresher</h3>
+          <ul className="text-sm space-y-1">
+            <li><strong>Inspector (OSP):</strong> The owner's authorized field representative responsible for documenting compliance and conformance.</li>
+            <li><strong>RUS Form 219:</strong> The Inspector's Final Certification of Completion confirming the project is done and conforms to specification.</li>
+            <li><strong>RUS Form 565 (Inspector's Daily Report):</strong> The daily construction record documenting weather, crew, work completed, and inspection findings.</li>
+          </ul>
+        </div>
+
         <h2>Davis-Bacon Compliance — The Inspector's Role</h2>
 
         <h3>Weekly WH-347 Collection</h3>

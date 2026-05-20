@@ -237,6 +237,15 @@ export default function T13L09ContractorRelations() {
 
       {/* ── WORKING ────────────────────────────────────────────────────── */}
       <section data-tier="working">
+        <div className="border-l-4 border-blue-400/30 bg-blue-400/5 p-3 my-3">
+          <h3 className="text-blue-900 font-semibold mb-2">Quick Refresher</h3>
+          <ul className="text-sm space-y-1">
+            <li><strong>Inspector (OSP):</strong> The owner's authorized field representative responsible for documenting conformance.</li>
+            <li><strong>Acceptance walk:</strong> The inspection of the completed project to confirm all work conforms to specification before formal acceptance.</li>
+            <li><strong>Punch list:</strong> A written record of all material deficiencies requiring correction before acceptance.</li>
+          </ul>
+        </div>
+
         <h2>Scenario: Differing Site Conditions at a Road Crossing</h2>
         <BranchingScenario scenario={dscScenario} />
 
