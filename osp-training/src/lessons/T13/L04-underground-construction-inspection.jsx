@@ -233,6 +233,15 @@ export default function T13L04UndergroundInspection() {
 
       {/* ── WORKING ────────────────────────────────────────────────────── */}
       <section data-tier="working">
+        <div className="border-l-4 border-blue-400/30 bg-blue-400/5 p-3 my-3">
+          <h3 className="text-blue-900 font-semibold mb-2">Quick Refresher</h3>
+          <ul className="text-sm space-y-1">
+            <li><strong>Inspector (OSP):</strong> The owner's authorized field representative responsible for conformance verification during construction.</li>
+            <li><strong>Inspection segment:</strong> A defined unit of construction used to evaluate deficiency thresholds.</li>
+            <li><strong>Material deficiency:</strong> Any condition that does not conform to the contract documents, specifications, or governing standards.</li>
+          </ul>
+        </div>
+
         <h2>Confined Space: Before Any Vault Descent</h2>
         <p>
           A below-grade fiber splice vault or handhole is a confined space under 29 CFR

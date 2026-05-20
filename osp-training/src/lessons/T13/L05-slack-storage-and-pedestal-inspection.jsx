@@ -144,6 +144,15 @@ export default function T13L05SlackInspection() {
 
       {/* ── WORKING ────────────────────────────────────────────────────── */}
       <section data-tier="working">
+        <div className="border-l-4 border-blue-400/30 bg-blue-400/5 p-3 my-3">
+          <h3 className="text-blue-900 font-semibold mb-2">Quick Refresher</h3>
+          <ul className="text-sm space-y-1">
+            <li><strong>Acceptance walk:</strong> The inspection of the completed network to confirm all work conforms to specification.</li>
+            <li><strong>Punch list:</strong> A written record of all material deficiencies requiring correction before acceptance.</li>
+            <li><strong>RUS Form 565:</strong> The daily inspection record documenting construction progress and findings.</li>
+          </ul>
+        </div>
+
         <h2>Measuring and Recording Slack</h2>
 
         <h3>Step 1: Measure the Coil</h3>

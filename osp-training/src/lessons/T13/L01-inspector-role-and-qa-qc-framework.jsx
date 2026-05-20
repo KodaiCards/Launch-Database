@@ -323,6 +323,15 @@ export default function T13L01InspectorRole() {
 
       {/* ── WORKING ────────────────────────────────────────────────────── */}
       <section data-tier="working">
+        <div className="border-l-4 border-blue-400/30 bg-blue-400/5 p-3 my-3">
+          <h3 className="text-blue-900 font-semibold mb-2">Quick Refresher</h3>
+          <ul className="text-sm space-y-1">
+            <li><strong>Material deficiency:</strong> Any physical condition that does not conform to the contract documents, project specifications, or applicable standards (NESC, RUS, NEC).</li>
+            <li><strong>Rework:</strong> The act of correcting a material deficiency by redoing the work to specification at the contractor's expense.</li>
+            <li><strong>Retainage:</strong> A percentage of progress payments withheld by the owner (typically 5–10%) as financial leverage to ensure completion and punch-list closeout.</li>
+          </ul>
+        </div>
+
         <h2>The Inspector-Arrival Daily Workflow</h2>
         <p>
           The six steps below are the professional standard for how an OSP inspector starts every

@@ -181,6 +181,15 @@ export default function T13L08JointUseCompliance() {
 
       {/* ── WORKING ────────────────────────────────────────────────────── */}
       <section data-tier="working">
+        <div className="border-l-4 border-blue-400/30 bg-blue-400/5 p-3 my-3">
+          <h3 className="text-blue-900 font-semibold mb-2">Quick Refresher</h3>
+          <ul className="text-sm space-y-1">
+            <li><strong>Inspector (OSP):</strong> The owner's authorized field representative responsible for documenting conformance.</li>
+            <li><strong>NESC:</strong> The National Electrical Safety Code governing clearances, grounding, and worker safety.</li>
+            <li><strong>Joint-use pole:</strong> A single pole carrying both supply (power) and communication (fiber) facilities.</li>
+          </ul>
+        </div>
+
         <h2>NESC Rule 232 Clearance Verification — Worked Example</h2>
         <WorkedExample example={clearanceWorked} />
 

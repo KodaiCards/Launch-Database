@@ -180,6 +180,15 @@ export default function T13L02PreConstructionBaseline() {
 
       {/* ── WORKING ────────────────────────────────────────────────────── */}
       <section data-tier="working">
+        <div className="border-l-4 border-blue-400/30 bg-blue-400/5 p-3 my-3">
+          <h3 className="text-blue-900 font-semibold mb-2">Quick Refresher</h3>
+          <ul className="text-sm space-y-1">
+            <li><strong>Inspector (OSP):</strong> The owner's authorized field representative responsible for documenting conformance to specification.</li>
+            <li><strong>Punch list:</strong> A written record of all material deficiencies requiring correction before acceptance.</li>
+            <li><strong>Inspection segment:</strong> A defined unit of construction used to evaluate kick-back thresholds.</li>
+          </ul>
+        </div>
+
         <h2>The Pre-Construction Conference</h2>
         <p>
           RUS Form 515 §3(a) requires a pre-construction conference before any work begins on

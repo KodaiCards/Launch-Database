@@ -200,6 +200,18 @@ export default function T13L06MaterialAcceptance() {
 
       {/* ── WORKING ────────────────────────────────────────────────────── */}
       <section data-tier="working">
+        <div className="border-l-4 border-blue-400/30 bg-blue-400/5 p-3 my-3">
+          <h3 className="text-blue-900 font-semibold mb-2">Quick Refresher</h3>
+          <ul className="text-sm space-y-1">
+            <li><strong>Inspector (OSP):</strong> The owner's authorized field representative responsible for documenting conformance.</li>
+            <li><strong>Punch list:</strong> A written record of all material deficiencies requiring correction before acceptance.</li>
+            <li><strong>Material deficiency:</strong> Any condition that does not conform to the contract documents or applicable standards.</li>
+          </ul>
+        </div>
+      </section>
+
+      {/* ── WORKING ────────────────────────────────────────────────────── */}
+      <section data-tier="working">
         <h2>Cable Type Verification Scenario</h2>
         <p>
           The scenario below walks through the correct verification sequence AND the

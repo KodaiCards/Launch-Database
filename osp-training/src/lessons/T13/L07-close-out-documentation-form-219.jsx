@@ -184,6 +184,15 @@ export default function T13L07CloseOutDocumentation() {
 
       {/* ── WORKING ────────────────────────────────────────────────────── */}
       <section data-tier="working">
+        <div className="border-l-4 border-blue-400/30 bg-blue-400/5 p-3 my-3">
+          <h3 className="text-blue-900 font-semibold mb-2">Quick Refresher</h3>
+          <ul className="text-sm space-y-1">
+            <li><strong>RUS Form 219:</strong> The Inspector's Final Certification of Completion certifying the project is done and conforms to specification.</li>
+            <li><strong>RUS Form 565:</strong> The daily construction record documenting weather, crew, work completed, and inspection findings.</li>
+            <li><strong>OTDR:</strong> The Optical Time-Domain Reflectometer instrument that measures fiber attenuation.</li>
+          </ul>
+        </div>
+
         <h2>The Form 219 Close-Out Package</h2>
         <p>
           Assembling the Form 219 package is the final inspector deliverable. Every component

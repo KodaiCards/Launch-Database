@@ -251,6 +251,15 @@ export default function T13L03AerialInspection() {
 
       {/* ── WORKING ────────────────────────────────────────────────────── */}
       <section data-tier="working">
+        <div className="border-l-4 border-blue-400/30 bg-blue-400/5 p-3 my-3">
+          <h3 className="text-blue-900 font-semibold mb-2">Quick Refresher</h3>
+          <ul className="text-sm space-y-1">
+            <li><strong>Inspector (OSP):</strong> The owner's authorized field representative responsible for conformance verification.</li>
+            <li><strong>Inspection segment:</strong> A defined unit of construction used to evaluate deficiency thresholds.</li>
+            <li><strong>Go/no-go decision:</strong> The binary evaluation of whether a condition is acceptable (go) or unacceptable (no-go).</li>
+          </ul>
+        </div>
+
         <h2>Pre-Climb Structural Assessment — Go/No-Go</h2>
         <p>
           Before any worker climbs a pole, the inspector (or the inspector's designated pole
