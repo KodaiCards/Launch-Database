@@ -11,6 +11,8 @@
 
 const { broadcast } = require('./_sse');
 
+const ALLOWED_PROGRAMS = ['rus', 'bau', 'gfr', 'other'];
+
 module.exports = function installClientsRoutes(app, pool, mw) {
   const { requireAdmin } = mw;
   // Wave 1.5 [UNGATED]: GET /api/clients was missing auth. All roles need
@@ -69,6 +71,58 @@ module.exports = function installClientsRoutes(app, pool, mw) {
     } catch (e) {
       console.error('[clients:PUT]', e && e.message);
       res.status(500).json({ error: 'Failed to update client.' });
+    }
+  });
+
+  // List service areas for a given client + program. Used by cascade pickers
+  // (timeclock, design, permitting portals) that know client_id + program but
+  // not the engineering contract UUID.
+  //
+  // Query param: ?program=<rus|bau|gfr|other> (required)
+  //
+  // Joins clients → engineering_contracts (active, matching program) →
+  // ec_service_areas. Returns [{id, name, ec_id, program}] ordered by name.
+  // Empty array if no active EC / no SAs. 404 only if client_id unknown.
+  //
+  // Auth: any authenticated non-customer role. Cascade pickers are internal
+  // tooling; customers access their own portal surfaces, not picker endpoints.
+  app.get('/api/clients/:client_id/service-areas', requireAuth(), async (req, res) => {
+    if (req.user && req.user.role === 'customer') {
+      return res.status(403).json({ error: 'Insufficient permissions for this action' });
+    }
+    const { client_id } = req.params;
+    const { program } = req.query;
+
+    if (!program || !ALLOWED_PROGRAMS.includes(String(program).trim().toLowerCase())) {
+      return res.status(400).json({
+        error: `program query param required. Allowed: ${ALLOWED_PROGRAMS.join(', ')}.`,
+      });
+    }
+
+    try {
+      const clientCheck = await pool.query(
+        'SELECT id FROM clients WHERE id = $1',
+        [client_id]
+      );
+      if (!clientCheck.rows[0]) {
+        return res.status(404).json({ error: 'Client not found' });
+      }
+
+      const { rows } = await pool.query(
+        `SELECT sa.id, sa.name, sa.engineering_contract_id AS ec_id, ec.program
+           FROM ec_service_areas sa
+           JOIN engineering_contracts ec ON ec.id = sa.engineering_contract_id
+           WHERE ec.client_id = $1
+             AND ec.program = $2
+             AND COALESCE(ec.active, TRUE) = TRUE
+           ORDER BY sa.name`,
+        [client_id, String(program).trim().toLowerCase()]
+      );
+
+      res.json(rows);
+    } catch (e) {
+      console.error('[clients:GET /api/clients/:client_id/service-areas]', e && e.message);
+      res.status(500).json({ error: 'Failed to load service areas.' });
     }
   });
 
