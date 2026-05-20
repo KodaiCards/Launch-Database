@@ -3590,7 +3590,6 @@ async function quickAddClient() {
     document.getElementById('proj-client').value = c.id;
     await clientChanged();
     document.getElementById('qa-client-name').value = '';
-    document.getElementById('qa-client-rus').checked = false;
     toggleQuickAdd('client', false);
   } catch (e) { alert('Failed: ' + e.message); }
 }
@@ -4790,6 +4789,7 @@ async function saveProject(opts) {
   const body = {
     name, client_id: clientId,
     contract_id: document.getElementById('proj-contract').value || null,
+    engineering_contract_id: document.getElementById('proj-ec')?.value || null,
     work_order_number: document.getElementById('proj-wo').value,
     service_area_label: (document.getElementById('proj-service-area')?.value || '').trim() || null,
     project_type: legacyType,

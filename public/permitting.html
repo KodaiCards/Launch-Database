@@ -1269,10 +1269,21 @@ async function saveProject(){
   const isFootage = opt && (opt.dataset.permit === '1' || opt.dataset.bt === 'footage');
   const amount = parseFloat(document.getElementById('proj-amount').value);
 
+  // Derive legacy project_type from job name — required NOT NULL column on projects.
+  let legacyType = 'other';
+  if (opt) {
+    const jn = (opt.text || '').toLowerCase();
+    if (jn.includes('inspect')) legacyType = 'inspection';
+    else if (jn.includes('resident') || jn === 're') legacyType = 're';
+    else if (opt.dataset.permit === '1') legacyType = 'permitting';
+    else if (jn.includes('design')) legacyType = 'design';
+  }
+
   const payload = {
     name, client_id, job_id,
     contract_id: document.getElementById('proj-contract').value || null,
     concentrator_id: document.getElementById('proj-concentrator').value || null,
+    project_type: legacyType,
     // Phase 3b: project_type_id was dropped; ptype dropdown holds program enum.
     program: document.getElementById('proj-ptype').value || null,
     work_order_number: document.getElementById('proj-wo').value.trim() || null,

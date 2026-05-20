@@ -553,7 +553,7 @@ module.exports = function installProjectsRoutes(app, pool, mw) {
       const { rows } = await pool.query(`
         UPDATE projects SET
           name=$1, client_id=$2, contract_id=$3, work_order_number=$4,
-          project_type=$5, program=COALESCE($6, program), job_id=$7,
+          project_type=COALESCE($5, project_type), program=COALESCE($6, program), job_id=$7,
           status=$8, billing_type=$9, billing_rate=$10,
           footage=$11, miles=$12, expected_hours=$13, expected_revenue=$14,
           start_date=$15, completed_date=$16, billed_date=$17,
