@@ -79,6 +79,10 @@ const FoundationsSection = () => (
       <li><Flashcard term="patch-panel boundary" definition="The demarcation point where OSP fiber connectors terminate on a centralized optical patch panel and ISP technicians patch trunk cables from that panel to their active equipment (OLT, transponders, regenerators)." /></li>
       <li><Flashcard term="rack-side handoff" definition="The physical location and procedural point where OSP-delivered fiber (usually at a demarcation patch panel or LIU mounted in a rack) transitions responsibility from the OSP crew to the ISP provisioning team." /></li>
       <li><Flashcard term="ISP provisioning scope" definition="The range of activities the ISP is responsible for after fiber handoff, including patching fibers to equipment, configuring optical and protocol-layer parameters, running signal acceptance tests, and managing subscriber provisioning." /></li>
+    </ul>
+
+    <h3>Additional Key Term</h3>
+    <ul>
       <li><Flashcard term="fiber alignment" definition="The precise positioning and routing of fiber connections at the demarcation point to ensure connectors are clean, properly seated, and accessible for patching without excessive bend radius or strain." /></li>
     </ul>
   </div>
