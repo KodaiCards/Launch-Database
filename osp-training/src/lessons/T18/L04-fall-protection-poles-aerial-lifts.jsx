@@ -181,6 +181,15 @@ export default function T18L04_FallProtectionPolesAerialLifts() {
       <section data-tier="working">
         <h2>Positioning System vs. Personal Fall Arrest System</h2>
 
+        <div className="border-l-4 border-blue-400/30 bg-blue-400/5 p-3 my-3 text-sm">
+          <p className="font-semibold text-blue-300 mb-1">Refresher from T18</p>
+          <ul className="text-slate-300/90 space-y-1 list-disc pl-5">
+            <li><strong>Hazard recognition:</strong> (from L01) identifying dangers before they cause harm</li>
+            <li><strong>Hierarchy of controls:</strong> (from L01) removal, substitution, engineering, administrative, PPE — in order</li>
+            <li><strong>Competent person:</strong> (from L01) someone trained AND authorized to identify hazards and stop unsafe work</li>
+          </ul>
+        </div>
+
         <p>
           This is the most critical distinction in pole fall protection. Many telecom crews
           have used body belts and pole straps for decades without incident — but there is a

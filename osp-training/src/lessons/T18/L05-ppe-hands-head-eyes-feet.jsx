@@ -174,6 +174,14 @@ export default function T18L05_PPEHandsHeadEyesFeet() {
       <section data-tier="working">
         <h2>What Each PPE Type Actually Protects Against</h2>
 
+        <div className="border-l-4 border-blue-400/30 bg-blue-400/5 p-3 my-3 text-sm">
+          <p className="font-semibold text-blue-300 mb-1">Refresher from T18</p>
+          <ul className="text-slate-300/90 space-y-1 list-disc pl-5">
+            <li><strong>Hierarchy of controls:</strong> (from L01) the order of hazard management: elimination first, PPE last</li>
+            <li><strong>Fall protection harness:</strong> (from L04) body-wear equipment that catches a falling worker when a lanyard is attached</li>
+          </ul>
+        </div>
+
         <h3 className="mt-2 font-semibold">HANDS — Leather vs. Rubber Insulating Gloves</h3>
         <p className="mt-2">
           On a typical OSP workday, a technician's hands face two completely different

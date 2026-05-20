@@ -181,6 +181,15 @@ export default function T18L08_HazardousMaterialsOSP() {
       <section data-tier="working">
         <h2>The Chemicals You Actually Encounter on an OSP Job</h2>
 
+        <div className="border-l-4 border-blue-400/30 bg-blue-400/5 p-3 my-3 text-sm">
+          <p className="font-semibold text-blue-300 mb-1">Refresher from T18</p>
+          <ul className="text-slate-300/90 space-y-1 list-disc pl-5">
+            <li><strong>SDS:</strong> (from L01) Safety Data Sheet — the reference document for chemical exposure limits and first-aid info</li>
+            <li><strong>Hazard recognition:</strong> (from L01) identifying dangers before they cause harm</li>
+            <li><strong>Hierarchy of controls:</strong> (from L01) the order of hazard management: elimination first, PPE last</li>
+          </ul>
+        </div>
+
         <p>
           Here are the five chemical hazards most commonly encountered on OSP fiber installations,
           with the key exposure info and what protects you:

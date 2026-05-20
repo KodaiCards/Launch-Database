@@ -210,6 +210,15 @@ export default function T18L01_HazardAwarenessRiskHierarchy() {
       <section data-tier="working">
         <h2>The Hierarchy of Controls — Applying It in the Field</h2>
 
+        <div className="border-l-4 border-blue-400/30 bg-blue-400/5 p-3 my-3 text-sm">
+          <p className="font-semibold text-blue-300 mb-1">Refresher from T01</p>
+          <ul className="text-slate-300/90 space-y-1 list-disc pl-5">
+            <li><strong>OSP:</strong> Outside Plant — fiber cables and equipment on poles and underground</li>
+            <li><strong>RUS:</strong> Rural Utilities Service — the federal loan program that funds many fiber projects</li>
+            <li><strong>NESC:</strong> National Electrical Safety Code — the standard for power and communications pole loading</li>
+          </ul>
+        </div>
+
         <p>
           The <strong>hierarchy of controls</strong> tells you which fix to reach for first.
           Think of it as a priority ladder: always try the top rung first, and only move down

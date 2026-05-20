@@ -197,6 +197,15 @@ export default function T18L02_LockoutTagout() {
       <section data-tier="working">
         <h2>How Re-energization and Group LOTO Work</h2>
 
+        <div className="border-l-4 border-blue-400/30 bg-blue-400/5 p-3 my-3 text-sm">
+          <p className="font-semibold text-blue-300 mb-1">Refresher from T18</p>
+          <ul className="text-slate-300/90 space-y-1 list-disc pl-5">
+            <li><strong>Hazard recognition:</strong> Spotting the physical, electrical, or chemical danger before it causes harm</li>
+            <li><strong>Hierarchy of controls:</strong> Elimination → Substitution → Engineering → Administrative → PPE (in order of effectiveness)</li>
+            <li><strong>1910.268:</strong> OSHA's telecommunications standard — the primary federal rule for OSP field work</li>
+          </ul>
+        </div>
+
         <h3 className="mt-4 font-semibold">Re-energization sequence (29 CFR 1910.147(e))</h3>
         <p className="mt-2">
           Getting re-energization wrong is as dangerous as skipping the lockout. The steps,

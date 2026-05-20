@@ -220,6 +220,16 @@ export default function T18L03_ConfinedSpaceEntry() {
       <section data-tier="working">
         <h2>The Critical Legal Distinction: 1910.268(o) vs. 1910.146</h2>
 
+        <div className="border-l-4 border-blue-400/30 bg-blue-400/5 p-3 my-3 text-sm">
+          <p className="font-semibold text-blue-300 mb-1">Refresher from T18</p>
+          <ul className="text-slate-300/90 space-y-1 list-disc pl-5">
+            <li><strong>Hazard recognition:</strong> (from L01) identifying dangers before they cause harm</li>
+            <li><strong>Hierarchy of controls:</strong> (from L01) removal, substitution, engineering, administrative, PPE — in order</li>
+            <li><strong>LOTO:</strong> (from L02) the lockout/tagout procedure for de-energizing equipment before servicing</li>
+            <li><strong>Energy isolating device:</strong> (from L02) the mechanical device (breaker, switch, valve) you apply a lock to</li>
+          </ul>
+        </div>
+
         <p>
           This is the most important book-vs-field gap in the entire T18 topic. Getting this
           wrong causes one of two equally bad outcomes: crews who skip atmospheric testing
