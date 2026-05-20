@@ -1,6 +1,6 @@
 // C05.L01 — OSP Course Final Exam (60 Questions, Comprehensive Assessment)
 // Covers all general topics T01–T19 proportionally.
-// Scores persisted via POST /api/training/cert-attempt (cert_track: 'OSP-Designer')
+// Scores persisted via POST /api/training/cert-attempt (cert_track: 'osp-general')
 // and POST /api/training/progress (lesson completion).
 //
 // Pass threshold: 80% (48/60).
@@ -45,7 +45,13 @@ export const meta = {
 // ── Question bank (60 questions) ────────────────────────────────────────────
 // Distribution: T01×4, T02×5, T03×3, T04×3, T05×5, T06×4, T07×2, T08×4,
 //               T09×4, T10×3, T11×4, T12×4, T13×3, T14×4, T15×2, T16×2,
-//               T17×2, T18×4, T19×2 = 64 written → trim T07, T15, T16, T17 by 1 each = 60.
+//               T17×2, T18×4, T19×2 = 64 authored.
+// Array order: F01–F25 (T01–T07 Q1), F27–F53 (T08–T15 Q1), F55 (T16 Q1),
+//              F57 (T17 Q1), F59–F64 (T18 + T19), then F26/F54/F56/F58 (trimmed).
+// QUESTIONS.slice(0,60) = T01–T19 with 1 Q from T07/T15/T16/T17 trimmed to hit 60.
+// Array order: T01–T17-Q1, T18×4, T19×2 fill positions 0–59; then T07-Q2,
+//              T15-Q2, T16-Q2, T17-Q2 at positions 60–63 (trimmed by slice).
+// Answer-index distribution (F01–F60): A≈15, B≈15, C≈15, D≈15 (rebalanced 2026-05-20).
 // Source lesson cited in JSX comment above each question for traceability.
 
 const QUESTIONS = [
@@ -59,12 +65,12 @@ const QUESTIONS = [
     prompt:
       'In a dome-style aerial splice closure, the entry port serves which primary function?',
     choices: [
-      'Routes water away from the splice trays',
       'Provides a controlled-environment cable entry point where fibers transition to the splice region while maintaining the environmental seal',
+      'Routes water away from the splice trays',
       'Anchors the strength members to the closure body',
       'Supplies thermal insulation for the fusion joints',
     ],
-    answerIndex: 1,
+    answerIndex: 0,
     explanation:
       'The entry port (also called a cable port or entry fitting) is the sealed interface where the incoming cable enters the closure. It must maintain the environmental seal against moisture and contaminants while allowing fiber transition to the internal splice trays. Strength-member anchoring and water routing are separate functions handled by other closure features. (T01.L04; RUS 1751F-630 §6)',
   },
@@ -77,12 +83,12 @@ const QUESTIONS = [
     prompt:
       'On a joint-use utility pole, which attachment zone is closest to the ground under NESC conventions?',
     choices: [
+      'Communications space (telecom)',
       'Supply space (electric utility)',
       'Neutral conductor',
-      'Communications space (telecom)',
       'Streetlight fixture',
     ],
-    answerIndex: 2,
+    answerIndex: 0,
     explanation:
       'NESC Rule 230 establishes a three-zone hierarchy from top to bottom: (1) supply conductors (power utility) at the top, (2) neutral conductor / streetlights in the middle, and (3) communications cables (telephone, cable TV, fiber) in the lowest zone. This separation provides isolation between the higher-voltage supply lines and the lower-voltage communications plant. (T01.L02; NESC C2 Rule 230)',
   },
@@ -96,11 +102,11 @@ const QUESTIONS = [
       'TIA-598-D assigns the following 12-color sequence to fiber ribbons. What color is position 5?',
     choices: [
       'White',
+      'Green',
       'Brown',
       'Slate',
-      'Green',
     ],
-    answerIndex: 2,
+    answerIndex: 3,
     explanation:
       'TIA-598-D 12-color sequence (positions 1–12): Blue, Orange, Green, Brown, Slate, White, Red, Black, Yellow, Violet, Rose, Aqua. Position 5 = Slate. This sequence applies to buffer tubes, fiber ribbons, and jacketed fibers in OSP cables. (T01.L08; TIA-598-D)',
   },
@@ -134,11 +140,11 @@ const QUESTIONS = [
       'G.652.D fiber is rated for a 30 mm installation bend radius. A conduit route requires a 20 mm bend. What is the expected consequence?',
     choices: [
       'No consequence — the specification is conservative and real fibers tolerate smaller bends',
-      'Measurable macrobend loss at this location, typically 0.1–1.0 dB per bend event',
       'Temporary loss only during the pull; fiber returns to normal after tension is released',
+      'Measurable macrobend loss at this location, typically 0.1–1.0 dB per bend event',
       'Loss only occurs at wavelengths below 1310 nm',
     ],
-    answerIndex: 1,
+    answerIndex: 2,
     explanation:
       'When a singlemode fiber is bent below its rated minimum bend radius, higher-order mode cutoff shifts, causing light to leak out of the core — macrobend loss. G.652.D at 20 mm (below the 30 mm install spec) produces measurable permanent loss of roughly 0.1–1.0 dB per bend location depending on severity. The loss does NOT reverse when the bend is released. G.657.A1/A2 bend-insensitive fibers are specified for tight-bend applications. (T02.L04; ITU-T G.652.D; IEC 60793-2-50)',
   },
@@ -152,11 +158,11 @@ const QUESTIONS = [
       'A 15 km link at 1310 nm has 3 fusion splices at 0.1 dB each and 2 connectors at 0.5 dB each. Fiber attenuation is 0.35 dB/km. What is the total optical link loss?',
     choices: [
       '5.25 dB',
-      '6.55 dB',
       '5.55 dB',
       '7.05 dB',
+      '6.55 dB',
     ],
-    answerIndex: 1,
+    answerIndex: 3,
     explanation:
       'Fiber loss: 15 km × 0.35 dB/km = 5.25 dB. Splice loss: 3 × 0.1 dB = 0.30 dB. Connector loss: 2 × 0.5 dB = 1.00 dB. Total: 5.25 + 0.30 + 1.00 = 6.55 dB. This calculation is the Tier 1 (OLTS) reference for link acceptance testing. The result must be compared against the optical power budget (transmit power minus receiver sensitivity) with a margin of at least 3 dB. (T02.L06; TIA-568.3-D Annex C)',
   },
@@ -171,10 +177,10 @@ const QUESTIONS = [
     choices: [
       'SMF is less expensive than OM4 for OSP applications',
       'OM4 multimode cannot be fusion-spliced in the field',
-      'SMF eliminates modal dispersion, allowing transmission over 12+ miles without bandwidth limitation from fiber type',
       'RUS Bulletin 1751F-630 prohibits multimode fiber in rural telecom networks',
+      'SMF eliminates modal dispersion, allowing transmission over 12+ miles without bandwidth limitation from fiber type',
     ],
-    answerIndex: 2,
+    answerIndex: 3,
     explanation:
       'OM4 multimode fiber\'s bandwidth-distance product limits it to ~2 km at 25 Gbps (VCSEL launch). At 12 miles (~19 km), only singlemode fiber is practical because SMF has a single propagation mode and is dispersion-limited only by chromatic and polarization mode dispersion (far less limiting). RUS-funded rural networks universally specify G.652.D or G.657-series SMF. (T02.L08; RUS 1751F-630 §4; ITU-T G.652.D)',
   },
@@ -188,13 +194,13 @@ const QUESTIONS = [
       'Chromatic dispersion causes signal pulse spreading proportional to the source\'s spectral width. At 1550 nm on G.652.D (17 ps/nm·km), a 0.1 nm spectral-width DFB laser over 80 km creates total dispersion of:',
     choices: [
       '13.6 ps',
-      '136 ps',
       '1360 ps',
+      '136 ps',
       '1.36 ps',
     ],
-    answerIndex: 1,
+    answerIndex: 2,
     explanation:
-      'Total chromatic dispersion = D × Δλ × L = 17 ps/nm·km × 0.1 nm × 80 km = 136 ps. At 10 Gbps (bit period ≈ 100 ps), 136 ps of dispersion is significant — it spreads each bit by 1.36× its time slot. This is within reach for 10G with some margin but approaches limits. Coherent systems (100G+) use DSP-based dispersion compensation, making G.652.D viable for long-haul. (T02.L03; ITU-T G.952)',
+      'Total chromatic dispersion = D × Δλ × L = 17 ps/nm·km × 0.1 nm × 80 km = 136 ps. At 10 Gbps (bit period ≈ 100 ps), 136 ps of dispersion is significant — it spreads each bit by 1.36× its time slot. This is within reach for 10G with some margin but approaches limits. Coherent systems (100G+) use DSP-based dispersion compensation, making G.652.D viable for long-haul. (T02.L03; ITU-T G.652)',
   },
 
   // Source: T02.L02 — Attenuation Three Numbers
@@ -206,11 +212,11 @@ const QUESTIONS = [
       'The three standard wavelength windows used for OSP singlemode fiber transmission are (in ascending wavelength order):',
     choices: [
       '850 nm, 1300 nm, 1550 nm',
-      '1310 nm, 1490 nm, 1550 nm',
       '1250 nm, 1310 nm, 1550 nm',
       '1300 nm, 1490 nm, 1625 nm',
+      '1310 nm, 1490 nm, 1550 nm',
     ],
-    answerIndex: 1,
+    answerIndex: 3,
     explanation:
       '1310 nm: the O-band (original band) — lowest chromatic dispersion for G.652.D, commonly used for shorter OSP spans. 1490 nm: GPON downstream wavelength (OLT→ONT). 1550 nm: the C-band — lowest attenuation (~0.20 dB/km), used for longer-haul and DWDM. A fourth wavelength (1625 nm) is used for live-network OTDR testing without interrupting traffic. The 850 nm window applies to multimode (VCSEL), not OSP singlemode. (T02.L02; ITU-T G.652.D)',
   },
@@ -226,11 +232,11 @@ const QUESTIONS = [
       'Corrugated aluminum tape (CAT) armor is preferred over corrugated steel tape (CST) in aerial applications primarily because:',
     choices: [
       'CAT provides superior rodent resistance in areas with gnawing wildlife',
-      'CAT has better corrosion resistance than CST due to its passive aluminum oxide surface layer, and is lighter per unit length',
       'CAT costs less than CST for long aerial spans',
       'RUS Bulletin 1751F-630 mandates CAT for all aerial cables',
+      'CAT has better corrosion resistance than CST due to its passive aluminum oxide surface layer, and is lighter per unit length',
     ],
-    answerIndex: 1,
+    answerIndex: 3,
     explanation:
       'Aluminum forms a self-repairing passive oxide (Al₂O₃) that prevents corrosion progression — important in coastal, industrial, or humid environments. CAT is also lighter than CST, reducing pole loading. The tradeoff: aluminum is softer, so CAT offers less rodent resistance than CST. For direct-burial in rodent-active zones, CST or polyethylene-jacketed CST is preferred. Neither is universally mandated — cable selection is project-specific. (T03.L07; ICEA S-87-640)',
   },
@@ -262,11 +268,11 @@ const QUESTIONS = [
       'G.657.A2 fiber is specified for a drop cable route that passes through an MDU (multi-dwelling unit) with multiple bends in conduit risers. What is the primary advantage of G.657.A2 over standard G.652.D in this application?',
     choices: [
       'G.657.A2 has lower attenuation than G.652.D at all wavelengths',
-      'G.657.A2 is rated for a minimum bend radius of 7.5 mm (vs. 30 mm for G.652.D), enabling sharper bends in tight routing without measurable loss',
       'G.657.A2 can use multimode connectors, reducing termination cost',
       'G.657.A2 fiber is thicker-coated and provides better protection against crushing forces',
+      'G.657.A2 is rated for a minimum bend radius of 7.5 mm (vs. 30 mm for G.652.D), enabling sharper bends in tight routing without measurable loss',
     ],
-    answerIndex: 1,
+    answerIndex: 3,
     explanation:
       'G.657.A2 (bend-insensitive singlemode) is fully backward-compatible with G.652.D (same core/cladding dimensions, same MFD) but is manufactured with a depressed-cladding design that traps light more effectively at tight bends. The IEC 60793-2-50 standard specifies G.657.A2 minimum bend radius of 7.5 mm at 1 turn vs. the 30 mm installation minimum for G.652.D. MDU riser conduit routes routinely require 10–15 mm radius bends that G.652.D would not tolerate without loss. (T03.L05; ITU-T G.657; IEC 60793-2-50)',
   },
@@ -281,12 +287,12 @@ const QUESTIONS = [
     prompt:
       'A route survey identifies a yellow-flagged underground utility at a critical crossing. What is the engineer\'s required next step before finalizing the route design?',
     choices: [
-      'Assume the standard 36-inch burial depth and route the fiber above it',
       'Contact the 811 One-Call center and the utility owner to confirm exact depth, material, and clearance before finalizing design',
+      'Assume the standard 36-inch burial depth and route the fiber above it',
       'The yellow flag means gas — fiber cannot cross gas lines under any circumstances',
       'Notify RUS that a foreign utility conflict exists and request a redesign waiver',
     ],
-    answerIndex: 1,
+    answerIndex: 0,
     explanation:
       'A yellow utility flag indicates a gas pipeline. The engineer must contact 811 (which triggers the utility\'s locating service) AND the gas utility directly to obtain: precise depth (which varies widely — gas mains range from 18 inches to 8+ feet depending on era and local codes), pipe material, pressure rating, and any right-of-way restrictions. Assuming 36 inches without verification risks conflicts or the utility requiring relocation at the project\'s expense. (T04.L01; Common Ground Alliance Best Practices; 49 CFR 192)',
   },
@@ -317,14 +323,14 @@ const QUESTIONS = [
     prompt:
       'During a pole audit, a staker measures an existing cable at 19.5 ft above ground at a point with 20 ft required clearance under NESC Rule 232 (Grade B residential crossing). What is the correct next step?',
     choices: [
-      'Document the deficiency and proceed — the existing cable was permitted at 19.5 ft',
       'Flag the pole as requiring make-ready to raise all attachments before adding the new cable',
+      'Document the deficiency and proceed — the existing cable was permitted at 19.5 ft',
       'The new fiber cable can attach below the existing cable since the clearance rule applies to the lowest conductor only',
       'Contact the pole owner and request a variance since 0.5 ft deficiency is minor',
     ],
-    answerIndex: 1,
+    answerIndex: 0,
     explanation:
-      'NESC Rule 232 (Grade B crossings) typically requires 18 ft clearance at crossing for communications cables (actual value depends on loading district and crossing type — verify against Table 232-1). If the existing cable is already non-compliant or at the minimum, adding a new attachment below it would push clearances even lower. Make-ready must address all existing violations before the new attachment can be added. The existing violation does not grandfather the condition — it must be corrected. (T04.L04; NESC Rule 232; FCC 47 CFR §1.1413)',
+      'NESC Rule 232 (Grade B crossings) typically requires 18 ft clearance at crossing for communications cables (actual value depends on loading district and crossing type — verify against Table 232-1). If the existing cable is already non-compliant or at the minimum, adding a new attachment below it would push clearances even lower. Make-ready must address all existing violations before the new attachment can be added. The existing violation does not grandfather the condition — it must be corrected. (T04.L04; NESC Rule 232; FCC 47 CFR §1.1411)',
   },
 
   // ─── T05 OSP Design — Aerial (5 questions) ──────────────────────────────
@@ -338,11 +344,11 @@ const QUESTIONS = [
       'NESC Rule 232 Grade B requires 18 ft clearance above a residential road. An aerial fiber cable is designed to sag 1.8 ft under heavy ice loading. What attachment height above the poles is required to maintain the 18 ft clearance under worst-case conditions?',
     choices: [
       '18 ft (clearance is measured at attachment)',
-      '19.8 ft (18 ft clearance + 1.8 ft sag at midspan)',
       '20 ft (NESC requires 2 ft margin above published clearance)',
       '18 ft + the NESC loading factor, which varies by district',
+      '19.8 ft (18 ft clearance + 1.8 ft sag at midspan)',
     ],
-    answerIndex: 1,
+    answerIndex: 3,
     explanation:
       'Clearance is measured at the lowest point of the cable (midspan under worst-case loading). If the cable sags 1.8 ft under heavy ice, the attachment point must be at minimum: required clearance + max sag = 18 + 1.8 = 19.8 ft. NESC Rule 232 Table 232-1 specifies clearances at midspan under the worst loading condition for the applicable Loading District. The engineer must design the attachment height so that even at maximum sag, the cable remains above the required clearance. (T05.L02; NESC Rule 232)',
   },
@@ -356,11 +362,11 @@ const QUESTIONS = [
       'A pole is designed for Grade B construction with a 1,200-lb transverse load capacity at 2 ft from the top. Current loading is 800 lb. A new fiber cable would add 280 lb. Is the addition feasible without make-ready?',
     choices: [
       'Yes — 800 + 280 = 1,080 lb, below the 1,200-lb limit',
-      'No — combined load (1,080 lb) is below the rating but NESC Rule 257 requires wind load to be added; full analysis is needed',
       'Yes, but only if the new cable weighs less than the existing cable',
       'No — pole rating headroom must exceed 25% of total load',
+      'No — combined load (1,080 lb) is below the rating but NESC Rule 257 requires wind load to be added; full analysis is needed',
     ],
-    answerIndex: 1,
+    answerIndex: 3,
     explanation:
       'Adding gravity loads (800 + 280 = 1,080 lb) and comparing to the static rating is a first-pass check, not the full analysis. NESC Rule 257 requires combined loading: vertical load (conductor weight, equipment) PLUS transverse wind loads (Rule 250) PLUS longitudinal loads at dead-ends. In a Heavy loading district, a combined transverse wind load may add 200–400 lb more. The full pole-loading worksheet per NESC Rule 261 (or O-Calc/PLS-POLE analysis) is required before committing to the attachment. (T05.L05; NESC Rules 257 and 261)',
   },
@@ -373,12 +379,12 @@ const QUESTIONS = [
     prompt:
       'A 150-meter span fiber cable is sagged to 2.1% under combined ice/wind loading. The NESC Grade B limit is 2.5% sag. The installation is performed at 95°F (hot day). Should the designer increase the sag for the hot-day installation?',
     choices: [
-      'No — 2.1% is already below 2.5%; there is no reason to adjust',
       'Yes — cable elongates at high temperatures, increasing sag beyond 2.1%; the installed sag must account for thermal elongation so the worst-case (winter ice) sag remains ≤ 2.5%',
+      'No — 2.1% is already below 2.5%; there is no reason to adjust',
       'No — temperature effects on sag are negligible for fiber optic cable',
       'Yes — NESC requires sag tables to be calculated at 60°F regardless of field conditions',
     ],
-    answerIndex: 1,
+    answerIndex: 0,
     explanation:
       'Sag tables must account for the full temperature range. At 95°F, thermal elongation increases sag. The cable must be tensioned at the installation temperature such that: when temperature drops to the Loading District minimum (e.g., 0°F or –20°F with ice), sag is at or below the NESC limit. Conversely, at peak summer temperatures, sag increases above the design point — the designer must verify clearance is still met at maximum thermal sag. Installing at 95°F requires referencing the sag-tension table for that temperature to apply the correct stringing chart. (T05.L07; NESC Rule 250; cable manufacturer sag-tension tables)',
   },
@@ -392,11 +398,11 @@ const QUESTIONS = [
       'OTMR (One-Touch Make-Ready) was authorized under the FCC 2018 Pole Access Order (FCC 18-111). Which type of make-ready work does OTMR NOT cover?',
     choices: [
       'Simple make-ready (transferring existing cables to code position)',
-      'Complex make-ready (work requiring pole replacement or down-guy installation)',
       'All make-ready if the pole owner can do it within 15 business days',
+      'Complex make-ready (work requiring pole replacement or down-guy installation)',
       'Make-ready involving cable transfer above the top communications wire',
     ],
-    answerIndex: 1,
+    answerIndex: 2,
     explanation:
       'OTMR allows the attaching party (fiber company) to perform simple make-ready work with its own contractors without waiting for the pole owner — subject to the pole owner\'s right to be present. Complex make-ready (pole replacement, down-guy addition, cross-arm changes) is excluded from OTMR and requires the pole owner\'s work crews or approved contractors. Simple vs. complex determination is made by the pole owner per 47 CFR §1.1411. (T05.L09; FCC 18-111; 47 CFR §1.1411)',
   },
@@ -430,11 +436,11 @@ const QUESTIONS = [
       'Under NESC Rule 354 (Underground Supply and Communications), a fiber conduit crossing a buried gas main must maintain what minimum vertical separation at the crossing?',
     choices: [
       '3 inches — same as for electric supply cables',
-      '6 to 12 inches vertical separation at crossings per NESC Rule 354',
       '24 inches — same as the burial depth for direct-buried fiber',
       'No minimum; the gas utility establishes separation requirements',
+      '6 to 12 inches vertical separation at crossings per NESC Rule 354',
     ],
-    answerIndex: 1,
+    answerIndex: 3,
     explanation:
       'NESC Rule 354 specifies separation between underground communication cables and supply utilities (including gas mains). At crossings, 6–12 inches of vertical separation is the standard requirement; parallel horizontal separation is 12–24 inches depending on construction method. The gas utility may impose additional requirements. NESC is the baseline minimum — local utility standards and state regulations may be stricter. (T06.L09; NESC Rule 354)',
   },
@@ -465,12 +471,12 @@ const QUESTIONS = [
     prompt:
       'A handhole is designed for a branch point with one incoming 96-fiber feeder cable and two outgoing 48-fiber distribution cables. Why must the handhole be sized larger than a simple straight-through splice handhole?',
     choices: [
-      'Branching cables add weight, requiring a reinforced structure',
       'Multiple cable routes require bend-radius-compliant cable management in three directions simultaneously, increasing the required internal volume',
+      'Branching cables add weight, requiring a reinforced structure',
       'RUS Bulletin 1751F-635 mandates a minimum 36×36×36-inch handhole for any branch point',
       'The splitter equipment inside a branch handhole requires 120V AC power, requiring a larger housing',
     ],
-    answerIndex: 1,
+    answerIndex: 0,
     explanation:
       'A branching handhole must accommodate cables leaving in multiple directions simultaneously, each requiring the minimum bend radius (typically 10–20 cable diameters). With three cable paths (one in, two out), the handhole must provide space for the cables to make compliant curves without kinking — requiring significantly more volume than a straight-through splice. Additionally, the splice organizer or distribution frame has a physical footprint. Sizing is calculated from the sum of cable diameters, bend-radius requirements, and equipment footprint. (T06.L05; RUS 1751F-635; cable bend-radius tables)',
   },
@@ -484,11 +490,11 @@ const QUESTIONS = [
       'Direct-buried fiber cable (no conduit) in a non-traffic area under NESC Rule 352 must be buried at a minimum depth of:',
     choices: [
       '18 inches',
-      '24 inches',
       '30 inches',
+      '24 inches',
       '36 inches',
     ],
-    answerIndex: 1,
+    answerIndex: 2,
     explanation:
       'NESC Rule 352 specifies burial depths for underground communication cables. In non-traffic (non-roadway) areas for direct-buried cable: 24 inches minimum (NESC 2023, Table 352-1 for buried communication cables in public areas). Depths increase to 30–36 inches in roadway crossings. Conduit reduces required burial depth in some jurisdictions. Local utility standards and state DOT specifications may be more stringent than NESC minimums. (T06.L02; NESC Rule 352, Table 352-1)',
   },
@@ -513,24 +519,6 @@ const QUESTIONS = [
       'Vertical clearance under NESC Rule 235 (communication-to-supply separation) is measured from the lowest supply conductor to the highest communications cable under worst-case loading — not the static attachment height. To verify compliance, the engineer needs: the existing power attachment height, the proposed telecom attachment height (22 ft), AND the horizontal offset and azimuth — because wind deflection in the horizontal plane may cause cables to approach each other on diagonal spans. "South side" is insufficient without a defined reference to the power attachment position. (T07.L05; NESC Rule 235; RUS Form 740)',
   },
 
-  // Source: T07.L03 — Photographing and Coding Pole Tags
-  {
-    id: 'F26',
-    topic: 'T07',
-    topicLabel: 'Staking',
-    prompt:
-      'During field staking, the staker photographs each pole from the same cardinal direction (facing north) and logs the pole tag number. Why is consistent cardinal-direction photography important for as-built documentation?',
-    choices: [
-      'Cardinal direction ensures the sun does not create glare in the photos',
-      'Consistent orientation means all photos can be directly compared to the GIS strand map, ensuring north-referenced cable routes, attachment positions, and infrastructure are correctly aligned without ambiguity',
-      'Facing north is required by RUS Form 740 instructions',
-      'It is a personal preference; consistency is optional as long as all components are visible',
-    ],
-    answerIndex: 1,
-    explanation:
-      'Staking photos serve as field-documentation evidence for design review, inspector review, and post-construction as-built reconciliation. Consistent cardinal-direction photography ensures each pole\'s photo can be correlated with the GIS/strand map (which is north-referenced) and clearly shows which side of the pole carries which attachment, which direction the span goes, and what the clearance situation looks like. Inconsistent orientation makes comparison to strand maps and clearance calculations ambiguous. (T07.L03; RUS Form 740 instructions)',
-  },
-
   // ─── T08 Make-Ready & Pole Attachment (4 questions) ─────────────────────
 
   // Source: T08.L02 — The 15-Day Clock
@@ -539,16 +527,16 @@ const QUESTIONS = [
     topic: 'T08',
     topicLabel: 'Make-Ready & Pole Attachment',
     prompt:
-      'Under FCC 47 CFR §1.1411, a complete OTMR application was submitted to a pole owner 17 days ago. The pole owner has not commenced work. What is the attacher\'s available remedy?',
+      'Under FCC 47 CFR §1.1411, a complete OTMR application was submitted to a pole owner 17 business days ago. The pole owner has not commenced work. What is the attacher\'s available remedy?',
     choices: [
-      'File a complaint with the FCC; no self-help is authorized under OTMR',
       'The attacher may now perform the make-ready work using its own qualified contractors, at the pole owner\'s expense, with required advance notice',
+      'File a complaint with the FCC; no self-help is authorized under OTMR',
       'The FCC automatically approves the attachment if the clock expires without pole-owner action',
       'The attacher must wait an additional 30 days before taking any action',
     ],
-    answerIndex: 1,
+    answerIndex: 0,
     explanation:
-      '47 CFR §1.1411 establishes the OTMR timeline: 15 business days from receipt of a complete OTMR application for the pole owner to commence make-ready. After expiry without commencement, the attacher may self-perform make-ready using its own qualified contractors, with advance written notice to the pole owner (typically 3 business days). The work is performed at the pole owner\'s expense. At day 17, the clock has expired and self-help rights are available. (T08.L02; 47 CFR §1.1411; FCC 18-111)',
+      '47 CFR §1.1411 establishes the OTMR timeline: 15 business days from receipt of a complete OTMR application for the pole owner to commence make-ready. After expiry without commencement, the attacher may self-perform make-ready using its own qualified contractors, with advance written notice to the pole owner (typically 3 business days). The work is performed at the pole owner\'s expense. At 17 business days, the 15-business-day clock has expired and self-help rights are available. (T08.L02; 47 CFR §1.1411; FCC 18-111)',
   },
 
   // Source: T08.L03 — Simple vs. Complex Attachment
@@ -560,11 +548,11 @@ const QUESTIONS = [
       'A make-ready estimate includes "pole replacement (Class 3 → Class 2) due to load requirement." This work is classified as:',
     choices: [
       'Simple make-ready — the attaching party\'s crews can perform it under OTMR',
-      'Complex make-ready — excluded from OTMR; requires pole owner coordination and may involve specialized crews',
       'No-cost make-ready — structural improvements are the pole owner\'s responsibility',
       'Negotiable — the parties can agree to treat pole replacement as simple under OTMR',
+      'Complex make-ready — excluded from OTMR; requires pole owner coordination and may involve specialized crews',
     ],
-    answerIndex: 1,
+    answerIndex: 3,
     explanation:
       'Pole replacement is complex make-ready per FCC 18-111 and 47 CFR §1.1411. Complex work (also including down-guys, cross-arm changes, and riser conduit replacements) is excluded from OTMR self-help rights. The pole owner must perform or coordinate complex work within the applicable timeframe (typically 60 days for complex). The attaching party bears the cost of any make-ready required by its new attachment — including structural upgrades that the existing load situation made necessary. (T08.L03; 47 CFR §1.1411; FCC 18-111)',
   },
@@ -579,10 +567,10 @@ const QUESTIONS = [
     choices: [
       'AT&T — since it is their wire being moved',
       'The pole owner — since they control the attachment zone',
-      'The fiber attacher requesting the new attachment that requires the transfer',
       'Shared equally between AT&T and the new attacher',
+      'The fiber attacher requesting the new attachment that requires the transfer',
     ],
-    answerIndex: 2,
+    answerIndex: 3,
     explanation:
       'Under FCC 18-111 and NECA joint-use norms, the new attaching party bears the cost of all make-ready work required to accommodate its new attachment — including moving existing third-party wires to comply with NESC clearances. AT&T\'s wire transfer is required because the new fiber attachment needs the space AT&T currently occupies (or needs the clearance zone AT&T\'s wire would violate). This is a well-established principle: you pay for the space you displace. (T08.L07; FCC 18-111; NECA Joint Use Guidelines)',
   },
@@ -596,11 +584,11 @@ const QUESTIONS = [
       'Annual pole attachment rent under FCC 47 CFR §1.1409 (the telecom formula) is calculated based on which factors?',
     choices: [
       'Market rate negotiated between the attacher and pole owner',
-      'Pole owner\'s net cost per pole, the usable pole space occupied by the attacher, and the total usable pole space available for attachments',
       'Number of attachments per pole and the pole replacement cost',
+      'Pole owner\'s net cost per pole, the usable pole space occupied by the attacher, and the total usable pole space available for attachments',
       'RUS Bulletin 1751F-630 tabulated rates by pole class and loading district',
     ],
-    answerIndex: 1,
+    answerIndex: 2,
     explanation:
       'The FCC telecom formula (47 CFR §1.1409): Annual rent = (Net cost per pole) × (Occupied space / Usable space). Occupied space = the attacher\'s vertical space. Usable space = total pole height minus minimum ground clearance, minus the space reserved for joint-use supply (power). The formula is designed to allocate pole costs fairly across all attachers. Cable companies use a different FCC formula. RUS does not set attachment rents. (T08.L08; 47 CFR §1.1409)',
   },
@@ -633,12 +621,12 @@ const QUESTIONS = [
     prompt:
       'The USFWS IPaC (Information for Planning and Consultation) tool returns a result listing the Northern Long-Eared Bat (NLEB) as a Threatened species within a project area. What regulatory step is triggered?',
     choices: [
-      'The project must be halted immediately until an Endangered Species Act consultation is complete',
       'ESA Section 7 formal consultation with USFWS is potentially triggered if the project has federal nexus (RUS funding); the agency must determine if the action "may affect" NLEB',
+      'The project must be halted immediately until an Endangered Species Act consultation is complete',
       'The NLEB listing applies only to projects in cave hibernacula areas; aerial fiber installation is exempt',
       'No action required — IPaC results are advisory only',
     ],
-    answerIndex: 1,
+    answerIndex: 0,
     explanation:
       'ESA Section 7 requires federal agencies (RUS, in this case) to consult with USFWS whenever an action "may affect" a listed species. IPaC results showing NLEB in the project area trigger the agency\'s obligation to conduct Biological Assessment and potentially formal Section 7 consultation. NLEB was uplisted to Threatened under White-Nose Syndrome pressure (87 FR 73488, November 2022). A 4(d) rule may provide some exceptions for tree clearing. The attaching party must work with the RUS NEPA review team to complete consultation. (T09.L04; 16 USC 1536; 87 FR 73488)',
   },
@@ -652,11 +640,11 @@ const QUESTIONS = [
       'USACE Nationwide Permit 57 (NWP 57, 2026 reissuance) covers certain utility line activities. What is a key limitation that may disqualify a fiber project from using NWP 57 vs. requiring an Individual Permit?',
     choices: [
       'NWP 57 does not apply to fiber optic cable installations — only to electric and gas utilities',
-      'NWP 57 caps fill in wetlands at 0.5 acres per crossing; projects exceeding this threshold require an Individual Section 404 Permit',
       'NWP 57 applies only in USACE Omaha District jurisdiction',
       'NWP 57 requires the project to be funded by the state, not the federal government',
+      'NWP 57 caps fill in wetlands at 0.5 acres per crossing; projects exceeding this threshold require an Individual Section 404 Permit',
     ],
-    answerIndex: 1,
+    answerIndex: 3,
     explanation:
       'NWP 57 (Utility Line Activities for Water and Other Resources) authorizes discharges of dredge/fill material for utility lines (including fiber) subject to conditions. The key acreage threshold: up to 0.5 acres of waters of the United States (wetlands + other waters) per crossing. Exceeding 0.5 acres per crossing requires either: a different NWP, a regional general permit, or an Individual Permit under Clean Water Act Section 404. (T09.L05; 88 FR — NWP 57 reissuance 2023/2026; 33 CFR Part 330)',
   },
@@ -690,11 +678,11 @@ const QUESTIONS = [
       'The crew has called 811, received utility markings, and the locate tickets are 5 days old. Excavation is about to begin. What must be confirmed before the first shovel hits the ground?',
     choices: [
       'Locate tickets are valid for 30 days; no additional steps are needed',
-      'Verify that all marked utilities have been visually confirmed in the field and that the ticket is still within the valid window for the jurisdiction (varies from 3 to 30 days)',
       'Call 811 again since 5-day-old tickets are always expired',
+      'Verify that all marked utilities have been visually confirmed in the field and that the ticket is still within the valid window for the jurisdiction (varies from 3 to 30 days)',
       'Confirm that the pole owner has approved excavation within their right-of-way',
     ],
-    answerIndex: 1,
+    answerIndex: 2,
     explanation:
       'Locate ticket validity varies significantly by state — from 3 working days (some states) to 30 calendar days (others). The crew must verify: (1) the ticket is still valid under the state\'s window, (2) all utilities shown on the ticket have been physically staked/painted in the field, and (3) any stakes that have been displaced or faded must be re-confirmed before excavation. Some states require re-notification (a new ticket) after the validity window even if no digging has occurred. (T10.L01; Common Ground Alliance Best Practices; state one-call requirements)',
   },
@@ -707,12 +695,12 @@ const QUESTIONS = [
     prompt:
       'During a 400-foot conduit pull, tension starts at 80 lb and rises to 160 lb by the midpoint. The cable manufacturer\'s maximum pulling tension is 200 lb. What is the correct action?',
     choices: [
-      'Continue the pull — 160 lb is still below the 200-lb limit',
       'Stop the pull, investigate the tension increase (obstruction, conduit damage, excess bend), and resolve before resuming',
+      'Continue the pull — 160 lb is still below the 200-lb limit',
       'Switch to a higher-powered winch to pull through the obstruction',
       'Add pulling lubricant and continue at the increased tension',
     ],
-    answerIndex: 1,
+    answerIndex: 0,
     explanation:
       'A tension spike during pulling signals an obstruction, bent conduit, debris, or cable binding. Continuing at elevated tension — even below the manufacturer\'s maximum — risks sudden tension spikes that can exceed the limit and cause micro-crack formation in fiber or damage to the buffer tubes. The correct response is STOP, investigate, and resolve. Adding lubricant without identifying the cause may mask the problem temporarily but does not address the root cause. (T10.L05; TIA/EIA-590; cable manufacturer installation guides)',
   },
@@ -725,12 +713,12 @@ const QUESTIONS = [
     prompt:
       'A concrete handhole is set in a sidewalk location. The top of the handhole frame is 0.5 inches below the finished sidewalk grade. What is the consequence and the required correction?',
     choices: [
-      'No consequence — 0.5 inches is within acceptable tolerance',
       'The frame must be raised to be flush with or slightly above finished grade; a recessed frame creates a tripping hazard and allows surface water infiltration',
+      'No consequence — 0.5 inches is within acceptable tolerance',
       'The frame should be further lowered to 1 inch below grade to protect it from traffic impact',
       'The frame height is correct; the cover will create the flush surface',
     ],
-    answerIndex: 1,
+    answerIndex: 0,
     explanation:
       'Handhole frames installed in pedestrian areas must be flush with (or in some jurisdictions, up to 0.25 inches above) finished grade. A recessed frame (0.5 inches below grade) creates: (1) a tripping hazard — a depression that catches toes; (2) a water collection point that accelerates ice formation in freeze-thaw climates; (3) an infiltration path for surface water into the handhole and potentially into conduit. AASHTO, ADA guidelines, and local municipal codes govern frame-to-grade requirements. The contractor must reset the frame using adjustment rings. (T10.L07; ADA guidelines; local DOT specifications)',
   },
@@ -781,12 +769,12 @@ const QUESTIONS = [
     prompt:
       'A gel-filled dome splice closure is opened for maintenance 8 years after initial installation. The technician must access two specific splices in tray 3 of 6. What is the primary advantage of a re-enterable (rather than heat-shrink-sealed) closure in this scenario?',
     choices: [
-      'Re-enterable closures are waterproof; heat-shrink closures are not',
       'Re-enterable closures can be opened, repaired, and resealed without damaging the other splice trays or replacing the closure body',
+      'Re-enterable closures are waterproof; heat-shrink closures are not',
       'Re-enterable closures cost less to purchase and install than heat-shrink closures',
       'Re-enterable closures do not require gel filling, simplifying maintenance',
     ],
-    answerIndex: 1,
+    answerIndex: 0,
     explanation:
       'Re-enterable closures use mechanical sealing systems (o-rings, compression plates) that can be opened without heat and resealed without replacing the closure. When accessing tray 3 of 6, a re-enterable closure allows opening, accessing only the affected trays, and resealing with the original hardware. A heat-shrink closure requires cutting the heat-shrink sleeve, which destroys the seal; resealing requires replacement shrink material. For a closure that may need repeated maintenance access, re-enterable is the preferred spec. (T11.L09; ITU-T L.12; FOSC manufacturer guidelines)',
   },
@@ -837,12 +825,12 @@ const QUESTIONS = [
     prompt:
       'End-face inspection per IEC 61300-3-35 Zone A is the critical inspection zone. What does Zone A represent?',
     choices: [
-      'The entire fiber end face from 0 to 125 µm diameter',
       'The core region — typically 0 to 25 µm diameter for singlemode fiber — where contamination causes the highest optical loss',
+      'The entire fiber end face from 0 to 125 µm diameter',
       'The cladding surface from 25 µm to 125 µm diameter',
       'The ferrule physical contact area that must be flat to within ±1 µm',
     ],
-    answerIndex: 1,
+    answerIndex: 0,
     explanation:
       'IEC 61300-3-35 defines four concentric inspection zones for fiber end-face assessment: Zone A (core region, 0–25 µm diameter for SMF), Zone B (cladding, 25–120 µm), Zone C (adhesive, 120–130 µm), and Zone D (ferrule exterior). Zone A is the critical zone because contamination there directly intercepts the optical mode field — even microscopic scratches or pits in Zone A cause significant connector loss. Zone A defects have the strictest pass/fail criteria. (T12.L11; IEC 61300-3-35)',
   },
@@ -894,11 +882,11 @@ const QUESTIONS = [
       'RUS Form 219 (Close-Out Report) requires the engineer to certify the as-built network. A splice location was field-shifted 18 feet from the design location to avoid a utility conflict. Is this a reportable variance requiring documentation?',
     choices: [
       'No — 18 feet is within a typical engineering tolerance zone',
-      'Yes — all location changes that affect the splice matrix, OTDR address assignments, or future maintenance must be documented as variances in the as-built record',
       'No — if the splice passes OTDR acceptance criteria, its location does not matter',
       'Yes, but only if the shift causes a NESC clearance issue',
+      'Yes — all location changes that affect the splice matrix, OTDR address assignments, or future maintenance must be documented as variances in the as-built record',
     ],
-    answerIndex: 1,
+    answerIndex: 3,
     explanation:
       'Any deviation from the design (pole location, splice location, cable route, fiber count changes) must be documented in the as-built record. An 18-foot splice shift changes: (1) the OTDR distance reference for the splice in the splice matrix, (2) the GPS coordinate of the splice location in the GIS database, (3) the length of the cable segments on either side. Future technicians using the splice matrix to locate a failure must have accurate location data. RUS Form 219 requires the engineer to certify accuracy of the as-built or document all variances. (T13.L07; RUS Form 219 instructions)',
   },
@@ -1033,24 +1021,6 @@ const QUESTIONS = [
       'Bidirectional OTDR: from end A, break at 7,230 m. From end B, break at 15,000 - 7,680 = 7,320 m from end A. The true break location is the average: (7,230 + 7,320) / 2 = 7,275 m from end A. The 90-m discrepancy reflects IOR (Index of Refraction) calibration error or measurement uncertainty in each OTDR measurement. Averaging the two bidirectional measurements is the standard technique to improve accuracy. This location is where the crew should excavate or search the aerial span. (T15.L02; TIA-OFSTP-14A; OTDR application notes)',
   },
 
-  // Source: T15.L08 — Method of Procedure
-  {
-    id: 'F54',
-    topic: 'T15',
-    topicLabel: 'Restoration & Outage Response',
-    prompt:
-      'A restoration team arrives at a backhoe-strike location. One end of the OTDRed cut is confirmed at the site. Before any splicing can begin, what is the required safety/planning step?',
-    choices: [
-      'Immediately set up the splice trailer and begin stripping the cable',
-      'Verify the site is safe (call 811 for surrounding utilities, confirm backhoe is removed, set up traffic control), OTDR both ends to characterize the full damage, then develop the repair plan',
-      'Contact the utility at each end of the link and notify them of the outage status before beginning repairs',
-      'Test fiber continuity with a visible light source to confirm which fibers are cut',
-    ],
-    answerIndex: 1,
-    explanation:
-      'Before restoration work begins: (1) safety — the excavation site may have exposed other utilities; call 811 for adjacent utility locate, set up traffic control, verify the backhoe and any other equipment is cleared; (2) OTDR from both ends — confirm whether there is one break or multiple breaks, get accurate distances, characterize fiber damage; (3) develop the repair plan — determine whether to use a pre-made pigtail repair or a full section replacement. Rushing to splice before understanding the damage scope often leads to incomplete restoration or safety incidents. (T15.L08; CGA guidelines; emergency restoration best practices)',
-  },
-
   // ─── T16 As-Built Documentation & GIS (2 questions) ─────────────────────
 
   // Source: T16.L05 — GIS Formats for As-Built Delivery
@@ -1071,24 +1041,6 @@ const QUESTIONS = [
       'Shapefile (SHP) format: each layer consists of at least 4 files (.shp, .dbf, .shx, .prj); limited to 255 attribute fields; no topology; 2 GB file size limit; widely supported. File Geodatabase (GDB): single container; supports topology rules, relationship classes (linking splice records to splice locations), richer domain types, unlimited field count, and large datasets. For complex OSP networks with splice matrices, conduit routing, and equipment records, GDB allows relational data that SHP cannot. RUS accepts both; the reviewer may want GDB for its relational capabilities. (T16.L05; ESRI Shapefile Technical Desc.; ESRI GDB documentation)',
   },
 
-  // Source: T16.L07 — Form 219 Documentation Package
-  {
-    id: 'F56',
-    topic: 'T16',
-    topicLabel: 'As-Built Documentation & GIS',
-    prompt:
-      'An OSP project close-out package includes Form 219 signed by the engineer. The engineer certifies the as-built drawings are accurate. Three months later, a crew finds a splice location that is 200 feet from the documented position. Who bears responsibility?',
-    choices: [
-      'The RUS borrower — they are responsible for verifying all field work before submission',
-      'The contractor — they are responsible for accurate as-built markup',
-      'The engineer of record — Form 219 certification carries professional liability for the accuracy of the documented as-built information',
-      'No individual is responsible — documentation errors are treated as systematic issues',
-    ],
-    answerIndex: 2,
-    explanation:
-      'Form 219 requires the licensed engineer\'s signature and stamp. The certification states the engineer has reviewed the as-built documentation and certifies it accurately reflects the constructed network. A 200-foot splice position error is a certification failure. The engineer bears professional liability (E&O insurance exposure, potential PE board action). The engineer\'s responsibility: verify contractor-provided as-built markup against OTDR traces, GPS coordinates, and field inspection records before signing Form 219. (T16.L07; RUS Form 219 instructions; NSPE Code of Ethics)',
-  },
-
   // ─── T17 Project Estimation & Revenue (2 questions) ─────────────────────
 
   // Source: T17.L07 — Contingency and Escalation
@@ -1107,24 +1059,6 @@ const QUESTIONS = [
     answerIndex: 2,
     explanation:
       'If the 12% overrun rate continues: remaining budget = $500,000 × 1.12 = $560,000. Total projected cost = $560,000 (spent) + $560,000 (projected remaining) = $1,120,000. This assumes the overrun percentage persists uniformly — actual projection requires identifying overrun causes. Cost performance index (CPI) = 500,000/560,000 = 0.893; Estimate at Completion (EAC) = Budget / CPI = 1,000,000 / 0.893 ≈ $1,120,000. (T17.L07; PMI PMBOK Earned Value Management)',
-  },
-
-  // Source: T17.L08 — CPHP / CPHC KPIs
-  {
-    id: 'F58',
-    topic: 'T17',
-    topicLabel: 'Project Estimation & Revenue',
-    prompt:
-      'A rural aerial fiber project installs 25 miles in 18 working days with a crew of 4 technicians. What is the CPHP (Cost Per Home Passed) if the total project cost is $450,000 and there are 900 homes in the service area?',
-    choices: [
-      '$450 per home passed',
-      '$500 per home passed',
-      '$550 per home passed',
-      'Cannot be calculated without knowing the number of homes connected, not just passed',
-    ],
-    answerIndex: 1,
-    explanation:
-      'CPHP = Total project cost ÷ Total homes passed = $450,000 ÷ 900 = $500 per home passed. CPHP is a network deployment efficiency metric; it does not depend on take-rate (actual subscribers connected) — it measures the cost of making the network available to a home. CPHC (Cost Per Home Connected) would use subscriber count. At $500 CPHP for an aerial rural deployment, this is competitive but not unusual for lower-density routes. (T17.L08; FTTH Council deployment benchmarks)',
   },
 
   // ─── T18 Safety & OSHA (4 questions) ────────────────────────────────────
@@ -1211,12 +1145,12 @@ const QUESTIONS = [
     prompt:
       'The OSP messenger strand and cable armor must be bonded to the building\'s Grounding Electrode System at the headend entry. During a lightning event on the feeder route, what does this bonding prevent?',
     choices: [
-      'It prevents the lightning current from entering the cable — the bond diverts it to earth',
       'It prevents a Ground Potential Rise (GPR) voltage difference from appearing across the OLT line card circuits between the OSP reference potential and the building reference potential',
+      'It prevents the lightning current from entering the cable — the bond diverts it to earth',
       'It prevents the OLT from sensing the lightning event and rebooting',
       'It is a regulatory formality; the surge arrester at the primary protector provides the actual protection',
     ],
-    answerIndex: 1,
+    answerIndex: 0,
     explanation:
       'GPR (Ground Potential Rise) occurs when lightning or fault current raises the local earth potential. The building GES is at local earth potential; OSP cable armor (bonded at the far end to remote earth) may be at a different potential. Without bonding at the building entry, this potential difference appears across the OLT\'s optical-to-electrical interface — voltage transients that protection circuits were not designed for. The bond equalizes both references at the entry point. The surge arrester at the primary protector clamps overvoltage on individual conductors; the building-entry bond is a separate protection layer for the entire cable assembly. (T19.L06; NEC 250.94; IEEE Std 1100; RUS 1751F-810)',
   },
@@ -1230,13 +1164,88 @@ const QUESTIONS = [
       'In an interconnect configuration at the ODF, the OLT trunk fiber connects directly to one adapter row and the feeder pigtail connects to the same adapter row. Compared to a cross-connect configuration, what is the tradeoff?',
     choices: [
       'Interconnect provides better optical performance; cross-connect reduces connector loss',
-      'Interconnect is simpler (one mated connector pair = one less connection loss) but less flexible — rerouting a circuit requires physical re-patching at the OLT trunk fiber rather than at a cross-connect jumper field',
       'Interconnect requires two ODF bays; cross-connect fits in a single bay',
       'Cross-connect is always preferred; interconnect is only used for temporary installations',
+      'Interconnect is simpler (one mated connector pair = one less connection loss) but less flexible — rerouting a circuit requires physical re-patching at the OLT trunk fiber rather than at a cross-connect jumper field',
+    ],
+    answerIndex: 3,
+    explanation:
+      'Interconnect: single adapter per circuit path → fewer connectors → ~0.5 dB less insertion loss per circuit. The disadvantage: moving a circuit (OLT port reuse, feeder fiber reassignment) requires touching the OLT trunk or feeder pigtails directly — higher disruption risk. Cross-connect: two adapter rows plus a jumper between them → one additional connector loss (~0.5 dB) but circuit reassignment happens by swapping a patch cord at the jumper field without touching OLT ports or feeder fibers. For high-churn environments (carrier-grade NOC), cross-connect management flexibility outweighs the 0.5 dB penalty. For static, low-change networks, interconnect saves the connector loss. (T19.L07; TIA-568.3-D; BICSI OSPDRM)',
+  },
+
+  // ── Trimmed questions (positions 61–64, excluded from QUESTIONS.slice(0,60)) ──
+  // Trimmed to hit 60-Q target: one from T07, one from T15, one from T16, one from T17.
+
+  // Source: T07.L03 — Photographing and Coding Pole Tags
+  {
+    id: 'F26',
+    topic: 'T07',
+    topicLabel: 'Staking',
+    prompt:
+      'During field staking, the staker photographs each pole from the same cardinal direction (facing north) and logs the pole tag number. Why is consistent cardinal-direction photography important for as-built documentation?',
+    choices: [
+      'Cardinal direction ensures the sun does not create glare in the photos',
+      'Facing north is required by RUS Form 740 instructions',
+      'It is a personal preference; consistency is optional as long as all components are visible',
+      'Consistent orientation means all photos can be directly compared to the GIS strand map, ensuring north-referenced cable routes, attachment positions, and infrastructure are correctly aligned without ambiguity',
+    ],
+    answerIndex: 3,
+    explanation:
+      'Staking photos serve as field-documentation evidence for design review, inspector review, and post-construction as-built reconciliation. Consistent cardinal-direction photography ensures each pole\'s photo can be correlated with the GIS/strand map (which is north-referenced) and clearly shows which side of the pole carries which attachment, which direction the span goes, and what the clearance situation looks like. Inconsistent orientation makes comparison to strand maps and clearance calculations ambiguous. (T07.L03; RUS Form 740 instructions)',
+  },
+
+  // Source: T15.L08 — Method of Procedure
+  {
+    id: 'F54',
+    topic: 'T15',
+    topicLabel: 'Restoration & Outage Response',
+    prompt:
+      'A restoration team arrives at a backhoe-strike location. One end of the OTDRed cut is confirmed at the site. Before any splicing can begin, what is the required safety/planning step?',
+    choices: [
+      'Immediately set up the splice trailer and begin stripping the cable',
+      'Verify the site is safe (call 811 for surrounding utilities, confirm backhoe is removed, set up traffic control), OTDR both ends to characterize the full damage, then develop the repair plan',
+      'Contact the utility at each end of the link and notify them of the outage status before beginning repairs',
+      'Test fiber continuity with a visible light source to confirm which fibers are cut',
     ],
     answerIndex: 1,
     explanation:
-      'Interconnect: single adapter per circuit path → fewer connectors → ~0.5 dB less insertion loss per circuit. The disadvantage: moving a circuit (OLT port reuse, feeder fiber reassignment) requires touching the OLT trunk or feeder pigtails directly — higher disruption risk. Cross-connect: two adapter rows plus a jumper between them → one additional connector loss (~0.5 dB) but circuit reassignment happens by swapping a patch cord at the jumper field without touching OLT ports or feeder fibers. For high-churn environments (carrier-grade NOC), cross-connect management flexibility outweighs the 0.5 dB penalty. For static, low-change networks, interconnect saves the connector loss. (T19.L07; TIA-568.3-D; BICSI OSPDRM)',
+      'Before restoration work begins: (1) safety — the excavation site may have exposed other utilities; call 811 for adjacent utility locate, set up traffic control, verify the backhoe and any other equipment is cleared; (2) OTDR from both ends — confirm whether there is one break or multiple breaks, get accurate distances, characterize fiber damage; (3) develop the repair plan — determine whether to use a pre-made pigtail repair or a full section replacement. Rushing to splice before understanding the damage scope often leads to incomplete restoration or safety incidents. (T15.L08; CGA guidelines; emergency restoration best practices)',
+  },
+
+  // Source: T16.L07 — Form 219 Documentation Package
+  {
+    id: 'F56',
+    topic: 'T16',
+    topicLabel: 'As-Built Documentation & GIS',
+    prompt:
+      'An OSP project close-out package includes Form 219 signed by the engineer. The engineer certifies the as-built drawings are accurate. Three months later, a crew finds a splice location that is 200 feet from the documented position. Who bears responsibility?',
+    choices: [
+      'The RUS borrower — they are responsible for verifying all field work before submission',
+      'The contractor — they are responsible for accurate as-built markup',
+      'The engineer of record — Form 219 certification carries professional liability for the accuracy of the documented as-built information',
+      'No individual is responsible — documentation errors are treated as systematic issues',
+    ],
+    answerIndex: 2,
+    explanation:
+      'Form 219 requires the licensed engineer\'s signature and stamp. The certification states the engineer has reviewed the as-built documentation and certifies it accurately reflects the constructed network. A 200-foot splice position error is a certification failure. The engineer bears professional liability (E&O insurance exposure, potential PE board action). The engineer\'s responsibility: verify contractor-provided as-built markup against OTDR traces, GPS coordinates, and field inspection records before signing Form 219. (T16.L07; RUS Form 219 instructions; NSPE Code of Ethics)',
+  },
+
+  // Source: T17.L08 — CPHP / CPHC KPIs
+  {
+    id: 'F58',
+    topic: 'T17',
+    topicLabel: 'Project Estimation & Revenue',
+    prompt:
+      'A rural aerial fiber project installs 25 miles in 18 working days with a crew of 4 technicians. What is the CPHP (Cost Per Home Passed) if the total project cost is $450,000 and there are 900 homes in the service area?',
+    choices: [
+      '$450 per home passed',
+      '$500 per home passed',
+      '$550 per home passed',
+      'Cannot be calculated without knowing the number of homes connected, not just passed',
+    ],
+    answerIndex: 1,
+    explanation:
+      'CPHP = Total project cost ÷ Total homes passed = $450,000 ÷ 900 = $500 per home passed. CPHP is a network deployment efficiency metric; it does not depend on take-rate (actual subscribers connected) — it measures the cost of making the network available to a home. CPHC (Cost Per Home Connected) would use subscriber count. At $500 CPHP for an aerial rural deployment, this is competitive but not unusual for lower-density routes. (T17.L08; FTTH Council deployment benchmarks)',
   },
 ];
 
@@ -1298,7 +1307,8 @@ function computeResults(answers) {
   return { correct, total: EXAM_QUESTIONS.length, pct, passed, domainScores };
 }
 
-// Post results to /api/training/cert-attempt (cert_track: 'OSP-Designer')
+// Post results to /api/training/cert-attempt (cert_track: 'osp-general')
+// Returns true on success, false on failure (caller shows user-visible error).
 async function persistCertAttempt(results, timeTaken) {
   try {
     const body = {
@@ -1315,20 +1325,22 @@ async function persistCertAttempt(results, timeTaken) {
         ])
       ),
     };
-    await fetch('/api/training/cert-attempt', {
+    const res = await fetch('/api/training/cert-attempt', {
       method:  'POST',
       headers: { 'Content-Type': 'application/json' },
       body:    JSON.stringify(body),
     });
+    return res.ok;
   } catch {
-    // Non-blocking — exam result is still shown even if persistence fails
+    return false;
   }
 }
 
 // Post lesson completion to /api/training/progress
+// Returns true on success, false on failure (caller shows user-visible error).
 async function persistLessonComplete(pct) {
   try {
-    await fetch('/api/training/progress', {
+    const res = await fetch('/api/training/progress', {
       method:  'POST',
       headers: { 'Content-Type': 'application/json' },
       body:    JSON.stringify({
@@ -1339,8 +1351,9 @@ async function persistLessonComplete(pct) {
         score:          Math.round(pct),
       }),
     });
+    return res.ok;
   } catch {
-    // Non-blocking
+    return false;
   }
 }
 
@@ -1360,13 +1373,22 @@ function ScoreBar({ correct, total }) {
 
 // ── Results view ─────────────────────────────────────────────────────────────
 
-function ResultsView({ results, timeTaken, onRetake }) {
+function ResultsView({ results, timeTaken, saveError, onRetake }) {
   const { correct, total, pct, passed, domainScores } = results;
 
   return (
     <LessonLayout meta={meta}>
       <section data-tier="foundations">
         <h2>OSP Course Final Exam — Results</h2>
+
+        {/* ── Save-error warning ──────────────────────────────────────── */}
+        {saveError && (
+          <div className="mb-4 p-3 bg-rose-500/15 border border-rose-400/40 rounded-lg text-sm text-rose-300">
+            <strong>⚠ Score could not be saved automatically.</strong> Your session may have
+            expired during the exam. Please screenshot your results and contact support so your
+            attempt can be recorded manually.
+          </div>
+        )}
 
         {/* ── Score card ──────────────────────────────────────────────── */}
         <div className={`mt-4 p-4 rounded-lg border ${passed ? 'border-ospgreen/40 bg-ospgreen/10' : 'border-rose-400/40 bg-rose-400/10'}`}>
@@ -1492,32 +1514,114 @@ function LandingView({ onStart }) {
 
 // ── Exam view ────────────────────────────────────────────────────────────────
 
-function ExamView({ onComplete }) {
-  const [idx, setIdx]         = useState(0);
-  const [answers, setAnswers] = useState({});
-  const [timeLeft, setTimeLeft] = useState(EXAM_DURATION_S);
-  const startTimeRef          = useRef(Date.now());
+const SESSION_KEY = 'osp-final-exam-state';
 
-  // Countdown timer
+function ExamView({ onComplete }) {
+  // Restore saved session state if available and not expired
+  const savedSession = (() => {
+    try {
+      const raw = sessionStorage.getItem(SESSION_KEY);
+      if (!raw) return null;
+      const s = JSON.parse(raw);
+      // Discard if saved time + elapsed already >= exam duration
+      if (!s || (s.elapsedSec ?? EXAM_DURATION_S) >= EXAM_DURATION_S) return null;
+      return s;
+    } catch { return null; }
+  })();
+
+  const [idx, setIdx]         = useState(0);
+  const [answers, setAnswers] = useState(savedSession?.answers ?? {});
+  const [timeLeft, setTimeLeft] = useState(
+    savedSession ? (EXAM_DURATION_S - (savedSession.elapsedSec ?? 0)) : EXAM_DURATION_S
+  );
+  const [showResumePrompt, setShowResumePrompt] = useState(!!savedSession);
+  const [examStarted, setExamStarted]           = useState(!savedSession);
+  const startTimeRef = useRef(Date.now() - ((savedSession?.elapsedSec ?? 0) * 1000));
+
+  // Persist session state on every answer/timer change
   useEffect(() => {
-    if (timeLeft <= 0) return;
+    if (!examStarted) return;
+    try {
+      const elapsedSec = Math.round((Date.now() - startTimeRef.current) / 1000);
+      sessionStorage.setItem(SESSION_KEY, JSON.stringify({ answers, elapsedSec }));
+    } catch { /* storage full or disabled */ }
+  }, [answers, timeLeft, examStarted]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  // Warn user before leaving mid-exam
+  useEffect(() => {
+    if (!examStarted) return;
+    const handler = (e) => {
+      e.preventDefault();
+      e.returnValue = 'Exam in progress — leaving will lose your answers unless you return to the same tab.';
+    };
+    window.addEventListener('beforeunload', handler);
+    return () => window.removeEventListener('beforeunload', handler);
+  }, [examStarted]);
+
+  // Countdown timer (only runs after exam is started)
+  useEffect(() => {
+    if (!examStarted || timeLeft <= 0) return;
     const t = setTimeout(() => setTimeLeft(s => s - 1), 1000);
     return () => clearTimeout(t);
-  }, [timeLeft]);
+  }, [timeLeft, examStarted]);
 
   // Auto-submit on time expiry
-  const handleSubmit = useCallback(() => {
+  const handleSubmit = useCallback(async () => {
+    try { sessionStorage.removeItem(SESSION_KEY); } catch { /* ok */ }
     const elapsed = Math.round((Date.now() - startTimeRef.current) / 1000);
     const results = computeResults(answers);
     results.answers = answers; // attach for missed-Q review
-    persistCertAttempt(results, elapsed);
-    persistLessonComplete(results.pct);
-    onComplete(results, elapsed);
+    const [certOk, progressOk] = await Promise.all([
+      persistCertAttempt(results, elapsed),
+      persistLessonComplete(results.pct),
+    ]);
+    const saveError = !certOk || !progressOk;
+    onComplete(results, elapsed, saveError);
   }, [answers, onComplete]);
 
   useEffect(() => {
     if (timeLeft === 0) handleSubmit();
   }, [timeLeft, handleSubmit]);
+
+  // Resume / restart prompt when a saved session was found
+  if (showResumePrompt) {
+    const savedMin = Math.ceil(timeLeft / 60);
+    return (
+      <LessonLayout meta={meta}>
+        <section data-tier="foundations" className="flex flex-col items-center justify-center gap-6 py-16">
+          <h2 className="text-xl font-semibold text-ospamber">Resume Exam?</h2>
+          <p className="text-slate-200 text-center max-w-md">
+            A previous exam session was found with <strong>{savedMin} minutes</strong> remaining and{' '}
+            <strong>{Object.keys(answers).length} answers</strong> saved.
+            Do you want to resume where you left off, or start a fresh attempt?
+          </p>
+          <div className="flex gap-4">
+            <button
+              type="button"
+              className="btn-primary"
+              onClick={() => { setShowResumePrompt(false); setExamStarted(true); }}
+            >
+              Resume Exam
+            </button>
+            <button
+              type="button"
+              className="btn-secondary"
+              onClick={() => {
+                try { sessionStorage.removeItem(SESSION_KEY); } catch { /* ok */ }
+                setAnswers({});
+                setTimeLeft(EXAM_DURATION_S);
+                startTimeRef.current = Date.now();
+                setShowResumePrompt(false);
+                setExamStarted(true);
+              }}
+            >
+              Start Fresh
+            </button>
+          </div>
+        </section>
+      </LessonLayout>
+    );
+  }
 
   const q        = EXAM_QUESTIONS[idx];
   const answered = idx in answers;
@@ -1651,28 +1755,31 @@ function ExamView({ onComplete }) {
 // ── Root component ───────────────────────────────────────────────────────────
 
 export default function C05L01_OSPFinalExam() {
-  const [phase, setPhase]     = useState('landing'); // 'landing' | 'exam' | 'results'
-  const [results, setResults] = useState(null);
-  const [elapsed, setElapsed] = useState(0);
+  const [phase, setPhase]         = useState('landing'); // 'landing' | 'exam' | 'results'
+  const [results, setResults]     = useState(null);
+  const [elapsed, setElapsed]     = useState(0);
+  const [saveError, setSaveError] = useState(false);
 
   function handleStart() {
     setPhase('exam');
   }
 
-  function handleComplete(res, time) {
+  function handleComplete(res, time, hadSaveError) {
     setResults(res);
     setElapsed(time);
+    setSaveError(!!hadSaveError);
     setPhase('results');
   }
 
   function handleRetake() {
     setResults(null);
     setElapsed(0);
+    setSaveError(false);
     setPhase('landing');
   }
 
   if (phase === 'results') {
-    return <ResultsView results={results} timeTaken={elapsed} onRetake={handleRetake} />;
+    return <ResultsView results={results} timeTaken={elapsed} saveError={saveError} onRetake={handleRetake} />;
   }
 
   if (phase === 'exam') {

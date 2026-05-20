@@ -360,9 +360,9 @@ export const courses = [
     available: true,
     estimated_minutes: 90,    // 60-question timed exam
     lesson_count: 1,
-    prerequisites: ['T01','T02','T03','T04','T05','T06','T07','T08','T09','T10','T11','T12','T13','T14','T15','T16','T17','T18','T19','T20'],
+    prerequisites: ['T01','T02','T03','T04','T05','T06','T07','T08','T09','T10','T11','T12','T13','T14','T15','T16','T17','T18','T19'],
     description:
-      '60-question comprehensive final exam covering all general OSP topics T01–T20. Passing threshold: 80%. Fixed-answer assessment to confirm mastery before certification prep tracks.',
+      '60-question comprehensive final exam covering all general OSP topics T01–T19. Passing threshold: 80%. Fixed-answer assessment to confirm mastery before certification prep tracks.',
   },
 ];
 
