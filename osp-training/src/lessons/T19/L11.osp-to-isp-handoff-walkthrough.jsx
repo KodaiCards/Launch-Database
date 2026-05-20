@@ -94,9 +94,24 @@ const FoundationsSection = () => (
 
 const WorkingSection = () => (
   <div className="lesson-section working">
+    {/* Refresher callout box with prerequisite terms */}
+    <div className="border-l-4 border-blue-400/30 bg-blue-400/5 p-3 my-3">
+      <h4 className="font-semibold text-sm mb-2">Refresher: Key Concepts from Earlier Lessons</h4>
+      <ul className="text-sm space-y-1">
+        <li><strong>OSP</strong> (from T01.L01): Outside Plant — fiber infrastructure you design and build from the street to the building entry point.</li>
+        <li><strong>OLT</strong> (from T19.L02): Optical Line Termination — the ISP's optical equipment that sends/receives signals on fiber ports.</li>
+        <li><strong>Patch panel</strong> (from T19.L07): Centralized connector field where OSP fiber terminates and ISP technicians patch trunk cables to their gear.</li>
+        <li><strong>LIU</strong> (from T19.L07): Light Interface Unit — active optical interface module where OSP fiber can terminate on a pigtail inside an equipment chassis.</li>
+        <li><strong>FDH</strong> (from T19.L09): Final Distribution Hub — passive splitter enclosure where OSP fiber can terminate; ISP patches from the FDH to their equipment.</li>
+      </ul>
+    </div>
+
     <h2>The Handoff Workflow: From OSP to ISP Provisioning</h2>
 
     <h3>Your Role (OSP Engineer)</h3>
+    <p>
+      You are an <strong>OSP</strong> (recall from T01.L01: Outside Plant engineer — the professional who designs and builds fiber infrastructure from the street to the building entry point).
+    </p>
     <ol>
       <li><strong>Design the fiber route</strong> from the street to a specific termination point in the CO.</li>
       <li><strong>Build and test the fiber path</strong> to a defined demarcation point (e.g., a specific connector on a patch panel).</li>
@@ -107,17 +122,17 @@ const WorkingSection = () => (
 
     <h3>Where Handoff Happens (The Demarcation)</h3>
     <p>
-      In most CO designs, the <strong>demarcation point is a connector on a patch panel or cross-connect field</strong> in the ISP's provisioning rack. Examples:
+      In most CO designs, the <strong>demarcation point is a connector on a patch panel or cross-connect field</strong> in the ISP's provisioning rack. The <strong>patch panel</strong> (recall from T19.L07: the centralized connector field where OSP fiber terminates and ISP technicians patch trunk cables to their equipment) is the most common demarcation location. Examples:
     </p>
     <ul>
       <li><strong>Scenario 1: Fiber-to-the-FDH (typical small CO)</strong>
-        <br />OSP fiber runs to the FDH (Final Distribution Hub) in the CO, terminates on a connector. The ISP tech patches a trunk cable from that FDH connector to the OLT input port. <strong>Demarc: the FDH connector.</strong> You own the fiber to that connector. ISP owns the trunk cable and everything downstream.
+        <br />OSP fiber runs to the <strong>FDH</strong> (recall from T19.L09: Final Distribution Hub — the passive splitter enclosure where OSP fiber terminates) in the CO, terminates on a connector. The ISP tech patches a <strong>trunk cable</strong> (recall from T19.L07: the fiber patch cable that connects from the demarc point to active equipment) from that FDH connector to the <strong>OLT</strong> (recall from T19.L02: Optical Line Termination — the ISP's optical equipment) input port. <strong>Demarc: the FDH connector.</strong> You own the fiber to that connector. ISP owns the trunk cable and everything downstream.
       </li>
       <li><strong>Scenario 2: Fiber-to-the-LIU (medium CO with active equipment)</strong>
-        <br />OSP fiber terminates on a pigtail in an LIU (Light Interface Unit) mounted in the OLT chassis. ISP tech patches from that pigtail to an OLT port. <strong>Demarc: the LIU output connector.</strong> You own the fiber to the LIU. ISP owns the patch cable and port configuration.
+        <br />OSP fiber terminates on a pigtail in an <strong>LIU</strong> (recall from T19.L07: Light Interface Unit — the active optical interface module where OSP fiber can terminate on a pigtail inside an equipment chassis) mounted in the OLT chassis. ISP tech patches from that pigtail to an OLT port. <strong>Demarc: the LIU output connector.</strong> You own the fiber to the LIU. ISP owns the patch cable and port configuration.
       </li>
       <li><strong>Scenario 3: Fiber-to-the-Patch-Panel (centralized model)</strong>
-        <br />OSP fiber runs to a central optical patch panel; ISP tech patches from that panel to their equipment (OLT, transponder, regenerator). <strong>Demarc: the patch panel port.</strong> You own the fiber to the panel. ISP owns the trunk cable and their gear.
+        <br />OSP fiber runs to a central optical patch panel; ISP tech patches from that panel to their equipment (OLT, transponder, regenerator) using trunk cables. <strong>Demarc: the patch panel port.</strong> You own the fiber to the panel. ISP owns the <strong>trunk cable</strong> (the <strong>cross-connect</strong> (recall from T19.L07: the assignment of a specific fiber onto a specific equipment port via a patch cable) made by their technician) and their gear.
       </li>
     </ul>
 

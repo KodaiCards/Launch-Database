@@ -186,6 +186,15 @@ export default function T19L07_RackSideHardwarePatchPanelsLiu() {
       <section data-tier="working">
         <h2>How the ODF Is Built — From Feeder Fiber to OLT Port</h2>
 
+        <div className="border-l-4 border-blue-400/30 bg-blue-400/5 p-3 my-3">
+          <p className="font-semibold text-blue-300 text-sm mb-2">Quick Refresher: Building and OLT Context from Earlier Lessons</p>
+          <ul className="text-sm text-slate-300/90 space-y-1">
+            <li><strong>MEF / Main Entrance Facility (from T19.L01):</strong> Where your cable enters the building. Fiber routes from MEF on cable tray to the ODF rack.</li>
+            <li><strong>MDF / ODF (from T19.L01):</strong> Main Distribution Frame — your OSP feeder fiber terminates here. For fiber networks, it's an ODF (Optical Distribution Frame).</li>
+            <li><strong>OLT ports (from T19.L02):</strong> Each GPON port expects a fiber patch cord routed from the ODF. Your splicing matrix tells the ISP which ODF port feeds which GPON port.</li>
+          </ul>
+        </div>
+
         <h3 className="mt-4 font-semibold">ODF construction sequence</h3>
         <p className="mt-2">
           Here's how a 144-fiber feeder cable goes from a loose-tube bundle to a

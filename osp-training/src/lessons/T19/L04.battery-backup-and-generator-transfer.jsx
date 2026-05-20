@@ -176,6 +176,14 @@ export default function T19L04_BatteryBackupAndGeneratorTransfer() {
       <section data-tier="working">
         <h2>Power Failure Sequence — What Happens When Utility Fails</h2>
 
+        <div className="border-l-4 border-blue-400/30 bg-blue-400/5 p-3 my-3">
+          <p className="font-semibold text-blue-300 text-sm mb-2">Quick Refresher: Power Plant Context from T19.L03</p>
+          <ul className="text-sm text-slate-300/90 space-y-1">
+            <li><strong>–48VDC power plant (from T19.L03):</strong> The battery strings and rectifiers you sized. The generator provides AC to feed the rectifiers when utility power is gone.</li>
+            <li><strong>Reserve time (from T19.L03):</strong> How long the batteries can sustain the OLT before the generator must take over. This section shows what happens DURING that transfer window.</li>
+          </ul>
+        </div>
+
         <p>
           Here's the exact sequence of events when utility power fails at a properly
           specified CO or hut. Every step matters; every step where the spec is wrong

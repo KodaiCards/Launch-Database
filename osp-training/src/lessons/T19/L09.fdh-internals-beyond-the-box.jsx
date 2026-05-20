@@ -387,6 +387,16 @@ export default function T19L09_FDHInternals() {
       {/* ── WORKING ──────────────────────────────────────────────────── */}
       <section data-tier="working">
         <h2>How a 1×32 Splitter Cassette Works</h2>
+
+        <div className="border-l-4 border-blue-400/30 bg-blue-400/5 p-3 my-3">
+          <p className="font-semibold text-blue-300 text-sm mb-2">Quick Refresher: Feeder Routing and OLT Context from Earlier Lessons</p>
+          <ul className="text-sm text-slate-300/90 space-y-1">
+            <li><strong>Feeder fiber (from T02 / T19.L02):</strong> The fiber running from the CO to the FDH. The OLT port at the CO drives the signal that arrives at the FDH feeder input.</li>
+            <li><strong>Link budget and loss planning (from T02):</strong> Every component — including this splitter cassette — consumes dB of margin. The 18.1 dB splitter loss is a GPON Class B+ standard constraint.</li>
+            <li><strong>OLT GPON port (from T19.L02):</strong> Has a 28 dB optical budget total from OLT to ONT. The splitter, connectors, and fiber all subtract from that budget.</li>
+          </ul>
+        </div>
+
         <p>
           The star player inside the FDH is the <strong>splitter cassette</strong>. This is a plastic module about the
           size of a thick paperback book. It holds a passive optical splitter — a device made of fused fiber that splits

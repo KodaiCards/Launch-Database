@@ -169,6 +169,14 @@ export default function T19L08_FoscAndSpliceEnclosuresInHeadend() {
       <section data-tier="working">
         <h2>OSP FOSC vs. Headend FOSC — Same Function, Different Environment</h2>
 
+        <div className="border-l-4 border-blue-400/30 bg-blue-400/5 p-3 my-3">
+          <p className="font-semibold text-blue-300 text-sm mb-2">Quick Refresher: Building and ODF Context from Earlier Lessons</p>
+          <ul className="text-sm text-slate-300/90 space-y-1">
+            <li><strong>MEF (from T19.L01):</strong> Main Entrance Facility — where your cable enters the building. Inside the building, the OSP cable must transition to inside-plant cable within 50 feet (per NEC §770.26).</li>
+            <li><strong>ODF (from T19.L07):</strong> Where your OSP feeder terminates on connectors. The FOSC organizes splices at the ODF. Express splices send light to the next FDH; split splices connect to local splitters.</li>
+          </ul>
+        </div>
+
         <SideBySide
           title="FOSC in OSP vs. FOSC in Headend"
           leftLabel="OSP FOSC (Outside Plant)"

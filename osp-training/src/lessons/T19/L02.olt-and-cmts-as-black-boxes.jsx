@@ -208,6 +208,15 @@ export default function T19L02_OltAndCmtsAsBlackBoxes() {
       <section data-tier="working">
         <h2>How the OLT Interfaces with OSP Plant</h2>
 
+        <div className="border-l-4 border-blue-400/30 bg-blue-400/5 p-3 my-3">
+          <p className="font-semibold text-blue-300 text-sm mb-2">Quick Refresher: Headend and OSP Termination from T19.L01</p>
+          <ul className="text-sm text-slate-300/90 space-y-1">
+            <li><strong>CO / Headend (from T19.L01):</strong> The facility where the OLT or CMTS lives — your feeder fiber terminates here at the demarcation point.</li>
+            <li><strong>MDF (from T19.L01):</strong> Main Distribution Frame — the first cross-connect point where your OSP feeder fiber lands and connects to ISP equipment.</li>
+            <li><strong>OSP termination point (from T19.L01):</strong> Usually in the MDF — where your responsibility as the OSP engineer ends and the ISP team's begins.</li>
+          </ul>
+        </div>
+
         <h3 className="mt-4 font-semibold">The GPON optical path — step by step</h3>
         <p>
           Here's the signal path from the OLT port to the subscriber, and back. Every
@@ -227,8 +236,8 @@ export default function T19L02_OltAndCmtsAsBlackBoxes() {
           </li>
           <li>
             <strong>OSP feeder fiber (underground or aerial) → FDH splitter:</strong>
-            The feeder runs through conduit or on aerial strand from the headend to the
-            Fiber Distribution Hub (FDH). This is the main OSP plant section.
+            The feeder (recall from T01.L07: the cable that runs from distribution to the CO) runs through conduit or on aerial strand from the headend to the
+            Fiber Distribution Hub (FDH — also from T01.L07, the distribution point where feeder splits into service fibers). This is the main OSP plant section.
           </li>
           <li>
             <strong>FDH passive splitter (1:32 or 1:64) → distribution fibers:</strong>

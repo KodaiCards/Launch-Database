@@ -213,6 +213,14 @@ export default function T19L03_Minus48VDCPowerPlant() {
       <section data-tier="working">
         <h2>Battery Plant Sizing — The OSP Engineer's Role</h2>
 
+        <div className="border-l-4 border-blue-400/30 bg-blue-400/5 p-3 my-3">
+          <p className="font-semibold text-blue-300 text-sm mb-2">Quick Refresher: Building Context from T19.L01 and T19.L02</p>
+          <ul className="text-sm text-slate-300/90 space-y-1">
+            <li><strong>CO / hut (from T19.L01):</strong> The facility where you're specifying this power plant. Remote huts are where OSP engineers specify infrastructure.</li>
+            <li><strong>OLT (from T19.L02):</strong> The active equipment this power plant must feed. OLT datasheets specify DC draw (amperes). That's your starting load number.</li>
+          </ul>
+        </div>
+
         <h3 className="mt-4 font-semibold">The negative-ground convention — step by step</h3>
         <p>
           This confuses a lot of people because it's backwards from what you expect.
