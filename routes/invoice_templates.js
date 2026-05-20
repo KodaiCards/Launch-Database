@@ -99,7 +99,7 @@ module.exports = function installInvoiceTemplatesRoutes(app, pool, mw) {
       );
       return { ok: true };
     } catch (e) {
-      console.error('[invoice-templates:analyze]', e && e.message);
+      console.error('[invoice-templates:analyze]', e);
       await pool.query(
         `UPDATE invoice_templates
             SET analysis_status = 'failed',
@@ -108,7 +108,7 @@ module.exports = function installInvoiceTemplatesRoutes(app, pool, mw) {
           WHERE id = $1`,
         [templateId, String(e && e.message || e).slice(0, 1000)]
       );
-      return { ok: false, error: e.message };
+      return { ok: false, error: 'Analysis failed: internal server error' };
     }
   }
 
@@ -351,7 +351,8 @@ module.exports = function installInvoiceTemplatesRoutes(app, pool, mw) {
         contract_ids: Array.isArray(contract_ids) ? contract_ids : null,
       });
     } catch (e) {
-      return res.status(400).json({ error: e.message });
+      console.error('[invoices:preview-template]', e);
+      return res.status(400).json({ error: 'Failed to build invoice data: internal server error' });
     }
     // Resolve client_id via the engineering_contract → client.
     const client_id = data && data.meta && data.meta.engineering_contract && data.meta.engineering_contract.id
@@ -402,7 +403,8 @@ module.exports = function installInvoiceTemplatesRoutes(app, pool, mw) {
         project_ids, period_start, period_end,
       });
     } catch (e) {
-      return res.status(422).json({ error: e.message, conflicts: e.conflicts || null, makeup: e.makeup || null });
+      console.error('[invoices:preview-from-projects]', e);
+      return res.status(422).json({ error: 'Failed to build invoice data: internal server error', conflicts: e.conflicts || null, makeup: e.makeup || null });
     }
     // Resolve client_id via the engineering_contract.
     const ecId = data && data.meta && data.meta.engineering_contract && data.meta.engineering_contract.id;
@@ -462,8 +464,8 @@ module.exports = function installInvoiceTemplatesRoutes(app, pool, mw) {
     try {
       pdfBuf = await tplEngine.renderHtmlToPdf(html);
     } catch (e) {
-      console.error('[invoices:render-pdf-from-html]', e && e.message);
-      return res.status(500).json({ error: 'PDF render failed: ' + e.message });
+      console.error('[invoices:render-pdf-from-html]', e);
+      return res.status(500).json({ error: 'PDF render failed: internal server error' });
     }
     const safeName = String(filename || 'invoice.pdf').replace(/[^A-Za-z0-9._-]/g, '_');
     res.setHeader('Content-Type', 'application/pdf');
