@@ -128,6 +128,10 @@ export default function T13L05SlackInspection() {
           restoration.
         </p>
 
+        <div className="text-slate-400 text-sm mb-4 p-3 border-l-4 border-slate-500">
+          <strong>Callback:</strong> From <strong>T10.L06 Slack and Storage</strong>, you learned MSA (Minimum Slack Allocation) schedules define per-project slack minimums. From <strong>T13.L02 Pre-Construction Baseline</strong>, you learned those minimums get documented in the acceptance criteria before construction starts. This lesson teaches the measurement and recording method: how to verify installed slack meets the MSA on Form 565.
+        </div>
+
         <h3>No Independent Slack Minimums in T13</h3>
         <p>
           This is important: T13 does NOT define its own slack minimums. The minimums for any

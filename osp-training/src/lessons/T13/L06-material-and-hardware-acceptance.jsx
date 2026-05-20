@@ -186,6 +186,10 @@ export default function T13L06MaterialAcceptance() {
           pushes back on your finding? You maintain the finding, document the dispute, and
           escalate to the engineer. You do not fold under pressure.
         </p>
+
+        <div className="text-slate-400 text-sm mb-4 p-3 border-l-4 border-slate-500">
+          <strong>Callback:</strong> From <strong>T02.L08 Fiber Type Selection</strong>, you learned fiber grades (G.652.D, OM3-OM5) and why they matter to performance. From <strong>T03.L05 Cable Product Families</strong>, you learned how cable designs vary by environment. This lesson teaches the verification method: checking reel certificates, lot numbers, fiber counts, and jacket specs BEFORE installation, documented on Form 565, so warranty claims 5 years later have proof.
+        </div>
       </section>
 
       {/* ── Flashcards ─────────────────────────────────────────────────── */}

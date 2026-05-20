@@ -166,6 +166,10 @@ export default function T13L02PreConstructionBaseline() {
           arrival workflow — you can only execute that workflow effectively if you already
           know what you're measuring against.
         </p>
+
+        <div className="text-slate-400 text-sm mb-4 p-3 border-l-4 border-slate-500">
+          <strong>Callback:</strong> From <strong>T06.L10 Close-Out Documentation</strong>, you learned about RUS Form 219 grounding acceptance and close-out forms. From <strong>T10.L06 Slack and Storage</strong>, you learned project MSA schedules define slack requirements. This lesson brings all that together: BEFORE construction starts, you must document quantified pass/fail criteria for every inspectable parameter (burial depth, lashing pitch, slack, ground resistance, OTDR budget) in the acceptance criteria document signed by all three parties.
+        </div>
       </section>
 
       {/* ── Flashcards ─────────────────────────────────────────────────── */}

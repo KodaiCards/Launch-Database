@@ -219,6 +219,10 @@ export default function T13L04UndergroundInspection() {
           below-grade vaults — which requires confirming confined space safety procedures
           before anyone goes in.
         </p>
+
+        <div className="text-slate-400 text-sm mb-4 p-3 border-l-4 border-slate-500">
+          <strong>Callback:</strong> From <strong>T01.L02 Conduit and Burial Rules</strong> + <strong>T05 Pole Loading</strong>, you learned the engineering basis for burial depth and load-bearing rules. From <strong>T10.L08 Compaction and Proctor Density</strong>, you learned ASTM D1557 specifications. From <strong>T14.L06 Ground Resistance Testing</strong>, you learned IEEE 81 measurement procedure. This lesson operationalizes all three: depth probe to measure, compaction meter to verify, clamp-on meter for grounding acceptance.
+        </div>
       </section>
 
       {/* ── Flashcards ─────────────────────────────────────────────────── */}
