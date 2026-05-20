@@ -269,15 +269,7 @@ export default function T13L06MaterialAcceptance() {
       <section className="mt-8 p-5 border-l-4 border-blue-500 bg-slate-800/40 rounded">
         <h3 className="text-blue-300 text-lg font-semibold mb-3">Tying It Together</h3>
         <p className="text-slate-200 mb-3">
-          This lesson builds on:
-        </p>
-        <ul className="space-y-2 text-slate-300 text-sm list-disc ml-5">
-    <li><strong>T01.L06</strong> — Part of the broader OSP workflow.</li>
-    <li><strong>T10.L11</strong> — Part of the broader OSP workflow.</li>
-    <li><strong>T10.L11</strong> — Part of the broader OSP workflow.</li>
-        </ul>
-        <p className="text-slate-200 mt-3 text-sm italic">
-          Each step in the OSP process feeds into the next — understanding these connections strengthens your grasp of the whole system.
+          Material acceptance is the upstream gate that determines whether every downstream inspection activity — sag checks, OTDR tests, ground resistance measurements — is being applied to materials that actually met specification. From <strong>T02.L08</strong> you learned fiber grades (G.652.D, G.657.A2, OM3–OM5) and why each grade exists; the three-step lot/batch verification here is how you confirm in the field that the contractor installed the grade the engineer specified, not a visually similar but mechanically different alternative. From <strong>T03.L05</strong> you learned cable product families and the difference between OSP direct-buried, indoor-outdoor, and conduit jacket types; the cable-type verification scenario in this lesson — where a G.652.D OI hybrid jacket was substituted for a DB jacket — demonstrates exactly why reel-tag + delivery ticket + cert letter all three must align. The materials accepted here using lot/batch verification flow forward to the Form 219 package in L07: the material certification letters assembled during construction are a required component of that close-out package, and the material acceptance log that bridges this lesson to L07 is the explicit evidentiary basis for the inspector's certification that specified materials were used. The contractor-dispute handling protocol practiced here — maintain the finding, document the dispute on Form 565, escalate to the EOR per 7 CFR §1753.47(d) — is the same protocol that governs specification deviation disputes in L09; the three-step verification record you create here is also your strongest defense against a reversed finding and the re-inspection cost exposure that comes with it.
         </p>
       </section>
     </LessonLayout>

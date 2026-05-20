@@ -375,15 +375,7 @@ export default function T13L07CloseOutDocumentation() {
       <section className="mt-8 p-5 border-l-4 border-blue-500 bg-slate-800/40 rounded">
         <h3 className="text-blue-300 text-lg font-semibold mb-3">Tying It Together</h3>
         <p className="text-slate-200 mb-3">
-          This lesson builds on:
-        </p>
-        <ul className="space-y-2 text-slate-300 text-sm list-disc ml-5">
-    <li><strong>T01.L06</strong> — Part of the broader OSP workflow.</li>
-    <li><strong>T01.L05</strong> — Part of the broader OSP workflow.</li>
-    <li><strong>T13.L11</strong> — Part of the broader OSP workflow.</li>
-        </ul>
-        <p className="text-slate-200 mt-3 text-sm italic">
-          Each step in the OSP process feeds into the next — understanding these connections strengthens your grasp of the whole system.
+          Form 219 is the convergence point where every prior lesson in T13 produces a required deliverable. From <strong>L11</strong> (Form 565) you assembled the unbroken daily inspection record chain that is the foundational evidence the GFR reviews before approving the final close-out. From <strong>L06</strong> (material acceptance) the lot/batch-verified material certification letters and the material acceptance log become explicit components of the Form 219 package, providing the evidentiary basis for the inspector's certification that specified materials were installed. From <strong>L04</strong> (underground inspection) the ground resistance test records — with IEEE 81 procedure, instrument serial numbers, and NEC §250.56 pass/fail results — are a required package component that backs the T14 bonding compliance certification implicit in Form 219. From <strong>L08</strong> (joint-use clearance) the clearance verification log closes out the NESC Rule 232 compliance certification for every joint-use aerial span on the project. The OTDR archive checklist in this lesson — bidirectional SOR files, launch cable subtracted, delivered to owner, calibration verified against Telcordia GR-196-CORE and TIA-526-7 — operationalizes the OTDR acceptance testing concepts from <strong>T12.L07</strong>; signing Form 219 without confirming those five archive conditions means certifying a federal record without the technical evidence to back it. The False Claims Act exposure at 31 USC §3729 — up to treble damages plus $13,947–$27,894 per false statement — is personal liability, not organizational; it is the sharpest possible reason to ensure every upstream lesson's documentation was completed accurately before Form 219 is signed.
         </p>
       </section>
     </LessonLayout>

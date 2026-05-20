@@ -330,15 +330,7 @@ export default function T13L09ContractorRelations() {
       <section className="mt-8 p-5 border-l-4 border-blue-500 bg-slate-800/40 rounded">
         <h3 className="text-blue-300 text-lg font-semibold mb-3">Tying It Together</h3>
         <p className="text-slate-200 mb-3">
-          This lesson builds on:
-        </p>
-        <ul className="space-y-2 text-slate-300 text-sm list-disc ml-5">
-    <li><strong>T01.L06</strong> — Part of the broader OSP workflow.</li>
-    <li><strong>T10.L11</strong> — Part of the broader OSP workflow.</li>
-    <li><strong>T10.L11</strong> — Part of the broader OSP workflow.</li>
-        </ul>
-        <p className="text-slate-200 mt-3 text-sm italic">
-          Each step in the OSP process feeds into the next — understanding these connections strengthens your grasp of the whole system.
+          The dispute-resolution authority chain in this lesson traces directly back to <strong>T01.L06</strong>, where the inspector's role in the federal borrower hierarchy was established — the inspector documents and recommends, the engineer of record approves, and 7 CFR §1753.47(d) codifies that chain so that no verbal field approval can override it. The "substantial completion" concept from <strong>T10.L11</strong> (where the acceptance walk and punch-list were introduced) now takes on a financial dimension: the AIA A201-2017 §9.8 milestone definition ties directly to retainage release, meaning the inspector's certification decision is not just documentation — it is the trigger event for a significant cash payment to the contractor. The waiver-by-conduct doctrine from <strong>L01</strong> is the underlying legal risk in every dispute scenario here: an inspector who routinely accepts work below the acceptance threshold from L02 creates a contract-modification precedent that makes subsequent kick-backs legally contestable. The re-inspection cost rule's bilateral accountability also explains why the three-step fiber lot verification procedure in <strong>L06</strong> matters — an inspector who reverses a material-type finding after issuing the punch-list entry absorbs the re-inspection cost on the owner's behalf, creating institutional incentive for thorough initial verification. The DSC protocol (stop, document, notify EOR) is a direct application of <strong>T09</strong>'s permit-gated work concept — just as NEPA environmental clearance must precede construction through a sensitive area, a permit-required crossing depth deviation must have EOR written approval before boring can continue, and the Form 565 DSC entry feeds into the Form 219 package at <strong>L07</strong> as evidence of the deviation's resolution.
         </p>
       </section>
     </LessonLayout>

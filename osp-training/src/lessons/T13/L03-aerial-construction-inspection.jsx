@@ -392,15 +392,7 @@ export default function T13L03AerialInspection() {
       <section className="mt-8 p-5 border-l-4 border-blue-500 bg-slate-800/40 rounded">
         <h3 className="text-blue-300 text-lg font-semibold mb-3">Tying It Together</h3>
         <p className="text-slate-200 mb-3">
-          This lesson builds on:
-        </p>
-        <ul className="space-y-2 text-slate-300 text-sm list-disc ml-5">
-    <li><strong>T01.L06</strong> — Part of the broader OSP workflow.</li>
-    <li><strong>T13.L01</strong> — Part of the broader OSP workflow.</li>
-    <li><strong>T13.L02</strong> — Part of the broader OSP workflow.</li>
-        </ul>
-        <p className="text-slate-200 mt-3 text-sm italic">
-          Each step in the OSP process feeds into the next — understanding these connections strengthens your grasp of the whole system.
+          Aerial inspection pulls together engineering principles from multiple upstream topics and enforces them as daily field decisions. From <strong>T05.L02</strong> (NESC Rule 232) you learned the clearance requirements that govern every joint-use span you walk; here you apply those minimums using the string-line sag check and non-conductive measuring tools. From <strong>T07</strong> (staking) and <strong>T08</strong> (make-ready) you learned what a correctly staked and make-ready-completed pole looks like — the pre-climb structural assessment in this lesson is the final go/no-go that confirms those upstream activities left the structure in a climbable state. From <strong>T18.L04</strong> (fall protection) you learned the fall-arrest requirements that govern climbing; the pre-climb go/no-go decision here is the checkpoint that gates whether T18.L04 protections are sufficient or whether an engineering evaluation is required first. The lashing pitch and drip loop deficiencies documented on Form 565 using this lesson's procedures flow forward to L08 (joint-use clearance log), where those same spans' vertical separation measurements complete the clearance verification log for the Form 219 package in L07. Every punch-list entry written here using the waiver-doctrine discipline from L01 is a document that survives into the retainage and dispute-resolution context of L09 — a missed deficiency on an aerial span that wasn't written up in L03 becomes a waiver-by-conduct risk that weakens the owner's position at substantial completion.
         </p>
       </section>
     </LessonLayout>

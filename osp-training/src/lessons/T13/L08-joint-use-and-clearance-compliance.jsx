@@ -265,15 +265,7 @@ export default function T13L08JointUseCompliance() {
       <section className="mt-8 p-5 border-l-4 border-blue-500 bg-slate-800/40 rounded">
         <h3 className="text-blue-300 text-lg font-semibold mb-3">Tying It Together</h3>
         <p className="text-slate-200 mb-3">
-          This lesson builds on:
-        </p>
-        <ul className="space-y-2 text-slate-300 text-sm list-disc ml-5">
-    <li><strong>T01.L06</strong> — Part of the broader OSP workflow.</li>
-    <li><strong>T05.L02</strong> — Part of the broader OSP workflow.</li>
-    <li><strong>T05.L02</strong> — Part of the broader OSP workflow.</li>
-        </ul>
-        <p className="text-slate-200 mt-3 text-sm italic">
-          Each step in the OSP process feeds into the next — understanding these connections strengthens your grasp of the whole system.
+          The NESC clearance numbers in this lesson originate in <strong>T05.L02</strong>, where you learned that Macon, GA sits in the NESC Light loading district per NESC Map 1 and that Rule 232 sets voltage-class-specific vertical separation minima between supply conductors and communication attachments — this lesson is where those abstract numbers become a live field measurement with pass/fail consequences. The make-ready work documented in <strong>T07 and T08</strong> (staking and pole attachment) was supposed to pre-position every attachment at the correct height; the clearance verification measured in L08 is the inspector's confirmation that the make-ready crew actually achieved those heights, not just that they were specified. The non-conductive tool requirement (fiberglass rod, never a metal tape) was introduced in <strong>L03</strong> under 29 CFR 1910.268(b)(20) and applies directly here — any metal tool within the MAD zone of an energized supply conductor creates electrocution risk, a concept whose electrical physics you absorbed from <strong>T18.L07</strong>. The clearance verification log you compile in this lesson is an explicit deliverable of the Form 219 close-out package described in <strong>L07</strong> — Form 219 cannot certify NESC Rule 232 compliance on an aerial joint-use project without a signed, pole-by-pole clearance log showing every measured value against the applicable minimum. The 47 CFR §32.2411 account citation corrects a systemic error that would surface in any carrier accounting audit: pole investment records that reference §32.2420 (cable and wire parent) instead of §32.2411 (Poles) are misclassified and will fail a Part 32 examination.
         </p>
       </section>
     </LessonLayout>

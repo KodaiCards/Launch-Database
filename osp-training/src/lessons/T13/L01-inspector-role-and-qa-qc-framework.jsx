@@ -498,15 +498,7 @@ export default function T13L01InspectorRole() {
       <section className="mt-8 p-5 border-l-4 border-blue-500 bg-slate-800/40 rounded">
         <h3 className="text-blue-300 text-lg font-semibold mb-3">Tying It Together</h3>
         <p className="text-slate-200 mb-3">
-          This lesson builds on:
-        </p>
-        <ul className="space-y-2 text-slate-300 text-sm list-disc ml-5">
-    <li><strong>T01.L06</strong> — Part of the broader OSP workflow.</li>
-    <li><strong>T10.L11</strong> — Part of the broader OSP workflow.</li>
-    <li><strong>T10.L11</strong> — Part of the broader OSP workflow.</li>
-        </ul>
-        <p className="text-slate-200 mt-3 text-sm italic">
-          Each step in the OSP process feeds into the next — understanding these connections strengthens your grasp of the whole system.
+          The authority framework and documentation habits built in this lesson are the load-bearing structure for everything that follows in T13. From <strong>T01.L06</strong> you inherited the definition of the OSP inspector's role in the federal borrower hierarchy — this lesson operationalizes that role into a repeatable daily system. From <strong>T10.L11</strong> you learned the acceptance walk and punch-list mechanics; the kick-back threshold and material-deficiency classification taught here give those mechanics their legal teeth. The QA/QC distinction matters because T18 (Safety) defines a QA failure differently than a QC failure — a missing atmospheric testing procedure is a QA gap, while failing to measure gas levels on a particular vault day is a QC miss. Mastering the six-step arrival workflow and the waiver-by-conduct doctrine directly enables L03 and L04, where you will apply these documentation reflexes to live aerial and underground inspection scenarios; any silence on a lashing or burial deficiency in L03 becomes a waiver risk under the AIA A201-2017 §3.3.1 doctrine you learned here. At close-out, every Form 565 produced using this lesson's daily workflow becomes a link in the federal advance chain that L11 and L07 explain — Form 219 cannot be signed without a complete, credible chain of those daily records.
         </p>
       </section>
     </LessonLayout>

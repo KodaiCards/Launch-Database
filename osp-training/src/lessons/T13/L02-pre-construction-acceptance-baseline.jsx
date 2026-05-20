@@ -323,15 +323,7 @@ export default function T13L02PreConstructionBaseline() {
       <section className="mt-8 p-5 border-l-4 border-blue-500 bg-slate-800/40 rounded">
         <h3 className="text-blue-300 text-lg font-semibold mb-3">Tying It Together</h3>
         <p className="text-slate-200 mb-3">
-          This lesson builds on:
-        </p>
-        <ul className="space-y-2 text-slate-300 text-sm list-disc ml-5">
-    <li><strong>T01.L06</strong> — Part of the broader OSP workflow.</li>
-    <li><strong>T10.L11</strong> — Part of the broader OSP workflow.</li>
-    <li><strong>T13.L01</strong> — Part of the broader OSP workflow.</li>
-        </ul>
-        <p className="text-slate-200 mt-3 text-sm italic">
-          Each step in the OSP process feeds into the next — understanding these connections strengthens your grasp of the whole system.
+          The acceptance criteria document signed here becomes the contractual reference card you carry through every lesson that follows. From <strong>T05.L02</strong> (NESC pole loading) and <strong>T07</strong> (staking) you learned the engineering basis for sag schedules and lashing pitch ranges — this lesson turns those engineering outputs into the specific quantified thresholds you write into the acceptance criteria document before Day 1. From <strong>T10.L06</strong> you learned the project MSA schedule; here you lock those slack minimums into the pre-construction baseline so a contractor cannot later argue the threshold was never agreed upon. The three inspection cadence models you selected in this lesson — continuous, milestone, and sampling — directly govern which activities in L03 (aerial) and L04 (underground) require your physical presence versus documentation-only verification; choosing the wrong cadence creates a constructive acceptance risk that L09 covers in the contractor-dispute context. The ground resistance threshold (25Ω per NEC §250.56) listed in the acceptance criteria here is the acceptance benchmark tested by the IEEE 81 procedure in L04 and certified in the Form 219 package assembled in L07. Setting these thresholds precisely before construction starts is what transforms the inspection role from subjective observer to objective auditor — a distinction with real legal weight under AIA A201-2017 §3.3.1 and 7 CFR §1753.47(d).
         </p>
       </section>
     </LessonLayout>

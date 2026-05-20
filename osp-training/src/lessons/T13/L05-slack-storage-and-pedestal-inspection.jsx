@@ -311,15 +311,7 @@ export default function T13L05SlackInspection() {
       <section className="mt-8 p-5 border-l-4 border-blue-500 bg-slate-800/40 rounded">
         <h3 className="text-blue-300 text-lg font-semibold mb-3">Tying It Together</h3>
         <p className="text-slate-200 mb-3">
-          This lesson builds on:
-        </p>
-        <ul className="space-y-2 text-slate-300 text-sm list-disc ml-5">
-    <li><strong>T01.L06</strong> — Part of the broader OSP workflow.</li>
-    <li><strong>T10.L11</strong> — Part of the broader OSP workflow.</li>
-    <li><strong>T10.L06</strong> — Part of the broader OSP workflow.</li>
-        </ul>
-        <p className="text-slate-200 mt-3 text-sm italic">
-          Each step in the OSP process feeds into the next — understanding these connections strengthens your grasp of the whole system.
+          Slack inspection is one of the few T13 tasks that directly enables an operational outcome years after close-out: the slack location register built here is the restoration technician's roadmap at 2 AM when a dig-in brings down a route. From <strong>T10.L06</strong> (slack and storage) you learned why MSA schedules exist and what slack quantities are typically required; this lesson teaches the measurement and recording method that turns those MSA requirements into verifiable, auditable Form 565 entries. The "coil count × estimated feet per wrap" calculation — 8 wraps × 7 ft = 56 ft — provides a documented estimate that survives GFR review without disturbing the installed coil. From <strong>T11</strong> (splicing) you learned how much slack a splicer needs to pull fiber up and into a fusion-splice rig; the splice-point minimums in the MSA schedule (typically 100 ft) reflect that working-length requirement — an inspector who documents 56 ft at what should be a splice point is documenting a deficiency that will cost a future technician a cable pull. The outside-in pedestal inspection sequence closing this lesson links forward to <strong>T14.L06</strong>'s bonding requirements: the ground wire visible and attached at Step 6 of the pedestal checklist must pass the 25Ω resistance threshold before first-installation acceptance is complete, which means the L04 IEEE 81 clamp-on procedure is the required follow-through to this lesson's visual check. The slack register handed to the borrower at close-out per L07 is part of the records package that triggers final retainage release — incomplete access information in that register is an incomplete close-out deliverable.
         </p>
       </section>
     </LessonLayout>

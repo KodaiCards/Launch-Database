@@ -387,15 +387,7 @@ export default function T13L04UndergroundInspection() {
       <section className="mt-8 p-5 border-l-4 border-blue-500 bg-slate-800/40 rounded">
         <h3 className="text-blue-300 text-lg font-semibold mb-3">Tying It Together</h3>
         <p className="text-slate-200 mb-3">
-          This lesson builds on:
-        </p>
-        <ul className="space-y-2 text-slate-300 text-sm list-disc ml-5">
-    <li><strong>T01.L06</strong> — Part of the broader OSP workflow.</li>
-    <li><strong>T13.L01</strong> — Part of the broader OSP workflow.</li>
-    <li><strong>T13.L02</strong> — Part of the broader OSP workflow.</li>
-        </ul>
-        <p className="text-slate-200 mt-3 text-sm italic">
-          Each step in the OSP process feeds into the next — understanding these connections strengthens your grasp of the whole system.
+          Underground inspection is where errors become the most expensive — buried defects cannot be re-inspected without excavation, which is why this lesson's measurement disciplines are irreversible once the trench closes. The five-step IEEE 81-2012 clamp-on ground resistance procedure taught here operationalizes the 25Ω threshold from <strong>T14.L06</strong>; those ground resistance test records, with instrument serial numbers and calibration dates logged on Form 565, are one of the ten required components of the Form 219 close-out package in L07. From <strong>T18.L03</strong> (confined space) you learned the atmospheric testing and attendant requirements; this lesson makes the inspector the enforcement checkpoint — no vault entry proceeds without confirmed pre-entry testing, and a Form 565 entry documents it. The ASCE 38-22 Quality Level verification introduced here links directly to <strong>T16</strong> (as-built documentation), where the GPS accuracy of as-built records determines how reliably the 811 locate database can route excavators away from your buried plant; QL-A road-crossing verification in this lesson is the field predecessor to that GIS record. From <strong>T10.L08</strong> (compaction and Proctor density) you learned the ASTM D1557 reference standard; here you verify the licensed technician's test frequency and results, closing the QC chain on an activity that was designed upstream but cannot be corrected after backfill. The clamp-on measurement worked example — 18.4Ω against the 25Ω NEC §250.56 threshold — illustrates exactly the kind of specific, instrument-identified, numerically documented entry on Form 565 that survives GFR audit and supports T14 bonding compliance certification at close-out.
         </p>
       </section>
     </LessonLayout>

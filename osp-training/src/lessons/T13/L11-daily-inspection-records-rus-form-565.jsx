@@ -452,15 +452,7 @@ export default function T13L11DailyInspectionRecords() {
       <section className="mt-8 p-5 border-l-4 border-blue-500 bg-slate-800/40 rounded">
         <h3 className="text-blue-300 text-lg font-semibold mb-3">Tying It Together</h3>
         <p className="text-slate-200 mb-3">
-          This lesson builds on:
-        </p>
-        <ul className="space-y-2 text-slate-300 text-sm list-disc ml-5">
-    <li><strong>T01.L06</strong> — Part of the broader OSP workflow.</li>
-    <li><strong>T01.L05</strong> — Part of the broader OSP workflow.</li>
-    <li><strong>T10.L11</strong> — Part of the broader OSP workflow.</li>
-        </ul>
-        <p className="text-slate-200 mt-3 text-sm italic">
-          Each step in the OSP process feeds into the next — understanding these connections strengthens your grasp of the whole system.
+          Form 565 is the foundational daily record that the entire construction advance chain depends on, and its legal weight is rooted in the inspector role established in <strong>T01.L06</strong> — the independent field representative whose certification is the federal government's assurance that loan funds are being applied to conforming work. <strong>T01.L05</strong> introduced RUS Form 219, and this lesson reveals why Form 219 cannot be signed credibly without an unbroken Form 565 chain: each Form 565 is a link in the evidence chain that the GFR will audit before releasing the final close-out payment, and a missing week is a gap that triggers advance suspension (Form 7d processing stops). The OTDR witnessing obligation entered in the "Inspection Measurements" field of Form 565 connects directly to <strong>T12</strong>'s testing requirements — 7 CFR §1755.400(b) requires the inspector to physically witness the OTDR test and record the instrument serial number, meaning a Form 565 that shows OTDR test results without an instrument serial number is incomplete and cannot satisfy the witnessing obligation. The multi-crew reality discussed here (three simultaneous crews, one inspector) means the "competent resident inspection at all times" standard from 7 CFR §1753 [confirm current section] can only be met by the same daily arrival workflow and inspection-segment discipline introduced in <strong>L01</strong> — the six-step arrival sequence, applied per crew, per location. At project close-out, the complete Form 565 record set is the primary evidence supporting the <strong>L07</strong> Form 219 certification, and any inspector who signs Form 219 knowing that Form 565 weeks are missing faces FCA personal liability under 31 USC §3729 — the same exposure described in L07 — because the Form 219 certification encompasses the entire inspection record chain.
         </p>
       </section>
     </LessonLayout>
