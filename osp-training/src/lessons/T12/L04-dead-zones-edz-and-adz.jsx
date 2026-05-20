@@ -75,6 +75,10 @@ export default function T12L04_DeadZones() {
       <section data-tier="foundations">
         <h2>Why the OTDR Goes Blind Right After a Reflection</h2>
 
+        <p className="text-slate-400 text-sm mb-3 p-3 border-l-4 border-slate-500">
+          <strong>Callback:</strong> In <strong>T12.L03</strong>, you learned about pulse width — the tradeoff between using a long pulse (more range, larger dead zones) or a short pulse (less range, smaller dead zones). This lesson explains what those dead zones ARE and how to design around them with launch cables.
+        </p>
+
         <p>
           When light hits a connector end-face or any air gap, a burst of energy reflects straight back
           into the OTDR. That burst is far stronger than the quiet Rayleigh backscatter the OTDR is

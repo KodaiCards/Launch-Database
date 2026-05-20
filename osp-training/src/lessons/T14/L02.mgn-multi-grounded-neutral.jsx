@@ -65,6 +65,9 @@ export default function T14L02_MGNMultiGroundedNeutral() {
       {/* ── FOUNDATIONS ─────────────────────────────────────────────────── */}
       <section data-tier="foundations">
         <h2>In Plain English</h2>
+        <p className="text-slate-400 text-sm mb-3 p-3 border-l-4 border-slate-500">
+          <strong>Callback:</strong> In <strong>T14.L01</strong>, you learned the PURPOSE of grounding: to give fault current a safe path to flow into the earth instead of through crew members. This lesson explains how the MGN system implements that purpose at the equipment level, and how your fiber messenger integrates into it.
+        </p>
         <p>
           On most joint-use poles in rural RUS territory, the power company runs a distribution
           system called MGN — multi-grounded neutral. The word "multi-grounded" means the neutral

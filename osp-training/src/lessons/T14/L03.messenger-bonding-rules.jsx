@@ -83,6 +83,9 @@ export default function T14L03_MessengerBondingRules() {
       {/* ── FOUNDATIONS ─────────────────────────────────────────────────── */}
       <section data-tier="foundations">
         <h2>In Plain English</h2>
+        <p className="text-slate-400 text-sm mb-3 p-3 border-l-4 border-slate-500">
+          <strong>Callback:</strong> You learned in <strong>T14.L01</strong> that the goal of grounding is to give fault current a path to earth, and in <strong>T14.L02</strong> that MGN systems achieve that by bonding the distribution neutral at every pole. This lesson specifies HOW to bond the communications side to maintain that equipotential.
+        </p>
         <p>
           Your lashed fiber cable rides on a steel messenger strand. That messenger is conductive
           metal. Under normal conditions it sits at near-earth potential because it's grounded

@@ -97,6 +97,9 @@ export default function T12L01_TierVsTier() {
         <p className="text-slate-400 text-sm mb-3 mt-6 p-3 border-l-4 border-slate-500">
           <strong>Callback:</strong> Recall from <strong>T02.L06 Link Budget</strong> — the optical budget defines how much loss the link can tolerate. Testing with both OLTS and OTDR ensures the plant actually meets that budget. OTDR alone cannot prove the cable is acceptable; only OLTS measurements match the link budget tier requirements.
         </p>
+        <p className="text-slate-400 text-sm mb-3 p-3 border-l-4 border-slate-500">
+          <strong>Callback:</strong> Remember from <strong>T02.L08 SMF vs. MMF</strong> — fiber type (G.652.D SMF, OM3 MMF, etc.) determines the attenuation at each wavelength. That's why we test at <strong>both 1310 nm and 1550 nm</strong> on singlemode plant: different wavelengths may show different loss characteristics in the same fiber, revealing defects like macrobends that are more visible at one wavelength than the other.
+        </p>
 
         <div className="mt-4 p-4 border border-blue-400/30 bg-blue-400/5 rounded-lg text-sm">
           <p className="font-semibold text-blue-300 mb-2">Refresher: Prerequisites for this lesson</p>

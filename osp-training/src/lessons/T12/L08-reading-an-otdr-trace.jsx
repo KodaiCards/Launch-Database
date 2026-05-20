@@ -78,6 +78,10 @@ export default function T12L08_ReadingOTDRTrace() {
       <section data-tier="foundations">
         <h2>What You're Actually Looking At on an OTDR Screen</h2>
 
+        <p className="text-slate-400 text-sm mb-3 p-3 border-l-4 border-slate-500">
+          <strong>Callback:</strong> Remember from <strong>T12.L03</strong> how Rayleigh backscatter creates the baseline trace slope, and from <strong>T12.L04</strong> about dead zones after reflections. Now you'll learn how to read the complete OTDR trace and navigate around those dead zones to extract accurate measurements.
+        </p>
+
         <p>
           The OTDR display shows a graph with <strong>distance</strong> on the horizontal axis
           (meters or kilometers) and <strong>optical power level</strong> on the vertical axis
