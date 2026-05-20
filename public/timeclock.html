@@ -219,6 +219,11 @@ html[data-theme="dark"] .tag-team-construction,html[data-theme="dark"] .tag-team
   th,td{padding:8px 6px}
   /* Form inputs in the pre-clock form should be 44px+ for thumbs */
   .pre-clock-form select,.pre-clock-form input{padding:12px;font-size:16px}
+.pre-clock-form select:disabled,.pre-clock-form input:disabled{opacity:.45;cursor:not-allowed}
+.cascade-hint{font-size:11px;color:rgba(255,255,255,.65);margin-top:3px}
+.cascade-error{font-size:11px;color:#fca5a5;margin-top:3px}
+.form-group .cascade-error{color:var(--danger)}
+.form-group input:disabled,.form-group select:disabled{opacity:.45;cursor:not-allowed;background:var(--gray-light)}
   .pre-clock-form .form-group{margin-bottom:12px}
 }
 /* a11y */
@@ -343,20 +348,27 @@ html[data-theme="dark"] .tag-team-construction,html[data-theme="dark"] .tag-team
     <div class="modal-body">
       <input type="hidden" id="entry-id">
       <input type="hidden" id="entry-pending-request-id">
+      <input type="hidden" id="entry-resolved-project-id">
       <div class="form-group">
         <label for="entry-client">Client *</label>
-        <select id="entry-client" onchange="entryClientChanged()"><option value="">— All clients —</option></select>
+        <select id="entry-client" onchange="cascadeChanged('entry','client')"><option value="">— Select client —</option></select>
       </div>
       <div class="form-group">
-        <label for="entry-project">Project *
+        <label for="entry-program">Program *</label>
+        <select id="entry-program" onchange="cascadeChanged('entry','program')" disabled><option value="">— Select program —</option></select>
+      </div>
+      <div class="form-group">
+        <label for="entry-sa">Service Area *</label>
+        <select id="entry-sa" onchange="cascadeChanged('entry','sa')" disabled><option value="">— Select service area —</option></select>
+      </div>
+      <div class="form-group">
+        <label for="entry-job">Job *
           <button type="button" class="btn btn-secondary btn-sm" style="float:right;font-size:11px;padding:2px 8px" onclick="openRequestNewProjectModal()" title="Request a new project — admin must approve before it merges into the project list"><i class="fa-solid fa-plus" aria-hidden="true"></i> Add New</button>
         </label>
-        <select id="entry-project" onchange="entryProjectChanged()"><option value="">Loading…</option></select>
+        <input id="entry-job" list="entry-job-list" placeholder="Type or select a job" autocomplete="off" oninput="cascadeJobInput('entry')" disabled>
+        <datalist id="entry-job-list"></datalist>
+        <div class="cascade-hint" id="entry-job-hint"></div>
         <div id="entry-pending-banner" style="display:none;margin-top:6px;padding:6px 10px;background:var(--warning-light);color:var(--warning-text);border:1px solid var(--warning);border-radius:6px;font-size:11px"><i class="fa-solid fa-clock" aria-hidden="true"></i> Pending project request — time will be held until admin approves.</div>
-      </div>
-      <div class="form-group">
-        <label for="entry-job">Job</label>
-        <select id="entry-job"><option value="">— Select project first —</option></select>
       </div>
       <div class="form-row">
         <div class="form-group">
@@ -653,6 +665,13 @@ function showAccountMenu(){
 async function signOut(){
   try { await fetch('/api/auth/logout', {method:'POST', credentials:'same-origin'}); } catch(e){}
   try { sessionStorage.removeItem('lfs_token'); } catch(e){}
+  try {
+    ['ci','sw','entry'].forEach(pfx => {
+      ['client','program','sa_id','job'].forEach(k => {
+        sessionStorage.removeItem('lf_tc_' + pfx + '_' + k);
+      });
+    });
+  } catch(e){}
   window.location.href = '/login';
 }
 
@@ -851,19 +870,29 @@ function renderClockCard(){
       <div id="quick-clock-row"></div>
       <div class="pre-clock-form">
         <div class="form-group">
-          <label for="ci-project">Project *</label>
-          <select id="ci-project" onchange="ciProjectChanged()"><option value="">— Select project —</option></select>
+          <label for="ci-client">Client *</label>
+          <select id="ci-client" onchange="cascadeChanged('ci','client')"><option value="">— Select client —</option></select>
         </div>
         <div class="form-group">
-          <label for="ci-job">Job</label>
-          <select id="ci-job"><option value="">— Select a job —</option></select>
+          <label for="ci-program">Program *</label>
+          <select id="ci-program" onchange="cascadeChanged('ci','program')" disabled><option value="">— Select program —</option></select>
+        </div>
+        <div class="form-group">
+          <label for="ci-sa">Service Area *</label>
+          <select id="ci-sa" onchange="cascadeChanged('ci','sa')" disabled><option value="">— Select service area —</option></select>
+        </div>
+        <div class="form-group">
+          <label for="ci-job">Job *</label>
+          <input id="ci-job" list="ci-job-list" placeholder="Type or select a job" autocomplete="off" oninput="cascadeJobInput('ci')" disabled>
+          <datalist id="ci-job-list"></datalist>
+          <div class="cascade-hint" id="ci-job-hint"></div>
         </div>
       </div>
       <div class="clock-controls" style="margin-top:18px">
         <button class="btn btn-xl clock-in-btn" onclick="clockIn()"><i class="fa-solid fa-play"></i> Clock In</button>
       </div>
     `;
-    populateProjectSelect(document.getElementById('ci-project'));
+    mountCascade('ci', { includeCompleted: false });
     renderQuickClockButtons();
   }
 }
@@ -920,19 +949,20 @@ async function quickClockIn(projectId, jobId, jobTitle){
   }
 }
 
-async function ciProjectChanged(){
-  const pid = document.getElementById('ci-project').value;
-  await populateJobSelect(document.getElementById('ci-job'), pid);
-}
-
 async function clockIn(){
-  const project_id = document.getElementById('ci-project').value;
-  const job_id = document.getElementById('ci-job').value || null;
-  if (!project_id){ alert('Please select a project before clocking in.'); return; }
+  let project_id;
   try {
-    await api('/api/timeclock/clock-in', 'POST', { project_id, job_id });
+    const resolved = await resolveOrCreateFromCascade('ci');
+    project_id = resolved.id;
+  } catch(e){
+    alert(e.message || 'Please complete all fields before clocking in.');
+    return;
+  }
+  try {
+    const jobVal = (document.getElementById('ci-job') || {}).value || '';
+    await api('/api/timeclock/clock-in', 'POST', { project_id, job_title: jobVal.trim() || null });
     await loadActiveSession();
-    await loadWeek();  // reflect new session immediately
+    await loadWeek();
   } catch(e){
     alert('Clock in failed: ' + e.message);
   }
@@ -966,12 +996,22 @@ function openSwitchModal(){
           <i class="fa-solid fa-circle-info"></i> Your current session will close and a new one will start. The hours so far will be saved as a time entry.
         </div>
         <div class="form-group">
-          <label for="switch-project">New Project *</label>
-          <select id="switch-project" onchange="switchProjectChanged()"><option value="">— Select project —</option></select>
+          <label for="sw-client">Client *</label>
+          <select id="sw-client" onchange="cascadeChanged('sw','client')"><option value="">— Select client —</option></select>
         </div>
         <div class="form-group">
-          <label for="switch-job">Job</label>
-          <select id="switch-job"><option value="">— Default —</option></select>
+          <label for="sw-program">Program *</label>
+          <select id="sw-program" onchange="cascadeChanged('sw','program')" disabled><option value="">— Select program —</option></select>
+        </div>
+        <div class="form-group">
+          <label for="sw-sa">Service Area *</label>
+          <select id="sw-sa" onchange="cascadeChanged('sw','sa')" disabled><option value="">— Select service area —</option></select>
+        </div>
+        <div class="form-group">
+          <label for="sw-job">Job *</label>
+          <input id="sw-job" list="sw-job-list" placeholder="Type or select a job" autocomplete="off" oninput="cascadeJobInput('sw')" disabled>
+          <datalist id="sw-job-list"></datalist>
+          <div class="cascade-hint" id="sw-job-hint"></div>
         </div>
       </div>
       <div class="modal-footer">
@@ -981,19 +1021,21 @@ function openSwitchModal(){
     </div>
   `;
   document.body.appendChild(overlay);
-  populateProjectSelect(document.getElementById('switch-project'));
+  mountCascade('sw', { includeCompleted: false });
   overlay.addEventListener('click', e => { if (e.target === overlay) overlay.remove(); });
 }
-async function switchProjectChanged(){
-  const pid = document.getElementById('switch-project').value;
-  await populateJobSelect(document.getElementById('switch-job'), pid);
-}
 async function doSwitch(){
-  const project_id = document.getElementById('switch-project').value;
-  const job_id = document.getElementById('switch-job').value || null;
-  if (!project_id){ alert('Please pick a project to switch to.'); return; }
+  let project_id;
   try {
-    await api('/api/timeclock/switch', 'POST', { project_id, job_id });
+    const resolved = await resolveOrCreateFromCascade('sw');
+    project_id = resolved.id;
+  } catch(e){
+    alert(e.message || 'Please complete all fields before switching.');
+    return;
+  }
+  try {
+    const jobVal = (document.getElementById('sw-job') || {}).value || '';
+    await api('/api/timeclock/switch', 'POST', { project_id, job_title: jobVal.trim() || null });
     document.getElementById('switch-modal').remove();
     await loadActiveSession();
     await loadWeek();
@@ -1104,45 +1146,39 @@ function _openEntryModalCommon() {
 }
 
 function openManualEntryModal(){
-  _entryModalIsEdit = false;  // New entries don't need the completed-projects cache.
+  _entryModalIsEdit = false;
   document.getElementById('entry-modal-title').textContent = 'Add Time Entry';
   document.getElementById('entry-id').value = '';
   document.getElementById('entry-pending-request-id').value = '';
+  document.getElementById('entry-resolved-project-id').value = '';
   document.getElementById('entry-date').value = new Date().toISOString().slice(0,10);
   document.getElementById('entry-hours').value = '';
   document.getElementById('entry-notes').value = '';
-  populateClientSelect(document.getElementById('entry-client'));
-  populateProjectSelect(document.getElementById('entry-project'));
-  populateJobSelect(document.getElementById('entry-job'), null);
   document.getElementById('entry-pending-banner').style.display = 'none';
   document.getElementById('entry-edit-warning').style.display = 'none';
   document.getElementById('entry-delete-btn').style.display = 'none';
+  mountCascade('entry', { includeCompleted: false });
   _openEntryModalCommon();
 }
 
 function openEditEntryModal(id){
   const e = weekData?.entries.find(x => String(x.id) === String(id));
   if (!e){ alert('Entry not found in current view'); return; }
-  _entryModalIsEdit = true;  // Signal entryClientChanged() to use completed cache.
+  _entryModalIsEdit = true;
   document.getElementById('entry-modal-title').textContent = 'Edit Time Entry';
   document.getElementById('entry-id').value = e.id;
   document.getElementById('entry-pending-request-id').value = e.pending_project_request_id || '';
+  document.getElementById('entry-resolved-project-id').value = e.project_id || '';
   document.getElementById('entry-date').value = String(e.entry_date).slice(0,10);
   document.getElementById('entry-hours').value = e.hours;
   document.getElementById('entry-notes').value = e.notes || '';
-  // Pre-select the entry's client; search the completed-inclusive cache so a
-  // project that has since been marked completed is still found (Carter Q4 lock).
-  const editCache = projectsCacheWithCompleted.length ? projectsCacheWithCompleted : projectsCache;
-  const proj = editCache.find(p => String(p.id) === String(e.project_id));
-  const cid = proj?.client_id || '';
-  populateClientSelect(document.getElementById('entry-client'), cid);
-  // useCompleted: true surfaces completed projects in the edit-entry picker for
-  // back-fill against completed work.
-  populateProjectSelect(document.getElementById('entry-project'), e.project_id, { client_id: cid || null, useCompleted: true });
-  populateJobSelect(document.getElementById('entry-job'), e.project_id, null);
   document.getElementById('entry-pending-banner').style.display = e.pending_project_request_id ? '' : 'none';
   document.getElementById('entry-edit-warning').style.display = '';
   document.getElementById('entry-delete-btn').style.display = '';
+  mountCascade('entry', { includeCompleted: true, prefill: {
+    project_id: e.project_id,
+    job_name: e.job_title || ''
+  }});
   _openEntryModalCommon();
 }
 
@@ -1150,25 +1186,6 @@ function closeEntryModal(){
   document.getElementById('entry-modal').style.display = 'none';
   // Release focus trap and restore focus to the trigger element.
   if (_entryModalTrap) { _entryModalTrap.release(); _entryModalTrap = null; }
-}
-
-async function entryProjectChanged(){
-  const pid = document.getElementById('entry-project').value;
-  await populateJobSelect(document.getElementById('entry-job'), pid);
-  // A real project selection clears any pending-request state.
-  if (pid) {
-    document.getElementById('entry-pending-request-id').value = '';
-    document.getElementById('entry-pending-banner').style.display = 'none';
-  }
-}
-
-// Client filter narrows the project list. Empty resets to all leaves.
-// In edit mode (_entryModalIsEdit) pass useCompleted:true so completed
-// projects remain visible for back-fill.
-function entryClientChanged(){
-  const cid = document.getElementById('entry-client').value || null;
-  populateProjectSelect(document.getElementById('entry-project'), null, { client_id: cid, useCompleted: _entryModalIsEdit });
-  populateJobSelect(document.getElementById('entry-job'), null);
 }
 
 function populateRnpAreaDropdown() {
@@ -1201,6 +1218,229 @@ function rnpAreaChanged() {
   }
 }
 
+// ─── CASCADE PICKER ENGINE ──────────────────────────────────────────────────
+// Shared 4-tier cascade (Client → Program → Service Area → Job) used by
+// the clock-in card (prefix "ci"), switch modal (prefix "sw"), and entry
+// modal (prefix "entry"). sessionStorage keys: lf_tc_{prefix}_{field}.
+var PROGRAM_LABELS = { rus: 'RUS', bau: 'BAU', gfr: 'GFR', other: 'Other' };
+var PROGRAMS = ['rus', 'bau', 'gfr', 'other'];
+var _cascadeEcCache = {};   // client_id → [{id, program, work_order_number}]
+var _cascadeSaCache = {};   // client_id → [{id, name, rollup_key, ec_id}]
+var _cascadeJobCache = {};  // sa_folder_id+completed → [{name}]
+
+function _ssGet(key){ try { return sessionStorage.getItem(key); } catch(e){ return null; } }
+function _ssSet(k,v){ try { if (v !== null && v !== undefined) sessionStorage.setItem(k,v); else sessionStorage.removeItem(k); } catch(e){} }
+function _ssDel(k){ try { sessionStorage.removeItem(k); } catch(e){} }
+function _el(prefix, suffix){ return document.getElementById(prefix + '-' + suffix); }
+
+async function _fetchEcsForClient(client_id){
+  if (_cascadeEcCache[client_id]) return _cascadeEcCache[client_id];
+  const rows = await api('/api/engineering-contracts?client_id=' + encodeURIComponent(client_id));
+  _cascadeEcCache[client_id] = Array.isArray(rows) ? rows : (rows.contracts || []);
+  return _cascadeEcCache[client_id];
+}
+
+async function _fetchSaFolders(client_id){
+  if (_cascadeSaCache[client_id]) return _cascadeSaCache[client_id];
+  // Use the client SA endpoint added in Phase B-support (accessible by crew).
+  const rows = await api('/api/clients/' + encodeURIComponent(client_id) + '/service-areas');
+  _cascadeSaCache[client_id] = Array.isArray(rows) ? rows : [];
+  return _cascadeSaCache[client_id];
+}
+
+async function _fetchJobsForSa(sa_folder_id, includeCompleted){
+  const cacheKey = sa_folder_id + '|' + includeCompleted;
+  if (_cascadeJobCache[cacheKey]) return _cascadeJobCache[cacheKey];
+  const statusParam = includeCompleted ? '' : '&status=active';
+  const rows = await api('/api/projects?parent_id=' + encodeURIComponent(sa_folder_id) + '&leaves_only=true&limit=all' + statusParam);
+  _cascadeJobCache[cacheKey] = Array.isArray(rows) ? rows : [];
+  return _cascadeJobCache[cacheKey];
+}
+
+function _mountClientSelect(prefix){
+  const sel = _el(prefix, 'client');
+  if (!sel) return;
+  const seen = new Map();
+  for (const p of projectsCache){
+    if (p.client_id && !seen.has(p.client_id)) seen.set(p.client_id, p.client_name || '—');
+  }
+  // Also check completed cache (edit flow needs completed projects' clients).
+  for (const p of projectsCacheWithCompleted){
+    if (p.client_id && !seen.has(p.client_id)) seen.set(p.client_id, p.client_name || '—');
+  }
+  const items = [...seen.entries()].sort((a,b) => String(a[1]).localeCompare(String(b[1])));
+  const html = ['<option value="">— Select client —</option>'];
+  for (const [id,name] of items) html.push('<option value="' + esc(id) + '">' + esc(name) + '</option>');
+  sel.innerHTML = html.join('');
+}
+
+async function _populateProgramSelect(prefix, client_id, savedProgram){
+  const sel = _el(prefix, 'program');
+  if (!sel) return;
+  const ecs = await _fetchEcsForClient(client_id);
+  const programs = [...new Set(ecs.map(ec => ec.program).filter(Boolean))];
+  const html = ['<option value="">— Select program —</option>'];
+  for (const prog of PROGRAMS){
+    if (!programs.includes(prog)) continue;
+    const sel_ = prog === savedProgram ? ' selected' : '';
+    html.push('<option value="' + prog + '"' + sel_ + '>' + (PROGRAM_LABELS[prog] || prog) + '</option>');
+  }
+  sel.innerHTML = html.join('');
+  sel.disabled = false;
+}
+
+async function _populateSaSelect(prefix, client_id, program, savedSaId){
+  const sel = _el(prefix, 'sa');
+  if (!sel) return;
+  sel.innerHTML = '<option value="">— Loading… —</option>';
+  sel.disabled = true;
+  const saList = await _fetchSaFolders(client_id);
+  // Filter SA folders to those whose EC matches the chosen program.
+  const ecs = await _fetchEcsForClient(client_id);
+  const ecIds = new Set(ecs.filter(ec => ec.program === program).map(ec => ec.id));
+  const filtered = saList.filter(sa => ecIds.has(sa.ec_id) || ecIds.has(sa.engineering_contract_id));
+  const html = ['<option value="">— Select service area —</option>'];
+  for (const sa of filtered){
+    const id = sa.id || sa.folder_id;
+    const saId = sa.sa_id || sa.rollup_key || id;
+    const sel_ = String(saId) === String(savedSaId) ? ' selected' : '';
+    html.push('<option value="' + esc(id) + '" data-sa-uuid="' + esc(saId) + '"' + sel_ + '>' + esc(sa.name || sa.area_name || '—') + '</option>');
+  }
+  sel.innerHTML = html.join('');
+  sel.disabled = filtered.length === 0;
+}
+
+async function _populateJobDatalist(prefix, sa_folder_id, includeCompleted, savedJob){
+  const inp = _el(prefix, 'job');
+  const dl = document.getElementById(prefix + '-job-list');
+  if (!inp || !dl) return;
+  inp.disabled = true;
+  dl.innerHTML = '';
+  const jobs = await _fetchJobsForSa(sa_folder_id, includeCompleted);
+  for (const j of jobs){
+    const opt = document.createElement('option');
+    opt.value = j.name || j.job_name || '';
+    dl.appendChild(opt);
+  }
+  inp.disabled = false;
+  if (savedJob) inp.value = savedJob;
+}
+
+async function mountCascade(prefix, opts){
+  opts = opts || {};
+  _mountClientSelect(prefix);
+  const saved = {
+    client: _ssGet('lf_tc_' + prefix + '_client'),
+    program: _ssGet('lf_tc_' + prefix + '_program'),
+    sa_id: _ssGet('lf_tc_' + prefix + '_sa_id'),
+    job: _ssGet('lf_tc_' + prefix + '_job')
+  };
+  // If prefill provided (edit flow), override saved state.
+  if (opts.prefill) {
+    if (opts.prefill.project_id) {
+      // Look up client_id + program from project cache.
+      const allP = projectsCache.concat(projectsCacheWithCompleted);
+      const proj = allP.find(p => String(p.id) === String(opts.prefill.project_id));
+      if (proj) {
+        if (proj.client_id) saved.client = String(proj.client_id);
+        if (proj.program) saved.program = proj.program;
+      }
+    }
+    if (opts.prefill.sa_id) saved.sa_id = String(opts.prefill.sa_id);
+    if (opts.prefill.job_name) saved.job = opts.prefill.job_name;
+  }
+  const clientSel = _el(prefix, 'client');
+  if (clientSel && saved.client) clientSel.value = saved.client;
+
+  // Disable downstream until client is picked.
+  const progSel = _el(prefix, 'program');
+  const saSel = _el(prefix, 'sa');
+  const jobInp = _el(prefix, 'job');
+  if (progSel) progSel.disabled = !saved.client;
+  if (saSel) saSel.disabled = true;
+  if (jobInp) jobInp.disabled = true;
+
+  if (saved.client) {
+    await _populateProgramSelect(prefix, saved.client, saved.program);
+    if (saved.program) {
+      await _populateSaSelect(prefix, saved.client, saved.program, saved.sa_id);
+      if (saved.sa_id) {
+        await _populateJobDatalist(prefix, saved.sa_id, opts.includeCompleted, saved.job);
+      }
+    }
+  }
+}
+
+async function cascadeChanged(prefix, tier){
+  const saved = {};
+  const clientSel = _el(prefix, 'client');
+  const progSel = _el(prefix, 'program');
+  const saSel = _el(prefix, 'sa');
+  const jobInp = _el(prefix, 'job');
+  const dl = document.getElementById(prefix + '-job-list');
+
+  if (tier === 'client'){
+    const v = clientSel ? clientSel.value : '';
+    _ssSet('lf_tc_' + prefix + '_client', v || null);
+    _ssDel('lf_tc_' + prefix + '_program');
+    _ssDel('lf_tc_' + prefix + '_sa_id');
+    _ssDel('lf_tc_' + prefix + '_job');
+    if (progSel){ progSel.innerHTML = '<option value="">— Select program —</option>'; progSel.disabled = !v; }
+    if (saSel){ saSel.innerHTML = '<option value="">— Select service area —</option>'; saSel.disabled = true; }
+    if (jobInp){ jobInp.value = ''; jobInp.disabled = true; }
+    if (dl) dl.innerHTML = '';
+    if (v) await _populateProgramSelect(prefix, v, null);
+  } else if (tier === 'program'){
+    const client = clientSel ? clientSel.value : '';
+    const v = progSel ? progSel.value : '';
+    _ssSet('lf_tc_' + prefix + '_program', v || null);
+    _ssDel('lf_tc_' + prefix + '_sa_id');
+    _ssDel('lf_tc_' + prefix + '_job');
+    if (saSel){ saSel.innerHTML = '<option value="">— Select service area —</option>'; saSel.disabled = true; }
+    if (jobInp){ jobInp.value = ''; jobInp.disabled = true; }
+    if (dl) dl.innerHTML = '';
+    if (v && client) await _populateSaSelect(prefix, client, v, null);
+  } else if (tier === 'sa'){
+    const v = saSel ? saSel.value : '';
+    const opt = saSel ? saSel.options[saSel.selectedIndex] : null;
+    const saUuid = (opt && opt.dataset.saUuid) || v;
+    _ssSet('lf_tc_' + prefix + '_sa_id', v || null);
+    _ssDel('lf_tc_' + prefix + '_job');
+    if (jobInp){ jobInp.value = ''; jobInp.disabled = !v; }
+    if (dl) dl.innerHTML = '';
+    if (v) await _populateJobDatalist(prefix, v, false, null);
+  }
+}
+
+function cascadeJobInput(prefix){
+  const inp = _el(prefix, 'job');
+  _ssSet('lf_tc_' + prefix + '_job', inp ? inp.value : null);
+}
+
+async function resolveOrCreateFromCascade(prefix){
+  const clientSel = _el(prefix, 'client');
+  const progSel = _el(prefix, 'program');
+  const saSel = _el(prefix, 'sa');
+  const jobInp = _el(prefix, 'job');
+
+  const client_id = clientSel ? clientSel.value : '';
+  const program = progSel ? progSel.value : '';
+  const sa_folder_id = saSel ? saSel.value : '';
+  const opt = saSel ? saSel.options[saSel.selectedIndex] : null;
+  const service_area_id = (opt && opt.dataset.saUuid) || sa_folder_id;
+  const job_name = (jobInp ? jobInp.value : '').trim();
+
+  if (!client_id) throw new Error('Please select a client.');
+  if (!program) throw new Error('Please select a program.');
+  if (!sa_folder_id) throw new Error('Please select a service area.');
+  if (!job_name) throw new Error('Please enter a job name.');
+
+  const resp = await api('/api/projects/resolve-or-create', 'POST', {
+    client_id, program, service_area_id, job_name
+  });
+  return resp; // { id, name, status }
+}
+
 // ─── REQUEST NEW PROJECT FLOW ───────────────────────────────────────────────
 // Engineers can propose a new project from the timeclock without clobbering
 // admin's project list. The flow:
@@ -1211,7 +1451,7 @@ function rnpAreaChanged() {
 //   4. Admin reviews via setting_change_requests; on approve, time entries
 //      retro-attach to the new project's id.
 function openRequestNewProjectModal(){
-  const cid = document.getElementById('entry-client').value || '';
+  const cid = document.getElementById('entry-client')?.value || '';
   const m = document.getElementById('rnp-modal');
   if (!m) return;
   document.getElementById('rnp-name').value = '';
@@ -1242,7 +1482,7 @@ async function submitRequestNewProject(){
     // Fold the request into the entry-modal: clear project select, stash
     // request_id, show the banner. saveEntry will route via the held flow.
     document.getElementById('entry-pending-request-id').value = resp.request_id;
-    document.getElementById('entry-project').value = '';
+    document.getElementById('entry-resolved-project-id').value = '';
     document.getElementById('entry-pending-banner').style.display = '';
     document.getElementById('entry-pending-banner').innerHTML =
       `<i class="fa-solid fa-clock"></i> Pending: <strong>${esc(name)}</strong>${work_order_number ? ' · WO# ' + esc(work_order_number) : ''} — time will be held until admin approves.`;
@@ -1255,26 +1495,34 @@ async function submitRequestNewProject(){
 
 async function saveEntry(){
   const id = document.getElementById('entry-id').value;
-  const project_id = document.getElementById('entry-project').value || null;
   const pending_request_id = document.getElementById('entry-pending-request-id').value || null;
-  const job_id = document.getElementById('entry-job').value || null;
   const entry_date = document.getElementById('entry-date').value;
   const hours = parseFloat(document.getElementById('entry-hours').value);
   const notes = document.getElementById('entry-notes').value || null;
 
-  // Either a real project OR a pending-request placeholder must be set.
-  if (!project_id && !pending_request_id){ alert('Project is required (or use Add New to request one).'); return; }
   if (!entry_date){ alert('Date is required'); return; }
   if (isNaN(hours) || hours <= 0){ alert('Hours must be greater than 0'); return; }
   if (hours > 24){ alert('Hours cannot exceed 24 per entry'); return; }
 
-  // Resolve job_title from job_id (server stores the title text on the entry).
-  // Skipped when no real project_id (the held timecard has no project to look up).
+  let project_id = null;
   let job_title = null;
-  if (job_id && project_id){
-    const jobs = await loadJobsForProject(project_id);
-    const j = jobs.find(x => x.id === job_id);
-    if (j) job_title = j.name;
+
+  if (pending_request_id) {
+    // Held entry — use request_id only, no project_id resolution needed.
+    project_id = null;
+  } else {
+    try {
+      const resolved = await resolveOrCreateFromCascade('entry');
+      project_id = resolved.id;
+      const jobEl = document.getElementById('entry-job');
+      job_title = (jobEl && jobEl.value.trim()) || null;
+    } catch(e) {
+      // Fall back to existing project_id if cascade is incomplete (edit flow).
+      project_id = document.getElementById('entry-resolved-project-id').value || null;
+      const jobEl = document.getElementById('entry-job');
+      job_title = (jobEl && jobEl.value.trim()) || null;
+      if (!project_id) { alert('Project is required (or use Add New to request one).'); return; }
+    }
   }
 
   const body = { project_id, entry_date, hours, job_title, notes };
@@ -1284,8 +1532,6 @@ async function saveEntry(){
     if (id){
       await api('/api/time-entries/' + id, 'PUT', body);
     } else {
-      // staff_id is auto-derived server-side via the user's linked staff
-      // record; we only need to send the project + date + hours payload.
       await api('/api/time-entries', 'POST', body);
     }
     closeEntryModal();
