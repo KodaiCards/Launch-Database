@@ -28,6 +28,8 @@ export const meta = {
     'RUS contract maximum',
     'concern threshold',
     'per-splice budget allocation',
+    'splice loss (dB)',
+    'splice loss acceptance threshold',
   ],
   key_terms: [
     {
@@ -54,6 +56,16 @@ export const meta = {
       term: 'per-splice budget allocation',
       definition:
         'The portion of the total optical link budget assigned to splice losses. Calculated as: (total splice count) × (estimated average splice loss). Example: 500 splices at 0.10 dB average = 50 dB total splice loss allocation. This allocation is part of the link budget the system engineer calculates before the build begins.',
+    },
+    {
+      term: 'splice loss (dB)',
+      definition:
+        'The optical insertion loss introduced by a single splice joint, measured in decibels (dB). Typical values for well-executed fusion splices on G.652.D fiber: 0.05–0.15 dB per splice. Poor technique or contamination can produce 0.25–0.50+ dB. All splices in a build contribute to the total link budget loss.',
+    },
+    {
+      term: 'splice loss acceptance threshold',
+      definition:
+        'The maximum acceptable loss for a single splice, defined by contract or standard. RUS Bulletin 1753F-401 specifies ≤0.30 dB as the contract maximum for RUS-financed builds. Any single splice exceeding this threshold must be re-spliced before the case is closed. The threshold is a pass/fail boundary, not a quality target.',
     },
   ],
   vocabulary_assumed: [

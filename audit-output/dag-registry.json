@@ -12938,8 +12938,8 @@
       "from_lesson": "T11.L04",
       "term": "splice loss acceptance threshold",
       "claimed_source": "T11.L03",
-      "verified": false,
-      "reason": "'splice loss acceptance threshold' is not introduced by any lesson in the curriculum"
+      "verified": true,
+      "reason": "splice loss acceptance threshold is introduced by T11.L03"
     },
     {
       "from_lesson": "T11.L05",
@@ -13048,8 +13048,8 @@
       "from_lesson": "T11.L08",
       "term": "splice loss acceptance threshold",
       "claimed_source": "T11.L03",
-      "verified": false,
-      "reason": "'splice loss acceptance threshold' is not introduced by any lesson in the curriculum"
+      "verified": true,
+      "reason": "splice loss acceptance threshold is introduced by T11.L03"
     },
     {
       "from_lesson": "T11.L08",
@@ -16066,8 +16066,8 @@
       "from_lesson": "T16.L01",
       "term": "DFR (Daily Field Report)",
       "claimed_source": "T10.L10",
-      "verified": false,
-      "reason": "'DFR (Daily Field Report)' is not introduced by any lesson in the curriculum"
+      "verified": true,
+      "reason": "DFR is introduced by T10.L10"
     },
     {
       "from_lesson": "T16.L01",
@@ -16085,8 +16085,8 @@
       "from_lesson": "T16.L02",
       "term": "fiber count",
       "claimed_source": "T03.L01",
-      "verified": false,
-      "reason": "'fiber count' is not introduced by any lesson in the curriculum"
+      "verified": true,
+      "reason": "fiber count is introduced by T03.L01"
     },
     {
       "from_lesson": "T16.L02",
@@ -16110,15 +16110,15 @@
       "from_lesson": "T16.L02",
       "term": "splice loss (dB)",
       "claimed_source": "T11.L03",
-      "verified": false,
-      "reason": "'splice loss (dB)' is not introduced by any lesson in the curriculum"
+      "verified": true,
+      "reason": "splice loss (dB) is introduced by T11.L03"
     },
     {
       "from_lesson": "T16.L02",
       "term": "splice case types",
       "claimed_source": "T11.L09",
-      "verified": false,
-      "reason": "'splice case types' is not introduced by any lesson in the curriculum"
+      "verified": true,
+      "reason": "splice case types is introduced by T11.L09"
     },
     {
       "from_lesson": "T16.L02",
@@ -16173,8 +16173,8 @@
       "from_lesson": "T16.L03",
       "term": "splice case types",
       "claimed_source": "T11.L09",
-      "verified": false,
-      "reason": "'splice case types' is not introduced by any lesson in the curriculum"
+      "verified": true,
+      "reason": "splice case types is introduced by T11.L09"
     },
     {
       "from_lesson": "T16.L04",
@@ -17705,9 +17705,9 @@
     {
       "from_lesson": "T21.L05",
       "term": "splice case",
-      "claimed_source": "T01.L03",
-      "verified": false,
-      "reason": "'splice case' is introduced by T01.L04, not T01.L03"
+      "claimed_source": "T01.L04",
+      "verified": true,
+      "reason": "splice case is introduced by T01.L04 (not T01.L03)"
     },
     {
       "from_lesson": "T21.L06",
