@@ -131,6 +131,16 @@ export default function T14L08_StrayVoltageDetection() {
 
       {/* ── WORKING ─────────────────────────────────────────────────────── */}
       <section data-tier="working">
+        <div className="border-l-4 border-blue-400/30 bg-blue-400/5 p-3 my-4">
+          <p className="text-sm text-slate-300 font-semibold mb-2">Quick refresher:</p>
+          <ul className="text-sm space-y-1 text-slate-300/90">
+            <li><strong>Bonding:</strong> Electrically connecting the messenger and all metallic components to the same potential so voltage differences don't accumulate. From T14.L01.</li>
+            <li><strong>Equipotential:</strong> The condition where two conductive objects are at the same voltage — no shock or arc risk if you touch both. From T14.L01.</li>
+            <li><strong>Ground potential rise (GPR):</strong> A temporary voltage jump at a ground electrode during a fault — why stray voltage is dangerous on ungrounded messengers. From T14.L01.</li>
+            <li><strong>Messenger bond:</strong> The electrical path from messenger to ground at every splice closure, preventing voltage from floating up. From T14.L03.</li>
+          </ul>
+        </div>
+
         <h3 className="mt-6 font-semibold">How induced voltage accumulates on a floating messenger</h3>
         <p className="mt-2">
           Think of a transformer. A primary coil carries current and creates a magnetic field.

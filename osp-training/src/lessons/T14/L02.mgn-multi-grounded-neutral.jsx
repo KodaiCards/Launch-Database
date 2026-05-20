@@ -120,6 +120,16 @@ export default function T14L02_MGNMultiGroundedNeutral() {
 
       {/* ── WORKING ─────────────────────────────────────────────────────── */}
       <section data-tier="working">
+        <div className="border-l-4 border-blue-400/30 bg-blue-400/5 p-3 my-4">
+          <p className="text-sm text-slate-300 font-semibold mb-2">Quick refresher before we dive in:</p>
+          <ul className="text-sm space-y-1 text-slate-300/90">
+            <li><strong>Grounding:</strong> Connecting a conductor to the earth through an electrode. From T14.L01.</li>
+            <li><strong>Bonding:</strong> Connecting two conductive components to the same voltage (usually earth). From T14.L01.</li>
+            <li><strong>Fault current:</strong> Unwanted electricity flowing through a dangerous path — what grounding and bonding are designed to safely redirect. From T14.L01.</li>
+            <li><strong>Equipotential:</strong> When everything conductive is at the same voltage — no shock hazard if you touch two things at once. From T14.L01.</li>
+          </ul>
+        </div>
+
         <h3 className="mt-6 font-semibold">How the MGN system works — from the pole down</h3>
         <p className="mt-2">
           A typical joint-use pole in MGN territory has the following layers from top to bottom

@@ -135,6 +135,16 @@ export default function T14L09_CathodicProtectionBasics() {
 
       {/* ── WORKING ─────────────────────────────────────────────────────── */}
       <section data-tier="working">
+        <div className="border-l-4 border-blue-400/30 bg-blue-400/5 p-3 my-4">
+          <p className="text-sm text-slate-300 font-semibold mb-2">Quick refresher:</p>
+          <ul className="text-sm space-y-1 text-slate-300/90">
+            <li><strong>Grounding:</strong> Creating an electrical path to earth — at the heart of cathodic protection design. From T14.L01.</li>
+            <li><strong>Ground rod:</strong> The electrode your protection system connects to for safe discharge of current into the earth. From T14.L04.</li>
+            <li><strong>Bonding:</strong> Electrically connecting metallic plant and parallel underground utilities so they don't form corrosion cells. From T14.L01.</li>
+            <li><strong>GES:</strong> The grounding electrode system that cathodic protection systems tie into to prevent stray corrosion current from reaching your conduit. From T14.L05.</li>
+          </ul>
+        </div>
+
         <h3 className="mt-6 font-semibold">How a corrosion cell forms</h3>
         <p className="mt-2">
           The basic corrosion cell requires three things: two different metals, a conductive

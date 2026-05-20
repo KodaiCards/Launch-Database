@@ -133,6 +133,16 @@ export default function T14L05_IBTandGES() {
 
       {/* ── WORKING ─────────────────────────────────────────────────────── */}
       <section data-tier="working">
+        <div className="border-l-4 border-blue-400/30 bg-blue-400/5 p-3 my-4">
+          <p className="text-sm text-slate-300 font-semibold mb-2">Quick refresher:</p>
+          <ul className="text-sm space-y-1 text-slate-300/90">
+            <li><strong>Grounding:</strong> Connecting a conductor to the earth via an electrode (ground rod, Ufer, etc.) to establish a reference potential. From T14.L01.</li>
+            <li><strong>Ground potential rise (GPR):</strong> The temporary voltage jump at a ground electrode during a fault — why all services must bond to the SAME electrode system. From T14.L01.</li>
+            <li><strong>Bonding:</strong> Connecting multiple components to the same potential so voltage differences don't exist between them. From T14.L01.</li>
+            <li><strong>Electrodes:</strong> NEC §250.52 types (ground rod, Ufer, ring electrode) — the hardware you bond everything to. From T14.L04.</li>
+          </ul>
+        </div>
+
         <h3 className="mt-6 font-semibold">The building-entry bonding path — from fiber to earth</h3>
         <p className="mt-2">
           Trace the bonding path for a fiber optical cable entering a building:

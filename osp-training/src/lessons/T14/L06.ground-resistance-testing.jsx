@@ -132,6 +132,16 @@ export default function T14L06_GroundResistanceTesting() {
 
       {/* ── WORKING ─────────────────────────────────────────────────────── */}
       <section data-tier="working">
+        <div className="border-l-4 border-blue-400/30 bg-blue-400/5 p-3 my-4">
+          <p className="text-sm text-slate-300 font-semibold mb-2">Quick refresher:</p>
+          <ul className="text-sm space-y-1 text-slate-300/90">
+            <li><strong>Grounding:</strong> Connecting to earth to create a low-resistance path for fault current. From T14.L01.</li>
+            <li><strong>Ground rod:</strong> 5/8-in. × 8-ft copper-clad electrode installed at the base of a pole or structure. From T14.L04.</li>
+            <li><strong>Supplemental electrode:</strong> A second rod required if the first doesn't meet the 25 Ω threshold. From T14.L04.</li>
+            <li><strong>GES (Grounding Electrode System):</strong> All electrodes at a site bonded together; must collectively meet the NEC threshold. From T14.L05.</li>
+          </ul>
+        </div>
+
         <h3 className="mt-6 font-semibold">The fall-of-potential setup — step by step</h3>
         <p className="mt-2">
           You need three things: the electrode under test (your ground rod), a current probe,

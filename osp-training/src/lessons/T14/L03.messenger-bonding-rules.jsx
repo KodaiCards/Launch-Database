@@ -138,6 +138,16 @@ export default function T14L03_MessengerBondingRules() {
 
       {/* ── WORKING ─────────────────────────────────────────────────────── */}
       <section data-tier="working">
+        <div className="border-l-4 border-blue-400/30 bg-blue-400/5 p-3 my-4">
+          <p className="text-sm text-slate-300 font-semibold mb-2">Quick refresher:</p>
+          <ul className="text-sm space-y-1 text-slate-300/90">
+            <li><strong>Bonding:</strong> Connecting conductive components to the same electrical potential so no voltage difference exists between them. From T14.L01.</li>
+            <li><strong>Grounding:</strong> Connecting that common potential to the earth through an electrode. From T14.L01.</li>
+            <li><strong>Neutral wire:</strong> The grounded conductor on the MGN distribution system, bonded to earth at frequent intervals. From T14.L02.</li>
+            <li><strong>Messenger:</strong> The steel strand supporting the cable — metallic and must be bonded to keep it at the same potential as the neutral. From T01.L03.</li>
+          </ul>
+        </div>
+
         <h3 className="mt-6 font-semibold">The complete bond assembly — three parts</h3>
         <p className="mt-2">
           Every messenger bond at a splice closure or dead-end has three components. All three

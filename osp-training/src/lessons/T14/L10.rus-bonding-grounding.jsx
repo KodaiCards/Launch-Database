@@ -112,6 +112,16 @@ export default function T14L10_RUSBondingGrounding() {
 
       {/* ── WORKING ─────────────────────────────────────────────────────── */}
       <section data-tier="working">
+        <div className="border-l-4 border-blue-400/30 bg-blue-400/5 p-3 my-4">
+          <p className="text-sm text-slate-300 font-semibold mb-2">Quick refresher:</p>
+          <ul className="text-sm space-y-1 text-slate-300/90">
+            <li><strong>Grounding:</strong> Installing electrodes (ground rods) and measuring their resistance to earth per NEC §250.56 (≤25Ω) and RUS requirements. From T14.L01.</li>
+            <li><strong>Ground resistance testing:</strong> The IEEE 81 fall-of-potential method to verify each installed electrode meets the 25 Ω threshold. From T14.L06.</li>
+            <li><strong>Bonding:</strong> Connecting the messenger downlead to the ground rod at each pole to keep everything at the same potential. From T14.L03.</li>
+            <li><strong>NESC Rule 96:</strong> The requirements for bonding intervals and downlead protection on aerial plant. From T14.L03.</li>
+          </ul>
+        </div>
+
         <h3 className="mt-6 font-semibold">The RUS bonding schedule — what it captures</h3>
         <p className="mt-2">
           The aerial plant bonding schedule is a table in the project close-out documentation

@@ -136,6 +136,16 @@ export default function T14L07_SurgeArrestersLightning() {
 
       {/* ── WORKING ─────────────────────────────────────────────────────── */}
       <section data-tier="working">
+        <div className="border-l-4 border-blue-400/30 bg-blue-400/5 p-3 my-4">
+          <p className="text-sm text-slate-300 font-semibold mb-2">Quick refresher:</p>
+          <ul className="text-sm space-y-1 text-slate-300/90">
+            <li><strong>Grounding:</strong> Providing a low-resistance path to earth so transient surges drain safely away from equipment. From T14.L01.</li>
+            <li><strong>Ground potential rise (GPR):</strong> Why your ground ring and GES matter during lightning strikes — to keep all facility grounds at the same elevated potential. From T14.L01.</li>
+            <li><strong>Ring electrode:</strong> A buried copper loop around a facility that equalizes grounding potential and provides a low-impedance discharge path for surges. From T14.L04.</li>
+            <li><strong>GES and IBT:</strong> The grounding electrode system and intersystem bonding termination that arresters connect to for surge discharge. From T14.L05.</li>
+          </ul>
+        </div>
+
         <h3 className="mt-6 font-semibold">The three arrester types</h3>
         <p className="mt-2">
           Surge arresters for OSP/telecom applications come in three main technologies.

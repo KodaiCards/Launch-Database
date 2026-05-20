@@ -97,6 +97,16 @@ export default function T14L11_NESCGroundsPerMile() {
 
       {/* ── WORKING ─────────────────────────────────────────────────────── */}
       <section data-tier="working">
+        <div className="border-l-4 border-blue-400/30 bg-blue-400/5 p-3 my-4">
+          <p className="text-sm text-slate-300 font-semibold mb-2">Quick refresher:</p>
+          <ul className="text-sm space-y-1 text-slate-300/90">
+            <li><strong>Grounding:</strong> Installing electrodes at sufficient intervals along a route to keep the plant at near-earth potential. From T14.L01.</li>
+            <li><strong>Ground rod:</strong> The 5/8-in. × 8-ft electrode installed at each bonding point. From T14.L04.</li>
+            <li><strong>Messenger bond:</strong> The electrical connection from the messenger to each ground rod via downlead and bond clamp, required at every splice closure and per NESC interval. From T14.L03.</li>
+            <li><strong>Ground resistance testing:</strong> IEEE 81 method to verify each installed electrode meets the 25 Ω threshold, supporting the grounding schedule. From T14.L06.</li>
+          </ul>
+        </div>
+
         <h3 className="mt-6 font-semibold">NESC Section 09 grounding interval</h3>
         <p className="mt-2">
           NESC C2-2023 Section 09 establishes the grounding requirements for communication

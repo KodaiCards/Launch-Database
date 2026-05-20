@@ -140,6 +140,16 @@ export default function T14L04_NEC250Electrodes() {
 
       {/* ── WORKING ─────────────────────────────────────────────────────── */}
       <section data-tier="working">
+        <div className="border-l-4 border-blue-400/30 bg-blue-400/5 p-3 my-4">
+          <p className="text-sm text-slate-300 font-semibold mb-2">Quick refresher:</p>
+          <ul className="text-sm space-y-1 text-slate-300/90">
+            <li><strong>Grounding:</strong> Connecting a conductor to the earth through an electrode for safety. From T14.L01.</li>
+            <li><strong>Ground potential rise (GPR):</strong> The temporary voltage rise at a ground electrode during a fault. From T14.L01.</li>
+            <li><strong>Messenger bond:</strong> The electrical connection from the messenger to the grounding system via bond clamp and downlead. From T14.L03.</li>
+            <li><strong>Downlead:</strong> The conductor running from a bond clamp down to a ground rod — must be properly sized and protected. From T14.L03.</li>
+          </ul>
+        </div>
+
         <h3 className="mt-6 font-semibold">NEC §250.52(A) — the recognized electrode types</h3>
         <p className="mt-2">
           NEC §250.52(A) lists eight electrode types. The four you encounter most often in OSP work:
