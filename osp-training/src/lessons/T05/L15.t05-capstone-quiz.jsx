@@ -54,6 +54,13 @@ export const meta = {
     { term: 'splitter insertion loss', source_lesson_id: 'T05.L12' },
     { term: 'make-ready cost estimate', source_lesson_id: 'T05.L13' },
   ],
+  learning_objectives: [
+    'Apply NESC Rules 232, 235, and 261 to verify clearances for communication cables over roads, railways, and power utility lines',
+    'Calculate sag and tension for aerial cable spans using the parabolic-sag formula and EDS (Everyday Stress) loading',
+    'Select the correct NESC loading district (Light, Medium, Heavy) and apply ice + wind combinations per NESC Rule 250',
+    'Evaluate pole loading forces (wind, ice, vertical cable weight) to determine if a given pole class is adequate for the design',
+    'Justify ADSS vs. lashed-cable choices and design PON/FTTH topology within aerial span constraints',
+  ],
   estimated_minutes: 30,
   key_terms: [],
 };

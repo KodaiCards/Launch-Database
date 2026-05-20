@@ -1,14 +1,19 @@
 /**
- * Splash — course catalog landing page.
+ * Splash — section-scoped course catalog page.
  *
- * Two sections per Carter's locked 2026-05-15 spec:
- *   1. General Learning Topics (18 topics, top / default)
- *   2. Certification Prep — Advanced (4 cert tracks, bottom / opt-in)
+ * Used for two routes:
+ *   /osp   → section="osp"  — shows all general OSP topics (T01-T20 + C05 final exam)
+ *   /isp   → section="isp"  — ISP placeholder ("coming soon") + migrated ISP catalog entries
+ *
+ * Cert tracks live at /cert → CertTrackChooser (separate component).
+ *
+ * Per directive 36 (2026-05-18): top-level chooser is / → ProductChooser.
+ * Splash is a section-scoped sub-page, not the root.
  */
 
 import React from 'react';
 import { Link } from 'react-router-dom';
-import { courses, certTracks } from '../data/course-catalog.js';
+import { courses } from '../data/course-catalog.js';
 import { useAllProgress } from '../hooks/useProgress.js';
 
 // ── Progress ring (simple CSS arc) ─────────────────────────────────────────
@@ -140,65 +145,15 @@ function CourseTile({ course, progressPct }) {
   );
 }
 
-// ── Cert track tile ─────────────────────────────────────────────────────────
-function CertTile({ track, progressPct }) {
-  const cta = ctaLabel(progressPct);
-  const completed = progressPct === 100;
-
-  // Defensive: guard against missing track or mock_exam_spec
-  const spec = track?.mock_exam_spec || { items: 0, time_minutes: 0, pass_threshold: 0 };
-
-  return (
-    <Link
-      to={`/cert/${track?.id || 'unknown'}`}
-      className={[
-        'block panel hover:ring-1 hover:ring-purple-400/40 transition group',
-        completed ? 'border-green-500/30' : 'border-purple-500/20',
-      ].join(' ')}
-    >
-      <div className="flex items-start gap-4">
-        <ProgressRing pct={progressPct} />
-
-        <div className="flex-1 min-w-0">
-          <div className="flex items-baseline gap-2 flex-wrap">
-            <span className="font-mono text-xs text-purple-400">{track?.id || 'N/A'}</span>
-            <h3 className="text-base font-semibold text-slate-100 truncate group-hover:text-purple-200 transition">
-              {track?.title || 'Unknown Cert Track'}
-            </h3>
-          </div>
-          <div className="flex items-center gap-3 mt-2 text-xs text-slate-400">
-            <span>{track?.lesson_count || 0} lessons</span>
-            <span>&middot;</span>
-            <span>
-              Mock exam: {spec.items} Q / {spec.time_minutes} min
-            </span>
-            <span>&middot;</span>
-            <span>Pass: {Math.round((spec.pass_threshold || 0) * 100)}%</span>
-          </div>
-        </div>
-
-        <span
-          className={[
-            'shrink-0 text-xs font-semibold px-3 py-1 rounded-full border self-center',
-            completed
-              ? 'border-green-400/40 text-green-300 bg-green-800/20'
-              : 'border-purple-400/40 text-purple-300 bg-purple-800/20',
-          ].join(' ')}
-        >
-          {cta}
-        </span>
-      </div>
-    </Link>
-  );
-}
-
 // ── Section header ──────────────────────────────────────────────────────────
 function SectionHeader({ label, count, description }) {
   return (
     <div className="mb-4">
       <div className="flex items-baseline gap-3">
         <h2 className="text-xl font-bold text-slate-100">{label}</h2>
-        <span className="text-xs text-slate-400">{count} courses</span>
+        {count != null && (
+          <span className="text-xs text-slate-400">{count} courses</span>
+        )}
       </div>
       {description && (
         <p className="text-sm text-slate-400 mt-1">{description}</p>
@@ -207,74 +162,129 @@ function SectionHeader({ label, count, description }) {
   );
 }
 
+// ── ISP coming-soon placeholder ─────────────────────────────────────────────
+function ISPComingSoon({ ispCourses }) {
+  return (
+    <div className="space-y-6">
+      {/* Hero card */}
+      <div className="panel border-ospsteel/60 bg-ospsteel/20 text-center py-10">
+        <div className="text-4xl mb-3">🏢</div>
+        <h2 className="text-2xl font-bold mb-2">Inside Plant Course</h2>
+        <p className="text-slate-400 max-w-lg mx-auto text-sm">
+          Deep inside-plant training covering CO and headend architecture, structured cabling
+          (TIA-568/569/606/607), data center standards (TIA-942), full multimode treatment,
+          long-haul and DWDM awareness, and RCDD certification prep.
+        </p>
+        <div className="mt-4 inline-block text-xs font-bold uppercase tracking-widest px-3 py-1.5 rounded bg-ospsteel/60 text-slate-300 border border-white/10">
+          Launching after OSP course rollout — 2026 Q3
+        </div>
+      </div>
+
+      {/* Migrated course previews */}
+      {ispCourses.length > 0 && (
+        <div>
+          <div className="text-xs uppercase tracking-widest text-slate-500 mb-3">
+            Coming in ISP Course
+          </div>
+          <div className="space-y-3">
+            {ispCourses.map(course => (
+              <div
+                key={course.id}
+                className="block panel opacity-40 cursor-not-allowed select-none"
+                aria-disabled="true"
+                role="article"
+              >
+                <div className="flex items-start gap-4">
+                  <div className="w-10 h-10 shrink-0 flex items-center justify-center rounded-full border border-white/10 text-slate-500 text-lg">
+                    🔒
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-baseline gap-2 flex-wrap">
+                      <span className="font-mono text-xs text-slate-500">{course.id}</span>
+                      <h3 className="text-base font-semibold text-slate-400 truncate">
+                        {course.title}
+                      </h3>
+                    </div>
+                    <p className="text-sm text-slate-500 mt-0.5 line-clamp-2">
+                      {course.description?.replace(/^MIGRATED TO FUTURE ISP COURSE[^.]*\. /, '')}
+                    </p>
+                  </div>
+                  <span className="shrink-0 text-xs font-semibold px-3 py-1 rounded-full border self-center border-slate-600/40 text-slate-500 bg-slate-800/20">
+                    ISP Course
+                  </span>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
 // ── Splash ──────────────────────────────────────────────────────────────────
-export default function Splash() {
+// section prop: 'osp' | 'isp'
+// (cert section handled separately by CertTrackChooser)
+export default function Splash({ section = 'osp' }) {
   const { getTopicProgress } = useAllProgress();
 
-  // Defensive: guard against undefined imports or data shape mismatches
   const coursesArray = courses || [];
-  const tracksArray = certTracks || [];
 
-  const generalCourses = coursesArray.filter(c => c?.section === 'general');
-  const certCourses    = coursesArray.filter(c => c?.section === 'cert');
+  // OSP section: show general topics (section: 'general') + C05 final exam
+  const ospCourses = coursesArray.filter(
+    c => c?.section === 'general' || c?.id === 'C05'
+  );
 
+  // ISP section: show isp-tagged courses (C01/C02/C03 migrated placeholders)
+  const ispCourses = coursesArray.filter(c => c?.section === 'isp');
+
+  if (section === 'isp') {
+    return (
+      <div className="space-y-6">
+        {/* Back breadcrumb */}
+        <div className="flex items-center gap-2">
+          <Link to="/" className="text-sm text-slate-400 hover:text-amber-200 transition">
+            ← All Sections
+          </Link>
+        </div>
+        <ISPComingSoon ispCourses={ispCourses} />
+      </div>
+    );
+  }
+
+  // Default: OSP section
   return (
-    <div className="space-y-12">
-      {/* ── Section 1: General Learning Topics ─────────────────────── */}
-      <section aria-labelledby="general-section-heading">
+    <div className="space-y-8">
+      {/* Back breadcrumb */}
+      <div className="flex items-center gap-2">
+        <Link to="/" className="text-sm text-slate-400 hover:text-amber-200 transition">
+          ← All Sections
+        </Link>
+      </div>
+
+      <div>
+        <h1 className="text-3xl font-bold mb-1">OSP Course</h1>
+        <p className="text-slate-400 text-sm">
+          Outside Plant engineering — from fundamentals to construction, testing, and program compliance.
+          Follow the teaching order: start at T01 and work through to T20.
+        </p>
+      </div>
+
+      {/* OSP general topics */}
+      <section aria-label="OSP course topics">
         <SectionHeader
-          label="General Learning Topics"
-          count={generalCourses.length}
-          description="Build OSP knowledge from the ground up — no prior engineering background required. Start at T01 and follow the learning path."
+          label="Course Topics"
+          count={ospCourses.length}
+          description="No prior engineering background required. Every term is defined before it's used."
         />
         <div className="space-y-3">
-          {(generalCourses || []).map(course => (
+          {ospCourses.map(course => (
             <CourseTile
               key={course?.id}
               course={course}
               progressPct={getTopicProgress(course?.id, course?.lesson_count || 0)}
             />
           ))}
-        </div>
-      </section>
-
-      {/* ── Section 2: Certification Prep ──────────────────────────── */}
-      <section aria-labelledby="cert-section-heading">
-        <div className="border-t border-white/10 pt-10">
-          <div className="mb-2">
-            <span className="text-xs font-bold uppercase tracking-widest px-2 py-1 rounded bg-purple-800/30 text-purple-300 border border-purple-500/30">
-              Advanced — Certification Prep
-            </span>
-          </div>
-          <SectionHeader
-            label="Certification Prep"
-            count={tracksArray.length}
-            description="Dedicated cert-track courses with practice exams. Recommended after completing the General Learning Topics."
-          />
-
-          {/* Cert tracks */}
-          <div className="space-y-3">
-            {tracksArray.map(track => (
-              <CertTile
-                key={track?.id || 'unknown'}
-                track={track}
-                progressPct={getTopicProgress(track?.id, track?.lesson_count || 0)}
-              />
-            ))}
-          </div>
-
-          {/* Cert courses (C01-C03 are also courses with lesson content) */}
-          {(certCourses?.length || 0) > 0 && (
-            <div className="mt-4 space-y-3">
-              {(certCourses || []).map(course => (
-                <CourseTile
-                  key={course?.id}
-                  course={course}
-                  progressPct={getTopicProgress(course?.id, course?.lesson_count || 0)}
-                />
-              ))}
-            </div>
-          )}
         </div>
       </section>
     </div>

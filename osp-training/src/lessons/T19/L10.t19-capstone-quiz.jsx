@@ -85,6 +85,13 @@ export const meta = {
     { term: 'demarc', source_lesson_id: 'T19.L09' },
     { term: 'drop fiber', source_lesson_id: 'T19.L09' },
   ],
+  learning_objectives: [
+    'Identify the primary functional zones of a CO/hut/headend (MDF, IDF, equipment room, main entrance facility) and locate OSP fiber termination points',
+    'Describe how OLT/CMTS hardware processes upstream and downstream signals in GPON and DOCSIS systems, including port density implications for fiber count',
+    'Evaluate –48VDC power-plant design (rectifier, battery strings, distribution bus) and generator backup (ATS transfer time, runtime, maintenance windows) to ensure continuity',
+    'Specify HVAC/fire-suppression architecture (CRAC, clean-agent systems, thermal envelopes per ASHRAE) and headend-to-OSP grounding tie-in (primary protector, TMGB)',
+    'Design patch-panel and LIU layouts for OSP↔ISP handoff, distinguishing interconnect (permanent) from cross-connect (semi-permanent) and selecting appropriate fiber-delivery form factors',
+  ],
   estimated_minutes: 30,
 };
 

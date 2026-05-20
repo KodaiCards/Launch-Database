@@ -20,13 +20,15 @@ import {
 } from 'react-router-dom';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 
-import ErrorBoundary from './components/ErrorBoundary.jsx';
-import Splash      from './pages/Splash.jsx';
-import CourseView  from './pages/CourseView.jsx';
-import LessonRouter from './pages/LessonRouter.jsx';
-import FieldTools  from './pages/FieldTools.jsx';
-import CertTrack   from './pages/CertTrack.jsx';
-import NotFound    from './pages/NotFound.jsx';
+import ErrorBoundary    from './components/ErrorBoundary.jsx';
+import ProductChooser   from './pages/ProductChooser.jsx';
+import Splash           from './pages/Splash.jsx';
+import CourseView       from './pages/CourseView.jsx';
+import LessonRouter     from './pages/LessonRouter.jsx';
+import FieldTools       from './pages/FieldTools.jsx';
+import CertTrack        from './pages/CertTrack.jsx';
+import CertTrackChooser from './pages/CertTrackChooser.jsx';
+import NotFound         from './pages/NotFound.jsx';
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -41,7 +43,7 @@ function AppLayout() {
   const location = useLocation();
 
   const navLinks = [
-    { to: '/', exact: true, label: 'All Courses' },
+    { to: '/', exact: true, label: 'Courses' },
     { to: '/tools', label: 'Field Tools' },
   ];
 
@@ -54,7 +56,7 @@ function AppLayout() {
               Launch Fiber Services · OSP Training
             </div>
             <Link to="/" className="text-lg font-semibold hover:text-amber-200 transition">
-              BICSI OSP · RCDD · FOA CFOS
+              OSP · ISP · Certification Prep
             </Link>
           </div>
 
@@ -82,11 +84,24 @@ function AppLayout() {
 
       <main className="flex-1 max-w-5xl mx-auto w-full px-6 py-8">
         <Routes>
-          <Route path="/" element={<Splash />} />
-          <Route path="/tools" element={<FieldTools />} />
-          <Route path="/cert/:certId" element={<CertTrack />} />
+          {/* Top-level chooser */}
+          <Route path="/" element={<ProductChooser />} />
+
+          {/* Section-scoped topic lists */}
+          <Route path="/osp"  element={<Splash section="osp" />} />
+          <Route path="/isp"  element={<Splash section="isp" />} />
+          <Route path="/cert" element={<CertTrackChooser />} />
+
+          {/* Course + lesson routes (shared across sections) */}
           <Route path="/course/:courseId" element={<CourseView />} />
           <Route path="/course/:courseId/lesson/:lessonOrder" element={<LessonRouter />} />
+
+          {/* Individual cert track landing */}
+          <Route path="/cert/:certId" element={<CertTrack />} />
+
+          {/* Field tools */}
+          <Route path="/tools" element={<FieldTools />} />
+
           <Route path="*" element={<NotFound />} />
         </Routes>
       </main>

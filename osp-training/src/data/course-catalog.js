@@ -274,11 +274,11 @@ export const courses = [
     description:
       'RUS borrower programs (1737, 1738, 1740E), engineering standards, form 290 design certification, USOA accounting, federal permitting integration, RUS project lifecycle vs. commercial projects, federal compliance call-order flowchart.',
   },
-  // ── Teaching position 21 ─────────────────────────────────────────────────
+  // ── Teaching position 21 — CERT PREP ─────────────────────────────────────
   {
     id: 'T21',
     title: 'FOA CFOS/O Cert Prep',
-    section: 'general',
+    section: 'cert',            // cert-prep track — NOT general OSP
     available: true,
     estimated_minutes: 250,   // 10 lessons × ~25 min avg
     lesson_count: 10,
@@ -286,11 +286,11 @@ export const courses = [
     description:
       'FOA Certified Fiber Optic Specialist—Outside Plant exam preparation. Comprehensive review of all OSP fundamentals + field practices. Requires 2 years field experience (advisory only) + CFOT cert.',
   },
-  // ── Teaching position 22 ─────────────────────────────────────────────────
+  // ── Teaching position 22 — CERT PREP ─────────────────────────────────────
   {
     id: 'T22',
     title: 'FOA CFOT Cert Prep',
-    section: 'general',
+    section: 'cert',            // cert-prep track — NOT general OSP
     available: true,
     estimated_minutes: 215,   // 9 lessons × ~24 min avg
     lesson_count: 9,
@@ -301,13 +301,12 @@ export const courses = [
   // ── Cert-prep topics C01–C03 — MIGRATED TO FUTURE ISP COURSE ────────────
   // Per Carter 2026-05-16: C01/C02/C03 are NOT authored in OSP-RW.
   // They will be authored when the ISP course is scoped and initiated.
-  // Retained as catalog entries (section: 'cert') so routing doesn't break,
-  // but lesson_count = 0 and a 'migrated' flag is set for the splash page
-  // to render a "Coming in ISP Course" CTA instead of "Start" / "Continue".
+  // Retained as catalog entries (section: 'isp') — displayed in the ISP
+  // placeholder section, NOT in cert prep.
   {
     id: 'C01',
     title: 'Networking Blueprints (RCDD prep)',
-    section: 'cert',
+    section: 'isp',
     available: false,
     estimated_minutes: 200,
     lesson_count: 0,           // NOT authored in OSP-RW — migrated to future ISP course
@@ -319,7 +318,7 @@ export const courses = [
   {
     id: 'C02',
     title: 'RCDD Core',
-    section: 'cert',
+    section: 'isp',
     available: false,
     estimated_minutes: 200,
     lesson_count: 0,           // NOT authored in OSP-RW — migrated to future ISP course
@@ -331,7 +330,7 @@ export const courses = [
   {
     id: 'C03',
     title: 'Data Center Standards',
-    section: 'cert',
+    section: 'isp',
     available: false,
     estimated_minutes: 200,
     lesson_count: 0,           // NOT authored in OSP-RW — migrated to future ISP course

@@ -54,6 +54,13 @@ export const meta = {
     { term: 'Environmental Impact Memorandum (EIM)', source_lesson_id: 'T09.L11' },
     { term: 'RUS CE checklist', source_lesson_id: 'T09.L11' },
   ],
+  learning_objectives: [
+    'Determine which environmental and cultural-resource reviews (NEPA, NHPA §106, ESA, state permits) apply to a given OSP project based on federal nexus and geography',
+    'Apply the NEPA categorical-exclusion (CE) process to qualify a routine fiber build, or identify extraordinary circumstances that require an EA or EIS',
+    'Coordinate NHPA §106 historic-properties review with state SHPOs and tribal THPOs to resolve conflicts and generate required documentation',
+    'Complete endangered-species screening via IPaC and USACE wetlands review under NWP 57 to ensure project compliance',
+    'Sequence permits across federal agencies (FCC, USACE, USFWS), state DOTs, local AHJs, and tribal governments to build a realistic permit-critical-path timeline',
+  ],
   estimated_minutes: 30,
 };
 

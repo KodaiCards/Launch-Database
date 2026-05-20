@@ -68,6 +68,12 @@ export const meta = {
     { term: 'tolerance band', source_lesson_id: 'T03.L11' },
     { term: 'aging factor', source_lesson_id: 'T03.L11' },
   ],
+  learning_objectives: [
+    'Evaluate cable type selection (ADSS, lashed, armored) for specific OSP deployment scenarios considering joint-use pole constraints and environmental hazards',
+    'Apply knowledge of cable construction, fiber grades, and armor types to route-specification decisions across aerial, underground, and indoor segments',
+    'Integrate NESC loading district requirements, span length limitations, and penetration-protection standards to make compliant cable choices',
+    'Synthesize cost, installation complexity, and regulatory constraints to justify cable selections in a multi-segment design',
+  ],
   estimated_minutes: 35,
 };
 

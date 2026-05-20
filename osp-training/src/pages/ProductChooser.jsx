@@ -48,7 +48,7 @@ export default function ProductChooser() {
           title="OSP Course"
           description="Build comprehensive Outside Plant engineering knowledge from fundamentals through construction, testing, and final certification."
           cta="Start Learning"
-          to="/training/osp"
+          to="/osp"
         />
 
         <ProductTile
@@ -56,15 +56,15 @@ export default function ProductChooser() {
           title="Inside Plant (ISP) Course"
           description="Deep Inside Plant training with CO/headend architecture, structured cabling, data center standards, and RCDD certification prep."
           cta="Learn More"
-          disabled
+          to="/isp"
         />
 
         <ProductTile
           icon="🎓"
           title="Certification Tracks"
-          description="Accelerated specialized courses: BICSI OSP Designer, FOA CFOS-O, BICSI RCDD. For those pursuing formal credentials."
+          description="Accelerated specialized courses: BICSI OSP Designer, FOA CFOS-O. For those pursuing formal credentials."
           cta="Browse Exams"
-          to="/training/cert"
+          to="/cert"
         />
       </div>
     </div>

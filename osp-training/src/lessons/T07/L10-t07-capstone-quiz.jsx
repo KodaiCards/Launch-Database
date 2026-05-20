@@ -43,6 +43,13 @@ export const meta = {
     { term: 'catch rate', source_lesson_id: 'T07.L09' },
     { term: 'staking re-do trigger', source_lesson_id: 'T07.L09' },
   ],
+  learning_objectives: [
+    'Interpret plan-and-profile drawings using stationing, elevations, and attachment-height callouts to extract field-staking data',
+    'Document staking observations on RUS Form 740 and in the staking packet with SCID codes, GPS coordinates, pole photos, and measurements',
+    'Analyze existing pole attachments and identify make-ready flagging needs (force pole, transfer, replacement) with supporting photographic evidence',
+    'Use Katapult and GPS tools to capture accurate field-to-design correlation, including bore-pit locations and underground-crossing markers',
+    'Evaluate staking QA results and recommend re-stakes when catch-rate violations or design inconsistencies appear in the field data',
+  ],
   estimated_minutes: 30,
 };
 

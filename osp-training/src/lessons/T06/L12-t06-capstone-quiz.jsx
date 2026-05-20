@@ -55,6 +55,13 @@ export const meta = {
     { term: 'access spacing', source_lesson_id: 'T06.L11' },
     { term: 'fill calc verification', source_lesson_id: 'T06.L11' },
   ],
+  learning_objectives: [
+    'Choose the correct installation method (HDD, open-cut, plowing) for a given underground segment based on crossing type, soil condition, and cost',
+    'Apply RUS burial-depth rules and AHJ overrides to ensure compliance for cable placement under roads, railways, and water crossings',
+    'Calculate conduit fill percentage and pull tension to verify a cable pull is feasible without exceeding equipment limits or damage thresholds',
+    'Design manhole and handhole spacing, access requirements, and slack-loop storage to facilitate future cable installation and maintenance',
+    'Integrate NESC §34 and §35 separation rules with RUS 1751F-643 innerduct qualification to ensure supply-communication isolation and product compliance',
+  ],
   estimated_minutes: 30,
 };
 

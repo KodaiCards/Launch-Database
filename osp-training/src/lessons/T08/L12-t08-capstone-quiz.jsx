@@ -43,6 +43,13 @@ export const meta = {
     { term: 'critical path', source_lesson_id: 'T08.L11' },
     { term: 'make-ready float', source_lesson_id: 'T08.L11' },
   ],
+  learning_objectives: [
+    'Distinguish between simple attachments (no existing-cable interference) and complex attachments (requiring transfers, reframes, or pole replacements)',
+    'Calculate make-ready estimate costs including labor, materials, contingency, and per-pole rental fees under FCC tariff methodology',
+    'Apply the 15-day OTMR clock and self-help remedy rules to manage timeline risk when multi-party make-ready dependencies arise',
+    'Coordinate attachment applications with local AHJ permitting, pole-owner tie-in notices, and as-built-notification procedures',
+    'Evaluate critical-path timing and make-ready float to sequence complex make-ready work across multiple poles and utility dependencies',
+  ],
   estimated_minutes: 30,
 };
 

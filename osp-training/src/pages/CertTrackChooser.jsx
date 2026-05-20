@@ -1,68 +1,261 @@
 /**
  * CertTrackChooser — Certification track selection (v3).
  *
- * Lists available cert tracks (OSP Designer, CFOS-O, RCDD).
- * Each links to /training/cert/:slug for the full track.
+ * Lists available cert tracks (OSP Designer, CFOT, CFOS/O).
+ * Each links to /cert/:certId for the full track mock exam.
+ *
+ * Per directive 36 (2026-05-18): cert tracks are separate products from
+ * the OSP / ISP courses. RCDD migrated to future ISP course.
+ *
+ * Also shows T21/T22 cert-prep courses from the catalog (course-based cert prep
+ * with lesson content) distinct from the exam-only certTracks.
  */
 
 import React from 'react';
 import { Link } from 'react-router-dom';
-import { certTracks } from '../data/course-catalog.js';
+import { certTracks, courses } from '../data/course-catalog.js';
+import { useAllProgress } from '../hooks/useProgress.js';
 
-function CertTrackTile({ track }) {
+// ── Progress ring ────────────────────────────────────────────────────────────
+function ProgressRing({ pct }) {
+  const r = 16;
+  const circ = 2 * Math.PI * r;
+  const dash = (pct / 100) * circ;
+  return (
+    <svg width="40" height="40" className="shrink-0" aria-hidden="true">
+      <circle cx="20" cy="20" r={r} fill="none" stroke="white" strokeOpacity="0.1" strokeWidth="3" />
+      <circle
+        cx="20" cy="20" r={r}
+        fill="none"
+        stroke={pct === 100 ? '#4ade80' : '#a78bfa'}
+        strokeWidth="3"
+        strokeDasharray={`${dash} ${circ}`}
+        strokeLinecap="round"
+        transform="rotate(-90 20 20)"
+        style={{ transition: 'stroke-dasharray 0.4s ease' }}
+      />
+      <text x="20" y="24" textAnchor="middle" fontSize="9" fill="white" fillOpacity="0.7">
+        {pct}%
+      </text>
+    </svg>
+  );
+}
+
+function ctaLabel(pct) {
+  if (pct === 0) return 'Start';
+  if (pct === 100) return 'Completed';
+  return 'Continue';
+}
+
+// ── Mock-exam track tile ─────────────────────────────────────────────────────
+function CertTrackTile({ track, progressPct }) {
+  const spec = track.mock_exam_spec || {};
+  const cta = ctaLabel(progressPct);
+  const completed = progressPct === 100;
+
   return (
     <Link
-      to={`/training/cert/${track.slug}`}
-      className="block panel hover:ring-1 hover:ring-amber-400/40 transition group"
+      to={`/cert/${track.id}`}
+      className={[
+        'block panel hover:ring-1 hover:ring-purple-400/40 transition group',
+        completed ? 'border-green-500/30' : 'border-purple-500/20',
+      ].join(' ')}
     >
-      <div className="flex items-start justify-between gap-4">
-        <div className="flex-1">
-          <div className="flex items-baseline gap-2">
-            <h3 className="text-lg font-semibold">{track.title}</h3>
-            <span className="text-xs text-slate-500 font-mono">{track.id}</span>
+      <div className="flex items-start gap-4">
+        <ProgressRing pct={progressPct} />
+        <div className="flex-1 min-w-0">
+          <div className="flex items-baseline gap-2 flex-wrap">
+            <span className="font-mono text-xs text-purple-400">{track.id}</span>
+            <h3 className="text-base font-semibold text-slate-100 truncate group-hover:text-purple-200 transition">
+              {track.title}
+            </h3>
           </div>
-          <p className="text-sm text-slate-400 mt-1 line-clamp-2">{track.description}</p>
-          <div className="flex items-center gap-3 mt-3 text-xs text-slate-500">
-            {track.exam_questions && (
+          <div className="flex items-center gap-3 mt-2 text-xs text-slate-400 flex-wrap">
+            {spec.items > 0 && <span>{spec.items}-question mock exam</span>}
+            {spec.items > 0 && spec.time_minutes > 0 && <span>&middot;</span>}
+            {spec.time_minutes > 0 && <span>{spec.time_minutes} min</span>}
+            {spec.pass_threshold > 0 && (
               <>
-                <span>{track.exam_questions} questions</span>
                 <span>&middot;</span>
+                <span>Pass: {Math.round(spec.pass_threshold * 100)}%</span>
               </>
             )}
-            <span>Mock exam included</span>
+            {track.required_topics?.length > 0 && (
+              <>
+                <span>&middot;</span>
+                <span>Requires: {track.required_topics.join(', ')}</span>
+              </>
+            )}
           </div>
         </div>
-        <button className="shrink-0 text-amber-300 group-hover:text-amber-200 transition font-semibold">
-          Start →
-        </button>
+        <span
+          className={[
+            'shrink-0 text-xs font-semibold px-3 py-1 rounded-full border self-center',
+            completed
+              ? 'border-green-400/40 text-green-300 bg-green-800/20'
+              : 'border-purple-400/40 text-purple-300 bg-purple-800/20',
+          ].join(' ')}
+        >
+          {cta}
+        </span>
       </div>
     </Link>
   );
 }
 
+// ── Course-based cert prep tile (T21, T22) ──────────────────────────────────
+function CertCourseTile({ course, progressPct }) {
+  const cta = ctaLabel(progressPct);
+  const completed = progressPct === 100;
+
+  return (
+    <Link
+      to={`/course/${course.id}`}
+      className={[
+        'block panel hover:ring-1 hover:ring-purple-400/40 transition group',
+        completed ? 'border-green-500/30' : 'border-purple-500/20',
+      ].join(' ')}
+    >
+      <div className="flex items-start gap-4">
+        <ProgressRing pct={progressPct} />
+        <div className="flex-1 min-w-0">
+          <div className="flex items-baseline gap-2 flex-wrap">
+            <span className="font-mono text-xs text-purple-400">{course.id}</span>
+            <h3 className="text-base font-semibold text-slate-100 truncate group-hover:text-purple-200 transition">
+              {course.title}
+            </h3>
+          </div>
+          <p className="text-sm text-slate-400 mt-0.5 line-clamp-2">{course.description}</p>
+          <div className="flex items-center gap-3 mt-2 text-xs text-slate-400">
+            <span>{course.lesson_count} lessons</span>
+            <span>&middot;</span>
+            <span>{Math.round(course.estimated_minutes / 60 * 10) / 10} hr</span>
+          </div>
+        </div>
+        <span
+          className={[
+            'shrink-0 text-xs font-semibold px-3 py-1 rounded-full border self-center',
+            completed
+              ? 'border-green-400/40 text-green-300 bg-green-800/20'
+              : 'border-purple-400/40 text-purple-300 bg-purple-800/20',
+          ].join(' ')}
+        >
+          {cta}
+        </span>
+      </div>
+    </Link>
+  );
+}
+
+// ── RCDD placeholder ─────────────────────────────────────────────────────────
+function RCDDPlaceholder() {
+  return (
+    <div
+      className="block panel opacity-50 cursor-not-allowed select-none border-slate-700/30"
+      aria-disabled="true"
+      role="article"
+    >
+      <div className="flex items-start gap-4">
+        <div className="w-10 h-10 shrink-0 flex items-center justify-center rounded-full border border-white/10 text-slate-500 text-lg">
+          🔒
+        </div>
+        <div className="flex-1 min-w-0">
+          <div className="flex items-baseline gap-2 flex-wrap">
+            <span className="font-mono text-xs text-slate-500">C04-RCDD</span>
+            <h3 className="text-base font-semibold text-slate-400 truncate">BICSI RCDD Certification</h3>
+          </div>
+          <p className="text-sm text-slate-500 mt-0.5">
+            Registered Communications Distribution Designer — covers the full TDMM scope
+            (inside plant, pathways, spaces, administration, grounding). Part of the future ISP course.
+          </p>
+        </div>
+        <span className="shrink-0 text-xs font-semibold px-3 py-1 rounded-full border self-center border-slate-600/40 text-slate-500 bg-slate-800/20">
+          Coming in ISP Course
+        </span>
+      </div>
+    </div>
+  );
+}
+
 export default function CertTrackChooser() {
-  const available = certTracks.filter(t => t.available !== false);
+  const { getTopicProgress } = useAllProgress();
+
+  // Exam-only tracks (OSP Designer, CFOT, CFOS/O)
+  const availableTracks = (certTracks || []).filter(t => t.id !== 'C04-RCDD');
+
+  // Course-based cert prep (T21 CFOS/O, T22 CFOT)
+  const certCourses = (courses || []).filter(c => c?.section === 'cert');
+
+  // C04 BICSI mock exam (lesson-based)
+  const c04 = (courses || []).find(c => c?.id === 'C04');
 
   return (
     <div className="space-y-8">
-      <div className="flex items-center gap-2 mb-4">
-        <Link to="/training/" className="text-sm text-slate-400 hover:text-amber-200 transition">
-          ← All Products
+      {/* Back breadcrumb */}
+      <div className="flex items-center gap-2">
+        <Link to="/" className="text-sm text-slate-400 hover:text-amber-200 transition">
+          ← All Sections
         </Link>
       </div>
 
       <div>
-        <h1 className="text-3xl font-bold mb-2">Certification Tracks</h1>
-        <p className="text-slate-400">
-          Specialized courses for formal certifications. Complete General Learning Topics first.
+        <h1 className="text-3xl font-bold mb-1">Certification Tracks</h1>
+        <p className="text-slate-400 text-sm">
+          Accelerated cert-prep courses and mock exams. Recommended after completing the OSP General Course.
+          RCDD certification prep is part of the future ISP course.
         </p>
       </div>
 
-      <div className="space-y-3">
-        {available.map(track => (
-          <CertTrackTile key={track.id} track={track} />
-        ))}
-      </div>
+      {/* Cert-prep lesson courses (T21/T22 + C04) */}
+      {(certCourses.length > 0 || c04) && (
+        <section aria-label="Cert prep courses">
+          <div className="text-xs uppercase tracking-widest text-slate-400 mb-3">
+            Cert Prep Courses — with Lessons
+          </div>
+          <div className="space-y-3">
+            {certCourses.map(course => (
+              <CertCourseTile
+                key={course.id}
+                course={course}
+                progressPct={getTopicProgress(course.id, course.lesson_count || 0)}
+              />
+            ))}
+            {c04 && (
+              <CertCourseTile
+                key="C04"
+                course={c04}
+                progressPct={getTopicProgress('C04', c04.lesson_count || 0)}
+              />
+            )}
+          </div>
+        </section>
+      )}
+
+      {/* Mock exam tracks */}
+      {availableTracks.length > 0 && (
+        <section aria-label="Mock exam tracks">
+          <div className="text-xs uppercase tracking-widest text-slate-400 mb-3">
+            Mock Exams
+          </div>
+          <div className="space-y-3">
+            {availableTracks.map(track => (
+              <CertTrackTile
+                key={track.id}
+                track={track}
+                progressPct={getTopicProgress(track.id, 0)}
+              />
+            ))}
+          </div>
+        </section>
+      )}
+
+      {/* RCDD coming-soon placeholder */}
+      <section aria-label="Future certifications">
+        <div className="text-xs uppercase tracking-widest text-slate-400 mb-3">
+          Future — ISP Course
+        </div>
+        <RCDDPlaceholder />
+      </section>
     </div>
   );
 }
