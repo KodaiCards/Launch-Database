@@ -3,7 +3,6 @@
 
 import React from 'react';
 import LessonLayout from '../../components/LessonLayout.jsx';
-import AnnotatedDiagram from '../../components/primitives/AnnotatedDiagram.jsx';
 import WorkedExample from '../../components/primitives/WorkedExample.jsx';
 import Quiz from '../../components/primitives/Quiz.jsx';
 

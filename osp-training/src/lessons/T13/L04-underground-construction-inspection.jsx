@@ -13,7 +13,7 @@ export const meta = {
   id: 'T13.L04',
   course_id: 'T13',
   title: 'Underground Construction Inspection',
-  order: 6,
+  order: 4,
   lesson_type: 'technical',
   prerequisites: ['T13.L03', 'T18.L03'],
   learning_objectives: [

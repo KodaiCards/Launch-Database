@@ -5,7 +5,6 @@
 import React from 'react';
 import LessonLayout from '../../components/LessonLayout.jsx';
 import WorkedExample from '../../components/primitives/WorkedExample.jsx';
-import AnnotatedDiagram from '../../components/primitives/AnnotatedDiagram.jsx';
 import Quiz from '../../components/primitives/Quiz.jsx';
 import Flashcard from '../../components/Flashcard.jsx';
 

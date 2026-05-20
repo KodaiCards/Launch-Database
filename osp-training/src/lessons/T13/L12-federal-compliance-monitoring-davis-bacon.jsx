@@ -13,7 +13,7 @@ export const meta = {
   id: 'T13.L12',
   course_id: 'T13',
   title: 'Federal Compliance Monitoring on RUS-Financed Projects',
-  order: 3,
+  order: 12,
   lesson_type: 'standards',
   prerequisites: ['T13.L11'],
   learning_objectives: [

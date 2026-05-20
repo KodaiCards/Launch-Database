@@ -17,7 +17,7 @@ export const meta = {
   id: 'T13.L11',
   course_id: 'T13',
   title: 'Daily Inspection Records: RUS Form 565',
-  order: 2,
+  order: 11,
   lesson_type: 'standards',
   prerequisites: ['T13.L01'],
   learning_objectives: [

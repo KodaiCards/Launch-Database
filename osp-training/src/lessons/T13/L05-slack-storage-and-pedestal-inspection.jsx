@@ -10,7 +10,7 @@ export const meta = {
   id: 'T13.L05',
   course_id: 'T13',
   title: 'Slack Storage and Pedestal Inspection',
-  order: 7,
+  order: 5,
   lesson_type: 'technical',
   prerequisites: ['T13.L04'],
   learning_objectives: [

@@ -6,7 +6,6 @@ import React from 'react';
 import LessonLayout from '../../components/LessonLayout.jsx';
 import Quiz from '../../components/primitives/Quiz.jsx';
 import Flashcard from '../../components/Flashcard.jsx';
-import AnnotatedDiagram from '../../components/primitives/AnnotatedDiagram.jsx';
 
 export const meta = {
   id: 'T10.L11',

@@ -11,7 +11,7 @@ export const meta = {
   id: 'T13.L09',
   course_id: 'T13',
   title: 'Contractor Relations and Dispute Resolution',
-  order: 11,
+  order: 9,
   lesson_type: 'standards',
   prerequisites: ['T13.L08'],
   learning_objectives: [

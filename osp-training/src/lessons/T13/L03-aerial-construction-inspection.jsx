@@ -7,13 +7,12 @@ import LessonLayout from '../../components/LessonLayout.jsx';
 import Quiz from '../../components/primitives/Quiz.jsx';
 import Flashcard from '../../components/Flashcard.jsx';
 import BranchingScenario from '../../components/primitives/BranchingScenario.jsx';
-import AnnotatedDiagram from '../../components/primitives/AnnotatedDiagram.jsx';
 
 export const meta = {
   id: 'T13.L03',
   course_id: 'T13',
   title: 'Aerial Construction Inspection',
-  order: 5,
+  order: 3,
   lesson_type: 'technical',
   prerequisites: ['T13.L02', 'T18.L04'],
   learning_objectives: [
