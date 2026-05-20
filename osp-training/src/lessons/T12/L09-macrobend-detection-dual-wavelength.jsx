@@ -301,15 +301,7 @@ export default function T12L09_MacrobendDetection() {
       <section className="mt-8 p-5 border-l-4 border-blue-500 bg-slate-800/40 rounded">
         <h3 className="text-blue-300 text-lg font-semibold mb-3">Tying It Together</h3>
         <p className="text-slate-200 mb-3">
-          This lesson builds on:
-        </p>
-        <ul className="space-y-2 text-slate-300 text-sm list-disc ml-5">
-    <li><strong>T02.L04</strong> — Part of the broader OSP workflow.</li>
-    <li><strong>T02.L01</strong> — Part of the broader OSP workflow.</li>
-    <li><strong>T02.L01</strong> — Part of the broader OSP workflow.</li>
-        </ul>
-        <p className="text-slate-200 mt-3 text-sm italic">
-          Each step in the OSP process feeds into the next — understanding these connections strengthens your grasp of the whole system.
+          Macrobends are wavelength-sensitive loss mechanisms because light-bending behavior depends on the wavelength itself — explained in <strong>T02.L04 Wavelength Windows — 1310 nm, 1550 nm, and Beyond</strong>. Shorter wavelengths (1310 nm) are less sensitive to macrobends than longer wavelengths (1550 nm, 1625 nm) due to how light couples into and out of the bent fiber. From <strong>T02.L01 Fiber Types and Properties</strong>, you understand that fiber's geometry and refractive index profile determine its bending behavior — different fiber types (G.652.D vs. G.657.A2 bend-insensitive) exhibit macrobend sensitivity at different severity levels. Dual-wavelength OTDR testing exposes a macrobend that a 1310 nm test alone might miss: if 1550 nm shows loss at a location that 1310 nm does not, you have a macrobend signature. This lesson synthesizes fiber properties + wavelength-dependent physics + dual-measurement strategy into a single diagnostic technique.
         </p>
       </section>
     </LessonLayout>

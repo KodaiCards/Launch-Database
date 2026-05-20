@@ -119,6 +119,11 @@ export default function T11L09_SpliceCaseTypes() {
             deckId="T11-L09"
             cards={[
               {
+                id: 'T11-L09-fc-types',
+                front: 'What are the main categories of splice case types and what drives the selection?',
+                back: 'The four main types are: dome/ovoid closure (direct-buried, soil-pressure self-sealing), butt-splice/inline closure (aerial lashing), wall-mount/pedestal closure (building entry or vault-mounted), and rack-mount closure (inside data center or equipment room). Selection is driven by environment (aerial vs. buried vs. indoor), re-entry requirements, fiber count, and cable entry configuration.',
+              },
+              {
                 id: 'T11-L09-fc-dome',
                 front: 'What is a dome closure and where is it used?',
                 back: 'A round splice case where the dome lifts off the base; all cable entries are at the base. The dome self-seals under ground pressure. Preferred for direct-buried and vault/handhole applications. Per Telcordia GR-763-CORE [confirm edition], dome closures meet direct-buried environmental performance requirements.',

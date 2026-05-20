@@ -378,15 +378,7 @@ export default function T12L01_TierVsTier() {
       <section className="mt-8 p-5 border-l-4 border-blue-500 bg-slate-800/40 rounded">
         <h3 className="text-blue-300 text-lg font-semibold mb-3">Tying It Together</h3>
         <p className="text-slate-200 mb-3">
-          This lesson builds on:
-        </p>
-        <ul className="space-y-2 text-slate-300 text-sm list-disc ml-5">
-    <li><strong>T02.L02</strong> — Part of the broader OSP workflow.</li>
-    <li><strong>T02.L05</strong> — Part of the broader OSP workflow.</li>
-    <li><strong>T02.L05</strong> — Part of the broader OSP workflow.</li>
-        </ul>
-        <p className="text-slate-200 mt-3 text-sm italic">
-          Each step in the OSP process feeds into the next — understanding these connections strengthens your grasp of the whole system.
+          This lesson depends critically on three earlier topics. From <strong>T02.L02 Attenuation</strong>, you learned how light weakens traveling through fiber at different rates per kilometer depending on wavelength. This lesson applies that principle: OTDR uses Rayleigh backscatter (attenuation's cousin) to infer loss. From <strong>T02.L05 dB and dBm</strong>, you learned that dB measures a power ratio — the core unit both OLTS and OTDR use. From <strong>T11.L12 Insertion Loss and Return Loss</strong>, you learned that insertion loss (dB) is what OLTS directly measures at a splice or connector, versus OTDR's indirect backscatter-based estimate. The distinction between direct measurement (OLTS, dB of real transmitted power) and inference (OTDR, dB derived from backscatter) is the reason they give different numbers on the same cable — and why contracts specify OLTS as the acceptance tier.
         </p>
       </section>
     </LessonLayout>
