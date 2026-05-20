@@ -436,16 +436,44 @@ fetch('/api/auth/me', { credentials: 'include' })
             <select id="proj-contract" onchange="contractChanged()"><option value="">None / N/A</option></select>
           </div>
         </div>
-        <!-- Existing-project lookup: once a client is chosen, surface
-             matching leaf projects (with WO# inline). Picking one swaps
-             the modal into Edit mode for that project; leaving blank keeps
-             this as a fresh create. Helps the team avoid duplicating a
-             project that's already in the system. -->
-        <div class="form-row" id="proj-existing-wrap" style="display:none">
+        <!-- 4-tier cascade picker: Client -> Program -> SA -> Job.
+             Shown only in create mode (hidden in edit mode).
+             Resolves or creates a leaf project via POST /api/projects/resolve-or-create. -->
+        <div class="form-row" id="pp-cascade-wrap" style="display:none">
           <div class="form-group span2">
-            <label for="proj-existing">Existing Project for this Client <span style="font-weight:400;color:var(--text-muted)">(optional — pick to edit instead of creating new)</span></label>
-            <select id="proj-existing" onchange="existingProjectPicked(this.value)"><option value="">— Create new below —</option></select>
-            <span class="form-hint" id="proj-existing-hint">Showing existing leaf projects under this client — with WO# in label when applicable.</span>
+            <label style="font-weight:600;margin-bottom:6px;display:block">Resolve / Create Project</label>
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+              <div class="form-group" style="margin:0">
+                <label for="pp-client">Client</label>
+                <select id="pp-client" aria-label="Cascade: client" onchange="ppClientChanged()">
+                  <option value="">Select client</option>
+                </select>
+              </div>
+              <div class="form-group" style="margin:0">
+                <label for="pp-program">Program</label>
+                <select id="pp-program" aria-label="Cascade: program" disabled onchange="ppProgramChanged()">
+                  <option value="">Select program</option>
+                </select>
+              </div>
+              <div class="form-group" style="margin:0">
+                <label for="pp-service-area">Service Area</label>
+                <select id="pp-service-area" aria-label="Cascade: service area" disabled onchange="ppServiceAreaChanged()">
+                  <option value="">Select service area</option>
+                </select>
+              </div>
+              <div class="form-group" style="margin:0">
+                <label for="pp-job">Job Name</label>
+                <input type="text" id="pp-job" list="pp-job-list" aria-label="Cascade: job name" disabled placeholder="Type or pick existing..." oninput="ppJobInput()" autocomplete="off">
+                <datalist id="pp-job-list"></datalist>
+              </div>
+            </div>
+            <div id="pp-cascade-error" role="alert" style="display:none;color:var(--danger,#dc3545);font-size:12px;margin-top:6px"></div>
+            <div style="margin-top:10px;display:flex;gap:8px;align-items:center">
+              <button type="button" class="btn btn-primary btn-sm" id="pp-cascade-submit" onclick="ppCascadeSubmit()" disabled>
+                <i class="fa-solid fa-check"></i> Use this project
+              </button>
+              <span id="pp-cascade-loading" style="display:none;font-size:12px;color:var(--text-muted)"><i class="fa-solid fa-circle-notch fa-spin"></i> Loading...</span>
+            </div>
           </div>
         </div>
         <div class="form-row">
@@ -794,6 +822,7 @@ async function openProjectModal(){
   populateProjectFormDropdowns();
   document.getElementById('proj-amount-hint').textContent = 'Pick a job to see the right unit';
   document.getElementById('proj-amount-label').innerHTML = 'Footage / Hours <span style="font-weight:400;color:var(--text-muted)">(optional)</span>';
+  await loadExistingProjectsForClient();
   om('project-modal');
 }
 
@@ -1187,52 +1216,247 @@ async function clientChanged(preserveJobId){
   } catch (e) { /* non-fatal */ }
 }
 
-// Fetch leaf projects for the current client + (optional) project type
-// and stuff them into the pick-to-edit dropdown above. WO# is inline in
-// the label so the right project is one glance away. Empty list →
-// keep the wrapper hidden.
+// Show or hide the cascade picker depending on create-vs-edit mode.
+// In edit mode (proj-id has a value) the cascade is hidden. In create mode
+// it shows and pre-populates the client select from clientsCache.
 async function loadExistingProjectsForClient() {
-  const wrap = document.getElementById('proj-existing-wrap');
-  const sel = document.getElementById('proj-existing');
-  if (!wrap || !sel) return;
-  const clientId = document.getElementById('proj-client')?.value;
-  if (!clientId) {
-    wrap.style.display = 'none';
-    sel.innerHTML = '<option value="">— Create new below —</option>';
-    return;
-  }
-  let url = '/api/projects?client_id=' + encodeURIComponent(clientId) + '&status=active&leaves_only=true&limit=all';
-  const ptype = document.getElementById('proj-ptype')?.value;
-  if (ptype) url += '&project_type=' + encodeURIComponent(ptype);
-  try {
-    const rows = await api(url);
-    const leaves = (rows || []).filter(p => !p.is_rollup);
-    if (!leaves.length) {
-      wrap.style.display = 'none';
-      sel.innerHTML = '<option value="">— Create new below —</option>';
-      return;
-    }
-    leaves.sort((a, b) => (a.name || '').localeCompare(b.name || ''));
-    const opts = ['<option value="">— Create new below —</option>'];
-    for (const p of leaves) {
-      const wo = p.work_order_number ? ' — WO#' + esc(p.work_order_number) : '';
-      opts.push(`<option value="${esc(p.id)}">${esc(p.name)}${wo}</option>`);
-    }
-    sel.innerHTML = opts.join('');
-    wrap.style.display = '';
-  } catch (e) {
-    wrap.style.display = 'none';
+  const wrap = document.getElementById('pp-cascade-wrap');
+  if (!wrap) return;
+  const isNewProject = !document.getElementById('proj-id').value;
+  wrap.style.display = isNewProject ? '' : 'none';
+  if (!isNewProject) return;
+  ppPopulateClientSelect();
+  ppRestoreSession();
+}
+
+// existingProjectPicked kept for compat; the old flat dropdown is gone.
+function existingProjectPicked(id) {
+  if (id) editProject(id);
+}
+
+// ---------------------------------------------------------------------------
+// 4-tier cascade picker: Client -> Program -> SA -> Job
+// ---------------------------------------------------------------------------
+const PP_SK = {
+  client:  'lf_pp_cascade_client',
+  program: 'lf_pp_cascade_program',
+  sa:      'lf_pp_cascade_sa',
+  job:     'lf_pp_cascade_job',
+};
+
+function ppSave(key, val) { try { sessionStorage.setItem(PP_SK[key], val); } catch(_){} }
+function ppLoad(key) { try { return sessionStorage.getItem(PP_SK[key]) || ''; } catch(_){ return ''; } }
+
+function ppSetError(msg) {
+  const el = document.getElementById('pp-cascade-error');
+  if (!el) return;
+  el.textContent = msg || '';
+  el.style.display = msg ? '' : 'none';
+}
+
+function ppSetLoading(on) {
+  const btn = document.getElementById('pp-cascade-submit');
+  const spin = document.getElementById('pp-cascade-loading');
+  if (btn)  btn.disabled = on;
+  if (spin) spin.style.display = on ? '' : 'none';
+}
+
+function ppUpdateSubmitState() {
+  const btn = document.getElementById('pp-cascade-submit');
+  if (!btn) return;
+  const client = document.getElementById('pp-client')?.value;
+  const program = document.getElementById('pp-program')?.value;
+  const sa = document.getElementById('pp-service-area')?.value;
+  const job = (document.getElementById('pp-job')?.value || '').trim();
+  btn.disabled = !(client && program && sa && job);
+}
+
+function ppPopulateClientSelect() {
+  const sel = document.getElementById('pp-client');
+  if (!sel) return;
+  const clients = clientsCache || [];
+  sel.innerHTML = '<option value="">Select client</option>' +
+    clients.map(c => `<option value="${esc(c.id)}">${esc(c.name)}</option>`).join('');
+}
+
+function ppRestoreSession() {
+  const clientSel = document.getElementById('pp-client');
+  const savedClient = ppLoad('client');
+  if (clientSel && savedClient) {
+    clientSel.value = savedClient;
+    if (clientSel.value) ppClientChanged();
   }
 }
 
-// Picking an existing project pivots the modal into Edit mode: pre-fill
-// every field from that project's row. Leaving the dropdown empty is the
-// "create new" path — no behaviour change.
-function existingProjectPicked(id) {
-  if (!id) return;
-  const wrap = document.getElementById('proj-existing-wrap');
-  if (wrap) wrap.style.display = 'none';
-  editProject(id);
+async function ppClientChanged() {
+  const clientId = document.getElementById('pp-client')?.value || '';
+  ppSave('client', clientId);
+  ppSetError('');
+
+  const programSel = document.getElementById('pp-program');
+  const saSel = document.getElementById('pp-service-area');
+  const jobIn = document.getElementById('pp-job');
+  if (programSel) { programSel.innerHTML = '<option value="">Select program</option>'; programSel.disabled = true; }
+  if (saSel) { saSel.innerHTML = '<option value="">Select service area</option>'; saSel.disabled = true; }
+  if (jobIn) { jobIn.value = ''; jobIn.disabled = true; document.getElementById('pp-job-list').innerHTML = ''; }
+  ppUpdateSubmitState();
+
+  if (!clientId) return;
+
+  // Programs come from engineeringContractsCache (already loaded by ensureCachesLoaded).
+  const ecs = (window.engineeringContractsCache || []).filter(e => e.client_id === clientId);
+  const programs = [...new Set(ecs.map(e => e.program).filter(Boolean))].sort();
+  if (!programs.length) {
+    ppSetError('No engineering contracts found for this client.');
+    return;
+  }
+  const labels = { rus: 'RUS', bau: 'BAU', gfr: 'GFR', other: 'Other' };
+  if (programSel) {
+    programSel.innerHTML = '<option value="">Select program</option>' +
+      programs.map(p => `<option value="${esc(p)}">${esc(labels[p] || p)}</option>`).join('');
+    programSel.disabled = false;
+  }
+
+  const savedProgram = ppLoad('program');
+  if (savedProgram && programs.includes(savedProgram)) {
+    programSel.value = savedProgram;
+    if (programSel.value) await ppProgramChanged();
+  }
+}
+
+async function ppProgramChanged() {
+  const clientId = document.getElementById('pp-client')?.value || '';
+  const program = document.getElementById('pp-program')?.value || '';
+  ppSave('program', program);
+  ppSetError('');
+
+  const saSel = document.getElementById('pp-service-area');
+  const jobIn = document.getElementById('pp-job');
+  if (saSel) { saSel.innerHTML = '<option value="">Select service area</option>'; saSel.disabled = true; }
+  if (jobIn) { jobIn.value = ''; jobIn.disabled = true; document.getElementById('pp-job-list').innerHTML = ''; }
+  ppUpdateSubmitState();
+
+  if (!clientId || !program) return;
+
+  // Fetch service areas via the client-scoped endpoint (requireAuth, not admin-only).
+  ppSetLoading(true);
+  try {
+    const rows = await api('/api/clients/' + encodeURIComponent(clientId) + '/service-areas?program=' + encodeURIComponent(program));
+    ppSetLoading(false);
+    if (!rows || !rows.length) { ppSetError('No service areas configured for this contract.'); return; }
+    if (saSel) {
+      saSel.innerHTML = '<option value="">Select service area</option>' +
+        rows.map(sa => `<option value="${esc(sa.id)}">${esc(sa.name)}</option>`).join('');
+      saSel.disabled = false;
+    }
+    const savedSa = ppLoad('sa');
+    if (savedSa && rows.find(r => r.id === savedSa)) {
+      saSel.value = savedSa;
+      if (saSel.value) await ppServiceAreaChanged();
+    }
+  } catch (e) {
+    ppSetLoading(false);
+    ppSetError('Failed to load service areas: ' + e.message);
+  }
+}
+
+async function ppServiceAreaChanged() {
+  const clientId = document.getElementById('pp-client')?.value || '';
+  const saId = document.getElementById('pp-service-area')?.value || '';
+  ppSave('sa', saId);
+  ppSetError('');
+
+  const jobIn = document.getElementById('pp-job');
+  const jobList = document.getElementById('pp-job-list');
+  if (jobIn) { jobIn.value = ''; jobIn.disabled = true; }
+  if (jobList) jobList.innerHTML = '';
+  ppUpdateSubmitState();
+
+  if (!clientId || !saId) return;
+
+  // Find the SA folder project (is_rollup=true, rollup_key=saId) under this client.
+  // Then fetch leaves under that folder via parent_id.
+  try {
+    const allProjects = await api('/api/projects?client_id=' + encodeURIComponent(clientId) + '&status=active&limit=all');
+    const saFolder = (allProjects || []).find(p => p.is_rollup && p.rollup_key === saId);
+    if (saFolder) {
+      const leaves = await api('/api/projects?parent_id=' + encodeURIComponent(saFolder.id) + '&leaves_only=true&status=active&limit=all');
+      if (jobList && leaves && leaves.length) {
+        jobList.innerHTML = leaves
+          .sort((a, b) => (a.name || '').localeCompare(b.name || ''))
+          .map(p => `<option value="${esc(p.name)}">${esc(p.name)}</option>`)
+          .join('');
+      }
+    }
+    if (jobIn) {
+      jobIn.disabled = false;
+      const savedJob = ppLoad('job');
+      if (savedJob) { jobIn.value = savedJob; ppUpdateSubmitState(); }
+    }
+  } catch (e) {
+    ppSetError('Failed to load jobs: ' + e.message);
+  }
+}
+
+function ppJobInput() {
+  ppSave('job', (document.getElementById('pp-job')?.value || '').trim());
+  ppUpdateSubmitState();
+}
+
+async function ppCascadeSubmit() {
+  const clientId = document.getElementById('pp-client')?.value;
+  const program = document.getElementById('pp-program')?.value;
+  const saId = document.getElementById('pp-service-area')?.value;
+  const jobName = (document.getElementById('pp-job')?.value || '').trim();
+
+  ppSetError('');
+  if (!clientId || !program || !saId || !jobName) {
+    ppSetError('Complete all four fields before submitting.');
+    return;
+  }
+
+  ppSetLoading(true);
+  try {
+    const result = await api('/api/projects/resolve-or-create', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ client_id: clientId, program, service_area_id: saId, job_name: jobName }),
+    });
+    ppSetLoading(false);
+
+    // Link to pending potential permit if set.
+    if (window.pendingPotentialId && result.id) {
+      try {
+        await api('/api/potential-permits/' + window.pendingPotentialId + '/link-project', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ project_id: result.id }),
+        });
+      } catch (_) {}
+    }
+
+    cm('project-modal');
+
+    if (result.created) {
+      if (window.LFS && window.LFS.toast) window.LFS.toast('Created new job: ' + result.name, 'success');
+    } else {
+      if (window.LFS && window.LFS.toast) window.LFS.toast('Linked to existing: ' + result.name, 'info');
+    }
+
+    await Promise.all([
+      typeof loadProjects === 'function' ? loadProjects() : Promise.resolve(),
+      typeof loadPipeline === 'function' ? loadPipeline() : Promise.resolve(),
+    ]);
+  } catch (e) {
+    ppSetLoading(false);
+    if (e.status === 404) {
+      ppSetError('Service area folder not initialized. Ask an admin to set up the SA project structure first.');
+    } else if (e.status === 400) {
+      ppSetError(e.message || 'Validation error. Check all fields.');
+    } else {
+      ppSetError('Failed to resolve project: ' + e.message);
+    }
+  }
 }
 
 // When the job changes, swap the Footage/Hours label & hint
