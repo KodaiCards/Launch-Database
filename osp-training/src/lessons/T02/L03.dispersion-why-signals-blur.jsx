@@ -54,8 +54,7 @@ export default function T02L03_DispersionWhySignalsBlur() {
         </div>
 
         <p>
-          Attenuation (from T02.L02) tells you how much signal power you lose over distance.
-          But there's a second problem: even if enough light arrives at the far end, it might
+          Recall from T02.L02 that <strong>attenuation</strong> tells you how much signal power you lose over distance, measured in <strong>dB/km</strong>. But there's a second problem: even if enough light arrives at the far end, it might
           arrive <em>smeared out in time</em>. That smearing is called <strong>dispersion</strong>.
         </p>
         <p className="mt-2">
@@ -122,7 +121,16 @@ export default function T02L03_DispersionWhySignalsBlur() {
       <section data-tier="working">
         <h2>Chromatic Dispersion (CD) — the Main Mechanism in SMF</h2>
 
-        <p className="text-slate-400 text-sm mb-3 p-3 border-l-4 border-slate-500">
+        <div className="mt-3 p-4 border border-blue-400/30 bg-blue-400/5 rounded-lg text-sm">
+          <p className="font-semibold text-blue-300 mb-2">Refresher: Key prerequisites</p>
+          <ul className="text-slate-300/90 space-y-1 list-disc pl-5">
+            <li><strong>Core:</strong> The inner glass cylinder where light travels via total internal reflection (from T02.L01)</li>
+            <li><strong>Total internal reflection:</strong> The mirror effect that confines light in the core (from T02.L01)</li>
+            <li><strong>Single-Mode Fiber (SMF):</strong> The 9 µm core fiber used for long-distance OSP (from T01.L08)</li>
+          </ul>
+        </div>
+
+        <p className="text-slate-400 text-sm mb-3 p-3 border-l-4 border-slate-500 mt-4">
           <strong>Callback:</strong> From <strong>T02.L02 (Attenuation)</strong>, you learned that signal loses POWER over distance. Now: dispersion is the problem where signal arrives with enough POWER but blurred in time. These are TWO SEPARATE link-limiting mechanisms — you must design for both.
         </p>
 
@@ -277,7 +285,7 @@ Step 5: ΔT = 170 ps`}
 
         <h3 className="mt-5 font-semibold">Modal dispersion — the multimode version</h3>
         <p>
-          In multimode fiber (MMF), there's a completely different dispersion mechanism:
+          Recall from T01.L08 that <strong>multimode fiber (MMF)</strong> has a 50 or 62.5 µm core. In MMF, there's a completely different dispersion mechanism:
           <strong> modal dispersion</strong>. Different modes (light paths at different angles)
           travel different path lengths. The fundamental mode (straight through) arrives first;
           higher-order modes (bouncing at wider angles) arrive later. The result is the same

@@ -141,7 +141,17 @@ export default function T02L05_DecibelsWithoutAlgebraFear() {
       {/* ── WORKING ─────────────────────────────────────────────────────── */}
       <section data-tier="working">
         <h2>Converting Between mW and dBm — Step by Step</h2>
-        <p>
+
+        <div className="mt-3 p-4 border border-blue-400/30 bg-blue-400/5 rounded-lg text-sm">
+          <p className="font-semibold text-blue-300 mb-2">Refresher: Key prerequisites</p>
+          <ul className="text-slate-300/90 space-y-1 list-disc pl-5">
+            <li><strong>Attenuation:</strong> Signal loss as light travels through fiber, measured in dB/km (from T02.L02)</li>
+            <li><strong>dB/km and dB:</strong> How to measure loss; in this lesson we unpack the "dB" unit itself</li>
+            <li><strong>Single-Mode Fiber (SMF):</strong> The fiber type used for long-distance OSP links (from T01.L08)</li>
+          </ul>
+        </div>
+
+        <p className="mt-4">
           Here's the conversion worked from scratch, so you see every step. No skipping algebra.
         </p>
 

@@ -105,9 +105,18 @@ export default function T02L04_MacrobendAndMicrobend() {
       <section data-tier="working">
         <h2>Bend Radius Rules — Book vs. Field</h2>
 
-        <h3 className="mt-4 font-semibold">Macrobend loss — the physics</h3>
+        <div className="mt-3 p-4 border border-blue-400/30 bg-blue-400/5 rounded-lg text-sm">
+          <p className="font-semibold text-blue-300 mb-2">Refresher: Key prerequisites</p>
+          <ul className="text-slate-300/90 space-y-1 list-disc pl-5">
+            <li><strong>Total internal reflection (TIR):</strong> The mirror effect that confines light in the core when the fiber is straight (from T02.L01)</li>
+            <li><strong>Critical angle:</strong> The boundary angle at which TIR begins; bends change this geometry (from T02.L01)</li>
+            <li><strong>Attenuation (dB/km):</strong> Baseline signal loss per kilometer; bends ADD extra loss on top (from T02.L02)</li>
+          </ul>
+        </div>
+
+        <h3 className="mt-5 font-semibold">Macrobend loss — the physics</h3>
         <p>
-          When a fiber is bent, the optical path on the outside of the bend is longer than
+          When a fiber is bent, you're breaking the straight geometry that allows <strong>total internal reflection (TIR)</strong> to work perfectly. The optical path on the outside of the bend is longer than
           on the inside. The light traveling along the outside edge must effectively travel
           "faster" to keep up — and at tight enough bends, the phase velocity required exceeds
           what's physically possible for TIR-bound light, so energy radiates out. The tighter

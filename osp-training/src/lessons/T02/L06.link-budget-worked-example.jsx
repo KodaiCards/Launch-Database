@@ -97,6 +97,15 @@ export default function T02L06_LinkBudgetWorkedExample() {
           </tbody>
         </table>
 
+        <div className="mt-5 p-4 border border-blue-400/30 bg-blue-400/5 rounded-lg text-sm">
+          <p className="font-semibold text-blue-300 mb-2">Refresher: Key prerequisites</p>
+          <ul className="text-slate-300/90 space-y-1 list-disc pl-5">
+            <li><strong>dB, dBm:</strong> Decibels and absolute power levels — the math that makes losses add (from T02.L05)</li>
+            <li><strong>Attenuation (dB/km):</strong> Signal loss per kilometer of fiber (from T02.L02)</li>
+            <li><strong>SMF:</strong> Single-Mode Fiber used for long-distance FTTH feeder runs (from T01.L08)</li>
+          </ul>
+        </div>
+
         <h3 className="mt-5 font-semibold">The four cost categories</h3>
         <ul className="list-disc pl-5 space-y-2 mt-2">
           <li>

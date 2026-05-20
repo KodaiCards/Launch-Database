@@ -46,7 +46,7 @@ export default function T02L02_AttenuationThreeNumbers() {
       <section data-tier="foundations">
         <h2>In Plain English</h2>
         <p>
-          Every time light travels through fiber, some of it is lost — absorbed or scattered
+          Recall from T01.L03 that <strong>fiber</strong> is the optical glass strand at the center of a cable, where light actually travels. Every time light travels through fiber, some of it is lost — absorbed or scattered
           by the glass molecules. This loss is called <strong>attenuation</strong>. It's measured
           in <strong>dB/km</strong> (decibels per kilometer — a unit we'll fully unpack in
           T02.L05). For now, think of dB/km as a "loss rate": the higher the number, the more
@@ -63,6 +63,15 @@ export default function T02L02_AttenuationThreeNumbers() {
         <p className="text-sm text-slate-300/90">
           In T02.L01, you learned how light travels through a fiber <strong>core</strong> via <strong>total internal reflection</strong>, and how the <strong>cladding</strong> around it confines the light. This lesson explains what happens when some of that light is <em>not</em> confined — it gets absorbed or scattered, causing <strong>attenuation</strong>. The <strong>fiber</strong> types (like <strong>SMF</strong>, introduced in T01.L08) have different attenuation rates. Attenuation is the foundation of link-budget calculations you'll use in T02.L06.
         </p>
+
+        <div className="mt-4 p-4 border border-blue-400/30 bg-blue-400/5 rounded-lg text-sm">
+          <p className="font-semibold text-blue-300 mb-2">Refresher: Key prerequisites</p>
+          <ul className="text-slate-300/90 space-y-1 list-disc pl-5">
+            <li><strong>Total internal reflection:</strong> The mirror-like effect that confines light inside the fiber core (from T02.L01)</li>
+            <li><strong>Single-Mode Fiber (SMF):</strong> A 9 µm core fiber used for long-distance OSP (from T01.L08)</li>
+            <li><strong>Core and cladding:</strong> The two glass layers that create the TIR effect (from T02.L01)</li>
+          </ul>
+        </div>
 
         <h3 className="mt-5 font-semibold">Acronyms in this lesson</h3>
         <table className="w-full text-sm border border-white/10 rounded-lg mt-2">
