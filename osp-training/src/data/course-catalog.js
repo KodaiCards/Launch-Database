@@ -63,11 +63,11 @@ export const courses = [
     title: 'Fiber Physics',
     section: 'general',
     available: true,
-    estimated_minutes: 350,   // 13 lessons × ~27 min avg (T02.L07b long-haul awareness added 2026-05-16)
-    lesson_count: 13,
+    estimated_minutes: 324,   // 12 lessons × ~27 min avg
+    lesson_count: 12,
     prerequisites: ['T01'],
     description:
-      'Why light travels in glass, attenuation, dispersion, macrobend/microbend, decibels, link budgets, wavelength windows used in OSP, and long-haul awareness (coherent optics, DWDM, transponders).',
+      'Why light travels in glass, attenuation, dispersion, macrobend/microbend, decibels, link budgets, wavelength windows used in OSP.',
   },
   // ── Teaching position 4 ──────────────────────────────────────────────────
   {
@@ -75,11 +75,11 @@ export const courses = [
     title: 'Cable Selection & Materials',
     section: 'general',
     available: true,
-    estimated_minutes: 340,   // 13 lessons × ~26 min avg (T03.L05b OM-grade cable products added 2026-05-16)
-    lesson_count: 13,
+    estimated_minutes: 312,   // 12 lessons × ~26 min avg
+    lesson_count: 12,
     prerequisites: ['T01', 'T02'],
     description:
-      'Loose-tube vs. ribbon vs. rollable-ribbon, OSP-rated jackets, armor types, messenger options, RUS-listed materials, fiber-count selection, pulling tension and bend-radius specs, and multimode OM cable products at the OSP↔ISP handoff.',
+      'Loose-tube vs. ribbon, OSP-rated jackets, armor types, messenger options, RUS-listed materials, fiber-count selection, pulling tension and bend-radius specs.',
   },
   // ── Teaching position 5 ──────────────────────────────────────────────────
   {
@@ -220,11 +220,11 @@ export const courses = [
     title: 'Inspection & Quality Assurance',
     section: 'general',
     available: true,
-    estimated_minutes: 360,   // 12 lessons × ~30 min avg
-    lesson_count: 12,
+    estimated_minutes: 390,   // 13 lessons × ~30 min avg
+    lesson_count: 13,
     prerequisites: ['T01', 'T05', 'T10', 'T12', 'T18'],
     description:
-      'Walking constructed plant: visual vs. instrument inspection, pole-top inspection, attachment compliance, depth/cover verification, slack at pedestals, punch-list vs. kick-back triggers, RUS Form 219 close-out workflow.',
+      'Walking constructed plant: visual vs. instrument inspection, pole-top inspection, attachment compliance, depth/cover verification, slack at pedestals, punch-list vs. kick-back triggers, RUS Form 219 close-out workflow, field decision workflow.',
   },
   // ── Teaching position 17 ─────────────────────────────────────────────────
   {
@@ -268,11 +268,11 @@ export const courses = [
     title: 'RUS Compliance & Federal Programs',
     section: 'general',
     available: true,
-    estimated_minutes: 215,   // 9 lessons × ~24 min avg
-    lesson_count: 9,
+    estimated_minutes: 240,   // 10 lessons × ~24 min avg
+    lesson_count: 10,
     prerequisites: ['T01', 'T05', 'T06', 'T19'],
     description:
-      'RUS borrower programs (1737, 1738, 1740E), engineering standards, form 290 design certification, USOA accounting, federal permitting integration, RUS project lifecycle vs. commercial projects.',
+      'RUS borrower programs (1737, 1738, 1740E), engineering standards, form 290 design certification, USOA accounting, federal permitting integration, RUS project lifecycle vs. commercial projects, federal compliance call-order flowchart.',
   },
   // ── Teaching position 21 ─────────────────────────────────────────────────
   {
