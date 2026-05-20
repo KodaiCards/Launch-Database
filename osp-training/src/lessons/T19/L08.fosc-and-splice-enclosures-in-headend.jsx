@@ -72,7 +72,6 @@ export const meta = {
     { term: 'FDH', source_lesson_id: 'T01.L07' },
     { term: 'fusion splice', source_lesson_id: 'T11.L04' },
   ],
-  estimated_minutes: 20,
 };
 
 export default function T19L08_FoscAndSpliceEnclosuresInHeadend() {

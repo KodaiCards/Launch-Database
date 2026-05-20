@@ -73,7 +73,6 @@ export const meta = {
     { term: 'splice organizer', source_lesson_id: 'T19.L07' },
     { term: 'feeder cable', source_lesson_id: 'T03.L08' },
   ],
-  estimated_minutes: 25,
 };
 
 // ── Annotated Diagram data ─────────────────────────────────────────────────

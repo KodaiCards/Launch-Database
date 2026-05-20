@@ -60,7 +60,6 @@ export const meta = {
     { term: 'hazard recognition', source_lesson_id: 'T18.L01' },
     { term: '1910.268', source_lesson_id: 'T18.L01' },
   ],
-  estimated_minutes: 20,
 };
 
 export default function T18L09_IncidentReportingOSHA300() {

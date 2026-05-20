@@ -132,7 +132,7 @@ export default function T11L02_TIA598ColorSequenceEveryFiber() {
           <h3 className="font-semibold text-blue-300 mb-2">Quick Refresher — Key Terms</h3>
           <ul className="list-disc pl-5 text-sm text-slate-300 space-y-1">
             <li><strong>Buffer tube:</strong> The protective plastic tube inside the cable that holds up to 12 fibers and protects them from mechanical damage during installation.</li>
-            <li><strong>Tube-within-tube system:</strong> TIA-598-D extension for cables with >12 fibers: tubes themselves are colored 1-12, and fibers within each tube are also colored 1-12.</li>
+            <li><strong>Tube-within-tube system:</strong> TIA-598-D extension for cables with more than 12 fibers: tubes themselves are colored 1-12, and fibers within each tube are also colored 1-12.</li>
           </ul>
         </div>
 

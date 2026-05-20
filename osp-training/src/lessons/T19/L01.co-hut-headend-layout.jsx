@@ -75,7 +75,6 @@ export const meta = {
     { term: 'feeder', source_lesson_id: 'T01.L07' },
     { term: 'conduit', source_lesson_id: 'T01.L02' },
   ],
-  estimated_minutes: 20,
 };
 
 export default function T19L01_CoHutHeadendLayout() {
