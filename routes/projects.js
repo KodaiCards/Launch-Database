@@ -47,6 +47,13 @@ module.exports = function installProjectsRoutes(app, pool, mw) {
     const leavesOnly = ['true','1','on'].includes(String(req.query.leaves_only ?? '').toLowerCase());
     if (leavesOnly) { where.push(`p.is_rollup IS NOT TRUE`); }
 
+    // Phase A (cascade-backend wave): opt-in parent_id filter.
+    // When present, restricts results to direct children of that folder.
+    // Works alongside leaves_only, status, client_id, etc. — all filters
+    // are AND-composed. No validation: an unknown UUID simply returns an
+    // empty array, which is the correct observable behaviour.
+    if (req.query.parent_id) { where.push(`p.parent_id=$${i++}`); params.push(req.query.parent_id); }
+
     // Phase 1 (timeclock-picker wave): opt-in include-completed flag for the
     // edit-entry / back-fill context. When present AND a status=active filter
     // was also specified, OR in completed rows so back-fill against a completed
@@ -706,6 +713,141 @@ module.exports = function installProjectsRoutes(app, pool, mw) {
     } catch (e) {
       console.error('[projects:with-hours:delete]', e && e.message);
       res.status(500).json({ error: 'Failed to delete project with hours.' });
+    }
+  });
+
+  // POST /api/projects/resolve-or-create
+  //
+  // Cascade-picker backend (Phase A). Given the four-level cascade selection
+  // (client_id + program + service_area_id + job_name), finds the matching leaf
+  // project or creates it under the service-area rollup folder.
+  //
+  // The service-area folder must already exist (admin creates SAs under each EC
+  // via POST /api/engineering-contracts/:id/service-areas). This endpoint ONLY
+  // auto-creates leaf projects, never folder rows.
+  //
+  // Race condition: the UNIQUE constraint on non-rollup leaves prevents
+  // duplicate names under the same parent. On 23505 we re-SELECT the winner
+  // and return created:false so the UI gets the existing project_id.
+  app.post('/api/projects/resolve-or-create', requireAuth(), async (req, res) => {
+    const { client_id, program, service_area_id, job_name } = req.body;
+
+    // Input validation
+    if (!job_name || !String(job_name).trim()) {
+      return res.status(400).json({ error: 'job_name is required and must be non-empty.' });
+    }
+    if (!client_id || typeof client_id !== 'string' || !client_id.match(/^[0-9a-f-]{36}$/i)) {
+      return res.status(400).json({ error: 'client_id must be a valid UUID.' });
+    }
+    if (!service_area_id || typeof service_area_id !== 'string' || !service_area_id.match(/^[0-9a-f-]{36}$/i)) {
+      return res.status(400).json({ error: 'service_area_id must be a valid UUID.' });
+    }
+    const programAllowed = ['rus', 'bau', 'gfr', 'other'];
+    if (!program || !programAllowed.includes(String(program).trim().toLowerCase())) {
+      return res.status(400).json({ error: `program must be one of: ${programAllowed.join(', ')}.` });
+    }
+    const normalizedProgram = String(program).trim().toLowerCase();
+    const normalizedJobName = String(job_name).trim();
+
+    // Block customer role — customers cannot create or resolve projects
+    if (req.user && req.user.role === 'customer') {
+      return res.status(403).json({ error: 'Customers cannot access this endpoint.' });
+    }
+
+    try {
+      // Find the engineering contract for (client_id + program)
+      const ecRow = await pool.query(
+        `SELECT id FROM engineering_contracts WHERE client_id = $1 AND program = $2 AND active = TRUE LIMIT 1`,
+        [client_id, normalizedProgram]
+      );
+      if (!ecRow.rows.length) {
+        return res.status(404).json({
+          error: `No active engineering contract found for client + program "${normalizedProgram}". Admin must create the engineering contract first.`,
+        });
+      }
+      const ecId = ecRow.rows[0].id;
+
+      // Verify the service-area row belongs to this EC
+      const saRow = await pool.query(
+        `SELECT id, name FROM ec_service_areas WHERE id = $1 AND engineering_contract_id = $2`,
+        [service_area_id, ecId]
+      );
+      if (!saRow.rows.length) {
+        return res.status(404).json({
+          error: 'No project rollup found for client + program + service area — admin must initialize service area first.',
+        });
+      }
+      const saName = saRow.rows[0].name;
+
+      // Find the service-area rollup folder project row.
+      // rollup_key for ec_service_areas-based folders is the ec_service_areas.id UUID
+      // (set by ensureRollupChain when concentrator_id is an ec_service_areas UUID).
+      const folderRow = await pool.query(
+        `SELECT id, engineering_contract_id FROM projects
+          WHERE is_rollup = TRUE
+            AND rollup_level = 'service_area'
+            AND rollup_key = $1
+          LIMIT 1`,
+        [service_area_id]
+      );
+      if (!folderRow.rows.length) {
+        return res.status(404).json({
+          error: 'No project rollup found for client + program + service area — admin must initialize service area first.',
+        });
+      }
+      const folderId = folderRow.rows[0].id;
+      const folderEcId = folderRow.rows[0].engineering_contract_id;
+
+      // Try to find an existing leaf under the service-area folder with a
+      // case-insensitive name match.
+      const existing = await pool.query(
+        `SELECT id, name, is_rollup, parent_id, status, engineering_contract_id
+           FROM projects
+          WHERE parent_id = $1
+            AND LOWER(name) = LOWER($2)
+            AND COALESCE(is_rollup, FALSE) = FALSE
+          LIMIT 1`,
+        [folderId, normalizedJobName]
+      );
+      if (existing.rows.length) {
+        return res.status(200).json({ ...existing.rows[0], created: false });
+      }
+
+      // Create the leaf project under the service-area folder.
+      // Inherits client_id, engineering_contract_id, and program from the folder context.
+      let newRow;
+      try {
+        const insert = await pool.query(
+          `INSERT INTO projects
+             (name, client_id, parent_id, engineering_contract_id, program,
+              status, is_rollup, billing_type, project_type)
+           VALUES ($1, $2, $3, $4, $5, 'active', FALSE, 'hourly', 'other')
+           RETURNING id, name, is_rollup, parent_id, status, engineering_contract_id`,
+          [normalizedJobName, client_id, folderId, folderEcId || ecId, normalizedProgram]
+        );
+        newRow = insert.rows[0];
+      } catch (err) {
+        if (err.code !== '23505') throw err;
+        // Race condition: another caller created the same leaf simultaneously.
+        // Re-SELECT the winner.
+        const refound = await pool.query(
+          `SELECT id, name, is_rollup, parent_id, status, engineering_contract_id
+             FROM projects
+            WHERE parent_id = $1
+              AND LOWER(name) = LOWER($2)
+              AND COALESCE(is_rollup, FALSE) = FALSE
+            LIMIT 1`,
+          [folderId, normalizedJobName]
+        );
+        if (!refound.rows.length) throw err;
+        return res.status(200).json({ ...refound.rows[0], created: false });
+      }
+
+      broadcast('admin', 'project_added', { id: newRow.id, name: newRow.name, client_id });
+      return res.status(201).json({ ...newRow, created: true });
+    } catch (e) {
+      console.error('[projects:resolve-or-create]', e && e.message);
+      res.status(500).json({ error: 'Failed to resolve or create project.' });
     }
   });
 
