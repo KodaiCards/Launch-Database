@@ -374,15 +374,10 @@ export default function T08L05_ReframeAdjustingWithoutMoving() {
       <section className="mt-8 p-5 border-l-4 border-blue-500 bg-slate-800/40 rounded">
         <h3 className="text-blue-300 text-lg font-semibold mb-3">Tying It Together</h3>
         <p className="text-slate-200 mb-3">
-          Make-ready work you learned here integrates with:
+          A reframe occupies a critical middle ground between simple attachment and full transfer — it resolves a clearance conflict by adjusting hardware position on the pole without moving the wire to a different pole or rerouting it along a new path. Whether a reframe is sufficient or a transfer (<strong>T08.L04</strong>) is required depends on the staker's measured attachment heights from <strong>T07.L04</strong> and the NESC clearance requirements from <strong>T05</strong>: if adjusting the position of a hardware bracket by 6 inches opens enough clearance for the new fiber while keeping the existing wire compliant, that's a reframe; if no position adjustment will satisfy the clearance rules without moving the wire, that's a transfer. The distinction matters under the complex-attachment classification from <strong>T08.L03</strong> because reframes and transfers carry different cost-allocation logic — reframes are generally borne by the entity that caused the conflict, but the hardware adjustment itself is cheaper and faster than a full wire transfer. After a reframe, the inspector in <strong>T13.L03</strong> measures the post-reframe attachment heights to verify compliance before the construction crew installs fiber at that pole.
         </p>
-        <ul className="space-y-2 text-slate-300 text-sm list-disc ml-5">
-    <li><strong>T08.L04 T08.L04</strong> — Feeds into the broader OSP workflow.</li>
-    <li><strong>T08.L01 T08.L01</strong> — Feeds into the broader OSP workflow.</li>
-    <li><strong>T08.L03 T08.L03</strong> — Feeds into the broader OSP workflow.</li>
-        </ul>
         <p className="text-slate-200 mt-3 text-sm italic">
-          Make-ready is the preparation work that clears the way for construction — every dollar invested here saves five during fiber installation.
+          Correctly distinguishing a reframe from a transfer saves hours of field time and hundreds of dollars per structure — the staker's initial height measurement is the data that makes that distinction possible.
         </p>
       </section>
     </LessonLayout>

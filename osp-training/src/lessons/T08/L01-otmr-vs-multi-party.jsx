@@ -513,15 +513,10 @@ export default function T08L01_OTMRvsMultiParty() {
       <section className="mt-8 p-5 border-l-4 border-blue-500 bg-slate-800/40 rounded">
         <h3 className="text-blue-300 text-lg font-semibold mb-3">Tying It Together</h3>
         <p className="text-slate-200 mb-3">
-          Make-ready work you learned here integrates with:
+          The OTMR vs. multi-party choice is not just a process preference — it is a project scheduling decision that determines your construction start date. Under multi-party make-ready, each pole owner's crew performs their own rearrangement work on their own schedule; if a power company takes 80 days to transfer its lines instead of the 15-day OTMR clock covered in <strong>T08.L02</strong>, your construction mobilization slides by 65 days. That schedule impact flows directly into the project timeline you submitted with the RUS Form 740 staking notes from <strong>T07.L05</strong>, which estimated the make-ready completion date the client used to schedule their construction crew. The pole anatomy knowledge from <strong>T01.L02</strong> is what allows the attaching entity to scope and price an OTMR contractor's work: knowing the communication space location, existing attachment heights, and NESC clearance rules from <strong>T05</strong> enables a realistic work order before the clock expires. When OTMR is elected and a utility owner exceeds the 15-day clock, the attaching entity can hire a qualified contractor to do the work at the pole owner's expense — but only if the OTMR election was properly documented in the original application.
         </p>
-        <ul className="space-y-2 text-slate-300 text-sm list-disc ml-5">
-    <li><strong>T01.L02 Pole Anatomy & Field Measurements</strong> — The pole anatomy and attachment concepts define what make-ready work needs to address.</li>
-    <li><strong>T07.L06 T07.L06</strong> — Feeds into the broader OSP workflow.</li>
-    <li><strong>T05.L08 T05.L08</strong> — Feeds into the broader OSP workflow.</li>
-        </ul>
         <p className="text-slate-200 mt-3 text-sm italic">
-          Make-ready is the preparation work that clears the way for construction — every dollar invested here saves five during fiber installation.
+          OTMR was created specifically to give attaching entities a tool to enforce timely make-ready — understanding when to elect it versus accepting multi-party pace is one of the highest-leverage schedule decisions in an OSP project.
         </p>
       </section>
     </LessonLayout>

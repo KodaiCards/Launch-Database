@@ -464,15 +464,10 @@ export default function T08L06_PoleReplacementInMakeReady() {
       <section className="mt-8 p-5 border-l-4 border-blue-500 bg-slate-800/40 rounded">
         <h3 className="text-blue-300 text-lg font-semibold mb-3">Tying It Together</h3>
         <p className="text-slate-200 mb-3">
-          Make-ready work you learned here integrates with:
+          Pole replacement is the highest-cost and highest-complexity make-ready scenario — it is triggered when no combination of transfer (<strong>T08.L04</strong>) and reframe (<strong>T08.L05</strong>) can achieve compliance with the NESC strength requirements from <strong>T05.L02</strong>. The NESC Section 26 overload capacity check — comparing the existing pole's rated strength against the combined wind, ice, and wire loading that the new fiber attachment adds — is what forces the replacement decision. The staker's field data from <strong>T07.L04</strong> feeds this calculation: the number of existing attachments, their heights and weights, and the pole class determine whether there is any remaining overload capacity for the new fiber. When the load analysis shows the pole would fail, replacement is mandatory before the attachment is permitted. Cost causation is the central dispute in pole replacements: the cost-split formula (betterment vs. direct cost allocation) differs between RUS programs and commercial joint-use agreements, which is why engineers must document the pre-replacement loading condition carefully. That documentation becomes part of the project close-out record in <strong>T13.L07 Form 219</strong>, which RUS reviewers may audit when determining whether the replacement cost is reimbursable under the loan.
         </p>
-        <ul className="space-y-2 text-slate-300 text-sm list-disc ml-5">
-    <li><strong>T08.L04 T08.L04</strong> — Feeds into the broader OSP workflow.</li>
-    <li><strong>T08.L05 T08.L05</strong> — Feeds into the broader OSP workflow.</li>
-    <li><strong>T08.L01 T08.L01</strong> — Feeds into the broader OSP workflow.</li>
-        </ul>
         <p className="text-slate-200 mt-3 text-sm italic">
-          Make-ready is the preparation work that clears the way for construction — every dollar invested here saves five during fiber installation.
+          Missing a pole replacement during staking is the single most expensive oversight in aerial make-ready — it surfaces after permit approval when construction is mobilized and derails the entire project schedule.
         </p>
       </section>
     </LessonLayout>

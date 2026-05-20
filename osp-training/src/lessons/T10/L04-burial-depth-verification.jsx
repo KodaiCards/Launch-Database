@@ -360,15 +360,10 @@ export default function T10L04_BurialDepthVerification() {
       <section className="mt-8 p-5 border-l-4 border-blue-500 bg-slate-800/40 rounded">
         <h3 className="text-blue-300 text-lg font-semibold mb-3">Tying It Together</h3>
         <p className="text-slate-200 mb-3">
-          This lesson builds on:
+          Burial depth verification is the inspector's field confirmation that the construction crew installed conduit or cable at the depth the design required — and its outcome directly determines whether the project can be accepted and closed. The minimum depth requirements from <strong>T06.L02</strong> (NESC, RUS 1751F-635, state DOT permits) form the acceptance threshold: any conduit probe reading below that threshold is a deficiency the contractor must remediate before the inspector signs off. For HDD-installed conduit from <strong>T10.L02</strong>, ground-penetrating radar or a depth probe at the bore exit verifies the minimum cover was achieved at the centerline of the crossing — a critical check because the bore contractor may report nominal depth without having verified the actual profile. In <strong>T13.L04 Underground Construction Inspection</strong>, burial depth discrepancies are the most frequently cited deficiency on RUS projects, because they are invisible once sod or pavement is restored. If depth problems are discovered after restoration, remediation costs — re-excavation, restoration again — can exceed the original trench cost; catching the deficiency before backfill is the only cost-effective window. The verified depth readings also become part of the Form 219 close-out documentation in <strong>T13.L07</strong>, where RUS reviewers may audit them as evidence that construction met the loan's technical specifications.
         </p>
-        <ul className="space-y-2 text-slate-300 text-sm list-disc ml-5">
-    <li><strong>T06.L01</strong> — Underground routing and conduit strategies.</li>
-    <li><strong>T01.L02</strong> — The foundational pole anatomy and measurements.</li>
-    <li><strong>T09.L01</strong> — Part of the broader OSP workflow.</li>
-        </ul>
         <p className="text-slate-200 mt-3 text-sm italic">
-          Each step in the OSP process feeds into the next — understanding these connections strengthens your grasp of the whole system.
+          The depth probe is the last chance to catch a burial violation before it is buried — literally and legally — under restored pavement.
         </p>
       </section>
     </LessonLayout>

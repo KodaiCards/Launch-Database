@@ -503,15 +503,10 @@ export default function T07L03_PhotographingAndCodingPoleTags() {
       <section className="mt-8 p-5 border-l-4 border-blue-500 bg-slate-800/40 rounded">
         <h3 className="text-blue-300 text-lg font-semibold mb-3">Tying It Together</h3>
         <p className="text-slate-200 mb-3">
-          The pole positioning you learned here doesn't stand alone — it interlocks with:
+          Pole tag photography and coding create the audit trail that every downstream phase depends on. The pole tag number links every subsequent document — the make-ready work order, the RUS Form 740 staking sheet, the Form 219 close-out record — back to a specific physical structure in the field. In <strong>T07.L05 Staking Notes &amp; RUS Form 740</strong>, you'll record make-ready scopes pole-by-pole using those tag numbers; if the tag photo is missing or misread, the wrong pole gets the work order. In <strong>T13 Inspection &amp; QA</strong>, the inspector verifies that make-ready was performed correctly on specific poles by cross-referencing the tag number in the staking record — a blurry photo or transposed digit sends the inspector to the wrong structure. In <strong>T16 As-Built Documentation</strong>, the GIS record links the fiber route geometry to the same pole tag identifiers, so a future crew can locate a specific splice case or slack loop without walking the entire route. The photograph is not a formality; it is the primary key that makes every other record searchable in the field.
         </p>
-        <ul className="space-y-2 text-slate-300 text-sm list-disc ml-5">
-    <li><strong>T07.L01 T07.L01</strong> — Connects to the broader OSP workflow.</li>
-    <li><strong>T07.L01 T07.L01</strong> — Connects to the broader OSP workflow.</li>
-    <li><strong>T07.L01 T07.L01</strong> — Connects to the broader OSP workflow.</li>
-        </ul>
         <p className="text-slate-200 mt-3 text-sm italic">
-          Accurate staking is the bridge between design intent and field reality — every downstream crew depends on it.
+          One unreadable tag photo can delay a make-ready crew for an hour while they drive the route looking for the right pole. At crew rates, that's a $200 mistake from a 30-second oversight.
         </p>
       </section>
     </LessonLayout>

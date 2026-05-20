@@ -533,15 +533,10 @@ export default function T07L04_MeasuringExistingAttachments() {
       <section className="mt-8 p-5 border-l-4 border-blue-500 bg-slate-800/40 rounded">
         <h3 className="text-blue-300 text-lg font-semibold mb-3">Tying It Together</h3>
         <p className="text-slate-200 mb-3">
-          The pole positioning you learned here doesn't stand alone — it interlocks with:
+          Measuring existing attachments is where the NESC rules from <strong>T05</strong> become field decisions, not textbook theory. Rule 232 Table 232-1 specifies minimum clearance heights for communications cables over roads — 15.5 feet over truck-accessible roads — and the staker's tape measure is the only way to verify the proposed fiber attachment will comply. If an existing wire is at 16.0 feet and the design places fiber at 14.5 feet, the staker's measurement triggers a make-ready flag; that flag becomes the complex-attachment classification in <strong>T08.L03</strong>, which drives the 45-day clock instead of the 15-day OTMR clock. The attachment height data also feeds the pole-loading calculation in <strong>T05.L02</strong>: the engineer's design assumed a certain number of attachments and their positions; if a staker finds two undocumented attachments, the wind and ice loading on that pole is higher than designed, and the engineer may need to revise the span or pole class before make-ready is ordered. Missing or inaccurate measurements here cascade through every downstream cost estimate, permit submittal, and construction scope.
         </p>
-        <ul className="space-y-2 text-slate-300 text-sm list-disc ml-5">
-    <li><strong>T01.L02 Pole Anatomy & Field Measurements</strong> — The span, attachment, and clearance measurements you learned there are what stakers verify in the field.</li>
-    <li><strong>T05.L01 NESC Clearance Rules</strong> — Stakers verify the NESC clearance rules that engineers use in design.</li>
-    <li><strong>T01.L05 Clearance & Safety Zones</strong> — Field verification of clearance assumptions relies on the safety-zone rules you learned there.</li>
-        </ul>
         <p className="text-slate-200 mt-3 text-sm italic">
-          Accurate staking is the bridge between design intent and field reality — every downstream crew depends on it.
+          A field measurement error that goes uncorrected costs 10x more to fix after construction starts than it does to call out during staking.
         </p>
       </section>
     </LessonLayout>

@@ -545,15 +545,10 @@ export default function T07L05_StakingNotesRUSForm740() {
       <section className="mt-8 p-5 border-l-4 border-blue-500 bg-slate-800/40 rounded">
         <h3 className="text-blue-300 text-lg font-semibold mb-3">Tying It Together</h3>
         <p className="text-slate-200 mb-3">
-          The staking data you learned here doesn't stand alone — it interlocks with:
+          RUS Form 740 is the formal handoff document that converts the staker's field observations into the engineer's design basis — and its accuracy determines the validity of everything that comes after. The form carries pole-by-pole make-ready scope derived from the attachment measurements in <strong>T07.L04</strong>: each transfer, reframe, and pole replacement noted on Form 740 becomes a line item in the make-ready cost estimate and the permit application the engineer submits under <strong>T09 Permitting</strong>. RUS reviewers cross-check Form 740 against the engineering drawings when approving loan funds — a discrepancy between the form and the plans can delay funding approval or trigger an audit. After construction, the as-built correction columns on Form 740 feed the close-out documentation in <strong>T13.L07 Form 219</strong>: the inspector's record and the staking record must reconcile structure-by-structure. If a make-ready scope noted on Form 740 was not completed in the field, the inspector flags it and construction cannot be declared complete until the deficiency is resolved.
         </p>
-        <ul className="space-y-2 text-slate-300 text-sm list-disc ml-5">
-    <li><strong>T04.L01 Route Survey Overview</strong> — The survey route data that T04 produced is the baseline — staking verifies if conditions have changed since the survey.</li>
-    <li><strong>T07.L01 T07.L01</strong> — Connects to the broader OSP workflow.</li>
-    <li><strong>T07.L01 T07.L01</strong> — Connects to the broader OSP workflow.</li>
-        </ul>
         <p className="text-slate-200 mt-3 text-sm italic">
-          Accurate staking is the bridge between design intent and field reality — every downstream crew depends on it.
+          On RUS-funded projects, Form 740 is a legal document — every entry has a downstream consequence for funding, permitting, and close-out.
         </p>
       </section>
     </LessonLayout>

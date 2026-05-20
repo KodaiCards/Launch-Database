@@ -469,15 +469,10 @@ export default function T08L03_SimpleVsComplexAttachment() {
       <section className="mt-8 p-5 border-l-4 border-blue-500 bg-slate-800/40 rounded">
         <h3 className="text-blue-300 text-lg font-semibold mb-3">Tying It Together</h3>
         <p className="text-slate-200 mb-3">
-          Make-ready work you learned here integrates with:
+          The simple vs. complex determination is the classification decision that drives the OTMR clock — and it is made by reading the staker's field data against the NESC clearance rules from <strong>T05</strong>. A simple attachment requires no rearrangement of existing wires; there is already adequate space in the communication zone per <strong>T01.L02</strong> and the proposed fiber attaches within existing clearances. A complex attachment is any case where existing wires must move before the new fiber can be installed — a transfer (<strong>T08.L04</strong>), reframe (<strong>T08.L05</strong>), or pole replacement (<strong>T08.L06</strong>). The simple/complex classification matters financially: simple attachments trigger the shorter 15-day clock from <strong>T08.L02</strong> for OTMR; complex attachments get up to 60 additional days for remediation. Misclassifying a complex attachment as simple — by not measuring existing wire heights carefully in <strong>T07.L04</strong> — means the 15-day deadline fires when the work can't actually be completed in 15 days, putting the attaching entity in a bind when they try to invoke self-help and the pole owner disputes the classification.
         </p>
-        <ul className="space-y-2 text-slate-300 text-sm list-disc ml-5">
-    <li><strong>T08.L01 T08.L01</strong> — Feeds into the broader OSP workflow.</li>
-    <li><strong>T01.L02 Pole Anatomy & Field Measurements</strong> — The pole anatomy and attachment concepts define what make-ready work needs to address.</li>
-    <li><strong>T08.L01 T08.L01</strong> — Feeds into the broader OSP workflow.</li>
-        </ul>
         <p className="text-slate-200 mt-3 text-sm italic">
-          Make-ready is the preparation work that clears the way for construction — every dollar invested here saves five during fiber installation.
+          The classification lives or dies on the quality of the staker's attachment measurements — a half-foot measurement error can flip a simple attachment to complex, or hide a complex attachment that should have been flagged.
         </p>
       </section>
     </LessonLayout>

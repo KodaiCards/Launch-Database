@@ -377,15 +377,10 @@ export default function T10L01_Call811BeforeYouDig() {
       <section className="mt-8 p-5 border-l-4 border-blue-500 bg-slate-800/40 rounded">
         <h3 className="text-blue-300 text-lg font-semibold mb-3">Tying It Together</h3>
         <p className="text-slate-200 mb-3">
-          This lesson builds on:
+          The 811 locate ticket is the legal clearance document that authorizes excavation — and it creates a direct dependency chain with multiple upstream and downstream lessons. The underground route alignment that the staker marked in <strong>T07.L07</strong> is what the locate request is based on: the ticket coordinates describe the exact corridor the crew will excavate, and any existing utilities the locate center flags within that corridor must be physically marked before a shovel goes in the ground. The burial depth rules from <strong>T06.L02</strong> determine how deep the crew will dig, which in turn affects whether the bore or trench path crosses existing utilities at a compliant depth or cuts dangerously close to a fiber or gas line above the planned crossing elevation. The permitting documentation from <strong>T09</strong> often requires a copy of the 811 ticket before a right-of-way permit is approved, because municipalities need to confirm that utility locate procedures were followed. If the crew digs outside the locate ticket boundary — even by 18 inches — the ticket's legal protection evaporates and any utility damage is the contractor's liability, a financial exposure the project's change-order provisions in <strong>T17.L06</strong> cannot recover.
         </p>
-        <ul className="space-y-2 text-slate-300 text-sm list-disc ml-5">
-    <li><strong>T01.L01</strong> — Part of the broader OSP workflow.</li>
-    <li><strong>T01.L08</strong> — Part of the broader OSP workflow.</li>
-    <li><strong>T09.L01</strong> — Part of the broader OSP workflow.</li>
-        </ul>
         <p className="text-slate-200 mt-3 text-sm italic">
-          Each step in the OSP process feeds into the next — understanding these connections strengthens your grasp of the whole system.
+          The 811 ticket is not a formality — it is the legal instrument that shifts liability from the contractor to the utility owner if a marked line gets hit during compliant excavation.
         </p>
       </section>
     </LessonLayout>

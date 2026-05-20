@@ -440,15 +440,10 @@ export default function T10L02_HDDExecution() {
       <section className="mt-8 p-5 border-l-4 border-blue-500 bg-slate-800/40 rounded">
         <h3 className="text-blue-300 text-lg font-semibold mb-3">Tying It Together</h3>
         <p className="text-slate-200 mb-3">
-          This lesson builds on:
+          HDD execution is the field application of decisions made two stages earlier in the project. The method selection from <strong>T06.L01</strong> identified HDD as the right approach for this crossing — typically because open-cut is prohibited (road crossing with active traffic, stream crossing with environmental permit constraints from <strong>T09.L04</strong>) or because the soil conditions favor boring over trenching. The conduit specification from <strong>T06.L03</strong> determined what the bore crew is pulling through the bore path: HDPE conduit sized per the conduit-fill calculation, with an inner diameter large enough to later pull the fiber cable without exceeding the maximum pulling tension from <strong>T06.L04</strong>. The burial depth requirement from <strong>T06.L02</strong> is the bore specification: if NESC or the road authority requires 36-inch cover under the paved surface, the entry angle and exit angle of the bore must achieve that depth at the centerline — a fact the inspector verifies with a depth-of-cover probe in <strong>T10.L04</strong>. A frac-out — where drilling slurry breaks through to the surface — contaminates soil, violates the storm-water permit, and creates a change-order that the cost-estimating framework from <strong>T17</strong> never budgeted because the contingency assumptions didn't account for the soil conditions.
         </p>
-        <ul className="space-y-2 text-slate-300 text-sm list-disc ml-5">
-    <li><strong>T06.L01</strong> — Underground routing and conduit strategies.</li>
-    <li><strong>T01.L02</strong> — The foundational pole anatomy and measurements.</li>
-    <li><strong>T06.L03</strong> — Part of the broader OSP workflow.</li>
-        </ul>
         <p className="text-slate-200 mt-3 text-sm italic">
-          Each step in the OSP process feeds into the next — understanding these connections strengthens your grasp of the whole system.
+          HDD is the most expensive per-foot underground method — its use is justified only when the permit or site conditions eliminate all cheaper alternatives, which is why the route survey and method selection must be precise before mobilization.
         </p>
       </section>
     </LessonLayout>

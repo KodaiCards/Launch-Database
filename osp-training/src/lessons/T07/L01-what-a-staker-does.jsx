@@ -466,15 +466,10 @@ export default function T07L01_WhatAStakerDoes() {
       <section className="mt-8 p-5 border-l-4 border-blue-500 bg-slate-800/40 rounded">
         <h3 className="text-blue-300 text-lg font-semibold mb-3">Tying It Together</h3>
         <p className="text-slate-200 mb-3">
-          The staking data you learned here doesn't stand alone — it interlocks with:
+          The staker's role is the field verification layer that sits between design and construction — and it depends on knowledge from every topic before it. The three-zone pole anatomy from <strong>T01.L02</strong> is what a staker reads at every structure: you can't measure attachment height, identify the communication space, or spot a make-ready conflict without knowing where the supply zone ends and the communications zone begins. The NESC clearance rules from <strong>T05.L01</strong> are the acceptance standard a staker applies with a measuring tape — if an existing attachment is 1.5 feet below the NESC minimum, the staker calls it out rather than leaving it for the construction crew to discover mid-build. That call-out feeds directly into <strong>T08 Make-Ready</strong>: the transfer, reframe, or pole-replacement work is sized by the staker's field measurements. If the staker under-records an attachment height by 6 inches, the make-ready estimate is wrong, the permit is wrong, and the construction crew hits an unbudgeted scope item at the most expensive possible time — when trucks are on site.
         </p>
-        <ul className="space-y-2 text-slate-300 text-sm list-disc ml-5">
-    <li><strong>T01.L02 Pole Anatomy & Field Measurements</strong> — The span, attachment, and clearance measurements you learned there are what stakers verify in the field.</li>
-    <li><strong>T01.L02 Pole Anatomy & Field Measurements</strong> — The span, attachment, and clearance measurements you learned there are what stakers verify in the field.</li>
-    <li><strong>T01.L02 Pole Anatomy & Field Measurements</strong> — The span, attachment, and clearance measurements you learned there are what stakers verify in the field.</li>
-        </ul>
         <p className="text-slate-200 mt-3 text-sm italic">
-          Accurate staking is the bridge between design intent and field reality — every downstream crew depends on it.
+          Accurate staking is the bridge between design intent and field reality — every downstream crew depends on what the staker writes down.
         </p>
       </section>
     </LessonLayout>

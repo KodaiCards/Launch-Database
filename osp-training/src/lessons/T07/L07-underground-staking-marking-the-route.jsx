@@ -512,15 +512,10 @@ export default function T07L07_UndergroundStakingMarkingTheRoute() {
       <section className="mt-8 p-5 border-l-4 border-blue-500 bg-slate-800/40 rounded">
         <h3 className="text-blue-300 text-lg font-semibold mb-3">Tying It Together</h3>
         <p className="text-slate-200 mb-3">
-          The staking data you learned here doesn't stand alone — it interlocks with:
+          Underground route marking is where the method selection from <strong>T06.L01 HDD vs. Open-Cut vs. Plowing</strong> becomes a physical stake in the ground. The staker translates the design's chosen method — HDD bore path, open-cut trench alignment, plow corridor — into APWA color-coded marks that communicate to the construction crew exactly where to dig and what depth rules apply from <strong>T06.L02 Burial Depth Rules</strong>. If the design specifies 36-inch burial depth under a county road per NESC Rule 352 and the staker marks the bore entry pit 8 feet from the road edge to achieve that depth, the bore crew uses that stake to set their entry angle; miss the entry angle by 5 degrees and the bore comes up at 28 inches instead of 36 — a burial depth violation the inspector will catch in <strong>T13.L04 Underground Construction Inspection</strong>. The 811 locate marks from <strong>T10.L01</strong> are also part of this picture: a staker marking an underground route must coordinate with existing utility locates so the construction crew never cuts across a live gas or power line that wasn't on the design drawings.
         </p>
-        <ul className="space-y-2 text-slate-300 text-sm list-disc ml-5">
-    <li><strong>T07.L01 T07.L01</strong> — Connects to the broader OSP workflow.</li>
-    <li><strong>T07.L02 Reading Plans in the Field</strong> — Reading the design plans correctly is the first step — staking applies those plans in the field.</li>
-    <li><strong>T07.L02 Reading Plans in the Field</strong> — Reading the design plans correctly is the first step — staking applies those plans in the field.</li>
-        </ul>
         <p className="text-slate-200 mt-3 text-sm italic">
-          Accurate staking is the bridge between design intent and field reality — every downstream crew depends on it.
+          Color codes are not decoration — APWA orange (communications) vs. yellow (gas) vs. red (electric) is the visual communication system that keeps excavation crews safe.
         </p>
       </section>
     </LessonLayout>

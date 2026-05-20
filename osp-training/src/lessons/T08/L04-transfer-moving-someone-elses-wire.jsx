@@ -389,15 +389,10 @@ export default function T08L04_TransferMovingWire() {
       <section className="mt-8 p-5 border-l-4 border-blue-500 bg-slate-800/40 rounded">
         <h3 className="text-blue-300 text-lg font-semibold mb-3">Tying It Together</h3>
         <p className="text-slate-200 mb-3">
-          Make-ready work you learned here integrates with:
+          A transfer is triggered when the staker's attachment measurements from <strong>T07.L04</strong> show that an existing wire is positioned where the new fiber needs to go — or that placing the new fiber would leave insufficient clearance under the existing wire per NESC Rule 232 from <strong>T05</strong>. The complex-attachment classification from <strong>T08.L03</strong> makes transfer the triggering mechanism for the longer 60-day OTMR remediation window. The NESC clearance rules govern where the transferred wire ends up: a communication wire transferred from 14.5 feet to 17.5 feet must maintain minimum vertical separation from both the supply conductors above and the new fiber below — you can't just move it anywhere that opens space. After the transfer is complete, the updated attachment height goes into the staking notes on RUS Form 740 (<strong>T07.L05</strong>) as a field change, and the inspector in <strong>T13.L03 Aerial Construction Inspection</strong> verifies the as-transferred heights against the staking record. A transfer that was not recorded on the staking sheet is an undocumented field change that creates reconciliation problems at close-out.
         </p>
-        <ul className="space-y-2 text-slate-300 text-sm list-disc ml-5">
-    <li><strong>T08.L01 T08.L01</strong> — Feeds into the broader OSP workflow.</li>
-    <li><strong>T08.L03 T08.L03</strong> — Feeds into the broader OSP workflow.</li>
-    <li><strong>T08.L03 T08.L03</strong> — Feeds into the broader OSP workflow.</li>
-        </ul>
         <p className="text-slate-200 mt-3 text-sm italic">
-          Make-ready is the preparation work that clears the way for construction — every dollar invested here saves five during fiber installation.
+          Transfers are cost-allocable to the entity that caused the complex-attachment condition — documenting who owns each wire before the transfer is what makes cost recovery possible.
         </p>
       </section>
     </LessonLayout>

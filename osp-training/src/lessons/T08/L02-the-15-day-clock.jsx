@@ -564,15 +564,10 @@ export default function T08L02_The15DayClock() {
       <section className="mt-8 p-5 border-l-4 border-blue-500 bg-slate-800/40 rounded">
         <h3 className="text-blue-300 text-lg font-semibold mb-3">Tying It Together</h3>
         <p className="text-slate-200 mb-3">
-          Make-ready work you learned here integrates with:
+          The 15-day clock is the enforcement mechanism that makes OTMR from <strong>T08.L01</strong> meaningful in practice. Without a hard deadline, OTMR would be a suggestion rather than a rule — pole owners could delay indefinitely and the attaching entity would have no recourse. The clock starts running when the application is deemed complete, which means the application itself must be correct: the make-ready scope derived from the staker's field measurements in <strong>T07.L04</strong> must accurately describe every required transfer, reframe, and height adjustment, because an incomplete application restarts the clock. The self-help remedy under 47 CFR §1.1411(i) — hiring a qualified contractor after the clock expires — requires the attaching entity to have documented the application date, the scope, and the pole owner's response (or non-response). That documentation feeds directly into project close-out records in <strong>T13.L07 Form 219</strong>, where make-ready completion is verified structure-by-structure before construction is declared complete and the RUS loan disbursement is triggered.
         </p>
-        <ul className="space-y-2 text-slate-300 text-sm list-disc ml-5">
-    <li><strong>T08.L01 T08.L01</strong> — Feeds into the broader OSP workflow.</li>
-    <li><strong>T08.L01 T08.L01</strong> — Feeds into the broader OSP workflow.</li>
-    <li><strong>T08.L01 T08.L01</strong> — Feeds into the broader OSP workflow.</li>
-        </ul>
         <p className="text-slate-200 mt-3 text-sm italic">
-          Make-ready is the preparation work that clears the way for construction — every dollar invested here saves five during fiber installation.
+          A missed 15-day deadline that isn't documented properly forfeits the self-help remedy — the window to recover costs from the pole owner closes if you don't act in writing.
         </p>
       </section>
     </LessonLayout>
