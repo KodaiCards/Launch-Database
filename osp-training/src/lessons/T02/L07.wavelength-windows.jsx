@@ -59,7 +59,7 @@ export default function T02L07_WavelengthWindows() {
         <h2>In Plain English</h2>
 
         <div className="mb-4 p-3 bg-amber-900/20 border-l-4 border-amber-500 rounded text-amber-100 text-sm">
-          <strong>Quick refresher:</strong> In <strong>T02.L02</strong>, you learned that different wavelengths have different attenuation rates (loss per km). In <strong>T02.L03</strong>, you learned that wavelength affects chromatic dispersion. This lesson explains which specific wavelengths (1310 nm, 1550 nm, etc.) are actually used in the field — and why.
+          <strong>Quick refresher:</strong> In <strong>T02.L02</strong>, you learned that attenuation — signal loss measured in dB/km — varies by wavelength; some wavelengths travel farther in the same fiber. In <strong>T02.L03</strong>, you learned that chromatic dispersion (pulse broadening) also depends on wavelength, with a zero-dispersion point around 1310 nm for standard SMF. In <strong>T02.L04</strong>, you saw that macrobend loss grows at longer wavelengths, making 1625 nm particularly sensitive to bends. This lesson maps those properties to the specific wavelength windows that OSP systems actually use — 850, 1310, 1490, 1550, and 1625 nm — and explains why each one gets chosen for its job. The <strong>SMF</strong> and <strong>MMF</strong> fiber types introduced in <strong>T01.L08</strong> each favor different windows.
         </div>
 
         <p>
@@ -78,9 +78,6 @@ export default function T02L07_WavelengthWindows() {
           frequency. Fiber systems choose wavelengths in the same way — pick the "station" that
           gives the lowest noise (attenuation) and best range for the job.
         </p>
-        <div className="mb-4 p-3 bg-amber-900/20 border-l-4 border-amber-500 rounded text-amber-100 text-sm">
-          <strong>Quick refresher:</strong> From <strong>T02.L02</strong>, attenuation is signal loss measured in dB/km — different wavelengths have different attenuation rates in the same fiber. From <strong>T02.L03</strong>, chromatic dispersion is pulse broadening — longer wavelengths have more dispersion. This lesson explains why OSP systems pick specific wavelengths based on these two properties.
-        </div>
 
         <h3 className="mt-5 font-semibold">Acronyms in this lesson</h3>
         <table className="w-full text-sm border border-white/10 rounded-lg mt-2">

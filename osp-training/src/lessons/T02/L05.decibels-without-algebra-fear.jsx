@@ -45,7 +45,7 @@ export default function T02L05_DecibelsWithoutAlgebraFear() {
         <h2>In Plain English</h2>
 
         <div className="mb-4 p-3 bg-amber-900/20 border-l-4 border-amber-500 rounded text-amber-100 text-sm">
-          <strong>Quick refresher:</strong> In <strong>T02.L02</strong>, you learned that attenuation is signal loss as light travels through fiber, measured in <strong>dB/km</strong>. This lesson explains what "dB" actually means — the unit itself, and how to use dB math to predict power levels in a link.
+          <strong>Quick refresher:</strong> In <strong>T02.L02</strong>, you learned that <strong>attenuation</strong> is signal loss as light travels through fiber, measured in <strong>dB/km</strong>. That lesson introduced the term "dB/km" without fully unpacking what a decibel is. This lesson explains the dB unit itself — and how to use dB math to predict optical power levels across a link. The <strong>SMF</strong> fiber types you first saw in <strong>T01.L08</strong> carry signals over these links; this math tells you how much signal survives the journey.
         </div>
 
         <p>
@@ -54,10 +54,6 @@ export default function T02L05_DecibelsWithoutAlgebraFear() {
           here's the good news: you don't need to understand logarithms from scratch to use
           dB on the job. You need to know three key facts and one formula. That's it.
         </p>
-
-        <div className="mb-4 p-3 bg-amber-900/20 border-l-4 border-amber-500 rounded text-amber-100 text-sm">
-          <strong>Quick refresher:</strong> In <strong>T02.L02</strong>, we introduced attenuation as signal loss measured in dB/km (decibels per kilometer). This lesson unpacks what a "decibel" actually is and how the dB unit makes loss calculations simple instead of complex.
-        </div>
 
         <h3 className="mt-5 font-semibold">The three facts you must know cold</h3>
         <ol className="list-decimal pl-5 space-y-3 mt-2">

@@ -49,6 +49,11 @@ export default function T02L01_WhyLightTravelsInGlass() {
       {/* ── FOUNDATIONS ─────────────────────────────────────────────────── */}
       <section data-tier="foundations">
         <h2>In Plain English</h2>
+
+        <div className="mb-4 p-3 bg-amber-900/20 border-l-4 border-amber-500 rounded text-amber-100 text-sm">
+          <strong>Building on T01:</strong> In <strong>T01.L01</strong>, you were introduced to the OSP network — OLTs, ONTs, and the fiber plant that connects them. In <strong>T01.L03</strong>, you learned that a fiber cable's inner glass strand (the <em>fiber</em>) is what carries the optical signal. In <strong>T01.L08</strong>, you saw the distinction between single-mode fiber (<strong>SMF</strong>) and multimode fiber (<strong>MMF</strong>). This lesson explains the physics behind how light actually stays inside that glass strand — the mechanism that makes the whole system work.
+        </div>
+
         <p>
           Fiber optic cable sends data as pulses of light. But why doesn't the light just
           leak out the side of a thin glass strand? The answer is a trick of physics

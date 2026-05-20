@@ -48,6 +48,11 @@ export default function T02L11_FiberPhysicsFieldVsBook() {
       {/* ── FOUNDATIONS ─────────────────────────────────────────────────── */}
       <section data-tier="foundations">
         <h2>In Plain English</h2>
+
+        <div className="mb-4 p-3 bg-amber-900/20 border-l-4 border-amber-500 rounded text-amber-100 text-sm">
+          <strong>Quick refresher:</strong> In <strong>T02.L02</strong>, you learned that fiber attenuation is measured in dB/km and that real cable specs list a max and a typical value. In <strong>T02.L04</strong>, you saw that macrobend and microbend losses add on top of that baseline — bends, kinks, and jacket stress all raise the loss number. In <strong>T02.L06</strong>, you built a link budget that added all those losses up and compared them against available optical power, leaving a safety margin for unknowns. This lesson is about what fills that margin in the real world: temperature swings, fiber aging, installation tension, connector contamination, and batch-to-batch variation. The <strong>SMF</strong> from <strong>T01.L08</strong> and the <strong>G.657</strong> bend-insensitive variants from <strong>T02.L04</strong> each behave somewhat differently in the field than their datasheets suggest.
+        </div>
+
         <p>
           This lesson pulls together the "book vs. field" notes scattered across T02 and
           gives you a practical map of where fiber physics bites crews in the real world.

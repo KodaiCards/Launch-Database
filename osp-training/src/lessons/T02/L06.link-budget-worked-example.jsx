@@ -49,7 +49,7 @@ export default function T02L06_LinkBudgetWorkedExample() {
         <h2>In Plain English</h2>
 
         <div className="mb-4 p-3 bg-amber-900/20 border-l-4 border-amber-500 rounded text-amber-100 text-sm">
-          <strong>Quick refresher:</strong> In <strong>T02.L02</strong>, you learned that attenuation is signal loss (measured in dB/km). In <strong>T02.L05</strong>, you learned how decibels (dB) work — so you can add losses together instead of multiplying fractions. This lesson brings those concepts together in a single calculation that tells you if a link actually works.
+          <strong>Quick refresher:</strong> In <strong>T02.L02</strong>, you learned that attenuation is signal loss measured in dB/km — the rate at which fiber consumes optical power per kilometer. In <strong>T02.L04</strong>, you saw that macrobend and microbend losses add on top of that baseline. In <strong>T02.L05</strong>, you learned how decibels work — so all those losses simply add together rather than multiplying as fractions. This lesson brings those concepts into a single calculation that tells you whether a link actually works. The <strong>SMF</strong> from <strong>T01.L08</strong> is the fiber type at the center of every OSP link budget.
         </div>
 
         <p>
@@ -64,10 +64,6 @@ export default function T02L06_LinkBudgetWorkedExample() {
           loss) + an emergency fund (safety margin). If the total is under $200, you make it.
           If it's over, you don't — and you need to redesign the trip.
         </p>
-
-        <div className="mb-4 p-3 bg-amber-900/20 border-l-4 border-amber-500 rounded text-amber-100 text-sm">
-          <strong>Quick refresher:</strong> You learned the building blocks in <strong>T02.L02</strong> (attenuation — signal loss as light travels through fiber), <strong>T02.L05</strong> (decibels — the arithmetic that makes losses simple to add), and <strong>T02.L02</strong> (dB/km — how attenuation is specified). This lesson brings all three together into one calculation: the link budget.
-        </div>
 
         <h3 className="mt-5 font-semibold">Acronyms in this lesson</h3>
         <table className="w-full text-sm border border-white/10 rounded-lg mt-2">
