@@ -106,6 +106,10 @@ export default function T11L03_SpliceLossFourNumbers() {
           about your work.
         </p>
 
+        <p className="text-slate-400 text-sm mb-3 mt-4 p-3 border-l-4 border-slate-500">
+          <strong>Callback:</strong> Remember from <strong>T11.L01 and T11.L02, TIA-598 color coding</strong> — every fiber you identified by tube color and fiber position is a potential splice point in the network. The loss number you measure at each of those joints is exactly what this lesson quantifies. Every splice on a 288-count cable is a color-coded fiber with a dB number attached to it.
+        </p>
+
         <h3 className="mt-5 font-semibold">Acronyms in this lesson</h3>
         <table className="w-full text-sm border border-white/10 rounded-lg mt-2">
           <thead className="bg-white/5 text-slate-200">

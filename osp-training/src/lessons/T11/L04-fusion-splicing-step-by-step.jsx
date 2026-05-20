@@ -126,6 +126,10 @@ export default function T11L04_FusionSplicingStepByStep() {
           that goes with it.
         </p>
 
+        <p className="text-slate-400 text-sm mb-3 mt-4 p-3 border-l-4 border-slate-500">
+          <strong>Callback:</strong> Remember from <strong>T11.L03, splice loss — the four numbers</strong> — your craftsmanship target is ≤0.10 dB per splice (FOA / ITU-T L.400) and the RUS contract rejection threshold is ≤0.30 dB. Every step of the workflow you're about to learn exists to hit that 0.10 dB target consistently. When a step is rushed or skipped, those numbers go up.
+        </p>
+
         {/* Flashcards */}
         <div className="mt-6">
           <h3 className="font-semibold mb-3">Key Terms</h3>
