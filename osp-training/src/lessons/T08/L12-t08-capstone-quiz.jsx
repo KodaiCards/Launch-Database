@@ -7,6 +7,7 @@ import LessonLayout from '../../components/LessonLayout.jsx';
 import Quiz from '../../components/primitives/Quiz.jsx';
 import BranchingScenario from '../../components/primitives/BranchingScenario.jsx';
 import WorkedExample from '../../components/primitives/WorkedExample.jsx';
+import Flashcard from '../../components/Flashcard.jsx';
 
 export const meta = {
   id: 'T08.L12',
@@ -53,6 +54,34 @@ export const meta = {
   estimated_minutes: 30,
 };
 
+// Convert vocabulary_assumed to key_terms for Flashcard rendering
+export const key_terms = [
+  { term: 'OTMR (One-Touch Make-Ready)', definition: 'An FCC-approved method where a single operator (often the network designer) coordinates all make-ready work across multiple pole owners and utilities in a defined service territory, subject to FCC rules and tariff compliance.' },
+  { term: 'multi-party', definition: 'A make-ready scenario involving multiple utility owners (electric, gas, telephone) whose attachments must be modified to clear space for the new network; coordination delays and cost disputes are common.' },
+  { term: '15-day clock', definition: 'An FCC rule that requires the pole owner to either complete make-ready work or explicitly waive the right to do the work within 15 days of notification; failure to respond triggers the self-help remedy.' },
+  { term: 'self-help remedy', definition: 'An FCC rule that allows the applicant (network builder) to hire a contractor to perform make-ready work at the pole owner\'s or other utility\'s expense if they fail to complete it within 15 days; only available after proper notice.' },
+  { term: 'simple attachment', definition: 'A make-ready scenario with no conflicts: the existing attachments provide adequate clearance for the new cable without modifications; lowest cost and fastest approval.' },
+  { term: 'complex attachment', definition: 'A make-ready scenario requiring transfers, reframes, or pole replacements to achieve design clearances; higher cost, longer schedule, and multi-party coordination.' },
+  { term: 'transfer', definition: 'A make-ready action that moves an existing utility attachment from the design pole to a nearby pole to clear space for the new network.' },
+  { term: 'reframe', definition: 'A make-ready action that adjusts (lowers, raises, or shifts) an existing attachment on the same pole to achieve the clearance required for the new cable.' },
+  { term: 'pole replacement', definition: 'A make-ready action that replaces a non-compliant or overloaded pole with a taller or stronger pole to accommodate new attachments within design clearances.' },
+  { term: 'MRE (make-ready estimate)', definition: 'A document itemizing the labor, materials, equipment, and contingency costs for all make-ready work on a specific route; used to forecast project budget and negotiate with pole owners.' },
+  { term: 'contingency', definition: 'A percentage (typically 10–20%) added to estimated labor and material costs to account for unforeseen field conditions, rework, or utility discovery.' },
+  { term: 'sub-contractor labor', definition: 'Make-ready work performed by a hired contractor (pole-climbing crew, electrician, transfer crew) rather than the utility owner\'s own employees; quoted separately from materials.' },
+  { term: 'annual rental rate', definition: 'The annual fee paid to the pole owner for each network attachment, calculated per FCC tariff methodology based on pole height, attachment location, and industry standard rates.' },
+  { term: 'FCC rate methodology', definition: 'A standardized formula specified by the FCC for calculating pole rental rates, including pole cost recovery, maintenance, and administrative fees; used to ensure consistent rates across pole owners.' },
+  { term: 'attachment application', definition: 'A formal written request submitted to the pole owner (or manager) asking for permission and conditions (clearances, rental rate, make-ready scope) for attaching the network infrastructure.' },
+  { term: 'local permitting (AHJ)', definition: 'Approval from the local Authority Having Jurisdiction (city, county, state) for work on public poles or in public ROW; required before make-ready work can proceed in some jurisdictions.' },
+  { term: 'tie-in notice', definition: 'A formal notification sent to the pole owner and other utilities alerting them that the network operator is preparing to tie in (connect) their cable to the pole; required by FCC and tariff rules.' },
+  { term: 'as-built notice', definition: 'A formal notification sent to the pole owner after the network is installed, documenting the actual attachment location, cable type, and final pole loading; required to close out the application.' },
+  { term: 'pole-loading update', definition: 'A recalculation of the structural load on a pole after new attachments are added; performed to verify the pole remains within safety limits under NESC standards.' },
+  { term: 'critical path', definition: 'The sequence of make-ready tasks that takes the longest total time and therefore constrains the overall project schedule; delays on the critical path delay the entire project.' },
+  { term: 'make-ready float', definition: 'The amount of schedule slack (extra time) available for non-critical make-ready tasks before they become critical path items; used to manage schedule risk.' },
+];
+
+export const vocabulary_introduced = meta.vocabulary_introduced;
+export const vocabulary_assumed = meta.vocabulary_assumed;
+
 export default function T08L12_CapstoneQuiz() {
   return (
     <LessonLayout meta={meta}>
@@ -68,6 +97,19 @@ export default function T08L12_CapstoneQuiz() {
           20 multiple-choice questions + 2 scenario simulations. The scenario at the bottom
           of this page integrates make-ready decision-making across the full topic.
         </p>
+
+        <h3 className="mt-6 font-semibold text-lg">Key Terms Review</h3>
+        <p className="mt-2 text-sm text-slate-400">
+          Before diving into the scenarios and quiz, use these flashcards to refresh your memory on core T08 make-ready terminology.
+        </p>
+        <Flashcard
+          deckId="T08-L12"
+          cards={key_terms.map((kt, i) => ({
+            id: `T08-L12-fc-${i}`,
+            front: kt.term,
+            back: kt.definition,
+          }))}
+        />
       </section>
 
       {/* CAPSTONE SCENARIO WORKED EXAMPLE — brief first, questions reference it */}

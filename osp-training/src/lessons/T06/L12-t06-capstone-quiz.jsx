@@ -6,6 +6,7 @@ import LessonLayout from '../../components/LessonLayout.jsx';
 import Quiz from '../../components/primitives/Quiz.jsx';
 import WorkedExample from '../../components/primitives/WorkedExample.jsx';
 import BranchingScenario from '../../components/primitives/BranchingScenario.jsx';
+import Flashcard from '../../components/Flashcard.jsx';
 
 export const meta = {
   id: 'T06.L12',
@@ -65,6 +66,48 @@ export const meta = {
   estimated_minutes: 30,
 };
 
+// Convert vocabulary_assumed to key_terms for Flashcard rendering
+// Pulls definitions from the source lessons' own key_terms exports
+export const key_terms = [
+  { term: 'HDD', definition: 'Horizontal directional drilling — a trenchless underground construction method that steers a drill head along a planned path under an obstacle and pulls conduit back through the drilled hole without surface excavation.' },
+  { term: 'open-cut trench', definition: 'An underground installation method that cuts a trench from the surface, lays conduit in the trench, then backfills and restores the surface.' },
+  { term: 'plowing', definition: 'A trenchless underground installation method that pulls a blade through the soil at the target depth, simultaneously laying conduit into the slot the blade creates.' },
+  { term: 'RUS 1751F-635', definition: 'USDA Rural Utilities Service bulletin specifying minimum burial depths, separation rules, and construction standards for rural underground utilities.' },
+  { term: 'minimum cover', definition: 'The required depth of earth above conduit or cable per RUS 1751F-635 — 18 inches residential, 24–36 inches under paved roads depending on AHJ.' },
+  { term: 'AHJ override', definition: 'A local Authority Having Jurisdiction requirement that supersedes RUS or NEC standards when stricter — e.g., a state DOT requiring 48-inch cover under state highways.' },
+  { term: 'Schedule 40 PVC', definition: 'Standard-wall PVC conduit rated for general burial and duct applications; most common for underground OSP conduit bundles.' },
+  { term: 'Schedule 80 PVC', definition: 'Extra-thick-wall PVC conduit rated for higher mechanical strength and deeper burial; used under roads or where external loading is high.' },
+  { term: 'HDPE', definition: 'High-Density Polyethylene — a flexible plastic conduit used as innerduct or direct burial for fiber cables; lighter than PVC and easier to pull in long runs.' },
+  { term: 'innerduct', definition: 'A small-diameter conduit (0.75–2 inches) installed inside a larger outer conduit to protect fiber during installation and allow future cable swaps without reexcavation.' },
+  { term: 'microduct', definition: 'Ultra-small-diameter tubing (4–10 mm) designed for fiber-only installations in high-density underground routes; allows very tight bundle density.' },
+  { term: 'conduit fill', definition: 'The percentage of cross-sectional area occupied by cables and innerducts inside an outer conduit; NEC limits to 40% for cable pulls without damage.' },
+  { term: 'pull tension', definition: 'The cumulative force (in pounds) required to drag cable through conduit, calculated from cable weight, bend friction, and bend angles — must not exceed manufacturer rated maximum.' },
+  { term: 'manhole', definition: 'A large access point (≥36 inches × 36 inches) into underground conduit runs, required for cable vaults, splice locations, and dense fiber bundle repositories.' },
+  { term: 'handhole', definition: 'A small access point (24–36 inches) in underground conduit for cable splicing, termination, or slack-loop storage where a full manhole is not required.' },
+  { term: 'H-20 live loading', definition: 'A truck axle loading standard (20,000 lbs) used in AASHTO for manhole/handhole cover design — covers must support H-20 live loading under paved roads.' },
+  { term: 'foreign utility', definition: 'Any utility (electric, gas, water, sewer, communications) other than the one being installed; separation rules apply to prevent damage and interference.' },
+  { term: 'APWA color codes', definition: 'Standardized color-marking convention for marking utilities during excavation — red = electric, yellow = gas, blue = water, etc.; used in pre-dig locating.' },
+  { term: 'pilot bore', definition: 'The initial small-diameter (4–6 inch) steering hole created by an HDD drill head before reamers enlarge the bore to final size for cable pull-back.' },
+  { term: 'bentonite slurry', definition: 'Drilling fluid used in HDD — a clay-water mixture that cools the drill bit, lubricates the bore, and transports soil cuttings out of the hole.' },
+  { term: 'bore-pit ground heave', definition: 'The risk that excessive slurry pressure in an HDD bore causes soil to bulge upward or rupture at the surface, creating a frac-out and environmental hazard.' },
+  { term: 'terminal pedestal', definition: 'An underground access box at the end of a buried route where fiber terminates into a splitter, LIU, or other network hardware; contains slack-loop storage.' },
+  { term: 'NIU', definition: 'Network Interface Unit — a pedestal-mounted device that transitions from buried fiber conduit to aerial or above-grade telecommunications infrastructure.' },
+  { term: 'pedestal spacing', definition: 'The distance between consecutive pedestals or handholes on a buried route — typically 250–350 feet to allow manageable cable pulls and future access.' },
+  { term: 'slack-loop storage', definition: 'Extra fiber cable coiled in a manhole or pedestal to allow future splicing, rerouting, or equipment changes without requiring additional cable. Typically 150–200 feet slack per pedestal.' },
+  { term: 'NESC §34', definition: 'National Electrical Safety Code §34 (cable terminations and grounding) covering bonding of sheaths and metallic elements to prevent shock and interference.' },
+  { term: 'NESC §35', definition: 'National Electrical Safety Code §35 (separation of supply and communications) specifying minimum clearances between electric supply and communication cables.' },
+  { term: 'NESC Rule 354', definition: 'The specific NESC Rule requiring 6 inches minimum separation between communications cable in conduit and electric supply cable in parallel routes.' },
+  { term: 'supply-communication separation', definition: 'The mandatory clearance (minimum 6 inches for in-conduit, greater for direct-buried) between electric power utilities and telecommunications cables to prevent hazards and interference.' },
+  { term: 'RUS 1751F-643 innerduct qualification', definition: 'USDA RUS bulletin specifying which innerduct products (by size, material, and manufacturer listing) are approved for use in RUS-funded underground routes.' },
+  { term: 'innerduct traceability', definition: 'The requirement that every innerduct in an RUS project be documented with manufacturer, part number, and receipt date to verify compliance with 1751F-643 product qualification.' },
+  { term: 'design review', definition: 'The engineering step where a completed underground design is reviewed for compliance with RUS/NESC/AHJ standards before issue for bid.' },
+  { term: 'access spacing', definition: 'The distance between consecutive manholes/handholes — must be ≤ 350 feet to ensure cable pull feasibility and future maintenance access; shorter spacing = safer.' },
+  { term: 'fill calc verification', definition: 'The calculation step confirming that the total cross-sectional area of innerducts and conduits does not exceed 40% of the outer conduit ID to prevent cable damage during installation.' },
+];
+
+export const vocabulary_introduced = meta.vocabulary_introduced;
+export const vocabulary_assumed = meta.vocabulary_assumed;
+
 export default function T06L12_CapstoneQuiz() {
   return (
     <LessonLayout meta={meta}>
@@ -80,6 +123,19 @@ export default function T06L12_CapstoneQuiz() {
           Every answer is derivable from T06 lesson content. If you get stuck, the explanation
           will point you to the lesson to review.
         </p>
+
+        <h3 className="mt-6 font-semibold text-lg">Key Terms Review</h3>
+        <p className="mt-2 text-sm text-slate-400">
+          Before diving into the scenarios and quiz, use these flashcards to refresh your memory on core T06 terminology.
+        </p>
+        <Flashcard
+          deckId="T06-L12"
+          cards={key_terms.map((kt, i) => ({
+            id: `T06-L12-fc-${i}`,
+            front: kt.term,
+            back: kt.definition,
+          }))}
+        />
       </section>
 
       {/* WORKED EXAMPLE: multi-step conduit fill + pull tension */}

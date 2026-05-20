@@ -5,6 +5,7 @@ import React from 'react';
 import LessonLayout from '../../components/LessonLayout.jsx';
 import Quiz from '../../components/primitives/Quiz.jsx';
 import BranchingScenario from '../../components/primitives/BranchingScenario.jsx';
+import Flashcard from '../../components/Flashcard.jsx';
 
 export const meta = {
   id: 'T09.L12',
@@ -64,6 +65,47 @@ export const meta = {
   estimated_minutes: 30,
 };
 
+// Convert vocabulary_assumed to key_terms for Flashcard rendering
+export const key_terms = [
+  { term: 'federal nexus', definition: 'A trigger for federal environmental and cultural reviews: when a federal agency funds, permits, or authorizes a project, federal NEPA and NHPA §106 reviews apply; absent federal involvement, reviews are state/local only.' },
+  { term: 'AHJ', definition: 'Authority Having Jurisdiction — the local city, county, or state agency with permitting and regulatory authority over the project area; varies by geography.' },
+  { term: 'encroachment permit', definition: 'A local permit issued by an AHJ or utility owner for work affecting public ROW, utility infrastructure, or private land; required before construction can proceed in most jurisdictions.' },
+  { term: 'NEPA', definition: 'National Environmental Policy Act — the federal law requiring environmental review and public disclosure of impacts for projects with federal funding, permits, or authorization.' },
+  { term: 'categorical exclusion (CE)', definition: 'A NEPA category for routine, low-impact actions (e.g., routine fiber builds in existing ROW) that do not require a full Environmental Assessment; still requires documentation and verification that no "extraordinary circumstances" apply.' },
+  { term: 'EA', definition: 'Environmental Assessment — a mid-level NEPA review documenting environmental impacts and proposing mitigation; required when categorical exclusion does not apply but an EIS is not needed.' },
+  { term: 'CE C-8', definition: 'A NEPA categorical exclusion (CE) category covering telecommunications infrastructure installations in existing rights-of-way; commonly used for routine fiber builds.' },
+  { term: 'extraordinary circumstances', definition: 'Conditions triggering a heightened level of NEPA review (EA or EIS instead of CE): endangered species habitat, historic properties, significant visual impact, etc.' },
+  { term: 'NHPA §106', definition: 'Section 106 of the National Historic Preservation Act — a federal requirement to consider effects on historic properties and allow the Advisory Council on Historic Preservation and Tribal Historic Preservation Officers (THPOs) to review and comment.' },
+  { term: 'SHPO', definition: 'State Historic Preservation Office — the state agency responsible for reviewing federal projects for impacts to historic properties and Native American cultural resources.' },
+  { term: 'APE (Area of Potential Effect)', definition: 'The geographic area defined by the project applicant within which the project may have direct or indirect effects on historic properties; must be clearly defined to engage SHPOs and THPOs.' },
+  { term: '30-day clock', definition: 'The NHPA §106 timeline: once SHPOs and THPOs receive notification of a Section 106 review, they have 30 days to comment; failure to respond waives their right to object.' },
+  { term: 'ESA', definition: 'Endangered Species Act — the federal law protecting endangered and threatened species and their habitats; requires consultation with the U.S. Fish and Wildlife Service if the project may affect listed species.' },
+  { term: 'IPaC', definition: 'Information, Planning, and Consultation system — a USFWS tool for screening projects against endangered species lists and generating required consultation letters.' },
+  { term: 'NWP 57', definition: 'Nationwide Permit #57 (Telecommunications) issued by USACE to streamline permits for routine telecom projects in waters of the U.S., wetlands, and navigable waterways.' },
+  { term: 'PCN', definition: 'Pre-Construction Notification — a USACE requirement to notify the Corps of Engineers (via "PCN") before beginning work under a Nationwide Permit; triggers a 15-day review window.' },
+  { term: 'Section 404 (CWA)', definition: 'Section 404 of the Clean Water Act — a federal permit requirement for discharging dredged or fill material into waters of the U.S. and wetlands; Nationwide Permit 57 authorizes routine compliance.' },
+  { term: 'encroachment permit (DOT)', definition: 'A state Department of Transportation permit required for work in or near state highways; includes requirements for sight-line clearance, traffic control, and restoration.' },
+  { term: 'PE stamp', definition: 'Professional Engineer stamp/seal on design drawings and documents, required by state DOT for certain projects and often mandated before permits are issued.' },
+  { term: 'prescriptive easement', definition: 'An easement acquired by years of open, uninterrupted use (typically 10–20 years depending on state) without owner permission; may apply to long-established utility corridors.' },
+  { term: 'express easement', definition: 'An easement explicitly granted in writing by the property owner through a deed or agreement; the standard form for new utility ROW and attachments.' },
+  { term: 'recording', definition: 'The process of filing (recording) a deed, easement, or other property document with the county recorder to create a permanent public record and bind future owners.' },
+  { term: 'franchise agreement', definition: 'A municipal agreement granting a utility the right to operate infrastructure in city ROW; includes provisions for annual fees, maintenance, restoration, and liability.' },
+  { term: 'pavement cut moratorium', definition: 'A municipal restriction (e.g., 2–5 years after street resurfacing) prohibiting utility cuts in newly paved roads; requires coordination with city capital budgets.' },
+  { term: 'ROW restoration bond', definition: 'A financial guarantee posted with the city to ensure that utility work in public ROW (trenching, boring, pavement cuts) is properly restored; bond is released after inspection approval.' },
+  { term: 'THPO', definition: 'Tribal Historic Preservation Officer — the tribal government\'s representative for historic preservation and cultural resource protection; consulted under NHPA §106 when tribal lands or interests are involved.' },
+  { term: 'NHO (Native Hawaiian Organization)', definition: 'Native Hawaiian Organization — a Hawaiian community organization designated by the Office of Hawaiian Affairs to consult on historic properties in Hawaii under NHPA §106.' },
+  { term: 'government-to-government consultation', definition: 'The formalized consultation process between federal agencies and federally recognized tribes on projects affecting tribal lands or cultural resources; required by NHPA §106 and the American Indian Religious Freedom Act Amendments.' },
+  { term: 'permit matrix', definition: 'A table documenting all federal, state, and local permits required for the project, their approval agency, timeline, and dependencies; used to track critical path.' },
+  { term: 'permit critical path', definition: 'The sequence of permits that determines the minimum possible project schedule; delays on the critical path delay the entire project.' },
+  { term: 'permit-to-construction date lag', definition: 'The time between final permit issuance and the ability to begin construction; may include post-permit design refinement, ROW acquisition, and stakeholder notifications.' },
+  { term: '7 CFR 1970', definition: 'USDA regulation covering environmental and cultural review procedures for RUS-funded programs; specifies when NEPA categorical exclusions and NHPA §106 reviews apply.' },
+  { term: 'Environmental Impact Memorandum (EIM)', definition: 'An RUS document summarizing NEPA review results and confirming that a project qualifies for categorical exclusion or other compliance path under 7 CFR 1970.' },
+  { term: 'RUS CE checklist', definition: 'A mandatory RUS form for qualifying projects for categorical exclusion; documents that no extraordinary circumstances are present and all RUS environmental requirements are met.' },
+];
+
+export const vocabulary_introduced = meta.vocabulary_introduced;
+export const vocabulary_assumed = meta.vocabulary_assumed;
+
 export default function T09L12_CapstoneQuiz() {
   return (
     <LessonLayout meta={meta}>
@@ -80,6 +122,19 @@ export default function T09L12_CapstoneQuiz() {
           20 multiple-choice questions + 1 multi-permit scenario simulation. The scenario
           at the bottom integrates permitting decisions across the full topic.
         </p>
+
+        <h3 className="mt-6 font-semibold text-lg">Key Terms Review</h3>
+        <p className="mt-2 text-sm text-slate-400">
+          Before diving into the quiz and scenario, use these flashcards to refresh your memory on core T09 permitting and environmental terminology.
+        </p>
+        <Flashcard
+          deckId="T09-L12"
+          cards={key_terms.map((kt, i) => ({
+            id: `T09-L12-fc-${i}`,
+            front: kt.term,
+            back: kt.definition,
+          }))}
+        />
       </section>
 
       {/* CAPSTONE QUIZ — 20 questions covering T09.L01-L11 */}

@@ -6,6 +6,7 @@ import React from 'react';
 import LessonLayout from '../../components/LessonLayout.jsx';
 import Quiz from '../../components/primitives/Quiz.jsx';
 import BranchingScenario from '../../components/primitives/BranchingScenario.jsx';
+import Flashcard from '../../components/Flashcard.jsx';
 
 export const meta = {
   id: 'T10.L12',
@@ -58,7 +59,37 @@ export const meta = {
 };
 
 export const vocabulary_introduced = meta.vocabulary_introduced;
-export const key_terms = meta.key_terms;
+export const vocabulary_assumed = meta.vocabulary_assumed;
+
+// Convert vocabulary_assumed to key_terms for Flashcard rendering
+export const key_terms = [
+  { term: 'Call-811', definition: 'The national one-call service that notifies all utilities of intended excavation; must be called 2–3 business days before digging to allow utilities to mark their facilities.' },
+  { term: 'locate ticket', definition: 'The confirmation number issued when 811 is called; proves the crew made notification and establishes a safe harbor against utility strike liability if located facilities were properly marked.' },
+  { term: 'APWA color code', definition: 'Standardized paint colors for marking utilities: red = electric, yellow = gas, blue = water, green = sewer, white = proposed excavation marking.' },
+  { term: 'pilot bore', definition: 'The initial small-diameter steering hole (typically 4–6 inches) created by an HDD drill head before reaming to final size for cable pull-back.' },
+  { term: 'frac-out', definition: 'An uncontrolled surface breakout of HDD slurry and spoils, usually caused by excessive bore pressure or inadequate slurry management; environmental hazard requiring containment and reporting.' },
+  { term: 'breakaway swivel', definition: 'A connection that automatically separates under excessive pull tension to protect cable from overload damage during conduit pull; rated to specific tension limits per cable size.' },
+  { term: 'shoring', definition: 'Temporary structural bracing (sheets, wales, cross-braces) used in open trenches to prevent trench wall collapse and protect workers; required by OSHA when trench depth > 5 feet in cohesive soils.' },
+  { term: 'bedding sand', definition: 'A 3–4 inch layer of sand placed under buried conduit to provide uniform support and protect the conduit bottom from rocks and abrupt ground settlement.' },
+  { term: 'warning tape', definition: 'A brightly colored (typically red) plastic tape placed above buried conduit to alert future excavators of the presence of utilities beneath; required by most AHJs.' },
+  { term: 'depth probe', definition: 'A tool (typically a hollow probe or rod) used to verify the actual burial depth of conduit during or after installation; used to confirm compliance with RUS/NESC depth requirements.' },
+  { term: 'cover card', definition: 'A document or marking (on-site) indicating the depth of conduit below the surface at a specific location; used by future crews to estimate safe digging depth.' },
+  { term: 'pull tension', definition: 'The cumulative force required to drag cable through conduit, calculated from cable weight, friction, and bend angles; must not exceed manufacturer rated maximum.' },
+  { term: 'conduit fill', definition: 'The percentage of conduit cross-section occupied by cables and innerducts; NEC limit is 40% to prevent cable damage during pulls.' },
+  { term: 'slack loop', definition: 'Extra fiber cable coiled in a manhole or pedestal (typically 150–200 feet per pedestal) to allow future splicing or rerouting without requiring additional cable.' },
+  { term: 'MSA', definition: 'Market Service Area — the geographic region served by a specific network; relevant to traffic engineering and future expansion planning.' },
+  { term: 'cast-in-place', definition: 'A manhole or handhole constructed by casting concrete in situ (in place) after forming, as opposed to a pre-fabricated modular unit.' },
+  { term: 'traffic loading', definition: 'The structural load imposed on underground facilities by vehicles passing over them; used to size manhole covers, calculate conduit wall thickness, and determine burial depth.' },
+  { term: 'ghost trench', definition: 'An excavated trench left open (not backfilled) for a period of time to allow settlement before cable installation and final backfilling; reduces future settlement risk.' },
+  { term: 'proctor density', definition: 'A soil compaction measurement (percentage of maximum dry density) required by ASTM D698 or D1557 for trench backfill; minimum 95% proctor typical requirement under roads.' },
+  { term: 'TCP', definition: 'Temporary Causeway or Traffic Control Post — the on-site location where traffic control personnel and equipment are staged during construction in roadway ROW.' },
+  { term: 'MUTCD Part 6', definition: 'The Manual on Uniform Traffic Control Devices (MUTCD) Part 6 covering temporary traffic control in work zones; specifies sign placement, message, and color patterns.' },
+  { term: 'DFR', definition: 'Daily Field Report — a log completed by the construction crew documenting work location, duration, crew size, activities, weather, and any incidents or changes to the plan.' },
+  { term: 'deviation log', definition: 'A record of changes from the engineering design encountered during construction (e.g., unexpected rock, shallower depth required by permit, field utility relocation).' },
+  { term: 'punch list', definition: 'A checklist of incomplete or non-conforming items identified during field QA/QC that must be corrected before the project is accepted for operation.' },
+  { term: 'kick-back authority', definition: 'The power given to an inspector to reject work that does not meet specifications or standards and require rework; an inspector can kick back (reject) work without manager approval within defined authority limits.' },
+  { term: 'RUS Form 219', definition: 'USDA RUS form documenting pole-grounding installation requirements and verification; required for RUS-funded projects as part of final close-out documentation.' },
+];
 
 // ─── 20-question capstone quiz ─────────────────────────────────────────────────
 const capstoneQuestions = [
@@ -512,6 +543,20 @@ export default function T10L12_CapstoneQuiz() {
           the learning happens.
         </p>
       </section>
+
+      {/* ── KEY TERMS REVIEW ───────────────────────────────────────────────────── */}
+      <h3 className="mt-6 font-semibold text-lg">Key Terms Review</h3>
+      <p className="mt-2 text-sm text-slate-400">
+        Before diving into the quiz and scenario, use these flashcards to refresh your memory on core T10 construction terminology.
+      </p>
+      <Flashcard
+        deckId="T10-L12"
+        cards={key_terms.map((kt, i) => ({
+          id: `T10-L12-fc-${i}`,
+          front: kt.term,
+          back: kt.definition,
+        }))}
+      />
 
       {/* ── WORKING: 20-question quiz ─────────────────────────────────────────── */}
       <section data-tier="working">

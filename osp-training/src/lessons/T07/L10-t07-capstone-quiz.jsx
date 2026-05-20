@@ -6,6 +6,7 @@ import React from 'react';
 import LessonLayout from '../../components/LessonLayout.jsx';
 import Quiz from '../../components/primitives/Quiz.jsx';
 import BranchingScenario from '../../components/primitives/BranchingScenario.jsx';
+import Flashcard from '../../components/Flashcard.jsx';
 
 export const meta = {
   id: 'T07.L10',
@@ -53,6 +54,36 @@ export const meta = {
   estimated_minutes: 30,
 };
 
+// Convert vocabulary_assumed to key_terms for Flashcard rendering
+export const key_terms = [
+  { term: 'staker', definition: 'The field engineer responsible for verifying the design route on the ground, measuring existing pole attachments and conditions, marking the construction route, and documenting field data that will guide make-ready and construction crews.' },
+  { term: 'field verification', definition: 'The on-site survey process that confirms design assumptions (pole locations, attachment heights, existing utilities) match real field conditions.' },
+  { term: 'plan-and-profile', definition: 'An engineering drawing showing the route viewed from above (plan view) and from the side (profile view with elevations), used by stakers to locate poles and measure attachments.' },
+  { term: 'stationing', definition: 'A linear measurement system in which distance is marked as station + footage (e.g., STA 6+50 = 6,500 feet from the route start), used to locate poles and design features along the route.' },
+  { term: 'SCID', definition: 'Span Crossing ID — a code assigned to each span between poles; used to reference staking notes, make-ready requirements, and cable pull segments in the field documentation.' },
+  { term: 'GPS coordinate', definition: 'A latitude/longitude pair (or UTM easting/northing) recorded at each pole or survey point during staking to enable GIS mapping and as-built record-keeping.' },
+  { term: 'attachment height measurement', definition: 'The vertical distance from the ground to the proposed attachment point on a pole, measured by the staker and verified against the design drawing to confirm the design is buildable.' },
+  { term: 'RUS Form 740', definition: 'The USDA Rural Utilities Service staking form used to document pole locations, attachments, make-ready requirements, and field observations for RUS-funded projects.' },
+  { term: 'staking packet', definition: 'A set of documents prepared during staking including completed RUS Form 740s, photographs of each pole, hand-marked plan-and-profile drawings, and notes on make-ready flagging needs.' },
+  { term: 'make-ready flag', definition: 'A field marking (typically a colored ribbon or spray paint) applied by the staker to indicate pole-owner attachments that need modification (e.g., "XFER" for transfer, "REPL" for replacement).' },
+  { term: 'transfer', definition: 'A make-ready action that moves an existing utility attachment from one pole to another (e.g., electric supply spur is re-attached to a nearby pole to clear space for the new fiber attachment).' },
+  { term: 'replacement', definition: 'A make-ready action that replaces an existing utility attachment with a new one (e.g., a degraded lightning arrestor is replaced with a new arrestor to meet design clearances).' },
+  { term: 'force pole', definition: 'A make-ready action that installs a new utility pole adjacent to the design pole to relieve overcrowding of attachments without transferring or removing existing equipment.' },
+  { term: 'burden of proof', definition: 'The principle that the design engineer (via the staker) bears the responsibility for demonstrating that proposed make-ready actions are necessary to achieve the design clearances; not the pole owner\'s burden to disprove them.' },
+  { term: 'survey stake', definition: 'A wooden or plastic marker driven into the ground at the exact design pole location, used by the staker as a reference point for measuring distances and offsets to the actual pole.' },
+  { term: 'offset stake', definition: 'A survey marker placed at a known offset distance (e.g., 25 feet north) from the design pole location; used when ground conditions prevent placing a stake at the exact pole location.' },
+  { term: 'bore pit location', definition: 'The field position (recorded by GPS and staking notes) where an HDD bore entry or exit pit will be dug, marked by the staker during staking for later reference by the construction crew.' },
+  { term: 'Katapult', definition: 'A cloud-based field staking tool that enables real-time GPS mapping, pole photography, attachment measurement, and design-versus-reality comparison during staking work.' },
+  { term: 'GPS accuracy', definition: 'The precision of GPS coordinates; typical field GPS ±5–15 meters; sub-meter GPS requires external RTK correction. Staker must understand the accuracy limitation of their GPS device.' },
+  { term: 'field-to-office real-time sync', definition: 'A workflow in which staking data (photos, GPS, measurements) captured on a mobile device are synchronized to a central office GIS or project-management system in real-time or at end-of-shift.' },
+  { term: 'QA review', definition: 'The engineering step where staking data is reviewed for completeness, accuracy, and consistency; identifies missing photos, conflicting measurements, or design inconsistencies requiring re-stake of specific poles.' },
+  { term: 'catch rate', definition: 'The percentage of staking data points (pole locations, measurements, photographs) that pass QA review without requiring re-stake; typical target is ≥95% catch rate.' },
+  { term: 'staking re-do trigger', definition: 'A condition (missing photo, conflicting measurements, design change, or unresolved field discrepancy) that requires the staker to return to the field and re-stake specific poles or spans.' },
+];
+
+export const vocabulary_introduced = meta.vocabulary_introduced;
+export const vocabulary_assumed = meta.vocabulary_assumed;
+
 export default function T07L10_CapstoneQuiz() {
   return (
     <LessonLayout meta={meta}>
@@ -68,6 +99,19 @@ export default function T07L10_CapstoneQuiz() {
           15 multiple-choice questions plus one multi-step scenario. Score ≥ 70% to
           demonstrate competency and move on to T08 (Make-Ready and Pole Attachment).
         </p>
+
+        <h3 className="mt-6 font-semibold text-lg">Key Terms Review</h3>
+        <p className="mt-2 text-sm text-slate-400">
+          Before diving into the quiz and scenario, use these flashcards to refresh your memory on core T07 staking terminology.
+        </p>
+        <Flashcard
+          deckId="T07-L10"
+          cards={key_terms.map((kt, i) => ({
+            id: `T07-L10-fc-${i}`,
+            front: kt.term,
+            back: kt.definition,
+          }))}
+        />
       </section>
 
       {/* ── 15 MC QUESTIONS ─────────────────────────────────────────────── */}
