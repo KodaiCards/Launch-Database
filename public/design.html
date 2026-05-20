@@ -336,6 +336,8 @@ fetch('/api/auth/me', { credentials: 'include' })
     <i class="fa-solid fa-drafting-compass" style="margin-right:6px;color:var(--primary)"></i>Design Portal
   </div>
   <div class="header-right">
+    <!-- Attenuation calculator trigger — mounts modal on DOMContentLoaded -->
+    <div id="att-calc-btn-wrap"></div>
     <button class="btn btn-secondary btn-sm btn-icon" onclick="toggleDarkMode()" id="dm-toggle" title="Toggle dark mode">
       <i class="fa-solid fa-moon" id="dm-icon"></i>
     </button>
@@ -2221,6 +2223,19 @@ fetch('/api/me/portals',{credentials:'include'}).then(r=>r.json()).then(({portal
 
   window.addEventListener('load', startSse);
 })();
+</script>
+
+<!-- Attenuation Calculator — self-contained vanilla JS module -->
+<script src="/js/attenuation_calc.js" defer></script>
+<script>
+// Mount the attenuation calculator button in the design portal header.
+// The mountAttenuationCalc call is deferred so attenuation_calc.js has loaded.
+document.addEventListener('DOMContentLoaded', function () {
+  var wrap = document.getElementById('att-calc-btn-wrap');
+  if (wrap && window.mountAttenuationCalc) {
+    mountAttenuationCalc(wrap, { buttonLabel: 'Attenuation Calc' });
+  }
+});
 </script>
 </body>
 </html>

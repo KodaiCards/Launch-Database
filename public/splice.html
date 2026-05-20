@@ -517,6 +517,8 @@ html[data-theme="dark"] .proj-item.active{color:var(--vetro-text-primary)}
   <div class="divider"></div>
   <div class="title" id="title-name">— No project selected —</div>
   <div class="right">
+    <!-- Attenuation calculator trigger — mounts modal on DOMContentLoaded -->
+    <div id="att-calc-btn-wrap"></div>
     <button class="btn btn-sm" id="btn-save-rev" title="Save a labeled revision" disabled onclick="saveRevision()"><i class="fa-solid fa-flag"></i> Save rev</button>
     <button class="btn btn-sm" id="btn-versions" title="Version history & compare" disabled onclick="openVersionsModal()"><i class="fa-solid fa-clock-rotate-left"></i> Versions</button>
     <button class="btn btn-sm" id="btn-share" disabled title="Share a read-only link with stakeholders" onclick="openShareModal()"><i class="fa-solid fa-share-nodes"></i> Share</button>
@@ -9743,6 +9745,19 @@ window.addEventListener('beforeunload', () => {
 fetch('/api/me/portals',{credentials:'include'}).then(r=>r.json()).then(({portals})=>{
   if(portals&&portals.length>1)document.querySelectorAll('[data-launcher-back]').forEach(el=>el.style.display='inline-flex');
 }).catch(()=>{});
+</script>
+
+<!-- Attenuation Calculator — self-contained vanilla JS module -->
+<script src="/js/attenuation_calc.js" defer></script>
+<script>
+// Mount the attenuation calculator button in the splice matrix header.
+// The mountAttenuationCalc call is deferred so attenuation_calc.js has loaded.
+document.addEventListener('DOMContentLoaded', function () {
+  var wrap = document.getElementById('att-calc-btn-wrap');
+  if (wrap && window.mountAttenuationCalc) {
+    mountAttenuationCalc(wrap, { buttonLabel: 'Attenuation Calc' });
+  }
+});
 </script>
 </body>
 </html>
