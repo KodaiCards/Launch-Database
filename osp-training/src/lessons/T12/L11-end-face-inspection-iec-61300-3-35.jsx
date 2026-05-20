@@ -288,15 +288,20 @@ export default function T12L11_EndFaceInspection() {
       <section className="mt-8 p-5 border-l-4 border-blue-500 bg-slate-800/40 rounded">
         <h3 className="text-blue-300 text-lg font-semibold mb-3">Tying It Together</h3>
         <p className="text-slate-200 mb-3">
-          This lesson builds on:
-        </p>
-        <ul className="space-y-2 text-slate-300 text-sm list-disc ml-5">
-    <li><strong>T01.L08</strong> — Part of the broader OSP workflow.</li>
-    <li><strong>T01.L08</strong> — Part of the broader OSP workflow.</li>
-    <li><strong>T12.L08</strong> — Part of the broader OSP workflow.</li>
-        </ul>
-        <p className="text-slate-200 mt-3 text-sm italic">
-          Each step in the OSP process feeds into the next — understanding these connections strengthens your grasp of the whole system.
+          Connector end-face inspection is the one testing discipline that catches the most common cause
+          of unexplained link loss — contamination — that neither an OLTS nor an OTDR can localize
+          definitively on its own. In T12.L08 (Reading an OTDR Trace) you learned that a reflection
+          spike at a connector shows up on a trace, but the trace alone cannot tell you whether the
+          reflectance is caused by a contaminated end-face, a scratched end-face, or an air gap from
+          a misaligned adapter; the VIP gives you that specificity. The CIC sequence is also a prerequisite
+          for every OLTS and OTDR measurement you learned earlier in T12: you cannot trust a loss
+          measurement made through a dirty connector, because the contamination introduces an insertion
+          loss that varies each time the connector is mated. The IEC 61300-3-35 Zone A / Zone B
+          acceptance criteria used in inspection feed directly into the acceptance thresholds in T12.L13
+          — a connector that fails Zone A inspection must be cleaned or replaced before the OLTS loss
+          measurement is valid, so inspection is a logical precondition for the acceptance-testing
+          sequence, not an afterthought. End-face inspection records are also a required component
+          of the final test documentation package in T12.L14.
         </p>
       </section>
     </LessonLayout>

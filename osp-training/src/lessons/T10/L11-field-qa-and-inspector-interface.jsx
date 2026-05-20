@@ -440,15 +440,20 @@ export default function T10L11_FieldQAInspectorInterface() {
       <section className="mt-8 p-5 border-l-4 border-blue-500 bg-slate-800/40 rounded">
         <h3 className="text-blue-300 text-lg font-semibold mb-3">Tying It Together</h3>
         <p className="text-slate-200 mb-3">
-          This lesson builds on:
-        </p>
-        <ul className="space-y-2 text-slate-300 text-sm list-disc ml-5">
-    <li><strong>T10.L10</strong> — Part of the broader OSP workflow.</li>
-    <li><strong>T10.L10</strong> — Part of the broader OSP workflow.</li>
-    <li><strong>T10.L10</strong> — Part of the broader OSP workflow.</li>
-        </ul>
-        <p className="text-slate-200 mt-3 text-sm italic">
-          Each step in the OSP process feeds into the next — understanding these connections strengthens your grasp of the whole system.
+          Field QA and the inspector interface are where the entire T10 construction sequence is
+          verified or rejected. The inspector's depth probe check connects directly to T10.L04 —
+          if burial depth is insufficient, the inspector has kick-back authority to require re-excavation
+          before pavement restoration proceeds. The slack-loop check from T10.L06 is a specific
+          acceptance-walk item: the inspector measures or counts the coil inside each handhole and
+          records it against the contract MSA requirement; a structure with under-specified slack
+          triggers a punch-list item that must be resolved before the RUS 1751F-635 final sign-off.
+          The DFR and deviation log from T10.L10 are the documentary foundation for the inspector's
+          acceptance walk — the inspector cross-references field deviations against the as-designed
+          plans from T04 to verify that every change from design was authorized and documented, not
+          silently executed. On RUS projects, the inspector's sign-off on RUS Form 219 (introduced
+          in T01.L05) is the trigger for final RUS payment, which means the inspector's punch-list
+          authority has direct financial consequence — a single unresolved item can withhold disbursement
+          on the entire project.
         </p>
       </section>
     </LessonLayout>

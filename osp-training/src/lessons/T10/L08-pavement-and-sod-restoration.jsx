@@ -338,15 +338,20 @@ export default function T10L08_PavementSodRestoration() {
       <section className="mt-8 p-5 border-l-4 border-blue-500 bg-slate-800/40 rounded">
         <h3 className="text-blue-300 text-lg font-semibold mb-3">Tying It Together</h3>
         <p className="text-slate-200 mb-3">
-          This lesson builds on:
-        </p>
-        <ul className="space-y-2 text-slate-300 text-sm list-disc ml-5">
-    <li><strong>T06.L01</strong> — Underground routing and conduit strategies.</li>
-    <li><strong>T09.L01</strong> — Part of the broader OSP workflow.</li>
-    <li><strong>T01.L08</strong> — Part of the broader OSP workflow.</li>
-        </ul>
-        <p className="text-slate-200 mt-3 text-sm italic">
-          Each step in the OSP process feeds into the next — understanding these connections strengthens your grasp of the whole system.
+          Pavement and sod restoration is the last construction milestone the permit authority sees before
+          they sign off — and permit authorities have long memories for ghost trenches. The encroachment
+          permit from T09.L06 defines the specific pavement match type, patch width, and AHJ inspection
+          requirements that govern this work; the contractor does not get to substitute materials because
+          they are cheaper. The backfill sequence's bedding-sand layer below the conduit connects
+          directly to the conduit burial depth and embedment requirements from T10.L04 — if the
+          inspector's depth probe finds the conduit above minimum cover, the entire backfill sequence
+          must be redone before any pavement is placed. Proctor density testing closes the loop with
+          the open-cut trench methods from T10.L03: a crew that rushed compaction in 24-inch lifts
+          instead of 6-inch lifts will produce a trench that passes visual inspection the day of
+          restoration and fails with a ghost trench 90 days later — at the contractor's expense
+          under most ROW warranty provisions. Restoration quality directly affects the as-built
+          documentation in T16 (As-Built and GIS) because the inspector's 30-day survivability sign-off
+          is a required closeout document for RUS 1751F-635 final acceptance.
         </p>
       </section>
     </LessonLayout>

@@ -349,15 +349,19 @@ export default function T10L05_ConduitPullTension() {
       <section className="mt-8 p-5 border-l-4 border-blue-500 bg-slate-800/40 rounded">
         <h3 className="text-blue-300 text-lg font-semibold mb-3">Tying It Together</h3>
         <p className="text-slate-200 mb-3">
-          This lesson builds on:
-        </p>
-        <ul className="space-y-2 text-slate-300 text-sm list-disc ml-5">
-    <li><strong>T01.L02</strong> — The foundational pole anatomy and measurements.</li>
-    <li><strong>T06.L03</strong> — Part of the broader OSP workflow.</li>
-    <li><strong>T06.L04</strong> — Part of the broader OSP workflow.</li>
-        </ul>
-        <p className="text-slate-200 mt-3 text-sm italic">
-          Each step in the OSP process feeds into the next — understanding these connections strengthens your grasp of the whole system.
+          Pull-tension math is where OSP physics (T02), underground design (T06), and construction
+          execution (T10) converge into a single decision: can this cable survive this pull?
+          The capstan formula you applied here relies on the coefficient of friction for PVC conduit —
+          a value that only makes sense in context of the conduit types covered in T06.L03 and the
+          fill conventions from T06.L04. The 600 lbf maximum pull tension is the weakest-link constraint
+          imposed by the cable's tensile strength rating, which is an intrinsic property of the
+          loose-tube cable construction covered in T02.L03. When you set a breakaway swivel calibrated
+          to 90% of that limit, you are protecting a fiber design with a specific count and sheath
+          geometry that the designer specified in T06 — and a failed pull that snaps the cable without
+          a swivel costs the entire cable segment plus excavation to reopen. This tension discipline
+          also gates the slack-loop lesson that follows in T10.L06: slack loops require the cable to
+          exit the conduit with enough residual length to coil, and that only works if the pull
+          succeeded without stretch damage to the fiber core.
         </p>
       </section>
     </LessonLayout>

@@ -454,15 +454,18 @@ export default function T07L08_KatapultAndGISStakingTools() {
       <section className="mt-8 p-5 border-l-4 border-blue-500 bg-slate-800/40 rounded">
         <h3 className="text-blue-300 text-lg font-semibold mb-3">Tying It Together</h3>
         <p className="text-slate-200 mb-3">
-          The staking data you learned here doesn't stand alone — it interlocks with:
-        </p>
-        <ul className="space-y-2 text-slate-300 text-sm list-disc ml-5">
-    <li><strong>T07.L01 T07.L01</strong> — Connects to the broader OSP workflow.</li>
-    <li><strong>T07.L05 T07.L05</strong> — Connects to the broader OSP workflow.</li>
-    <li><strong>T07.L04 T07.L04</strong> — Connects to the broader OSP workflow.</li>
-        </ul>
-        <p className="text-slate-200 mt-3 text-sm italic">
-          Accurate staking is the bridge between design intent and field reality — every downstream crew depends on it.
+          Digital staking tools like Katapult sit at the intersection of every upstream data-collection skill
+          you built in T07 and every downstream engineering workflow that depends on accurate field records.
+          The GPS coordinate captured at a pole feeds directly into the GIS layer introduced in T01.L08,
+          giving the design engineer a georeferenced record that can be imported into pole-loading software
+          without manual transcription. The photo-attach workflow you learned here directly extends the
+          measurement discipline from T07.L04 — without a clean, timestamped photo of the laser display,
+          a Katapult record has no better evidentiary value than a handwritten note. When Katapult syncs
+          a make-ready flag to the office in real time, the engineer can begin the make-ready analysis
+          covered in T08 (Make-Ready and Pole Attachment) while you are still walking the route — compressing
+          the project schedule in a way paper staking cannot match. Mastery of digital staking workflows
+          is also a prerequisite for the staking QA lesson that follows in T07.L09, where you will see
+          how an engineer verifies a digital package and what triggers a re-stake versus a field call.
         </p>
       </section>
     </LessonLayout>

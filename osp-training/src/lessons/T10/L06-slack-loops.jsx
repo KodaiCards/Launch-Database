@@ -309,15 +309,19 @@ export default function T10L06_SlackLoops() {
       <section className="mt-8 p-5 border-l-4 border-blue-500 bg-slate-800/40 rounded">
         <h3 className="text-blue-300 text-lg font-semibold mb-3">Tying It Together</h3>
         <p className="text-slate-200 mb-3">
-          This lesson builds on:
-        </p>
-        <ul className="space-y-2 text-slate-300 text-sm list-disc ml-5">
-    <li><strong>T06.L05</strong> — Part of the broader OSP workflow.</li>
-    <li><strong>T06.L05</strong> — Part of the broader OSP workflow.</li>
-    <li><strong>T02.L04</strong> — Part of the broader OSP workflow.</li>
-        </ul>
-        <p className="text-slate-200 mt-3 text-sm italic">
-          Each step in the OSP process feeds into the next — understanding these connections strengthens your grasp of the whole system.
+          The slack loop is the construction team's gift to the splicing team — and getting it wrong
+          costs far more in corrective excavation than the cable saved. The minimum coil diameter rule
+          (at or above the 20× OD minimum bend radius from T02.L04) applies directly here: a slack
+          loop coiled too tightly inside a handhole becomes a source of microbend attenuation and
+          eventually a failure point, exactly the physics T02.L04 introduced. The handhole and vault
+          structures that receive the slack loop were sized in T06.L05 — a designer who
+          specifies a 100 ft splice-point slack loop into a 17-inch handhole that cannot physically
+          accommodate the coil has made a mismatch that the crew discovers at installation, not on paper.
+          Downstream, the splice technician who pulls that 100 ft of slack out of the handhole in
+          T11 (Splicing) depends on every inch being accounted for: insufficient slack means the
+          splice trailer cannot reach the midpoint without re-excavating a segment. The MSA values
+          specified here — 50 ft at intermediate handholes, 100 ft at splice-point structures — are
+          the contract floor; the inspector verifying T10.L11 will check them against the as-built DFR.
         </p>
       </section>
     </LessonLayout>

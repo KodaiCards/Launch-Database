@@ -308,15 +308,19 @@ export default function T10L07_ManholeHandholeInstallation() {
       <section className="mt-8 p-5 border-l-4 border-blue-500 bg-slate-800/40 rounded">
         <h3 className="text-blue-300 text-lg font-semibold mb-3">Tying It Together</h3>
         <p className="text-slate-200 mb-3">
-          This lesson builds on:
-        </p>
-        <ul className="space-y-2 text-slate-300 text-sm list-disc ml-5">
-    <li><strong>T06.L05</strong> — Part of the broader OSP workflow.</li>
-    <li><strong>T06.L05</strong> — Part of the broader OSP workflow.</li>
-    <li><strong>T06.L05</strong> — Part of the broader OSP workflow.</li>
-        </ul>
-        <p className="text-slate-200 mt-3 text-sm italic">
-          Each step in the OSP process feeds into the next — understanding these connections strengthens your grasp of the whole system.
+          Manhole and handhole installation is where OSP design decisions made in T06 become concrete
+          — literally. The structure type (handhole vs. manhole vs. vault), its dimensions, and its
+          traffic loading rating were all specified during the underground design phase in T06.L05;
+          the installation crew executes against that spec, not the other way around. The H-20 vs.
+          H-25 traffic loading distinction you learned here traces directly to the encroachment permit
+          conditions set in T09.L06 — most state DOT permits for primary-road ROW specify H-25 as a
+          minimum, and installing an H-20 structure in that location is a permit violation that requires
+          excavation and replacement. Confined-space entry procedures from T18.L03 govern any work
+          inside a manhole — the structure you install here is a confined space the moment a worker
+          enters it, and the atmospheric and ventilation requirements apply before the lid closes for
+          the first time. The vault dimensions must also accommodate the cable bend radius from T02.L04
+          and the slack loop quantities from T10.L06, so the construction superintendent must verify
+          that the structure spec sheet matches the design's cable geometry before the concrete is poured.
         </p>
       </section>
     </LessonLayout>

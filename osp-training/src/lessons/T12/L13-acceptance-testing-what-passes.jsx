@@ -313,15 +313,21 @@ export default function T12L13_AcceptanceTesting() {
       <section className="mt-8 p-5 border-l-4 border-blue-500 bg-slate-800/40 rounded">
         <h3 className="text-blue-300 text-lg font-semibold mb-3">Tying It Together</h3>
         <p className="text-slate-200 mb-3">
-          This lesson builds on:
-        </p>
-        <ul className="space-y-2 text-slate-300 text-sm list-disc ml-5">
-    <li><strong>T01.L08</strong> — Part of the broader OSP workflow.</li>
-    <li><strong>T12.L07</strong> — Part of the broader OSP workflow.</li>
-    <li><strong>T12.L11</strong> — Part of the broader OSP workflow.</li>
-        </ul>
-        <p className="text-slate-200 mt-3 text-sm italic">
-          Each step in the OSP process feeds into the next — understanding these connections strengthens your grasp of the whole system.
+          Acceptance thresholds are where every upstream testing skill is judged against a contractual
+          pass/fail line. The TIA-568 channel loss model you applied here requires accurate inputs:
+          connector count (from the splice and termination records in T11), span length (from the
+          as-built route in T16), and splicing loss (from the bidirectional OTDR averages learned in T12.L07).
+          An error in any of those inputs produces a wrong threshold, which means a link can appear
+          to pass when it actually fails — or appear to fail when it passes. The dual-wavelength
+          requirement (1310 nm + 1550 nm) is where the macrobend physics from T12.L09 directly
+          translate into a testing mandate: a link with tight bends near a handhole may pass at
+          1310 nm and fail at 1550 nm because macrobend loss is wavelength-dependent, increasing
+          sharply at longer wavelengths. The CIC sequence from T12.L11 is a logical precondition
+          for acceptance testing — connector inspection must pass before OLTS loss is measured,
+          because dirty connectors produce artificially high insertion loss that may cause the
+          link to fail acceptance on a defect that a wipe would resolve. NECA/FOA 301 acceptance
+          thresholds also flow directly into the documentation package in T12.L14: the pass/fail
+          status for each fiber is the centerpiece of the as-tested fiber record delivered to the owner.
         </p>
       </section>
     </LessonLayout>

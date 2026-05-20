@@ -308,15 +308,18 @@ export default function T10L09_TrafficControl() {
       <section className="mt-8 p-5 border-l-4 border-blue-500 bg-slate-800/40 rounded">
         <h3 className="text-blue-300 text-lg font-semibold mb-3">Tying It Together</h3>
         <p className="text-slate-200 mb-3">
-          This lesson builds on:
-        </p>
-        <ul className="space-y-2 text-slate-300 text-sm list-disc ml-5">
-    <li><strong>T18.L06</strong> — Part of the broader OSP workflow.</li>
-    <li><strong>T09.L01</strong> — Part of the broader OSP workflow.</li>
-    <li><strong>T09.L06</strong> — Part of the broader OSP workflow.</li>
-        </ul>
-        <p className="text-slate-200 mt-3 text-sm italic">
-          Each step in the OSP process feeds into the next — understanding these connections strengthens your grasp of the whole system.
+          Traffic control is the intersection of regulatory compliance, safety culture, and construction
+          logistics — every other T10 lesson happens inside the zone you establish here. The encroachment
+          permit from T09.L06 specifies whether the work requires a PE-stamped TCP or whether a standard
+          MUTCD diagram is acceptable; the cost of mobilizing with the wrong document is a work stoppage
+          while the crew waits for the permit to be revised. The work-zone safety orientation from T18.L06
+          (struck-by hazards, PPE requirements for flaggers, high-visibility vest standards under ANSI/ISEA 107)
+          applies to every person in the lane-closure zone — flaggers are among the highest-fatality
+          occupations in highway construction precisely because a TCP that looks correct on paper but
+          places the flagger in a poor sight-line position still creates lethal exposure. Mastery of
+          MUTCD Part 6 minimums also unlocks confidence in the daily-reporting lesson in T10.L10:
+          the DFR must document the TCP in use each day, and the inspector in T10.L11 has authority
+          to shut down a lane closure whose TCP does not match field conditions.
         </p>
       </section>
     </LessonLayout>

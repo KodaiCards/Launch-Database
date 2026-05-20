@@ -508,15 +508,20 @@ export default function T07L09_StakingQAWhatTheEngineerReviews() {
       <section className="mt-8 p-5 border-l-4 border-blue-500 bg-slate-800/40 rounded">
         <h3 className="text-blue-300 text-lg font-semibold mb-3">Tying It Together</h3>
         <p className="text-slate-200 mb-3">
-          The staking data you learned here doesn't stand alone — it interlocks with:
-        </p>
-        <ul className="space-y-2 text-slate-300 text-sm list-disc ml-5">
-    <li><strong>T07.L01 T07.L01</strong> — Connects to the broader OSP workflow.</li>
-    <li><strong>T07.L05 T07.L05</strong> — Connects to the broader OSP workflow.</li>
-    <li><strong>T07.L06 T07.L06</strong> — Connects to the broader OSP workflow.</li>
-        </ul>
-        <p className="text-slate-200 mt-3 text-sm italic">
-          Accurate staking is the bridge between design intent and field reality — every downstream crew depends on it.
+          Staking QA is the quality gate that transforms a field crew's raw observations into a usable
+          engineering deliverable. Every element the engineer reviews in a staking package traces back
+          to a specific skill in T07: the GPS route-progression check verifies that the staker followed
+          the protocol from T07.L01; the attachment-height completeness check uses the measurement
+          discipline from T07.L04; the make-ready flag review checks that the documentation standards
+          from T07.L06 were followed with measurement and photo evidence; the photo-attach completeness
+          check verifies the digital workflow from T07.L08. A staking package that clears QA review
+          unlocks the make-ready engineering wave — the engineer of record can now calculate pole loading
+          per NESC Rule 250 (covered in T05) with confidence that field measurements are accurate, not
+          estimated. Catch rate — the fraction of real make-ready conflicts the crew flagged — is also
+          your quality score on future projects: RUS 1751F-630 requires complete and accurate staking
+          data as the foundation for final design, and low catch rates are traceable to incomplete packages.
+          Internalizing the QA checklist from the engineer's perspective, as you did in this lesson,
+          closes the feedback loop: you now stake like someone who will also have to defend the package.
         </p>
       </section>
     </LessonLayout>

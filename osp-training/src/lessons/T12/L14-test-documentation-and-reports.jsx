@@ -340,15 +340,21 @@ export default function T12L14_TestDocumentation() {
       <section className="mt-8 p-5 border-l-4 border-blue-500 bg-slate-800/40 rounded">
         <h3 className="text-blue-300 text-lg font-semibold mb-3">Tying It Together</h3>
         <p className="text-slate-200 mb-3">
-          This lesson builds on:
-        </p>
-        <ul className="space-y-2 text-slate-300 text-sm list-disc ml-5">
-    <li><strong>T01.L08</strong> — Part of the broader OSP workflow.</li>
-    <li><strong>T01.L08</strong> — Part of the broader OSP workflow.</li>
-    <li><strong>T12.L07</strong> — Part of the broader OSP workflow.</li>
-        </ul>
-        <p className="text-slate-200 mt-3 text-sm italic">
-          Each step in the OSP process feeds into the next — understanding these connections strengthens your grasp of the whole system.
+          Test documentation is the permanent record that makes all prior testing work defensible and
+          reusable — without it, the measurements you took exist only in memory. The SOR file format
+          (Bellcore GR-196) is the reason OTDR data can be reviewed on any platform years after the
+          original instrument is retired; a carrier or owner who receives proprietary-format trace
+          files cannot independently verify the contractor's acceptance claim, which is why NECA/FOA 301
+          and RUS 1753F-401 specifically require SOR. The bidirectional OTDR data from T12.L07 — both
+          directions, both wavelengths, per fiber — must appear in the SOR archive to satisfy the
+          dual-wavelength baseline from T12.L13; submitting only one direction or one wavelength is
+          a documentation deficiency that triggers rejection regardless of the loss values. The connector
+          end-face inspection records from T12.L11 (VIP grade per IEC 61300-3-35, per fiber end) are
+          a required component of the test package, closing the loop from inspection through measurement
+          through documentation. The as-tested fiber record produced here feeds directly into T16
+          (As-Built and GIS): the fiber database maintained in GIS-linked records needs the measured
+          attenuation coefficients per reel and the splice loss per location as permanent baseline
+          data for future maintenance and troubleshooting.
         </p>
       </section>
     </LessonLayout>
