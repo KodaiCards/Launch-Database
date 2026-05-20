@@ -81,58 +81,78 @@ const budgetWorkedExample = {
   description:
     'A 9-mile rural FTTH project estimated today with construction starting in 18 months. Apply contingency and escalation correctly.',
   variables: [
-    { symbol: 'Base', name: 'Base estimate (direct cost + overhead + profit)', value: '$2,240,000', unit: '' },
-    { symbol: 'Design_pct', name: 'Design maturity at estimate time', value: '70%', unit: 'complete' },
-    { symbol: 'Contingency_pct', name: 'Contingency percentage (70% design, OSP civil)', value: '15%', unit: '' },
-    { symbol: 'Escalation_rate', name: 'Annual escalation rate for OSP materials + labor', value: '3.5%', unit: '/year' },
-    { symbol: 'Time_to_construction', name: 'Time between estimate and construction start', value: '18', unit: 'months' },
+    { key: 'Base', label: 'Base estimate (direct cost + overhead + profit)', units: '$', default: 2240000, min: 100000, max: 10000000 },
+    { key: 'Design_pct', label: 'Design maturity at estimate time', units: '%', default: 70, min: 10, max: 100 },
+    { key: 'Contingency_pct', label: 'Contingency percentage', units: '%', default: 15, min: 5, max: 50 },
+    { key: 'Escalation_rate', label: 'Annual escalation rate', units: '%/year', default: 3.5, min: 0, max: 10 },
+    { key: 'Time_to_construction', label: 'Time to construction start', units: 'months', default: 18, min: 1, max: 60 },
   ],
-  steps: [
-    {
-      label: 'Step 1 — Establish the contingency percentage',
-      expression: 'Design is 70% complete → Construction contingency = 15%. (If design were 100% complete, 10% floor. At 70%, 15% accounts for the remaining design risk.)',
-      explanation:
-        'Contingency is a function of how well-defined the scope is. At 100% design completion: 10% floor (construction risk only — field conditions). At 70% design: 15% (design risk + construction risk). At 50% design: 20–25%. At conceptual/planning level (20% design): 25–35%. These are OSP-specific guidelines; structural/mechanical construction carries different norms.',
-    },
-    {
-      label: 'Step 2 — Calculate contingency amount',
-      expression: 'Contingency = Base × 15% = $2,240,000 × 0.15 = $336,000',
-      explanation:
-        'The contingency amount is $336,000. This is the fund set aside to cover change orders, quantity overruns, and scope adjustments. It is NOT added to the contractor\'s contract value — it stays with the owner as a reserve.',
-    },
-    {
-      label: 'Step 3 — Calculate escalation period in years',
-      expression: 'Time = 18 months ÷ 12 = 1.5 years',
-      explanation:
-        'Escalation applies from the date of estimate to the midpoint of construction (a common convention) or to construction start if a lump-sum contract locks pricing at award. Here we use construction start (18 months = 1.5 years) for a conservative approach.',
-    },
-    {
-      label: 'Step 4 — Calculate escalation multiplier',
-      expression: 'Multiplier = (1 + 0.035)^1.5 = 1.035^1.5 ≈ 1.05271',
-      explanation:
-        'Escalation compounds annually. At 3.5%/year over 1.5 years: ln(1.035) = 0.034398; 1.5 × 0.034398 = 0.051597; e^0.051597 = 1.05271 — prices are expected to be 5.271% higher at construction start than at estimate date.',
-    },
-    {
-      label: 'Step 5 — Calculate escalation dollar amount',
-      expression: 'Escalation = (Base + Contingency) × (Multiplier − 1) = $2,576,000 × 0.05271 = $135,934',
-      explanation:
-        'Escalation applies to the contingency-inclusive total of $2,576,000, not just the base. Reason: if the contingency reserve sits unused for 18 months before construction completes, those contingency dollars also buy less in the future. Conservative practice applies escalation to the full reserve, not just the base cost. $2,576,000 × (1.05271 − 1) = $2,576,000 × 0.05271 = $135,934.',
-    },
-    {
-      label: 'Step 6 — Total project budget',
-      expression: 'Total Budget = Base + Contingency + Escalation = $2,240,000 + $336,000 + $135,934 = $2,711,934',
-      explanation:
-        'The total project budget is $2,711,934 — 21.0% above the base estimate ($471,934 in reserves). Presenting a budget without these allowances as "the project cost" and then watching it climb 21% during execution is how projects get labeled as cost overruns when they were actually under-estimated from the start.',
-    },
-    {
-      label: 'Step 7 — Sanity check: does this match RUS guidance?',
-      expression: 'RUS projects typically budget 10–15% contingency + 3–5% escalation on base estimates. Total reserves of 20.3% on a 70%-design, 18-month-delayed project is appropriate.',
-      explanation:
-        'RUS Form 524 budget submissions include contingency and escalation as separate line items. The 20.3% total reserve is at the high end but defensible for a 70%-complete design with an 18-month construction delay. A well-prepared RUS budget submits with documented justification for each reserve percentage.',
-    },
-  ],
-  sanityCheck:
-    'The $2.71M budget vs. $2.24M base estimate (21.1% reserves) is appropriate for a partially-designed project with an 18-month execution gap. Escalation applied to the contingency-inclusive total ($2,576,000) rather than the base alone adds $18,369 in conservatism — modest insurance for a 1.5-year wait. If the project were 100% designed and starting in 3 months, reserves would drop to approximately 10% contingency + 0.9% escalation on contingency-inclusive = 10.9% total reserves ≈ $2.48M. The difference between the two scenarios ($232,000) represents the real cost of incomplete design and delayed construction start.',
+  formula: (values) => {
+    const base = values.Base;
+    const contingency_pct = values.Contingency_pct / 100;
+    const escalation_rate = values.Escalation_rate / 100;
+    const time_years = values.Time_to_construction / 12;
+
+    const contingency_amt = base * contingency_pct;
+    const contingency_inclusive = base + contingency_amt;
+    const escalation_multiplier = Math.pow(1 + escalation_rate, time_years);
+    const escalation_amt = contingency_inclusive * (escalation_multiplier - 1);
+    const total_budget = contingency_inclusive + escalation_amt;
+
+    return total_budget;
+  },
+  steps: (values, result) => {
+    const base = values.Base;
+    const contingency_pct = values.Contingency_pct / 100;
+    const escalation_rate = values.Escalation_rate / 100;
+    const time_years = values.Time_to_construction / 12;
+
+    const contingency_amt = base * contingency_pct;
+    const contingency_inclusive = base + contingency_amt;
+    const escalation_multiplier = Math.pow(1 + escalation_rate, time_years);
+    const escalation_amt = contingency_inclusive * (escalation_multiplier - 1);
+
+    return [
+      {
+        expression: `Contingency amount = Base × (${values.Contingency_pct}% / 100)`,
+        value: contingency_amt,
+        unit: '$',
+      },
+      {
+        expression: `Base + Contingency = ${base.toFixed(0)} + ${contingency_amt.toFixed(0)}`,
+        value: contingency_inclusive,
+        unit: '$',
+      },
+      {
+        expression: `Escalation period = ${values.Time_to_construction} months ÷ 12`,
+        value: time_years,
+        unit: 'years',
+      },
+      {
+        expression: `Escalation multiplier = (1 + ${(escalation_rate * 100).toFixed(1)}%)^${time_years.toFixed(2)}`,
+        value: escalation_multiplier,
+        unit: '',
+      },
+      {
+        expression: `Escalation amount = ${contingency_inclusive.toFixed(0)} × (${(escalation_multiplier - 1).toFixed(5)})`,
+        value: escalation_amt,
+        unit: '$',
+      },
+      {
+        expression: `Total Budget = ${base.toFixed(0)} + ${contingency_amt.toFixed(0)} + ${escalation_amt.toFixed(0)}`,
+        value: result,
+        unit: '$',
+      },
+    ];
+  },
+  sanityCheck: (result, values) => {
+    const base = values.Base;
+    const pct_over_base = ((result - base) / base * 100).toFixed(1);
+    return `Total project budget of $${result.toFixed(0)} represents a ${pct_over_base}% reserve over the base estimate of $${base.toFixed(0)} — appropriate for a project with ${values.Design_pct}% design maturity and ${values.Time_to_construction}-month construction delay.`;
+  },
+  resultLabel: 'Total Project Budget',
+  resultUnit: '$',
+  resultDecimals: 0,
 };
 
 const quizQuestions = [
