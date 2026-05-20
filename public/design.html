@@ -1169,6 +1169,7 @@ async function populateEcScopedWoSaForModal(ecId) {
 }
 
 async function clientChanged(preserveJobId){
+  const clientId = document.getElementById('proj-client').value;
   // Reset explicit program on client change so stale values from the
   // previous client don't leak into the gating.
   const pSel = document.getElementById('proj-ptype');
@@ -1223,13 +1224,13 @@ async function loadExistingProjectsForClient() {
     sel.innerHTML = '<option value="">— Create new below —</option>';
     return;
   }
-  let url = '/api/projects?client_id=' + encodeURIComponent(clientId) + '&status=active';
+  let url = '/api/projects?client_id=' + encodeURIComponent(clientId) + '&status=active&leaves_only=true&limit=all';
   // Project Type filter (PSC only — for non-PSC the type field is hidden)
   const ptype = document.getElementById('proj-ptype')?.value;
   if (ptype) url += '&project_type=' + encodeURIComponent(ptype);
   try {
     const rows = await api(url);
-    // Leaves only — rollups are folders.
+    // Leaves only — rollups are folders. Already filtered by backend.
     const leaves = (rows || []).filter(p => !p.is_rollup);
     if (!leaves.length) {
       wrap.style.display = 'none';

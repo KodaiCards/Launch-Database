@@ -27,7 +27,7 @@ module.exports = function installProjectsRoutes(app, pool, mw) {
 
   // Wave 1.5 [UNGATED]: GET /api/projects and GET /api/projects/:id were missing auth.
   app.get('/api/projects', requireAuth(), async (req, res) => {
-    const { status, client_id, type } = req.query;
+    const { status, client_id, project_type } = req.query;
     let where = [];
     let params = [];
     let i = 1;
@@ -36,7 +36,7 @@ module.exports = function installProjectsRoutes(app, pool, mw) {
     let statusParamSlot = null;
     if (status) { statusParamSlot = i; where.push(`p.status=$${i++}`); params.push(status); }
     if (client_id) { where.push(`p.client_id=$${i++}`); params.push(client_id); }
-    if (type) { where.push(`p.project_type=$${i++}`); params.push(type); }
+    if (project_type) { where.push(`p.project_type=$${i++}`); params.push(project_type); }
 
     // Phase 1 (timeclock-picker wave): opt-in leaf-only filter.
     // Accepted values: 'true', '1', 'on' (case-insensitive). Anything else
