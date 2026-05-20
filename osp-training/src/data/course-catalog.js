@@ -728,4 +728,10 @@ export const lessonFileIndex = {
   'T22.L07': '../lessons/T22/L07.troubleshooting-field-issues.jsx',
   'T22.L08': '../lessons/T22/L08.mock-exam-one-75-questions.jsx',
   'T22.L09': '../lessons/T22/L09.mock-exam-two-75-questions.jsx',
+
+  // ── C04 OSP Designer Mock Exam ───────────────────────────────────────────────
+  'C04.L01': '../lessons/C04/L01.osp-designer-mock-exam.jsx',
+
+  // ── C05 OSP Final Exam ───────────────────────────────────────────────────────
+  'C05.L01': '../lessons/C05/L01.osp-final-exam.jsx',
 };
