@@ -129,7 +129,7 @@ function MultipleChoice({ q, revealed, onAnswer }) {
               className={`w-full text-left px-4 py-2 rounded-lg border transition ${cls}`}
             >
               <span className="font-mono text-xs text-slate-300/60 mr-2">{String.fromCharCode(65 + i)}.</span>
-              {c}
+              {typeof c === 'string' ? c : c.text}
             </button>
           </li>
         );

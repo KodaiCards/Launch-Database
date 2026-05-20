@@ -178,7 +178,7 @@ function MultipleChoice({ q, revealed, onAnswer }) {
               <span className="font-mono text-xs text-slate-300/60 mr-2">
                 {String.fromCharCode(65 + i)}.
               </span>
-              {c}
+              {typeof c === 'string' ? c : c.text}
             </button>
           </li>
         );
