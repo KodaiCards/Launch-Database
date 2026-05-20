@@ -130,7 +130,7 @@ test.describe('Fiber Attenuation Calculator — design portal', () => {
     const connText = await page.locator('#att-r-conn').textContent();
     expect(connText).toContain('1.00');
 
-    // Sanity check should be green (3.50 dB < 22 dB threshold for 1550 nm)
+    // Sanity check should be green (3.50 dB < 28 dB green threshold for 1550 nm)
     await expect(page.locator('#att-sanity.green')).toBeVisible();
 
     expect(pageErrors).toHaveLength(0);
@@ -166,7 +166,10 @@ test.describe('Fiber Attenuation Calculator — design portal', () => {
     expect(pageErrors).toHaveLength(0);
   });
 
-  test('5. Red sanity check fires when total exceeds 28 dB (1550 nm threshold)', async ({ page }) => {
+  test('5. Red sanity check fires when total exceeds 35 dB (1550 nm yellow threshold)', async ({ page }) => {
+    // NEW-1 fix: LOW-B1 raised 1550 nm thresholds to green=28, yellow=35.
+    // 160 km × 0.22 dB/km = 35.20 dB which exceeds the yellow threshold (35 dB) → RED.
+    // (Old 150 km test produced 33 dB which now falls between green=28 and yellow=35 → YELLOW, not RED.)
     const pageErrors = [];
     page.on('pageerror', (err) => { pageErrors.push(err); console.error('[pageerror]', err.message); });
 
@@ -176,15 +179,15 @@ test.describe('Fiber Attenuation Calculator — design portal', () => {
 
     await page.selectOption('#att-fiber-type', 'G.652.D');
     await page.click('input[name="att-wl"][value="1550"]');
-    // 150 km × 0.22 dB/km = 33 dB fiber alone — clearly over budget
+    // 160 km × 0.22 dB/km = 35.20 dB — exceeds the 35 dB yellow threshold → RED
     await page.locator('#att-unit-m').click();
-    await page.fill('#att-span', '150');
+    await page.fill('#att-span', '160');
     await page.fill('#att-splices', '0');
     await page.fill('#att-connectors', '0');
 
     await page.waitForTimeout(200);
 
-    // Sanity should show red
+    // Sanity should show red (35.20 dB > 35 dB yellow threshold)
     await expect(page.locator('#att-sanity.red')).toBeVisible();
 
     expect(pageErrors).toHaveLength(0);
@@ -345,8 +348,12 @@ test.describe('Fiber Attenuation Calculator — design portal', () => {
     expect(threw).toBe(true);
   });
 
-  // MED-A1: G.655 @ 1310 nm UI — warning shown, results hidden
-  test('12. UI: G.655 + 1310 nm shows blocked warning, hides results', async ({ page }) => {
+  // MED-A1: G.655 @ 1310 nm UI — 1310 nm radio is disabled (combination is blocked)
+  test('12. UI: G.655 selected disables 1310 nm radio (G.655 + 1310 nm is out-of-spec)', async ({ page }) => {
+    // NEW-2 fix: when G.655 is selected with 1310nm active, the UI auto-switches to 1490nm.
+    // After the auto-switch, blocked = G.655+1490nm = false, so the warning hides.
+    // The stable observable state is: the 1310nm radio is disabled (aria-disabled + input.disabled).
+    // We assert that rather than the transient warning visibility.
     const pageErrors = [];
     page.on('pageerror', (err) => { pageErrors.push(err); console.error('[pageerror]', err.message); });
 
@@ -354,15 +361,13 @@ test.describe('Fiber Attenuation Calculator — design portal', () => {
     await page.click('#att-calc-btn-wrap button');
     await expect(page.locator('#att-calc-modal-overlay')).toBeVisible({ timeout: 5_000 });
 
-    // Select G.655
+    // Select G.655 — UI will auto-switch away from 1310nm and mark the radio disabled
     await page.selectOption('#att-fiber-type', 'G.655');
-    // Ensure 1310 nm is selected (it may have been auto-switched; manually click it)
-    // Note: the 1310 radio may be disabled after G.655 select — check the warning appears
     await page.waitForTimeout(300);
 
-    // The blocked warning should be visible
-    const warning = page.locator('#att-blocked-warning');
-    await expect(warning).toBeVisible({ timeout: 3_000 });
+    // The 1310 nm radio should be disabled — G.655 has no ITU-T spec at 1310 nm
+    const radio1310 = page.locator('input[name="att-wl"][value="1310"]');
+    await expect(radio1310).toBeDisabled({ timeout: 3_000 });
 
     expect(pageErrors).toHaveLength(0);
   });

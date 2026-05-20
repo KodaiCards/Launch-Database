@@ -194,11 +194,33 @@
           + 'or a higher-power transceiver before finalizing design.';
     }
 
+    // NEW-LOW fix (RT-C): for 1490nm (GPON), remind user that the span reading is span-only —
+    // total GPON path loss must add splitter IL. A GREEN span reading does not mean the full
+    // GPON path is within budget if a downstream splitter adds 14–18 dB.
+    if (wavelength === 1490) {
+      msg += ' Note: this is span attenuation only. For GPON, add splitter insertion loss '
+           + '(1:32 splitter ≈ 17 dB, 1:8 ≈ 11 dB) to get total path loss — verify against '
+           + 'OLT/ONU Rx sensitivity (Class B+ total budget = 28 dB per ITU-T G.984.2).';
+    }
+
+    // NEW-3 fix: dispersion/PMD advisory is now fiber-type-aware so G.655 users
+    // see accurate NZDSF figures instead of the G.652.D standard-SMF figures.
     // LOW-B2: dispersion/PMD advisory for long spans or high-bitrate systems
     if (spanKm >= 40) {
+      let dispNote;
+      if (fiberType === 'G.655') {
+        // G.655 (NZDSF): low non-zero dispersion, ~3–4 ps/nm·km @ 1550 nm per ITU-T G.655 §5
+        dispNote = '(G.655/NZDSF: ~3–4 ps/nm·km @ 1550 nm — low CD, optimized for C-band WDM; '
+                 + 'PMD ≤ 0.20 ps/√km per G.655 §5)';
+      } else {
+        // G.652.D and G.657.A2: both are standard SMF geometry with the same dispersion class
+        // G.657.A2 shares G.652.D attenuation and dispersion characteristics (ITU-T G.657 §6.1)
+        dispNote = '(G.652.D/G.657.A2: ~17 ps/nm·km @ 1550 nm; PMD ≤ 0.20 ps/√km per G.652.D §6.2)';
+      }
       msg += ' ⚠ For spans ≥ 40 km or bitrates ≥ 10 Gbps, also verify chromatic dispersion '
-           + '(G.652.D: ~17 ps/nm·km @ 1550 nm) and PMD (G.652.D: ≤ 0.2 ps/√km) against your '
-           + 'transceiver tolerance separately — attenuation alone does not determine link viability.';
+           + 'and PMD against your transceiver tolerance separately '
+           + dispNote
+           + ' — attenuation alone does not determine link viability.';
     }
 
     return { level, msg };
@@ -839,6 +861,7 @@
     // Uses window.trapFocus from public/js/focus_trap.js (loaded in design.html + splice.html).
     // Falls back to manual focus management if trapFocus is unavailable.
     let activeTrap = null;
+    let fallbackTrigger = null; // NEW-4: stores trigger element for fallback focus-return
 
     function open(triggerEl) {
       overlay.style.display = 'flex';
@@ -848,7 +871,9 @@
           onEsc: close
         });
       } else {
-        // Minimal fallback: move focus to first focusable element
+        // Fallback: save trigger for focus-return on close, then move focus into modal
+        // NEW-4: capture activeElement BEFORE shifting focus so close() can restore it
+        fallbackTrigger = triggerEl || document.activeElement;
         const firstFocusable = panel.querySelector('select, input, button');
         if (firstFocusable) firstFocusable.focus();
       }
@@ -860,6 +885,10 @@
       if (activeTrap) {
         activeTrap.release();
         activeTrap = null;
+      } else if (fallbackTrigger) {
+        // NEW-4: restore focus to trigger element in fallback path (mirrors trapFocus behaviour)
+        try { fallbackTrigger.focus(); } catch (_) {}
+        fallbackTrigger = null;
       }
     }
 
