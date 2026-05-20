@@ -273,6 +273,113 @@ export default function T14L03_MessengerBondingRules() {
         />
       </section>
 
+      {/* ── ADVANCED ──────────────────────────────────────────────────────── */}
+      <section data-tier="advanced" className="mt-8">
+        <h2>Advanced: Messenger Bonding in System Design</h2>
+
+        <p>
+          Building on the foundations of grounding (<strong>T14.L01</strong>) and multi-grounded neutral systems
+          (<strong>T14.L02</strong>), this section ties messenger bonding into the broader OSP plant strategy and
+          shows when the bonding decision affects design choices.
+        </p>
+
+        <h3 className="mt-5 font-semibold">Messenger Bond as an Equipment Protection Layer</h3>
+
+        <p>
+          From T14.L01, you learned that grounding exists to give fault current a safe path to earth, protecting
+          equipment and crew. The MGN system in T14.L02 does this for the distribution plant. Messenger bonding
+          is the communications plant's connection into that equipotential: when the fiber messenger is bonded
+          at splice closures, you're tying your cable sheath and any connected metallic components (closures,
+          pedestals, service-drop cable armor) into the same reference potential as the utility's grounded neutral.
+        </p>
+
+        <p className="mt-3">
+          This has a practical field consequence: if a distribution line breaks and falls across your joint-use pole,
+          the fault current seeks the best ground path. If your messenger is bonded per NESC Rule 96F, the fault
+          current flows through your cable sheath → downlead → ground rod → earth, which also means the fault
+          energy is distributed among multiple paths (the utility's ground rods AND your downleads at adjacent poles).
+          If your messenger is NOT bonded, the fault current that contacts your cable has nowhere to go except
+          through your equipment (closure, splicer's hands, pedestals) to ground — a potentially lethal path. The
+          bonding rule exists to prevent this.
+        </p>
+
+        <h3 className="mt-5 font-semibold">Design Scenario: Lashed Strand vs. ADSS Choice</h3>
+
+        <p>
+          Messenger bonding is a key input into the cable selection decision (T03). Some projects have a choice
+          between lashed-strand cable (with a steel messenger that requires bonding at every closure) or ADSS
+          (self-supporting, no bonding required). Here's when each choice makes sense:
+        </p>
+
+        <ul className="list-disc ml-6 mt-2 space-y-2 text-slate-300/90">
+          <li>
+            <strong>Lashed-strand on joint-use poles:</strong> The messenger bond strategy is already in place
+            (the utility has ground rods every pole or every few poles for the MGN). Your downlead can use
+            the shared ground rod, reducing cost. Vertical separation from distribution neutrals can be reduced
+            per T14.L03's bonded-messenger rule (closer routing = tighter conduit runs = easier make-ready).
+            Trade-off: you must install bond clamps at every splice closure — recurring labor cost, but one-time
+            material cost per project.
+          </li>
+          <li>
+            <strong>ADSS on joint-use poles with poor grounding:</strong> If the joint-use pole's ground rod
+            is inadequate or far from your cable route (e.g., the pole is on sand where deep-driving is required),
+            adding a downlead to a remote ground rod becomes expensive. ADSS sidesteps this: no bonding required,
+            no downlead cost, no dependency on the utility's grounding infrastructure. Trade-off: ADSS cable
+            is more expensive than lashed-strand; you lose the reduced-separation benefit, so your clearance
+            from distribution neutrals must meet the standard separation (larger). Larger clearance may mean
+            higher pole heights or new poles — assess the trade-off on your project.
+          </li>
+          <li>
+            <strong>ADSS on solo fiber routes (no joint-use):</strong> No bonding rules apply because there is
+            no MGN system on the pole. ADSS is the standard choice here. Lashed-strand would still require a
+            bonding strategy (ground rod at every closure) per the broader NESC Rule 96F principle, even though
+            there is no joint-use partner. ADSS eliminates that cost.
+          </li>
+        </ul>
+
+        <h3 className="mt-5 font-semibold">Restoration Scenario: Bonding After Cable Damage</h3>
+
+        <p>
+          From T15 (Restoration & Outage Response), when a joint-use cable is damaged and must be spliced in the field,
+          the messenger bonding rule creates a hard constraint: your splice closure MUST be bonded per Rule 96F, even
+          in an emergency. This means the restoration team must:
+        </p>
+
+        <ol className="list-decimal ml-6 mt-2 space-y-2 text-slate-300/90">
+          <li>
+            Locate or drive a new ground rod at the splice location (if no existing rod is within bonding distance).
+          </li>
+          <li>
+            Install a downlead from the splice closure's bond point to the ground rod.
+          </li>
+          <li>
+            Verify the downlead is protected from grade to 8 feet above grade.
+          </li>
+        </ol>
+
+        <p className="mt-2">
+          This is not optional even for a "quick temporary splice." A temporary closure without a proper downlead
+          bond is a floating conductor that will accumulate voltage from nearby distribution lines, creating a shock
+          hazard during the follow-up permanent repair work. The team doing the permanent restoration will discover
+          an ungrounded closure and must stop, drive a ground rod, install a downlead, and only then finish the splice
+          installation. Planning for the ground rod and downlead before the splice starts saves hours of downstream work.
+        </p>
+
+        <h3 className="mt-5 font-semibold">Cross-Topic Integration: Bonding + Impedance</h3>
+
+        <p>
+          T14.L01 introduced grounding resistance (Rg) as a measure of how effectively an electrode gets fault current
+          into the earth. A typical pole ground rod at 5/8-in. × 8-ft driven in soil yields Rg ≈ 10–25 Ω. T14.L02
+          explained that the MGN system bonds the distribution neutral at frequent intervals to keep it at low impedance
+          to ground. When your messenger downlead connects to that same ground rod, you're sharing the Rg. If the rod is
+          already bonded to the MGN system, both the distribution neutral and your fiber cable are at the same reference
+          potential — exactly the goal. If the rod is not yet bonded (perhaps it's a new pole), your downlead is the FIRST
+          bond from that rod to the distribution system, and you become the low-impedance path for distribution fault current.
+          This is fine (the rod performs its intended function), but it underscores why the bonding decision is not cosmetic:
+          it determines the fault-current flow path in your plant.
+        </p>
+      </section>
+
       {/* ── FLASHCARDS ───────────────────────────────────────────────────── */}
       <section data-tier="foundations" className="mt-8">
         <h3 className="font-semibold mb-3">Key Terms — Flashcards</h3>
