@@ -241,6 +241,16 @@ export default function T15L01OutageResponseFirst30() {
       <section data-tier="working">
         <h2>The First 30 Minutes: Step by Step</h2>
 
+        <div className="border-l-4 border-blue-400/30 bg-blue-400/5 p-3 my-3 rounded text-sm">
+          <strong>Quick Refresher:</strong> Before diving into the 30-minute timeline, recall these prerequisite concepts:
+          <ul className="mt-2 space-y-1 ml-4 list-disc text-slate-600">
+            <li><strong>Inspector (OSP)</strong> (T01.L06) — OSP personnel responsible for QA/QC. During outage response, the inspector may be part of the field crew or remain at the office documenting the MOP.</li>
+            <li><strong>As-Built Drawings</strong> (T10.L11) — the formal record of what was actually constructed. The NOC uses the as-built to identify which fiber types and splice methods exist on the affected route — critical for repair planning.</li>
+            <li><strong>OTDR Trace (Event Table)</strong> (T12.L07) — the graphical record from an optical time-domain reflectometer showing breaks, splices, and loss events. Fault locate starts with an OTDR trace from the nearest launch point.</li>
+            <li><strong>RUS Form 565 (Inspector's Daily Report)</strong> (T13.L11) — the daily inspection log that becomes the audit trail. During outage response, bridge call notes serve a similar function: timestamped record of every action and decision.</li>
+          </ul>
+        </div>
+
         <h3>Minute 0: NOC Detects the Outage</h3>
         <p>
           Network management systems alarm when circuit power (optical signal level) drops below

@@ -236,6 +236,18 @@ export default function L07CustomerCommunicationDuringOutages() {
 
       {/* ── ETR STRUCTURE ─────────────────────────────────────────────────── */}
       <section className="lesson-section working">
+        <div className="border-l-4 border-blue-400/30 bg-blue-400/5 p-3 my-3 rounded text-sm">
+          <strong>Quick Refresher:</strong> ETR communication relies on these technical foundations:
+          <ul className="mt-2 space-y-1 ml-4 list-disc text-slate-600">
+            <li><strong>Outage Bridge Call</strong> (T15.L01) — the platform where the NOC issues the ETR and field crew updates it. You are the source of technical information the NOC relays to the customer.</li>
+            <li><strong>RTO (Recovery Time Objective)</strong> (T15.L01) — the SLA target. Your ETR must be more aggressive than the RTO (faster if possible) to meet the SLA commitment.</li>
+            <li><strong>Fault Locate (Cable-Distance)</strong> (T15.L02) — the OTDR math. The break location determines civil work effort and repair complexity.</li>
+            <li><strong>Temporary vs. Permanent Repair</strong> (T15.L04) — the key trade-off driving ETR. Temporary patch is faster but may require follow-up. Permanent restoration takes longer but is final.</li>
+            <li><strong>Emergency Civil Work</strong> (T15.L06) — the digging, shoring, and utility protection. Civil work is often the longest task in an outage. ETR must account for excavation time.</li>
+            <li><strong>Splice Trailer Setup</strong> (T15.L05) — once access is confirmed, splicing time is predictable. The variable is usually access and environmental control setup.</li>
+          </ul>
+        </div>
+
         <h2>ETR: What It Is and What It Isn't</h2>
         <p>
           An <strong>ETR (Estimated Time to Restore)</strong> is your best current estimate of when service

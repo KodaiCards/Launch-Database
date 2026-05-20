@@ -182,6 +182,15 @@ export default function T16L03TIA606CClasses() {
 
       {/* ── WORKING ─────────────────────────────────────────────────────── */}
       <section className="lesson-section working">
+        <div className="border-l-4 border-blue-400/30 bg-blue-400/5 p-3 my-3">
+          <h3 className="text-blue-900 font-semibold mb-2">Quick Refresher — Key Concepts</h3>
+          <ul className="text-sm space-y-1">
+            <li><strong>ANSI/TIA-606-C (from T16.L01):</strong> The standard that governs systematic identification, documentation, and tracking of every infrastructure component.</li>
+            <li><strong>As-built record (from T16.L01):</strong> The permanent documentation of what was physically installed, organized using TIA-606-C record types.</li>
+            <li><strong>GIS record of record (from T16.L01):</strong> The authoritative GIS dataset that complements TIA-606-C with geographic coordinates and routing information.</li>
+          </ul>
+        </div>
+
         <h2>TIA-606-C Record Types — Four Categories</h2>
         <p>
           TIA-606-C uses four record types to document an infrastructure. Each record type answers a different question:

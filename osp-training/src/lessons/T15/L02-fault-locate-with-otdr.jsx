@@ -266,16 +266,30 @@ export default function T15L02FaultLocateOTDR() {
       {/* ── WORKED EXAMPLE ─────────────────────────────────────────────── */}
       <section data-tier="working">
         <h2>Fault Distance: The Math</h2>
+
+        <div className="border-l-4 border-blue-400/30 bg-blue-400/5 p-3 my-3 rounded text-sm">
+          <strong>Quick Refresher:</strong> This section uses concepts from earlier topics:
+          <ul className="mt-2 space-y-1 ml-4 list-disc text-slate-600">
+            <li><strong>OTDR Trace (Event Table)</strong> (T12.L07) — the graphical display showing distance vs. backscatter level. This lesson deepens your ability to extract fault distance from the trace data.</li>
+            <li><strong>IOR (Index of Refraction)</strong> (T02.L01) — the fiber parameter that slows light down. Getting IOR correct is the single largest source of OTDR distance error.</li>
+            <li><strong>Return Loss (RL)</strong> (T11.L12) — the reflection measurement. A clean break creates a strong return-loss spike on the OTDR trace.</li>
+            <li><strong>Insertion Loss</strong> (T12.L06) — the power lost passing through an event. Combined with return loss, insertion loss helps distinguish a clean break from gradual attenuation (crush damage).</li>
+          </ul>
+        </div>
+
         <WorkedExample example={faultDistanceWorked} />
       </section>
 
       {/* ── WORKING ────────────────────────────────────────────────────── */}
       <section data-tier="working">
         <h2>Break Signatures: What the Trace Tells You</h2>
+
         <p>
           Different types of damage produce recognizable OTDR trace shapes. Learning to read
           these shapes speeds up your field response — you know what you're going to find before
-          you start digging.
+          you start digging. Recall from <strong>T15.L01 Outage Response: The First 30 Minutes</strong> —
+          during an active outage, the field crew must locate a break quickly. Reading the OTDR trace
+          accurately is the first step.
         </p>
 
         <table style={{ width: '100%', borderCollapse: 'collapse', margin: '1rem 0' }}>

@@ -147,6 +147,17 @@ export default function L09PostRestorationAsBuiltUpdate() {
 
       {/* ── AS-BUILT UPDATE ───────────────────────────────────────────────── */}
       <section className="lesson-section working">
+        <div className="border-l-4 border-blue-400/30 bg-blue-400/5 p-3 my-3 rounded text-sm">
+          <strong>Quick Refresher:</strong> Post-restoration documentation connects back to foundational topics:
+          <ul className="mt-2 space-y-1 ml-4 list-disc text-slate-600">
+            <li><strong>As-Built Drawings</strong> (T10.L11) — the record you relied on during fault locate (T15.L02–L03). Now you update the as-built to include the new splice point and closure for the next crew.</li>
+            <li><strong>OTDR Trace (Event Table)</strong> (T12.L07) — the post-splice OTDR trace is archived in .sor format (binary, not screenshots). Future crews can load your trace and compare against it if the circuit shows new loss.</li>
+            <li><strong>Fusion Splice</strong> (T11.L04) — the splice loss measurement from your post-splice OTDR becomes part of the as-built record. Baseline loss is documented so changes indicate future degradation.</li>
+            <li><strong>Reconciling As-Built to As-Designed</strong> (T16.L06) — your post-restoration update IS reconciliation: "we originally designed it for a splice at mile 7.2; the actual break was at mile 7.1; we spliced at 7.1 and updated the record."</li>
+            <li><strong>Emergency MOP</strong> (T15.L01 + T15.L08) — the MOP documents the temporary or permanent nature of the repair. The as-built records the location, closure, and baseline loss.</li>
+          </ul>
+        </div>
+
         <h2>Required Post-Restoration As-Built Elements</h2>
         <p>
           The post-restoration as-built update creates the new record of record for the restored section.

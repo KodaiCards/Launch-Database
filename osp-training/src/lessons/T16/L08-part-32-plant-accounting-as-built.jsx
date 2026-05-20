@@ -114,6 +114,15 @@ export default function L08() {
 
       {/* ── WORKING ──────────────────────────────────────────────── */}
       <section className="lesson-section working">
+        <div className="border-l-4 border-blue-400/30 bg-blue-400/5 p-3 my-3">
+          <h3 className="text-blue-900 font-semibold mb-2">Quick Refresher — Key Concepts</h3>
+          <ul className="text-sm space-y-1">
+            <li><strong>As-built record (from T16.L01):</strong> The permanent documentation of what was physically installed, which feeds the borrower's plant ledger.</li>
+            <li><strong>Reconciliation (from T16.L06):</strong> The process of comparing as-designed to as-built, documenting deviations, and producing the final as-built record.</li>
+            <li><strong>GIS record of record (from T16.L01):</strong> The authoritative, accepted GIS dataset that becomes the official plant location record after close-out.</li>
+          </ul>
+        </div>
+
         <h2>The Part 32 Accounts That Matter for OSP Fiber</h2>
 
         <p>

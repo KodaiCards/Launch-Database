@@ -195,6 +195,16 @@ export default function T16L02SpliceMatrix() {
 
       {/* ── WORKING ─────────────────────────────────────────────────────── */}
       <section className="lesson-section working">
+        <div className="border-l-4 border-blue-400/30 bg-blue-400/5 p-3 my-3">
+          <h3 className="text-blue-900 font-semibold mb-2">Quick Refresher — Key Concepts</h3>
+          <ul className="text-sm space-y-1">
+            <li><strong>As-built record (from T16.L01):</strong> The permanent documentation of what was physically installed, which the splice matrix supports.</li>
+            <li><strong>Buffer tube (from T01.L03):</strong> The protective outer layer (usually 900 µm) that holds up to 12 fibers inside a cable.</li>
+            <li><strong>Splice case types (from T11.L09):</strong> The different closure designs (inline mid-span, breakout, pedestal, vault) that house and organize splice trays.</li>
+            <li><strong>Splice loss in dB (from T11.L03):</strong> The measured attenuation across each splice, a key quality indicator for the link budget.</li>
+          </ul>
+        </div>
+
         <h2>Splice Matrix Schema — The Eight Required Fields</h2>
         <p>
           A complete splice matrix entry needs enough information to (1) identify the specific fibers involved, (2) locate the splice case, (3) confirm the splice quality, and (4) support future maintenance. Eight fields cover all four requirements:

@@ -179,6 +179,16 @@ export default function T16L05GISFormats() {
 
       {/* ── WORKING ─────────────────────────────────────────────────────── */}
       <section className="lesson-section working">
+        <div className="border-l-4 border-blue-400/30 bg-blue-400/5 p-3 my-3">
+          <h3 className="text-blue-900 font-semibold mb-2">Quick Refresher — Key Concepts</h3>
+          <ul className="text-sm space-y-1">
+            <li><strong>GIS (from T01.L08):</strong> Geographic Information System — software for storing spatial data (coordinates, map layers) in queryable format.</li>
+            <li><strong>Shapefile (.shp/.shx/.dbf/.prj) (from T04.L03):</strong> One of the standard vector formats for delivering GIS data, consisting of four companion files.</li>
+            <li><strong>As-built record (from T16.L01):</strong> The permanent documentation of physical installation, with GIS providing the geographic coordinate layer.</li>
+            <li><strong>GIS record of record (from T16.L01):</strong> The authoritative, accepted GIS dataset that becomes the official plant location reference after close-out.</li>
+          </ul>
+        </div>
+
         <h2>Shapefile vs. File Geodatabase</h2>
 
         <SideBySide {...formatComparison} />

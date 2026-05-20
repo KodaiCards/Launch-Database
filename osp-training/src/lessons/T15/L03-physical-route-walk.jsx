@@ -206,6 +206,17 @@ export default function T15L03PhysicalRouteWalk() {
       {/* ── WORKING ────────────────────────────────────────────────────── */}
       <section data-tier="working">
         <h2>Buried Cable Physical Locate Sequence</h2>
+
+        <div className="border-l-4 border-blue-400/30 bg-blue-400/5 p-3 my-3 rounded text-sm">
+          <strong>Quick Refresher:</strong> Building on earlier topics from your OSP foundation:
+          <ul className="mt-2 space-y-1 ml-4 list-disc text-slate-600">
+            <li><strong>Fusion Splice</strong> (T11.L04) — during the route walk, you may find evidence of prior splices in buried cabinets. Know what fusion splice permanent records look like (fiber pigtails, steel tube housing, silica gel).</li>
+            <li><strong>As-Built Drawings</strong> (T10.L11) — your map during the physical route walk. Without accurate as-builts showing burial depth, cable type, and crossing utilities, the locate becomes guesswork.</li>
+            <li><strong>Call-811 (Damage Prevention)</strong> (from T09 Permitting) — before breaking ground on any buried locate, notify 811 and utilities. During an active emergency outage, you notify 811 of the emergency nature and confirm the locate priority.</li>
+            <li><strong>Slack Factor</strong> (T15.L02) — the conversion you just did from cable distance (OTDR) to route distance. The physical walk starts at that calculated route distance.</li>
+          </ul>
+        </div>
+
         <ol>
           <li>
             <strong>Calculate route survey distance</strong> from OTDR cable distance using the

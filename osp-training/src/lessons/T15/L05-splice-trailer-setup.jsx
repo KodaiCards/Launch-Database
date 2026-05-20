@@ -168,6 +168,18 @@ export default function L05SpliceTrailerSetup() {
 
       {/* ── GENERATOR SAFETY ──────────────────────────────────────────────── */}
       <section className="lesson-section working">
+        <div className="border-l-4 border-blue-400/30 bg-blue-400/5 p-3 my-3 rounded text-sm">
+          <strong>Quick Refresher:</strong> Before setting up the splice trailer, recall foundational concepts:
+          <ul className="mt-2 space-y-1 ml-4 list-disc text-slate-600">
+            <li><strong>Fusion Splice</strong> (T11.L04) — the splicing process that requires precise temperature control and humidity conditions. The trailer's environmental controls support this.</li>
+            <li><strong>OTDR Trace</strong> (T12.L07) — post-splice verification performed inside the trailer. The workspace must accommodate an OTDR setup alongside the splicer.</li>
+            <li><strong>Temporary Patch</strong> (T15.L04) — some repairs may skip the trailer (mechanical splice in the field). Permanent restoration uses the trailer.</li>
+            <li><strong>Permanent Restoration</strong> (T15.L04) — fusion splicing with full environmental control. The trailer IS the permanent restoration tool.</li>
+            <li><strong>PPE (General)</strong> (T18.L01) — personal protective equipment required around high-voltage power, arc equipment, and heat sources in the trailer.</li>
+            <li><strong>LOTO</strong> (T18.L05) — Lockout/Tagout applies before connecting external power to the trailer's main electrical panel.</li>
+          </ul>
+        </div>
+
         <h2>Generator Placement: Carbon Monoxide Safety</h2>
 
         <div className="callout critical">

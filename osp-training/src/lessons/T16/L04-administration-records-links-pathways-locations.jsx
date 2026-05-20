@@ -172,6 +172,15 @@ export default function T16L04AdminRecordsWorked() {
 
       {/* ── WORKING ─────────────────────────────────────────────────────── */}
       <section className="lesson-section working">
+        <div className="border-l-4 border-blue-400/30 bg-blue-400/5 p-3 my-3">
+          <h3 className="text-blue-900 font-semibold mb-2">Quick Refresher — Key Concepts</h3>
+          <ul className="text-sm space-y-1">
+            <li><strong>TIA-606-C administration classes (from T16.L03):</strong> Four tiers (A/B/C/D) that define minimum required records based on infrastructure complexity.</li>
+            <li><strong>As-built record (from T16.L01):</strong> The permanent documentation of what was physically installed, organized into link, pathway, and location records.</li>
+            <li><strong>Splice matrix (from T16.L02):</strong> A detailed table documenting fiber routing, splice locations, and measured loss values in each fiber path.</li>
+          </ul>
+        </div>
+
         <h2>Worked Examples</h2>
 
         {/* Link Record Worked Example */}

@@ -275,6 +275,19 @@ export default function L04TemporaryVsPermanentRepair() {
       {/* ── FIBER TYPE CONFIRMATION ────────────────────────────────────── */}
       <section className="lesson-section working">
         <h2>Step 1 Before Splicing: Confirm the Fiber Type</h2>
+
+        <div className="border-l-4 border-blue-400/30 bg-blue-400/5 p-3 my-3 rounded text-sm">
+          <strong>Quick Refresher:</strong> Bring forward key prerequisites before the splicing decision:
+          <ul className="mt-2 space-y-1 ml-4 list-disc text-slate-600">
+            <li><strong>OTDR Trace</strong> (T12.L07) — part of fault locate in T15.L02. You know WHERE the break is.</li>
+            <li><strong>Fusion Splice</strong> (T11.L04) — the mechanical process. This lesson applies it to the emergency outage context.</li>
+            <li><strong>Fault Locate (Cable-Distance)</strong> (T15.L02) — the OTDR math that found the break. Confirmed via the route walk (T15.L03).</li>
+            <li><strong>Event Dead Zone (EDZ)</strong> (T15.L02) — the reflection recovery zone. On the OTDR, EDZ affects how closely two events (like your splice and the original break) can be distinguished.</li>
+            <li><strong>Emergency MOP</strong> (T15.L01) — the documentation that runs in parallel. Your fiber type confirmation and splice quality become part of the MOP record.</li>
+            <li><strong>RTO (Recovery Time Objective)</strong> (T15.L01) — the SLA commitment driving your repair speed decision (temporary vs. permanent).</li>
+          </ul>
+        </div>
+
         <p>
           Before touching a splicer, confirm the fiber type on both ends. This takes 2–5 minutes and
           prevents a repair that restores service but fails under load.

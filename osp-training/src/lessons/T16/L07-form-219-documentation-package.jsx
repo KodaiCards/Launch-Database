@@ -205,6 +205,16 @@ export default function L07() {
 
       {/* ── WORKING ──────────────────────────────────────────────── */}
       <section className="lesson-section working">
+        <div className="border-l-4 border-blue-400/30 bg-blue-400/5 p-3 my-3">
+          <h3 className="text-blue-900 font-semibold mb-2">Quick Refresher — Key Concepts</h3>
+          <ul className="text-sm space-y-1">
+            <li><strong>As-built record (from T16.L01):</strong> The permanent documentation of what was physically installed, the centerpiece of the close-out package.</li>
+            <li><strong>Reconciliation (from T16.L06):</strong> The formal process of comparing as-designed to as-built and documenting every deviation with engineer approval.</li>
+            <li><strong>GIS record of record (from T16.L01):</strong> The authoritative, accepted GIS dataset included in Form 219 close-out as the official plant location reference.</li>
+            <li><strong>Splice matrix (from T16.L02):</strong> A detailed table of every fiber's path, splice locations, and loss measurements, required documentation for close-out.</li>
+          </ul>
+        </div>
+
         <h2>What Goes in the Close-Out Package</h2>
 
         <p>

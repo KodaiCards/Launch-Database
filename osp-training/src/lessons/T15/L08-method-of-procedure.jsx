@@ -230,6 +230,17 @@ export default function L08MethodOfProcedure() {
 
       {/* ── MOP ELEMENTS ──────────────────────────────────────────────────── */}
       <section className="lesson-section working">
+        <div className="border-l-4 border-blue-400/30 bg-blue-400/5 p-3 my-3 rounded text-sm">
+          <strong>Quick Refresher:</strong> MOP documentation draws on these earlier topics:
+          <ul className="mt-2 space-y-1 ml-4 list-disc text-slate-600">
+            <li><strong>Outage Bridge Call</strong> (T15.L01) — the NOC supervisor provides verbal authorization logged with a timestamp on the bridge. That timestamp and authorization name go into the MOP.</li>
+            <li><strong>Emergency MOP</strong> (T15.L01) — the concept introduced; this lesson deepens the structure and required fields.</li>
+            <li><strong>Fiber Type Confirmation</strong> (T15.L04) — the results of your sheath-printing or cross-section check must be recorded in the MOP (which fiber grades were spliced).</li>
+            <li><strong>RUS Form 565 (Inspector's Daily Report)</strong> (T13.L11) — the daily inspection log. The emergency MOP serves a similar documentation function during restoration, timestamping each action.</li>
+            <li><strong>Safety Actions</strong> (from T18) — any LOTO, confined-space entry, or PPE requirements are documented in the MOP with timing and personnel names.</li>
+          </ul>
+        </div>
+
         <h2>Emergency MOP Structure</h2>
         <p>
           An emergency MOP contains the same structural elements as a standard MOP — the difference is

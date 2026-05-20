@@ -172,6 +172,15 @@ export default function L06() {
 
       {/* ── WORKING ──────────────────────────────────────────────── */}
       <section className="lesson-section working">
+        <div className="border-l-4 border-blue-400/30 bg-blue-400/5 p-3 my-3">
+          <h3 className="text-blue-900 font-semibold mb-2">Quick Refresher — Key Concepts</h3>
+          <ul className="text-sm space-y-1">
+            <li><strong>As-built record (from T16.L01):</strong> The permanent documentation of what was physically installed, incorporating every deviation from the design.</li>
+            <li><strong>As-designed drawing (from T04.L08):</strong> The engineer's original design drawings before construction begins.</li>
+            <li><strong>Administration record (from T16.L04):</strong> A completed entry in the TIA-606-C system with all required fields populated for a specific component.</li>
+          </ul>
+        </div>
+
         <h2>The Reconciliation Process Step by Step</h2>
 
         <p>
@@ -211,7 +220,7 @@ export default function L06() {
           <li>
             <strong>Update all administration records.</strong> Every change that affected a TIA-606-C
             link, pathway, or location record must be updated in the administration record system.
-            Splice matrix entries for any relocated or re-spliced fibers must also be corrected. A
+            <span title="Recall from T16.L02: the splice matrix documents every fiber's path through the plant and captures fiber count, buffer tube routing, and splice loss data">Splice matrix entries for any relocated or re-spliced fibers must also be corrected.</span> A
             drawing update without a corresponding administration record update is an incomplete
             reconciliation.
           </li>

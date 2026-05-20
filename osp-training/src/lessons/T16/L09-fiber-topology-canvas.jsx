@@ -175,6 +175,16 @@ export default function L09() {
 
       {/* ── WORKING ──────────────────────────────────────────────── */}
       <section className="lesson-section working">
+        <div className="border-l-4 border-blue-400/30 bg-blue-400/5 p-3 my-3">
+          <h3 className="text-blue-900 font-semibold mb-2">Quick Refresher — Key Concepts</h3>
+          <ul className="text-sm space-y-1">
+            <li><strong>As-built record (from T16.L01):</strong> The authoritative documentation of what was physically installed, used for planning and locate responses.</li>
+            <li><strong>Splice matrix (from T16.L02):</strong> A detailed table documenting every fiber's path through splices, buffer tube routing, and splice loss measurements.</li>
+            <li><strong>Administration record (from T16.L04):</strong> The TIA-606-C database entries (link, pathway, location records) that organize the plant systematically.</li>
+            <li><strong>ANSI/TIA-606-C (from T16.L03):</strong> The standard that defines how fiber infrastructure is systematically labeled, documented, and administered.</li>
+          </ul>
+        </div>
+
         <h2>Reading a Topology Canvas</h2>
 
         <p>
@@ -195,7 +205,7 @@ export default function L09() {
           <li>
             <strong>Intermediate splice closures</strong> — diamond or circle symbols on the
             feeder span, each labeled with a closure ID and splice count. Inline closures that
-            contain express fibers show a pass-through arrow alongside the splice symbol.
+            contain <span title="Recall from vocabulary: express fibers pass through the closure without active splice, only recorded">express fibers</span> show a pass-through arrow alongside the splice symbol.
           </li>
           <li>
             <strong>FDH cabinet</strong> — a box labeled with FDH ID (e.g., FDH-SR42-01),

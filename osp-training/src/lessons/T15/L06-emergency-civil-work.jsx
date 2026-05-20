@@ -238,6 +238,17 @@ export default function L06EmergencyCivilWork() {
 
       {/* ── EMERGENCY 811 EXCEPTION ───────────────────────────────────────── */}
       <section className="lesson-section working">
+        <div className="border-l-4 border-blue-400/30 bg-blue-400/5 p-3 my-3 rounded text-sm">
+          <strong>Quick Refresher:</strong> Emergency civil work requires knowledge from earlier topics:
+          <ul className="mt-2 space-y-1 ml-4 list-disc text-slate-600">
+            <li><strong>Emergency MOP</strong> (T15.L01) — concurrent documentation of all excavation work. The MOP becomes your record of utility protection measures taken.</li>
+            <li><strong>Slack Factor</strong> (T15.L02) — the cable distance-to-route conversion. Where the physical break is located determines where you dig.</li>
+            <li><strong>Physical Route Walk</strong> (T15.L03) — surface evidence of the break guides your excavation point. You already have a pinpointed location before breaking ground.</li>
+            <li><strong>Splice Trailer Setup</strong> (T15.L05) — once you excavate and access the cable ends, the trailer is staged nearby for the actual splice repair.</li>
+            <li><strong>Safety (from T18)</strong> — excavation involves electrical hazard (energized utility lines), hazardous gas (confined space), crush injury (trench collapse), and manual labor injury (hand tools).</li>
+          </ul>
+        </div>
+
         <h2>The Emergency 811 Exception: What It Actually Allows</h2>
         <p>
           OSHA 1926.651(b)(2) provides an emergency exception to the normal one-call pre-excavation
