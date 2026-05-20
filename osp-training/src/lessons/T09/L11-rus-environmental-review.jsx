@@ -67,6 +67,8 @@ export const meta = {
   ],
 };
 
+export const vocabulary_introduced = meta.vocabulary_introduced;
+
 export default function T09L11_RusEnvironmentalReview() {
   return (
     <LessonLayout meta={meta}>

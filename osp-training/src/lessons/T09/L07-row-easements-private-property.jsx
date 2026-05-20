@@ -82,6 +82,8 @@ export const meta = {
   ],
 };
 
+export const vocabulary_introduced = meta.vocabulary_introduced;
+
 export default function T09L07_RowEasementsPrivateProperty() {
   return (
     <LessonLayout meta={meta}>

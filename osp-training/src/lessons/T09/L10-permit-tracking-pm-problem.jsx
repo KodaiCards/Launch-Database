@@ -72,6 +72,8 @@ export const meta = {
   ],
 };
 
+export const vocabulary_introduced = meta.vocabulary_introduced;
+
 export default function T09L10_PermitTrackingPmProblem() {
   return (
     <LessonLayout meta={meta}>
