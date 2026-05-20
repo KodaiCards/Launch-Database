@@ -858,7 +858,7 @@
     attachHandlers(calcContainer);
 
     // HIGH-A2: focus trap + focus return on modal close
-    // Uses window.trapFocus from public/js/focus_trap.js (loaded in design.html + splice.html).
+    // Uses window.trapFocus from public/js/focus_trap.js (loaded in design.html; splice.html uses fallback).
     // Falls back to manual focus management if trapFocus is unavailable.
     let activeTrap = null;
     let fallbackTrigger = null; // NEW-4: stores trigger element for fallback focus-return
