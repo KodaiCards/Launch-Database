@@ -366,7 +366,18 @@ export default function T03L05_G652VsG657BendInsensitive() {
       <section data-tier="advanced">
         <h2>Going Deeper</h2>
 
-        <h3 className="mt-4 font-semibold">Trench-assisted profile — the physics</h3>
+        <h3 className="mt-4 font-semibold">The G.652 vs. G.657 decision in the full design workflow</h3>
+        <p>
+          The fiber-type choice you make here directly drives downstream design phases that you'll learn in T06 (underground conduit sizing) and T11 (fusion splicing compatibility). Here's why this matters: T02 taught you that macrobend loss is the enemy, especially at 1550 nm. Standard G.652.D has a minimum installation bend radius of roughly 240 mm (9.5 inches) for a typical 12 mm OSP cable. That's fine for a straight aerial span or a gently curved burial run. But what happens when an OSP feeder cable has to make a 90-degree turn inside a conduit at a distribution handhole? Or when a fiber drop cable has to make a 5 mm radius turn inside a building?
+        </p>
+        <p className="mt-2">
+          If you specify G.652.D for that tight-bend scenario, you're guaranteeing macrobend loss that will fail the link budget. The fix is either (a) redesign the conduit with larger radius bends (costs $3k–5k in civil work), or (b) re-spec the cable to G.657.A1 or A2 ($0.10–0.20/meter difference, negligible total). Architects and crew leads who understand G.657 subcategories make the right call at design time. Crews who don't end up with tight bends and field-installed cable that fails 6 months later.
+        </p>
+        <p className="mt-2">
+          Additionally, when you're splicing cables with mixed fiber types (legacy G.652 in the trunk + new G.657.A1/A2 at a distribution point), T11 splicing techniques assume you'll measure the splice loss because MFD differences may add up to 0.1 dB per joint. This Advanced section teaches the physics so you understand the tradeoffs at a level that prevents costly field surprises.
+        </p>
+
+        <h3 className="mt-5 font-semibold">Trench-assisted profile — the physics</h3>
         <p>
           In a standard step-index fiber (G.652.D), the refractive index profile is simple:
           high-index core, lower-index cladding, flat cladding out to 125 µm. When the fiber

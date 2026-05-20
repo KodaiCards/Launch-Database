@@ -272,7 +272,18 @@ export default function T03L07_ArmorDeepDive() {
       <section data-tier="advanced">
         <h2>Going Deeper</h2>
 
-        <h3 className="mt-4 font-semibold">Galvanic corrosion — when steel armor meets dissimilar metals</h3>
+        <h3 className="mt-4 font-semibold">How armor selection ripples through design and field work</h3>
+        <p>
+          The armor type you pick in this lesson connects to three downstream phases: (a) T03.L04 messenger and strength member selection (armored cables are heavier → higher sag → may require heavier messenger), (b) T06 underground routing decisions (CST armor in corrosive soil → long-term reliability risk), and (c) T18 bonding and grounding (armored CST entering a building must be bonded per NEC 770.48 — but THAT bond is exactly where galvanic corrosion becomes a hidden 30-year problem if the armor touches dissimilar metals in the conduit).
+        </p>
+        <p className="mt-2">
+          Consider a real scenario: an aerial cable transitions to a direct-burial conduit run under a city street. The design calls for CST-armored cable (good for rodents in the burial section). But the conduit also carries a copper grounding wire (installed decades ago for water main bonding). Over time, the steel CST and copper wire corrode galvanically in wet soil. The armor loses strength silently. Twenty years later, a road cut cracks the conduit, water infiltrates, and the cable fails — far downstream of the original design decision. Designers and crew leads who understand armor selection tradeoffs catch this risk at design time: either isolate the armor from the copper wire, or spec aluminum (CAT) armor or fully dielectric cable in corrosive environments.
+        </p>
+        <p className="mt-2">
+          This Advanced section explores the physics and field consequences so you understand why "armor selection" is not a spec detail — it's a decision that shapes 30-year plant reliability.
+        </p>
+
+        <h3 className="mt-5 font-semibold">Galvanic corrosion — when steel armor meets dissimilar metals</h3>
         <p>
           In a buried environment, steel CST armor can corrode galvanically when it comes
           into contact with a dissimilar metal through a common electrolyte (wet soil). The

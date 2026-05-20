@@ -254,7 +254,20 @@ export default function T18L02_LockoutTagout() {
 
       {/* ── ADVANCED ────────────────────────────────────────────────────── */}
       <section data-tier="advanced">
-        <h2>Tagout vs. Lockout — When Is a Tag Alone Acceptable?</h2>
+        <h2>LOTO's Role in the Broader Safety Ecosystem</h2>
+
+        <h3 className="mt-4 font-semibold">How LOTO connects to electrical hazard awareness and grounding</h3>
+        <p>
+          The LOTO procedure you learned in the Working section doesn't exist in a vacuum. It's the mechanical enforcement of the hazard-control principles from T18.L01 (hazard recognition → hierarchy of controls). T18.L01 taught you the electrical hazard categories and emphasized elimination of the hazard as the strongest control. LOTO is elimination for maintenance work — you physically remove the energy source for the duration of the work. Once the work is done and you're clear, T15 (outage response) logic applies: the system is re-energized in a controlled sequence by qualified personnel.
+        </p>
+        <p className="mt-2">
+          Additionally, T14 (bonding and grounding) teaches you why a CST-armored cable entering a building must be bonded to ground. That bond is the primary means of discharging surge currents when lightning strikes the plant. LOTO is different — LOTO eliminates the hazard of unexpected re-energization while a worker is inside the danger zone. The two are complementary: bonding protects against external surge; LOTO protects against internal maintenance hazards. A crew member who understands both knows when each applies and why both matter.
+        </p>
+        <p className="mt-2">
+          This Advanced section explores the nuances of LOTO enforcement and the boundary between lockout and tagout so you can make the right call in field scenarios where both are technically possible but one is the correct choice.
+        </p>
+
+        <h2 className="mt-6">Tagout vs. Lockout — When Is a Tag Alone Acceptable?</h2>
         <p>
           A lockout (physical padlock) is always preferred over a tagout (warning tag alone).
           A tagout is only permitted when the equipment physically cannot accept a lock — there is

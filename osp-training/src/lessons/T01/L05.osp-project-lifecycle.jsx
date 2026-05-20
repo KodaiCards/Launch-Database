@@ -270,7 +270,20 @@ export default function T01L05_OspProjectLifecycle() {
 
       {/* ── ADVANCED ────────────────────────────────────────────────────── */}
       <section data-tier="advanced">
-        <h2>Going Deeper — The As-Designed vs. As-Built Gap</h2>
+        <h2>Going Deeper — How Lifecycle Stages Connect to Other Topics</h2>
+
+        <h3 className="mt-4 font-semibold">Why understanding all seven stages matters even if you do only one</h3>
+        <p>
+          The seven-stage lifecycle you learned here sits downstream of the cable selection decision from T03. T03 taught you loose-tube vs. ribbon vs. dielectric cable — that decision is made in Stage 2 (Design). But why do you care about this connection as a field worker? Because a crew member who understands the full lifecycle can recognize when a design choice has downstream consequences for their work.
+        </p>
+        <p className="mt-2">
+          Here's a concrete example: the designer specifies ribbon cable (high-count feeder, 288 fibers) to save splicing time. That decision gets made in Design (Stage 2). By the time construction crews arrive (Stage 5), they're unloading ribbon cable. By Stage 6 (Testing), they're doing the splicing. A crew lead who understands Stage 2's choice can anticipate Stage 5 and Stage 6 challenges: mass-fusion splicing (which requires specific training), ribbon handling (which is different from loose-tube), and tight schedules (because the designer promised management the project saves 6 hours at the splice closure — and the crew is now on the hook to deliver it). Without that context, the crew just unloads whatever cable is on the truck and splices it.
+        </p>
+        <p className="mt-2">
+          Additionally, the permitting and make-ready stages (Stages 3–4) are where T05 (NESC) standards and T18 (Safety) rules get enforced. Make-ready is when existing pole attachments are moved to meet NESC clearance. LOTO from T18 applies during make-ready if powered equipment is involved. A field worker who knows the full lifecycle can read the Stage 3 permit package and understand which specific NESC clauses drove the Stage 4 make-ready scope.
+        </p>
+
+        <h2 className="mt-6">The As-Designed vs. As-Built Gap</h2>
         <p>
           No construction project is built exactly as designed. Poles move. Conduit routes
           shift to avoid an unexpected obstacle. A splice case gets repositioned. The "as-built"
