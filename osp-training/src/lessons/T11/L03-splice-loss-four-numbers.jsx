@@ -178,8 +178,18 @@ export default function T11L03_SpliceLossFourNumbers() {
       {/* ── WORKING ──────────────────────────────────────────────────── */}
       <section data-tier="working">
         <h2>The Four Numbers — One Table</h2>
+
+        <div className="p-4 mb-6 rounded-lg border border-blue-400/30 bg-blue-400/5">
+          <h3 className="font-semibold text-blue-300 mb-2">Quick Refresher — Key Terms</h3>
+          <ul className="list-disc pl-5 text-sm text-slate-300 space-y-1">
+            <li><strong>dB (Decibel):</strong> The unit for measuring optical power loss. A 0.10 dB splice loses about 2.3% of power; 0.30 dB loses about 6.7%.</li>
+            <li><strong>Attenuation (dB/km):</strong> The rate at which optical signal weakens traveling through the fiber per kilometer of distance.</li>
+            <li><strong>Link budget:</strong> The total available optical power margin from transmitter to receiver, minus all losses (fiber attenuation, splices, connectors).</li>
+          </ul>
+        </div>
+
         <p className="text-slate-400 text-sm mb-3 p-3 border-l-4 border-slate-500">
-          <strong>Callback:</strong> Remember from <strong>T02.L06, the link budget</strong> is the total power margin available over the entire fiber link. Every splice loss you accept eats into that budget. That's why acceptance thresholds matter — they prevent cumulative loss from exhausting the budget.
+          <strong>Callback:</strong> Remember from <strong>T02.L05, dB and dBm</strong> — dB measures a ratio (how much signal is lost); dBm measures absolute power. From <strong>T02.L06, the link budget</strong> is the total power margin available over the entire fiber link. Every splice loss you accept eats into that budget. That's why acceptance thresholds matter — they prevent cumulative loss from exhausting the budget.
         </p>
         <p>
           Every splice you make gets evaluated against these four reference points. Memorize

@@ -162,6 +162,20 @@ export default function T11L09_SpliceCaseTypes() {
       <section data-tier="working">
         <h2>Four Case Types — Side by Side</h2>
 
+        <div className="p-4 mb-6 rounded-lg border border-blue-400/30 bg-blue-400/5">
+          <h3 className="font-semibold text-blue-300 mb-2">Quick Refresher — Key Terms</h3>
+          <ul className="list-disc pl-5 text-sm text-slate-300 space-y-1">
+            <li><strong>Splice case:</strong> The outdoor housing that protects splices from water, mud, mechanical damage, and temperature extremes.</li>
+            <li><strong>Dome closure & butt-splice (inline/horizontal) closure:</strong> The two main case form factors — domes for most OSP, inline for certain aerial/duct applications.</li>
+            <li><strong>Buffer tube, conduit, manhole, pedestal, aerial lashing:</strong> Installation contexts that determine which case type to use.</li>
+            <li><strong>Mechanical & fusion splices:</strong> Both types live inside splice cases — the case protects the joint from the environment.</li>
+          </ul>
+        </div>
+
+        <p className="text-slate-400 text-sm mb-3 p-3 border-l-4 border-slate-500">
+          <strong>Callback:</strong> From <strong>T01.L04, splice case basics</strong> — this lesson goes deep into the selection decision. From <strong>T10.L01, T10.L04, T04.L08</strong> — the installation contexts (conduit, manhole, pedestal, aerial) that dictate case choice.
+        </p>
+
           <p className="text-sm text-slate-400 mt-2">
           Four splice case types and their differentiating features. Source: Telcordia GR-763-CORE [confirm edition] for environmental performance classifications; FOA OSP Design Reference for field application guidance.
         </p>

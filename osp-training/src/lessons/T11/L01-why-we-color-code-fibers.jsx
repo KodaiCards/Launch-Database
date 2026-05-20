@@ -95,7 +95,11 @@ export default function T11L01_WhyWeColorCodeFibers() {
         </p>
 
         <p className="text-slate-400 text-sm mb-3 mt-6 p-3 border-l-4 border-slate-500">
-          <strong>Callback:</strong> Recall from <strong>T01.L03 Cable Construction</strong> — a buffer tube is the protective layer that wraps individual optical fibers inside the cable sheath. The TIA-598 color code applies to fibers within each buffer tube, making it the key to identifying fibers once you've opened the cable.
+          <strong>Callback:</strong> Recall from <strong>T01.L03 Cable Construction</strong> — a **buffer tube** is the protective layer that wraps individual optical fibers inside the cable sheath. The TIA-598 color code applies to fibers within each buffer tube, making it the key to identifying fibers once you've opened the cable. Also from T01.L03: a **fiber** is the thin glass strand at the heart of the cable; the **sheath** is the outermost protective jacket that guards the fibers from damage.
+        </p>
+
+        <p className="text-slate-400 text-sm mb-3 mt-2 p-3 border-l-4 border-slate-500">
+          <strong>Callback:</strong> From <strong>T03.L01 Cable Types</strong> — **loose-tube** cables group fibers in protective tubes (what we're describing in this lesson); **ribbon** cables arrange fibers side-by-side in a flat ribbon form (colors still follow TIA-598, but the layout is linear instead of circular).
         </p>
 
         <h3 className="mt-5 font-semibold">Acronyms in this lesson</h3>
@@ -160,6 +164,16 @@ export default function T11L01_WhyWeColorCodeFibers() {
       {/* ── WORKING ──────────────────────────────────────────────────── */}
       <section data-tier="working">
         <h2>The 12-Color Sequence</h2>
+
+        <div className="p-4 mb-6 rounded-lg border border-blue-400/30 bg-blue-400/5">
+          <h3 className="font-semibold text-blue-300 mb-2">Quick Refresher — Key Terms</h3>
+          <ul className="list-disc pl-5 text-sm text-slate-300 space-y-1">
+            <li><strong>Splice tray:</strong> The component inside a splice case that holds individual fibers and protects splices.</li>
+            <li><strong>Splice case:</strong> The outdoor housing (dome closure or inline) that protects the splice trays and splices from water, mud, and mechanical damage.</li>
+            <li><strong>Buffer tube:</strong> The plastic tube that wraps individual fibers inside the cable to provide mechanical protection.</li>
+          </ul>
+        </div>
+
         <p>
           The TIA-598-D sequence is: <strong>Blue → Orange → Green → Brown → Slate → White →
           Red → Black → Yellow → Violet → Rose → Aqua</strong>. Twelve colors, in that exact

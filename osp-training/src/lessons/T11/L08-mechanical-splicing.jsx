@@ -117,6 +117,19 @@ export default function T11L08_MechanicalSplicing() {
       <section data-tier="working">
         <h2>Mechanical Splice Specifications</h2>
 
+        <div className="p-4 mb-6 rounded-lg border border-blue-400/30 bg-blue-400/5">
+          <h3 className="font-semibold text-blue-300 mb-2">Quick Refresher — Key Terms</h3>
+          <ul className="list-disc pl-5 text-sm text-slate-300 space-y-1">
+            <li><strong>Fusion splice:</strong> The permanent arc-welded joint you're comparing mechanical splices against.</li>
+            <li><strong>Splice loss acceptance threshold:</strong> ≤0.30 dB per RUS — mechanical splices are harder to keep within this budget due to higher typical loss.</li>
+            <li><strong>Cleave angle:</strong> Mechanical splices also require precise cleaves, just like fusion — the end-face angle matters for coupling loss.</li>
+          </ul>
+        </div>
+
+        <p className="text-slate-400 text-sm mb-3 p-3 border-l-4 border-slate-500">
+          <strong>Callback:</strong> From <strong>T11.L03, the four splice loss numbers</strong> — mechanical splices are almost always ABOVE the FOA 0.10 dB design target and often struggle with the RUS 0.30 dB max. That's why they're emergency/temporary tools, not permanent solutions.
+        </p>
+
         <div className="mt-4 overflow-x-auto">
           <table className="w-full text-sm border border-white/10 rounded-lg">
             <thead className="bg-white/5 text-slate-200">

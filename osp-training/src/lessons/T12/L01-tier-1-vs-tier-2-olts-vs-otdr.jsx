@@ -98,6 +98,16 @@ export default function T12L01_TierVsTier() {
           <strong>Callback:</strong> Recall from <strong>T02.L06 Link Budget</strong> — the optical budget defines how much loss the link can tolerate. Testing with both OLTS and OTDR ensures the plant actually meets that budget. OTDR alone cannot prove the cable is acceptable; only OLTS measurements match the link budget tier requirements.
         </p>
 
+        <div className="mt-4 p-4 border border-blue-400/30 bg-blue-400/5 rounded-lg text-sm">
+          <p className="font-semibold text-blue-300 mb-2">Refresher: Prerequisites for this lesson</p>
+          <ul className="text-slate-300/90 space-y-1 list-disc pl-5">
+            <li><strong>Attenuation:</strong> Signal loss as light travels through fiber (from T02.L02)</li>
+            <li><strong>dB and dBm:</strong> Units for expressing optical power and loss (from T02.L05)</li>
+            <li><strong>Link budget:</strong> The contract-specified maximum allowable loss from source to receiver (from T02.L06)</li>
+            <li><strong>Insertion loss:</strong> The total end-to-end power loss measured by an OLTS (from T11.L12)</li>
+          </ul>
+        </div>
+
         <h3 className="mt-5 font-semibold">Acronyms in this lesson</h3>
         <table className="w-full text-sm border border-white/10 rounded-lg mt-2">
           <thead className="bg-white/5 text-slate-200">
@@ -217,7 +227,7 @@ export default function T12L01_TierVsTier() {
         <p className="mt-2">
           The OLTS is a <em>direct power measurement</em>. Light goes in one end; you measure
           how much comes out the other end. The math is simple and definitive: if 1.00 mW went
-          in and 0.794 mW came out, the insertion loss is exactly 1.0 dB. No interpretation
+          in and 0.794 mW came out, the insertion loss is exactly 1.0 dB (recall from T02.L05 that <strong>dB</strong> is how we express optical power ratios). No interpretation
           required.
         </p>
         <p className="mt-2">
@@ -238,8 +248,7 @@ export default function T12L01_TierVsTier() {
           <strong>Tier-1 (OLTS) is required for acceptance certification on all OSP projects.</strong>{' '}
           TIA-568.3-D and NECA/FOA 301-2016 both specify OLTS as the measurement method for
           cable plant acceptance. RUS-financed projects additionally require bidirectional OTDR
-          (Tier-2) per RUS 1753F-401 §5. The two tiers complement each other — neither replaces
-          the other.
+          (Tier-2) per RUS 1753F-401 §5. The two tiers complement each other — as you learned in T02.L06, the <strong>link budget</strong> governs which tier you need: OLTS proves the plant meets the budget; OTDR identifies the specific events causing loss.
         </p>
         <p className="mt-2">
           Tier-2 alone is NOT sufficient for acceptance. A contractor who delivers only OTDR

@@ -95,6 +95,16 @@ export default function T12L06_LaunchReceiveMFD() {
           MFD difference between the two fibers.
         </p>
 
+        <div className="mt-4 p-4 border border-blue-400/30 bg-blue-400/5 rounded-lg text-sm">
+          <p className="font-semibold text-blue-300 mb-2">Refresher: Prerequisites for this lesson</p>
+          <ul className="text-slate-300/90 space-y-1 list-disc pl-5">
+            <li><strong>MFD (Mode Field Diameter):</strong> The effective beam size in a singlemode fiber; varies by fiber type (from T02.L03)</li>
+            <li><strong>Launch cable:</strong> A known-good fiber jumper that pushes the first connector beyond the dead zone (from T12.L04)</li>
+            <li><strong>Gainer artifacts:</strong> False loss steps caused by Rayleigh backscatter discontinuities at fiber mismatches (from T12.L03)</li>
+            <li><strong>Fiber types:</strong> G.652.D, G.655, G.657.A2, etc. each have different MFD values (from T02.L01)</li>
+          </ul>
+        </div>
+
         <p className="text-slate-400 text-sm mb-3 mt-6 p-3 border-l-4 border-slate-500">
           <strong>Callback:</strong> Recall from <strong>T02.L03 Mode Field Diameter</strong> — MFD mismatch is the root cause of gainer artifacts in OTDR traces. When your launch cable doesn't match the cable under test, the MFD discontinuity creates a false loss step. Always verify launch cable spec before testing.
         </p>

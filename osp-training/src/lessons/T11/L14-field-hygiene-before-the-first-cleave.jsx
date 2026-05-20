@@ -269,6 +269,16 @@ export default function L14FieldHygieneBeforeTheFirstCleave() {
       <section data-tier="working" className="mb-10">
         <h2 className="text-2xl font-bold text-gray-800 mb-4">The Field Hygiene Sequence</h2>
 
+        <div className="p-4 mb-6 rounded-lg border border-blue-400/30 bg-blue-400/5">
+          <h3 className="font-semibold text-blue-300 mb-2">Quick Refresher — Key Terms</h3>
+          <ul className="list-disc pl-5 text-sm text-slate-300 space-y-1">
+            <li><strong>Fusion splice:</strong> The joint you're preparing for — contamination at the end-face kills it.</li>
+            <li><strong>Cleave angle:</strong> You can have the perfect angle, but if the end-face has dust or gel smear, the splice loss will still be high.</li>
+            <li><strong>IEC 61300-3-35 inspection protocol & insertion loss:</strong> The standard that defines fiber-end-face cleanliness for connectors; same principle for splicing.</li>
+            <li><strong>IPA hazmat awareness:</strong> 99% isopropyl alcohol is flammable — use it in well-ventilated areas away from ignition sources.</li>
+          </ul>
+        </div>
+
         {/* Step-by-step prep routine */}
         <div className="mb-8">
           <h3 className="text-xl font-semibold text-gray-700 mb-3">Complete Fiber-End Preparation Routine</h3>

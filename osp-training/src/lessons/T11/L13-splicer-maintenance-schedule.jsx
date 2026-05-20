@@ -231,6 +231,15 @@ export default function L13SplicerMaintenanceSchedule() {
       <section data-tier="working" className="mb-10">
         <h2 className="text-2xl font-bold text-gray-800 mb-4">The Maintenance Schedule</h2>
 
+        <div className="p-4 mb-6 rounded-lg border border-blue-400/30 bg-blue-400/5">
+          <h3 className="font-semibold text-blue-300 mb-2">Quick Refresher — Key Terms</h3>
+          <ul className="list-disc pl-5 text-sm text-slate-300 space-y-1">
+            <li><strong>Fusion splice:</strong> The joint you're making — maintenance of the splicer directly affects splice quality.</li>
+            <li><strong>Arc calibration & arc power:</strong> The splicer's core tuning mechanism — done daily before splicing starts.</li>
+            <li><strong>Cleave angle & cleaver blade:</strong> A worn blade produces bad cleaves — blade rotation interval is critical for consistent angle.</li>
+          </ul>
+        </div>
+
         {/* Master Checklist */}
         <div className="mb-8">
           <h3 className="text-xl font-semibold text-gray-700 mb-3">Five-Interval Maintenance Checklist</h3>

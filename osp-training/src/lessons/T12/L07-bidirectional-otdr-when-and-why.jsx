@@ -110,6 +110,16 @@ export default function T12L07_BidirectionalOTDR() {
           average down to the true value.
         </p>
 
+        <div className="mt-4 p-4 border border-blue-400/30 bg-blue-400/5 rounded-lg text-sm">
+          <p className="font-semibold text-blue-300 mb-2">Refresher: Prerequisites for this lesson</p>
+          <ul className="text-slate-300/90 space-y-1 list-disc pl-5">
+            <li><strong>OTDR:</strong> Measures distance-to-events and estimates loss from backscatter (from T12.L01)</li>
+            <li><strong>OTDR trace and loss steps:</strong> How splices and connectors appear on the backscatter plot (from T12.L08)</li>
+            <li><strong>Directional variation:</strong> The difference in loss measured A→B vs B→A due to connector asymmetry (from T12.L02)</li>
+            <li><strong>Bidirectional averaging:</strong> Averaging two-direction measurements to remove systematic error (from T12.L02)</li>
+          </ul>
+        </div>
+
         <p className="text-slate-400 text-sm mb-3 mt-6 p-3 border-l-4 border-slate-500">
           <strong>Callback:</strong> Recall from <strong>T12.L02 OLTS Reference Methods</strong> — the same bidirectional averaging principle applies to OLTS measurements. Two-direction testing eliminates directional asymmetry in both instruments, ensuring you get the true loss regardless of measurement direction.
         </p>

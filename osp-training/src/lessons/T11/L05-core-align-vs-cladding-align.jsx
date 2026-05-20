@@ -129,6 +129,19 @@ export default function T11L05_CoreAlignVsCladdingAlign() {
       <section data-tier="working">
         <h2>Which Mode for Which Scenario</h2>
 
+        <div className="p-4 mb-6 rounded-lg border border-blue-400/30 bg-blue-400/5">
+          <h3 className="font-semibold text-blue-300 mb-2">Quick Refresher — Key Terms</h3>
+          <ul className="list-disc pl-5 text-sm text-slate-300 space-y-1">
+            <li><strong>MFD (Mode Field Diameter):</strong> The effective light-beam diameter inside a single-mode fiber, typically 8.8–9.6 µm for G.652.D. Mismatch between fibers causes extra splice loss.</li>
+            <li><strong>G.652.D & G.657:</strong> Standard fiber types — G.652.D is the workhorse; G.657 is bend-insensitive with smaller MFD (~8.6–9.5 µm).</li>
+            <li><strong>Fusion splice & splicer display:</strong> The arc-welded joint you're optimizing with these alignment modes; the splicer's estimated loss after each alignment attempt.</li>
+          </ul>
+        </div>
+
+        <p className="text-slate-400 text-sm mb-3 p-3 border-l-4 border-slate-500">
+          <strong>Callback:</strong> From <strong>T11.L04, the splicer display</strong> shows you an estimated loss after each alignment attempt. Use those estimates to pick the right mode — cladding-align is faster, but core-align is more accurate when you're crossing fiber types.
+        </p>
+
         <div className="mt-4 overflow-x-auto">
           <table className="w-full text-sm border border-white/10 rounded-lg">
             <thead className="bg-white/5 text-slate-200">

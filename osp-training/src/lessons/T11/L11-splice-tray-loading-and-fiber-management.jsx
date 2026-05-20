@@ -130,6 +130,20 @@ export default function T11L11_SpliceTrayLoadingAndFiberManagement() {
       {/* ── WORKING ──────────────────────────────────────────────────── */}
       <section data-tier="working">
         <h2>Loading a 12F Tray: Express Fibers + Splice Fibers</h2>
+
+        <div className="p-4 mb-6 rounded-lg border border-blue-400/30 bg-blue-400/5">
+          <h3 className="font-semibold text-blue-300 mb-2">Quick Refresher — Key Terms</h3>
+          <ul className="list-disc pl-5 text-sm text-slate-300 space-y-1">
+            <li><strong>Splice tray:</strong> The precision plastic tray inside the splice case that holds fibers during and after splicing.</li>
+            <li><strong>Buffer tube & splice case:</strong> The source of your fibers and the housing that protects them — you're organizing them inside the tray.</li>
+            <li><strong>Fusion splice & TIA-598 color sequence:</strong> The splices go in slots 7–12 (positions Red through Aqua); express fibers stay in slots 1–6 (Blue through White).</li>
+          </ul>
+        </div>
+
+        <p className="text-slate-400 text-sm mb-3 p-3 border-l-4 border-slate-500">
+          <strong>Callback:</strong> From <strong>T11.L01, the TIA-598 color sequence</strong> — you're using it NOW to organize which fiber goes into which tray slot. From <strong>T01.L04, splice tray basics</strong> — this lesson shows the detailed loading procedure.
+        </p>
+
         <p>
           The scenario: you have a 12F buffer tube from Cable A at this splice location. Six
           of the 12 fibers (Blue through White, positions 1–6) are express — they pass through

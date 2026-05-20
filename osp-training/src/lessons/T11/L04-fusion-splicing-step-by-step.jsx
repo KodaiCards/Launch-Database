@@ -196,8 +196,18 @@ export default function T11L04_FusionSplicingStepByStep() {
       <section data-tier="working">
         <h2>The 8-Step Fusion Splice Workflow</h2>
 
+        <div className="p-4 mb-6 rounded-lg border border-blue-400/30 bg-blue-400/5">
+          <h3 className="font-semibold text-blue-300 mb-2">Quick Refresher — Key Terms</h3>
+          <ul className="list-disc pl-5 text-sm text-slate-300 space-y-1">
+            <li><strong>Attenuation (dB/km):</strong> How fast signal weakens traveling through fiber per kilometer. Higher fiber quality = lower dB/km.</li>
+            <li><strong>G.652.D & G.657:</strong> Standard ITU-T single-mode fiber types — G.652.D is the workhorse for OSP, G.657 is bend-tolerant for tight installations.</li>
+            <li><strong>FOA design target:</strong> ≤0.10 dB per splice — the quality benchmark for craftsmanship.</li>
+            <li><strong>Splice loss acceptance threshold:</strong> ≤0.30 dB per RUS contract — the rejection limit above which a splice fails and must be re-done.</li>
+          </ul>
+        </div>
+
         <p className="text-slate-400 text-sm mb-3 p-3 border-l-4 border-slate-500">
-          <strong>Callback:</strong> Recall from <strong>T11.L03, the four splice loss numbers</strong> — your goal is ≤0.10 dB per splice. Each of these 8 steps directly impacts whether you hit that target. Skip the cleaning or get a bad cleave, and you're immediately above 0.10 dB.
+          <strong>Callback:</strong> Recall from <strong>T11.L03, the four splice loss numbers</strong> — your goal is ≤0.10 dB per splice. Each of these 8 steps directly impacts whether you hit that target. Skip the cleaning or get a bad cleave, and you're immediately above 0.10 dB. From <strong>T01.L03, the buffer tube</strong> — you're starting by opening it to access the individual fibers inside.
         </p>
 
         <h3 className="mt-4 font-semibold">Before you start: thread the splice protector</h3>

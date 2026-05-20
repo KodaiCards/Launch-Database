@@ -141,6 +141,15 @@ export default function T11L12_ConnectorLossThreeNumbers() {
       <section data-tier="working">
         <h2>The Three-Tier Connector Specification</h2>
 
+        <div className="p-4 mb-6 rounded-lg border border-blue-400/30 bg-blue-400/5">
+          <h3 className="font-semibold text-blue-300 mb-2">Quick Refresher — Key Terms</h3>
+          <ul className="list-disc pl-5 text-sm text-slate-300 space-y-1">
+            <li><strong>APC (Angle Physical Contact) & UPC (Ultra Physical Contact):</strong> Two connector polish styles — APC (green) for high-performance PON/CATV, UPC (blue) for most OSP data/voice.</li>
+            <li><strong>APC/UPC mating prohibition:</strong> Never mate them together — the 8° angled face of APC against UPC flat face causes 3–5 dB loss and ferrule damage.</li>
+            <li><strong>dB & attenuation:</strong> Connector insertion loss (IL) eats into your link budget; return loss (RL) is reflection suppression, especially critical for PON.</li>
+          </ul>
+        </div>
+
         <div className="mt-4 overflow-x-auto">
           <table className="w-full text-sm border border-white/10 rounded-lg">
             <thead className="bg-white/5 text-slate-200">

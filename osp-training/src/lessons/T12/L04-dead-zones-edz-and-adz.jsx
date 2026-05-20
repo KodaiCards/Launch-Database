@@ -91,6 +91,16 @@ export default function T12L04_DeadZones() {
           (EDZ)</strong> and the <strong>Attenuation Dead Zone (ADZ)</strong>.
         </p>
 
+        <div className="mt-4 p-4 border border-blue-400/30 bg-blue-400/5 rounded-lg text-sm">
+          <p className="font-semibold text-blue-300 mb-2">Refresher: Prerequisites for this lesson</p>
+          <ul className="text-slate-300/90 space-y-1 list-disc pl-5">
+            <li><strong>OTDR:</strong> The instrument that sends a pulse and measures distance-to-events (from T12.L01)</li>
+            <li><strong>Pulse width:</strong> Controls the tradeoff between range and event resolution (from T12.L03)</li>
+            <li><strong>Rayleigh backscatter:</strong> The continuous scattering that creates the normal OTDR trace slope (from T12.L03)</li>
+            <li><strong>Reflection vs. loss event:</strong> Connectors cause reflections; splices cause loss steps (from T12.L02)</li>
+          </ul>
+        </div>
+
           <h3>EDZ vs. ADZ — the key difference</h3>
         <p>
           The <strong>EDZ</strong> is the shorter one. Within the EDZ, the OTDR cannot even

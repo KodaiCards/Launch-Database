@@ -127,6 +127,15 @@ export default function T11L02_TIA598ColorSequenceEveryFiber() {
       {/* ── WORKING ──────────────────────────────────────────────────── */}
       <section data-tier="working">
         <h2>Fiber-Within-Tube Arithmetic</h2>
+
+        <div className="p-4 mb-6 rounded-lg border border-blue-400/30 bg-blue-400/5">
+          <h3 className="font-semibold text-blue-300 mb-2">Quick Refresher — Key Terms</h3>
+          <ul className="list-disc pl-5 text-sm text-slate-300 space-y-1">
+            <li><strong>Buffer tube:</strong> The protective plastic tube inside the cable that holds up to 12 fibers and protects them from mechanical damage during installation.</li>
+            <li><strong>Tube-within-tube system:</strong> TIA-598-D extension for cables with >12 fibers: tubes themselves are colored 1-12, and fibers within each tube are also colored 1-12.</li>
+          </ul>
+        </div>
+
         <p>
           The arithmetic follows a simple pattern. Tubes hold 12 fibers each. To find
           which tube a fiber lives in, divide the fiber number by 12 and round up. To find

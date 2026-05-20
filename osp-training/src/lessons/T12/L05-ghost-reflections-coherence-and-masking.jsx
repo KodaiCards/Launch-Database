@@ -122,6 +122,16 @@ export default function T12L05_GhostReflections() {
           </li>
         </ol>
 
+        <div className="mt-4 p-4 border border-blue-400/30 bg-blue-400/5 rounded-lg text-sm">
+          <p className="font-semibold text-blue-300 mb-2">Refresher: Prerequisites for this lesson</p>
+          <ul className="text-slate-300/90 space-y-1 list-disc pl-5">
+            <li><strong>OTDR trace slope:</strong> The Rayleigh backscatter slope represents fiber attenuation (from T12.L03)</li>
+            <li><strong>Dead zones:</strong> EDZ and ADZ regions where the OTDR can't detect or measure events (from T12.L04)</li>
+            <li><strong>Reflection events:</strong> Connectors and air gaps create reflection spikes on the trace (from T12.L08)</li>
+            <li><strong>Loss vs. reflection:</strong> Splices show loss steps; reflections show spikes (from T12.L02, T12.L03)</li>
+          </ul>
+        </div>
+
         <p className="text-slate-400 text-sm mb-3 mt-6 p-3 border-l-4 border-slate-500">
           <strong>Callback:</strong> Recall from <strong>T12.L04 Dead Zones</strong> — high reflectance is what creates dead zones in the first place. Ghost reflections and coherence peaks are phenomena that occur in high-reflectance environments. Understanding dead zones teaches you why these artifacts appear.
         </p>

@@ -153,6 +153,19 @@ export default function T11L06_CleaveAngleAndArcQuality() {
       <section data-tier="working">
         <h2>Cleave Quality: What Acceptable Looks Like</h2>
 
+        <div className="p-4 mb-6 rounded-lg border border-blue-400/30 bg-blue-400/5">
+          <h3 className="font-semibold text-blue-300 mb-2">Quick Refresher — Key Terms</h3>
+          <ul className="list-disc pl-5 text-sm text-slate-300 space-y-1">
+            <li><strong>Fusion splice:</strong> The arc-welded joint you're preparing for by getting the cleave angle right.</li>
+            <li><strong>Cleave:</strong> The precise perpendicular cut that creates the fiber end-face — this lesson covers how angle and defects affect fusion.</li>
+            <li><strong>Splicer display:</strong> Shows "cleave OK" feedback after you cleave, telling you whether the angle is acceptable.</li>
+          </ul>
+        </div>
+
+        <p className="text-slate-400 text-sm mb-3 p-3 border-l-4 border-slate-500">
+          <strong>Callback:</strong> From <strong>T11.L04, the cleave step</strong> — you're optimizing the quality of that cut. This lesson shows what acceptable looks like and what to avoid.
+        </p>
+
         <AnnotatedDiagram
           imageUrl={null}
           alt="Cleave angle and defect types diagram"

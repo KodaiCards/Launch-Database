@@ -117,6 +117,21 @@ export default function T11L07_RibbonMassFusionSplicing() {
       {/* ── WORKING ──────────────────────────────────────────────────── */}
       <section data-tier="working">
         <h2>The Productivity Math</h2>
+
+        <div className="p-4 mb-6 rounded-lg border border-blue-400/30 bg-blue-400/5">
+          <h3 className="font-semibold text-blue-300 mb-2">Quick Refresher — Key Terms</h3>
+          <ul className="list-disc pl-5 text-sm text-slate-300 space-y-1">
+            <li><strong>Fusion splice:</strong> The arc-welded joint you're doing in bulk with ribbon splicing.</li>
+            <li><strong>Cleave angle:</strong> All 12 fibers in a ribbon cleave at once — angle consistency is critical across the ribbon.</li>
+            <li><strong>Splice protector:</strong> Must be slid over the ribbon before splicing — same rule as single-fiber.</li>
+            <li><strong>TIA-598 color sequence & rollable ribbon:</strong> The colors are the same in ribbon form — position 1 is Blue even in a ribbon.</li>
+          </ul>
+        </div>
+
+        <p className="text-slate-400 text-sm mb-3 p-3 border-l-4 border-slate-500">
+          <strong>Callback:</strong> From <strong>T11.L04, the 8-step fusion splice</strong> — ribbon splicing compresses those steps, but the cleave angle and proof-test still apply. From <strong>T03.L01, rollable ribbon</strong> — this lesson applies those same color codes to ribbon form.
+        </p>
+
         <p>
           Ribbon splicing pays off on high-count cables. The math below shows why.
         </p>

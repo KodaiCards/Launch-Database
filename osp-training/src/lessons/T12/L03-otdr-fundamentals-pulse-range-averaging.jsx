@@ -101,6 +101,16 @@ export default function T12L03_OTDRFundamentals() {
           <strong>Callback:</strong> Recall from <strong>T02.L02 Attenuation</strong> — the fiber's base attenuation sets the normal slope of the OTDR trace. Any deviation from that slope signals a splice, connector, or bend. Understanding attenuation is essential to reading an OTDR trace correctly.
         </p>
 
+        <div className="mt-4 p-4 border border-blue-400/30 bg-blue-400/5 rounded-lg text-sm">
+          <p className="font-semibold text-blue-300 mb-2">Refresher: Prerequisites for this lesson</p>
+          <ul className="text-slate-300/90 space-y-1 list-disc pl-5">
+            <li><strong>OTDR:</strong> The Tier-2 diagnostic instrument that measures distance-to-events (from T12.L01)</li>
+            <li><strong>Attenuation:</strong> Signal loss per km of fiber — the reason OTDR traces slope downward (from T02.L02)</li>
+            <li><strong>G.652.D and fiber types:</strong> Different fiber types have different attenuation rates at each wavelength (from T02.L01, T02.L07)</li>
+            <li><strong>dB:</strong> The unit for expressing optical power ratios and loss measurements (from T02.L05)</li>
+          </ul>
+        </div>
+
         <h3 className="mt-5 font-semibold">Key Terms</h3>
         <Flashcard
           deckId="T12-L03"
@@ -185,6 +195,7 @@ export default function T12L03_OTDRFundamentals() {
           <h2 className="mt-8">Setting the EIOR Before Every Test</h2>
         <p className="mt-2">
           The OTDR cannot directly measure distance — it measures time. To convert time to
+          distance it uses a formula based on the <strong>EIOR (Effective Group Index)</strong> — a value that depends on the specific fiber type you're testing. Recall from T02.L07 that different wavelengths travel at different speeds in the fiber, and the EIOR captures that effect. To convert time to
           distance it uses this formula:
         </p>
         <div className="bg-slate-800/50 rounded-xl border border-white/10 p-4 mt-3 font-mono text-center">

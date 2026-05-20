@@ -128,6 +128,16 @@ export default function T12L02_OLTSReferenceMethods() {
             },
           ]}
         />
+
+        <div className="mt-6 p-4 border border-blue-400/30 bg-blue-400/5 rounded-lg text-sm">
+          <p className="font-semibold text-blue-300 mb-2">Refresher: Prerequisites for this lesson</p>
+          <ul className="text-slate-300/90 space-y-1 list-disc pl-5">
+            <li><strong>OLTS:</strong> Tier-1 certification instrument that directly measures end-to-end optical power loss (from T12.L01)</li>
+            <li><strong>Insertion loss (IL):</strong> The total power loss from one end of a link to the other, measured in dB (from T11.L12)</li>
+            <li><strong>Attenuation:</strong> Signal loss per unit length of fiber (from T02.L02)</li>
+            <li><strong>Dual-wavelength acceptance:</strong> Testing at both 1310 nm and 1550 nm (from T12.L01)</li>
+          </ul>
+        </div>
       </section>
 
       {/* ── WORKING ──────────────────────────────────────────────────────── */}
@@ -156,7 +166,7 @@ export default function T12L02_OLTSReferenceMethods() {
         <p className="mt-2">
           TIA-526-7A defines three ways to establish the OLTS reference (zero point). Each
           includes a different set of connectors in the reference, which changes which
-          connectors get counted in the link loss measurement.
+          connectors get counted in the link loss measurement. Recall from T12.L01 that <strong>Tier-1 certification</strong> requires you to be explicit about which method you're using — switching methods mid-project invalidates comparisons between test days.
         </p>
 
           <div className="mt-4 rounded-xl border border-white/10 overflow-hidden">

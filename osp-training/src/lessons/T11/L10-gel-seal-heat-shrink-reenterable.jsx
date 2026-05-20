@@ -143,6 +143,15 @@ export default function T11L10_GelSealHeatShrinkReenterable() {
       <section data-tier="working">
         <h2>Sealing System Selection</h2>
 
+        <div className="p-4 mb-6 rounded-lg border border-blue-400/30 bg-blue-400/5">
+          <h3 className="font-semibold text-blue-300 mb-2">Quick Refresher — Key Terms</h3>
+          <ul className="list-disc pl-5 text-sm text-slate-300 space-y-1">
+            <li><strong>Dome closure & butt-splice closure:</strong> The case types that house your splices — you're choosing entry/exit port sealing for them.</li>
+            <li><strong>Cable jacket types & gel-filled cables:</strong> Determine what sealing strategy will work best (gel vs. cold-seal).</li>
+            <li><strong>Case re-entry:</strong> Whether you can safely open the case again after closing it — critical for maintenance and future adds.</li>
+          </ul>
+        </div>
+
         <div className="mt-4 overflow-x-auto">
           <table className="w-full text-sm border border-white/10 rounded-lg">
             <thead className="bg-white/5 text-slate-200">
