@@ -160,33 +160,11 @@ export default function T06L09_NESCUndergroundRules() {
         {/* Key Terms Flashcards */}
         <Flashcard
           deckId="T06-L09"
-          cards={[
-            {
-              id: 'T06-L09-fc-s34',
-              front: 'What does NESC §34 cover?',
-              back: 'Section 34 of the NESC (C2 [confirm edition]) is titled "Cable in Underground Structures." It covers both electric supply cables and communication cables installed inside underground structures — manholes, handholes, and enclosed conduit systems. The distinction from §35: §34 applies when cables are in an enclosed structure; §35 applies when cables are in the open earth (direct-buried or in duct not part of a conduit system).',
-            },
-            {
-              id: 'T06-L09-fc-s35',
-              front: 'What does NESC §35 cover?',
-              back: 'Section 35 of the NESC (C2 [confirm edition]) is titled "Direct-Buried Cable and Cable in Duct Not Part of a Conduit System." It applies to both supply and communication cables installed directly in the earth or in open-duct outside of enclosed underground conduit systems. This is the primary NESC section for most OSP fiber underground construction — open-trench conduit, bored conduit, and direct-buried drops. Supply-to-communication separation within §35 is governed by Rule 354.',
-            },
-            {
-              id: 'T06-L09-fc-sep',
-              front: 'What is supply-communication separation underground?',
-              back: 'The minimum horizontal or vertical distance required between an electric supply cable and a communication cable when they are installed underground in the same corridor. Within NESC §35, separation between supply and communication facilities is governed by Rules 320, 353, and 354. Two situations: (1) crossing — supply and communication cross each other at approximately 90°; (2) parallel run — supply and communication run alongside each other in the same trench or corridor.',
-            },
-            {
-              id: 'T06-L09-fc-cover',
-              front: 'What is communication-to-ground clearance for underground cable?',
-              back: 'The minimum depth at which a communication cable or conduit must be installed below finished grade to provide protection from surface disturbance (lawn aeration, agricultural tilling, frost heave, construction activity). NESC §35 and RUS 1751F-635 both specify cover requirements; the AHJ (authority having jurisdiction) may require greater depth for local conditions. [confirm current NESC C2 edition clause with AHJ at time of design]',
-            },
-            {
-              id: 'T06-L09-fc-rule354',
-              front: 'What is NESC Rule 354?',
-              back: 'The specific NESC rule within §35 (Direct-Buried Cable and Cable in Duct) that governs separation between supply facilities and communication facilities in direct-buried or open-duct underground installations. Rule 354 specifies minimum separation distances for crossings and parallel runs between supply and communication plant. [confirm current NESC C2 edition values — standard is paywalled; values summarized in RUS 1751F-635]',
-            },
-          ]}
+          cards={key_terms.map((kt, idx) => ({
+            id: `T06-L09-fc-${idx}`,
+            front: `What is ${kt.term}?`,
+            back: kt.definition,
+          }))}
         />
       </section>
 

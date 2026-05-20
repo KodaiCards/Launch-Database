@@ -100,28 +100,11 @@ export default function T06L11_UndergroundDesignQAChecklist() {
         {/* Key Terms Flashcards */}
         <Flashcard
           deckId="T06-L11"
-          cards={[
-            {
-              id: 'T06-L11-fc-review',
-              front: 'What is a design review in OSP underground work?',
-              back: 'A structured examination of a design drawing or plan set before construction begins, performed to verify that every design element meets applicable codes (NESC, NEC, RUS), project specifications, and engineering standards. A proper design review is performed by someone OTHER than the person who drew the plan. In OSP work, the design review typically checks: burial depth callouts, conduit sizing, fill percentages, access spacing, separation from foreign utilities, bore path profiles, and materials specification.',
-            },
-            {
-              id: 'T06-L11-fc-depth',
-              front: 'What is a depth marking on plan and why is it required?',
-              back: 'The notation on a design drawing that specifies the exact burial depth at key points along the route — particularly at road crossings, utility crossings, changes in soil type, and driveway crossings. A plan that shows conduit route without depth callouts at these critical points is incomplete: the bore crew and inspector cannot verify compliance with RUS 1751F-635 cover requirements without an explicit depth reference on the drawing.',
-            },
-            {
-              id: 'T06-L11-fc-fill',
-              front: 'What is fill calc verification in a design review?',
-              back: 'The process of checking that the conduit fill percentage (cable or innerduct cross-sectional area as a fraction of conduit internal area) does not exceed 40% at any point in the design. Fill calc verification requires knowing: the conduit schedule and inner diameter, the cable or innerduct outer diameter, and the count of cables or innerducts installed in each conduit. A plan that specifies conduit size and cable count without a fill calculation is incomplete.',
-            },
-            {
-              id: 'T06-L11-fc-spacing',
-              front: 'What is access spacing verification in underground design QA?',
-              back: 'The measured distance between successive terminal pedestals, manholes, or handholes along the underground route, verified against the RUS 1751F-635 maximum spacing rule of 330 feet. Access spacing must be verified along the actual cable route (not point-to-point straight-line distance). A design drawing should include dimensioned route segments between each access point so the reviewer can confirm that no segment exceeds the 330-foot maximum.',
-            },
-          ]}
+          cards={key_terms.map((kt, idx) => ({
+            id: `T06-L11-fc-${idx}`,
+            front: `What is ${kt.term}?`,
+            back: kt.definition,
+          }))}
         />
       </section>
 

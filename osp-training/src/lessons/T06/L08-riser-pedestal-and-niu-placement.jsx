@@ -137,38 +137,11 @@ export default function T06L08_RiserPedestalAndNIUPlacement() {
         {/* Key Terms Flashcards */}
         <Flashcard
           deckId="T06-L08"
-          cards={[
-            {
-              id: 'T06-L08-fc-riser',
-              front: 'What is a riser in underground fiber plant?',
-              back: 'A vertical conduit assembly that transitions the underground conduit route from below grade up to a surface-mounted pedestal or above-grade terminal. The riser protects the cable where it exits the ground and passes through the pedestal base. Risers are typically Schedule 80 PVC or HDPE to withstand the mechanical stress of the grade transition. A damaged or missing riser leaves the cable exposed to lawn equipment, water intrusion, and physical damage at the ground entry point.',
-            },
-            {
-              id: 'T06-L08-fc-terminal',
-              front: 'What is a terminal pedestal?',
-              back: 'A surface-mounted enclosure that provides a splice point, slack-loop storage, and splitter/terminal mounting for fiber distribution along an underground route. Terminal pedestals are used at service branch points, splice locations, and route midpoints where technicians need access to the cable plant. In RUS-funded systems, terminal pedestals are typically placed every 250–330 feet along the route and at every branch to a service address.',
-            },
-            {
-              id: 'T06-L08-fc-niu',
-              front: 'What is an NIU (Network Interface Unit)?',
-              back: 'Network Interface Unit — the demarcation device installed at the customer\'s premises where the provider\'s network meets the customer\'s equipment. In fiber-to-the-home designs, the NIU is typically a weatherproof outdoor unit mounted on the side of the building or on a pedestal near the property line. The NIU holds the fiber termination (SC/APC connectors), an optical power test port, and sometimes the ONT if the provider includes it in the NIU enclosure.',
-            },
-            {
-              id: 'T06-L08-fc-vault',
-              front: 'What is a vaulted NIU and when is it used?',
-              back: 'A below-grade NIU installation where the NIU enclosure is placed in a small underground vault or traffic-rated box instead of a surface-mounted pedestal. Vaulted NIUs are used where surface conditions make a pedestal impractical: high-traffic commercial areas, manicured landscapes where the property owner rejects visible pedestals, or flood-prone areas where a surface pedestal would be submerged regularly. The vault must be H-20 load-rated if it can be driven over.',
-            },
-            {
-              id: 'T06-L08-fc-spacing',
-              front: 'What is the RUS maximum pedestal spacing for residential underground plant?',
-              back: 'Pedestal spacing is the maximum distance between successive terminal pedestals along an underground fiber route, measured along the cable route (not in a straight line). RUS 1751F-635 §7 specifies a maximum spacing of 330 feet (100 m) between terminal pedestals in residential underground plant. Spacing beyond 330 feet creates access problems: technicians cannot efficiently pull slack or locate a splice point by routing the route between accessible points that are too far apart.',
-            },
-            {
-              id: 'T06-L08-fc-slack',
-              front: 'What is slack-loop storage and why is it required?',
-              back: 'Extra cable length coiled and stored inside a pedestal or splice enclosure beyond what is needed for the active splices. Standard practice is to store at minimum 20–30 feet of slack on each cable end entering a pedestal. This slack serves two purposes: (1) allows a damaged splice to be re-made without having to pull a new cable, and (2) allows the pedestal to be relocated 15–20 feet if a service requirement or property issue demands it. Slack is coiled in a figure-8 pattern on the pedestal tray to prevent kinks.',
-            },
-          ]}
+          cards={key_terms.map((kt, idx) => ({
+            id: `T06-L08-fc-${idx}`,
+            front: `What is ${kt.term}?`,
+            back: kt.definition,
+          }))}
         />
       </section>
 

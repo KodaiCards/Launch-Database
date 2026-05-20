@@ -133,23 +133,11 @@ export default function T06L10_RUS1751F643InnterductStandard() {
         {/* Key Terms Flashcards */}
         <Flashcard
           deckId="T06-L10"
-          cards={[
-            {
-              id: 'T06-L10-fc-qual',
-              front: 'What is RUS 1751F-643 innerduct qualification?',
-              back: 'RUS Bulletin 1751F-643 is the RUS standard that specifies material and performance requirements for innerduct used on RUS-funded telecommunications projects. For innerduct to be used on a RUS-funded job, it must be listed on the RUS Accepted Materials List (AML). Using non-listed innerduct on a RUS job is a contract non-compliance issue. (Source: RUS 1751F-635, cross-reference to RUS 1751F-643; [confirm current requirements per RUS 1751F-643].)',
-            },
-            {
-              id: 'T06-L10-fc-trace',
-              front: 'What is innerduct traceability and what does it include?',
-              back: 'The documentation chain that allows an inspector to verify that specific innerduct installed in the field was manufactured to RUS 1751F-643 specifications. Traceability includes: (1) type designation printed on the duct, (2) manufacturer\'s date code, (3) reel or lot number, and (4) the manufacturer\'s test certificate confirming 1751F-643 compliance. Traceability is required in the project\'s closeout documentation package.',
-            },
-            {
-              id: 'T06-L10-fc-accept',
-              front: 'What is RUS acceptance testing for innerduct?',
-              back: 'The testing program required by RUS 1751F-643 to demonstrate that innerduct meets RUS specifications before use on a RUS-funded project. For innerduct, acceptance testing includes mechanical tests (tensile pull, crush resistance, impact resistance) and material tests (UV resistance, chemical compatibility with bentonite slurry and conduit lubricants, long-term creep resistance). The manufacturer performs these tests to obtain AML status. The field crew\'s job is to verify that the product is AML-listed and has traceability documents. [confirm current innerduct acceptance test requirements per RUS 1751F-643]',
-            },
-          ]}
+          cards={key_terms.map((kt, idx) => ({
+            id: `T06-L10-fc-${idx}`,
+            front: `What is ${kt.term}?`,
+            back: kt.definition,
+          }))}
         />
       </section>
 

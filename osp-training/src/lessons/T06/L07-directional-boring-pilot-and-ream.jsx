@@ -130,38 +130,11 @@ export default function T06L07_DirectionalBoringPilotAndReam() {
         {/* Key Terms Flashcards */}
         <Flashcard
           deckId="T06-L07"
-          cards={[
-            {
-              id: 'T06-L07-fc-pilot',
-              front: 'What is a pilot bore in HDD?',
-              back: 'The first phase of HDD (horizontal directional drilling): a small-diameter drill bit steered underground along a predetermined path from the entry pit to the exit pit. The pilot bore cuts a narrow hole — typically 4–6 inches in diameter — that establishes the bore path. Everything else follows this path.',
-            },
-            {
-              id: 'T06-L07-fc-ream',
-              front: 'What are reaming passes in HDD?',
-              back: 'Successive enlarging passes made after the pilot bore, using a cone-shaped reamer pulled back toward the drill rig. Each pass increases the borehole diameter. For a 4-inch conduit install, a typical sequence is: 6-inch ream → 8-inch ream → 12-inch backream. Multiple passes are required to avoid over-stressing the formation and prevent slurry blow-out.',
-            },
-            {
-              id: 'T06-L07-fc-bentonite',
-              front: 'What is bentonite slurry and what does it do?',
-              back: 'A mixture of bentonite clay and water pumped continuously through the drill stem during boring. It serves three functions: (1) carries drill cuttings back out of the bore path to the entry pit, (2) stabilizes the borehole walls to prevent collapse, and (3) lubricates the bore path to reduce pull tension during conduit installation. Slurry that returns to the surface must be managed as waste — it cannot be left in ditches or waterways.',
-            },
-            {
-              id: 'T06-L07-fc-heave',
-              front: 'What is bore-pit ground heave and what causes it?',
-              back: 'Upward displacement of the ground surface directly above the bore path, caused by excessive slurry pressure fracturing the formation and forcing slurry into the soil voids. Visible heave looks like the ground bubbling or cracking; subsurface heave can go undetected until it lifts a road or damages adjacent utilities. Preventing heave requires correct slurry pump pressure limits, proper pilot bore diameter, and adequate soil cover above the bore path.',
-            },
-            {
-              id: 'T06-L07-fc-swab',
-              front: 'What is swabbing before conduit pull-back?',
-              back: 'A pull-back pass made before conduit installation using a mandrel or pipe with a foam swab attached. Swabbing cleans slurry debris and loose cuttings from the borehole, verifying that the bore path is open and free of obstructions before the conduit is committed to the hole. A failed swab pull stops the project before you have stuck conduit.',
-            },
-            {
-              id: 'T06-L07-fc-exitpit',
-              front: 'What is exit pit setup for HDD?',
-              back: 'Preparation of the far-end excavation where the pilot bore will exit the ground. Correct setup includes: stable pit walls (shoring if needed), a clean surface for the drill bit to emerge, a receiving area for returning slurry, a route for conduit from the spool to the bore entry, and safety clearance around the bit exit point. A poorly set-up exit pit is a safety hazard — the bit exits with high rotational force.',
-            },
-          ]}
+          cards={key_terms.map((kt, idx) => ({
+            id: `T06-L07-fc-${idx}`,
+            front: `What is ${kt.term}?`,
+            back: kt.definition,
+          }))}
         />
       </section>
 
