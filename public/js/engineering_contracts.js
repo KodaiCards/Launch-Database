@@ -285,7 +285,7 @@
     try {
       const all = await api(`/api/contracts?client_id=${encodeURIComponent(ec.client_id)}`);
       const attachedIds = new Set((attached || []).filter(c => c.scope === 'explicit').map(c => c.id));
-      const unattached = all.filter(c => !attachedIds.has(c.id) && (c.engineering_contract_id === null || c.engineering_contract_id !== ecId));
+      const unattached = all.filter(c => !attachedIds.has(c.id) && c.engineering_contract_id === null);
       _ecUnattachedCache[ecId] = unattached;
       if (!unattached.length) {
         sel.innerHTML = '<option value="">— All contracts attached —</option>';
@@ -342,11 +342,21 @@
       await refreshEcContractsPanel(ecId);
     } catch (e) {
       const raw = e.message || '';
-      const msg = raw.toLowerCase().includes('different client')
-        ? 'This contract belongs to a different client — cannot attach.'
-        : 'Attach failed: ' + raw;
-      if (errEl) errEl.textContent = msg;
-      else if (window.LFS && window.LFS.toast) window.LFS.toast.error(msg);
+      let msg;
+      if (raw.toLowerCase().includes('different client')) {
+        msg = 'This contract belongs to a different client — cannot attach.';
+      } else if (raw.toLowerCase().includes('different engineering contract')) {
+        msg = 'This contract is already attached to a different engineering contract. Detach it from the other EC first.';
+      } else {
+        try {
+          const parsed = JSON.parse(raw);
+          msg = parsed.error || raw;
+        } catch {
+          msg = raw;
+        }
+      }
+      if (errEl) errEl.textContent = 'Attach failed: ' + msg;
+      else if (window.LFS && window.LFS.toast) window.LFS.toast.error('Attach failed: ' + msg);
     }
   }
 
