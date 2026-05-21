@@ -438,11 +438,12 @@ fetch('/api/auth/me', { credentials: 'include' })
             <select id="proj-contract" onchange="contractChanged()"><option value="">None / N/A</option></select>
           </div>
         </div>
-        <!-- Cascade picker (create mode only): Client → Program → Service Area → Job.
+        <!-- Cascade picker (create mode only): Client → Program → [EC + SA | free-text SA] → Job.
              Hidden in edit mode. Replaces the old flat "Existing Project" dropdown. -->
         <div id="dp-cascade-wrap" style="display:none">
+          <!-- ROW 1: Program -->
           <div class="form-row">
-            <div class="form-group">
+            <div class="form-group span2">
               <label for="proj-ptype">Program *</label>
               <select id="proj-ptype" onchange="dpProgramChanged()" disabled>
                 <option value="">— Select program —</option>
@@ -452,13 +453,32 @@ fetch('/api/auth/me', { credentials: 'include' })
                 <option value="other">Other</option>
               </select>
             </div>
+          </div>
+          <!-- ROW 2a: EC mode — Engineering Contract + Service Area dropdown -->
+          <div class="form-row" id="dp-ec-row" style="display:none">
+            <div class="form-group">
+              <label for="dp-ec">Engineering Contract *</label>
+              <select id="dp-ec" disabled aria-label="Engineering contract" onchange="dpEcChanged()">
+                <option value="">— select contract —</option>
+              </select>
+            </div>
             <div class="form-group">
               <label for="dp-service-area">Service Area *</label>
               <select id="dp-service-area" disabled aria-label="Service area" onchange="dpSaChanged()">
-                <option value="">— Select program first —</option>
+                <option value="">— Select contract first —</option>
               </select>
+              <div id="dp-sa-no-config-hint" style="display:none;font-size:11px;color:var(--warning-text);background:var(--warning-light);border:1px solid var(--warning);border-radius:4px;padding:6px 8px;margin-top:4px"></div>
             </div>
           </div>
+          <!-- ROW 2b: No-EC mode — free-text Service Area -->
+          <div class="form-row" id="dp-noec-row" style="display:none">
+            <div class="form-group span2">
+              <label for="dp-sa-label">Service Area <span style="font-weight:400;color:var(--text-muted)">(optional)</span></label>
+              <input type="text" id="dp-sa-label" placeholder="e.g. Buford, Sugar Hill, etc." autocomplete="off">
+              <span class="form-hint" style="font-size:11px;color:var(--text-muted)">Free text — projects sharing this label group together under client.</span>
+            </div>
+          </div>
+          <!-- ROW 3: Job Name -->
           <div class="form-row">
             <div class="form-group span2">
               <label for="dp-job-input">Job Name *</label>
@@ -1305,7 +1325,17 @@ function dpEnterEditMode() {
 
 function dpResetSaAndJob() {
   const saSel = document.getElementById('dp-service-area');
-  if (saSel) { saSel.innerHTML = '<option value="">— Select program first —</option>'; saSel.disabled = true; }
+  if (saSel) { saSel.innerHTML = '<option value="">— Select contract first —</option>'; saSel.disabled = true; }
+  const ecSel = document.getElementById('dp-ec');
+  if (ecSel) { ecSel.innerHTML = '<option value="">— select contract —</option>'; ecSel.disabled = true; }
+  const ecRow = document.getElementById('dp-ec-row');
+  if (ecRow) ecRow.style.display = 'none';
+  const noEcRow = document.getElementById('dp-noec-row');
+  if (noEcRow) noEcRow.style.display = 'none';
+  const saLabel = document.getElementById('dp-sa-label');
+  if (saLabel) saLabel.value = '';
+  const saHint = document.getElementById('dp-sa-no-config-hint');
+  if (saHint) saHint.style.display = 'none';
   const jobIn = document.getElementById('dp-job-input');
   if (jobIn) { jobIn.value = ''; jobIn.disabled = true; }
   const dl = document.getElementById('dp-job-list');
@@ -1366,34 +1396,100 @@ async function dpProgramChanged() {
   if (!clientId || !program) return;
 
   sessionStorage.setItem('lf_dp_cascade_program', program);
+  sessionStorage.removeItem('lf_dp_cascade_ec');
+  sessionStorage.removeItem('lf_dp_cascade_sa');
+  sessionStorage.removeItem('lf_dp_cascade_sa_label');
+  sessionStorage.removeItem('lf_dp_cascade_job');
+
+  const ecCache = window.engineeringContractsCache || [];
+  const matchingEcs = ecCache.filter(e => e.client_id === clientId &&
+    (program === 'gfr' ? e.program === 'rus' : e.program === program)
+  );
+
+  const ecRow = document.getElementById('dp-ec-row');
+  const noEcRow = document.getElementById('dp-noec-row');
+
+  if (matchingEcs.length > 0) {
+    // EC mode: populate EC dropdown, show ec-row
+    const ecSel = document.getElementById('dp-ec');
+    if (!ecSel) return;
+    ecSel.innerHTML = '<option value="">— select contract —</option>' +
+      matchingEcs.slice().sort((a, b) => a.name.localeCompare(b.name)).map(ec => {
+        const lbl = (ec.client_name || '?') + ' · ' + ec.name + (ec.contract_number ? ' – ' + ec.contract_number : '');
+        return `<option value="${esc(ec.id)}">${esc(lbl)}</option>`;
+      }).join('');
+    ecSel.disabled = false;
+    if (ecRow) ecRow.style.display = '';
+    if (noEcRow) noEcRow.style.display = 'none';
+    // Auto-select if only one EC
+    if (matchingEcs.length === 1) {
+      ecSel.value = matchingEcs[0].id;
+      await dpEcChanged();
+    }
+  } else {
+    // No-EC mode: show free-text SA input, enable job directly
+    if (ecRow) ecRow.style.display = 'none';
+    if (noEcRow) noEcRow.style.display = '';
+    const jobIn = document.getElementById('dp-job-input');
+    if (jobIn) { jobIn.disabled = false; jobIn.value = ''; }
+    const hint = document.getElementById('dp-job-hint');
+    if (hint) hint.textContent = 'Type a job name';
+  }
+}
+
+// Called when Engineering Contract changes in EC mode.
+async function dpEcChanged() {
+  const ecId = document.getElementById('dp-ec')?.value;
+  const saSel = document.getElementById('dp-service-area');
+  const saHint = document.getElementById('dp-sa-no-config-hint');
+  const jobIn = document.getElementById('dp-job-input');
+  const hint = document.getElementById('dp-job-hint');
+  dpClearError();
+
+  if (!saSel) return;
+  saSel.innerHTML = '<option value="">— loading… —</option>';
+  saSel.disabled = true;
+  if (jobIn) { jobIn.disabled = true; jobIn.value = ''; }
+
+  if (!ecId) {
+    saSel.innerHTML = '<option value="">— Select contract first —</option>';
+    if (saHint) saHint.style.display = 'none';
+    return;
+  }
+
+  sessionStorage.setItem('lf_dp_cascade_ec', ecId);
   sessionStorage.removeItem('lf_dp_cascade_sa');
   sessionStorage.removeItem('lf_dp_cascade_job');
 
-  // Find the EC for this client + program.
-  const ec = (window.engineeringContractsCache || []).find(e => e.client_id === clientId && e.program === program);
-  if (!ec) {
-    dpShowError('No engineering contract found for this client + program. Ask admin to create one.');
-    return;
-  }
-  const saSel = document.getElementById('dp-service-area');
-  if (!saSel) return;
-  saSel.innerHTML = '<option value="">Loading service areas...</option>';
-  saSel.disabled = true;
   try {
-    let sas = _dpSaCache[ec.id];
+    let sas = _dpSaCache[ecId];
     if (!sas) {
-      sas = await api('/api/engineering-contracts/' + ec.id + '/service-areas');
-      _dpSaCache[ec.id] = sas;
+      sas = await api('/api/engineering-contracts/' + encodeURIComponent(ecId) + '/service-areas');
+      _dpSaCache[ecId] = sas;
     }
     if (!sas.length) {
-      saSel.innerHTML = '<option value="">No service areas — ask admin to add</option>';
-      return;
+      saSel.innerHTML = '<option value="">No service areas configured</option>';
+      const ec = (window.engineeringContractsCache || []).find(e => e.id === ecId);
+      const ecName = ec ? (ec.name || ec.contract_number || 'this contract') : 'this contract';
+      if (saHint) {
+        saHint.textContent = `No service areas configured for ${ecName}. Add them via Settings → Engineering Contracts.`;
+        saHint.style.display = '';
+      }
+    } else {
+      if (saHint) saHint.style.display = 'none';
+      saSel.innerHTML = '<option value="">— Select service area —</option>' +
+        sas.map(sa => {
+          const wo = sa.work_order_number ? ` (WO# ${sa.work_order_number})` : '';
+          return `<option value="${esc(sa.id)}">${esc(sa.name)}${wo}</option>`;
+        }).join('');
+      saSel.disabled = false;
+      if (sas.length === 1) {
+        saSel.value = sas[0].id;
+        await dpSaChanged();
+      }
     }
-    saSel.innerHTML = '<option value="">— Select service area —</option>' +
-      sas.map(sa => `<option value="${esc(sa.id)}">${esc(sa.name)}</option>`).join('');
-    saSel.disabled = false;
   } catch (e) {
-    saSel.innerHTML = '<option value="">Failed to load service areas</option>';
+    saSel.innerHTML = '<option value="">Error loading service areas</option>';
     dpShowError('Could not load service areas: ' + (e.message || 'server error'));
   }
 }
@@ -1435,30 +1531,43 @@ async function dpSaChanged() {
 async function dpSubmitCascade() {
   const clientId = document.getElementById('proj-client')?.value;
   const program = document.getElementById('proj-ptype')?.value;
-  const saId = document.getElementById('dp-service-area')?.value;
   const jobName = document.getElementById('dp-job-input')?.value.trim();
-  const name = document.getElementById('proj-name').value.trim();
 
   dpClearError();
 
-  if (!clientId) return alert('Client is required');
-  if (!program) return alert('Program is required');
-  if (!saId) return alert('Service Area is required');
-  if (!jobName) return alert('Job name is required');
-  // proj-name is optional in cascade mode — default to job name if blank.
-  const projectName = name || jobName;
+  if (!clientId) return dpShowError('Client is required');
+  if (!program) return dpShowError('Program is required');
+  if (!jobName) return dpShowError('Job name is required');
 
-  const payload = { client_id: clientId, program, service_area_id: saId, job_name: jobName };
+  // Determine mode: EC (service_area_id) vs no-EC (service_area_label)
+  const noEcRow = document.getElementById('dp-noec-row');
+  const isNoEc = noEcRow && noEcRow.style.display !== 'none';
+
+  let payload;
+  if (isNoEc) {
+    // No-EC mode: free-text service area label
+    const saLabel = (document.getElementById('dp-sa-label')?.value || '').trim();
+    payload = { client_id: clientId, program, service_area_label: saLabel || undefined, job_name: jobName };
+    sessionStorage.setItem('lf_dp_cascade_sa_label', saLabel);
+    sessionStorage.removeItem('lf_dp_cascade_ec');
+    sessionStorage.removeItem('lf_dp_cascade_sa');
+  } else {
+    // EC mode: service area UUID from dropdown
+    const saId = document.getElementById('dp-service-area')?.value;
+    if (!saId) return dpShowError('Service area is required');
+    payload = { client_id: clientId, program, service_area_id: saId, job_name: jobName };
+    sessionStorage.setItem('lf_dp_cascade_ec', document.getElementById('dp-ec')?.value || '');
+    sessionStorage.setItem('lf_dp_cascade_sa', saId);
+    sessionStorage.removeItem('lf_dp_cascade_sa_label');
+  }
+
   try {
     const result = await api('/api/projects/resolve-or-create', 'POST', payload);
     const created = result.created !== false;
-    // Persist sessionStorage on successful submit.
     sessionStorage.setItem('lf_dp_cascade_client', clientId);
     sessionStorage.setItem('lf_dp_cascade_program', program);
-    sessionStorage.setItem('lf_dp_cascade_sa', saId);
     sessionStorage.setItem('lf_dp_cascade_job', jobName);
     if (created) {
-      // Show a brief toast if the job was newly created.
       dpShowToast('Created new job: ' + jobName);
     }
     cm('project-modal');
@@ -1479,12 +1588,13 @@ async function dpSubmitCascade() {
 async function dpRestoreSession() {
   const storedClient = sessionStorage.getItem('lf_dp_cascade_client');
   const storedProgram = sessionStorage.getItem('lf_dp_cascade_program');
+  const storedEc = sessionStorage.getItem('lf_dp_cascade_ec');
   const storedSa = sessionStorage.getItem('lf_dp_cascade_sa');
+  const storedSaLabel = sessionStorage.getItem('lf_dp_cascade_sa_label');
   const storedJob = sessionStorage.getItem('lf_dp_cascade_job');
   if (!storedClient) return;
   const clientSel = document.getElementById('proj-client');
   if (!clientSel) return;
-  // Ensure the cached client is still available.
   if (![...clientSel.options].some(o => o.value === storedClient)) return;
   clientSel.value = storedClient;
   dpClientChanged();
@@ -1493,12 +1603,27 @@ async function dpRestoreSession() {
   if (!ptSel) return;
   ptSel.value = storedProgram;
   await dpProgramChanged();
-  if (!storedSa) return;
-  const saSel = document.getElementById('dp-service-area');
-  if (!saSel || saSel.disabled) return;
-  if (![...saSel.options].some(o => o.value === storedSa)) return;
-  saSel.value = storedSa;
-  await dpSaChanged();
+  // Restore EC selection (EC mode)
+  if (storedEc) {
+    const ecSel = document.getElementById('dp-ec');
+    if (ecSel && !ecSel.disabled && [...ecSel.options].some(o => o.value === storedEc)) {
+      ecSel.value = storedEc;
+      await dpEcChanged();
+    }
+  }
+  // Restore SA (EC mode)
+  if (storedSa) {
+    const saSel = document.getElementById('dp-service-area');
+    if (saSel && !saSel.disabled && [...saSel.options].some(o => o.value === storedSa)) {
+      saSel.value = storedSa;
+      await dpSaChanged();
+    }
+  }
+  // Restore SA label (no-EC mode)
+  if (storedSaLabel) {
+    const saLabelIn = document.getElementById('dp-sa-label');
+    if (saLabelIn) saLabelIn.value = storedSaLabel;
+  }
   if (!storedJob) return;
   const jobIn = document.getElementById('dp-job-input');
   if (jobIn && !jobIn.disabled) jobIn.value = storedJob;
@@ -1615,7 +1740,7 @@ async function ensureCachesLoaded(force){
   }
   // Always refresh projects on force; otherwise lazy
   if (force || !projectsCache.length) {
-    try { projectsCache = await api('/api/projects'); } catch(e){}
+    try { projectsCache = await api('/api/projects?leaves_only=true&include_completed=true'); } catch(e){}
   }
 }
 // Force-refresh shim used by polling — re-fetches even if caches are populated.
