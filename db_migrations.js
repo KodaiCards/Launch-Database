@@ -106,7 +106,9 @@ async function runMigrations(pool, opts = {}) {
       try { await client.query('ROLLBACK'); } catch {}
       log.push({ filename, status: 'failed', error: e.message });
       console.error(`[migrations] FAILED ${filename}:`, e.message);
-      throw e;
+      // DO NOT throw — continue to next migration so a single broken file
+      // doesn't block all subsequent ones. The failed migration is NOT
+      // recorded in schema_migrations, so it will retry on next boot.
     } finally {
       client.release();
     }

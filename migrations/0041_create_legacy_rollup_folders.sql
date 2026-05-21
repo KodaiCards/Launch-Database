@@ -83,6 +83,7 @@ DECLARE
   v_client_folders_created INTEGER := 0;
   v_sa_folders_created     INTEGER := 0;
   v_leaves_reparented      INTEGER := 0;
+  v_step4_count            INTEGER := 0;
 BEGIN
 
   -- STEP 1: Ensure a Client rollup folder exists for every client that has
@@ -186,8 +187,9 @@ BEGIN
     AND  cf.rollup_level = 'client'
     AND  cf.rollup_key = p.client_id::text;
 
-  GET DIAGNOSTICS v_leaves_reparented = v_leaves_reparented + ROW_COUNT;
-  RAISE NOTICE '0041: Step 4 — reparented no-concentrator leaf project(s) under client folder';
+  GET DIAGNOSTICS v_step4_count = ROW_COUNT;
+  v_leaves_reparented := v_leaves_reparented + v_step4_count;
+  RAISE NOTICE '0041: Step 4 — reparented % no-concentrator leaf project(s) under client folder', v_step4_count;
 
   RAISE NOTICE '0041: COMPLETE — Client folders created: %, SA folders created: %, leaves reparented: %',
     v_client_folders_created, v_sa_folders_created, v_leaves_reparented;
