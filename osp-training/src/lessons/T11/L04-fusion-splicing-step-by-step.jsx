@@ -34,6 +34,7 @@ export const meta = {
     'splice protector',
     'splicer display',
     'fiber holder (V-groove assembly)',
+    'bidirectional measurement',
   ],
   key_terms: [
     {
@@ -90,6 +91,11 @@ export const meta = {
       term: 'fiber holder (V-groove assembly)',
       definition:
         'The precision V-shaped channel that holds the fiber during cleaving and in the splicer. The V-groove positions the fiber at a consistent height and lateral position so the splicer\'s cameras can find it. Cleanliness of the V-groove is critical — a fiber laid into a dirty V-groove gets contaminated and the alignment is compromised.',
+    },
+    {
+      term: 'bidirectional measurement',
+      definition:
+        'Running an OTDR test from both ends of a fiber span and averaging the two splice-loss readings for each splice event. Because each fiber\'s backscatter coefficient is slightly different, an OTDR measuring from one end may see a splice as 0.05 dB while the same splice measured from the other end appears as 0.15 dB. Neither reading is wrong — they reflect the backscatter mismatch between the two fibers. The bidirectional average (0.10 dB in this example) is the true optical insertion loss of the splice.',
     },
   ],
   vocabulary_assumed: [
@@ -190,6 +196,11 @@ export default function T11L04_FusionSplicingStepByStep() {
                 id: 'T11-L04-fc-fuse',
                 front: 'What is the "fuse" step in fusion splicing?',
                 back: 'The arc discharge cycle that melts and permanently joins the two aligned fiber ends. Typically two phases: cleaning arc (short, low-power — burns surface contamination) followed by main fuse arc (full-power — achieves glass flow and permanent joint). The splicer displays estimated insertion loss after fusion.',
+              },
+              {
+                id: 'T11-L04-fc-bidir',
+                front: 'What is a bidirectional measurement and why does it matter for splice loss?',
+                back: 'Running an OTDR test from both ends of a fiber span and averaging the two splice-loss readings for each splice. Because each fiber\'s backscatter coefficient is slightly different, an OTDR measuring from one end may see a splice as 0.05 dB while the same splice measured from the other end appears as 0.15 dB. The bidirectional average (0.10 dB in this example) is the true optical insertion loss. Never re-splice based on a single one-direction OTDR reading showing high loss — check the average first.',
               },
             ]}
           />
@@ -314,6 +325,49 @@ export default function T11L04_FusionSplicingStepByStep() {
           visible flowing from both ends. Let it cool before handling — the sleeve is soft
           and deformable until fully cooled.
         </p>
+
+        {/* Book vs. Field — splice loss measurement reality */}
+        <div className="mt-6 p-4 border border-amber-400/30 bg-amber-400/5 rounded-lg text-sm">
+          <p className="font-semibold text-amber-300 mb-2">Book vs. Field — Reading Your Test Results</p>
+
+          <p className="text-slate-300/90">
+            <strong>Book (IEC 61280-4-2 / TIA-526-7A):</strong> The OTDR measures splice loss
+            from one direction. The acceptance criterion is ≤0.10 dB per splice (FOA design
+            target) or ≤0.30 dB (RUS rejection threshold). If the OTDR shows 0.18 dB, that
+            splice fails. Re-splice it.
+          </p>
+
+          <p className="text-slate-300/90 mt-3">
+            <strong>Field reality — bidirectional measurement variance:</strong> Measure the same
+            fusion splice from two directions and you will often see different numbers. A splice
+            that reads 0.05 dB westbound may read 0.15 dB eastbound. Both readings are real —
+            they reflect the fact that each fiber has a slightly different backscatter coefficient,
+            so the OTDR "sees" more or less apparent loss depending on which end it fires from.
+            This is not a defective splice. The true optical insertion loss is the{' '}
+            <strong>bidirectional average</strong>: (0.05 + 0.15) ÷ 2 = 0.10 dB.{' '}
+            <strong>Never re-splice based on a single one-direction OTDR reading.</strong> Always
+            run both directions and average before making the call. Cold weather adds another
+            layer: at low temperatures, apparent OTDR loss on a fusion splice can read
+            0.03–0.05 dB higher than at room temperature due to fiber coating contraction. A
+            splice that looks marginal at 30°F on a December morning may be perfectly fine at
+            the 60°F calibration temperature. Warm the splicer and run again before deciding.
+          </p>
+
+          <p className="text-slate-300/90 mt-3">
+            <strong>Field reality — OTDR vs. OLTS disagreement:</strong> Your OTDR-derived
+            total link loss and your OLTS end-to-end insertion loss will not always agree, even
+            on a well-built link. The OTDR calculates loss by summing backscatter events — it is
+            sensitive to dead zones, backscatter level changes at splice points, and event
+            resolution limits. The OLTS measures actual transmitted optical power between the two
+            ends. On singlemode plant, the two methods can disagree by 0.5–1.0 dB on the same
+            link. When they disagree,{' '}
+            <strong>the OLTS is the acceptance test of record</strong> (per TIA-568.3-D and
+            TIA-526-7A). The OTDR is a fault-location and event-characterization tool — it tells
+            you WHERE loss is occurring, not the precise total that determines pass/fail. Field
+            crews who only have an OTDR on the job need to understand that their event-sum total
+            is a diagnostic estimate, not a certification measurement.
+          </p>
+        </div>
 
         {/* AnnotatedDiagram — fusion splicer anatomy */}
         <div className="mt-6">
