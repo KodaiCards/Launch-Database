@@ -941,6 +941,26 @@ CREATE TABLE public.time_entries (
 );
 
 --
+-- Name: csv_review_queue; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.csv_review_queue (
+    id uuid DEFAULT gen_random_uuid() NOT NULL,
+    imported_at timestamp with time zone DEFAULT now() NOT NULL,
+    imported_by_user_id uuid,
+    csv_filename text,
+    raw_row jsonb NOT NULL,
+    match_attempts jsonb NOT NULL,
+    suggested_project_id uuid,
+    status character varying(20) DEFAULT 'pending'::character varying NOT NULL,
+    matched_project_id uuid,
+    resolved_at timestamp with time zone,
+    resolved_by_user_id uuid,
+    notes text,
+    CONSTRAINT csv_review_queue_status_check CHECK (((status)::text = ANY (ARRAY[('pending'::character varying)::text, ('matched'::character varying)::text, ('discarded'::character varying)::text])))
+);
+
+--
 -- Name: time_entry_audit; Type: TABLE; Schema: public; Owner: -
 --
 
@@ -1655,6 +1675,13 @@ ALTER TABLE ONLY public.time_entries
     ADD CONSTRAINT time_entries_pkey PRIMARY KEY (id);
 
 --
+-- Name: csv_review_queue csv_review_queue_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.csv_review_queue
+    ADD CONSTRAINT csv_review_queue_pkey PRIMARY KEY (id);
+
+--
 -- Name: time_entry_audit time_entry_audit_pkey; Type: CONSTRAINT; Schema: public; Owner: -
 --
 
@@ -2230,6 +2257,12 @@ CREATE INDEX idx_splices_ribbon_group ON public.splices USING btree (ribbon_grou
 --
 
 CREATE INDEX idx_splices_tray ON public.splices USING btree (tray_id);
+
+--
+-- Name: csv_review_queue_status_idx; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX csv_review_queue_status_idx ON public.csv_review_queue USING btree (status, imported_at DESC);
 
 --
 -- Name: idx_time_entries_entry_date; Type: INDEX; Schema: public; Owner: -
@@ -3139,6 +3172,34 @@ ALTER TABLE ONLY public.time_entries
 
 ALTER TABLE ONLY public.time_entries
     ADD CONSTRAINT time_entries_user_id_fkey FOREIGN KEY (user_id) REFERENCES public.users(id) ON DELETE SET NULL;
+
+--
+-- Name: csv_review_queue csv_review_queue_imported_by_user_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.csv_review_queue
+    ADD CONSTRAINT csv_review_queue_imported_by_user_id_fkey FOREIGN KEY (imported_by_user_id) REFERENCES public.users(id) ON DELETE SET NULL;
+
+--
+-- Name: csv_review_queue csv_review_queue_matched_project_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.csv_review_queue
+    ADD CONSTRAINT csv_review_queue_matched_project_id_fkey FOREIGN KEY (matched_project_id) REFERENCES public.projects(id) ON DELETE SET NULL;
+
+--
+-- Name: csv_review_queue csv_review_queue_resolved_by_user_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.csv_review_queue
+    ADD CONSTRAINT csv_review_queue_resolved_by_user_id_fkey FOREIGN KEY (resolved_by_user_id) REFERENCES public.users(id) ON DELETE SET NULL;
+
+--
+-- Name: csv_review_queue csv_review_queue_suggested_project_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.csv_review_queue
+    ADD CONSTRAINT csv_review_queue_suggested_project_id_fkey FOREIGN KEY (suggested_project_id) REFERENCES public.projects(id) ON DELETE SET NULL;
 
 --
 -- Name: time_entry_audit time_entry_audit_actor_user_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -

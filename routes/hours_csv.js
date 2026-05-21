@@ -302,7 +302,7 @@ module.exports = function installHoursCsvRoutes(app, pool, mw) {
 
       const inferredJobTitle = inferJobTitle(req.file.originalname, rows2d, headerIdx);
 
-      const [staffR, projR, pricingR] = await Promise.all([
+      const [staffR, projR, pricingR, tier2R] = await Promise.all([
         pool.query('SELECT id, name FROM staff'),
         // Owner-flagged 2026-05-06: WO# is often set ONLY on the parent
         // rollup (e.g. "Cummings (16299)"), not on the leaf
@@ -354,6 +354,18 @@ module.exports = function installHoursCsvRoutes(app, pool, mw) {
           FROM pricing_entries pe
           LEFT JOIN jobs j ON j.id = pe.job_id
           WHERE pe.billing_code IS NOT NULL AND pe.billing_code != ''
+        `),
+        // Tier 2: leaf projects with client + service_area_name + job_name
+        // for matching when no WO# is present. Only real leaves (non-rollup,
+        // no children) are indexed — rollup containers don't accept hours.
+        pool.query(`
+          SELECT p.id, p.name, p.client_id, p.service_area_name,
+                 p.is_ongoing, j.name AS job_name,
+                 NOT EXISTS (SELECT 1 FROM projects c WHERE c.parent_id = p.id) AS is_leaf
+            FROM projects p
+            LEFT JOIN jobs j ON j.id = p.job_id
+           WHERE COALESCE(p.is_rollup, false) = false
+             AND p.status NOT IN ('archived')
         `)
       ]);
       const staffByNorm = {};
@@ -369,6 +381,20 @@ module.exports = function installHoursCsvRoutes(app, pool, mw) {
         (projsByNorm[k] = projsByNorm[k] || []).push(p);
       });
 
+      // Tier 2 index: (client_id, norm_sa, norm_job) → project.
+      // Only real leaves are indexed. Used when a CSV row has no WO#
+      // but carries client/SA/job hints from the customer column or
+      // explicit columns.
+      const projsByNameKey = new Map();
+      tier2R.rows.forEach(p => {
+        if (!p.client_id || !p.job_name) return;
+        const saNorm = normalizeName(p.service_area_name || '');
+        const jobNorm = normalizeName(p.job_name || '');
+        const key = `${p.client_id}|${saNorm}|${jobNorm}`;
+        if (!projsByNameKey.has(key)) projsByNameKey.set(key, []);
+        projsByNameKey.get(key).push(p);
+      });
+
       const jobByCode = {};
       pricingR.rows.forEach(pe => {
         if (pe.billing_code && pe.job_name) {
@@ -376,7 +402,8 @@ module.exports = function installHoursCsvRoutes(app, pool, mw) {
         }
       });
 
-      // Pick the most specific project for a (WO, job) pair.
+      // Pick the most specific project for a (WO, job) pair (Tier 1).
+      // Returns { project, tier: 'wo' } or null.
       // Order of preference:
       //   1. A real LEAF (is_rollup=FALSE, has_children=FALSE) whose
       //      job_name matches the billing-code-derived job. This is the
@@ -388,7 +415,7 @@ module.exports = function installHoursCsvRoutes(app, pool, mw) {
       //      against legacy data without is_rollup flag).
       //   4. The first candidate whatever it is (legacy fallback so
       //      we never silently drop hours).
-      function pickProject(woNorm, billingCodeJobName) {
+      function pickProjectTier1(woNorm, billingCodeJobName) {
         const candidates = projsByNorm[woNorm];
         if (!candidates || !candidates.length) return null;
         const wantLc = billingCodeJobName ? billingCodeJobName.toLowerCase() : null;
@@ -398,21 +425,44 @@ module.exports = function installHoursCsvRoutes(app, pool, mw) {
           // 1. Real leaf with matching job
           const leafJobMatch = candidates.find(c => isRealLeaf(c)
             && c.job_name && c.job_name.toLowerCase() === wantLc);
-          if (leafJobMatch) return leafJobMatch;
+          if (leafJobMatch) return { project: leafJobMatch, tier: 'wo' };
           // 3. Any non-rollup matching job
           const anyJobMatch = candidates.find(c => !c.is_rollup
             && c.job_name && c.job_name.toLowerCase() === wantLc);
-          if (anyJobMatch) return anyJobMatch;
+          if (anyJobMatch) return { project: anyJobMatch, tier: 'wo' };
         }
         // 2. Any real leaf (no job constraint)
         const realLeaves = candidates.filter(isRealLeaf);
-        if (realLeaves.length) return realLeaves[0];
+        if (realLeaves.length) return { project: realLeaves[0], tier: 'wo' };
         // 4. Last resort — first non-rollup candidate. Rollup containers have
         // no job or billing semantics; routing a time entry to a rollup would
         // make it unresolvable in billing and the Hours tab. Return null instead
-        // so the row lands in the "Needs Project Assignment" panel rather than
-        // silently attaching to a folder that will never be billed.
-        return candidates.find(c => !c.is_rollup) || null;
+        // so the row lands in the review queue rather than silently attaching
+        // to a folder that will never be billed.
+        const nonRollup = candidates.find(c => !c.is_rollup);
+        return nonRollup ? { project: nonRollup, tier: 'wo' } : null;
+      }
+
+      // Tier 2: match by (client_id, service_area_name, job_name).
+      // Case-insensitive on SA and job. Returns { project, tier: 'name' } or null.
+      // Only called when Tier 1 finds nothing and the row has client context.
+      function pickProjectTier2(clientId, saHint, jobHint) {
+        if (!clientId || !jobHint) return null;
+        const saNorm = normalizeName(saHint || '');
+        const jobNorm = normalizeName(jobHint || '');
+        // Exact match: client + SA + job
+        const exactKey = `${clientId}|${saNorm}|${jobNorm}`;
+        const exactCandidates = projsByNameKey.get(exactKey);
+        if (exactCandidates && exactCandidates.length) {
+          return { project: exactCandidates[0], tier: 'name' };
+        }
+        // SA-less match: client + job only (when SA hint is absent or differs)
+        const noSaKey = `${clientId}||${jobNorm}`;
+        const noSaCandidates = projsByNameKey.get(noSaKey);
+        if (noSaCandidates && noSaCandidates.length) {
+          return { project: noSaCandidates[0], tier: 'name' };
+        }
+        return null;
       }
 
       const today = new Date(); today.setHours(0,0,0,0);
@@ -485,11 +535,59 @@ module.exports = function installHoursCsvRoutes(app, pool, mw) {
         // unbilled rows so the commit step doesn't bucket them into the
         // "skipped_unknown_wo" tally; they're intentionally project-less,
         // not unmatched.
-        const proj = unbilled ? null : pickProject(woNorm, codeLookup);
+        let matchResult = null;
+        const matchAttempts = [];
+        if (!unbilled) {
+          if (woNorm) {
+            // Tier 1: WO# match
+            matchResult = pickProjectTier1(woNorm, codeLookup);
+            if (!matchResult) {
+              matchAttempts.push({ tier: 'wo', tried: woNorm, result: 'no_match' });
+            }
+          } else {
+            matchAttempts.push({ tier: 'wo', tried: null, result: 'no_wo' });
+          }
+          if (!matchResult) {
+            // Tier 2: client + SA + job name match
+            // Pull client_id hint from customer column (free text won't have UUID,
+            // so this tier only fires when the caller explicitly passes client hints
+            // via the row's inferred job title or the CSV has a structured SA col).
+            // In the validate phase we don't know client_id from the CSV text, so
+            // Tier 2 uses the job_name hint against ALL clients' projects.
+            // We iterate projsByNameKey looking for job+SA match across any client.
+            const saHint = null; // CSV rows rarely carry structured SA text
+            const jobHint = finalTitle || codeLookup;
+            if (jobHint) {
+              // Try across all clients: look for (any_client, '', jobNorm)
+              const jobNorm = normalizeName(jobHint);
+              // Collect all potential candidates that match on job name
+              const tier2Candidates = [];
+              for (const [key, projs] of projsByNameKey) {
+                const parts = key.split('|');
+                // parts[2] is job_norm
+                if (parts[2] === jobNorm) tier2Candidates.push(...projs);
+              }
+              if (tier2Candidates.length === 1) {
+                // Exactly one project has this job name → unambiguous Tier 2 match
+                matchResult = { project: tier2Candidates[0], tier: 'name' };
+                matchAttempts.push({ tier: 'name', tried: { job: jobHint, sa: saHint }, result: 'matched' });
+              } else if (tier2Candidates.length > 1) {
+                matchAttempts.push({ tier: 'name', tried: { job: jobHint, sa: saHint }, result: 'ambiguous', count: tier2Candidates.length });
+              } else {
+                matchAttempts.push({ tier: 'name', tried: { job: jobHint, sa: saHint }, result: 'no_match' });
+              }
+            } else {
+              matchAttempts.push({ tier: 'name', tried: null, result: 'no_job_hint' });
+            }
+          }
+        }
+
+        const proj = unbilled ? null : (matchResult ? matchResult.project : null);
+        const matchTier = matchResult ? matchResult.tier : null;
         const woKnown = unbilled ? true : !!proj;
 
         if (!staffKnown) unknownStaff.set(normalizeName(name), name);
-        if (!unbilled && !proj) unknownWOs.set(woNorm, String(rawWO).trim());
+        if (!unbilled && !proj) unknownWOs.set(woNorm, String(rawWO ?? '').trim());
 
         validRows.push({
           row_num: rowNum,
@@ -505,6 +603,9 @@ module.exports = function installHoursCsvRoutes(app, pool, mw) {
           project_id: proj?.id || null,
           project_name: proj?.name || null,
           project_job_name: proj?.job_name || null,
+          project_is_ongoing: proj?.is_ongoing || false,
+          match_tier: matchTier,
+          match_attempts: matchAttempts,
           staff_known: staffKnown,
           wo_known: woKnown,
           is_billable: !unbilled,
@@ -667,6 +768,7 @@ module.exports = function installHoursCsvRoutes(app, pool, mw) {
         expiresAt: Date.now() + CSV_STAGE_TTL_MS
       });
 
+      const unmatchedRows = validRows.filter(r => r.is_billable && !r.wo_known);
       res.json({
         stage_id,
         headers,
@@ -679,6 +781,9 @@ module.exports = function installHoursCsvRoutes(app, pool, mw) {
           ready_to_import: validRows.filter(r => r.staff_known && r.wo_known).length,
           rows_with_unknown_staff: validRows.filter(r => !r.staff_known).length,
           rows_with_unknown_wo: validRows.filter(r => !r.wo_known).length,
+          rows_matched_tier1: validRows.filter(r => r.match_tier === 'wo').length,
+          rows_matched_tier2: validRows.filter(r => r.match_tier === 'name').length,
+          rows_unmatched: unmatchedRows.length,
           rows_in_billed_periods: billedConflictCount,
           unbilled_rows: validRows.filter(r => !r.is_billable).length,
           invalid: invalidRows.length,
@@ -698,6 +803,7 @@ module.exports = function installHoursCsvRoutes(app, pool, mw) {
             .slice(0, 3)
         })),
         unknown_wos: [...unknownWOs.values()],
+        unmatched_rows: unmatchedRows.slice(0, 200),
         invalid_rows: invalidRows.slice(0, 50),
         valid_rows: validRows.slice(0, 500),
         valid_rows_total: validRows.length
@@ -1040,6 +1146,179 @@ module.exports = function installHoursCsvRoutes(app, pool, mw) {
       res.status(500).json({ error: e.message });
     } finally {
       client.release();
+    }
+  });
+
+  // ─── CSV Review Queue endpoints ────────────────────────────────────────────
+
+  // Persist unmatched rows from a completed CSV import session into the
+  // review queue so admins can manually map them instead of silently losing them.
+  app.post('/api/hours/csv-queue-unmatched', requireAdmin, async (req, res) => {
+    const { stage_id, csv_filename } = req.body;
+    if (!stage_id) return res.status(400).json({ error: 'stage_id required' });
+    const staged = csvStage.get(stage_id);
+    if (!staged) return res.status(400).json({ error: 'Staged data expired. Re-validate the file.' });
+
+    const unmatchedRows = staged.validRows.filter(r => r.is_billable && !r.wo_known);
+    if (!unmatchedRows.length) return res.json({ ok: true, queued: 0 });
+
+    const userId = req.user?.id || null;
+    const client = await pool.connect();
+    try {
+      await client.query('BEGIN');
+      let queued = 0;
+      for (const row of unmatchedRows) {
+        await client.query(
+          `INSERT INTO csv_review_queue
+             (imported_by_user_id, csv_filename, raw_row, match_attempts, status)
+           VALUES ($1, $2, $3, $4, 'pending')`,
+          [userId, csv_filename || null, JSON.stringify(row), JSON.stringify(row.match_attempts || [])]
+        );
+        queued++;
+      }
+      await client.query('COMMIT');
+      res.json({ ok: true, queued });
+    } catch (e) {
+      await client.query('ROLLBACK');
+      console.error('[csv-queue-unmatched]', e && e.message);
+      res.status(500).json({ error: e.message });
+    } finally {
+      client.release();
+    }
+  });
+
+  // List queued rows, optionally filtered by status.
+  app.get('/api/csv-review-queue', requireAdmin, async (req, res) => {
+    const { status = 'pending', limit = 100, offset = 0 } = req.query;
+    const validStatuses = ['pending', 'matched', 'discarded', 'all'];
+    const statusFilter = validStatuses.includes(status) ? status : 'pending';
+    try {
+      const where = statusFilter === 'all' ? '' : `WHERE q.status = $1`;
+      const params = statusFilter === 'all' ? [] : [statusFilter];
+      const { rows } = await pool.query(`
+        SELECT q.*,
+               pu.username AS imported_by_username,
+               ru.username AS resolved_by_username,
+               p.name AS matched_project_name,
+               sp.name AS suggested_project_name
+          FROM csv_review_queue q
+          LEFT JOIN users pu ON pu.id = q.imported_by_user_id
+          LEFT JOIN users ru ON ru.id = q.resolved_by_user_id
+          LEFT JOIN projects p ON p.id = q.matched_project_id
+          LEFT JOIN projects sp ON sp.id = q.suggested_project_id
+        ${where}
+        ORDER BY q.imported_at DESC
+        LIMIT $${params.length + 1} OFFSET $${params.length + 2}
+      `, [...params, Math.min(Number(limit) || 100, 500), Math.max(Number(offset) || 0, 0)]);
+
+      const countRes = await pool.query(
+        `SELECT COUNT(*) FROM csv_review_queue ${statusFilter === 'all' ? '' : 'WHERE status = $1'}`,
+        statusFilter === 'all' ? [] : [statusFilter]
+      );
+      res.json({ rows, total: parseInt(countRes.rows[0].count, 10) });
+    } catch (e) {
+      console.error('[csv-review-queue:list]', e && e.message);
+      res.status(500).json({ error: e.message });
+    }
+  });
+
+  // Admin manually matches a queued row to a project → creates time_entry + marks matched.
+  app.post('/api/csv-review-queue/:id/match', requireAdmin, async (req, res) => {
+    const { project_id } = req.body;
+    if (!project_id) return res.status(400).json({ error: 'project_id required' });
+
+    const client = await pool.connect();
+    try {
+      await client.query('BEGIN');
+
+      const qRes = await client.query(
+        `SELECT * FROM csv_review_queue WHERE id = $1 AND status = 'pending'`,
+        [req.params.id]
+      );
+      if (!qRes.rows.length) return res.status(404).json({ error: 'Queued row not found or not pending' });
+      const qRow = qRes.rows[0];
+
+      const projRes = await client.query('SELECT id, name FROM projects WHERE id = $1', [project_id]);
+      if (!projRes.rows.length) return res.status(400).json({ error: 'Project not found' });
+
+      const raw = qRow.raw_row;
+      if (!raw.staff_id) {
+        return res.status(400).json({ error: 'Row has no resolved staff — edit the queued row via the Hours import flow to fix staff first' });
+      }
+      if (!raw.date || !raw.hours) {
+        return res.status(400).json({ error: 'Row is missing date or hours data' });
+      }
+
+      const snappedHours = snapHoursToQuarter(parseFloat(raw.hours));
+      const { rows: insRows } = await client.query(
+        `INSERT INTO time_entries (project_id, staff_id, entry_date, hours, job_title, import_batch, is_billable)
+         VALUES ($1, $2, $3, $4, $5, $6, true)
+         RETURNING *`,
+        [project_id, raw.staff_id, raw.date, snappedHours,
+         raw.job_title || null, `csv_review_${Date.now()}`]
+      );
+
+      await client.query(
+        `UPDATE csv_review_queue
+           SET status = 'matched', matched_project_id = $1,
+               resolved_at = now(), resolved_by_user_id = $2
+         WHERE id = $3`,
+        [project_id, req.user?.id || null, req.params.id]
+      );
+
+      await client.query('COMMIT');
+
+      await updateProjectHours(project_id);
+
+      if (typeof auditTimeEntry === 'function') {
+        try {
+          await auditTimeEntry({
+            req, timeEntryId: insRows[0].id, action: 'created',
+            before: null, after: insRows[0], source: 'csv_review',
+          });
+        } catch (auditErr) {
+          console.error('[csv-review-queue:match:audit]', auditErr && auditErr.message);
+        }
+      }
+
+      res.json({ ok: true, time_entry_id: insRows[0].id, project_name: projRes.rows[0].name });
+    } catch (e) {
+      await client.query('ROLLBACK');
+      console.error('[csv-review-queue:match]', e && e.message);
+      res.status(500).json({ error: e.message });
+    } finally {
+      client.release();
+    }
+  });
+
+  // Admin discards a queued row — it won't be imported.
+  app.post('/api/csv-review-queue/:id/discard', requireAdmin, async (req, res) => {
+    try {
+      const result = await pool.query(
+        `UPDATE csv_review_queue
+           SET status = 'discarded', resolved_at = now(), resolved_by_user_id = $1,
+               notes = COALESCE($2, notes)
+         WHERE id = $3 AND status = 'pending'
+         RETURNING id`,
+        [req.user?.id || null, req.body?.notes || null, req.params.id]
+      );
+      if (!result.rows.length) return res.status(404).json({ error: 'Queued row not found or not pending' });
+      res.json({ ok: true });
+    } catch (e) {
+      console.error('[csv-review-queue:discard]', e && e.message);
+      res.status(500).json({ error: e.message });
+    }
+  });
+
+  // Convenience: get pending count for the badge/notification in the UI.
+  app.get('/api/csv-review-queue/pending-count', requireAdmin, async (req, res) => {
+    try {
+      const { rows } = await pool.query(
+        `SELECT COUNT(*) AS count FROM csv_review_queue WHERE status = 'pending'`
+      );
+      res.json({ count: parseInt(rows[0].count, 10) });
+    } catch (e) {
+      res.status(500).json({ error: e.message });
     }
   });
 };

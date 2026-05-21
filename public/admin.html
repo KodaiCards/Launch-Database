@@ -1131,6 +1131,31 @@ select.filter{border:1px solid var(--gray-border);border-radius:7px;padding:7px 
         </div>
         <div id="held-timecards-body" style="padding:0"></div>
       </div>
+      <!-- CSV review queue: rows from CSV imports that could not be matched
+           to a project automatically. Admin manually assigns a project or
+           discards each row. Hidden when no pending rows exist. -->
+      <div id="csv-review-queue-panel" class="card" style="display:none;margin-bottom:14px;border-left:4px solid var(--warning,#FFC107)">
+        <div class="card-header">
+          <span class="card-title"><i class="fa-solid fa-inbox" style="color:var(--warning,#FFC107)"></i> CSV Review Queue <span id="csv-rq-count" style="margin-left:8px;color:var(--text-muted);font-weight:400"></span></span>
+        </div>
+        <div style="overflow-x:auto;padding:0">
+          <table class="table" style="width:100%;border-collapse:collapse;font-size:13px">
+            <thead>
+              <tr style="background:var(--surface-2,var(--gray-light));color:var(--text-muted);font-size:12px">
+                <th style="padding:8px 12px;text-align:left;border-bottom:1px solid var(--border-weak,var(--border))">Imported</th>
+                <th style="padding:8px 12px;text-align:left;border-bottom:1px solid var(--border-weak,var(--border))">Staff</th>
+                <th style="padding:8px 12px;text-align:left;border-bottom:1px solid var(--border-weak,var(--border))">WO#</th>
+                <th style="padding:8px 12px;text-align:left;border-bottom:1px solid var(--border-weak,var(--border))">Date</th>
+                <th style="padding:8px 12px;text-align:right;border-bottom:1px solid var(--border-weak,var(--border))">Hours</th>
+                <th style="padding:8px 12px;text-align:left;border-bottom:1px solid var(--border-weak,var(--border))">Job / Match Attempts</th>
+                <th style="padding:8px 12px;text-align:left;border-bottom:1px solid var(--border-weak,var(--border))">Assign Project</th>
+                <th style="padding:8px 12px;border-bottom:1px solid var(--border-weak,var(--border))"></th>
+              </tr>
+            </thead>
+            <tbody id="csv-rq-body"></tbody>
+          </table>
+        </div>
+      </div>
       <!-- Unbilled hours surface: time_entries rows with is_billable=FALSE,
            bucketed by unbilled_category (Miscellaneous / Permitting / bare
            WO #). These are CSV-imported overhead hours where the timeclock
@@ -3081,7 +3106,7 @@ function showView(view) {
   if (view==='design') loadDesign();
   if (view==='inspection') loadInspection();
   if (view==='potential-permits') loadPotentialPermits();
-  if (view==='hours') loadHours();
+  if (view==='hours') { loadHours(); if (typeof loadCsvReviewQueue === 'function') loadCsvReviewQueue(); }
   // 'clients' tab is under construction — owner unwired the data fetch
   // until the portal UI is finalized. Keep the dispatch line nearby so
   // re-enabling is a one-line edit (uncomment + ship).
@@ -6258,8 +6283,10 @@ function renderImportReview(d) {
   html += `<div class="stats-grid" style="margin-bottom:18px">
     <div class="stat-card"><div class="stat-label">Total Rows</div><div class="stat-value">${s.total_rows}</div></div>
     <div class="stat-card accent"><div class="stat-label">Ready to Import</div><div class="stat-value">${s.ready_to_import}</div></div>
+    ${s.rows_matched_tier1 > 0 ? `<div class="stat-card"><div class="stat-label">WO# Match</div><div class="stat-value">${s.rows_matched_tier1}</div></div>` : ''}
+    ${s.rows_matched_tier2 > 0 ? `<div class="stat-card"><div class="stat-label">Name Match</div><div class="stat-value">${s.rows_matched_tier2}</div></div>` : ''}
     ${s.rows_with_unknown_staff > 0 ? `<div class="stat-card warn"><div class="stat-label">Unknown Staff</div><div class="stat-value">${s.rows_with_unknown_staff}</div></div>` : ''}
-    ${s.rows_with_unknown_wo > 0 ? `<div class="stat-card warn"><div class="stat-label">Unknown WO#</div><div class="stat-value">${s.rows_with_unknown_wo}</div></div>` : ''}
+    ${(s.rows_unmatched||s.rows_with_unknown_wo) > 0 ? `<div class="stat-card warn"><div class="stat-label">Unmatched</div><div class="stat-value">${s.rows_unmatched||s.rows_with_unknown_wo}</div></div>` : ''}
     ${s.rows_in_billed_periods > 0 ? `<div class="stat-card warn"><div class="stat-label">In Billed Months</div><div class="stat-value">${s.rows_in_billed_periods}</div></div>` : ''}
     ${s.invalid > 0 ? `<div class="stat-card warn"><div class="stat-label">Invalid Rows</div><div class="stat-value">${s.invalid}</div></div>` : ''}
   </div>`;
@@ -6411,6 +6438,46 @@ function renderImportReview(d) {
         <div style="margin-top:8px;padding:8px;background:var(--gray-light);border-radius:6px;font-size:11px;color:var(--text-muted)">
           <strong>Bulk shortcut:</strong> When you set a client + job for the FIRST row, those values copy down to any other rows with the same Action that are still blank. Saves typing on big batches.
         </div>
+      </div>
+    </div>`;
+  }
+
+  // Unmatched rows section: rows that had a WO# or job hint but still didn't
+  // match any project. These can be queued for later admin triage instead of
+  // being silently skipped at commit time.
+  if (d.unmatched_rows && d.unmatched_rows.length > 0) {
+    const unmatchedCount = d.summary.rows_unmatched || d.unmatched_rows.length;
+    html += `<div class="card" style="margin-bottom:14px;border-left:4px solid var(--warning)">
+      <div class="card-header">
+        <span class="card-title"><i class="fa-solid fa-clock-rotate-left" style="color:var(--warning)"></i> Unmatched Rows (${unmatchedCount})</span>
+        <span style="font-size:11px;color:var(--text-muted)">No project match found. Queue them for admin triage — no data is lost.</span>
+      </div>
+      <div class="card-body" style="font-size:13px">
+        <p style="margin-bottom:10px">These rows have hours that couldn't be matched to any project (no WO# match and no client+job match). Click <strong>Queue for Review</strong> after importing — they'll appear in the CSV Review Queue panel so you can manually assign them to a project later.</p>
+        <table style="width:100%;font-size:12px;border-collapse:collapse">
+          <thead><tr style="background:var(--surface-2,var(--gray-light));text-align:left">
+            <th style="padding:6px 8px">Row</th>
+            <th style="padding:6px 8px">Staff</th>
+            <th style="padding:6px 8px">Date</th>
+            <th style="padding:6px 8px">WO</th>
+            <th style="padding:6px 8px;text-align:right">Hours</th>
+            <th style="padding:6px 8px">Job</th>
+            <th style="padding:6px 8px">Match attempts</th>
+          </tr></thead>
+          <tbody>
+            ${d.unmatched_rows.map(r => `
+              <tr style="border-top:1px solid var(--border-weak,var(--gray-border))">
+                <td style="padding:6px 8px;color:var(--text-muted)">${r.row_num}</td>
+                <td style="padding:6px 8px">${esc(r.name)}</td>
+                <td style="padding:6px 8px">${esc(r.date||'')}</td>
+                <td style="padding:6px 8px;font-family:monospace">${esc(r.wo||'—')}</td>
+                <td style="padding:6px 8px;text-align:right">${r.hours}</td>
+                <td style="padding:6px 8px">${esc(r.job_title||'—')}</td>
+                <td style="padding:6px 8px;font-size:11px;color:var(--text-muted)">${(r.match_attempts||[]).map(a => a.tier + ':' + a.result).join(', ')}</td>
+              </tr>
+            `).join('')}
+          </tbody>
+        </table>
       </div>
     </div>`;
   }
@@ -6708,6 +6775,17 @@ async function csvImportCommit() {
       if (skippedBilled > 0) parts.push(`${skippedBilled} in already-billed months`);
       html += `<p style="font-size:13px;color:var(--text-muted)">Skipped ${skipped} row${skipped !== 1 ? 's' : ''}: ${parts.join(', ')}.</p>`;
     }
+    // Offer to queue unmatched rows if there are any in this import session
+    const unmatchedCount = csvStageData && csvStageData.summary && csvStageData.summary.rows_unmatched;
+    if (unmatchedCount > 0) {
+      html += `<div style="background:var(--surface-2,var(--gray-light));border:1px solid var(--border-weak,var(--gray-border));border-radius:8px;padding:12px 16px;margin-top:12px">
+        <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap">
+          <span style="font-size:13px"><i class="fa-solid fa-clock-rotate-left" style="color:var(--warning)"></i> <strong>${unmatchedCount} unmatched row${unmatchedCount !== 1 ? 's' : ''}</strong> couldn't be matched to a project.</span>
+          <button class="btn btn-secondary btn-sm" id="queue-unmatched-btn" onclick="csvQueueUnmatched()"><i class="fa-solid fa-inbox"></i> Queue for Review</button>
+        </div>
+        <div style="font-size:12px;color:var(--text-muted);margin-top:6px">Queued rows appear in the <strong>CSV Review Queue</strong> panel on the Hours tab where you can manually assign them to a project.</div>
+      </div>`;
+    }
     html += `<p style="font-size:12px;color:var(--text-muted);margin-top:10px">Batch ID: <code>${esc(data.batch)}</code></p>`;
     document.getElementById('import-stage-review').style.display = 'none';
     document.getElementById('import-stage-done').style.display = 'block';
@@ -6743,6 +6821,115 @@ async function csvImportCommit() {
   } finally {
     btn.disabled = false;
     btn.innerHTML = '<i class="fa-solid fa-check"></i> Import Valid Rows';
+  }
+}
+
+// ─── CSV REVIEW QUEUE ─────────────────────────────────────────────────────
+
+async function csvQueueUnmatched() {
+  if (!csvStageData || !csvStageData.stage_id) return;
+  const btn = document.getElementById('queue-unmatched-btn');
+  if (btn) { btn.disabled = true; btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Queuing...'; }
+  try {
+    const r = await fetch('/api/hours/csv-queue-unmatched', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        stage_id: csvStageData.stage_id,
+        csv_filename: csvStageData.csv_filename || null,
+      }),
+    });
+    const data = await r.json();
+    if (!r.ok) throw new Error(data.error || 'Failed to queue rows');
+    if (btn) {
+      btn.innerHTML = `<i class="fa-solid fa-check"></i> Queued ${data.queued} row${data.queued !== 1 ? 's' : ''}`;
+      btn.disabled = true;
+      btn.classList.remove('btn-secondary');
+      btn.classList.add('btn-success');
+    }
+    // Refresh the review queue panel if it's visible
+    if (typeof loadCsvReviewQueue === 'function') loadCsvReviewQueue();
+  } catch (e) {
+    if (btn) { btn.disabled = false; btn.innerHTML = '<i class="fa-solid fa-inbox"></i> Queue for Review'; }
+    alert('Failed to queue rows: ' + e.message);
+  }
+}
+
+async function loadCsvReviewQueue() {
+  const panel = document.getElementById('csv-review-queue-panel');
+  if (!panel) return;
+  try {
+    const data = await api('/api/csv-review-queue?status=pending&limit=100');
+    if (!data.total) {
+      panel.style.display = 'none';
+      return;
+    }
+    panel.style.display = 'block';
+    const countEl = panel.querySelector('#csv-rq-count');
+    if (countEl) countEl.textContent = data.total;
+    const tbody = panel.querySelector('#csv-rq-body');
+    if (!tbody) return;
+    const projOptions = (allProjects || []).map(p =>
+      `<option value="${p.id}">${esc(p.name)} (${esc(p.client_name||'—')}) WO${esc(p.work_order_number||'—')}</option>`
+    ).join('');
+    tbody.innerHTML = data.rows.map(row => {
+      const raw = row.raw_row || {};
+      return `<tr data-rq-id="${row.id}">
+        <td style="padding:6px 8px;font-size:11px;color:var(--text-muted)">${esc(row.csv_filename||'—')}<br>${new Date(row.imported_at).toLocaleDateString()}</td>
+        <td style="padding:6px 8px">${esc(raw.name||'—')}</td>
+        <td style="padding:6px 8px;font-family:monospace">${esc(raw.wo||'—')}</td>
+        <td style="padding:6px 8px">${esc(raw.date||'—')}</td>
+        <td style="padding:6px 8px;text-align:right">${raw.hours||'—'}</td>
+        <td style="padding:6px 8px">${esc(raw.job_title||'—')}</td>
+        <td style="padding:6px 8px">
+          <select class="csv-rq-proj" data-rq-id="${row.id}" aria-label="Assign project" style="width:180px;padding:3px 4px;font-size:11px">
+            <option value="">— Pick project —</option>
+            ${projOptions}
+          </select>
+        </td>
+        <td style="padding:6px 8px;white-space:nowrap">
+          <button class="btn btn-primary btn-sm" onclick="csvRqMatch('${row.id}')" style="font-size:11px;padding:3px 8px">Assign</button>
+          <button class="btn btn-sm" style="color:var(--danger);background:transparent;border:1px solid var(--gray-border);font-size:11px;padding:3px 8px;margin-left:4px" onclick="csvRqDiscard('${row.id}')">Discard</button>
+        </td>
+      </tr>`;
+    }).join('');
+  } catch (e) {
+    console.error('[csv-review-queue]', e);
+  }
+}
+
+async function csvRqMatch(id) {
+  const sel = document.querySelector(`.csv-rq-proj[data-rq-id="${id}"]`);
+  if (!sel || !sel.value) { alert('Pick a project first.'); return; }
+  try {
+    const r = await fetch(`/api/csv-review-queue/${id}/match`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ project_id: sel.value }),
+    });
+    const data = await r.json();
+    if (!r.ok) throw new Error(data.error || 'Match failed');
+    // Remove the row and reload queue
+    const tr = document.querySelector(`tr[data-rq-id="${id}"]`);
+    if (tr) tr.remove();
+    loadCsvReviewQueue();
+    loadHours();
+  } catch (e) {
+    alert('Failed to assign: ' + e.message);
+  }
+}
+
+async function csvRqDiscard(id) {
+  if (!confirm('Discard this row? It will not be imported.')) return;
+  try {
+    const r = await fetch(`/api/csv-review-queue/${id}/discard`, { method: 'POST' });
+    const data = await r.json();
+    if (!r.ok) throw new Error(data.error || 'Discard failed');
+    const tr = document.querySelector(`tr[data-rq-id="${id}"]`);
+    if (tr) tr.remove();
+    loadCsvReviewQueue();
+  } catch (e) {
+    alert('Failed to discard: ' + e.message);
   }
 }
 
