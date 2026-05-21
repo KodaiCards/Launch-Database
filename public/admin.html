@@ -1579,6 +1579,7 @@ select.filter{border:1px solid var(--gray-border);border-radius:7px;padding:7px 
               </select>
               <button type="button" class="btn btn-secondary btn-icon btn-sm" onclick="toggleQuickAdd('conc')" title="Add new concentrator"><i class="fa-solid fa-plus"></i></button>
             </div>
+            <div id="proj-sa-no-config-hint" style="display:none;font-size:11px;color:var(--warning-text,#856404);background:var(--warning-light,#fff3cd);border:1px solid var(--warning-border,#ffc107);border-radius:4px;padding:6px 8px;margin-top:4px"></div>
             <div id="qa-conc" style="display:none;margin-top:8px;padding:10px;background:var(--gray-light);border-radius:8px;font-size:13px">
               <div style="display:flex;gap:6px;margin-bottom:6px">
                 <input type="text" id="qa-conc-contract" placeholder="Contract label (e.g. Contract 3)" aria-label="Quick-add concentrator contract label" style="flex:1">
@@ -3198,7 +3199,16 @@ async function loadConcentrators() {
 function concentratorChanged() {
   const sel = document.getElementById('proj-concentrator');
   const id = sel.value;
+  // BUG-2 FIX: store the user's explicit pick so that downstream re-renders
+  // of this dropdown (triggered by contractChanged / applyProjectModalFieldGating)
+  // can restore it instead of resetting to the empty placeholder.
+  if (id) sel.dataset.userPicked = id;
   if (!id) return;
+
+  // EC-scoped mode: SA was populated from ec_service_areas — WO# auto-fill
+  // happens via the WO select's onchange in populateEcScopedWoSaForModal.
+  if (sel.dataset.ecId) return;
+
   const conc = allConcentrators.find(c => c.id === id);
   if (!conc) return;
   // Auto-fill WO# only for RUS — that's the only program where WO# is
@@ -3422,9 +3432,17 @@ function populateContractDropdownForProgram() {
 //      (legacy production data: contract_number is "Contract 3 / 515-3"
 //      while concentrator.contract_label is "Contract 3" — startsWith
 //      bridges them without backfilling).
+//
+// BUG-1 FIX: when dataset.ecId is set, populateEcScopedWoSaForModal() has
+// already populated the dropdown from ec_service_areas. Skip the legacy
+// concentrators query so it can't overwrite the correct EC-scoped options.
 function populateConcentratorDropdownForContract() {
   const sel = document.getElementById('proj-concentrator');
   if (!sel) return;
+
+  // EC-scoped mode active — legacy concentrators path must not run.
+  if (sel.dataset.ecId) return;
+
   const contractId = document.getElementById('proj-contract')?.value;
   const contract = (window.contractsCache || []).find(c => c.id === contractId);
   const allConcs = (typeof allConcentrators !== 'undefined' && allConcentrators) || [];
@@ -3452,7 +3470,10 @@ function populateConcentratorDropdownForContract() {
     opts.push(`<option value="${co.id}">${esc(co.area_name)}${wo}</option>`);
   }
   sel.innerHTML = opts.join('');
-  if (filtered.some(c => c.id === prev)) sel.value = prev;
+  // Restore: prefer the explicit user pick (dataset.userPicked) over the
+  // stale prev so re-renders don't silently drop the user's selection.
+  const toRestore = sel.dataset.userPicked || prev;
+  if (filtered.some(c => c.id === toRestore)) sel.value = toRestore;
 }
 
 async function clientChanged(preserveJobId, preservePicks = false) {
@@ -4166,6 +4187,12 @@ function openProjectModal(type='') {
   // visibility state (or the markup defaults), which can leak fields
   // that don't apply to a fresh-form session.
   if (typeof applyProjectModalFieldGating === 'function') applyProjectModalFieldGating();
+  // BUG-3 FIX: populate the jobs dropdown on open from the current scope
+  // context (no client/program yet → all active jobs). Without this, the
+  // dropdown stays at the empty placeholder until the user changes a
+  // cascade field, because refilterJobsDropdown() is only wired to
+  // clientChanged / ptypeChanged / contractChanged change events.
+  refilterJobsDropdown(null);
   openModal('project-modal');
 
   // ── Draft restore (new project only) ─────────────────────────────────
@@ -4354,9 +4381,12 @@ function clearProjectForm() {
   if (woSelect) { woSelect.value = ''; woSelect.style.display = 'none'; }
   const woIn = document.getElementById('proj-wo');
   if (woIn) { woIn.value = ''; woIn.style.display = ''; }
-  // Clear the ecId marker on the concentrator select so legacy path resumes
+  // Clear the ecId + userPicked markers on the concentrator select so legacy
+  // path resumes on a fresh form session.
   const concSel = document.getElementById('proj-concentrator');
-  if (concSel) delete concSel.dataset.ecId;
+  if (concSel) { delete concSel.dataset.ecId; delete concSel.dataset.userPicked; }
+  const saHint = document.getElementById('proj-sa-no-config-hint');
+  if (saHint) saHint.style.display = 'none';
   document.getElementById('proj-start').value=new Date().toISOString().split('T')[0];
   // Reset cadence to default; jobChanged() will switch to monthly if Inspection picked
   if (document.getElementById('proj-cadence')) document.getElementById('proj-cadence').value = 'one_time';
@@ -4516,19 +4546,31 @@ async function populateEcScopedWoSaForModal(ecId) {
     // ── Service Area picker ─────────────────────────────────────────────────
     const concWrap = document.getElementById('proj-concentrator-wrap');
     const concSel  = document.getElementById('proj-concentrator');
+    const saHint   = document.getElementById('proj-sa-no-config-hint');
     if (concWrap && concSel && sas.length > 0) {
       // Overwrite options with EC-scoped SAs.  Keep an empty first option.
-      const prev = concSel.value;
+      const prev = concSel.dataset.userPicked || concSel.value;
       concSel.innerHTML =
         '<option value="">— Select service area —</option>' +
         sas.map(sa => `<option value="${sa.id}" data-type="ec-sa">${escHtml(sa.name)}</option>`).join('');
       // Restore prior selection if still in the new list.
       if (sas.some(sa => sa.id === prev)) concSel.value = prev;
-      // Store EC id so concentratorChanged knows to look in EC-scoped data.
+      // Store EC id so concentratorChanged / populateConcentratorDropdownForContract
+      // know EC-scoped mode is active and must not run the legacy path.
       concSel.dataset.ecId = ecId;
+      if (saHint) saHint.style.display = 'none';
     } else if (concSel) {
-      // No EC-scoped SAs — clear the ecId marker and let legacy path run.
-      delete concSel.dataset.ecId;
+      // EC selected but zero EC-scoped SAs configured. Stay in EC-scoped mode
+      // (mark ecId) so the legacy concentrators path doesn't run, and show the
+      // actionable helper text pointing the user to Settings → Engineering Contracts.
+      concSel.dataset.ecId = ecId;
+      const ec = (window.engineeringContractsCache || []).find(e => e.id === ecId);
+      const ecName = ec ? (ec.name || ec.contract_number || 'this contract') : 'this contract';
+      concSel.innerHTML = '<option value="">No service areas configured</option>';
+      if (saHint) {
+        saHint.textContent = `No service areas configured for ${ecName}. Add them via Settings → Engineering Contracts → ${ecName} → Service Areas.`;
+        saHint.style.display = '';
+      }
     }
 
     // ── WO# picker ──────────────────────────────────────────────────────────
