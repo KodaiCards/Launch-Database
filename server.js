@@ -739,6 +739,27 @@ require('./routes/portal_access')(app, pool, { requireAdmin }, PORTAL_DEFS);
 // Wave 13: client portal API — project status for the beta client-facing view.
 require('./routes/client_portal')(app, pool, { requireAuth });
 
+// Wave 14 diagnostic — inspect rollup tree state when Railway logs are
+// rate-limit dropping the [WAVE 14 DIAG] output.
+app.get('/api/admin/diag/rollup-state', requireAdmin, async (req, res) => {
+  try {
+    const [clients, ecFolders, legacyRollups, orphans] = await Promise.all([
+      pool.query(`SELECT id, name FROM projects WHERE is_rollup=TRUE AND rollup_level='client' ORDER BY name`),
+      pool.query(`SELECT p.id, p.name, p.parent_id, p.engineering_contract_id, ec.name AS ec_name, (SELECT COUNT(*) FROM projects c WHERE c.parent_id = p.id)::int AS child_count FROM projects p LEFT JOIN engineering_contracts ec ON ec.id = p.engineering_contract_id WHERE p.is_rollup=TRUE AND p.rollup_level='engineering_contract' ORDER BY p.name`),
+      pool.query(`SELECT p.id, p.name, p.client_id, cl.name AS client_name, p.parent_id, pp.name AS parent_name, (SELECT COUNT(*) FROM projects c WHERE c.parent_id = p.id)::int AS child_count FROM projects p LEFT JOIN clients cl ON cl.id = p.client_id LEFT JOIN projects pp ON pp.id = p.parent_id WHERE p.is_rollup=TRUE AND p.rollup_level IS NULL ORDER BY p.name`),
+      pool.query(`SELECT id, name FROM projects WHERE parent_id IS NULL AND is_rollup IS NOT TRUE ORDER BY name LIMIT 20`),
+    ]);
+    res.json({
+      client_folders: clients.rows,
+      ec_folders: ecFolders.rows,
+      legacy_rollups_null_level: legacyRollups.rows,
+      flat_leaves_sample: orphans.rows,
+    });
+  } catch (e) {
+    res.status(500).json({ error: e.message });
+  }
+});
+
 // Wave 13C: admin impersonation ("View as Staff / Customer").
 // Registered AFTER auth middleware so req.user is always populated before the
 // requireAdmin guard fires.
@@ -1536,25 +1557,26 @@ async function bootstrapDefensiveRecentMigrations() {
       console.error(`[WAVE 14 DIAG] legacy="${row.legacy_name}" (${row.legacy_children} children) <=> new="${row.new_name}" → stripped="${row.new_name_stripped}" MATCH=${row.new_name_stripped === row.legacy_name}`);
     }
 
-    // W14-7: merge duplicate EC folders. W14-3 created NEW empty
-    // 'engineering_contract'-level folders for every active EC row, naming
-    // them "<ec.name> (<PROGRAM>)" e.g. "...A72 (RUS)". Legacy rollups carry
-    // the bare name "...A72" with rollup_level=NULL and have all the actual
-    // data under them. Match by STRIPPING the " (PROGRAM)" suffix off the
-    // new folder name before comparing to the legacy name.
+    // W14-7: merge duplicate EC folders. W14-3 created NEW EC folders named
+    // "<ec.name> (<PROGRAM>)" with engineering_contract_id set. Legacy
+    // rollups have just the bare EC name with rollup_level=NULL. Match by
+    // looking up the EC's true name from engineering_contracts via the new
+    // folder's engineering_contract_id, then comparing to ec_legacy.name.
+    // No regex — direct FK-based match.
     const w14_7a = await pool.query(`
       UPDATE projects child
       SET parent_id = ec_new.id
       FROM projects ec_legacy
       JOIN projects ec_new
-        ON regexp_replace(ec_new.name, ' \\([A-Za-z]+\\)$', '') = ec_legacy.name
-       AND ec_new.client_id = ec_legacy.client_id
+        ON ec_new.client_id = ec_legacy.client_id
        AND ec_new.is_rollup = TRUE
        AND ec_new.rollup_level = 'engineering_contract'
        AND ec_new.id <> ec_legacy.id
+      JOIN engineering_contracts ec ON ec.id = ec_new.engineering_contract_id
       WHERE child.parent_id = ec_legacy.id
         AND ec_legacy.is_rollup = TRUE
         AND ec_legacy.rollup_level IS NULL
+        AND ec_legacy.name = ec.name
     `);
     console.error(`[WAVE 14] step W14-7a: merged ${w14_7a.rowCount} child(ren) from duplicate-name legacy EC(s) into new EC folder(s)`);
 
@@ -1564,11 +1586,12 @@ async function bootstrapDefensiveRecentMigrations() {
         AND ec_legacy.rollup_level IS NULL
         AND EXISTS (
           SELECT 1 FROM projects ec_new
-          WHERE regexp_replace(ec_new.name, ' \\([A-Za-z]+\\)$', '') = ec_legacy.name
-            AND ec_new.client_id = ec_legacy.client_id
+          JOIN engineering_contracts ec ON ec.id = ec_new.engineering_contract_id
+          WHERE ec_new.client_id = ec_legacy.client_id
             AND ec_new.is_rollup = TRUE
             AND ec_new.rollup_level = 'engineering_contract'
             AND ec_new.id <> ec_legacy.id
+            AND ec_legacy.name = ec.name
         )
         AND NOT EXISTS (SELECT 1 FROM projects c WHERE c.parent_id = ec_legacy.id)
     `);
