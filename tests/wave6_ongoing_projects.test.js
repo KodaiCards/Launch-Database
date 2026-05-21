@@ -361,3 +361,135 @@ test('POST /api/projects/:id/generate-monthly-invoice is idempotent', async () =
   `, [projRes.id]);
   assert.equal(invRows.length, 1, 'exactly one invoice must exist for this project + period');
 });
+
+test('generate-monthly-invoice: concurrent calls don\'t double-create', async () => {
+  // Create a project with hours for concurrent race testing
+  const clientRes = await requestJson('POST', '/api/clients', { token }, {
+    name: `Concurrent Test Client ${Date.now()}`
+  });
+  const clientId = clientRes.id;
+  extraCleanup.clients = extraCleanup.clients || [];
+  extraCleanup.clients.push(clientId);
+
+  const projRes = await requestJson('POST', '/api/projects', { token }, {
+    name: `Concurrent Test Project ${Date.now()}`,
+    client_id: clientId,
+    billing_rate: 100,
+    is_ongoing: true
+  });
+  const projectId = projRes.id;
+  extraCleanup.projects = extraCleanup.projects || [];
+  extraCleanup.projects.push(projectId);
+
+  // Insert hours for April 2025
+  await pool.query(`
+    INSERT INTO time_entries (project_id, entry_date, hours, is_billable, staff_name)
+    VALUES ($1, '2025-04-15', 10, true, 'TestStaff')
+  `, [projectId]);
+
+  // Simulate concurrent calls using Promise.all
+  const [r1, r2] = await Promise.all([
+    requestJson('POST', `/api/projects/${projectId}/generate-monthly-invoice`, { token }, { month: 4, year: 2025 }),
+    requestJson('POST', `/api/projects/${projectId}/generate-monthly-invoice`, { token }, { month: 4, year: 2025 })
+  ]);
+
+  // Both should succeed (200 status)
+  assert.ok(r1, 'first concurrent request must succeed');
+  assert.ok(r2, 'second concurrent request must succeed');
+
+  // One must be new, one must be existing
+  const newCount = [r1, r2].filter(r => r.existing === false).length;
+  const existingCount = [r1, r2].filter(r => r.existing === true).length;
+  assert.equal(newCount, 1, 'exactly one of the concurrent requests must create (existing=false)');
+  assert.equal(existingCount, 1, 'exactly one of the concurrent requests must find existing (existing=true)');
+
+  // Both must reference the same invoice
+  assert.equal(r1.invoice.id, r2.invoice.id, 'both concurrent responses must reference the same invoice');
+
+  // Verify only one invoice row exists for this project + period
+  const { rows: invRows } = await pool.query(`
+    SELECT i.id FROM invoices i
+    JOIN invoice_items ii ON ii.invoice_id = i.id
+    WHERE ii.project_id = $1
+      AND i.billing_period_start = '2025-04-01'
+      AND i.billing_period_end   = '2025-04-30'
+  `, [projectId]);
+  assert.equal(invRows.length, 1, 'exactly one invoice must exist for this project + period (no double-create)');
+  extraCleanup.invoices.push(r1.invoice.id);
+});
+
+test('generate-monthly-invoice: 404 on non-existent project', async () => {
+  const fakeProjectId = '00000000-0000-0000-0000-000000000000';
+  const res = await requestJson(
+    'POST',
+    `/api/projects/${fakeProjectId}/generate-monthly-invoice`,
+    { token },
+    { month: 4, year: 2025 }
+  );
+  assert.equal(res.error, 'Project not found.', 'request for non-existent project must return 404 with correct message');
+});
+
+test('generate-monthly-invoice: 400 on invalid month', async () => {
+  // Create a project
+  const clientRes = await requestJson('POST', '/api/clients', { token }, {
+    name: `Invalid Month Test Client ${Date.now()}`
+  });
+  const clientId = clientRes.id;
+  extraCleanup.clients = extraCleanup.clients || [];
+  extraCleanup.clients.push(clientId);
+
+  const projRes = await requestJson('POST', '/api/projects', { token }, {
+    name: `Invalid Month Test Project ${Date.now()}`,
+    client_id: clientId,
+    billing_rate: 100
+  });
+  const projectId = projRes.id;
+  extraCleanup.projects = extraCleanup.projects || [];
+  extraCleanup.projects.push(projectId);
+
+  const res = await requestJson(
+    'POST',
+    `/api/projects/${projectId}/generate-monthly-invoice`,
+    { token },
+    { month: 13, year: 2025 }
+  );
+  assert.equal(res.error, 'month must be 1-12', 'invalid month must return 400');
+});
+
+test('generate-monthly-invoice: succeeds with zero billing_rate', async () => {
+  // Create a project with billing_rate=0
+  const clientRes = await requestJson('POST', '/api/clients', { token }, {
+    name: `Zero Rate Test Client ${Date.now()}`
+  });
+  const clientId = clientRes.id;
+  extraCleanup.clients = extraCleanup.clients || [];
+  extraCleanup.clients.push(clientId);
+
+  const projRes = await requestJson('POST', '/api/projects', { token }, {
+    name: `Zero Rate Test Project ${Date.now()}`,
+    client_id: clientId,
+    billing_rate: 0,
+    is_ongoing: true
+  });
+  const projectId = projRes.id;
+  extraCleanup.projects = extraCleanup.projects || [];
+  extraCleanup.projects.push(projectId);
+
+  // Insert hours
+  await pool.query(`
+    INSERT INTO time_entries (project_id, entry_date, hours, is_billable, staff_name)
+    VALUES ($1, '2025-04-15', 5, true, 'TestStaff')
+  `, [projectId]);
+
+  const res = await requestJson(
+    'POST',
+    `/api/projects/${projectId}/generate-monthly-invoice`,
+    { token },
+    { month: 4, year: 2025 }
+  );
+
+  assert.equal(res.existing, false, 'must create invoice even with zero rate');
+  assert.ok(res.invoice.id, 'invoice must have an id');
+  assert.equal(res.invoice.total_amount, 0, 'invoice amount must be 0 when billing_rate is 0');
+  extraCleanup.invoices.push(res.invoice.id);
+});

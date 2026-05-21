@@ -23,7 +23,7 @@ module.exports = function installProjectsRoutes(app, pool, mw) {
   // Item 2 + 22 fix: requireAuth added alongside requireAdmin.
   // POST and PUT were entirely unguarded — any unauthenticated request
   // could create or mutate projects. requireAuth() gates both handlers.
-  const { requireAdmin, requireAuth } = mw;
+  const { requireAdmin, requireAuth, requireManagerOrAdmin } = mw;
 
   // Wave 1.5 [UNGATED]: GET /api/projects and GET /api/projects/:id were missing auth.
   app.get('/api/projects', requireAuth(), async (req, res) => {
@@ -305,8 +305,12 @@ module.exports = function installProjectsRoutes(app, pool, mw) {
 
       // Cadence: caller can set explicitly, otherwise default to 'monthly' for
       // Inspection jobs (matches the schema backfill rule), 'one_time' otherwise.
-      const effectiveCadence = billing_cadence
+      // When is_ongoing=true, enforce cadence='monthly' server-side (invariant).
+      let effectiveCadence = billing_cadence
         || (jobName === 'Inspection' ? 'monthly' : 'one_time');
+      if (isOngoingFlag === true && effectiveCadence !== 'monthly') {
+        effectiveCadence = 'monthly'; // Server-side coercion for ongoing projects
+      }
 
       // For the financials calc, treat is_permitting as the trigger
       const finType = isPermitting ? 'permitting' : (project_type || 'other');
@@ -499,7 +503,11 @@ module.exports = function installProjectsRoutes(app, pool, mw) {
       const fin = calcProjectFinancials(finType, effectiveRate, footage, existingHpm);
 
       // Preserve existing values when payload doesn't include the field
-      const newCadence = billing_cadence !== undefined ? billing_cadence : existing.rows[0]?.billing_cadence;
+      let newCadence = billing_cadence !== undefined ? billing_cadence : existing.rows[0]?.billing_cadence;
+      // When is_ongoing=true, enforce cadence='monthly' server-side (invariant).
+      if (isOngoingFlag === true && newCadence !== 'monthly') {
+        newCadence = 'monthly'; // Server-side coercion for ongoing projects
+      }
       const newProjected = projected_revenue !== undefined
         ? (projected_revenue === null || projected_revenue === '' ? null : parseFloat(projected_revenue))
         : existing.rows[0]?.projected_revenue;
@@ -1135,7 +1143,7 @@ module.exports = function installProjectsRoutes(app, pool, mw) {
   // Admin-triggered invoice for an ongoing project's current (or specified) month.
   // Body: { month?: 1-12, year?: YYYY } — defaults to current month/year.
   // Idempotent: returns existing invoice row when one already covers this period.
-  app.post('/api/projects/:id/generate-monthly-invoice', requireAuth(), async (req, res) => {
+  app.post('/api/projects/:id/generate-monthly-invoice', requireManagerOrAdmin, async (req, res) => {
     const projectId = req.params.id;
     const now = new Date();
     const month = parseInt(req.body.month, 10) || (now.getMonth() + 1);
@@ -1196,6 +1204,7 @@ module.exports = function installProjectsRoutes(app, pool, mw) {
           INSERT INTO invoices (client_id, invoice_number, invoice_date,
             billing_period_start, billing_period_end, total_amount, status, notes)
           VALUES ($1, $2, $3, $4, $5, $6, 'draft', $7)
+          ON CONFLICT (invoice_number) DO NOTHING
           RETURNING *
         `, [
           p.client_id,
@@ -1207,7 +1216,22 @@ module.exports = function installProjectsRoutes(app, pool, mw) {
           `Auto-generated for ${p.name}`,
         ]);
 
-        const invoice = invRes.rows[0];
+        // If INSERT was suppressed by ON CONFLICT, re-SELECT the existing invoice
+        let invoice = invRes.rows[0];
+        if (!invoice) {
+          const existRes = await client.query(
+            `SELECT * FROM invoices WHERE invoice_number = $1`,
+            [invoiceNumber]
+          );
+          invoice = existRes.rows[0];
+          if (invoice) {
+            // Invoice exists but no invoice_items yet for this project — this can happen if
+            // the prior attempt succeeded at invoice creation but failed before item insertion.
+            // Return it as-is; caller should re-check via the idempotency pattern.
+            await client.query('COMMIT');
+            return res.json({ existing: true, invoice });
+          }
+        }
 
         await client.query(`
           INSERT INTO invoice_items (invoice_id, project_id, description, quantity, unit, rate, amount)
