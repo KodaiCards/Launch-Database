@@ -5193,25 +5193,28 @@ async function saveProject(opts) {
     else if (n.includes('design')) legacyType = 'design';
   }
 
+  // Helper: normalize empty strings to null for nullable fields
+  const nullIfEmpty = (v) => (v === '' || v === undefined) ? null : v;
+
   const body = {
     name, client_id: clientId,
-    contract_id: document.getElementById('proj-contract').value || null,
-    engineering_contract_id: document.getElementById('proj-ec')?.value || null,
-    work_order_number: document.getElementById('proj-wo').value || null,
-    service_area_label: saLabel || null,
-    service_area_name: saLabel || null,
+    contract_id: nullIfEmpty(document.getElementById('proj-contract').value),
+    engineering_contract_id: nullIfEmpty(document.getElementById('proj-ec')?.value),
+    work_order_number: nullIfEmpty(document.getElementById('proj-wo').value),
+    service_area_label: nullIfEmpty(saLabel),
+    service_area_name: nullIfEmpty(saLabel),
     project_type: legacyType,
-    program: projectTypeId || null,
-    job_id: jobId || null,
+    program: nullIfEmpty(projectTypeId),
+    job_id: nullIfEmpty(jobId),
     status: document.getElementById('proj-status').value,
     billing_type: isFootage ? 'footage' : 'hourly',
     billing_rate: parseFloat(rate)||null,
     footage: footage ? parseFloat(footage) : null,
     start_date: document.getElementById('proj-start').value,
-    notes: document.getElementById('proj-notes').value,
-    parent_id: document.getElementById('proj-parent').value || null,
-    budget_code_id: document.getElementById('proj-budget-code').value || null,
-    concentrator_id: document.getElementById('proj-concentrator').value || null,
+    notes: nullIfEmpty(document.getElementById('proj-notes').value),
+    parent_id: nullIfEmpty(document.getElementById('proj-parent').value),
+    budget_code_id: nullIfEmpty(document.getElementById('proj-budget-code').value),
+    concentrator_id: nullIfEmpty(document.getElementById('proj-concentrator').value),
     permit_manager: (document.getElementById('proj-permit-manager')?.value || '').trim() || null,
     billing_cadence: document.getElementById('proj-cadence')?.value || 'one_time',
     projected_revenue: (() => {
