@@ -1511,6 +1511,31 @@ async function bootstrapDefensiveRecentMigrations() {
     `);
     console.error(`[WAVE 14] step W14-6b: deleted ${w14_6b.rowCount} now-empty legacy intermediate(s)`);
 
+    // W14-7 DIAG: list candidate legacy duplicates so we can see what
+    // the matcher will/won't catch. Logged before the UPDATE runs.
+    const w14_diag = await pool.query(`
+      SELECT
+        legacy.id AS legacy_id,
+        legacy.name AS legacy_name,
+        legacy.parent_id AS legacy_parent,
+        (SELECT COUNT(*) FROM projects c WHERE c.parent_id = legacy.id) AS legacy_children,
+        ec_new.id AS new_id,
+        ec_new.name AS new_name,
+        regexp_replace(ec_new.name, ' \\([A-Za-z]+\\)$', '') AS new_name_stripped
+      FROM projects legacy
+      LEFT JOIN projects ec_new
+        ON ec_new.client_id = legacy.client_id
+       AND ec_new.is_rollup = TRUE
+       AND ec_new.rollup_level = 'engineering_contract'
+       AND ec_new.id <> legacy.id
+      WHERE legacy.is_rollup = TRUE
+        AND legacy.rollup_level IS NULL
+      ORDER BY legacy.name
+    `);
+    for (const row of w14_diag.rows) {
+      console.error(`[WAVE 14 DIAG] legacy="${row.legacy_name}" (${row.legacy_children} children) <=> new="${row.new_name}" → stripped="${row.new_name_stripped}" MATCH=${row.new_name_stripped === row.legacy_name}`);
+    }
+
     // W14-7: merge duplicate EC folders. W14-3 created NEW empty
     // 'engineering_contract'-level folders for every active EC row, naming
     // them "<ec.name> (<PROGRAM>)" e.g. "...A72 (RUS)". Legacy rollups carry
@@ -1522,7 +1547,7 @@ async function bootstrapDefensiveRecentMigrations() {
       SET parent_id = ec_new.id
       FROM projects ec_legacy
       JOIN projects ec_new
-        ON regexp_replace(ec_new.name, ' \\([A-Z]+\\)$', '') = ec_legacy.name
+        ON regexp_replace(ec_new.name, ' \\([A-Za-z]+\\)$', '') = ec_legacy.name
        AND ec_new.client_id = ec_legacy.client_id
        AND ec_new.is_rollup = TRUE
        AND ec_new.rollup_level = 'engineering_contract'
@@ -1539,7 +1564,7 @@ async function bootstrapDefensiveRecentMigrations() {
         AND ec_legacy.rollup_level IS NULL
         AND EXISTS (
           SELECT 1 FROM projects ec_new
-          WHERE regexp_replace(ec_new.name, ' \\([A-Z]+\\)$', '') = ec_legacy.name
+          WHERE regexp_replace(ec_new.name, ' \\([A-Za-z]+\\)$', '') = ec_legacy.name
             AND ec_new.client_id = ec_legacy.client_id
             AND ec_new.is_rollup = TRUE
             AND ec_new.rollup_level = 'engineering_contract'
