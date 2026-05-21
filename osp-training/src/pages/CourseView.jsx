@@ -67,6 +67,18 @@ export default function CourseView() {
 
   return (
     <div className="space-y-4">
+      {/* ── Back button ────────────────────────────────────────────── */}
+      {(() => {
+        const back = SECTION_BACK[course.section] || { to: '/', label: 'Courses' };
+        return (
+          <div className="flex items-center gap-2">
+            <Link to={back.to} className="text-sm text-slate-400 hover:text-amber-200 transition">
+              ← Back to {back.label}
+            </Link>
+          </div>
+        );
+      })()}
+
       {/* ── Course header ─────────────────────────────────────────── */}
       <header className="panel">
         <div className="flex items-start justify-between gap-4 flex-wrap">

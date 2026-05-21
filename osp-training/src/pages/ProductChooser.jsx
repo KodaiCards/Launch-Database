@@ -37,6 +37,17 @@ function ProductTile({ icon, title, description, cta, to, disabled }) {
 export default function ProductChooser() {
   return (
     <div className="space-y-8">
+      {/* Back to Launcher button */}
+      <div className="flex items-center gap-2 -mx-6 px-6 py-2 -mt-2">
+        <a
+          href="/"
+          className="text-sm text-slate-400 hover:text-amber-200 transition inline-flex items-center gap-1"
+          title="Exit to portal launcher"
+        >
+          ← Back to Launcher
+        </a>
+      </div>
+
       <div>
         <h1 className="text-3xl font-bold mb-2">OSP Training</h1>
         <p className="text-slate-400">Choose your learning path</p>

@@ -241,10 +241,10 @@ export default function Splash({ section = 'osp' }) {
   if (section === 'isp') {
     return (
       <div className="space-y-6">
-        {/* Back breadcrumb */}
-        <div className="flex items-center gap-2">
+        {/* Back navigation breadcrumb */}
+        <div className="flex items-center gap-4">
           <Link to="/" className="text-sm text-slate-400 hover:text-amber-200 transition">
-            ← All Sections
+            ← Back to Courses
           </Link>
         </div>
         <ISPComingSoon ispCourses={ispCourses} />
@@ -255,10 +255,10 @@ export default function Splash({ section = 'osp' }) {
   // Default: OSP section
   return (
     <div className="space-y-8">
-      {/* Back breadcrumb */}
-      <div className="flex items-center gap-2">
+      {/* Back navigation breadcrumb */}
+      <div className="flex items-center gap-4">
         <Link to="/" className="text-sm text-slate-400 hover:text-amber-200 transition">
-          ← All Sections
+          ← Back to Courses
         </Link>
       </div>
 
