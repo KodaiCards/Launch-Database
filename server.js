@@ -741,6 +741,90 @@ require('./routes/client_portal')(app, pool, { requireAuth });
 
 // Wave 14 diagnostic — inspect rollup tree state when Railway logs are
 // rate-limit dropping the [WAVE 14 DIAG] output.
+// Wave 14 — manual cleanup trigger. Returns step-by-step rowCounts so we
+// can see exactly what fired (no rate-limit issues like the boot log).
+app.post('/api/admin/diag/wave14-cleanup', requireAdmin, async (req, res) => {
+  const log = [];
+  try {
+    // Step A: merge children from legacy EC folders into their new W14-3
+    // counterparts (name match: new_name = legacy_name + " (PROGRAM)")
+    const a = await pool.query(`
+      UPDATE projects child
+      SET parent_id = ec_new.id
+      FROM projects ec_legacy, projects ec_new
+      WHERE child.parent_id = ec_legacy.id
+        AND ec_legacy.is_rollup = TRUE
+        AND ec_legacy.rollup_level IS NULL
+        AND ec_new.client_id = ec_legacy.client_id
+        AND ec_new.is_rollup = TRUE
+        AND ec_new.rollup_level = 'engineering_contract'
+        AND ec_new.id <> ec_legacy.id
+        AND ec_new.name LIKE ec_legacy.name || ' (%)'
+    `);
+    log.push({ step: 'A: merge children → new EC folders', rowCount: a.rowCount });
+
+    // Step B: delete now-empty legacy EC folders
+    const b = await pool.query(`
+      DELETE FROM projects ec_legacy
+      WHERE ec_legacy.is_rollup = TRUE
+        AND ec_legacy.rollup_level IS NULL
+        AND EXISTS (
+          SELECT 1 FROM projects ec_new
+          WHERE ec_new.client_id = ec_legacy.client_id
+            AND ec_new.is_rollup = TRUE
+            AND ec_new.rollup_level = 'engineering_contract'
+            AND ec_new.id <> ec_legacy.id
+            AND ec_new.name LIKE ec_legacy.name || ' (%)'
+        )
+        AND NOT EXISTS (SELECT 1 FROM projects c WHERE c.parent_id = ec_legacy.id)
+    `);
+    log.push({ step: 'B: delete empty legacy EC folders', rowCount: b.rowCount });
+
+    // Step C: promote children of legacy intermediates (parent=Client folder,
+    // rollup_level=NULL, no non-rollup children) up to the Client folder
+    const c = await pool.query(`
+      UPDATE projects child
+      SET parent_id = legacy.parent_id
+      FROM projects legacy
+      WHERE child.parent_id = legacy.id
+        AND legacy.is_rollup = TRUE
+        AND legacy.rollup_level IS NULL
+        AND EXISTS (
+          SELECT 1 FROM projects p
+          WHERE p.id = legacy.parent_id
+            AND p.is_rollup = TRUE
+            AND p.rollup_level = 'client'
+        )
+        AND NOT EXISTS (
+          SELECT 1 FROM projects leaf
+          WHERE leaf.parent_id = legacy.id
+            AND leaf.is_rollup IS NOT TRUE
+        )
+    `);
+    log.push({ step: 'C: promote children up from intermediate rollups', rowCount: c.rowCount });
+
+    // Step D: delete now-empty intermediates (PSC RUS 217 type)
+    const d = await pool.query(`
+      DELETE FROM projects legacy
+      WHERE legacy.is_rollup = TRUE
+        AND legacy.rollup_level IS NULL
+        AND legacy.parent_id IS NOT NULL
+        AND EXISTS (
+          SELECT 1 FROM projects p
+          WHERE p.id = legacy.parent_id
+            AND p.is_rollup = TRUE
+            AND p.rollup_level = 'client'
+        )
+        AND NOT EXISTS (SELECT 1 FROM projects c WHERE c.parent_id = legacy.id)
+    `);
+    log.push({ step: 'D: delete empty intermediates', rowCount: d.rowCount });
+
+    res.json({ ok: true, steps: log });
+  } catch (e) {
+    res.status(500).json({ ok: false, error: e.message, steps: log });
+  }
+});
+
 app.get('/api/admin/diag/rollup-state', requireAdmin, async (req, res) => {
   try {
     const [clients, ecFolders, legacyRollups, orphans] = await Promise.all([
@@ -1566,17 +1650,15 @@ async function bootstrapDefensiveRecentMigrations() {
     const w14_7a = await pool.query(`
       UPDATE projects child
       SET parent_id = ec_new.id
-      FROM projects ec_legacy
-      JOIN projects ec_new
-        ON ec_new.client_id = ec_legacy.client_id
-       AND ec_new.is_rollup = TRUE
-       AND ec_new.rollup_level = 'engineering_contract'
-       AND ec_new.id <> ec_legacy.id
-      JOIN engineering_contracts ec ON ec.id = ec_new.engineering_contract_id
+      FROM projects ec_legacy, projects ec_new
       WHERE child.parent_id = ec_legacy.id
         AND ec_legacy.is_rollup = TRUE
         AND ec_legacy.rollup_level IS NULL
-        AND ec_legacy.name = ec.name
+        AND ec_new.client_id = ec_legacy.client_id
+        AND ec_new.is_rollup = TRUE
+        AND ec_new.rollup_level = 'engineering_contract'
+        AND ec_new.id <> ec_legacy.id
+        AND ec_new.name LIKE ec_legacy.name || ' (%)'
     `);
     console.error(`[WAVE 14] step W14-7a: merged ${w14_7a.rowCount} child(ren) from duplicate-name legacy EC(s) into new EC folder(s)`);
 
@@ -1586,12 +1668,11 @@ async function bootstrapDefensiveRecentMigrations() {
         AND ec_legacy.rollup_level IS NULL
         AND EXISTS (
           SELECT 1 FROM projects ec_new
-          JOIN engineering_contracts ec ON ec.id = ec_new.engineering_contract_id
           WHERE ec_new.client_id = ec_legacy.client_id
             AND ec_new.is_rollup = TRUE
             AND ec_new.rollup_level = 'engineering_contract'
             AND ec_new.id <> ec_legacy.id
-            AND ec_legacy.name = ec.name
+            AND ec_new.name LIKE ec_legacy.name || ' (%)'
         )
         AND NOT EXISTS (SELECT 1 FROM projects c WHERE c.parent_id = ec_legacy.id)
     `);
