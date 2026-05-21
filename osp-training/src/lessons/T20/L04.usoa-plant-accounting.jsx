@@ -15,9 +15,7 @@ export const meta = {
   ],
   estimated_minutes: 25,
   vocabulary_introduced: [],
-  vocabulary_assumed: [
-    { term: 'cost', source_lesson_id: 'T04.L01' },
-  ],
+  vocabulary_assumed: [],
 };
 
 export const key_terms = [];

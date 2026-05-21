@@ -16,7 +16,7 @@ export const meta = {
   estimated_minutes: 25,
   vocabulary_introduced: [],
   vocabulary_assumed: [
-    { term: 'construction', source_lesson_id: 'T10.L01' },
+    { term: 'construction', source_lesson_id: 'T01.L05' },
   ],
 };
 

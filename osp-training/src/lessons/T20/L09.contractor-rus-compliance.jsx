@@ -16,9 +16,7 @@ export const meta = {
   ],
   estimated_minutes: 20,
   vocabulary_introduced: [],
-  vocabulary_assumed: [
-    { term: 'contractor', source_lesson_id: 'T10.L01' },
-  ],
+  vocabulary_assumed: [],
 };
 
 export const key_terms = [];

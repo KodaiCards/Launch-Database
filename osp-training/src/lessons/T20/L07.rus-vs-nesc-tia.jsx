@@ -17,7 +17,6 @@ export const meta = {
   vocabulary_introduced: [],
   vocabulary_assumed: [
     { term: 'NESC', source_lesson_id: 'T05.L01' },
-    { term: 'TIA-607', source_lesson_id: 'T14.L01' },
   ],
 };
 

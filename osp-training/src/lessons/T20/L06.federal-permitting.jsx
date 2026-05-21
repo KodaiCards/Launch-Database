@@ -16,8 +16,7 @@ export const meta = {
   estimated_minutes: 30,
   vocabulary_introduced: [],
   vocabulary_assumed: [
-    { term: 'NEPA', source_lesson_id: 'T09.L01' },
-    { term: 'permitting', source_lesson_id: 'T09.L01' },
+    { term: 'NEPA', source_lesson_id: 'T01.L08' },
   ],
 };
 

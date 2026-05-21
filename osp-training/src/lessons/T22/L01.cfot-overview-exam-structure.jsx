@@ -20,7 +20,7 @@ export const meta = {
   ],
   estimated_minutes: 18,
   vocabulary_introduced: [
-    'CFOT (Certified Fiber Optic Technician)',
+    'CFOT',
     'FOA (Fiber Optic Association)',
     'Domain (exam subject area)',
     'Blueprint (exam scope and weighting)',
