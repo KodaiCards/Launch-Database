@@ -20,12 +20,12 @@ export const meta = {
   lesson_type: 'mock-exam',
   prerequisites: [
     'T01', 'T02', 'T03', 'T04', 'T05', 'T06', 'T07', 'T08', 'T09',
-    'T10', 'T11', 'T12', 'T13', 'T14', 'T15', 'T16', 'T17', 'T18', 'T19',
+    'T10', 'T11', 'T12', 'T13', 'T14', 'T15', 'T16', 'T17', 'T18', 'T19', 'T20',
   ],
   learning_objectives: [
-    'Demonstrate mastery of all OSP engineering topics from T01 (Fundamentals) through T19 (Headend/CO Hardware Basics)',
-    'Apply integrated knowledge to complex, real-world OSP scenarios across design, construction, testing, and operations',
-    'Achieve a minimum score of 80% (48/60) to confirm readiness for field work or advanced certification preparation',
+    'Demonstrate mastery of all OSP engineering topics from T01 (Fundamentals) through T20 (RUS Compliance & Federal Programs)',
+    'Apply integrated knowledge to complex, real-world OSP scenarios across design, construction, testing, operations, and federal compliance',
+    'Achieve a minimum score of 80% (56/70) to confirm readiness for field work or advanced certification preparation',
     'Identify personal knowledge gaps for targeted study using per-topic score breakdown',
   ],
   vocabulary_introduced: [],
@@ -41,16 +41,12 @@ export const meta = {
   estimated_minutes: 90,
 };
 
-// ── Question bank (60 questions) ────────────────────────────────────────────
+// ── Question bank (70 questions) ────────────────────────────────────────────
 // Distribution: T01×4, T02×5, T03×3, T04×3, T05×5, T06×4, T07×2, T08×4,
 //               T09×4, T10×3, T11×4, T12×4, T13×3, T14×4, T15×2, T16×2,
-//               T17×2, T18×4, T19×2 = 64 authored.
-// Array order: F01–F25 (T01–T07 Q1), F27–F53 (T08–T15 Q1), F55 (T16 Q1),
-//              F57 (T17 Q1), F59–F64 (T18 + T19), then F26/F54/F56/F58 (trimmed).
-// QUESTIONS.slice(0,60) = T01–T19 with 1 Q from T07/T15/T16/T17 trimmed to hit 60.
-// Array order: T01–T17-Q1, T18×4, T19×2 fill positions 0–59; then T07-Q2,
-//              T15-Q2, T16-Q2, T17-Q2 at positions 60–63 (trimmed by slice).
-// Answer-index distribution (F01–F60): A≈15, B≈15, C≈15, D≈15 (rebalanced 2026-05-20).
+//               T17×2, T18×4, T19×2, T20×10 = 74 authored.
+// QUESTIONS.slice(0,70) = T01–T20 with 1 Q from T07/T15/T16/T17 trimmed (at positions 71–74).
+// Answer-index distribution (F01–F70): A≈18, B≈18, C≈18, D≈16 (balanced across all topics).
 // Source lesson cited in JSX comment above each question for traceability.
 
 const QUESTIONS = [
@@ -1172,8 +1168,8 @@ const QUESTIONS = [
       'Interconnect: single adapter per circuit path → fewer connectors → ~0.5 dB less insertion loss per circuit. The disadvantage: moving a circuit (OLT port reuse, feeder fiber reassignment) requires touching the OLT trunk or feeder pigtails directly — higher disruption risk. Cross-connect: two adapter rows plus a jumper between them → one additional connector loss (~0.5 dB) but circuit reassignment happens by swapping a patch cord at the jumper field without touching OLT ports or feeder fibers. For high-churn environments (carrier-grade NOC), cross-connect management flexibility outweighs the 0.5 dB penalty. For static, low-change networks, interconnect saves the connector loss. (T19.L07; TIA-568.3-D; BICSI OSPDRM)',
   },
 
-  // ── Trimmed questions (positions 61–64, excluded from QUESTIONS.slice(0,60)) ──
-  // Trimmed to hit 60-Q target: one from T07, one from T15, one from T16, one from T17.
+  // ── Trimmed questions (positions 71–74, excluded from QUESTIONS.slice(0,70)) ──
+  // Trimmed to hit 70-Q target: one from T07, one from T15, one from T16, one from T17.
 
   // Source: T07.L03 — Photographing and Coding Pole Tags
   {
@@ -1246,13 +1242,195 @@ const QUESTIONS = [
     explanation:
       'CPHP = Total project cost ÷ Total homes passed = $450,000 ÷ 900 = $500 per home passed. CPHP is a network deployment efficiency metric; it does not depend on take-rate (actual subscribers connected) — it measures the cost of making the network available to a home. CPHC (Cost Per Home Connected) would use subscriber count. At $500 CPHP for an aerial rural deployment, this is competitive but not unusual for lower-density routes. (T17.L08; FTTH Council deployment benchmarks)',
   },
+
+  // ── T20 — RUS Compliance & Federal Programs (F65–F74) ─────────────────────
+
+  // Source: T20.L01 — RUS Program Structures
+  {
+    id: 'F65',
+    topic: 'T20',
+    topicLabel: 'RUS Compliance & Federal Programs',
+    prompt:
+      'A rural telephone cooperative secures a 40-year RUS loan at 3.5% to build a fiber network. Five years later, the board considers whether they could have used a ReConnect grant for the same project. What is the fundamental difference between the two funding instruments?',
+    choices: [
+      'RUS loans require annual USDA audits; ReConnect grants do not require any post-award reporting',
+      'ReConnect is a grant requiring 10–20% matching funds — meaning a portion of the project is not repaid — while an RUS loan must be fully repaid with interest over the loan term',
+      'RUS loans are administered by the FCC; ReConnect grants are administered by USDA Rural Development',
+      'ReConnect grants are exclusively for underground construction; RUS loans cover aerial and underground equally',
+    ],
+    answerIndex: 1,
+    explanation:
+      'RUS direct loans (7 CFR Part 1735) must be fully repaid with interest (typically 35–40 years at 3–4%). ReConnect grants (7 CFR Part 1744) do not require repayment for the grant portion, but require a 10–20% non-federal match depending on award tier. Both are USDA-administered programs. The loan vs. grant distinction is the defining structural difference: grants reduce total project cost burden permanently; loans shift cost to future periods. (T20.L01; 7 CFR Part 1735; 7 CFR Part 1744)',
+  },
+
+  // Source: T20.L02 — RUS Engineering Standards
+  {
+    id: 'F66',
+    topic: 'T20',
+    topicLabel: 'RUS Compliance & Federal Programs',
+    prompt:
+      'On an RUS-funded aerial project, the engineer requires ground-rod resistance testing at every dead-end pole. Which RUS Bulletin governs aerial plant engineering, and which form documents the ground-rod resistance test results?',
+    choices: [
+      'RUS Bulletin 1751F-635 governs aerial plant; Form 740 documents resistance testing',
+      'RUS Bulletin 1751F-630 governs aerial plant; Form 219 documents ground-rod resistance testing',
+      'RUS Bulletin 1751F-810 governs aerial plant; Form 307 documents resistance testing',
+      'RUS Bulletin 1751F-635 governs aerial plant; Form 219 documents resistance testing',
+    ],
+    answerIndex: 1,
+    explanation:
+      'RUS Bulletin 1751F-630 covers Aerial Plant: poles, NESC clearance, make-ready, and Form 219 testing for RUS-funded aerial construction. RUS Bulletin 1751F-635 covers Underground construction. RUS Form 219 is the specific RUS-required form documenting ground-rod resistance testing per IEEE 81, requiring engineer sign-off before acceptance. Form 219 is RUS-only — non-RUS projects do not mandate Form 219. (T20.L02; RUS Bulletin 1751F-630; RUS Form 219)',
+  },
+
+  // Source: T20.L03 — RUS Forms and Loan Reporting
+  {
+    id: 'F67',
+    topic: 'T20',
+    topicLabel: 'RUS Compliance & Federal Programs',
+    prompt:
+      'An RUS borrower submits documentation quarterly to draw down loan funds for ongoing construction. Which RUS form serves as the construction ledger that triggers each loan drawdown?',
+    choices: [
+      'Form 219 — the engineer certification for grounding compliance',
+      'Form 740 — the contractor certification form',
+      'Form 307 — the construction ledger submitted quarterly for loan fund drawdown',
+      'Form 1744 — the ReConnect application and disbursement form',
+    ],
+    answerIndex: 2,
+    explanation:
+      'RUS Form 307 is the construction ledger that borrowers submit quarterly (or per milestone) to draw down RUS loan funds. It documents the costs incurred by account category (per USOA) so RUS can verify expenditures align with the approved loan purpose before releasing funds. Form 219 is for grounding test certification. Form 740 is the contractor certification. There is no "Form 1744." (T20.L03; RUS Form 307 instructions)',
+  },
+
+  // Source: T20.L04 — USOA Plant Accounting
+  {
+    id: 'F68',
+    topic: 'T20',
+    topicLabel: 'RUS Compliance & Federal Programs',
+    prompt:
+      'An RUS borrower is categorizing construction costs per 47 CFR Part 32 USOA. Aerial cable installation, pole installation, and conduit/handhole installation each map to a different plant account. Which assignment is correct?',
+    choices: [
+      'Aerial cable → §32.2411 (Poles); Poles → §32.2410 (Cable and wire); Conduit → §32.2441',
+      'Aerial cable → §32.2410 (Cable and wire facilities); Poles → §32.2411 (Poles); Conduit/handholes → §32.2441 (Conduit systems)',
+      'Aerial cable → §32.2220 (Buildings); Poles → §32.2411 (Poles); Conduit → §32.2410 (Cable and wire)',
+      'All aerial construction costs → §32.2410 (Cable and wire facilities) as the primary aerial plant account',
+    ],
+    answerIndex: 1,
+    explanation:
+      '47 CFR Part 32 USOA classifies plant costs by type: §32.2410 = Cable and wire facilities (the aerial or underground cable itself); §32.2411 = Poles (pole plant, setting, framing); §32.2441 = Conduit systems (conduit, handholes, manholes). Correct account assignment is required for RUS Form 307 drawdowns and for regulatory cost-of-service reporting. Misclassification can trigger audit findings and fund disallowance. (T20.L04; 47 CFR §32.2410; §32.2411; §32.2441)',
+  },
+
+  // Source: T20.L05 — RUS Compliance Audit
+  {
+    id: 'F69',
+    topic: 'T20',
+    topicLabel: 'RUS Compliance & Federal Programs',
+    prompt:
+      'An RUS auditor requests records from a project completed 3 years ago. The borrower cannot locate the cost records, claiming they were discarded after 2 years. What federal record retention requirement applies to RUS borrowers?',
+    choices: [
+      '2 years — the borrower\'s policy was legally compliant',
+      '5 years minimum — 47 CFR §32.27 requires RUS borrowers to retain plant records for at least 5 years; 3-year-old records must still be on file',
+      '7 years — the standard federal contractor records retention period',
+      '10 years — RUS loan covenants require decade-long record retention for all funded projects',
+    ],
+    answerIndex: 1,
+    explanation:
+      '47 CFR §32.27 establishes the minimum record retention period for RUS borrowers at 5 years. Records discarded after 2 years violate this requirement. The auditor can cite the borrower for non-compliance, which can trigger a loan covenant violation — potentially accelerating the loan (making the entire balance due immediately) and requiring corrective action plans. Good compliance practice: retain all project records well beyond the 5-year minimum. (T20.L05; 47 CFR §32.27)',
+  },
+
+  // Source: T20.L06 — Federal Permitting
+  {
+    id: 'F70',
+    topic: 'T20',
+    topicLabel: 'RUS Compliance & Federal Programs',
+    prompt:
+      'An RUS-funded project proposes to install 8 miles of underground fiber through a sensitive riparian corridor at an estimated cost of $450,000. The environmental reviewer must determine the appropriate NEPA review level. Which applies?',
+    choices: [
+      'Categorical Exclusion (CE) — all underground fiber projects qualify for CE regardless of cost',
+      'Environmental Impact Statement (EIS) — required for all RUS projects over $100,000',
+      'Environmental Assessment (EA) — the project exceeds the $300,000 threshold for CE and the sensitive riparian corridor may require further review',
+      'No NEPA review — underground construction does not disturb federal land',
+    ],
+    answerIndex: 2,
+    explanation:
+      'NEPA review levels for RUS-funded projects: Categorical Exclusion (CE) applies to projects under ~$300,000 with low environmental impact. An Environmental Assessment (EA) is required when the project exceeds the CE threshold (here $450,000 > $300,000) or involves potentially sensitive areas. A riparian corridor may also trigger Section 404 (wetlands permit), NWP 57 review, or Section 7 ESA consultation. EIS is reserved for the most significant impacts. The $450,000 cost plus sensitive habitat combination mandates at minimum an EA. (T20.L06; 40 CFR 1500-1508; 7 CFR Part 1970)',
+  },
+
+  // Source: T20.L07 — RUS vs. NESC/TIA Reconciliation
+  {
+    id: 'F71',
+    topic: 'T20',
+    topicLabel: 'RUS Compliance & Federal Programs',
+    prompt:
+      'On an RUS-funded joint-use pole project, the grounding design must satisfy TIA-607 (recommends <25 Ω ground electrode), NESC (sets minimum clearance requirements), and RUS Bulletin 1751F-810 with Form 219 (requires measured resistance ≤5 Ω with engineer sign-off). Which standard governs, and what resistance must be achieved?',
+    choices: [
+      'NESC governs because it is the primary federal electrical safety standard; achieve NESC minimum clearances only',
+      'TIA-607 governs because it is fiber-specific; design to <25 Ω',
+      'RUS governs on RUS-funded projects; design to ≤5 Ω per Form 219 requirements — the stricter standard applies',
+      'Engineer discretion — choose whichever standard is least costly to achieve on-site',
+    ],
+    answerIndex: 2,
+    explanation:
+      'On RUS-funded projects, RUS takes precedence when NESC, TIA, and RUS diverge — the loan covenant requires design to RUS Bulletins. The stricter standard rule applies: TIA-607 recommends <25 Ω (a minimum); RUS Form 219 requires ≤5 Ω (stricter). Design to ≤5 Ω, measure per IEEE 81, document on Form 219 with engineer signature before acceptance. Both TIA-607 and RUS are satisfied by the stricter ≤5 Ω target — there is no conflict, only an additive requirement. (T20.L07; RUS Bulletin 1751F-810; TIA-607; RUS Form 219)',
+  },
+
+  // Source: T20.L08 — RUS Broadband Programs
+  {
+    id: 'F72',
+    topic: 'T20',
+    topicLabel: 'RUS Compliance & Federal Programs',
+    prompt:
+      'A rural cooperative is applying for federal broadband funding and comparing two USDA programs: one requires a 10–20% non-federal match and targets unserved areas; the other requires a 25% match and focuses on community institutions (libraries, schools, clinics). Which programs are being described?',
+    choices: [
+      'Both are ReConnect programs — Tier 1 (10%) and Tier 2 (20%) match requirements',
+      'Both are Community Connect programs at different award tiers',
+      'ReConnect (10–20% match, 7 CFR Part 1744) targets unserved areas; Community Connect (25% match, 7 CFR Part 1703) targets community institutions',
+      'Community Connect (10–20% match) targets unserved areas; ReConnect (25% match) targets community institutions',
+    ],
+    answerIndex: 2,
+    explanation:
+      'ReConnect (7 CFR Part 1744) provides loans, grants, or loan/grant combinations for broadband infrastructure in unserved areas, requiring a 10–20% non-federal match depending on the funding tier. Community Connect (7 CFR Part 1703) specifically funds broadband to community institutions — libraries, schools, healthcare facilities — and requires a 25% matching contribution. These are distinct USDA Rural Development programs with different eligibility requirements and target populations. (T20.L08; 7 CFR Part 1744; 7 CFR Part 1703)',
+  },
+
+  // Source: T20.L09 — Contractor RUS Compliance
+  {
+    id: 'F73',
+    topic: 'T20',
+    topicLabel: 'RUS Compliance & Federal Programs',
+    prompt:
+      'An RUS borrower hires a contractor for underground conduit installation with total estimated labor costs of $1,800. The contractor asks whether Davis-Bacon prevailing wage rates apply. What is the correct answer?',
+    choices: [
+      'Yes — Davis-Bacon always applies to any RUS-funded construction regardless of labor cost',
+      'No — Davis-Bacon (40 USC §3141) applies only when an RUS project has ≥$2,000 in labor costs; at $1,800, the threshold is not met',
+      'Yes — Davis-Bacon applies because the project involves federal loan funds from USDA',
+      'No — Davis-Bacon applies only to union contractors; this contractor is non-union',
+    ],
+    answerIndex: 1,
+    explanation:
+      'The Davis-Bacon Act (40 USC §3141) requires prevailing wage payment on RUS-funded projects when total labor costs reach or exceed $2,000. At $1,800 in estimated labor costs, the threshold is not met and the prevailing wage requirement does not apply. However, if costs increase during construction and cross $2,000, the requirement kicks in retroactively for remaining work. Contractors must post wage rates on the job site when Davis-Bacon applies. (T20.L09; Davis-Bacon Act, 40 USC §3141)',
+  },
+
+  // Source: T20.L10 — Federal Compliance Call-Order Flowchart
+  {
+    id: 'F74',
+    topic: 'T20',
+    topicLabel: 'RUS Compliance & Federal Programs',
+    prompt:
+      'A field engineer discovers that a completed conduit segment has actual costs running 12% over the approved RUS budget allocation for that construction element. Before the next Form 307 drawdown submission, what is the appropriate escalation path?',
+    choices: [
+      'Proceed with the drawdown as planned; minor cost overruns are absorbed by RUS automatically',
+      'Contact the RUS state office loan officer immediately; a 12% overrun may require a loan modification request to the national office and must be disclosed before the next drawdown',
+      'Notify only the borrower\'s board of directors; RUS does not need to be informed of cost overruns under 15%',
+      'Reduce scope on a future segment to offset the overrun without notifying RUS',
+    ],
+    answerIndex: 1,
+    explanation:
+      'RUS borrowers must disclose material cost variances to their RUS state office loan officer before submitting the next Form 307 drawdown. A 12% overrun is material and may require a formal loan modification request routed through the state office to the national office. Submitting a drawdown that includes unauthorized cost overruns without prior disclosure can constitute a loan covenant violation. Scope reductions to offset overruns without RUS approval are also prohibited without a modification. Transparency and early escalation protect the borrower from audit findings. (T20.L10; RUS loan covenant requirements; Form 307 submission guidelines)',
+  },
 ];
 
 // ── Exam constants ───────────────────────────────────────────────────────────
-const TOTAL_QUESTIONS = QUESTIONS.length; // 64 authored, slice to 60 below
-const EXAM_QUESTIONS  = QUESTIONS.slice(0, 60); // 60-question exam
+const TOTAL_QUESTIONS = QUESTIONS.length; // 74 authored, slice to 70 below
+const EXAM_QUESTIONS  = QUESTIONS.slice(0, 70); // 70-question exam
 const EXAM_DURATION_S = 90 * 60;           // 90 minutes
-const PASS_THRESHOLD  = 0.80;              // 80% = 48/60
+const PASS_THRESHOLD  = 0.80;              // 80% = 56/70
 
 // Topic display order and labels for the per-domain score table
 const TOPIC_ORDER = [
@@ -1275,6 +1453,7 @@ const TOPIC_ORDER = [
   { id: 'T17', label: 'T17 — Project Estimation & Revenue' },
   { id: 'T18', label: 'T18 — Safety & OSHA' },
   { id: 'T19', label: 'T19 — Headend / CO + Rack-Side Hardware' },
+  { id: 'T20', label: 'T20 — RUS Compliance & Federal Programs' },
 ];
 
 // ── Utilities ────────────────────────────────────────────────────────────────
@@ -1402,7 +1581,7 @@ function ResultsView({ results, timeTaken, saveError, onRetake }) {
               : '○ Below 80% passing threshold — Review and retake'}
           </p>
           <p className="text-sm text-slate-300/70 mt-1">
-            Time taken: {fmtTime(Math.round(timeTaken))} &nbsp;·&nbsp; Pass threshold: 48 / 60 (80%)
+            Time taken: {fmtTime(Math.round(timeTaken))} &nbsp;·&nbsp; Pass threshold: 56 / 70 (80%)
           </p>
           <ScoreBar correct={correct} total={total} />
         </div>
@@ -1479,23 +1658,24 @@ function LandingView({ onStart }) {
         <h2>OSP Course Final Exam</h2>
         <p className="mt-4 text-slate-200">
           This comprehensive final exam confirms your mastery of all OSP engineering topics
-          covered in T01–T19. Questions are drawn proportionally from every topic: fundamentals,
+          covered in T01–T20. Questions are drawn proportionally from every topic: fundamentals,
           fiber physics, cable selection, route survey, aerial and underground design, staking,
           make-ready, permitting, construction, splicing, testing, inspection, bonding/grounding,
-          restoration, as-built documentation, estimation, safety, and headend hardware basics.
+          restoration, as-built documentation, estimation, safety, headend hardware basics, and
+          RUS compliance &amp; federal programs.
         </p>
 
         <ul className="mt-4 space-y-2 text-sm text-slate-200 list-disc pl-5">
-          <li><strong>60 questions</strong> — multiple-choice, all fixed-answer</li>
+          <li><strong>70 questions</strong> — multiple-choice, all fixed-answer</li>
           <li><strong>90 minutes</strong> — timer starts when you click Start Exam; auto-submits at expiry</li>
-          <li><strong>Pass threshold: 80%</strong> — 48 of 60 correct</li>
+          <li><strong>Pass threshold: 80%</strong> — 56 of 70 correct</li>
           <li><strong>Per-topic breakdown</strong> shown in results to guide further study</li>
           <li><strong>Score persisted</strong> — attempt recorded for your training record</li>
         </ul>
 
         <div className="mt-4 p-3 bg-ospamber/10 border border-ospamber/30 rounded-lg text-sm text-amber-200">
-          <strong>Before you start:</strong> ensure you have completed all general topics T01–T19
-          and their capstone quizzes. The exam covers material from all 19 topics and assumes
+          <strong>Before you start:</strong> ensure you have completed all general topics T01–T20
+          and their capstone quizzes. The exam covers material from all 20 topics and assumes
           full course completion.
         </div>
 
