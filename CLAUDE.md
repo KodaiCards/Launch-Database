@@ -23,7 +23,20 @@
 
 **Attenuation calc + free-text Q + T20-T22 cert prep:** all DISCOVERED already done in prior sessions; scout dispatches prevented destructive rebuilds. T20-T22 DAG cleanup `93daa45` (2 pointer fixes + 4 dangling removes + CFOT normalize).
 
-**RT-β M1 LESSON LEARNED (locked 2026-05-21):** systematic vocabulary_assumed pointer cleanup across 60+ files in one dispatch is HIGH RISK. The agent corrupted JSX structure when applying mechanical pointer normalizations. Going forward: pointer cleanup must be PER-TOPIC (1 topic per dispatch) with Vite build verification after each topic. Bulk cross-topic mechanical edits = footgun. Token saving via batching is false economy.
+**RT-β M1 LESSON LEARNED (locked 2026-05-21):** systematic vocabulary_assumed pointer cleanup across 60+ files in one dispatch is HIGH RISK. First attempt corrupted JSX structure when applying mechanical pointer normalizations. **Retry with self-correction logic succeeded `6bcaa2f` (151 pointers resolved across 67 files, A=54 wrong-source + B=33 variant + C=64 orphan-remove, Vite + schema 252/252 PASS).** The agent detected its own corruption mid-flight, restored from origin/main, and re-applied via safer targeted script that scoped edits to vocabulary_assumed array boundaries only. Lesson: agents CAN self-correct when given clear guard rails; cross-topic bulk mechanical edits CAN work if the apply-fix script doesn't use overly-greedy regex.
+
+**Late-session waves (2026-05-21 night):**
+- Wave 11 `781dc08` migration 0041 creates Client + SA rollup folders for legacy concentrator-based PSC RUS projects (the actual fix for "still flat rollups" Carter reported — Wave 9+10 assumed folders already existed)
+- C05 T20 coverage `4d63ff4` — exam grows 60→70 Q, F65-F74 covering all 10 T20 lessons, 80% pass = 56/70
+- Wave 12 `5744840` per-staff portal access (migration 0042 `user_portal_access` table, 3 admin endpoints in `routes/portal_access.js`, settings checkbox matrix UI in `settings_portal_access.js`, Client Portal launcher tile placeholder)
+
+**Awaiting Carter verification (post Railway redeploy):**
+- Wave 11 — admin Projects tab should show proper PSC → SA folders → leaves hierarchy (no more "virtual" badges)
+- Wave 12 — Settings → Portal Access checkbox grid, Client Portal tile in launcher
+
+**Blocked on Carter input:**
+- Customer portal new URL (Carter to provide)
+- Client portal v1 actual content (logo deferred per 2026-05-21 directive)
 
 ---
 
