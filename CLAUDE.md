@@ -54,10 +54,14 @@
 - ✅ **Free-text Q removal** — Haiku scout `63dca08` confirmed pre-compliant. 330+ quiz instances across 254 lessons, ALL fixed-answer (138 MC + 88 fill-in-blank + 32 drag-match + 72 deterministic BranchingScenario). No work needed.
 - ✅ **60-Q OSP final exam** — built + verified earlier session at `afe5949`.
 
+### T20-T22 cert prep — CLOSED 2026-05-21 (this session)
+
+DISCOVERED already authored — 10/10 T20 lessons (RUS Compliance), 10/10 T21 (FOA CFOS-O), 9/9 T22 (FOA CFOT) all in main with multi-framing RT reports from earlier sessions. Inventory scout `3728b54`. Stale RT findings reconciled: T20 HIGH FTTH pointer (T07.L01→T01.L08) + T21 L02 Q2 math (84%→64%) — both already fixed in prior sessions. T22 final-verify RTA pair completed `0956fce` YELLOW with 1 HIGH CFOT term mismatch. DAG cleanup wave `93daa45` applied 7 surgical fixes (2 pointer corrections T01.L05 for `construction` + T01.L08 for `NEPA`; 4 dangling-pointer removes for unintroduced terms `cost`/`permitting`/`TIA-607`/`contractor`; 1 CFOT term normalize). Vite clean, schema 10/10 PASS each topic.
+
 ### Genuine remaining queue (next session)
 
-1. **T20-T22 cert prep authoring** — BICSI OSPDR + FOA CFOS-O + FOA CFOS-T. Full per-topic pipeline (3 research framings paywalled-heavy + author + 2 RT pair + saturation polish stages). Estimated ~2M Sonnet per topic.
-2. **Final-audit pipeline on C05 final exam** — 3 Sonnet adversarial framings + 1 Opus zero-context learning-simulation (reads every lesson sequentially, takes the 60-Q exam blind, score = teaching-effectiveness signal).
+1. **Final-audit pipeline on C05 OSP final exam + curriculum cross-topic validity** — per directive 36: 3 Sonnet adversarial framings (full-course audit, different framings, full-depth saturation) + 1 Opus zero-context learning-simulation (reads every lesson SEQUENTIALLY without rewind/search, takes the 60-Q exam blind, score = teaching-effectiveness signal; <80% = curriculum has a gap). Estimated ~2M+ Sonnet + ~1M Opus. **Fresh-session-class work.**
+2. **Production boot-smoke discipline codification** — Wave 6's `requireManagerOrAdmin` boot crash (hotfix `b8666c8` this session, ~3 hours prod downtime) was the SAME class of bug as the 2026-05-11 Monday-demo crash. Add `node -e "require('./server.js')"` smoke step to every dispatch template that adds new route file destructures or middleware references. Should land in agent-protocol.md.
 3. **Client portal v1** — token-based auth per client_organization. Spec at `audit-output/future/client-portal-spec.md`. **Blocker:** PSC logo at `public/img/clients/psc-logo.png` required before kickoff (Carter to provide).
 4. **ISP course** (very-future) — defer until OSP rewrite settled in production for weeks.
 
