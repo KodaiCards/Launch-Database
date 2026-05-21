@@ -1,5 +1,5 @@
 // T14.L03 — Messenger Bonding Rules
-// Working lesson: NESC Rule 96F, bond clamp + downlead assembly, ADSS exemption
+// Working lesson: NESC Rule 215D, bond clamp + downlead assembly, ADSS exemption
 
 import React from 'react';
 import LessonLayout from '../../components/LessonLayout.jsx';
@@ -18,7 +18,7 @@ export const meta = {
     'messenger bond',
     'bond clamp',
     'downlead',
-    'NESC Rule 96F',
+    'NESC Rule 215D',
     'bonded-messenger separation',
     'ADSS exemption',
   ],
@@ -26,7 +26,7 @@ export const meta = {
     {
       term: 'messenger bond',
       definition:
-        'The electrical connection between the steel messenger wire and the grounding system at a pole, made via a listed bond clamp and a downlead conductor to the ground rod. Required at every splice closure per NESC Rule 96F on joint-use poles with an MGN distribution system.',
+        'The electrical connection between the steel messenger wire and the grounding system at a pole, made via a listed bond clamp and a downlead conductor to the ground rod. Required at every splice closure per NESC Rule 215D on joint-use poles with an MGN distribution system.',
     },
     {
       term: 'bond clamp',
@@ -39,9 +39,9 @@ export const meta = {
         'The conductor that runs from the bond clamp (or from the messenger through the clamp) down the pole to the ground rod. Minimum #6 AWG bare soft-drawn copper for most OSP applications per NESC Rule 96. Protected from mechanical damage from grade to 8 feet above grade.',
     },
     {
-      term: 'NESC Rule 96F',
+      term: 'NESC Rule 215D',
       definition:
-        'The NESC rule that requires the communication messenger to be bonded to the supply system MGN at every splice closure (or at equivalent intervals). Rule 96F is the primary authority for messenger bonding intervals on joint-use aerial plant. (Source: NESC C2-2023 Rule 96F.)',
+        'The NESC rule (C2-2023, Part 2 §21 — Grounding and Bonding) that requires bonding of messengers, supply neutrals, and metallic poles on joint-use aerial plant. Rule 215D requires the communication messenger to be bonded to the supply system MGN at every splice closure (or at equivalent intervals). This is the primary authority for messenger bonding intervals. (Source: NESC C2-2023 Rule 215D.)',
     },
     {
       term: 'bonded-messenger separation',
@@ -95,7 +95,7 @@ export default function T14L03_MessengerBondingRules() {
           who touches a floating messenger without testing it first is at risk.
         </p>
         <p className="mt-2">
-          NESC Rule 96F solves this by requiring the messenger to be bonded at every splice
+          NESC Rule 215D solves this by requiring the messenger to be bonded at every splice
           closure. This lesson covers exactly what that bond assembly looks like, how to install
           it, and the one big exception: ADSS (all-dielectric self-supporting) cable, which has
           no metal at all and therefore needs no bond.
@@ -123,7 +123,7 @@ export default function T14L03_MessengerBondingRules() {
             <tr className="border-t border-white/10">
               <td className="px-3 py-2 font-mono">NESC</td>
               <td className="px-3 py-2">National Electrical Safety Code</td>
-              <td className="px-3 py-2">Sets the bonding rules for comm plant on joint-use poles; Rule 96F is the key messenger-bonding rule</td>
+              <td className="px-3 py-2">Sets the bonding rules for comm plant on joint-use poles; Rule 215D is the key messenger-bonding rule</td>
             </tr>
             <tr className="border-t border-white/10">
               <td className="px-3 py-2 font-mono">MGN</td>
@@ -180,9 +180,9 @@ export default function T14L03_MessengerBondingRules() {
           </li>
         </ol>
 
-        <h3 className="mt-5 font-semibold">NESC Rule 96F — when and where to bond</h3>
+        <h3 className="mt-5 font-semibold">NESC Rule 215D — when and where to bond</h3>
         <p className="mt-2">
-          NESC Rule 96F requires the communication messenger to be bonded to the supply system
+          NESC Rule 215D requires the communication messenger to be bonded to the supply system
           MGN at every splice closure. In practice on a joint-use pole run, that means:
         </p>
         <ul className="list-disc ml-6 mt-2 space-y-1 text-slate-300/90">
@@ -193,12 +193,12 @@ export default function T14L03_MessengerBondingRules() {
         <p className="mt-2">
           <em>
             Book vs. field note: Some joint-use attachment agreements specify a less-frequent
-            bonding interval (e.g., "every other pole" or "every 1,000 ft"). The NESC Rule 96F
+            bonding interval (e.g., "every other pole" or "every 1,000 ft"). The NESC Rule 215D
             is the MINIMUM — if the joint-use agreement specifies every splice closure and NESC
             requires every splice closure, you're aligned. If the agreement says every 2,000 ft
             but splice closures are at 1,200 ft intervals, NESC requires the bond at the closure
             regardless. The stricter requirement controls.
-            (Source: NESC C2-2023 Rule 96F; RUS 1751F-630 §7.)
+            (Source: NESC C2-2023 Rule 215D; RUS 1751F-630 §7.)
           </em>
         </p>
 
@@ -224,7 +224,7 @@ export default function T14L03_MessengerBondingRules() {
         <h3 className="mt-5 font-semibold">Bonded-messenger reduced separation</h3>
         <p className="mt-2">
           Here is a useful consequence of proper bonding: when the fiber messenger is bonded to
-          the distribution neutral per Rule 96F, both the messenger and the neutral are at the
+          the distribution neutral per Rule 215D, both the messenger and the neutral are at the
           same electrical potential. Since there is no voltage difference between them, the
           standard NESC vertical-separation requirement between "communications" and "neutral"
           conductors can be reduced.
@@ -265,7 +265,7 @@ export default function T14L03_MessengerBondingRules() {
             },
             { expression: 'Step 5: Ground rod — 5/8-in. × 8-ft copper-clad steel, driven at pole base', value: null },
             { expression: 'Step 6: Protect downlead from grade to 8 ft above grade (conduit or guard strip)', value: null },
-            { expression: 'Result: Bond assembly is complete. Meets NESC Rule 96F + RUS 1751F-630 §7.', value: null },
+            { expression: 'Result: Bond assembly is complete. Meets NESC Rule 215D + RUS 1751F-630 §7.', value: null },
           ]}
           sanityCheck={(result) =>
             `Downlead length ≈ ${result} ft — covers the ${result - 2}-ft pole-face run plus the ~2-ft stub to the rod connection. Confirm the clamp is listed for the specific messenger size; unlisted hardware can cause high-resistance connections that degrade over time.`
@@ -295,7 +295,7 @@ export default function T14L03_MessengerBondingRules() {
 
         <p className="mt-3">
           This has a practical field consequence: if a distribution line breaks and falls across your joint-use pole,
-          the fault current seeks the best ground path. If your messenger is bonded per NESC Rule 96F, the fault
+          the fault current seeks the best ground path. If your messenger is bonded per NESC Rule 215D, the fault
           current flows through your cable sheath → downlead → ground rod → earth, which also means the fault
           energy is distributed among multiple paths (the utility's ground rods AND your downleads at adjacent poles).
           If your messenger is NOT bonded, the fault current that contacts your cable has nowhere to go except
@@ -332,7 +332,7 @@ export default function T14L03_MessengerBondingRules() {
           <li>
             <strong>ADSS on solo fiber routes (no joint-use):</strong> No bonding rules apply because there is
             no MGN system on the pole. ADSS is the standard choice here. Lashed-strand would still require a
-            bonding strategy (ground rod at every closure) per the broader NESC Rule 96F principle, even though
+            bonding strategy (ground rod at every closure) per the broader NESC Rule 215D principle, even though
             there is no joint-use partner. ADSS eliminates that cost.
           </li>
         </ul>
@@ -341,7 +341,7 @@ export default function T14L03_MessengerBondingRules() {
 
         <p>
           From T15 (Restoration & Outage Response), when a joint-use cable is damaged and must be spliced in the field,
-          the messenger bonding rule creates a hard constraint: your splice closure MUST be bonded per Rule 96F, even
+          the messenger bonding rule creates a hard constraint: your splice closure MUST be bonded per Rule 215D, even
           in an emergency. This means the restoration team must:
         </p>
 
@@ -396,7 +396,7 @@ export default function T14L03_MessengerBondingRules() {
           questions={[
             {
               id: 'T14L03Q1',
-              text: 'A crew is installing lashed-fiber cable on a joint-use pole. Per NESC Rule 96F, when is a messenger bond required?',
+              text: 'A crew is installing lashed-fiber cable on a joint-use pole. Per NESC Rule 215D, when is a messenger bond required?',
               options: [
                 'Only at dead-end poles where the messenger terminates',
                 'Only at the first and last poles of each cable segment',
@@ -405,7 +405,7 @@ export default function T14L03_MessengerBondingRules() {
               ],
               correct: 2,
               explanation:
-                'NESC Rule 96F requires the communication messenger to be bonded to the supply system MGN at every splice closure. Dead-end poles also require a bond because the messenger terminates there and would otherwise become a floating conductor segment. (Source: NESC C2-2023 Rule 96F.)',
+                'NESC Rule 215D requires the communication messenger to be bonded to the supply system MGN at every splice closure. Dead-end poles also require a bond because the messenger terminates there and would otherwise become a floating conductor segment. (Source: NESC C2-2023 Rule 215D.)',
             },
             {
               id: 'T14L03Q2',

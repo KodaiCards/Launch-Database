@@ -249,7 +249,7 @@ const QUESTIONS = [
     prompt:
       'A drop cable datasheet specifies "breaking strength: 600 lb / EDS: 15% RTS." A crew installs the cable at 100 lb tension. After installation, the cable settles to 90 lb long-term tension. Is the long-term tension compliant?',
     choices: [
-      'No — EDS limits long-term tension to 15% of 600 lb = 90 lb; 90 lb is exactly at the limit, so compliant but marginal',
+      'Yes — 90 lb is within EDS because EDS = 15% of 600 lb = 90 lb and 90 ≤ 90',
       'Yes — 90 lb is comfortably below the 600 lb breaking strength',
       'No — EDS = 15% of 600 lb = 90 lb; 90 lb equals the limit exactly; any temperature-induced tension increase may cause a violation',
       'Cannot determine without knowing ambient temperature and ice loading',
