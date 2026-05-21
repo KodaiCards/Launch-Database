@@ -305,7 +305,7 @@ export default function T01L05_OspProjectLifecycle() {
         </p>
         <p className="mt-2 text-sm text-slate-300/90">
           Source: RUS Bulletin 1751F-630 §14 (close-out documentation requirements);
-          TIA-606-D (administration standard for fiber infrastructure documentation).
+          ANSI/TIA-606-C (administration standard for fiber infrastructure documentation; "TIA-606-D" is a BICSI TDMM shorthand, not a published edition).
         </p>
       </section>
 
@@ -399,7 +399,7 @@ export default function T01L05_OspProjectLifecycle() {
             answerIndex: 1,
             explanation:
               'The as-built is a 25+ year document. It\'s used by O&M technicians to locate faults, by expansion designers to understand the existing plant, and by regulators to verify compliance. While it may also satisfy the client and funding agency, its primary value is as the permanent operational record. Test records are part of the as-built package but are not the package\'s primary purpose.',
-            citation: 'RUS Bulletin 1751F-630 §14; TIA-606-D.',
+            citation: 'RUS Bulletin 1751F-630 §14; ANSI/TIA-606-C.',
           },
           {
             id: 'T01-L05-Q2',

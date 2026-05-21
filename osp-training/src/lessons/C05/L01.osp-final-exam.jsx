@@ -1109,7 +1109,7 @@ const QUESTIONS = [
     choices: [
       '2 feet — same as for distribution voltages under 15 kV',
       'Any approach is acceptable if the unqualified worker does not touch the conductor',
-      'There is no OSHA MAD for unqualified workers — all work near energized conductors requires a qualified electrical worker',
+      'There is no OSHA MAD for unqualified workers — the crew must maintain ≥10 feet, and work closer than 10 feet requires de-energization or a qualified 1910.269 electrical worker to establish safe clearance',
       'Minimum 1.5 feet, the Phase-to-Ground voltage MAD per OSHA Table S-5',
     ],
     answerIndex: 2,

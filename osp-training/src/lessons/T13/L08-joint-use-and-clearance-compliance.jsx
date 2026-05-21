@@ -45,7 +45,7 @@ export const meta = {
     },
   ],
   vocabulary_assumed: [
-    { term: 'inspector (OSP)', source_lesson_id: 'T01.L06' },
+    { term: 'inspector', source_lesson_id: 'T01.L06' },
     { term: 'NESC (National Electrical Safety Code)', source_lesson_id: 'T05.L02' },
     { term: 'loading district', source_lesson_id: 'T05.L02' },
     { term: 'RUS Form 565 (Inspector\'s Daily Report)', source_lesson_id: 'T13.L11' },

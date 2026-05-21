@@ -81,7 +81,7 @@ export const meta = {
     },
   ],
   vocabulary_assumed: [
-    { term: 'inspector (OSP)', source_lesson_id: 'T01.L06' },
+    { term: 'inspector', source_lesson_id: 'T01.L06' },
     { term: 'RUS Form 219', source_lesson_id: 'T01.L05' },
     { term: 'punch list', source_lesson_id: 'T10.L11' },
     { term: 'inspector-arrival workflow', source_lesson_id: 'T13.L01' },

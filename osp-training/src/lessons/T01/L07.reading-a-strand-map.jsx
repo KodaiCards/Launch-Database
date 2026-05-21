@@ -220,7 +220,7 @@ export default function T01L07_ReadingAStrandMap() {
           can see what's already in the ground before designing a new route.
         </p>
         <p className="mt-2 text-sm text-slate-300/90">
-          For RUS-program projects, TIA-606-D (administration standard) provides the framework
+          For RUS-program projects, ANSI/TIA-606-C (administration standard; "TIA-606-D" is a BICSI TDMM shorthand) provides the framework
           for labeling and record-keeping for fiber infrastructure. The as-built GIS export
           is part of the close-out package. (Covered in T16 — As-Built Documentation &amp; GIS.)
         </p>

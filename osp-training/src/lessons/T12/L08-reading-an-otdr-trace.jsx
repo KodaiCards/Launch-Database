@@ -22,6 +22,7 @@ export const meta = {
   ],
   estimated_minutes: 30,
   vocabulary_introduced: [
+    'OTDR trace',
     'event table',
     'loss event',
     'reflection event',
@@ -39,6 +40,11 @@ export const meta = {
     { term: 'bidirectional OTDR', source_lesson_id: 'T12.L07' },
   ],
   key_terms: [
+    {
+      term: 'OTDR trace',
+      definition:
+        'The distance-vs-dB graph shown on an OTDR display. The horizontal axis is distance (meters or kilometers); the vertical axis is optical power level (in dB, referenced to the backscatter level at the OTDR port). Sometimes called the "signature" of the fiber. Rayleigh backscatter produces a gradually descending slope; splices, connectors, macrobends, and end-faces appear as steps or spikes deviating from that slope.',
+    },
     {
       term: 'event table',
       definition:

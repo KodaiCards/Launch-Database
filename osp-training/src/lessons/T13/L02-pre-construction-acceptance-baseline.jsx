@@ -46,7 +46,7 @@ export const meta = {
     },
   ],
   vocabulary_assumed: [
-    { term: 'inspector (OSP)', source_lesson_id: 'T01.L06' },
+    { term: 'inspector', source_lesson_id: 'T01.L06' },
     { term: 'punch list', source_lesson_id: 'T10.L11' },
     { term: 'inspection segment', source_lesson_id: 'T13.L01' },
     { term: 'QA/QC', source_lesson_id: 'T13.L01' },

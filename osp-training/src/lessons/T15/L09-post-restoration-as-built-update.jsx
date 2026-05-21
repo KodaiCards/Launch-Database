@@ -25,7 +25,7 @@ export const meta = {
     'post-incident RCA (Root Cause Analysis)',
   ],
   vocabulary_assumed: [
-    { term: 'as-built drawings', source_lesson_id: 'T10.L11' },
+    { term: 'as-built', source_lesson_id: 'T01.L05' },
     { term: 'OTDR trace', source_lesson_id: 'T12.L07' },
     { term: 'concurrent documentation', source_lesson_id: 'T15.L08' },
     { term: 'MOP (Method of Procedure)', source_lesson_id: 'T15.L08' },

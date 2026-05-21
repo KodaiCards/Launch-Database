@@ -23,7 +23,7 @@ export const meta = {
   vocabulary_introduced: [],
   key_terms: [],
   vocabulary_assumed: [
-    { term: 'inspector (OSP)', source_lesson_id: 'T01.L06' },
+    { term: 'inspector', source_lesson_id: 'T01.L06' },
     { term: 'acceptance walk', source_lesson_id: 'T10.L11' },
     { term: 'MSA', source_lesson_id: 'T10.L06' },
     { term: 'slack loop', source_lesson_id: 'T10.L06' },
@@ -32,7 +32,7 @@ export const meta = {
     { term: 'RUS Form 565 (Inspector\'s Daily Report)', source_lesson_id: 'T13.L11' },
     { term: 'locate ticket', source_lesson_id: 'T10.L01' },
     { term: 'material deficiency', source_lesson_id: 'T13.L01' },
-    { term: 'as-built drawings', source_lesson_id: 'T10.L11' },
+    { term: 'as-built', source_lesson_id: 'T01.L05' },
   ],
 };
 

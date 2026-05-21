@@ -338,7 +338,7 @@ export default function T01L09_OspStandardsLandscape() {
             </tr>
             <tr className="border-t border-white/10">
               <td className="px-3 py-2">Infrastructure documentation</td>
-              <td className="px-3 py-2">TIA-606-D; RUS Form 219 (RUS-funded close-out)</td>
+              <td className="px-3 py-2">ANSI/TIA-606-C; RUS Form 219 (RUS-funded close-out)</td>
             </tr>
             <tr className="border-t border-white/10">
               <td className="px-3 py-2">RUS-funded project design</td>

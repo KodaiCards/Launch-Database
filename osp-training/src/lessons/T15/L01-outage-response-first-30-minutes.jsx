@@ -83,7 +83,7 @@ export const meta = {
   ],
   vocabulary_assumed: [
     { term: 'inspector (OSP)', source_lesson_id: 'T01.L06' },
-    { term: 'as-built drawings', source_lesson_id: 'T10.L11' },
+    { term: 'as-built', source_lesson_id: 'T01.L05' },
     { term: 'fusion splice', source_lesson_id: 'T11.L04' },
     { term: 'OTDR trace (event table)', source_lesson_id: 'T12.L07' },
     { term: 'RUS Form 565 (Inspector\'s Daily Report)', source_lesson_id: 'T13.L11' },

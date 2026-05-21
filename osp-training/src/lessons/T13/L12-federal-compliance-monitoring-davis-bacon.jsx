@@ -95,7 +95,7 @@ export const meta = {
     },
   ],
   vocabulary_assumed: [
-    { term: 'inspector (OSP)', source_lesson_id: 'T01.L06' },
+    { term: 'inspector', source_lesson_id: 'T01.L06' },
     { term: 'RUS Form 219', source_lesson_id: 'T01.L05' },
     { term: 'RUS Form 565 (Inspector\'s Daily Report)', source_lesson_id: 'T13.L11' },
     { term: '7 CFR §1753 inspection obligation [confirm current section]', source_lesson_id: 'T13.L11' },

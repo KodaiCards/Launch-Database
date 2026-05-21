@@ -45,7 +45,7 @@ export const meta = {
     },
   ],
   vocabulary_assumed: [
-    { term: 'inspector (OSP)', source_lesson_id: 'T01.L06' },
+    { term: 'inspector', source_lesson_id: 'T01.L06' },
     { term: 'RUS Form 219', source_lesson_id: 'T01.L05' },
     { term: 'RUS Form 553a (Contractor\'s Certificate)', source_lesson_id: 'T13.L11' },
     { term: 'construction advance chain', source_lesson_id: 'T13.L11' },

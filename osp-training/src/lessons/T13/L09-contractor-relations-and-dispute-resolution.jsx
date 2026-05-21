@@ -45,7 +45,7 @@ export const meta = {
     },
   ],
   vocabulary_assumed: [
-    { term: 'inspector (OSP)', source_lesson_id: 'T01.L06' },
+    { term: 'inspector', source_lesson_id: 'T01.L06' },
     { term: 'acceptance walk', source_lesson_id: 'T10.L11' },
     { term: 'punch list', source_lesson_id: 'T10.L11' },
     { term: 'kick-back authority', source_lesson_id: 'T10.L11' },
