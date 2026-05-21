@@ -1368,12 +1368,10 @@ function dpClientChanged() {
     ptSel.disabled = true;
     return;
   }
-  // Enable program select, populate with programs that have active ECs for this client.
-  const ecs = (window.engineeringContractsCache || []).filter(e => e.client_id === clientId);
-  const programs = [...new Set(ecs.map(e => e.program).filter(Boolean))];
+  // Enable program select. Always show all 4 programs — EC vs no-EC mode is
+  // determined at program-select time (dpProgramChanged).
   ptSel.innerHTML = '<option value="">— Select program —</option>' +
     [['rus','RUS'],['bau','BAU'],['gfr','GF(R)'],['other','Other']]
-      .filter(([v]) => !programs.length || programs.includes(v))
       .map(([v,l]) => `<option value="${esc(v)}">${esc(l)}</option>`)
       .join('');
   ptSel.disabled = false;
