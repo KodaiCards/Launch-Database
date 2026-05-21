@@ -1511,6 +1511,82 @@ async function bootstrapDefensiveRecentMigrations() {
     `);
     console.error(`[WAVE 14] step W14-6b: deleted ${w14_6b.rowCount} now-empty legacy intermediate(s)`);
 
+    // W14-7: merge duplicate EC folders. W14-3 created NEW empty
+    // 'engineering_contract'-level folders for every active EC row. Legacy
+    // rollups with the SAME NAME but rollup_level=NULL exist with all the
+    // actual data (SA folders, Construction folders, leaves) under them.
+    // Move children of legacy duplicate → new EC folder, then delete legacy.
+    // Match key: same name + same client_id + one is 'engineering_contract'
+    // and the other is NULL rollup_level.
+    const w14_7a = await pool.query(`
+      UPDATE projects child
+      SET parent_id = ec_new.id
+      FROM projects ec_legacy
+      JOIN projects ec_new
+        ON ec_new.name = ec_legacy.name
+       AND ec_new.client_id = ec_legacy.client_id
+       AND ec_new.is_rollup = TRUE
+       AND ec_new.rollup_level = 'engineering_contract'
+       AND ec_new.id <> ec_legacy.id
+      WHERE child.parent_id = ec_legacy.id
+        AND ec_legacy.is_rollup = TRUE
+        AND ec_legacy.rollup_level IS NULL
+    `);
+    console.error(`[WAVE 14] step W14-7a: merged ${w14_7a.rowCount} child(ren) from duplicate-name legacy EC(s) into new EC folder(s)`);
+
+    const w14_7b = await pool.query(`
+      DELETE FROM projects ec_legacy
+      WHERE ec_legacy.is_rollup = TRUE
+        AND ec_legacy.rollup_level IS NULL
+        AND EXISTS (
+          SELECT 1 FROM projects ec_new
+          WHERE ec_new.name = ec_legacy.name
+            AND ec_new.client_id = ec_legacy.client_id
+            AND ec_new.is_rollup = TRUE
+            AND ec_new.rollup_level = 'engineering_contract'
+            AND ec_new.id <> ec_legacy.id
+        )
+        AND NOT EXISTS (SELECT 1 FROM projects c WHERE c.parent_id = ec_legacy.id)
+    `);
+    console.error(`[WAVE 14] step W14-7b: deleted ${w14_7b.rowCount} now-empty duplicate legacy EC folder(s)`);
+
+    // W14-7c: re-run the W14-6 collapse to catch any newly-childless
+    // legacy intermediates (e.g., PSC RUS 217 whose sole child was the
+    // legacy EC folder we just merged + deleted).
+    const w14_7c_promote = await pool.query(`
+      UPDATE projects child
+      SET parent_id = legacy.parent_id
+      FROM projects legacy
+      WHERE child.parent_id = legacy.id
+        AND legacy.is_rollup = TRUE
+        AND legacy.rollup_level IS NULL
+        AND EXISTS (
+          SELECT 1 FROM projects p
+          WHERE p.id = legacy.parent_id
+            AND p.is_rollup = TRUE
+            AND p.rollup_level = 'client'
+        )
+        AND NOT EXISTS (
+          SELECT 1 FROM projects leaf
+          WHERE leaf.parent_id = legacy.id
+            AND leaf.is_rollup IS NOT TRUE
+        )
+    `);
+    const w14_7c_delete = await pool.query(`
+      DELETE FROM projects legacy
+      WHERE legacy.is_rollup = TRUE
+        AND legacy.rollup_level IS NULL
+        AND legacy.parent_id IS NOT NULL
+        AND EXISTS (
+          SELECT 1 FROM projects p
+          WHERE p.id = legacy.parent_id
+            AND p.is_rollup = TRUE
+            AND p.rollup_level = 'client'
+        )
+        AND NOT EXISTS (SELECT 1 FROM projects c WHERE c.parent_id = legacy.id)
+    `);
+    console.error(`[WAVE 14] step W14-7c: post-merge collapse promoted ${w14_7c_promote.rowCount}, deleted ${w14_7c_delete.rowCount}`);
+
     // Verify extended DB state
     const counts14 = await pool.query(`
       SELECT
