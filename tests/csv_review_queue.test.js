@@ -331,3 +331,55 @@ test('GET /api/csv-review-queue rejects non-admin', async () => {
   const r = await fetch(`${baseUrl()}/api/csv-review-queue?status=pending`);
   assert.equal(r.status, 401, 'unauthenticated request rejected');
 });
+
+// ─── normalizeWO leading-zeros edge case ──────────────────────────────────
+
+test('normalizeWO: zero-padded and bare WO# normalize to same value', () => {
+  const { normalizeWO } = require('../routes/hours_csv')._helpers;
+  assert.equal(normalizeWO('00016299'), normalizeWO('16299'), 'leading zeros stripped');
+  assert.equal(normalizeWO('00016299'), '16299');
+  assert.equal(normalizeWO('0'), '0', 'lone zero preserved');
+  assert.equal(normalizeWO('WO-00016299'), '16299', 'WO prefix + leading zeros stripped');
+});
+
+// ─── /match backend leaf-only validation ──────────────────────────────────
+
+test('/match rejects assignment to a rollup folder', async () => {
+  const token = await adminLogin();
+  const s = await fixtures.staff({ name: uniqueTag('T3 RollupGuard') });
+  trash.staff.push(s.id);
+
+  // Create an unmatched queue row
+  const csv = buildCsv([
+    { name: s.name, date: '2026-03-07', wo: 'ROLLUPGUARD_' + Date.now(), hours: 4 },
+  ]);
+  const v = await uploadCsv(token, 't3rg.csv', csv);
+  const q = await requestJson('POST', '/api/hours/csv-queue-unmatched', {
+    token, body: { stage_id: v.stage_id, csv_filename: 't3rg.csv' },
+  });
+  assert.ok(q.queued >= 1);
+
+  const list = await requestJson('GET', '/api/csv-review-queue?status=pending', { token });
+  const found = list.rows.find(r => r.raw_row && r.raw_row.name === s.name);
+  assert.ok(found, 'row in queue');
+  trash.csv_review_queue.push(found.id);
+
+  // Create a rollup project (client-level folder)
+  const c = await fixtures.client({ name: uniqueTag('rg-client') });
+  trash.clients.push(c.id);
+  // Insert rollup directly — fixtures.project doesn't expose is_rollup
+  const { rows: rp } = await pool.query(
+    `INSERT INTO projects (name, client_id, is_rollup, rollup_level, status)
+       VALUES ($1, $2, true, 'client', 'active') RETURNING id`,
+    [uniqueTag('rg-rollup'), c.id]
+  );
+  const rollupId = rp[0].id;
+  trash.projects.push(rollupId);
+
+  const m = await requestJson('POST', `/api/csv-review-queue/${found.id}/match`, {
+    token, body: { project_id: rollupId }, expectStatus: 400,
+  });
+  // Should be rejected because rollupId.is_rollup = true
+  assert.ok(m.error, 'error returned for rollup assignment');
+  assert.ok(/rollup/i.test(m.error), 'error message mentions rollup');
+});

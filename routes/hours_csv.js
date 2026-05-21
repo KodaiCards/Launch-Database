@@ -55,12 +55,15 @@ function withUploadSlot(fn) {
 // Pure (no DB / state). Exported via module.exports._helpers so tests
 // can hit them directly if needed.
 
-// Normalize a WO# for matching: strip "WO" prefix, separators, whitespace, uppercase
+// Normalize a WO# for matching: strip "WO" prefix, separators, whitespace, uppercase,
+// and strip leading zeros so "00016299" matches "16299".
 function normalizeWO(s) {
   if (s === null || s === undefined) return '';
-  return String(s).trim().toUpperCase()
+  const stripped = String(s).trim().toUpperCase()
     .replace(/^WO[\s\-_#:]*/i, '')   // strip leading "WO ", "WO-", "WO#", etc.
-    .replace(/[\s\-_]+/g, '');         // strip remaining separators
+    .replace(/[\s\-_]+/g, '');        // strip remaining separators
+  // Strip leading zeros but preserve a lone "0"
+  return stripped.replace(/^0+(\d)/, '$1');
 }
 
 // Normalize a name for matching: trim, collapse whitespace, lowercase
@@ -548,33 +551,35 @@ module.exports = function installHoursCsvRoutes(app, pool, mw) {
             matchAttempts.push({ tier: 'wo', tried: null, result: 'no_wo' });
           }
           if (!matchResult) {
-            // Tier 2: client + SA + job name match
-            // Pull client_id hint from customer column (free text won't have UUID,
-            // so this tier only fires when the caller explicitly passes client hints
-            // via the row's inferred job title or the CSV has a structured SA col).
-            // In the validate phase we don't know client_id from the CSV text, so
-            // Tier 2 uses the job_name hint against ALL clients' projects.
-            // We iterate projsByNameKey looking for job+SA match across any client.
+            // Tier 2: (client + SA + job) match via pickProjectTier2.
+            // CSV free-text rows don't carry a client UUID so clientId is null
+            // here, which causes pickProjectTier2 to return null. When it does,
+            // fall back to a cross-client job-name-only scan with an ambiguity
+            // guard: exactly-one global match → accept; more than one → queue.
             const saHint = null; // CSV rows rarely carry structured SA text
             const jobHint = finalTitle || codeLookup;
             if (jobHint) {
-              // Try across all clients: look for (any_client, '', jobNorm)
-              const jobNorm = normalizeName(jobHint);
-              // Collect all potential candidates that match on job name
-              const tier2Candidates = [];
-              for (const [key, projs] of projsByNameKey) {
-                const parts = key.split('|');
-                // parts[2] is job_norm
-                if (parts[2] === jobNorm) tier2Candidates.push(...projs);
-              }
-              if (tier2Candidates.length === 1) {
-                // Exactly one project has this job name → unambiguous Tier 2 match
-                matchResult = { project: tier2Candidates[0], tier: 'name' };
+              const clientIdHint = null; // no UUID available from CSV free-text
+              const tier2Result = pickProjectTier2(clientIdHint, saHint, jobHint);
+              if (tier2Result) {
+                matchResult = tier2Result;
                 matchAttempts.push({ tier: 'name', tried: { job: jobHint, sa: saHint }, result: 'matched' });
-              } else if (tier2Candidates.length > 1) {
-                matchAttempts.push({ tier: 'name', tried: { job: jobHint, sa: saHint }, result: 'ambiguous', count: tier2Candidates.length });
               } else {
-                matchAttempts.push({ tier: 'name', tried: { job: jobHint, sa: saHint }, result: 'no_match' });
+                // Broader cross-client scan: collect all projects with this job name
+                const jobNorm = normalizeName(jobHint);
+                const tier2Candidates = [];
+                for (const [key, projs] of projsByNameKey) {
+                  const parts = key.split('|');
+                  if (parts[2] === jobNorm) tier2Candidates.push(...projs);
+                }
+                if (tier2Candidates.length === 1) {
+                  matchResult = { project: tier2Candidates[0], tier: 'name' };
+                  matchAttempts.push({ tier: 'name', tried: { job: jobHint, sa: saHint }, result: 'matched' });
+                } else if (tier2Candidates.length > 1) {
+                  matchAttempts.push({ tier: 'name', tried: { job: jobHint, sa: saHint }, result: 'ambiguous', count: tier2Candidates.length });
+                } else {
+                  matchAttempts.push({ tier: 'name', tried: { job: jobHint, sa: saHint }, result: 'no_match' });
+                }
               }
             } else {
               matchAttempts.push({ tier: 'name', tried: null, result: 'no_job_hint' });
@@ -1231,15 +1236,22 @@ module.exports = function installHoursCsvRoutes(app, pool, mw) {
     try {
       await client.query('BEGIN');
 
+      // FOR UPDATE serializes concurrent /match calls on the same row.
+      // The second caller blocks here until the first commits, then sees
+      // status='matched' and hits the 404 below — no duplicate time_entries.
       const qRes = await client.query(
-        `SELECT * FROM csv_review_queue WHERE id = $1 AND status = 'pending'`,
+        `SELECT * FROM csv_review_queue WHERE id = $1 AND status = 'pending' FOR UPDATE`,
         [req.params.id]
       );
       if (!qRes.rows.length) return res.status(404).json({ error: 'Queued row not found or not pending' });
       const qRow = qRes.rows[0];
 
-      const projRes = await client.query('SELECT id, name FROM projects WHERE id = $1', [project_id]);
+      const projRes = await client.query(
+        'SELECT id, name, is_rollup FROM projects WHERE id = $1',
+        [project_id]
+      );
       if (!projRes.rows.length) return res.status(400).json({ error: 'Project not found' });
+      if (projRes.rows[0].is_rollup) return res.status(400).json({ error: 'Cannot assign hours to a rollup folder — pick a leaf project' });
 
       const raw = qRow.raw_row;
       if (!raw.staff_id) {

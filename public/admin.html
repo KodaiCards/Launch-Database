@@ -6831,16 +6831,10 @@ async function csvQueueUnmatched() {
   const btn = document.getElementById('queue-unmatched-btn');
   if (btn) { btn.disabled = true; btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Queuing...'; }
   try {
-    const r = await fetch('/api/hours/csv-queue-unmatched', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        stage_id: csvStageData.stage_id,
-        csv_filename: csvStageData.csv_filename || null,
-      }),
+    const data = await api('/api/hours/csv-queue-unmatched', 'POST', {
+      stage_id: csvStageData.stage_id,
+      csv_filename: csvStageData.csv_filename || null,
     });
-    const data = await r.json();
-    if (!r.ok) throw new Error(data.error || 'Failed to queue rows');
     if (btn) {
       btn.innerHTML = `<i class="fa-solid fa-check"></i> Queued ${data.queued} row${data.queued !== 1 ? 's' : ''}`;
       btn.disabled = true;
@@ -6859,6 +6853,11 @@ async function loadCsvReviewQueue() {
   const panel = document.getElementById('csv-review-queue-panel');
   if (!panel) return;
   try {
+    // Ensure project list is loaded before rendering pickers — Hours tab can be
+    // the first tab visited so allProjects may be empty.
+    if (!allProjects || !allProjects.length) {
+      allProjects = await api('/api/projects');
+    }
     const data = await api('/api/csv-review-queue?status=pending&limit=100');
     if (!data.total) {
       panel.style.display = 'none';
@@ -6869,7 +6868,9 @@ async function loadCsvReviewQueue() {
     if (countEl) countEl.textContent = data.total;
     const tbody = panel.querySelector('#csv-rq-body');
     if (!tbody) return;
-    const projOptions = (allProjects || []).map(p =>
+    // Only leaf projects are valid assignment targets — rollup folders cannot hold hours.
+    const leafProjects = (allProjects || []).filter(p => !p.is_rollup);
+    const projOptions = leafProjects.map(p =>
       `<option value="${p.id}">${esc(p.name)} (${esc(p.client_name||'—')}) WO${esc(p.work_order_number||'—')}</option>`
     ).join('');
     tbody.innerHTML = data.rows.map(row => {
@@ -6901,20 +6902,17 @@ async function loadCsvReviewQueue() {
 async function csvRqMatch(id) {
   const sel = document.querySelector(`.csv-rq-proj[data-rq-id="${id}"]`);
   if (!sel || !sel.value) { alert('Pick a project first.'); return; }
+  const btn = document.querySelector(`tr[data-rq-id="${id}"] .btn-primary`);
+  if (btn) btn.disabled = true;
   try {
-    const r = await fetch(`/api/csv-review-queue/${id}/match`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ project_id: sel.value }),
-    });
-    const data = await r.json();
-    if (!r.ok) throw new Error(data.error || 'Match failed');
+    const data = await api(`/api/csv-review-queue/${id}/match`, 'POST', { project_id: sel.value });
     // Remove the row and reload queue
     const tr = document.querySelector(`tr[data-rq-id="${id}"]`);
     if (tr) tr.remove();
     loadCsvReviewQueue();
     loadHours();
   } catch (e) {
+    if (btn) btn.disabled = false;
     alert('Failed to assign: ' + e.message);
   }
 }
@@ -6922,9 +6920,7 @@ async function csvRqMatch(id) {
 async function csvRqDiscard(id) {
   if (!confirm('Discard this row? It will not be imported.')) return;
   try {
-    const r = await fetch(`/api/csv-review-queue/${id}/discard`, { method: 'POST' });
-    const data = await r.json();
-    if (!r.ok) throw new Error(data.error || 'Discard failed');
+    await api(`/api/csv-review-queue/${id}/discard`, 'POST');
     const tr = document.querySelector(`tr[data-rq-id="${id}"]`);
     if (tr) tr.remove();
     loadCsvReviewQueue();
