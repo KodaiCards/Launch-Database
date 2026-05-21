@@ -286,9 +286,20 @@
         const checkbox = isLeaf
           ? `<input type="checkbox" class="bulk-row-cb" aria-label="Select ${esc(p.name || 'project')} for bulk action" data-id="${p.id}" data-status="${esc(p.status || '')}" onclick="event.stopPropagation();bulkOnChange()" ${bulkSelected.has(p.id) ? 'checked' : ''}>`
           : '';
+        // Build a path breadcrumb so duplicate-named leaf projects are distinguishable
+        // in the list. Shows: Client / Program / SA (if SA is set).
+        // All three fields come from p.* which the list API already returns.
+        const _breadcrumbParts = [];
+        if (p.client_name) _breadcrumbParts.push(esc(p.client_name));
+        if (p.program) _breadcrumbParts.push(esc(p.program.toUpperCase()));
+        if (p.service_area_name) _breadcrumbParts.push(esc(p.service_area_name));
+        const _breadcrumb = isLeaf && _breadcrumbParts.length > 0
+          ? `<br><span style="font-size:11px;color:var(--text-muted);font-weight:400">${_breadcrumbParts.join(' / ')}</span>`
+          : '';
+
         html += `<tr ${trAttrs} onclick="showProjectDetail('${p.id}')">
           <td style="text-align:center" onclick="event.stopPropagation()">${checkbox}</td>
-          <td class="td-name" style="padding-left:${12 + indent}px">${chevron}${prefix}${esc(p.name)}${badge}</td>
+          <td class="td-name" style="padding-left:${12 + indent}px">${chevron}${prefix}${esc(p.name)}${_breadcrumb}${badge}</td>
           <td>${esc(p.client_name || '—')}<br><span class="td-muted" style="font-size:11px">${esc(p.contract_number || '')}</span></td>
           <td class="td-mono">${esc(p.work_order_number || '—')}</td>
           <td>${typeBadge(p.project_type)}</td>

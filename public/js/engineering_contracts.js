@@ -106,7 +106,7 @@
             </tr>
             <tr id="ec-wosa-panel-${ec.id}" style="display:none;background:var(--gray-light)">
               <td colspan="8" style="padding:0">
-                <div style="padding:12px 16px;border-top:2px solid var(--primary,#1a73e8)">
+                <div style="padding:12px 16px;border-top:2px solid var(--primary)">
                   <div style="font-weight:600;font-size:13px;margin-bottom:10px">WO# &amp; Service Areas — ${esc(ec.name)}</div>
                   <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px">
                     <!-- Service Areas sub-panel -->

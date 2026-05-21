@@ -1507,14 +1507,14 @@ select.filter{border:1px solid var(--gray-border);border-radius:7px;padding:7px 
             <select id="proj-concentrator" onchange="projSaChanged()" disabled>
               <option value="">— pick contract first —</option>
             </select>
-            <div id="proj-sa-no-config-hint" style="display:none;font-size:11px;color:var(--warning-text,#856404);background:var(--warning-light,#fff3cd);border:1px solid var(--warning-border,#ffc107);border-radius:4px;padding:6px 8px;margin-top:4px"></div>
+            <div id="proj-sa-no-config-hint" style="display:none;font-size:11px;color:var(--warning-text);background:var(--warning-light);border:1px solid var(--warning);border-radius:4px;padding:6px 8px;margin-top:4px"></div>
           </div>
         </div>
         <!-- ROW 3b: No-EC-mode — free-text Service Area (hidden, shown when client+program has no EC) -->
         <div class="form-row" id="proj-no-ec-row" style="display:none">
           <div class="form-group span2" id="proj-service-area-wrap">
             <label for="proj-service-area">Service Area <span style="font-weight:400;color:var(--text-muted)">(optional)</span></label>
-            <input type="text" id="proj-service-area" placeholder="e.g. Buford, Sugar Hill, etc." autocomplete="off">
+            <input type="text" id="proj-service-area" placeholder="e.g. Buford, Sugar Hill, etc." autocomplete="off" oninput="_projAutoFillName()">
             <span class="form-hint" style="font-size:11px;color:var(--text-muted)">Free text — projects sharing this label group together under client.</span>
           </div>
         </div>
@@ -1531,7 +1531,7 @@ select.filter{border:1px solid var(--gray-border);border-radius:7px;padding:7px 
               <input type="text" id="proj-job-input" placeholder="Type to search jobs…" autocomplete="off"
                 oninput="projJobInputTyped()" onfocus="projJobInputTyped()" onblur="projJobBlur()" disabled>
               <input type="hidden" id="proj-job">
-              <div id="proj-job-dropdown" role="listbox" style="display:none;position:absolute;top:100%;left:0;right:0;background:var(--surface,#fff);border:1px solid var(--border-weak,var(--gray-border));border-radius:4px;box-shadow:0 4px 12px rgba(0,0,0,.12);z-index:2000;max-height:220px;overflow-y:auto"></div>
+              <div id="proj-job-dropdown" role="listbox" style="display:none;position:absolute;top:100%;left:0;right:0;background:var(--surface-2);border:1px solid var(--border-weak);border-radius:4px;box-shadow:0 4px 12px rgba(0,0,0,.12);z-index:2000;max-height:220px;overflow-y:auto"></div>
             </div>
           </div>
         </div>
@@ -4139,6 +4139,11 @@ function openProjectModal(type='') {
   document.getElementById('proj-delete-btn').style.display = 'none';
   // Populate client list so it's ready (proj-client select already loaded by loadClients())
   openModal('project-modal');
+  // Wire manual-edit flag: once the user types in the name box, stop auto-filling it.
+  const _nameEl = document.getElementById('proj-name');
+  if (_nameEl) {
+    _nameEl.oninput = () => { __projNameManuallyEdited = true; };
+  }
 
   // ── Draft restore (new project only) ─────────────────────────────────
   const _draftKey = 'lf_form:project-modal';
@@ -4214,6 +4219,9 @@ async function editProject(id) {
   // STEP 3 — set ID + name + scalar fields immediately.
   document.getElementById('proj-id').value   = p.id;
   document.getElementById('proj-name').value = p.name || '';
+  // Treat the pre-filled name as "manually set" so cascade changes during edit
+  // don't overwrite it.
+  __projNameManuallyEdited = true;
   document.getElementById('proj-status').value = p.status || 'active';
   document.getElementById('proj-start').value  = p.start_date?.split('T')[0] || '';
   document.getElementById('proj-notes').value  = p.notes || '';
@@ -4369,6 +4377,7 @@ async function editProject(id) {
 }
 
 function clearProjectForm() {
+  __projNameManuallyEdited = false;
   ['proj-id','proj-name','proj-wo','proj-rate','proj-footage','proj-notes','proj-projected','proj-manual-amount'].forEach(id => { const el = document.getElementById(id); if (el) el.value=''; });
   document.getElementById('proj-client').value='';
   document.getElementById('proj-contract').innerHTML='<option value="">None / N/A</option>';
@@ -4478,6 +4487,37 @@ const projectModalState = {
   job_id: null,
   new_job_name: null,   // set when user picks "+ Create '…' as new job"
 };
+
+// Auto-name: track whether the user has manually typed in #proj-name so we
+// don't clobber edits with cascade-derived suggestions.
+let __projNameManuallyEdited = false;
+
+function _projAutoFillName() {
+  if (__projNameManuallyEdited) return;
+  const nameEl = document.getElementById('proj-name');
+  if (!nameEl) return;
+
+  // Derive SA label
+  let saLabel = '';
+  if (projectModalState.ec_id && projectModalState.sa_id) {
+    const sas = _projEcSaCache[projectModalState.ec_id] || [];
+    const sa = sas.find(s => s.id === projectModalState.sa_id);
+    saLabel = sa ? sa.name : '';
+  } else {
+    const saFreeText = document.getElementById('proj-service-area');
+    saLabel = saFreeText ? saFreeText.value.trim() : '';
+  }
+
+  // Derive Job label
+  const jobLabel = projectModalState.new_job_name ||
+    (projectModalState.job_id
+      ? (document.getElementById('proj-job-input') || {}).value || ''
+      : '');
+
+  if (saLabel && jobLabel) {
+    nameEl.value = saLabel + ' — ' + jobLabel;
+  }
+}
 
 // Cache for EC service-area lists keyed by ec_id.
 const _projEcSaCache = {};
@@ -4660,6 +4700,8 @@ function projSaChanged() {
   // The hidden proj-wo is kept in sync for saveProject()
   const woHidden = document.getElementById('proj-wo');
   if (woHidden) woHidden.value = sa?.work_order_number || '';
+
+  _projAutoFillName();
 }
 
 // ─── Job typeahead ────────────────────────────────────────────────────────────
@@ -4713,15 +4755,15 @@ function _projRenderJobDropdown() {
     const label = j.name + (j.billing_code ? ' (' + j.billing_code + ')' : '');
     html += `<div role="option" style="padding:8px 12px;cursor:pointer;font-size:13px" tabindex="-1"
       onmousedown="event.preventDefault()" onclick="_projPickJob('${j.id}','${esc(j.name)}')"
-      onmouseover="this.style.background='var(--surface-2,#f5f5f5)'"
+      onmouseover="this.style.background='var(--surface-3)'"
       onmouseout="this.style.background=''">${esc(label)}</div>`;
   }
   // "+ Create" option when text doesn't match an existing job
   const exactMatch = _projJobsCache.some(j => j.name.toLowerCase() === q);
   if (q && !exactMatch) {
-    html += `<div role="option" style="padding:8px 12px;cursor:pointer;font-size:13px;color:var(--primary,#0066cc);border-top:1px solid var(--border-weak,#e0e0e0)" tabindex="-1"
+    html += `<div role="option" style="padding:8px 12px;cursor:pointer;font-size:13px;color:var(--primary);border-top:1px solid var(--border-weak)" tabindex="-1"
       onmousedown="event.preventDefault()" onclick="_projPickNewJob('${esc(inp.value.trim())}')"
-      onmouseover="this.style.background='var(--surface-2,#f5f5f5)'"
+      onmouseover="this.style.background='var(--surface-3)'"
       onmouseout="this.style.background=''"
       >+ Create "<strong>${esc(inp.value.trim())}</strong>" as new job</div>`;
   }
@@ -4738,6 +4780,7 @@ function _projPickJob(id, name) {
   document.getElementById('proj-job-dropdown').style.display = 'none';
   projectModalState.job_id = id;
   projectModalState.new_job_name = null;
+  _projAutoFillName();
   // Trigger billing field updates (rate lookup, footage display, etc.)
   jobChanged(/*skipRateLookup=*/false);
 }
@@ -4748,6 +4791,7 @@ function _projPickNewJob(name) {
   document.getElementById('proj-job-dropdown').style.display = 'none';
   projectModalState.job_id = null;
   projectModalState.new_job_name = name;
+  _projAutoFillName();
 }
 
 // ─── Reset helpers ────────────────────────────────────────────────────────────
