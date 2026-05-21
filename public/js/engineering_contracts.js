@@ -115,6 +115,7 @@
                       <div id="ec-sa-list-${ec.id}" style="margin-bottom:8px;font-size:13px"></div>
                       <div style="display:flex;gap:6px">
                         <input type="text" id="ec-sa-new-name-${ec.id}" aria-label="New service area name" placeholder="Area name" style="flex:2;font-size:12px;padding:4px 6px;border:1px solid var(--gray-border);border-radius:4px">
+                        <input type="text" id="ec-sa-new-wo-${ec.id}" aria-label="Work order number" placeholder="WO# (optional)" style="width:90px;font-size:12px;padding:4px 6px;border:1px solid var(--gray-border);border-radius:4px;font-family:monospace">
                         <input type="text" id="ec-sa-new-notes-${ec.id}" aria-label="New service area notes" placeholder="Notes (optional)" style="flex:3;font-size:12px;padding:4px 6px;border:1px solid var(--gray-border);border-radius:4px">
                         <button class="btn btn-sm btn-primary" onclick="addEcServiceArea('${ec.id}')"><i class="fa-solid fa-plus"></i> Add</button>
                       </div>
@@ -190,9 +191,10 @@
     }
     el.innerHTML = sas.map(sa => `
       <div style="display:flex;align-items:center;gap:6px;padding:3px 0;border-bottom:1px solid var(--gray-border)">
-        <span id="ec-sa-display-${sa.id}" style="flex:1">${esc(sa.name)}${sa.notes ? ` <span style="color:var(--text-muted);font-size:11px">· ${esc(sa.notes)}</span>` : ''}</span>
+        <span id="ec-sa-display-${sa.id}" style="flex:1">${esc(sa.name)}${sa.work_order_number ? ` <span style="font-family:monospace;color:var(--text-muted);font-size:11px">WO# ${esc(sa.work_order_number)}</span>` : ''}${sa.notes ? ` <span style="color:var(--text-muted);font-size:11px">· ${esc(sa.notes)}</span>` : ''}</span>
         <div id="ec-sa-edit-${sa.id}" style="display:none;flex:1;gap:4px">
-          <input type="text" id="ec-sa-edit-name-${sa.id}" aria-label="Service area name" value="${esc(sa.name)}" style="font-size:12px;padding:2px 5px;border:1px solid var(--gray-border);border-radius:3px;flex:1">
+          <input type="text" id="ec-sa-edit-name-${sa.id}" aria-label="Service area name" value="${esc(sa.name)}" style="font-size:12px;padding:2px 5px;border:1px solid var(--gray-border);border-radius:3px;flex:2">
+          <input type="text" id="ec-sa-edit-wo-${sa.id}" aria-label="Work order number" value="${esc(sa.work_order_number || '')}" placeholder="WO# (optional)" style="font-size:12px;padding:2px 5px;border:1px solid var(--gray-border);border-radius:3px;width:90px;font-family:monospace">
           <input type="text" id="ec-sa-edit-notes-${sa.id}" aria-label="Service area notes" value="${esc(sa.notes || '')}" placeholder="Notes" style="font-size:12px;padding:2px 5px;border:1px solid var(--gray-border);border-radius:3px;flex:1">
         </div>
         <button class="btn btn-sm btn-secondary" id="ec-sa-btn-edit-${sa.id}" onclick="startEcSaEdit('${sa.id}','${ecId}')" style="font-size:11px;padding:2px 6px">Edit</button>
@@ -252,21 +254,24 @@
 
   async function saveEcSaEdit(saId, ecId) {
     const name = document.getElementById(`ec-sa-edit-name-${saId}`)?.value.trim();
+    const work_order_number = document.getElementById(`ec-sa-edit-wo-${saId}`)?.value.trim() || null;
     const notes = document.getElementById(`ec-sa-edit-notes-${saId}`)?.value.trim() || null;
     if (!name) return alert('Name required');
     try {
-      await api(`/api/ec-service-areas/${saId}`, 'PUT', { name, notes });
+      await api(`/api/ec-service-areas/${saId}`, 'PUT', { name, work_order_number, notes });
       await refreshEcWosaPanel(ecId);
     } catch (e) { alert('Failed: ' + e.message); }
   }
 
   async function addEcServiceArea(ecId) {
     const name = document.getElementById(`ec-sa-new-name-${ecId}`)?.value.trim();
+    const work_order_number = document.getElementById(`ec-sa-new-wo-${ecId}`)?.value.trim() || null;
     const notes = document.getElementById(`ec-sa-new-notes-${ecId}`)?.value.trim() || null;
     if (!name) return alert('Area name required');
     try {
-      await api(`/api/engineering-contracts/${ecId}/service-areas`, 'POST', { name, notes });
+      await api(`/api/engineering-contracts/${ecId}/service-areas`, 'POST', { name, work_order_number, notes });
       document.getElementById(`ec-sa-new-name-${ecId}`).value = '';
+      document.getElementById(`ec-sa-new-wo-${ecId}`).value = '';
       document.getElementById(`ec-sa-new-notes-${ecId}`).value = '';
       await refreshEcWosaPanel(ecId);
     } catch (e) { alert('Failed: ' + e.message); }

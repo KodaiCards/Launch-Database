@@ -1466,233 +1466,76 @@ select.filter{border:1px solid var(--gray-border);border-radius:7px;padding:7px 
     </div>
     <div class="modal-body">
       <input type="hidden" id="proj-id">
+      <!-- LEGACY hidden inputs — kept so existing code paths that read these values
+           still work; they are not shown in the primary form but are populated by
+           the cascade handlers and saveProject() reads them. -->
+      <input type="hidden" id="proj-wo">
       <div class="form-grid">
+        <!-- ROW 1: Project Name (full width) -->
         <div class="form-row">
           <div class="form-group span2">
             <label for="proj-name">Project Name *</label>
-            <input type="text" id="proj-name" placeholder="e.g. RUS WO-001 Inspection">
+            <input type="text" id="proj-name" placeholder="e.g. RUS WO-001 Inspection" autocomplete="off">
           </div>
         </div>
-        <!--
-          Manual rollup flag (owner-flagged 2026-05-06). When checked,
-          this project becomes an organize-only container — no job, no
-          billing rate, no footage, no time entries. Server-side
-          enforces by NULL-ing trait fields on save.
-        -->
-        <div class="form-row">
-          <div class="form-group span2" style="background:var(--gray-light);border-radius:8px;padding:10px">
-            <label style="display:flex;align-items:center;gap:8px;cursor:pointer;margin:0">
-              <input type="checkbox" id="proj-rollup" onchange="rollupChanged()" style="margin:0">
-              <span><strong>Organize-only (rollup)</strong> — purely a folder for nesting other projects. No job / billing / hours.</span>
-            </label>
-            <div id="proj-rollup-hint" style="display:none;font-size:11px;color:var(--text-muted);margin-top:6px;line-height:1.5">
-              Rollup containers don't carry traits — saving will clear job, billing rate, footage, projections.
-              The AI knows to nest leaf projects under rollups, even when the rollup's name matches a job (e.g. "Inspection" rollup
-              with "Inspection" job leaves underneath).
-            </div>
-          </div>
-        </div>
-        <div class="form-row">
-          <div class="form-group span2">
-            <label for="proj-parent">Parent Project <span style="font-weight:400;color:var(--text-muted)">(leave empty for top-level)</span></label>
-            <div style="display:flex;gap:6px">
-              <select id="proj-parent" onchange="parentChanged(this.value)" style="flex:1"><option value="">None — Top-level project</option></select>
-              <button type="button" class="btn btn-secondary btn-icon btn-sm" onclick="toggleQuickAdd('parent')" title="Add new parent project"><i class="fa-solid fa-plus"></i></button>
-            </div>
-            <div id="qa-parent" style="display:none;margin-top:8px;padding:10px;background:var(--gray-light);border-radius:8px;font-size:13px">
-              <input type="text" id="qa-parent-name" placeholder="Parent project name (e.g. Reconnect 3 — Contract 3)" aria-label="Quick-add parent project name" style="margin-bottom:6px">
-              <div style="font-size:11px;color:var(--text-muted);margin-bottom:6px">Creates a top-level container project. The current client/construction contract will be inherited.</div>
-              <div style="display:flex;gap:6px;justify-content:flex-end">
-                <button type="button" class="btn btn-secondary btn-sm" onclick="toggleQuickAdd('parent', false)">Cancel</button>
-                <button type="button" class="btn btn-primary btn-sm" onclick="quickAddParent()"><i class="fa-solid fa-check"></i> Add</button>
-              </div>
-            </div>
-          </div>
-        </div>
-        <!-- ROW 1: Client | Program -->
+        <!-- ROW 2: Client | Program -->
         <div class="form-row">
           <div class="form-group">
             <label for="proj-client">Client *</label>
-            <div style="display:flex;gap:6px">
-              <select id="proj-client" onchange="clientChanged()" style="flex:1"><option value="">Select client...</option></select>
-              <button type="button" class="btn btn-secondary btn-icon btn-sm" onclick="toggleQuickAdd('client')" title="Add new client"><i class="fa-solid fa-plus"></i></button>
-            </div>
-            <div id="qa-client" style="display:none;margin-top:8px;padding:10px;background:var(--gray-light);border-radius:8px;font-size:13px">
-              <div style="display:flex;gap:6px;align-items:center;margin-bottom:6px">
-                <input type="text" id="qa-client-name" placeholder="Client name (e.g. PSC)" aria-label="Quick-add client name" style="flex:1">
-              </div>
-              <div style="font-size:11px;color:var(--text-muted);margin-bottom:6px">After saving, set the program (RUS / BAU / GFR / Other) on each engineering contract you create for this client.</div>
-              <div style="display:flex;gap:6px;justify-content:flex-end">
-                <button type="button" class="btn btn-secondary btn-sm" onclick="toggleQuickAdd('client', false)">Cancel</button>
-                <button type="button" class="btn btn-primary btn-sm" onclick="quickAddClient()"><i class="fa-solid fa-check"></i> Add</button>
-              </div>
-            </div>
+            <select id="proj-client" onchange="projClientChanged()">
+              <option value="">Select client…</option>
+            </select>
           </div>
           <div class="form-group" id="proj-ptype-wrap">
-            <label for="proj-ptype">Program * <span style="color:var(--text-muted);font-weight:400">(drives which fields populate)</span></label>
-            <select id="proj-ptype" onchange="ptypeChanged()">
-              <option value="">Select program...</option>
+            <label for="proj-ptype">Program *</label>
+            <select id="proj-ptype" onchange="projProgramChanged()" disabled>
+              <option value="">— pick client first —</option>
             </select>
           </div>
         </div>
-        <!-- ROW 1b: Engineering Contract (shown for RUS / GF(R) only) -->
+        <!-- ROW 3a: EC-mode — Engineering Contract + Service Area cascade -->
         <div class="form-row" id="proj-ec-row" style="display:none">
-          <div class="form-group span2" id="proj-ec-wrap">
+          <div class="form-group" id="proj-ec-wrap">
             <label id="proj-ec-label" for="proj-ec">Engineering Contract *</label>
-            <!-- Top-level: active picker dropdown -->
-            <select id="proj-ec" onchange="ecChanged()" style="width:100%">
-              <option value="">— Select engineering contract —</option>
+            <select id="proj-ec" onchange="projEcChanged()" disabled>
+              <option value="">— select contract —</option>
             </select>
-            <!-- Child project: read-only inherited display -->
-            <div id="proj-ec-inherited" style="display:none;font-size:13px;color:var(--text-muted);padding:6px 8px;background:var(--gray-light);border:1px solid var(--gray-border);border-radius:4px"></div>
-            <span class="form-hint" style="font-size:11px;color:var(--text-muted)">Filters the Construction Contract dropdown below to only show contracts under this umbrella.</span>
+            <div id="proj-ec-inherited" style="display:none;font-size:13px;color:var(--text-muted);padding:6px 8px;background:var(--surface-2,var(--gray-light));border:1px solid var(--border-weak,var(--gray-border));border-radius:4px"></div>
           </div>
-        </div>
-        <!-- ROW 2: Construction Contract | Service Area -->
-        <div class="form-row" id="proj-row-contract-area">
-          <div class="form-group" id="proj-contract-wrap">
-            <label for="proj-contract">Construction Contract</label>
-            <div style="display:flex;gap:6px">
-              <select id="proj-contract" onchange="contractChanged()" style="flex:1"><option value="">None / N/A</option></select>
-              <button type="button" class="btn btn-secondary btn-icon btn-sm" onclick="toggleQuickAdd('contract')" title="Add new construction contract"><i class="fa-solid fa-plus"></i></button>
-            </div>
-            <div id="qa-contract" style="display:none;margin-top:8px;padding:10px;background:var(--gray-light);border-radius:8px;font-size:13px">
-              <div style="display:flex;gap:6px;margin-bottom:6px">
-                <input type="text" id="qa-contract-num" placeholder="Contract # (e.g. RUS-217)" aria-label="Quick-add contract number" style="flex:1">
-                <input type="text" id="qa-contract-name" placeholder="Display name (optional)" aria-label="Quick-add contract display name" style="flex:2">
-              </div>
-              <div style="font-size:11px;color:var(--text-muted);margin-bottom:6px">Will be added under the currently-selected client.</div>
-              <div style="display:flex;gap:6px;justify-content:flex-end">
-                <button type="button" class="btn btn-secondary btn-sm" onclick="toggleQuickAdd('contract', false)">Cancel</button>
-                <button type="button" class="btn btn-primary btn-sm" onclick="quickAddContract()"><i class="fa-solid fa-check"></i> Add</button>
-              </div>
-            </div>
-          </div>
-          <!-- Service Area: concentrator dropdown for RUS / GF(R), free-text otherwise.
-               Both wrappers live in the same form-row column slot — gating shows
-               exactly one at a time (or neither if no program signal yet). -->
           <div class="form-group" id="proj-concentrator-wrap">
             <label for="proj-concentrator">Service Area</label>
-            <div style="display:flex;gap:6px">
-              <select id="proj-concentrator" onchange="concentratorChanged()" style="flex:1">
-                <option value="">— Pick contract first —</option>
-              </select>
-              <button type="button" class="btn btn-secondary btn-icon btn-sm" onclick="toggleQuickAdd('conc')" title="Add new concentrator"><i class="fa-solid fa-plus"></i></button>
-            </div>
-            <div id="proj-sa-no-config-hint" style="display:none;font-size:11px;color:var(--warning-text,#856404);background:var(--warning-light,#fff3cd);border:1px solid var(--warning-border,#ffc107);border-radius:4px;padding:6px 8px;margin-top:4px"></div>
-            <div id="qa-conc" style="display:none;margin-top:8px;padding:10px;background:var(--gray-light);border-radius:8px;font-size:13px">
-              <div style="display:flex;gap:6px;margin-bottom:6px">
-                <input type="text" id="qa-conc-contract" placeholder="Contract label (e.g. Contract 3)" aria-label="Quick-add concentrator contract label" style="flex:1">
-                <input type="text" id="qa-conc-area" placeholder="Area name (e.g. Mt. Paran)" aria-label="Quick-add concentrator area name" style="flex:1">
-                <input type="text" id="qa-conc-wo" placeholder="WO# (optional)" aria-label="Quick-add concentrator work order number" style="flex:1">
-              </div>
-              <div style="display:flex;gap:6px;justify-content:flex-end">
-                <button type="button" class="btn btn-secondary btn-sm" onclick="toggleQuickAdd('conc', false)">Cancel</button>
-                <button type="button" class="btn btn-primary btn-sm" onclick="quickAddConcentrator()"><i class="fa-solid fa-check"></i> Add</button>
-              </div>
-            </div>
-          </div>
-          <div class="form-group" id="proj-service-area-wrap" style="display:none">
-            <label for="proj-service-area">Service Area</label>
-            <input type="text" id="proj-service-area" placeholder="e.g. Buford, Sugar Hill, etc.">
-            <span class="form-hint" style="font-size:11px;color:var(--text-muted)">Free text — projects sharing this label group together under client + team.</span>
-          </div>
-        </div>
-        <!-- ROW 3: WO# | Job -->
-        <div class="form-row" id="proj-row-wo-job">
-          <div class="form-group" id="proj-wo-wrap">
-            <label for="proj-wo">Work Order Number <span style="color:var(--text-muted);font-weight:400">(RUS only)</span></label>
-            <input type="text" id="proj-wo" placeholder="e.g. 16316">
-          </div>
-          <div class="form-group">
-            <label for="proj-job">Job * <span style="color:var(--text-muted);font-weight:400">(work category)</span></label>
-            <div style="display:flex;gap:6px">
-              <select id="proj-job" onchange="jobChanged()" style="flex:1">
-                <option value="">Select job...</option>
-              </select>
-              <button type="button" class="btn btn-secondary btn-icon btn-sm" onclick="toggleQuickAdd('job')" title="Add new job"><i class="fa-solid fa-plus"></i></button>
-            </div>
-            <div id="qa-job" style="display:none;margin-top:8px;padding:10px;background:var(--gray-light);border-radius:8px;font-size:13px">
-              <div style="display:flex;gap:6px;margin-bottom:6px">
-                <input type="text" id="qa-job-name" placeholder="Job name (e.g. Surveyor)" aria-label="Quick-add job name" style="flex:2">
-                <input type="number" id="qa-job-rate" placeholder="Default rate" aria-label="Quick-add job default rate" step="0.01" style="flex:1">
-              </div>
-              <div style="display:flex;gap:6px;margin-bottom:6px;align-items:center">
-                <select id="qa-job-billing" aria-label="Quick-add job billing type" style="flex:1;font-size:12px">
-                  <option value="hourly">Hourly ($/hr)</option>
-                  <option value="footage">Footage ($/mile)</option>
-                </select>
-                <label style="display:flex;align-items:center;gap:4px;font-size:11px;white-space:nowrap"><input type="checkbox" id="qa-job-permit" style="width:auto"> Uses permit calc</label>
-              </div>
-              <div style="display:flex;gap:6px;justify-content:flex-end">
-                <button type="button" class="btn btn-secondary btn-sm" onclick="toggleQuickAdd('job', false)">Cancel</button>
-                <button type="button" class="btn btn-primary btn-sm" onclick="quickAddJob()"><i class="fa-solid fa-check"></i> Add</button>
-              </div>
-            </div>
-          </div>
-        </div>
-        <!-- Rate section — shown/hidden by type -->
-        <div id="rate-section" class="form-row">
-          <div class="form-group" id="rate-group">
-            <label id="rate-label" for="proj-rate">Billing Rate ($/hr)</label>
-            <div class="input-group">
-              <input type="number" id="proj-rate" placeholder="0.00" step="0.01" oninput="calcExpected()">
-              <span class="input-addon">/hr</span>
-            </div>
-            <span class="form-hint" id="rate-hint">Optional. Leave blank if billing by flat amount instead.</span>
-          </div>
-          <div class="form-group" id="footage-group" style="display:none">
-            <label for="proj-footage">Linear Footage</label>
-            <div class="input-group">
-              <input type="number" id="proj-footage" placeholder="0" oninput="calcExpected()">
-              <span class="input-addon">LF</span>
-            </div>
-          </div>
-          <div class="form-group" id="manual-amount-group">
-            <label for="proj-manual-amount">Flat Invoice Amount <span style="color:var(--text-muted);font-weight:400">(optional)</span></label>
-            <div class="input-group">
-              <span class="input-addon">$</span>
-              <input type="number" id="proj-manual-amount" placeholder="0.00" step="0.01">
-            </div>
-            <span class="form-hint">When set, this overrides the calculated amount on bills.</span>
-          </div>
-        </div>
-        <!-- Hidden: expected_hours / expected_revenue still get computed
-             server-side (needed for footage/permitting billing math) but are
-             not shown to the user. -->
-        <div id="expected-display" style="display:none">
-          <input type="hidden" id="proj-exp-hours">
-          <input type="hidden" id="proj-exp-rev">
-        </div>
-
-        <!-- Billing cadence + projected revenue. Cadence drives billing flow
-             (one-time vs monthly recurring). Projected revenue is the
-             total contract value — used by the Revenue tab and rolled up
-             at parent levels. Optional. -->
-        <div class="form-row" id="proj-row-cadence">
-          <div class="form-group">
-            <label for="proj-cadence">Billing Cadence</label>
-            <select id="proj-cadence" style="width:100%">
-              <option value="one_time">One-time (single invoice when complete)</option>
-              <option value="monthly">Monthly (bills hours each month, project stays active)</option>
+            <select id="proj-concentrator" onchange="projSaChanged()" disabled>
+              <option value="">— pick contract first —</option>
             </select>
-            <span class="form-hint">Inspection projects default to monthly. Permitting / fixed-fee jobs are usually one-time.</span>
-          </div>
-          <!-- Projected Revenue input hidden while projection logic is
-               retired. Field still exists (display:none) so any code
-               reading proj-projected.value gets an empty string and the
-               server's projected_revenue column stays NULL — no break
-               in the create/edit POST. To re-enable, change display:none
-               to display:block on the wrapper. -->
-          <div class="form-group" style="display:none">
-            <label for="proj-projected">Projected Revenue <span style="color:var(--text-muted);font-weight:400">(optional)</span></label>
-            <div class="input-group">
-              <span class="input-addon">$</span>
-              <input type="number" id="proj-projected" placeholder="0.00" step="0.01">
-            </div>
-            <span class="form-hint">Retired pending revisit.</span>
+            <div id="proj-sa-no-config-hint" style="display:none;font-size:11px;color:var(--warning-text,#856404);background:var(--warning-light,#fff3cd);border:1px solid var(--warning-border,#ffc107);border-radius:4px;padding:6px 8px;margin-top:4px"></div>
           </div>
         </div>
+        <!-- ROW 3b: No-EC-mode — free-text Service Area (hidden, shown when client+program has no EC) -->
+        <div class="form-row" id="proj-no-ec-row" style="display:none">
+          <div class="form-group span2" id="proj-service-area-wrap">
+            <label for="proj-service-area">Service Area <span style="font-weight:400;color:var(--text-muted)">(optional)</span></label>
+            <input type="text" id="proj-service-area" placeholder="e.g. Buford, Sugar Hill, etc." autocomplete="off">
+            <span class="form-hint" style="font-size:11px;color:var(--text-muted)">Free text — projects sharing this label group together under client.</span>
+          </div>
+        </div>
+        <!-- ROW 4: Job typeahead -->
+        <div class="form-row" id="proj-row-wo-job">
+          <!-- Legacy WO# wrapper kept hidden — used internally; WO# is now server-derived from SA selection -->
+          <div class="form-group" id="proj-wo-wrap" style="display:none">
+            <label for="proj-wo-visible">Work Order Number</label>
+            <input type="text" id="proj-wo-visible" placeholder="e.g. 16316" readonly style="background:var(--surface-2,var(--gray-light));cursor:default">
+          </div>
+          <div class="form-group span2" id="proj-job-wrap">
+            <label for="proj-job-input">Job * <span style="font-weight:400;color:var(--text-muted)">(work category)</span></label>
+            <div style="position:relative">
+              <input type="text" id="proj-job-input" placeholder="Type to search jobs…" autocomplete="off"
+                oninput="projJobInputTyped()" onfocus="projJobInputTyped()" onblur="projJobBlur()" disabled>
+              <input type="hidden" id="proj-job">
+              <div id="proj-job-dropdown" role="listbox" style="display:none;position:absolute;top:100%;left:0;right:0;background:var(--surface,#fff);border:1px solid var(--border-weak,var(--gray-border));border-radius:4px;box-shadow:0 4px 12px rgba(0,0,0,.12);z-index:2000;max-height:220px;overflow-y:auto"></div>
+            </div>
+          </div>
+        </div>
+        <!-- ROW 5: Status | Start Date -->
         <div class="form-row">
           <div class="form-group">
             <label for="proj-status">Status</label>
@@ -1708,31 +1551,145 @@ select.filter{border:1px solid var(--gray-border);border-radius:7px;padding:7px 
             <input type="date" id="proj-start">
           </div>
         </div>
-        <div class="form-group" id="budget-code-group" style="display:none">
-          <label for="proj-budget-code">Budget Code <span style="font-weight:400;color:var(--text-muted)">(bills against this allocation)</span></label>
-          <div style="display:flex;gap:6px">
-            <select id="proj-budget-code" style="flex:1"><option value="">None — No budget link</option></select>
-            <button type="button" class="btn btn-secondary btn-icon btn-sm" onclick="toggleQuickAdd('bcode')" title="Add new budget code"><i class="fa-solid fa-plus"></i></button>
-          </div>
-          <div id="qa-bcode" style="display:none;margin-top:8px;padding:10px;background:var(--gray-light);border-radius:8px;font-size:13px">
-            <div style="display:flex;gap:6px;margin-bottom:6px">
-              <input type="text" id="qa-bcode-code" placeholder="Code (e.g. Inspection)" aria-label="Quick-add budget code name" style="flex:1">
-              <input type="number" id="qa-bcode-amount" placeholder="Allocated $" aria-label="Quick-add budget code amount" style="flex:1" step="0.01">
-            </div>
-            <div style="font-size:11px;color:var(--text-muted);margin-bottom:6px">Will be added under the parent project's budget. The parent must have a budget already.</div>
-            <div style="display:flex;gap:6px;justify-content:flex-end">
-              <button type="button" class="btn btn-secondary btn-sm" onclick="toggleQuickAdd('bcode', false)">Cancel</button>
-              <button type="button" class="btn btn-primary btn-sm" onclick="quickAddBudgetCode()"><i class="fa-solid fa-check"></i> Add</button>
-            </div>
+        <!-- ROW 6: Notes (full width) -->
+        <div class="form-row">
+          <div class="form-group span2" id="proj-notes-wrap">
+            <label for="proj-notes">Notes <span style="font-weight:400;color:var(--text-muted)">(optional)</span></label>
+            <textarea id="proj-notes" rows="2" placeholder="Any additional notes…"></textarea>
           </div>
         </div>
-        <div class="form-group" id="permit-manager-group" style="display:none">
-          <label for="proj-permit-manager">Permit Manager / Created by <span style="font-weight:400;color:var(--text-muted)">(used for permit pipeline tracking)</span></label>
-          <input type="text" id="proj-permit-manager" placeholder="Your name">
-        </div>
-        <div class="form-group" id="proj-notes-wrap">
-          <label for="proj-notes">Notes</label>
-          <textarea id="proj-notes" placeholder="Any additional notes..."></textarea>
+        <!-- Advanced settings — billing fields, rollup, parent, contract -->
+        <div class="form-row">
+          <div class="form-group span2">
+            <details id="proj-advanced-details">
+              <summary style="cursor:pointer;user-select:none;color:var(--text-muted);font-size:13px;padding:6px 0">Advanced settings</summary>
+              <div style="margin-top:10px;display:flex;flex-direction:column;gap:12px">
+                <!-- Rollup flag -->
+                <div style="background:var(--surface-2,var(--gray-light));border-radius:8px;padding:10px">
+                  <label style="display:flex;align-items:center;gap:8px;cursor:pointer;margin:0">
+                    <input type="checkbox" id="proj-rollup" onchange="rollupChanged()" style="margin:0">
+                    <span><strong>Organize-only (rollup)</strong> — purely a folder for nesting other projects. No job / billing / hours.</span>
+                  </label>
+                  <div id="proj-rollup-hint" style="display:none;font-size:11px;color:var(--text-muted);margin-top:6px;line-height:1.5">
+                    Rollup containers don't carry traits — saving will clear job, billing rate, footage, projections.
+                  </div>
+                </div>
+                <!-- Parent picker -->
+                <div class="form-row">
+                  <div class="form-group span2">
+                    <label for="proj-parent">Parent Project <span style="font-weight:400;color:var(--text-muted)">(leave empty for top-level)</span></label>
+                    <div style="display:flex;gap:6px">
+                      <select id="proj-parent" onchange="parentChanged(this.value)" style="flex:1"><option value="">None — Top-level project</option></select>
+                      <button type="button" class="btn btn-secondary btn-icon btn-sm" onclick="toggleQuickAdd('parent')" title="Add new parent project"><i class="fa-solid fa-plus"></i></button>
+                    </div>
+                    <div id="qa-parent" style="display:none;margin-top:8px;padding:10px;background:var(--surface-2,var(--gray-light));border-radius:8px;font-size:13px">
+                      <input type="text" id="qa-parent-name" placeholder="Parent project name" aria-label="Quick-add parent project name" style="margin-bottom:6px">
+                      <div style="display:flex;gap:6px;justify-content:flex-end">
+                        <button type="button" class="btn btn-secondary btn-sm" onclick="toggleQuickAdd('parent', false)">Cancel</button>
+                        <button type="button" class="btn btn-primary btn-sm" onclick="quickAddParent()"><i class="fa-solid fa-check"></i> Add</button>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+                <!-- Construction Contract (legacy RUS path) -->
+                <div class="form-row" id="proj-row-contract-area">
+                  <div class="form-group span2" id="proj-contract-wrap">
+                    <label for="proj-contract">Construction Contract</label>
+                    <div style="display:flex;gap:6px">
+                      <select id="proj-contract" onchange="contractChanged()" style="flex:1"><option value="">None / N/A</option></select>
+                      <button type="button" class="btn btn-secondary btn-icon btn-sm" onclick="toggleQuickAdd('contract')" title="Add new construction contract"><i class="fa-solid fa-plus"></i></button>
+                    </div>
+                    <div id="qa-contract" style="display:none;margin-top:8px;padding:10px;background:var(--surface-2,var(--gray-light));border-radius:8px;font-size:13px">
+                      <div style="display:flex;gap:6px;margin-bottom:6px">
+                        <input type="text" id="qa-contract-num" placeholder="Contract # (e.g. RUS-217)" aria-label="Quick-add contract number" style="flex:1">
+                        <input type="text" id="qa-contract-name" placeholder="Display name (optional)" aria-label="Quick-add contract display name" style="flex:2">
+                      </div>
+                      <div style="display:flex;gap:6px;justify-content:flex-end">
+                        <button type="button" class="btn btn-secondary btn-sm" onclick="toggleQuickAdd('contract', false)">Cancel</button>
+                        <button type="button" class="btn btn-primary btn-sm" onclick="quickAddContract()"><i class="fa-solid fa-check"></i> Add</button>
+                      </div>
+                    </div>
+                  </div>
+                  <!-- Legacy conc quick-add kept hidden so quickAddConcentrator() still works -->
+                  <div id="qa-conc" style="display:none">
+                    <input type="text" id="qa-conc-contract" aria-label="Quick-add concentrator contract label">
+                    <input type="text" id="qa-conc-area" aria-label="Quick-add concentrator area name">
+                    <input type="text" id="qa-conc-wo" aria-label="Quick-add concentrator work order number">
+                  </div>
+                </div>
+                <!-- Billing rate / footage / flat amount -->
+                <div id="rate-section" class="form-row">
+                  <div class="form-group" id="rate-group">
+                    <label id="rate-label" for="proj-rate">Billing Rate ($/hr)</label>
+                    <div class="input-group">
+                      <input type="number" id="proj-rate" placeholder="0.00" step="0.01" oninput="calcExpected()">
+                      <span class="input-addon">/hr</span>
+                    </div>
+                    <span class="form-hint" id="rate-hint">Optional.</span>
+                  </div>
+                  <div class="form-group" id="footage-group" style="display:none">
+                    <label for="proj-footage">Linear Footage</label>
+                    <div class="input-group">
+                      <input type="number" id="proj-footage" placeholder="0" oninput="calcExpected()">
+                      <span class="input-addon">LF</span>
+                    </div>
+                  </div>
+                  <div class="form-group" id="manual-amount-group">
+                    <label for="proj-manual-amount">Flat Invoice Amount <span style="color:var(--text-muted);font-weight:400">(optional)</span></label>
+                    <div class="input-group">
+                      <span class="input-addon">$</span>
+                      <input type="number" id="proj-manual-amount" placeholder="0.00" step="0.01">
+                    </div>
+                    <span class="form-hint">Overrides calculated amount on bills.</span>
+                  </div>
+                </div>
+                <div id="expected-display" style="display:none">
+                  <input type="hidden" id="proj-exp-hours">
+                  <input type="hidden" id="proj-exp-rev">
+                </div>
+                <!-- Cadence + Projected Revenue -->
+                <div class="form-row" id="proj-row-cadence">
+                  <div class="form-group">
+                    <label for="proj-cadence">Billing Cadence</label>
+                    <select id="proj-cadence" style="width:100%">
+                      <option value="one_time">One-time</option>
+                      <option value="monthly">Monthly</option>
+                    </select>
+                  </div>
+                  <div class="form-group" style="display:none">
+                    <label for="proj-projected">Projected Revenue</label>
+                    <div class="input-group">
+                      <span class="input-addon">$</span>
+                      <input type="number" id="proj-projected" placeholder="0.00" step="0.01">
+                    </div>
+                  </div>
+                </div>
+                <!-- Budget code -->
+                <div class="form-group" id="budget-code-group" style="display:none">
+                  <label for="proj-budget-code">Budget Code <span style="font-weight:400;color:var(--text-muted)">(bills against this allocation)</span></label>
+                  <div style="display:flex;gap:6px">
+                    <select id="proj-budget-code" style="flex:1"><option value="">None — No budget link</option></select>
+                    <button type="button" class="btn btn-secondary btn-icon btn-sm" onclick="toggleQuickAdd('bcode')" title="Add new budget code"><i class="fa-solid fa-plus"></i></button>
+                  </div>
+                  <div id="qa-bcode" style="display:none;margin-top:8px;padding:10px;background:var(--surface-2,var(--gray-light));border-radius:8px;font-size:13px">
+                    <div style="display:flex;gap:6px;margin-bottom:6px">
+                      <input type="text" id="qa-bcode-code" placeholder="Code (e.g. Inspection)" aria-label="Quick-add budget code name" style="flex:1">
+                      <input type="number" id="qa-bcode-amount" placeholder="Allocated $" aria-label="Quick-add budget code amount" style="flex:1" step="0.01">
+                    </div>
+                    <div style="display:flex;gap:6px;justify-content:flex-end">
+                      <button type="button" class="btn btn-secondary btn-sm" onclick="toggleQuickAdd('bcode', false)">Cancel</button>
+                      <button type="button" class="btn btn-primary btn-sm" onclick="quickAddBudgetCode()"><i class="fa-solid fa-check"></i> Add</button>
+                    </div>
+                  </div>
+                </div>
+                <!-- Permit manager -->
+                <div class="form-group" id="permit-manager-group" style="display:none">
+                  <label for="proj-permit-manager">Permit Manager / Created by</label>
+                  <input type="text" id="proj-permit-manager" placeholder="Your name">
+                </div>
+              </div>
+            </details>
+          </div>
         </div>
       </div>
     </div>
@@ -4180,33 +4137,15 @@ function openProjectModal(type='') {
   clearProjectForm();
   document.getElementById('proj-modal-title').textContent = 'New Project';
   document.getElementById('proj-delete-btn').style.display = 'none';
-  populateTypeAndJobDropdowns();
-  // Run field gating once for the empty-form state. With no client + no
-  // program picked, effective=null and only the Program select remains
-  // visible. Without this, the form opens with the previous user's
-  // visibility state (or the markup defaults), which can leak fields
-  // that don't apply to a fresh-form session.
-  if (typeof applyProjectModalFieldGating === 'function') applyProjectModalFieldGating();
-  // BUG-3 FIX: populate the jobs dropdown on open from the current scope
-  // context (no client/program yet → all active jobs). Without this, the
-  // dropdown stays at the empty placeholder until the user changes a
-  // cascade field, because refilterJobsDropdown() is only wired to
-  // clientChanged / ptypeChanged / contractChanged change events.
-  refilterJobsDropdown(null);
+  // Populate client list so it's ready (proj-client select already loaded by loadClients())
   openModal('project-modal');
 
   // ── Draft restore (new project only) ─────────────────────────────────
   const _draftKey = 'lf_form:project-modal';
   const _draftContainer = document.querySelector('#project-modal .modal-body');
   if (_draftContainer) {
-    // Tear down any previous listener set.
     if (_formDraftCleanups['project-modal']) _formDraftCleanups['project-modal']();
-    // Show restore banner if a draft exists (it also re-applies field values).
-    _formDraftShowBanner(_draftKey, _draftContainer, () => {
-      // After discarding, re-run field gating since values were wiped.
-      if (typeof applyProjectModalFieldGating === 'function') applyProjectModalFieldGating();
-    });
-    // Attach ongoing auto-save.
+    _formDraftShowBanner(_draftKey, _draftContainer, () => { /* no gating to re-run */ });
     _formDraftCleanups['project-modal'] = _formDraftAttach(_draftKey, _draftContainer, 'proj-id');
   }
 }
@@ -4260,93 +4199,147 @@ async function editProject(id) {
     return;
   }
 
-  // STEP 3 — set ID + name immediately. These don't depend on dropdowns.
+  // STEP 3 — set ID + name + scalar fields immediately.
   document.getElementById('proj-id').value   = p.id;
   document.getElementById('proj-name').value = p.name || '';
   document.getElementById('proj-status').value = p.status || 'active';
   document.getElementById('proj-start').value  = p.start_date?.split('T')[0] || '';
   document.getElementById('proj-notes').value  = p.notes || '';
   document.getElementById('proj-wo').value     = p.work_order_number || '';
+  const woVisible = document.getElementById('proj-wo-visible');
+  if (woVisible) woVisible.value = p.work_order_number || '';
   document.getElementById('proj-rate').value   = p.billing_rate || '';
   document.getElementById('proj-footage').value = p.footage || '';
   if (document.getElementById('proj-cadence'))       document.getElementById('proj-cadence').value = p.billing_cadence || 'one_time';
   if (document.getElementById('proj-projected'))     document.getElementById('proj-projected').value = p.projected_revenue ?? '';
   if (document.getElementById('proj-manual-amount')) document.getElementById('proj-manual-amount').value = p.manual_invoice_amount ?? '';
-  // Reflect the rollup flag and hint the user the trait fields are
-  // intentionally empty on a rollup. saveProject() skips the
-  // job/program required-field validation when this is checked.
   const rb = document.getElementById('proj-rollup');
   if (rb) { rb.checked = !!p.is_rollup; rollupChanged(); }
 
-  // STEP 4 — populate dropdowns defensively. Each step in its own try/catch so
-  // a failure on one (e.g. parent dropdown, jobs cache, budget codes) doesn't
-  // abort the whole modal-population sequence.
+  // STEP 4 — cascade: client → program → EC → SA → job, each step guarded.
   try {
     if (!allProjects.length) allProjects = await api('/api/projects');
     populateParentDropdown(id);
     document.getElementById('proj-parent').value = p.parent_id || '';
   } catch (e) { console.error('parent dropdown failed:', e); }
 
-  try {
-    populateTypeAndJobDropdowns();
-    // Phase 3b: project_type_id was dropped; the dropdown is keyed on the
-    // program enum now. Pre-select from p.program (the new column),
-    // falling back to lower-casing the legacy free-text project_type
-    // when the program column is NULL on older rows.
-    const presetProgram = p.program
-      || (p.project_type ? String(p.project_type).toLowerCase() : '');
-    const ptypeSel = document.getElementById('proj-ptype');
-    if (ptypeSel) ptypeSel.value = ['rus','bau','gfr','other'].includes(presetProgram) ? presetProgram : '';
-  } catch (e) { console.error('type/job dropdown failed:', e); }
-
+  // Set client, then drive the cascade
   try {
     document.getElementById('proj-client').value = p.client_id || '';
-    // Threads p.job_id through so the dropdown preserves the current job even
-    // if it was deactivated by the v3 reseed (renders as "(legacy)").
-    // preservePicks=true keeps the ptype + contract values pre-filled
-    // above (line 3898) from being wiped by the program/contract reset
-    // path that clientChanged uses for fresh new-project sessions.
-    await clientChanged(p.job_id, /*preservePicks=*/ true);
-    document.getElementById('proj-job').value = p.job_id || '';
-  } catch (e) { console.error('client/job hookup failed:', e); }
+    // Pre-load ECs for this client into the cache
+    if (p.client_id) {
+      try {
+        const fresh = await api('/api/engineering-contracts?client_id=' + encodeURIComponent(p.client_id));
+        window.engineeringContractsCache = (window.engineeringContractsCache || [])
+          .filter(e => e.client_id !== p.client_id).concat(fresh);
+      } catch (e2) { /* non-fatal */ }
+    }
+    // Determine effective program from project record
+    const presetProgram = p.program || (p.project_type ? String(p.project_type).toLowerCase() : '');
+    const effectiveProg = ['rus','bau','gfr','other'].includes(presetProgram) ? presetProgram : '';
+    projectModalState.client_id = p.client_id || null;
+    projectModalState.program = effectiveProg || null;
 
-  try {
-    // Pre-populate the EC picker from the project's contract → EC chain.
-    const pc = p.contract_id && (window.contractsCache || []).find(c => c.id === p.contract_id);
-    const pcEcId = pc?.engineering_contract_id || '';
-    if (pcEcId) {
-      // Ensure this EC has an option in the dropdown before setting value.
+    // Populate program dropdown (mirrors projClientChanged but without full reset)
+    const PROGRAM_LABELS = { rus: 'RUS', bau: 'BAU', gfr: 'GF(R)', other: 'Other' };
+    const ptypeSel = document.getElementById('proj-ptype');
+    ptypeSel.innerHTML = '<option value="">Select program…</option>' +
+      ['rus','bau','gfr','other'].map(pg => `<option value="${pg}">${PROGRAM_LABELS[pg]}</option>`).join('');
+    ptypeSel.value = effectiveProg;
+    ptypeSel.disabled = !p.client_id;
+
+    // Determine EC from the project's concentrator_id (which IS the ec_service_areas.id)
+    // or from contract → engineering_contract chain as fallback
+    let editEcId = p.engineering_contract_id || '';
+    if (!editEcId && p.contract_id) {
+      await (async () => {
+        try {
+          const ctrs = await api('/api/contracts?client_id=' + encodeURIComponent(p.client_id));
+          window.contractsCache = (window.contractsCache || []).filter(c => c.client_id !== p.client_id).concat(ctrs);
+          const pc = ctrs.find(c => c.id === p.contract_id);
+          if (pc?.engineering_contract_id) editEcId = pc.engineering_contract_id;
+        } catch (e2) { /* non-fatal */ }
+      })();
+    }
+
+    const ecCache = window.engineeringContractsCache || [];
+    const matchingEcs = ecCache.filter(e => e.client_id === p.client_id &&
+      (effectiveProg === 'gfr' ? e.program === 'rus' : e.program === effectiveProg)
+    );
+
+    const ecRow = document.getElementById('proj-ec-row');
+    const noEcRow = document.getElementById('proj-no-ec-row');
+
+    if (matchingEcs.length > 0) {
+      ecRow.style.display = '';
+      noEcRow.style.display = 'none';
+      // Populate EC dropdown
       const ecSel = document.getElementById('proj-ec');
-      if (ecSel && !ecSel.querySelector(`option[value="${pcEcId}"]`)) {
-        const pcEc = (window.engineeringContractsCache || []).find(e => e.id === pcEcId);
-        if (pcEc) {
-          const lbl = `${pcEc.client_name || '?'} · ${pcEc.name}${pcEc.contract_number ? ' – ' + pcEc.contract_number : ''}`;
-          ecSel.add(new Option(lbl, pcEc.id));
-        }
+      ecSel.innerHTML = '<option value="">— select contract —</option>' +
+        matchingEcs.slice().sort((a,b) => a.name.localeCompare(b.name)).map(ec => {
+          const lbl = (ec.client_name||'?') + ' · ' + ec.name + (ec.contract_number ? ' – ' + ec.contract_number : '');
+          return `<option value="${ec.id}">${esc(lbl)}</option>`;
+        }).join('');
+      ecSel.disabled = false;
+      if (editEcId && matchingEcs.some(e => e.id === editEcId)) {
+        ecSel.value = editEcId;
+        projectModalState.ec_id = editEcId;
+        // Load SAs for this EC
+        try {
+          let sas = _projEcSaCache[editEcId];
+          if (!sas) {
+            sas = await api('/api/engineering-contracts/' + encodeURIComponent(editEcId) + '/service-areas');
+            _projEcSaCache[editEcId] = sas;
+          }
+          const concSel = document.getElementById('proj-concentrator');
+          const saHint = document.getElementById('proj-sa-no-config-hint');
+          if (sas.length > 0) {
+            if (saHint) saHint.style.display = 'none';
+            concSel.innerHTML = '<option value="">— select service area —</option>' +
+              sas.map(sa => {
+                const wo = sa.work_order_number ? ` (WO# ${sa.work_order_number})` : '';
+                return `<option value="${sa.id}">${esc(sa.name)}${wo}</option>`;
+              }).join('');
+            concSel.disabled = false;
+            // Restore SA selection from concentrator_id
+            if (p.concentrator_id && sas.some(s => s.id === p.concentrator_id)) {
+              concSel.value = p.concentrator_id;
+              projectModalState.sa_id = p.concentrator_id;
+            }
+          } else {
+            concSel.innerHTML = '<option value="">No service areas configured</option>';
+          }
+        } catch (e2) { console.warn('[editProject SA load]', e2); }
       }
-      if (ecSel) ecSel.value = pcEcId;
+    } else if (effectiveProg) {
+      ecRow.style.display = 'none';
+      noEcRow.style.display = '';
+      const saFreeText = document.getElementById('proj-service-area');
+      if (saFreeText) saFreeText.value = p.service_area_name || p.service_area_label || '';
     }
-    document.getElementById('proj-contract').value = p.contract_id || '';
-    // After setting contract, repopulate the concentrator dropdown so
-    // the project's concentrator_id has a matching <option>. Without
-    // this, the next .value=p.concentrator_id silently drops because
-    // the dropdown is still in its "pick contract first" state.
-    if (typeof populateConcentratorDropdownForContract === 'function') {
-      populateConcentratorDropdownForContract();
-    }
-    // If the EC has EC-scoped service areas / work orders, load them into
-    // the modal pickers (replaces the concentrator dropdown + WO# input).
-    if (pcEcId && typeof populateEcScopedWoSaForModal === 'function') {
-      await populateEcScopedWoSaForModal(pcEcId);
-    }
-  } catch (e) { /* contract dropdown might not have the option yet — non-fatal */ }
 
+    // Contract (advanced settings)
+    document.getElementById('proj-contract').value = p.contract_id || '';
+  } catch (e) { console.error('cascade hookup failed:', e); }
+
+  // Job typeahead pre-fill
   try {
-    document.getElementById('proj-concentrator').value = p.concentrator_id || '';
-    // If the concentrator dropdown was repopulated with EC-scoped SAs, also
-    // try to match by concentrator_id (the SA id in ec_service_areas uses
-    // the same uuid column, so a direct value set works when IDs match).
-  } catch (e) { /* same */ }
+    await _projRefreshJobsCache(p.client_id, projectModalState.program, projectModalState.ec_id);
+    if (p.job_id) {
+      let job = _projJobsCache.find(j => j.id === p.job_id);
+      if (!job) {
+        try { job = await api('/api/jobs/' + p.job_id); } catch (e2) { /* ignore */ }
+      }
+      if (job) {
+        document.getElementById('proj-job-input').value = job.name;
+        document.getElementById('proj-job').value = job.id;
+        projectModalState.job_id = job.id;
+        document.getElementById('proj-job-input').disabled = false;
+      }
+    } else {
+      document.getElementById('proj-job-input').disabled = false;
+    }
+  } catch (e) { console.error('job typeahead pre-fill failed:', e); }
 
   try {
     await loadBudgetCodesForProject(p.parent_id || p.id);
@@ -4354,7 +4347,7 @@ async function editProject(id) {
   } catch (e) { console.error('budget codes failed:', e); }
 
   try {
-    jobChanged(/*skipRateLookup=*/true); // reflect current job's UI without overwriting the existing rate
+    jobChanged(/*skipRateLookup=*/true);
   } catch (e) { /* non-fatal */ }
 }
 
@@ -4363,35 +4356,47 @@ function clearProjectForm() {
   document.getElementById('proj-client').value='';
   document.getElementById('proj-contract').innerHTML='<option value="">None / N/A</option>';
   document.getElementById('proj-parent').value='';
-  document.getElementById('proj-concentrator').value='';
   document.getElementById('proj-budget-code').innerHTML='<option value="">None — No budget link</option>';
   document.getElementById('budget-code-group').style.display='none';
-  document.getElementById('proj-ptype').value='';
-  document.getElementById('proj-job').value='';
   document.getElementById('proj-status').value='active';
-  // Reset EC picker
-  const ecSel = document.getElementById('proj-ec');
-  if (ecSel) { ecSel.value=''; ecSel.style.display=''; }
-  const ecInherited = document.getElementById('proj-ec-inherited');
-  if (ecInherited) { ecInherited.style.display='none'; ecInherited.dataset.ecId=''; }
+  // Reset new cascade state + UI
+  Object.assign(projectModalState, { client_id: null, program: null, ec_id: null, sa_id: null, job_id: null, new_job_name: null });
+  // Program select — back to disabled/placeholder
+  const ptypeSel = document.getElementById('proj-ptype');
+  if (ptypeSel) { ptypeSel.innerHTML = '<option value="">— pick client first —</option>'; ptypeSel.disabled = true; }
+  // EC + no-EC rows hidden
   const ecRow = document.getElementById('proj-ec-row');
-  if (ecRow) ecRow.style.display='none';
-  // Reset EC-scoped WO select (injected by populateEcScopedWoSaForModal)
-  const woSelect = document.getElementById('proj-wo-select');
-  if (woSelect) { woSelect.value = ''; woSelect.style.display = 'none'; }
-  const woIn = document.getElementById('proj-wo');
-  if (woIn) { woIn.value = ''; woIn.style.display = ''; }
-  // Clear the ecId + userPicked markers on the concentrator select so legacy
-  // path resumes on a fresh form session.
+  if (ecRow) ecRow.style.display = 'none';
+  const noEcRow = document.getElementById('proj-no-ec-row');
+  if (noEcRow) noEcRow.style.display = 'none';
+  // EC picker
+  const ecSel = document.getElementById('proj-ec');
+  if (ecSel) { ecSel.value=''; ecSel.disabled=true; ecSel.innerHTML='<option value="">— select contract —</option>'; }
+  const ecInherited = document.getElementById('proj-ec-inherited');
+  if (ecInherited) { ecInherited.style.display='none'; delete ecInherited.dataset.ecId; }
+  // SA picker
   const concSel = document.getElementById('proj-concentrator');
-  if (concSel) { delete concSel.dataset.ecId; delete concSel.dataset.userPicked; }
+  if (concSel) { concSel.innerHTML='<option value="">— pick contract first —</option>'; concSel.disabled=true; delete concSel.dataset.ecId; delete concSel.dataset.userPicked; }
   const saHint = document.getElementById('proj-sa-no-config-hint');
   if (saHint) saHint.style.display = 'none';
+  // Free-text SA
+  const saFreeText = document.getElementById('proj-service-area');
+  if (saFreeText) saFreeText.value = '';
+  // WO# visible display
+  const woVisible = document.getElementById('proj-wo-visible');
+  if (woVisible) woVisible.value = '';
+  // Job typeahead
+  const jobInput = document.getElementById('proj-job-input');
+  if (jobInput) { jobInput.value=''; jobInput.disabled=true; }
+  const jobHidden = document.getElementById('proj-job');
+  if (jobHidden) jobHidden.value='';
+  const jobDd = document.getElementById('proj-job-dropdown');
+  if (jobDd) jobDd.style.display='none';
+  // Legacy EC-scoped WO select (injected by populateEcScopedWoSaForModal)
+  const woSelect = document.getElementById('proj-wo-select');
+  if (woSelect) { woSelect.value = ''; woSelect.style.display = 'none'; }
   document.getElementById('proj-start').value=new Date().toISOString().split('T')[0];
-  // Reset cadence to default; jobChanged() will switch to monthly if Inspection picked
   if (document.getElementById('proj-cadence')) document.getElementById('proj-cadence').value = 'one_time';
-  // Reset the rollup checkbox so a fresh "New Project" never inherits a
-  // prior open's rollup state. rollupChanged() syncs the hint visibility.
   const rb = document.getElementById('proj-rollup');
   if (rb) { rb.checked = false; rollupChanged(); }
   jobChanged(/*skipRateLookup=*/true);
@@ -4407,8 +4412,10 @@ function rollupChanged() {
   const hint = document.getElementById('proj-rollup-hint');
   if (hint) hint.style.display = checked ? '' : 'none';
   const traitWrapIds = [
-    'proj-row-contract-area',
+    'proj-ec-row',
+    'proj-no-ec-row',
     'proj-row-wo-job',
+    'proj-row-contract-area',
     'rate-section',
     'proj-row-cadence',
     'proj-start-wrap',
@@ -4420,11 +4427,9 @@ function rollupChanged() {
     const el = document.getElementById(id);
     if (el) el.style.display = checked ? 'none' : '';
   });
-  // When un-checking, re-run program-driven gating so WO#/Service-Area/EC
-  // wrappers reflect the current Program selection (otherwise everything
-  // would just be visible without respecting the program rules).
-  if (!checked && typeof applyProjectModalFieldGating === 'function') {
-    applyProjectModalFieldGating();
+  // When un-checking, trigger program cascade to restore gating
+  if (!checked && projectModalState.program) {
+    projProgramChanged();
   }
 }
 
@@ -4437,6 +4442,329 @@ async function ptypeChanged() {
   await refilterJobsDropdown(document.getElementById('proj-job')?.value || null);
   jobChanged();
 }
+
+// ─── NEW CASCADE HANDLERS (Wave B 2026-05-21) ────────────────────────────────
+//
+// The new project modal uses a 6-row cascade: Client → Program → EC / SA → Job.
+// These functions replace the old clientChanged / ptypeChanged / ecChanged wiring
+// for the primary form rows. The old helpers (clientChanged, ptypeChanged,
+// applyProjectModalFieldGating, populateEcDropdown, etc.) are preserved below
+// for the Quick-Add sub-flows and edit-mode backward compat.
+
+// State bag for the cascade so helpers can inspect current picks without
+// reading DOM every time.
+const projectModalState = {
+  client_id: null,
+  program: null,     // 'rus'|'bau'|'gfr'|'other'|null
+  ec_id: null,
+  sa_id: null,
+  job_id: null,
+  new_job_name: null,   // set when user picks "+ Create '…' as new job"
+};
+
+// Cache for EC service-area lists keyed by ec_id.
+const _projEcSaCache = {};
+
+// Client changed — fetch ECs for client, enable/populate Program, determine EC vs no-EC mode.
+async function projClientChanged() {
+  const clientId = document.getElementById('proj-client').value;
+  projectModalState.client_id = clientId;
+  projectModalState.program = null;
+  projectModalState.ec_id = null;
+  projectModalState.sa_id = null;
+  projectModalState.job_id = null;
+  projectModalState.new_job_name = null;
+
+  // Reset downstream fields
+  _projResetProgramAndBelow();
+
+  if (!clientId) {
+    document.getElementById('proj-ptype').disabled = true;
+    document.getElementById('proj-ptype').innerHTML = '<option value="">— pick client first —</option>';
+    return;
+  }
+
+  // Ensure EC cache is populated for this client
+  try {
+    if (!window.engineeringContractsCache || !window.engineeringContractsCache.some(e => e.client_id === clientId)) {
+      const fresh = await api('/api/engineering-contracts?client_id=' + encodeURIComponent(clientId));
+      window.engineeringContractsCache = (window.engineeringContractsCache || []).filter(e => e.client_id !== clientId).concat(fresh);
+    }
+  } catch (e) { /* non-fatal */ }
+
+  // Populate program options based on ECs for this client
+  const ecCache = window.engineeringContractsCache || [];
+  const clientEcs = ecCache.filter(e => e.client_id === clientId);
+  const programs = [...new Set(clientEcs.map(e => e.program).filter(Boolean))];
+
+  const PROGRAM_LABELS = { rus: 'RUS', bau: 'BAU', gfr: 'GF(R)', other: 'Other' };
+  const ptypeSel = document.getElementById('proj-ptype');
+  ptypeSel.innerHTML = '<option value="">Select program…</option>' +
+    ['rus', 'bau', 'gfr', 'other'].map(p =>
+      `<option value="${p}">${PROGRAM_LABELS[p]}</option>`
+    ).join('');
+  ptypeSel.disabled = false;
+
+  // Auto-select if only one program available for this client
+  if (programs.length === 1) {
+    ptypeSel.value = programs[0];
+    await projProgramChanged();
+  }
+
+  // Refresh job typeahead scope
+  await _projRefreshJobsCache(clientId, null, null);
+}
+
+// Program changed — check EC existence for (client, program), show/hide EC-mode row vs no-EC row.
+async function projProgramChanged() {
+  const clientId = projectModalState.client_id || document.getElementById('proj-client').value;
+  const program = document.getElementById('proj-ptype').value;
+  projectModalState.program = program;
+  projectModalState.ec_id = null;
+  projectModalState.sa_id = null;
+
+  _projResetEcAndBelow();
+
+  if (!program) return;
+
+  // Determine if there are ECs for this client+program
+  const ecCache = window.engineeringContractsCache || [];
+  const matchingEcs = ecCache.filter(e => e.client_id === clientId &&
+    (program === 'gfr' ? e.program === 'rus' : e.program === program)
+  );
+
+  const ecRow = document.getElementById('proj-ec-row');
+  const noEcRow = document.getElementById('proj-no-ec-row');
+
+  if (matchingEcs.length > 0) {
+    // EC-mode: show the EC + SA row
+    ecRow.style.display = '';
+    noEcRow.style.display = 'none';
+
+    // Populate EC dropdown
+    const ecSel = document.getElementById('proj-ec');
+    const prev = ecSel.value;
+    ecSel.innerHTML = '<option value="">— select contract —</option>' +
+      matchingEcs
+        .slice().sort((a, b) => a.name.localeCompare(b.name))
+        .map(ec => {
+          const lbl = (ec.client_name || '?') + ' · ' + ec.name + (ec.contract_number ? ' – ' + ec.contract_number : '');
+          return `<option value="${ec.id}">${esc(lbl)}</option>`;
+        }).join('');
+    ecSel.disabled = false;
+    if (matchingEcs.some(e => e.id === prev)) {
+      ecSel.value = prev;
+      await projEcChanged();
+    } else if (matchingEcs.length === 1) {
+      ecSel.value = matchingEcs[0].id;
+      await projEcChanged();
+    }
+  } else {
+    // No-EC mode: show the free-text SA row
+    ecRow.style.display = 'none';
+    noEcRow.style.display = '';
+  }
+
+  // Enable job typeahead
+  await _projRefreshJobsCache(clientId, null, null);
+  _projEnableJobInput();
+}
+
+// EC changed — fetch SAs for this EC, populate SA dropdown with name (WO# N) format.
+async function projEcChanged() {
+  const ecId = document.getElementById('proj-ec').value;
+  projectModalState.ec_id = ecId;
+  projectModalState.sa_id = null;
+
+  const concSel = document.getElementById('proj-concentrator');
+  const saHint = document.getElementById('proj-sa-no-config-hint');
+  concSel.innerHTML = '<option value="">— loading… —</option>';
+  concSel.disabled = true;
+
+  if (!ecId) {
+    concSel.innerHTML = '<option value="">— pick contract first —</option>';
+    if (saHint) saHint.style.display = 'none';
+    return;
+  }
+
+  try {
+    let sas = _projEcSaCache[ecId];
+    if (!sas) {
+      sas = await api('/api/engineering-contracts/' + encodeURIComponent(ecId) + '/service-areas');
+      _projEcSaCache[ecId] = sas;
+    }
+
+    if (sas.length === 0) {
+      concSel.innerHTML = '<option value="">No service areas configured</option>';
+      const ec = (window.engineeringContractsCache || []).find(e => e.id === ecId);
+      const ecName = ec ? (ec.name || ec.contract_number || 'this contract') : 'this contract';
+      if (saHint) {
+        saHint.textContent = `No service areas configured for ${ecName}. Add them via Settings → Engineering Contracts.`;
+        saHint.style.display = '';
+      }
+    } else {
+      if (saHint) saHint.style.display = 'none';
+      concSel.innerHTML = '<option value="">— select service area —</option>' +
+        sas.map(sa => {
+          const wo = sa.work_order_number ? ` (WO# ${sa.work_order_number})` : '';
+          return `<option value="${sa.id}">${esc(sa.name)}${wo}</option>`;
+        }).join('');
+      concSel.disabled = false;
+      // Auto-select if only one SA
+      if (sas.length === 1) {
+        concSel.value = sas[0].id;
+        projSaChanged();
+      }
+    }
+  } catch (e) {
+    concSel.innerHTML = '<option value="">Error loading service areas</option>';
+    console.warn('[projEcChanged]', e);
+  }
+
+  // Refresh job scope
+  await _projRefreshJobsCache(projectModalState.client_id, projectModalState.program, ecId);
+  _projEnableJobInput();
+}
+
+// SA changed — update state, mirror WO# from the selected SA option label.
+function projSaChanged() {
+  const concSel = document.getElementById('proj-concentrator');
+  const saId = concSel.value;
+  projectModalState.sa_id = saId;
+
+  // Mirror WO# into the hidden input from the SA's cached data
+  const ecId = projectModalState.ec_id;
+  const sas = (ecId && _projEcSaCache[ecId]) || [];
+  const sa = sas.find(s => s.id === saId);
+  const woVisible = document.getElementById('proj-wo-visible');
+  if (woVisible) woVisible.value = sa?.work_order_number || '';
+  // The hidden proj-wo is kept in sync for saveProject()
+  const woHidden = document.getElementById('proj-wo');
+  if (woHidden) woHidden.value = sa?.work_order_number || '';
+}
+
+// ─── Job typeahead ────────────────────────────────────────────────────────────
+
+let _projJobsCache = []; // filtered list for current (client, program, ec) scope
+let _projJobDebounceTimer = null;
+
+async function _projRefreshJobsCache(clientId, program, ecId) {
+  let url = '/api/jobs';
+  const qp = [];
+  if (ecId) qp.push('engineering_contract_id=' + encodeURIComponent(ecId));
+  else if (program && ['rus','bau','gfr','other'].includes(program)) qp.push('program=' + encodeURIComponent(program));
+  else if (clientId) qp.push('client_id=' + encodeURIComponent(clientId));
+  if (qp.length) url += '?' + qp.join('&');
+  try {
+    _projJobsCache = await api(url);
+  } catch (e) { /* leave cache stale */ }
+}
+
+function _projEnableJobInput() {
+  const inp = document.getElementById('proj-job-input');
+  if (inp) inp.disabled = false;
+}
+
+function projJobInputTyped() {
+  clearTimeout(_projJobDebounceTimer);
+  _projJobDebounceTimer = setTimeout(_projRenderJobDropdown, 250);
+}
+
+function projJobBlur() {
+  // Delay close so click on dropdown option registers first
+  setTimeout(() => {
+    const dd = document.getElementById('proj-job-dropdown');
+    if (dd) dd.style.display = 'none';
+  }, 180);
+}
+
+function _projRenderJobDropdown() {
+  const inp = document.getElementById('proj-job-input');
+  const dd = document.getElementById('proj-job-dropdown');
+  const hidden = document.getElementById('proj-job');
+  if (!inp || !dd) return;
+
+  const q = inp.value.trim().toLowerCase();
+  const matches = q
+    ? _projJobsCache.filter(j => j.name.toLowerCase().includes(q)).slice(0, 5)
+    : _projJobsCache.slice(0, 5);
+
+  let html = '';
+  for (const j of matches) {
+    const label = j.name + (j.billing_code ? ' (' + j.billing_code + ')' : '');
+    html += `<div role="option" style="padding:8px 12px;cursor:pointer;font-size:13px" tabindex="-1"
+      onmousedown="event.preventDefault()" onclick="_projPickJob('${j.id}','${esc(j.name)}')"
+      onmouseover="this.style.background='var(--surface-2,#f5f5f5)'"
+      onmouseout="this.style.background=''">${esc(label)}</div>`;
+  }
+  // "+ Create" option when text doesn't match an existing job
+  const exactMatch = _projJobsCache.some(j => j.name.toLowerCase() === q);
+  if (q && !exactMatch) {
+    html += `<div role="option" style="padding:8px 12px;cursor:pointer;font-size:13px;color:var(--primary,#0066cc);border-top:1px solid var(--border-weak,#e0e0e0)" tabindex="-1"
+      onmousedown="event.preventDefault()" onclick="_projPickNewJob('${esc(inp.value.trim())}')"
+      onmouseover="this.style.background='var(--surface-2,#f5f5f5)'"
+      onmouseout="this.style.background=''"
+      >+ Create "<strong>${esc(inp.value.trim())}</strong>" as new job</div>`;
+  }
+  if (!html) {
+    html = '<div style="padding:8px 12px;font-size:13px;color:var(--text-muted)">No jobs found</div>';
+  }
+  dd.innerHTML = html;
+  dd.style.display = '';
+}
+
+function _projPickJob(id, name) {
+  document.getElementById('proj-job-input').value = name;
+  document.getElementById('proj-job').value = id;
+  document.getElementById('proj-job-dropdown').style.display = 'none';
+  projectModalState.job_id = id;
+  projectModalState.new_job_name = null;
+  // Trigger billing field updates (rate lookup, footage display, etc.)
+  jobChanged(/*skipRateLookup=*/false);
+}
+
+function _projPickNewJob(name) {
+  document.getElementById('proj-job-input').value = name;
+  document.getElementById('proj-job').value = '';
+  document.getElementById('proj-job-dropdown').style.display = 'none';
+  projectModalState.job_id = null;
+  projectModalState.new_job_name = name;
+}
+
+// ─── Reset helpers ────────────────────────────────────────────────────────────
+
+function _projResetProgramAndBelow() {
+  const ptypeSel = document.getElementById('proj-ptype');
+  ptypeSel.innerHTML = '<option value="">— pick client first —</option>';
+  ptypeSel.disabled = true;
+  _projResetEcAndBelow();
+}
+
+function _projResetEcAndBelow() {
+  // EC row
+  document.getElementById('proj-ec-row').style.display = 'none';
+  document.getElementById('proj-no-ec-row').style.display = 'none';
+  const ecSel = document.getElementById('proj-ec');
+  ecSel.value = '';
+  ecSel.disabled = true;
+  // SA
+  const concSel = document.getElementById('proj-concentrator');
+  concSel.innerHTML = '<option value="">— pick contract first —</option>';
+  concSel.disabled = true;
+  const saHint = document.getElementById('proj-sa-no-config-hint');
+  if (saHint) saHint.style.display = 'none';
+  // Job
+  document.getElementById('proj-job-input').value = '';
+  document.getElementById('proj-job').value = '';
+  document.getElementById('proj-job-dropdown').style.display = 'none';
+  document.getElementById('proj-job-input').disabled = true;
+  projectModalState.ec_id = null;
+  projectModalState.sa_id = null;
+  projectModalState.job_id = null;
+  projectModalState.new_job_name = null;
+}
+
+// ─── END NEW CASCADE HANDLERS ─────────────────────────────────────────────────
 
 // Populate the Engineering Contract dropdown for the current client + program.
 // Only called when the EC row is visible (RUS / GF(R)). Filters to RUS-program
@@ -4780,6 +5108,8 @@ async function quickAddJob() {
     await loadJobs();
     populateTypeAndJobDropdowns();
     document.getElementById('proj-job').value = j.id;
+    const jobInputEl = document.getElementById('proj-job-input');
+    if (jobInputEl) { jobInputEl.value = j.name; jobInputEl.disabled = false; }
     document.getElementById('qa-job-name').value = '';
     document.getElementById('qa-job-rate').value = '';
     document.getElementById('qa-job-permit').checked = false;
@@ -4795,30 +5125,46 @@ async function saveProject(opts) {
   // without disrupting whatever the user is currently doing.
   const silent = opts && opts.silent === true;
   const projectTypeId = document.getElementById('proj-ptype').value;
-  const jobId = document.getElementById('proj-job').value;
   const name = document.getElementById('proj-name').value.trim();
   const clientId = document.getElementById('proj-client').value;
   const rate = document.getElementById('proj-rate').value;
-  // Rollup flag: when checked, this project has no traits (no job, no
-  // billing rate, no footage). Validation skips those required-field
-  // checks so a rollup with only a name + client + parent saves cleanly.
   const isRollup = !!document.getElementById('proj-rollup')?.checked;
   if (!name) return silent ? false : alert('Project name is required');
   if (!clientId) return silent ? false : alert('Client is required');
-  if (!isRollup && !projectTypeId) return silent ? false : alert('Project type is required');
+  if (!isRollup && !projectTypeId) return silent ? false : alert('Program is required');
+
+  // Handle "+ Create new job" branch: POST /api/jobs first, then use the new id.
+  let jobId = document.getElementById('proj-job').value;
+  if (!jobId && projectModalState.new_job_name) {
+    if (!silent) {
+      try {
+        const newJob = await api('/api/jobs', 'POST', { name: projectModalState.new_job_name, default_billing_type: 'hourly' });
+        jobId = newJob.id;
+        document.getElementById('proj-job').value = jobId;
+        projectModalState.job_id = jobId;
+        projectModalState.new_job_name = null;
+        await loadJobs(); // refresh global jobsCache
+      } catch (e) { return alert('Failed to create job: ' + e.message); }
+    } else {
+      return false; // autosave can't create jobs
+    }
+  }
+
   if (!isRollup && !jobId) return silent ? false : alert('Job is required');
 
   const job = jobsCache.find(j => j.id === jobId);
   const isPermit = !!job?.is_permitting;
   const isFootage = job?.default_billing_type === 'footage' || isPermit;
-  // Billing rate and footage are now OPTIONAL. Server stores NULL when blank
-  // and projects can be edited later to fill them in. Footage projects without
-  // a rate just won't compute expected_revenue until the rate is set.
-
   const footage = document.getElementById('proj-footage').value;
 
-  // Pick a legacy project_type tag for backward compat with code that still
-  // reads p.project_type. Map by job name when available.
+  // Derive service_area_label from whichever mode is active
+  const concSel = document.getElementById('proj-concentrator');
+  const saOption = concSel && concSel.value ? concSel.options[concSel.selectedIndex] : null;
+  const saLabel = saOption
+    ? saOption.text.replace(/\s*\(WO#.*\)$/, '').trim()   // strip "(WO# N)" suffix
+    : (document.getElementById('proj-service-area')?.value || '').trim();
+
+  // Legacy project_type tag for backward compat
   let legacyType = 'other';
   if (job) {
     const n = job.name.toLowerCase();
@@ -4832,13 +5178,12 @@ async function saveProject(opts) {
     name, client_id: clientId,
     contract_id: document.getElementById('proj-contract').value || null,
     engineering_contract_id: document.getElementById('proj-ec')?.value || null,
-    work_order_number: document.getElementById('proj-wo').value,
-    service_area_label: (document.getElementById('proj-service-area')?.value || '').trim() || null,
+    work_order_number: document.getElementById('proj-wo').value || null,
+    service_area_label: saLabel || null,
+    service_area_name: saLabel || null,
     project_type: legacyType,
-    // Phase 3b: project_type_id was dropped; the dropdown now holds a
-    // program code (rus|bau|gfr|other) — send it as `program`.
     program: projectTypeId || null,
-    job_id: jobId,
+    job_id: jobId || null,
     status: document.getElementById('proj-status').value,
     billing_type: isFootage ? 'footage' : 'hourly',
     billing_rate: parseFloat(rate)||null,
