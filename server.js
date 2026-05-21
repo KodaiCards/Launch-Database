@@ -1512,18 +1512,17 @@ async function bootstrapDefensiveRecentMigrations() {
     console.error(`[WAVE 14] step W14-6b: deleted ${w14_6b.rowCount} now-empty legacy intermediate(s)`);
 
     // W14-7: merge duplicate EC folders. W14-3 created NEW empty
-    // 'engineering_contract'-level folders for every active EC row. Legacy
-    // rollups with the SAME NAME but rollup_level=NULL exist with all the
-    // actual data (SA folders, Construction folders, leaves) under them.
-    // Move children of legacy duplicate → new EC folder, then delete legacy.
-    // Match key: same name + same client_id + one is 'engineering_contract'
-    // and the other is NULL rollup_level.
+    // 'engineering_contract'-level folders for every active EC row, naming
+    // them "<ec.name> (<PROGRAM>)" e.g. "...A72 (RUS)". Legacy rollups carry
+    // the bare name "...A72" with rollup_level=NULL and have all the actual
+    // data under them. Match by STRIPPING the " (PROGRAM)" suffix off the
+    // new folder name before comparing to the legacy name.
     const w14_7a = await pool.query(`
       UPDATE projects child
       SET parent_id = ec_new.id
       FROM projects ec_legacy
       JOIN projects ec_new
-        ON ec_new.name = ec_legacy.name
+        ON regexp_replace(ec_new.name, ' \\([A-Z]+\\)$', '') = ec_legacy.name
        AND ec_new.client_id = ec_legacy.client_id
        AND ec_new.is_rollup = TRUE
        AND ec_new.rollup_level = 'engineering_contract'
@@ -1540,7 +1539,7 @@ async function bootstrapDefensiveRecentMigrations() {
         AND ec_legacy.rollup_level IS NULL
         AND EXISTS (
           SELECT 1 FROM projects ec_new
-          WHERE ec_new.name = ec_legacy.name
+          WHERE regexp_replace(ec_new.name, ' \\([A-Z]+\\)$', '') = ec_legacy.name
             AND ec_new.client_id = ec_legacy.client_id
             AND ec_new.is_rollup = TRUE
             AND ec_new.rollup_level = 'engineering_contract'
