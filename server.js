@@ -1258,8 +1258,14 @@ async function start(opts = {}) {
   // into numbered migration files. Failure logs but doesn't crash boot.
   try {
     const { runMigrations } = require('./db_migrations');
+    console.log('[migrations] starting runner...');
     const out = await runMigrations(pool);
-    if (out.applied > 0) console.log(`[migrations] applied ${out.applied} new (skipped ${out.skipped})`);
+    console.log(`[migrations] done — applied ${out.applied} new, skipped ${out.skipped}`);
+    if (out.files && out.files.length) {
+      for (const f of out.files) {
+        console.log(`[migrations]   ${f.status === 'applied' ? '✓' : '·'} ${f.filename} (${f.status})`);
+      }
+    }
   } catch (mErr) {
     console.error('[migrations] failed:', mErr && mErr.message);
   }
