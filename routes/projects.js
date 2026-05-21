@@ -528,8 +528,25 @@ module.exports = function installProjectsRoutes(app, pool, mw) {
       }
       // If neither engineering_contract_id nor contract_id was touched, leave it alone.
       const ecIdForUpdate = updEngContractId !== undefined ? updEngContractId : null;
+
+      // Build conditional SET clauses for fields that support explicit clearing.
+      // Semantic: omitted (undefined) = preserve existing; explicit value including
+      // null = write that value (allows clearing the field).
+      // $N slots are assigned dynamically starting after the 25 fixed params.
+      const conditionalParams = [];
+      let nextSlot = 26;
+
       const ecIdSetClause = updEngContractId !== undefined
-        ? ', engineering_contract_id=$29'
+        ? (() => { conditionalParams.push(ecIdForUpdate); return `, engineering_contract_id=$${nextSlot++}`; })()
+        : '';
+      const wonSetClause = work_order_number !== undefined
+        ? (() => { conditionalParams.push(work_order_number); return `, work_order_number=$${nextSlot++}`; })()
+        : '';
+      const concSetClause = concentrator_id !== undefined
+        ? (() => { conditionalParams.push(concentrator_id); return `, concentrator_id=$${nextSlot++}`; })()
+        : '';
+      const sanSetClause = service_area_name !== undefined
+        ? (() => { conditionalParams.push(service_area_name); return `, service_area_name=$${nextSlot++}`; })()
         : '';
 
       // Resolve the effective is_rollup for THIS save:
@@ -555,34 +572,34 @@ module.exports = function installProjectsRoutes(app, pool, mw) {
       const updProjected    = willBeRollup ? null : newProjected;
       const updManual       = willBeRollup ? null : newManual;
 
+      // Fixed params: $1-$25. Conditional params appended after ($26+).
       const updateParams = [
-        name, client_id, contract_id || null, work_order_number,
+        name, client_id, contract_id || null,
         project_type, effectiveProgram === undefined ? null : effectiveProgram, updJobId,
         status, updBillingType, updBillingRate,
         updFootage, updMiles, updExpHours, updExpRev,
         start_date || null, completed_date || null, billed_date || null,
-        notes, parent_id || null, budget_code_id || null, concentrator_id || null,
+        notes, parent_id || null, budget_code_id || null,
         updHrPerMi,
         newCadence, updProjected, updManual,
-        service_area_name || null,
         req.params.id,
         isRollupFlag === undefined ? null : isRollupFlag,
+        ...conditionalParams,
       ];
-      if (updEngContractId !== undefined) updateParams.push(ecIdForUpdate);
 
       const { rows } = await pool.query(`
         UPDATE projects SET
-          name=$1, client_id=$2, contract_id=$3, work_order_number=COALESCE($4, work_order_number),
-          project_type=COALESCE($5, project_type), program=COALESCE($6, program), job_id=$7,
-          status=$8, billing_type=$9, billing_rate=$10,
-          footage=$11, miles=$12, expected_hours=$13, expected_revenue=$14,
-          start_date=$15, completed_date=$16, billed_date=$17,
-          notes=$18, parent_id=$19, budget_code_id=$20, concentrator_id=COALESCE($21, concentrator_id),
-          permitting_hours_per_mile=$22,
-          billing_cadence=$23, projected_revenue=$24,
-          manual_invoice_amount=$25, service_area_name=COALESCE($26, service_area_name),
-          is_rollup=COALESCE($28, is_rollup)${ecIdSetClause}
-        WHERE id=$27 RETURNING *
+          name=$1, client_id=$2, contract_id=$3,
+          project_type=COALESCE($4, project_type), program=COALESCE($5, program), job_id=$6,
+          status=$7, billing_type=$8, billing_rate=$9,
+          footage=$10, miles=$11, expected_hours=$12, expected_revenue=$13,
+          start_date=$14, completed_date=$15, billed_date=$16,
+          notes=$17, parent_id=$18, budget_code_id=$19,
+          permitting_hours_per_mile=$20,
+          billing_cadence=$21, projected_revenue=$22,
+          manual_invoice_amount=$23,
+          is_rollup=COALESCE($25, is_rollup)${ecIdSetClause}${wonSetClause}${concSetClause}${sanSetClause}
+        WHERE id=$24 RETURNING *
       `, updateParams);
       broadcast('admin', 'project_updated', { id: rows[0].id, name: rows[0].name, client_id: rows[0].client_id });
       res.json(rows[0]);

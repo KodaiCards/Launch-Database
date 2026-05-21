@@ -285,6 +285,7 @@
     if (!confirm('Delete this service area? Any work orders linked to it will lose their service-area link (they will not be deleted).')) return;
     try {
       await api(`/api/ec-service-areas/${saId}`, 'DELETE');
+      if (window._projEcSaCache) delete window._projEcSaCache[ecId];
       await refreshEcWosaPanel(ecId);
     } catch (e) { alert('Delete failed: ' + e.message); }
   }

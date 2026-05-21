@@ -4190,6 +4190,7 @@ async function editProject(id) {
   // with empty engineering_contract_id / concentrator_id and overwrite existing
   // EC linkage on the project row.
   window.__suppressProjectAutosave = true;
+  try {
   // Reset autosave indicator state for a fresh edit session
   if (typeof _autosaveResetForOpen === 'function') _autosaveResetForOpen();
   // STEP 1 — open the modal IMMEDIATELY. If population fails partway through,
@@ -4361,8 +4362,10 @@ async function editProject(id) {
     jobChanged(/*skipRateLookup=*/true);
   } catch (e) { /* non-fatal */ }
 
-  // All cascade awaits are complete — safe to re-enable autosave.
-  window.__suppressProjectAutosave = false;
+  } finally {
+    // Always re-enable autosave, even if STEP 2 fetch or cascade threw.
+    window.__suppressProjectAutosave = false;
+  }
 }
 
 function clearProjectForm() {
@@ -4478,6 +4481,8 @@ const projectModalState = {
 
 // Cache for EC service-area lists keyed by ec_id.
 const _projEcSaCache = {};
+// Expose on window so engineering_contracts.js (separate file, no lexical access) can invalidate.
+window._projEcSaCache = _projEcSaCache;
 
 // Client changed — fetch ECs for client, enable/populate Program, determine EC vs no-EC mode.
 async function projClientChanged() {
