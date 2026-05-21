@@ -1227,6 +1227,70 @@ async function bootstrapV3Schema() {
   }
 
   console.log(`───── v3 bootstrap complete: ${okCount} OK, ${failCount} failed ─────`);
+
+  // ─── Defensive idempotent re-run of recent migrations (Wave 11 + 12) ───
+  // Railway's log rate-limit was dropping the [migrations] runner output,
+  // making it impossible to tell whether 0041 + 0042 actually applied.
+  // These INSERTs/CREATEs are all idempotent via IF NOT EXISTS / NOT EXISTS
+  // / ON CONFLICT guards. Safe to run every boot.
+  try {
+    console.log('[boot-defensive] ensuring user_portal_access table exists (Wave 12 / migration 0042)...');
+    await pool.query(`
+      CREATE TABLE IF NOT EXISTS user_portal_access (
+        user_id uuid NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+        portal_key varchar(50) NOT NULL,
+        granted_at timestamptz DEFAULT now(),
+        granted_by_user_id uuid REFERENCES users(id) ON DELETE SET NULL,
+        PRIMARY KEY (user_id, portal_key)
+      )
+    `);
+    await pool.query(`CREATE INDEX IF NOT EXISTS idx_user_portal_access_user ON user_portal_access(user_id)`);
+    console.log('[boot-defensive] ✓ user_portal_access ready');
+  } catch (e) {
+    console.error('[boot-defensive] ✗ user_portal_access setup failed:', e.message);
+  }
+
+  try {
+    console.log('[boot-defensive] ensuring legacy rollup folders exist (Wave 11 / migration 0041)...');
+    const r1 = await pool.query(`
+      INSERT INTO projects (name, client_id, status, is_rollup, rollup_level, rollup_key, project_type)
+      SELECT cl.name, cl.id, 'active', TRUE, 'client', cl.id::text, 'rollup'
+      FROM clients cl
+      WHERE EXISTS (SELECT 1 FROM projects p WHERE p.client_id = cl.id AND p.parent_id IS NULL AND p.is_rollup IS NOT TRUE)
+        AND NOT EXISTS (SELECT 1 FROM projects cf WHERE cf.is_rollup = TRUE AND cf.rollup_level = 'client' AND cf.rollup_key = cl.id::text)
+    `);
+    console.log(`[boot-defensive]   created ${r1.rowCount} Client rollup folder(s)`);
+
+    const r2 = await pool.query(`
+      INSERT INTO projects (name, client_id, parent_id, concentrator_id, status, is_rollup, rollup_level, rollup_key, project_type)
+      SELECT DISTINCT ON (p.concentrator_id)
+        COALESCE(con.area_name, 'Service Area'), p.client_id, cf.id, p.concentrator_id,
+        'active', TRUE, 'service_area', p.concentrator_id::text, 'rollup'
+      FROM projects p
+      JOIN concentrators con ON con.id = p.concentrator_id
+      JOIN projects cf ON cf.is_rollup = TRUE AND cf.rollup_level = 'client' AND cf.rollup_key = p.client_id::text
+      WHERE p.parent_id IS NULL AND p.is_rollup IS NOT TRUE AND p.concentrator_id IS NOT NULL
+        AND NOT EXISTS (SELECT 1 FROM projects sa WHERE sa.is_rollup = TRUE AND sa.rollup_level = 'service_area' AND sa.rollup_key = p.concentrator_id::text)
+    `);
+    console.log(`[boot-defensive]   created ${r2.rowCount} SA rollup folder(s)`);
+
+    const r3 = await pool.query(`
+      UPDATE projects p SET parent_id = sa.id FROM projects sa
+      WHERE p.parent_id IS NULL AND p.is_rollup IS NOT TRUE AND p.concentrator_id IS NOT NULL
+        AND sa.is_rollup = TRUE AND sa.rollup_level = 'service_area' AND sa.rollup_key = p.concentrator_id::text
+    `);
+    console.log(`[boot-defensive]   reparented ${r3.rowCount} concentrator leaf(s) under SA folders`);
+
+    const r4 = await pool.query(`
+      UPDATE projects p SET parent_id = cf.id FROM projects cf
+      WHERE p.parent_id IS NULL AND p.is_rollup IS NOT TRUE AND p.concentrator_id IS NULL AND p.client_id IS NOT NULL
+        AND cf.is_rollup = TRUE AND cf.rollup_level = 'client' AND cf.rollup_key = p.client_id::text
+    `);
+    console.log(`[boot-defensive]   reparented ${r4.rowCount} no-concentrator leaf(s) directly under Client folders`);
+    console.log('[boot-defensive] ✓ legacy rollup folders ready');
+  } catch (e) {
+    console.error('[boot-defensive] ✗ legacy rollup setup failed:', e.message);
+  }
 }
 
 async function start(opts = {}) {
