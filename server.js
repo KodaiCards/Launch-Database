@@ -1470,6 +1470,47 @@ async function bootstrapDefensiveRecentMigrations() {
     `);
     console.error(`[WAVE 14] step W14-5: reparented ${w14_5.rowCount} additional SA folder(s) via leaf EC linkage`);
 
+    // W14-6: collapse legacy intermediate rollups between Client and EC. Any
+    // rollup_level IS NULL folder sitting under a Client folder whose children
+    // are all proper rollups (EC level or below) is a transitional artifact
+    // from before Wave 14. "PSC RUS 217" is the canonical example. Promote its
+    // children up to the Client folder and delete the empty intermediate.
+    const w14_6a = await pool.query(`
+      UPDATE projects child
+      SET parent_id = legacy.parent_id
+      FROM projects legacy
+      WHERE child.parent_id = legacy.id
+        AND legacy.is_rollup = TRUE
+        AND legacy.rollup_level IS NULL
+        AND EXISTS (
+          SELECT 1 FROM projects p
+          WHERE p.id = legacy.parent_id
+            AND p.is_rollup = TRUE
+            AND p.rollup_level = 'client'
+        )
+        AND NOT EXISTS (
+          SELECT 1 FROM projects leaf
+          WHERE leaf.parent_id = legacy.id
+            AND leaf.is_rollup IS NOT TRUE
+        )
+    `);
+    console.error(`[WAVE 14] step W14-6a: promoted ${w14_6a.rowCount} child rollup(s) up from legacy intermediate(s)`);
+
+    const w14_6b = await pool.query(`
+      DELETE FROM projects legacy
+      WHERE legacy.is_rollup = TRUE
+        AND legacy.rollup_level IS NULL
+        AND legacy.parent_id IS NOT NULL
+        AND EXISTS (
+          SELECT 1 FROM projects p
+          WHERE p.id = legacy.parent_id
+            AND p.is_rollup = TRUE
+            AND p.rollup_level = 'client'
+        )
+        AND NOT EXISTS (SELECT 1 FROM projects c WHERE c.parent_id = legacy.id)
+    `);
+    console.error(`[WAVE 14] step W14-6b: deleted ${w14_6b.rowCount} now-empty legacy intermediate(s)`);
+
     // Verify extended DB state
     const counts14 = await pool.query(`
       SELECT
