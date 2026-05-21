@@ -1,5 +1,6 @@
 import React from 'react';
 import LessonLayout from '../../components/LessonLayout.jsx';
+import Flashcard from '../../components/Flashcard.jsx';
 import Quiz from '../../components/primitives/Quiz.jsx';
 
 export const meta = {
@@ -14,11 +15,33 @@ export const meta = {
     'Recognize program impact on OSP scope and funding',
   ],
   estimated_minutes: 15,
-  vocabulary_introduced: [],
+  vocabulary_introduced: [
+    'ReConnect Program',
+    'Community Connect',
+    'broadband-eligible cost',
+    'match requirement',
+  ],
   vocabulary_assumed: [],
 };
 
-export const key_terms = [];
+export const key_terms = [
+  {
+    term: 'ReConnect Program',
+    definition: 'Dedicated RUS broadband grant/loan (7 CFR Part 1744). Post-2018 expansion. Funds FTTH, wireless, and other broadband technologies in underserved rural areas. Match requirement: 10–20%.',
+  },
+  {
+    term: 'Community Connect',
+    definition: 'RUS broadband program (7 CFR Part 1703) combining broadband, distance-learning, and telemedicine grants. Smaller awards with a 25% match requirement (higher than ReConnect).',
+  },
+  {
+    term: 'broadband-eligible cost',
+    definition: 'Plant capable of delivering ≥25 Mbps download and funded under broadband program rules. Older cable, legacy equipment, or non-broadband-capable plant may be classified as non-eligible and not funded by RUS.',
+  },
+  {
+    term: 'match requirement',
+    definition: 'The percentage of total project cost the borrower must contribute from non-RUS sources. ReConnect requires 10–20%; Community Connect requires 25%.',
+  },
+];
 
 export default function T20L08_BroadbandPrograms() {
   return (
@@ -44,6 +67,32 @@ export default function T20L08_BroadbandPrograms() {
 
         <p className="mt-2"><strong>Impact on your design:</strong> If borrower is on a broadband program with limited budget, you may need to optimize fiber count, minimize splice-point equipment, defer non-critical upgrades — to stay within the broadband-eligible cost cap.</p>
       </section>
+
+      <Flashcard
+        deckId="T20-L08"
+        cards={[
+          {
+            id: 'T20-L08-fc-reconnect',
+            front: 'What is the ReConnect Program?',
+            back: 'Dedicated RUS broadband grant/loan (7 CFR Part 1744). Post-2018 expansion. Funds FTTH, wireless, and other broadband technologies in underserved rural areas. Match requirement: 10–20%.',
+          },
+          {
+            id: 'T20-L08-fc-community',
+            front: 'What is Community Connect?',
+            back: 'RUS broadband program (7 CFR Part 1703) combining broadband, distance-learning, and telemedicine grants. Smaller awards with a 25% match requirement (higher than ReConnect).',
+          },
+          {
+            id: 'T20-L08-fc-eligible',
+            front: 'What is a broadband-eligible cost?',
+            back: 'Plant capable of delivering ≥25 Mbps download and funded under broadband program rules. Older cable, legacy equipment, or non-broadband-capable plant may be classified as non-eligible and not funded by RUS.',
+          },
+          {
+            id: 'T20-L08-fc-match',
+            front: 'What is a match requirement in RUS broadband programs?',
+            back: 'The percentage of total project cost the borrower must contribute from non-RUS sources. ReConnect requires 10–20%; Community Connect requires 25%.',
+          },
+        ]}
+      />
 
       <h3 className="mt-6 font-semibold">Lesson Quiz</h3>
       <Quiz

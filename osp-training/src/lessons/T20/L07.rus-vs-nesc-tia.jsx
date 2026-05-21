@@ -1,5 +1,6 @@
 import React from 'react';
 import LessonLayout from '../../components/LessonLayout.jsx';
+import Flashcard from '../../components/Flashcard.jsx';
 import Quiz from '../../components/primitives/Quiz.jsx';
 
 export const meta = {
@@ -14,13 +15,35 @@ export const meta = {
     'Apply reconciliation to joint-use pole + grounding scenario',
   ],
   estimated_minutes: 25,
-  vocabulary_introduced: [],
+  vocabulary_introduced: [
+    'RUS precedence',
+    'standards reconciliation',
+    'stricter standard rule',
+    'joint-use pole',
+  ],
   vocabulary_assumed: [
     { term: 'NESC', source_lesson_id: 'T05.L01' },
   ],
 };
 
-export const key_terms = [];
+export const key_terms = [
+  {
+    term: 'RUS precedence',
+    definition: 'On RUS-funded projects, RUS takes precedence when RUS, NESC, and TIA diverge. RUS is the authoritative source because the loan covenant requires design to RUS Bulletins.',
+  },
+  {
+    term: 'standards reconciliation',
+    definition: 'The process of resolving conflicts when multiple standards (NESC, TIA-607, RUS Bulletins) all apply to the same project element. Rule: if NESC or TIA exceeds RUS, do the stricter standard; if RUS exceeds NESC/TIA, do RUS.',
+  },
+  {
+    term: 'stricter standard rule',
+    definition: 'When two applicable standards differ, implement the stricter one. On RUS projects: if NESC or TIA provides more safety margin than RUS requires, apply the stricter version. If RUS requires more than NESC/TIA, apply RUS.',
+  },
+  {
+    term: 'joint-use pole',
+    definition: 'A pole shared by both electric and telecom utilities. Joint-use poles require compliance with NESC (applies to both electric and telecom sides) plus any RUS requirements on the telecom side if the telecom project is RUS-funded.',
+  },
+];
 
 export default function T20L07_Reconciliation() {
   return (
@@ -46,6 +69,32 @@ export default function T20L07_Reconciliation() {
         <h3 className="mt-5 font-semibold">Reconciliation rule on RUS projects</h3>
         <p className="mt-2"><strong>Hierarchy: RUS takes precedence.</strong> If all three agree: implement all. If NESC or TIA exceeds RUS: do the stricter standard (more safety). If RUS exceeds NESC/TIA: do RUS (loan covenant). Example: TIA-607 says ground electrode under 5Ω optimal. RUS Form 219 requires under 5Ω. Both agree: install under 5Ω. No conflict.</p>
       </section>
+
+      <Flashcard
+        deckId="T20-L07"
+        cards={[
+          {
+            id: 'T20-L07-fc-precedence',
+            front: 'Which standard takes precedence on an RUS-funded project when NESC, TIA, and RUS conflict?',
+            back: 'On RUS-funded projects, RUS takes precedence when RUS, NESC, and TIA diverge. RUS is the authoritative source because the loan covenant requires design to RUS Bulletins.',
+          },
+          {
+            id: 'T20-L07-fc-reconcile',
+            front: 'What is standards reconciliation?',
+            back: 'The process of resolving conflicts when multiple standards (NESC, TIA-607, RUS Bulletins) all apply to the same project element. Rule: if NESC or TIA exceeds RUS, do the stricter standard; if RUS exceeds NESC/TIA, do RUS.',
+          },
+          {
+            id: 'T20-L07-fc-stricter',
+            front: 'What is the stricter standard rule?',
+            back: 'When two applicable standards differ, implement the stricter one. On RUS projects: if NESC or TIA provides more safety margin than RUS requires, apply the stricter version. If RUS requires more than NESC/TIA, apply RUS.',
+          },
+          {
+            id: 'T20-L07-fc-jointuse',
+            front: 'What is a joint-use pole?',
+            back: 'A pole shared by both electric and telecom utilities. Joint-use poles require compliance with NESC (applies to both electric and telecom sides) plus any RUS requirements on the telecom side if the telecom project is RUS-funded.',
+          },
+        ]}
+      />
 
       <section data-tier="working">
         <h2>Worked Scenario: Joint-Use Pole + RUS</h2>

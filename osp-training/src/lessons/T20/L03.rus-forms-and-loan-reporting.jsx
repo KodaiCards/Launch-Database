@@ -1,5 +1,6 @@
 import React from 'react';
 import LessonLayout from '../../components/LessonLayout.jsx';
+import Flashcard from '../../components/Flashcard.jsx';
 import Quiz from '../../components/primitives/Quiz.jsx';
 
 export const meta = {
@@ -14,13 +15,40 @@ export const meta = {
     'Explain RUS Form 219 (ground-electrode testing)',
   ],
   estimated_minutes: 25,
-  vocabulary_introduced: [],
+  vocabulary_introduced: [
+    'Form 307',
+    'Form 740',
+    'drawdown',
+    'loan advance',
+    'contractor certification',
+  ],
   vocabulary_assumed: [
     { term: 'construction', source_lesson_id: 'T01.L05' },
   ],
 };
 
-export const key_terms = [];
+export const key_terms = [
+  {
+    term: 'Form 307',
+    definition: 'RUS construction ledger showing costs (labor, material, equipment) allocated to plant accounts (Cable & Wire, Poles, Conduit, Land). Submitted quarterly with construction phase; RUS reviews costs, approves, and releases next drawdown.',
+  },
+  {
+    term: 'Form 740',
+    definition: 'RUS contractor certification form. Contractor certifies no discrimination, bonding/insurance in place, no conflicts of interest, prevailing wage rates paid (if applicable). Must be signed before work begins.',
+  },
+  {
+    term: 'drawdown',
+    definition: 'Disbursement of loan funds by RUS to the borrower after reviewing and approving Form 307 cost documentation. Late Form 307 = late payment = contractor cash flow breaks.',
+  },
+  {
+    term: 'loan advance',
+    definition: 'Each quarterly release of RUS loan funds tied to a completed construction phase and approved Form 307. No valid Form 307 = no loan advance.',
+  },
+  {
+    term: 'contractor certification',
+    definition: 'The signed Form 740 attesting to contractor eligibility, bonding/insurance coverage, non-discrimination, and prevailing wage commitment. RUS won\'t allow work to proceed without it on file.',
+  },
+];
 
 export default function T20L03_RUSForms() {
   return (
@@ -45,6 +73,37 @@ export default function T20L03_RUSForms() {
           </div>
         </div>
       </section>
+
+      <Flashcard
+        deckId="T20-L03"
+        cards={[
+          {
+            id: 'T20-L03-fc-307',
+            front: 'What is RUS Form 307 and when is it submitted?',
+            back: 'RUS construction ledger showing costs (labor, material, equipment) allocated to plant accounts (Cable & Wire, Poles, Conduit, Land). Submitted quarterly with construction phase; RUS reviews costs, approves, and releases next drawdown.',
+          },
+          {
+            id: 'T20-L03-fc-740',
+            front: 'What is RUS Form 740 and when must it be signed?',
+            back: 'RUS contractor certification form. Contractor certifies no discrimination, bonding/insurance in place, no conflicts of interest, prevailing wage rates paid (if applicable). Must be signed before work begins.',
+          },
+          {
+            id: 'T20-L03-fc-drawdown',
+            front: 'What is a RUS drawdown?',
+            back: 'Disbursement of loan funds by RUS to the borrower after reviewing and approving Form 307 cost documentation. Late Form 307 = late payment = contractor cash flow breaks.',
+          },
+          {
+            id: 'T20-L03-fc-advance',
+            front: 'What is a loan advance in RUS program terms?',
+            back: 'Each quarterly release of RUS loan funds tied to a completed construction phase and approved Form 307. No valid Form 307 = no loan advance.',
+          },
+          {
+            id: 'T20-L03-fc-certif',
+            front: 'What does contractor certification mean in the RUS context?',
+            back: 'The signed Form 740 attesting to contractor eligibility, bonding/insurance coverage, non-discrimination, and prevailing wage commitment. RUS won\'t allow work to proceed without it on file.',
+          },
+        ]}
+      />
 
       <section data-tier="working">
         <h2>Form 307 Drawdown Cycle</h2>

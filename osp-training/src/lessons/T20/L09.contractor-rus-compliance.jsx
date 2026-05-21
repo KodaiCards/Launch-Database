@@ -1,5 +1,6 @@
 import React from 'react';
 import LessonLayout from '../../components/LessonLayout.jsx';
+import Flashcard from '../../components/Flashcard.jsx';
 import Quiz from '../../components/primitives/Quiz.jsx';
 
 export const meta = {
@@ -15,11 +16,38 @@ export const meta = {
     'Verify contractor compliance on site',
   ],
   estimated_minutes: 20,
-  vocabulary_introduced: [],
+  vocabulary_introduced: [
+    'Davis-Bacon Act',
+    'prevailing wage',
+    'performance bond',
+    'payment bond',
+    'bid bond',
+  ],
   vocabulary_assumed: [],
 };
 
-export const key_terms = [];
+export const key_terms = [
+  {
+    term: 'Davis-Bacon Act',
+    definition: 'Federal law (40 USC §3141). If an RUS project has ≥$2,000 in labor costs, workers must be paid the federal prevailing wage rate (hourly rate by trade per federal wage determination). Contractor must post wage rates on job site.',
+  },
+  {
+    term: 'prevailing wage',
+    definition: 'The federal hourly wage rate for a given trade (e.g., cable splicer, equipment operator) in a geographic area, published annually by the Department of Labor. Required on RUS projects with ≥$2,000 labor under the Davis-Bacon Act.',
+  },
+  {
+    term: 'performance bond',
+    definition: 'Bond equal to 100% of the contract value that guarantees the contractor will complete the work per the contract terms. Required by RUS before construction begins.',
+  },
+  {
+    term: 'payment bond',
+    definition: 'Bond equal to 100% of the contract value guaranteeing the contractor will pay all subcontractors, laborers, and material suppliers. Required by RUS before construction begins.',
+  },
+  {
+    term: 'bid bond',
+    definition: 'A small-percentage bond submitted with a contractor bid, guaranteeing that the bidder will enter into the contract if awarded. Part of the RUS bonding package required for contractor eligibility.',
+  },
+];
 
 export default function T20L09_ContractorCompliance() {
   return (
@@ -44,6 +72,37 @@ export default function T20L09_ContractorCompliance() {
           </div>
         </div>
       </section>
+
+      <Flashcard
+        deckId="T20-L09"
+        cards={[
+          {
+            id: 'T20-L09-fc-davisbacon',
+            front: 'What is the Davis-Bacon Act and when does it apply?',
+            back: 'Federal law (40 USC §3141). If an RUS project has ≥$2,000 in labor costs, workers must be paid the federal prevailing wage rate (hourly rate by trade per federal wage determination). Contractor must post wage rates on job site.',
+          },
+          {
+            id: 'T20-L09-fc-prevailing',
+            front: 'What is prevailing wage in the context of RUS projects?',
+            back: 'The federal hourly wage rate for a given trade (e.g., cable splicer, equipment operator) in a geographic area, published annually by the Department of Labor. Required on RUS projects with ≥$2,000 labor under the Davis-Bacon Act.',
+          },
+          {
+            id: 'T20-L09-fc-performance',
+            front: 'What is a performance bond?',
+            back: 'Bond equal to 100% of the contract value that guarantees the contractor will complete the work per the contract terms. Required by RUS before construction begins.',
+          },
+          {
+            id: 'T20-L09-fc-payment',
+            front: 'What is a payment bond?',
+            back: 'Bond equal to 100% of the contract value guaranteeing the contractor will pay all subcontractors, laborers, and material suppliers. Required by RUS before construction begins.',
+          },
+          {
+            id: 'T20-L09-fc-bid',
+            front: 'What is a bid bond?',
+            back: 'A small-percentage bond submitted with a contractor bid, guaranteeing that the bidder will enter into the contract if awarded. Part of the RUS bonding package required for contractor eligibility.',
+          },
+        ]}
+      />
 
       <section data-tier="working">
         <h2>On-Site Compliance Monitoring</h2>

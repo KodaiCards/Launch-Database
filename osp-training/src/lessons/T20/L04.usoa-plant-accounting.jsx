@@ -1,5 +1,6 @@
 import React from 'react';
 import LessonLayout from '../../components/LessonLayout.jsx';
+import Flashcard from '../../components/Flashcard.jsx';
 import Quiz from '../../components/primitives/Quiz.jsx';
 
 export const meta = {
@@ -14,11 +15,38 @@ export const meta = {
     'Understand cost-per-mile accounting for RUS borrower reporting',
   ],
   estimated_minutes: 25,
-  vocabulary_introduced: [],
+  vocabulary_introduced: [
+    'USOA',
+    'Part 32',
+    'plant account',
+    'cost-per-mile allowance',
+    'cost allocation',
+  ],
   vocabulary_assumed: [],
 };
 
-export const key_terms = [];
+export const key_terms = [
+  {
+    term: 'USOA',
+    definition: 'Uniform System of Accounts — FCC-mandated accounting framework (47 CFR Part 32) that requires every dollar spent on telecom plant to be tracked in a specific plant account category.',
+  },
+  {
+    term: 'Part 32',
+    definition: '47 CFR Part 32 — the FCC regulation defining plant account categories (Cable & Wire, Poles, Conduit, Land, etc.) that RUS borrowers must use to classify all project costs.',
+  },
+  {
+    term: 'plant account',
+    definition: 'FCC-mandated cost category under 47 CFR Part 32 (e.g., §32.2410 Cable & Wire, §32.2411 Poles, §32.2441 Conduit). Every dollar spent on an RUS project must be tracked in a plant account.',
+  },
+  {
+    term: 'cost-per-mile allowance',
+    definition: 'RUS-approved maximum cost per mile for a construction phase. If actual costs exceed allowance without amendment, the borrower absorbs the overage.',
+  },
+  {
+    term: 'cost allocation',
+    definition: 'The process of assigning costs from contractor invoices to the correct plant account (e.g., assigning aerial cable costs to §32.2410). Allocation methodology must be documented and auditable for RUS review.',
+  },
+];
 
 export default function T20L04_USOA() {
   return (
@@ -63,6 +91,37 @@ export default function T20L04_USOA() {
         <h3 className="mt-4 font-semibold">Cost-per-mile allowance mapping</h3>
         <p className="mt-2">RUS says: "50 miles aerial = $50,000 per mile allowance = $2.5M total." That $2.5M is broken down by account: poles $X, cable $Y, labor $Z. If actual costs exceed allowance, borrower overages the difference (or requests amendment).</p>
       </section>
+
+      <Flashcard
+        deckId="T20-L04"
+        cards={[
+          {
+            id: 'T20-L04-fc-usoa',
+            front: 'What is the USOA and what does it require?',
+            back: 'Uniform System of Accounts — FCC-mandated accounting framework (47 CFR Part 32) that requires every dollar spent on telecom plant to be tracked in a specific plant account category.',
+          },
+          {
+            id: 'T20-L04-fc-part32',
+            front: 'What is 47 CFR Part 32?',
+            back: '47 CFR Part 32 — the FCC regulation defining plant account categories (Cable & Wire, Poles, Conduit, Land, etc.) that RUS borrowers must use to classify all project costs.',
+          },
+          {
+            id: 'T20-L04-fc-plantacct',
+            front: 'What is a plant account?',
+            back: 'FCC-mandated cost category under 47 CFR Part 32 (e.g., §32.2410 Cable & Wire, §32.2411 Poles, §32.2441 Conduit). Every dollar spent on an RUS project must be tracked in a plant account.',
+          },
+          {
+            id: 'T20-L04-fc-cpm',
+            front: 'What is the RUS cost-per-mile allowance?',
+            back: 'RUS-approved maximum cost per mile for a construction phase. If actual costs exceed allowance without amendment, the borrower absorbs the overage.',
+          },
+          {
+            id: 'T20-L04-fc-alloc',
+            front: 'What is cost allocation in the RUS context?',
+            back: 'The process of assigning costs from contractor invoices to the correct plant account (e.g., assigning aerial cable costs to §32.2410). Allocation methodology must be documented and auditable for RUS review.',
+          },
+        ]}
+      />
 
       <section data-tier="working">
         <h2>Book vs. Field: USOA Tracking</h2>

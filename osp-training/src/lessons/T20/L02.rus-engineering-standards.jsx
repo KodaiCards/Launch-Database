@@ -16,14 +16,41 @@ export const meta = {
     'Understand Form 219 grounding testing requirement (RUS-only)',
   ],
   estimated_minutes: 30,
-  vocabulary_introduced: [],
+  vocabulary_introduced: [
+    'RUS Bulletin 1751F-630',
+    'RUS Bulletin 1751F-635',
+    'RUS Bulletin 1751F-810',
+    'Form 219',
+    'design certification',
+  ],
   vocabulary_assumed: [
     { term: 'NESC', source_lesson_id: 'T05.L01' },
     { term: 'grounding', source_lesson_id: 'T14.L01' },
   ],
 };
 
-export const key_terms = [];
+export const key_terms = [
+  {
+    term: 'RUS Bulletin 1751F-630',
+    definition: 'Aerial Plant: covers poles, NESC clearance, make-ready, and Form 219 testing for RUS-funded aerial construction.',
+  },
+  {
+    term: 'RUS Bulletin 1751F-635',
+    definition: 'Underground: covers duct, conduit, burial depth, and cable terminations for RUS-funded underground construction.',
+  },
+  {
+    term: 'RUS Bulletin 1751F-810',
+    definition: 'Electrical Protection: covers grounding, bonding, primary protectors, and Form 219 testing for RUS-funded projects.',
+  },
+  {
+    term: 'Form 219',
+    definition: 'RUS-required form documenting ground-rod resistance testing per IEEE 81, proving resistance meets RUS threshold, with engineer sign-off before acceptance. RUS-only — non-RUS projects do not mandate Form 219.',
+  },
+  {
+    term: 'design certification',
+    definition: 'Engineer sign-off confirming design meets RUS Bulletins. Required before RUS releases loan funds for construction.',
+  },
+];
 
 export default function T20L02_RUSEngineeringStandards() {
   return (
@@ -51,6 +78,37 @@ export default function T20L02_RUSEngineeringStandards() {
         <h3 className="mt-5 font-semibold">RUS-specific: Form 219 grounding test</h3>
         <p className="mt-2">NESC doesn't mandate measured ground-rod testing. RUS requires Form 219: (1) measure ground-rod resistance per IEEE 81, (2) prove resistance &lt;5Ω (varies by region), (3) engineer sign-off before acceptance. This is RUS-only — non-RUS projects don't mandate Form 219.</p>
       </section>
+
+      <Flashcard
+        deckId="T20-L02"
+        cards={[
+          {
+            id: 'T20-L02-fc-630',
+            front: 'What does RUS Bulletin 1751F-630 cover?',
+            back: 'Aerial Plant: covers poles, NESC clearance, make-ready, and Form 219 testing for RUS-funded aerial construction.',
+          },
+          {
+            id: 'T20-L02-fc-635',
+            front: 'What does RUS Bulletin 1751F-635 cover?',
+            back: 'Underground: covers duct, conduit, burial depth, and cable terminations for RUS-funded underground construction.',
+          },
+          {
+            id: 'T20-L02-fc-810',
+            front: 'What does RUS Bulletin 1751F-810 cover?',
+            back: 'Electrical Protection: covers grounding, bonding, primary protectors, and Form 219 testing for RUS-funded projects.',
+          },
+          {
+            id: 'T20-L02-fc-219',
+            front: 'What is RUS Form 219 and what makes it RUS-specific?',
+            back: 'RUS-required form documenting ground-rod resistance testing per IEEE 81, proving resistance meets RUS threshold, with engineer sign-off before acceptance. RUS-only — non-RUS projects do not mandate Form 219.',
+          },
+          {
+            id: 'T20-L02-fc-cert',
+            front: 'What is design certification on an RUS project?',
+            back: 'Engineer sign-off confirming design meets RUS Bulletins. Required before RUS releases loan funds for construction.',
+          },
+        ]}
+      />
 
       <section data-tier="working">
         <h2>When RUS Standards Apply</h2>

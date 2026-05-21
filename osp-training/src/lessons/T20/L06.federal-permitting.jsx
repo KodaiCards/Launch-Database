@@ -1,5 +1,6 @@
 import React from 'react';
 import LessonLayout from '../../components/LessonLayout.jsx';
+import Flashcard from '../../components/Flashcard.jsx';
 import Quiz from '../../components/primitives/Quiz.jsx';
 
 export const meta = {
@@ -14,13 +15,40 @@ export const meta = {
     'Understand RUS environmental worksheet role',
   ],
   estimated_minutes: 30,
-  vocabulary_introduced: [],
+  vocabulary_introduced: [
+    'RUS environmental worksheet',
+    'categorical exclusion',
+    'environmental assessment',
+    'Section 106',
+    'NWP 57',
+  ],
   vocabulary_assumed: [
     { term: 'NEPA', source_lesson_id: 'T01.L08' },
   ],
 };
 
-export const key_terms = [];
+export const key_terms = [
+  {
+    term: 'RUS environmental worksheet',
+    definition: 'First NEPA screening tool. RUS borrower completes worksheet documenting project scope, environmental setting, and potential impacts (wetlands, endangered species, historic sites, Indian lands). Worksheet determines whether NEPA goes to Categorical Exclusion or Environmental Assessment.',
+  },
+  {
+    term: 'categorical exclusion',
+    definition: 'NEPA review level for projects under $300K in low-impact areas where the worksheet shows no wetlands, no endangered species, no historic sites. RUS approves with NEPA coverage closed.',
+  },
+  {
+    term: 'environmental assessment',
+    definition: 'Deeper NEPA review for projects $300K or higher or in sensitive areas. RUS prepares EA, issues Finding of No Significant Impact (FONSI) or refers to Environmental Impact Statement.',
+  },
+  {
+    term: 'Section 106',
+    definition: 'Federal historic preservation law (54 USC 306108). Required if project crosses federal land, affects historic properties, or triggers federal permits. Requires consultation with state historic preservation office (SHPO).',
+  },
+  {
+    term: 'NWP 57',
+    definition: 'USACE Nationwide Permit 57 (33 CFR Part 330). Applies when aerial/underground construction crosses federal jurisdictional wetlands (within 500 ft of OHWM). Telecom projects often qualify; minimal paperwork if conditions met.',
+  },
+];
 
 export default function T20L06_FederalPermitting() {
   return (
@@ -48,6 +76,37 @@ export default function T20L06_FederalPermitting() {
           </div>
         </div>
       </section>
+
+      <Flashcard
+        deckId="T20-L06"
+        cards={[
+          {
+            id: 'T20-L06-fc-worksheet',
+            front: 'What is the RUS environmental worksheet?',
+            back: 'First NEPA screening tool. RUS borrower completes worksheet documenting project scope, environmental setting, and potential impacts (wetlands, endangered species, historic sites, Indian lands). Worksheet determines whether NEPA goes to Categorical Exclusion or Environmental Assessment.',
+          },
+          {
+            id: 'T20-L06-fc-ce',
+            front: 'What is a categorical exclusion in RUS NEPA review?',
+            back: 'NEPA review level for projects under $300K in low-impact areas where the worksheet shows no wetlands, no endangered species, no historic sites. RUS approves with NEPA coverage closed.',
+          },
+          {
+            id: 'T20-L06-fc-ea',
+            front: 'What is an environmental assessment in RUS NEPA review?',
+            back: 'Deeper NEPA review for projects $300K or higher or in sensitive areas. RUS prepares EA, issues Finding of No Significant Impact (FONSI) or refers to Environmental Impact Statement.',
+          },
+          {
+            id: 'T20-L06-fc-s106',
+            front: 'When does Section 106 apply to an RUS project?',
+            back: 'Federal historic preservation law (54 USC 306108). Required if project crosses federal land, affects historic properties, or triggers federal permits. Requires consultation with state historic preservation office (SHPO).',
+          },
+          {
+            id: 'T20-L06-fc-nwp57',
+            front: 'What is USACE Nationwide Permit 57?',
+            back: 'USACE Nationwide Permit 57 (33 CFR Part 330). Applies when aerial/underground construction crosses federal jurisdictional wetlands (within 500 ft of OHWM). Telecom projects often qualify; minimal paperwork if conditions met.',
+          },
+        ]}
+      />
 
       <section data-tier="working">
         <h2>RUS Environmental Worksheet</h2>
