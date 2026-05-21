@@ -1514,7 +1514,7 @@ select.filter{border:1px solid var(--gray-border);border-radius:7px;padding:7px 
         <div class="form-row" id="proj-no-ec-row" style="display:none">
           <div class="form-group span2" id="proj-service-area-wrap">
             <label for="proj-service-area">Service Area <span style="font-weight:400;color:var(--text-muted)">(optional)</span></label>
-            <input type="text" id="proj-service-area" placeholder="e.g. Buford, Sugar Hill, etc." autocomplete="off" oninput="_projAutoFillName()">
+            <input type="text" id="proj-service-area" placeholder="e.g. Buford, Sugar Hill, etc." autocomplete="off" oninput="_projSaInputDebounced()">
             <span class="form-hint" style="font-size:11px;color:var(--text-muted)">Free text — projects sharing this label group together under client.</span>
           </div>
         </div>
@@ -2895,6 +2895,7 @@ const STAGES = ['potential','started','submitted','approved','checklist'];
 const STAGE_LABELS = {potential:'Potential',started:'Started',submitted:'Submitted',approved:'Approved',checklist:'Checklist'};
 const TYPE_LABELS = {inspection:'Inspection',re:'Resident Engineer',permitting:'Permitting',design:'Design',other:'Other'};
 const TYPE_RATES = {inspection:90,re:100};
+const PROGRAM_LABELS = {rus:'RUS',bau:'BAU',gfr:'GF(R)',other:'Other'};
 const MONTH_NAMES = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
 const MONTH_FULL = ['January','February','March','April','May','June','July','August','September','October','November','December'];
 let aiMessages = [];
@@ -4261,7 +4262,7 @@ async function editProject(id) {
     projectModalState.program = effectiveProg || null;
 
     // Populate program dropdown (mirrors projClientChanged but without full reset)
-    const PROGRAM_LABELS = { rus: 'RUS', bau: 'BAU', gfr: 'GF(R)', other: 'Other' };
+    // PROGRAM_LABELS is global const defined at top of script
     const ptypeSel = document.getElementById('proj-ptype');
     ptypeSel.innerHTML = '<option value="">Select program…</option>' +
       ['rus','bau','gfr','other'].map(pg => `<option value="${pg}">${PROGRAM_LABELS[pg]}</option>`).join('');
@@ -4492,6 +4493,13 @@ const projectModalState = {
 // don't clobber edits with cascade-derived suggestions.
 let __projNameManuallyEdited = false;
 
+// Debounce wrapper for free-text SA auto-fill to reduce flicker on keystroke
+let __saTypeDebounce;
+function _projSaInputDebounced() {
+  clearTimeout(__saTypeDebounce);
+  __saTypeDebounce = setTimeout(_projAutoFillName, 250);
+}
+
 function _projAutoFillName() {
   if (__projNameManuallyEdited) return;
   const nameEl = document.getElementById('proj-name');
@@ -4556,7 +4564,7 @@ async function projClientChanged() {
   const clientEcs = ecCache.filter(e => e.client_id === clientId);
   const programs = [...new Set(clientEcs.map(e => e.program).filter(Boolean))];
 
-  const PROGRAM_LABELS = { rus: 'RUS', bau: 'BAU', gfr: 'GF(R)', other: 'Other' };
+  // PROGRAM_LABELS is global const defined at top of script
   const ptypeSel = document.getElementById('proj-ptype');
   ptypeSel.innerHTML = '<option value="">Select program…</option>' +
     ['rus', 'bau', 'gfr', 'other'].map(p =>

@@ -291,7 +291,7 @@
         // All three fields come from p.* which the list API already returns.
         const _breadcrumbParts = [];
         if (p.client_name) _breadcrumbParts.push(esc(p.client_name));
-        if (p.program) _breadcrumbParts.push(esc(p.program.toUpperCase()));
+        if (p.program) _breadcrumbParts.push(esc((window.PROGRAM_LABELS && window.PROGRAM_LABELS[p.program]) || p.program));
         if (p.service_area_name) _breadcrumbParts.push(esc(p.service_area_name));
         const _breadcrumb = isLeaf && _breadcrumbParts.length > 0
           ? `<br><span style="font-size:11px;color:var(--text-muted);font-weight:400">${_breadcrumbParts.join(' / ')}</span>`
