@@ -138,6 +138,44 @@ button{font-family:inherit;cursor:pointer;border:none;background:none;color:inhe
   font-size:13px;color:var(--text-muted);
 }
 
+/* Admin toolbar */
+.cp-admin-toolbar{
+  background:var(--surface-2);
+  border:1px solid var(--gray-border);
+  border-radius:8px;
+  padding:12px 16px;
+  margin-bottom:20px;
+  display:flex;align-items:center;gap:12px;
+  flex-wrap:wrap;
+}
+.cp-admin-toolbar label{
+  font-size:13px;font-weight:500;color:var(--text-secondary);
+  display:flex;align-items:center;gap:8px;
+}
+.cp-admin-toolbar select{
+  padding:6px 10px;border-radius:6px;font-size:13px;
+  border:1px solid var(--gray-border);
+  background:var(--surface-1);color:var(--text);
+  font-family:var(--font);cursor:pointer;
+  min-width:220px;
+}
+.cp-admin-toolbar select:focus{outline:2px solid var(--primary);outline-offset:2px}
+.cp-view-as-notice{
+  font-size:12px;color:var(--text-muted);margin-left:4px;
+  font-style:italic;
+}
+
+/* Client section header (admin all-clients overview) */
+.cp-client-section{margin-bottom:32px}
+.cp-client-heading{
+  font-size:15px;font-weight:700;color:var(--text);
+  padding:10px 0 10px;
+  border-bottom:2px solid var(--primary);
+  margin-bottom:16px;
+  display:flex;align-items:center;gap:8px;
+}
+.cp-client-heading i{color:var(--primary);font-size:14px}
+
 /* Footer */
 .cp-footer{
   margin-top:24px;
@@ -182,48 +220,26 @@ button{font-family:inherit;cursor:pointer;border:none;background:none;color:inhe
 
 <main class="container" id="main-content">
   <div class="page-header">
-    <h1 class="page-title">Your Projects</h1>
-    <p class="page-sub">Design and permitting activity — updates automatically.</p>
+    <h1 class="page-title" id="cp-page-title">Your Projects</h1>
+    <p class="page-sub" id="cp-page-sub">Design and permitting activity — updates automatically.</p>
   </div>
 
-  <div class="cp-grid" role="main" aria-label="Project columns">
+  <!-- Admin toolbar: visible only for non-customer roles, populated by JS -->
+  <div id="cp-admin-toolbar" class="cp-admin-toolbar" style="display:none" role="search" aria-label="Admin view controls">
+    <label for="cp-view-as">
+      <i class="fa-solid fa-eye" aria-hidden="true"></i>
+      View as:
+    </label>
+    <select id="cp-view-as" aria-label="Select client to view as">
+      <option value="">All clients (admin overview)</option>
+    </select>
+    <span class="cp-view-as-notice" id="cp-view-as-notice" aria-live="polite"></span>
+  </div>
 
-    <!-- Design column -->
-    <section class="cp-column" aria-labelledby="col-design-heading">
-      <div class="cp-col-header">
-        <i class="fa-solid fa-drafting-compass cp-col-icon" aria-hidden="true"></i>
-        <span class="cp-col-title" id="col-design-heading">Design</span>
-      </div>
-      <div class="cp-col-body" id="cp-col-design" aria-live="polite" aria-label="Design projects">
-        <div class="cp-empty">Loading&hellip;</div>
-      </div>
-    </section>
-
-    <!-- Permitting column -->
-    <section class="cp-column" aria-labelledby="col-permit-heading">
-      <div class="cp-col-header">
-        <i class="fa-solid fa-file-signature cp-col-icon" aria-hidden="true"></i>
-        <span class="cp-col-title" id="col-permit-heading">Permitting</span>
-      </div>
-      <div class="cp-col-body" id="cp-col-permit" aria-live="polite" aria-label="Permitting projects">
-        <div class="cp-empty">Loading&hellip;</div>
-      </div>
-    </section>
-
-    <!-- Construction column — deferred -->
-    <section class="cp-column" aria-labelledby="col-const-heading">
-      <div class="cp-col-header">
-        <i class="fa-solid fa-hard-hat cp-col-icon" aria-hidden="true"></i>
-        <span class="cp-col-title" id="col-const-heading">Construction</span>
-      </div>
-      <div class="cp-col-body">
-        <div class="cp-deferred">
-          <div class="cp-deferred-icon"><i class="fa-solid fa-clock" aria-hidden="true"></i></div>
-          <p class="cp-deferred-msg">Construction projects coming soon.</p>
-        </div>
-      </div>
-    </section>
-
+  <!-- Project content: JS renders either a single cp-grid (customer/single-client)
+       or multiple cp-client-section blocks (admin all-clients overview) -->
+  <div id="cp-content" aria-live="polite">
+    <div class="cp-empty" style="padding:40px 0;text-align:center">Loading&hellip;</div>
   </div>
 
   <div class="cp-footer" aria-live="polite">

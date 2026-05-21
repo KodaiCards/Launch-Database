@@ -1,20 +1,36 @@
-// public/js/client_portal.js — client portal beta: fetch + render + poll.
+// public/js/client_portal.js — Wave 13B: per-client scoped client portal.
 //
-// Three columns: Design | Permitting | Construction (deferred).
-// Polls every 20s and re-renders with a "last updated" footer.
+// Modes:
+//   customer role        — 3 columns, server scopes to their clients. No toolbar.
+//   admin/staff, no filter — per-client sections. Toolbar shows "All clients".
+//   admin/staff, client selected — 3 columns for that one client (mimics customer view).
+//
+// Hide-empty-column rule: Design and Permitting columns hidden when no projects.
+// Construction column always shows "Coming Soon" (deferred, never has projects yet).
 
 (function () {
   'use strict';
 
-  // project_type values that map to each column
   const DESIGN_TYPES = new Set(['design', 're', 'resident engineer', 'inspection']);
   const PERMIT_TYPES = new Set(['permitting']);
+  const CONST_TYPES  = new Set(['construction']);
 
-  // Sort order for derived_status within a column
   const STATUS_ORDER = { in_progress: 0, not_started: 1, completed: 2, billed: 3 };
 
-  let lastUpdated = null;
-  let pollTimer = null;
+  let currentUser  = null;
+  let currentClientId = ''; // '' = all, '<uuid>' = single-client filter
+  let lastUpdated  = null;
+  let pollTimer    = null;
+
+  // ─── HTML helpers ────────────────────────────────────────────────────────
+
+  function escapeHtml(str) {
+    return String(str)
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;');
+  }
 
   function statusPillHTML(derived) {
     const map = {
@@ -55,13 +71,11 @@
     const money   = formatMoney(p.expected_revenue);
     const hrs     = formatHours(p.actual_hours, p.expected_hours);
     const footage = formatFootage(p.footage, p.miles);
-
     const meta = [
       money   ? `<div class="cp-card-money">${money}</div>` : '',
       hrs     ? `<div class="cp-card-meta">${hrs}</div>` : '',
       footage ? `<div class="cp-card-meta">${footage}</div>` : '',
     ].join('');
-
     return `
       <div class="cp-project-card">
         <div class="cp-card-name">${escapeHtml(p.name)}</div>
@@ -70,22 +84,60 @@
       </div>`;
   }
 
-  function renderColumn(projects) {
+  function renderColumnBody(projects) {
     if (!projects.length) {
       return '<div class="cp-empty">No projects to display.</div>';
     }
     return projects.map(renderCard).join('');
   }
 
-  function groupAndSort(projects) {
-    const design  = [];
-    const permit  = [];
+  // Build a column element; returns null to signal "hide this column"
+  // construction is always shown (Coming Soon placeholder).
+  function buildColumnEl(type, projects) {
+    const isConstruction = (type === 'construction');
+
+    if (!isConstruction && projects.length === 0) return null;
+
+    const configs = {
+      design:       { icon: 'fa-drafting-compass', title: 'Design'       },
+      permitting:   { icon: 'fa-file-signature',   title: 'Permitting'   },
+      construction: { icon: 'fa-hard-hat',          title: 'Construction' },
+    };
+    const { icon, title } = configs[type];
+
+    const bodyHtml = isConstruction
+      ? `<div class="cp-deferred">
+           <div class="cp-deferred-icon"><i class="fa-solid fa-clock" aria-hidden="true"></i></div>
+           <p class="cp-deferred-msg">Construction projects coming soon.</p>
+         </div>`
+      : renderColumnBody(projects);
+
+    const el = document.createElement('section');
+    el.className = 'cp-column';
+    el.setAttribute('aria-labelledby', `col-${type}-heading`);
+    el.innerHTML = `
+      <div class="cp-col-header">
+        <i class="fa-solid ${icon} cp-col-icon" aria-hidden="true"></i>
+        <span class="cp-col-title" id="col-${type}-heading">${title}</span>
+      </div>
+      <div class="cp-col-body" aria-live="polite" aria-label="${title} projects">
+        ${bodyHtml}
+      </div>`;
+    return el;
+  }
+
+  // Render a grid (3-column layout) from a flat project array for one client.
+  // Returns the grid element (possibly fewer than 3 columns if some are empty).
+  function renderGrid(projects) {
+    const design       = [];
+    const permit       = [];
+    const construction = [];
 
     for (const p of projects) {
       const t = (p.project_type || '').toLowerCase();
-      if (DESIGN_TYPES.has(t)) design.push(p);
+      if (DESIGN_TYPES.has(t))     design.push(p);
       else if (PERMIT_TYPES.has(t)) permit.push(p);
-      // other types intentionally omitted from client view
+      else if (CONST_TYPES.has(t))  construction.push(p);
     }
 
     const byStatus = (a, b) =>
@@ -93,38 +145,133 @@
 
     design.sort(byStatus);
     permit.sort(byStatus);
+    construction.sort(byStatus);
 
-    return { design, permit };
+    const grid = document.createElement('div');
+    grid.className = 'cp-grid';
+    grid.setAttribute('role', 'main');
+    grid.setAttribute('aria-label', 'Project columns');
+
+    const designEl  = buildColumnEl('design', design);
+    const permitEl  = buildColumnEl('permitting', permit);
+    const constEl   = buildColumnEl('construction', construction);
+
+    if (designEl)  grid.appendChild(designEl);
+    if (permitEl)  grid.appendChild(permitEl);
+    if (constEl)   grid.appendChild(constEl);
+
+    // If all three are hidden (no projects at all), signal caller
+    if (!designEl && !permitEl && !constEl) return null;
+
+    return grid;
   }
 
-  function escapeHtml(str) {
-    return String(str)
-      .replace(/&/g, '&amp;')
-      .replace(/</g, '&lt;')
-      .replace(/>/g, '&gt;')
-      .replace(/"/g, '&quot;');
+  // ─── Render modes ─────────────────────────────────────────────────────────
+
+  // customer or admin viewing single client — plain 3-column grid
+  function renderSingleClient(projects) {
+    const content = document.getElementById('cp-content');
+    if (!content) return;
+
+    const grid = renderGrid(projects);
+    if (!grid) {
+      content.innerHTML = '<div class="cp-empty" style="padding:40px 0;text-align:center">No active projects to display.</div>';
+    } else {
+      content.innerHTML = '';
+      content.appendChild(grid);
+    }
   }
 
-  function updateLastUpdated() {
-    const el = document.getElementById('cp-last-updated');
-    if (!el || !lastUpdated) return;
-    const secs = Math.round((Date.now() - lastUpdated) / 1000);
-    el.textContent = secs < 5 ? 'Just updated' : `Last updated ${secs}s ago`;
+  // admin viewing all clients — one section per client
+  function renderAllClients(projects) {
+    const content = document.getElementById('cp-content');
+    if (!content) return;
+
+    // Group rows by client_id
+    const byClient = new Map();
+    for (const p of projects) {
+      const key = p.client_id || '__none__';
+      if (!byClient.has(key)) {
+        byClient.set(key, { name: p.client_name || 'Unknown Client', rows: [] });
+      }
+      byClient.get(key).rows.push(p);
+    }
+
+    if (byClient.size === 0) {
+      content.innerHTML = '<div class="cp-empty" style="padding:40px 0;text-align:center">No active projects to display.</div>';
+      return;
+    }
+
+    content.innerHTML = '';
+
+    // Sort by client name
+    const sorted = Array.from(byClient.entries()).sort((a, b) =>
+      a[1].name.localeCompare(b[1].name)
+    );
+
+    for (const [, { name, rows }] of sorted) {
+      const grid = renderGrid(rows);
+      if (!grid) continue; // skip clients with no displayable projects
+
+      const section = document.createElement('div');
+      section.className = 'cp-client-section';
+      section.innerHTML = `
+        <div class="cp-client-heading">
+          <i class="fa-solid fa-building" aria-hidden="true"></i>
+          ${escapeHtml(name)}
+        </div>`;
+      section.appendChild(grid);
+      content.appendChild(section);
+    }
+
+    if (content.children.length === 0) {
+      content.innerHTML = '<div class="cp-empty" style="padding:40px 0;text-align:center">No active projects to display.</div>';
+    }
   }
+
+  // ─── Page title / subtitle based on mode ─────────────────────────────────
+
+  function updatePageTitle() {
+    const titleEl = document.getElementById('cp-page-title');
+    const subEl   = document.getElementById('cp-page-sub');
+    if (!titleEl || !subEl) return;
+
+    const isCustomer = currentUser && currentUser.role === 'customer';
+    if (isCustomer) {
+      titleEl.textContent = 'Your Projects';
+      subEl.textContent   = 'Design and permitting activity — updates automatically.';
+    } else if (currentClientId) {
+      const sel = document.getElementById('cp-view-as');
+      const clientName = sel ? (sel.options[sel.selectedIndex] || {}).text || 'Selected Client' : 'Selected Client';
+      titleEl.textContent = clientName + ' — Projects';
+      subEl.textContent   = 'Viewing exactly what this client sees.';
+    } else {
+      titleEl.textContent = 'All Clients — Project Overview';
+      subEl.textContent   = 'Per-client design and permitting activity — updates automatically.';
+    }
+  }
+
+  // ─── Fetch and render ─────────────────────────────────────────────────────
 
   async function fetchAndRender() {
     try {
-      const resp = await fetch('/api/client-portal/projects', { credentials: 'same-origin' });
+      let url = '/api/client-portal/projects';
+      if (currentClientId) url += '?client_id=' + encodeURIComponent(currentClientId);
+
+      const resp = await fetch(url, { credentials: 'same-origin' });
       if (!resp.ok) throw new Error('HTTP ' + resp.status);
       const projects = await resp.json();
 
-      const { design, permit } = groupAndSort(projects);
+      const isCustomer   = currentUser && currentUser.role === 'customer';
+      const singleClient = isCustomer || !!currentClientId;
 
-      const designCol = document.getElementById('cp-col-design');
-      const permitCol = document.getElementById('cp-col-permit');
+      updatePageTitle();
 
-      if (designCol) designCol.innerHTML = renderColumn(design);
-      if (permitCol) permitCol.innerHTML = renderColumn(permit);
+      if (singleClient) {
+        renderSingleClient(projects);
+      } else {
+        renderAllClients(projects);
+      }
 
       lastUpdated = Date.now();
       updateLastUpdated();
@@ -133,16 +280,73 @@
     }
   }
 
+  // ─── Admin toolbar init ───────────────────────────────────────────────────
+
+  async function initAdminToolbar() {
+    const toolbar = document.getElementById('cp-admin-toolbar');
+    const sel     = document.getElementById('cp-view-as');
+    if (!toolbar || !sel) return;
+
+    toolbar.style.display = 'flex';
+
+    try {
+      const resp = await fetch('/api/client-portal/clients-with-active-projects', { credentials: 'same-origin' });
+      if (!resp.ok) throw new Error('HTTP ' + resp.status);
+      const clients = await resp.json();
+
+      for (const c of clients) {
+        const opt = document.createElement('option');
+        opt.value       = c.id;
+        opt.textContent = c.name;
+        sel.appendChild(opt);
+      }
+    } catch (err) {
+      console.error('[client_portal] clients fetch failed', err);
+    }
+
+    sel.addEventListener('change', function () {
+      currentClientId = this.value;
+      const notice = document.getElementById('cp-view-as-notice');
+      if (notice) {
+        notice.textContent = currentClientId
+          ? 'Showing exactly what this client sees.'
+          : '';
+      }
+      fetchAndRender();
+    });
+  }
+
+  // ─── Time label ──────────────────────────────────────────────────────────
+
+  function updateLastUpdated() {
+    const el = document.getElementById('cp-last-updated');
+    if (!el || !lastUpdated) return;
+    const secs = Math.round((Date.now() - lastUpdated) / 1000);
+    el.textContent = secs < 5 ? 'Just updated' : `Last updated ${secs}s ago`;
+  }
+
+  // ─── Polling ──────────────────────────────────────────────────────────────
+
   function startPolling() {
     if (pollTimer) clearInterval(pollTimer);
-    // Update the "X seconds ago" label every 5s without a full fetch
     setInterval(updateLastUpdated, 5000);
-    // Full refetch every 20s
     pollTimer = setInterval(fetchAndRender, 20000);
   }
 
-  document.addEventListener('DOMContentLoaded', function () {
-    fetchAndRender();
+  // ─── Boot ─────────────────────────────────────────────────────────────────
+
+  document.addEventListener('DOMContentLoaded', async function () {
+    try {
+      const meResp = await fetch('/api/auth/me', { credentials: 'same-origin' });
+      if (meResp.ok) currentUser = await meResp.json();
+    } catch (_) { /* continue without user — behave as customer */ }
+
+    const isCustomer = !currentUser || currentUser.role === 'customer';
+    if (!isCustomer) {
+      await initAdminToolbar();
+    }
+
+    await fetchAndRender();
     startPolling();
   });
 })();
