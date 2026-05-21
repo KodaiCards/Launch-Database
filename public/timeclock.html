@@ -357,9 +357,14 @@ html[data-theme="dark"] .tag-team-construction,html[data-theme="dark"] .tag-team
         <label for="entry-program">Program *</label>
         <select id="entry-program" onchange="cascadeChanged('entry','program')" disabled><option value="">— Select program —</option></select>
       </div>
-      <div class="form-group">
+      <div class="form-group" id="entry-sa-select-row">
         <label for="entry-sa">Service Area *</label>
         <select id="entry-sa" onchange="cascadeChanged('entry','sa')" disabled><option value="">— Select service area —</option></select>
+      </div>
+      <div class="form-group" id="entry-sa-text-row" style="display:none">
+        <label for="entry-sa-text">Service Area <span style="font-weight:400;color:var(--text-muted)">(optional)</span></label>
+        <input type="text" id="entry-sa-text" placeholder="e.g. Buford, Sugar Hill, etc." autocomplete="off" oninput="cascadeSaLabelInput('entry')">
+        <span style="font-size:11px;color:var(--text-muted)">Free text — no engineering contract needed.</span>
       </div>
       <div class="form-group">
         <label for="entry-job">Job *
@@ -415,15 +420,28 @@ html[data-theme="dark"] .tag-team-construction,html[data-theme="dark"] .tag-team
       </div>
       <div class="form-group">
         <label for="rnp-client">Client *</label>
-        <select id="rnp-client"></select>
+        <select id="rnp-client" onchange="rnpClientChanged()"></select>
+      </div>
+      <div class="form-group">
+        <label for="rnp-program">Program *</label>
+        <select id="rnp-program" onchange="rnpProgramChanged()" disabled>
+          <option value="">— Select client first —</option>
+        </select>
+      </div>
+      <!-- EC mode: service area dropdown (clients with ECs) -->
+      <div class="form-group" id="rnp-sa-ec-row" style="display:none">
+        <label for="rnp-area">Service Area <span style="color:var(--text-muted);font-weight:400">(optional)</span></label>
+        <select id="rnp-area" onchange="rnpAreaChanged()"><option value="">— Select service area —</option></select>
+      </div>
+      <!-- No-EC mode: free-text service area (clients without ECs) -->
+      <div class="form-group" id="rnp-sa-noec-row" style="display:none">
+        <label for="rnp-area-label">Service Area <span style="color:var(--text-muted);font-weight:400">(optional)</span></label>
+        <input type="text" id="rnp-area-label" placeholder="e.g. Buford, Sugar Hill, etc." autocomplete="off">
+        <span style="font-size:11px;color:var(--text-muted)">Free text — groups projects under this client.</span>
       </div>
       <div class="form-group">
         <label for="rnp-name">Project Name *</label>
         <input type="text" id="rnp-name" placeholder="e.g. Crossroad School">
-      </div>
-      <div class="form-group">
-        <label for="rnp-area">Service Area <span style="color:var(--text-muted);font-weight:400">(optional)</span></label>
-        <select id="rnp-area" onchange="rnpAreaChanged()"><option value="">— Select area (PSC/RUS only) —</option></select>
       </div>
       <div class="form-group">
         <label for="rnp-wo">Work Order # <span style="color:var(--text-muted);font-weight:400">(optional)</span></label>
@@ -667,7 +685,7 @@ async function signOut(){
   try { sessionStorage.removeItem('lfs_token'); } catch(e){}
   try {
     ['ci','sw','entry'].forEach(pfx => {
-      ['client','program','sa_id','job'].forEach(k => {
+      ['client','program','sa_id','sa_label','job'].forEach(k => {
         sessionStorage.removeItem('lf_tc_' + pfx + '_' + k);
       });
     });
@@ -877,9 +895,14 @@ function renderClockCard(){
           <label for="ci-program">Program *</label>
           <select id="ci-program" onchange="cascadeChanged('ci','program')" disabled><option value="">— Select program —</option></select>
         </div>
-        <div class="form-group">
+        <div class="form-group" id="ci-sa-select-row">
           <label for="ci-sa">Service Area *</label>
           <select id="ci-sa" onchange="cascadeChanged('ci','sa')" disabled><option value="">— Select service area —</option></select>
+        </div>
+        <div class="form-group" id="ci-sa-text-row" style="display:none">
+          <label for="ci-sa-text">Service Area <span style="font-weight:400;color:var(--text-muted)">(optional)</span></label>
+          <input type="text" id="ci-sa-text" placeholder="e.g. Buford, Sugar Hill, etc." autocomplete="off" oninput="cascadeSaLabelInput('ci')">
+          <span style="font-size:11px;color:var(--text-muted)">Free text — no engineering contract needed.</span>
         </div>
         <div class="form-group">
           <label for="ci-job">Job *</label>
@@ -1003,9 +1026,14 @@ function openSwitchModal(){
           <label for="sw-program">Program *</label>
           <select id="sw-program" onchange="cascadeChanged('sw','program')" disabled><option value="">— Select program —</option></select>
         </div>
-        <div class="form-group">
+        <div class="form-group" id="sw-sa-select-row">
           <label for="sw-sa">Service Area *</label>
           <select id="sw-sa" onchange="cascadeChanged('sw','sa')" disabled><option value="">— Select service area —</option></select>
+        </div>
+        <div class="form-group" id="sw-sa-text-row" style="display:none">
+          <label for="sw-sa-text">Service Area <span style="font-weight:400;color:var(--text-muted)">(optional)</span></label>
+          <input type="text" id="sw-sa-text" placeholder="e.g. Buford, Sugar Hill, etc." autocomplete="off" oninput="cascadeSaLabelInput('sw')">
+          <span style="font-size:11px;color:var(--text-muted)">Free text — no engineering contract needed.</span>
         </div>
         <div class="form-group">
           <label for="sw-job">Job *</label>
@@ -1210,11 +1238,73 @@ function populateRnpAreaDropdown() {
 
 function rnpAreaChanged() {
   const sel = document.getElementById('rnp-area');
-  const id = sel.value;
+  const id = sel ? sel.value : '';
   if (!id) return;
   const conc = allConcentrators.find(c => c.id === id);
   if (conc && conc.work_order_number) {
     document.getElementById('rnp-wo').value = conc.work_order_number;
+  }
+}
+
+async function rnpClientChanged() {
+  const clientId = document.getElementById('rnp-client')?.value;
+  const progSel = document.getElementById('rnp-program');
+  const ecRow = document.getElementById('rnp-sa-ec-row');
+  const noEcRow = document.getElementById('rnp-sa-noec-row');
+  if (progSel) {
+    progSel.innerHTML = '<option value="">— Select program —</option>';
+    progSel.disabled = !clientId;
+  }
+  if (ecRow) ecRow.style.display = 'none';
+  if (noEcRow) noEcRow.style.display = 'none';
+  if (!clientId) return;
+  // Populate programs — show all 4, EC detection happens at program-select time.
+  if (progSel) {
+    const opts = ['<option value="">— Select program —</option>'];
+    for (const prog of (window.PROGRAMS || ['rus','bau','gfr','other'])) {
+      opts.push('<option value="' + prog + '">' + ((window.PROGRAM_LABELS || {})[prog] || prog) + '</option>');
+    }
+    progSel.innerHTML = opts.join('');
+    progSel.disabled = false;
+  }
+}
+
+async function rnpProgramChanged() {
+  const clientId = document.getElementById('rnp-client')?.value;
+  const program = document.getElementById('rnp-program')?.value;
+  const ecRow = document.getElementById('rnp-sa-ec-row');
+  const noEcRow = document.getElementById('rnp-sa-noec-row');
+  if (ecRow) ecRow.style.display = 'none';
+  if (noEcRow) noEcRow.style.display = 'none';
+  if (!clientId || !program) return;
+
+  const ecs = await _fetchEcsForClient(clientId);
+  const matchingEcs = ecs.filter(ec => ec.program === program);
+
+  if (matchingEcs.length > 0) {
+    // EC mode: populate SA dropdown from ECs.
+    if (ecRow) ecRow.style.display = '';
+    const areaSel = document.getElementById('rnp-area');
+    if (areaSel) {
+      const saList = await _fetchSaFolders(clientId);
+      const ecIds = new Set(matchingEcs.map(ec => ec.id));
+      const filtered = saList.filter(sa => ecIds.has(sa.ec_id) || ecIds.has(sa.engineering_contract_id));
+      const opts = ['<option value="">— Select service area —</option>'];
+      for (const sa of filtered) {
+        const id = sa.id || sa.folder_id;
+        const wo = sa.work_order_number ? ' (WO# ' + sa.work_order_number + ')' : '';
+        opts.push('<option value="' + esc(id) + '">' + esc(sa.name || sa.area_name || '—') + wo + '</option>');
+      }
+      areaSel.innerHTML = opts.join('');
+      // Auto-fill WO# when a single SA is present.
+      if (filtered.length === 1) {
+        areaSel.value = filtered[0].id || filtered[0].folder_id;
+        rnpAreaChanged();
+      }
+    }
+  } else {
+    // No-EC mode: free-text service area.
+    if (noEcRow) noEcRow.style.display = '';
   }
 }
 
@@ -1278,10 +1368,11 @@ async function _populateProgramSelect(prefix, client_id, savedProgram){
   const sel = _el(prefix, 'program');
   if (!sel) return;
   const ecs = await _fetchEcsForClient(client_id);
-  const programs = [...new Set(ecs.map(ec => ec.program).filter(Boolean))];
+  const ecPrograms = new Set(ecs.map(ec => ec.program).filter(Boolean));
+  // Show all programs; EC-matching ones are labelled normally.
+  // No-EC clients see all options — the SA tier will switch to free-text mode.
   const html = ['<option value="">— Select program —</option>'];
   for (const prog of PROGRAMS){
-    if (!programs.includes(prog)) continue;
     const sel_ = prog === savedProgram ? ' selected' : '';
     html.push('<option value="' + prog + '"' + sel_ + '>' + (PROGRAM_LABELS[prog] || prog) + '</option>');
   }
@@ -1289,15 +1380,48 @@ async function _populateProgramSelect(prefix, client_id, savedProgram){
   sel.disabled = false;
 }
 
-async function _populateSaSelect(prefix, client_id, program, savedSaId){
+async function _populateSaSelect(prefix, client_id, program, savedSaId, savedSaLabel){
   const sel = _el(prefix, 'sa');
+  const selectRow = document.getElementById(prefix + '-sa-select-row');
+  const textRow = document.getElementById(prefix + '-sa-text-row');
+  const jobInp = _el(prefix, 'job');
+
+  const ecs = await _fetchEcsForClient(client_id);
+  const matchingEcs = ecs.filter(ec => ec.program === program);
+
+  if (matchingEcs.length === 0) {
+    // No-EC mode: hide dropdown, show free-text input, enable job directly.
+    if (selectRow) selectRow.style.display = 'none';
+    if (textRow) textRow.style.display = '';
+    const textInp = _el(prefix, 'sa-text');
+    if (textInp) {
+      textInp.value = savedSaLabel || _ssGet('lf_tc_' + prefix + '_sa_label') || '';
+    }
+    if (jobInp) {
+      jobInp.disabled = false;
+      // Populate all active leaf jobs for this client (no SA scoping in no-EC mode).
+      const dl = document.getElementById(prefix + '-job-list');
+      if (dl) {
+        const allLeaves = projectsCache.filter(p =>
+          !p.is_rollup && !(Number(p.child_count) > 0) &&
+          String(p.client_id) === String(client_id)
+        );
+        dl.innerHTML = allLeaves.map(p => '<option value="' + esc(p.name) + '"></option>').join('');
+      }
+    }
+    return;
+  }
+
+  // EC mode: show dropdown, hide free-text input.
+  if (selectRow) selectRow.style.display = '';
+  if (textRow) textRow.style.display = 'none';
+
   if (!sel) return;
   sel.innerHTML = '<option value="">— Loading… —</option>';
   sel.disabled = true;
+
   const saList = await _fetchSaFolders(client_id);
-  // Filter SA folders to those whose EC matches the chosen program.
-  const ecs = await _fetchEcsForClient(client_id);
-  const ecIds = new Set(ecs.filter(ec => ec.program === program).map(ec => ec.id));
+  const ecIds = new Set(matchingEcs.map(ec => ec.id));
   const filtered = saList.filter(sa => ecIds.has(sa.ec_id) || ecIds.has(sa.engineering_contract_id));
   const html = ['<option value="">— Select service area —</option>'];
   for (const sa of filtered){
@@ -1333,6 +1457,7 @@ async function mountCascade(prefix, opts){
     client: _ssGet('lf_tc_' + prefix + '_client'),
     program: _ssGet('lf_tc_' + prefix + '_program'),
     sa_id: _ssGet('lf_tc_' + prefix + '_sa_id'),
+    sa_label: _ssGet('lf_tc_' + prefix + '_sa_label'),
     job: _ssGet('lf_tc_' + prefix + '_job')
   };
   // If prefill provided (edit flow), override saved state.
@@ -1363,9 +1488,15 @@ async function mountCascade(prefix, opts){
   if (saved.client) {
     await _populateProgramSelect(prefix, saved.client, saved.program);
     if (saved.program) {
-      await _populateSaSelect(prefix, saved.client, saved.program, saved.sa_id);
-      if (saved.sa_id) {
+      await _populateSaSelect(prefix, saved.client, saved.program, saved.sa_id, saved.sa_label);
+      // In no-EC mode the job input is already enabled; in EC mode restore only if SA is selected.
+      const textRow = document.getElementById(prefix + '-sa-text-row');
+      const isNoEc = textRow && textRow.style.display !== 'none';
+      if (!isNoEc && saved.sa_id) {
         await _populateJobDatalist(prefix, saved.sa_id, opts.includeCompleted, saved.job);
+      } else if (isNoEc && saved.job) {
+        const jobInp2 = _el(prefix, 'job');
+        if (jobInp2) jobInp2.value = saved.job;
       }
     }
   }
@@ -1384,9 +1515,15 @@ async function cascadeChanged(prefix, tier){
     _ssSet('lf_tc_' + prefix + '_client', v || null);
     _ssDel('lf_tc_' + prefix + '_program');
     _ssDel('lf_tc_' + prefix + '_sa_id');
+    _ssDel('lf_tc_' + prefix + '_sa_label');
     _ssDel('lf_tc_' + prefix + '_job');
     if (progSel){ progSel.innerHTML = '<option value="">— Select program —</option>'; progSel.disabled = !v; }
     if (saSel){ saSel.innerHTML = '<option value="">— Select service area —</option>'; saSel.disabled = true; }
+    // Reset SA mode: hide both rows, re-show select row as default.
+    const selectRow = document.getElementById(prefix + '-sa-select-row');
+    const textRow = document.getElementById(prefix + '-sa-text-row');
+    if (selectRow) selectRow.style.display = '';
+    if (textRow) textRow.style.display = 'none';
     if (jobInp){ jobInp.value = ''; jobInp.disabled = true; }
     if (dl) dl.innerHTML = '';
     if (v) await _populateProgramSelect(prefix, v, null);
@@ -1395,8 +1532,11 @@ async function cascadeChanged(prefix, tier){
     const v = progSel ? progSel.value : '';
     _ssSet('lf_tc_' + prefix + '_program', v || null);
     _ssDel('lf_tc_' + prefix + '_sa_id');
+    _ssDel('lf_tc_' + prefix + '_sa_label');
     _ssDel('lf_tc_' + prefix + '_job');
     if (saSel){ saSel.innerHTML = '<option value="">— Select service area —</option>'; saSel.disabled = true; }
+    const textInp = _el(prefix, 'sa-text');
+    if (textInp) textInp.value = '';
     if (jobInp){ jobInp.value = ''; jobInp.disabled = true; }
     if (dl) dl.innerHTML = '';
     if (v && client) await _populateSaSelect(prefix, client, v, null);
@@ -1417,6 +1557,11 @@ function cascadeJobInput(prefix){
   _ssSet('lf_tc_' + prefix + '_job', inp ? inp.value : null);
 }
 
+function cascadeSaLabelInput(prefix){
+  const textInp = _el(prefix, 'sa-text');
+  _ssSet('lf_tc_' + prefix + '_sa_label', textInp ? textInp.value : null);
+}
+
 async function resolveOrCreateFromCascade(prefix){
   const clientSel = _el(prefix, 'client');
   const progSel = _el(prefix, 'program');
@@ -1425,19 +1570,31 @@ async function resolveOrCreateFromCascade(prefix){
 
   const client_id = clientSel ? clientSel.value : '';
   const program = progSel ? progSel.value : '';
-  const sa_folder_id = saSel ? saSel.value : '';
-  const opt = saSel ? saSel.options[saSel.selectedIndex] : null;
-  const service_area_id = (opt && opt.dataset.saUuid) || sa_folder_id;
   const job_name = (jobInp ? jobInp.value : '').trim();
 
   if (!client_id) throw new Error('Please select a client.');
   if (!program) throw new Error('Please select a program.');
-  if (!sa_folder_id) throw new Error('Please select a service area.');
   if (!job_name) throw new Error('Please enter a job name.');
 
-  const resp = await api('/api/projects/resolve-or-create', 'POST', {
-    client_id, program, service_area_id, job_name
-  });
+  // Detect EC vs no-EC mode by checking which SA row is visible.
+  const textRow = document.getElementById(prefix + '-sa-text-row');
+  const isNoEc = textRow && textRow.style.display !== 'none';
+
+  let payload;
+  if (isNoEc) {
+    const textInp = _el(prefix, 'sa-text');
+    const service_area_label = (textInp ? textInp.value.trim() : '') || undefined;
+    _ssSet('lf_tc_' + prefix + '_sa_label', service_area_label || null);
+    payload = { client_id, program, service_area_label, job_name };
+  } else {
+    const sa_folder_id = saSel ? saSel.value : '';
+    const opt = saSel ? saSel.options[saSel.selectedIndex] : null;
+    const service_area_id = (opt && opt.dataset.saUuid) || sa_folder_id;
+    if (!sa_folder_id) throw new Error('Please select a service area.');
+    payload = { client_id, program, service_area_id, job_name };
+  }
+
+  const resp = await api('/api/projects/resolve-or-create', 'POST', payload);
   return resp; // { id, name, status }
 }
 
@@ -1459,8 +1616,17 @@ function openRequestNewProjectModal(){
   document.getElementById('rnp-notes').value = '';
   document.getElementById('rnp-error').style.display = 'none';
   const areaSel = document.getElementById('rnp-area');
-  if (areaSel) areaSel.value = '';
+  if (areaSel) areaSel.innerHTML = '<option value="">— Select service area —</option>';
+  const areaLabel = document.getElementById('rnp-area-label');
+  if (areaLabel) areaLabel.value = '';
+  const progSel = document.getElementById('rnp-program');
+  if (progSel) { progSel.innerHTML = '<option value="">— Select client first —</option>'; progSel.disabled = true; }
+  const ecRow = document.getElementById('rnp-sa-ec-row');
+  const noEcRow = document.getElementById('rnp-sa-noec-row');
+  if (ecRow) ecRow.style.display = 'none';
+  if (noEcRow) noEcRow.style.display = 'none';
   populateClientSelect(document.getElementById('rnp-client'), cid);
+  if (cid) rnpClientChanged();
   m.style.display = 'flex';
 }
 function closeRequestNewProjectModal(){
@@ -1471,13 +1637,28 @@ async function submitRequestNewProject(){
   const name = document.getElementById('rnp-name').value.trim();
   const work_order_number = document.getElementById('rnp-wo').value.trim() || null;
   const client_id = document.getElementById('rnp-client').value || null;
+  const program = document.getElementById('rnp-program')?.value || null;
   const notes = document.getElementById('rnp-notes').value.trim() || null;
   const errEl = document.getElementById('rnp-error');
   errEl.style.display = 'none';
   if (!name){ errEl.textContent = 'Project name is required.'; errEl.style.display = 'block'; return; }
   if (!client_id){ errEl.textContent = 'Client is required.'; errEl.style.display = 'block'; return; }
+
+  // Determine service area (EC mode: dropdown value; no-EC mode: free-text label).
+  const noEcRow = document.getElementById('rnp-sa-noec-row');
+  const isNoEc = noEcRow && noEcRow.style.display !== 'none';
+  let service_area_id = null;
+  let service_area_label = null;
+  if (isNoEc) {
+    service_area_label = document.getElementById('rnp-area-label')?.value.trim() || null;
+  } else {
+    service_area_id = document.getElementById('rnp-area')?.value || null;
+  }
+
   try {
-    const resp = await api('/api/portal/projects/request-create', 'POST', { name, work_order_number, client_id, notes });
+    const resp = await api('/api/portal/projects/request-create', 'POST', {
+      name, work_order_number, client_id, program, service_area_id, service_area_label, notes
+    });
     if (!resp || !resp.request_id) throw new Error('No request_id returned');
     // Fold the request into the entry-modal: clear project select, stash
     // request_id, show the banner. saveEntry will route via the held flow.
