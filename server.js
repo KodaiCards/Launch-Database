@@ -574,7 +574,7 @@ require('./routes/staff')(app, pool, { requireAdmin, requireAuth }); // H-1: req
 // stay below for now and will move in a follow-up.
 // ─────────────────────────────────────────────────────────────────────────────
 // Item 2 + 22 fix: requireAuth added so projects.js can gate POST/PUT.
-require('./routes/projects')(app, pool, { requireAdmin, requireAuth });
+require('./routes/projects')(app, pool, { requireAdmin, requireAuth, requireManagerOrAdmin });
 
 // ─────────────────────────────────────────────────────────────────────────────
 // UNDO REPLAY — extracted to routes/undo.js (Track 1.3.6).
