@@ -111,6 +111,39 @@ before(async () => {
 
 // ─── GET /api/engineering-contracts/:ecId/jobs (3-tier precedence) ────────────
 
+test('GET /jobs — job_assignments tier: client-scoped assignment matches EC', async () => {
+  // Directly insert a client-scoped job_assignment (engineering_contract_id = NULL).
+  // This tests the F1 fix: Tier 1 should match rows where
+  // engineering_contract_id IS NULL if the client matches.
+  const jaRes = await pool.query(
+    `INSERT INTO job_assignments (client_id, engineering_contract_id, team, job_id)
+     VALUES ($1, NULL, NULL, $2)
+     RETURNING id`,
+    [sharedClient.id, genericJob.id]
+  );
+  const jaId = jaRes.rows[0].id;
+
+  try {
+    const list = await requestJson('GET', `/api/engineering-contracts/${sharedEc.id}/jobs`, { token });
+    assert.ok(Array.isArray(list), 'must return array');
+
+    const foundGeneric = list.find(j => j.id === genericJob.id);
+    assert.ok(foundGeneric, 'client-scoped job_assignment must activate Tier 1');
+    assert.equal(
+      foundGeneric.is_visible_via,
+      'job_assignments',
+      'must report is_visible_via = job_assignments'
+    );
+  } finally {
+    // Cleanup: delete the job_assignment
+    try {
+      await pool.query(`DELETE FROM job_assignments WHERE id = $1`, [jaId]);
+    } catch (e) {
+      console.warn('[cleanup] failed to delete job_assignment:', e.message);
+    }
+  }
+});
+
 test('GET /jobs — legacy_filter tier: RUS EC returns only rus/shared program_scope jobs', async () => {
   // No job_assignments, no ec_job_visibility rows for this EC → legacy tier.
   const list = await requestJson('GET', `/api/engineering-contracts/${sharedEc.id}/jobs`, { token });

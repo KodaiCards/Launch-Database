@@ -370,16 +370,21 @@ module.exports = function installEngineeringContractsRoutes(app, pool, mw) {
       if (!ecRows[0]) return res.status(404).json({ error: 'Engineering contract not found' });
       const { client_id, program } = ecRows[0];
 
-      // Tier 1: check job_assignments for rows scoped to this EC.
+      // Tier 1: check job_assignments for rows scoped to this EC or client.
+      // NULL in assignment columns means "wildcard" — a row with
+      // client_id=X, engineering_contract_id=NULL matches any EC for client X.
+      // Only check EC-specific and client-scoped assignments, not team-scoped.
       const { rows: jaRows } = await pool.query(
         `SELECT DISTINCT j.*,
                 'job_assignments' AS is_visible_via
            FROM job_assignments ja
            JOIN jobs j ON j.id = ja.job_id
-          WHERE ja.engineering_contract_id = $1
+          WHERE (ja.engineering_contract_id = $1 OR ja.engineering_contract_id IS NULL)
+            AND (ja.client_id = $2 OR ja.client_id IS NULL)
+            AND ja.team IS NULL
             AND j.active = TRUE
           ORDER BY j.name`,
-        [ecId]
+        [ecId, client_id]
       );
       if (jaRows.length > 0) return res.json(jaRows);
 
