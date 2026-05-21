@@ -207,6 +207,18 @@ CREATE TABLE public.ec_work_orders (
 );
 
 --
+-- Name: ec_job_visibility; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.ec_job_visibility (
+    id uuid DEFAULT gen_random_uuid() NOT NULL,
+    engineering_contract_id uuid NOT NULL,
+    job_id uuid NOT NULL,
+    created_at timestamp with time zone DEFAULT now() NOT NULL,
+    created_by_user_id uuid
+);
+
+--
 -- Name: engineering_contracts; Type: TABLE; Schema: public; Owner: -
 --
 
@@ -1202,6 +1214,20 @@ ALTER TABLE ONLY public.design_stages
     ADD CONSTRAINT design_stages_project_id_stage_key UNIQUE (project_id, stage);
 
 --
+-- Name: ec_job_visibility ec_job_visibility_engineering_contract_id_job_id_key; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.ec_job_visibility
+    ADD CONSTRAINT ec_job_visibility_engineering_contract_id_job_id_key UNIQUE (engineering_contract_id, job_id);
+
+--
+-- Name: ec_job_visibility ec_job_visibility_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.ec_job_visibility
+    ADD CONSTRAINT ec_job_visibility_pkey PRIMARY KEY (id);
+
+--
 -- Name: ec_service_areas ec_service_areas_engineering_contract_id_name_key; Type: CONSTRAINT; Schema: public; Owner: -
 --
 
@@ -1736,6 +1762,24 @@ CREATE INDEX idx_contracts_engineering_contract_id ON public.contracts USING btr
 --
 
 CREATE INDEX idx_customer_clients_client ON public.customer_clients USING btree (client_id);
+
+--
+-- Name: idx_ec_job_visibility_created_by; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX idx_ec_job_visibility_created_by ON public.ec_job_visibility USING btree (created_by_user_id) WHERE (created_by_user_id IS NOT NULL);
+
+--
+-- Name: idx_ec_job_visibility_ec; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX idx_ec_job_visibility_ec ON public.ec_job_visibility USING btree (engineering_contract_id);
+
+--
+-- Name: idx_ec_job_visibility_job; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX idx_ec_job_visibility_job ON public.ec_job_visibility USING btree (job_id);
 
 --
 -- Name: idx_ec_service_areas_ec; Type: INDEX; Schema: public; Owner: -
@@ -2423,6 +2467,27 @@ ALTER TABLE ONLY public.customer_clients
 
 ALTER TABLE ONLY public.design_stages
     ADD CONSTRAINT design_stages_project_id_fkey FOREIGN KEY (project_id) REFERENCES public.projects(id) ON DELETE CASCADE;
+
+--
+-- Name: ec_job_visibility ec_job_visibility_engineering_contract_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.ec_job_visibility
+    ADD CONSTRAINT ec_job_visibility_engineering_contract_id_fkey FOREIGN KEY (engineering_contract_id) REFERENCES public.engineering_contracts(id) ON DELETE CASCADE;
+
+--
+-- Name: ec_job_visibility ec_job_visibility_job_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.ec_job_visibility
+    ADD CONSTRAINT ec_job_visibility_job_id_fkey FOREIGN KEY (job_id) REFERENCES public.jobs(id) ON DELETE CASCADE;
+
+--
+-- Name: ec_job_visibility ec_job_visibility_created_by_user_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.ec_job_visibility
+    ADD CONSTRAINT ec_job_visibility_created_by_user_id_fkey FOREIGN KEY (created_by_user_id) REFERENCES public.users(id) ON DELETE SET NULL;
 
 --
 -- Name: ec_service_areas ec_service_areas_engineering_contract_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -

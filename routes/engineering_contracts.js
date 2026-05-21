@@ -346,4 +346,311 @@ module.exports = function installEngineeringContractsRoutes(app, pool, mw) {
       res.status(500).json({ error: 'Failed to delete work order.' });
     }
   });
+
+  // ─── EC-SCOPED JOB VISIBILITY ────────────────────────────────────────────────
+  //
+  // Precedence for which jobs are visible to a given EC:
+  //   1. job_assignments rows matching this EC (or its client + no team override)
+  //      → return ONLY those jobs (existing override system, unchanged)
+  //   2. If no job_assignments match → check ec_job_visibility rows for this EC
+  //      → if rows exist, return ONLY those
+  //   3. If ec_job_visibility is empty → fall back to legacy for_psc_client /
+  //      for_generic_client / program_scope filters on the jobs table
+
+  // GET /api/engineering-contracts/:ecId/jobs
+  // Returns all jobs visible to this EC via 3-tier precedence.
+  app.get('/api/engineering-contracts/:ecId/jobs', requireAuth(), async (req, res) => {
+    const { ecId } = req.params;
+    try {
+      // Look up the EC's client_id and program for use in legacy fallback.
+      const { rows: ecRows } = await pool.query(
+        `SELECT client_id, program FROM engineering_contracts WHERE id = $1`,
+        [ecId]
+      );
+      if (!ecRows[0]) return res.status(404).json({ error: 'Engineering contract not found' });
+      const { client_id, program } = ecRows[0];
+
+      // Tier 1: check job_assignments for rows scoped to this EC.
+      const { rows: jaRows } = await pool.query(
+        `SELECT DISTINCT j.*,
+                'job_assignments' AS is_visible_via
+           FROM job_assignments ja
+           JOIN jobs j ON j.id = ja.job_id
+          WHERE ja.engineering_contract_id = $1
+            AND j.active = TRUE
+          ORDER BY j.name`,
+        [ecId]
+      );
+      if (jaRows.length > 0) return res.json(jaRows);
+
+      // Tier 2: check ec_job_visibility rows.
+      const { rows: evRows } = await pool.query(
+        `SELECT j.*,
+                'ec_job_visibility' AS is_visible_via
+           FROM ec_job_visibility ev
+           JOIN jobs j ON j.id = ev.job_id
+          WHERE ev.engineering_contract_id = $1
+            AND j.active = TRUE
+          ORDER BY j.name`,
+        [ecId]
+      );
+      if (evRows.length > 0) return res.json(evRows);
+
+      // Tier 3: legacy filters — program_scope mirrors the heuristic in GET /api/jobs.
+      // When the EC has a program set, narrow by program_scope. Otherwise return all
+      // active jobs (admin hasn't classified the EC yet).
+      const legacyConds = ['j.active = TRUE'];
+      if (program === 'rus') {
+        legacyConds.push(`j.program_scope IN ('rus', 'shared')`);
+      } else if (program !== null) {
+        legacyConds.push(`j.program_scope IN ('non_rus', 'shared')`);
+      }
+
+      const { rows: legacyRows } = await pool.query(
+        `SELECT j.*,
+                'legacy_filter' AS is_visible_via
+           FROM jobs j
+          WHERE ${legacyConds.join(' AND ')}
+          ORDER BY j.name`
+      );
+      res.json(legacyRows);
+    } catch (e) {
+      console.error('[ec-jobs:list]', e && e.message);
+      res.status(500).json({ error: 'Failed to load jobs for engineering contract.' });
+    }
+  });
+
+  // GET /api/engineering-contracts/:ecId/job-visibility
+  // Lists explicit ec_job_visibility rows (admin use — shows what's opted-in).
+  app.get('/api/engineering-contracts/:ecId/job-visibility', requireAuth(), async (req, res) => {
+    try {
+      const { rows: ecCheck } = await pool.query(
+        `SELECT id FROM engineering_contracts WHERE id = $1`,
+        [req.params.ecId]
+      );
+      if (!ecCheck[0]) return res.status(404).json({ error: 'Engineering contract not found' });
+
+      const { rows } = await pool.query(
+        `SELECT id, engineering_contract_id, job_id, created_at, created_by_user_id
+           FROM ec_job_visibility
+          WHERE engineering_contract_id = $1
+          ORDER BY created_at`,
+        [req.params.ecId]
+      );
+      res.json(rows);
+    } catch (e) {
+      console.error('[ec-jobs:visibility-list]', e && e.message);
+      res.status(500).json({ error: 'Failed to load job visibility list.' });
+    }
+  });
+
+  // POST /api/engineering-contracts/:ecId/job-visibility
+  // Add one job to this EC's explicit visibility list. Idempotent (409 on dup).
+  app.post('/api/engineering-contracts/:ecId/job-visibility', requireAdmin, async (req, res) => {
+    const { job_id } = req.body || {};
+    if (!job_id) return res.status(400).json({ error: 'job_id required' });
+
+    try {
+      const { rows: ecCheck } = await pool.query(
+        `SELECT id FROM engineering_contracts WHERE id = $1`,
+        [req.params.ecId]
+      );
+      if (!ecCheck[0]) return res.status(404).json({ error: 'Engineering contract not found' });
+
+      const { rows: jobCheck } = await pool.query(
+        `SELECT id FROM jobs WHERE id = $1`,
+        [job_id]
+      );
+      if (!jobCheck[0]) return res.status(404).json({ error: 'Job not found' });
+
+      const userId = req.user && req.user.id;
+      const { rows } = await pool.query(
+        `INSERT INTO ec_job_visibility (engineering_contract_id, job_id, created_by_user_id)
+           VALUES ($1, $2, $3)
+           RETURNING *`,
+        [req.params.ecId, job_id, userId || null]
+      );
+      res.status(201).json(rows[0]);
+    } catch (e) {
+      if (e.code === '23505') return res.status(409).json({ error: 'This job is already in the visibility list for this engineering contract.' });
+      console.error('[ec-jobs:visibility-add]', e && e.message);
+      res.status(500).json({ error: 'Failed to add job to visibility list.' });
+    }
+  });
+
+  // DELETE /api/engineering-contracts/:ecId/job-visibility/:jobId
+  // Remove one job from this EC's explicit visibility list.
+  app.delete('/api/engineering-contracts/:ecId/job-visibility/:jobId', requireAdmin, async (req, res) => {
+    try {
+      const { rows } = await pool.query(
+        `DELETE FROM ec_job_visibility
+          WHERE engineering_contract_id = $1 AND job_id = $2
+          RETURNING id`,
+        [req.params.ecId, req.params.jobId]
+      );
+      if (!rows[0]) return res.status(404).json({ error: 'Job not found in visibility list for this engineering contract.' });
+      res.json({ ok: true });
+    } catch (e) {
+      console.error('[ec-jobs:visibility-delete]', e && e.message);
+      res.status(500).json({ error: 'Failed to remove job from visibility list.' });
+    }
+  });
+
+  // PUT /api/engineering-contracts/:ecId/job-visibility
+  // Bulk-replace the entire visibility list (checkbox-list save UX).
+  // Body: { job_ids: [uuid, ...] }  — empty array clears the list (reverts to legacy filters).
+  app.put('/api/engineering-contracts/:ecId/job-visibility', requireAdmin, async (req, res) => {
+    const { job_ids } = req.body || {};
+    if (!Array.isArray(job_ids)) return res.status(400).json({ error: 'job_ids must be an array' });
+
+    const { ecId } = req.params;
+    const client = await pool.connect();
+    try {
+      await client.query('BEGIN');
+
+      const { rows: ecCheck } = await client.query(
+        `SELECT id FROM engineering_contracts WHERE id = $1`,
+        [ecId]
+      );
+      if (!ecCheck[0]) {
+        await client.query('ROLLBACK');
+        return res.status(404).json({ error: 'Engineering contract not found' });
+      }
+
+      // Delete existing rows for this EC.
+      await client.query(
+        `DELETE FROM ec_job_visibility WHERE engineering_contract_id = $1`,
+        [ecId]
+      );
+
+      let newRows = [];
+      if (job_ids.length > 0) {
+        const userId = req.user && req.user.id;
+        // Insert new rows, skipping any invalid job UUIDs via INNER JOIN.
+        const { rows } = await client.query(
+          `INSERT INTO ec_job_visibility (engineering_contract_id, job_id, created_by_user_id)
+             SELECT $1, j.id, $3
+               FROM jobs j
+              WHERE j.id = ANY($2::uuid[])
+             RETURNING *`,
+          [ecId, job_ids, userId || null]
+        );
+        newRows = rows;
+      }
+
+      await client.query('COMMIT');
+      res.json(newRows);
+    } catch (e) {
+      await client.query('ROLLBACK');
+      console.error('[ec-jobs:visibility-replace]', e && e.message);
+      res.status(500).json({ error: 'Failed to replace job visibility list.' });
+    } finally {
+      client.release();
+    }
+  });
+
+  // ─── EC-SCOPED CONSTRUCTION CONTRACTS ───────────────────────────────────────
+  //
+  // Uses the existing nullable contracts.engineering_contract_id FK
+  // (added in migration 0031) — no new link table needed.
+  //
+  // Response includes a `scope` field: 'explicit' when contracts.engineering_contract_id
+  // matches this EC, 'legacy_fallback' when the contract is unscoped (null) but
+  // belongs to the same client.
+
+  // GET /api/engineering-contracts/:ecId/construction-contracts
+  // Lists contracts explicitly attached to this EC plus unscoped contracts at
+  // the same client (legacy fallback).
+  app.get('/api/engineering-contracts/:ecId/construction-contracts', requireAuth(), async (req, res) => {
+    const { ecId } = req.params;
+    try {
+      const { rows: ecRows } = await pool.query(
+        `SELECT client_id FROM engineering_contracts WHERE id = $1`,
+        [ecId]
+      );
+      if (!ecRows[0]) return res.status(404).json({ error: 'Engineering contract not found' });
+      const { client_id } = ecRows[0];
+
+      const { rows } = await pool.query(
+        `SELECT c.*,
+                CASE WHEN c.engineering_contract_id = $1 THEN 'explicit'
+                     ELSE 'legacy_fallback' END AS scope
+           FROM contracts c
+          WHERE c.engineering_contract_id = $1
+             OR (c.engineering_contract_id IS NULL AND c.client_id = $2)
+          ORDER BY c.active DESC, c.contract_number`,
+        [ecId, client_id]
+      );
+      res.json(rows);
+    } catch (e) {
+      console.error('[ec-contracts:list]', e && e.message);
+      res.status(500).json({ error: 'Failed to load construction contracts.' });
+    }
+  });
+
+  // POST /api/engineering-contracts/:ecId/construction-contracts
+  // Attach an existing contract to this EC (sets contracts.engineering_contract_id).
+  // Body: { contract_id: uuid }
+  app.post('/api/engineering-contracts/:ecId/construction-contracts', requireAdmin, async (req, res) => {
+    const { contract_id } = req.body || {};
+    if (!contract_id) return res.status(400).json({ error: 'contract_id required' });
+
+    const { ecId } = req.params;
+    try {
+      const { rows: ecRows } = await pool.query(
+        `SELECT client_id FROM engineering_contracts WHERE id = $1`,
+        [ecId]
+      );
+      if (!ecRows[0]) return res.status(404).json({ error: 'Engineering contract not found' });
+      const { client_id } = ecRows[0];
+
+      // Validate the contract exists.
+      const { rows: contractRows } = await pool.query(
+        `SELECT id, client_id, engineering_contract_id FROM contracts WHERE id = $1`,
+        [contract_id]
+      );
+      if (!contractRows[0]) return res.status(404).json({ error: 'Contract not found' });
+
+      // Prevent attaching a contract that belongs to a different client.
+      if (contractRows[0].client_id !== client_id) {
+        return res.status(409).json({ error: 'Contract belongs to a different client than this engineering contract.' });
+      }
+
+      // Prevent attaching a contract that is already explicitly attached to a
+      // different EC. (Re-attaching to the same EC is a no-op / idempotent.)
+      const existing = contractRows[0].engineering_contract_id;
+      if (existing && existing !== ecId) {
+        return res.status(409).json({ error: 'Contract is already attached to a different engineering contract. Detach it first.' });
+      }
+
+      const { rows } = await pool.query(
+        `UPDATE contracts SET engineering_contract_id = $1 WHERE id = $2 RETURNING *`,
+        [ecId, contract_id]
+      );
+      res.json(rows[0]);
+    } catch (e) {
+      console.error('[ec-contracts:attach]', e && e.message);
+      res.status(500).json({ error: 'Failed to attach contract.' });
+    }
+  });
+
+  // DELETE /api/engineering-contracts/:ecId/construction-contracts/:contractId
+  // Detach a contract from this EC (sets engineering_contract_id = NULL).
+  // Returns 404 if contract is not attached to this specific EC.
+  app.delete('/api/engineering-contracts/:ecId/construction-contracts/:contractId', requireAdmin, async (req, res) => {
+    const { ecId, contractId } = req.params;
+    try {
+      const { rows } = await pool.query(
+        `UPDATE contracts SET engineering_contract_id = NULL
+          WHERE id = $1 AND engineering_contract_id = $2
+          RETURNING id`,
+        [contractId, ecId]
+      );
+      if (!rows[0]) return res.status(404).json({ error: 'Contract not found or not attached to this engineering contract.' });
+      res.json({ ok: true });
+    } catch (e) {
+      console.error('[ec-contracts:detach]', e && e.message);
+      res.status(500).json({ error: 'Failed to detach contract.' });
+    }
+  });
 };
