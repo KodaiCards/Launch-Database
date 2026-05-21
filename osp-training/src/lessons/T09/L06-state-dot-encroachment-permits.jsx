@@ -72,10 +72,9 @@ export const meta = {
   vocabulary_assumed: [
     { term: 'encroachment permit', source_lesson_id: 'T09.L01' },
     { term: 'AHJ', source_lesson_id: 'T09.L01' },
-    { term: 'ROW', source_lesson_id: 'T01.L01' },
+    { term: 'ROW', source_lesson_id: 'T01.L08' },
     { term: 'jurisdictional trigger', source_lesson_id: 'T09.L01' },
-    { term: 'KMZ / shapefile deliverables', source_lesson_id: 'T04.L06' },
-    { term: 'route alternatives', source_lesson_id: 'T04.L01' },
+        { term: 'route alternatives', source_lesson_id: 'T04.L05' },
   ],
 };
 

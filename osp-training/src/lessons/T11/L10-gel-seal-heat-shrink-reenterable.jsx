@@ -67,9 +67,7 @@ export const meta = {
     { term: 'butt-splice (inline/horizontal) closure', source_lesson_id: 'T11.L09' },
     { term: 'heat-shrink vs. cold-seal entry port', source_lesson_id: 'T11.L09' },
     { term: 'case re-entry', source_lesson_id: 'T11.L09' },
-    { term: 'cable jacket types', source_lesson_id: 'T03.L01' },
-    { term: 'gel-filled', source_lesson_id: 'T03.L01' },
-  ],
+          ],
 };
 
 export const vocabulary_introduced = meta.vocabulary_introduced;

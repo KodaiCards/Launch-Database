@@ -45,15 +45,10 @@ export const meta = {
     { term: 'inspection segment', source_lesson_id: 'T13.L01' },
     { term: 'acceptance criteria document', source_lesson_id: 'T13.L02' },
     { term: 'RUS Form 565 (Inspector\'s Daily Report)', source_lesson_id: 'T13.L11' },
-    { term: 'confined space, atmospheric testing, attendant', source_lesson_id: 'T18.L03' },
-    { term: 'proctor density', source_lesson_id: 'T10.L08' },
-    { term: 'ASTM D1557 Modified Proctor', source_lesson_id: 'T10.L08' },
-    { term: 'depth probe', source_lesson_id: 'T10.L04' },
+        { term: 'proctor density', source_lesson_id: 'T10.L08' },
+        { term: 'depth probe', source_lesson_id: 'T10.L04' },
     { term: 'cover card', source_lesson_id: 'T10.L04' },
-    { term: 'Call-811, locate ticket', source_lesson_id: 'T10.L01' },
-    { term: 'ground resistance threshold (25Ω, NEC §250.56)', source_lesson_id: 'T14.L06' },
-    { term: 'MUTCD traffic control', source_lesson_id: 'T10.L03' },
-    { term: 'PPE (general)', source_lesson_id: 'T18.L01' },
+                { term: 'PPE', source_lesson_id: 'T01.L08' },
   ],
 };
 

@@ -27,7 +27,7 @@ export const meta = {
     'mismatched fiber splice',
   ],
   vocabulary_assumed: [
-    { term: 'OTDR trace', source_lesson_id: 'T12.L07' },
+    { term: 'OTDR trace', source_lesson_id: 'T12.L08' },
     { term: 'fusion splice', source_lesson_id: 'T11.L04' },
     { term: 'fault locate (cable-distance)', source_lesson_id: 'T15.L02' },
     { term: 'slack factor', source_lesson_id: 'T15.L02' },

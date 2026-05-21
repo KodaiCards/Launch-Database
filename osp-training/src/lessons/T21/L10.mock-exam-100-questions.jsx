@@ -18,7 +18,6 @@ export const meta = {
   estimated_minutes: 120,
   vocabulary_introduced: [],
   vocabulary_assumed: [
-    { term: 'CFOS-O exam blueprint', source_lesson_id: 'T21.L01' },
   ],
 };
 

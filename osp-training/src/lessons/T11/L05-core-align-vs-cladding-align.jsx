@@ -51,7 +51,7 @@ export const meta = {
     },
   ],
   vocabulary_assumed: [
-    { term: 'MFD', source_lesson_id: 'T02.L03' },
+    { term: 'MFD', source_lesson_id: 'T02.L01' },
     { term: 'G.652.D', source_lesson_id: 'T02.L01' },
     { term: 'G.657', source_lesson_id: 'T02.L04' },
     { term: 'fusion splice', source_lesson_id: 'T11.L04' },

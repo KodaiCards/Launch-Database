@@ -69,8 +69,7 @@ export const meta = {
     },
   ],
   vocabulary_assumed: [
-    { term: 'attenuation dB/km', source_lesson_id: 'T02.L02' },
-    { term: 'link budget', source_lesson_id: 'T02.L06' },
+        { term: 'link budget', source_lesson_id: 'T02.L06' },
     { term: 'dB', source_lesson_id: 'T02.L05' },
     { term: 'dBm', source_lesson_id: 'T02.L05' },
     { term: 'TIA-598 color sequence', source_lesson_id: 'T11.L01' },

@@ -27,10 +27,8 @@ export const meta = {
     'Blueprint (exam scope definition)',
   ],
   vocabulary_assumed: [
-    { term: 'fiber optics', source_lesson_id: 'T02.L01' },
     { term: 'OSP', source_lesson_id: 'T01.L01' },
-    { term: 'CFOT', source_lesson_id: 'T01.L01' },
-    { term: 'splice', source_lesson_id: 'T11.L02' },
+    { term: 'CFOT', source_lesson_id: 'T01.L08' },
   ],
 };
 

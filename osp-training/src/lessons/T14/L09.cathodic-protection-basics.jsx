@@ -64,10 +64,7 @@ export const meta = {
     { term: 'ground rod', source_lesson_id: 'T14.L04' },
     { term: 'GES', source_lesson_id: 'T01.L08' },
     { term: 'conduit', source_lesson_id: 'T01.L02' },
-    { term: 'pedestal', source_lesson_id: 'T06.L05' },
-    { term: 'burial depth', source_lesson_id: 'T06.L02' },
-    { term: 'duct', source_lesson_id: 'T06.L02' },
-  ],
+              ],
   learning_objectives: [
     'Explain the corrosion cell mechanism and why buried metallic conduit adjacent to gas or water mains is at risk',
     'Describe cathodic protection using the sacrificial anode method in plain English',

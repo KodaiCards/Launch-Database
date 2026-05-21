@@ -29,10 +29,9 @@ export const meta = {
     { term: 'fault locate (cable-distance)', source_lesson_id: 'T15.L02' },
     { term: 'hand-dig zone (24-inch tolerance zone)', source_lesson_id: 'T15.L03' },
     { term: 'locate ticket', source_lesson_id: 'T10.L01' },
-    { term: 'MUTCD traffic control', source_lesson_id: 'T10.L03' },
-    { term: 'PPE (general)', source_lesson_id: 'T18.L01' },
+        { term: 'PPE', source_lesson_id: 'T01.L08' },
     { term: 'confined space', source_lesson_id: 'T18.L03' },
-    { term: 'PRCS (permit-required confined space)', source_lesson_id: 'T18.L03' },
+    { term: 'permit-required confined space', source_lesson_id: 'T18.L03' },
   ],
   key_terms: [
     {

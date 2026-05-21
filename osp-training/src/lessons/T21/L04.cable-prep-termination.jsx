@@ -29,9 +29,7 @@ export const meta = {
   ],
   vocabulary_assumed: [
     { term: 'buffer tube', source_lesson_id: 'T01.L03' },
-    { term: 'fiber stripping', source_lesson_id: 'T04.L01' },
-    { term: 'splice', source_lesson_id: 'T11.L02' },
-    { term: 'fusion splicer', source_lesson_id: 'T11.L02' },
+            { term: 'fusion splicer', source_lesson_id: 'T22.L03' },
   ],
 };
 

@@ -44,8 +44,7 @@ export const meta = {
     { term: 'span', source_lesson_id: 'T01.L02' },
     { term: 'sag', source_lesson_id: 'T01.L02' },
     { term: 'messenger', source_lesson_id: 'T01.L03' },
-    { term: 'tension', source_lesson_id: 'T03.L04' },
-  ],
+      ],
   key_terms: [
     {
       term: 'pole loading',

@@ -34,10 +34,9 @@ export const meta = {
   vocabulary_assumed: [
     { term: 'fusion splice', source_lesson_id: 'T11.L04' },
     { term: 'cleave angle', source_lesson_id: 'T11.L06' },
-    { term: 'insertion loss', source_lesson_id: 'T11.L12' },
+    { term: 'insertion loss', source_lesson_id: 'T22.L04' },
     { term: 'IEC 61300-3-35 inspection protocol', source_lesson_id: 'T11.L12' },
-    { term: 'IPA hazmat awareness', source_lesson_id: 'T18.L04' },
-  ],
+      ],
 };
 
 export const key_terms = [

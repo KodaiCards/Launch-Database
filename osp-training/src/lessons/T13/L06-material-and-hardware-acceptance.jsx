@@ -46,7 +46,7 @@ export const meta = {
     { term: 'retainage', source_lesson_id: 'T13.L01' },
     { term: 'inspection segment', source_lesson_id: 'T13.L01' },
     { term: 'RUS Form 565 (Inspector\'s Daily Report)', source_lesson_id: 'T13.L11' },
-    { term: 'OTDR', source_lesson_id: 'T12.L07' },
+    { term: 'OTDR', source_lesson_id: 'T01.L08' },
   ],
 };
 

@@ -46,13 +46,12 @@ export const meta = {
   ],
   vocabulary_assumed: [
     { term: 'inspector', source_lesson_id: 'T01.L06' },
-    { term: 'NESC (National Electrical Safety Code)', source_lesson_id: 'T05.L02' },
-    { term: 'loading district', source_lesson_id: 'T05.L02' },
+    { term: 'NESC', source_lesson_id: 'T05.L01' },
+    { term: 'loading district', source_lesson_id: 'T05.L06' },
     { term: 'RUS Form 565 (Inspector\'s Daily Report)', source_lesson_id: 'T13.L11' },
     { term: 'pre-construction acceptance baseline', source_lesson_id: 'T13.L02' },
     { term: 'acceptance criteria document', source_lesson_id: 'T13.L02' },
-    { term: 'MAD, MAB', source_lesson_id: 'T18.L07' },
-    { term: 'Form 219 certification scope', source_lesson_id: 'T13.L07' },
+        { term: 'Form 219 certification scope', source_lesson_id: 'T13.L07' },
   ],
 };
 

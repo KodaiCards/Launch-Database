@@ -31,11 +31,9 @@ export const meta = {
     'NEPA review',
   ],
   vocabulary_assumed: [
-    { term: 'RUS', source_lesson_id: 'T20.L01' },
-    { term: 'borrower', source_lesson_id: 'T20.L01' },
-    { term: 'Form 740', source_lesson_id: 'T20.L09' },
-    { term: 'Davis-Bacon', source_lesson_id: 'T20.L09' },
-  ],
+    { term: 'RUS', source_lesson_id: 'T01.L01' },
+        { term: 'Form 740', source_lesson_id: 'T20.L03' },
+      ],
   estimated_minutes: 45,
   learning_objectives: [
     'Diagram the call-order decision tree for RUS compliance escalation: state office loan officer (routine questions, construction status, schedule), RUS national office (policy interpretation, modification requests, waiver requests)',

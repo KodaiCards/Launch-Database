@@ -53,10 +53,8 @@ export const meta = {
     { term: 'RUS Form 565 (Inspector\'s Daily Report)', source_lesson_id: 'T13.L11' },
     { term: 'MSA', source_lesson_id: 'T10.L06' },
     { term: 'proctor density', source_lesson_id: 'T10.L08' },
-    { term: 'OTDR', source_lesson_id: 'T12.L07' },
-    { term: 'ground resistance threshold (25Ω, NEC §250.56)', source_lesson_id: 'T14.L06' },
-    { term: 'MUTCD traffic control', source_lesson_id: 'T10.L03' },
-  ],
+    { term: 'OTDR', source_lesson_id: 'T01.L08' },
+          ],
 };
 
 export const vocabulary_introduced = meta.vocabulary_introduced;

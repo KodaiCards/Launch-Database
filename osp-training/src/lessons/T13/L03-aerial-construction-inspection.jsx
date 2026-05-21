@@ -45,11 +45,8 @@ export const meta = {
     { term: 'acceptance criteria document', source_lesson_id: 'T13.L02' },
     { term: 'inspection cadence', source_lesson_id: 'T13.L02' },
     { term: 'RUS Form 565 (Inspector\'s Daily Report)', source_lesson_id: 'T13.L11' },
-    { term: 'fall protection, aerial lift', source_lesson_id: 'T18.L04' },
-    { term: 'MAD, MAB', source_lesson_id: 'T18.L07' },
-    { term: 'PPE (general)', source_lesson_id: 'T18.L01' },
-    { term: 'MUTCD traffic control', source_lesson_id: 'T10.L03' },
-  ],
+            { term: 'PPE', source_lesson_id: 'T01.L08' },
+      ],
 };
 
 export const vocabulary_introduced = meta.vocabulary_introduced;

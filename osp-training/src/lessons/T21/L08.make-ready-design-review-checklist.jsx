@@ -28,10 +28,10 @@ export const meta = {
     'Burndown (resolve issues before build)',
   ],
   vocabulary_assumed: [
-    { term: 'design', source_lesson_id: 'T05.L01' },
+    { term: 'design', source_lesson_id: 'T01.L05' },
     { term: 'pole', source_lesson_id: 'T01.L02' },
     { term: 'NESC', source_lesson_id: 'T05.L01' },
-    { term: 'make-ready', source_lesson_id: 'T08.L01' },
+    { term: 'make-ready', source_lesson_id: 'T01.L05' },
   ],
 };
 

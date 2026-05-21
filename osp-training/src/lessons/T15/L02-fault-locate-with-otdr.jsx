@@ -77,10 +77,9 @@ export const meta = {
     },
   ],
   vocabulary_assumed: [
-    { term: 'OTDR trace (event table)', source_lesson_id: 'T12.L08' },
-    { term: 'IOR (index of refraction)', source_lesson_id: 'T02.L01' },
-    { term: 'return loss (RL)', source_lesson_id: 'T11.L12' },
-    { term: 'insertion loss', source_lesson_id: 'T12.L06' },
+    { term: 'OTDR trace', source_lesson_id: 'T12.L08' },
+        { term: 'return loss (RL)', source_lesson_id: 'T11.L12' },
+    { term: 'insertion loss', source_lesson_id: 'T22.L04' },
     { term: 'fusion splice', source_lesson_id: 'T11.L04' },
     { term: 'outage bridge call', source_lesson_id: 'T15.L01' },
     { term: 'mobilization', source_lesson_id: 'T15.L01' },

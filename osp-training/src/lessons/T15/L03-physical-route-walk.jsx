@@ -45,10 +45,8 @@ export const meta = {
     { term: 'event dead zone (EDZ)', source_lesson_id: 'T15.L02' },
     { term: 'as-built', source_lesson_id: 'T01.L05' },
     { term: 'locate ticket', source_lesson_id: 'T10.L01' },
-    { term: 'MAD, MAB', source_lesson_id: 'T18.L07' },
-    { term: 'PPE (general)', source_lesson_id: 'T18.L01' },
-    { term: 'MUTCD traffic control', source_lesson_id: 'T10.L03' },
-  ],
+        { term: 'PPE', source_lesson_id: 'T01.L08' },
+      ],
 };
 
 export const vocabulary_introduced = meta.vocabulary_introduced;

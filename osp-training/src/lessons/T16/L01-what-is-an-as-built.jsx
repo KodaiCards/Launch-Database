@@ -35,7 +35,7 @@ export const meta = {
     { term: 'RUS Form 219', source_lesson_id: 'T01.L05' },
     { term: 'Form 219 certification scope', source_lesson_id: 'T13.L07' },
     { term: 'post-restoration as-built', source_lesson_id: 'T15.L09' },
-    { term: 'DFR (Daily Field Report)', source_lesson_id: 'T10.L10' },
+    { term: 'DFR', source_lesson_id: 'T10.L10' },
     { term: 'deviation log', source_lesson_id: 'T10.L10' },
   ],
   key_terms: [

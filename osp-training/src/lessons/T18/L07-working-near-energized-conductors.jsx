@@ -48,7 +48,7 @@ export const meta = {
     { term: 'hierarchy of controls', source_lesson_id: 'T18.L01' },
     { term: 'PPG glove class', source_lesson_id: 'T18.L05' },
     { term: 'ANSI Z89.1 Class E', source_lesson_id: 'T18.L05' },
-    { term: 'pole', source_lesson_id: 'T01.L01' },
+    { term: 'pole', source_lesson_id: 'T01.L02' },
   ],
   estimated_minutes: 25,
 };

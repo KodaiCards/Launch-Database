@@ -72,8 +72,7 @@ export const meta = {
     { term: 'federal nexus', source_lesson_id: 'T09.L01' },
     { term: 'BEAD', source_lesson_id: 'T09.L01' },
     { term: 'extraordinary circumstances', source_lesson_id: 'T09.L02' },
-    { term: 'route corridor', source_lesson_id: 'T04.L01' },
-  ],
+      ],
 };
 
 export const vocabulary_introduced = meta.vocabulary_introduced;

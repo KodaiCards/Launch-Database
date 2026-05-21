@@ -38,7 +38,7 @@ export const meta = {
     { term: 'express loop', source_lesson_id: 'T11.L11' },
     { term: 'splice loss (dB)', source_lesson_id: 'T11.L03' },
     { term: 'splice case types', source_lesson_id: 'T11.L09' },
-    { term: 'OTDR trace', source_lesson_id: 'T12.L07' },
+    { term: 'OTDR trace', source_lesson_id: 'T12.L08' },
     { term: 'as-built record', source_lesson_id: 'T16.L01' },
     { term: 'GIS record of record', source_lesson_id: 'T16.L01' },
   ],

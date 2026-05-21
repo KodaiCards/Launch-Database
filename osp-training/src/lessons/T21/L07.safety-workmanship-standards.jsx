@@ -28,10 +28,8 @@ export const meta = {
     'Qualified person (OSHA definition)',
   ],
   vocabulary_assumed: [
-    { term: 'OSHA', source_lesson_id: 'T18.L01' },
     { term: 'NESC', source_lesson_id: 'T05.L01' },
-    { term: 'PPE', source_lesson_id: 'T18.L02' },
-    { term: 'pole climbing', source_lesson_id: 'T18.L03' },
+    { term: 'PPE', source_lesson_id: 'T01.L08' },
   ],
 };
 

@@ -54,10 +54,8 @@ export const meta = {
     { term: 'transfer', source_lesson_id: 'T08.L04' },
     { term: 'reframe', source_lesson_id: 'T08.L05' },
     { term: 'OTMR', source_lesson_id: 'T08.L01' },
-    { term: 'pole audit', source_lesson_id: 'T07.L02' },
-    { term: 'NESC design loads', source_lesson_id: 'T05.L05' },
-    { term: 'pole condition', source_lesson_id: 'T07.L02' },
-  ],
+    { term: 'pole audit', source_lesson_id: 'T04.L04' },
+          ],
 };
 
 export const vocabulary_introduced = meta.vocabulary_introduced;

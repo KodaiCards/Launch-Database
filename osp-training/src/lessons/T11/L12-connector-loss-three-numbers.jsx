@@ -65,8 +65,7 @@ export const meta = {
     { term: 'APC (Angle Physical Contact)', source_lesson_id: 'T11.L02' },
     { term: 'UPC (Ultra Physical Contact)', source_lesson_id: 'T11.L02' },
     { term: 'APC/UPC mating prohibition', source_lesson_id: 'T11.L02' },
-    { term: 'attenuation dB/km', source_lesson_id: 'T02.L02' },
-    { term: 'dB', source_lesson_id: 'T02.L05' },
+        { term: 'dB', source_lesson_id: 'T02.L05' },
   ],
 };
 

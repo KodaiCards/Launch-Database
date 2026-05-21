@@ -22,8 +22,7 @@ export const meta = {
   ],
   vocabulary_introduced: [],
   vocabulary_assumed: [
-    { term: 'OTMR (One-Touch Make-Ready)', source_lesson_id: 'T08.L01' },
-    { term: 'multi-party', source_lesson_id: 'T08.L01' },
+    { term: 'multi-party make-ready', source_lesson_id: 'T08.L01' },
     { term: '15-day clock', source_lesson_id: 'T08.L02' },
     { term: 'self-help remedy', source_lesson_id: 'T08.L02' },
     { term: 'simple attachment', source_lesson_id: 'T08.L03' },

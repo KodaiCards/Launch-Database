@@ -19,8 +19,6 @@ export const meta = {
   estimated_minutes: 45,
   vocabulary_introduced: [],
   vocabulary_assumed: [
-    { term: 'CFOS-O exam', source_lesson_id: 'T21.L01' },
-    { term: 'domains', source_lesson_id: 'T21.L01' },
   ],
 };
 

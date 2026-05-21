@@ -32,10 +32,10 @@ export const meta = {
     'recording',
   ],
   vocabulary_assumed: [
-    { term: 'ROW (right-of-way)', source_lesson_id: 'T09.L01' },
+    { term: 'ROW', source_lesson_id: 'T01.L08' },
     { term: 'AHJ', source_lesson_id: 'T09.L01' },
     { term: 'landbase', source_lesson_id: 'T04.L03' },
-    { term: 'GIS', source_lesson_id: 'T04.L03' },
+    { term: 'GIS', source_lesson_id: 'T01.L08' },
     { term: 'site walk', source_lesson_id: 'T04.L01' },
   ],
   key_terms: [

@@ -60,9 +60,7 @@ export const meta = {
     { term: 'OTMR', source_lesson_id: 'T08.L01' },
     { term: 'complex attachment', source_lesson_id: 'T08.L03' },
     { term: 'make-ready cost causation', source_lesson_id: 'T08.L03' },
-    { term: 'attachment hardware', source_lesson_id: 'T07.L02' },
-    { term: 'bracket', source_lesson_id: 'T07.L02' },
-  ],
+          ],
 };
 
 export const vocabulary_introduced = meta.vocabulary_introduced;

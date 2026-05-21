@@ -27,13 +27,13 @@ export const meta = {
   ],
   vocabulary_assumed: [
     { term: 'fusion splice', source_lesson_id: 'T11.L04' },
-    { term: 'OTDR trace', source_lesson_id: 'T12.L07' },
+    { term: 'OTDR trace', source_lesson_id: 'T12.L08' },
     { term: 'temporary patch', source_lesson_id: 'T15.L04' },
     { term: 'permanent restoration', source_lesson_id: 'T15.L04' },
     { term: 'fiber type confirmation', source_lesson_id: 'T15.L04' },
     { term: 'mobilization', source_lesson_id: 'T15.L01' },
-    { term: 'PPE (general)', source_lesson_id: 'T18.L01' },
-    { term: 'LOTO', source_lesson_id: 'T18.L05' },
+    { term: 'PPE', source_lesson_id: 'T01.L08' },
+    { term: 'LOTO', source_lesson_id: 'T01.L08' },
   ],
   key_terms: [
     {

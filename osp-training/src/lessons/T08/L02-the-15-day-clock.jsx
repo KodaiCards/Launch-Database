@@ -62,8 +62,8 @@ export const meta = {
     { term: 'FCC 18-111', source_lesson_id: 'T08.L01' },
     { term: '47 CFR §1.1411', source_lesson_id: 'T08.L01' },
     { term: 'attachment applicant', source_lesson_id: 'T08.L01' },
-    { term: 'pole owner', source_lesson_id: 'T01.L02' },
-    { term: 'make-ready', source_lesson_id: 'T07.L02' },
+    { term: 'pole owner', source_lesson_id: 'T05.L08' },
+    { term: 'make-ready', source_lesson_id: 'T01.L05' },
   ],
 };
 

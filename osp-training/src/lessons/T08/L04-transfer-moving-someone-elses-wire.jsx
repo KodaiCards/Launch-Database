@@ -54,8 +54,7 @@ export const meta = {
     { term: 'complex attachment', source_lesson_id: 'T08.L03' },
     { term: 'make-ready cost causation', source_lesson_id: 'T08.L03' },
     { term: 'attachment applicant', source_lesson_id: 'T08.L01' },
-    { term: 'NESC clearance', source_lesson_id: 'T05.L04' },
-    { term: 'pole audit', source_lesson_id: 'T07.L02' },
+        { term: 'pole audit', source_lesson_id: 'T04.L04' },
   ],
 };
 

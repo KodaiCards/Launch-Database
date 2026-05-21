@@ -79,9 +79,8 @@ export const meta = {
     { term: 'federal nexus', source_lesson_id: 'T09.L01' },
     { term: 'AHJ', source_lesson_id: 'T09.L01' },
     { term: 'BEAD', source_lesson_id: 'T09.L01' },
-    { term: 'ROW', source_lesson_id: 'T01.L01' },
-    { term: 'route footprint', source_lesson_id: 'T04.L01' },
-  ],
+    { term: 'ROW', source_lesson_id: 'T01.L08' },
+      ],
 };
 
 export const vocabulary_introduced = meta.vocabulary_introduced;

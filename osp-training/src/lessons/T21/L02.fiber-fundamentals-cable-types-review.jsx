@@ -22,12 +22,10 @@ export const meta = {
     'Spectral window (1310 vs 1490 vs 1550 nm applications)',
   ],
   vocabulary_assumed: [
-    { term: 'fiber optic', source_lesson_id: 'T02.L01' },
-    { term: 'single-mode fiber', source_lesson_id: 'T02.L08' },
-    { term: 'multimode fiber', source_lesson_id: 'T02.L08' },
-    { term: 'attenuation', source_lesson_id: 'T02.L01' },
-    { term: 'dispersion', source_lesson_id: 'T02.L01' },
-    { term: 'numerical aperture', source_lesson_id: 'T02.L02' },
+    { term: 'Single-mode fiber (SMF)', source_lesson_id: 'T22.L02' },
+    { term: 'Multimode fiber (MMF)', source_lesson_id: 'T22.L02' },
+    { term: 'attenuation', source_lesson_id: 'T02.L02' },
+    { term: 'dispersion', source_lesson_id: 'T02.L03' },
   ],
 };
 

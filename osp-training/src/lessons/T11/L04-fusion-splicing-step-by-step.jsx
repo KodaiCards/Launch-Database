@@ -99,8 +99,7 @@ export const meta = {
     },
   ],
   vocabulary_assumed: [
-    { term: 'attenuation dB/km', source_lesson_id: 'T02.L02' },
-    { term: 'G.652.D', source_lesson_id: 'T02.L01' },
+        { term: 'G.652.D', source_lesson_id: 'T02.L01' },
     { term: 'G.657', source_lesson_id: 'T02.L04' },
     { term: 'buffer tube', source_lesson_id: 'T01.L03' },
     { term: 'FOA design target', source_lesson_id: 'T11.L03' },

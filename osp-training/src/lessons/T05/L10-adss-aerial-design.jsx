@@ -31,8 +31,8 @@ export const meta = {
   ],
   vocabulary_assumed: [
     { term: 'ADSS', source_lesson_id: 'T01.L08' },
-    { term: 'EDS (Everyday Stress)', source_lesson_id: 'T03.L04' },
-    { term: 'RTS (Rated Tensile Strength)', source_lesson_id: 'T03.L04' },
+    { term: 'EDS', source_lesson_id: 'T03.L04' },
+    { term: 'RTS', source_lesson_id: 'T03.L04' },
     { term: 'sag (s)', source_lesson_id: 'T05.L07' },
     { term: 'horizontal tension (H)', source_lesson_id: 'T05.L07' },
     { term: 'parabolic approximation', source_lesson_id: 'T05.L07' },

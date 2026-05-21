@@ -34,8 +34,7 @@ export const meta = {
   vocabulary_assumed: [
     { term: 'AHJ', source_lesson_id: 'T09.L01' },
     { term: 'encroachment permit', source_lesson_id: 'T09.L01' },
-    { term: 'KMZ deliverable', source_lesson_id: 'T04.L06' },
-    { term: 'ROW (right-of-way)', source_lesson_id: 'T09.L01' },
+        { term: 'ROW', source_lesson_id: 'T01.L08' },
     { term: 'PE stamp', source_lesson_id: 'T09.L06' },
   ],
   key_terms: [

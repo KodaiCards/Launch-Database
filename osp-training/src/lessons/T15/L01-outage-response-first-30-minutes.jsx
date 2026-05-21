@@ -82,12 +82,12 @@ export const meta = {
     },
   ],
   vocabulary_assumed: [
-    { term: 'inspector (OSP)', source_lesson_id: 'T01.L06' },
+    { term: 'inspector', source_lesson_id: 'T01.L06' },
     { term: 'as-built', source_lesson_id: 'T01.L05' },
     { term: 'fusion splice', source_lesson_id: 'T11.L04' },
-    { term: 'OTDR trace (event table)', source_lesson_id: 'T12.L07' },
+    { term: 'OTDR trace', source_lesson_id: 'T12.L08' },
     { term: 'RUS Form 565 (Inspector\'s Daily Report)', source_lesson_id: 'T13.L11' },
-    { term: 'Form 219', source_lesson_id: 'T13.L07' },
+    { term: 'Form 219', source_lesson_id: 'T01.L09' },
   ],
 };
 

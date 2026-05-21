@@ -37,7 +37,7 @@ export const meta = {
     { term: 'indirect cost / overhead', source_lesson_id: 'T17.L01' },
     { term: 'bore cost', source_lesson_id: 'T17.L02' },
     { term: 'make-ready cost', source_lesson_id: 'T17.L02' },
-    { term: 'RUS (Rural Utilities Service)', source_lesson_id: 'T01.L01' },
+    { term: 'RUS', source_lesson_id: 'T01.L01' },
   ],
 };
 

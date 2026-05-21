@@ -29,10 +29,9 @@ export const meta = {
   ],
   vocabulary_assumed: [
     { term: 'OTDR', source_lesson_id: 'T12.L01' },
-    { term: 'attenuation', source_lesson_id: 'T02.L01' },
-    { term: 'fusion splice', source_lesson_id: 'T21.L05' },
-    { term: 'fiber link', source_lesson_id: 'T01.L07' },
-  ],
+    { term: 'attenuation', source_lesson_id: 'T02.L02' },
+    { term: 'fusion splice', source_lesson_id: 'T11.L04' },
+      ],
 };
 
 export const key_terms = meta.vocabulary_introduced;

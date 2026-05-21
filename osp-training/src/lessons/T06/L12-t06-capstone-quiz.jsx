@@ -38,7 +38,7 @@ export const meta = {
     { term: 'handhole', source_lesson_id: 'T06.L05' },
     { term: 'H-20 live loading', source_lesson_id: 'T06.L05' },
     { term: 'foreign utility', source_lesson_id: 'T06.L06' },
-    { term: 'APWA color codes', source_lesson_id: 'T06.L06' },
+    { term: 'APWA color code', source_lesson_id: 'T10.L01' },
     { term: 'pilot bore', source_lesson_id: 'T06.L07' },
     { term: 'bentonite slurry', source_lesson_id: 'T06.L07' },
     { term: 'bore-pit ground heave', source_lesson_id: 'T06.L07' },

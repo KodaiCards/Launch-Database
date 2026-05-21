@@ -82,8 +82,7 @@ export const meta = {
     { term: 'federal nexus', source_lesson_id: 'T09.L01' },
     { term: 'jurisdictional trigger', source_lesson_id: 'T09.L01' },
     { term: 'AHJ', source_lesson_id: 'T09.L01' },
-    { term: 'route survey wetland flags', source_lesson_id: 'T04.L01' },
-  ],
+      ],
 };
 
 export const vocabulary_introduced = meta.vocabulary_introduced;

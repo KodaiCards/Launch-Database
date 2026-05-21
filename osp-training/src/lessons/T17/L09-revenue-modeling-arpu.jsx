@@ -37,7 +37,7 @@ export const meta = {
     { term: 'unit cost (construction)', source_lesson_id: 'T17.L01' },
     { term: 'direct cost', source_lesson_id: 'T17.L01' },
     { term: 'indirect cost / overhead', source_lesson_id: 'T17.L01' },
-    { term: 'RUS (Rural Utilities Service)', source_lesson_id: 'T01.L01' },
+    { term: 'RUS', source_lesson_id: 'T01.L01' },
     { term: 'GPON', source_lesson_id: 'T01.L08' },
   ],
 };

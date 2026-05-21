@@ -28,10 +28,8 @@ export const meta = {
     'Clearance (NESC)',
   ],
   vocabulary_assumed: [
-    { term: 'OSP cable', source_lesson_id: 'T03.L01' },
     { term: 'NESC', source_lesson_id: 'T05.L01' },
     { term: 'pole', source_lesson_id: 'T01.L02' },
-    { term: 'burial depth', source_lesson_id: 'T06.L01' },
     { term: 'splice case', source_lesson_id: 'T01.L04' },
   ],
 };

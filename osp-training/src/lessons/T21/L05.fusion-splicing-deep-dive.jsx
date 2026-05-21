@@ -28,10 +28,9 @@ export const meta = {
     'Splice enclosure / heat-shrink sleeve',
   ],
   vocabulary_assumed: [
-    { term: 'fusion splicing', source_lesson_id: 'T11.L02' },
-    { term: 'fiber alignment', source_lesson_id: 'T11.L01' },
-    { term: 'cleaving', source_lesson_id: 'T21.L04' },
-    { term: 'splice case', source_lesson_id: 'T01.L03' },
+    { term: 'fiber alignment', source_lesson_id: 'T19.L11' },
+    { term: 'Cleaving (fiber end preparation)', source_lesson_id: 'T21.L04' },
+    { term: 'splice case', source_lesson_id: 'T01.L04' },
   ],
 };
 

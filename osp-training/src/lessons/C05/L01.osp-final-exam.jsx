@@ -1,9 +1,9 @@
-// C05.L01 — OSP Course Final Exam (60 Questions, Comprehensive Assessment)
-// Covers all general topics T01–T19 proportionally.
+// C05.L01 — OSP Course Final Exam (70 Questions, Comprehensive Assessment)
+// Covers all general topics T01–T20 proportionally.
 // Scores persisted via POST /api/training/cert-attempt (cert_track: 'osp-general')
 // and POST /api/training/progress (lesson completion).
 //
-// Pass threshold: 80% (48/60).
+// Pass threshold: 80% (56/70).
 // Timed: 90 minutes with auto-submit on expiry.
 // Per-domain breakdown shown in results view.
 
@@ -33,8 +33,7 @@ export const meta = {
     { term: 'OSP', source_lesson_id: 'T01.L01' },
     { term: 'NESC', source_lesson_id: 'T05.L01' },
     { term: 'attenuation', source_lesson_id: 'T02.L02' },
-    { term: 'splice', source_lesson_id: 'T11.L01' },
-    { term: 'make-ready', source_lesson_id: 'T08.L01' },
+        { term: 'make-ready', source_lesson_id: 'T01.L05' },
     { term: 'OTDR', source_lesson_id: 'T12.L01' },
     { term: 'FDH', source_lesson_id: 'T19.L09' },
   ],

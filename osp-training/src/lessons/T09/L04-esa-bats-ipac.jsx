@@ -79,8 +79,7 @@ export const meta = {
     { term: 'extraordinary circumstances', source_lesson_id: 'T09.L02' },
     { term: 'CE C-8', source_lesson_id: 'T09.L02' },
     { term: 'site walk', source_lesson_id: 'T04.L01' },
-    { term: 'vegetation observation', source_lesson_id: 'T04.L01' },
-  ],
+      ],
 };
 
 export const vocabulary_introduced = meta.vocabulary_introduced;

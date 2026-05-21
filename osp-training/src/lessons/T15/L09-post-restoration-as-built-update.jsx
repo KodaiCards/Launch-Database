@@ -26,7 +26,7 @@ export const meta = {
   ],
   vocabulary_assumed: [
     { term: 'as-built', source_lesson_id: 'T01.L05' },
-    { term: 'OTDR trace', source_lesson_id: 'T12.L07' },
+    { term: 'OTDR trace', source_lesson_id: 'T12.L08' },
     { term: 'concurrent documentation', source_lesson_id: 'T15.L08' },
     { term: 'MOP (Method of Procedure)', source_lesson_id: 'T15.L08' },
     { term: 'splice closure reinstallation', source_lesson_id: 'T15.L04' },
