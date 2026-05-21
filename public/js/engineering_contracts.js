@@ -101,6 +101,8 @@
               <td style="padding:6px 8px;text-align:right;white-space:nowrap">
                 <button class="btn btn-sm btn-secondary" onclick="editEngineeringContract('${ec.id}')" title="Edit fields"><i class="fa-solid fa-pen"></i></button>
                 <button class="btn btn-sm btn-secondary" onclick="toggleEcWosaPanel('${ec.id}')" title="Manage WO# and Service Areas" style="font-size:11px;padding:3px 7px">WO/SA</button>
+                <button class="btn btn-sm btn-secondary" onclick="toggleEcJobsPanel('${ec.id}')" title="Manage job visibility" style="font-size:11px;padding:3px 7px">Jobs</button>
+                <button class="btn btn-sm btn-secondary" onclick="toggleEcContractsPanel('${ec.id}')" title="Manage attached contracts" style="font-size:11px;padding:3px 7px">Contracts</button>
                 <button class="btn btn-sm" style="color:var(--danger);background:transparent;border:1px solid var(--gray-border)" onclick="deleteEngineeringContract('${ec.id}', '${esc(ec.name)}', ${ec.contract_count})" title="Delete"><i class="fa-solid fa-trash"></i></button>
               </td>
             </tr>
@@ -137,10 +139,230 @@
                 </div>
               </td>
             </tr>
+            <!-- Job Visibility panel -->
+            <tr id="ec-jobs-panel-${ec.id}" style="display:none;background:var(--surface-1)">
+              <td colspan="8" style="padding:0">
+                <div style="padding:12px 16px;border-top:2px solid var(--primary)">
+                  <div style="font-weight:600;font-size:13px;margin-bottom:4px">Jobs Visible for This EC — ${esc(ec.name)}</div>
+                  <div style="font-size:12px;color:var(--text-muted);margin-bottom:10px">Check jobs that should appear in this EC's project picker. If none are checked, all jobs visible via global filters (for_psc_client / program_scope) will be used instead.</div>
+                  <div id="ec-jobs-list-${ec.id}" style="max-height:260px;overflow-y:auto;border:1px solid var(--border-strong);border-radius:4px;padding:4px 8px;background:var(--surface-2)"></div>
+                  <div id="ec-jobs-err-${ec.id}" style="color:var(--danger);font-size:12px;margin-top:4px"></div>
+                  <div style="margin-top:8px;display:flex;justify-content:flex-end">
+                    <button id="ec-jobs-save-${ec.id}" class="btn btn-sm btn-primary" onclick="saveEcJobVisibility('${ec.id}')">Update Visibility</button>
+                  </div>
+                </div>
+              </td>
+            </tr>
+            <!-- Construction Contracts panel -->
+            <tr id="ec-contracts-panel-${ec.id}" style="display:none;background:var(--surface-1)">
+              <td colspan="8" style="padding:0">
+                <div style="padding:12px 16px;border-top:2px solid var(--primary)">
+                  <div style="display:flex;align-items:center;gap:8px;margin-bottom:10px">
+                    <div style="font-weight:600;font-size:13px">Construction Contracts — ${esc(ec.name)}</div>
+                    <span id="ec-cc-count-${ec.id}" style="font-size:11px;background:var(--surface-3);color:var(--text-muted);border-radius:10px;padding:1px 8px"></span>
+                  </div>
+                  <div id="ec-cc-list-${ec.id}" style="margin-bottom:10px;font-size:13px"></div>
+                  <div id="ec-cc-err-${ec.id}" style="color:var(--danger);font-size:12px;margin-bottom:6px"></div>
+                  <div style="font-size:11px;font-weight:700;text-transform:uppercase;color:var(--text-muted);margin-bottom:6px">+ Attach Contract</div>
+                  <div style="display:flex;gap:6px;align-items:center">
+                    <select id="ec-cc-attach-sel-${ec.id}" aria-label="Select contract to attach" style="flex:1;font-size:12px;padding:4px 6px;border:1px solid var(--border-strong);border-radius:4px;background:var(--surface-2);color:var(--text)">
+                      <option value="">— Select contract to attach —</option>
+                    </select>
+                    <button class="btn btn-sm btn-primary" onclick="attachEcContract('${ec.id}')"><i class="fa-solid fa-link"></i> Attach</button>
+                  </div>
+                </div>
+              </td>
+            </tr>
           `).join('')}
         </tbody>
       </table>
     `;
+  }
+
+  // ── Job Visibility panel ─────────────────────────────────────────────────────
+
+  // Per-EC cache: all system jobs + which are currently visible for this EC.
+  const _ecJobsCache = {};
+  const _ecJobVisibilityCache = {};
+
+  async function refreshEcJobsPanel(ecId) {
+    const listEl = document.getElementById(`ec-jobs-list-${ecId}`);
+    const errEl  = document.getElementById(`ec-jobs-err-${ecId}`);
+    if (!listEl) return;
+    listEl.innerHTML = '<div style="color:var(--text-muted);font-size:12px;padding:4px 0">Loading…</div>';
+    if (errEl) errEl.textContent = '';
+    try {
+      const [allJobs, visRows] = await Promise.all([
+        api('/api/jobs?active=true'),
+        api(`/api/engineering-contracts/${ecId}/job-visibility`),
+      ]);
+      _ecJobsCache[ecId]           = allJobs;
+      _ecJobVisibilityCache[ecId]  = visRows;
+      renderEcJobsList(ecId, allJobs, visRows);
+    } catch (e) {
+      listEl.innerHTML = '';
+      if (errEl) errEl.textContent = 'Failed to load jobs: ' + e.message;
+    }
+  }
+
+  function renderEcJobsList(ecId, allJobs, visRows) {
+    const listEl = document.getElementById(`ec-jobs-list-${ecId}`);
+    if (!listEl) return;
+    const visSet = new Set((visRows || []).map(r => r.job_id));
+    if (!allJobs || !allJobs.length) {
+      listEl.innerHTML = '<div style="color:var(--text-muted);font-size:12px">No jobs in system yet.</div>';
+      return;
+    }
+    const rows = allJobs.map((job, i) => {
+      const checked = visSet.has(job.id) ? 'checked' : '';
+      const meta = [
+        job.team          ? `<span style="color:var(--text-muted);font-size:11px">${esc(job.team)}</span>` : '',
+        job.program_scope ? `<span style="color:var(--text-muted);font-size:11px;text-transform:uppercase">${esc(job.program_scope)}</span>` : '',
+      ].filter(Boolean).join(' · ');
+      return `
+        <label style="display:flex;align-items:center;gap:8px;padding:4px 0;border-bottom:1px solid var(--border-weak);cursor:pointer" for="ec-job-cb-${ecId}-${i}">
+          <input type="checkbox" id="ec-job-cb-${ecId}-${i}" data-job-id="${job.id}" ${checked}
+                 style="accent-color:var(--primary);width:14px;height:14px;flex-shrink:0">
+          <span style="flex:1;font-size:13px;color:var(--text)">${esc(job.name)}</span>
+          ${meta}
+        </label>`;
+    }).join('');
+    listEl.innerHTML = rows;
+  }
+
+  async function saveEcJobVisibility(ecId) {
+    const listEl = document.getElementById(`ec-jobs-list-${ecId}`);
+    const errEl  = document.getElementById(`ec-jobs-err-${ecId}`);
+    const saveBtn = document.getElementById(`ec-jobs-save-${ecId}`);
+    if (!listEl) return;
+    if (errEl) errEl.textContent = '';
+    const checkboxes = listEl.querySelectorAll('input[type="checkbox"]');
+    const job_ids = [...checkboxes].filter(cb => cb.checked).map(cb => cb.dataset.jobId);
+    if (saveBtn) { saveBtn.disabled = true; saveBtn.textContent = 'Saving…'; }
+    try {
+      await api(`/api/engineering-contracts/${ecId}/job-visibility`, 'PUT', { job_ids });
+      if (window.LFS && window.LFS.toast) window.LFS.toast.success('Job visibility updated.');
+      await refreshEcJobsPanel(ecId);
+    } catch (e) {
+      if (errEl) errEl.textContent = 'Save failed: ' + e.message;
+      else if (window.LFS && window.LFS.toast) window.LFS.toast.error('Save failed: ' + e.message);
+    } finally {
+      if (saveBtn) { saveBtn.disabled = false; saveBtn.textContent = 'Update Visibility'; }
+    }
+  }
+
+  // ── Construction Contracts panel ─────────────────────────────────────────────
+
+  const _ecConstructionCache = {};
+  const _ecUnattachedCache   = {};
+
+  async function refreshEcContractsPanel(ecId) {
+    const listEl = document.getElementById(`ec-cc-list-${ecId}`);
+    const errEl  = document.getElementById(`ec-cc-err-${ecId}`);
+    if (!listEl) return;
+    listEl.innerHTML = '<div style="color:var(--text-muted);font-size:12px;padding:4px 0">Loading…</div>';
+    if (errEl) errEl.textContent = '';
+    try {
+      const attached = await api(`/api/engineering-contracts/${ecId}/construction-contracts`);
+      _ecConstructionCache[ecId] = attached;
+      renderEcContractsList(ecId, attached);
+      await refreshEcAttachPicker(ecId, attached);
+    } catch (e) {
+      listEl.innerHTML = '';
+      if (errEl) errEl.textContent = 'Failed to load contracts: ' + e.message;
+    }
+  }
+
+  async function refreshEcAttachPicker(ecId, attached) {
+    const sel = document.getElementById(`ec-cc-attach-sel-${ecId}`);
+    if (!sel) return;
+    // Find the EC's client_id from local cache.
+    const ec = engineeringContractsCache.find(x => x.id === ecId);
+    if (!ec || !ec.client_id) {
+      sel.innerHTML = '<option value="">— No client set —</option>';
+      return;
+    }
+    try {
+      const all = await api(`/api/contracts?client_id=${encodeURIComponent(ec.client_id)}`);
+      const attachedIds = new Set((attached || []).filter(c => c.scope === 'explicit').map(c => c.id));
+      const unattached = all.filter(c => !attachedIds.has(c.id) && (c.engineering_contract_id === null || c.engineering_contract_id !== ecId));
+      _ecUnattachedCache[ecId] = unattached;
+      if (!unattached.length) {
+        sel.innerHTML = '<option value="">— All contracts attached —</option>';
+        sel.disabled = true;
+      } else {
+        sel.disabled = false;
+        sel.innerHTML = '<option value="">— Select contract to attach —</option>' +
+          unattached.map(c => `<option value="${c.id}">${esc(c.contract_number || '—')} ${c.name ? '· ' + esc(c.name) : ''}</option>`).join('');
+      }
+    } catch (e) {
+      sel.innerHTML = '<option value="">— Could not load —</option>';
+    }
+  }
+
+  function renderEcContractsList(ecId, contracts) {
+    const listEl = document.getElementById(`ec-cc-list-${ecId}`);
+    if (!listEl) return;
+    const explicit  = (contracts || []).filter(c => c.scope === 'explicit');
+    const fallback  = (contracts || []).filter(c => c.scope === 'legacy_fallback');
+    if (!explicit.length && !fallback.length) {
+      listEl.innerHTML = '<div style="color:var(--text-muted);font-size:12px">No construction contracts attached. Use the picker below to link one.</div>';
+      return;
+    }
+    const rows = (contracts || []).map(c => {
+      const label = c.friendly_label ? ` <span style="color:var(--text-muted);font-size:11px">· ${esc(c.friendly_label)}</span>` : '';
+      const fallbackBadge = c.scope === 'legacy_fallback'
+        ? `<span style="font-size:10px;background:var(--warning-light);color:var(--warning-text);border-radius:3px;padding:1px 5px;margin-left:4px">shared</span>`
+        : '';
+      const detachBtn = c.scope === 'explicit'
+        ? `<button class="btn btn-sm" onclick="detachEcContract('${ecId}','${c.id}')" style="color:var(--danger);background:transparent;border:1px solid var(--border-strong);font-size:11px;padding:2px 6px" title="Detach">Detach</button>`
+        : `<span style="font-size:11px;color:var(--text-muted)">unscoped</span>`;
+      return `
+        <div style="display:flex;align-items:center;gap:8px;padding:4px 0;border-bottom:1px solid var(--border-weak)">
+          <span style="font-family:monospace;font-size:12px;color:var(--text)">${esc(c.contract_number || '—')}</span>
+          <span style="flex:1;font-size:13px;color:var(--text)">${c.name ? esc(c.name) : ''}${label}${fallbackBadge}</span>
+          ${detachBtn}
+        </div>`;
+    }).join('');
+    const count = explicit.length;
+    const countBadge = document.getElementById(`ec-cc-count-${ecId}`);
+    if (countBadge) countBadge.textContent = `${count} attached`;
+    listEl.innerHTML = rows;
+  }
+
+  async function attachEcContract(ecId) {
+    const sel   = document.getElementById(`ec-cc-attach-sel-${ecId}`);
+    const errEl = document.getElementById(`ec-cc-err-${ecId}`);
+    if (!sel || !sel.value) return;
+    const contract_id = sel.value;
+    if (errEl) errEl.textContent = '';
+    try {
+      await api(`/api/engineering-contracts/${ecId}/construction-contracts`, 'POST', { contract_id });
+      if (window.LFS && window.LFS.toast) window.LFS.toast.success('Contract attached.');
+      await refreshEcContractsPanel(ecId);
+    } catch (e) {
+      const raw = e.message || '';
+      const msg = raw.toLowerCase().includes('different client')
+        ? 'This contract belongs to a different client — cannot attach.'
+        : 'Attach failed: ' + raw;
+      if (errEl) errEl.textContent = msg;
+      else if (window.LFS && window.LFS.toast) window.LFS.toast.error(msg);
+    }
+  }
+
+  async function detachEcContract(ecId, contractId) {
+    if (!confirm('Detach this contract from the EC? It will revert to unscoped (shared at client level).')) return;
+    const errEl = document.getElementById(`ec-cc-err-${ecId}`);
+    if (errEl) errEl.textContent = '';
+    try {
+      await api(`/api/engineering-contracts/${ecId}/construction-contracts/${contractId}`, 'DELETE');
+      if (window.LFS && window.LFS.toast) window.LFS.toast.success('Contract detached.');
+      await refreshEcContractsPanel(ecId);
+    } catch (e) {
+      const msg = 'Detach failed: ' + e.message;
+      if (errEl) errEl.textContent = msg;
+      else if (window.LFS && window.LFS.toast) window.LFS.toast.error(msg);
+    }
   }
 
   // ── WO / SA panel helpers ────────────────────────────────────────────────────
@@ -159,6 +381,30 @@
     }
     panel.style.display = '';
     await refreshEcWosaPanel(ecId);
+  }
+
+  async function toggleEcJobsPanel(ecId) {
+    const panel = document.getElementById(`ec-jobs-panel-${ecId}`);
+    if (!panel) return;
+    const isOpen = panel.style.display !== 'none';
+    if (isOpen) {
+      panel.style.display = 'none';
+      return;
+    }
+    panel.style.display = '';
+    await refreshEcJobsPanel(ecId);
+  }
+
+  async function toggleEcContractsPanel(ecId) {
+    const panel = document.getElementById(`ec-contracts-panel-${ecId}`);
+    if (!panel) return;
+    const isOpen = panel.style.display !== 'none';
+    if (isOpen) {
+      panel.style.display = 'none';
+      return;
+    }
+    panel.style.display = '';
+    await refreshEcContractsPanel(ecId);
   }
 
   async function refreshEcWosaPanel(ecId) {
@@ -443,6 +689,13 @@
   window.startEcWoEdit = startEcWoEdit;
   window.cancelEcWoEdit = cancelEcWoEdit;
   window.saveEcWoEdit = saveEcWoEdit;
+  // Job Visibility panel
+  window.toggleEcJobsPanel = toggleEcJobsPanel;
+  window.saveEcJobVisibility = saveEcJobVisibility;
+  // Construction Contracts panel
+  window.toggleEcContractsPanel = toggleEcContractsPanel;
+  window.attachEcContract = attachEcContract;
+  window.detachEcContract = detachEcContract;
 
   // ── SSE live-update hooks ──────────────────────────────────────────────────
   let _ecStaleTimer = null;
