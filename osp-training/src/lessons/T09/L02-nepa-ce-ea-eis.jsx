@@ -295,6 +295,63 @@ export default function T09L02_NepaTypes() {
           Part 1970 RUS NEPA procedures).
         </p>
 
+        {/* Book vs. Field — eastern US extraordinary-circumstance trigger rates */}
+        <div className="mt-5 p-4 border border-amber-400/30 bg-amber-400/5 rounded-lg text-sm">
+          <p className="font-semibold text-amber-300 mb-2">Book vs. Field — CE Is the Goal, Not the Assumption</p>
+
+          <p className="text-slate-300/90">
+            <strong>Book (42 U.S.C. §4332; 7 CFR Part 1b [eff. April 3, 2026]):</strong> CE C-8
+            applies to aerial and buried utility construction within or adjacent to existing ROW,
+            provided no extraordinary circumstances are present. The rule is national — the same
+            checklist applies in Nevada as in North Carolina.
+          </p>
+
+          <p className="text-slate-300/90 mt-3">
+            <strong>Field reality in the eastern US:</strong> The extraordinary-circumstances
+            checklist fires far more often in the South, Mid-Atlantic, and Appalachian corridor
+            than in the West. Three reasons:
+          </p>
+          <ul className="list-disc pl-5 space-y-1 text-slate-300/90 mt-2">
+            <li>
+              <strong>Wetlands density.</strong> Coastal plain states (Georgia, the Carolinas,
+              Virginia, Florida, Gulf Coast) have some of the highest concentrations of
+              jurisdictional wetlands in the country. A route that runs 10 miles in these
+              regions has a meaningful probability of crossing or running adjacent to a
+              wetland mapped on the National Wetlands Inventory — which triggers the
+              USACE Section 404 coordination row on your checklist.
+            </li>
+            <li>
+              <strong>T&amp;E species consultation frequency.</strong> Eastern forests and coastal
+              watersheds support multiple species under active ESA §7 (16 U.S.C. §1536)
+              consultation programs. The species involved vary by geography and listing status —
+              confirm current species and their range maps using the USFWS IPaC tool at the time
+              of project. Do not assume a clean IPaC result without running the tool on your
+              specific project footprint; listed species and their designated critical habitat
+              change as USFWS completes listing reviews.
+            </li>
+            <li>
+              <strong>Historic properties density.</strong> The eastern US carries denser
+              pre-Columbian and colonial-era archaeological and architectural resources than
+              most of the West. In Georgia, the Carolinas, Virginia, and Tennessee, aerial
+              routes passing through older towns frequently touch the edge of a recorded
+              historic district or an APE (Area of Potential Effect) where a Section 106
+              (36 CFR Part 800) records search flags potential resources.
+            </li>
+          </ul>
+
+          <p className="text-slate-300/90 mt-3">
+            <strong>The practical implication:</strong> In the eastern US, engineers who
+            treat CE as the default outcome — and only prepare the extraordinary-circumstances
+            checklist as a formality — regularly get caught requiring an EA when the
+            schedule assumed a CE. The correct field posture: assume at project kickoff that
+            at least one extraordinary circumstance will fire, and begin the IPaC query, NWI
+            map review, and county historic-property records check on Day 1 of route survey
+            (covered in T04). Treat CE as the optimistic outcome you are trying to confirm,
+            not the starting assumption. If the checklist comes back clean, you finish faster.
+            If it fires, you started your agency coordination 60–90 days earlier.
+          </p>
+        </div>
+
         <h3 className="mt-5 font-semibold">Multi-Circumstance Agency Sequencing — When Multiple Extraordinary Circumstances Co-Occur</h3>
         <p>
           A single route may trigger multiple extraordinary circumstances at the same time — for example, a corridor with both a listed T&E species habitat AND a historic property within the Area of Potential Effect (APE) AND wetlands that require USACE Section 404 permits. When this happens, the project requires coordination across three separate federal agencies, each with its own timeline and legal authority.
