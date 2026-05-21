@@ -44,23 +44,22 @@
 
 **Wave 4 polish + HIGH+MED fix + Wave 6 + Wave 6 fix landed `b5e4e7e` (2026-05-21):** Wave 4 polish removed design's program-dropdown filter (was hiding programs without ECs, blocking no-EC creation; permitting + timeclock already correct). Wave 4 HIGH+MED fix patched 5 RT-K findings — H1 (backend now accepts null/empty service_area_label in MODE 2 → no-EC project nests directly under Client folder when SA blank; all 3 portals send `|| null` instead of `|| undefined`), H2 (timeclock `_fetchSaFolders` now passes `?program=` so EC clock-in SA dropdown works), M1 (design dpSaChanged now does rollup_key→folder→leaves two-step lookup; backend GET /api/projects supports rollup_key filter), M2 (design GFR/RUS alias removed), M3 (RNP WO# cache lookup fixed to use _rnpSaList instead of allConcentrators — note: SA endpoint still doesn't return work_order_number, queued for Wave 8 backend addition). Wave 6 shipped ongoing-project lifecycle: admin modal checkbox + cadence-locking + project list badge + `is_ongoing` flag on POST/PUT + GET /api/projects/:id/monthly-hours-breakdown + POST /api/projects/:id/generate-monthly-invoice (admin-triggered, idempotent). Wave 6 fix patched 5 RT-L MEDs — D5 (requireManagerOrAdmin gate on invoice gen), D2 (ON CONFLICT race-safe insert), B3 (server-side coercion forces billing_cadence='monthly' when is_ongoing=true), H2 (concurrent-click idempotency test), H3 (404/400/zero-rate negative tests). Carter's check-in moment: cross-portal cascade live + no-EC creation works without forcing SA + ongoing project monthly billing flow working.
 
-**Proj-Modal queue remaining:** W7 CSV importer tiered matching (WO# for EC, client+SA+job for non-EC, ongoing-project month bucket, review-queue UI for unmatched — IN FLIGHT) → W8 cleanup LOWs (M3 WO# missing from SA endpoint, hardcoded #fca5a5 in timeclock, dead code from earlier waves, ppServiceAreaChanged line 1380 unfiltered fetch, 7 RT-L cosmetic items, raw-JSON error pattern across engineering_contracts.js per RT-J M2).
+**Proj-Modal Waves 7 + 7-fix + 8 — closed (2026-05-21, session-end):** W7 `327b957` CSV tiered matching (Tier 1 WO#, Tier 2 client+SA+job, Tier 3 unmatched→review queue) + migration 0038 csv_review_queue + 9 tests. RT-M YELLOW (Tier 2 wrong-scoping cross-client + leading-zero WO# normalization + migration FK mismatch) + RT-N 2 HIGH (race on /match concurrent calls, missing credentials on 3 frontend fetches). Wave 7 fix `1b96c3f` (7 fixes: FOR UPDATE row lock + api() refactor + Tier 2 via pickProjectTier2 + ON DELETE SET NULL + leading-zero normalization + leaves-only picker filter + allProjects load guard; +2 tests = 11). Wave 8 polish `833cc35` (salvaged from stalled agent — 8 fixes: SA endpoint work_order_number, error sanitization across 7 backend + 4 frontend sites, hardcoded #fca5a5/#4ade80→tokens, accessibility batch, button disable during fetch, RNP modal auto-trigger, ppServiceAreaChanged backend rollup_key filter, "all contracts attached" wording).
 
-### Next sequential work — future-build queue (per directive 21)
+**proj-modal-rebuild PROGRAM CLOSED** — Waves 1, 1B, 2A, 2B, 4A, 4B, 4C, 4D, 5, 6, 7, 8 all merged on main. Migration count: 0036+0037+0038.
 
-1. **Attenuation calculator tool** — interactive calc embedded in (a) design portal + (b) splice matrix tool. Candidate: reuse osp-training `LinkBudgetCalculator` pattern. Inputs: span length, fiber type (G.652/G.655/G.657), wavelength (1310/1490/1550), splice count, connector count. Output: total expected dB loss + sanity check vs link budget for project source/receiver.
+### Stale "future-build queue" reconciliation (session-end 2026-05-21)
 
-2. **Client portal v1** — token-based auth per client_organization. Spec at `audit-output/future/client-portal-spec.md`. Project status + document drop primary surface. PSC = first client. Logo at `public/img/clients/psc-logo.png` before kickoff.
+- ✅ **Attenuation calculator** — DISCOVERED already built on main (970-line `public/js/attenuation_calc.js` with ITU-T G.652.D/G.655/G.657.A2 citations + GPON G.984.2 context + 417-line Playwright suite, wired into design.html + splice.html via `<div id="att-calc-btn-wrap">` + `mountAttenuationCalc()`). Came from earlier `b0ccc1b` + `4b90800` work. Haiku scout dispatch attempted to rebuild it and was nearly destructive (would've overwritten 1031 lines) — caught at spot-check, branch `agent/attenuation-calc-v1` SCRAP. Lesson: ALWAYS grep main for prior work before "new feature" dispatches.
+- ✅ **Free-text Q removal** — Haiku scout `63dca08` confirmed pre-compliant. 330+ quiz instances across 254 lessons, ALL fixed-answer (138 MC + 88 fill-in-blank + 32 drag-match + 72 deterministic BranchingScenario). No work needed.
+- ✅ **60-Q OSP final exam** — built + verified earlier session at `afe5949`.
 
-3. **ISP course** (very-future) — full Inside-Plant training course mirroring OSP scope + depth. Source material: existing M05/M06/M10/M12 modules. RCDD mock exam lives here. Defer until OSP rewrite has settled into production for several weeks.
+### Genuine remaining queue (next session)
 
-### Pending OSP-RW work (directive 36)
-
-- T20-T22 (cert prep) authoring — not started
-- C04 Practice Exam Bank — moved to ISP scope per directive 36
-- 60-Q OSP final exam build at end of T19 (80% pass, all fixed-answer)
-- Final-audit pipeline: 3 Sonnet adversarial + 1 Opus learning-simulation (zero-context blind-read learner takes final exam)
-- Remove all free-text Q across existing lessons (directive 36)
+1. **T20-T22 cert prep authoring** — BICSI OSPDR + FOA CFOS-O + FOA CFOS-T. Full per-topic pipeline (3 research framings paywalled-heavy + author + 2 RT pair + saturation polish stages). Estimated ~2M Sonnet per topic.
+2. **Final-audit pipeline on C05 final exam** — 3 Sonnet adversarial framings + 1 Opus zero-context learning-simulation (reads every lesson sequentially, takes the 60-Q exam blind, score = teaching-effectiveness signal).
+3. **Client portal v1** — token-based auth per client_organization. Spec at `audit-output/future/client-portal-spec.md`. **Blocker:** PSC logo at `public/img/clients/psc-logo.png` required before kickoff (Carter to provide).
+4. **ISP course** (very-future) — defer until OSP rewrite settled in production for weeks.
 
 ### Session token notes
 
