@@ -821,7 +821,7 @@ module.exports = function installHoursCsvRoutes(app, pool, mw) {
       if (req.file?.path && fs.existsSync(req.file.path)) {
         try { await fs.promises.unlink(req.file.path); } catch {}
       }
-      res.status(500).json({ error: e.message });
+      res.status(500).json({ error: 'File validation failed. Please check the file and try again.' });
     }
   });
 
@@ -871,7 +871,8 @@ module.exports = function installHoursCsvRoutes(app, pool, mw) {
 
       res.json({ ok: true, row });
     } catch (e) {
-      res.status(500).json({ error: e.message });
+      console.error('[csv-edit-row]', e && e.message);
+      res.status(500).json({ error: 'Failed to apply row edit.' });
     }
   });
 
@@ -1148,7 +1149,7 @@ module.exports = function installHoursCsvRoutes(app, pool, mw) {
     } catch (e) {
       await client.query('ROLLBACK');
       console.error('CSV commit error:', e);
-      res.status(500).json({ error: e.message });
+      res.status(500).json({ error: 'Import failed. Please try again or contact support.' });
     } finally {
       client.release();
     }
@@ -1186,7 +1187,7 @@ module.exports = function installHoursCsvRoutes(app, pool, mw) {
     } catch (e) {
       await client.query('ROLLBACK');
       console.error('[csv-queue-unmatched]', e && e.message);
-      res.status(500).json({ error: e.message });
+      res.status(500).json({ error: 'Failed to queue unmatched rows.' });
     } finally {
       client.release();
     }
@@ -1223,7 +1224,7 @@ module.exports = function installHoursCsvRoutes(app, pool, mw) {
       res.json({ rows, total: parseInt(countRes.rows[0].count, 10) });
     } catch (e) {
       console.error('[csv-review-queue:list]', e && e.message);
-      res.status(500).json({ error: e.message });
+      res.status(500).json({ error: 'Failed to load review queue.' });
     }
   });
 
@@ -1297,7 +1298,7 @@ module.exports = function installHoursCsvRoutes(app, pool, mw) {
     } catch (e) {
       await client.query('ROLLBACK');
       console.error('[csv-review-queue:match]', e && e.message);
-      res.status(500).json({ error: e.message });
+      res.status(500).json({ error: 'Failed to match row to project.' });
     } finally {
       client.release();
     }
@@ -1318,7 +1319,7 @@ module.exports = function installHoursCsvRoutes(app, pool, mw) {
       res.json({ ok: true });
     } catch (e) {
       console.error('[csv-review-queue:discard]', e && e.message);
-      res.status(500).json({ error: e.message });
+      res.status(500).json({ error: 'Failed to discard row.' });
     }
   });
 
@@ -1330,7 +1331,8 @@ module.exports = function installHoursCsvRoutes(app, pool, mw) {
       );
       res.json({ count: parseInt(rows[0].count, 10) });
     } catch (e) {
-      res.status(500).json({ error: e.message });
+      console.error('[csv-review-queue:pending-count]', e && e.message);
+      res.status(500).json({ error: 'Failed to load pending count.' });
     }
   });
 };

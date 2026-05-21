@@ -1422,11 +1422,10 @@ async function ppServiceAreaChanged() {
 
   if (!clientId || !saId) return;
 
-  // Find the SA folder project (is_rollup=true, rollup_key=saId) under this client.
-  // Then fetch leaves under that folder via parent_id.
+  // Fetch the SA folder project directly via rollup_key filter, then leaves under it.
   try {
-    const allProjects = await api('/api/projects?client_id=' + encodeURIComponent(clientId) + '&status=active&limit=all');
-    const saFolder = (allProjects || []).find(p => p.is_rollup && p.rollup_key === saId);
+    const saFolders = await api('/api/projects?client_id=' + encodeURIComponent(clientId) + '&rollup_key=' + encodeURIComponent(saId) + '&status=active&limit=all');
+    const saFolder = (saFolders || []).find(p => p.is_rollup && p.rollup_key === saId);
     if (saFolder) {
       const leaves = await api('/api/projects?parent_id=' + encodeURIComponent(saFolder.id) + '&leaves_only=true&status=active&limit=all');
       if (jobList && leaves && leaves.length) {

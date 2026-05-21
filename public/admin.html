@@ -6902,29 +6902,31 @@ async function loadCsvReviewQueue() {
 async function csvRqMatch(id) {
   const sel = document.querySelector(`.csv-rq-proj[data-rq-id="${id}"]`);
   if (!sel || !sel.value) { alert('Pick a project first.'); return; }
-  const btn = document.querySelector(`tr[data-rq-id="${id}"] .btn-primary`);
-  if (btn) btn.disabled = true;
+  const tr = document.querySelector(`tr[data-rq-id="${id}"]`);
+  const btns = tr ? tr.querySelectorAll('button') : [];
+  btns.forEach(b => { b.disabled = true; });
   try {
-    const data = await api(`/api/csv-review-queue/${id}/match`, 'POST', { project_id: sel.value });
-    // Remove the row and reload queue
-    const tr = document.querySelector(`tr[data-rq-id="${id}"]`);
+    await api(`/api/csv-review-queue/${id}/match`, 'POST', { project_id: sel.value });
     if (tr) tr.remove();
     loadCsvReviewQueue();
     loadHours();
   } catch (e) {
-    if (btn) btn.disabled = false;
+    btns.forEach(b => { b.disabled = false; });
     alert('Failed to assign: ' + e.message);
   }
 }
 
 async function csvRqDiscard(id) {
   if (!confirm('Discard this row? It will not be imported.')) return;
+  const tr = document.querySelector(`tr[data-rq-id="${id}"]`);
+  const btns = tr ? tr.querySelectorAll('button') : [];
+  btns.forEach(b => { b.disabled = true; });
   try {
     await api(`/api/csv-review-queue/${id}/discard`, 'POST');
-    const tr = document.querySelector(`tr[data-rq-id="${id}"]`);
     if (tr) tr.remove();
     loadCsvReviewQueue();
   } catch (e) {
+    btns.forEach(b => { b.disabled = false; });
     alert('Failed to discard: ' + e.message);
   }
 }

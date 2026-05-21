@@ -221,7 +221,7 @@ html[data-theme="dark"] .tag-team-construction,html[data-theme="dark"] .tag-team
   .pre-clock-form select,.pre-clock-form input{padding:12px;font-size:16px}
 .pre-clock-form select:disabled,.pre-clock-form input:disabled{opacity:.45;cursor:not-allowed}
 .cascade-hint{font-size:11px;color:rgba(255,255,255,.65);margin-top:3px}
-.cascade-error{font-size:11px;color:#fca5a5;margin-top:3px}
+.cascade-error{font-size:11px;color:var(--danger);margin-top:3px}
 .form-group .cascade-error{color:var(--danger)}
 .form-group input:disabled,.form-group select:disabled{opacity:.45;cursor:not-allowed;background:var(--gray-light)}
   .pre-clock-form .form-group{margin-bottom:12px}
@@ -854,7 +854,7 @@ function renderClockCard(){
     const elapsedMs = Date.now() - startedMs;
     const elapsedHrs = elapsedMs / 3600000;
     card.innerHTML = `
-      <div class="clock-status-label"><i class="fa-solid fa-circle" style="color:#4ade80;font-size:8px;margin-right:4px"></i> Clocked In</div>
+      <div class="clock-status-label"><i class="fa-solid fa-circle" style="color:var(--success);font-size:8px;margin-right:4px" aria-hidden="true"></i> Clocked In</div>
       <div class="clock-time" id="elapsed-display">${fmtDuration(elapsedMs)}</div>
       <div class="clock-time-sub">${elapsedHrs.toFixed(2)} hours · started ${new Date(activeSession.started_at).toLocaleTimeString('en-US',{hour:'numeric',minute:'2-digit'})}</div>
       <div class="clock-project">
@@ -1630,7 +1630,7 @@ function openRequestNewProjectModal(){
   if (ecRow) ecRow.style.display = 'none';
   if (noEcRow) noEcRow.style.display = 'none';
   populateClientSelect(document.getElementById('rnp-client'), cid);
-  if (cid) rnpClientChanged();
+  rnpClientChanged();
   m.style.display = 'flex';
 }
 function closeRequestNewProjectModal(){

@@ -20,6 +20,14 @@
 //   saveEngineeringContract, deleteEngineeringContract
 
 (function () {
+  // Extract a human-readable message from api() errors. api() throws with
+  // the raw response text as e.message (e.g. '{"error":"..."}'), so parse
+  // and surface the .error field when available.
+  function extractApiError(e) {
+    const raw = (e && e.message) || '';
+    try { return JSON.parse(raw).error || raw; } catch { return raw; }
+  }
+
   let engineeringContractsCache = [];
 
   // Allowed program values must match the CHECK constraint in
@@ -99,11 +107,11 @@
               <td style="padding:6px 8px;text-align:right">${ec.contract_count}</td>
               <td style="padding:6px 8px;text-align:right">${ec.project_count}</td>
               <td style="padding:6px 8px;text-align:right;white-space:nowrap">
-                <button class="btn btn-sm btn-secondary" onclick="editEngineeringContract('${ec.id}')" title="Edit fields"><i class="fa-solid fa-pen"></i></button>
+                <button class="btn btn-sm btn-secondary" onclick="editEngineeringContract('${ec.id}')" title="Edit fields" aria-label="Edit ${esc(ec.name)}"><i class="fa-solid fa-pen" aria-hidden="true"></i></button>
                 <button class="btn btn-sm btn-secondary" onclick="toggleEcWosaPanel('${ec.id}')" title="Manage WO# and Service Areas" style="font-size:11px;padding:3px 7px">WO/SA</button>
                 <button class="btn btn-sm btn-secondary" onclick="toggleEcJobsPanel('${ec.id}')" title="Manage job visibility" style="font-size:11px;padding:3px 7px">Jobs</button>
                 <button class="btn btn-sm btn-secondary" onclick="toggleEcContractsPanel('${ec.id}')" title="Manage attached contracts" style="font-size:11px;padding:3px 7px">Contracts</button>
-                <button class="btn btn-sm" style="color:var(--danger);background:transparent;border:1px solid var(--gray-border)" onclick="deleteEngineeringContract('${ec.id}', '${esc(ec.name)}', ${ec.contract_count})" title="Delete"><i class="fa-solid fa-trash"></i></button>
+                <button class="btn btn-sm" style="color:var(--danger);background:transparent;border:1px solid var(--gray-border)" onclick="deleteEngineeringContract('${ec.id}', '${esc(ec.name)}', ${ec.contract_count})" title="Delete" aria-label="Delete ${esc(ec.name)}"><i class="fa-solid fa-trash" aria-hidden="true"></i></button>
               </td>
             </tr>
             <tr id="ec-wosa-panel-${ec.id}" style="display:none;background:var(--gray-light)">
@@ -119,7 +127,7 @@
                         <input type="text" id="ec-sa-new-name-${ec.id}" aria-label="New service area name" placeholder="Area name" style="flex:2;font-size:12px;padding:4px 6px;border:1px solid var(--gray-border);border-radius:4px">
                         <input type="text" id="ec-sa-new-wo-${ec.id}" aria-label="Work order number" placeholder="WO# (optional)" style="width:90px;font-size:12px;padding:4px 6px;border:1px solid var(--gray-border);border-radius:4px;font-family:monospace">
                         <input type="text" id="ec-sa-new-notes-${ec.id}" aria-label="New service area notes" placeholder="Notes (optional)" style="flex:3;font-size:12px;padding:4px 6px;border:1px solid var(--gray-border);border-radius:4px">
-                        <button class="btn btn-sm btn-primary" onclick="addEcServiceArea('${ec.id}')"><i class="fa-solid fa-plus"></i> Add</button>
+                        <button class="btn btn-sm btn-primary" onclick="addEcServiceArea('${ec.id}')"><i class="fa-solid fa-plus" aria-hidden="true"></i> Add</button>
                       </div>
                     </div>
                     <!-- Work Orders sub-panel -->
@@ -132,7 +140,7 @@
                         <select id="ec-wo-new-sa-${ec.id}" aria-label="New work order service area" style="flex:2;font-size:12px;padding:4px 6px;border:1px solid var(--gray-border);border-radius:4px">
                           <option value="">— No service area —</option>
                         </select>
-                        <button class="btn btn-sm btn-primary" onclick="addEcWorkOrder('${ec.id}')"><i class="fa-solid fa-plus"></i> Add</button>
+                        <button class="btn btn-sm btn-primary" onclick="addEcWorkOrder('${ec.id}')"><i class="fa-solid fa-plus" aria-hidden="true"></i> Add</button>
                       </div>
                     </div>
                   </div>
@@ -146,7 +154,7 @@
                   <div style="font-weight:600;font-size:13px;margin-bottom:4px">Jobs Visible for This EC — ${esc(ec.name)}</div>
                   <div style="font-size:12px;color:var(--text-muted);margin-bottom:10px">Check jobs that should appear in this EC's project picker. If none are checked, all jobs visible via global filters (for_psc_client / program_scope) will be used instead.</div>
                   <div id="ec-jobs-list-${ec.id}" style="max-height:260px;overflow-y:auto;border:1px solid var(--border-strong);border-radius:4px;padding:4px 8px;background:var(--surface-2)"></div>
-                  <div id="ec-jobs-err-${ec.id}" style="color:var(--danger);font-size:12px;margin-top:4px"></div>
+                  <div id="ec-jobs-err-${ec.id}" style="color:var(--danger);font-size:12px;margin-top:4px" aria-live="polite"></div>
                   <div style="margin-top:8px;display:flex;justify-content:flex-end">
                     <button id="ec-jobs-save-${ec.id}" class="btn btn-sm btn-primary" onclick="saveEcJobVisibility('${ec.id}')">Update Visibility</button>
                   </div>
@@ -162,13 +170,13 @@
                     <span id="ec-cc-count-${ec.id}" style="font-size:11px;background:var(--surface-3);color:var(--text-muted);border-radius:10px;padding:1px 8px"></span>
                   </div>
                   <div id="ec-cc-list-${ec.id}" style="margin-bottom:10px;font-size:13px"></div>
-                  <div id="ec-cc-err-${ec.id}" style="color:var(--danger);font-size:12px;margin-bottom:6px"></div>
+                  <div id="ec-cc-err-${ec.id}" style="color:var(--danger);font-size:12px;margin-bottom:6px" aria-live="polite"></div>
                   <div style="font-size:11px;font-weight:700;text-transform:uppercase;color:var(--text-muted);margin-bottom:6px">+ Attach Contract</div>
                   <div style="display:flex;gap:6px;align-items:center">
                     <select id="ec-cc-attach-sel-${ec.id}" aria-label="Select contract to attach" style="flex:1;font-size:12px;padding:4px 6px;border:1px solid var(--border-strong);border-radius:4px;background:var(--surface-2);color:var(--text)">
                       <option value="">— Select contract to attach —</option>
                     </select>
-                    <button class="btn btn-sm btn-primary" onclick="attachEcContract('${ec.id}')"><i class="fa-solid fa-link"></i> Attach</button>
+                    <button class="btn btn-sm btn-primary" onclick="attachEcContract('${ec.id}')"><i class="fa-solid fa-link" aria-hidden="true"></i> Attach</button>
                   </div>
                 </div>
               </td>
@@ -201,7 +209,7 @@
       renderEcJobsList(ecId, allJobs, visRows);
     } catch (e) {
       listEl.innerHTML = '';
-      if (errEl) errEl.textContent = 'Failed to load jobs: ' + e.message;
+      if (errEl) errEl.textContent = 'Failed to load jobs: ' + extractApiError(e);
     }
   }
 
@@ -244,8 +252,8 @@
       if (window.LFS && window.LFS.toast) window.LFS.toast.success('Job visibility updated.');
       await refreshEcJobsPanel(ecId);
     } catch (e) {
-      if (errEl) errEl.textContent = 'Save failed: ' + e.message;
-      else if (window.LFS && window.LFS.toast) window.LFS.toast.error('Save failed: ' + e.message);
+      if (errEl) errEl.textContent = 'Save failed: ' + extractApiError(e);
+      else if (window.LFS && window.LFS.toast) window.LFS.toast.error('Save failed: ' + extractApiError(e));
     } finally {
       if (saveBtn) { saveBtn.disabled = false; saveBtn.textContent = 'Update Visibility'; }
     }
@@ -269,7 +277,7 @@
       await refreshEcAttachPicker(ecId, attached);
     } catch (e) {
       listEl.innerHTML = '';
-      if (errEl) errEl.textContent = 'Failed to load contracts: ' + e.message;
+      if (errEl) errEl.textContent = 'Failed to load contracts: ' + extractApiError(e);
     }
   }
 
@@ -288,7 +296,7 @@
       const unattached = all.filter(c => !attachedIds.has(c.id) && c.engineering_contract_id === null);
       _ecUnattachedCache[ecId] = unattached;
       if (!unattached.length) {
-        sel.innerHTML = '<option value="">— All contracts attached —</option>';
+        sel.innerHTML = '<option value="">— No contracts available to attach —</option>';
         sel.disabled = true;
       } else {
         sel.disabled = false;
@@ -369,7 +377,7 @@
       if (window.LFS && window.LFS.toast) window.LFS.toast.success('Contract detached.');
       await refreshEcContractsPanel(ecId);
     } catch (e) {
-      const msg = 'Detach failed: ' + e.message;
+      const msg = 'Detach failed: ' + extractApiError(e);
       if (errEl) errEl.textContent = msg;
       else if (window.LFS && window.LFS.toast) window.LFS.toast.error(msg);
     }
@@ -456,7 +464,7 @@
         <button class="btn btn-sm btn-secondary" id="ec-sa-btn-edit-${sa.id}" onclick="startEcSaEdit('${sa.id}','${ecId}')" style="font-size:11px;padding:2px 6px">Edit</button>
         <button class="btn btn-sm btn-primary" id="ec-sa-btn-save-${sa.id}" onclick="saveEcSaEdit('${sa.id}','${ecId}')" style="display:none;font-size:11px;padding:2px 6px">Save</button>
         <button class="btn btn-sm btn-secondary" id="ec-sa-btn-cancel-${sa.id}" onclick="cancelEcSaEdit('${sa.id}')" style="display:none;font-size:11px;padding:2px 6px">Cancel</button>
-        <button class="btn btn-sm" onclick="deleteEcServiceArea('${sa.id}','${ecId}')" style="color:var(--danger);background:transparent;border:1px solid var(--gray-border);font-size:11px;padding:2px 6px" title="Delete"><i class="fa-solid fa-trash"></i></button>
+        <button class="btn btn-sm" onclick="deleteEcServiceArea('${sa.id}','${ecId}')" style="color:var(--danger);background:transparent;border:1px solid var(--gray-border);font-size:11px;padding:2px 6px" title="Delete service area" aria-label="Delete service area ${esc(sa.name)}"><i class="fa-solid fa-trash" aria-hidden="true"></i></button>
       </div>
     `).join('');
   }
@@ -484,7 +492,7 @@
         <button class="btn btn-sm btn-secondary" id="ec-wo-btn-edit-${wo.id}" onclick="startEcWoEdit('${wo.id}','${ecId}')" style="font-size:11px;padding:2px 6px">Edit</button>
         <button class="btn btn-sm btn-primary" id="ec-wo-btn-save-${wo.id}" onclick="saveEcWoEdit('${wo.id}','${ecId}')" style="display:none;font-size:11px;padding:2px 6px">Save</button>
         <button class="btn btn-sm btn-secondary" id="ec-wo-btn-cancel-${wo.id}" onclick="cancelEcWoEdit('${wo.id}')" style="display:none;font-size:11px;padding:2px 6px">Cancel</button>
-        <button class="btn btn-sm" onclick="deleteEcWorkOrder('${wo.id}','${ecId}')" style="color:var(--danger);background:transparent;border:1px solid var(--gray-border);font-size:11px;padding:2px 6px" title="Delete"><i class="fa-solid fa-trash"></i></button>
+        <button class="btn btn-sm" onclick="deleteEcWorkOrder('${wo.id}','${ecId}')" style="color:var(--danger);background:transparent;border:1px solid var(--gray-border);font-size:11px;padding:2px 6px" title="Delete work order" aria-label="Delete work order ${esc(wo.number)}"><i class="fa-solid fa-trash" aria-hidden="true"></i></button>
       </div>
     `).join('');
   }
@@ -633,8 +641,8 @@
       <td style="padding:6px 8px"><select id="ec-edit-program-${id}" aria-label="EC program" style="width:100%;font-size:13px;padding:4px 6px;border:1px solid var(--gray-border);border-radius:4px">${programOptionsHtml(ec.program)}</select></td>
       <td colspan="2" style="padding:6px 8px;text-align:right;color:var(--text-muted);font-size:11px">${ec.contract_count} contracts · ${ec.project_count} projects</td>
       <td style="padding:6px 8px;text-align:right;white-space:nowrap">
-        <button class="btn btn-sm btn-primary" onclick="saveEngineeringContract('${id}')"><i class="fa-solid fa-check"></i></button>
-        <button class="btn btn-sm btn-secondary" onclick="renderEngineeringContractsList()"><i class="fa-solid fa-xmark"></i></button>
+        <button class="btn btn-sm btn-primary" onclick="saveEngineeringContract('${id}')" aria-label="Save changes"><i class="fa-solid fa-check" aria-hidden="true"></i></button>
+        <button class="btn btn-sm btn-secondary" onclick="renderEngineeringContractsList()" aria-label="Cancel edit"><i class="fa-solid fa-xmark" aria-hidden="true"></i></button>
       </td>
     `;
   }

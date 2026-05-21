@@ -109,7 +109,8 @@ module.exports = function installClientsRoutes(app, pool, mw) {
       }
 
       const { rows } = await pool.query(
-        `SELECT sa.id, sa.name, sa.engineering_contract_id AS ec_id, ec.program
+        `SELECT sa.id, sa.name, sa.engineering_contract_id AS ec_id, ec.program,
+                sa.work_order_number
            FROM ec_service_areas sa
            JOIN engineering_contracts ec ON ec.id = sa.engineering_contract_id
            WHERE ec.client_id = $1
