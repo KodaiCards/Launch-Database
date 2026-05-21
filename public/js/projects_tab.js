@@ -307,6 +307,16 @@
           ? `<span onclick="event.stopPropagation();ptreeToggle('${p.id}','${groupKey}','${chevId}')" style="display:inline-flex;align-items:center;justify-content:center;width:28px;height:28px;border-radius:6px;cursor:pointer;margin-right:4px;background:var(--gray-light);border:1px solid var(--gray-border)"><i class="fa-solid fa-chevron-right" id="${chevId}" style="font-size:11px;color:var(--text-muted);transition:transform .2s;${chevRotation}"></i></span>`
           : (depth === 0 ? '<span style="width:32px;display:inline-block"></span>' : '');
 
+        // EC rollup folders get a contract icon to distinguish them from plain
+        // client/SA folders. Program chip shown next to the name.
+        const isEcFolder = p.is_rollup && p.rollup_level === 'engineering_contract';
+        const folderIcon = isEcFolder
+          ? `<i class="fa-solid fa-file-contract" style="color:var(--primary);margin-right:6px" title="Engineering Contract"></i>`
+          : (p.is_rollup ? `<i class="fa-solid fa-folder" style="color:var(--primary);margin-right:6px"></i>` : '');
+        const programChip = isEcFolder && p.program
+          ? `<span style="font-size:10px;color:var(--primary);background:var(--primary-light);padding:1px 6px;border-radius:10px;font-weight:600;margin-left:6px">${esc(p.program.toUpperCase())}</span>`
+          : '';
+
         // Use server-computed ytd_revenue — no frontend calculation needed
         const ytd = parseFloat(p.ytd_revenue) || 0;
         // Leaves show their own logged_hours; rollups roll up via the
@@ -351,7 +361,7 @@
           : '';
         html += `<tr ${trAttrs} onclick="showProjectDetail('${p.id}')">
           <td style="text-align:center" onclick="event.stopPropagation()">${checkbox}</td>
-          <td class="td-name" style="padding-left:${12 + indent}px">${chevron}${prefix}${esc(p.name)}${_breadcrumb}${ongoingBadge}${badge}</td>
+          <td class="td-name" style="padding-left:${12 + indent}px">${chevron}${prefix}${folderIcon}${esc(p.name)}${programChip}${_breadcrumb}${ongoingBadge}${badge}</td>
           <td>${esc(p.client_name || '—')}<br><span class="td-muted" style="font-size:11px">${esc(p.contract_number || '')}</span></td>
           <td class="td-mono">${esc(p.work_order_number || '—')}</td>
           <td>${typeBadge(p.project_type)}</td>

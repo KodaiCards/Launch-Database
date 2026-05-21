@@ -861,10 +861,64 @@ module.exports = function installProjectsRoutes(app, pool, mw) {
           });
         }
 
+        // Find or create the EC rollup folder (new Wave 10 level).
+        // rollup_key = ec.id::text, rollup_level = 'engineering_contract'.
+        // Parent = Client folder (rollup_level='client', rollup_key=client_id::text).
+        // This folder sits between the Client folder and the SA folder.
+        let ecFolderRow = await pool.query(
+          `SELECT id FROM projects
+            WHERE is_rollup = TRUE
+              AND rollup_level = 'engineering_contract'
+              AND rollup_key = $1
+            LIMIT 1`,
+          [ecId]
+        );
+        if (!ecFolderRow.rows.length) {
+          // EC folder doesn't exist yet — find the client folder and create it.
+          const clientFolderRow = await pool.query(
+            `SELECT id FROM projects
+              WHERE is_rollup = TRUE
+                AND rollup_level = 'client'
+                AND rollup_key = $1
+              LIMIT 1`,
+            [client_id]
+          );
+          const clientFolderId = clientFolderRow.rows.length ? clientFolderRow.rows[0].id : null;
+          const ecNameRow = await pool.query(
+            `SELECT name, program FROM engineering_contracts WHERE id = $1`,
+            [ecId]
+          );
+          const ecLabel = ecNameRow.rows.length
+            ? ecNameRow.rows[0].name + ' (' + (ecNameRow.rows[0].program || 'EC').toUpperCase() + ')'
+            : 'Engineering Contract';
+          try {
+            ecFolderRow = await pool.query(
+              `INSERT INTO projects
+                 (name, client_id, parent_id, engineering_contract_id, program,
+                  status, is_rollup, rollup_level, rollup_key, project_type)
+               VALUES ($1, $2, $3, $4, $5, 'active', TRUE, 'engineering_contract', $6, 'rollup')
+               RETURNING id`,
+              [ecLabel, client_id, clientFolderId, ecId, normalizedProgram, ecId]
+            );
+          } catch (ecInsertErr) {
+            // Race: another caller inserted simultaneously. Re-find the winner.
+            if (ecInsertErr.code !== '23505') throw ecInsertErr;
+            ecFolderRow = await pool.query(
+              `SELECT id FROM projects
+                WHERE is_rollup = TRUE
+                  AND rollup_level = 'engineering_contract'
+                  AND rollup_key = $1
+                LIMIT 1`,
+              [ecId]
+            );
+          }
+        }
+        const ecFolderId = ecFolderRow.rows.length ? ecFolderRow.rows[0].id : null;
+
         // Find the service-area rollup folder project row.
         // rollup_key for ec_service_areas-based folders is the ec_service_areas.id UUID
         const folderRow = await pool.query(
-          `SELECT id, engineering_contract_id FROM projects
+          `SELECT id, parent_id, engineering_contract_id FROM projects
             WHERE is_rollup = TRUE
               AND rollup_level = 'service_area'
               AND rollup_key = $1
@@ -878,6 +932,17 @@ module.exports = function installProjectsRoutes(app, pool, mw) {
         }
         const folderId = folderRow.rows[0].id;
         const folderEcId = folderRow.rows[0].engineering_contract_id;
+
+        // Ensure SA folder is parented under the EC folder (migration 0040 handles
+        // existing data; this handles SA folders created before 0040 ran or for
+        // brand-new ECs where the SA folder was created on a prior request that
+        // predated Wave 10).
+        if (ecFolderId && folderRow.rows[0].parent_id !== ecFolderId) {
+          await pool.query(
+            `UPDATE projects SET parent_id = $1 WHERE id = $2`,
+            [ecFolderId, folderId]
+          );
+        }
 
         // Try to find an existing leaf under the service-area folder with a
         // case-insensitive name match.
