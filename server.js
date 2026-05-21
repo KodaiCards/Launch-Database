@@ -1260,12 +1260,53 @@ async function bootstrapDefensiveRecentMigrations() {
 
   // Wave 11 / migration 0041 — legacy rollup folders + reparenting
   try {
+    // CLEANUP: remove duplicate Client folders previously created by this
+    // defensive boot when the client already had a legacy top-level rollup
+    // (which doesn't carry rollup_level='client' marker). Children
+    // reparented in step 4 get their parent_id reset to NULL so the next
+    // iteration doesn't re-attach them.
+    const cleanupUpdate = await pool.query(`
+      UPDATE projects child
+      SET parent_id = NULL
+      FROM projects dup
+      WHERE child.parent_id = dup.id
+        AND dup.is_rollup = TRUE
+        AND dup.rollup_level = 'client'
+        AND EXISTS (
+          SELECT 1 FROM projects legacy
+          WHERE legacy.client_id = dup.client_id
+            AND legacy.is_rollup = TRUE
+            AND legacy.parent_id IS NULL
+            AND legacy.id <> dup.id
+        )
+    `);
+    if (cleanupUpdate.rowCount > 0) {
+      console.error(`[DEFENSIVE BOOT] cleanup detached ${cleanupUpdate.rowCount} leaf(s) from duplicate Client folder(s)`);
+    }
+    const cleanupDelete = await pool.query(`
+      DELETE FROM projects dup
+      WHERE dup.is_rollup = TRUE
+        AND dup.rollup_level = 'client'
+        AND EXISTS (
+          SELECT 1 FROM projects legacy
+          WHERE legacy.client_id = dup.client_id
+            AND legacy.is_rollup = TRUE
+            AND legacy.parent_id IS NULL
+            AND legacy.id <> dup.id
+        )
+        AND NOT EXISTS (SELECT 1 FROM projects c WHERE c.parent_id = dup.id)
+    `);
+    if (cleanupDelete.rowCount > 0) {
+      console.error(`[DEFENSIVE BOOT] cleanup deleted ${cleanupDelete.rowCount} duplicate Client folder(s)`);
+    }
+
     const r1 = await pool.query(`
       INSERT INTO projects (name, client_id, status, is_rollup, rollup_level, rollup_key, project_type)
       SELECT cl.name, cl.id, 'active', TRUE, 'client', cl.id::text, 'rollup'
       FROM clients cl
-      WHERE EXISTS (SELECT 1 FROM projects p WHERE p.client_id = cl.id AND p.parent_id IS NULL AND p.is_rollup IS NOT TRUE)
+      WHERE EXISTS (SELECT 1 FROM projects p WHERE p.client_id = cl.id AND p.parent_id IS NULL AND p.is_rollup IS NOT TRUE AND p.concentrator_id IS NULL)
         AND NOT EXISTS (SELECT 1 FROM projects cf WHERE cf.is_rollup = TRUE AND cf.rollup_level = 'client' AND cf.rollup_key = cl.id::text)
+        AND NOT EXISTS (SELECT 1 FROM projects legacy WHERE legacy.client_id = cl.id AND legacy.is_rollup = TRUE AND legacy.parent_id IS NULL)
     `);
     console.error(`[DEFENSIVE BOOT] step1 created ${r1.rowCount} Client folder(s)`);
 
