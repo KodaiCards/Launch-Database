@@ -12,10 +12,14 @@ import React, { useMemo, useState } from 'react';
  * The calculator is for teaching, not for engineering sign-off. It does not
  * replace a real datasheet-fed budget tool.
  */
+
+const KM_PER_MILE = 1.609344;
+
 export default function LinkBudgetCalculator() {
   const [tx, setTx] = useState(3);          // dBm
   const [rx, setRx] = useState(-24);        // dBm receiver sensitivity
-  const [km, setKm] = useState(18);         // fiber length in km
+  const [km, setKm] = useState(17.7);       // fiber length in km (≈ 11 mi)
+  const [lengthUnit, setLengthUnit] = useState('mi'); // 'km' or 'mi'
   const [dbPerKm, setDbPerKm] = useState(0.25);
   const [splices, setSplices] = useState(6);
   const [splLoss, setSplLoss] = useState(0.10);
@@ -47,7 +51,13 @@ export default function LinkBudgetCalculator() {
       <div className="grid sm:grid-cols-2 gap-x-6 gap-y-2 text-sm">
         <Field label="Tx power (dBm)"            value={tx}        onChange={setTx} />
         <Field label="Rx sensitivity (dBm)"      value={rx}        onChange={setRx} />
-        <Field label="Fiber length (km)"         value={km}        onChange={setKm}        min={0}/>
+        <LengthField
+          label="Fiber length"
+          kmValue={km}
+          unit={lengthUnit}
+          onKmChange={setKm}
+          onUnitChange={setLengthUnit}
+        />
         <Field label="dB / km"                   value={dbPerKm}   onChange={setDbPerKm}   step={0.01} />
         <Field label="# fusion splices"          value={splices}   onChange={setSplices}   min={0} step={1}/>
         <Field label="dB / splice"               value={splLoss}   onChange={setSplLoss}   step={0.01} />
@@ -98,5 +108,51 @@ function Row({ label, value, unit, bold, color }) {
       <span>{label}</span>
       <span>{value.toFixed(2)} {unit}</span>
     </div>
+  );
+}
+
+function LengthField({ label, kmValue, unit, onKmChange, onUnitChange }) {
+  // Convert km to display value based on current unit
+  const displayValue = unit === 'mi' ? (kmValue / KM_PER_MILE).toFixed(2) : kmValue.toFixed(2);
+
+  // Handle input changes: convert back to km before storing
+  const handleInputChange = (e) => {
+    const inputValue = Number(e.target.value);
+    if (unit === 'mi') {
+      onKmChange(inputValue * KM_PER_MILE);
+    } else {
+      onKmChange(inputValue);
+    }
+  };
+
+  const handleUnitChange = (e) => {
+    onUnitChange(e.target.value);
+  };
+
+  return (
+    <label className="flex items-center justify-between gap-3 py-1.5 border-b border-white/5">
+      <span className="text-slate-300/90">
+        {label} <span className="text-slate-500 text-xs">({unit})</span>
+      </span>
+      <div className="flex items-center gap-2">
+        <input
+          type="number"
+          step={0.1}
+          min={0}
+          value={displayValue}
+          onChange={handleInputChange}
+          className="w-16 bg-black/40 border border-white/15 rounded px-2 py-1 font-mono text-right"
+        />
+        <select
+          value={unit}
+          onChange={handleUnitChange}
+          className="bg-black/40 border border-white/15 rounded px-2 py-1 text-sm font-mono text-slate-200 cursor-pointer"
+          aria-label="Distance unit selector"
+        >
+          <option value="km">km</option>
+          <option value="mi">mi</option>
+        </select>
+      </div>
+    </label>
   );
 }
