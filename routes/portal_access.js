@@ -28,11 +28,18 @@ module.exports = function installPortalAccessRoutes(app, pool, mw, portalDefs) {
         ORDER BY username ASC
       `);
 
-      const { rows: overrides } = await pool.query(`
-        SELECT user_id, portal_key FROM user_portal_access
-      `);
-
-      const overrideSet = new Set(overrides.map(r => `${r.user_id}:${r.portal_key}`));
+      // Defensive: if migration 0042 hasn't run yet (user_portal_access table
+      // missing), fall back to empty override set. UI still works — just shows
+      // no per-user grants until the table exists.
+      let overrideSet = new Set();
+      try {
+        const { rows: overrides } = await pool.query(`
+          SELECT user_id, portal_key FROM user_portal_access
+        `);
+        overrideSet = new Set(overrides.map(r => `${r.user_id}:${r.portal_key}`));
+      } catch (e) {
+        console.warn('[portal-access:list] user_portal_access query failed (migration 0042 may not have run yet):', e && e.message);
+      }
 
       const employeePortals = portalDefs
         .filter(p => p.audience === 'employee')
