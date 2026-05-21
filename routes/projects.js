@@ -188,12 +188,14 @@ module.exports = function installProjectsRoutes(app, pool, mw) {
       manual_invoice_amount,
       is_rollup,             // owner-flagged 2026-05-06: manual rollup flag.
                              // TRUE = container/folder, no traits, no hours.
+      is_ongoing,            // Wave 6: monthly recurring projects
       engineering_contract_id,  // direct EC FK — stored on the new project row
     } = req.body;
     // Coerce to boolean. JSON might arrive as 'true'/'false' strings from
     // form submissions; treat anything truthy as TRUE, everything else
     // (including undefined) as FALSE so the DB column never goes NULL.
     const isRollupFlag = (is_rollup === true || is_rollup === 'true' || is_rollup === 1 || is_rollup === '1');
+    const isOngoingFlag = (is_ongoing === true || is_ongoing === 'true' || is_ongoing === 1 || is_ongoing === '1');
     // Phase 3b (2026-05-04): project_types was dropped. Pricing now keys on
     // a program enum (rus|bau|gfr|other). Each project carries its own
     // program — auto-derived from the engineering contract when one is
@@ -367,8 +369,9 @@ module.exports = function installProjectsRoutes(app, pool, mw) {
           footage, miles, expected_hours, expected_revenue,
           start_date, notes, parent_id, budget_code_id, concentrator_id,
           permitting_hours_per_mile, billing_cadence, projected_revenue,
-          manual_invoice_amount, is_rollup, engineering_contract_id, service_area_name
-        ) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18,$19,$20,$21,$22,$23,$24,$25,$26)
+          manual_invoice_amount, is_rollup, engineering_contract_id, service_area_name,
+          is_ongoing
+        ) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18,$19,$20,$21,$22,$23,$24,$25,$26,$27)
         RETURNING *
       `, [
         name, client_id, contract_id || null, work_order_number,
@@ -378,6 +381,7 @@ module.exports = function installProjectsRoutes(app, pool, mw) {
         start_date || null, notes, parent_id || null, budget_code_id || null, concentrator_id || null,
         insertHrPerMi, effectiveCadence, insertProjected,
         insertManual, isRollupFlag, engineering_contract_id || null, service_area_label || null,
+        isOngoingFlag,
       ]);
 
       // Auto-create permit / design stages — but ONLY for real projects.
@@ -419,6 +423,7 @@ module.exports = function installProjectsRoutes(app, pool, mw) {
       is_rollup,             // owner-flagged 2026-05-06: manual rollup flag.
                              // Use COALESCE in the SET so omitting the field
                              // preserves the existing value.
+      is_ongoing,            // Wave 6: monthly recurring flag
       engineering_contract_id,  // direct EC FK — re-derived if contract_id changes
     } = req.body;
     // Coerce is_rollup to a boolean (or undefined when omitted, so the
@@ -428,6 +433,11 @@ module.exports = function installProjectsRoutes(app, pool, mw) {
       isRollupFlag = undefined;
     } else {
       isRollupFlag = (is_rollup === true || is_rollup === 'true' || is_rollup === 1 || is_rollup === '1');
+    }
+    // Coerce is_ongoing similarly — undefined = leave as-is, value = set.
+    let isOngoingFlag;
+    if (is_ongoing !== undefined) {
+      isOngoingFlag = (is_ongoing === true || is_ongoing === 'true' || is_ongoing === 1 || is_ongoing === '1');
     }
     // Phase 3b: program enum replaces project_type_id. Same validation as POST.
     if (program !== undefined) {
@@ -553,6 +563,9 @@ module.exports = function installProjectsRoutes(app, pool, mw) {
       const sanSetClause = service_area_name !== undefined
         ? (() => { conditionalParams.push(service_area_name); return `, service_area_name=$${nextSlot++}`; })()
         : '';
+      const ongoingSetClause = isOngoingFlag !== undefined
+        ? (() => { conditionalParams.push(isOngoingFlag); return `, is_ongoing=$${nextSlot++}`; })()
+        : '';
 
       // Resolve the effective is_rollup for THIS save:
       //   - explicit param wins
@@ -603,7 +616,7 @@ module.exports = function installProjectsRoutes(app, pool, mw) {
           permitting_hours_per_mile=$20,
           billing_cadence=$21, projected_revenue=$22,
           manual_invoice_amount=$23,
-          is_rollup=COALESCE($25, is_rollup)${ecIdSetClause}${wonSetClause}${concSetClause}${sanSetClause}
+          is_rollup=COALESCE($25, is_rollup)${ecIdSetClause}${wonSetClause}${concSetClause}${sanSetClause}${ongoingSetClause}
         WHERE id=$24 RETURNING *
       `, updateParams);
       broadcast('admin', 'project_updated', { id: rows[0].id, name: rows[0].name, client_id: rows[0].client_id });
@@ -1088,6 +1101,132 @@ module.exports = function installProjectsRoutes(app, pool, mw) {
       res.status(500).json({ error: 'Tree delete failed. Check server logs.' });
     } finally {
       client.release();
+    }
+  });
+
+  // GET /api/projects/:id/monthly-hours-breakdown
+  // Returns per-month hours + revenue for a project. Used by the admin detail
+  // view for ongoing (monthly-recurring) projects. Works for any project with
+  // time entries, not just is_ongoing=true — the UI gates visibility, but the
+  // endpoint is unrestricted so the same data feeds the monthly breakdown table.
+  app.get('/api/projects/:id/monthly-hours-breakdown', requireAuth(), async (req, res) => {
+    try {
+      const { rows } = await pool.query(`
+        SELECT
+          EXTRACT(YEAR  FROM te.entry_date)::int AS year,
+          EXTRACT(MONTH FROM te.entry_date)::int AS month,
+          SUM(te.hours)::numeric(10,2)            AS hours,
+          (SUM(te.hours) * COALESCE(p.billing_rate, 0))::numeric(12,2) AS revenue
+        FROM time_entries te
+        JOIN projects p ON p.id = te.project_id
+        WHERE te.project_id = $1
+          AND COALESCE(te.is_billable, TRUE) = TRUE
+        GROUP BY year, month
+        ORDER BY year, month
+      `, [req.params.id]);
+      res.json(rows);
+    } catch (e) {
+      console.error('[projects:monthly-hours-breakdown]', e && e.message);
+      res.status(500).json({ error: 'Failed to load monthly breakdown.' });
+    }
+  });
+
+  // POST /api/projects/:id/generate-monthly-invoice
+  // Admin-triggered invoice for an ongoing project's current (or specified) month.
+  // Body: { month?: 1-12, year?: YYYY } — defaults to current month/year.
+  // Idempotent: returns existing invoice row when one already covers this period.
+  app.post('/api/projects/:id/generate-monthly-invoice', requireAuth(), async (req, res) => {
+    const projectId = req.params.id;
+    const now = new Date();
+    const month = parseInt(req.body.month, 10) || (now.getMonth() + 1);
+    const year  = parseInt(req.body.year,  10) || now.getFullYear();
+
+    if (month < 1 || month > 12) return res.status(400).json({ error: 'month must be 1-12' });
+
+    const periodStart = `${year}-${String(month).padStart(2, '0')}-01`;
+    // Last day of month via day-0 trick
+    const periodEnd = new Date(year, month, 0).toISOString().slice(0, 10);
+
+    try {
+      const proj = await pool.query(
+        `SELECT id, name, client_id, billing_rate, is_ongoing FROM projects WHERE id = $1`,
+        [projectId]
+      );
+      if (!proj.rows.length) return res.status(404).json({ error: 'Project not found.' });
+      const p = proj.rows[0];
+
+      // Idempotency: check for an existing invoice whose period overlaps this month
+      // keyed by project via invoice_items join.
+      const existing = await pool.query(`
+        SELECT i.id, i.invoice_number, i.total_amount, i.status
+        FROM invoices i
+        JOIN invoice_items ii ON ii.invoice_id = i.id
+        WHERE ii.project_id = $1
+          AND i.billing_period_start = $2
+          AND i.billing_period_end   = $3
+        LIMIT 1
+      `, [projectId, periodStart, periodEnd]);
+
+      if (existing.rows.length) {
+        return res.json({ existing: true, invoice: existing.rows[0] });
+      }
+
+      // Sum billable hours for the month
+      const hoursRes = await pool.query(`
+        SELECT COALESCE(SUM(hours), 0)::numeric(10,2) AS hours
+        FROM time_entries
+        WHERE project_id = $1
+          AND EXTRACT(YEAR  FROM entry_date)::int = $2
+          AND EXTRACT(MONTH FROM entry_date)::int = $3
+          AND COALESCE(is_billable, TRUE) = TRUE
+      `, [projectId, year, month]);
+
+      const hours  = parseFloat(hoursRes.rows[0].hours) || 0;
+      const rate   = parseFloat(p.billing_rate) || 0;
+      const amount = parseFloat((hours * rate).toFixed(2));
+
+      const invoiceNumber = `INV-${year}${String(month).padStart(2, '0')}-${projectId.slice(0, 8).toUpperCase()}`;
+      const description   = `${p.name} — ${new Date(year, month - 1).toLocaleString('en-US', { month: 'long', year: 'numeric' })}`;
+
+      const client = await pool.connect();
+      try {
+        await client.query('BEGIN');
+
+        const invRes = await client.query(`
+          INSERT INTO invoices (client_id, invoice_number, invoice_date,
+            billing_period_start, billing_period_end, total_amount, status, notes)
+          VALUES ($1, $2, $3, $4, $5, $6, 'draft', $7)
+          RETURNING *
+        `, [
+          p.client_id,
+          invoiceNumber,
+          periodEnd,
+          periodStart,
+          periodEnd,
+          amount,
+          `Auto-generated for ${p.name}`,
+        ]);
+
+        const invoice = invRes.rows[0];
+
+        await client.query(`
+          INSERT INTO invoice_items (invoice_id, project_id, description, quantity, unit, rate, amount)
+          VALUES ($1, $2, $3, $4, 'hrs', $5, $6)
+        `, [invoice.id, projectId, description, hours, rate, amount]);
+
+        await client.query('COMMIT');
+
+        broadcast('admin', 'invoice_generated', { invoice_id: invoice.id, project_id: projectId });
+        res.status(201).json({ existing: false, invoice });
+      } catch (e) {
+        await client.query('ROLLBACK');
+        throw e;
+      } finally {
+        client.release();
+      }
+    } catch (e) {
+      console.error('[projects:generate-monthly-invoice]', e && e.message);
+      res.status(500).json({ error: 'Failed to generate invoice.' });
     }
   });
 };

@@ -1647,11 +1647,18 @@ select.filter{border:1px solid var(--gray-border);border-radius:7px;padding:7px 
                   <input type="hidden" id="proj-exp-hours">
                   <input type="hidden" id="proj-exp-rev">
                 </div>
+                <!-- Ongoing (monthly recurring) toggle -->
+                <div style="background:var(--surface-2,var(--gray-light));border-radius:8px;padding:10px">
+                  <label style="display:flex;align-items:center;gap:8px;cursor:pointer;margin:0">
+                    <input type="checkbox" id="proj-ongoing" onchange="ongoingChanged()" style="margin:0">
+                    <span><strong>Ongoing (monthly recurring)</strong> — hours billed each month; enables monthly invoice generation.</span>
+                  </label>
+                </div>
                 <!-- Cadence + Projected Revenue -->
                 <div class="form-row" id="proj-row-cadence">
                   <div class="form-group">
                     <label for="proj-cadence">Billing Cadence</label>
-                    <select id="proj-cadence" style="width:100%">
+                    <select id="proj-cadence" style="width:100%" onchange="cadenceChanged()">
                       <option value="one_time">One-time</option>
                       <option value="monthly">Monthly</option>
                     </select>
@@ -4236,6 +4243,8 @@ async function editProject(id) {
   if (document.getElementById('proj-manual-amount')) document.getElementById('proj-manual-amount').value = p.manual_invoice_amount ?? '';
   const rb = document.getElementById('proj-rollup');
   if (rb) { rb.checked = !!p.is_rollup; rollupChanged(); }
+  const og = document.getElementById('proj-ongoing');
+  if (og) { og.checked = !!p.is_ongoing; ongoingChanged(); }
 
   // STEP 4 — cascade: client → program → EC → SA → job, each step guarded.
   try {
@@ -4426,6 +4435,8 @@ function clearProjectForm() {
   if (document.getElementById('proj-cadence')) document.getElementById('proj-cadence').value = 'one_time';
   const rb = document.getElementById('proj-rollup');
   if (rb) { rb.checked = false; rollupChanged(); }
+  const ogCb = document.getElementById('proj-ongoing');
+  if (ogCb) { ogCb.checked = false; ongoingChanged(); }
   jobChanged(/*skipRateLookup=*/true);
 }
 
@@ -4458,6 +4469,27 @@ function rollupChanged() {
   if (!checked && projectModalState.program) {
     projProgramChanged();
   }
+}
+
+// When the ongoing toggle changes, sync billing_cadence:
+// is_ongoing=true forces cadence to monthly and locks the selector.
+function ongoingChanged() {
+  const ongoing = !!document.getElementById('proj-ongoing')?.checked;
+  const cadSel = document.getElementById('proj-cadence');
+  if (!cadSel) return;
+  if (ongoing) {
+    cadSel.value = 'monthly';
+    cadSel.disabled = true;
+  } else {
+    cadSel.disabled = false;
+  }
+}
+
+// When the cadence selector changes manually, sync the ongoing toggle.
+function cadenceChanged() {
+  const cadSel = document.getElementById('proj-cadence');
+  const ongoingCb = document.getElementById('proj-ongoing');
+  if (!cadSel || !ongoingCb || ongoingCb.checked) return;
 }
 
 // User changed the program category. Re-derive field gating (program now
@@ -5282,6 +5314,7 @@ async function saveProject(opts) {
       return isNaN(n) ? null : n;
     })(),
     is_rollup: isRollup,
+    is_ongoing: !!document.getElementById('proj-ongoing')?.checked,
   };
   // Double-submit guard: disable Save button for the duration of the manual
   // (non-silent) submit. Autosave ({silent:true}) doesn't touch the button.
@@ -6831,6 +6864,7 @@ function renderProjectDetail(data, month, year) {
       <div><div style="font-size:11px;color:var(--text-muted);text-transform:uppercase">Billing</div><div style="font-weight:600">${esc(p.billing_type)}${rate ? ' @ ' + fmtMoney(rate) + '/hr' : ''}</div></div>
       ${p.budget_code ? `<div><div style="font-size:11px;color:var(--text-muted);text-transform:uppercase">Budget Code</div><div style="font-weight:600">${esc(p.budget_code)}</div></div>` : ''}
       ${p.has_budget ? `<div><button class="btn btn-secondary btn-sm" onclick="closeModal('project-detail-modal');showBudgetForProject('${p.id}','${esc(p.name)}')"><i class="fa-solid fa-wallet"></i> View Budget</button></div>` : ''}
+      ${p.is_ongoing ? `<div><button class="btn btn-primary btn-sm" id="pd-gen-invoice-btn" onclick="generateMonthlyInvoice('${p.id}')"><i class="fa-solid fa-file-invoice-dollar"></i> Generate this month's invoice</button></div>` : ''}
     </div>
   </div>`;
 
@@ -7081,6 +7115,28 @@ function renderProjectDetail(data, month, year) {
 }
 
 // Used by the month switcher tabs at the top of the project detail popup.
+async function generateMonthlyInvoice(projectId, month, year) {
+  const btn = document.getElementById('pd-gen-invoice-btn');
+  if (btn) { btn.disabled = true; btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Generating…'; }
+  const now = new Date();
+  const m = month || (now.getMonth() + 1);
+  const y = year  || now.getFullYear();
+  try {
+    const result = await api(`/api/projects/${projectId}/generate-monthly-invoice`, 'POST', { month: m, year: y });
+    if (result.existing) {
+      alert(`Invoice already exists for this month: ${result.invoice.invoice_number || result.invoice.id}`);
+    } else {
+      alert(`Invoice created: ${result.invoice.invoice_number || result.invoice.id}`);
+      // Reload detail to show updated invoice history
+      reloadProjectDetail(projectId, m, y);
+    }
+  } catch (e) {
+    alert('Failed to generate invoice: ' + e.message);
+  } finally {
+    if (btn) { btn.disabled = false; btn.innerHTML = '<i class="fa-solid fa-file-invoice-dollar"></i> Generate this month\'s invoice'; }
+  }
+}
+
 async function reloadProjectDetail(projectId, month, year) {
   const params = new URLSearchParams();
   if (year) params.set('year', year);

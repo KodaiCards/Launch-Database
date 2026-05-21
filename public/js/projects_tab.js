@@ -297,9 +297,12 @@
           ? `<br><span style="font-size:11px;color:var(--text-muted);font-weight:400">${_breadcrumbParts.join(' / ')}</span>`
           : '';
 
+        const ongoingBadge = p.is_ongoing
+          ? `<span style="font-size:10px;background:var(--primary-light);color:var(--primary);padding:1px 6px;border-radius:10px;font-weight:600;margin-left:4px" title="Monthly recurring">&#9851; Ongoing</span>`
+          : '';
         html += `<tr ${trAttrs} onclick="showProjectDetail('${p.id}')">
           <td style="text-align:center" onclick="event.stopPropagation()">${checkbox}</td>
-          <td class="td-name" style="padding-left:${12 + indent}px">${chevron}${prefix}${esc(p.name)}${_breadcrumb}${badge}</td>
+          <td class="td-name" style="padding-left:${12 + indent}px">${chevron}${prefix}${esc(p.name)}${_breadcrumb}${ongoingBadge}${badge}</td>
           <td>${esc(p.client_name || '—')}<br><span class="td-muted" style="font-size:11px">${esc(p.contract_number || '')}</span></td>
           <td class="td-mono">${esc(p.work_order_number || '—')}</td>
           <td>${typeBadge(p.project_type)}</td>
