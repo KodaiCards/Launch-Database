@@ -440,13 +440,62 @@
     setHtmlIfChanged(tbody, buildProjRows(roots, 0, null, true) + buildVirtualGroups());
   }
 
-  // Shared toggle: see makeTreeToggle in tree_state.js.
-  const ptreeToggle = makeTreeToggle({
-    state: projectsTreeState,
-    chevIdPrefix: 'pc-',
-    groupKeyPrefix: 'pt-',
-    rowClassPrefix: 'ptree-',
-  });
+  // Toggle with full descendant cascade. When collapsing a parent:
+  //   1. Remove parent + all descendants from projectsTreeState so a
+  //      re-render produces a fully-collapsed subtree.
+  //   2. Immediately hide every descendant row and reset every nested
+  //      chevron in the DOM so the UI is responsive before the next
+  //      polling re-render fires.
+  // When expanding, only the parent is marked expanded; children render
+  // in their default collapsed state because their ids are absent from
+  // projectsTreeState.
+  function ptreeToggle(projectId, groupKey, chevId) {
+    const wasExpanded = projectsTreeState.isExpanded(projectId);
+
+    if (wasExpanded) {
+      projectsTreeState.collapse(projectId);
+
+      // Collect all descendant project ids recursively.
+      const list = (typeof allProjects !== 'undefined' && allProjects) ? allProjects : [];
+      const collectDescendants = (parentId, acc) => {
+        list.filter(p => p.parent_id === parentId).forEach(c => {
+          acc.add(c.id);
+          collectDescendants(c.id, acc);
+        });
+      };
+      const descs = new Set();
+      collectDescendants(projectId, descs);
+      // Remove all descendants from state so re-render shows them collapsed.
+      projectsTreeState.collapseAll([...descs]);
+
+      // Hide direct child rows of this parent.
+      document.querySelectorAll('.ptree-' + groupKey).forEach(r => {
+        r.style.display = 'none';
+      });
+
+      // Hide every descendant row and reset every descendant chevron.
+      descs.forEach(descId => {
+        const descKey = 'pt-' + descId;
+        document.querySelectorAll('.ptree-' + descKey).forEach(r => {
+          r.style.display = 'none';
+        });
+        const descChev = document.getElementById('pc-' + descId);
+        if (descChev) descChev.style.transform = 'rotate(0deg)';
+      });
+    } else {
+      projectsTreeState.expand(projectId);
+
+      // Show only direct child rows; their own children stay hidden because
+      // descendants are not in projectsTreeState (were collapsed above, or
+      // never expanded).
+      document.querySelectorAll('.ptree-' + groupKey).forEach(r => {
+        r.style.display = 'table-row';
+      });
+    }
+
+    const chev = document.getElementById(chevId);
+    if (chev) chev.style.transform = wasExpanded ? 'rotate(0deg)' : 'rotate(90deg)';
+  }
 
   // Show or hide every branch in the projects tree at once.
   function ptreeExpandAll(expand) {
