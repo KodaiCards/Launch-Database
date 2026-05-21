@@ -65,37 +65,28 @@ async function isDuplicateProject(pool, name, parentId, excludeId = null) {
   return r.rows.length > 0;
 }
 
-// ─── Auto-nesting: ensure rollup chain exists, return team-folder id ────────
-// Builds (or finds) the Client → Service Area → Project Type → Team rollup
-// chain and returns the deepest existing rollup id, suitable for use as the
-// new project's parent_id.
+// ─── Auto-nesting: ensure rollup chain exists, return deepest folder id ──────
+// Builds (or finds) the rollup chain and returns the deepest folder id,
+// suitable for use as the new project's parent_id.
+//
+// Hierarchy (Wave 14):
+//   Client → EC → SA → Leaf       (when engineering_contract_id is set)
+//   Client → SA → Leaf            (no EC, but SA is known)
+//   Client → Leaf                 (neither EC nor SA)
+//
+// The legacy Team folder level (Client → Team → SA) is NO LONGER created by
+// this function. Existing Team folders are left in place as legacy artifacts
+// (they have children and must not be deleted), but new projects never land
+// under a Team folder.
+//
+// Service Area resolution:
+//   - concentrator_id provided → ec_service_areas lookup first, then
+//     concentrators fallback. rollup_key = concentrator_id UUID.
+//   - service_area_label (free text) provided → rollup_key =
+//     client_id|lowercased_label so case-insensitive dedup is client-scoped.
+//   - Neither provided → SA level skipped.
 async function ensureRollupChain(pool, { client_id, concentrator_id, service_area_label, job_id, engineering_contract_id }, pgClient) {
   if (!client_id) return null;
-
-  // Three-level rollup hierarchy: Client → Team → Service Area → (project).
-  //
-  // Team resolution rules — there are exactly THREE possible team folders
-  // under any client, never more:
-  //   - 'design'     → "Design Team" folder
-  //   - 'permitting' → "Permitting Team" folder
-  //   - 'both' or NULL or anything else → "Shared / Other" folder
-  // Importantly, 'both' collapses to 'shared'. The reason: the user wants
-  // ONE Shared folder per client that holds ONLY projects whose jobs are
-  // explicitly cross-team or unassigned. Without this collapse, a project
-  // with team='both' would create a separate "Shared (Design + Permitting)"
-  // folder distinct from a project with team=NULL — visible to the user as
-  // duplicate-looking team folders. By normalizing to 'shared', the rollup_key
-  // is always one of three values, so findOrCreateRollup returns the same
-  // folder for every project that should share it.
-  //
-  // Service Area resolution:
-  //   - PSC clients: concentrator_id (looked up from WO# match) → folder named
-  //     after the concentrator's area_name. rollup_key = concentrator UUID.
-  //   - Non-PSC clients: service_area_label (free text) → folder named that
-  //     label. rollup_key = client_id|lowercased_label so case-insensitive
-  //     dedup happens but cross-client collisions are avoided.
-  //   - Neither provided → Service Area level skipped; project lands directly
-  //     under the Team folder.
 
   // 1) Client folder
   const cli = await pool.query('SELECT name FROM clients WHERE id = $1', [client_id]);
@@ -110,40 +101,24 @@ async function ensureRollupChain(pool, { client_id, concentrator_id, service_are
     extras: { client_id, engineering_contract_id: engineering_contract_id || null }
   }, pgClient);
 
-  // 2) Team folder — normalize anything that isn't 'design' or 'permitting'
-  // into 'shared'. This guarantees only three possible team folders per client.
-  let rawTeam = null;
-  if (job_id) {
-    const jr = await pool.query('SELECT team FROM jobs WHERE id = $1', [job_id]);
-    rawTeam = jr.rows[0]?.team || null;
+  // 2) EC folder — only when engineering_contract_id is explicitly provided.
+  if (engineering_contract_id) {
+    const ecRow = await pool.query(
+      `SELECT name, program FROM engineering_contracts WHERE id = $1`,
+      [engineering_contract_id]
+    );
+    if (ecRow.rows.length) {
+      const ec = ecRow.rows[0];
+      const ecLabel = ec.name + (ec.program ? ' (' + ec.program.toUpperCase() + ')' : '');
+      folder = await findOrCreateRollup(pool, {
+        parent_id: folder,
+        rollup_level: 'engineering_contract',
+        rollup_key: engineering_contract_id,
+        name: ecLabel,
+        extras: { client_id, engineering_contract_id }
+      }, pgClient);
+    }
   }
-  let teamKey, teamLabel;
-  if (rawTeam === 'design') {
-    teamKey = 'design';
-    teamLabel = 'Design Team';
-  } else if (rawTeam === 'permitting') {
-    teamKey = 'permitting';
-    teamLabel = 'Permitting Team';
-  } else if (rawTeam === 'construction' || rawTeam === 'inspection') {
-    // 'inspection' is the legacy team value; the 0009 migration
-    // renamed it to 'construction' but we still accept both so any
-    // unmigrated row in flight (e.g. a job inserted between code
-    // deploy and migration apply) keeps working.
-    teamKey = 'construction';
-    teamLabel = 'Construction Team';
-  } else {
-    // 'both', NULL, 'shared', or any unrecognized value all collapse here.
-    teamKey = 'shared';
-    teamLabel = 'Shared / Other';
-  }
-
-  folder = await findOrCreateRollup(pool, {
-    parent_id: folder,
-    rollup_level: 'team',
-    rollup_key: teamKey,
-    name: teamLabel,
-    extras: { client_id, engineering_contract_id: engineering_contract_id || null }
-  }, pgClient);
 
   // 3) Service Area folder — optional. Either concentrator-based (PSC) or
   // free-text label (non-PSC). If neither, skip this level.

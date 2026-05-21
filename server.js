@@ -1349,6 +1349,142 @@ async function bootstrapDefensiveRecentMigrations() {
   } catch (e) {
     console.error('[DEFENSIVE BOOT] legacy rollup FAILED:', e.message);
   }
+
+  // Wave 14 — Client → EC → SA hierarchy restructure
+  // Goal: pull legacy top-level rollup folders (e.g. "PSC RUS 217") under the
+  // client folder, create EC-level rollup folders for each engineering_contract,
+  // and reparent SA folders under EC folders when the connection is traceable.
+  // All operations are idempotent: ON CONFLICT DO NOTHING / WHERE NOT EXISTS guards.
+  try {
+    // Step W14-1: Ensure every client has a Client folder (idempotent — step1
+    // above already does this for clients with flat leaves; extend to ALL clients).
+    const w14_1 = await pool.query(`
+      INSERT INTO projects (name, client_id, status, is_rollup, rollup_level, rollup_key, project_type)
+      SELECT cl.name, cl.id, 'active', TRUE, 'client', cl.id::text, 'rollup'
+      FROM clients cl
+      WHERE NOT EXISTS (
+        SELECT 1 FROM projects cf
+        WHERE cf.is_rollup = TRUE
+          AND cf.rollup_level = 'client'
+          AND cf.rollup_key = cl.id::text
+      )
+      ON CONFLICT DO NOTHING
+    `);
+    console.error(`[WAVE 14] step W14-1: created ${w14_1.rowCount} missing Client folder(s)`);
+
+    // Step W14-2: Pull existing top-level rollup folders (parent_id IS NULL,
+    // not already a client-level folder) under their client's Client folder.
+    // This handles legacy EC-named folders like "PSC RUS 217" that were created
+    // before Wave 14 and currently sit at tree root.
+    // SAFETY: skip Team-level folders (rollup_level='team') — they may have
+    // children and will be left in place as legacy artifacts.
+    const w14_2 = await pool.query(`
+      UPDATE projects p
+      SET parent_id = cf.id
+      FROM projects cf
+      WHERE p.is_rollup = TRUE
+        AND p.parent_id IS NULL
+        AND COALESCE(p.rollup_level, '') <> 'client'
+        AND p.client_id IS NOT NULL
+        AND cf.is_rollup = TRUE
+        AND cf.rollup_level = 'client'
+        AND cf.rollup_key = p.client_id::text
+    `);
+    console.error(`[WAVE 14] step W14-2: reparented ${w14_2.rowCount} top-level rollup(s) under Client folder(s)`);
+
+    // Step W14-3: Create EC-level rollup folders for each engineering_contract
+    // that doesn't already have one. Name = ec.name (+ program label).
+    // Parent = Client folder for that EC's client.
+    const w14_3 = await pool.query(`
+      INSERT INTO projects
+        (name, client_id, parent_id, engineering_contract_id, program,
+         status, is_rollup, rollup_level, rollup_key, project_type)
+      SELECT
+        ec.name || CASE WHEN ec.program IS NOT NULL THEN ' (' || UPPER(ec.program) || ')' ELSE '' END,
+        ec.client_id,
+        cf.id,
+        ec.id,
+        ec.program,
+        'active', TRUE, 'engineering_contract', ec.id::text, 'rollup'
+      FROM engineering_contracts ec
+      JOIN projects cf
+        ON cf.is_rollup = TRUE
+       AND cf.rollup_level = 'client'
+       AND cf.rollup_key = ec.client_id::text
+      WHERE ec.active = TRUE
+        AND NOT EXISTS (
+          SELECT 1 FROM projects ep
+          WHERE ep.is_rollup = TRUE
+            AND ep.rollup_level = 'engineering_contract'
+            AND ep.rollup_key = ec.id::text
+        )
+      ON CONFLICT DO NOTHING
+    `);
+    console.error(`[WAVE 14] step W14-3: created ${w14_3.rowCount} EC folder(s)`);
+
+    // Step W14-4: Reparent SA-level rollup folders that belong to an EC
+    // (identified via engineering_contract_id on the SA folder) under the
+    // matching EC folder. Only moves folders that are currently parented
+    // directly under a Client folder or Team folder (i.e. not already under EC).
+    const w14_4 = await pool.query(`
+      UPDATE projects sa
+      SET parent_id = ec_folder.id
+      FROM projects ec_folder
+      WHERE sa.is_rollup = TRUE
+        AND sa.rollup_level = 'service_area'
+        AND sa.engineering_contract_id IS NOT NULL
+        AND ec_folder.is_rollup = TRUE
+        AND ec_folder.rollup_level = 'engineering_contract'
+        AND ec_folder.rollup_key = sa.engineering_contract_id::text
+        AND sa.parent_id <> ec_folder.id
+    `);
+    console.error(`[WAVE 14] step W14-4: reparented ${w14_4.rowCount} SA folder(s) under EC folder(s)`);
+
+    // Step W14-5: Reparent SA-level rollup folders that can be linked to an EC
+    // via their child leaf projects (leaf has engineering_contract_id). Only
+    // fires for SA folders not yet moved in W14-4.
+    const w14_5 = await pool.query(`
+      UPDATE projects sa
+      SET
+        parent_id = ec_folder.id,
+        engineering_contract_id = COALESCE(sa.engineering_contract_id, ec_folder.rollup_key::uuid)
+      FROM (
+        SELECT DISTINCT ON (p.parent_id)
+          p.parent_id AS sa_id,
+          ef.id AS ec_folder_id
+        FROM projects p
+        JOIN projects ef
+          ON ef.is_rollup = TRUE
+         AND ef.rollup_level = 'engineering_contract'
+         AND ef.rollup_key = p.engineering_contract_id::text
+        WHERE p.engineering_contract_id IS NOT NULL
+          AND p.is_rollup IS NOT TRUE
+          AND p.parent_id IS NOT NULL
+        ORDER BY p.parent_id, ef.id
+      ) link
+      JOIN projects sa ON sa.id = link.sa_id
+      JOIN projects ec_folder ON ec_folder.id = link.ec_folder_id
+      WHERE sa.is_rollup = TRUE
+        AND sa.rollup_level = 'service_area'
+        AND sa.parent_id <> ec_folder.id
+    `);
+    console.error(`[WAVE 14] step W14-5: reparented ${w14_5.rowCount} additional SA folder(s) via leaf EC linkage`);
+
+    // Verify extended DB state
+    const counts14 = await pool.query(`
+      SELECT
+        (SELECT COUNT(*) FROM projects WHERE is_rollup = TRUE AND rollup_level = 'client') AS client_folders,
+        (SELECT COUNT(*) FROM projects WHERE is_rollup = TRUE AND rollup_level = 'engineering_contract') AS ec_folders,
+        (SELECT COUNT(*) FROM projects WHERE is_rollup = TRUE AND rollup_level = 'service_area') AS sa_folders,
+        (SELECT COUNT(*) FROM projects WHERE is_rollup = TRUE AND rollup_level = 'team') AS team_folders,
+        (SELECT COUNT(*) FROM projects WHERE parent_id IS NULL AND is_rollup IS NOT TRUE) AS flat_leaves
+    `);
+    const c14 = counts14.rows[0];
+    console.error(`[WAVE 14] DB STATE: ${c14.client_folders} client, ${c14.ec_folders} EC, ${c14.sa_folders} SA, ${c14.team_folders} team (legacy), ${c14.flat_leaves} flat leaves`);
+  } catch (e) {
+    console.error('[WAVE 14] EC hierarchy restructure FAILED:', e.message);
+  }
+
   console.error('═════ [DEFENSIVE BOOT] end ═════');
 }
 
