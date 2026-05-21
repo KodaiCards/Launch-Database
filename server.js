@@ -261,20 +261,46 @@ const PORTAL_DEFS = [
     description: 'View your projects, progress updates, and invoices.',
     canAccess: u => u.role === 'customer',
   },
+  // Wave 12: client portal tile — admin-only by default; per-user overrides
+  // grant access to specific staff via user_portal_access table.
+  {
+    id: 'client_portal',
+    audience: 'employee',
+    url: '/client-portal',
+    name: 'Client Portal',
+    icon: 'handshake',
+    description: 'Client-facing portal preview.',
+    canAccess: u => u.role === 'admin',
+  },
 ];
 
 // GET /api/me/portals — returns the list of portals the current user can access.
 // Optional query param: ?audience=employee|client
 //   default: customer role → 'client'; everything else → 'employee'
 // Returns: { portals: [{id, name, icon, url, description}], user: {role, name} }
-app.get('/api/me/portals', requireAuth(), (req, res) => {
+// Wave 12: also checks user_portal_access table for per-user override grants.
+app.get('/api/me/portals', requireAuth(), async (req, res) => {
   const u = req.user;
   const defaultAudience = u.role === 'customer' ? 'client' : 'employee';
   const audience = (req.query.audience === 'client' || req.query.audience === 'employee')
     ? req.query.audience
     : defaultAudience;
+
+  let overrideKeys = new Set();
+  if (u.role !== 'customer') {
+    try {
+      const { rows } = await pool.query(
+        `SELECT portal_key FROM user_portal_access WHERE user_id = $1`,
+        [u.id]
+      );
+      overrideKeys = new Set(rows.map(r => r.portal_key));
+    } catch (e) {
+      console.error('[portals] Failed to load portal overrides:', e && e.message);
+    }
+  }
+
   const portals = PORTAL_DEFS
-    .filter(p => p.audience === audience && p.canAccess(u))
+    .filter(p => p.audience === audience && (p.canAccess(u) || overrideKeys.has(p.id)))
     .map(p => ({ id: p.id, name: p.name, icon: p.icon, url: p.url, description: p.description }));
   res.json({ portals, user: { role: u.role, name: u.full_name || u.username } });
 });
@@ -704,6 +730,12 @@ require('./routes/splice')(app, pool, { requireAuth });
 // ─────────────────────────────────────────────────────────────────────────────
 require('./routes/training')(app, pool, { requireAuth });
 
+// ─────────────────────────────────────────────────────────────────────────────
+// PORTAL ACCESS — Wave 12
+// Per-user portal access overrides. Schema: migration 0042_user_portal_access.sql.
+// ─────────────────────────────────────────────────────────────────────────────
+require('./routes/portal_access')(app, pool, { requireAdmin }, PORTAL_DEFS);
+
 // ─── Mapbox token endpoint (Splice 5.D.1) ────────────────────────────────────
 // Returns the MAPBOX_TOKEN env var to authenticated clients so it can be used
 // in the browser-side MapLibre transformRequest without hardcoding in HTML.
@@ -761,6 +793,10 @@ app.use('/api', (err, req, res, next) => {
 // These remain available as direct deep-links even without PORTAL_MODE.
 app.get('/permitting', (req, res) => res.sendFile(path.join(__dirname, 'public', 'permitting.html')));
 app.get('/design', (req, res) => res.sendFile(path.join(__dirname, 'public', 'design.html')));
+// Wave 12: client portal placeholder — requires auth; actual content TBD.
+app.get('/client-portal', requireAuth(), (req, res) => {
+  res.sendFile(path.join(__dirname, 'public', 'client-portal-placeholder.html'));
+});
 
 // Old bookmark /index.html → redirect to /admin.html
 app.get('/index.html', (req, res) => res.redirect('/admin.html'));

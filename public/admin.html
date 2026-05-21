@@ -2613,6 +2613,22 @@ select.filter{border:1px solid var(--gray-border);border-radius:7px;padding:7px 
         <div id="users-list-body" style="font-size:13px"></div>
       </div>
 
+      <!-- ── Portal Access (Wave 12) ── per-user portal grants ── -->
+      <div class="settings-section" id="portal-access-section" style="margin-top:24px">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px">
+          <h4 style="font-size:14px;font-weight:600;margin:0"><i class="fa-solid fa-key" style="margin-right:6px;color:var(--text-muted)"></i>Portal Access</h4>
+          <button class="btn btn-secondary btn-sm" onclick="loadPortalAccessMatrix()"><i class="fa-solid fa-rotate"></i> Refresh</button>
+        </div>
+        <p style="font-size:12px;color:var(--text-muted);margin:0 0 12px 0">
+          Role-based defaults are shown but cannot be unchecked. Additional portals can be granted per staff member.
+          Checked &amp; locked <i class="fa-solid fa-lock" style="font-size:10px"></i> = role default.
+          Checked &amp; unlocked = granted override (uncheck to revoke).
+        </p>
+        <div id="portal-access-body" style="font-size:13px;overflow-x:auto">
+          <div style="padding:20px;text-align:center;color:var(--text-muted)"><i class="fa-solid fa-spinner fa-spin"></i> Loading&hellip;</div>
+        </div>
+      </div>
+
       <!-- ── Invoice Templates ── reference-PDF-driven generator
            Each (Job, Client) can have a PDF sample uploaded; Claude
            vision analyses the layout once, the system fills + renders
@@ -2745,6 +2761,7 @@ select.filter{border:1px solid var(--gray-border);border-radius:7px;padding:7px 
 <script src="/js/pricing_settings.js"></script>
 <script src="/js/migration_tools.js"></script>
 <script src="/js/clients_settings.js"></script>
+<script src="/js/settings_portal_access.js"></script>
 <script src="/js/inspection_tab.js"></script>
 <script src="/js/design_potential_tabs.js"></script>
 <script src="/js/permits_tab.js"></script>
@@ -7508,6 +7525,13 @@ async function openSettings() {
       loadProjectionDQ().catch(() => {});
     }
   } catch (e) { console.warn('proj-dq load skipped:', e.message); }
+
+  // Wave 12: load portal access matrix for admins
+  try {
+    if (typeof currentUser !== 'undefined' && currentUser && currentUser.role === 'admin') {
+      if (typeof loadPortalAccessMatrix === 'function') loadPortalAccessMatrix().catch(() => {});
+    }
+  } catch (e) { console.warn('portal-access load skipped:', e.message); }
 }
 
 
@@ -7773,7 +7797,7 @@ function applyUserScopedUI() {
     if (approvalsBtn) approvalsBtn.style.display = 'none';
     // Also hide the user management section even if Settings is opened
     document.querySelectorAll('.settings-section').forEach(s => {
-      if (s.querySelector('#users-list-body') || s.querySelector('#renest-result')) {
+      if (s.querySelector('#users-list-body') || s.querySelector('#renest-result') || s.querySelector('#portal-access-body')) {
         s.style.display = 'none';
       }
     });

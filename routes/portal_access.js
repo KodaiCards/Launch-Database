@@ -1,0 +1,127 @@
+// routes/portal_access.js — per-user portal access overrides (Wave 12)
+//
+// Schema: migrations/0042_user_portal_access.sql
+//   user_portal_access(user_id, portal_key, granted_at, granted_by_user_id)
+//
+// Three endpoints (all admin-only):
+//   GET  /api/portal-access              — full matrix: users x portals
+//   POST /api/users/:userId/portal-access/:portalKey   — grant override
+//   DELETE /api/users/:userId/portal-access/:portalKey — revoke override
+
+module.exports = function installPortalAccessRoutes(app, pool, mw, portalDefs) {
+  const requireAdmin = (mw && mw.requireAdmin) || ((req, res, next) => next());
+
+  function serverError(res, e, where) {
+    console.error(`[portal-access:${where}]`, e && e.message);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+
+  // GET /api/portal-access
+  // Returns the full matrix of non-customer users x portals.
+  // Each row has { user_id, username, full_name, role, portals: [{key, label, hasRoleDefault, hasOverride}] }
+  app.get('/api/portal-access', requireAdmin, async (req, res) => {
+    try {
+      const { rows: users } = await pool.query(`
+        SELECT id, username, full_name, role
+        FROM users
+        WHERE active = true AND role <> 'customer'
+        ORDER BY username ASC
+      `);
+
+      const { rows: overrides } = await pool.query(`
+        SELECT user_id, portal_key FROM user_portal_access
+      `);
+
+      const overrideSet = new Set(overrides.map(r => `${r.user_id}:${r.portal_key}`));
+
+      const employeePortals = portalDefs
+        .filter(p => p.audience === 'employee')
+        .map(p => ({ key: p.id, label: p.name }));
+
+      const matrix = users.map(u => ({
+        user_id: u.id,
+        username: u.username,
+        full_name: u.full_name || u.username,
+        role: u.role,
+        portals: employeePortals.map(p => ({
+          key: p.key,
+          label: p.label,
+          hasRoleDefault: isRoleDefault(u, p.key, portalDefs),
+          hasOverride: overrideSet.has(`${u.id}:${p.key}`),
+        })),
+      }));
+
+      res.json(matrix);
+    } catch (e) {
+      serverError(res, e, 'list');
+    }
+  });
+
+  // POST /api/users/:userId/portal-access/:portalKey
+  // Idempotent — ON CONFLICT DO NOTHING.
+  app.post('/api/users/:userId/portal-access/:portalKey', requireAdmin, async (req, res) => {
+    const { userId, portalKey } = req.params;
+    const knownKeys = portalDefs.filter(p => p.audience === 'employee').map(p => p.id);
+    if (!knownKeys.includes(portalKey)) {
+      return res.status(400).json({ error: `Unknown portal key: ${portalKey}` });
+    }
+    try {
+      const { rows: userRows } = await pool.query(
+        `SELECT id, role FROM users WHERE id = $1 AND active = true AND role <> 'customer'`,
+        [userId]
+      );
+      if (!userRows[0]) return res.status(404).json({ error: 'User not found' });
+
+      await pool.query(
+        `INSERT INTO user_portal_access (user_id, portal_key, granted_by_user_id)
+         VALUES ($1, $2, $3)
+         ON CONFLICT (user_id, portal_key) DO NOTHING`,
+        [userId, portalKey, req.user.id]
+      );
+      res.json({ ok: true });
+    } catch (e) {
+      serverError(res, e, 'grant');
+    }
+  });
+
+  // DELETE /api/users/:userId/portal-access/:portalKey
+  // Refuses to remove a role-default access (would have no effect but clarifies intent).
+  app.delete('/api/users/:userId/portal-access/:portalKey', requireAdmin, async (req, res) => {
+    const { userId, portalKey } = req.params;
+    try {
+      const { rows: userRows } = await pool.query(
+        `SELECT id, role FROM users WHERE id = $1`,
+        [userId]
+      );
+      if (!userRows[0]) return res.status(404).json({ error: 'User not found' });
+
+      const u = userRows[0];
+      if (isRoleDefault(u, portalKey, portalDefs)) {
+        return res.status(400).json({
+          error: `Cannot revoke role-default access. User has ${portalKey} access via their role (${u.role}).`,
+        });
+      }
+
+      await pool.query(
+        `DELETE FROM user_portal_access WHERE user_id = $1 AND portal_key = $2`,
+        [userId, portalKey]
+      );
+      res.json({ ok: true });
+    } catch (e) {
+      serverError(res, e, 'revoke');
+    }
+  });
+};
+
+// Returns true if the user's role alone grants access to this portal (no override needed).
+// Mirrors the canAccess logic in PORTAL_DEFS without requiring the full sync fn.
+function isRoleDefault(user, portalKey, portalDefs) {
+  if (user.role === 'admin') return true;
+  const def = portalDefs.find(p => p.id === portalKey);
+  if (!def) return false;
+  try {
+    return def.canAccess(user);
+  } catch {
+    return false;
+  }
+}
