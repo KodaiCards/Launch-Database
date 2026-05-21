@@ -330,3 +330,55 @@ test('resolve-or-create: no-EC-for-client+program returns 404', async () => {
   });
   assert.equal(res.status, 404, 'missing EC for program must return 404');
 });
+
+// ─── NO-EC MODE (service_area_label) ─────────────────────────────────────────
+
+test('resolve-or-create: no-EC mode creates leaf under free-text SA folder', async () => {
+  const saLabel = uniqueTag('no-ec-sa');
+  const jobName = uniqueTag('no-ec-leaf');
+  const result = await requestJson('POST', '/api/projects/resolve-or-create', {
+    token,
+    expectStatus: 201,
+    body: {
+      client_id: sharedClient.id,
+      service_area_label: saLabel,
+      job_name: jobName,
+    },
+  });
+  assert.ok(result.id, 'created project must have an id');
+  assert.equal(result.created, true, 'created must be true for new leaf');
+  assert.equal(result.is_rollup, false, 'new leaf must not be a rollup');
+  assert.equal(result.service_area_name, saLabel, 'service_area_name must match the label');
+  assert.ok(result.parent_id, 'new leaf must have a parent_id (the SA folder)');
+  cleanup.projects.push(result.id);
+});
+
+test('resolve-or-create: no-EC mode finds existing leaf case-insensitively', async () => {
+  const saLabel = uniqueTag('no-ec-sa-dup');
+  const jobName = uniqueTag('no-ec-find-existing');
+
+  // Create first leaf
+  const first = await requestJson('POST', '/api/projects/resolve-or-create', {
+    token,
+    expectStatus: 201,
+    body: {
+      client_id: sharedClient.id,
+      service_area_label: saLabel,
+      job_name: jobName,
+    },
+  });
+  cleanup.projects.push(first.id);
+
+  // Try to find it with a case-variant name
+  const result = await requestJson('POST', '/api/projects/resolve-or-create', {
+    token,
+    expectStatus: 200,
+    body: {
+      client_id: sharedClient.id,
+      service_area_label: saLabel,
+      job_name: jobName.toUpperCase(),
+    },
+  });
+  assert.equal(result.id, first.id, 'case-insensitive match must find the existing leaf');
+  assert.equal(result.created, false, 'created must be false for existing leaf');
+});

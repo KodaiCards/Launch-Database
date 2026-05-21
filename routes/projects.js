@@ -748,35 +748,34 @@ module.exports = function installProjectsRoutes(app, pool, mw) {
 
   // POST /api/projects/resolve-or-create
   //
-  // Cascade-picker backend (Phase A). Given the four-level cascade selection
-  // (client_id + program + service_area_id + job_name), finds the matching leaf
-  // project or creates it under the service-area rollup folder.
+  // Cascade-picker backend supporting TWO modes:
   //
-  // The service-area folder must already exist (admin creates SAs under each EC
-  // via POST /api/engineering-contracts/:id/service-areas). This endpoint ONLY
-  // auto-creates leaf projects, never folder rows.
+  // MODE 1 (EC-scoped, existing):
+  //   Body: { client_id, program, service_area_id, job_name }
+  //   Finds or creates a leaf under the EC's service-area rollup folder.
   //
-  // Race condition: the UNIQUE constraint on non-rollup leaves prevents
-  // duplicate names under the same parent. On 23505 we re-SELECT the winner
-  // and return created:false so the UI gets the existing project_id.
+  // MODE 2 (no-EC, new):
+  //   Body: { client_id, service_area_label, job_name }
+  //   Finds or creates a leaf under a free-text service-area rollup folder
+  //   (via ensureRollupChain). No EC required. No program parameter.
+  //
+  // Branch selection: if service_area_id is present → MODE 1 (EC).
+  // If service_area_label is present → MODE 2 (no-EC).
+  // If neither: 400 error.
+  //
+  // Race condition on leaf creation: UNIQUE constraint on non-rollup leaves
+  // prevents duplicate names under the same parent. On 23505 we re-SELECT
+  // the winner and return created:false so the UI gets the existing project_id.
   app.post('/api/projects/resolve-or-create', requireAuth(), async (req, res) => {
-    const { client_id, program, service_area_id, job_name } = req.body;
+    const { client_id, program, service_area_id, service_area_label, job_name } = req.body;
 
-    // Input validation
+    // Input validation (common to both modes)
     if (!job_name || !String(job_name).trim()) {
       return res.status(400).json({ error: 'job_name is required and must be non-empty.' });
     }
     if (!client_id || typeof client_id !== 'string' || !client_id.match(/^[0-9a-f-]{36}$/i)) {
       return res.status(400).json({ error: 'client_id must be a valid UUID.' });
     }
-    if (!service_area_id || typeof service_area_id !== 'string' || !service_area_id.match(/^[0-9a-f-]{36}$/i)) {
-      return res.status(400).json({ error: 'service_area_id must be a valid UUID.' });
-    }
-    const programAllowed = ['rus', 'bau', 'gfr', 'other'];
-    if (!program || !programAllowed.includes(String(program).trim().toLowerCase())) {
-      return res.status(400).json({ error: `program must be one of: ${programAllowed.join(', ')}.` });
-    }
-    const normalizedProgram = String(program).trim().toLowerCase();
     const normalizedJobName = String(job_name).trim();
 
     // Block customer role — customers cannot create or resolve projects
@@ -784,84 +783,73 @@ module.exports = function installProjectsRoutes(app, pool, mw) {
       return res.status(403).json({ error: 'Customers cannot access this endpoint.' });
     }
 
+    // Branch selection: EC-scoped vs no-EC
+    const isEcMode = !!service_area_id;
+    const isNoEcMode = !!service_area_label;
+
+    if (!isEcMode && !isNoEcMode) {
+      return res.status(400).json({
+        error: 'Either service_area_id (EC mode) or service_area_label (no-EC mode) is required.',
+      });
+    }
+
     try {
-      // Find the engineering contract for (client_id + program)
-      const ecRow = await pool.query(
-        `SELECT id FROM engineering_contracts WHERE client_id = $1 AND program = $2 AND active = TRUE LIMIT 1`,
-        [client_id, normalizedProgram]
-      );
-      if (!ecRow.rows.length) {
-        return res.status(404).json({
-          error: `No active engineering contract found for client + program "${normalizedProgram}". Admin must create the engineering contract first.`,
-        });
-      }
-      const ecId = ecRow.rows[0].id;
+      if (isEcMode) {
+        // ═══ MODE 1: EC-SCOPED (existing behavior) ═══
+        const programAllowed = ['rus', 'bau', 'gfr', 'other'];
+        if (!program || !programAllowed.includes(String(program).trim().toLowerCase())) {
+          return res.status(400).json({ error: `program must be one of: ${programAllowed.join(', ')}.` });
+        }
+        if (typeof service_area_id !== 'string' || !service_area_id.match(/^[0-9a-f-]{36}$/i)) {
+          return res.status(400).json({ error: 'service_area_id must be a valid UUID.' });
+        }
+        const normalizedProgram = String(program).trim().toLowerCase();
 
-      // Verify the service-area row belongs to this EC
-      const saRow = await pool.query(
-        `SELECT id, name FROM ec_service_areas WHERE id = $1 AND engineering_contract_id = $2`,
-        [service_area_id, ecId]
-      );
-      if (!saRow.rows.length) {
-        return res.status(404).json({
-          error: 'No project rollup found for client + program + service area — admin must initialize service area first.',
-        });
-      }
-      const saName = saRow.rows[0].name;
-
-      // Find the service-area rollup folder project row.
-      // rollup_key for ec_service_areas-based folders is the ec_service_areas.id UUID
-      // (set by ensureRollupChain when concentrator_id is an ec_service_areas UUID).
-      const folderRow = await pool.query(
-        `SELECT id, engineering_contract_id FROM projects
-          WHERE is_rollup = TRUE
-            AND rollup_level = 'service_area'
-            AND rollup_key = $1
-          LIMIT 1`,
-        [service_area_id]
-      );
-      if (!folderRow.rows.length) {
-        return res.status(404).json({
-          error: 'No project rollup found for client + program + service area — admin must initialize service area first.',
-        });
-      }
-      const folderId = folderRow.rows[0].id;
-      const folderEcId = folderRow.rows[0].engineering_contract_id;
-
-      // Try to find an existing leaf under the service-area folder with a
-      // case-insensitive name match.
-      const existing = await pool.query(
-        `SELECT id, name, is_rollup, parent_id, status, engineering_contract_id
-           FROM projects
-          WHERE parent_id = $1
-            AND LOWER(name) = LOWER($2)
-            AND COALESCE(is_rollup, FALSE) = FALSE
-          LIMIT 1`,
-        [folderId, normalizedJobName]
-      );
-      if (existing.rows.length) {
-        return res.status(200).json({ ...existing.rows[0], created: false });
-      }
-
-      // Create the leaf project under the service-area folder.
-      // Inherits client_id, engineering_contract_id, and program from the folder context.
-      let newRow;
-      try {
-        const insert = await pool.query(
-          `INSERT INTO projects
-             (name, client_id, parent_id, engineering_contract_id, program,
-              status, is_rollup, billing_type, project_type)
-           VALUES ($1, $2, $3, $4, $5, 'active', FALSE, 'hourly', 'other')
-           RETURNING id, name, is_rollup, parent_id, status, engineering_contract_id`,
-          [normalizedJobName, client_id, folderId, folderEcId || ecId, normalizedProgram]
+        // Find the engineering contract for (client_id + program)
+        const ecRow = await pool.query(
+          `SELECT id FROM engineering_contracts WHERE client_id = $1 AND program = $2 AND active = TRUE LIMIT 1`,
+          [client_id, normalizedProgram]
         );
-        newRow = insert.rows[0];
-      } catch (err) {
-        if (err.code !== '23505') throw err;
-        // Race condition: another caller created the same leaf simultaneously.
-        // Re-SELECT the winner.
-        const refound = await pool.query(
-          `SELECT id, name, is_rollup, parent_id, status, engineering_contract_id
+        if (!ecRow.rows.length) {
+          return res.status(404).json({
+            error: `No active engineering contract found for client + program "${normalizedProgram}". Admin must create the engineering contract first.`,
+          });
+        }
+        const ecId = ecRow.rows[0].id;
+
+        // Verify the service-area row belongs to this EC
+        const saRow = await pool.query(
+          `SELECT id, name FROM ec_service_areas WHERE id = $1 AND engineering_contract_id = $2`,
+          [service_area_id, ecId]
+        );
+        if (!saRow.rows.length) {
+          return res.status(404).json({
+            error: 'No project rollup found for client + program + service area — admin must initialize service area first.',
+          });
+        }
+
+        // Find the service-area rollup folder project row.
+        // rollup_key for ec_service_areas-based folders is the ec_service_areas.id UUID
+        const folderRow = await pool.query(
+          `SELECT id, engineering_contract_id FROM projects
+            WHERE is_rollup = TRUE
+              AND rollup_level = 'service_area'
+              AND rollup_key = $1
+            LIMIT 1`,
+          [service_area_id]
+        );
+        if (!folderRow.rows.length) {
+          return res.status(404).json({
+            error: 'No project rollup found for client + program + service area — admin must initialize service area first.',
+          });
+        }
+        const folderId = folderRow.rows[0].id;
+        const folderEcId = folderRow.rows[0].engineering_contract_id;
+
+        // Try to find an existing leaf under the service-area folder with a
+        // case-insensitive name match.
+        const existing = await pool.query(
+          `SELECT id, name, is_rollup, parent_id, status, engineering_contract_id, service_area_name
              FROM projects
             WHERE parent_id = $1
               AND LOWER(name) = LOWER($2)
@@ -869,12 +857,120 @@ module.exports = function installProjectsRoutes(app, pool, mw) {
             LIMIT 1`,
           [folderId, normalizedJobName]
         );
-        if (!refound.rows.length) throw err;
-        return res.status(200).json({ ...refound.rows[0], created: false });
-      }
+        if (existing.rows.length) {
+          return res.status(200).json({ ...existing.rows[0], created: false });
+        }
 
-      broadcast('admin', 'project_added', { id: newRow.id, name: newRow.name, client_id });
-      return res.status(201).json({ ...newRow, created: true });
+        // Create the leaf project under the service-area folder.
+        let newRow;
+        try {
+          const insert = await pool.query(
+            `INSERT INTO projects
+               (name, client_id, parent_id, engineering_contract_id, program,
+                status, is_rollup, billing_type, project_type, service_area_name)
+             VALUES ($1, $2, $3, $4, $5, 'active', FALSE, 'hourly', 'other', $6)
+             RETURNING id, name, is_rollup, parent_id, status, engineering_contract_id, service_area_name`,
+            [normalizedJobName, client_id, folderId, folderEcId || ecId, normalizedProgram, saRow.rows[0].name]
+          );
+          newRow = insert.rows[0];
+        } catch (err) {
+          if (err.code !== '23505') throw err;
+          // Race condition: another caller created the same leaf simultaneously.
+          // Re-SELECT the winner.
+          const refound = await pool.query(
+            `SELECT id, name, is_rollup, parent_id, status, engineering_contract_id, service_area_name
+               FROM projects
+              WHERE parent_id = $1
+                AND LOWER(name) = LOWER($2)
+                AND COALESCE(is_rollup, FALSE) = FALSE
+              LIMIT 1`,
+            [folderId, normalizedJobName]
+          );
+          if (!refound.rows.length) throw err;
+          return res.status(200).json({ ...refound.rows[0], created: false });
+        }
+
+        broadcast('admin', 'project_added', { id: newRow.id, name: newRow.name, client_id });
+        return res.status(201).json({ ...newRow, created: true });
+
+      } else {
+        // ═══ MODE 2: NO-EC (free-text service area) ═══
+        // Validate service_area_label
+        const normalizedLabel = String(service_area_label).trim();
+        if (!normalizedLabel || normalizedLabel.length > 200) {
+          return res.status(400).json({
+            error: 'service_area_label must be a non-empty string ≤ 200 characters.',
+          });
+        }
+
+        // Verify client exists
+        const clientRow = await pool.query(
+          `SELECT id FROM clients WHERE id = $1`,
+          [client_id]
+        );
+        if (!clientRow.rows.length) {
+          return res.status(404).json({ error: 'Client not found.' });
+        }
+
+        // Use ensureRollupChain to get/create the rollup chain (Client → SA → leaf)
+        const ensureRollupChain = app.locals.ensureRollupChain;
+        const folderId = await ensureRollupChain(pool, {
+          client_id,
+          service_area_label: normalizedLabel,
+          job_id: null,
+        });
+        if (!folderId) {
+          return res.status(500).json({
+            error: 'Failed to initialize service area rollup chain.',
+          });
+        }
+
+        // Try to find an existing leaf under the SA folder with a case-insensitive name match.
+        const existing = await pool.query(
+          `SELECT id, name, is_rollup, parent_id, status, engineering_contract_id, service_area_name
+             FROM projects
+            WHERE parent_id = $1
+              AND LOWER(name) = LOWER($2)
+              AND COALESCE(is_rollup, FALSE) = FALSE
+            LIMIT 1`,
+          [folderId, normalizedJobName]
+        );
+        if (existing.rows.length) {
+          return res.status(200).json({ ...existing.rows[0], created: false });
+        }
+
+        // Create the leaf project under the SA folder.
+        let newRow;
+        try {
+          const insert = await pool.query(
+            `INSERT INTO projects
+               (name, client_id, parent_id, billing_type, project_type, status,
+                is_rollup, service_area_name)
+             VALUES ($1, $2, $3, 'hourly', 'other', 'active', FALSE, $4)
+             RETURNING id, name, is_rollup, parent_id, status, engineering_contract_id, service_area_name`,
+            [normalizedJobName, client_id, folderId, normalizedLabel]
+          );
+          newRow = insert.rows[0];
+        } catch (err) {
+          if (err.code !== '23505') throw err;
+          // Race condition: another caller created the same leaf simultaneously.
+          // Re-SELECT the winner.
+          const refound = await pool.query(
+            `SELECT id, name, is_rollup, parent_id, status, engineering_contract_id, service_area_name
+               FROM projects
+              WHERE parent_id = $1
+                AND LOWER(name) = LOWER($2)
+                AND COALESCE(is_rollup, FALSE) = FALSE
+              LIMIT 1`,
+            [folderId, normalizedJobName]
+          );
+          if (!refound.rows.length) throw err;
+          return res.status(200).json({ ...refound.rows[0], created: false });
+        }
+
+        broadcast('admin', 'project_added', { id: newRow.id, name: newRow.name, client_id });
+        return res.status(201).json({ ...newRow, created: true });
+      }
     } catch (e) {
       console.error('[projects:resolve-or-create]', e && e.message);
       res.status(500).json({ error: 'Failed to resolve or create project.' });
