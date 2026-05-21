@@ -39,17 +39,17 @@ export default function T20L04_USOA() {
           <tbody className="text-slate-300/90">
             <tr className="border-t border-white/10">
               <td className="px-2 py-2 font-mono">Cable & Wire</td>
-              <td className="px-2 py-2">§32.2210</td>
+              <td className="px-2 py-2">§32.2410</td>
               <td className="px-2 py-2">Fiber optic cable, copper cable, GPON splitters, closures</td>
             </tr>
             <tr className="border-t border-white/10">
               <td className="px-2 py-2 font-mono">Poles</td>
-              <td className="px-2 py-2">§32.2420</td>
+              <td className="px-2 py-2">§32.2411</td>
               <td className="px-2 py-2">Wood/concrete poles, reinforcement, hardware</td>
             </tr>
             <tr className="border-t border-white/10">
               <td className="px-2 py-2 font-mono">Conduit / Duct</td>
-              <td className="px-2 py-2">§32.2480</td>
+              <td className="px-2 py-2">§32.2441</td>
               <td className="px-2 py-2">PVC/HDPE duct, concrete duct, handholes, vaults</td>
             </tr>
             <tr className="border-t border-white/10">
@@ -72,7 +72,7 @@ export default function T20L04_USOA() {
         </div>
         <div className="rounded bg-green-900/30 p-3 mt-3 text-sm">
           <p className="font-semibold text-green-300">Field</p>
-          <p className="text-slate-300/90 mt-1">Contractor invoices often lump "Materials + Labor" per phase. Borrower uses spreadsheet to back-allocate based on spec (e.g., "this phase = 50 mi cable → 50 × $price/mi → account 32.2210"). RUS accepts if allocation methodology is documented and auditable.</p>
+          <p className="text-slate-300/90 mt-1">Contractor invoices often lump "Materials + Labor" per phase. Borrower uses spreadsheet to back-allocate based on spec (e.g., "this phase = 50 mi cable → 50 × $price/mi → account §32.2410"). RUS accepts if allocation methodology is documented and auditable.</p>
         </div>
       </section>
 
@@ -81,7 +81,7 @@ export default function T20L04_USOA() {
         <h3 className="font-semibold text-slate-200">Tying It Together</h3>
         <p className="text-sm text-slate-300/90 mt-2">
           When you designed the <strong>site survey</strong> (T04) and estimated <strong>costs per mile</strong> (T17), you were implicitly assigning items to USOA accounts.
-          Cable costs go to §32.2210, pole costs to §32.2420, duct to §32.2480. Now you see the formalization: RUS requires every cost tracked per account
+          Cable costs go to §32.2410, pole costs to §32.2411, duct to §32.2441. Now you see the formalization: RUS requires every cost tracked per account
           so auditors can reconcile total spend against the cost-per-mile allowance by category. Your design spec → cost estimate → USOA account mapping → RUS audit trail.
           It's a connected chain where precision at the design stage saves headaches during accounting.
         </p>
@@ -107,9 +107,9 @@ export default function T20L04_USOA() {
             type: 'mc',
             prompt: 'Fiber optic cable costs go into which plant account?',
             options: [
-              { key: 'a', text: 'Poles (§32.2420)' },
-              { key: 'b', text: 'Cable & Wire (§32.2210)' },
-              { key: 'c', text: 'Conduit (§32.2480)' },
+              { key: 'a', text: 'Poles (§32.2411)' },
+              { key: 'b', text: 'Cable & Wire (§32.2410)' },
+              { key: 'c', text: 'Conduit (§32.2441)' },
               { key: 'd', text: 'Land (§32.2220)' },
             ],
             correct: 'b',

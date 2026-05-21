@@ -127,9 +127,9 @@ export default function T21L02_FiberFundamentalsReview() {
         <div className="mt-3 space-y-2 text-slate-300/90">
           <p>
             Fiber losses vary by wavelength. There are three "windows" (low-loss bands):
-            <br /><strong>1310 nm (C-band):</strong> Zero-dispersion point for standard SMF. Historically used for long-haul. Lower attenuation than 1550 but higher than 1490.
-            <br /><strong>1490 nm:</strong> Intermediate. Lower attenuation than 1310, used in some newer systems.
-            <br /><strong>1550 nm (L-band):</strong> Lowest attenuation (~0.18 dB/km SMF). Most common for modern feeder routes. Requires dispersion compensation for very long spans.
+            <br /><strong>1310 nm (O-band):</strong> Zero-dispersion point for standard SMF (G.652.D). Historically used for long-haul; still common for PON upstream and shorter OSP spans.
+            <br /><strong>1490 nm (S-band):</strong> Intermediate. Used for PON downstream (GPON, XG-PON); lower attenuation than 1310 nm.
+            <br /><strong>1550 nm (C-band):</strong> Lowest attenuation (~0.18 dB/km SMF). Most common for modern long-distance feeder routes. Requires dispersion compensation for very long spans.
           </p>
           <p>
             <strong>In OSP:</strong> You'll see 1310 in older networks, 1550 in newer builds (especially GPON/XG-PON). The exam expects you to know why 1550 is preferred for distance and which effects (dispersion, attenuation, chromatic dispersion) become relevant at each wavelength.

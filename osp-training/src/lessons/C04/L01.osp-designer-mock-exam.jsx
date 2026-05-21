@@ -602,7 +602,7 @@ const ospDesignerQuestions = [
     domain: 'Fiber Physics',
     stem: 'At what wavelength does standard G.652.D fiber exhibit ZERO chromatic dispersion?',
     choices: [
-      '1310 nm (C-band, minimum loss window)',
+      '1310 nm (O-band, zero-dispersion wavelength)',
       '1255 nm (L-band edge)',
       '1550 nm (minimum dispersion slope)',
       '850 nm (multimode shorthand)',

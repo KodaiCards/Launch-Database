@@ -185,13 +185,13 @@ export default function T22L02_FiberFundamentals() {
           Maximum distance (m) = (Bandwidth-distance product (MHz·km) × 1000) / (Data rate (MHz))
         </p>
         <p className="mt-2">
-          <strong>Example (OM3 @ 1550 nm):</strong>
+          <strong>Example (OM3 @ 850 nm):</strong>
           <br />
-          OM3 modal bandwidth = 500 MHz·km @ 1550 nm
+          OM3 EMB (Effective Modal Bandwidth) = 2000 MHz·km @ 850 nm
           <br />
           For 100 Mbps (need ~125 MHz channel bandwidth):
           <br />
-          Max distance = (500 MHz·km × 1000) / 125 MHz = <strong>4000 m = 4 km</strong>
+          Max distance = (2000 MHz·km × 1000) / 125 MHz = <strong>16000 m = 16 km</strong>
         </p>
         <p className="mt-2">
           In practice, you also account for attenuation loss (cable loss + splices). The
@@ -276,7 +276,7 @@ export default function T22L02_FiberFundamentals() {
             term === 'Modal dispersion' ? 'In multimode fiber, different light rays (modes) bounce at different angles and arrive at different times, spreading (dispersing) the signal pulse and limiting distance.' :
             term === 'Attenuation (dB/km)' ? 'Signal loss per unit distance due to absorption and scattering. G.652.D loses ~0.2 dB per km @ 1550 nm; OM1 multimode loses ~3 dB/km @ 1550 nm.' :
             term === 'G.652.D (standard single-mode)' ? 'ITU-T standard for outside-plant single-mode fiber; 8–9 µm core; ~0.35 dB/km @ 1310 nm, ~0.2 dB/km @ 1550 nm.' :
-            term === 'OM3, OM4, OM5 (multimode grades)' ? 'Multimode fiber grades with increasing modal bandwidth. OM5 is newest (~4700 MHz·km @ 1550 nm); OM1 is legacy (~200 MHz·km).' :
+            term === 'OM3, OM4, OM5 (multimode grades)' ? 'Multimode fiber grades with increasing modal bandwidth. OM5 is newest (~4700 MHz·km @ 850 nm); OM1 is legacy (~200 MHz·km).' :
             'Wavelength at which higher-order modes stop propagating in single-mode fiber. For G.652.D, λc ≈ 1270 nm; both 1310 nm and 1550 nm are well below cutoff (truly single-mode).'
           } />
         ))}
