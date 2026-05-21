@@ -196,10 +196,10 @@ module.exports = function installEngineeringContractsRoutes(app, pool, mw) {
 
   // ─── EC-SCOPED SERVICE AREAS ────────────────────────────────────────────────
 
-  app.get('/api/engineering-contracts/:id/service-areas', requireAdmin, async (req, res) => {
+  app.get('/api/engineering-contracts/:id/service-areas', requireAuth(), async (req, res) => {
     try {
       const { rows } = await pool.query(
-        `SELECT * FROM ec_service_areas
+        `SELECT id, name, notes, work_order_number, created_at FROM ec_service_areas
           WHERE engineering_contract_id = $1
           ORDER BY name`,
         [req.params.id]
@@ -212,15 +212,15 @@ module.exports = function installEngineeringContractsRoutes(app, pool, mw) {
   });
 
   app.post('/api/engineering-contracts/:id/service-areas', requireAdmin, async (req, res) => {
-    const { name, notes } = req.body || {};
+    const { name, notes, work_order_number } = req.body || {};
     if (!name || !String(name).trim()) {
       return res.status(400).json({ error: 'name required' });
     }
     try {
       const { rows } = await pool.query(
-        `INSERT INTO ec_service_areas (engineering_contract_id, name, notes)
-           VALUES ($1, $2, $3) RETURNING *`,
-        [req.params.id, String(name).trim(), notes || null]
+        `INSERT INTO ec_service_areas (engineering_contract_id, name, notes, work_order_number)
+           VALUES ($1, $2, $3, $4) RETURNING *`,
+        [req.params.id, String(name).trim(), notes || null, work_order_number || null]
       );
       res.status(201).json(rows[0]);
     } catch (e) {
@@ -231,13 +231,14 @@ module.exports = function installEngineeringContractsRoutes(app, pool, mw) {
   });
 
   app.put('/api/ec-service-areas/:id', requireAdmin, async (req, res) => {
-    const { name, notes } = req.body || {};
+    const { name, notes, work_order_number } = req.body || {};
     try {
       const sets = [];
       const params = [req.params.id];
       let i = 2;
       if (name !== undefined) { sets.push(`name = $${i++}`); params.push(String(name).trim()); }
       if (notes !== undefined) { sets.push(`notes = $${i++}`); params.push(notes || null); }
+      if (work_order_number !== undefined) { sets.push(`work_order_number = $${i++}`); params.push(work_order_number || null); }
       if (!sets.length) return res.status(400).json({ error: 'Nothing to update' });
       const { rows } = await pool.query(
         `UPDATE ec_service_areas SET ${sets.join(', ')} WHERE id = $1 RETURNING *`,

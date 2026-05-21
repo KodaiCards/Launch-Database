@@ -255,6 +255,17 @@ module.exports = function installProjectsRoutes(app, pool, mw) {
         });
       }
 
+      // Auto-derive work_order_number from concentrator_id (SA) lookup if present
+      if (!work_order_number && concentrator_id) {
+        const sa = await pool.query(
+          `SELECT work_order_number FROM ec_service_areas WHERE id = $1`,
+          [concentrator_id]
+        );
+        if (sa.rows[0]?.work_order_number) {
+          work_order_number = sa.rows[0].work_order_number;
+        }
+      }
+
       // Duplicate-project guard (same name under same parent rejected)
       if (await app.locals.isDuplicateProject(name, parent_id)) {
         return res.status(409).json({ error: 'A project with this name already exists under the same parent' });
@@ -351,8 +362,8 @@ module.exports = function installProjectsRoutes(app, pool, mw) {
           footage, miles, expected_hours, expected_revenue,
           start_date, notes, parent_id, budget_code_id, concentrator_id,
           permitting_hours_per_mile, billing_cadence, projected_revenue,
-          manual_invoice_amount, is_rollup, engineering_contract_id
-        ) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18,$19,$20,$21,$22,$23,$24,$25)
+          manual_invoice_amount, is_rollup, engineering_contract_id, service_area_name
+        ) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18,$19,$20,$21,$22,$23,$24,$25,$26)
         RETURNING *
       `, [
         name, client_id, contract_id || null, work_order_number,
@@ -361,7 +372,7 @@ module.exports = function installProjectsRoutes(app, pool, mw) {
         insertFootage, insertMiles, insertExpHours, insertExpRev,
         start_date || null, notes, parent_id || null, budget_code_id || null, concentrator_id || null,
         insertHrPerMi, effectiveCadence, insertProjected,
-        insertManual, isRollupFlag, engineering_contract_id || null,
+        insertManual, isRollupFlag, engineering_contract_id || null, service_area_label || null,
       ]);
 
       // Auto-create permit / design stages — but ONLY for real projects.
@@ -398,6 +409,7 @@ module.exports = function installProjectsRoutes(app, pool, mw) {
       project_type, program, job_id,
       status, billing_type, billing_rate,
       footage, start_date, completed_date, billed_date, notes, parent_id, budget_code_id, concentrator_id,
+      service_area_name,
       billing_cadence, projected_revenue, manual_invoice_amount,
       is_rollup,             // owner-flagged 2026-05-06: manual rollup flag.
                              // Use COALESCE in the SET so omitting the field
@@ -552,6 +564,7 @@ module.exports = function installProjectsRoutes(app, pool, mw) {
         notes, parent_id || null, budget_code_id || null, concentrator_id || null,
         updHrPerMi,
         newCadence, updProjected, updManual,
+        service_area_name || null,
         req.params.id,
         isRollupFlag === undefined ? null : isRollupFlag,
       ];
@@ -567,9 +580,9 @@ module.exports = function installProjectsRoutes(app, pool, mw) {
           notes=$18, parent_id=$19, budget_code_id=$20, concentrator_id=$21,
           permitting_hours_per_mile=$22,
           billing_cadence=$23, projected_revenue=$24,
-          manual_invoice_amount=$25,
-          is_rollup=COALESCE($27, is_rollup)${ecIdSetClause}
-        WHERE id=$26 RETURNING *
+          manual_invoice_amount=$25, service_area_name=$26,
+          is_rollup=COALESCE($28, is_rollup)${ecIdSetClause}
+        WHERE id=$27 RETURNING *
       `, updateParams);
       broadcast('admin', 'project_updated', { id: rows[0].id, name: rows[0].name, client_id: rows[0].client_id });
       res.json(rows[0]);

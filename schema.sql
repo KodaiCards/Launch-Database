@@ -189,6 +189,7 @@ CREATE TABLE public.ec_service_areas (
     engineering_contract_id uuid NOT NULL,
     name text NOT NULL,
     notes text,
+    work_order_number text,
     created_at timestamp with time zone DEFAULT now()
 );
 
@@ -424,6 +425,7 @@ CREATE TABLE public.projects (
     updated_by_user_id uuid,
     is_ongoing boolean DEFAULT false,
     program character varying(20),
+    service_area_name text,
     CONSTRAINT projects_program_check CHECK (((program IS NULL) OR ((program)::text = ANY ((ARRAY['rus'::character varying, 'bau'::character varying, 'gfr'::character varying, 'other'::character varying])::text[]))))
 );
 
