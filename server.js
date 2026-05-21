@@ -736,6 +736,9 @@ require('./routes/training')(app, pool, { requireAuth });
 // ─────────────────────────────────────────────────────────────────────────────
 require('./routes/portal_access')(app, pool, { requireAdmin }, PORTAL_DEFS);
 
+// Wave 13: client portal API — project status for the beta client-facing view.
+require('./routes/client_portal')(app, pool, { requireAuth });
+
 // ─── Mapbox token endpoint (Splice 5.D.1) ────────────────────────────────────
 // Returns the MAPBOX_TOKEN env var to authenticated clients so it can be used
 // in the browser-side MapLibre transformRequest without hardcoding in HTML.
@@ -793,9 +796,10 @@ app.use('/api', (err, req, res, next) => {
 // These remain available as direct deep-links even without PORTAL_MODE.
 app.get('/permitting', (req, res) => res.sendFile(path.join(__dirname, 'public', 'permitting.html')));
 app.get('/design', (req, res) => res.sendFile(path.join(__dirname, 'public', 'design.html')));
-// Wave 12: client portal placeholder — requires auth; actual content TBD.
+// Wave 13: client portal — real three-column project status view.
+// Placeholder kept at client-portal-placeholder.html for rollback.
 app.get('/client-portal', requireAuth(), (req, res) => {
-  res.sendFile(path.join(__dirname, 'public', 'client-portal-placeholder.html'));
+  res.sendFile(path.join(__dirname, 'public', 'client-portal.html'));
 });
 
 // Old bookmark /index.html → redirect to /admin.html
