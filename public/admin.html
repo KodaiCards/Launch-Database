@@ -4179,6 +4179,17 @@ function populateTypeAndJobDropdowns() {
 }
 
 async function editProject(id) {
+  // Clear any stale state from a prior new-project form session before
+  // pre-filling this project's fields. Without this, stale EC/SA dropdown
+  // options from the previous open session are briefly visible while the
+  // async cascade in STEP 4 runs.
+  clearProjectForm();
+  // Suppress autosave during pre-fill: scalar fields set in STEP 3 fire input
+  // events that would arm the 1500ms debounce before the async cascade in STEP 4
+  // finishes populating EC/SA dropdowns. Without suppression, autosave can fire
+  // with empty engineering_contract_id / concentrator_id and overwrite existing
+  // EC linkage on the project row.
+  window.__suppressProjectAutosave = true;
   // Reset autosave indicator state for a fresh edit session
   if (typeof _autosaveResetForOpen === 'function') _autosaveResetForOpen();
   // STEP 1 — open the modal IMMEDIATELY. If population fails partway through,
@@ -4349,6 +4360,9 @@ async function editProject(id) {
   try {
     jobChanged(/*skipRateLookup=*/true);
   } catch (e) { /* non-fatal */ }
+
+  // All cascade awaits are complete — safe to re-enable autosave.
+  window.__suppressProjectAutosave = false;
 }
 
 function clearProjectForm() {
@@ -5260,6 +5274,9 @@ function _autosaveScheduleSave() {
   // Only autosave if we're editing an existing project
   const id = document.getElementById('proj-id')?.value;
   if (!id) return;
+  // Suppress during editProject() cascade pre-fill to prevent autosave
+  // firing with empty EC/SA fields before the cascade completes.
+  if (window.__suppressProjectAutosave) return;
   _autosaveError = null;
   _autosaveLastInteractAt = Date.now();
   _autosaveRenderStatus();

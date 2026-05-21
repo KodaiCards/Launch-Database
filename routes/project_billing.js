@@ -110,15 +110,18 @@ module.exports = function installProjectBillingRoutes(app, pool, mw) {
              parent_id, name, client_id, contract_id, work_order_number,
              project_type, status, billing_type, billing_rate, footage,
              expected_hours, expected_revenue, start_date, notes,
-             budget_code_id, concentrator_id, job_id, billing_cadence
+             budget_code_id, concentrator_id, job_id, billing_cadence,
+             engineering_contract_id, service_area_name
            ) VALUES (
-             $1, $2, $3, $4, $5, $6, 'active', $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17
+             $1, $2, $3, $4, $5, $6, 'active', $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17,
+             $18, $19
            ) RETURNING *`,
           [
             orig.parent_id, newName, orig.client_id, orig.contract_id, orig.work_order_number,
             orig.project_type, orig.billing_type, orig.billing_rate, orig.footage,
             orig.expected_hours, orig.expected_revenue, billDate, orig.notes,
-            orig.budget_code_id, orig.concentrator_id, orig.job_id, orig.billing_cadence
+            orig.budget_code_id, orig.concentrator_id, orig.job_id, orig.billing_cadence,
+            orig.engineering_contract_id || null, orig.service_area_name || null
           ]
         );
         followOn = followR.rows[0];

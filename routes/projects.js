@@ -529,7 +529,7 @@ module.exports = function installProjectsRoutes(app, pool, mw) {
       // If neither engineering_contract_id nor contract_id was touched, leave it alone.
       const ecIdForUpdate = updEngContractId !== undefined ? updEngContractId : null;
       const ecIdSetClause = updEngContractId !== undefined
-        ? ', engineering_contract_id=$28'
+        ? ', engineering_contract_id=$29'
         : '';
 
       // Resolve the effective is_rollup for THIS save:
@@ -572,15 +572,15 @@ module.exports = function installProjectsRoutes(app, pool, mw) {
 
       const { rows } = await pool.query(`
         UPDATE projects SET
-          name=$1, client_id=$2, contract_id=$3, work_order_number=$4,
+          name=$1, client_id=$2, contract_id=$3, work_order_number=COALESCE($4, work_order_number),
           project_type=COALESCE($5, project_type), program=COALESCE($6, program), job_id=$7,
           status=$8, billing_type=$9, billing_rate=$10,
           footage=$11, miles=$12, expected_hours=$13, expected_revenue=$14,
           start_date=$15, completed_date=$16, billed_date=$17,
-          notes=$18, parent_id=$19, budget_code_id=$20, concentrator_id=$21,
+          notes=$18, parent_id=$19, budget_code_id=$20, concentrator_id=COALESCE($21, concentrator_id),
           permitting_hours_per_mile=$22,
           billing_cadence=$23, projected_revenue=$24,
-          manual_invoice_amount=$25, service_area_name=$26,
+          manual_invoice_amount=$25, service_area_name=COALESCE($26, service_area_name),
           is_rollup=COALESCE($28, is_rollup)${ecIdSetClause}
         WHERE id=$27 RETURNING *
       `, updateParams);

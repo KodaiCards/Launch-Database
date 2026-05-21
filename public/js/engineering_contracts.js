@@ -259,6 +259,8 @@
     if (!name) return alert('Name required');
     try {
       await api(`/api/ec-service-areas/${saId}`, 'PUT', { name, work_order_number, notes });
+      // Invalidate the project modal's SA cache so next open fetches fresh data.
+      if (window._projEcSaCache) delete window._projEcSaCache[ecId];
       await refreshEcWosaPanel(ecId);
     } catch (e) { alert('Failed: ' + e.message); }
   }
@@ -273,6 +275,8 @@
       document.getElementById(`ec-sa-new-name-${ecId}`).value = '';
       document.getElementById(`ec-sa-new-wo-${ecId}`).value = '';
       document.getElementById(`ec-sa-new-notes-${ecId}`).value = '';
+      // Invalidate the project modal's SA cache so next open fetches fresh data.
+      if (window._projEcSaCache) delete window._projEcSaCache[ecId];
       await refreshEcWosaPanel(ecId);
     } catch (e) { alert('Failed: ' + e.message); }
   }
