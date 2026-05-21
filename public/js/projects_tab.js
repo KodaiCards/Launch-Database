@@ -212,7 +212,7 @@
     // in virtual SA group headers so they don't appear as an undifferentiated
     // flat list ("Inspection / Inspection / Inspection").
     const flatLeaves = list.filter(p =>
-      !p.parent_id &&
+      (!p.parent_id || !byId[p.parent_id]) &&
       !p.is_rollup &&
       !(childrenOf[p.id] && childrenOf[p.id].length)
     );
@@ -340,7 +340,8 @@
         const _breadcrumbParts = [];
         if (p.client_name) _breadcrumbParts.push(esc(p.client_name));
         if (p.program) _breadcrumbParts.push(esc((window.PROGRAM_LABELS && window.PROGRAM_LABELS[p.program]) || p.program));
-        if (p.service_area_name) _breadcrumbParts.push(esc(p.service_area_name));
+        const _saLabel = _deriveSaLabel(p);
+        if (_saLabel) _breadcrumbParts.push(esc(_saLabel));
         const _breadcrumb = isLeaf && _breadcrumbParts.length > 0
           ? `<br><span style="font-size:11px;color:var(--text-muted);font-weight:400">${_breadcrumbParts.join(' / ')}</span>`
           : '';
