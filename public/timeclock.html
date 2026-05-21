@@ -493,6 +493,7 @@ let _entryModalIsEdit = false;
 let jobsCache = {};  // project_id → [{id, name, default_billing_type, default_rate}]
 let timerInterval = null;
 let allConcentrators = [];
+let _rnpSaList = []; // SA rows used to populate rnp-area dropdown (ec-mode)
 
 // ─── DARK MODE ──────────────────────────────────────────────────────────────
 function applyDarkMode(on){
@@ -1240,9 +1241,10 @@ function rnpAreaChanged() {
   const sel = document.getElementById('rnp-area');
   const id = sel ? sel.value : '';
   if (!id) return;
-  const conc = allConcentrators.find(c => c.id === id);
-  if (conc && conc.work_order_number) {
-    document.getElementById('rnp-wo').value = conc.work_order_number;
+  // _rnpSaList holds the SA rows used to build this dropdown; look up WO# there.
+  const sa = _rnpSaList.find(s => (s.id || s.folder_id) === id);
+  if (sa && sa.work_order_number) {
+    document.getElementById('rnp-wo').value = sa.work_order_number;
   }
 }
 
@@ -1286,9 +1288,10 @@ async function rnpProgramChanged() {
     if (ecRow) ecRow.style.display = '';
     const areaSel = document.getElementById('rnp-area');
     if (areaSel) {
-      const saList = await _fetchSaFolders(clientId);
+      const saList = await _fetchSaFolders(clientId, program);
       const ecIds = new Set(matchingEcs.map(ec => ec.id));
       const filtered = saList.filter(sa => ecIds.has(sa.ec_id) || ecIds.has(sa.engineering_contract_id));
+      _rnpSaList = filtered; // store for rnpAreaChanged WO# lookup
       const opts = ['<option value="">— Select service area —</option>'];
       for (const sa of filtered) {
         const id = sa.id || sa.folder_id;
@@ -1330,12 +1333,13 @@ async function _fetchEcsForClient(client_id){
   return _cascadeEcCache[client_id];
 }
 
-async function _fetchSaFolders(client_id){
-  if (_cascadeSaCache[client_id]) return _cascadeSaCache[client_id];
-  // Use the client SA endpoint added in Phase B-support (accessible by crew).
-  const rows = await api('/api/clients/' + encodeURIComponent(client_id) + '/service-areas');
-  _cascadeSaCache[client_id] = Array.isArray(rows) ? rows : [];
-  return _cascadeSaCache[client_id];
+async function _fetchSaFolders(client_id, program){
+  const cacheKey = client_id + '|' + (program || '');
+  if (_cascadeSaCache[cacheKey]) return _cascadeSaCache[cacheKey];
+  // Use the client SA endpoint — program param is required by the backend.
+  const rows = await api('/api/clients/' + encodeURIComponent(client_id) + '/service-areas?program=' + encodeURIComponent(program || ''));
+  _cascadeSaCache[cacheKey] = Array.isArray(rows) ? rows : [];
+  return _cascadeSaCache[cacheKey];
 }
 
 async function _fetchJobsForSa(sa_folder_id, includeCompleted){
@@ -1420,7 +1424,7 @@ async function _populateSaSelect(prefix, client_id, program, savedSaId, savedSaL
   sel.innerHTML = '<option value="">— Loading… —</option>';
   sel.disabled = true;
 
-  const saList = await _fetchSaFolders(client_id);
+  const saList = await _fetchSaFolders(client_id, program);
   const ecIds = new Set(matchingEcs.map(ec => ec.id));
   const filtered = saList.filter(sa => ecIds.has(sa.ec_id) || ecIds.has(sa.engineering_contract_id));
   const html = ['<option value="">— Select service area —</option>'];
@@ -1583,8 +1587,8 @@ async function resolveOrCreateFromCascade(prefix){
   let payload;
   if (isNoEc) {
     const textInp = _el(prefix, 'sa-text');
-    const service_area_label = (textInp ? textInp.value.trim() : '') || undefined;
-    _ssSet('lf_tc_' + prefix + '_sa_label', service_area_label || null);
+    const service_area_label = (textInp ? textInp.value.trim() : '') || null;
+    _ssSet('lf_tc_' + prefix + '_sa_label', service_area_label);
     payload = { client_id, program, service_area_label, job_name };
   } else {
     const sa_folder_id = saSel ? saSel.value : '';

@@ -54,6 +54,11 @@ module.exports = function installProjectsRoutes(app, pool, mw) {
     // empty array, which is the correct observable behaviour.
     if (req.query.parent_id) { where.push(`p.parent_id=$${i++}`); params.push(req.query.parent_id); }
 
+    // Wave 4 (FIX-M1): opt-in rollup_key filter. Used by the design portal to
+    // find the SA folder project (is_rollup=true) whose rollup_key is the
+    // ec_service_areas.id UUID, so dpSaChanged can resolve parent_id correctly.
+    if (req.query.rollup_key) { where.push(`p.rollup_key=$${i++}`); params.push(req.query.rollup_key); }
+
     // Phase 1 (timeclock-picker wave): opt-in include-completed flag for the
     // edit-entry / back-fill context. When present AND a status=active filter
     // was also specified, OR in completed rows so back-fill against a completed
@@ -783,15 +788,12 @@ module.exports = function installProjectsRoutes(app, pool, mw) {
       return res.status(403).json({ error: 'Customers cannot access this endpoint.' });
     }
 
-    // Branch selection: EC-scoped vs no-EC
+    // Branch selection: EC-scoped vs no-EC.
+    // MODE 1 (EC): service_area_id present → EC-scoped path.
+    // MODE 2 (no-EC): no service_area_id → free-text SA path; service_area_label
+    //   is optional — blank/missing means no SA grouping, project lands directly
+    //   under the team folder for this client.
     const isEcMode = !!service_area_id;
-    const isNoEcMode = !!service_area_label;
-
-    if (!isEcMode && !isNoEcMode) {
-      return res.status(400).json({
-        error: 'Either service_area_id (EC mode) or service_area_label (no-EC mode) is required.',
-      });
-    }
 
     try {
       if (isEcMode) {
@@ -894,12 +896,13 @@ module.exports = function installProjectsRoutes(app, pool, mw) {
         return res.status(201).json({ ...newRow, created: true });
 
       } else {
-        // ═══ MODE 2: NO-EC (free-text service area) ═══
-        // Validate service_area_label
-        const normalizedLabel = String(service_area_label).trim();
-        if (!normalizedLabel || normalizedLabel.length > 200) {
+        // ═══ MODE 2: NO-EC (free-text service area, optional) ═══
+        // service_area_label is optional: blank/missing → project nests directly
+        // under the client's team folder with no SA grouping.
+        const normalizedLabel = service_area_label ? String(service_area_label).trim() : '';
+        if (normalizedLabel.length > 200) {
           return res.status(400).json({
-            error: 'service_area_label must be a non-empty string ≤ 200 characters.',
+            error: 'service_area_label must be 200 characters or fewer.',
           });
         }
 
@@ -912,20 +915,22 @@ module.exports = function installProjectsRoutes(app, pool, mw) {
           return res.status(404).json({ error: 'Client not found.' });
         }
 
-        // Use ensureRollupChain to get/create the rollup chain (Client → SA → leaf)
+        // Use ensureRollupChain to get/create the rollup chain.
+        // When normalizedLabel is empty, ensureRollupChain skips the SA level and
+        // returns the team folder — project nests directly under Client → Team.
         const ensureRollupChain = app.locals.ensureRollupChain;
         const folderId = await ensureRollupChain(pool, {
           client_id,
-          service_area_label: normalizedLabel,
+          service_area_label: normalizedLabel || null,
           job_id: null,
         });
         if (!folderId) {
           return res.status(500).json({
-            error: 'Failed to initialize service area rollup chain.',
+            error: 'Failed to initialize rollup chain.',
           });
         }
 
-        // Try to find an existing leaf under the SA folder with a case-insensitive name match.
+        // Try to find an existing leaf under the folder with a case-insensitive name match.
         const existing = await pool.query(
           `SELECT id, name, is_rollup, parent_id, status, engineering_contract_id, service_area_name
              FROM projects
@@ -939,7 +944,7 @@ module.exports = function installProjectsRoutes(app, pool, mw) {
           return res.status(200).json({ ...existing.rows[0], created: false });
         }
 
-        // Create the leaf project under the SA folder.
+        // Create the leaf project under the folder.
         let newRow;
         try {
           const insert = await pool.query(
@@ -948,7 +953,7 @@ module.exports = function installProjectsRoutes(app, pool, mw) {
                 is_rollup, service_area_name)
              VALUES ($1, $2, $3, 'hourly', 'other', 'active', FALSE, $4)
              RETURNING id, name, is_rollup, parent_id, status, engineering_contract_id, service_area_name`,
-            [normalizedJobName, client_id, folderId, normalizedLabel]
+            [normalizedJobName, client_id, folderId, normalizedLabel || null]
           );
           newRow = insert.rows[0];
         } catch (err) {

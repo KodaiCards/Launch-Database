@@ -1545,7 +1545,7 @@ async function dpSubmitCascade() {
   if (isNoEc) {
     // No-EC mode: free-text service area label
     const saLabel = (document.getElementById('dp-sa-label')?.value || '').trim();
-    payload = { client_id: clientId, program, service_area_label: saLabel || undefined, job_name: jobName };
+    payload = { client_id: clientId, program, service_area_label: saLabel || null, job_name: jobName };
     sessionStorage.setItem('lf_dp_cascade_sa_label', saLabel);
     sessionStorage.removeItem('lf_dp_cascade_ec');
     sessionStorage.removeItem('lf_dp_cascade_sa');

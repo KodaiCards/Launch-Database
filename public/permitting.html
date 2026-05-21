@@ -1477,7 +1477,7 @@ async function ppCascadeSubmit() {
     body = { client_id: clientId, program, service_area_id: saId, job_name: jobName };
   } else {
     const saLabel = (document.getElementById('pp-service-area-text')?.value || '').trim();
-    body = { client_id: clientId, program, service_area_label: saLabel || undefined, job_name: jobName };
+    body = { client_id: clientId, program, service_area_label: saLabel || null, job_name: jobName };
   }
 
   ppSetLoading(true);
