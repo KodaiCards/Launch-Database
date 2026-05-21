@@ -8,6 +8,25 @@
 
 ## TL;DR (read this first; rest is depth)
 
+## 2026-05-21 session-end state
+
+**Final-audit pipeline (per directive 36):**
+- Phase 1: 3 Sonnet adversarial framings landed — RT-α citations `ec6d56b` (3 HIGH + 2 MED + 1 LOW), RT-β DAG `88d25a0` (2 HIGH + 4 MED), RT-γ field `7f13d2c` (1 HIGH + 4 MED + 5 LOW). Fix Wave A `1ff7314` closed 4 HIGHs (T20.L04 Part 32 cascade w/ §32.2410/2411/2441 corrections, T22.L02 OM5 wavelength + OM3 4× reach re-derivation, T17 schema bare→object form, T21+C04 wavelength band labels O/S/C/L). T20.L05 enhancement `ccd390c` (Flashcards + WorkedExample + BranchingScenario, +237 lines). MED-A `253f009` (C05 F61 OSHA two-remedy, T12.L08 OTDR trace, 11 T13 inspector normalization, 5 as-built normalization, TIA-606-D→C, T20 inventory found 7/10 lessons deficient). T20 Flashcard backfill `6d7026f` (7 deficient T20 lessons + Flashcards). T11.L04 field-reality `ede9e7c` (Book vs Field — bidirectional measurement + OTDR/OLTS disagreement). T09.L02 field-reality `cf2ae37` (eastern US extraordinary-circumstance trigger rates).
+- Phase 2: Opus learning-sim `d4fab43` GREEN 60/60 PASS on C05 60-Q final exam. Curriculum sufficient to teach blank-slate learner to pass at ≥80%. DAG ordering scaffolded learning correctly. No-rewind constraint honored.
+- DEFERRED: RT-β H2 T20 curricular gap (0 questions for T20 in C05 60-Q exam — requires 15/15/15/15 re-balance). RT-β M1 183 broken pointers — attempted systematic cleanup `agent/rt-beta-m1-pointers` FAILED (agent corrupted `export const meta = { ... }` opening braces in T08.L12 and likely other files; reverted before commit). Pointer cleanup needs careful per-topic incremental approach, NOT one big systematic dispatch.
+
+**Proj-Modal program (live in admin Projects tab):**
+- Waves 1, 1B, 2A, 2B, 4A, 4B, 4C, 4D, 5, 6, 7, 8: all merged on main earlier sessions.
+- Wave 9 rollup organization `1630630` + Wave 9 fix `92daab6` — frontend virtual SA group headers + idempotent migration 0039 reparenting flat legacy projects under existing SA folders. Wave 9 fix extended `flatLeaves` filter to catch orphan-parent case + breadcrumb uses derived SA chain.
+- HOTFIX `b8666c8` — Wave 6 boot crash (`requireManagerOrAdmin` undefined in routes/projects.js). 3-hour prod downtime. Cause: server.js destructure list didn't include the middleware that Wave 6 fix referenced. Same class of bug as 2026-05-11 Monday-demo crash. Lesson: every dispatch adding new middleware reference MUST boot-smoke server.js before push.
+- Wave 10 `e1444f0` — adds EC rollup level between Client and SA. Migration 0040 creates EC folders + reparents existing SA folders. Backend resolve-or-create updated. Frontend renders EC folders with `fa-file-contract` icon. Pending Carter verification.
+
+**Attenuation calc + free-text Q + T20-T22 cert prep:** all DISCOVERED already done in prior sessions; scout dispatches prevented destructive rebuilds. T20-T22 DAG cleanup `93daa45` (2 pointer fixes + 4 dangling removes + CFOT normalize).
+
+**RT-β M1 LESSON LEARNED (locked 2026-05-21):** systematic vocabulary_assumed pointer cleanup across 60+ files in one dispatch is HIGH RISK. The agent corrupted JSX structure when applying mechanical pointer normalizations. Going forward: pointer cleanup must be PER-TOPIC (1 topic per dispatch) with Vite build verification after each topic. Bulk cross-topic mechanical edits = footgun. Token saving via batching is false economy.
+
+---
+
 ## ✅ ACTIVE QUEUE CLOSED 2026-05-20 (resume here)
 
 **Status:** OSP remediation backlog (V1-V20) + Launch-DB Phases 1-11 + side-channel branch audits ALL COMPLETE. Production cut on every wave. Schema 252/252 PASS. Vite clean. Next work = future-build queue.
