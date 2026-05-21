@@ -174,6 +174,26 @@
     renderProjects(allProjects.filter(p => keep.has(p.id)), true);
   }
 
+  // Derive the best SA label for a flat (parent_id IS NULL) leaf project.
+  // Priority: concentrator area name → EC work-order SA name → service_area_name (free-text)
+  // Returns null when no SA info is available.
+  function _deriveSaLabel(p) {
+    if (p.concentrator_area_name) return p.concentrator_area_name;
+    if (p.ec_service_area_name) return p.ec_service_area_name;
+    if (p.service_area_name) return p.service_area_name;
+    return null;
+  }
+
+  // Build a display key for grouping: "ClientName / PROGRAM / SA name"
+  function _groupKey(p) {
+    const parts = [];
+    if (p.client_name) parts.push(p.client_name);
+    if (p.program) parts.push((window.PROGRAM_LABELS && window.PROGRAM_LABELS[p.program]) || p.program.toUpperCase());
+    const sa = _deriveSaLabel(p);
+    if (sa) parts.push(sa);
+    return parts.join(' / ') || '(Unassigned)';
+  }
+
   function renderProjects(list, expandAll = false) {
     const tbody = document.getElementById('projects-body');
     if (!list.length) {
@@ -186,7 +206,35 @@
     list.forEach(p => byId[p.id] = p);
     const childrenOf = {};
     list.forEach(p => { if (p.parent_id && byId[p.parent_id]) { (childrenOf[p.parent_id] = childrenOf[p.parent_id] || []).push(p); } });
-    const roots = list.filter(p => !p.parent_id || !byId[p.parent_id]);
+
+    // Segregate flat legacy leaves (parent_id IS NULL, is_rollup falsy, no real
+    // parent visible in this list) from properly-parented nodes. These get wrapped
+    // in virtual SA group headers so they don't appear as an undifferentiated
+    // flat list ("Inspection / Inspection / Inspection").
+    const flatLeaves = list.filter(p =>
+      !p.parent_id &&
+      !p.is_rollup &&
+      !(childrenOf[p.id] && childrenOf[p.id].length)
+    );
+    const flatLeafIds = new Set(flatLeaves.map(p => p.id));
+
+    // Group flat leaves by their derived SA label. Preserve insertion order so
+    // groups appear in the order of first occurrence.
+    const groupMap = new Map(); // key → [project, …]
+    for (const p of flatLeaves) {
+      const key = _groupKey(p);
+      if (!groupMap.has(key)) groupMap.set(key, []);
+      groupMap.get(key).push(p);
+    }
+    // Sort leaves within each group alphabetically
+    for (const [, members] of groupMap) {
+      members.sort((a, b) => (a.name || '').localeCompare(b.name || ''));
+    }
+
+    // Real roots: rollup folders + properly-parented projects whose parent is
+    // missing from this list (edge case). Flat leaves excluded — they render
+    // under virtual headers instead.
+    const roots = list.filter(p => (!p.parent_id || !byId[p.parent_id]) && !flatLeafIds.has(p.id));
 
     // Infer billing rate from project type when not explicitly set
     function inferRate(p) {
@@ -321,9 +369,64 @@
       return html;
     }
 
+    // Build virtual SA group header rows for flat legacy leaves.
+    // Each group renders as a folder-style header (not in DB) followed by
+    // its member leaves indented one level. Groups collapse/expand via
+    // a synthetic key "vg-<index>" stored in projectsTreeState.
+    function buildVirtualGroups() {
+      if (!groupMap.size) return '';
+      let html = '';
+      let gIdx = 0;
+      for (const [label, members] of groupMap) {
+        const vgKey = 'vg-' + gIdx++;
+        const chevId = 'vgc-' + vgKey;
+        const expanded = expandAll || projectsTreeState.isExpanded(vgKey);
+        const chevRotation = expanded ? 'transform:rotate(90deg);' : '';
+        const chevron = `<span onclick="event.stopPropagation();ptreeToggle('${vgKey}','${vgKey}','${chevId}')" style="display:inline-flex;align-items:center;justify-content:center;width:28px;height:28px;border-radius:6px;cursor:pointer;margin-right:4px;background:var(--gray-light);border:1px solid var(--gray-border)"><i class="fa-solid fa-chevron-right" id="${chevId}" style="font-size:11px;color:var(--text-muted);transition:transform .2s;${chevRotation}"></i></span>`;
+        const badge = `<span style="font-size:10px;color:var(--primary);margin-left:6px;font-weight:600;background:var(--primary-light);padding:1px 6px;border-radius:10px">${members.length}</span>`;
+        const virtualTag = `<span style="font-size:10px;color:var(--text-muted);margin-left:8px;border:1px solid var(--border-weak);padding:1px 5px;border-radius:4px">virtual</span>`;
+        html += `<tr style="cursor:pointer" onclick="ptreeToggle('${vgKey}','${vgKey}','${chevId}')">
+          <td style="text-align:center"></td>
+          <td class="td-name" style="padding-left:12px"><i class="fa-solid fa-folder" style="color:var(--primary);margin-right:6px"></i>${chevron}${esc(label)}${badge}${virtualTag}</td>
+          <td colspan="7" style="color:var(--text-muted);font-size:12px">Legacy flat projects — no folder in DB</td>
+        </tr>`;
+        for (const p of members) {
+          const display = expanded ? '' : 'display:none;';
+          const ownLogged = parseFloat(p.logged_hours) || 0;
+          const ytd = parseFloat(p.ytd_revenue) || 0;
+          const ytdCell = `<span style="font-size:11px;color:var(--text-muted);text-transform:uppercase;letter-spacing:.5px">YTD Revenue</span><br><strong style="color:var(--primary);font-size:14px">${fmtMoney(ytd)}</strong><br><span style="font-size:11px;color:var(--text-muted)">${fmt(ownLogged, 'hrs')} logged</span>`;
+          const projAmount = parseFloat(p.projected_revenue) || 0;
+          const projCell = projAmount > 0
+            ? `<strong style="color:var(--text);font-size:14px">${fmtMoney(projAmount)}</strong>`
+            : '<span style="color:var(--text-muted);font-size:12px">—</span>';
+          const ongoingBadge = p.is_ongoing
+            ? `<span style="font-size:10px;background:var(--primary-light);color:var(--primary);padding:1px 6px;border-radius:10px;font-weight:600;margin-left:4px" title="Monthly recurring">&#9851; Ongoing</span>`
+            : '';
+          const checkbox = `<input type="checkbox" class="bulk-row-cb" aria-label="Select ${esc(p.name || 'project')} for bulk action" data-id="${p.id}" data-status="${esc(p.status || '')}" onclick="event.stopPropagation();bulkOnChange()" ${bulkSelected.has(p.id) ? 'checked' : ''}>`;
+          html += `<tr class="ptree ptree-${vgKey}" style="${display}background:var(--gray-light);cursor:pointer" onclick="showProjectDetail('${p.id}')">
+            <td style="text-align:center" onclick="event.stopPropagation()">${checkbox}</td>
+            <td class="td-name" style="padding-left:40px"><span style="color:var(--text-muted);margin-right:4px">└</span>${esc(p.name)}${ongoingBadge}</td>
+            <td>${esc(p.client_name || '—')}<br><span class="td-muted" style="font-size:11px">${esc(p.contract_number || '')}</span></td>
+            <td class="td-mono">${esc(p.work_order_number || '—')}</td>
+            <td>${typeBadge(p.project_type)}</td>
+            <td>${projCell}</td>
+            <td>${ytdCell}</td>
+            <td>${statusBadge(p.status)}</td>
+            <td style="white-space:nowrap">
+              <button class="btn btn-sm btn-secondary btn-icon" onclick="event.stopPropagation();editProject('${p.id}')" title="Edit"><i class="fa-solid fa-pen"></i></button>
+              <button class="btn btn-sm btn-secondary btn-icon" onclick="event.stopPropagation();showBudgetForProject('${p.id}','${esc(p.name)}')" title="Budget"><i class="fa-solid fa-wallet"></i></button>
+              ${p.status === 'completed' && !p.billed_date ? `<button class="btn btn-sm btn-success" onclick="event.stopPropagation();markBilled('${p.id}')" title="Mark billed"><i class="fa-solid fa-check"></i></button>` : ''}
+              <button class="btn btn-sm btn-icon" style="color:var(--danger);background:transparent;border:1px solid var(--gray-border)" onclick="event.stopPropagation();confirmDeleteProject('${p.id}','${esc(p.name)}')" title="Delete"><i class="fa-solid fa-trash"></i></button>
+            </td>
+          </tr>`;
+        }
+      }
+      return html;
+    }
+
     // Skip the DOM write if nothing changed — same flicker/dropdown fix as
     // the dashboard tree above.
-    setHtmlIfChanged(tbody, buildProjRows(roots, 0, null, true));
+    setHtmlIfChanged(tbody, buildProjRows(roots, 0, null, true) + buildVirtualGroups());
   }
 
   // Shared toggle: see makeTreeToggle in tree_state.js.

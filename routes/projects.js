@@ -107,6 +107,10 @@ module.exports = function installProjectsRoutes(app, pool, mw) {
           pp.name as parent_name,
           COALESCE(SUM(te.hours),0) as logged_hours,
           (SELECT COUNT(*) FROM projects ch WHERE ch.parent_id = p.id) as child_count,
+          -- SA name for legacy flat projects: concentrator path (PSC)
+          con.area_name AS concentrator_area_name,
+          -- SA name for legacy flat projects: EC work-order path
+          esa_via_wo.name AS ec_service_area_name,
           -- Server-computed YTD revenue for this project + all descendants
           COALESCE((
             WITH RECURSIVE tree AS (
@@ -137,8 +141,14 @@ module.exports = function installProjectsRoutes(app, pool, mw) {
         LEFT JOIN contracts co ON co.id = p.contract_id
         LEFT JOIN projects pp ON pp.id = p.parent_id
         LEFT JOIN time_entries te ON te.project_id = p.id
+        LEFT JOIN concentrators con ON con.id = p.concentrator_id
+        LEFT JOIN ec_work_orders wo_link
+          ON wo_link.engineering_contract_id = p.engineering_contract_id
+         AND wo_link.number = p.work_order_number
+        LEFT JOIN ec_service_areas esa_via_wo ON esa_via_wo.id = wo_link.service_area_id
         ${whereStr}
-        GROUP BY p.id, cl.name, co.contract_number, co.name, pp.name
+        GROUP BY p.id, cl.name, co.contract_number, co.name, pp.name,
+                 con.area_name, esa_via_wo.name
         ORDER BY COALESCE(p.parent_id, p.id), p.parent_id NULLS FIRST, p.created_at DESC
         ${limitClause}
       `, params);
