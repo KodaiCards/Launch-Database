@@ -422,5 +422,6 @@ fetch('/api/me/portals?audience=client',{credentials:'include'}).then(r=>r.json(
   if(portals&&portals.length>1)document.querySelectorAll('[data-launcher-back]').forEach(el=>el.style.display='inline-flex');
 }).catch(()=>{});
 </script>
+<script src="/js/impersonation_banner.js"></script>
 </body>
 </html>

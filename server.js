@@ -165,7 +165,7 @@ if (PORTAL_MODE) {
 // portal routes can read req.user / req.cookies. Express middleware runs in
 // registration order, so a route registered before authMiddleware never
 // sees req.user.
-const { bootstrapAuthSchema, installAuthRoutes, requireAuth, requireAdmin, requireManagerOrAdmin, canAccessPortal, signToken, verifyToken, rateLimitOk } = require('./auth');
+const { bootstrapAuthSchema, installAuthRoutes, requireAuth, requireAdmin, requireManagerOrAdmin, canAccessPortal, signToken, signImpersonationToken, verifyToken, rateLimitOk, cookieOpts } = require('./auth');
 installAuthRoutes(app, pool);
 
 // Customer scope guard. Per auth.js's role doc: "Customers are external —
@@ -738,6 +738,11 @@ require('./routes/portal_access')(app, pool, { requireAdmin }, PORTAL_DEFS);
 
 // Wave 13: client portal API — project status for the beta client-facing view.
 require('./routes/client_portal')(app, pool, { requireAuth });
+
+// Wave 13C: admin impersonation ("View as Staff / Customer").
+// Registered AFTER auth middleware so req.user is always populated before the
+// requireAdmin guard fires.
+require('./routes/impersonation')(app, pool, { requireAdmin, signImpersonationToken, cookieOpts });
 
 // ─── Mapbox token endpoint (Splice 5.D.1) ────────────────────────────────────
 // Returns the MAPBOX_TOKEN env var to authenticated clients so it can be used

@@ -245,6 +245,29 @@ function signToken(user) {
   );
 }
 
+// Wave 13C: short-lived impersonation token. Uses the same JWT_SECRET and
+// audience/issuer but carries impersonator_id so downstream code can
+// distinguish impersonated requests. 1-hour TTL — admin's own lfs_session
+// stays untouched.
+const IMPERSONATION_COOKIE = 'lfs_impersonation';
+const IMPERSONATION_TTL    = '1h';
+
+function signImpersonationToken(payload) {
+  return jwt.sign(
+    {
+      id:               payload.id,
+      username:         payload.username,
+      role:             payload.role,
+      team:             payload.team,
+      full_name:        payload.full_name,
+      impersonator_id:  payload.impersonator_id,
+      impersonator_name: payload.impersonator_name,
+    },
+    JWT_SECRET,
+    { expiresIn: IMPERSONATION_TTL, audience: JWT_AUDIENCE, issuer: JWT_ISSUER }
+  );
+}
+
 function verifyToken(token) {
   try {
     return jwt.verify(token, JWT_SECRET, {
@@ -265,6 +288,42 @@ function extractToken(req) {
 
 function authMiddleware(pool) {
   return async (req, res, next) => {
+    // Wave 13C: check impersonation cookie FIRST. When an admin has started a
+    // "view as" session, their lfs_impersonation cookie carries the target
+    // user's identity. The admin's own lfs_session is untouched — closing the
+    // impersonation tab or calling end-impersonation removes this cookie.
+    //
+    // The impersonation token must NOT be usable to start a new impersonation
+    // (no chaining). That guard lives in the /api/admin/impersonate endpoint.
+    if (req.cookies && req.cookies[IMPERSONATION_COOKIE]) {
+      const impPayload = verifyToken(req.cookies[IMPERSONATION_COOKIE]);
+      if (impPayload && impPayload.impersonator_id) {
+        try {
+          // Verify the target user still exists and is active.
+          const { rows } = await pool.query(
+            `SELECT id, username, role, team, extra_teams, full_name, email, active, staff_id FROM users WHERE id = $1 LIMIT 1`,
+            [impPayload.id]
+          );
+          const target = rows[0];
+          if (target && target.active) {
+            req.user = {
+              ...target,
+              impersonator_id:   impPayload.impersonator_id,
+              impersonator_name: impPayload.impersonator_name,
+              iat: impPayload.iat,
+            };
+            console.warn(
+              `[impersonation:request] admin=${impPayload.impersonator_id} acting as user=${target.id} (${target.username}) — ${req.method} ${req.path}`
+            );
+            return next();
+          }
+        } catch (e) {
+          console.error('[auth:impersonation] DB error reading impersonated user', e && e.message);
+        }
+        // Invalid or expired impersonation — fall through to normal auth below.
+      }
+    }
+
     const token = extractToken(req);
     if (!token) return next();
     const payload = verifyToken(token);
@@ -404,7 +463,14 @@ function installAuthRoutes(app, pool) {
         [req.user.id]
       );
       if (!rows[0]) return res.status(404).json({ error: 'User not found' });
-      res.json(rows[0]);
+      const result = rows[0];
+      // Wave 13C: if this request came through an impersonation cookie, include
+      // the impersonator context so the frontend can show the warning banner.
+      if (req.user.impersonator_id) {
+        result.impersonator_id   = req.user.impersonator_id;
+        result.impersonator_name = req.user.impersonator_name;
+      }
+      res.json(result);
     } catch (e) {
       return serverError(res, e, 'me');
     }
@@ -635,6 +701,7 @@ module.exports = {
   requireAdmin,
   requireManagerOrAdmin,
   signToken,
+  signImpersonationToken,
   verifyToken,
   rateLimitOk,
   teamForRole,
@@ -643,4 +710,6 @@ module.exports = {
   isManagerOrAdmin,
   MIN_PASSWORD_LEN,
   VALID_ROLES,
+  IMPERSONATION_COOKIE,
+  cookieOpts,
 };

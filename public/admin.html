@@ -2762,6 +2762,9 @@ select.filter{border:1px solid var(--gray-border);border-radius:7px;padding:7px 
 <script src="/js/migration_tools.js"></script>
 <script src="/js/clients_settings.js"></script>
 <script src="/js/settings_portal_access.js"></script>
+<script src="/js/settings_client_links.js"></script>
+<script src="/js/settings_staff_view.js"></script>
+<script src="/js/impersonation_banner.js"></script>
 <script src="/js/inspection_tab.js"></script>
 <script src="/js/design_potential_tabs.js"></script>
 <script src="/js/permits_tab.js"></script>
@@ -7909,12 +7912,16 @@ function renderUsersList() {
     admin: 'Admin', design_manager: 'Design Mgr', permitting_manager: 'Permit Mgr',
     design_engineer: 'Design Eng', permitting_engineer: 'Permit Eng'
   };
+  // Determine whether any customer-role users exist so we show the
+  // "Linked Client(s)" column only when relevant.
+  const hasCustomers = usersCache.some(u => u.role === 'customer');
   root.innerHTML = `<table style="width:100%;font-size:13px;border-collapse:collapse">
     <thead><tr style="color:var(--text-muted);font-size:11px;text-transform:uppercase">
       <th style="text-align:left;padding:6px 8px">Username</th>
       <th style="text-align:left;padding:6px 8px">Full Name</th>
       <th style="text-align:left;padding:6px 8px">Role</th>
       <th style="text-align:left;padding:6px 8px">Linked Staff</th>
+      ${hasCustomers ? '<th style="text-align:left;padding:6px 8px">Linked Client(s)</th>' : ''}
       <th style="text-align:left;padding:6px 8px">Last Login</th>
       <th style="text-align:center;padding:6px 8px">Active</th>
       <th></th>
@@ -7927,19 +7934,44 @@ function renderUsersList() {
       const staffCell = u.staff_name
         ? `<span style="color:var(--text)"><i class="fa-solid fa-link" style="color:var(--success);font-size:10px;margin-right:4px"></i>${esc(u.staff_name)}</span>`
         : `<span style="color:var(--text-muted);font-size:11px"><i class="fa-solid fa-link-slash" style="margin-right:4px"></i>not linked</span>`;
+
+      // Linked client(s) — only meaningful for customer-role users.
+      const clientLinkCell = hasCustomers
+        ? (u.role === 'customer'
+            ? renderClientLinksCell(u.id)
+            : '<td style="padding:6px 8px;color:var(--text-muted);font-size:11px">—</td>')
+        : '';
+
+      // "View as" button — skip for current admin's own row.
+      const isSelf = currentUser && currentUser.id === u.id;
+      const viewAsBtn = isSelf ? '' :
+        `<button class="btn btn-sm btn-secondary btn-icon"
+           onclick="viewAsUser('${u.id}','${esc(u.full_name || u.username)}','${u.role}')"
+           title="${u.role === 'customer' ? 'View customer portal as this user' : 'View staff portal as this user'}"
+           style="margin-right:2px">
+          <i class="fa-solid fa-eye"></i>
+         </button>`;
+
       return `<tr style="border-top:1px solid var(--gray-border);${u.active ? '' : 'opacity:0.55'}">
         <td style="padding:6px 8px;font-family:monospace;font-weight:600">${esc(u.username)}</td>
         <td style="padding:6px 8px">${esc(u.full_name || '—')}</td>
         <td style="padding:6px 8px"><span class="badge" style="background:var(--primary-light);color:var(--primary);font-size:10px">${ROLE_LABELS[u.role] || u.role}</span></td>
         <td style="padding:6px 8px;font-size:12px">${staffCell}</td>
+        ${clientLinkCell}
         <td style="padding:6px 8px;color:var(--text-muted);font-size:11px">${last}</td>
         <td style="padding:6px 8px;text-align:center">${u.active ? '<i class="fa-solid fa-check" style="color:var(--success)"></i>' : '<i class="fa-solid fa-pause" style="color:var(--text-muted)"></i>'}</td>
         <td style="padding:6px 8px;text-align:right;white-space:nowrap">
+          ${viewAsBtn}
           <button class="btn btn-sm btn-secondary btn-icon" onclick="openEditUserModal('${u.id}')" title="Edit"><i class="fa-solid fa-pen"></i></button>
-          ${currentUser && currentUser.id === u.id ? '' : `<button class="btn btn-sm btn-icon" style="color:var(--danger);background:transparent;border:1px solid var(--gray-border)" onclick="deactivateUser('${u.id}','${esc(u.username)}')" title="Deactivate"><i class="fa-solid fa-ban"></i></button>`}
+          ${isSelf ? '' : `<button class="btn btn-sm btn-icon" style="color:var(--danger);background:transparent;border:1px solid var(--gray-border)" onclick="deactivateUser('${u.id}','${esc(u.username)}')" title="Deactivate"><i class="fa-solid fa-ban"></i></button>`}
         </td>
       </tr>`;
     }).join('')}</tbody></table>`;
+
+  // After rendering, kick off async client-link loading for customer rows.
+  if (hasCustomers) {
+    usersCache.filter(u => u.role === 'customer').forEach(u => loadClientLinksForRow(u.id));
+  }
 }
 
 // Cached staff list for the user-modal staff link dropdown. Loaded once on
