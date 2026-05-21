@@ -140,13 +140,13 @@ const QUESTIONS = [
       'G.652.D fiber is rated for a 30 mm installation bend radius. A conduit route requires a 20 mm bend. What is the expected consequence?',
     choices: [
       'No consequence — the specification is conservative and real fibers tolerate smaller bends',
-      'Temporary loss only during the pull; fiber returns to normal after tension is released',
       'Measurable macrobend loss at this location, typically 0.1–1.0 dB per bend event',
+      'Temporary loss only during the pull; fiber returns to normal after tension is released',
       'Loss only occurs at wavelengths below 1310 nm',
     ],
-    answerIndex: 2,
+    answerIndex: 1,
     explanation:
-      'When a singlemode fiber is bent below its rated minimum bend radius, higher-order mode cutoff shifts, causing light to leak out of the core — macrobend loss. G.652.D at 20 mm (below the 30 mm install spec) produces measurable permanent loss of roughly 0.1–1.0 dB per bend location depending on severity. The loss does NOT reverse when the bend is released. G.657.A1/A2 bend-insensitive fibers are specified for tight-bend applications. (T02.L04; ITU-T G.652.D; IEC 60793-2-50)',
+      'When a singlemode fiber is bent below its rated minimum bend radius, higher-order mode cutoff shifts, causing light to leak out of the core — macrobend loss. G.652.D at 20 mm (below the 30 mm install spec) produces measurable permanent loss of roughly 0.1–1.0 dB per bend location depending on severity. The loss does NOT reverse when the bend is released. G.657.A1/A2 bend-insensitive fibers are specified for tight-bend applications. The correct answer is choice B. (T02.L04; ITU-T G.652.D; IEC 60793-2-50)',
   },
 
   // Source: T02.L06 — Link Budget Worked Example
@@ -956,13 +956,13 @@ const QUESTIONS = [
       'NESC Rule 215D requires messenger strand bonding at pole attachment points. For a 500-foot aerial span, how many bonding points does the NESC minimum require?',
     choices: [
       'One bonding point at the dead-end pole only',
-      'One at each attachment point (both poles at each end of the span)',
       'One per 300 feet of span (approximately 2 for this span)',
+      'One at each attachment point (both poles at each end of the span)',
       'Bonding at both end poles plus a mid-span bond for spans exceeding 400 feet',
     ],
-    answerIndex: 1,
+    answerIndex: 2,
     explanation:
-      'NESC Rule 215D requires messenger bonding (to the grounded support structure) at each attachment point where the cable is supported. For a 500-foot span, the messenger attaches at both end poles — two bonding points. For continuous aerial routes with no dead-ends, bonding at each pole is the standard (every attachment point). This prevents voltage buildup from induced currents in the messenger over long ungrounded runs. Additional mid-span grounding is common engineering practice for long-span runs but is not the NESC minimum. (T14.L03; NESC Rule 215D; RUS 1751F-630 §7)',
+      'NESC Rule 215D requires messenger bonding (to the grounded support structure) at each attachment point where the cable is supported. For a 500-foot span, the messenger attaches at both end poles — two bonding points. For continuous aerial routes with no dead-ends, bonding at each pole is the standard (every attachment point). This prevents voltage buildup from induced currents in the messenger over long ungrounded runs. Additional mid-span grounding is common engineering practice for long-span runs but is not the NESC minimum. The correct answer is choice C. (T14.L03; NESC Rule 215D; RUS 1751F-630 §7)',
   },
 
   // Source: T14.L05 — IBT and GES
