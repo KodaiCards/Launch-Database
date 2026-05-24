@@ -49,7 +49,7 @@ export default function ProductChooser() {
       </div>
 
       <div>
-        <h1 className="text-3xl font-bold mb-2">OSP Training</h1>
+        <h1 className="text-3xl font-bold mb-2">Launch Training</h1>
         <p className="text-slate-400">Choose your learning path</p>
       </div>
 
