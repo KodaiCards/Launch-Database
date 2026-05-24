@@ -74,9 +74,14 @@ module.exports = function installClientPortalRoutes(app, pool, { requireAuth }) 
           p.footage,
           p.miles,
           p.client_id,
-          cl.name AS client_name
+          cl.name AS client_name,
+          p.work_order_number,
+          COALESCE(con.area_name, p.service_area_name) AS service_area_label,
+          j.team
         FROM projects p
         LEFT JOIN clients cl ON cl.id = p.client_id
+        LEFT JOIN concentrators con ON con.id = p.concentrator_id
+        LEFT JOIN jobs j ON j.id = p.job_id
         WHERE
           COALESCE(p.is_rollup, false) = false
           AND LOWER(p.project_type) != 'potential'

@@ -5,15 +5,14 @@
 //   admin/staff, no filter — per-client sections. Toolbar shows "All clients".
 //   admin/staff, client selected — 3 columns for that one client (mimics customer view).
 //
-// Hide-empty-column rule: Design and Permitting columns hidden when no projects.
-// Construction column always shows "Coming Soon" (deferred, never has projects yet).
+// Hide-empty-column rule: all three columns hidden when they have no projects.
 
 (function () {
   'use strict';
 
-  const DESIGN_TYPES = new Set(['design', 're', 'resident engineer', 'inspection']);
+  const DESIGN_TYPES = new Set(['design']);
   const PERMIT_TYPES = new Set(['permitting']);
-  const CONST_TYPES  = new Set(['construction']);
+  const CONST_TYPES  = new Set(['construction', 're', 'resident engineer', 'inspection']);
 
   const STATUS_ORDER = { in_progress: 0, not_started: 1, completed: 2, billed: 3 };
 
@@ -67,6 +66,14 @@
     return null;
   }
 
+  function displayName(p) {
+    const parts = [];
+    if (p.service_area_label) parts.push(p.service_area_label);
+    if (p.work_order_number)  parts.push(p.work_order_number);
+    parts.push(p.name);
+    return parts.join(' / ');
+  }
+
   function renderCard(p) {
     const money   = formatMoney(p.expected_revenue);
     const hrs     = formatHours(p.actual_hours, p.expected_hours);
@@ -78,7 +85,7 @@
     ].join('');
     return `
       <div class="cp-project-card">
-        <div class="cp-card-name">${escapeHtml(p.name)}</div>
+        <div class="cp-card-name">${escapeHtml(displayName(p))}</div>
         ${statusPillHTML(p.derived_status)}
         ${meta}
       </div>`;
@@ -91,12 +98,10 @@
     return projects.map(renderCard).join('');
   }
 
-  // Build a column element; returns null to signal "hide this column"
-  // construction is always shown (Coming Soon placeholder).
+    // Build a column element; returns null to signal "hide this column".
+  // All three columns hide when empty (empty-column rule applies to all).
   function buildColumnEl(type, projects) {
-    const isConstruction = (type === 'construction');
-
-    if (!isConstruction && projects.length === 0) return null;
+    if (projects.length === 0) return null;
 
     const configs = {
       design:       { icon: 'fa-drafting-compass', title: 'Design'       },
@@ -105,12 +110,7 @@
     };
     const { icon, title } = configs[type];
 
-    const bodyHtml = isConstruction
-      ? `<div class="cp-deferred">
-           <div class="cp-deferred-icon"><i class="fa-solid fa-clock" aria-hidden="true"></i></div>
-           <p class="cp-deferred-msg">Construction projects coming soon.</p>
-         </div>`
-      : renderColumnBody(projects);
+    const bodyHtml = renderColumnBody(projects);
 
     const el = document.createElement('section');
     el.className = 'cp-column';
@@ -126,6 +126,20 @@
     return el;
   }
 
+  // Derive column bucket from jobs.team when available, else fall back to project_type.
+  function columnBucket(p) {
+    const team = (p.team || '').toLowerCase();
+    if (team === 'design')       return 'design';
+    if (team === 'permitting')   return 'permitting';
+    if (team === 'construction') return 'construction';
+    // No job or job has no team — classify by project_type.
+    const t = (p.project_type || '').toLowerCase();
+    if (DESIGN_TYPES.has(t))     return 'design';
+    if (PERMIT_TYPES.has(t))     return 'permitting';
+    if (CONST_TYPES.has(t))      return 'construction';
+    return null;
+  }
+
   // Render a grid (3-column layout) from a flat project array for one client.
   // Returns the grid element (possibly fewer than 3 columns if some are empty).
   function renderGrid(projects) {
@@ -134,10 +148,10 @@
     const construction = [];
 
     for (const p of projects) {
-      const t = (p.project_type || '').toLowerCase();
-      if (DESIGN_TYPES.has(t))     design.push(p);
-      else if (PERMIT_TYPES.has(t)) permit.push(p);
-      else if (CONST_TYPES.has(t))  construction.push(p);
+      const bucket = columnBucket(p);
+      if (bucket === 'design')       design.push(p);
+      else if (bucket === 'permitting') permit.push(p);
+      else if (bucket === 'construction') construction.push(p);
     }
 
     const byStatus = (a, b) =>
