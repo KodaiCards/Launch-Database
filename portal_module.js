@@ -138,7 +138,9 @@ async function ensureRollupChain(pool, { client_id, concentrator_id, service_are
     );
     if (conRow.rows.length) {
       const con = conRow.rows[0];
-      const conLabel = con.friendly_label || con.name || con.contract_number;
+      const conLabel = (con.friendly_label && con.contract_number)
+        ? con.friendly_label + ' / ' + con.contract_number
+        : con.friendly_label || con.name || con.contract_number;
       folder = await findOrCreateRollup(pool, {
         parent_id: folder,
         rollup_level: 'contract',

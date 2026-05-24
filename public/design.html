@@ -473,14 +473,15 @@ fetch('/api/auth/me', { credentials: 'include' })
               <span class="form-hint" style="font-size:11px;color:var(--text-muted)">Auto-filled when a service area is selected. Override if needed.</span>
             </div>
           </div>
-          <!-- ROW 2a-3: EC mode — Service Area dropdown -->
+          <!-- ROW 2a-3: EC mode — Service Area datalist (accepts known options OR free-text) -->
           <div class="form-row" id="dp-sa-row" style="display:none">
             <div class="form-group span2">
               <label for="dp-service-area">Service Area *</label>
-              <select id="dp-service-area" disabled aria-label="Service area" onchange="dpSaChanged()">
-                <option value="">— Select contract first —</option>
-              </select>
-              <div id="dp-sa-no-config-hint" style="display:none;font-size:11px;color:var(--warning-text);background:var(--warning-light);border:1px solid var(--warning);border-radius:4px;padding:6px 8px;margin-top:4px"></div>
+              <input type="text" id="dp-service-area" list="dp-sa-list" disabled
+                     aria-label="Service area" placeholder="Type or select a service area"
+                     autocomplete="off" oninput="dpSaChanged()">
+              <datalist id="dp-sa-list"></datalist>
+              <div id="dp-sa-no-config-hint" style="display:none;font-size:11px;color:var(--text-muted);margin-top:4px">No service areas configured — type one freely.</div>
             </div>
           </div>
           <!-- ROW 2b: No-EC mode — free-text Service Area -->
@@ -1337,8 +1338,10 @@ function dpEnterEditMode() {
 }
 
 function dpResetSaAndJob() {
-  const saSel = document.getElementById('dp-service-area');
-  if (saSel) { saSel.innerHTML = '<option value="">— Select EC first —</option>'; saSel.disabled = true; }
+  const saIn = document.getElementById('dp-service-area');
+  if (saIn) { saIn.value = ''; saIn.removeAttribute('data-selected-id'); saIn.removeAttribute('data-selected-contract-id'); saIn.disabled = true; }
+  const saDl = document.getElementById('dp-sa-list');
+  if (saDl) saDl.innerHTML = '';
   const ecSel = document.getElementById('dp-ec');
   if (ecSel) { ecSel.innerHTML = '<option value="">— select contract —</option>'; ecSel.disabled = true; }
   const conSel = document.getElementById('dp-contract');
@@ -1457,23 +1460,25 @@ async function dpProgramChanged() {
 // Called when Engineering Contract changes in EC mode.
 async function dpEcChanged() {
   const ecId = document.getElementById('dp-ec')?.value;
-  const saSel = document.getElementById('dp-service-area');
+  const saIn = document.getElementById('dp-service-area');
+  const saDl = document.getElementById('dp-sa-list');
   const saHint = document.getElementById('dp-sa-no-config-hint');
   const conSel = document.getElementById('dp-contract');
   const contractRow = document.getElementById('dp-contract-row');
   const saRow = document.getElementById('dp-sa-row');
   const jobIn = document.getElementById('dp-job-input');
-  const hint = document.getElementById('dp-job-hint');
   dpClearError();
 
-  if (!saSel) return;
-  saSel.innerHTML = '<option value="">— loading… —</option>';
-  saSel.disabled = true;
+  if (!saIn) return;
+  saIn.value = '';
+  saIn.removeAttribute('data-selected-id');
+  saIn.removeAttribute('data-selected-contract-id');
+  saIn.disabled = true;
+  if (saDl) saDl.innerHTML = '';
   if (conSel) { conSel.innerHTML = '<option value="">— none / not grouped by contract —</option>'; conSel.disabled = true; }
   if (jobIn) { jobIn.disabled = true; jobIn.value = ''; }
 
   if (!ecId) {
-    saSel.innerHTML = '<option value="">— Select EC first —</option>';
     if (saHint) saHint.style.display = 'none';
     if (contractRow) contractRow.style.display = 'none';
     if (saRow) saRow.style.display = 'none';
@@ -1510,36 +1515,39 @@ async function dpEcChanged() {
     if (conSel) conSel.disabled = false;
   }
 
+  // Populate SA datalist — accepts both known options AND free-text entry.
+  // Each datalist option stores the SA id as its value; displayed text is the name.
+  // We store the full SA list on _dpSaCache[ecId] so dpSaChanged() can resolve id+contract.
   try {
     let sas = _dpSaCache[ecId];
     if (!sas) {
       sas = await api('/api/engineering-contracts/' + encodeURIComponent(ecId) + '/service-areas');
       _dpSaCache[ecId] = sas;
     }
+    saIn.disabled = false;
     if (!sas.length) {
-      saSel.innerHTML = '<option value="">No service areas configured</option>';
-      const ec = (window.engineeringContractsCache || []).find(e => e.id === ecId);
-      const ecName = ec ? (ec.name || ec.contract_number || 'this contract') : 'this contract';
-      if (saHint) {
-        saHint.textContent = `No service areas configured for ${ecName}. Add them via Settings → Engineering Contracts.`;
-        saHint.style.display = '';
-      }
+      // No configured SAs — show hint but allow free-text entry.
+      if (saHint) saHint.style.display = '';
     } else {
       if (saHint) saHint.style.display = 'none';
-      saSel.innerHTML = '<option value="">— Select service area —</option>' +
-        sas.map(sa => {
+      if (saDl) {
+        saDl.innerHTML = sas.map(sa => {
           const wo = sa.work_order_number ? ` (WO# ${sa.work_order_number})` : '';
-          const cAttr = sa.contract_id ? ` data-contract-id="${esc(sa.contract_id)}"` : '';
-          return `<option value="${esc(sa.id)}"${cAttr}>${esc(sa.name)}${wo}</option>`;
+          return `<option value="${esc(sa.name)}${wo}" data-id="${esc(sa.id)}"${sa.contract_id ? ` data-contract-id="${esc(sa.contract_id)}"` : ''}>${esc(sa.name)}${wo}</option>`;
         }).join('');
-      saSel.disabled = false;
+      }
+      // Auto-select when only one SA
       if (sas.length === 1) {
-        saSel.value = sas[0].id;
+        const wo = sas[0].work_order_number ? ` (WO# ${sas[0].work_order_number})` : '';
+        saIn.value = sas[0].name + wo;
+        saIn.dataset.selectedId = sas[0].id;
+        if (sas[0].contract_id) saIn.dataset.selectedContractId = sas[0].contract_id;
         await dpSaChanged();
       }
     }
   } catch (e) {
-    saSel.innerHTML = '<option value="">Error loading service areas</option>';
+    saIn.placeholder = 'Error loading service areas — type a name freely';
+    saIn.disabled = false;
     dpShowError('Could not load service areas: ' + (e.message || 'server error'));
   }
 }
@@ -1554,36 +1562,82 @@ function dpContractChanged() {
   }
 }
 
-// Called when service area changes.
+// Resolve the current SA input value to a known ec_service_areas row (id + contract_id).
+// Returns { id, contractId } when the typed text matches a cached option, or { id: null } for free-text.
+function dpResolveSa() {
+  const saIn = document.getElementById('dp-service-area');
+  if (!saIn) return { id: null, contractId: null };
+
+  // If a prior auto-select or explicit selection stored an id, use it.
+  if (saIn.dataset.selectedId) {
+    return { id: saIn.dataset.selectedId, contractId: saIn.dataset.selectedContractId || null };
+  }
+
+  // Try to match the typed text against the cached datalist options for the current EC.
+  const ecId = document.getElementById('dp-ec')?.value;
+  const sas = ecId && _dpSaCache[ecId];
+  if (sas && saIn.value.trim()) {
+    const typed = saIn.value.trim().toLowerCase();
+    const match = sas.find(sa => {
+      const wo = sa.work_order_number ? ` (wo# ${sa.work_order_number})` : '';
+      return (sa.name + wo).toLowerCase() === typed || sa.name.toLowerCase() === typed;
+    });
+    if (match) {
+      saIn.dataset.selectedId = match.id;
+      if (match.contract_id) saIn.dataset.selectedContractId = match.contract_id;
+      return { id: match.id, contractId: match.contract_id || null };
+    }
+  }
+
+  return { id: null, contractId: null };
+}
+
+// Called when service area input changes (oninput).
 async function dpSaChanged() {
-  const saSel = document.getElementById('dp-service-area');
-  const saId = saSel?.value;
+  const saIn = document.getElementById('dp-service-area');
+  const typed = saIn?.value.trim();
   const jobIn = document.getElementById('dp-job-input');
   const dl = document.getElementById('dp-job-list');
   const hint = document.getElementById('dp-job-hint');
   dpClearError();
-  if (!saId) {
+
+  // Clear previously resolved SA id so dpResolveSa() re-matches on new text.
+  if (saIn) {
+    saIn.removeAttribute('data-selected-id');
+    saIn.removeAttribute('data-selected-contract-id');
+  }
+
+  if (!typed) {
     if (jobIn) { jobIn.disabled = true; jobIn.value = ''; }
     if (dl) dl.innerHTML = '';
-    if (hint) hint.textContent = 'Select a service area first';
+    if (hint) hint.textContent = 'Select or type a service area first';
     return;
   }
 
+  // Resolve to known SA id (may remain null for free-text entry).
+  const { id: saId, contractId } = dpResolveSa();
+
   // Auto-select construction contract from the chosen SA (user can override).
   const conSel = document.getElementById('dp-contract');
-  if (conSel && saSel) {
-    const selectedOpt = saSel.options[saSel.selectedIndex];
-    const contractId = selectedOpt ? selectedOpt.getAttribute('data-contract-id') : null;
-    if (contractId && conSel.querySelector(`option[value="${contractId}"]`)) {
-      conSel.value = contractId;
-      sessionStorage.setItem('lf_dp_cascade_contract', contractId);
-    }
+  if (conSel && contractId && conSel.querySelector(`option[value="${contractId}"]`)) {
+    conSel.value = contractId;
+    sessionStorage.setItem('lf_dp_cascade_contract', contractId);
   }
 
-  sessionStorage.setItem('lf_dp_cascade_sa', saId);
+  if (saId) sessionStorage.setItem('lf_dp_cascade_sa', saId);
   sessionStorage.removeItem('lf_dp_cascade_job');
-  if (jobIn) { jobIn.disabled = true; }
-  if (hint) hint.textContent = 'Loading existing jobs...';
+
+  // Enable the job input regardless — free-text SA still needs a job name.
+  if (jobIn) jobIn.disabled = false;
+  if (hint) hint.textContent = saId ? 'Loading existing jobs...' : 'Type a job name (new service area — no existing jobs to show)';
+
+  if (!saId) {
+    // Free-text SA: no existing jobs to populate
+    if (dl) dl.innerHTML = '';
+    if (hint) hint.textContent = 'Type a job name';
+    return;
+  }
+
   try {
     const leaves = await api('/api/projects?parent_id=' + encodeURIComponent(saId) + '&leaves_only=true&status=active&limit=all');
     if (dl) {
@@ -1591,10 +1645,8 @@ async function dpSaChanged() {
         .map(p => `<option value="${esc(p.name)}"></option>`)
         .join('');
     }
-    if (jobIn) { jobIn.disabled = false; jobIn.value = ''; }
     if (hint) hint.textContent = leaves.length ? `${leaves.length} existing job${leaves.length !== 1 ? 's' : ''} available` : 'No existing jobs — type a name to create one';
   } catch (e) {
-    if (jobIn) { jobIn.disabled = false; }
     if (hint) hint.textContent = 'Type a job name';
     dpShowError('Could not load existing jobs: ' + (e.message || 'server error'));
   }
@@ -1620,21 +1672,27 @@ async function dpSubmitCascade() {
   if (isNoEc) {
     // No-EC mode: free-text service area label
     const saLabel = (document.getElementById('dp-sa-label')?.value || '').trim();
-    payload = { client_id: clientId, program, service_area_label: saLabel || null, job_name: jobName };
+    payload = { client_id: clientId, program, service_area_label: saLabel || null, job_name: jobName, project_type: 'design' };
     sessionStorage.setItem('lf_dp_cascade_sa_label', saLabel);
     sessionStorage.removeItem('lf_dp_cascade_ec');
     sessionStorage.removeItem('lf_dp_cascade_sa');
   } else {
-    // EC mode: service area UUID from dropdown
-    const saId = document.getElementById('dp-service-area')?.value;
-    if (!saId) return dpShowError('Service area is required');
-    const contractId = document.getElementById('dp-contract')?.value || null;
-    payload = { client_id: clientId, program, service_area_id: saId, job_name: jobName, contract_id: contractId || undefined };
+    // EC mode: resolve SA — known option → service_area_id UUID; free-text → service_area_label
+    const { id: saId, contractId: saContractId } = dpResolveSa();
+    const saTyped = (document.getElementById('dp-service-area')?.value || '').trim();
+    if (!saId && !saTyped) return dpShowError('Service area is required');
+    const contractId = document.getElementById('dp-contract')?.value || saContractId || null;
+    if (saId) {
+      payload = { client_id: clientId, program, service_area_id: saId, job_name: jobName, project_type: 'design', contract_id: contractId || undefined };
+      sessionStorage.setItem('lf_dp_cascade_sa', saId);
+    } else {
+      // Free-text SA typed in EC mode — treat like no-EC path with a label
+      payload = { client_id: clientId, program, service_area_label: saTyped, job_name: jobName, project_type: 'design', contract_id: contractId || undefined };
+      sessionStorage.setItem('lf_dp_cascade_sa_label', saTyped);
+    }
     sessionStorage.setItem('lf_dp_cascade_ec', document.getElementById('dp-ec')?.value || '');
-    sessionStorage.setItem('lf_dp_cascade_sa', saId);
     if (contractId) sessionStorage.setItem('lf_dp_cascade_contract', contractId);
     else sessionStorage.removeItem('lf_dp_cascade_contract');
-    sessionStorage.removeItem('lf_dp_cascade_sa_label');
   }
 
   try {
@@ -1695,11 +1753,17 @@ async function dpRestoreSession() {
       conSel.value = storedContract;
     }
   }
-  // Restore SA (EC mode)
+  // Restore SA (EC mode) — find the SA in the cache to get its name for the input
   if (storedSa) {
-    const saSel = document.getElementById('dp-service-area');
-    if (saSel && !saSel.disabled && [...saSel.options].some(o => o.value === storedSa)) {
-      saSel.value = storedSa;
+    const saIn = document.getElementById('dp-service-area');
+    const ecId = document.getElementById('dp-ec')?.value;
+    const sas = ecId && _dpSaCache[ecId];
+    const saMatch = sas && sas.find(s => s.id === storedSa);
+    if (saIn && !saIn.disabled && saMatch) {
+      const wo = saMatch.work_order_number ? ` (WO# ${saMatch.work_order_number})` : '';
+      saIn.value = saMatch.name + wo;
+      saIn.dataset.selectedId = saMatch.id;
+      if (saMatch.contract_id) saIn.dataset.selectedContractId = saMatch.contract_id;
       await dpSaChanged();
     }
   }

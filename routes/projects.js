@@ -824,7 +824,7 @@ module.exports = function installProjectsRoutes(app, pool, mw) {
   // prevents duplicate names under the same parent. On 23505 we re-SELECT
   // the winner and return created:false so the UI gets the existing project_id.
   app.post('/api/projects/resolve-or-create', requireAuth(), requireProjectCreate, async (req, res) => {
-    const { client_id, program, service_area_id, service_area_label, job_name, contract_id } = req.body;
+    const { client_id, program, service_area_id, service_area_label, job_name, contract_id, project_type: explicitProjectType } = req.body;
 
     // Input validation (common to both modes)
     if (!job_name || !String(job_name).trim()) {
@@ -852,12 +852,15 @@ module.exports = function installProjectsRoutes(app, pool, mw) {
       if (jobRow.rows.length) resolvedJobTeam = jobRow.rows[0].team || null;
     } catch (_) {}
 
-    // Map job team to project_type so the project appears in the right portal pipeline.
-    // design → 'design' (appears in GET /api/design)
-    // permitting → 'permitting' (appears in permitting pipeline)
-    // anything else → 'other'
+    // Determine project_type. When the caller supplies an explicit value (e.g. the design
+    // portal always sends project_type:'design'), use it directly so the project appears in
+    // the correct pipeline even when the free-text job name doesn't match any jobs row.
+    // Fall back to derivation from jobs.team when no explicit value is provided.
+    const allowedExplicit = ['design', 'permitting', 'construction', 'other'];
     const teamToProjectType = { design: 'design', permitting: 'permitting' };
-    const derivedProjectType = (resolvedJobTeam && teamToProjectType[resolvedJobTeam]) || 'other';
+    const derivedProjectType = (explicitProjectType && allowedExplicit.includes(String(explicitProjectType)))
+      ? String(explicitProjectType)
+      : (resolvedJobTeam && teamToProjectType[resolvedJobTeam]) || 'other';
 
     // Branch selection: EC-scoped vs no-EC.
     // MODE 1 (EC): service_area_id present → EC-scoped path.

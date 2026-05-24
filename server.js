@@ -1801,6 +1801,117 @@ async function bootstrapDefensiveRecentMigrations() {
     console.error('[WAVE 19] SA contract_id bootstrap FAILED:', e.message);
   }
 
+  // Wave 20 Fix 1 — Normalize legacy "Contract N" service_area folders to contract level.
+  // These folders were created by Wave 9/10/11 boot from concentrators with rollup_level='service_area'
+  // and rollup_key=concentrator_id. Wave 17 created parallel rollup_level='contract' folders keyed
+  // on contract_id — causing duplicates. Match by name against contracts.friendly_label / contract_number
+  // / name for the same EC, then re-tag the folder as contract-level. The folder's id does not change,
+  // so all child parent_id FKs remain valid. Idempotent: contract_id IS NULL + rollup_key NOT IN
+  // (contracts.id::text) guards prevent re-touching already-normalized rows.
+  try {
+    const fix1 = await pool.query(`
+      UPDATE projects sa
+      SET rollup_level = 'contract',
+          rollup_key   = c.id::text,
+          contract_id  = c.id
+      FROM projects ec_folder
+      JOIN contracts c
+        ON c.engineering_contract_id = ec_folder.engineering_contract_id
+       AND ( lower(c.friendly_label) = lower(sa.name)
+          OR lower(c.contract_number) = lower(sa.name)
+          OR lower(c.name)            = lower(sa.name) )
+      WHERE sa.is_rollup = TRUE
+        AND sa.rollup_level = 'service_area'
+        AND ec_folder.id = sa.parent_id
+        AND ec_folder.is_rollup = TRUE
+        AND ec_folder.rollup_level = 'engineering_contract'
+        AND sa.contract_id IS NULL
+        AND sa.rollup_key NOT IN (SELECT id::text FROM contracts)
+    `);
+    console.error(`[WAVE 20] fix1 normalized ${fix1.rowCount} service_area folder(s) → contract level`);
+  } catch (e) {
+    console.error('[WAVE 20] fix1 normalize FAILED:', e.message);
+  }
+
+  // Wave 20 Fix 2 — Dedup contract-level folders sharing same (parent_id, rollup_key).
+  // After Fix 1, a Wave-17-created contract folder may coexist with the just-normalized original.
+  // Strategy: within each duplicate group pick the CANONICAL keeper = most children, tiebreak oldest.
+  // Reparent children of non-keepers to keeper, then DELETE non-keepers if they have zero children.
+  // Pure SQL via CTE — idempotent (no-op when no duplicate groups exist).
+  try {
+    const fix2_reparent = await pool.query(`
+      WITH groups AS (
+        SELECT
+          parent_id,
+          rollup_key,
+          id,
+          ROW_NUMBER() OVER (
+            PARTITION BY parent_id, rollup_key
+            ORDER BY (SELECT COUNT(*) FROM projects ch WHERE ch.parent_id = p.id) DESC,
+                     COALESCE(created_at, now()) ASC,
+                     id ASC
+          ) AS rn
+        FROM projects p
+        WHERE is_rollup = TRUE
+          AND rollup_level = 'contract'
+      ),
+      keepers AS (SELECT parent_id, rollup_key, id AS keeper_id FROM groups WHERE rn = 1),
+      dupes   AS (SELECT g.parent_id, g.rollup_key, g.id AS dupe_id, k.keeper_id
+                    FROM groups g JOIN keepers k USING (parent_id, rollup_key)
+                   WHERE g.rn > 1)
+      UPDATE projects child
+      SET parent_id = d.keeper_id
+      FROM dupes d
+      WHERE child.parent_id = d.dupe_id
+    `);
+    console.error(`[WAVE 20] fix2 reparented ${fix2_reparent.rowCount} child(ren) from duplicate contract folders`);
+
+    const fix2_delete = await pool.query(`
+      WITH groups AS (
+        SELECT
+          parent_id,
+          rollup_key,
+          id,
+          ROW_NUMBER() OVER (
+            PARTITION BY parent_id, rollup_key
+            ORDER BY (SELECT COUNT(*) FROM projects ch WHERE ch.parent_id = p.id) DESC,
+                     COALESCE(created_at, now()) ASC,
+                     id ASC
+          ) AS rn
+        FROM projects p
+        WHERE is_rollup = TRUE
+          AND rollup_level = 'contract'
+      )
+      DELETE FROM projects
+      WHERE id IN (
+        SELECT id FROM groups WHERE rn > 1
+      )
+        AND NOT EXISTS (SELECT 1 FROM projects ch WHERE ch.parent_id = projects.id)
+    `);
+    console.error(`[WAVE 20] fix2 deleted ${fix2_delete.rowCount} empty duplicate contract folder(s)`);
+  } catch (e) {
+    console.error('[WAVE 20] fix2 dedup FAILED:', e.message);
+  }
+
+  // Wave 20 Fix 3 — Rename contract-level folders to "friendly_label / contract_number".
+  // IS DISTINCT FROM guard makes this idempotent — only touches rows whose name differs from the target.
+  try {
+    const fix3 = await pool.query(`
+      UPDATE projects p
+      SET name = c.friendly_label || ' / ' || c.contract_number
+      FROM contracts c
+      WHERE p.is_rollup = TRUE
+        AND p.rollup_level = 'contract'
+        AND p.contract_id = c.id
+        AND c.friendly_label IS NOT NULL
+        AND c.contract_number IS NOT NULL
+        AND p.name IS DISTINCT FROM (c.friendly_label || ' / ' || c.contract_number)
+    `);
+    console.error(`[WAVE 20] fix3 renamed ${fix3.rowCount} contract folder(s) to "label / number" format`);
+  } catch (e) {
+    console.error('[WAVE 20] fix3 rename FAILED:', e.message);
+  }
+
   console.error('═════ [DEFENSIVE BOOT] end ═════');
 }
 
