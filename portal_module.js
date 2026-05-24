@@ -123,17 +123,22 @@ async function ensureRollupChain(pool, { client_id, concentrator_id, service_are
   // 3) Service Area folder — optional. Either concentrator-based (PSC) or
   // free-text label (non-PSC). If neither, skip this level.
   let areaKey = null, areaLabel = null;
+  // resolvedConcentratorId tracks whether the id is a real concentrators.id.
+  // When resolved from ec_service_areas it is NOT a concentrators FK — must stay null.
+  let resolvedConcentratorId = null;
   if (concentrator_id) {
     // Try ec_service_areas first (new EC-scoped path)
     const ecsa = await pool.query('SELECT name FROM ec_service_areas WHERE id = $1', [concentrator_id]);
     if (ecsa.rows.length) {
       areaKey = concentrator_id;
       areaLabel = ecsa.rows[0].name;
+      // resolvedConcentratorId stays null — ec_service_areas.id ≠ concentrators FK
     } else {
       // Fallback to concentrators (legacy path)
       const con = await pool.query('SELECT area_name FROM concentrators WHERE id = $1', [concentrator_id]);
       areaKey = concentrator_id;
       areaLabel = con.rows[0]?.area_name || 'Service Area';
+      resolvedConcentratorId = concentrator_id;
     }
   } else if (service_area_label && service_area_label.trim()) {
     const trimmed = service_area_label.trim();
@@ -146,7 +151,7 @@ async function ensureRollupChain(pool, { client_id, concentrator_id, service_are
       rollup_level: 'service_area',
       rollup_key: areaKey,
       name: areaLabel,
-      extras: { client_id, concentrator_id: concentrator_id || null, engineering_contract_id: engineering_contract_id || null }
+      extras: { client_id, concentrator_id: resolvedConcentratorId, engineering_contract_id: engineering_contract_id || null }
     }, pgClient);
   }
 
