@@ -85,7 +85,17 @@ async function isDuplicateProject(pool, name, parentId, excludeId = null) {
 //   - service_area_label (free text) provided → rollup_key =
 //     client_id|lowercased_label so case-insensitive dedup is client-scoped.
 //   - Neither provided → SA level skipped.
-async function ensureRollupChain(pool, { client_id, concentrator_id, service_area_label, job_id, engineering_contract_id }, pgClient) {
+//
+// Construction Contract resolution (new):
+//   - contract_id provided → inserts a rollup_level='contract' folder
+//     between the EC folder and the SA folder. rollup_key = contract_id UUID.
+//   - Absent → contract level skipped (backwards-compat).
+//
+// Category resolution (new):
+//   - job_team provided ('design', 'permitting', 'construction') → inserts a
+//     category rollup folder below the SA folder. rollup_key = sa_key + '|' + job_team.
+//   - Absent → category level skipped (backwards-compat).
+async function ensureRollupChain(pool, { client_id, concentrator_id, service_area_label, job_id, engineering_contract_id, contract_id, job_team }, pgClient) {
   if (!client_id) return null;
 
   // 1) Client folder
@@ -116,6 +126,25 @@ async function ensureRollupChain(pool, { client_id, concentrator_id, service_are
         rollup_key: engineering_contract_id,
         name: ecLabel,
         extras: { client_id, engineering_contract_id }
+      }, pgClient);
+    }
+  }
+
+  // 2b) Construction Contract folder (rollup_level='contract') — between EC and SA when contract_id is provided.
+  if (contract_id) {
+    const conRow = await pool.query(
+      `SELECT contract_number, name, friendly_label FROM contracts WHERE id = $1`,
+      [contract_id]
+    );
+    if (conRow.rows.length) {
+      const con = conRow.rows[0];
+      const conLabel = con.friendly_label || con.name || con.contract_number;
+      folder = await findOrCreateRollup(pool, {
+        parent_id: folder,
+        rollup_level: 'contract',
+        rollup_key: contract_id,
+        name: conLabel,
+        extras: { client_id, engineering_contract_id: engineering_contract_id || null }
       }, pgClient);
     }
   }
@@ -152,6 +181,20 @@ async function ensureRollupChain(pool, { client_id, concentrator_id, service_are
       rollup_key: areaKey,
       name: areaLabel,
       extras: { client_id, concentrator_id: resolvedConcentratorId, engineering_contract_id: engineering_contract_id || null }
+    }, pgClient);
+  }
+
+  // 4) Category folder — between SA and leaf when job_team is provided.
+  // rollup_key scoped to SA key so the same team name can appear under different SAs.
+  if (job_team && areaKey) {
+    const categoryLabels = { design: 'Design', permitting: 'Permitting', construction: 'Construction' };
+    const catLabel = categoryLabels[job_team] || job_team.charAt(0).toUpperCase() + job_team.slice(1);
+    folder = await findOrCreateRollup(pool, {
+      parent_id: folder,
+      rollup_level: 'category',
+      rollup_key: areaKey + '|' + job_team,
+      name: catLabel,
+      extras: { client_id, engineering_contract_id: engineering_contract_id || null }
     }, pgClient);
   }
 

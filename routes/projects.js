@@ -824,7 +824,7 @@ module.exports = function installProjectsRoutes(app, pool, mw) {
   // prevents duplicate names under the same parent. On 23505 we re-SELECT
   // the winner and return created:false so the UI gets the existing project_id.
   app.post('/api/projects/resolve-or-create', requireAuth(), requireProjectCreate, async (req, res) => {
-    const { client_id, program, service_area_id, service_area_label, job_name } = req.body;
+    const { client_id, program, service_area_id, service_area_label, job_name, contract_id } = req.body;
 
     // Input validation (common to both modes)
     if (!job_name || !String(job_name).trim()) {
@@ -834,6 +834,30 @@ module.exports = function installProjectsRoutes(app, pool, mw) {
       return res.status(400).json({ error: 'client_id must be a valid UUID.' });
     }
     const normalizedJobName = String(job_name).trim();
+
+    // Validate contract_id when provided — must be a UUID string.
+    const normalizedContractId = (contract_id && typeof contract_id === 'string' && contract_id.match(/^[0-9a-f-]{36}$/i))
+      ? contract_id
+      : null;
+
+    // Resolve job team from the jobs table by name.
+    // Used to set project_type and create the Category rollup folder.
+    // Falls back to null when the job name doesn't match any jobs row (e.g. free-text entry).
+    let resolvedJobTeam = null;
+    try {
+      const jobRow = await pool.query(
+        `SELECT team FROM jobs WHERE LOWER(name) = LOWER($1) AND active = TRUE LIMIT 1`,
+        [normalizedJobName]
+      );
+      if (jobRow.rows.length) resolvedJobTeam = jobRow.rows[0].team || null;
+    } catch (_) {}
+
+    // Map job team to project_type so the project appears in the right portal pipeline.
+    // design → 'design' (appears in GET /api/design)
+    // permitting → 'permitting' (appears in permitting pipeline)
+    // anything else → 'other'
+    const teamToProjectType = { design: 'design', permitting: 'permitting' };
+    const derivedProjectType = (resolvedJobTeam && teamToProjectType[resolvedJobTeam]) || 'other';
 
     // Branch selection: EC-scoped vs no-EC.
     // MODE 1 (EC): service_area_id present → EC-scoped path.
@@ -877,24 +901,27 @@ module.exports = function installProjectsRoutes(app, pool, mw) {
           });
         }
 
-        // Auto-create the full rollup chain (Client → EC → SA) if any level is
-        // missing. ensureRollupChain accepts concentrator_id = service_area_id
-        // to drive the SA folder name from ec_service_areas.name, and
-        // engineering_contract_id to create the EC folder above it.
-        // This replaces the previous manual EC-folder + SA-folder lookup that
-        // returned 404 when folders hadn't been pre-initialized by an admin.
+        // Auto-create the full rollup chain:
+        //   Client → EC → [Construction Contract] → SA → [Category] → leaf
+        // ensureRollupChain accepts:
+        //   concentrator_id = service_area_id → resolves SA name from ec_service_areas.
+        //   engineering_contract_id → creates EC folder above SA.
+        //   contract_id (new) → creates Construction Contract folder between EC and SA.
+        //   job_team (new) → creates Category folder below SA.
         const ensureRollupChain = app.locals.ensureRollupChain;
         const folderId = await ensureRollupChain({
           client_id,
           engineering_contract_id: ecId,
           concentrator_id: service_area_id,
+          contract_id: normalizedContractId,
           job_id: null,
+          job_team: resolvedJobTeam,
         });
         if (!folderId) {
           return res.status(500).json({ error: 'Failed to initialize rollup chain.' });
         }
 
-        // Try to find an existing leaf under the service-area folder with a
+        // Try to find an existing leaf under the deepest folder with a
         // case-insensitive name match.
         const existing = await pool.query(
           `SELECT id, name, is_rollup, parent_id, status, engineering_contract_id, service_area_name
@@ -909,16 +936,16 @@ module.exports = function installProjectsRoutes(app, pool, mw) {
           return res.status(200).json({ ...existing.rows[0], created: false });
         }
 
-        // Create the leaf project under the service-area folder.
+        // Create the leaf project under the deepest folder.
         let newRow;
         try {
           const insert = await pool.query(
             `INSERT INTO projects
                (name, client_id, parent_id, engineering_contract_id, program,
                 status, is_rollup, billing_type, project_type, service_area_name)
-             VALUES ($1, $2, $3, $4, $5, 'active', FALSE, 'hourly', 'other', $6)
+             VALUES ($1, $2, $3, $4, $5, 'active', FALSE, 'hourly', $6, $7)
              RETURNING id, name, is_rollup, parent_id, status, engineering_contract_id, service_area_name`,
-            [normalizedJobName, client_id, folderId, ecId, normalizedProgram, saRow.rows[0].name]
+            [normalizedJobName, client_id, folderId, ecId, normalizedProgram, derivedProjectType, saRow.rows[0].name]
           );
           newRow = insert.rows[0];
         } catch (err) {
@@ -936,6 +963,14 @@ module.exports = function installProjectsRoutes(app, pool, mw) {
           );
           if (!refound.rows.length) throw err;
           return res.status(200).json({ ...refound.rows[0], created: false });
+        }
+
+        // Auto-create design pipeline entry when project_type is 'design'.
+        if (derivedProjectType === 'design' && newRow && newRow.id) {
+          await pool.query(
+            `INSERT INTO design_stages (project_id, stage) VALUES ($1, 'potential') ON CONFLICT (project_id, stage) DO NOTHING`,
+            [newRow.id]
+          );
         }
 
         broadcast('admin', 'project_added', { id: newRow.id, name: newRow.name, client_id });
@@ -970,7 +1005,9 @@ module.exports = function installProjectsRoutes(app, pool, mw) {
         const folderId = await ensureRollupChain({
           client_id,
           service_area_label: normalizedLabel || null,
+          contract_id: normalizedContractId,
           job_id: null,
+          job_team: resolvedJobTeam,
         });
         if (!folderId) {
           return res.status(500).json({
@@ -978,7 +1015,7 @@ module.exports = function installProjectsRoutes(app, pool, mw) {
           });
         }
 
-        // Try to find an existing leaf under the folder with a case-insensitive name match.
+        // Try to find an existing leaf under the deepest folder with a case-insensitive name match.
         const existing = await pool.query(
           `SELECT id, name, is_rollup, parent_id, status, engineering_contract_id, service_area_name
              FROM projects
@@ -992,16 +1029,16 @@ module.exports = function installProjectsRoutes(app, pool, mw) {
           return res.status(200).json({ ...existing.rows[0], created: false });
         }
 
-        // Create the leaf project under the folder.
+        // Create the leaf project under the deepest folder.
         let newRow;
         try {
           const insert = await pool.query(
             `INSERT INTO projects
                (name, client_id, parent_id, billing_type, project_type, status,
                 is_rollup, service_area_name)
-             VALUES ($1, $2, $3, 'hourly', 'other', 'active', FALSE, $4)
+             VALUES ($1, $2, $3, 'hourly', $4, 'active', FALSE, $5)
              RETURNING id, name, is_rollup, parent_id, status, engineering_contract_id, service_area_name`,
-            [normalizedJobName, client_id, folderId, normalizedLabel || null]
+            [normalizedJobName, client_id, folderId, derivedProjectType, normalizedLabel || null]
           );
           newRow = insert.rows[0];
         } catch (err) {
@@ -1019,6 +1056,14 @@ module.exports = function installProjectsRoutes(app, pool, mw) {
           );
           if (!refound.rows.length) throw err;
           return res.status(200).json({ ...refound.rows[0], created: false });
+        }
+
+        // Auto-create design pipeline entry when project_type is 'design'.
+        if (derivedProjectType === 'design' && newRow && newRow.id) {
+          await pool.query(
+            `INSERT INTO design_stages (project_id, stage) VALUES ($1, 'potential') ON CONFLICT (project_id, stage) DO NOTHING`,
+            [newRow.id]
+          );
         }
 
         broadcast('admin', 'project_added', { id: newRow.id, name: newRow.name, client_id });

@@ -454,15 +454,28 @@ fetch('/api/auth/me', { credentials: 'include' })
               </select>
             </div>
           </div>
-          <!-- ROW 2a: EC mode — Engineering Contract + Service Area dropdown -->
+          <!-- ROW 2a: EC mode — Engineering Contract dropdown -->
           <div class="form-row" id="dp-ec-row" style="display:none">
-            <div class="form-group">
+            <div class="form-group span2">
               <label for="dp-ec">Engineering Contract *</label>
               <select id="dp-ec" disabled aria-label="Engineering contract" onchange="dpEcChanged()">
                 <option value="">— select contract —</option>
               </select>
             </div>
-            <div class="form-group">
+          </div>
+          <!-- ROW 2a-2: EC mode — Construction Contract dropdown (between EC and SA) -->
+          <div class="form-row" id="dp-contract-row" style="display:none">
+            <div class="form-group span2">
+              <label for="dp-contract">Construction Contract <span style="font-weight:400;color:var(--text-muted)">(optional — groups SA under contract folder)</span></label>
+              <select id="dp-contract" disabled aria-label="Construction contract" onchange="dpContractChanged()">
+                <option value="">— none / not grouped by contract —</option>
+              </select>
+              <span class="form-hint" style="font-size:11px;color:var(--text-muted)">Auto-filled when a service area is selected. Override if needed.</span>
+            </div>
+          </div>
+          <!-- ROW 2a-3: EC mode — Service Area dropdown -->
+          <div class="form-row" id="dp-sa-row" style="display:none">
+            <div class="form-group span2">
               <label for="dp-service-area">Service Area *</label>
               <select id="dp-service-area" disabled aria-label="Service area" onchange="dpSaChanged()">
                 <option value="">— Select contract first —</option>
@@ -1325,11 +1338,17 @@ function dpEnterEditMode() {
 
 function dpResetSaAndJob() {
   const saSel = document.getElementById('dp-service-area');
-  if (saSel) { saSel.innerHTML = '<option value="">— Select contract first —</option>'; saSel.disabled = true; }
+  if (saSel) { saSel.innerHTML = '<option value="">— Select EC first —</option>'; saSel.disabled = true; }
   const ecSel = document.getElementById('dp-ec');
   if (ecSel) { ecSel.innerHTML = '<option value="">— select contract —</option>'; ecSel.disabled = true; }
+  const conSel = document.getElementById('dp-contract');
+  if (conSel) { conSel.innerHTML = '<option value="">— none / not grouped by contract —</option>'; conSel.disabled = true; }
   const ecRow = document.getElementById('dp-ec-row');
   if (ecRow) ecRow.style.display = 'none';
+  const contractRow = document.getElementById('dp-contract-row');
+  if (contractRow) contractRow.style.display = 'none';
+  const saRow = document.getElementById('dp-sa-row');
+  if (saRow) saRow.style.display = 'none';
   const noEcRow = document.getElementById('dp-noec-row');
   if (noEcRow) noEcRow.style.display = 'none';
   const saLabel = document.getElementById('dp-sa-label');
@@ -1440,6 +1459,9 @@ async function dpEcChanged() {
   const ecId = document.getElementById('dp-ec')?.value;
   const saSel = document.getElementById('dp-service-area');
   const saHint = document.getElementById('dp-sa-no-config-hint');
+  const conSel = document.getElementById('dp-contract');
+  const contractRow = document.getElementById('dp-contract-row');
+  const saRow = document.getElementById('dp-sa-row');
   const jobIn = document.getElementById('dp-job-input');
   const hint = document.getElementById('dp-job-hint');
   dpClearError();
@@ -1447,17 +1469,46 @@ async function dpEcChanged() {
   if (!saSel) return;
   saSel.innerHTML = '<option value="">— loading… —</option>';
   saSel.disabled = true;
+  if (conSel) { conSel.innerHTML = '<option value="">— none / not grouped by contract —</option>'; conSel.disabled = true; }
   if (jobIn) { jobIn.disabled = true; jobIn.value = ''; }
 
   if (!ecId) {
-    saSel.innerHTML = '<option value="">— Select contract first —</option>';
+    saSel.innerHTML = '<option value="">— Select EC first —</option>';
     if (saHint) saHint.style.display = 'none';
+    if (contractRow) contractRow.style.display = 'none';
+    if (saRow) saRow.style.display = 'none';
     return;
   }
 
   sessionStorage.setItem('lf_dp_cascade_ec', ecId);
+  sessionStorage.removeItem('lf_dp_cascade_contract');
   sessionStorage.removeItem('lf_dp_cascade_sa');
   sessionStorage.removeItem('lf_dp_cascade_job');
+
+  // Show contract + SA rows
+  if (contractRow) contractRow.style.display = '';
+  if (saRow) saRow.style.display = '';
+
+  // Populate construction contract dropdown for this EC
+  try {
+    const contracts = await api('/api/contracts?engineering_contract_id=' + encodeURIComponent(ecId) + '&active=true');
+    if (conSel) {
+      conSel.innerHTML = '<option value="">— none / not grouped by contract —</option>' +
+        (contracts || []).map(c => {
+          const lbl = c.friendly_label || c.name || c.contract_number || c.id;
+          return `<option value="${esc(c.id)}">${esc(lbl)}</option>`;
+        }).join('');
+      conSel.disabled = false;
+      // Auto-select if only one contract
+      if (contracts && contracts.length === 1) {
+        conSel.value = contracts[0].id;
+        sessionStorage.setItem('lf_dp_cascade_contract', contracts[0].id);
+      }
+    }
+  } catch (_) {
+    // Contract dropdown is optional — failure is non-blocking
+    if (conSel) conSel.disabled = false;
+  }
 
   try {
     let sas = _dpSaCache[ecId];
@@ -1489,6 +1540,16 @@ async function dpEcChanged() {
   } catch (e) {
     saSel.innerHTML = '<option value="">Error loading service areas</option>';
     dpShowError('Could not load service areas: ' + (e.message || 'server error'));
+  }
+}
+
+// Called when construction contract dropdown changes (user override).
+function dpContractChanged() {
+  const conId = document.getElementById('dp-contract')?.value;
+  if (conId) {
+    sessionStorage.setItem('lf_dp_cascade_contract', conId);
+  } else {
+    sessionStorage.removeItem('lf_dp_cascade_contract');
   }
 }
 
@@ -1553,9 +1614,12 @@ async function dpSubmitCascade() {
     // EC mode: service area UUID from dropdown
     const saId = document.getElementById('dp-service-area')?.value;
     if (!saId) return dpShowError('Service area is required');
-    payload = { client_id: clientId, program, service_area_id: saId, job_name: jobName };
+    const contractId = document.getElementById('dp-contract')?.value || null;
+    payload = { client_id: clientId, program, service_area_id: saId, job_name: jobName, contract_id: contractId || undefined };
     sessionStorage.setItem('lf_dp_cascade_ec', document.getElementById('dp-ec')?.value || '');
     sessionStorage.setItem('lf_dp_cascade_sa', saId);
+    if (contractId) sessionStorage.setItem('lf_dp_cascade_contract', contractId);
+    else sessionStorage.removeItem('lf_dp_cascade_contract');
     sessionStorage.removeItem('lf_dp_cascade_sa_label');
   }
 
@@ -1607,6 +1671,14 @@ async function dpRestoreSession() {
     if (ecSel && !ecSel.disabled && [...ecSel.options].some(o => o.value === storedEc)) {
       ecSel.value = storedEc;
       await dpEcChanged();
+    }
+  }
+  // Restore Construction Contract selection (EC mode)
+  const storedContract = sessionStorage.getItem('lf_dp_cascade_contract');
+  if (storedContract) {
+    const conSel = document.getElementById('dp-contract');
+    if (conSel && !conSel.disabled && [...conSel.options].some(o => o.value === storedContract)) {
+      conSel.value = storedContract;
     }
   }
   // Restore SA (EC mode)
