@@ -77,17 +77,22 @@ module.exports = function installClientPortalRoutes(app, pool, { requireAuth }) 
           cl.name AS client_name,
           p.work_order_number,
           COALESCE(con.area_name, p.service_area_name) AS service_area_label,
-          j.team
+          j.team,
+          j.name AS job_name,
+          p.contract_id,
+          ct.contract_number,
+          COALESCE(ct.friendly_label, ct.name, ct.contract_number) AS contract_label
         FROM projects p
         LEFT JOIN clients cl ON cl.id = p.client_id
         LEFT JOIN concentrators con ON con.id = p.concentrator_id
         LEFT JOIN jobs j ON j.id = p.job_id
+        LEFT JOIN contracts ct ON ct.id = p.contract_id
         WHERE
           COALESCE(p.is_rollup, false) = false
           AND LOWER(p.project_type) != 'potential'
           AND p.status NOT IN ('archived')
           ${clientFilter}
-        ORDER BY cl.name, p.project_type, p.name
+        ORDER BY cl.name, contract_label NULLS LAST, j.name, p.name
       `, params);
 
       res.json(rows);

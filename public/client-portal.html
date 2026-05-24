@@ -71,18 +71,25 @@ button{font-family:inherit;cursor:pointer;border:none;background:none;color:inhe
 .page-title{font-size:22px;font-weight:700;color:var(--text);margin-bottom:4px}
 .page-sub{font-size:13px;color:var(--text-muted)}
 
-/* Three-column grid */
+/* Grid — dynamic layout based on how many non-empty team categories exist */
 .cp-grid{
   display:grid;
-  grid-template-columns:1fr 1fr 1fr;
   gap:20px;
   align-items:start;
 }
+/* Three columns */
+.cp-grid-three{grid-template-columns:1fr 1fr 1fr}
+/* Two columns */
+.cp-grid-two{grid-template-columns:1fr 1fr}
+/* Single — full width, column expands to fill */
+.cp-grid-single{grid-template-columns:1fr}
+.cp-column-full{width:100%}
+
 @media(max-width:860px){
-  .cp-grid{grid-template-columns:1fr 1fr}
+  .cp-grid-three{grid-template-columns:1fr 1fr}
 }
 @media(max-width:560px){
-  .cp-grid{grid-template-columns:1fr}
+  .cp-grid-three,.cp-grid-two{grid-template-columns:1fr}
 }
 
 /* Column */
@@ -100,6 +107,39 @@ button{font-family:inherit;cursor:pointer;border:none;background:none;color:inhe
 .cp-col-icon{font-size:15px;color:var(--primary)}
 .cp-col-title{font-size:14px;font-weight:600;color:var(--text)}
 .cp-col-body{padding:12px}
+
+/* Contract group (level 1 nesting — only rendered when project has a contract) */
+.cp-contract-group{
+  margin-bottom:14px;
+  border:1px solid var(--border-weak);
+  border-radius:10px;
+  overflow:hidden;
+}
+.cp-contract-group:last-child{margin-bottom:0}
+.cp-contract-header{
+  display:flex;align-items:center;gap:7px;
+  padding:9px 12px;
+  background:var(--primary-light);
+  border-bottom:1px solid var(--border-weak);
+  font-size:13px;font-weight:600;color:var(--primary);
+}
+html[data-theme="dark"] .cp-contract-header{
+  background:var(--primary-dark);
+  color:var(--primary-text);
+}
+.cp-contract-icon{font-size:12px}
+.cp-contract-label{line-height:1.3}
+
+/* Job group (level 2 nesting — always rendered) */
+.cp-job-group{padding:10px 12px 2px}
+.cp-contract-group .cp-job-group{padding:10px 10px 2px}
+.cp-job-header{
+  font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.55px;
+  color:var(--text-muted);
+  margin-bottom:8px;padding-bottom:5px;
+  border-bottom:1px solid var(--border-weak);
+}
+.cp-job-areas{/* leaf cards go here — cp-project-card handles own spacing */}
 
 /* Project card */
 .cp-project-card{

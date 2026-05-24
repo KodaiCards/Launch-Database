@@ -1,4 +1,5 @@
 // public/js/client_portal.js — Wave 13B: per-client scoped client portal.
+// Wave 16: nested grouping (team → contract → job → area) + dynamic layout.
 //
 // Modes:
 //   customer role        — 3 columns, server scopes to their clients. No toolbar.
@@ -66,40 +67,124 @@
     return null;
   }
 
-  function displayName(p) {
-    const parts = [];
-    if (p.service_area_label) parts.push(p.service_area_label);
-    if (p.work_order_number)  parts.push(p.work_order_number);
-    parts.push(p.name);
-    return parts.join(' / ');
+  // Derive column bucket from jobs.team when available, else fall back to project_type.
+  function columnBucket(p) {
+    const team = (p.team || '').toLowerCase();
+    if (team === 'design')       return 'design';
+    if (team === 'permitting')   return 'permitting';
+    if (team === 'construction') return 'construction';
+    const t = (p.project_type || '').toLowerCase();
+    if (DESIGN_TYPES.has(t))     return 'design';
+    if (PERMIT_TYPES.has(t))     return 'permitting';
+    if (CONST_TYPES.has(t))      return 'construction';
+    return null;
   }
 
-  function renderCard(p) {
-    const money   = formatMoney(p.expected_revenue);
-    const hrs     = formatHours(p.actual_hours, p.expected_hours);
-    const footage = formatFootage(p.footage, p.miles);
+  // ─── Leaf card (area) ────────────────────────────────────────────────────
+
+  function renderAreaCard(p) {
+    const areaLabel = p.service_area_label || p.name;
+    const money     = formatMoney(p.expected_revenue);
+    const hrs       = formatHours(p.actual_hours, p.expected_hours);
+    const footage   = formatFootage(p.footage, p.miles);
     const meta = [
-      money   ? `<div class="cp-card-money">${money}</div>` : '',
-      hrs     ? `<div class="cp-card-meta">${hrs}</div>` : '',
-      footage ? `<div class="cp-card-meta">${footage}</div>` : '',
+      money   ? `<div class="cp-card-money">${escapeHtml(money)}</div>` : '',
+      hrs     ? `<div class="cp-card-meta">${escapeHtml(hrs)}</div>` : '',
+      footage ? `<div class="cp-card-meta">${escapeHtml(footage)}</div>` : '',
     ].join('');
     return `
       <div class="cp-project-card">
-        <div class="cp-card-name">${escapeHtml(displayName(p))}</div>
+        <div class="cp-card-name">${escapeHtml(areaLabel)}</div>
         ${statusPillHTML(p.derived_status)}
         ${meta}
       </div>`;
   }
 
-  function renderColumnBody(projects) {
+  // ─── Grouping tree builder ────────────────────────────────────────────────
+  //
+  // Returns a nested structure:
+  //   { contracts: Map<contractKey, { label, jobs: Map<jobKey, { label, projects: [] }> }> }
+  //
+  // contractKey = contract_id or '__none__' (no contract).
+  // When contractKey is '__none__', the contract level is skipped in rendering.
+  // jobKey = job_name or project_type, used as the group-level-2 label.
+
+  function buildGroupingTree(projects) {
+    const byStatus = (a, b) =>
+      (STATUS_ORDER[a.derived_status] ?? 99) - (STATUS_ORDER[b.derived_status] ?? 99);
+
+    // Map: contractKey → { label, jobs: Map<jobKey, { label, projects }> }
+    const contracts = new Map();
+
+    for (const p of projects) {
+      const contractKey   = p.contract_id || '__none__';
+      const contractLabel = p.contract_id ? (p.contract_label || p.contract_number || 'Contract') : '__none__';
+      const jobLabel      = p.job_name || p.project_type || 'Other';
+
+      if (!contracts.has(contractKey)) {
+        contracts.set(contractKey, { label: contractLabel, jobs: new Map() });
+      }
+      const contractEntry = contracts.get(contractKey);
+
+      if (!contractEntry.jobs.has(jobLabel)) {
+        contractEntry.jobs.set(jobLabel, { label: jobLabel, projects: [] });
+      }
+      contractEntry.jobs.get(jobLabel).projects.push(p);
+    }
+
+    // Sort projects within each job group by status
+    for (const [, c] of contracts) {
+      for (const [, j] of c.jobs) {
+        j.projects.sort(byStatus);
+      }
+    }
+
+    return contracts;
+  }
+
+  // ─── Render nested column body (contract → job → area) ───────────────────
+
+  function renderNestedColumnBody(projects) {
     if (!projects.length) {
       return '<div class="cp-empty">No projects to display.</div>';
     }
-    return projects.map(renderCard).join('');
+
+    const contracts = buildGroupingTree(projects);
+    let html = '';
+
+    for (const [contractKey, { label: contractLabel, jobs }] of contracts) {
+      const hasContract = contractKey !== '__none__';
+
+      if (hasContract) {
+        // Group level 1: contract header
+        html += `<div class="cp-contract-group">
+          <div class="cp-contract-header">
+            <i class="fa-solid fa-file-contract cp-contract-icon" aria-hidden="true"></i>
+            <span class="cp-contract-label">${escapeHtml(contractLabel)}</span>
+          </div>`;
+      }
+
+      // Group level 2: job rollups
+      for (const [, { label: jobLabel, projects: jobProjects }] of jobs) {
+        html += `<div class="cp-job-group">
+          <div class="cp-job-header">${escapeHtml(jobLabel)}</div>
+          <div class="cp-job-areas">`;
+        for (const p of jobProjects) {
+          html += renderAreaCard(p);
+        }
+        html += '</div></div>';
+      }
+
+      if (hasContract) {
+        html += '</div>'; // close cp-contract-group
+      }
+    }
+
+    return html;
   }
 
-    // Build a column element; returns null to signal "hide this column".
-  // All three columns hide when empty (empty-column rule applies to all).
+  // ─── Column element builder ───────────────────────────────────────────────
+
   function buildColumnEl(type, projects) {
     if (projects.length === 0) return null;
 
@@ -110,7 +195,7 @@
     };
     const { icon, title } = configs[type];
 
-    const bodyHtml = renderColumnBody(projects);
+    const bodyHtml = renderNestedColumnBody(projects);
 
     const el = document.createElement('section');
     el.className = 'cp-column';
@@ -126,22 +211,12 @@
     return el;
   }
 
-  // Derive column bucket from jobs.team when available, else fall back to project_type.
-  function columnBucket(p) {
-    const team = (p.team || '').toLowerCase();
-    if (team === 'design')       return 'design';
-    if (team === 'permitting')   return 'permitting';
-    if (team === 'construction') return 'construction';
-    // No job or job has no team — classify by project_type.
-    const t = (p.project_type || '').toLowerCase();
-    if (DESIGN_TYPES.has(t))     return 'design';
-    if (PERMIT_TYPES.has(t))     return 'permitting';
-    if (CONST_TYPES.has(t))      return 'construction';
-    return null;
-  }
+  // ─── Dynamic layout grid builder ──────────────────────────────────────────
+  //
+  // When only ONE non-empty team category exists, expand it to full page width
+  // (single-column expanded layout, contract groups flow horizontally inside).
+  // When multiple categories exist, keep them as columns sized to fit.
 
-  // Render a grid (3-column layout) from a flat project array for one client.
-  // Returns the grid element (possibly fewer than 3 columns if some are empty).
   function renderGrid(projects) {
     const design       = [];
     const permit       = [];
@@ -149,40 +224,41 @@
 
     for (const p of projects) {
       const bucket = columnBucket(p);
-      if (bucket === 'design')       design.push(p);
-      else if (bucket === 'permitting') permit.push(p);
+      if (bucket === 'design')            design.push(p);
+      else if (bucket === 'permitting')   permit.push(p);
       else if (bucket === 'construction') construction.push(p);
     }
-
-    const byStatus = (a, b) =>
-      (STATUS_ORDER[a.derived_status] ?? 99) - (STATUS_ORDER[b.derived_status] ?? 99);
-
-    design.sort(byStatus);
-    permit.sort(byStatus);
-    construction.sort(byStatus);
-
-    const grid = document.createElement('div');
-    grid.className = 'cp-grid';
-    grid.setAttribute('role', 'main');
-    grid.setAttribute('aria-label', 'Project columns');
 
     const designEl  = buildColumnEl('design', design);
     const permitEl  = buildColumnEl('permitting', permit);
     const constEl   = buildColumnEl('construction', construction);
 
-    if (designEl)  grid.appendChild(designEl);
-    if (permitEl)  grid.appendChild(permitEl);
-    if (constEl)   grid.appendChild(constEl);
-
-    // If all three are hidden (no projects at all), signal caller
     if (!designEl && !permitEl && !constEl) return null;
+
+    const nonEmpty = [designEl, permitEl, constEl].filter(Boolean);
+    const count    = nonEmpty.length;
+
+    const grid = document.createElement('div');
+    grid.setAttribute('role', 'main');
+    grid.setAttribute('aria-label', 'Project columns');
+
+    if (count === 1) {
+      // Single non-empty category — full-width expanded layout
+      grid.className = 'cp-grid cp-grid-single';
+      nonEmpty[0].classList.add('cp-column-full');
+    } else if (count === 2) {
+      grid.className = 'cp-grid cp-grid-two';
+    } else {
+      grid.className = 'cp-grid cp-grid-three';
+    }
+
+    for (const el of nonEmpty) grid.appendChild(el);
 
     return grid;
   }
 
   // ─── Render modes ─────────────────────────────────────────────────────────
 
-  // customer or admin viewing single client — plain 3-column grid
   function renderSingleClient(projects) {
     const content = document.getElementById('cp-content');
     if (!content) return;
@@ -196,12 +272,10 @@
     }
   }
 
-  // admin viewing all clients — one section per client
   function renderAllClients(projects) {
     const content = document.getElementById('cp-content');
     if (!content) return;
 
-    // Group rows by client_id
     const byClient = new Map();
     for (const p of projects) {
       const key = p.client_id || '__none__';
@@ -218,14 +292,13 @@
 
     content.innerHTML = '';
 
-    // Sort by client name
     const sorted = Array.from(byClient.entries()).sort((a, b) =>
       a[1].name.localeCompare(b[1].name)
     );
 
     for (const [, { name, rows }] of sorted) {
       const grid = renderGrid(rows);
-      if (!grid) continue; // skip clients with no displayable projects
+      if (!grid) continue;
 
       const section = document.createElement('div');
       section.className = 'cp-client-section';
