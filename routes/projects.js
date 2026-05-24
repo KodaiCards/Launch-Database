@@ -1014,8 +1014,10 @@ module.exports = function installProjectsRoutes(app, pool, mw) {
         // Use ensureRollupChain to get/create the rollup chain.
         // When normalizedLabel is empty, ensureRollupChain skips the SA level and
         // returns the team folder — project nests directly under Client → Team.
+        // app.locals.ensureRollupChain is a wrapper (params) => fn(pool, params),
+        // so it takes ONE argument (the params object) — NOT (pool, params).
         const ensureRollupChain = app.locals.ensureRollupChain;
-        const folderId = await ensureRollupChain(pool, {
+        const folderId = await ensureRollupChain({
           client_id,
           service_area_label: normalizedLabel || null,
           job_id: null,
