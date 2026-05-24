@@ -247,7 +247,7 @@ const PORTAL_DEFS = [
     id: 'training',
     audience: 'employee',
     url: TRAINING_URL,
-    name: 'OSP Training',
+    name: 'Launch Training',
     icon: 'graduation-cap',
     description: 'OSP design training modules, references, and practice exercises.',
     canAccess: u => u.role !== 'customer',
