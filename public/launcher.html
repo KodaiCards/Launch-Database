@@ -132,50 +132,46 @@ body{
 #tile-area{
   flex:1;
   display:flex;
-  align-items:center;
+  align-items:stretch;
   justify-content:center;
   min-height:0;
-  overflow:auto;
+  overflow:hidden;
   padding:20px;
   box-sizing:border-box;
 }
 .launcher-box{
   width:100%;
   max-width:720px;
-  /* Height is driven by tile content (aspect-ratio 1/1) — no fixed height needed.
-     max-height keeps it from overflowing the available viewport area. */
-  height:auto;
-  max-height:calc(100vh - var(--topbar-h) - var(--footer-h) - 40px);
+  /* Stretch to fill the available vertical space so the grid can divide it evenly.
+     The grid uses fr rows so tiles shrink to fit rather than overflow. */
   display:flex;
-  align-items:flex-start;
+  align-items:stretch;
 }
 
-/* ── Tile grid (uniform-square bento layout) ──
-   Rows are auto so each tile's aspect-ratio:1/1 drives the row height.
-   Columns are count-driven fr tracks so tiles share available width equally.
-   Result: every tile is a perfect square, all the same size. */
+/* ── Tile grid (viewport-fitted bento layout) ──
+   Both columns AND rows use fr tracks so every tile shares available space equally
+   in both dimensions — tiles shrink as count grows so they all fit without scrolling.
+   The grid fills the .launcher-box height (which fills the viewport minus topbar/footer).
+   aspect-ratio is removed from tiles; cells drive the size. */
 .launcher-grid{
   display:grid;
   width:100%;
-  height:auto;
+  height:100%;
   gap:10px;
   box-sizing:border-box;
 }
-/* Count-driven column layouts — rows are always auto (driven by aspect-ratio) */
-.launcher-grid[data-count="1"]{grid-template-columns:1fr}
-.launcher-grid[data-count="2"]{grid-template-columns:1fr 1fr}
-.launcher-grid[data-count="3"]{grid-template-columns:1fr 1fr 1fr}
-.launcher-grid[data-count="4"]{grid-template-columns:1fr 1fr}
-.launcher-grid[data-count="5"],
-.launcher-grid[data-count="6"]{grid-template-columns:repeat(3, 1fr)}
-.launcher-grid[data-count="7"],
-.launcher-grid[data-count="8"],
-.launcher-grid[data-count="9"]{grid-template-columns:repeat(3, 1fr)}
-/* 10+ falls back to auto-fill at standard tile size */
-.launcher-grid[data-count="10"]{
-  grid-template-columns:repeat(auto-fill, minmax(180px, 1fr));
-  overflow-y:auto;
-}
+/* Count-driven column + row layouts — both axes use fr so tiles fill the viewport */
+.launcher-grid[data-count="1"]{grid-template-columns:1fr;grid-template-rows:1fr}
+.launcher-grid[data-count="2"]{grid-template-columns:1fr 1fr;grid-template-rows:1fr}
+.launcher-grid[data-count="3"]{grid-template-columns:1fr 1fr 1fr;grid-template-rows:1fr}
+.launcher-grid[data-count="4"]{grid-template-columns:1fr 1fr;grid-template-rows:1fr 1fr}
+.launcher-grid[data-count="5"]{grid-template-columns:repeat(3, 1fr);grid-template-rows:1fr 1fr}
+.launcher-grid[data-count="6"]{grid-template-columns:repeat(3, 1fr);grid-template-rows:1fr 1fr}
+.launcher-grid[data-count="7"]{grid-template-columns:repeat(4, 1fr);grid-template-rows:1fr 1fr}
+.launcher-grid[data-count="8"]{grid-template-columns:repeat(4, 1fr);grid-template-rows:1fr 1fr}
+.launcher-grid[data-count="9"]{grid-template-columns:repeat(3, 1fr);grid-template-rows:1fr 1fr 1fr}
+/* 10+ uses a 4-col layout with enough rows to hold all tiles */
+.launcher-grid[data-count="10"]{grid-template-columns:repeat(4, 1fr);grid-template-rows:repeat(3, 1fr)}
 
 /* ── Individual tile (base / small style) ── */
 .tile{
@@ -197,9 +193,10 @@ body{
   min-width:0;
   min-height:0;
   text-align:center;
-  /* Uniform square: width is set by grid column, height matches via aspect-ratio */
-  aspect-ratio:1 / 1;
+  /* Fill the grid cell in both axes — grid rows/cols drive the size,
+     so tiles shrink when more portals are shown */
   width:100%;
+  height:100%;
 }
 .tile:hover{
   box-shadow:var(--shadow-lift);
@@ -249,8 +246,8 @@ html[data-theme="dark"] .tile-icon{
   max-width:36ch;
 }
 
-/* Hero (count=1) — single square tile, capped at a reasonable max size */
-.launcher-grid[data-count="1"]{max-width:320px;margin:0 auto}
+/* Hero (count=1) — single tile; box is capped so it doesn't sprawl on large screens */
+.launcher-grid[data-count="1"]{max-width:320px;max-height:320px;margin:auto}
 .launcher-grid[data-count="1"] .tile{
   gap:20px;
   padding:40px;
@@ -359,7 +356,7 @@ html[data-theme="dark"] .tile-icon{
 }
 .theme-btn:hover{background:rgba(255,255,255,0.22)}
 
-/* ── Mobile (< 600px) — 2-column square tiles, scrollable ── */
+/* ── Mobile (< 600px) — scrollable, 2-column layout ── */
 @media(max-width:600px){
   body{overflow:auto}
   .main{overflow:visible}
@@ -367,27 +364,30 @@ html[data-theme="dark"] .tile-icon{
     overflow:visible;
     align-items:flex-start;
     padding:12px;
+    height:auto;
   }
   .launcher-box{
     max-width:calc(100vw - 24px);
     height:auto;
-    max-height:none;
   }
   .launcher-grid{
-    /* 2-col grid on mobile so tiles stay square and fit the screen */
+    /* 2-col scrollable grid on mobile — tiles use aspect-ratio to stay square */
     grid-template-columns:1fr 1fr !important;
     grid-template-rows:auto !important;
-    height:auto;
+    height:auto !important;
     gap:10px;
+  }
+  /* Restore aspect-ratio on mobile since we're back to scroll-based layout */
+  .tile{
+    aspect-ratio:1 / 1;
+    height:auto !important;
+    padding:14px;
+    gap:8px;
   }
   /* Single-tile hero: full-width square */
   .launcher-grid[data-count="1"]{
     grid-template-columns:1fr !important;
-  }
-  /* Consistent tile style at mobile size */
-  .tile{
-    padding:14px;
-    gap:8px;
+    max-height:none;
   }
   .tile-icon{
     width:clamp(40px,10vw,56px);
