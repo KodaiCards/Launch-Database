@@ -368,7 +368,7 @@ html[data-theme="dark"] .tag-team-construction,html[data-theme="dark"] .tag-team
       </div>
       <div class="form-group">
         <label for="entry-job">Job *
-          <button type="button" class="btn btn-secondary btn-sm" style="float:right;font-size:11px;padding:2px 8px" onclick="openRequestNewProjectModal()" title="Request a new project — admin must approve before it merges into the project list"><i class="fa-solid fa-plus" aria-hidden="true"></i> Add New</button>
+          <button type="button" id="btn-request-new-project" class="btn btn-secondary btn-sm" style="float:right;font-size:11px;padding:2px 8px;display:none" onclick="openRequestNewProjectModal()" title="Request a new project — admin must approve before it merges into the project list"><i class="fa-solid fa-plus" aria-hidden="true"></i> Add New</button>
         </label>
         <input id="entry-job" list="entry-job-list" placeholder="Type or select a job" autocomplete="off" oninput="cascadeJobInput('entry')" disabled>
         <datalist id="entry-job-list"></datalist>
@@ -574,6 +574,9 @@ async function loadCurrentUser(){
       pillText.innerHTML = `<strong>${esc(currentUser.full_name || currentUser.username)}</strong>`;
       pill.style.display = 'flex';
     }
+    // Wave 15: show Add New button only when permitted.
+    const addNewBtn = document.getElementById('btn-request-new-project');
+    if (addNewBtn && currentUser.can_create_projects) addNewBtn.style.display = '';
     initPortalsButton('timeclock');
   } catch(e){
     // Not logged in — auth middleware already redirected, but as a safety

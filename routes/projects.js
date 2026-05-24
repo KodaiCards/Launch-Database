@@ -24,6 +24,25 @@ module.exports = function installProjectsRoutes(app, pool, mw) {
   // POST and PUT were entirely unguarded — any unauthenticated request
   // could create or mutate projects. requireAuth() gates both handlers.
   const { requireAdmin, requireAuth, requireManagerOrAdmin } = mw;
+  const { canCreateProjects } = require('../auth');
+
+  // Wave 15: async middleware — 401 if not logged in, 403 if not permitted.
+  // On DB error falls back to role-only check so transient failures don't
+  // lock out admins/managers.
+  async function requireProjectCreate(req, res, next) {
+    if (!req.user) return res.status(401).json({ error: 'Login required' });
+    try {
+      const ok = await canCreateProjects(req.user, pool);
+      if (!ok) return res.status(403).json({ error: 'You do not have permission to create or edit projects.' });
+      next();
+    } catch (e) {
+      console.error('[requireProjectCreate] unexpected error', e && e.message);
+      // DB error: fall back to role-based check so admins/managers still pass
+      const { isManagerOrAdmin } = require('../auth');
+      if (isManagerOrAdmin(req.user.role)) return next();
+      return res.status(403).json({ error: 'You do not have permission to create or edit projects.' });
+    }
+  }
 
   // Wave 1.5 [UNGATED]: GET /api/projects and GET /api/projects/:id were missing auth.
   app.get('/api/projects', requireAuth(), async (req, res) => {
@@ -186,7 +205,8 @@ module.exports = function installProjectsRoutes(app, pool, mw) {
   // before accepting an explicit parent_id. Without this, a caller can
   // nest a project under an arbitrary UUID (including a project from
   // another client's tree), breaking the tree integrity invariant.
-  app.post('/api/projects', requireAuth(), async (req, res) => {
+  // Wave 15: requireProjectCreate gates create to admin/manager + grant holders.
+  app.post('/api/projects', requireAuth(), requireProjectCreate, async (req, res) => {
     let {
       name, client_id, contract_id, work_order_number,
       project_type, program, job_id,
@@ -426,7 +446,8 @@ module.exports = function installProjectsRoutes(app, pool, mw) {
   // Item 2 fix: requireAuth() added — PUT was completely unguarded.
   // Item 22 fix: parent_id validation — verify the target parent exists
   // before accepting a re-parent operation.
-  app.put('/api/projects/:id', requireAuth(), async (req, res) => {
+  // Wave 15: requireProjectCreate gates edits to admin/manager + grant holders.
+  app.put('/api/projects/:id', requireAuth(), requireProjectCreate, async (req, res) => {
     let {
       name, client_id, contract_id, work_order_number,
       project_type, program, job_id,
@@ -802,7 +823,7 @@ module.exports = function installProjectsRoutes(app, pool, mw) {
   // Race condition on leaf creation: UNIQUE constraint on non-rollup leaves
   // prevents duplicate names under the same parent. On 23505 we re-SELECT
   // the winner and return created:false so the UI gets the existing project_id.
-  app.post('/api/projects/resolve-or-create', requireAuth(), async (req, res) => {
+  app.post('/api/projects/resolve-or-create', requireAuth(), requireProjectCreate, async (req, res) => {
     const { client_id, program, service_area_id, service_area_label, job_name } = req.body;
 
     // Input validation (common to both modes)
@@ -813,11 +834,6 @@ module.exports = function installProjectsRoutes(app, pool, mw) {
       return res.status(400).json({ error: 'client_id must be a valid UUID.' });
     }
     const normalizedJobName = String(job_name).trim();
-
-    // Block customer role — customers cannot create or resolve projects
-    if (req.user && req.user.role === 'customer') {
-      return res.status(403).json({ error: 'Customers cannot access this endpoint.' });
-    }
 
     // Branch selection: EC-scoped vs no-EC.
     // MODE 1 (EC): service_area_id present → EC-scoped path.

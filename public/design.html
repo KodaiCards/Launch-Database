@@ -371,7 +371,7 @@ fetch('/api/auth/me', { credentials: 'include' })
     <div><div class="section-title">Design Pipeline</div></div>
     <div style="display:flex;gap:8px">
       <button class="btn btn-secondary btn-sm" onclick="loadPipeline()" title="Refresh"><i class="fa-solid fa-rotate"></i></button>
-      <button class="btn btn-primary btn-sm" onclick="openProjectModal()"><i class="fa-solid fa-plus"></i> Add Project</button>
+      <button id="btn-add-project" class="btn btn-primary btn-sm" onclick="openProjectModal()" style="display:none"><i class="fa-solid fa-plus"></i> Add Project</button>
     </div>
   </div>
   <div id="dsb" style="display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-bottom:8px"></div>
@@ -2087,6 +2087,9 @@ async function loadCurrentUser() {
         pill.style.cursor = 'pointer';
         pill.onclick = showAccountMenu;
       }
+      // Wave 15: show Add Project button only when permitted.
+      const addBtn = document.getElementById('btn-add-project');
+      if (addBtn && currentUser.can_create_projects) addBtn.style.display = '';
       initPortalsButton('design');
     }
   } catch(e){}

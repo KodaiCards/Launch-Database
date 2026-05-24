@@ -137,6 +137,31 @@ function isManagerOrAdmin(role) {
   return role === 'admin' || role === 'design_manager' || role === 'permitting_manager';
 }
 
+// Wave 15: capability sentinel stored in user_portal_access.
+const CAP_CREATE_PROJECTS = '__cap_create_projects__';
+
+// Returns true when the user may create/edit projects:
+//   - admin or any manager role → always yes
+//   - others → only if a user_portal_access row exists with the sentinel key
+// On DB error, falls back to role-only check so a transient failure does not
+// lock out admins or managers.
+async function canCreateProjects(user, pool) {
+  if (!user) return false;
+  if (isManagerOrAdmin(user.role)) return true;
+  if (user.role === 'customer') return false;
+  try {
+    const { rows } = await pool.query(
+      `SELECT 1 FROM user_portal_access WHERE user_id = $1 AND portal_key = $2 LIMIT 1`,
+      [user.id, CAP_CREATE_PROJECTS]
+    );
+    return rows.length > 0;
+  } catch (e) {
+    // DB failure: deny for non-managers (safe default)
+    console.error('[auth:canCreateProjects] DB error — denying non-manager:', e && e.message);
+    return false;
+  }
+}
+
 // ─── SCHEMA BOOTSTRAP ────────────────────────────────────────────────────────
 async function bootstrapAuthSchema(pool) {
   console.log('───── auth schema bootstrap ─────');
@@ -470,6 +495,8 @@ function installAuthRoutes(app, pool) {
         result.impersonator_id   = req.user.impersonator_id;
         result.impersonator_name = req.user.impersonator_name;
       }
+      // Wave 15: expose project-create capability so portals can show/hide buttons.
+      result.can_create_projects = await canCreateProjects(result, pool);
       res.json(result);
     } catch (e) {
       return serverError(res, e, 'me');
@@ -708,6 +735,8 @@ module.exports = {
   teamsForUser,
   canAccessPortal,
   isManagerOrAdmin,
+  canCreateProjects,
+  CAP_CREATE_PROJECTS,
   MIN_PASSWORD_LEN,
   VALID_ROLES,
   IMPERSONATION_COOKIE,
