@@ -1730,6 +1730,56 @@ async function bootstrapDefensiveRecentMigrations() {
     console.error('[WAVE 14] EC hierarchy restructure FAILED:', e.message);
   }
 
+  // Populate ec_service_areas for "RUS 217 Engineering Contract GA 1706 - A72"
+  // from existing concentrators + project work_order_number data. Idempotent —
+  // ON CONFLICT (engineering_contract_id, name) DO NOTHING skips already-present rows.
+  try {
+    const ecRow = await pool.query(
+      `SELECT id FROM engineering_contracts WHERE name = $1 LIMIT 1`,
+      ['RUS 217 Engineering Contract GA 1706 - A72']
+    );
+    if (ecRow.rows[0]) {
+      const ecId = ecRow.rows[0].id;
+      // Derive one row per distinct concentrator linked to any project under
+      // this EC. Work-order number comes from the concentrator row itself
+      // (concentrators.work_order_number) when present; otherwise falls back
+      // to the first project-level work_order_number that shares the same
+      // concentrator. This covers the known data layout where Construction
+      // rollup projects carry the WO# and leaf projects do not.
+      const saInsert = await pool.query(`
+        INSERT INTO ec_service_areas (engineering_contract_id, name, work_order_number)
+        SELECT
+          $1,
+          c.area_name,
+          COALESCE(
+            NULLIF(c.work_order_number, ''),
+            (
+              SELECT NULLIF(p2.work_order_number, '')
+              FROM projects p2
+              WHERE p2.concentrator_id = c.id
+                AND p2.engineering_contract_id = $1
+                AND p2.work_order_number IS NOT NULL
+              ORDER BY p2.work_order_number
+              LIMIT 1
+            )
+          )
+        FROM concentrators c
+        WHERE c.id IN (
+          SELECT DISTINCT p.concentrator_id
+          FROM projects p
+          WHERE p.engineering_contract_id = $1
+            AND p.concentrator_id IS NOT NULL
+        )
+        ON CONFLICT (engineering_contract_id, name) DO NOTHING
+      `, [ecId]);
+      console.error(`[EC-SA SEED] inserted ${saInsert.rowCount} ec_service_area row(s) for RUS 217 EC`);
+    } else {
+      console.error('[EC-SA SEED] EC "RUS 217 Engineering Contract GA 1706 - A72" not found — skipping seed');
+    }
+  } catch (e) {
+    console.error('[EC-SA SEED] FAILED:', e.message);
+  }
+
   console.error('═════ [DEFENSIVE BOOT] end ═════');
 }
 
