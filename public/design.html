@@ -1529,7 +1529,8 @@ async function dpEcChanged() {
       saSel.innerHTML = '<option value="">— Select service area —</option>' +
         sas.map(sa => {
           const wo = sa.work_order_number ? ` (WO# ${sa.work_order_number})` : '';
-          return `<option value="${esc(sa.id)}">${esc(sa.name)}${wo}</option>`;
+          const cAttr = sa.contract_id ? ` data-contract-id="${esc(sa.contract_id)}"` : '';
+          return `<option value="${esc(sa.id)}"${cAttr}>${esc(sa.name)}${wo}</option>`;
         }).join('');
       saSel.disabled = false;
       if (sas.length === 1) {
@@ -1555,7 +1556,8 @@ function dpContractChanged() {
 
 // Called when service area changes.
 async function dpSaChanged() {
-  const saId = document.getElementById('dp-service-area')?.value;
+  const saSel = document.getElementById('dp-service-area');
+  const saId = saSel?.value;
   const jobIn = document.getElementById('dp-job-input');
   const dl = document.getElementById('dp-job-list');
   const hint = document.getElementById('dp-job-hint');
@@ -1566,6 +1568,18 @@ async function dpSaChanged() {
     if (hint) hint.textContent = 'Select a service area first';
     return;
   }
+
+  // Auto-select construction contract from the chosen SA (user can override).
+  const conSel = document.getElementById('dp-contract');
+  if (conSel && saSel) {
+    const selectedOpt = saSel.options[saSel.selectedIndex];
+    const contractId = selectedOpt ? selectedOpt.getAttribute('data-contract-id') : null;
+    if (contractId && conSel.querySelector(`option[value="${contractId}"]`)) {
+      conSel.value = contractId;
+      sessionStorage.setItem('lf_dp_cascade_contract', contractId);
+    }
+  }
+
   sessionStorage.setItem('lf_dp_cascade_sa', saId);
   sessionStorage.removeItem('lf_dp_cascade_job');
   if (jobIn) { jobIn.disabled = true; }

@@ -199,7 +199,7 @@ module.exports = function installEngineeringContractsRoutes(app, pool, mw) {
   app.get('/api/engineering-contracts/:id/service-areas', requireAuth(), async (req, res) => {
     try {
       const { rows } = await pool.query(
-        `SELECT id, name, notes, work_order_number, created_at FROM ec_service_areas
+        `SELECT id, name, notes, work_order_number, contract_id, created_at FROM ec_service_areas
           WHERE engineering_contract_id = $1
           ORDER BY name`,
         [req.params.id]

@@ -1780,6 +1780,27 @@ async function bootstrapDefensiveRecentMigrations() {
     console.error('[EC-SA SEED] FAILED:', e.message);
   }
 
+  // Wave 19 — SA→Contract link
+  // Add contract_id to ec_service_areas, then populate it by matching each SA
+  // row's name to the legacy SA rollup folder and walking up to its parent
+  // Construction Contract folder.
+  try {
+    await pool.query(`ALTER TABLE ec_service_areas ADD COLUMN IF NOT EXISTS contract_id uuid REFERENCES contracts(id) ON DELETE SET NULL`);
+    const populated = await pool.query(`
+      UPDATE ec_service_areas esa
+      SET contract_id = sa_folder.contract_id
+      FROM projects sa_folder
+      WHERE esa.contract_id IS NULL
+        AND sa_folder.is_rollup = TRUE
+        AND sa_folder.rollup_level = 'service_area'
+        AND sa_folder.contract_id IS NOT NULL
+        AND lower(sa_folder.name) = lower(esa.name)
+    `);
+    console.error(`[WAVE 19] ec_service_areas.contract_id populated for ${populated.rowCount} row(s)`);
+  } catch (e) {
+    console.error('[WAVE 19] SA contract_id bootstrap FAILED:', e.message);
+  }
+
   console.error('═════ [DEFENSIVE BOOT] end ═════');
 }
 
