@@ -1,5 +1,6 @@
 // public/js/client_portal.js — Wave 13B: per-client scoped client portal.
 // Wave 16: nested grouping (team → contract → job → area) + dynamic layout.
+// Wave 18: collapsible tree at every node level + per-node overviews + clickable leaf detail.
 //
 // Modes:
 //   customer role        — 3 columns, server scopes to their clients. No toolbar.
@@ -7,6 +8,9 @@
 //   admin/staff, client selected — 3 columns for that one client (mimics customer view).
 //
 // Hide-empty-column rule: all three columns hidden when they have no projects.
+//
+// Tree collapse state stored in sessionStorage so it survives a poll refresh
+// within the same browser session but resets on a new tab/window.
 
 (function () {
   'use strict';
@@ -21,6 +25,38 @@
   let currentClientId = ''; // '' = all, '<uuid>' = single-client filter
   let lastUpdated  = null;
   let pollTimer    = null;
+
+  // ─── Session-persisted collapse state ────────────────────────────────────
+  // Keys stored: 'cp_collapsed_<nodeId>' = '1'
+  // By default every node is EXPANDED except job-level nodes, which start
+  // collapsed (so the initial view shows contracts but not individual leaf cards
+  // until you drill in).
+
+  const STORAGE_PREFIX = 'cp_collapsed_';
+
+  function isCollapsed(nodeId) {
+    return sessionStorage.getItem(STORAGE_PREFIX + nodeId) === '1';
+  }
+
+  function setCollapsed(nodeId, collapsed) {
+    if (collapsed) {
+      sessionStorage.setItem(STORAGE_PREFIX + nodeId, '1');
+    } else {
+      sessionStorage.removeItem(STORAGE_PREFIX + nodeId);
+    }
+  }
+
+  // When a parent collapses, cascade-collapse its children so that
+  // re-expanding the parent doesn't show previously-expanded grandchildren.
+  function cascadeCollapse(nodeId) {
+    const prefix = STORAGE_PREFIX + nodeId + '-';
+    const toRemove = [];
+    for (let i = 0; i < sessionStorage.length; i++) {
+      const k = sessionStorage.key(i);
+      if (k && k.startsWith(prefix)) toRemove.push(k);
+    }
+    toRemove.forEach(k => sessionStorage.removeItem(k));
+  }
 
   // ─── HTML helpers ────────────────────────────────────────────────────────
 
@@ -80,6 +116,117 @@
     return null;
   }
 
+  // ─── Overview computation ────────────────────────────────────────────────
+  //
+  // Given an array of leaf projects, compute rolled-up stats for display
+  // in a node header. All computation is client-side from the API rows.
+
+  function computeOverview(projects) {
+    const counts = {};
+    let totalHours = 0;
+    let totalCost = 0;
+    let hasCost = false;
+
+    for (const p of projects) {
+      const s = p.derived_status || 'not_started';
+      counts[s] = (counts[s] || 0) + 1;
+      totalHours += Number(p.actual_hours) || 0;
+      if (p.expected_revenue && Number(p.expected_revenue) > 0) {
+        totalCost += Number(p.expected_revenue);
+        hasCost = true;
+      }
+    }
+
+    const total = projects.length;
+    const statusParts = [];
+    if (counts.in_progress) statusParts.push(`${counts.in_progress} in progress`);
+    if (counts.not_started) statusParts.push(`${counts.not_started} not started`);
+    if (counts.completed)   statusParts.push(`${counts.completed} completed`);
+    if (counts.billed)      statusParts.push(`${counts.billed} billed`);
+
+    return {
+      total,
+      totalHours: totalHours > 0 ? totalHours.toFixed(1) : null,
+      statusSummary: statusParts.join(', ') || 'no projects',
+      cost: hasCost ? formatMoney(totalCost) : null,
+    };
+  }
+
+  function renderOverviewBadge(overview) {
+    const parts = [];
+    parts.push(`<span class="cp-ov-count">${overview.total} area${overview.total !== 1 ? 's' : ''}</span>`);
+    if (overview.totalHours) {
+      parts.push(`<span class="cp-ov-meta">${overview.totalHours} hrs</span>`);
+    }
+    if (overview.statusSummary) {
+      parts.push(`<span class="cp-ov-status">${escapeHtml(overview.statusSummary)}</span>`);
+    }
+    if (overview.cost) {
+      parts.push(`<span class="cp-ov-cost">${escapeHtml(overview.cost)}</span>`);
+    }
+    return `<span class="cp-overview">${parts.join('<span class="cp-ov-sep">·</span>')}</span>`;
+  }
+
+  // ─── Project detail modal ─────────────────────────────────────────────────
+
+  function openDetailModal(p) {
+    const existing = document.getElementById('cp-detail-modal');
+    if (existing) existing.remove();
+
+    const areaLabel = escapeHtml(p.service_area_label || p.name);
+    const money     = formatMoney(p.expected_revenue);
+    const hrs       = formatHours(p.actual_hours, p.expected_hours);
+    const footage   = formatFootage(p.footage, p.miles);
+
+    const rows = [
+      ['Status', statusPillHTML(p.derived_status)],
+      hrs     ? ['Hours', escapeHtml(hrs)] : null,
+      footage ? ['Footage', escapeHtml(footage)] : null,
+      money   ? ['Value', escapeHtml(money)] : null,
+      p.job_name     ? ['Job', escapeHtml(p.job_name)] : null,
+      p.contract_label && p.contract_label !== p.contract_number
+        ? ['Contract', escapeHtml(p.contract_label)] : null,
+      p.work_order_number ? ['WO #', escapeHtml(p.work_order_number)] : null,
+    ].filter(Boolean);
+
+    const tableRows = rows.map(([label, value]) =>
+      `<tr><th class="cp-detail-th">${escapeHtml(label)}</th><td class="cp-detail-td">${value}</td></tr>`
+    ).join('');
+
+    const modal = document.createElement('div');
+    modal.id = 'cp-detail-modal';
+    modal.className = 'cp-detail-overlay';
+    modal.setAttribute('role', 'dialog');
+    modal.setAttribute('aria-modal', 'true');
+    modal.setAttribute('aria-label', p.service_area_label || p.name);
+    modal.innerHTML = `
+      <div class="cp-detail-box">
+        <div class="cp-detail-header">
+          <span class="cp-detail-title">${areaLabel}</span>
+          <button class="cp-detail-close" aria-label="Close detail" id="cp-detail-close-btn">
+            <i class="fa-solid fa-xmark" aria-hidden="true"></i>
+          </button>
+        </div>
+        <div class="cp-detail-body">
+          <table class="cp-detail-table">
+            <tbody>${tableRows}</tbody>
+          </table>
+        </div>
+      </div>`;
+
+    document.body.appendChild(modal);
+
+    const close = () => { modal.remove(); };
+    document.getElementById('cp-detail-close-btn').addEventListener('click', close);
+    modal.addEventListener('click', e => { if (e.target === modal) close(); });
+    document.addEventListener('keydown', function esc(e) {
+      if (e.key === 'Escape') { close(); document.removeEventListener('keydown', esc); }
+    });
+
+    // Focus the close button for a11y
+    document.getElementById('cp-detail-close-btn').focus();
+  }
+
   // ─── Leaf card (area) ────────────────────────────────────────────────────
 
   function renderAreaCard(p) {
@@ -92,28 +239,59 @@
       hrs     ? `<div class="cp-card-meta">${escapeHtml(hrs)}</div>` : '',
       footage ? `<div class="cp-card-meta">${escapeHtml(footage)}</div>` : '',
     ].join('');
-    return `
-      <div class="cp-project-card">
-        <div class="cp-card-name">${escapeHtml(areaLabel)}</div>
-        ${statusPillHTML(p.derived_status)}
-        ${meta}
-      </div>`;
+
+    const card = document.createElement('div');
+    card.className = 'cp-project-card cp-clickable';
+    card.setAttribute('role', 'button');
+    card.setAttribute('tabindex', '0');
+    card.setAttribute('aria-label', `View details for ${areaLabel}`);
+    card.innerHTML = `
+      <div class="cp-card-name">${escapeHtml(areaLabel)}</div>
+      ${statusPillHTML(p.derived_status)}
+      ${meta}`;
+
+    const open = () => openDetailModal(p);
+    card.addEventListener('click', open);
+    card.addEventListener('keydown', e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); open(); } });
+    return card;
+  }
+
+  // ─── Collapsible node header builder ─────────────────────────────────────
+  //
+  // Returns a header element that toggles its sibling body when clicked.
+  // nodeId  — unique string key used for sessionStorage collapse state.
+  // content — inner HTML for the header (icon + label).
+  // overview — optional overview object from computeOverview().
+  // className — CSS class for the header element.
+  // defaultCollapsed — initial state when no sessionStorage entry exists.
+
+  function buildCollapseHeader({ nodeId, content, overview, className, defaultCollapsed = false }) {
+    const startCollapsed = sessionStorage.getItem(STORAGE_PREFIX + nodeId) !== null
+      ? isCollapsed(nodeId)
+      : defaultCollapsed;
+
+    const header = document.createElement('div');
+    header.className = className + ' cp-collapsible-header';
+    header.setAttribute('role', 'button');
+    header.setAttribute('tabindex', '0');
+    header.setAttribute('aria-expanded', startCollapsed ? 'false' : 'true');
+
+    const ovBadge = overview ? renderOverviewBadge(overview) : '';
+    header.innerHTML = `
+      <i class="fa-solid fa-chevron-right cp-chev" aria-hidden="true"
+         style="transform:rotate(${startCollapsed ? 0 : 90}deg)"></i>
+      ${content}
+      ${ovBadge}`;
+
+    return { header, startCollapsed };
   }
 
   // ─── Grouping tree builder ────────────────────────────────────────────────
-  //
-  // Returns a nested structure:
-  //   { contracts: Map<contractKey, { label, jobs: Map<jobKey, { label, projects: [] }> }> }
-  //
-  // contractKey = contract_id or '__none__' (no contract).
-  // When contractKey is '__none__', the contract level is skipped in rendering.
-  // jobKey = job_name or project_type, used as the group-level-2 label.
 
   function buildGroupingTree(projects) {
     const byStatus = (a, b) =>
       (STATUS_ORDER[a.derived_status] ?? 99) - (STATUS_ORDER[b.derived_status] ?? 99);
 
-    // Map: contractKey → { label, jobs: Map<jobKey, { label, projects }> }
     const contracts = new Map();
 
     for (const p of projects) {
@@ -132,7 +310,6 @@
       contractEntry.jobs.get(jobLabel).projects.push(p);
     }
 
-    // Sort projects within each job group by status
     for (const [, c] of contracts) {
       for (const [, j] of c.jobs) {
         j.projects.sort(byStatus);
@@ -143,44 +320,151 @@
   }
 
   // ─── Render nested column body (contract → job → area) ───────────────────
+  //
+  // Returns a DocumentFragment to avoid repeated innerHTML assignments.
+  // Job nodes default to COLLAPSED so the initial view shows contracts
+  // without showing every individual area card (avoids a wall of text).
 
-  function renderNestedColumnBody(projects) {
+  function renderNestedColumnBody(projects, colType) {
+    const frag = document.createDocumentFragment();
+
     if (!projects.length) {
-      return '<div class="cp-empty">No projects to display.</div>';
+      const empty = document.createElement('div');
+      empty.className = 'cp-empty';
+      empty.textContent = 'No projects to display.';
+      frag.appendChild(empty);
+      return frag;
     }
 
     const contracts = buildGroupingTree(projects);
-    let html = '';
 
     for (const [contractKey, { label: contractLabel, jobs }] of contracts) {
       const hasContract = contractKey !== '__none__';
 
-      if (hasContract) {
-        // Group level 1: contract header
-        html += `<div class="cp-contract-group">
-          <div class="cp-contract-header">
-            <i class="fa-solid fa-file-contract cp-contract-icon" aria-hidden="true"></i>
-            <span class="cp-contract-label">${escapeHtml(contractLabel)}</span>
-          </div>`;
-      }
+      // Gather all leaves under this contract for the overview
+      const contractLeaves = [];
+      for (const [, j] of jobs) contractLeaves.push(...j.projects);
 
-      // Group level 2: job rollups
-      for (const [, { label: jobLabel, projects: jobProjects }] of jobs) {
-        html += `<div class="cp-job-group">
-          <div class="cp-job-header">${escapeHtml(jobLabel)}</div>
-          <div class="cp-job-areas">`;
-        for (const p of jobProjects) {
-          html += renderAreaCard(p);
+      if (hasContract) {
+        const contractNodeId = `cp-contract-${contractKey}`;
+        const contractOv = computeOverview(contractLeaves);
+        const { header, startCollapsed } = buildCollapseHeader({
+          nodeId: contractNodeId,
+          content: `<i class="fa-solid fa-file-contract cp-contract-icon" aria-hidden="true"></i>
+                    <span class="cp-contract-label">${escapeHtml(contractLabel)}</span>`,
+          overview: contractOv,
+          className: 'cp-contract-header',
+          defaultCollapsed: false, // contracts expand by default
+        });
+
+        const group = document.createElement('div');
+        group.className = 'cp-contract-group';
+        group.appendChild(header);
+
+        const body = document.createElement('div');
+        body.className = 'cp-contract-body';
+        if (startCollapsed) body.style.display = 'none';
+
+        // Build jobs inside the contract body
+        for (const [, { label: jobLabel, projects: jobProjects }] of jobs) {
+          const jobNodeId = `cp-job-${contractKey}-${jobLabel.replace(/\s+/g, '_')}`;
+          const jobOv = computeOverview(jobProjects);
+          const { header: jobHeader, startCollapsed: jobCollapsed } = buildCollapseHeader({
+            nodeId: jobNodeId,
+            content: `<span class="cp-job-header-label">${escapeHtml(jobLabel)}</span>`,
+            overview: jobOv,
+            className: 'cp-job-header cp-job-header-collapsible',
+            defaultCollapsed: true, // jobs start collapsed
+          });
+
+          const jobGroup = document.createElement('div');
+          jobGroup.className = 'cp-job-group';
+          jobGroup.appendChild(jobHeader);
+
+          const jobBody = document.createElement('div');
+          jobBody.className = 'cp-job-areas';
+          if (jobCollapsed) jobBody.style.display = 'none';
+
+          for (const p of jobProjects) {
+            jobBody.appendChild(renderAreaCard(p));
+          }
+
+          jobGroup.appendChild(jobBody);
+          attachToggle(jobHeader, jobBody, jobNodeId, false);
+          body.appendChild(jobGroup);
         }
-        html += '</div></div>';
-      }
 
-      if (hasContract) {
-        html += '</div>'; // close cp-contract-group
+        group.appendChild(body);
+        attachToggle(header, body, contractNodeId, false);
+        frag.appendChild(group);
+
+      } else {
+        // No contract level — just render job groups directly
+        for (const [, { label: jobLabel, projects: jobProjects }] of jobs) {
+          const jobNodeId = `cp-job-nocontract-${colType}-${jobLabel.replace(/\s+/g, '_')}`;
+          const jobOv = computeOverview(jobProjects);
+          const { header: jobHeader, startCollapsed: jobCollapsed } = buildCollapseHeader({
+            nodeId: jobNodeId,
+            content: `<span class="cp-job-header-label">${escapeHtml(jobLabel)}</span>`,
+            overview: jobOv,
+            className: 'cp-job-header cp-job-header-collapsible',
+            defaultCollapsed: true,
+          });
+
+          const jobGroup = document.createElement('div');
+          jobGroup.className = 'cp-job-group';
+          jobGroup.appendChild(jobHeader);
+
+          const jobBody = document.createElement('div');
+          jobBody.className = 'cp-job-areas';
+          if (jobCollapsed) jobBody.style.display = 'none';
+
+          for (const p of jobProjects) {
+            jobBody.appendChild(renderAreaCard(p));
+          }
+
+          jobGroup.appendChild(jobBody);
+          attachToggle(jobHeader, jobBody, jobNodeId, false);
+          frag.appendChild(jobGroup);
+        }
       }
     }
 
-    return html;
+    return frag;
+  }
+
+  // ─── Toggle wiring ────────────────────────────────────────────────────────
+  //
+  // headerEl  — the clickable header element (has .cp-chev inside).
+  // bodyEl    — the container that expands/collapses.
+  // nodeId    — sessionStorage key.
+  // cascadeOnCollapse — if true, also cascade-collapse child node sessions.
+
+  function attachToggle(headerEl, bodyEl, nodeId, cascadeOnCollapse) {
+    const toggle = () => {
+      const collapsed = bodyEl.style.display === 'none';
+      if (collapsed) {
+        // Expand
+        bodyEl.style.display = '';
+        headerEl.setAttribute('aria-expanded', 'true');
+        setCollapsed(nodeId, false);
+        const chev = headerEl.querySelector('.cp-chev');
+        if (chev) chev.style.transform = 'rotate(90deg)';
+      } else {
+        // Collapse
+        bodyEl.style.display = 'none';
+        headerEl.setAttribute('aria-expanded', 'false');
+        setCollapsed(nodeId, true);
+        if (cascadeOnCollapse) cascadeCollapse(nodeId);
+        const chev = headerEl.querySelector('.cp-chev');
+        if (chev) chev.style.transform = 'rotate(0deg)';
+      }
+    };
+
+    headerEl.addEventListener('click', toggle);
+    headerEl.addEventListener('keydown', e => {
+      if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); toggle(); }
+    });
   }
 
   // ─── Column element builder ───────────────────────────────────────────────
@@ -195,27 +479,36 @@
     };
     const { icon, title } = configs[type];
 
-    const bodyHtml = renderNestedColumnBody(projects);
+    // Column-level overview
+    const colOv = computeOverview(projects);
+    const colNodeId = `cp-col-${type}`;
+    const { header: colHeader, startCollapsed: colCollapsed } = buildCollapseHeader({
+      nodeId: colNodeId,
+      content: `<i class="fa-solid ${icon} cp-col-icon" aria-hidden="true"></i>
+                <span class="cp-col-title" id="col-${type}-heading">${title}</span>`,
+      overview: colOv,
+      className: 'cp-col-header',
+      defaultCollapsed: false, // top-level columns always open by default
+    });
+
+    const bodyEl = document.createElement('div');
+    bodyEl.className = 'cp-col-body';
+    bodyEl.setAttribute('aria-live', 'polite');
+    bodyEl.setAttribute('aria-label', `${title} projects`);
+    if (colCollapsed) bodyEl.style.display = 'none';
+    bodyEl.appendChild(renderNestedColumnBody(projects, type));
 
     const el = document.createElement('section');
     el.className = 'cp-column';
     el.setAttribute('aria-labelledby', `col-${type}-heading`);
-    el.innerHTML = `
-      <div class="cp-col-header">
-        <i class="fa-solid ${icon} cp-col-icon" aria-hidden="true"></i>
-        <span class="cp-col-title" id="col-${type}-heading">${title}</span>
-      </div>
-      <div class="cp-col-body" aria-live="polite" aria-label="${title} projects">
-        ${bodyHtml}
-      </div>`;
+    el.appendChild(colHeader);
+    el.appendChild(bodyEl);
+
+    attachToggle(colHeader, bodyEl, colNodeId, true);
     return el;
   }
 
   // ─── Dynamic layout grid builder ──────────────────────────────────────────
-  //
-  // When only ONE non-empty team category exists, expand it to full page width
-  // (single-column expanded layout, contract groups flow horizontally inside).
-  // When multiple categories exist, keep them as columns sized to fit.
 
   function renderGrid(projects) {
     const design       = [];
@@ -243,7 +536,6 @@
     grid.setAttribute('aria-label', 'Project columns');
 
     if (count === 1) {
-      // Single non-empty category — full-width expanded layout
       grid.className = 'cp-grid cp-grid-single';
       nonEmpty[0].classList.add('cp-column-full');
     } else if (count === 2) {
