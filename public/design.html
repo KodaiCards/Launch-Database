@@ -496,7 +496,7 @@ fetch('/api/auth/me', { credentials: 'include' })
           <div class="form-row">
             <div class="form-group span2">
               <label for="dp-job-select">Job *</label>
-              <select id="dp-job-select" disabled>
+              <select id="dp-job-select" disabled onchange="dpCascadeJobChanged()">
                 <option value="">— Select a job —</option>
               </select>
               <span class="form-hint" id="dp-job-hint">Select a client and program first</span>
@@ -1325,9 +1325,17 @@ const _dpSaCache = {}; // ecId → [{id, name}]
 function dpEnterCreateMode() {
   const cascadeWrap = document.getElementById('dp-cascade-wrap');
   if (cascadeWrap) cascadeWrap.style.display = '';
-  // Hide the legacy job row in create mode — cascade drives project resolution.
-  const jobRow = document.getElementById('proj-job')?.closest('.form-row');
-  if (jobRow) jobRow.style.display = 'none';
+  // Hide only the legacy job form-group in create mode — cascade drives project resolution.
+  // The proj-amount form-group shares the same .form-row; hide only the job group, not the row,
+  // so the Footage / Hours field remains visible in create mode.
+  const jobGroup = document.getElementById('proj-job')?.closest('.form-group');
+  if (jobGroup) jobGroup.style.display = 'none';
+  // Ensure the amount field's container row is visible.
+  const amountRow = document.getElementById('proj-amount')?.closest('.form-row');
+  if (amountRow) amountRow.style.display = '';
+  // Reset amount label/hint to neutral until cascade job is picked.
+  document.getElementById('proj-amount-label').innerHTML = 'Footage / Hours <span style="font-weight:400;color:var(--text-muted)">(optional)</span>';
+  document.getElementById('proj-amount-hint').textContent = 'Pick a job to see the right unit';
   // Hide all legacy duplicate wraps — cascade owns these fields in create mode.
   ['proj-contract-wrap','proj-concentrator-wrap','proj-wo-wrap','proj-service-area-wrap'].forEach(id => {
     const el = document.getElementById(id);
@@ -1342,9 +1350,9 @@ function dpEnterCreateMode() {
 function dpEnterEditMode() {
   const cascadeWrap = document.getElementById('dp-cascade-wrap');
   if (cascadeWrap) cascadeWrap.style.display = 'none';
-  // Show the legacy job row for edit mode.
-  const jobRow = document.getElementById('proj-job')?.closest('.form-row');
-  if (jobRow) jobRow.style.display = '';
+  // Show the legacy job form-group for edit mode (was hidden in create mode).
+  const jobGroup = document.getElementById('proj-job')?.closest('.form-group');
+  if (jobGroup) jobGroup.style.display = '';
   dpClearError();
 }
 
@@ -1657,11 +1665,19 @@ async function dpSubmitCascade() {
   const noEcRow = document.getElementById('dp-noec-row');
   const isNoEc = noEcRow && noEcRow.style.display !== 'none';
 
+  // Read footage/hours amount from the shared field and determine which key to send.
+  const amountRaw = parseFloat(document.getElementById('proj-amount')?.value);
+  const jobOpt = jobSel?.selectedOptions[0];
+  const dpIsFootage = jobOpt && (jobOpt.dataset.permit === '1' || jobOpt.dataset.bt === 'footage');
+  const amountPayload = (Number.isFinite(amountRaw) && amountRaw > 0)
+    ? (dpIsFootage ? { footage: amountRaw } : { expected_hours: amountRaw })
+    : {};
+
   let payload;
   if (isNoEc) {
     // No-EC mode: free-text service area label
     const saLabel = (document.getElementById('dp-sa-label')?.value || '').trim();
-    payload = { client_id: clientId, program, service_area_label: saLabel || null, job_name: jobName, project_type: 'design' };
+    payload = { client_id: clientId, program, service_area_label: saLabel || null, job_name: jobName, project_type: 'design', ...amountPayload };
     sessionStorage.setItem('lf_dp_cascade_sa_label', saLabel);
     sessionStorage.removeItem('lf_dp_cascade_ec');
     sessionStorage.removeItem('lf_dp_cascade_sa');
@@ -1672,11 +1688,11 @@ async function dpSubmitCascade() {
     if (!saId && !saTyped) return dpShowError('Service area is required');
     const contractId = document.getElementById('dp-contract')?.value || saContractId || null;
     if (saId) {
-      payload = { client_id: clientId, program, service_area_id: saId, job_name: jobName, project_type: 'design', contract_id: contractId || undefined };
+      payload = { client_id: clientId, program, service_area_id: saId, job_name: jobName, project_type: 'design', contract_id: contractId || undefined, ...amountPayload };
       sessionStorage.setItem('lf_dp_cascade_sa', saId);
     } else {
       // Free-text SA typed in EC mode — treat like no-EC path with a label
-      payload = { client_id: clientId, program, service_area_label: saTyped, job_name: jobName, project_type: 'design', contract_id: contractId || undefined };
+      payload = { client_id: clientId, program, service_area_label: saTyped, job_name: jobName, project_type: 'design', contract_id: contractId || undefined, ...amountPayload };
       sessionStorage.setItem('lf_dp_cascade_sa_label', saTyped);
     }
     sessionStorage.setItem('lf_dp_cascade_ec', document.getElementById('dp-ec')?.value || '');
@@ -1787,7 +1803,7 @@ async function dpPopulateJobSelect(clientId, program) {
     const prev = jobSel.value;
     jobSel.innerHTML = '<option value="">— Select a job —</option>' +
       (jobs || []).map(j =>
-        `<option value="${esc(j.id)}" data-name="${esc(j.name)}">${esc(j.name)}${j.billing_code ? ' (' + esc(j.billing_code) + ')' : ''}${j.is_permitting ? ' ⚡' : ''}</option>`
+        `<option value="${esc(j.id)}" data-name="${esc(j.name)}" data-bt="${esc(j.default_billing_type||'hourly')}" data-permit="${j.is_permitting?1:0}">${esc(j.name)}${j.billing_code ? ' (' + esc(j.billing_code) + ')' : ''}${j.is_permitting ? ' ⚡' : ''}</option>`
       ).join('');
     jobSel.disabled = false;
     if (prev && [...jobSel.options].some(o => o.value === prev)) jobSel.value = prev;
@@ -1805,6 +1821,27 @@ function dpShowToast(msg) {
   setTimeout(() => t.remove(), 3000);
 }
 // ─── End design cascade picker ────────────────────────────────────────────────
+
+// When the cascade job dropdown changes, update the Footage/Hours label & hint.
+function dpCascadeJobChanged() {
+  const opt = document.getElementById('dp-job-select')?.selectedOptions[0];
+  const label = document.getElementById('proj-amount-label');
+  const hint  = document.getElementById('proj-amount-hint');
+  if (!opt || !opt.value) {
+    label.innerHTML = 'Footage / Hours <span style="font-weight:400;color:var(--text-muted)">(optional)</span>';
+    hint.textContent = 'Pick a job to see the right unit';
+    return;
+  }
+  const isPermit = opt.dataset.permit === '1';
+  const billType = opt.dataset.bt;
+  if (isPermit || billType === 'footage') {
+    label.innerHTML = 'Footage <span style="font-weight:400;color:var(--text-muted)">(in feet, optional)</span>';
+    hint.textContent = isPermit ? 'Permit calc auto-applies: hours = footage ÷ 5280 × 27.5 (min 25 hrs)' : 'Footage in linear feet';
+  } else {
+    label.innerHTML = 'Hours Estimate <span style="font-weight:400;color:var(--text-muted)">(optional)</span>';
+    hint.textContent = 'Estimated total hours for this project';
+  }
+}
 
 // When the job changes, swap the Footage/Hours label & hint.
 function jobChanged(){

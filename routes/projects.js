@@ -824,7 +824,15 @@ module.exports = function installProjectsRoutes(app, pool, mw) {
   // prevents duplicate names under the same parent. On 23505 we re-SELECT
   // the winner and return created:false so the UI gets the existing project_id.
   app.post('/api/projects/resolve-or-create', requireAuth(), requireProjectCreate, async (req, res) => {
-    const { client_id, program, service_area_id, service_area_label, job_name, contract_id, project_type: explicitProjectType } = req.body;
+    const {
+      client_id, program, service_area_id, service_area_label,
+      job_name, contract_id, project_type: explicitProjectType,
+      footage: rawFootage, expected_hours: rawExpectedHours,
+    } = req.body;
+
+    // Validate optional numeric amounts — ignore when absent or non-numeric.
+    const submittedFootage       = (rawFootage !== undefined && rawFootage !== null && rawFootage !== '' && !isNaN(parseFloat(rawFootage)) && parseFloat(rawFootage) >= 0) ? parseFloat(rawFootage) : null;
+    const submittedExpectedHours = (rawExpectedHours !== undefined && rawExpectedHours !== null && rawExpectedHours !== '' && !isNaN(parseFloat(rawExpectedHours)) && parseFloat(rawExpectedHours) >= 0) ? parseFloat(rawExpectedHours) : null;
 
     // Input validation (common to both modes)
     if (!job_name || !String(job_name).trim()) {
@@ -840,16 +848,25 @@ module.exports = function installProjectsRoutes(app, pool, mw) {
       ? contract_id
       : null;
 
-    // Resolve job team from the jobs table by name.
-    // Used to set project_type and create the Category rollup folder.
-    // Falls back to null when the job name doesn't match any jobs row (e.g. free-text entry).
+    // Resolve job metadata (team, billing type, rate, permitting flag) from the jobs table by name.
+    // Used to set project_type, billing_type, billing_rate, and create the Category rollup folder.
+    // Falls back to defaults when the job name doesn't match any jobs row (e.g. free-text entry).
     let resolvedJobTeam = null;
+    let resolvedJobIsPermitting = false;
+    let resolvedJobDefaultBillingType = null;
+    let resolvedJobDefaultRate = null;
     try {
       const jobRow = await pool.query(
-        `SELECT team FROM jobs WHERE LOWER(name) = LOWER($1) AND active = TRUE LIMIT 1`,
+        `SELECT team, is_permitting, default_billing_type, default_rate FROM jobs WHERE LOWER(name) = LOWER($1) AND active = TRUE LIMIT 1`,
         [normalizedJobName]
       );
-      if (jobRow.rows.length) resolvedJobTeam = jobRow.rows[0].team || null;
+      if (jobRow.rows.length) {
+        const j = jobRow.rows[0];
+        resolvedJobTeam = j.team || null;
+        resolvedJobIsPermitting = !!j.is_permitting;
+        resolvedJobDefaultBillingType = j.default_billing_type || null;
+        resolvedJobDefaultRate = j.default_rate || null;
+      }
     } catch (_) {}
 
     // Determine project_type. When the caller supplies an explicit value (e.g. the design
@@ -861,6 +878,25 @@ module.exports = function installProjectsRoutes(app, pool, mw) {
     const derivedProjectType = (explicitProjectType && allowedExplicit.includes(String(explicitProjectType)))
       ? String(explicitProjectType)
       : (resolvedJobTeam && teamToProjectType[resolvedJobTeam]) || 'other';
+
+    // Derive billing type and rate from the matched job row.
+    // is_permitting ⇒ billing_type='footage'; else use job's default_billing_type || 'hourly'.
+    const effectiveBillingType = resolvedJobIsPermitting
+      ? 'footage'
+      : (resolvedJobDefaultBillingType || 'hourly');
+    const effectiveRate = resolvedJobDefaultRate;
+
+    // Compute financials using the same helper as the main POST/PUT.
+    // For permitting jobs, calcProjectFinancials derives expected_hours + expected_revenue from footage.
+    // For hourly jobs it returns all nulls (expected_hours stored directly from submittedExpectedHours).
+    const isPermittingLeaf = resolvedJobIsPermitting || derivedProjectType === 'permitting';
+    const finType = isPermittingLeaf ? 'permitting' : 'other';
+    const fin = calcProjectFinancials(finType, effectiveRate, submittedFootage);
+    const insertFootage      = isPermittingLeaf ? (submittedFootage || null) : null;
+    const insertExpHours     = isPermittingLeaf ? fin.expectedHours : (submittedExpectedHours || null);
+    const insertExpRev       = fin.expectedRevenue;
+    const insertMiles        = fin.miles;
+    const insertHrPerMi      = fin.permittingHoursPerMile || null;
 
     // Branch selection: EC-scoped vs no-EC.
     // MODE 1 (EC): service_area_id present → EC-scoped path.
@@ -945,10 +981,15 @@ module.exports = function installProjectsRoutes(app, pool, mw) {
           const insert = await pool.query(
             `INSERT INTO projects
                (name, client_id, parent_id, engineering_contract_id, program,
-                status, is_rollup, billing_type, project_type, service_area_name)
-             VALUES ($1, $2, $3, $4, $5, 'active', FALSE, 'hourly', $6, $7)
+                status, is_rollup, billing_type, billing_rate, project_type, service_area_name,
+                footage, miles, expected_hours, expected_revenue, permitting_hours_per_mile)
+             VALUES ($1, $2, $3, $4, $5, 'active', FALSE, $6, $7, $8, $9, $10, $11, $12, $13, $14)
              RETURNING id, name, is_rollup, parent_id, status, engineering_contract_id, service_area_name`,
-            [normalizedJobName, client_id, folderId, ecId, normalizedProgram, derivedProjectType, saRow.rows[0].name]
+            [
+              normalizedJobName, client_id, folderId, ecId, normalizedProgram,
+              effectiveBillingType, effectiveRate || null, derivedProjectType, saRow.rows[0].name,
+              insertFootage, insertMiles, insertExpHours, insertExpRev, insertHrPerMi,
+            ]
           );
           newRow = insert.rows[0];
         } catch (err) {
@@ -968,11 +1009,17 @@ module.exports = function installProjectsRoutes(app, pool, mw) {
           return res.status(200).json({ ...refound.rows[0], created: false });
         }
 
-        // Auto-create design pipeline entry when project_type is 'design'.
+        // Auto-create pipeline stage entries for design and permitting projects.
         if (derivedProjectType === 'design' && newRow && newRow.id) {
           await pool.query(
             `INSERT INTO design_stages (project_id, stage) VALUES ($1, 'potential') ON CONFLICT (project_id, stage) DO NOTHING`,
             [newRow.id]
+          );
+        }
+        if (isPermittingLeaf && newRow && newRow.id) {
+          await pool.query(
+            `INSERT INTO permit_stages (project_id, stage, updated_by) VALUES ($1, 'potential', $2) ON CONFLICT (project_id, stage) DO NOTHING`,
+            [newRow.id, req.user && req.user.id || null]
           );
         }
 
@@ -1037,11 +1084,16 @@ module.exports = function installProjectsRoutes(app, pool, mw) {
         try {
           const insert = await pool.query(
             `INSERT INTO projects
-               (name, client_id, parent_id, billing_type, project_type, status,
-                is_rollup, service_area_name)
-             VALUES ($1, $2, $3, 'hourly', $4, 'active', FALSE, $5)
+               (name, client_id, parent_id, billing_type, billing_rate, project_type, status,
+                is_rollup, service_area_name,
+                footage, miles, expected_hours, expected_revenue, permitting_hours_per_mile)
+             VALUES ($1, $2, $3, $4, $5, $6, 'active', FALSE, $7, $8, $9, $10, $11, $12)
              RETURNING id, name, is_rollup, parent_id, status, engineering_contract_id, service_area_name`,
-            [normalizedJobName, client_id, folderId, derivedProjectType, normalizedLabel || null]
+            [
+              normalizedJobName, client_id, folderId,
+              effectiveBillingType, effectiveRate || null, derivedProjectType, normalizedLabel || null,
+              insertFootage, insertMiles, insertExpHours, insertExpRev, insertHrPerMi,
+            ]
           );
           newRow = insert.rows[0];
         } catch (err) {
@@ -1061,11 +1113,17 @@ module.exports = function installProjectsRoutes(app, pool, mw) {
           return res.status(200).json({ ...refound.rows[0], created: false });
         }
 
-        // Auto-create design pipeline entry when project_type is 'design'.
+        // Auto-create pipeline stage entries for design and permitting projects.
         if (derivedProjectType === 'design' && newRow && newRow.id) {
           await pool.query(
             `INSERT INTO design_stages (project_id, stage) VALUES ($1, 'potential') ON CONFLICT (project_id, stage) DO NOTHING`,
             [newRow.id]
+          );
+        }
+        if (isPermittingLeaf && newRow && newRow.id) {
+          await pool.query(
+            `INSERT INTO permit_stages (project_id, stage, updated_by) VALUES ($1, 'potential', $2) ON CONFLICT (project_id, stage) DO NOTHING`,
+            [newRow.id, req.user && req.user.id || null]
           );
         }
 
