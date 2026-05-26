@@ -582,6 +582,11 @@ select.filter{border:1px solid var(--gray-border);border-radius:7px;padding:7px 
 .skip-nav:focus{position:fixed;left:50%;top:8px;transform:translateX(-50%);width:auto;height:auto;padding:10px 20px;background:var(--primary,#1B5FA0);color:#fff;font-weight:600;border-radius:6px;font-size:14px;z-index:9999}
 /* a11y: screen-reader only utility */
 .sr-only{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0}
+/* Demo Mode — blur financial values so they're unreadable during screen-shares */
+body.demo-blur .lf-financial{filter:blur(7px);user-select:none;transition:filter 0.15s}
+body.demo-blur .lf-financial:hover{filter:blur(0)}
+#demo-blur-btn.demo-active{background:var(--warning,#f59e0b);color:#fff;border-color:var(--warning,#f59e0b)}
+#demo-blur-btn.demo-active:hover{background:#d97706;border-color:#d97706}
 </style>
 <link rel="stylesheet" href="/app-shell.css">
 <script src="/toast.js" defer></script>
@@ -613,6 +618,7 @@ select.filter{border:1px solid var(--gray-border);border-radius:7px;padding:7px 
   <span class="header-title">Project Management System</span>
   <div class="header-right">
     <span id="hdr-date" style="font-size:12px;color:var(--text-muted)"></span>
+    <button class="btn btn-secondary btn-sm" id="demo-blur-btn" onclick="toggleDemoBlur()" title="Demo Mode — blur financial values" aria-label="Toggle demo blur mode" style="margin-right:6px"><i class="fa-solid fa-eye-slash" aria-hidden="true"></i> <span class="btn-label">Demo</span></button>
     <button class="btn btn-secondary btn-sm btn-icon" onclick="toggleDarkMode()" id="dm-toggle" title="Toggle dark mode" aria-label="Toggle dark mode" style="margin-right:6px"><i class="fa-solid fa-moon" id="dm-icon" aria-hidden="true"></i></button>
     <button class="btn btn-secondary btn-sm" id="settings-btn" onclick="openSettings()" style="position:relative" title="Settings & Pricing">
       <i class="fa-solid fa-gear"></i> Settings
@@ -3094,6 +3100,8 @@ async function init() {
     if (h && _validViews.includes(h)) showView(h);
   });
   refreshSettingsDot();
+  // Wrap any financial values that were present on first paint.
+  wrapFinancials();
 }
 
 // api() lives in /js/api.js (extracted as part of CLEANUP_PLAN.md Track 1.2).
@@ -3134,7 +3142,70 @@ function showView(view) {
   if (view==='billing') loadBilling();
   if (view==='revenue') loadRevenue();
   window._showViewHooks.forEach(fn => fn(view));
+  // Re-wrap any newly-rendered financial text after the tab loads.
+  // setTimeout 0 lets the tab's own data-fetch/render run first.
+  setTimeout(wrapFinancials, 0);
 }
+
+
+// ═══════════════════════════════════════════════════════════
+// DEMO BLUR — wraps $-prefixed text nodes in .lf-financial spans
+// ═══════════════════════════════════════════════════════════
+function wrapFinancials() {
+  const SKIP_TAGS = new Set(['SCRIPT','STYLE','INPUT','TEXTAREA','SELECT','BUTTON']);
+  const walker = document.createTreeWalker(
+    document.body,
+    NodeFilter.SHOW_TEXT,
+    {
+      acceptNode(node) {
+        let el = node.parentElement;
+        while (el && el !== document.body) {
+          if (SKIP_TAGS.has(el.tagName)) return NodeFilter.FILTER_REJECT;
+          if (el.classList && el.classList.contains('lf-financial')) return NodeFilter.FILTER_REJECT;
+          el = el.parentElement;
+        }
+        return /^\s*\$[\d\-\(]/.test(node.textContent) ? NodeFilter.FILTER_ACCEPT : NodeFilter.FILTER_SKIP;
+      }
+    }
+  );
+  const nodes = [];
+  let n;
+  while ((n = walker.nextNode())) nodes.push(n);
+  nodes.forEach(node => {
+    const span = document.createElement('span');
+    span.className = 'lf-financial';
+    node.parentNode.replaceChild(span, node);
+    span.appendChild(node);
+  });
+}
+
+function toggleDemoBlur() {
+  const active = document.body.classList.toggle('demo-blur');
+  try { localStorage.setItem('lf_demo_blur', active ? '1' : '0'); } catch(e) {}
+  const btn = document.getElementById('demo-blur-btn');
+  if (btn) btn.classList.toggle('demo-active', active);
+  if (active) wrapFinancials();
+}
+
+// Restore demo-blur state from localStorage on page load.
+(function(){
+  try {
+    if (localStorage.getItem('lf_demo_blur') === '1') {
+      document.body.classList.add('demo-blur');
+      const btn = document.getElementById('demo-blur-btn');
+      if (btn) btn.classList.add('demo-active');
+    }
+  } catch(e) {}
+})();
+
+// MutationObserver: wrap financials whenever the main content area changes.
+(function(){
+  const target = document.getElementById('main-content') || document.body;
+  const obs = new MutationObserver(() => {
+    if (document.body.classList.contains('demo-blur')) wrapFinancials();
+  });
+  obs.observe(target, { childList: true, subtree: true });
+})();
 
 
 // ═══════════════════════════════════════════════════════════
