@@ -185,3 +185,114 @@ test('GET /api/admin/audit-log/:id returns 404 for nonexistent id', async () => 
   const r = await requestJson('GET', '/api/admin/audit-log/999999999', { token });
   assert.equal(r.status, 404, 'should return 404 for missing row');
 });
+
+test('redactPII redacts sensitive password fields', async () => {
+  const { redactPII } = require('../routes/_audit');
+  const obj = {
+    user: 'john',
+    password: 'secret123',
+    password_hash: 'abc123def',
+  };
+  const redacted = redactPII(obj);
+  assert.equal(redacted.user, 'john', 'non-sensitive fields preserved');
+  assert.equal(redacted.password, '[REDACTED]', 'password field redacted');
+  assert.equal(redacted.password_hash, '[REDACTED]', 'password_hash field redacted');
+});
+
+test('redactPII redacts token and secret fields', async () => {
+  const { redactPII } = require('../routes/_audit');
+  const obj = {
+    api_key: 'key123',
+    raw_token: 'token456',
+    secret: 'shh',
+    private_key: 'pk789',
+  };
+  const redacted = redactPII(obj);
+  assert.equal(redacted.api_key, '[REDACTED]');
+  assert.equal(redacted.raw_token, '[REDACTED]');
+  assert.equal(redacted.secret, '[REDACTED]');
+  assert.equal(redacted.private_key, '[REDACTED]');
+});
+
+test('redactPII preserves non-sensitive fields (email, phone, name)', async () => {
+  const { redactPII } = require('../routes/_audit');
+  const obj = {
+    email: 'user@example.com',
+    phone: '555-1234',
+    name: 'John Doe',
+    address: '123 Main St',
+  };
+  const redacted = redactPII(obj);
+  assert.equal(redacted.email, 'user@example.com', 'email preserved');
+  assert.equal(redacted.phone, '555-1234', 'phone preserved');
+  assert.equal(redacted.name, 'John Doe', 'name preserved');
+  assert.equal(redacted.address, '123 Main St', 'address preserved');
+});
+
+test('redactPII handles nested objects and arrays', async () => {
+  const { redactPII } = require('../routes/_audit');
+  const obj = {
+    user: {
+      name: 'Alice',
+      password_hash: 'hash123',
+    },
+    logs: [
+      { action: 'login', token: 'abc' },
+      { action: 'logout' },
+    ],
+  };
+  const redacted = redactPII(obj);
+  assert.equal(redacted.user.name, 'Alice', 'nested non-sensitive preserved');
+  assert.equal(redacted.user.password_hash, '[REDACTED]', 'nested sensitive redacted');
+  assert.equal(redacted.logs[0].action, 'login', 'array non-sensitive preserved');
+  assert.equal(redacted.logs[0].token, '[REDACTED]', 'array sensitive redacted');
+  assert.equal(redacted.logs[1].action, 'logout', 'array item without sensitive key unchanged');
+});
+
+test('GET /api/admin/audit-log returns redacted PII in response', async () => {
+  const token = await adminLogin();
+  const tag = uniqueTag();
+
+  // Insert a row with sensitive data in before_data and after_data
+  await pool.query(
+    `INSERT INTO audit_log
+       (actor_type, action, entity_type, entity_id, source, before_data, after_data)
+     VALUES ('user', 'redaction.test', 'user', $1, 'test',
+             '{"password_hash":"oldpw","email":"old@example.com"}'::jsonb,
+             '{"password_hash":"newpw","email":"new@example.com"}'::jsonb)`,
+    [`user-${tag}-redact`]
+  );
+
+  const r = await requestJson('GET', '/api/admin/audit-log?action=redaction.test&limit=100', { token });
+  assert.ok(r.rows, 'request should succeed');
+  assert.equal(r.rows[0]['X-Audit-Redacted'] === undefined, true, 'header not in JSON body');
+
+  const redactedRow = r.rows.find(row => row.action === 'redaction.test');
+  assert.ok(redactedRow, 'should find the redaction.test row');
+  assert.equal(redactedRow.before_data.password_hash, '[REDACTED]', 'before_data password_hash redacted');
+  assert.equal(redactedRow.before_data.email, 'old@example.com', 'before_data email preserved');
+  assert.equal(redactedRow.after_data.password_hash, '[REDACTED]', 'after_data password_hash redacted');
+  assert.equal(redactedRow.after_data.email, 'new@example.com', 'after_data email preserved');
+});
+
+test('GET /api/admin/audit-log/:id returns X-Audit-Redacted header', async () => {
+  const token = await adminLogin();
+  const tag = uniqueTag();
+
+  // Insert a test row with sensitive data
+  const { rows: inserted } = await pool.query(
+    `INSERT INTO audit_log
+       (actor_type, action, entity_type, entity_id, source, before_data, meta)
+     VALUES ('user', 'header.test', 'account', $1, 'test',
+             '{"api_key":"secret123"}'::jsonb, '{"reason":"test"}'::jsonb)
+     RETURNING id`,
+    [`acct-${tag}-header`]
+  );
+  const id = inserted[0].id;
+
+  // Manually call the endpoint using requestJson which should preserve headers
+  const r = await requestJson('GET', `/api/admin/audit-log/${id}`, { token });
+  assert.ok(r.id, 'should return the id');
+  assert.equal(r.before_data.api_key, '[REDACTED]', 'api_key should be redacted');
+  assert.equal(r.meta.reason, 'test', 'non-sensitive meta field preserved');
+});

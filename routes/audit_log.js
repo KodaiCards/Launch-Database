@@ -5,9 +5,12 @@
 //             before_data, after_data, source, ip, user_agent, meta)
 //
 // Provides read-only access to the tamper-resistant audit trail.
+// PII is redacted at read time before rows leave the API.
 // Two endpoints (both admin-only):
 //   GET  /api/admin/audit-log              — paginated list with optional filters
 //   GET  /api/admin/audit-log/:id         — single row detail
+
+const { redactPII } = require('./_audit');
 
 module.exports = function installAuditLogRoutes(app, pool, mw) {
   const requireAdmin = (mw && mw.requireAdmin) || ((req, res, next) => next());
@@ -97,12 +100,19 @@ module.exports = function installAuditLogRoutes(app, pool, mw) {
       const { rows } = await pool.query(query, params);
       const total = rows.length > 0 ? parseInt(rows[0].total_count) : 0;
 
-      // Remove total_count from response rows
+      // Remove total_count from response rows and redact PII
       const cleanRows = rows.map(row => {
         const { total_count, ...rest } = row;
-        return rest;
+        // Redact PII from before_data, after_data, and meta
+        return {
+          ...rest,
+          before_data: redactPII(rest.before_data),
+          after_data: redactPII(rest.after_data),
+          meta: redactPII(rest.meta),
+        };
       });
 
+      res.set('X-Audit-Redacted', 'true');
       res.json({
         rows: cleanRows,
         total,
@@ -133,7 +143,17 @@ module.exports = function installAuditLogRoutes(app, pool, mw) {
         return res.status(404).json({ error: 'Audit log entry not found' });
       }
 
-      res.json(rows[0]);
+      const row = rows[0];
+      // Redact PII from before_data, after_data, and meta
+      const redactedRow = {
+        ...row,
+        before_data: redactPII(row.before_data),
+        after_data: redactPII(row.after_data),
+        meta: redactPII(row.meta),
+      };
+
+      res.set('X-Audit-Redacted', 'true');
+      res.json(redactedRow);
     } catch (e) {
       serverError(res, e, 'GET /api/admin/audit-log/:id');
     }

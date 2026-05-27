@@ -43,4 +43,56 @@ async function logAudit(pool, opts) {
   }
 }
 
-module.exports = { logAudit };
+/**
+ * Deep clone an object and redact sensitive keys.
+ * Sensitive key patterns (case-insensitive substring match):
+ *   - password, password_hash, passwordHash, hash
+ *   - token, raw_token, rawToken, api_key, apiKey, secret, private_key, privateKey
+ *   - ssn, social_security, socialSecurity, tax_id, taxId, ein
+ *   - credit_card, creditCard, card_number, cardNumber, cvv
+ *   - bank_account, bankAccount, routing_number, routingNumber
+ *   - dob, date_of_birth, dateOfBirth
+ *
+ * Recursively walks nested objects and arrays.
+ * Does NOT redact emails, phone numbers, names, addresses (operational fields).
+ */
+function redactPII(obj) {
+  if (obj === null || obj === undefined) {
+    return obj;
+  }
+
+  if (Array.isArray(obj)) {
+    return obj.map(item => redactPII(item));
+  }
+
+  if (typeof obj === 'object') {
+    const redacted = {};
+    const sensitivePatternsLower = [
+      'password', 'password_hash', 'passwordhash', 'hash',
+      'token', 'raw_token', 'rawtoken', 'api_key', 'apikey', 'secret', 'private_key', 'privatekey',
+      'ssn', 'social_security', 'socialsecurity', 'tax_id', 'taxid', 'ein',
+      'credit_card', 'creditcard', 'card_number', 'cardnumber', 'cvv',
+      'bank_account', 'bankaccount', 'routing_number', 'routingnumber',
+      'dob', 'date_of_birth', 'dateofbirth',
+    ];
+
+    for (const key in obj) {
+      if (Object.prototype.hasOwnProperty.call(obj, key)) {
+        const keyLower = key.toLowerCase();
+        const isSensitive = sensitivePatternsLower.some(pattern => keyLower.includes(pattern));
+
+        if (isSensitive) {
+          redacted[key] = '[REDACTED]';
+        } else {
+          redacted[key] = redactPII(obj[key]);
+        }
+      }
+    }
+    return redacted;
+  }
+
+  // Primitives (string, number, boolean) returned as-is
+  return obj;
+}
+
+module.exports = { logAudit, redactPII };
