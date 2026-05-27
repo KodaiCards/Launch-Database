@@ -761,6 +761,11 @@ require('./routes/portal_access')(app, pool, { requireAdmin }, PORTAL_DEFS);
 // Wave 13: client portal API — project status for the beta client-facing view.
 require('./routes/client_portal')(app, pool, { requireAuth });
 
+// Wave E2 (2026-05-27): client portal v1 — token-based auth + admin org/user/token management.
+// New portal at /client/login/:token and /api/admin/client-orgs/*.
+// The Wave 13 portal above stays operational until E6 retires it.
+require('./routes/client_portal_v2')(app, pool, { requireAuth });
+
 // ─────────────────────────────────────────────────────────────────────────────
 // DWG OFFLINE-SYNC — Wave 35 / C1
 // Backend endpoints for field-tech laptop sync of raw DWG/DXF files.

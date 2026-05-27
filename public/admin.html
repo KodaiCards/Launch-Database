@@ -2446,6 +2446,112 @@ body.demo-blur .lf-financial:hover{filter:blur(0)}
   </div>
 </div>
 
+<!-- ── Client Portal v1 — Create Org modal ────────────────────────── -->
+<div class="modal-overlay" id="cp-create-org-modal" role="dialog" aria-modal="true" aria-labelledby="cp-create-org-modal-title" style="z-index:1100">
+  <div class="modal" style="max-width:480px;width:95%">
+    <div class="modal-header">
+      <span class="modal-title" id="cp-create-org-modal-title"><i class="fa-solid fa-building" style="color:var(--primary)" aria-hidden="true"></i> New Client Organization</span>
+      <button class="btn btn-icon btn-secondary" aria-label="Close dialog" onclick="closeModal('cp-create-org-modal')"><i class="fa-solid fa-xmark" aria-hidden="true"></i></button>
+    </div>
+    <div class="modal-body">
+      <div class="form-group">
+        <label class="form-label" for="cp-org-name">Organization name <span style="color:var(--danger)">*</span></label>
+        <input id="cp-org-name" class="form-control" type="text" placeholder="e.g. Public Service Company" />
+      </div>
+      <div class="form-group">
+        <label class="form-label" for="cp-org-short">Short name / abbreviation</label>
+        <input id="cp-org-short" class="form-control" type="text" placeholder="e.g. PSC" />
+      </div>
+      <div class="form-group">
+        <label class="form-label" for="cp-org-logo">Logo URL</label>
+        <input id="cp-org-logo" class="form-control" type="text" placeholder="/img/clients/psc-logo.png" />
+      </div>
+      <div class="form-group">
+        <label class="form-label" for="cp-org-color">Theme color</label>
+        <input id="cp-org-color" class="form-control" type="text" placeholder="#1E88E5" maxlength="20" />
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-secondary" onclick="closeModal('cp-create-org-modal')">Cancel</button>
+      <button class="btn btn-primary" id="cp-create-org-btn" onclick="cpSubmitCreateOrg()"><i class="fa-solid fa-building"></i> Create</button>
+    </div>
+  </div>
+</div>
+
+<!-- ── Client Portal v1 — Org detail / users modal ──────────────── -->
+<div class="modal-overlay" id="cp-org-detail-modal" role="dialog" aria-modal="true" aria-labelledby="cp-org-detail-title" style="z-index:1100">
+  <div class="modal" style="max-width:680px;width:95%">
+    <div class="modal-header">
+      <span class="modal-title" id="cp-org-detail-title"><i class="fa-solid fa-building" style="color:var(--primary)" aria-hidden="true"></i> <span id="cp-org-detail-name"></span></span>
+      <button class="btn btn-icon btn-secondary" aria-label="Close dialog" onclick="closeModal('cp-org-detail-modal')"><i class="fa-solid fa-xmark" aria-hidden="true"></i></button>
+    </div>
+    <div class="modal-body">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px">
+        <strong style="font-size:13px">Users &amp; Login Tokens</strong>
+        <button class="btn btn-primary btn-sm" onclick="cpOpenAddUserModal()"><i class="fa-solid fa-user-plus"></i> Add User</button>
+      </div>
+      <div id="cp-org-users-body" style="font-size:13px"></div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-secondary" onclick="closeModal('cp-org-detail-modal')">Close</button>
+    </div>
+  </div>
+</div>
+
+<!-- ── Client Portal v1 — Add user modal ────────────────────────── -->
+<div class="modal-overlay" id="cp-add-user-modal" role="dialog" aria-modal="true" aria-labelledby="cp-add-user-modal-title" style="z-index:1200">
+  <div class="modal" style="max-width:420px;width:95%">
+    <div class="modal-header">
+      <span class="modal-title" id="cp-add-user-modal-title"><i class="fa-solid fa-user-plus" style="color:var(--primary)" aria-hidden="true"></i> Add Client User</span>
+      <button class="btn btn-icon btn-secondary" aria-label="Close dialog" onclick="closeModal('cp-add-user-modal')"><i class="fa-solid fa-xmark" aria-hidden="true"></i></button>
+    </div>
+    <div class="modal-body">
+      <div class="form-group">
+        <label class="form-label" for="cp-user-name">Name</label>
+        <input id="cp-user-name" class="form-control" type="text" placeholder="Contact name" />
+      </div>
+      <div class="form-group">
+        <label class="form-label" for="cp-user-email">Email</label>
+        <input id="cp-user-email" class="form-control" type="email" placeholder="contact@example.com" />
+      </div>
+      <div class="form-group">
+        <label class="form-label" for="cp-user-primary" style="display:flex;align-items:center;gap:8px;cursor:pointer">
+          <input id="cp-user-primary" type="checkbox" />
+          Primary contact for this organization
+        </label>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-secondary" onclick="closeModal('cp-add-user-modal')">Cancel</button>
+      <button class="btn btn-primary" id="cp-add-user-btn" onclick="cpSubmitAddUser()"><i class="fa-solid fa-user-plus"></i> Add</button>
+    </div>
+  </div>
+</div>
+
+<!-- ── Client Portal v1 — Token display modal (shown once) ───────── -->
+<div class="modal-overlay" id="cp-token-modal" role="dialog" aria-modal="true" aria-labelledby="cp-token-modal-title" style="z-index:1300">
+  <div class="modal" style="max-width:540px;width:95%">
+    <div class="modal-header">
+      <span class="modal-title" id="cp-token-modal-title"><i class="fa-solid fa-link" style="color:var(--primary)" aria-hidden="true"></i> Login Link — Copy Now</span>
+      <button class="btn btn-icon btn-secondary" aria-label="Close dialog" onclick="closeModal('cp-token-modal')"><i class="fa-solid fa-xmark" aria-hidden="true"></i></button>
+    </div>
+    <div class="modal-body">
+      <div style="background:var(--surface-2);border:1px solid var(--border-weak);border-radius:6px;padding:12px;margin-bottom:14px">
+        <div style="font-size:11px;color:var(--text-muted);margin-bottom:6px;text-transform:uppercase;letter-spacing:.04em">Login URL — shown only once</div>
+        <div id="cp-token-url" style="font-family:monospace;font-size:12px;word-break:break-all;color:var(--text)"></div>
+      </div>
+      <div style="background:var(--danger-bg,#fff0f0);border:1px solid var(--danger);border-radius:6px;padding:10px;font-size:12px;color:var(--danger)">
+        <i class="fa-solid fa-triangle-exclamation" style="margin-right:6px"></i>
+        <strong>This link will not be shown again.</strong> Copy it now and send it to your client via a secure channel.
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-secondary btn-sm" onclick="cpCopyTokenUrl()"><i class="fa-solid fa-copy"></i> Copy link</button>
+      <button class="btn btn-primary" onclick="closeModal('cp-token-modal')">Done — I copied it</button>
+    </div>
+  </div>
+</div>
+
 <div class="modal-overlay" id="settings-modal" role="dialog" aria-modal="true" aria-labelledby="settings-modal-title">
   <div class="modal" style="max-width:920px;width:95%">
     <div class="modal-header">
@@ -2635,6 +2741,22 @@ body.demo-blur .lf-financial:hover{filter:blur(0)}
         </div>
       </div>
 
+      <!-- ── Client Portal (v1) ── org / user / token management ── -->
+      <div class="settings-section" id="client-portal-v2-section" style="margin-top:24px">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px">
+          <h4 style="font-size:14px;font-weight:600;margin:0"><i class="fa-solid fa-building" style="margin-right:6px;color:var(--text-muted)"></i>Client Portal</h4>
+          <button class="btn btn-primary btn-sm" onclick="cpOpenCreateOrgModal()"><i class="fa-solid fa-plus"></i> New Organization</button>
+        </div>
+        <p style="font-size:12px;color:var(--text-muted);margin:0 0 12px 0">
+          Manage client organizations, their portal users, and login tokens.
+          Generate a login link to share with a client — the link is valid until revoked.
+          <strong>Tokens are shown only once at creation.</strong>
+        </p>
+        <div id="cp-orgs-list" style="font-size:13px">
+          <div style="padding:20px;text-align:center;color:var(--text-muted)"><i class="fa-solid fa-spinner fa-spin"></i> Loading&hellip;</div>
+        </div>
+      </div>
+
       <!-- ── Invoice Templates ── reference-PDF-driven generator
            Each (Job, Client) can have a PDF sample uploaded; Claude
            vision analyses the layout once, the system fills + renders
@@ -2768,6 +2890,7 @@ body.demo-blur .lf-financial:hover{filter:blur(0)}
 <script src="/js/migration_tools.js"></script>
 <script src="/js/clients_settings.js"></script>
 <script src="/js/settings_portal_access.js"></script>
+<script src="/js/client_portal_admin.js"></script>
 <script src="/js/settings_client_links.js"></script>
 <script src="/js/settings_staff_view.js"></script>
 <script src="/js/impersonation_banner.js"></script>
