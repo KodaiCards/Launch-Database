@@ -167,16 +167,21 @@ module.exports = function installBillingRoutes(app, pool, mw) {
       // using ANY($ids) instead of per-project UPDATEs (N→1 round trips).
       if (lineItems.length) {
         // Build parameterised multi-row INSERT for invoice_items.
+        // period_year / period_month are written so the unique partial index
+        // (idx_invoice_items_project_period, migration 0043) can enforce
+        // one invoice item per project per month. A 23505 on this INSERT
+        // means the admin already billed this project+month — caught below.
         const itemValues = [];
         const itemParams = [];
         let pi = 1;
         for (const li of lineItems) {
-          itemValues.push(`($${pi},$${pi+1},$${pi+2},$${pi+3},$${pi+4},$${pi+5},$${pi+6})`);
-          itemParams.push(invoiceId, li.project_id, li.description, li.quantity, li.unit, li.rate, li.amount);
-          pi += 7;
+          itemValues.push(`($${pi},$${pi+1},$${pi+2},$${pi+3},$${pi+4},$${pi+5},$${pi+6},$${pi+7},$${pi+8})`);
+          itemParams.push(invoiceId, li.project_id, li.description, li.quantity, li.unit, li.rate, li.amount,
+                          li.period_year || null, li.period_month || null);
+          pi += 9;
         }
         await client.query(
-          `INSERT INTO invoice_items (invoice_id, project_id, description, quantity, unit, rate, amount)
+          `INSERT INTO invoice_items (invoice_id, project_id, description, quantity, unit, rate, amount, period_year, period_month)
            VALUES ${itemValues.join(',')}`,
           itemParams
         );
@@ -205,6 +210,25 @@ module.exports = function installBillingRoutes(app, pool, mw) {
       res.json({ ok: true, invoice_id: invoiceId, total, line_count: lineItems.length });
     } catch (e) {
       await client.query('ROLLBACK');
+      if (e.code === '23505' && e.constraint === 'idx_invoice_items_project_period') {
+        // Unique partial index violation: this project+month was already billed.
+        // Look up the existing invoice so the frontend can deep-link to it.
+        const dupItem = e.detail && e.detail.match(/project_id, period_year, period_month\)=\(([^,]+), (\d+), (\d+)\)/);
+        let existingInvoiceId = null;
+        try {
+          if (dupItem) {
+            const ex = await pool.query(
+              `SELECT invoice_id FROM invoice_items WHERE project_id=$1 AND period_year=$2 AND period_month=$3 LIMIT 1`,
+              [dupItem[1], parseInt(dupItem[2]), parseInt(dupItem[3])]
+            );
+            existingInvoiceId = ex.rows[0]?.invoice_id || null;
+          }
+        } catch (_) { /* best-effort */ }
+        return res.status(409).json({
+          error: 'Invoice already exists for this project + period. Refresh and retry.',
+          existing_invoice_id: existingInvoiceId,
+        });
+      }
       console.error('bill-multiple error:', e);
       res.status(500).json({ error: e.message });
     } finally {

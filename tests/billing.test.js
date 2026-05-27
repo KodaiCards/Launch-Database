@@ -675,17 +675,17 @@ test('// FLOAT-DRIFT: classic 0.1 + 0.2 case via override amounts', async () => 
 });
 
 // ════════════════════════════════════════════════════════════════════════════
-// IDEMPOTENCY — current behavior: NO guard against double-billing the same
-// monthly period. After B2 unique-index lands, these tests need INVERSION
-// (current = creates two invoices; post-B2 = second call returns 409 / existing).
+// IDEMPOTENCY — B2 guard: unique partial index on invoice_items(project_id,
+// period_year, period_month) prevents duplicate monthly billing. A second POST
+// for the same project+month returns 409 with existing_invoice_id so the
+// frontend can deep-link to the already-created invoice.
 // ════════════════════════════════════════════════════════════════════════════
 
-test('// IDEMPOTENCY: bill-multiple does NOT prevent duplicate monthly invoices (pre-B2)', async () => {
-  // TODO B2: this test will need inversion after B2 lands. Post-B2:
-  //   - second call must NOT create a duplicate invoice; must error 409 or
-  //     return existing invoice id reference.
-  // Pre-B2 (current): two POST calls with same project + period_year +
-  // period_month happily create two separate invoices.
+test('IDEMPOTENCY: bill-multiple rejects duplicate monthly invoice with 409 (post-B2)', async () => {
+  // Post-B2 behavior: the unique partial index idx_invoice_items_project_period
+  // (migration 0043) means a second call for the same project+period_year+period_month
+  // is caught by the 23505 handler and returns 409 with existing_invoice_id.
+  // Only one invoice is created; the DB count stays at 1.
   const proj = await seedHourlyProject({
     client_id: sharedClient.id,
     billing_rate: 90,
@@ -704,7 +704,8 @@ test('// IDEMPOTENCY: bill-multiple does NOT prevent duplicate monthly invoices 
   });
   extraCleanup.invoices.push(first.invoice_id);
 
-  const second = await requestJson('POST', '/api/billing/bill-multiple', {
+  // Second POST for the same project + period must return 409.
+  const secondRaw = await request('POST', '/api/billing/bill-multiple', {
     token,
     body: {
       project_ids: [proj.id],
@@ -712,21 +713,23 @@ test('// IDEMPOTENCY: bill-multiple does NOT prevent duplicate monthly invoices 
       items: [{ project_id: proj.id, period_year: 2024, period_month: 12 }],
     },
   });
-  extraCleanup.invoices.push(second.invoice_id);
+  assert.equal(secondRaw.status, 409,
+    'post-B2: duplicate period billing must return 409');
 
-  // Pre-B2: BOTH succeed and produce DIFFERENT invoice ids.
-  assert.notEqual(first.invoice_id, second.invoice_id,
-    'CURRENT (pre-B2): duplicate period billing creates two invoices');
+  const secondBody = await secondRaw.json();
+  assert.ok(secondBody.error, 'post-B2: 409 body must include error message');
+  assert.equal(secondBody.existing_invoice_id, first.invoice_id,
+    'post-B2: 409 body must reference the original invoice id');
 
+  // Only one invoice item for this project+month exists in the DB.
   const { rows } = await pool.query(`
     SELECT COUNT(*)::int AS n FROM invoices i
     JOIN invoice_items ii ON ii.invoice_id = i.id
     WHERE ii.project_id = $1
       AND i.billing_period_start = '2024-12-01'
   `, [proj.id]);
-  // Pre-B2: 2 invoices land. Post-B2 (after the fix), this must be 1.
-  assert.equal(rows[0].n, 2,
-    'CURRENT (pre-B2): two duplicate invoices exist for the same project+month');
+  assert.equal(rows[0].n, 1,
+    'post-B2: only one invoice must exist for the same project+month');
 });
 
 // ════════════════════════════════════════════════════════════════════════════

@@ -1851,6 +1851,12 @@ CREATE INDEX idx_invoice_items_invoice_id ON public.invoice_items USING btree (i
 CREATE INDEX idx_invoice_items_project_id ON public.invoice_items USING btree (project_id);
 
 --
+-- Name: idx_invoice_items_project_period; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE UNIQUE INDEX idx_invoice_items_project_period ON public.invoice_items USING btree (project_id, period_year, period_month) WHERE ((period_year IS NOT NULL) AND (period_month IS NOT NULL));
+
+--
 -- Name: idx_invoice_templates_job_client; Type: INDEX; Schema: public; Owner: -
 --
 
