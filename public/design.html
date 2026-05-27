@@ -379,16 +379,6 @@ fetch('/api/auth/me', { credentials: 'include' })
     <thead><tr><th>Project</th><th>Client</th><th>WO #</th><th>Stage</th><th>Pipeline</th><th></th></tr></thead>
     <tbody id="dplb"><tr><td colspan="6" class="empty-state">Loading...</td></tr></tbody>
   </table></div></div>
-  <!-- Hidden compatibility shims for legacy listeners that touch these IDs.
-       The <tbody> MUST be wrapped in a <table> — a tbody as a direct child
-       of a div is invalid HTML and Chrome's parser silently drops the tag,
-       which made getElementById('dpb') return null and crashed loadProjects'
-       catch (line 641) the moment any /api/projects call threw. -->
-  <div style="display:none">
-    <input id="proj-search" aria-label="Search projects">
-    <select id="proj-status-filter" aria-label="Project status filter"><option value="active" selected>Active</option></select>
-    <table><tbody id="dpb"></tbody></table>
-  </div>
 </div>
 
 <!-- ───────── POTENTIAL PERMITS VIEW ───────── -->
@@ -799,47 +789,6 @@ function setStab(name){
   document.getElementById('stab-'+name).style.display='block';
 }
 
-// ═══════════════════════════════════════════════════════════════════════════
-// PROJECTS — list, filter, create
-// ═══════════════════════════════════════════════════════════════════════════
-async function loadProjects(){
-  const status = document.getElementById('proj-status-filter')?.value || '';
-  const url = '/api/projects' + (status ? '?status=' + encodeURIComponent(status) + '&leaves_only=true' : '?leaves_only=true');
-  try {
-    projectsCache = await api(url);
-    renderProjects(projectsCache);
-  } catch (e) {
-    document.getElementById('dpb').innerHTML = '<tr><td colspan="7" class="empty-state">Error loading: ' + esc(e.message) + '</td></tr>';
-  }
-}
-
-function renderProjects(list){
-  const body = document.getElementById('dpb');
-  if (!list.length) { body.innerHTML = '<tr><td colspan="7" class="empty-state"><i class="fa-solid fa-folder-open"></i><br>No projects yet. Click "New Project" to add one.</td></tr>'; return; }
-  body.innerHTML = list.map(p => {
-    const stage = p.current_stage ? `<span class="badge" style="background:var(--primary-light);color:var(--portal-color)">${DL[p.current_stage] || p.current_stage}</span>` : '—';
-    const job = jobsCache.find(j => j.id === p.job_id)?.name || '—';
-    return `<tr>
-      <td class="td-name">${p.parent_name ? '<span style="color:var(--text-muted);font-size:11px">↳ </span>' : ''}${esc(p.name)}</td>
-      <td>${esc(p.client_name || '—')}</td>
-      <td class="td-mono">${esc(p.work_order_number || '—')}</td>
-      <td>${esc(job)}</td>
-      <td>${stage}</td>
-      <td><span class="badge badge-${p.status}">${esc(p.status)}</span></td>
-      <td><button class="btn btn-sm btn-secondary" onclick="editProject('${p.id}')" title="Edit"><i class="fa-solid fa-pen"></i></button></td>
-    </tr>`;
-  }).join('');
-}
-
-function filterProjects(){
-  const q = (document.getElementById('proj-search').value || '').toLowerCase();
-  if (!q) return renderProjects(projectsCache);
-  renderProjects(projectsCache.filter(p =>
-    (p.name||'').toLowerCase().includes(q) ||
-    (p.client_name||'').toLowerCase().includes(q) ||
-    (p.work_order_number||'').toLowerCase().includes(q)
-  ));
-}
 
 // Open the project modal blank (or pre-filled when editing).
 async function openProjectModal(){
@@ -1710,7 +1659,6 @@ async function dpSubmitCascade() {
       dpShowToast('Created new job: ' + jobName);
     }
     cm('project-modal');
-    loadProjects();
     loadPipeline();
   } catch (e) {
     if (e.message && e.message.includes('admin must initialize service area')) {
@@ -1914,7 +1862,6 @@ async function saveProject(){
   try {
     await api('/api/projects/' + id, 'PUT', payload);
     cm('project-modal');
-    loadProjects();
     loadPipeline();
   } catch (e) {
     if (/duplicate|already exists/i.test(e.message)) {
@@ -2024,7 +1971,7 @@ async function advanceDesign(id){
   try {
     const r = await api('/api/design/' + id + '/advance', 'PUT', { _: 'Design Portal' });
     if (r.current === 'completed') alert('Design completed! It will appear in the billing dashboard.');
-    loadPipeline(); loadProjects();
+    loadPipeline();
   } catch (e) { alert(e.message); }
 }
 
@@ -2464,7 +2411,6 @@ async function _pollTick(){
   const viewId = active?.id || '';
   const callIfExists = (name) => { try { if (typeof window[name] === 'function') return window[name](); } catch(e){} };
 
-  if (viewId === 'view-projects')   callIfExists('loadProjects');
   if (viewId === 'view-pipeline')   callIfExists('loadPipeline');
   if (viewId === 'view-potential')  callIfExists('loadPotential');
   if (viewId === 'view-dashboard')  callIfExists('loadDashboard');
@@ -2541,8 +2487,7 @@ fetch('/api/me/portals',{credentials:'include'}).then(r=>r.json()).then(({portal
         _sseSource.addEventListener(ev, () => _debounce('hours', () => callIfExists('loadHours')));
       });
       ['project_added', 'project_updated', 'project_deleted'].forEach(ev => {
-        _sseSource.addEventListener(ev, () => _debounce('projects', () => callIfExists('loadProjects')));
-        // Also refresh the design pipeline view on project changes — stage advances/
+        // Refresh the design pipeline view on project changes — stage advances/
         // regresses now broadcast project_updated so the pipeline stays live.
         _sseSource.addEventListener(ev, () => _debounce('pipeline', () => callIfExists('loadPipeline')));
       });
