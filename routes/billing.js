@@ -62,7 +62,9 @@ module.exports = function installBillingRoutes(app, pool, mw) {
       // For monthly cadence projects, the override should also include
       // period_year / period_month — we sum hours just from that month.
       const itemMap = new Map((items || []).map(it => [it.project_id, it]));
-      let total = 0;
+      // Accumulate in integer cents to avoid float drift on multi-line invoices.
+      // Convert back to dollars only at DB-write / response time.
+      let totalCents = 0;
       const lineItems = [];
       for (const p of projR.rows) {
         const override = itemMap.get(p.id) || {};
@@ -116,7 +118,8 @@ module.exports = function installBillingRoutes(app, pool, mw) {
           period_year: override.period_year || null,
           period_month: override.period_month || null
         });
-        total += amount;
+        // Integer-cents accumulation — eliminates float drift on sums.
+        totalCents += Math.round(amount * 100);
       }
 
       // Determine invoice_date AND billing_period bounds.
@@ -150,6 +153,8 @@ module.exports = function installBillingRoutes(app, pool, mw) {
         const lastDay = new Date(py, pm, 0).getDate();
         billingPeriodEnd = `${py}-${String(pm).padStart(2, '0')}-${String(lastDay).padStart(2, '0')}`;
       }
+      // Convert cents back to dollars for the DB write (toFixed keeps precision explicit).
+      const total = totalCents / 100;
       const invR = await client.query(
         `INSERT INTO invoices (client_id, invoice_number, invoice_date,
                                billing_period_start, billing_period_end,
@@ -157,7 +162,7 @@ module.exports = function installBillingRoutes(app, pool, mw) {
          VALUES ($1, $2, $3, $4, $5, $6, 'sent', $7) RETURNING id`,
         [billClientId, invoice_number || null, billDate,
          billingPeriodStart, billingPeriodEnd,
-         total, invoice_name || null]
+         (totalCents / 100).toFixed(2), invoice_name || null]
       );
       const invoiceId = invR.rows[0].id;
 
@@ -315,7 +320,11 @@ module.exports = function installBillingRoutes(app, pool, mw) {
       // Inferred fields can be null when the selection is ambiguous — that's
       // fine for a batch (admin can fix before confirming). We still store
       // whatever single values the inference picked up.
-      const totalAmount = (Array.isArray(items) ? items : []).reduce((s, it) => s + (Number(it.snapshot_amount) || 0), 0);
+      // Accumulate snapshot_amounts in integer cents to avoid float drift.
+      const totalAmountCents = (Array.isArray(items) ? items : []).reduce(
+        (s, it) => s + Math.round((Number(it.snapshot_amount) || 0) * 100), 0
+      );
+      const totalAmount = totalAmountCents / 100;
       const { rows: br } = await client.query(
         `INSERT INTO billing_batches
            (name, client_id, engineering_contract_id, job_id, period_start, period_end, total_amount, notes, created_by_user_id)
@@ -491,8 +500,9 @@ module.exports = function installBillingRoutes(app, pool, mw) {
         ORDER BY inv.invoice_date ASC, inv.created_at ASC
       `, params);
 
+      // Sum in integer cents to avoid float drift on large monthly rollups.
       const monthlyRev = month
-        ? invR.rows.reduce((s, r) => s + parseFloat(r.total_amount || 0), 0)
+        ? invR.rows.reduce((s, r) => s + Math.round(parseFloat(r.total_amount || 0) * 100), 0) / 100
         : null;
 
       const ytdR = await pool.query(`

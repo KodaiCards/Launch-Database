@@ -659,14 +659,11 @@ test('// FLOAT-DRIFT: classic 0.1 + 0.2 case via override amounts', async () => 
   });
   extraCleanup.invoices.push(res.invoice_id);
 
-  // CURRENT BEHAVIOR: response.total is the JS float 0.30000000000000004
-  // (because total += amount accumulates floats before the JSON serializer
-  // runs). DB column rounds to 0.30 via NUMERIC(12,2).
-  // After B1 cents-int refactor: response.total should be exactly 0.30.
-  // Capture present behavior — round to 2 decimals to be robust to either
-  // direction the refactor lands.
-  assert.equal(dec2(res.total), 0.30,
-    'rounded total must be 0.30 — exact pre-B1 (DECIMAL cast) AND post-B1 (cents-int)');
+  // Post-B1 (cents-int): response.total is exactly 0.30 (30 cents / 100).
+  // The float-drift path (0.30000000000000004) is eliminated because the
+  // accumulator now runs in integer cents.
+  assert.equal(res.total, 0.30,
+    'post-B1: response.total must be exactly 0.30 — cents-int eliminates float drift');
 
   const { rows } = await pool.query(
     `SELECT total_amount FROM invoices WHERE id = $1`, [res.invoice_id]
