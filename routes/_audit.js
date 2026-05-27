@@ -95,4 +95,60 @@ function redactPII(obj) {
   return obj;
 }
 
-module.exports = { logAudit, redactPII };
+/**
+ * Archive old audit_log rows by setting archived_at timestamp.
+ * Respects the hot_retention_days threshold from audit_retention_config.
+ * Rows are NOT deleted (DELETE trigger prevents removal); only marked archived.
+ *
+ * @param {Pool} pool - Postgres connection pool
+ * @param {Object} options - optional overrides
+ * @param {number} options.hot_retention_days - override config default
+ * @returns {Promise<{rows_archived: number, cutoff_at: Date}>}
+ */
+async function archiveOldAuditRows(pool, options = {}) {
+  try {
+    // Read current retention config
+    const configResult = await pool.query(
+      `SELECT hot_retention_days FROM audit_retention_config WHERE id = 1`
+    );
+    const hotRetentionDays = options.hot_retention_days ||
+      (configResult.rows[0]?.hot_retention_days ?? 730);
+
+    // Calculate cutoff: rows older than hot_retention_days get archived
+    const cutoffDate = new Date();
+    cutoffDate.setDate(cutoffDate.getDate() - hotRetentionDays);
+
+    // Update rows to set archived_at (transactional)
+    const updateResult = await pool.query(
+      `UPDATE audit_log
+       SET archived_at = now()
+       WHERE archived_at IS NULL AND at < $1
+       RETURNING id`,
+      [cutoffDate]
+    );
+
+    const rowsArchived = updateResult.rowCount || 0;
+
+    // Update the config table with run state
+    await pool.query(
+      `UPDATE audit_retention_config
+       SET last_archive_run_at = now(),
+           last_archive_row_count = $1,
+           updated_at = now()
+       WHERE id = 1`,
+      [rowsArchived]
+    );
+
+    console.log(`[audit-retention] archived ${rowsArchived} rows older than ${hotRetentionDays} days (cutoff: ${cutoffDate.toISOString()})`);
+
+    return {
+      rows_archived: rowsArchived,
+      cutoff_at: cutoffDate,
+    };
+  } catch (e) {
+    console.error('[audit_log:archive]', e && e.message);
+    throw e; // Re-throw so caller can decide whether to fail gracefully
+  }
+}
+
+module.exports = { logAudit, redactPII, archiveOldAuditRows };

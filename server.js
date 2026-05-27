@@ -2021,6 +2021,27 @@ async function start(opts = {}) {
     } catch (e) {
       console.error('[boot] startScheduler failed (continuing without it):', e && (e.message || e));
     }
+
+    // Audit log auto-archive scheduler (RUS retention policy)
+    // Wave 47: soft-archive (set archived_at) for rows older than hot_retention_days.
+    // Respects AUDIT_AUTO_ARCHIVE_ENABLED env var (default: false).
+    if (process.env.AUDIT_AUTO_ARCHIVE_ENABLED === 'true') {
+      const { archiveOldAuditRows } = require('./routes/_audit');
+      // Run once on startup after a short delay (let pool settle)
+      setTimeout(() => {
+        archiveOldAuditRows(pool).catch(e => {
+          console.error('[audit-retention] startup archive failed:', e && (e.message || e));
+        });
+      }, 30000);
+      // Then run daily (24 hours)
+      setInterval(() => {
+        archiveOldAuditRows(pool).catch(e => {
+          console.error('[audit-retention] daily archive failed:', e && (e.message || e));
+        });
+      }, 24 * 60 * 60 * 1000);
+    } else {
+      console.log('[audit-retention] auto-archive disabled (set AUDIT_AUTO_ARCHIVE_ENABLED=true to enable)');
+    }
   }
   // listenPort: pass 0 from tests to bind to an ephemeral port; pass the
   // configured PORT in production. We log the resolved port (server.address())

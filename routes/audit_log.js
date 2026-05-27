@@ -10,7 +10,7 @@
 //   GET  /api/admin/audit-log              — paginated list with optional filters
 //   GET  /api/admin/audit-log/:id         — single row detail
 
-const { redactPII } = require('./_audit');
+const { redactPII, archiveOldAuditRows, logAudit } = require('./_audit');
 
 module.exports = function installAuditLogRoutes(app, pool, mw) {
   const requireAdmin = (mw && mw.requireAdmin) || ((req, res, next) => next());
@@ -156,6 +156,76 @@ module.exports = function installAuditLogRoutes(app, pool, mw) {
       res.json(redactedRow);
     } catch (e) {
       serverError(res, e, 'GET /api/admin/audit-log/:id');
+    }
+  });
+
+  // GET /api/admin/audit-log/retention/status — return retention config + live counts
+  // Returns: {hot_retention_days, total_retention_days, last_archive_run_at, last_archive_row_count, hot_row_count, archived_row_count}
+  app.get('/api/admin/audit-log/retention/status', requireAdmin, async (req, res) => {
+    try {
+      // Fetch config
+      const { rows: configRows } = await pool.query(
+        `SELECT hot_retention_days, total_retention_days, last_archive_run_at, last_archive_row_count
+         FROM audit_retention_config WHERE id = 1`
+      );
+      const config = configRows[0] || {
+        hot_retention_days: 730,
+        total_retention_days: 2557,
+        last_archive_run_at: null,
+        last_archive_row_count: null,
+      };
+
+      // Fetch hot row count (where archived_at IS NULL)
+      const { rows: hotRows } = await pool.query(
+        `SELECT COUNT(*) as count FROM audit_log WHERE archived_at IS NULL`
+      );
+      const hotRowCount = hotRows[0]?.count || 0;
+
+      // Fetch archived row count (where archived_at IS NOT NULL)
+      const { rows: archivedRows } = await pool.query(
+        `SELECT COUNT(*) as count FROM audit_log WHERE archived_at IS NOT NULL`
+      );
+      const archivedRowCount = archivedRows[0]?.count || 0;
+
+      res.json({
+        hot_retention_days: config.hot_retention_days,
+        total_retention_days: config.total_retention_days,
+        last_archive_run_at: config.last_archive_run_at,
+        last_archive_row_count: config.last_archive_row_count,
+        hot_row_count: hotRowCount,
+        archived_row_count: archivedRowCount,
+      });
+    } catch (e) {
+      serverError(res, e, 'GET /api/admin/audit-log/retention/status');
+    }
+  });
+
+  // POST /api/admin/audit-log/retention/archive-now — manually trigger archive
+  // Returns: {rows_archived, cutoff_at}
+  app.post('/api/admin/audit-log/retention/archive-now', requireAdmin, async (req, res) => {
+    try {
+      const result = await archiveOldAuditRows(pool);
+
+      // Log the archive action itself as an audit event
+      await logAudit(pool, {
+        req,
+        action: 'audit.archive_run',
+        entity_type: 'audit_log',
+        entity_id: null,
+        source: 'admin_ui',
+        meta: {
+          rows_archived: result.rows_archived,
+          cutoff_at: result.cutoff_at,
+          trigger: 'manual',
+        },
+      });
+
+      res.json({
+        rows_archived: result.rows_archived,
+        cutoff_at: result.cutoff_at,
+      });
+    } catch (e) {
+      serverError(res, e, 'POST /api/admin/audit-log/retention/archive-now');
     }
   });
 };

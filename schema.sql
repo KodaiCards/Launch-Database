@@ -3403,5 +3403,26 @@ CREATE TRIGGER trg_audit_log_no_delete
     BEFORE DELETE ON public.audit_log
     FOR EACH ROW EXECUTE FUNCTION public.prevent_audit_delete();
 
+-- archived_at column (soft-archive marker, not deletion)
+-- Migration 0048: retention policy tracking
+ALTER TABLE IF EXISTS public.audit_log
+    ADD COLUMN IF NOT EXISTS archived_at timestamp with time zone;
+
+CREATE INDEX IF NOT EXISTS idx_audit_log_hot ON public.audit_log (at DESC) WHERE archived_at IS NULL;
+CREATE INDEX IF NOT EXISTS idx_audit_log_archived ON public.audit_log (archived_at) WHERE archived_at IS NOT NULL;
+
+-- audit_retention_config: singleton retention policy + archive run state
+CREATE TABLE IF NOT EXISTS public.audit_retention_config (
+    id                    integer NOT NULL PRIMARY KEY,
+    hot_retention_days    integer NOT NULL DEFAULT 730,
+    total_retention_days  integer NOT NULL DEFAULT 2557,
+    last_archive_run_at   timestamp with time zone,
+    last_archive_row_count integer,
+    updated_at            timestamp with time zone NOT NULL DEFAULT now(),
+    CONSTRAINT audit_retention_config_id_check CHECK ((id = 1))
+);
+
+INSERT INTO public.audit_retention_config (id) VALUES (1) ON CONFLICT DO NOTHING;
+
 --
 --

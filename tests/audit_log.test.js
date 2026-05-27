@@ -296,3 +296,87 @@ test('GET /api/admin/audit-log/:id returns X-Audit-Redacted header', async () =>
   assert.equal(r.before_data.api_key, '[REDACTED]', 'api_key should be redacted');
   assert.equal(r.meta.reason, 'test', 'non-sensitive meta field preserved');
 });
+
+test('archiveOldAuditRows archives rows older than hot_retention_days', async () => {
+  const { archiveOldAuditRows } = require('../routes/_audit');
+
+  // Insert a row dated 800 days ago (should be archived with default 730-day threshold)
+  const pastDate = new Date();
+  pastDate.setDate(pastDate.getDate() - 800);
+
+  await pool.query(
+    `INSERT INTO audit_log (at, actor_type, action, entity_type, source)
+     VALUES ($1, 'system', 'archive.test.old', 'project', 'test')`,
+    [pastDate]
+  );
+
+  // Insert a row dated 30 days ago (should NOT be archived)
+  const recentDate = new Date();
+  recentDate.setDate(recentDate.getDate() - 30);
+
+  await pool.query(
+    `INSERT INTO audit_log (at, actor_type, action, entity_type, source)
+     VALUES ($1, 'system', 'archive.test.recent', 'project', 'test')`,
+    [recentDate]
+  );
+
+  // Run the archive
+  const result = await archiveOldAuditRows(pool);
+
+  // Verify old row is archived
+  const { rows: oldRows } = await pool.query(
+    `SELECT id, archived_at FROM audit_log WHERE action = 'archive.test.old'`
+  );
+  assert.equal(oldRows.length, 1, 'should find the old row');
+  assert.ok(oldRows[0].archived_at, 'old row should be archived_at');
+
+  // Verify recent row is NOT archived
+  const { rows: recentRows } = await pool.query(
+    `SELECT id, archived_at FROM audit_log WHERE action = 'archive.test.recent'`
+  );
+  assert.equal(recentRows.length, 1, 'should find the recent row');
+  assert.strictEqual(recentRows[0].archived_at, null, 'recent row should NOT be archived');
+
+  // Verify result
+  assert.equal(result.rows_archived, 1, 'should report 1 row archived');
+  assert.ok(result.cutoff_at instanceof Date, 'should return cutoff_at as Date');
+});
+
+test('GET /api/admin/audit-log/retention/status returns config + counts', async () => {
+  const token = await adminLogin();
+
+  const r = await requestJson('GET', '/api/admin/audit-log/retention/status', { token });
+
+  assert.equal(typeof r.hot_retention_days, 'number', 'hot_retention_days should be number');
+  assert.equal(typeof r.total_retention_days, 'number', 'total_retention_days should be number');
+  assert.equal(typeof r.hot_row_count, 'number', 'hot_row_count should be number');
+  assert.equal(typeof r.archived_row_count, 'number', 'archived_row_count should be number');
+  assert.ok(r.hot_row_count > 0, 'should have at least some hot rows (from prior tests)');
+});
+
+test('POST /api/admin/audit-log/retention/archive-now triggers archive + logs action', async () => {
+  const token = await adminLogin();
+
+  // Insert an old row to be archived
+  const pastDate = new Date();
+  pastDate.setDate(pastDate.getDate() - 800);
+  await pool.query(
+    `INSERT INTO audit_log (at, actor_type, action, entity_type, source)
+     VALUES ($1, 'system', 'archive.test.manual', 'project', 'test')`,
+    [pastDate]
+  );
+
+  // Trigger manual archive
+  const r = await requestJson('POST', '/api/admin/audit-log/retention/archive-now', { token, body: {} });
+
+  assert.equal(typeof r.rows_archived, 'number', 'rows_archived should be number');
+  assert.ok(r.cutoff_at, 'cutoff_at should be present');
+
+  // Verify the archive action was logged in audit_log
+  const { rows: auditRows } = await pool.query(
+    `SELECT action, meta FROM audit_log WHERE action = 'audit.archive_run' ORDER BY at DESC LIMIT 1`
+  );
+  assert.ok(auditRows.length > 0, 'should have logged the archive action');
+  assert.equal(auditRows[0].action, 'audit.archive_run', 'action should be audit.archive_run');
+  assert.equal(auditRows[0].meta.trigger, 'manual', 'meta.trigger should be manual');
+});
