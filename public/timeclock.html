@@ -966,7 +966,7 @@ async function quickClockIn(projectId, jobId, jobTitle){
     const body = { project_id: projectId };
     if (jobId) body.job_id = jobId;
     if (jobTitle) body.job_title = jobTitle;
-    await api('/api/timeclock/clock-in', { method:'POST', body: JSON.stringify(body) });
+    await api('/api/timeclock/clock-in', 'POST', body);
     if (window.LFS && window.LFS.toast) window.LFS.toast.success('Clocked in.');
     await loadActiveSession();
     await loadWeek();
@@ -979,7 +979,7 @@ async function quickClockIn(projectId, jobId, jobTitle){
 async function clockIn(){
   let project_id;
   try {
-    const resolved = await resolveOrCreateFromCascade('ci');
+    const resolved = resolveFromCascadeOnly('ci');
     project_id = resolved.id;
   } catch(e){
     alert(e.message || 'Please complete all fields before clocking in.');
@@ -1059,7 +1059,7 @@ function openSwitchModal(){
 async function doSwitch(){
   let project_id;
   try {
-    const resolved = await resolveOrCreateFromCascade('sw');
+    const resolved = resolveFromCascadeOnly('sw');
     project_id = resolved.id;
   } catch(e){
     alert(e.message || 'Please complete all fields before switching.');
@@ -1567,6 +1567,50 @@ function cascadeJobInput(prefix){
 function cascadeSaLabelInput(prefix){
   const textInp = _el(prefix, 'sa-text');
   _ssSet('lf_tc_' + prefix + '_sa_label', textInp ? textInp.value : null);
+}
+
+// resolveFromCascadeOnly — timeclock-specific resolver that finds an existing
+// leaf project from the cascade selections WITHOUT creating one. If the job
+// name doesn't match any leaf under the selected SA (or client in no-EC mode),
+// the user gets a clear error asking them to pick from the list.
+// Clock-in and switch MUST use this — no phantom projects from typos.
+function resolveFromCascadeOnly(prefix){
+  const clientSel = _el(prefix, 'client');
+  const progSel = _el(prefix, 'program');
+  const saSel = _el(prefix, 'sa');
+  const jobInp = _el(prefix, 'job');
+
+  const client_id = clientSel ? clientSel.value : '';
+  const program = progSel ? progSel.value : '';
+  const job_name = (jobInp ? jobInp.value : '').trim();
+
+  if (!client_id) throw new Error('Please select a client.');
+  if (!program) throw new Error('Please select a program.');
+  if (!job_name) throw new Error('Please select a job.');
+
+  const textRow = document.getElementById(prefix + '-sa-text-row');
+  const isNoEc = textRow && textRow.style.display !== 'none';
+
+  let candidates = projectsCache.filter(p =>
+    !p.is_rollup &&
+    !(Number(p.child_count) > 0) &&
+    String(p.client_id) === String(client_id) &&
+    (p.status || 'active') !== 'completed'
+  );
+
+  if (!isNoEc) {
+    const sa_folder_id = saSel ? saSel.value : '';
+    if (!sa_folder_id) throw new Error('Please select a service area.');
+    candidates = candidates.filter(p => String(p.parent_id) === String(sa_folder_id));
+  }
+
+  const match = candidates.find(p =>
+    (p.name || '').toLowerCase() === job_name.toLowerCase()
+  );
+  if (!match) {
+    throw new Error('Job "' + job_name + '" not found. Select an existing job from the list.');
+  }
+  return match;
 }
 
 async function resolveOrCreateFromCascade(prefix){

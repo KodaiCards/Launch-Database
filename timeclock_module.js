@@ -303,6 +303,72 @@ function installTimeClockRoutes(app, pool, requireAuth) {
   }
 
   // ─────────────────────────────────────────────────────────────────────────
+  // GET /api/timeclock/picker-data
+  //
+  // Returns all cascade data in a single call so the clock-in and
+  // switch-project pickers can build their Client → Program → SA → Job
+  // selects without multiple round-trips. Only active (non-completed) leaf
+  // projects are returned — completed projects appear only in the back-fill
+  // / edit-entry context which uses the separate /api/projects endpoint.
+  //
+  // Response shape:
+  //   {
+  //     clients:       [{ id, name }],
+  //     ecs:           [{ id, client_id, program, work_order_number }],
+  //     service_areas: [{ id, name, ec_id, client_id, program }],
+  //     projects:      [{ id, name, client_id, program, parent_id,
+  //                       work_order_number, client_name }]
+  //   }
+  // ─────────────────────────────────────────────────────────────────────────
+  app.get('/api/timeclock/picker-data', requireAuth(), async (req, res) => {
+    try {
+      const { rows: clients } = await pool.query(`
+        SELECT DISTINCT c.id, c.name
+        FROM clients c
+        JOIN projects p ON p.client_id = c.id
+        WHERE p.is_rollup IS NOT TRUE
+          AND COALESCE(p.status, 'active') != 'completed'
+        ORDER BY c.name
+      `);
+
+      const { rows: ecs } = await pool.query(`
+        SELECT ec.id, ec.client_id, ec.program, ec.work_order_number
+        FROM engineering_contracts ec
+        WHERE ec.active = TRUE
+        ORDER BY ec.client_id, ec.program
+      `);
+
+      const { rows: service_areas } = await pool.query(`
+        SELECT p.id, p.name, p.client_id, p.program,
+               p.engineering_contract_id AS ec_id,
+               p.rollup_key
+        FROM projects p
+        WHERE p.is_rollup = TRUE
+          AND p.engineering_contract_id IS NOT NULL
+          AND p.rollup_type = 'service_area'
+        ORDER BY p.client_id, p.name
+      `);
+
+      const { rows: projects } = await pool.query(`
+        SELECT p.id, p.name, p.client_id, p.program,
+               p.parent_id,
+               p.work_order_number,
+               c.name AS client_name
+        FROM projects p
+        LEFT JOIN clients c ON c.id = p.client_id
+        WHERE p.is_rollup IS NOT TRUE
+          AND COALESCE(p.status, 'active') != 'completed'
+        ORDER BY c.name, p.name
+      `);
+
+      res.json({ clients, ecs, service_areas, projects });
+    } catch (e) {
+      console.error('[timeclock:picker-data]', e && e.message);
+      res.status(500).json({ error: 'Failed to load picker data.' });
+    }
+  });
+
+  // ─────────────────────────────────────────────────────────────────────────
   // GET /api/timeclock/active
   // Returns the user's current open session (or null if not clocked in).
   // Used by the portal on page load + every poll tick to render Clock In

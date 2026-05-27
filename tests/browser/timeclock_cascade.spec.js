@@ -351,7 +351,58 @@ test('cascade: existing job name returns same project (no duplicate)', async ({ 
 });
 
 // ---------------------------------------------------------------------------
-// Test 8: sessionStorage stickiness — client/program persists across page reload
+// Test 8: resolveFromCascadeOnly rejects unknown job names (no auto-create)
+// ---------------------------------------------------------------------------
+test('cascade: clock-in resolve-only rejects unknown job name without creating', async ({ page }) => {
+  if (!HAS_DB) test.skip('Requires DATABASE_URL');
+
+  const pageErrors = [];
+  page.on('pageerror', err => pageErrors.push(err));
+
+  await login(page);
+  await page.goto('/timeclock');
+
+  // Only runs when clocked out (ci- selects are rendered).
+  const ciClient = page.locator('#ci-client');
+  if (await ciClient.count() === 0) {
+    test.skip('Already clocked in — ci cascade not rendered');
+    return;
+  }
+
+  await page.locator('#ci-client').selectOption({ label: fixtures.client.name });
+  await page.waitForFunction(() => !document.getElementById('ci-program').disabled, { timeout: 8_000 });
+  await page.locator('#ci-program').selectOption('rus');
+  await page.waitForFunction(() => !document.getElementById('ci-sa').disabled, { timeout: 8_000 });
+  await page.locator('#ci-sa').selectOption({ index: 1 });
+  await page.waitForFunction(() => !document.getElementById('ci-job').disabled, { timeout: 8_000 });
+
+  // Type a job name that does NOT exist — resolve-only should throw.
+  const bogusJob = `BogusJob-${Date.now()}`;
+  await page.locator('#ci-job').fill(bogusJob);
+
+  const result = await page.evaluate(() => {
+    try {
+      const r = window.resolveFromCascadeOnly('ci');
+      return { ok: true, id: r.id };
+    } catch (e) {
+      return { ok: false, error: e.message };
+    }
+  });
+
+  expect(result.ok).toBe(false);
+  expect(result.error).toMatch(/not found/i);
+
+  // Confirm no new project was created with that name.
+  const pool = new Pool({ connectionString: process.env.TEST_DATABASE_URL || process.env.DATABASE_URL });
+  const { rows } = await pool.query(`SELECT id FROM projects WHERE name = $1`, [bogusJob]);
+  await pool.end();
+  expect(rows).toHaveLength(0);
+
+  expect(pageErrors.map(e => e.message)).toEqual([]);
+});
+
+// ---------------------------------------------------------------------------
+// Test 9: sessionStorage stickiness — client/program persists across page reload
 // ---------------------------------------------------------------------------
 test('cascade: sessionStorage stickiness restores client+program on reload', async ({ page }) => {
   if (!HAS_DB) test.skip('Requires DATABASE_URL');
