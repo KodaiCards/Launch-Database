@@ -5,7 +5,6 @@
 import React from 'react';
 import LessonLayout from '../../components/LessonLayout.jsx';
 import Quiz from '../../components/primitives/Quiz.jsx';
-import AnnotatedDiagram from '../../components/primitives/AnnotatedDiagram.jsx';
 import Flashcard from '../../components/Flashcard.jsx';
 
 export const meta = {
@@ -166,23 +165,71 @@ export default function T11L06_CleaveAngleAndArcQuality() {
           <strong>Callback:</strong> From <strong>T11.L04, the cleave step</strong> — you're optimizing the quality of that cut. This lesson shows what acceptable looks like and what to avoid.
         </p>
 
-        <AnnotatedDiagram
-          imageUrl={null}
-          alt="Cleave angle and defect types diagram"
-          width={720}
-          height={280}
-          annotations={[
-            { id: 'perfect', x: 80, y: 80, label: 'Perfect cleave (0°)', description: 'End-face perpendicular to fiber axis. Mirror flat. No chips, no hackle, no lip. This is the target. Splicer shows no cleave warning. Produces lowest possible splice loss.' },
-            { id: 'acceptable', x: 200, y: 80, label: 'Acceptable (0.3°)', description: 'Slight tilt, within ≤0.5° target. Splicer accepts it. May produce 0.01–0.03 dB additional loss vs. perfect cleave — negligible in practice.' },
-            { id: 'marginal', x: 320, y: 80, label: 'Marginal (0.7°)', description: 'Between 0.5° and 1.0°. Splicer shows a warning on some models. Produces 0.03–0.10 dB loss penalty. Likely from a worn blade or contaminated V-groove in the cleaver. Re-cleave before proceeding.' },
-            { id: 'reject', x: 440, y: 80, label: 'Reject (>1.0°)', description: 'Above splicer\'s rejection threshold. Splicer displays "cleave error" or "cleave NG" and will not proceed. Must re-cleave. Root cause: worn blade, contaminated V-groove, fiber not fully seated in cleaver V-groove.' },
-            { id: 'chipped', x: 560, y: 80, label: 'Chipped end-face', description: 'A piece of glass is missing from the end-face edge. Caused by worn blade or glass fragment in the V-groove. Splicer may or may not reject — the chip is not always in the camera\'s field of view. Visual inspection under the splicer\'s 200× magnification will show it. Re-cleave.' },
-            { id: 'hackle', x: 680, y: 80, label: 'Hackle / lip', description: 'A rough texture or protruding edge on the cleaved face. Caused by a chipped blade applying irregular force. Produces a visible step defect on the splicer display. Always re-cleave; hackle cannot be fixed by adjusting arc power.' },
-            { id: 'bubble', x: 360, y: 210, label: 'Void/bubble at fusion', description: 'What a bad cleave (chipped or hackle) looks like AFTER fusion — a visible dark bubble at the splice center on the splicer display. Even if the estimated loss is "acceptable," a visible void means the splice has a mechanical defect. Re-splice.' },
-          ]}
-        />
-        <p className="text-sm text-slate-400 mt-2">
-          Cleave angle and defect types. Re-cleave when: angle &gt;0.5° (warning), &gt;1.0° (error), chipped, hackle, or lip visible. Never proceed with a reject cleave.
+        <p className="text-sm text-slate-300/90 mt-4">
+          Every cleave you make falls into one of four categories on the splicer's angle reading
+          and, if the blade is failing, may carry one of three additional defects. Learn to
+          identify all seven on the splicer display — and re-cleave whenever you see anything
+          other than "Perfect" or "Acceptable."
+        </p>
+
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-3 mt-4">
+          {[
+            {
+              label: 'Perfect cleave (0°)',
+              severity: 'good',
+              description: 'End-face perpendicular to fiber axis. Mirror flat. No chips, no hackle, no lip. This is the target. Splicer shows no cleave warning. Produces lowest possible splice loss.',
+            },
+            {
+              label: 'Acceptable (0.3°)',
+              severity: 'good',
+              description: 'Slight tilt, within ≤0.5° target. Splicer accepts it. May produce 0.01–0.03 dB additional loss vs. perfect cleave — negligible in practice.',
+            },
+            {
+              label: 'Marginal (0.7°)',
+              severity: 'warn',
+              description: 'Between 0.5° and 1.0°. Splicer shows a warning on some models. Produces 0.03–0.10 dB loss penalty. Likely from a worn blade or contaminated V-groove in the cleaver. Re-cleave before proceeding.',
+            },
+            {
+              label: 'Reject (>1.0°)',
+              severity: 'bad',
+              description: 'Above splicer\'s rejection threshold. Splicer displays "cleave error" or "cleave NG" and will not proceed. Must re-cleave. Root cause: worn blade, contaminated V-groove, fiber not fully seated in cleaver V-groove.',
+            },
+            {
+              label: 'Chipped end-face',
+              severity: 'bad',
+              description: 'A piece of glass is missing from the end-face edge. Caused by worn blade or glass fragment in the V-groove. Splicer may or may not reject — the chip is not always in the camera\'s field of view. Visual inspection under the splicer\'s 200× magnification will show it. Re-cleave.',
+            },
+            {
+              label: 'Hackle / lip',
+              severity: 'bad',
+              description: 'A rough texture or protruding edge on the cleaved face. Caused by a chipped blade applying irregular force. Produces a visible step defect on the splicer display. Always re-cleave; hackle cannot be fixed by adjusting arc power.',
+            },
+            {
+              label: 'Void / bubble at fusion',
+              severity: 'bad',
+              description: 'What a bad cleave (chipped or hackle) looks like AFTER fusion — a visible dark bubble at the splice center on the splicer display. Even if the estimated loss is "acceptable," a visible void means the splice has a mechanical defect. Re-splice.',
+            },
+          ].map(({ label, severity, description }) => {
+            const borderClass =
+              severity === 'good' ? 'border-green-500/40 bg-green-500/5' :
+              severity === 'warn' ? 'border-yellow-500/40 bg-yellow-500/5' :
+                                     'border-red-500/40 bg-red-500/5';
+            const labelClass =
+              severity === 'good' ? 'text-green-300' :
+              severity === 'warn' ? 'text-yellow-300' :
+                                     'text-red-300';
+            return (
+              <div key={label} className={`p-3 rounded-lg border ${borderClass}`}>
+                <p className={`font-semibold text-sm ${labelClass}`}>{label}</p>
+                <p className="text-slate-300/90 text-xs mt-1 leading-relaxed">{description}</p>
+              </div>
+            );
+          })}
+        </div>
+        <p className="text-sm text-slate-400 mt-3">
+          Re-cleave when: angle &gt;0.5° (warning), &gt;1.0° (error), or any chip, hackle, or lip
+          visible. Never proceed with a reject cleave — bad geometry going into the arc cannot be
+          repaired by adjusting fusion power.
         </p>
 
         <h3 className="mt-6 font-semibold">Arc Calibration: Three Triggers, One Discipline</h3>

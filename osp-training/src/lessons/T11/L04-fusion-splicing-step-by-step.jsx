@@ -1,11 +1,10 @@
 // T11.L04 — Fusion Splicing — Step by Step
 // Foundation lesson: every step from opening buffer tube to closing splice protector
-// Source: M04 §4.2 migrated + AnnotatedDiagram + step-sequence quiz
+// Source: M04 §4.2 migrated + step-sequence quiz
 
 import React from 'react';
 import LessonLayout from '../../components/LessonLayout.jsx';
 import Quiz from '../../components/primitives/Quiz.jsx';
-import AnnotatedDiagram from '../../components/primitives/AnnotatedDiagram.jsx';
 import Flashcard from '../../components/Flashcard.jsx';
 
 export const meta = {
@@ -368,27 +367,35 @@ export default function T11L04_FusionSplicingStepByStep() {
           </p>
         </div>
 
-        {/* AnnotatedDiagram — fusion splicer anatomy */}
+        {/* Fusion Splicer Anatomy — component reference */}
         <div className="mt-6">
           <h3 className="font-semibold mb-3">Fusion Splicer Anatomy</h3>
-          <AnnotatedDiagram
-            imageUrl={null}
-            alt="Fusion splicer component diagram"
-            width={720}
-            height={340}
-            annotations={[
-              { id: 'vgroove-l', x: 180, y: 120, label: 'Left V-groove', description: 'Precision V-shaped channel that holds the left fiber at a defined height. Must be kept clean of dust and gel — contamination here causes alignment errors even with clean fiber ends.' },
-              { id: 'vgroove-r', x: 540, y: 120, label: 'Right V-groove', description: 'Precision V-shaped channel for the right fiber. Both V-grooves must be at the same height for the fiber ends to align when the arc fires.' },
-              { id: 'electrodes', x: 360, y: 170, label: 'Tungsten electrodes', description: 'Two tungsten rods positioned on either side of the fiber splice point. When the arc fires, current jumps between them, generating >1,700°C heat that melts the silica glass fiber ends together.' },
-              { id: 'clamp-l', x: 100, y: 200, label: 'Left fiber clamp', description: 'Spring-loaded clamp that holds the left fiber in the V-groove during alignment and fusion. Releases automatically after the proof-test.' },
-              { id: 'clamp-r', x: 620, y: 200, label: 'Right fiber clamp', description: 'Spring-loaded clamp for the right fiber. The two clamps are driven apart during the proof-test — if the splice holds 1–2 N tension, it passed.' },
-              { id: 'camera-lr', x: 360, y: 50, label: 'Camera assembly', description: 'High-magnification CCD cameras (typically × 200) view the fiber ends from two orthogonal directions (X and Y axes). The splicer uses this image for alignment and displays it on screen for the operator.' },
-              { id: 'windcover', x: 360, y: 290, label: 'Wind cover / dust shield', description: 'Protective cover that must be closed before the arc fires. Prevents wind from disturbing the fiber alignment and protects the electrodes from contamination. Always close this before pressing SPLICE.' },
-              { id: 'heatoven', x: 680, y: 270, label: 'Heat sleeve oven', description: 'The slot where the heat-shrink splice protector is placed after fusion. The oven reaches ~200°C and shrinks the sleeve in 30–60 seconds depending on sleeve type. Integral to most portable splicers.' },
-            ]}
-          />
-          <p className="text-sm text-slate-400 mt-2">
-            Fusion splicer schematic — components vary by manufacturer (Fujikura, Sumitomo, AFL, FITEL). Consult your specific splicer's operator manual for component locations and cleaning procedures.
+          <p className="text-sm text-slate-300/90 mb-4">
+            Eight components handle the precision work of a fusion splice. Knowing what each one
+            does — and what happens when it's dirty, worn, or misused — is the difference between
+            a 0.05 dB splice and a 0.30 dB rework.
+          </p>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+            {[
+              { label: 'Left V-groove', description: 'Precision V-shaped channel that holds the left fiber at a defined height. Must be kept clean of dust and gel — contamination here causes alignment errors even with clean fiber ends.' },
+              { label: 'Right V-groove', description: 'Precision V-shaped channel for the right fiber. Both V-grooves must be at the same height for the fiber ends to align when the arc fires.' },
+              { label: 'Tungsten electrodes', description: 'Two tungsten rods positioned on either side of the fiber splice point. When the arc fires, current jumps between them, generating >1,700°C heat that melts the silica glass fiber ends together.' },
+              { label: 'Left fiber clamp', description: 'Spring-loaded clamp that holds the left fiber in the V-groove during alignment and fusion. Releases automatically after the proof-test.' },
+              { label: 'Right fiber clamp', description: 'Spring-loaded clamp for the right fiber. The two clamps are driven apart during the proof-test — if the splice holds 1–2 N tension, it passed.' },
+              { label: 'Camera assembly', description: 'High-magnification CCD cameras (typically × 200) view the fiber ends from two orthogonal directions (X and Y axes). The splicer uses this image for alignment and displays it on screen for the operator.' },
+              { label: 'Wind cover / dust shield', description: 'Protective cover that must be closed before the arc fires. Prevents wind from disturbing the fiber alignment and protects the electrodes from contamination. Always close this before pressing SPLICE.' },
+              { label: 'Heat sleeve oven', description: 'The slot where the heat-shrink splice protector is placed after fusion. The oven reaches ~200°C and shrinks the sleeve in 30–60 seconds depending on sleeve type. Integral to most portable splicers.' },
+            ].map(({ label, description }) => (
+              <div key={label} className="p-3 bg-slate-800/40 border border-slate-600/40 rounded-lg">
+                <p className="font-semibold text-slate-200 text-sm">{label}</p>
+                <p className="text-slate-300/90 text-xs mt-1 leading-relaxed">{description}</p>
+              </div>
+            ))}
+          </div>
+          <p className="text-sm text-slate-400 mt-3">
+            Component names are common across manufacturers (Fujikura, Sumitomo, AFL, FITEL),
+            though physical layout varies. Consult your specific splicer's operator manual for
+            component locations and cleaning procedures.
           </p>
         </div>
 

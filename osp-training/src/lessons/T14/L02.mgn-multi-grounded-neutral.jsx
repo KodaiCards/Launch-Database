@@ -4,7 +4,6 @@
 import React from 'react';
 import LessonLayout from '../../components/LessonLayout.jsx';
 import Quiz from '../../components/primitives/Quiz.jsx';
-import AnnotatedDiagram from '../../components/primitives/AnnotatedDiagram.jsx';
 import Flashcard from '../../components/Flashcard.jsx';
 
 export const meta = {
@@ -162,69 +161,59 @@ export default function T14L02_MGNMultiGroundedNeutral() {
           </li>
         </ol>
 
-        <AnnotatedDiagram
-          title="MGN Joint-Use Pole Cross-Section"
-          description="Click each labeled component to see its function and the rule that governs it."
-          src="/training/assets/diagrams/t14-mgn-pole-diagram.svg"
-          alt="Diagram of a joint-use distribution pole showing phase conductors, neutral wire, fiber messenger, bond clamp, downlead, and ground rod"
-          aspectRatio={9 / 16}
-          hotPoints={[
-            {
-              id: 'primary',
-              x: 50,
-              y: 10,
-              label: 'Phase Conductors',
-              explanation:
-                'Energized at distribution voltage (commonly 7,200 V phase-to-ground). In the supply space. Your comm crew must maintain NESC clearance from these — they are the utility\'s responsibility, not a surface you bond to.',
-              type: 'click',
-            },
-            {
-              id: 'neutral',
-              x: 50,
-              y: 28,
-              label: 'Distribution Neutral',
-              explanation:
-                'The grounded conductor of the distribution system. On an MGN system, this wire is connected to a ground rod at every pole (or at defined intervals). It stays very close to earth potential. Your messenger bonds to this wire via NESC Rule 96F — the neutral\'s low impedance to earth is what protects your plant. (Source: NESC C2-2023 Rule 96F.)',
-              type: 'click',
-            },
-            {
-              id: 'messenger',
-              x: 50,
-              y: 50,
-              label: 'Fiber Messenger',
-              explanation:
-                'The steel strand that supports the fiber cable in the communications space. Bonded to the distribution neutral (and through it, to earth) per NESC Rule 96F. The bond clamp attaches the messenger to the downlead conductor that runs to the ground rod.',
-              type: 'click',
-            },
-            {
-              id: 'bondclamp',
-              x: 65,
-              y: 55,
-              label: 'Bond Clamp',
-              explanation:
-                'A listed bonding clamp that electrically connects the messenger wire to the downlead conductor. Must be listed for the conductor sizes involved. Sized for the messenger diameter (typically 6M, 10M, etc.) and the downlead conductor (#6 AWG bare copper minimum per NESC Rule 96). (Sources: NESC C2-2023 Rule 96; RUS 1751F-630 §7.)',
-              type: 'click',
-            },
-            {
-              id: 'downlead',
-              x: 75,
-              y: 68,
-              label: '#6 AWG Downlead',
-              explanation:
-                'The conductor that runs from the bond clamp down the pole to the ground rod. Must be protected from mechanical damage from grade to 8 feet above grade per NESC Rule 96. Minimum size: #6 AWG bare soft-drawn copper for most OSP applications (some high-fault-current areas require #4 AWG per NESC Rule 96C). (Source: NESC C2-2023 Rule 96.)',
-              type: 'click',
-            },
-            {
-              id: 'groundrod',
-              x: 50,
-              y: 92,
-              label: 'Ground Rod',
-              explanation:
-                'A 5/8-in. × 8-ft copper-clad steel rod driven into the soil at the pole base. Per NEC §250.52(A)(5), the rod must be at least 8 feet long and at least 5/8-inch in diameter (copper-clad). The downlead from the messenger (and the distribution neutral\'s own downlead on an MGN system) terminate here. If the single rod reads > 25 Ω on a ground resistance test, a second supplemental rod is required per NEC §250.56.',
-              type: 'click',
-            },
-          ]}
-        />
+        <div className="mt-5 p-4 border border-slate-600/50 bg-slate-800/40 rounded-lg">
+          <h4 className="font-semibold text-slate-200 mb-3">MGN Joint-Use Pole — Component Reference (top to bottom)</h4>
+          <p className="text-sm text-slate-300/90 mb-4">
+            Walking down the pole from supply space to ground, each component has a defined role,
+            a governing rule, and a specific failure mode if installed wrong. Read in order — the
+            sequence is also the path fault current follows from a stray strike on the primary down
+            into the earth.
+          </p>
+          <div className="space-y-3">
+            {[
+              {
+                label: 'Phase Conductors (top)',
+                explanation:
+                  'Energized at distribution voltage (commonly 7,200 V phase-to-ground). In the supply space. Your comm crew must maintain NESC clearance from these — they are the utility\'s responsibility, not a surface you bond to.',
+              },
+              {
+                label: 'Distribution Neutral',
+                explanation:
+                  'The grounded conductor of the distribution system. On an MGN system, this wire is connected to a ground rod at every pole (or at defined intervals). It stays very close to earth potential. Your messenger bonds to this wire via NESC Rule 96F — the neutral\'s low impedance to earth is what protects your plant. (Source: NESC C2-2023 Rule 96F.)',
+              },
+              {
+                label: 'Fiber Messenger',
+                explanation:
+                  'The steel strand that supports the fiber cable in the communications space. Bonded to the distribution neutral (and through it, to earth) per NESC Rule 96F. The bond clamp attaches the messenger to the downlead conductor that runs to the ground rod.',
+              },
+              {
+                label: 'Bond Clamp',
+                explanation:
+                  'A listed bonding clamp that electrically connects the messenger wire to the downlead conductor. Must be listed for the conductor sizes involved. Sized for the messenger diameter (typically 6M, 10M, etc.) and the downlead conductor (#6 AWG bare copper minimum per NESC Rule 96). (Sources: NESC C2-2023 Rule 96; RUS 1751F-630 §7.)',
+              },
+              {
+                label: '#6 AWG Downlead',
+                explanation:
+                  'The conductor that runs from the bond clamp down the pole to the ground rod. Must be protected from mechanical damage from grade to 8 feet above grade per NESC Rule 96. Minimum size: #6 AWG bare soft-drawn copper for most OSP applications (some high-fault-current areas require #4 AWG per NESC Rule 96C). (Source: NESC C2-2023 Rule 96.)',
+              },
+              {
+                label: 'Ground Rod (bottom, driven into soil)',
+                explanation:
+                  'A 5/8-in. × 8-ft copper-clad steel rod driven into the soil at the pole base. Per NEC §250.52(A)(5), the rod must be at least 8 feet long and at least 5/8-inch in diameter (copper-clad). The downlead from the messenger (and the distribution neutral\'s own downlead on an MGN system) terminate here. If the single rod reads > 25 Ω on a ground resistance test, a second supplemental rod is required per NEC §250.56.',
+              },
+            ].map(({ label, explanation }, idx) => (
+              <div key={label} className="flex items-start gap-3 p-3 bg-slate-900/40 border border-slate-700/40 rounded">
+                <div className="w-7 h-7 rounded-full bg-blue-600/70 flex items-center justify-center text-white font-bold text-xs flex-shrink-0 mt-0.5">
+                  {idx + 1}
+                </div>
+                <div className="flex-1">
+                  <p className="font-semibold text-slate-200 text-sm">{label}</p>
+                  <p className="text-slate-300/90 text-xs mt-1 leading-relaxed">{explanation}</p>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
 
         <h3 className="mt-6 font-semibold">Why MGN reduces fault-current exposure</h3>
         <p className="mt-2">

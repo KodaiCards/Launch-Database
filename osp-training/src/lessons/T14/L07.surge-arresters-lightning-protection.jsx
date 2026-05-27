@@ -4,7 +4,6 @@
 import React from 'react';
 import LessonLayout from '../../components/LessonLayout.jsx';
 import Quiz from '../../components/primitives/Quiz.jsx';
-import AnnotatedDiagram from '../../components/primitives/AnnotatedDiagram.jsx';
 import Flashcard from '../../components/Flashcard.jsx';
 
 export const meta = {
@@ -214,60 +213,53 @@ export default function T14L07_SurgeArrestersLightning() {
           </li>
         </ul>
 
-        <AnnotatedDiagram
-          title="Protection Coordination Chain — Aerial to Building"
-          description="The stages of protection from the aerial plant to the connected equipment. Click each stage to see its role."
-          src="/training/assets/diagrams/t14-protection-chain.svg"
-          alt="Diagram showing aerial cable entering building: gas-tube first-stage at riser, combination protector at building entry, equipment connected inside"
-          aspectRatio={16 / 6}
-          hotPoints={[
-            {
-              id: 'aerial',
-              x: 8,
-              y: 50,
-              label: 'Aerial Plant',
-              explanation:
-                'The exposed outdoor portion of the cable. Lightning induction can raise voltages to thousands of volts on the messenger and any metallic sheath components. The surge travels along the cable toward the equipment.',
-              type: 'click',
-            },
-            {
-              id: 'riser_arrester',
-              x: 28,
-              y: 50,
-              label: 'Line-Side Arrester (Riser)',
-              explanation:
-                'First-stage arrester at the aerial-to-underground transition. A gas-tube or combination device. Absorbs the large initial energy of the lightning surge before it enters the protected conduit. Grounded to the pole ground rod. (Sources: IEEE Std 1100-2005 §8.5 [confirm edition]; NESC C2-2023 Rule 97.)',
-              type: 'click',
-            },
-            {
-              id: 'underground',
-              x: 50,
-              y: 50,
-              label: 'Underground / Conduit Run',
-              explanation:
-                'The underground portion of the cable. Protected by the riser arrester from the worst of the surge. However, residual voltage can still travel this section, which is why a second-stage protector at the building entry is also required.',
-              type: 'click',
-            },
-            {
-              id: 'building_protector',
-              x: 72,
-              y: 50,
-              label: 'Primary Protector (Building Entry)',
-              explanation:
-                'Combination protector (UL 497B for fiber, UL 497 for comm pairs) at building entry. Clamps residual surge voltage to VPL. Bonded to GES via IBT per NEC §250.94. This is the last stage before the equipment. (Sources: NEC §770.93; NEC §250.94.)',
-              type: 'click',
-            },
-            {
-              id: 'equipment',
-              x: 90,
-              y: 50,
-              label: 'Equipment (OLT / ONT)',
-              explanation:
-                'The protected electronic equipment. The equipment\'s immunity rating (surge withstand in the datasheet) must EXCEED the primary protector\'s VPL with a margin. If VPL > equipment immunity → equipment can still be damaged. The protection chain must be designed to match. (Source: IEEE Std 1100-2005 §8.6 [confirm edition].)',
-              type: 'click',
-            },
-          ]}
-        />
+        <div className="mt-5 p-4 border border-slate-600/50 bg-slate-800/40 rounded-lg">
+          <h4 className="font-semibold text-slate-200 mb-3">Protection Coordination Chain — Aerial to Building</h4>
+          <p className="text-sm text-slate-300/90 mb-4">
+            A lightning-induced surge moves through five stages from the exposed aerial plant to
+            the protected equipment inside the building. Each stage either absorbs energy or
+            clamps voltage; together they coordinate to keep the energy delivered to electronics
+            within the equipment's immunity rating.
+          </p>
+          <div className="space-y-2">
+            {[
+              {
+                label: '① Aerial Plant',
+                explanation:
+                  'The exposed outdoor portion of the cable. Lightning induction can raise voltages to thousands of volts on the messenger and any metallic sheath components. The surge travels along the cable toward the equipment.',
+              },
+              {
+                label: '② Line-Side Arrester (Riser)',
+                explanation:
+                  'First-stage arrester at the aerial-to-underground transition. A gas-tube or combination device. Absorbs the large initial energy of the lightning surge before it enters the protected conduit. Grounded to the pole ground rod. (Sources: IEEE Std 1100-2005 §8.5 [confirm edition]; NESC C2-2023 Rule 97.)',
+              },
+              {
+                label: '③ Underground / Conduit Run',
+                explanation:
+                  'The underground portion of the cable. Protected by the riser arrester from the worst of the surge. However, residual voltage can still travel this section, which is why a second-stage protector at the building entry is also required.',
+              },
+              {
+                label: '④ Primary Protector (Building Entry)',
+                explanation:
+                  'Combination protector (UL 497B for fiber, UL 497 for comm pairs) at building entry. Clamps residual surge voltage to VPL. Bonded to GES via IBT per NEC §250.94. This is the last stage before the equipment. (Sources: NEC §770.93; NEC §250.94.)',
+              },
+              {
+                label: '⑤ Equipment (OLT / ONT)',
+                explanation:
+                  'The protected electronic equipment. The equipment\'s immunity rating (surge withstand in the datasheet) must EXCEED the primary protector\'s VPL with a margin. If VPL > equipment immunity → equipment can still be damaged. The protection chain must be designed to match. (Source: IEEE Std 1100-2005 §8.6 [confirm edition].)',
+              },
+            ].map(({ label, explanation }) => (
+              <div key={label} className="p-3 bg-slate-900/40 border border-slate-700/40 rounded">
+                <p className="font-semibold text-slate-200 text-sm">{label}</p>
+                <p className="text-slate-300/90 text-xs mt-1 leading-relaxed">{explanation}</p>
+              </div>
+            ))}
+          </div>
+          <p className="text-xs text-slate-400 mt-3 italic">
+            Surge energy flows left-to-right through the chain. Each downstream stage handles a
+            smaller, faster, lower-voltage portion of what the upstream stage couldn't absorb.
+          </p>
+        </div>
 
         <h3 className="mt-6 font-semibold">The ground ring at CO and headend sites</h3>
         <p className="mt-2">

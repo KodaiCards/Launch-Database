@@ -77,10 +77,8 @@ import React from 'react';
 import LessonLayout from '../../components/LessonLayout.jsx';
 import Quiz from '../../components/primitives/Quiz.jsx';
 // Import other primitives as needed (all are default exports):
-// import AnnotatedDiagram from '../../components/primitives/AnnotatedDiagram.jsx';
 // import WorkedExample from '../../components/primitives/WorkedExample.jsx';
 // import BranchingScenario from '../../components/primitives/BranchingScenario.jsx';
-// import HotSpot from '../../components/primitives/HotSpot.jsx';
 // import Sortable from '../../components/primitives/Sortable.jsx';
 // import SliderExploration from '../../components/primitives/SliderExploration.jsx';
 // import SideBySide from '../../components/primitives/SideBySide.jsx';
@@ -186,15 +184,13 @@ Body content is divided into three tiers using `data-tier` on `<section>` elemen
 
 ## Interactive Element Contracts
 
-All 9 primitives are **default exports**. Use `import PrimitiveName from '...'` (not named import).
+All 7 primitives are **default exports**. Use `import PrimitiveName from '...'` (not named import).
 
 | Primitive | Import (default) | Required props |
 |---|---|---|
 | `<Quiz>` | `import Quiz from '../../components/primitives/Quiz.jsx'` | `title`, `mode` (`'multiple-choice'`/`'drag-match'`/`'fill-in-blank'`), `questions` array (see Quiz.example.jsx), `onComplete?` |
-| `<AnnotatedDiagram>` | `import AnnotatedDiagram from '../../components/primitives/AnnotatedDiagram.jsx'` | `src`, `alt`, `hotPoints` array `[{x, y, label, explanation}]` |
 | `<WorkedExample>` | `import WorkedExample from '../../components/primitives/WorkedExample.jsx'` | `title`, `formula`, `variables` array, `steps` fn, `sanityCheck` fn |
 | `<BranchingScenario>` | `import BranchingScenario from '../../components/primitives/BranchingScenario.jsx'` | `scenarioId`, `title`, `startNodeId`, `nodes` FSM object |
-| `<HotSpot>` | `import HotSpot from '../../components/primitives/HotSpot.jsx'` | `imageUrl`, `alt`, `regions` array, `mode` (`'challenge'`/`'explore'`) |
 | `<Sortable>` | `import Sortable from '../../components/primitives/Sortable.jsx'` | `title`, `items` array `[{id, label}]`, `correctOrder` array of ids |
 | `<SliderExploration>` | `import SliderExploration from '../../components/primitives/SliderExploration.jsx'` | `title`, `variables` array, `compute` fn |
 | `<SideBySide>` | `import SideBySide from '../../components/primitives/SideBySide.jsx'` | `title`, `leftLabel`, `rightLabel`, `rows` array |
