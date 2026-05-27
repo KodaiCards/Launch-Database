@@ -341,7 +341,9 @@ CREATE TABLE public.permit_documents (
     uploaded_by character varying(100),
     notes text,
     created_at timestamp with time zone DEFAULT now(),
-    uploaded_by_user_id uuid
+    uploaded_by_user_id uuid,
+    sha256 character(64),
+    content_type character varying(80)
 );
 
 --
@@ -391,6 +393,19 @@ CREATE TABLE public.pricing_entries (
     updated_at timestamp with time zone DEFAULT now(),
     program character varying(20),
     CONSTRAINT pricing_entries_program_check CHECK (((program IS NULL) OR ((program)::text = ANY ((ARRAY['rus'::character varying, 'bau'::character varying, 'gfr'::character varying, 'other'::character varying])::text[]))))
+);
+
+--
+-- Name: project_dwg_sync_state; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.project_dwg_sync_state (
+    user_id uuid NOT NULL,
+    project_id uuid NOT NULL,
+    last_synced_at timestamp with time zone DEFAULT now() NOT NULL,
+    manifest_etag text,
+    client_label text,
+    CONSTRAINT project_dwg_sync_state_pkey PRIMARY KEY (user_id, project_id)
 );
 
 --
@@ -2329,6 +2344,12 @@ CREATE INDEX idx_training_cert_attempts_user_date ON public.training_cert_attemp
 --
 
 CREATE INDEX idx_training_progress_user_course ON public.training_progress USING btree (user_id, course_id);
+
+--
+-- Name: idx_dwg_sync_state_user; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX idx_dwg_sync_state_user ON public.project_dwg_sync_state USING btree (user_id);
 
 --
 -- Name: idx_undo_buckets_expires_at; Type: INDEX; Schema: public; Owner: -

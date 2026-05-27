@@ -739,6 +739,13 @@ require('./routes/portal_access')(app, pool, { requireAdmin }, PORTAL_DEFS);
 // Wave 13: client portal API — project status for the beta client-facing view.
 require('./routes/client_portal')(app, pool, { requireAuth });
 
+// ─────────────────────────────────────────────────────────────────────────────
+// DWG OFFLINE-SYNC — Wave 35 / C1
+// Backend endpoints for field-tech laptop sync of raw DWG/DXF files.
+// Schema: migration 0044_dwg_offline_sync.sql
+// ─────────────────────────────────────────────────────────────────────────────
+require('./routes/dwg_sync')(app, pool, { requireAuth, uploadDir: UPLOAD_DIR });
+
 // Wave 14 diagnostic — inspect rollup tree state when Railway logs are
 // rate-limit dropping the [WAVE 14 DIAG] output.
 // Wave 14 — manual cleanup trigger. Returns step-by-step rowCounts so we
