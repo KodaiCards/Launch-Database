@@ -18,6 +18,7 @@ const {
   calcProjectFinancials,
 } = require('./_helpers');
 const { broadcast } = require('./_sse');
+const { logAudit } = require('./_audit');
 
 module.exports = function installProjectsRoutes(app, pool, mw) {
   // Item 2 + 22 fix: requireAuth added alongside requireAdmin.
@@ -436,6 +437,9 @@ module.exports = function installProjectsRoutes(app, pool, mw) {
       }
 
       broadcast('admin', 'project_added', { id: rows[0].id, name: rows[0].name, client_id: rows[0].client_id });
+      logAudit(pool, { req, action: 'create', entity_type: 'project', entity_id: rows[0].id,
+        after: { id: rows[0].id, name: rows[0].name, client_id: rows[0].client_id, program: rows[0].program },
+        source: 'admin_ui' });
       res.json(rows[0]);
     } catch (e) {
       console.error('[projects:create]', e && e.message);
@@ -659,6 +663,9 @@ module.exports = function installProjectsRoutes(app, pool, mw) {
         WHERE id=$24 RETURNING *
       `, updateParams);
       broadcast('admin', 'project_updated', { id: rows[0].id, name: rows[0].name, client_id: rows[0].client_id });
+      logAudit(pool, { req, action: 'update', entity_type: 'project', entity_id: rows[0].id,
+        after: { id: rows[0].id, name: rows[0].name, status: rows[0].status, program: rows[0].program },
+        source: 'admin_ui' });
       res.json(rows[0]);
     } catch (e) {
       console.error('[projects:update]', e && e.message);
@@ -694,6 +701,8 @@ module.exports = function installProjectsRoutes(app, pool, mw) {
       await pool.query('DELETE FROM billing_batch_items WHERE project_id=$1', [req.params.id]);
       await pool.query('DELETE FROM projects WHERE id=$1', [req.params.id]);
       broadcast('admin', 'project_deleted', { id: req.params.id });
+      logAudit(pool, { req, action: 'delete', entity_type: 'project', entity_id: req.params.id,
+        before: { id: proj.rows[0].id, name: proj.rows[0].name }, source: 'admin_ui' });
       res.json({ ok: true });
     } catch (e) {
       console.error('[projects:delete]', e && e.message);
@@ -1024,6 +1033,8 @@ module.exports = function installProjectsRoutes(app, pool, mw) {
         }
 
         broadcast('admin', 'project_added', { id: newRow.id, name: newRow.name, client_id });
+        logAudit(pool, { req, action: 'create', entity_type: 'project', entity_id: newRow.id,
+          after: { id: newRow.id, name: newRow.name, client_id, mode: 'ec' }, source: 'api' });
         return res.status(201).json({ ...newRow, created: true });
 
       } else {
@@ -1128,6 +1139,8 @@ module.exports = function installProjectsRoutes(app, pool, mw) {
         }
 
         broadcast('admin', 'project_added', { id: newRow.id, name: newRow.name, client_id });
+        logAudit(pool, { req, action: 'create', entity_type: 'project', entity_id: newRow.id,
+          after: { id: newRow.id, name: newRow.name, client_id, mode: 'no_ec' }, source: 'api' });
         return res.status(201).json({ ...newRow, created: true });
       }
     } catch (e) {
@@ -1229,6 +1242,10 @@ module.exports = function installProjectsRoutes(app, pool, mw) {
       // Notify listeners for every deleted project (tree may be large;
       // broadcast the root id only to avoid a fire-hose of payloads).
       broadcast('admin', 'project_deleted', { id: req.params.id, tree: true, deleted_count: projects.length });
+      logAudit(pool, { req, action: 'delete', entity_type: 'project', entity_id: req.params.id,
+        meta: { tree: true, deleted_projects: projects.length, deleted_time_entries: teRes.rows.length,
+                undo_token: undo.token },
+        source: 'admin_ui' });
       res.json({
         ok: true,
         deleted_projects: projects.length,

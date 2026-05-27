@@ -38,6 +38,7 @@ const fs = require('fs');
 const path = require('path');
 const crypto = require('crypto');
 const { v4: uuidv4 } = require('uuid');
+const { logAudit } = require('./_audit');
 
 // H-5 fix: per-user sliding-window rate limiter for /api/ai/chat.
 // 20 requests per 5-minute window per user. The auth.js rateLimitOk helper
@@ -2485,8 +2486,16 @@ app.post('/api/ai/chat', requireAdmin, async (req, res) => {
         if (approved) {
           console.log(`AI APPROVED tool: ${tu.name}`, JSON.stringify(tu.input).substring(0, 200));
           result = await executeTool(tu.name, tu.input, reqActor);
+          logAudit(pool, { req, action: 'execute', entity_type: 'ai_tool', actor_type: 'user',
+            meta: { ai_tool: tu.name, approved: true,
+                    sql: tu.name === 'write_sql' ? (tu.input && tu.input.sql) : undefined,
+                    query: tu.name === 'query_database' ? (tu.input && tu.input.query) : undefined,
+                    input_summary: JSON.stringify(tu.input).slice(0, 500),
+                    success: result && result.success }, source: 'ai_assistant' });
         } else {
           result = { success: false, error: 'User declined this action.', user_declined: true };
+          logAudit(pool, { req, action: 'execute', entity_type: 'ai_tool', actor_type: 'user',
+            meta: { ai_tool: tu.name, approved: false }, source: 'ai_assistant' });
         }
         toolResults.push({ tool: tu.name, input: tu.input, result, was_approved: approved });
         toolResultContents.push({
@@ -2649,6 +2658,11 @@ app.post('/api/ai/chat', requireAdmin, async (req, res) => {
         console.log(`AI Tool Call: ${toolUseBlock.name}`, JSON.stringify(toolUseBlock.input).substring(0, 200));
         const toolResult = await executeTool(toolUseBlock.name, toolUseBlock.input, immediateActor);
         console.log(`AI Tool Result: ${toolUseBlock.name}`, JSON.stringify(toolResult).substring(0, 200));
+        logAudit(pool, { req, action: 'execute', entity_type: 'ai_tool', actor_type: 'user',
+          meta: { ai_tool: toolUseBlock.name, approved: true,
+                  query: toolUseBlock.name === 'query_database' ? (toolUseBlock.input && toolUseBlock.input.query) : undefined,
+                  input_summary: JSON.stringify(toolUseBlock.input).slice(0, 500),
+                  success: toolResult && toolResult.success }, source: 'ai_assistant' });
         toolResults.push({ tool: toolUseBlock.name, input: toolUseBlock.input, result: toolResult });
         toolResultContents.push({
           type: 'tool_result',

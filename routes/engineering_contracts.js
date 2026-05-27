@@ -16,6 +16,7 @@
 //   other — Anything else; generic treatment.
 const ALLOWED_PROGRAMS = ['rus', 'bau', 'gfr', 'other'];
 const { broadcast } = require('./_sse');
+const { logAudit } = require('./_audit');
 
 function normalizeProgram(input) {
   if (input === null || input === undefined || input === '') return null;
@@ -107,6 +108,9 @@ module.exports = function installEngineeringContractsRoutes(app, pool, mw) {
         [client_id, String(name).trim(), contract_number || null, loan_name || null, notes || null, normalizedProgram]
       );
       broadcast('admin', 'engineering_contract_added', { id: rows[0].id, name: rows[0].name });
+      logAudit(pool, { req, action: 'create', entity_type: 'engineering_contract', entity_id: rows[0].id,
+        after: { id: rows[0].id, name: rows[0].name, program: rows[0].program, client_id: rows[0].client_id },
+        source: 'admin_ui' });
       res.json(rows[0]);
     } catch (e) {
       if (e.code === '23505') return res.status(409).json({ error: 'An engineering contract with this name already exists for this client' });
@@ -142,6 +146,10 @@ module.exports = function installEngineeringContractsRoutes(app, pool, mw) {
       );
       if (!rows[0]) return res.status(404).json({ error: 'Engineering contract not found' });
       broadcast('admin', 'engineering_contract_updated', { id: rows[0].id, name: rows[0].name });
+      const ecAuditAction = (program !== undefined) ? 'program_reclassification' : 'update';
+      logAudit(pool, { req, action: ecAuditAction, entity_type: 'engineering_contract', entity_id: rows[0].id,
+        after: { id: rows[0].id, name: rows[0].name, program: rows[0].program, active: rows[0].active },
+        source: 'admin_ui' });
       res.json(rows[0]);
     } catch (e) {
       if (e.code === '23505') return res.status(409).json({ error: 'An engineering contract with this name already exists for this client' });
@@ -187,6 +195,8 @@ module.exports = function installEngineeringContractsRoutes(app, pool, mw) {
       );
       if (!rows[0]) return res.status(404).json({ error: 'Engineering contract not found' });
       broadcast('admin', 'engineering_contract_deleted', { id: req.params.id });
+      logAudit(pool, { req, action: 'delete', entity_type: 'engineering_contract', entity_id: req.params.id,
+        source: 'admin_ui' });
       res.json({ ok: true });
     } catch (e) {
       console.error('[engineering-contracts:delete]', e && e.message);

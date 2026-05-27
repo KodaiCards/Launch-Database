@@ -3301,4 +3301,107 @@ ALTER TABLE ONLY public.users
     ADD CONSTRAINT users_staff_id_fkey FOREIGN KEY (staff_id) REFERENCES public.staff(id) ON DELETE SET NULL;
 
 --
+-- Client portal v1 — migration 0047_client_portal_v1.sql
+--
+
+CREATE TABLE IF NOT EXISTS public.client_organizations (
+    id uuid DEFAULT gen_random_uuid() NOT NULL,
+    name text NOT NULL,
+    short_name text,
+    logo_url text,
+    theme_color text,
+    status text DEFAULT 'active'::text NOT NULL,
+    created_at timestamptz DEFAULT now() NOT NULL,
+    created_by uuid,
+    CONSTRAINT client_organizations_pkey PRIMARY KEY (id),
+    CONSTRAINT client_organizations_status_check CHECK ((status = ANY (ARRAY['active'::text, 'suspended'::text, 'archived'::text])))
+);
+
+CREATE TABLE IF NOT EXISTS public.client_users (
+    id uuid DEFAULT gen_random_uuid() NOT NULL,
+    org_id uuid NOT NULL,
+    email text,
+    name text,
+    is_primary boolean DEFAULT false NOT NULL,
+    status text DEFAULT 'active'::text NOT NULL,
+    invited_by uuid,
+    created_at timestamptz DEFAULT now() NOT NULL,
+    CONSTRAINT client_users_pkey PRIMARY KEY (id),
+    CONSTRAINT client_users_status_check CHECK ((status = ANY (ARRAY['active'::text, 'revoked'::text])))
+);
+
+CREATE INDEX IF NOT EXISTS idx_client_users_org ON public.client_users USING btree (org_id);
+
+CREATE TABLE IF NOT EXISTS public.client_tokens (
+    id uuid DEFAULT gen_random_uuid() NOT NULL,
+    client_user_id uuid NOT NULL,
+    token_hash text NOT NULL,
+    last_used_at timestamptz,
+    expires_at timestamptz,
+    revoked_at timestamptz,
+    created_at timestamptz DEFAULT now() NOT NULL,
+    CONSTRAINT client_tokens_pkey PRIMARY KEY (id),
+    CONSTRAINT client_tokens_token_hash_key UNIQUE (token_hash)
+);
+
+CREATE INDEX IF NOT EXISTS idx_client_tokens_user ON public.client_tokens USING btree (client_user_id);
+
+ALTER TABLE ONLY public.client_organizations
+    ADD CONSTRAINT client_organizations_created_by_fkey FOREIGN KEY (created_by) REFERENCES public.users(id) ON DELETE SET NULL;
+
+ALTER TABLE ONLY public.client_users
+    ADD CONSTRAINT client_users_org_id_fkey FOREIGN KEY (org_id) REFERENCES public.client_organizations(id) ON DELETE CASCADE;
+
+ALTER TABLE ONLY public.client_users
+    ADD CONSTRAINT client_users_invited_by_fkey FOREIGN KEY (invited_by) REFERENCES public.users(id) ON DELETE SET NULL;
+
+ALTER TABLE ONLY public.client_tokens
+    ADD CONSTRAINT client_tokens_client_user_id_fkey FOREIGN KEY (client_user_id) REFERENCES public.client_users(id) ON DELETE CASCADE;
+
+-- Note: client_org_id column on engineering_contracts added by migration 0047.
+-- Schema.sql represents the post-migration state; the column + FK + index are
+-- created by the migration runner before this snapshot is compared.
+-- (schema:sync regenerates this file from pg_dump after migration runs.)
+
+-- audit_log: system-wide compliance log (migration 0046)
+CREATE TABLE IF NOT EXISTS public.audit_log (
+    id              bigserial NOT NULL,
+    at              timestamptz NOT NULL DEFAULT now(),
+    actor_user_id   uuid,
+    actor_username  text,
+    actor_type      text NOT NULL DEFAULT 'user',
+    action          text NOT NULL,
+    entity_type     text NOT NULL,
+    entity_id       text,
+    before_data     jsonb,
+    after_data      jsonb,
+    source          text,
+    ip              text,
+    user_agent      text,
+    meta            jsonb,
+    CONSTRAINT audit_log_pkey PRIMARY KEY (id)
+);
+
+CREATE INDEX IF NOT EXISTS idx_audit_log_at     ON public.audit_log USING btree (at DESC);
+CREATE INDEX IF NOT EXISTS idx_audit_log_actor  ON public.audit_log USING btree (actor_user_id, at DESC);
+CREATE INDEX IF NOT EXISTS idx_audit_log_entity ON public.audit_log USING btree (entity_type, entity_id, at DESC);
+CREATE INDEX IF NOT EXISTS idx_audit_log_action ON public.audit_log USING btree (action, at DESC);
+
+ALTER TABLE ONLY public.audit_log
+    ADD CONSTRAINT IF NOT EXISTS audit_log_actor_user_id_fkey FOREIGN KEY (actor_user_id) REFERENCES public.users(id) ON DELETE SET NULL;
+
+CREATE OR REPLACE FUNCTION public.prevent_audit_delete() RETURNS trigger
+    LANGUAGE plpgsql
+    AS $$
+BEGIN
+  RAISE EXCEPTION 'audit_log rows cannot be deleted (compliance + tamper-resistance)';
+END;
+$$;
+
+DROP TRIGGER IF EXISTS trg_audit_log_no_delete ON public.audit_log;
+CREATE TRIGGER trg_audit_log_no_delete
+    BEFORE DELETE ON public.audit_log
+    FOR EACH ROW EXECUTE FUNCTION public.prevent_audit_delete();
+
+--
 --

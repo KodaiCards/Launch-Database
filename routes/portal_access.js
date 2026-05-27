@@ -12,6 +12,7 @@
 // These are not portal keys (they have no portalDef entry) but use the same table.
 const { CAP_CREATE_PROJECTS } = require('../auth');
 const CAPABILITY_KEYS = new Set([CAP_CREATE_PROJECTS]);
+const { logAudit } = require('./_audit');
 
 module.exports = function installPortalAccessRoutes(app, pool, mw, portalDefs) {
   const requireAdmin = (mw && mw.requireAdmin) || ((req, res, next) => next());
@@ -109,6 +110,8 @@ module.exports = function installPortalAccessRoutes(app, pool, mw, portalDefs) {
          ON CONFLICT (user_id, portal_key) DO NOTHING`,
         [userId, portalKey, req.user.id]
       );
+      logAudit(pool, { req, action: 'grant', entity_type: 'portal_access', entity_id: userId,
+        meta: { portal_key: portalKey }, source: 'admin_ui' });
       res.json({ ok: true });
     } catch (e) {
       serverError(res, e, 'grant');
@@ -139,6 +142,8 @@ module.exports = function installPortalAccessRoutes(app, pool, mw, portalDefs) {
         `DELETE FROM user_portal_access WHERE user_id = $1 AND portal_key = $2`,
         [userId, portalKey]
       );
+      logAudit(pool, { req, action: 'revoke', entity_type: 'portal_access', entity_id: userId,
+        meta: { portal_key: portalKey }, source: 'admin_ui' });
       res.json({ ok: true });
     } catch (e) {
       serverError(res, e, 'revoke');

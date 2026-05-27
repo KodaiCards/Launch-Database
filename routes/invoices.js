@@ -13,6 +13,7 @@
 const { updateProjectHours } = require('./_helpers');
 const invoiceGenerator = require('../invoice_generator');
 const { broadcast } = require('./_sse');
+const { logAudit } = require('./_audit');
 
 module.exports = function installInvoicesRoutes(app, pool, mw) {
   const { requireManagerOrAdmin, requireAdmin } = mw;
@@ -73,6 +74,8 @@ module.exports = function installInvoicesRoutes(app, pool, mw) {
     // Stream the PDF directly. We never buffer the full file in memory —
     // pdfkit pipes chunks straight to the response.
     const filename = invoiceGenerator.suggestedFilename(data);
+    logAudit(pool, { req, action: 'generate', entity_type: 'invoice',
+      meta: { engineering_contract_id, job_id, period_start, period_end, filename }, source: 'admin_ui' });
     res.setHeader('Content-Type', 'application/pdf');
     // Inline disposition so the browser opens it in a new tab (better UX
     // than forcing a download — admin can still save from there).
@@ -139,6 +142,8 @@ module.exports = function installInvoicesRoutes(app, pool, mw) {
       return res.status(400).json({ error: e.message });
     }
     const filename = invoiceGenerator.suggestedFilename(data);
+    logAudit(pool, { req, action: 'generate', entity_type: 'invoice',
+      meta: { project_ids, period_start, period_end, filename }, source: 'admin_ui' });
     res.setHeader('Content-Type', 'application/pdf');
     res.setHeader('Content-Disposition', `inline; filename="${filename}"`);
     try {
@@ -214,6 +219,8 @@ module.exports = function installInvoicesRoutes(app, pool, mw) {
       await pool.query('DELETE FROM invoices WHERE id=$1', [req.params.id]);
 
       broadcast('admin', 'invoice_voided', { id: req.params.id, unbilled_projects: projectIds.length });
+      logAudit(pool, { req, action: 'void', entity_type: 'invoice', entity_id: req.params.id,
+        meta: { unbilled_projects: projectIds.length, wipe_hours: wipe_hours === 'true' }, source: 'admin_ui' });
       res.json({ ok: true, unbilled_projects: projectIds.length });
     } catch (e) { res.status(500).json({ error: e.message }); }
   });

@@ -21,6 +21,7 @@ const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 const cookieParser = require('cookie-parser');
 const crypto = require('crypto');
+const { logAudit } = require('./routes/_audit');
 
 let JWT_SECRET = process.env.JWT_SECRET;
 if (!JWT_SECRET) {
@@ -579,6 +580,8 @@ function installAuthRoutes(app, pool) {
         ...cookieOpts(),
         maxAge: 7 * 24 * 60 * 60 * 1000,
       });
+      logAudit(pool, { req, action: 'password_change', entity_type: 'user', entity_id: req.user.id,
+        source: 'admin_ui' });
       // Token returned in both cookie + body (sessionStorage fallback). See
       // POST /api/auth/login above for the full rationale.
       res.json({ ok: true, token: newToken });
@@ -626,6 +629,8 @@ function installAuthRoutes(app, pool) {
          RETURNING id, username, role, team, extra_teams, full_name, email, active, created_at`,
         [cleanUsername, hash, role, team, full_name || null, email || null, cleanExtras]
       );
+      logAudit(pool, { req, action: 'create', entity_type: 'user', entity_id: rows[0].id,
+        after: { id: rows[0].id, username: rows[0].username, role: rows[0].role }, source: 'admin_ui' });
       res.json(rows[0]);
     } catch (e) {
       if (e.code === '23505') return res.status(409).json({ error: 'Username already taken' });
@@ -681,6 +686,13 @@ function installAuthRoutes(app, pool) {
         vals
       );
       if (!rows[0]) return res.status(404).json({ error: 'User not found' });
+      const auditAction = password ? 'password_change'
+        : role !== undefined ? 'role_change'
+        : active === false ? 'deactivate'
+        : 'update';
+      logAudit(pool, { req, action: auditAction, entity_type: 'user', entity_id: rows[0].id,
+        after: { id: rows[0].id, username: rows[0].username, role: rows[0].role, active: rows[0].active },
+        source: 'admin_ui' });
       res.json(rows[0]);
     } catch (e) {
       if (e.code === '23505') return res.status(409).json({ error: 'Username already taken' });
@@ -706,6 +718,8 @@ function installAuthRoutes(app, pool) {
           });
         }
         await pool.query('DELETE FROM users WHERE id = $1', [req.params.id]);
+        logAudit(pool, { req, action: 'delete', entity_type: 'user', entity_id: req.params.id,
+          meta: { mode: 'hard', username: cur.rows[0].username }, source: 'admin_ui' });
         return res.json({ ok: true, mode: 'hard', deleted_username: cur.rows[0].username });
       }
 
@@ -715,6 +729,8 @@ function installAuthRoutes(app, pool) {
         [req.params.id]
       );
       if (!rows[0]) return res.status(404).json({ error: 'User not found' });
+      logAudit(pool, { req, action: 'deactivate', entity_type: 'user', entity_id: req.params.id,
+        meta: { mode: 'soft' }, source: 'admin_ui' });
       res.json({ ok: true, mode: 'soft', deactivated: true });
     } catch (e) { return serverError(res, e, 'delete-user'); }
   });
