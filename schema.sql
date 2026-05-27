@@ -1403,6 +1403,13 @@ ALTER TABLE ONLY public.projects
     ADD CONSTRAINT projects_pkey PRIMARY KEY (id);
 
 --
+-- Name: projects check_ongoing_is_monthly; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.projects
+    ADD CONSTRAINT check_ongoing_is_monthly CHECK ((NOT is_ongoing OR (billing_cadence = 'monthly'::character varying)));
+
+--
 -- Name: schema_migrations schema_migrations_pkey; Type: CONSTRAINT; Schema: public; Owner: -
 --
 
@@ -1872,6 +1879,24 @@ CREATE INDEX idx_invoice_items_project_id ON public.invoice_items USING btree (p
 CREATE UNIQUE INDEX idx_invoice_items_project_period ON public.invoice_items USING btree (project_id, period_year, period_month) WHERE ((period_year IS NOT NULL) AND (period_month IS NOT NULL));
 
 --
+-- Name: idx_invoices_client_id; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX idx_invoices_client_id ON public.invoices USING btree (client_id);
+
+--
+-- Name: idx_invoices_invoice_date; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX idx_invoices_invoice_date ON public.invoices USING btree (invoice_date);
+
+--
+-- Name: idx_invoices_status; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX idx_invoices_status ON public.invoices USING btree (status);
+
+--
 -- Name: idx_invoice_templates_job_client; Type: INDEX; Schema: public; Owner: -
 --
 
@@ -2098,6 +2123,18 @@ CREATE INDEX idx_splice_design_imports_project ON public.splice_design_imports U
 --
 
 CREATE INDEX idx_splice_design_imports_status ON public.splice_design_imports USING btree (project_id, status);
+
+--
+-- Name: idx_splice_design_imports_project_id; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX idx_splice_design_imports_project_id ON public.splice_design_imports USING btree (project_id);
+
+--
+-- Name: idx_splice_design_imports_status_col; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX idx_splice_design_imports_status_col ON public.splice_design_imports USING btree (status);
 
 --
 -- Name: idx_splice_fibers_circuit; Type: INDEX; Schema: public; Owner: -
@@ -2589,7 +2626,7 @@ ALTER TABLE ONLY public.invoice_items
 --
 
 ALTER TABLE ONLY public.invoice_items
-    ADD CONSTRAINT invoice_items_project_id_fkey FOREIGN KEY (project_id) REFERENCES public.projects(id);
+    ADD CONSTRAINT invoice_items_project_id_fkey FOREIGN KEY (project_id) REFERENCES public.projects(id) ON DELETE RESTRICT;
 
 --
 -- Name: invoice_templates invoice_templates_client_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
@@ -2617,7 +2654,7 @@ ALTER TABLE ONLY public.invoice_templates
 --
 
 ALTER TABLE ONLY public.invoices
-    ADD CONSTRAINT invoices_client_id_fkey FOREIGN KEY (client_id) REFERENCES public.clients(id);
+    ADD CONSTRAINT invoices_client_id_fkey FOREIGN KEY (client_id) REFERENCES public.clients(id) ON DELETE RESTRICT;
 
 --
 -- Name: job_assignments job_assignments_client_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
