@@ -95,6 +95,69 @@ module.exports = function installClientPortalV2(app, pool, { requireAuth }) {
     res.json({ client_user: req.client_user, client_org: req.client_org });
   });
 
+  // ── Client projects list ────────────────────────────────────────────────
+  // Returns leaf projects (is_rollup = false) for the client's organization
+  // Grouped by engineering contract.
+  app.get('/api/client/projects', requireClientAuthMW, async (req, res) => {
+    try {
+      const orgId = req.client_org.id;
+      const { rows } = await pool.query(`
+        SELECT
+          p.id,
+          p.name,
+          p.service_area_name,
+          p.program,
+          p.status,
+          p.created_at,
+          p.engineering_contract_id,
+          ec.id AS contract_id
+        FROM projects p
+        JOIN engineering_contracts ec ON ec.id = p.engineering_contract_id
+        WHERE ec.client_org_id = $1
+          AND COALESCE(p.is_rollup, false) = false
+        ORDER BY ec.name, p.name
+      `, [orgId]);
+
+      res.json({ projects: rows });
+    } catch (e) {
+      console.error('[client_portal_v2] list projects:', e && e.message);
+      res.status(500).json({ error: 'failed to load projects' });
+    }
+  });
+
+  // ── Client single project detail ────────────────────────────────────────
+  // Returns a single project by ID if it belongs to the authenticated client's org.
+  // Returns 404 if project not found or doesn't belong to the client.
+  app.get('/api/client/projects/:id', requireClientAuthMW, async (req, res) => {
+    try {
+      const orgId = req.client_org.id;
+      const projectId = req.params.id;
+
+      const { rows } = await pool.query(`
+        SELECT
+          p.id,
+          p.name,
+          p.service_area_name,
+          p.program,
+          p.status,
+          p.created_at,
+          p.engineering_contract_id,
+          ec.id AS contract_id
+        FROM projects p
+        JOIN engineering_contracts ec ON ec.id = p.engineering_contract_id
+        WHERE p.id = $1
+          AND ec.client_org_id = $2
+          AND COALESCE(p.is_rollup, false) = false
+      `, [projectId, orgId]);
+
+      if (!rows.length) return res.status(404).json({ error: 'project not found' });
+      res.json({ project: rows[0] });
+    } catch (e) {
+      console.error('[client_portal_v2] get project:', e && e.message);
+      res.status(500).json({ error: 'failed to load project' });
+    }
+  });
+
   // ══════════════════════════════════════════════════════════════════════
   // Admin endpoints — all gated with requireAuth(['admin'])
   // ══════════════════════════════════════════════════════════════════════

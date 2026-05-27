@@ -477,6 +477,11 @@ app.get('/sw-dwg-sync.js', (req, res) => {
   res.sendFile(path.join(__dirname, 'public', 'sw-dwg-sync.js'));
 });
 
+// Wave 40: client portal v1 — read-only project status
+// Not gated with requireAuth() here; authentication is at the API layer
+// via the lfs_client_session cookie validated by requireClientAuth middleware.
+app.use('/client', express.static(path.join(__dirname, 'public', 'client')));
+
 app.use(express.static(path.join(__dirname, 'public')));
 
 // Serve uploads with auth enforcement (item 6 fix).

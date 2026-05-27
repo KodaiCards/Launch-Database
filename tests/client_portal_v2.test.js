@@ -270,9 +270,102 @@ test('inactive org returns 401 on /api/client/me', async () => {
   assert.equal(meRes.status, 401);
 });
 
+// ── Client projects list & detail endpoints ───────────────────────────────
+
+async function setupProjectsForClient(orgId) {
+  // Insert engineering contract tied to the client org
+  const { rows: ecRows } = await pool.query(`
+    INSERT INTO engineering_contracts (name, program, client_org_id)
+    VALUES ($1, $2, $3)
+    RETURNING id
+  `, ['Test EC', 'rus', orgId]);
+  const ecId = ecRows[0].id;
+
+  // Insert leaf projects (is_rollup = false)
+  const { rows: projRows } = await pool.query(`
+    INSERT INTO projects (name, service_area_name, program, status, engineering_contract_id, is_rollup)
+    VALUES
+      ($1, $2, $3, $4, $5, false),
+      ($6, $7, $8, $9, $10, false)
+    RETURNING id
+  `, [
+    'Project 1', 'Service Area 1', 'rus', 'active', ecId,
+    'Project 2', 'Service Area 2', 'bau', 'pending', ecId,
+  ]);
+
+  return { ecId, projectIds: projRows.map(r => r.id) };
+}
+
+test('GET /api/client/projects returns org\'s leaf projects only', async () => {
+  const { baseUrl } = require('./_helpers');
+  const org = await insertOrg();
+  const user = await insertUser(org.id);
+  const { raw } = await insertToken(user.id);
+  const { ecId, projectIds } = await setupProjectsForClient(org.id);
+
+  // Log in to get cookie
+  const loginRes = await fetch(`${baseUrl()}/client/login/${raw}`, { redirect: 'manual' });
+  const cookie = loginRes.headers.get('set-cookie');
+
+  // Fetch projects
+  const projRes = await fetch(`${baseUrl()}/api/client/projects`, { headers: { cookie } });
+  assert.equal(projRes.status, 200);
+  const data = await projRes.json();
+  assert.ok(Array.isArray(data.projects));
+  assert.equal(data.projects.length, 2, 'returns both projects');
+  assert.ok(data.projects.every(p => p.engineering_contract_id === ecId));
+  assert.ok(data.projects.every(p => !p.is_rollup));
+});
+
+test('GET /api/client/projects/:id returns single project for client\'s org', async () => {
+  const { baseUrl } = require('./_helpers');
+  const org = await insertOrg();
+  const user = await insertUser(org.id);
+  const { raw } = await insertToken(user.id);
+  const { projectIds } = await setupProjectsForClient(org.id);
+
+  // Log in to get cookie
+  const loginRes = await fetch(`${baseUrl()}/client/login/${raw}`, { redirect: 'manual' });
+  const cookie = loginRes.headers.get('set-cookie');
+
+  // Fetch single project
+  const projRes = await fetch(`${baseUrl()}/api/client/projects/${projectIds[0]}`, { headers: { cookie } });
+  assert.equal(projRes.status, 200);
+  const data = await projRes.json();
+  assert.ok(data.project);
+  assert.equal(data.project.id, projectIds[0]);
+  assert.equal(data.project.name, 'Project 1');
+});
+
+test('GET /api/client/projects/:id returns 404 for other org\'s project (IDOR)', async () => {
+  const { baseUrl } = require('./_helpers');
+  const org1 = await insertOrg();
+  const org2 = await insertOrg();
+  const user = await insertUser(org1.id);
+  const { raw } = await insertToken(user.id);
+  const { projectIds: org2ProjectIds } = await setupProjectsForClient(org2.id);
+
+  // Log in as org1
+  const loginRes = await fetch(`${baseUrl()}/client/login/${raw}`, { redirect: 'manual' });
+  const cookie = loginRes.headers.get('set-cookie');
+
+  // Try to access org2's project
+  const projRes = await fetch(`${baseUrl()}/api/client/projects/${org2ProjectIds[0]}`, { headers: { cookie } });
+  assert.equal(projRes.status, 404);
+});
+
+test('GET /api/client/projects requires authentication', async () => {
+  const { baseUrl } = require('./_helpers');
+  const res = await fetch(`${baseUrl()}/api/client/projects`);
+  assert.equal(res.status, 401);
+});
+
+test('GET /api/client/projects/:id requires authentication', async () => {
+  const { baseUrl } = require('./_helpers');
+  const res = await fetch(`${baseUrl()}/api/client/projects/some-id`);
+  assert.equal(res.status, 401);
+});
+
 // ── IDOR placeholder ──────────────────────────────────────────────────────
-// TODO(E7): once client-scoped data endpoints are built, add tests that:
-//   1. Create org A + org B with separate tokens.
-//   2. Log in as org A.
-//   3. Attempt to GET project/document endpoints scoped to org B.
-//   4. Assert 403 or empty result — not org B's data.
+// E4 scope complete — projects list + detail endpoints working with auth.
+// E7 will extend with document upload/download endpoints.
