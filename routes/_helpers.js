@@ -215,8 +215,86 @@ function snapHoursToQuarter(input) {
   return Math.round(n * 4) / 4;
 }
 
+// batchUpdateProjectHours — same semantic as updateProjectHours but accepts
+// a Set or array of leaf project IDs and recomputes the full rollup chain for
+// all of them in D UPDATE passes (one per depth level), each touching all
+// affected projects at that level in a single statement.
+//
+// Why this beats looping updateProjectHours(pid) for each:
+//   Old: N leaves × D parent levels × 2 queries = N×D×2 sequential round trips.
+//   New: 1 (ancestor-collection) + D (level-by-level updates) = D+1 total,
+//        regardless of N.  For a 100-entry import over a 5-deep hierarchy,
+//        that is 6 queries vs up to 1000.
+//
+// Why level-by-level and not a single UPDATE FROM (SELECT … WITH RECURSIVE):
+//   A Postgres CTE reads the database state as of statement start; the UPDATE
+//   FROM target table is not visible to the CTE.  A single-shot UPDATE would
+//   compute a rollup parent's new actual_hours from its children's *pre-update*
+//   values, producing a stale result for any parent whose children are also in
+//   the affected set.  Iterating bottom-up (leaves first, then their parents,
+//   etc.) ensures each level reads freshly-committed child values.
+//
+// Depth cap: 30 levels (matches collectProjectTree).  Malformed parent_id
+// cycles are broken by the UNION ALL dedup in the WITH RECURSIVE.
+async function batchUpdateProjectHours(projectIds) {
+  const ids = [...new Set(projectIds)].filter(Boolean);
+  if (ids.length === 0) return;
+
+  // Phase 1: collect every ancestor reachable from the input leaves,
+  // annotated with the minimum depth at which they appear (0 = leaf,
+  // 1 = direct parent, …).  We want a stable bottom-up ordering.
+  const { rows: levelRows } = await pool.query(`
+    WITH RECURSIVE ancestors AS (
+      SELECT id, parent_id, 0 AS depth
+        FROM projects
+       WHERE id = ANY($1::uuid[])
+      UNION
+      SELECT p.id, p.parent_id, a.depth + 1
+        FROM projects p
+        JOIN ancestors a ON p.id = a.parent_id
+       WHERE a.depth < 30
+    )
+    SELECT id, MIN(depth) AS depth
+      FROM ancestors
+     GROUP BY id
+     ORDER BY MIN(depth)
+  `, [ids]);
+
+  if (levelRows.length === 0) return;
+
+  // Phase 2: group by depth level.
+  const byLevel = new Map();
+  for (const { id, depth } of levelRows) {
+    const d = Number(depth);
+    if (!byLevel.has(d)) byLevel.set(d, []);
+    byLevel.get(d).push(id);
+  }
+  const levels = [...byLevel.keys()].sort((a, b) => a - b);
+
+  // Phase 3: update bottom-up, one level at a time.  Each UPDATE reads
+  // child actual_hours that were committed by the previous iteration.
+  for (const level of levels) {
+    const levelIds = byLevel.get(level);
+    await pool.query(`
+      UPDATE projects p
+         SET actual_hours = (
+               SELECT COALESCE(SUM(te.hours), 0)
+                 FROM time_entries te
+                WHERE te.project_id = p.id
+                  AND COALESCE(te.is_billable, TRUE) = TRUE
+             ) + (
+               SELECT COALESCE(SUM(ch.actual_hours), 0)
+                 FROM projects ch
+                WHERE ch.parent_id = p.id
+             )
+       WHERE p.id = ANY($1::uuid[])
+    `, [levelIds]);
+  }
+}
+
 module.exports = {
   updateProjectHours,
+  batchUpdateProjectHours,
   saveUndoBucket,
   popUndoBucket,
   collectProjectTree,

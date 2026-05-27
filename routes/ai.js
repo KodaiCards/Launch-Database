@@ -43,7 +43,12 @@ const { v4: uuidv4 } = require('uuid');
 // 20 requests per 5-minute window per user. The auth.js rateLimitOk helper
 // is not exported, so this is a local copy of the same pattern.
 // Single-process only (Railway single-instance — matches _pendingApprovals scope).
+//
+// Size cap: 1000 entries. An attacker enumerating user-IDs that never trigger
+// the 1-hour GC interval could grow this Map unboundedly. On insert, if the
+// cap is hit, the oldest entry (Map insertion-order = FIFO) is evicted.
 const _aiChatRlBuckets = new Map();
+const AI_CHAT_RL_BUCKETS_MAX = 1000;
 function aiChatRateLimitOk(userId) {
   const AI_CHAT_RL_LIMIT = 20;
   const AI_CHAT_RL_WINDOW_MS = 5 * 60 * 1000;
@@ -56,6 +61,10 @@ function aiChatRateLimitOk(userId) {
     return false;
   }
   arr.push(now);
+  if (!_aiChatRlBuckets.has(key) && _aiChatRlBuckets.size >= AI_CHAT_RL_BUCKETS_MAX) {
+    const oldestKey = _aiChatRlBuckets.keys().next().value;
+    if (oldestKey !== undefined) _aiChatRlBuckets.delete(oldestKey);
+  }
   _aiChatRlBuckets.set(key, arr);
   return true;
 }
@@ -125,7 +134,7 @@ module.exports = function installAiRoutes(app, pool, mw) {
   // surfaced immediately at startup rather than at first chat.
   const anthropic = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
 
-  const { updateProjectHours, calcProjectFinancials, collectProjectTree } = require('./_helpers');
+  const { updateProjectHours, batchUpdateProjectHours, calcProjectFinancials, collectProjectTree } = require('./_helpers');
   const { csvStage, CSV_STAGE_TTL_MS } = require('./_csv_stage');
   const csvHelpers = require('./hours_csv')._helpers;
   const { normalizeName, normalizeWO, detectColumns, parseDateCell } = csvHelpers;
@@ -1568,12 +1577,14 @@ async function executeTool(toolName, toolInput, actor = {}) {
             );
             count++;
           }
-          // Update actual_hours with hierarchy rollup
-          const projectIds = [...new Set(toolInput.entries.map(e => e.project_id))];
+          // Update actual_hours with hierarchy rollup.
+          // batchUpdateProjectHours issues one WITH RECURSIVE + one UPDATE FROM
+          // instead of N×D sequential queries (one updateProjectHours call per
+          // distinct project × depth of parent chain = 200–500 queries for a
+          // 100-entry import over a 5-deep hierarchy).
+          const touchedProjectIds = [...new Set(toolInput.entries.map(e => e.project_id))];
           await client.query('COMMIT');
-          for (const pid of projectIds) {
-            await updateProjectHours(pid);
-          }
+          await batchUpdateProjectHours(touchedProjectIds);
           return { success: true, inserted: count, batch: importBatch };
         } catch (err) {
           await client.query('ROLLBACK');
@@ -2241,11 +2252,37 @@ function summarizeToolCall(toolName, toolInput) {
 
 // ─── FILE UPLOAD FOR AI ──────────────────────────────────────────────────────
 // ─── IN-MEMORY UPLOAD STORE ──────────────────────────────────────────────────
+//
+// Size cap: 20 entries. Each parsed workbook can be 5–50 MB in the worst case
+// (100 columns × 10,000 rows × 2 sheets). On a 512 MB Railway box, 20 entries
+// is a safe ceiling that leaves room for normal app overhead. The TTL-based GC
+// (30-min interval, 30-min TTL) handles the normal case; this cap prevents a
+// burst of concurrent uploads from exhausting heap before the GC fires.
+//
+// Eviction policy: on insert, if the Map is at cap, evict the entry with the
+// smallest timestamp (oldest). Map.entries() preserves insertion order so the
+// first entry is typically the oldest, but we do an explicit min-scan to be
+// correct even if an entry was re-inserted (uuidv4 IDs make that impossible in
+// practice, but the scan is O(20) and therefore negligible).
 const uploadStore = new Map(); // uploadId → { rows, headers, filename, timestamp }
-// Clean up old uploads every 30 minutes. .unref() so the timer doesn't
-// hold the event loop alive in tests — without it, pool.end() + server.close()
-// drain successfully but the process never exits, and node:test fires
-// per-test 180s timeouts on every file.
+const UPLOAD_STORE_MAX = 20;
+function uploadStoreSet(id, value) {
+  if (uploadStore.size >= UPLOAD_STORE_MAX && !uploadStore.has(id)) {
+    let oldestId, oldestTs = Infinity;
+    for (const [k, v] of uploadStore) {
+      if (v.timestamp < oldestTs) { oldestTs = v.timestamp; oldestId = k; }
+    }
+    if (oldestId !== undefined) {
+      console.warn(`uploadStore at cap (${UPLOAD_STORE_MAX}); evicting oldest entry ${oldestId}`);
+      uploadStore.delete(oldestId);
+    }
+  }
+  uploadStore.set(id, value);
+}
+// Clean up old uploads every 5 minutes (TTL 30 minutes). .unref() so the timer
+// doesn't hold the event loop alive in tests — without it, pool.end() +
+// server.close() drain successfully but the process never exits, and node:test
+// fires per-test 180s timeouts on every file.
 setInterval(() => {
   const cutoff = Date.now() - 30 * 60 * 1000;
   for (const [id, data] of uploadStore) {
@@ -2297,7 +2334,7 @@ app.post('/api/ai/upload', requireAdmin, upload.single('file'), async (req, res)
       const uploadId = uuidv4();
       // Bind upload to the uploading user so get_upload_data / csv_smart_import
       // reject cross-user access (Item 6 — uploadStore user binding).
-      uploadStore.set(uploadId, { raw_text: content.substring(0, 50000), filename: req.file.originalname, timestamp: Date.now(), owner_id: req.user && String(req.user.id) });
+      uploadStoreSet(uploadId, { raw_text: content.substring(0, 50000), filename: req.file.originalname, timestamp: Date.now(), owner_id: req.user && String(req.user.id) });
       fs.promises.unlink(req.file.path).catch(() => {});
       return res.json({ success: true, upload_id: uploadId, filename: req.file.originalname, raw_text: content.substring(0, 2000) });
     }
@@ -2305,7 +2342,7 @@ app.post('/api/ai/upload', requireAdmin, upload.single('file'), async (req, res)
     // Store full data server-side, send only summary to client
     const uploadId = uuidv4();
     // Bind upload to the uploading user (Item 6 — uploadStore user binding).
-    uploadStore.set(uploadId, { rows, headers, filename: req.file.originalname, timestamp: Date.now(), owner_id: req.user && String(req.user.id) });
+    uploadStoreSet(uploadId, { rows, headers, filename: req.file.originalname, timestamp: Date.now(), owner_id: req.user && String(req.user.id) });
 
     fs.promises.unlink(req.file.path).catch(() => {});
 
