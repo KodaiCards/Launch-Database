@@ -1,0 +1,296 @@
+<!doctype html>
+<html lang="en" data-theme="light">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Offline DWG Sync — Launch Fiber Services</title>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+/* Token system — mirrors the rest of Launch Fiber. Edit tokens here and every
+   component updates automatically. Dark mode flips without per-component overrides. */
+:root{
+  --primary:#1B5FA0;--primary-dark:#134880;--primary-light:#E8F0FB;--primary-text:#FFFFFF;
+  --surface-1:#F5F7FA;--surface-2:#FFFFFF;--surface-3:#F0F0F0;
+  --border-strong:#DEE2E6;--border-weak:#EEF1F5;--gray-border:#DEE2E6;
+  --text:#212529;--text-secondary:#495057;--text-muted:#5A6470;
+  --success:#28A745;--success-light:#E8F5E9;--success-text:#1B5E20;
+  --warning:#FFC107;--warning-light:#FFF8E1;--warning-text:#7A4F0E;
+  --danger:#DC3545;--danger-light:#FBE9E9;--danger-text:#841C24;
+  --info:#1B5FA0;--info-light:#E8F0FB;--info-text:#0D47A1;
+  --font:'Inter',sans-serif;
+}
+html[data-theme="dark"]{
+  --primary:#4A90D9;--primary-dark:#1B5FA0;--primary-light:#1E3A5C;--primary-text:#FFFFFF;
+  --surface-1:#1A1F26;--surface-2:#1D2430;--surface-3:#1F2630;
+  --border-strong:#2D3540;--border-weak:#252A33;--gray-border:#2D3540;
+  --text:#E8EAED;--text-secondary:#C2C7CD;--text-muted:#9BA1A8;
+  --success:#5DD27A;--success-light:#1B3D24;--success-text:#A5D6A7;
+  --warning:#FFCA28;--warning-light:#3D2F0F;--warning-text:#FFCC80;
+  --danger:#E57373;--danger-light:#4A1F22;--danger-text:#FFB4B4;
+  --info:#4A90D9;--info-light:#1E3A5C;--info-text:#90CAF9;
+  color-scheme:dark;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{font-family:var(--font);background:var(--surface-1);color:var(--text);min-height:100vh}
+html[data-theme="dark"] body{background:#0F1419}
+button{font-family:inherit;cursor:pointer;border:none;background:none;color:inherit}
+
+/* Header */
+.header{
+  background:var(--surface-2);
+  border-bottom:1px solid var(--gray-border);
+  padding:10px 20px;
+  display:flex;align-items:center;justify-content:space-between;gap:12px;
+}
+.header-title{font-size:14px;font-weight:600;color:var(--text)}
+.header-sub{font-size:12px;color:var(--text-muted)}
+.header-right{display:flex;align-items:center;gap:8px}
+.btn{
+  padding:8px 14px;border-radius:6px;font-size:13px;font-weight:500;
+  border:1px solid transparent;display:inline-flex;align-items:center;gap:6px;
+  transition:all .15s;text-decoration:none;color:inherit;
+}
+.btn-primary{background:var(--primary);color:var(--primary-text);border-color:var(--primary)}
+.btn-primary:hover{background:var(--primary-dark);border-color:var(--primary-dark)}
+.btn-primary:disabled{opacity:.55;cursor:not-allowed}
+.btn-secondary{background:var(--surface-2);color:var(--text);border-color:var(--gray-border)}
+.btn-secondary:hover{background:var(--surface-1)}
+.btn-secondary:disabled{opacity:.55;cursor:not-allowed}
+.btn-sm{padding:6px 10px;font-size:12px}
+.btn-icon{padding:6px 8px}
+
+/* Layout */
+.container{max-width:1100px;margin:0 auto;padding:24px 16px}
+.page-header{margin-bottom:24px}
+.page-title{font-size:22px;font-weight:700;color:var(--text);margin-bottom:4px}
+.page-sub{font-size:13px;color:var(--text-muted)}
+
+/* Section card */
+.section{
+  background:var(--surface-2);
+  border:1px solid var(--gray-border);
+  border-radius:12px;
+  padding:18px 20px;
+  margin-bottom:20px;
+}
+.section-title{
+  font-size:14px;font-weight:600;color:var(--text);
+  display:flex;align-items:center;gap:8px;
+  margin-bottom:12px;
+}
+.section-title i{color:var(--primary);font-size:14px}
+.section-body{font-size:13px;color:var(--text-secondary);line-height:1.5}
+
+/* Folder status row */
+.folder-row{
+  display:flex;align-items:center;justify-content:space-between;
+  gap:12px;flex-wrap:wrap;
+  padding:12px 14px;
+  background:var(--surface-1);
+  border:1px solid var(--border-weak);
+  border-radius:8px;
+  margin-top:10px;
+}
+.folder-info{font-size:13px;color:var(--text)}
+.folder-name{font-weight:600;color:var(--text)}
+.folder-empty{color:var(--text-muted);font-style:italic}
+
+/* Project list */
+.project-list{display:flex;flex-direction:column;gap:10px}
+.project-row{
+  display:grid;
+  grid-template-columns:1fr auto;
+  align-items:center;
+  gap:14px;
+  padding:12px 14px;
+  background:var(--surface-1);
+  border:1px solid var(--border-weak);
+  border-radius:8px;
+}
+.project-meta{display:flex;flex-direction:column;gap:4px;min-width:0}
+.project-name{font-size:14px;font-weight:600;color:var(--text);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.project-client{font-size:12px;color:var(--text-muted)}
+.project-counts{font-size:12px;color:var(--text-secondary);display:flex;gap:14px;flex-wrap:wrap}
+.project-actions{display:flex;align-items:center;gap:8px}
+
+/* Sync state badge */
+.badge{
+  display:inline-flex;align-items:center;gap:5px;
+  padding:3px 9px;border-radius:999px;
+  font-size:11px;font-weight:600;
+  border:1px solid transparent;
+}
+.badge-success{background:var(--success-light);color:var(--success-text);border-color:var(--success)}
+.badge-warning{background:var(--warning-light);color:var(--warning-text);border-color:var(--warning)}
+.badge-neutral{background:var(--surface-3);color:var(--text-muted);border-color:var(--border-weak)}
+.badge-danger{background:var(--danger-light);color:var(--danger-text);border-color:var(--danger)}
+
+/* Toast */
+.toast-host{
+  position:fixed;bottom:18px;right:18px;z-index:9999;
+  display:flex;flex-direction:column;gap:8px;pointer-events:none;
+}
+.toast{
+  background:var(--surface-2);color:var(--text);
+  border:1px solid var(--gray-border);
+  border-left:4px solid var(--primary);
+  border-radius:8px;
+  padding:10px 14px;font-size:13px;
+  box-shadow:0 6px 20px rgba(0,0,0,.12);
+  min-width:240px;max-width:380px;
+  pointer-events:auto;
+}
+.toast-success{border-left-color:var(--success)}
+.toast-warning{border-left-color:var(--warning)}
+.toast-danger{border-left-color:var(--danger)}
+
+/* Empty state */
+.empty{
+  padding:30px 16px;text-align:center;color:var(--text-muted);font-size:13px;
+}
+
+/* Banner — offline / unsupported */
+.banner{
+  padding:10px 14px;border-radius:8px;font-size:13px;
+  display:flex;align-items:center;gap:10px;margin-bottom:16px;
+  border:1px solid transparent;
+}
+.banner-warning{background:var(--warning-light);color:var(--warning-text);border-color:var(--warning)}
+.banner-danger{background:var(--danger-light);color:var(--danger-text);border-color:var(--danger)}
+.banner-info{background:var(--info-light);color:var(--info-text);border-color:var(--info)}
+
+/* a11y */
+.skip-nav{
+  position:absolute;left:-9999px;top:auto;width:1px;height:1px;
+  overflow:hidden;z-index:9999;text-decoration:none;
+}
+.skip-nav:focus{
+  position:fixed;left:50%;top:8px;transform:translateX(-50%);
+  width:auto;height:auto;padding:10px 20px;background:var(--primary);
+  color:var(--primary-text);font-weight:600;border-radius:6px;font-size:14px;z-index:9999;
+}
+
+/* Spinner */
+.spin{display:inline-block;animation:spin 1s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+</style>
+</head>
+<body>
+
+<a href="#main-content" class="skip-nav">Skip to main content</a>
+
+<header class="header" role="banner">
+  <div style="display:flex;align-items:center;gap:14px">
+    <span class="header-title">Launch Fiber Services</span>
+    <span class="header-sub">Offline DWG Sync</span>
+  </div>
+  <div class="header-right">
+    <button class="btn btn-secondary btn-sm btn-icon"
+            id="theme-toggle"
+            title="Toggle dark mode"
+            aria-label="Toggle dark mode">
+      <i class="fa-solid fa-moon" aria-hidden="true"></i>
+    </button>
+    <a href="/" class="btn btn-secondary btn-sm">
+      <i class="fa-solid fa-arrow-left" aria-hidden="true"></i> Back to Launcher
+    </a>
+  </div>
+</header>
+
+<main class="container" id="main-content">
+  <div class="page-header">
+    <h1 class="page-title">Offline DWG Sync</h1>
+    <p class="page-sub">Sync project DWG files to a folder on this device so you can open them in AutoCAD without internet access.</p>
+  </div>
+
+  <!-- Unsupported-browser banner — shown only if File System Access API unavailable -->
+  <div id="banner-unsupported" class="banner banner-warning" style="display:none" role="status">
+    <i class="fa-solid fa-triangle-exclamation" aria-hidden="true"></i>
+    <span>This browser does not support the File System Access API. Offline sync requires Chrome, Edge, or another Chromium-based browser. A ZIP-download fallback is coming in a future update.</span>
+  </div>
+
+  <!-- Offline banner — shown when navigator.onLine is false -->
+  <div id="banner-offline" class="banner banner-info" style="display:none" role="status">
+    <i class="fa-solid fa-cloud-arrow-down" aria-hidden="true"></i>
+    <span>You're offline. Available projects can't be refreshed, but synced projects below are still accessible from your local folder.</span>
+  </div>
+
+  <!-- Section 1: Setup -->
+  <section class="section" aria-labelledby="setup-title">
+    <h2 class="section-title" id="setup-title">
+      <i class="fa-solid fa-folder-tree" aria-hidden="true"></i>
+      Sync folder
+    </h2>
+    <div class="section-body">
+      <p>Choose a folder on this device where DWG files will be saved. Each project gets its own subfolder.</p>
+      <div class="folder-row" id="folder-status">
+        <div class="folder-info">
+          <span class="folder-empty" id="folder-empty-msg">No folder chosen yet.</span>
+          <span id="folder-name" style="display:none">Folder: <span class="folder-name" id="folder-name-text"></span></span>
+          <span id="folder-needs-permission" style="display:none;color:var(--warning-text)">
+            <i class="fa-solid fa-lock" aria-hidden="true"></i>
+            Permission lost — click "Resume sync" to grant access again.
+          </span>
+        </div>
+        <div style="display:flex;gap:8px;flex-wrap:wrap">
+          <button class="btn btn-primary btn-sm" id="btn-pick-folder">
+            <i class="fa-solid fa-folder-plus" aria-hidden="true"></i>
+            <span id="btn-pick-folder-label">Choose folder</span>
+          </button>
+          <button class="btn btn-secondary btn-sm" id="btn-resume-permission" style="display:none">
+            <i class="fa-solid fa-key" aria-hidden="true"></i> Resume sync
+          </button>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Section 2: Available projects -->
+  <section class="section" aria-labelledby="available-title">
+    <h2 class="section-title" id="available-title">
+      <i class="fa-solid fa-cloud" aria-hidden="true"></i>
+      Available projects
+    </h2>
+    <div class="section-body">
+      <p>Projects with DWG files that you have permission to sync.</p>
+      <div id="available-list" class="project-list" style="margin-top:12px" aria-live="polite">
+        <div class="empty">Loading&hellip;</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Section 3: Synced offline -->
+  <section class="section" aria-labelledby="synced-title">
+    <h2 class="section-title" id="synced-title">
+      <i class="fa-solid fa-hard-drive" aria-hidden="true"></i>
+      Synced offline
+    </h2>
+    <div class="section-body">
+      <p>Projects you've already downloaded. These are accessible from your local folder even without internet.</p>
+      <div id="synced-list" class="project-list" style="margin-top:12px" aria-live="polite">
+        <div class="empty">No synced projects yet.</div>
+      </div>
+    </div>
+  </section>
+
+</main>
+
+<div class="toast-host" id="toast-host" aria-live="polite" aria-atomic="false"></div>
+
+<script>
+// Restore saved theme preference before first paint
+(function(){
+  var t=localStorage.getItem('theme');
+  if(t==='dark'||t==='light') document.documentElement.dataset.theme=t;
+})();
+document.getElementById('theme-toggle').addEventListener('click', function(){
+  var t = document.documentElement.dataset.theme;
+  document.documentElement.dataset.theme = (t === 'dark') ? 'light' : 'dark';
+  localStorage.setItem('theme', document.documentElement.dataset.theme);
+});
+</script>
+<script src="/js/offline_sync.js" defer></script>
+</body>
+</html>

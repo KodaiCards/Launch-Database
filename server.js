@@ -77,9 +77,9 @@ app.use(cors({
   credentials: true,
 }));
 app.use(express.json({ limit: '10mb' }));
-// OAuth2 token endpoint POSTs application/x-www-form-urlencoded per the spec.
-// No existing routes use form bodies, so this only activates for matching
-// Content-Type headers and is safe to enable globally.
+// Form-encoded body parsing — activates only for matching Content-Type headers,
+// safe to leave globally enabled. (Previously documented as supporting the
+// removed Moodle OAuth2 token endpoint; that bridge was torn out in OSP-RW.6.)
 app.use(express.urlencoded({ extended: false }));
 
 // CSRF defense via Origin/Referer validation. Cookie-auth + a cross-site form
@@ -272,6 +272,17 @@ const PORTAL_DEFS = [
     description: 'Client-facing portal preview.',
     canAccess: u => u.role === 'admin',
   },
+  // Wave 37: offline DWG sync — pull project DWG files to a local folder
+  // for offline AutoCAD use. Admin + design/permitting staff only.
+  {
+    id: 'offline_sync',
+    audience: 'employee',
+    url: '/offline-sync',
+    name: 'Offline DWG Sync',
+    icon: 'cloud-arrow-down',
+    description: 'Sync DWG files to your laptop for offline AutoCAD use.',
+    canAccess: u => ['admin', 'design_manager', 'design_engineer', 'permitting_manager', 'permitting_engineer'].includes(u.role),
+  },
 ];
 
 // GET /api/me/portals — returns the list of portals the current user can access.
@@ -453,6 +464,17 @@ app.use('/training', requireAuth(), express.static(path.join(__dirname, 'public'
 // SPA client-side routing fallback: any unmatched /training/* path serves index.html
 app.get('/training/*', requireAuth(), (req, res) => {
   res.sendFile(path.join(__dirname, 'public', 'training', 'index.html'));
+});
+
+// Wave 37: service worker for offline DWG sync.
+// Serve sw-dwg-sync.js with Service-Worker-Allowed so the worker, even though
+// it lives at /sw-dwg-sync.js, can scope its control to /offline-sync/.
+// Must be BEFORE express.static so we get to set the header.
+app.get('/sw-dwg-sync.js', (req, res) => {
+  res.setHeader('Service-Worker-Allowed', '/offline-sync/');
+  res.setHeader('Content-Type', 'application/javascript; charset=utf-8');
+  res.setHeader('Cache-Control', 'no-cache');
+  res.sendFile(path.join(__dirname, 'public', 'sw-dwg-sync.js'));
 });
 
 app.use(express.static(path.join(__dirname, 'public')));
@@ -917,6 +939,10 @@ app.get('/design', (req, res) => res.sendFile(path.join(__dirname, 'public', 'de
 // Placeholder kept at client-portal-placeholder.html for rollback.
 app.get('/client-portal', requireAuth(), (req, res) => {
   res.sendFile(path.join(__dirname, 'public', 'client-portal.html'));
+});
+// Wave 37: offline DWG sync front-end. SPA shell registers /sw-dwg-sync.js.
+app.get('/offline-sync', requireAuth(), (req, res) => {
+  res.sendFile(path.join(__dirname, 'public', 'offline-sync.html'));
 });
 
 // Old bookmark /index.html → redirect to /admin.html

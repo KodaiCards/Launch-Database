@@ -12,6 +12,8 @@
 //
 // Extracted from server.js as part of CLEANUP_PLAN.md Track 1.3.
 
+const { broadcast } = require('./_sse');
+
 module.exports = function installPotentialPermitsRoutes(app, pool, mw) {
   const requireAuth = (mw && mw.requireAuth) || (() => (req, res, next) => next());
 
@@ -40,6 +42,21 @@ module.exports = function installPotentialPermitsRoutes(app, pool, mw) {
          VALUES ($1,$2,$3,$4,$5) RETURNING *`,
         [sr_hwy || null, county || null, route || null, notes || null, submittedBy]
       );
+      // A6: notify permitting team so they don't have to poll the Review tab.
+      // Matches the pattern in routes/permits.js — admin + team:permitting channels.
+      try {
+        const payload = {
+          id: rows[0].id,
+          project_id: rows[0].project_id || null,
+          submitted_by: req.user.id,
+          at: new Date().toISOString(),
+        };
+        broadcast('team:permitting', 'potential_permit_created', payload);
+        broadcast('admin', 'potential_permit_created', payload);
+      } catch (broadcastErr) {
+        // Broadcast failure should not break the POST response.
+        console.error('[potential_permits:POST] broadcast error:', broadcastErr && broadcastErr.message);
+      }
       res.json(rows[0]);
     } catch (e) {
       console.error('[potential_permits:POST]', e && e.message);
