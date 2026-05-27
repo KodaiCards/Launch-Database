@@ -2552,6 +2552,48 @@ body.demo-blur .lf-financial:hover{filter:blur(0)}
   </div>
 </div>
 
+<!-- ── Training Admin Dashboard (Wave 43) ─────────────────────────────────── -->
+<div class="modal-overlay" id="training-admin-modal" role="dialog" aria-modal="true" style="z-index:1050">
+  <div class="modal" style="max-width:1000px;width:95%;max-height:90vh;display:flex;flex-direction:column">
+    <div class="modal-header">
+      <div>
+        <div class="modal-title"><i class="fa-solid fa-graduation-cap" style="margin-right:6px;color:var(--primary)"></i>Training Progress Dashboard</div>
+        <div style="font-size:12px;color:var(--text-muted);margin-top:4px">Track crew completion against the OSP curriculum</div>
+      </div>
+      <button class="btn btn-icon btn-secondary" aria-label="Close dialog" onclick="window.TrainingAdmin && window.TrainingAdmin.close()"><i class="fa-solid fa-xmark"></i></button>
+    </div>
+
+    <div id="training-admin-filters" style="padding:16px;border-bottom:1px solid var(--border-weak);display:flex;align-items:center;gap:12px;flex-wrap:wrap">
+      <select id="training-filter-role" class="filter" onchange="window.TrainingAdmin && window.TrainingAdmin.onFilterChange()" style="flex:0 1 auto">
+        <option value="">All Roles</option>
+        <option value="admin">Admin</option>
+        <option value="design_manager">Design Manager</option>
+        <option value="design_engineer">Designer</option>
+        <option value="permitting_manager">Permitting Manager</option>
+        <option value="permitting">Permitting Staff</option>
+        <option value="engineer">Engineer</option>
+      </select>
+
+      <input type="text" id="training-filter-search" class="search-input" placeholder="Search by name or username" onkeyup="window.TrainingAdmin && window.TrainingAdmin.onFilterChange()" style="flex:1;min-width:180px">
+
+      <label style="display:flex;align-items:center;gap:6px;font-size:12px;color:var(--text-muted);flex-shrink:0">
+        <input type="checkbox" id="training-filter-active" onchange="window.TrainingAdmin && window.TrainingAdmin.onFilterChange()">
+        Active in last 30 days
+      </label>
+    </div>
+
+    <div style="flex:1;overflow-y:auto;display:flex;flex-direction:column">
+      <div id="training-admin-overview" style="flex:1">
+        <!-- Overview table rendered here -->
+      </div>
+
+      <div id="training-admin-detail" style="display:none;flex:1;overflow-y:auto">
+        <!-- User detail view rendered here -->
+      </div>
+    </div>
+  </div>
+</div>
+
 <div class="modal-overlay" id="settings-modal" role="dialog" aria-modal="true" aria-labelledby="settings-modal-title">
   <div class="modal" style="max-width:920px;width:95%">
     <div class="modal-header">
@@ -2750,6 +2792,15 @@ body.demo-blur .lf-financial:hover{filter:blur(0)}
         <p style="font-size:12px;color:var(--text-muted);margin:0 0 12px 0">Government-grade compliance trail. View all user actions, project changes, invoice generations, and AI tool executions. Rows cannot be deleted.</p>
       </div>
 
+      <!-- ── Training Progress (Wave 43) ── OSP training course + cert tracking ── -->
+      <div class="settings-section" id="training-progress-section" style="margin-top:24px">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px">
+          <h4 style="font-size:14px;font-weight:600;margin:0"><i class="fa-solid fa-graduation-cap" style="margin-right:6px;color:var(--text-muted)"></i>Training Progress</h4>
+          <button class="btn btn-primary btn-sm" onclick="window.TrainingAdmin && window.TrainingAdmin.open()"><i class="fa-solid fa-chart-line"></i> View Dashboard</button>
+        </div>
+        <p style="font-size:12px;color:var(--text-muted);margin:0 0 12px 0">Track crew completion against the OSP training curriculum. View individual progress, certification exam attempts, and overall team metrics.</p>
+      </div>
+
       <!-- ── Client Portal (v1) ── org / user / token management ── -->
       <div class="settings-section" id="client-portal-v2-section" style="margin-top:24px">
         <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px">
@@ -2913,6 +2964,7 @@ body.demo-blur .lf-financial:hover{filter:blur(0)}
 <script src="/js/hours_tab.js"></script>
 <script src="/js/projects_tab.js?v=w11"></script>
 <script src="/js/audit_log_admin.js"></script>
+<script src="/js/training_admin.js"></script>
 
 <script>
 
