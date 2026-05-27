@@ -166,7 +166,21 @@ function attach(app, mw) {
     // This ensures demoted or deactivated users stop receiving events
     // within at most one heartbeat interval (25 s) rather than holding
     // their channel subscription until they close the browser tab.
+    // Track whether this connection has been cleaned up so the heartbeat
+    // can't double-purge / double-clear after req.on('close') already fired
+    // (or vice versa). _purge() is internally idempotent (early-returns on
+    // missing _resChanMap entry), but the flag short-circuits the whole
+    // heartbeat body so we don't even attempt the DB query after teardown.
+    let _closed = false;
+    const _cleanupConn = () => {
+      if (_closed) return;
+      _closed = true;
+      try { clearInterval(heartbeat); } catch {}
+      try { _purge(res); } catch {}
+    };
+
     const heartbeat = setInterval(async () => {
+      if (_closed) return;
       // Re-validate session
       if (pool) {
         try {
@@ -188,33 +202,43 @@ function attach(app, mw) {
               try {
                 res.write(`event: session_invalid\ndata: ${JSON.stringify({ reason: 'session_expired' })}\n\n`);
               } catch {}
-              clearInterval(heartbeat);
-              _purge(res);
+              _cleanupConn();
               try { res.end(); } catch {}
               return;
             }
           }
         } catch (dbErr) {
-          // DB error during re-validation — log and continue. We don't
-          // close the connection on a transient DB hiccup; the next tick
-          // will retry.
+          // DB error during re-validation — log AND clean up. Previously
+          // we logged and continued, but if pool.query() throws repeatedly
+          // (DB blip / slow query / connection refusal), the heartbeat tick
+          // returns early before reaching the ping/write at the bottom, so
+          // dead-connection detection stalls AND the subscription leaks in
+          // sseClients indefinitely. Treating a DB error as fatal-for-this-
+          // connection lets the client reconnect cleanly on the next tick
+          // (their browser will re-establish the EventSource), and avoids
+          // accumulating orphaned subscriptions across hours.
           console.error('[_sse:heartbeat:revalidate]', dbErr && dbErr.message);
+          _cleanupConn();
+          try { res.end(); } catch {}
+          return;
         }
       }
 
       let ok;
       try { ok = res.write(`: ping\n\n`); } catch { ok = false; }
       if (ok === false) {
-        clearInterval(heartbeat);
-        _purge(res);
+        _cleanupConn();
       }
     }, 25000);
 
-    const cleanup = () => {
-      clearInterval(heartbeat);
-      _purge(res);
-    };
-    req.on('close', cleanup);
+    // Wrap close handler in try/catch so a throwing listener (e.g., on a
+    // bizarre res implementation) can't blow up the cleanup chain and leak
+    // the interval timer.
+    req.on('close', () => {
+      try { _cleanupConn(); } catch (e) {
+        console.error('[_sse:close-handler]', e && e.message);
+      }
+    });
   });
 }
 

@@ -263,7 +263,13 @@ module.exports = function installInvoiceTemplatesRoutes(app, pool, mw) {
       );
       if (!rows[0]) return res.status(404).json({ error: 'Template not found.' });
       const t = rows[0];
-      if (!t.reference_pdf_path || !fs.existsSync(t.reference_pdf_path)) {
+      // BE-perf: was fs.existsSync (sync I/O blocks event loop on every
+      // request). fsp.stat is non-blocking; missing file rejects and we
+      // map that to the same 400 response.
+      const refExists = t.reference_pdf_path
+        ? await fsp.stat(t.reference_pdf_path).then(() => true).catch(() => false)
+        : false;
+      if (!refExists) {
         return res.status(400).json({ error: 'Reference PDF missing on disk; re-upload required.' });
       }
       const result = await runAnalysisAndPersist(t.id, t.reference_pdf_path);
@@ -316,7 +322,10 @@ module.exports = function installInvoiceTemplatesRoutes(app, pool, mw) {
       if (!rel || rel.startsWith('..') || path.isAbsolute(rel)) {
         return res.status(400).json({ error: 'Invalid reference path.' });
       }
-      if (!fs.existsSync(resolved)) return res.status(404).json({ error: 'Reference PDF file missing on disk.' });
+      // BE-perf: was fs.existsSync (sync I/O blocks event loop). fsp.stat
+      // is non-blocking; missing file maps to the same 404.
+      const exists = await fsp.stat(resolved).then(() => true).catch(() => false);
+      if (!exists) return res.status(404).json({ error: 'Reference PDF file missing on disk.' });
       res.setHeader('Content-Type', 'application/pdf');
       res.setHeader('Content-Disposition',
         `inline; filename="${(rows[0].reference_pdf_filename || 'reference.pdf').replace(/[^A-Za-z0-9._-]/g, '_')}"`);
