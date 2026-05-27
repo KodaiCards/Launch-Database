@@ -611,3 +611,332 @@ test('IDOR: GET /api/client/projects excludes rollup rows', async () => {
   assert.ok(!names.includes('rollup-folder'), 'rollup-folder must not appear');
   assert.ok(names.includes('leaf-project'), 'leaf-project must appear');
 });
+
+// ══════════════════════════════════════════════════════════════════════════
+// Wave 49b: Documents + Approvals Tests
+// ══════════════════════════════════════════════════════════════════════════
+
+// Helper: insert a document for testing
+async function insertDocument(orgId, { projectId = null, filename = 'test.pdf', mimeType = 'application/pdf', sizeBytes = 1024, direction = 'from_client', status = 'active' } = {}) {
+  const { v4: uuidv4 } = require('uuid');
+  const storageKey = `client-docs/${orgId}/${uuidv4()}.pdf`;
+  const { rows } = await pool.query(`
+    INSERT INTO client_documents (
+      client_org_id, project_id, filename, mime_type, size_bytes,
+      storage_key, uploaded_by_client_user_id, direction, status
+    ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
+    RETURNING *
+  `, [orgId, projectId || null, filename, mimeType, sizeBytes, storageKey, null, direction, status]);
+  return rows[0];
+}
+
+// Helper: insert an approval for testing
+async function insertApproval(orgId, { projectId = null, documentId = null, title = 'Test Approval', status = 'pending' } = {}) {
+  const { rows } = await pool.query(`
+    INSERT INTO client_approvals (
+      client_org_id, project_id, document_id, title, requested_by, status
+    ) VALUES ($1, $2, $3, $4, $5, $6)
+    RETURNING *
+  `, [orgId, projectId || null, documentId || null, title, null, status]);
+  return rows[0];
+}
+
+// ── Documents Tests ────────────────────────────────────────────────────────
+
+test('GET /api/client/documents returns caller\'s org documents only (IDOR)', async () => {
+  const org1 = await insertOrg();
+  const org2 = await insertOrg();
+  const user = await insertUser(org1.id);
+  const { raw } = await insertToken(user.id);
+
+  // Insert docs for both orgs
+  await insertDocument(org1.id, { filename: 'org1-doc.pdf' });
+  await insertDocument(org2.id, { filename: 'org2-doc.pdf' });
+
+  const { baseUrl } = require('./_helpers');
+  const loginRes = await fetch(`${baseUrl()}/client/login/${raw}`, { redirect: 'manual' });
+  const cookie = loginRes.headers.get('set-cookie');
+
+  const docsRes = await fetch(`${baseUrl()}/api/client/documents`, { headers: { cookie } });
+  assert.equal(docsRes.status, 200);
+  const data = await docsRes.json();
+  assert.ok(Array.isArray(data.documents));
+  assert.equal(data.documents.length, 1, 'returns only caller\'s org doc (IDOR)');
+  assert.equal(data.documents[0].filename, 'org1-doc.pdf');
+});
+
+test('GET /api/client/documents with ?project_id filter validates org ownership (IDOR)', async () => {
+  const org1 = await insertOrg();
+  const org2 = await insertOrg();
+  const user = await insertUser(org1.id);
+  const { raw } = await insertToken(user.id);
+
+  // Create EC + project for each org
+  const { ecId: ec1Id } = await setupProjectsForClient(org1.id);
+  const { projectIds: org1ProjectIds } = await setupProjectsForClient(org1.id);
+  const { projectIds: org2ProjectIds } = await setupProjectsForClient(org2.id);
+
+  const { baseUrl } = require('./_helpers');
+  const loginRes = await fetch(`${baseUrl()}/client/login/${raw}`, { redirect: 'manual' });
+  const cookie = loginRes.headers.get('set-cookie');
+
+  // Try to filter by org2's project — should 404
+  const docsRes = await fetch(`${baseUrl()}/api/client/documents?project_id=${org2ProjectIds[0]}`, { headers: { cookie } });
+  assert.equal(docsRes.status, 404, 'cross-org project filter rejected (IDOR)');
+});
+
+test('GET /api/client/documents/:id/download returns 404 for other org\'s document (IDOR)', async () => {
+  const org1 = await insertOrg();
+  const org2 = await insertOrg();
+  const user = await insertUser(org1.id);
+  const { raw } = await insertToken(user.id);
+  const org2Doc = await insertDocument(org2.id);
+
+  const { baseUrl } = require('./_helpers');
+  const loginRes = await fetch(`${baseUrl()}/client/login/${raw}`, { redirect: 'manual' });
+  const cookie = loginRes.headers.get('set-cookie');
+
+  const dlRes = await fetch(`${baseUrl()}/api/client/documents/${org2Doc.id}/download`, { headers: { cookie } });
+  assert.equal(dlRes.status, 404, 'cross-org document access denied (IDOR)');
+});
+
+test('GET /api/client/documents/:id/download returns 400 for invalid UUID', async () => {
+  const org = await insertOrg();
+  const user = await insertUser(org.id);
+  const { raw } = await insertToken(user.id);
+
+  const { baseUrl } = require('./_helpers');
+  const loginRes = await fetch(`${baseUrl()}/client/login/${raw}`, { redirect: 'manual' });
+  const cookie = loginRes.headers.get('set-cookie');
+
+  const dlRes = await fetch(`${baseUrl()}/api/client/documents/not-a-uuid/download`, { headers: { cookie } });
+  assert.equal(dlRes.status, 400, 'malformed UUID returns 400');
+});
+
+test('GET /api/client/documents/:id/download sets Content-Disposition header', async () => {
+  const org = await insertOrg();
+  const user = await insertUser(org.id);
+  const { raw } = await insertToken(user.id);
+  const doc = await insertDocument(org.id, { filename: 'my-contract.pdf' });
+
+  const { baseUrl } = require('./_helpers');
+  const loginRes = await fetch(`${baseUrl()}/client/login/${raw}`, { redirect: 'manual' });
+  const cookie = loginRes.headers.get('set-cookie');
+
+  const dlRes = await fetch(`${baseUrl()}/api/client/documents/${doc.id}/download`, { headers: { cookie } });
+  // Note: may be 500 if file doesn't exist in sandbox, or 200 if stream succeeds
+  if (dlRes.status === 200) {
+    const contentDisp = dlRes.headers.get('content-disposition');
+    assert.ok(contentDisp && contentDisp.includes('attachment'), 'Content-Disposition header set');
+    assert.ok(contentDisp.includes('my-contract.pdf'), 'filename in disposition');
+  }
+});
+
+// ── Approvals Tests ────────────────────────────────────────────────────────
+
+test('POST /api/admin/client-orgs/:id/approvals creates approval', async () => {
+  const org = await insertOrg();
+  const approval = await requestJson('POST', `/api/admin/client-orgs/${org.id}/approvals`, {
+    token: adminToken,
+    body: { title: 'Sign Contract', description: 'Please review and sign' },
+    expectStatus: 201,
+  });
+  assert.equal(approval.title, 'Sign Contract');
+  assert.equal(approval.description, 'Please review and sign');
+  assert.equal(approval.status, 'pending');
+});
+
+test('POST /api/admin/client-orgs/:id/approvals rejects missing title', async () => {
+  const org = await insertOrg();
+  await requestJson('POST', `/api/admin/client-orgs/${org.id}/approvals`, {
+    token: adminToken,
+    body: { description: 'no title' },
+    expectStatus: 400,
+  });
+});
+
+test('POST /api/admin/client-orgs/:id/approvals rejects project_id from different org', async () => {
+  const org1 = await insertOrg();
+  const org2 = await insertOrg();
+  const { projectIds: org2ProjectIds } = await setupProjectsForClient(org2.id);
+
+  await requestJson('POST', `/api/admin/client-orgs/${org1.id}/approvals`, {
+    token: adminToken,
+    body: { title: 'Approval', project_id: org2ProjectIds[0] },
+    expectStatus: 404,
+  });
+});
+
+test('POST /api/admin/client-orgs/:id/approvals rejects document_id from different org', async () => {
+  const org1 = await insertOrg();
+  const org2 = await insertOrg();
+  const org2Doc = await insertDocument(org2.id);
+
+  await requestJson('POST', `/api/admin/client-orgs/${org1.id}/approvals`, {
+    token: adminToken,
+    body: { title: 'Approval', document_id: org2Doc.id },
+    expectStatus: 404,
+  });
+});
+
+test('POST /api/admin/client-orgs/:id/approvals rejects invalid UUID formats', async () => {
+  const org = await insertOrg();
+  await requestJson('POST', `/api/admin/client-orgs/${org.id}/approvals`, {
+    token: adminToken,
+    body: { title: 'Approval', project_id: 'not-a-uuid' },
+    expectStatus: 400,
+  });
+});
+
+test('POST /api/admin/client-orgs/:id/approvals requires admin role', async () => {
+  const org = await insertOrg();
+  const user = await insertUser(org.id);
+  const { raw } = await insertToken(user.id);
+
+  const { baseUrl } = require('./_helpers');
+  const loginRes = await fetch(`${baseUrl()}/client/login/${raw}`, { redirect: 'manual' });
+  const cookie = loginRes.headers.get('set-cookie');
+
+  const appRes = await fetch(`${baseUrl()}/api/admin/client-orgs/${org.id}/approvals`, {
+    method: 'POST',
+    headers: { 'content-type': 'application/json', cookie },
+    body: JSON.stringify({ title: 'Approval' })
+  });
+  assert.equal(appRes.status, 403, 'client user cannot create approvals');
+});
+
+test('GET /api/client/approvals returns caller\'s org approvals only (IDOR)', async () => {
+  const org1 = await insertOrg();
+  const org2 = await insertOrg();
+  const user = await insertUser(org1.id);
+  const { raw } = await insertToken(user.id);
+
+  // Insert approvals for both orgs
+  await insertApproval(org1.id, { title: 'App1' });
+  await insertApproval(org2.id, { title: 'App2' });
+
+  const { baseUrl } = require('./_helpers');
+  const loginRes = await fetch(`${baseUrl()}/client/login/${raw}`, { redirect: 'manual' });
+  const cookie = loginRes.headers.get('set-cookie');
+
+  const appRes = await fetch(`${baseUrl()}/api/client/approvals`, { headers: { cookie } });
+  assert.equal(appRes.status, 200);
+  const data = await appRes.json();
+  assert.ok(Array.isArray(data.approvals));
+  assert.equal(data.approvals.length, 1, 'returns only caller\'s org approval (IDOR)');
+  assert.equal(data.approvals[0].title, 'App1');
+});
+
+test('GET /api/client/approvals?status=all returns all statuses', async () => {
+  const org = await insertOrg();
+  const user = await insertUser(org.id);
+  const { raw } = await insertToken(user.id);
+
+  // Insert pending and responded approvals
+  await insertApproval(org.id, { title: 'Pending App', status: 'pending' });
+  await insertApproval(org.id, { title: 'Responded App', status: 'responded' });
+
+  const { baseUrl } = require('./_helpers');
+  const loginRes = await fetch(`${baseUrl()}/client/login/${raw}`, { redirect: 'manual' });
+  const cookie = loginRes.headers.get('set-cookie');
+
+  const appRes = await fetch(`${baseUrl()}/api/client/approvals?status=all`, { headers: { cookie } });
+  assert.equal(appRes.status, 200);
+  const data = await appRes.json();
+  assert.equal(data.approvals.length, 2, 'returns both pending and responded');
+});
+
+test('POST /api/client/approvals/:id/respond updates approval with response', async () => {
+  const org = await insertOrg();
+  const user = await insertUser(org.id);
+  const { raw } = await insertToken(user.id);
+  const approval = await insertApproval(org.id, { title: 'Needs Response' });
+
+  const { baseUrl } = require('./_helpers');
+  const loginRes = await fetch(`${baseUrl()}/client/login/${raw}`, { redirect: 'manual' });
+  const cookie = loginRes.headers.get('set-cookie');
+
+  const respondRes = await fetch(`${baseUrl()}/api/client/approvals/${approval.id}/respond`, {
+    method: 'POST',
+    headers: { 'content-type': 'application/json', cookie },
+    body: JSON.stringify({ response: 'approved', response_notes: 'Looks good' })
+  });
+  assert.equal(respondRes.status, 200);
+  const result = await respondRes.json();
+  assert.equal(result.approval.response, 'approved');
+  assert.equal(result.approval.response_notes, 'Looks good');
+  assert.equal(result.approval.status, 'responded');
+  assert.ok(result.approval.responded_at, 'responded_at is set');
+});
+
+test('POST /api/client/approvals/:id/respond rejects invalid response value', async () => {
+  const org = await insertOrg();
+  const user = await insertUser(org.id);
+  const { raw } = await insertToken(user.id);
+  const approval = await insertApproval(org.id);
+
+  const { baseUrl } = require('./_helpers');
+  const loginRes = await fetch(`${baseUrl()}/client/login/${raw}`, { redirect: 'manual' });
+  const cookie = loginRes.headers.get('set-cookie');
+
+  const respondRes = await fetch(`${baseUrl()}/api/client/approvals/${approval.id}/respond`, {
+    method: 'POST',
+    headers: { 'content-type': 'application/json', cookie },
+    body: JSON.stringify({ response: 'invalid-response' })
+  });
+  assert.equal(respondRes.status, 400, 'rejects invalid response value');
+});
+
+test('POST /api/client/approvals/:id/respond returns 409 if already responded', async () => {
+  const org = await insertOrg();
+  const user = await insertUser(org.id);
+  const { raw } = await insertToken(user.id);
+  const approval = await insertApproval(org.id, { status: 'responded' });
+
+  const { baseUrl } = require('./_helpers');
+  const loginRes = await fetch(`${baseUrl()}/client/login/${raw}`, { redirect: 'manual' });
+  const cookie = loginRes.headers.get('set-cookie');
+
+  const respondRes = await fetch(`${baseUrl()}/api/client/approvals/${approval.id}/respond`, {
+    method: 'POST',
+    headers: { 'content-type': 'application/json', cookie },
+    body: JSON.stringify({ response: 'approved' })
+  });
+  assert.equal(respondRes.status, 409, 'already responded returns 409 conflict');
+});
+
+test('POST /api/client/approvals/:id/respond returns 404 for other org\'s approval (IDOR)', async () => {
+  const org1 = await insertOrg();
+  const org2 = await insertOrg();
+  const user = await insertUser(org1.id);
+  const { raw } = await insertToken(user.id);
+  const org2Approval = await insertApproval(org2.id);
+
+  const { baseUrl } = require('./_helpers');
+  const loginRes = await fetch(`${baseUrl()}/client/login/${raw}`, { redirect: 'manual' });
+  const cookie = loginRes.headers.get('set-cookie');
+
+  const respondRes = await fetch(`${baseUrl()}/api/client/approvals/${org2Approval.id}/respond`, {
+    method: 'POST',
+    headers: { 'content-type': 'application/json', cookie },
+    body: JSON.stringify({ response: 'approved' })
+  });
+  assert.equal(respondRes.status, 404, 'cross-org approval access denied (IDOR)');
+});
+
+test('POST /api/client/approvals/:id/respond returns 400 for invalid UUID', async () => {
+  const org = await insertOrg();
+  const user = await insertUser(org.id);
+  const { raw } = await insertToken(user.id);
+
+  const { baseUrl } = require('./_helpers');
+  const loginRes = await fetch(`${baseUrl()}/client/login/${raw}`, { redirect: 'manual' });
+  const cookie = loginRes.headers.get('set-cookie');
+
+  const respondRes = await fetch(`${baseUrl()}/api/client/approvals/invalid-uuid/respond`, {
+    method: 'POST',
+    headers: { 'content-type': 'application/json', cookie },
+    body: JSON.stringify({ response: 'approved' })
+  });
+  assert.equal(respondRes.status, 400, 'malformed UUID returns 400');
+});

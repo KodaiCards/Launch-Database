@@ -2486,6 +2486,11 @@ body.demo-blur .lf-financial:hover{filter:blur(0)}
       <button class="btn btn-icon btn-secondary" aria-label="Close dialog" onclick="closeModal('cp-org-detail-modal')"><i class="fa-solid fa-xmark" aria-hidden="true"></i></button>
     </div>
     <div class="modal-body">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px">
+        <strong style="font-size:13px">Actions</strong>
+      </div>
+      <button class="btn btn-secondary btn-sm" onclick="cpOpenCreateApprovalModal()" style="margin-bottom:16px"><i class="fa-solid fa-clipboard-check" aria-hidden="true"></i> Create Approval Request</button>
+
       <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px">
         <strong style="font-size:13px">Users &amp; Login Tokens</strong>
         <button class="btn btn-primary btn-sm" onclick="cpOpenAddUserModal()"><i class="fa-solid fa-user-plus"></i> Add User</button>
@@ -2548,6 +2553,39 @@ body.demo-blur .lf-financial:hover{filter:blur(0)}
     <div class="modal-footer">
       <button class="btn btn-secondary btn-sm" onclick="cpCopyTokenUrl()"><i class="fa-solid fa-copy"></i> Copy link</button>
       <button class="btn btn-primary" onclick="closeModal('cp-token-modal')">Done — I copied it</button>
+    </div>
+  </div>
+</div>
+
+<!-- ── Client Portal v1 — Create Approval Request modal (Wave 49b) ──────────── -->
+<div class="modal-overlay" id="cp-create-approval-modal" role="dialog" aria-modal="true" aria-labelledby="cp-create-approval-title" style="z-index:1200">
+  <div class="modal" style="max-width:500px;width:95%">
+    <div class="modal-header">
+      <span class="modal-title" id="cp-create-approval-title"><i class="fa-solid fa-clipboard-check" style="color:var(--primary)" aria-hidden="true"></i> Create Approval Request</span>
+      <button class="btn btn-icon btn-secondary" aria-label="Close dialog" onclick="closeModal('cp-create-approval-modal')"><i class="fa-solid fa-xmark" aria-hidden="true"></i></button>
+    </div>
+    <div class="modal-body">
+      <div class="form-group">
+        <label class="form-label" for="cp-approval-title">Title *</label>
+        <input id="cp-approval-title" class="form-control" type="text" placeholder="e.g., Sign Contract, Review Documents" />
+      </div>
+      <div class="form-group">
+        <label class="form-label" for="cp-approval-description">Description</label>
+        <textarea id="cp-approval-description" class="form-control" placeholder="Additional context for the client..." style="min-height:80px;resize:vertical"></textarea>
+      </div>
+      <div class="form-group">
+        <label class="form-label" for="cp-approval-project">Project (optional)</label>
+        <input id="cp-approval-project" class="form-control" type="text" placeholder="Project UUID or leave blank" />
+      </div>
+      <div class="form-group">
+        <label class="form-label" for="cp-approval-document">Document (optional)</label>
+        <input id="cp-approval-document" class="form-control" type="text" placeholder="Document UUID or leave blank" />
+      </div>
+      <div id="cp-approval-error" style="display:none;margin-bottom:12px;padding:8px;background:var(--danger-light,#fff0f0);color:var(--danger);border-radius:4px;font-size:13px"></div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-secondary" onclick="closeModal('cp-create-approval-modal')">Cancel</button>
+      <button class="btn btn-primary" id="cp-create-approval-btn" onclick="cpSubmitCreateApproval()"><i class="fa-solid fa-check"></i> Create</button>
     </div>
   </div>
 </div>

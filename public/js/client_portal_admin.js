@@ -180,6 +180,71 @@
     }
   }
 
+  // ── Create Approval Request (Wave 49b) ──────────────────────────────
+  function cpOpenCreateApprovalModal() {
+    if (!_currentOrgId) {
+      alert('No org selected');
+      return;
+    }
+    // Clear form fields
+    document.getElementById('cp-approval-title').value = '';
+    document.getElementById('cp-approval-description').value = '';
+    document.getElementById('cp-approval-project').value = '';
+    document.getElementById('cp-approval-document').value = '';
+    document.getElementById('cp-approval-error').style.display = 'none';
+    openModal('cp-create-approval-modal');
+  }
+
+  async function cpSubmitCreateApproval() {
+    const orgId = _currentOrgId;
+    if (!orgId) {
+      alert('No org selected');
+      return;
+    }
+
+    const title = document.getElementById('cp-approval-title').value.trim();
+    const description = document.getElementById('cp-approval-description').value.trim() || null;
+    const projectId = document.getElementById('cp-approval-project').value.trim() || null;
+    const documentId = document.getElementById('cp-approval-document').value.trim() || null;
+
+    if (!title) {
+      showApprovalError('Title is required');
+      return;
+    }
+
+    const btn = document.getElementById('cp-create-approval-btn');
+    btn.disabled = true;
+    const origText = btn.innerHTML;
+    btn.innerHTML = '<i class="fa-solid fa-spinner" style="animation:spin 1s linear infinite"></i>';
+
+    try {
+      const approval = await api('POST', `/api/admin/client-orgs/${orgId}/approvals`, {
+        title,
+        description,
+        project_id: projectId,
+        document_id: documentId
+      });
+
+      closeModal('cp-create-approval-modal');
+      alert(`Approval "${approval.title}" created successfully`);
+
+      // Refresh org detail to show updated state
+      if (_currentOrgId) {
+        await cpOpenOrgDetail(_currentOrgId);
+      }
+    } catch (e) {
+      showApprovalError(e.message || 'Request failed');
+      btn.disabled = false;
+      btn.innerHTML = origText;
+    }
+  }
+
+  function showApprovalError(msg) {
+    const errDiv = document.getElementById('cp-approval-error');
+    errDiv.textContent = msg;
+    errDiv.style.display = 'block';
+  }
+
   // ── Helpers ──────────────────────────────────────────────────────────
   function esc(s) {
     return String(s || '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
@@ -193,13 +258,15 @@
   };
 
   // Expose functions globally for onclick handlers.
-  window.cpOpenCreateOrgModal  = cpOpenCreateOrgModal;
-  window.cpSubmitCreateOrg     = cpSubmitCreateOrg;
-  window.cpOpenOrgDetail       = cpOpenOrgDetail;
-  window.cpOpenAddUserModal    = cpOpenAddUserModal;
-  window.cpSubmitAddUser       = cpSubmitAddUser;
-  window.cpGenerateToken       = cpGenerateToken;
-  window.cpCopyTokenUrl        = cpCopyTokenUrl;
-  window.cpRevokeToken         = cpRevokeToken;
-  window.cpLoadOrgs            = cpLoadOrgs;
+  window.cpOpenCreateOrgModal      = cpOpenCreateOrgModal;
+  window.cpSubmitCreateOrg         = cpSubmitCreateOrg;
+  window.cpOpenOrgDetail           = cpOpenOrgDetail;
+  window.cpOpenAddUserModal        = cpOpenAddUserModal;
+  window.cpSubmitAddUser           = cpSubmitAddUser;
+  window.cpGenerateToken           = cpGenerateToken;
+  window.cpCopyTokenUrl            = cpCopyTokenUrl;
+  window.cpRevokeToken             = cpRevokeToken;
+  window.cpOpenCreateApprovalModal = cpOpenCreateApprovalModal;
+  window.cpSubmitCreateApproval    = cpSubmitCreateApproval;
+  window.cpLoadOrgs                = cpLoadOrgs;
 })();
