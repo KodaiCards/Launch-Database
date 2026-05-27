@@ -706,6 +706,9 @@ require('./routes/inspection')(app, pool, { requireAuth }); // C-3: was {} — n
 // Revenue endpoints extracted to routes/revenue.js (Track 1.3).
 require('./routes/revenue')(app, pool, { requireManagerOrAdmin });
 
+// Audit log viewer (read-only admin UI for compliance trail — Wave 41).
+require('./routes/audit_log')(app, pool, { requireAdmin });
+
 
 // ─────────────────────────────────────────────────────────────────────────────
 // INVOICE MANAGEMENT — extracted to routes/invoices.js (Track 1.3.5).

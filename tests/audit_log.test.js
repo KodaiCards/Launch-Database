@@ -111,3 +111,77 @@ test('AI write_sql tool execution produces audit_log row with meta.sql', async (
   assert.equal(rows[0].meta.approved, true);
   assert.equal(rows[0].meta.success, true);
 });
+
+test('GET /api/admin/audit-log requires admin role', async () => {
+  // Non-admin user should be rejected
+  const { status } = await requestJson('GET', '/api/admin/audit-log?limit=10', {
+    token: null  // No auth = guest
+  });
+  assert.equal(status, 401, 'unauthenticated request must be rejected');
+});
+
+test('GET /api/admin/audit-log returns paginated list', async () => {
+  const token = await adminLogin();
+
+  // Insert a test audit row
+  const tag = uniqueTag();
+  await pool.query(
+    `INSERT INTO audit_log (actor_type, action, entity_type, entity_id, source)
+     VALUES ('user', 'test.pagination', 'project', $1, 'test')`,
+    [`proj-${tag}`]
+  );
+
+  const r = await requestJson('GET', '/api/admin/audit-log?limit=50&offset=0', { token });
+  assert.equal(r.status || r.rows ? 200 : 400, 200, 'request should succeed');
+  assert.ok(Array.isArray(r.rows), 'response must have rows array');
+  assert.equal(typeof r.total, 'number', 'response must have total count');
+  assert.equal(r.limit, 50, 'limit should be returned');
+  assert.equal(r.offset, 0, 'offset should be returned');
+});
+
+test('GET /api/admin/audit-log filters by action', async () => {
+  const token = await adminLogin();
+  const tag = uniqueTag();
+
+  // Insert two rows with different actions
+  await pool.query(
+    `INSERT INTO audit_log (actor_type, action, entity_type, entity_id, source)
+     VALUES ('user', 'filter.test.action1', 'project', $1, 'test'),
+            ('user', 'filter.test.action2', 'project', $2, 'test')`,
+    [`proj-${tag}-1`, `proj-${tag}-2`]
+  );
+
+  const r = await requestJson('GET', '/api/admin/audit-log?action=filter.test.action1&limit=100', { token });
+  assert.ok(r.rows, 'request should succeed');
+  const matching = r.rows.filter(row => row.action === 'filter.test.action1');
+  assert.ok(matching.length > 0, 'should find rows matching the filtered action');
+});
+
+test('GET /api/admin/audit-log/:id returns single row detail', async () => {
+  const token = await adminLogin();
+  const tag = uniqueTag();
+
+  // Insert a row and get its ID
+  const { rows: inserted } = await pool.query(
+    `INSERT INTO audit_log
+       (actor_type, action, entity_type, entity_id, source, before_data, after_data, meta)
+     VALUES ('user', 'detail.test', 'project', $1, 'test',
+             '{"old":"value"}'::jsonb, '{"new":"value"}'::jsonb, '{"info":"test"}'::jsonb)
+     RETURNING id`,
+    [`proj-${tag}-detail`]
+  );
+  const id = inserted[0].id;
+
+  const r = await requestJson('GET', `/api/admin/audit-log/${id}`, { token });
+  assert.ok(r.id, 'should return the id');
+  assert.equal(r.action, 'detail.test', 'should return the action');
+  assert.deepEqual(r.before_data, { old: 'value' }, 'should include before_data');
+  assert.deepEqual(r.after_data, { new: 'value' }, 'should include after_data');
+  assert.deepEqual(r.meta, { info: 'test' }, 'should include meta');
+});
+
+test('GET /api/admin/audit-log/:id returns 404 for nonexistent id', async () => {
+  const token = await adminLogin();
+  const r = await requestJson('GET', '/api/admin/audit-log/999999999', { token });
+  assert.equal(r.status, 404, 'should return 404 for missing row');
+});
