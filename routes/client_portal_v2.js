@@ -402,4 +402,335 @@ module.exports = function installClientPortalV2(app, pool, { requireAuth }) {
       res.status(500).json({ error: 'failed to revoke token' });
     }
   });
+
+  // ══════════════════════════════════════════════════════════════════════
+  // Wave 49: Documents + Approvals (client write surface)
+  // ══════════════════════════════════════════════════════════════════════
+
+  // ── List documents ─────────────────────────────────────────────────────
+  app.get('/api/client/documents', requireClientAuthMW, async (req, res) => {
+    try {
+      const orgId = req.client_org.id;
+      const projectId = req.query.project_id;
+
+      // If project_id filter requested, verify it belongs to this org.
+      if (projectId) {
+        if (!isValidUUID(projectId)) return res.status(400).json({ error: 'invalid project_id' });
+        const { rows: projCheck } = await pool.query(`
+          SELECT p.id FROM projects p
+          JOIN engineering_contracts ec ON ec.id = p.engineering_contract_id
+          WHERE p.id = $1 AND ec.client_org_id = $2
+        `, [projectId, orgId]);
+        if (!projCheck.length) return res.status(404).json({ error: 'project not found in org' });
+      }
+
+      const query = projectId
+        ? `
+          SELECT id, client_org_id, project_id, filename, mime_type, size_bytes,
+                 direction, status, notes, created_at
+          FROM client_documents
+          WHERE client_org_id = $1 AND project_id = $2 AND status = 'active'
+          ORDER BY created_at DESC
+        `
+        : `
+          SELECT id, client_org_id, project_id, filename, mime_type, size_bytes,
+                 direction, status, notes, created_at
+          FROM client_documents
+          WHERE client_org_id = $1 AND status = 'active'
+          ORDER BY created_at DESC
+        `;
+
+      const params = projectId ? [orgId, projectId] : [orgId];
+      const { rows } = await pool.query(query, params);
+
+      res.json({ documents: rows, total: rows.length });
+    } catch (e) {
+      console.error('[client_portal_v2] list documents:', e && e.message);
+      res.status(500).json({ error: 'failed to load documents' });
+    }
+  });
+
+  // ── Download document ──────────────────────────────────────────────────
+  app.get('/api/client/documents/:id/download', requireClientAuthMW, async (req, res) => {
+    try {
+      if (!isValidUUID(req.params.id)) return res.status(400).json({ error: 'invalid document id' });
+      const orgId = req.client_org.id;
+
+      const { rows } = await pool.query(`
+        SELECT id, storage_key, filename
+        FROM client_documents
+        WHERE id = $1 AND client_org_id = $2 AND status = 'active'
+      `, [req.params.id, orgId]);
+
+      if (!rows.length) return res.status(404).json({ error: 'document not found' });
+      const doc = rows[0];
+
+      const fs = require('fs');
+      const path = require('path');
+      const uploadDir = process.env.UPLOAD_DIR || path.join(__dirname, '..', 'uploads');
+      const filePath = path.join(uploadDir, doc.storage_key);
+
+      // Prevent path traversal.
+      if (!filePath.startsWith(uploadDir)) {
+        return res.status(403).json({ error: 'access denied' });
+      }
+
+      res.setHeader('Content-Disposition', `attachment; filename="${doc.filename}"`);
+      const stream = fs.createReadStream(filePath);
+      stream.on('error', (e) => {
+        console.error('[client_portal_v2] download stream error:', e && e.message);
+        res.status(500).json({ error: 'failed to download document' });
+      });
+      stream.pipe(res);
+    } catch (e) {
+      console.error('[client_portal_v2] download document:', e && e.message);
+      res.status(500).json({ error: 'failed to download document' });
+    }
+  });
+
+  // ── Upload document ────────────────────────────────────────────────────
+  // Note: assumes multer middleware is mounted at app level.
+  // This endpoint requires multipart/form-data with fields: file, project_id (optional), notes (optional).
+  app.post('/api/client/documents', requireClientAuthMW, (req, res, next) => {
+    // Multer middleware will be injected by calling code or server.js.
+    // For now, we'll implement as a simple middleware handler.
+    // The actual upload will be handled by multer middleware passed from server.js
+    // This route will receive req.file + req.body from multer.
+    next();
+  });
+
+  // We'll handle the actual POST /api/client/documents via a separate handler
+  // that wraps multer. This is registered in server.js.
+  // For now, create a placeholder handler.
+  const path = require('path');
+  function installClientDocumentUpload(uploadMW) {
+    app.post('/api/client/documents', requireClientAuthMW, uploadMW.single('file'), async (req, res) => {
+      try {
+        if (!req.file) return res.status(400).json({ error: 'no file provided' });
+
+        const orgId = req.client_org.id;
+        const projectId = req.body.project_id;
+        const notes = req.body.notes || null;
+
+        // Whitelist MIME types.
+        const allowedMimes = [
+          'application/pdf',
+          'image/png', 'image/jpeg',
+          'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+          'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+          'image/vnd.dwg', 'image/x-dwg', 'application/vnd.dwg'
+        ];
+        if (!allowedMimes.includes(req.file.mimetype)) {
+          // Clean up uploaded file.
+          const fs = require('fs');
+          fs.unlink(req.file.path, (e) => {});
+          return res.status(400).json({ error: 'file type not allowed' });
+        }
+
+        // 50MB cap.
+        if (req.file.size > 50 * 1024 * 1024) {
+          const fs = require('fs');
+          fs.unlink(req.file.path, (e) => {});
+          return res.status(400).json({ error: 'file exceeds 50MB limit' });
+        }
+
+        // If project_id provided, verify it belongs to this org.
+        if (projectId) {
+          if (!isValidUUID(projectId)) {
+            const fs = require('fs');
+            fs.unlink(req.file.path, (e) => {});
+            return res.status(400).json({ error: 'invalid project_id' });
+          }
+          const { rows: projCheck } = await pool.query(`
+            SELECT p.id FROM projects p
+            JOIN engineering_contracts ec ON ec.id = p.engineering_contract_id
+            WHERE p.id = $1 AND ec.client_org_id = $2
+          `, [projectId, orgId]);
+          if (!projCheck.length) {
+            const fs = require('fs');
+            fs.unlink(req.file.path, (e) => {});
+            return res.status(404).json({ error: 'project not found in org' });
+          }
+        }
+
+        // Store relative path: client-docs/<org_id>/<filename>
+        const uploadDir = process.env.UPLOAD_DIR || path.join(__dirname, '..', 'uploads');
+        const fs = require('fs');
+        const fsp = fs.promises;
+        const ext = path.extname(req.file.originalname);
+        const { v4: uuidv4 } = require('uuid');
+        const uuid = uuidv4();
+        const storageKey = path.join('client-docs', orgId, `${uuid}${ext}`).replace(/\\/g, '/');
+        const fullPath = path.join(uploadDir, storageKey);
+        const dirPath = path.dirname(fullPath);
+
+        // Ensure directory exists.
+        await fsp.mkdir(dirPath, { recursive: true });
+        await fsp.rename(req.file.path, fullPath);
+
+        // Insert document row.
+        const { rows } = await pool.query(`
+          INSERT INTO client_documents (
+            client_org_id, project_id, filename, mime_type, size_bytes,
+            storage_key, uploaded_by_client_user_id, direction, status, notes
+          ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
+          RETURNING id, filename, mime_type, size_bytes, storage_key, direction,
+                    status, notes, created_at
+        `, [
+          orgId,
+          projectId || null,
+          req.file.originalname,
+          req.file.mimetype,
+          req.file.size,
+          storageKey,
+          req.client_user.id,
+          'from_client',
+          'active',
+          notes
+        ]);
+
+        res.status(201).json({ document: rows[0] });
+      } catch (e) {
+        console.error('[client_portal_v2] upload document:', e && e.message);
+        // Clean up on error.
+        if (req.file && req.file.path) {
+          const fs = require('fs');
+          fs.unlink(req.file.path, (e) => {});
+        }
+        res.status(500).json({ error: 'failed to upload document' });
+      }
+    });
+  }
+
+  // Export the upload handler for server.js to wire.
+  module.exports.installClientDocumentUpload = installClientDocumentUpload;
+
+  // ── List approvals ─────────────────────────────────────────────────────
+  app.get('/api/client/approvals', requireClientAuthMW, async (req, res) => {
+    try {
+      const orgId = req.client_org.id;
+      const statusFilter = req.query.status || 'pending';
+
+      let whereClause = 'client_org_id = $1';
+      const params = [orgId];
+
+      if (statusFilter !== 'all') {
+        whereClause += ' AND status = $2';
+        params.push(statusFilter);
+      }
+
+      const { rows } = await pool.query(`
+        SELECT id, client_org_id, project_id, title, description, document_id,
+               response, response_notes, requested_at, responded_at, status
+        FROM client_approvals
+        WHERE ${whereClause}
+        ORDER BY CASE WHEN status = 'pending' THEN 0 ELSE 1 END, requested_at DESC
+      `, params);
+
+      res.json({ approvals: rows, total: rows.length });
+    } catch (e) {
+      console.error('[client_portal_v2] list approvals:', e && e.message);
+      res.status(500).json({ error: 'failed to load approvals' });
+    }
+  });
+
+  // ── Respond to approval ────────────────────────────────────────────────
+  app.post('/api/client/approvals/:id/respond', requireClientAuthMW, async (req, res) => {
+    try {
+      if (!isValidUUID(req.params.id)) return res.status(400).json({ error: 'invalid approval id' });
+
+      const { response, response_notes } = req.body || {};
+      if (!['approved', 'rejected', 'changes_requested'].includes(response)) {
+        return res.status(400).json({ error: 'invalid response value' });
+      }
+
+      const orgId = req.client_org.id;
+      const approvalId = req.params.id;
+
+      // Verify approval belongs to this org and is pending.
+      const { rows: approvalCheck } = await pool.query(`
+        SELECT id, status FROM client_approvals
+        WHERE id = $1 AND client_org_id = $2
+      `, [approvalId, orgId]);
+
+      if (!approvalCheck.length) return res.status(404).json({ error: 'approval not found' });
+      if (approvalCheck[0].status !== 'pending') {
+        return res.status(409).json({ error: 'approval already responded' });
+      }
+
+      // Update approval.
+      const { rows } = await pool.query(`
+        UPDATE client_approvals
+        SET response = $1, response_notes = $2, status = 'responded',
+            responded_at = NOW(), responded_by_client_user_id = $3
+        WHERE id = $4
+        RETURNING id, response, response_notes, responded_at, status
+      `, [response, response_notes || null, req.client_user.id, approvalId]);
+
+      res.json({ approval: rows[0] });
+    } catch (e) {
+      console.error('[client_portal_v2] respond approval:', e && e.message);
+      res.status(500).json({ error: 'failed to respond to approval' });
+    }
+  });
+
+  // ── Create approval (admin only) ────────────────────────────────────────
+  app.post('/api/admin/client-orgs/:id/approvals', requireAuth(['admin']), async (req, res) => {
+    try {
+      if (!isValidUUID(req.params.id)) return res.status(400).json({ error: 'invalid org id' });
+
+      const { title, description, project_id, document_id } = req.body || {};
+      if (!title) return res.status(400).json({ error: 'title required' });
+
+      const orgId = req.params.id;
+
+      // Verify org exists.
+      const { rows: orgCheck } = await pool.query(
+        'SELECT id FROM client_organizations WHERE id = $1',
+        [orgId]
+      );
+      if (!orgCheck.length) return res.status(404).json({ error: 'org not found' });
+
+      // If project_id or document_id provided, verify they scope to this org.
+      if (project_id) {
+        if (!isValidUUID(project_id)) return res.status(400).json({ error: 'invalid project_id' });
+        const { rows: projCheck } = await pool.query(`
+          SELECT p.id FROM projects p
+          JOIN engineering_contracts ec ON ec.id = p.engineering_contract_id
+          WHERE p.id = $1 AND ec.client_org_id = $2
+        `, [project_id, orgId]);
+        if (!projCheck.length) return res.status(404).json({ error: 'project not found in org' });
+      }
+
+      if (document_id) {
+        if (!isValidUUID(document_id)) return res.status(400).json({ error: 'invalid document_id' });
+        const { rows: docCheck } = await pool.query(
+          'SELECT id FROM client_documents WHERE id = $1 AND client_org_id = $2',
+          [document_id, orgId]
+        );
+        if (!docCheck.length) return res.status(404).json({ error: 'document not found in org' });
+      }
+
+      // Create approval.
+      const { rows } = await pool.query(`
+        INSERT INTO client_approvals (
+          client_org_id, title, description, project_id, document_id, requested_by, status
+        ) VALUES ($1, $2, $3, $4, $5, $6, $7)
+        RETURNING id, title, description, project_id, document_id, status, requested_at
+      `, [
+        orgId,
+        title,
+        description || null,
+        project_id || null,
+        document_id || null,
+        req.user.id,
+        'pending'
+      ]);
+
+      res.status(201).json({ approval: rows[0] });
+    } catch (e) {
+      console.error('[client_portal_v2] create approval:', e && e.message);
+      res.status(500).json({ error: 'failed to create approval' });
+    }
+  });
 };

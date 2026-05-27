@@ -294,6 +294,361 @@ body {
   white-space: nowrap;
 }
 
+/* Tab Navigation */
+.tabs-nav {
+  max-width: 1200px;
+  margin: 0 auto 24px;
+  padding: 0 24px;
+  display: flex;
+  gap: 12px;
+  border-bottom: 1px solid var(--border-weak);
+}
+
+.tab-btn {
+  background: none;
+  border: none;
+  padding: 12px 0;
+  color: var(--text-2);
+  font-size: 14px;
+  font-weight: 500;
+  font-family: inherit;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  transition: color 0.12s, border-color 0.12s;
+  border-bottom: 2px solid transparent;
+  margin-bottom: -1px;
+}
+
+.tab-btn:hover {
+  color: var(--text-1);
+}
+
+.tab-btn.active {
+  color: var(--primary);
+  border-bottom-color: var(--primary);
+}
+
+.badge {
+  background: #ef4444;
+  color: white;
+  border-radius: 10px;
+  padding: 2px 6px;
+  font-size: 11px;
+  font-weight: 600;
+  margin-left: 4px;
+}
+
+/* Tab Content */
+.tab-content {
+  display: none;
+}
+
+.tab-content.active {
+  display: block;
+}
+
+/* Document Styles */
+.upload-section {
+  background: var(--surface-1);
+  border: 1px solid var(--border-weak);
+  border-radius: var(--radius);
+  padding: 20px;
+  margin-bottom: 24px;
+}
+
+.upload-section h3 {
+  font-size: 16px;
+  font-weight: 600;
+  margin-bottom: 16px;
+}
+
+.upload-form {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.form-group {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.form-group label {
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--text-1);
+}
+
+.form-select,
+.form-textarea,
+input[type="file"] {
+  padding: 8px 12px;
+  border: 1px solid var(--border-weak);
+  border-radius: 6px;
+  font-family: inherit;
+  font-size: 13px;
+  background: var(--surface-2);
+  color: var(--text-1);
+}
+
+.form-textarea {
+  resize: vertical;
+}
+
+input[type="file"] {
+  padding: 6px 8px;
+}
+
+.btn-primary,
+.btn-secondary,
+.btn-small {
+  padding: 8px 16px;
+  border-radius: 6px;
+  font-size: 13px;
+  font-weight: 500;
+  font-family: inherit;
+  cursor: pointer;
+  border: none;
+  transition: background 0.12s, opacity 0.12s;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  white-space: nowrap;
+}
+
+.btn-primary {
+  background: var(--primary);
+  color: white;
+}
+
+.btn-primary:hover {
+  opacity: 0.9;
+}
+
+.btn-secondary {
+  background: var(--surface-2);
+  color: var(--text-1);
+  border: 1px solid var(--border-weak);
+}
+
+.btn-secondary:hover {
+  background: var(--border-weak);
+}
+
+.btn-small {
+  padding: 6px 12px;
+  font-size: 12px;
+  background: var(--primary);
+  color: white;
+}
+
+.btn-small:hover {
+  opacity: 0.9;
+}
+
+.documents-list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.document-row {
+  background: var(--surface-1);
+  border: 1px solid var(--border-weak);
+  border-radius: var(--radius);
+  padding: 16px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.doc-info {
+  flex: 1;
+  min-width: 0;
+}
+
+.doc-name {
+  font-weight: 500;
+  color: var(--text-1);
+  font-size: 14px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.doc-meta {
+  font-size: 12px;
+  color: var(--text-2);
+  margin-top: 4px;
+}
+
+.doc-notes {
+  font-size: 12px;
+  color: var(--text-2);
+  margin-top: 6px;
+  font-style: italic;
+}
+
+/* Approval Styles */
+.approvals-list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.approval-row {
+  background: var(--surface-1);
+  border: 1px solid var(--border-weak);
+  border-radius: var(--radius);
+  padding: 16px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.approval-row.completed {
+  background: var(--success-bg);
+  border-color: var(--success-text);
+}
+
+.approval-info {
+  flex: 1;
+  min-width: 0;
+}
+
+.approval-title {
+  font-weight: 500;
+  color: var(--text-1);
+  font-size: 14px;
+}
+
+.approval-desc {
+  font-size: 12px;
+  color: var(--text-2);
+  margin-top: 4px;
+}
+
+.approval-date {
+  font-size: 11px;
+  color: var(--text-3);
+  margin-top: 4px;
+}
+
+.approval-response {
+  font-size: 12px;
+  margin-top: 8px;
+  padding: 8px 12px;
+  border-radius: 4px;
+  background: var(--info-bg);
+  color: var(--info-text);
+}
+
+.approval-response.response-approved {
+  background: var(--success-bg);
+  color: var(--success-text);
+}
+
+.approval-response.response-rejected {
+  background: #fee2e2;
+  color: #dc2626;
+}
+
+.approval-response.response-changes_requested {
+  background: var(--warning-bg);
+  color: var(--warning-text);
+}
+
+.response-notes {
+  margin-top: 6px;
+  font-style: italic;
+  opacity: 0.9;
+}
+
+.btn-approve {
+  background: var(--primary);
+  color: white;
+  padding: 8px 16px;
+  border: none;
+  border-radius: 6px;
+  font-size: 13px;
+  font-weight: 500;
+  font-family: inherit;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  white-space: nowrap;
+}
+
+.btn-approve:hover {
+  opacity: 0.9;
+}
+
+/* Modal Styles */
+.modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+}
+
+.modal-dialog {
+  background: var(--surface-1);
+  border-radius: var(--radius);
+  padding: 24px;
+  max-width: 500px;
+  width: 90%;
+  box-shadow: var(--shadow-md);
+}
+
+.modal-dialog h2 {
+  font-size: 18px;
+  font-weight: 600;
+  margin-bottom: 12px;
+}
+
+.modal-dialog p {
+  font-size: 14px;
+  color: var(--text-2);
+  margin-bottom: 16px;
+}
+
+.radio-group {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.radio-group label {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-weight: 400;
+  cursor: pointer;
+}
+
+.radio-group input[type="radio"] {
+  cursor: pointer;
+}
+
+.modal-actions {
+  display: flex;
+  gap: 8px;
+  justify-content: flex-end;
+  margin-top: 20px;
+}
+
 /* Mobile Responsive */
 @media (max-width: 768px) {
   .header-content {
@@ -316,5 +671,21 @@ body {
 
   .project-list {
     padding-left: 0;
+  }
+
+  .tabs-nav {
+    padding: 0 12px;
+    overflow-x: auto;
+    flex-wrap: nowrap;
+  }
+
+  .document-row,
+  .approval-row {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .modal-dialog {
+    width: 95%;
   }
 }

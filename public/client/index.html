@@ -31,24 +31,104 @@
   </div>
 </header>
 
+<!-- Tab Navigation -->
+<nav class="tabs-nav">
+  <button class="tab-btn active" data-tab="projects">
+    <i class="fa-solid fa-folder"></i>
+    Projects
+  </button>
+  <button class="tab-btn" data-tab="documents">
+    <i class="fa-solid fa-file"></i>
+    Documents
+  </button>
+  <button class="tab-btn" data-tab="approvals">
+    <i class="fa-solid fa-check-circle"></i>
+    Approvals <span id="approvals-badge" class="badge" style="display: none;"></span>
+  </button>
+</nav>
+
 <!-- Main Content -->
 <main class="main-content">
-  <div id="loading-state" class="state-container loading-state">
-    <i class="fa-solid fa-spinner fa-spin"></i>
-    <p>Loading your projects...</p>
-  </div>
+  <!-- Projects Tab -->
+  <section id="projects-tab" class="tab-content active">
+    <div id="loading-state" class="state-container loading-state">
+      <i class="fa-solid fa-spinner fa-spin"></i>
+      <p>Loading your projects...</p>
+    </div>
 
-  <div id="empty-state" class="state-container empty-state" style="display: none;">
-    <i class="fa-solid fa-folder-open"></i>
-    <p>No projects yet — your team will share project status here as work begins.</p>
-  </div>
+    <div id="empty-state" class="state-container empty-state" style="display: none;">
+      <i class="fa-solid fa-folder-open"></i>
+      <p>No projects yet — your team will share project status here as work begins.</p>
+    </div>
 
-  <div id="projects-container" class="projects-container" style="display: none;"></div>
+    <div id="projects-container" class="projects-container" style="display: none;"></div>
 
-  <div id="error-state" class="state-container error-state" style="display: none;">
-    <i class="fa-solid fa-triangle-exclamation"></i>
-    <p id="error-message">An error occurred. Please try again.</p>
-  </div>
+    <div id="error-state" class="state-container error-state" style="display: none;">
+      <i class="fa-solid fa-triangle-exclamation"></i>
+      <p id="error-message">An error occurred. Please try again.</p>
+    </div>
+  </section>
+
+  <!-- Documents Tab -->
+  <section id="documents-tab" class="tab-content" style="display: none;">
+    <div id="documents-loading" class="state-container loading-state">
+      <i class="fa-solid fa-spinner fa-spin"></i>
+      <p>Loading documents...</p>
+    </div>
+
+    <div id="documents-empty" class="state-container empty-state" style="display: none;">
+      <i class="fa-solid fa-file"></i>
+      <p>No documents yet.</p>
+    </div>
+
+    <div id="documents-container" style="display: none;">
+      <div id="upload-section" class="upload-section">
+        <h3>Upload Document</h3>
+        <form id="upload-form" class="upload-form">
+          <input type="file" id="file-input" accept=".pdf,.png,.jpg,.jpeg,.docx,.xlsx,.dwg" required>
+          <select id="project-select" class="form-select">
+            <option value="">Organization-level document</option>
+          </select>
+          <textarea id="notes-input" class="form-textarea" placeholder="Notes (optional)" rows="2"></textarea>
+          <button type="submit" class="btn-primary">Upload</button>
+        </form>
+      </div>
+
+      <h3>Your Documents</h3>
+      <div id="documents-list" class="documents-list"></div>
+    </div>
+
+    <div id="documents-error" class="state-container error-state" style="display: none;">
+      <i class="fa-solid fa-triangle-exclamation"></i>
+      <p id="documents-error-message">Failed to load documents.</p>
+    </div>
+  </section>
+
+  <!-- Approvals Tab -->
+  <section id="approvals-tab" class="tab-content" style="display: none;">
+    <div id="approvals-loading" class="state-container loading-state">
+      <i class="fa-solid fa-spinner fa-spin"></i>
+      <p>Loading approvals...</p>
+    </div>
+
+    <div id="approvals-empty" class="state-container empty-state" style="display: none;">
+      <i class="fa-solid fa-check"></i>
+      <p>No pending approvals.</p>
+    </div>
+
+    <div id="approvals-container" style="display: none;">
+      <div id="pending-approvals" class="approvals-section"></div>
+      <div id="responded-approvals" class="approvals-section" style="display: none;">
+        <h3>Completed Approvals</h3>
+        <div id="responded-list" class="approvals-list"></div>
+      </div>
+    </div>
+
+    <div id="approvals-error" class="state-container error-state" style="display: none;">
+      <i class="fa-solid fa-triangle-exclamation"></i>
+      <p id="approvals-error-message">Failed to load approvals.</p>
+    </div>
+  </section>
 </main>
 
 <script src="client.js"></script>

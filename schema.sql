@@ -3426,3 +3426,72 @@ INSERT INTO public.audit_retention_config (id) VALUES (1) ON CONFLICT DO NOTHING
 
 --
 --
+
+-- Wave 49: client_documents + client_approvals (read-write surfaces)
+CREATE TABLE IF NOT EXISTS public.client_documents (
+    id uuid NOT NULL DEFAULT gen_random_uuid(),
+    client_org_id uuid NOT NULL,
+    project_id uuid,
+    filename text NOT NULL,
+    mime_type text NOT NULL,
+    size_bytes bigint NOT NULL,
+    storage_key text NOT NULL,
+    uploaded_by_user_id uuid,
+    uploaded_by_client_user_id uuid,
+    direction text NOT NULL DEFAULT 'to_client'::text,
+    status text NOT NULL DEFAULT 'active'::text,
+    notes text,
+    created_at timestamp with time zone NOT NULL DEFAULT now(),
+    CONSTRAINT client_documents_pkey PRIMARY KEY (id),
+    CONSTRAINT client_documents_direction_check CHECK ((direction = ANY (ARRAY['to_client'::text, 'from_client'::text]))),
+    CONSTRAINT client_documents_status_check CHECK ((status = ANY (ARRAY['active'::text, 'archived'::text]))),
+    CONSTRAINT client_documents_uploader_check CHECK (((uploaded_by_user_id IS NOT NULL AND uploaded_by_client_user_id IS NULL) OR (uploaded_by_user_id IS NULL AND uploaded_by_client_user_id IS NOT NULL) OR (uploaded_by_user_id IS NULL AND uploaded_by_client_user_id IS NULL)))
+);
+
+CREATE INDEX IF NOT EXISTS idx_client_documents_org ON public.client_documents USING btree (client_org_id, created_at DESC);
+CREATE INDEX IF NOT EXISTS idx_client_documents_project ON public.client_documents USING btree (project_id) WHERE (project_id IS NOT NULL);
+CREATE INDEX IF NOT EXISTS idx_client_documents_status ON public.client_documents USING btree (client_org_id, status);
+
+ALTER TABLE ONLY public.client_documents
+    ADD CONSTRAINT IF NOT EXISTS client_documents_client_org_id_fkey FOREIGN KEY (client_org_id) REFERENCES public.client_organizations(id) ON DELETE CASCADE;
+ALTER TABLE ONLY public.client_documents
+    ADD CONSTRAINT IF NOT EXISTS client_documents_project_id_fkey FOREIGN KEY (project_id) REFERENCES public.projects(id) ON DELETE SET NULL;
+ALTER TABLE ONLY public.client_documents
+    ADD CONSTRAINT IF NOT EXISTS client_documents_uploaded_by_user_id_fkey FOREIGN KEY (uploaded_by_user_id) REFERENCES public.users(id) ON DELETE SET NULL;
+ALTER TABLE ONLY public.client_documents
+    ADD CONSTRAINT IF NOT EXISTS client_documents_uploaded_by_client_user_id_fkey FOREIGN KEY (uploaded_by_client_user_id) REFERENCES public.client_users(id) ON DELETE SET NULL;
+
+CREATE TABLE IF NOT EXISTS public.client_approvals (
+    id uuid NOT NULL DEFAULT gen_random_uuid(),
+    client_org_id uuid NOT NULL,
+    project_id uuid,
+    title text NOT NULL,
+    description text,
+    document_id uuid,
+    requested_by uuid,
+    responded_by_client_user_id uuid,
+    response text,
+    response_notes text,
+    requested_at timestamp with time zone NOT NULL DEFAULT now(),
+    responded_at timestamp with time zone,
+    status text NOT NULL DEFAULT 'pending'::text,
+    CONSTRAINT client_approvals_pkey PRIMARY KEY (id),
+    CONSTRAINT client_approvals_response_check CHECK ((response = ANY (ARRAY['approved'::text, 'rejected'::text, 'changes_requested'::text]))),
+    CONSTRAINT client_approvals_status_check CHECK ((status = ANY (ARRAY['pending'::text, 'responded'::text, 'cancelled'::text])))
+);
+
+CREATE INDEX IF NOT EXISTS idx_client_approvals_org_pending ON public.client_approvals USING btree (client_org_id, status) WHERE (status = 'pending'::text);
+CREATE INDEX IF NOT EXISTS idx_client_approvals_org_all ON public.client_approvals USING btree (client_org_id, status);
+CREATE INDEX IF NOT EXISTS idx_client_approvals_project ON public.client_approvals USING btree (project_id) WHERE (project_id IS NOT NULL);
+CREATE INDEX IF NOT EXISTS idx_client_approvals_responded_at ON public.client_approvals USING btree (responded_at DESC) WHERE (responded_at IS NOT NULL);
+
+ALTER TABLE ONLY public.client_approvals
+    ADD CONSTRAINT IF NOT EXISTS client_approvals_client_org_id_fkey FOREIGN KEY (client_org_id) REFERENCES public.client_organizations(id) ON DELETE CASCADE;
+ALTER TABLE ONLY public.client_approvals
+    ADD CONSTRAINT IF NOT EXISTS client_approvals_project_id_fkey FOREIGN KEY (project_id) REFERENCES public.projects(id) ON DELETE SET NULL;
+ALTER TABLE ONLY public.client_approvals
+    ADD CONSTRAINT IF NOT EXISTS client_approvals_document_id_fkey FOREIGN KEY (document_id) REFERENCES public.client_documents(id) ON DELETE SET NULL;
+ALTER TABLE ONLY public.client_approvals
+    ADD CONSTRAINT IF NOT EXISTS client_approvals_requested_by_fkey FOREIGN KEY (requested_by) REFERENCES public.users(id) ON DELETE SET NULL;
+ALTER TABLE ONLY public.client_approvals
+    ADD CONSTRAINT IF NOT EXISTS client_approvals_responded_by_client_user_id_fkey FOREIGN KEY (responded_by_client_user_id) REFERENCES public.client_users(id) ON DELETE SET NULL;
