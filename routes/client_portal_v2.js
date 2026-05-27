@@ -16,6 +16,11 @@
 //   POST /api/admin/client-orgs/:id/users/:uid/tokens — generate token (raw shown once)
 //   POST /api/admin/client-tokens/:tid/revoke         — revoke a token
 
+// W45-MED-2: UUID format guard applied to all path params before SQL.
+// PostgreSQL throws a syntax error (500) on non-UUID strings; we return 400.
+const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+function isValidUUID(v) { return typeof v === 'string' && UUID_RE.test(v); }
+
 module.exports = function installClientPortalV2(app, pool, { requireAuth }) {
   const {
     generateRawToken,
@@ -54,12 +59,15 @@ module.exports = function installClientPortalV2(app, pool, { requireAuth }) {
         WHERE ct.token_hash = $1
       `, [tokenHash]);
 
-      if (!rows.length) return res.status(401).send('Invalid or expired login link.');
+      // W45-MED-1: all 401 paths return the same opaque message to prevent
+      // token-state enumeration (existence / revoked / expired / inactive).
+      const DENY_MSG = 'This login link is invalid or no longer active.';
+      if (!rows.length) return res.status(401).send(DENY_MSG);
       const r = rows[0];
-      if (r.revoked_at) return res.status(401).send('This login link has been revoked.');
-      if (r.expires_at && new Date(r.expires_at) < new Date()) return res.status(401).send('This login link has expired.');
-      if (r.user_status !== 'active') return res.status(401).send('Your account is not active.');
-      if (r.org_status !== 'active') return res.status(401).send('Your organization account is not active.');
+      if (r.revoked_at) return res.status(401).send(DENY_MSG);
+      if (r.expires_at && new Date(r.expires_at) < new Date()) return res.status(401).send(DENY_MSG);
+      if (r.user_status !== 'active') return res.status(401).send(DENY_MSG);
+      if (r.org_status !== 'active') return res.status(401).send(DENY_MSG);
 
       res.cookie(CLIENT_SESSION_COOKIE, raw, clientCookieOpts());
       return res.redirect('/client/');
@@ -130,6 +138,8 @@ module.exports = function installClientPortalV2(app, pool, { requireAuth }) {
   // Returns 404 if project not found or doesn't belong to the client.
   app.get('/api/client/projects/:id', requireClientAuthMW, async (req, res) => {
     try {
+      // W45-MED-2: validate UUID format before SQL to return 400 not 500.
+      if (!isValidUUID(req.params.id)) return res.status(400).json({ error: 'invalid project id' });
       const orgId = req.client_org.id;
       const projectId = req.params.id;
 
@@ -218,15 +228,26 @@ module.exports = function installClientPortalV2(app, pool, { requireAuth }) {
   // ── Get org detail (with users + token info) ──────────────────────────
   app.get('/api/admin/client-orgs/:id', requireAuth(['admin']), async (req, res) => {
     try {
+      // W45-MED-2: UUID validation.
+      if (!isValidUUID(req.params.id)) return res.status(400).json({ error: 'invalid id' });
       const { rows: orgRows } = await pool.query(
         'SELECT * FROM client_organizations WHERE id = $1',
         [req.params.id]
       );
       if (!orgRows.length) return res.status(404).json({ error: 'org not found' });
 
+      // W45-MED-3: explicit column list instead of cu.* to prevent future
+      // accidental column exposure (e.g. if sensitive columns are added later).
+      // invited_by UUID is an internal staff reference — intentionally omitted.
       const { rows: userRows } = await pool.query(`
         SELECT
-          cu.*,
+          cu.id,
+          cu.org_id,
+          cu.email,
+          cu.name,
+          cu.is_primary,
+          cu.status,
+          cu.created_at,
           COALESCE(
             json_agg(
               json_build_object(
@@ -255,6 +276,8 @@ module.exports = function installClientPortalV2(app, pool, { requireAuth }) {
 
   // ── Update org ─────────────────────────────────────────────────────────
   app.put('/api/admin/client-orgs/:id', requireAuth(['admin']), async (req, res) => {
+    // W45-MED-2: UUID validation.
+    if (!isValidUUID(req.params.id)) return res.status(400).json({ error: 'invalid id' });
     const { name, short_name, logo_url, theme_color, status } = req.body || {};
     const validStatuses = ['active', 'suspended', 'archived'];
     if (status && !validStatuses.includes(status)) {
@@ -288,6 +311,8 @@ module.exports = function installClientPortalV2(app, pool, { requireAuth }) {
 
   // ── Create client user ─────────────────────────────────────────────────
   app.post('/api/admin/client-orgs/:id/users', requireAuth(['admin']), async (req, res) => {
+    // W45-MED-2: UUID validation.
+    if (!isValidUUID(req.params.id)) return res.status(400).json({ error: 'invalid id' });
     const { email, name, is_primary } = req.body || {};
     try {
       const { rows: orgCheck } = await pool.query(
@@ -318,6 +343,10 @@ module.exports = function installClientPortalV2(app, pool, { requireAuth }) {
   // Returns raw token ONCE. Admin copies + sends to client.
   // After this response the raw value is never seen again (only hash stored).
   app.post('/api/admin/client-orgs/:id/users/:uid/tokens', requireAuth(['admin']), async (req, res) => {
+    // W45-MED-2: UUID validation for both :id and :uid.
+    if (!isValidUUID(req.params.id) || !isValidUUID(req.params.uid)) {
+      return res.status(400).json({ error: 'invalid id' });
+    }
     const { expires_days } = req.body || {};
     try {
       // Verify user belongs to the specified org.
@@ -358,6 +387,8 @@ module.exports = function installClientPortalV2(app, pool, { requireAuth }) {
 
   // ── Revoke token ───────────────────────────────────────────────────────
   app.post('/api/admin/client-tokens/:tid/revoke', requireAuth(['admin']), async (req, res) => {
+    // W45-MED-2: UUID validation.
+    if (!isValidUUID(req.params.tid)) return res.status(400).json({ error: 'invalid id' });
     try {
       const { rows } = await pool.query(`
         UPDATE client_tokens SET revoked_at = NOW()

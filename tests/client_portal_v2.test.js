@@ -366,6 +366,248 @@ test('GET /api/client/projects/:id requires authentication', async () => {
   assert.equal(res.status, 401);
 });
 
-// ── IDOR placeholder ──────────────────────────────────────────────────────
-// E4 scope complete — projects list + detail endpoints working with auth.
-// E7 will extend with document upload/download endpoints.
+// ── Wave 45 IDOR + security tests ────────────────────────────────────────
+// W45-MED-1: opaque login error messages
+// W45-MED-2: UUID validation (400 not 500 on malformed IDs)
+// W45-MED-3: admin user detail explicit column list (no invited_by leak)
+// Plus: role-escalation guards, cross-org denial, rollup exclusion
+
+// Helper: establish a client session cookie for org/user
+async function getClientCookie(org, user) {
+  const { baseUrl } = require('./_helpers');
+  const { raw } = await insertToken(user.id);
+  const loginRes = await fetch(`${baseUrl()}/client/login/${raw}`, { redirect: 'manual' });
+  const cookie = loginRes.headers.get('set-cookie');
+  if (!loginRes.headers.get('set-cookie')) throw new Error('login did not set cookie');
+  return cookie;
+}
+
+// W45-MED-1: login endpoint returns identical 401 message regardless of token state
+test('W45-MED-1: revoked token login returns same opaque 401 as invalid token', async () => {
+  const { baseUrl } = require('./_helpers');
+  const org = await insertOrg();
+  const user = await insertUser(org.id);
+  const { raw, token } = await insertToken(user.id, { revoked: true });
+
+  const revokedRes = await fetch(`${baseUrl()}/client/login/${raw}`);
+  assert.equal(revokedRes.status, 401);
+  const revokedBody = await revokedRes.text();
+
+  const invalidRes = await fetch(`${baseUrl()}/client/login/definitely-not-a-valid-token`);
+  assert.equal(invalidRes.status, 401);
+  const invalidBody = await invalidRes.text();
+
+  // Both responses must be identical to prevent token-state enumeration.
+  assert.equal(revokedBody, invalidBody, 'revoked and invalid token login must return same message');
+});
+
+test('W45-MED-1: expired token login returns same opaque 401 as invalid token', async () => {
+  const { baseUrl } = require('./_helpers');
+  const org = await insertOrg();
+  const user = await insertUser(org.id);
+  const { raw } = await insertToken(user.id, { expiredDaysAgo: 1 });
+
+  const expiredRes = await fetch(`${baseUrl()}/client/login/${raw}`);
+  assert.equal(expiredRes.status, 401);
+  const expiredBody = await expiredRes.text();
+
+  const invalidRes = await fetch(`${baseUrl()}/client/login/not-a-token-at-all`);
+  const invalidBody = await invalidRes.text();
+
+  assert.equal(expiredBody, invalidBody, 'expired and invalid token login must return same message');
+});
+
+test('W45-MED-1: inactive user login returns same opaque 401 as invalid token', async () => {
+  const { baseUrl } = require('./_helpers');
+  const org = await insertOrg();
+  const user = await insertUser(org.id, { status: 'revoked' });
+  const { raw } = await insertToken(user.id);
+
+  const inactiveRes = await fetch(`${baseUrl()}/client/login/${raw}`);
+  assert.equal(inactiveRes.status, 401);
+  const inactiveBody = await inactiveRes.text();
+
+  const invalidRes = await fetch(`${baseUrl()}/client/login/not-a-token-at-all`);
+  const invalidBody = await invalidRes.text();
+
+  assert.equal(inactiveBody, invalidBody, 'inactive user and invalid token login must return same message');
+});
+
+// W45-MED-2: malformed UUID in path params returns 400, not 500
+test('W45-MED-2: GET /api/admin/client-orgs with non-UUID id returns 400', async () => {
+  await requestJson('GET', '/api/admin/client-orgs/not-a-uuid', {
+    token: adminToken,
+    expectStatus: 400,
+  });
+});
+
+test('W45-MED-2: PUT /api/admin/client-orgs with non-UUID id returns 400', async () => {
+  await requestJson('PUT', '/api/admin/client-orgs/not-a-uuid', {
+    token: adminToken,
+    body: { status: 'active' },
+    expectStatus: 400,
+  });
+});
+
+test('W45-MED-2: POST /api/admin/client-orgs/:id/users with non-UUID id returns 400', async () => {
+  await requestJson('POST', '/api/admin/client-orgs/not-a-uuid/users', {
+    token: adminToken,
+    body: { name: 'test', email: 'test@test.invalid' },
+    expectStatus: 400,
+  });
+});
+
+test('W45-MED-2: POST generate-token with non-UUID :id returns 400', async () => {
+  const org = await insertOrg();
+  const user = await insertUser(org.id);
+  await requestJson('POST', `/api/admin/client-orgs/not-a-uuid/users/${user.id}/tokens`, {
+    token: adminToken,
+    body: {},
+    expectStatus: 400,
+  });
+});
+
+test('W45-MED-2: POST generate-token with non-UUID :uid returns 400', async () => {
+  const org = await insertOrg();
+  await requestJson('POST', `/api/admin/client-orgs/${org.id}/users/not-a-uuid/tokens`, {
+    token: adminToken,
+    body: {},
+    expectStatus: 400,
+  });
+});
+
+test('W45-MED-2: POST /api/admin/client-tokens with non-UUID :tid returns 400', async () => {
+  await requestJson('POST', '/api/admin/client-tokens/not-a-uuid/revoke', {
+    token: adminToken,
+    body: {},
+    expectStatus: 400,
+  });
+});
+
+test('W45-MED-2: GET /api/client/projects/:id with non-UUID returns 400 not 500', async () => {
+  const { baseUrl } = require('./_helpers');
+  const org = await insertOrg();
+  const user = await insertUser(org.id);
+  const cookie = await getClientCookie(org, user);
+
+  const res = await fetch(`${baseUrl()}/api/client/projects/not-a-uuid`, {
+    headers: { cookie },
+  });
+  assert.equal(res.status, 400, 'non-UUID project id should return 400 not 500');
+});
+
+// W45-MED-3: admin user detail response does not expose invited_by
+test('W45-MED-3: GET /api/admin/client-orgs/:id users do not expose invited_by column', async () => {
+  const org = await insertOrg();
+  await insertUser(org.id);
+  const data = await requestJson('GET', `/api/admin/client-orgs/${org.id}`, {
+    token: adminToken,
+  });
+  assert.ok(Array.isArray(data.users));
+  assert.ok(data.users.length > 0, 'user was inserted');
+  for (const u of data.users) {
+    assert.strictEqual(u.invited_by, undefined, 'invited_by must not be in response');
+  }
+});
+
+// IDOR: cross-org access denial for admin endpoints
+test('IDOR: /api/admin/client-orgs/:id returns 404 for nonexistent org (not 500)', async () => {
+  // A random UUID that definitely does not exist.
+  const fakeId = '00000000-0000-0000-0000-000000000001';
+  await requestJson('GET', `/api/admin/client-orgs/${fakeId}`, {
+    token: adminToken,
+    expectStatus: 404,
+  });
+});
+
+test('IDOR: generate-token returns 404 when uid does not belong to org', async () => {
+  const org1 = await insertOrg();
+  const org2 = await insertOrg();
+  const user2 = await insertUser(org2.id);
+
+  // Try to generate a token for user2 under org1's path — IDOR attempt.
+  await requestJson('POST', `/api/admin/client-orgs/${org1.id}/users/${user2.id}/tokens`, {
+    token: adminToken,
+    body: {},
+    expectStatus: 404,
+  });
+});
+
+// Role escalation: client cookie cannot hit admin endpoints
+test('role escalation: client cookie cannot hit GET /api/admin/client-orgs', async () => {
+  const { baseUrl } = require('./_helpers');
+  const org = await insertOrg();
+  const user = await insertUser(org.id);
+  const cookie = await getClientCookie(org, user);
+
+  const res = await fetch(`${baseUrl()}/api/admin/client-orgs`, {
+    headers: { cookie },
+  });
+  // Admin endpoint requires lfs_session JWT. Client session cookie is ignored.
+  assert.ok(res.status === 401 || res.status === 403, `expected 401 or 403, got ${res.status}`);
+});
+
+// Role escalation: no-auth request to client endpoints returns 401
+test('role escalation: no cookie to GET /api/client/projects returns 401', async () => {
+  const { baseUrl } = require('./_helpers');
+  const res = await fetch(`${baseUrl()}/api/client/projects`);
+  assert.equal(res.status, 401);
+});
+
+// IDOR: client cannot list projects from another org via query param tampering
+test('IDOR: GET /api/client/projects only returns authenticated client\'s org projects', async () => {
+  const { baseUrl } = require('./_helpers');
+  const org1 = await insertOrg();
+  const org2 = await insertOrg();
+  const user1 = await insertUser(org1.id);
+  const cookie = await getClientCookie(org1, user1);
+
+  // Set up projects for both orgs
+  const { projectIds: org1Ids } = await setupProjectsForClient(org1.id);
+  const { projectIds: org2Ids } = await setupProjectsForClient(org2.id);
+
+  const res = await fetch(`${baseUrl()}/api/client/projects`, { headers: { cookie } });
+  assert.equal(res.status, 200);
+  const data = await res.json();
+
+  const returnedIds = data.projects.map(p => p.id);
+  // All returned projects must belong to org1 (none from org2)
+  for (const id of org2Ids) {
+    assert.ok(!returnedIds.includes(id), `org2 project ${id} must not appear in org1 client response`);
+  }
+  // org1 projects must appear
+  for (const id of org1Ids) {
+    assert.ok(returnedIds.includes(id), `org1 project ${id} must appear`);
+  }
+});
+
+// IDOR: rollup projects must not appear in client project list
+test('IDOR: GET /api/client/projects excludes rollup rows', async () => {
+  const { baseUrl } = require('./_helpers');
+  const org = await insertOrg();
+  const user = await insertUser(org.id);
+  const cookie = await getClientCookie(org, user);
+
+  const { rows: ecRows } = await pool.query(
+    `INSERT INTO engineering_contracts (name, program, client_org_id) VALUES ($1, $2, $3) RETURNING id`,
+    ['Rollup EC', 'rus', org.id]
+  );
+  const ecId = ecRows[0].id;
+
+  // Insert one leaf + one rollup
+  await pool.query(`
+    INSERT INTO projects (name, program, status, engineering_contract_id, is_rollup)
+    VALUES
+      ($1, $2, $3, $4, false),
+      ($5, $6, $7, $8, true)
+  `, ['leaf-project', 'rus', 'active', ecId,
+      'rollup-folder', 'rus', 'active', ecId]);
+
+  const res = await fetch(`${baseUrl()}/api/client/projects`, { headers: { cookie } });
+  assert.equal(res.status, 200);
+  const data = await res.json();
+  assert.ok(data.projects.every(p => !p.is_rollup), 'no rollup rows in client project list');
+  const names = data.projects.map(p => p.name);
+  assert.ok(!names.includes('rollup-folder'), 'rollup-folder must not appear');
+  assert.ok(names.includes('leaf-project'), 'leaf-project must appear');
+});
