@@ -370,6 +370,7 @@ fetch('/api/auth/me', { credentials: 'include' })
   <div class="section-header">
     <div><div class="section-title">Design Pipeline</div></div>
     <div style="display:flex;gap:8px">
+      <button class="btn btn-secondary btn-sm" onclick="window.open('/offline-sync.html','_blank')" title="Export DWGs for offline editing"><i class="fa-solid fa-cloud-arrow-down"></i> Export DWGs</button>
       <button class="btn btn-secondary btn-sm" onclick="loadPipeline()" title="Refresh"><i class="fa-solid fa-rotate"></i></button>
       <button id="btn-add-project" class="btn btn-primary btn-sm" onclick="openProjectModal()" style="display:none"><i class="fa-solid fa-plus"></i> Add Project</button>
     </div>
