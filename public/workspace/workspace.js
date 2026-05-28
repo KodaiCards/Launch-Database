@@ -85,4 +85,121 @@ function confirmRestoreVersion(fileId, versionId, uploadedBy, uploadedAt) {
   };
 
   openModal('restore-version-modal');
-}function updateButtonStates(){const shareBtn=document.getElementById('share-btn');const deleteBtn=document.getElementById('delete-btn');const hasSelection=selectedItems.size>0;shareBtn.disabled=!hasSelection;deleteBtn.disabled=!hasSelection;}function setupEventListeners(){document.querySelectorAll('.collapse-toggle').forEach(btn=>{btn.addEventListener('click',(e)=>{const section=btn.dataset.section;const list=document.getElementById(`${section}-tree`);list.classList.toggle('collapsed');});});document.getElementById('new-folder-btn').addEventListener('click',()=>{openModal('new-folder-modal');});document.getElementById('upload-file-btn').addEventListener('click',()=>{document.getElementById('file-upload-input').click();});document.getElementById('file-upload-input').addEventListener('change',async(e)=>{const file=e.target.files[0];if(!file||!currentFolderId)return;const formData=new FormData();formData.append('file',file);try{const res=await fetch(`/api/workspace/folders/${currentFolderId}/files`,{method:'POST',credentials:'include',body:formData,});if(!res.ok)throw new Error(`HTTP ${res.status}`);showToast('File uploaded successfully','success');await loadFolderContents(currentFolderId);}catch(err){console.error('Upload failed:',err);showToast(`Upload failed: ${err.message}`,'error');}});document.getElementById('share-btn').addEventListener('click',()=>{openModal('share-modal');});document.getElementById('delete-btn').addEventListener('click',()=>{if(selectedItems.size>0){const firstId=Array.from(selectedItems)[0];const firstName=document.querySelector(`[data-file-id="${firstId}"] .file-name`)?.textContent||'item';confirmDelete(firstId,'file',firstName);}});document.getElementById('create-folder-submit').addEventListener('click',async()=>{const name=document.getElementById('new-folder-name').value.trim();if(!name||!currentFolderId)return;try{const res=await fetch('/api/workspace/folders',{method:'POST',credentials:'include',headers:{'Content-Type':'application/json'},body:JSON.stringify({parent_id:currentFolderId,name}),});if(!res.ok)throw new Error(`HTTP ${res.status}`);showToast('Folder created successfully','success');closeModal('new-folder-modal');await loadFolderContents(currentFolderId);}catch(err){console.error('Create folder failed:',err);showToast(`Failed to create folder: ${err.message}`,'error');}});document.querySelectorAll('.modal-close').forEach(btn=>{btn.addEventListener('click',(e)=>{const modal=e.target.closest('.modal');if(modal)closeModal(modal.id);});});document.getElementById('select-all-checkbox').addEventListener('change',(e)=>{const checkboxes=document.querySelectorAll('.file-checkbox');checkboxes.forEach(cb=>{cb.checked=e.target.checked;if(e.target.checked){selectedItems.add(cb.dataset.fileId);}else{selectedItems.delete(cb.dataset.fileId);}});updateButtonStates();});document.getElementById('share-mode').addEventListener('change',(e)=>{const specificGroup=document.getElementById('specific-users-group');specificGroup.style.display=e.target.value==='specific'?'block':'none';});document.querySelector('.toggle-tree-btn').addEventListener('click',()=>{document.querySelector('.tree-panel').classList.toggle('collapsed');});document.querySelector('.back-to-launcher').addEventListener('click',(e)=>{e.preventDefault();window.location.href='/';});document.querySelector('.details-close').addEventListener('click',()=>{document.querySelector('.details-panel').classList.toggle('collapsed');});}function confirmDelete(itemId,type,name){const message=document.getElementById('delete-message');message.textContent=`Are you sure you want to delete "${escapeHtml(name)}"? This cannot be undone.`;const submitBtn=document.getElementById('delete-submit');submitBtn.onclick=async()=>{try{const endpoint=type==='file'?`/api/workspace/files/${itemId}`:`/api/workspace/folders/${itemId}`;const res=await fetch(endpoint,{method:'DELETE',credentials:'include',});if(!res.ok)throw new Error(`HTTP ${res.status}`);showToast('Item deleted successfully','success');closeModal('delete-modal');if(currentFolderId){await loadFolderContents(currentFolderId);}}catch(err){console.error('Delete failed:',err);showToast(`Failed to delete: ${err.message}`,'error');}};openModal('delete-modal');}function openModal(id){const modal=document.getElementById(id);if(modal){modal.classList.add('active');modal.style.display='flex';}}function closeModal(id){const modal=document.getElementById(id);if(modal){modal.classList.remove('active');modal.style.display='none';}}function showToast(message,type='info'){const container=document.getElementById('toast-container');const toast=document.createElement('div');toast.className=`toast ${type}`;toast.textContent=message;container.appendChild(toast);setTimeout(()=>{toast.remove();},4000);}function escapeHtml(text){const map={'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'};return text.replace(/[&<>"']/g,m=>map[m]);}function formatBytes(bytes){if(bytes===0)return '0 B';const k=1024;const sizes=['B','KB','MB','GB'];const i=Math.floor(Math.log(bytes)/Math.log(k));return Math.round((bytes/Math.pow(k,i))*100)/100+' '+sizes[i];}function formatDate(dateStr){if(!dateStr)return '—';const date=new Date(dateStr);return date.toLocaleDateString()+' '+date.toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'});}function getFileIcon(filename){if(!filename)return 'fa-file';const ext=filename.split('.').pop().toLowerCase();const icons={'pdf':'fa-file-pdf','doc':'fa-file-word','docx':'fa-file-word','xls':'fa-file-excel','xlsx':'fa-file-excel','ppt':'fa-file-powerpoint','pptx':'fa-file-powerpoint','txt':'fa-file-text','zip':'fa-file-zipper','jpg':'fa-file-image','jpeg':'fa-file-image','png':'fa-file-image','gif':'fa-file-image'};return icons[ext]||'fa-file';}})();
+}function updateButtonStates(){const shareBtn=document.getElementById('share-btn');const deleteBtn=document.getElementById('delete-btn');const hasSelection=selectedItems.size>0;shareBtn.disabled=!hasSelection;deleteBtn.disabled=!hasSelection;}function setupEventListeners(){document.querySelectorAll('.collapse-toggle').forEach(btn=>{btn.addEventListener('click',(e)=>{const section=btn.dataset.section;const list=document.getElementById(`${section}-tree`);list.classList.toggle('collapsed');});});document.getElementById('new-folder-btn').addEventListener('click',()=>{openModal('new-folder-modal');});document.getElementById('upload-file-btn').addEventListener('click',()=>{document.getElementById('file-upload-input').click();});document.getElementById('file-upload-input').addEventListener('change',async(e)=>{const file=e.target.files[0];if(!file||!currentFolderId)return;const formData=new FormData();formData.append('file',file);try{const res=await fetch(`/api/workspace/folders/${currentFolderId}/files`,{method:'POST',credentials:'include',body:formData,});if(!res.ok)throw new Error(`HTTP ${res.status}`);showToast('File uploaded successfully','success');await loadFolderContents(currentFolderId);}catch(err){console.error('Upload failed:',err);showToast(`Upload failed: ${err.message}`,'error');}});document.getElementById('share-btn').addEventListener('click',()=>{openModal('share-modal');});document.getElementById('delete-btn').addEventListener('click',()=>{if(selectedItems.size>0){const firstId=Array.from(selectedItems)[0];const firstName=document.querySelector(`[data-file-id="${firstId}"] .file-name`)?.textContent||'item';confirmDelete(firstId,'file',firstName);}});document.getElementById('create-folder-submit').addEventListener('click',async()=>{const name=document.getElementById('new-folder-name').value.trim();if(!name||!currentFolderId)return;try{const res=await fetch('/api/workspace/folders',{method:'POST',credentials:'include',headers:{'Content-Type':'application/json'},body:JSON.stringify({parent_id:currentFolderId,name}),});if(!res.ok)throw new Error(`HTTP ${res.status}`);showToast('Folder created successfully','success');closeModal('new-folder-modal');await loadFolderContents(currentFolderId);}catch(err){console.error('Create folder failed:',err);showToast(`Failed to create folder: ${err.message}`,'error');}});document.querySelectorAll('.modal-close').forEach(btn=>{btn.addEventListener('click',(e)=>{const modal=e.target.closest('.modal');if(modal)closeModal(modal.id);});});document.getElementById('select-all-checkbox').addEventListener('change',(e)=>{const checkboxes=document.querySelectorAll('.file-checkbox');checkboxes.forEach(cb=>{cb.checked=e.target.checked;if(e.target.checked){selectedItems.add(cb.dataset.fileId);}else{selectedItems.delete(cb.dataset.fileId);}});updateButtonStates();});document.getElementById('share-mode').addEventListener('change',(e)=>{const specificGroup=document.getElementById('specific-users-group');specificGroup.style.display=e.target.value==='specific'?'block':'none';});document.querySelector('.toggle-tree-btn').addEventListener('click',()=>{document.querySelector('.tree-panel').classList.toggle('collapsed');});document.querySelector('.back-to-launcher').addEventListener('click',(e)=>{e.preventDefault();window.location.href='/';});document.querySelector('.details-close').addEventListener('click',()=>{document.querySelector('.details-panel').classList.toggle('collapsed');});}function confirmDelete(itemId,type,name){const message=document.getElementById('delete-message');message.textContent=`Are you sure you want to delete "${escapeHtml(name)}"? This cannot be undone.`;const submitBtn=document.getElementById('delete-submit');submitBtn.onclick=async()=>{try{const endpoint=type==='file'?`/api/workspace/files/${itemId}`:`/api/workspace/folders/${itemId}`;const res=await fetch(endpoint,{method:'DELETE',credentials:'include',});if(!res.ok)throw new Error(`HTTP ${res.status}`);showToast('Item deleted successfully','success');closeModal('delete-modal');if(currentFolderId){await loadFolderContents(currentFolderId);}}catch(err){console.error('Delete failed:',err);showToast(`Failed to delete: ${err.message}`,'error');}};openModal('delete-modal');}function openModal(id){const modal=document.getElementById(id);if(modal){modal.classList.add('active');modal.style.display='flex';}}function closeModal(id){const modal=document.getElementById(id);if(modal){modal.classList.remove('active');modal.style.display='none';}}function showToast(message,type='info'){const container=document.getElementById('toast-container');const toast=document.createElement('div');toast.className=`toast ${type}`;toast.textContent=message;container.appendChild(toast);setTimeout(()=>{toast.remove();},4000);}function escapeHtml(text){const map={'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'};return text.replace(/[&<>"']/g,m=>map[m]);}function formatBytes(bytes){if(bytes===0)return '0 B';const k=1024;const sizes=['B','KB','MB','GB'];const i=Math.floor(Math.log(bytes)/Math.log(k));return Math.round((bytes/Math.pow(k,i))*100)/100+' '+sizes[i];}function formatDate(dateStr){if(!dateStr)return '—';const date=new Date(dateStr);return date.toLocaleDateString()+' '+date.toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'});}function getFileIcon(filename){if(!filename)return 'fa-file';const ext=filename.split('.').pop().toLowerCase();const icons={'pdf':'fa-file-pdf','doc':'fa-file-word','docx':'fa-file-word','xls':'fa-file-excel','xlsx':'fa-file-excel','ppt':'fa-file-powerpoint','pptx':'fa-file-powerpoint','txt':'fa-file-text','zip':'fa-file-zipper','jpg':'fa-file-image','jpeg':'fa-file-image','png':'fa-file-image','gif':'fa-file-image'};return icons[ext]||'fa-file';}
+
+// ===== WAVE 67: SEARCH + DRAG-AND-DROP UPLOAD =====
+
+// Search functionality
+let searchTimer = null;
+const searchInput = document.getElementById('workspace-search');
+const searchResults = document.getElementById('search-results');
+
+if (searchInput) {
+  searchInput.addEventListener('input', (e) => {
+    clearTimeout(searchTimer);
+    const q = e.target.value.trim();
+    if (q.length < 2) {
+      searchResults.style.display = 'none';
+      return;
+    }
+    searchTimer = setTimeout(async () => {
+      try {
+        const res = await fetch(`/api/workspace/search?q=${encodeURIComponent(q)}`, { credentials: 'include' });
+        if (!res.ok) return;
+        const data = await res.json();
+        renderSearchResults(data.hits, q);
+      } catch (err) { console.error(err); }
+    }, 250); // debounce
+  });
+}
+
+function renderSearchResults(hits, query) {
+  if (!hits.length) {
+    searchResults.innerHTML = '<div class="search-empty">No files found</div>';
+    searchResults.style.display = '';
+    return;
+  }
+  searchResults.innerHTML = hits.map(h => `
+    <div class="search-hit" data-folder-id="${h.folder_id}" data-file-id="${h.file_id}">
+      <div class="search-hit-name">${escapeHtml(h.filename)}</div>
+      <div class="search-hit-path">${escapeHtml(h.folder_path)}</div>
+      <div class="search-hit-meta">${escapeHtml(h.uploaded_by_name || '?')} · ${formatBytes(h.size_bytes)} · ${formatDate(h.uploaded_at)}</div>
+    </div>
+  `).join('');
+  searchResults.style.display = '';
+}
+
+// Click search hit → navigate to folder + highlight file
+document.addEventListener('click', (e) => {
+  const hit = e.target.closest('.search-hit');
+  if (hit) {
+    const folderId = hit.dataset.folderId;
+    const fileId = hit.dataset.fileId;
+    searchResults.style.display = 'none';
+    searchInput.value = '';
+    currentFolderId = folderId;
+    loadFolderContents(folderId);
+  }
+});
+
+// Drag-and-drop upload
+const filePanel = document.getElementById('file-panel');
+const dropzoneOverlay = document.getElementById('dropzone-overlay');
+let dragCounter = 0;
+
+if (filePanel) {
+  filePanel.addEventListener('dragenter', (e) => {
+    e.preventDefault();
+    dragCounter++;
+    dropzoneOverlay.style.display = '';
+  });
+
+  filePanel.addEventListener('dragleave', () => {
+    dragCounter--;
+    if (dragCounter === 0) dropzoneOverlay.style.display = 'none';
+  });
+
+  filePanel.addEventListener('dragover', (e) => e.preventDefault());
+
+  filePanel.addEventListener('drop', async (e) => {
+    e.preventDefault();
+    dragCounter = 0;
+    dropzoneOverlay.style.display = 'none';
+
+    if (!currentFolderId) {
+      showToast('Select a folder first', 'error');
+      return;
+    }
+
+    const files = Array.from(e.dataTransfer.files);
+    if (!files.length) return;
+
+    showToast(`Uploading ${files.length} file(s)...`, 'info');
+
+    for (const file of files) {
+      const form = new FormData();
+      form.append('file', file);
+      try {
+        const res = await fetch(`/api/workspace/folders/${currentFolderId}/files`, {
+          method: 'POST',
+          body: form,
+          credentials: 'include'
+        });
+        if (!res.ok) {
+          const err = await res.json().catch(() => ({error: 'Upload failed'}));
+          showToast(`${file.name}: ${err.error}`, 'error');
+        } else {
+          showToast(`Uploaded ${file.name}`, 'success');
+        }
+      } catch (err) {
+        showToast(`${file.name}: ${err.message}`, 'error');
+      }
+    }
+
+    if (currentFolderId) {
+      await loadFolderContents(currentFolderId);
+    }
+  });
+}
+
+})();

@@ -494,6 +494,70 @@ function createFolderWorkspaceRoutes(pool) {
   });
 
   /**
+   * GET /api/workspace/search?q=<query>&limit=50
+   * Searches workspace_files by filename (ILIKE %query%) and returns hits the caller can read.
+   * Searches across ALL folders the caller has access to.
+   * Returns: { hits: [{file_id, filename, folder_id, folder_path, size_bytes, uploaded_at, uploaded_by_name}], total }
+   */
+  router.get('/search', requireAuth(), async (req, res) => {
+    try {
+      const q = (req.query.q || '').trim();
+      if (!q || q.length < 2) {
+        return res.json({ hits: [], total: 0 });
+      }
+
+      const limit = Math.min(parseInt(req.query.limit || '50', 10), 200);
+      const userId = req.user.id;
+      const userRole = req.user.role || 'employee';
+
+      // Query all files where filename ILIKE %q%, JOIN to folders
+      // Use a recursive CTE to build folder_path strings
+      const { rows } = await pool.query(`
+        WITH RECURSIVE folder_paths AS (
+          SELECT id, name AS path, parent_id, kind, owner_user_id, share_mode, project_id
+          FROM workspace_folders WHERE parent_id IS NULL
+          UNION ALL
+          SELECT f.id, fp.path || ' / ' || f.name, f.parent_id, f.kind, f.owner_user_id, f.share_mode, f.project_id
+          FROM workspace_folders f
+          JOIN folder_paths fp ON f.parent_id = fp.id
+        )
+        SELECT
+          wf.id AS file_id, wf.filename, wf.size_bytes, wf.uploaded_at,
+          wf.folder_id, fp.path AS folder_path, fp.kind, fp.owner_user_id, fp.share_mode, fp.project_id,
+          (SELECT username FROM users WHERE id = wf.uploaded_by) AS uploaded_by_name
+        FROM workspace_files wf
+        JOIN folder_paths fp ON fp.id = wf.folder_id
+        WHERE wf.filename ILIKE $1
+        ORDER BY wf.uploaded_at DESC
+        LIMIT $2
+      `, ['%' + q + '%', limit * 3]); // over-fetch since we filter post-query
+
+      // Filter by permission
+      const visible = [];
+      for (const row of rows) {
+        const perm = await getEffectivePermission(row.folder_id, userId, userRole);
+        if (perm.canRead) {
+          visible.push({
+            file_id: row.file_id,
+            filename: row.filename,
+            folder_id: row.folder_id,
+            folder_path: row.folder_path,
+            size_bytes: row.size_bytes,
+            uploaded_at: row.uploaded_at,
+            uploaded_by_name: row.uploaded_by_name || '?',
+          });
+          if (visible.length >= limit) break;
+        }
+      }
+
+      res.json({ hits: visible, total: visible.length });
+    } catch (err) {
+      console.error('GET /search error:', err);
+      res.status(500).json({ error: 'Search failed' });
+    }
+  });
+
+  /**
    * POST /api/workspace/folders/:id/files
    * Multipart upload (reuses Wave 49 MIME patterns, 50MB cap)
    */

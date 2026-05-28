@@ -574,4 +574,92 @@ describe('Folder Workspace Backend (Wave 57)', function() {
     const hasPrivate = byProjRes.body.folders.some(f => f.name === 'Private Project Folder');
     assert.equal(hasPrivate, false);
   });
+
+  // Wave 67: Search endpoint tests
+  it('67.1. GET /api/workspace/search?q=<empty> returns empty hits', async function() {
+    const res = await request(app)
+      .get('/api/workspace/search?q=')
+      .set('Authorization', authToken);
+
+    assert.equal(res.status, 200);
+    assert.deepEqual(res.body.hits, []);
+    assert.equal(res.body.total, 0);
+  });
+
+  it('67.2. GET /api/workspace/search?q=x (too short) returns empty hits', async function() {
+    const res = await request(app)
+      .get('/api/workspace/search?q=x')
+      .set('Authorization', authToken);
+
+    assert.equal(res.status, 200);
+    assert.deepEqual(res.body.hits, []);
+    assert.equal(res.body.total, 0);
+  });
+
+  it('67.3. GET /api/workspace/search?q=test finds matching files across folders', async function() {
+    // Get user's home folder
+    const treeRes = await request(app)
+      .get('/api/workspace/tree?root=user')
+      .set('Authorization', authToken);
+
+    const homeId = treeRes.body.folders[0].id;
+
+    // Create a test file in the home folder
+    await pool.query(
+      `INSERT INTO workspace_files (folder_id, filename, mime_type, storage_key, sha256, size_bytes, uploaded_by)
+       VALUES ($1, $2, $3, $4, $5, $6, $7)`,
+      [homeId, 'testfile-wave67.txt', 'text/plain', '/tmp/test-wave67.txt', 'xyz789', 50, testUserId]
+    );
+
+    // Search for 'testfile'
+    const res = await request(app)
+      .get('/api/workspace/search?q=testfile')
+      .set('Authorization', authToken);
+
+    assert.equal(res.status, 200);
+    assert(Array.isArray(res.body.hits));
+    assert(res.body.hits.length > 0);
+    const hit = res.body.hits[0];
+    assert.equal(hit.filename, 'testfile-wave67.txt');
+    assert.equal(hit.folder_id, homeId);
+    assert(hit.folder_path);
+  });
+
+  it('67.4. GET /api/workspace/search respects permission (private folder files not visible to other users)', async function() {
+    // Manager creates a private folder with a file
+    const treeRes = await request(app)
+      .get('/api/workspace/tree?root=all')
+      .set('Authorization', managerToken);
+
+    const managerHome = treeRes.body.folders.find(f => f.owner_user_id === managerId);
+
+    // Create a private folder
+    const folderRes = await request(app)
+      .post('/api/workspace/folders')
+      .set('Authorization', managerToken)
+      .send({
+        name: 'Private Manager Folder',
+        parent_id: managerHome.id,
+        share_mode: 'private'
+      });
+
+    const privateFolderId = folderRes.body.id;
+
+    // Add a file to that folder
+    await pool.query(
+      `INSERT INTO workspace_files (folder_id, filename, mime_type, storage_key, sha256, size_bytes, uploaded_by)
+       VALUES ($1, $2, $3, $4, $5, $6, $7)`,
+      [privateFolderId, 'secret-wave67.doc', 'application/msword', '/tmp/secret-wave67.doc', 'sec123', 100, managerId]
+    );
+
+    // testUser searches for the file — should NOT find it
+    const res = await request(app)
+      .get('/api/workspace/search?q=secret')
+      .set('Authorization', authToken);
+
+    assert.equal(res.status, 200);
+    const hits = res.body.hits;
+    const hasSecret = hits.some(h => h.filename === 'secret-wave67.doc');
+    assert.equal(hasSecret, false, 'User should not see files in private folders');
+  });
 });

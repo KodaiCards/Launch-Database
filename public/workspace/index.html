@@ -66,6 +66,12 @@
           </button>
         </div>
 
+        <div class="search-bar">
+          <input type="search" id="workspace-search" placeholder="Search files by name..."
+                 autocomplete="off" aria-label="Search workspace files" />
+          <div id="search-results" class="search-results" style="display:none;"></div>
+        </div>
+
         <div class="toolbar">
           <button id="new-folder-btn" class="btn btn-primary" title="Create new folder">
             <i class="fas fa-folder-plus"></i> New Folder
@@ -81,7 +87,10 @@
           </button>
         </div>
 
-        <div class="folder-view">
+        <div id="file-panel" class="file-panel">
+          <div id="dropzone-overlay" class="dropzone-overlay" style="display:none;">
+            <div class="dropzone-message">Drop files here to upload to this folder</div>
+          </div>
           <table class="file-table">
             <thead>
               <tr>
