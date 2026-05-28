@@ -814,6 +814,69 @@ function createFolderWorkspaceRoutes(pool) {
   });
 
   /**
+   * GET /api/workspace/files/:file_id/versions/:version_id/download
+   * Download a specific prior version of a file.
+   * Permission: same as downloading the head (caller must have canRead on the parent folder).
+   * 404 if file_id or version_id is malformed, doesn't exist, or version doesn't belong to the file.
+   */
+  router.get('/files/:file_id/versions/:version_id/download', requireAuth(), async (req, res) => {
+    try {
+      const { file_id, version_id } = req.params;
+      const userId = req.user.id;
+
+      // Basic UUID validation (check for RFC 4122 format)
+      const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+      if (!uuidRegex.test(file_id) || !uuidRegex.test(version_id)) {
+        return res.status(400).json({ error: 'Invalid id' });
+      }
+
+      // Look up the file + version + verify they're related
+      const versionResult = await pool.query(`
+        SELECT v.id AS version_id, v.storage_key, v.size_bytes, v.uploaded_at,
+               f.id AS file_id, f.filename, f.mime_type, f.folder_id
+        FROM workspace_file_versions v
+        JOIN workspace_files f ON f.id = v.file_id
+        WHERE v.id = $1 AND v.file_id = $2
+      `, [version_id, file_id]);
+
+      if (versionResult.rows.length === 0) {
+        return res.status(404).json({ error: 'Version not found' });
+      }
+
+      const row = versionResult.rows[0];
+
+      // Permission check on parent folder
+      const perm = await getEffectivePermission(row.folder_id, userId, req.user.role);
+      if (!perm.canRead) {
+        return res.status(404).json({ error: 'Version not found' }); // 404 not 403 to avoid existence leak
+      }
+
+      // Verify file exists on disk
+      try {
+        await fs.access(row.storage_key, fs.constants.R_OK);
+      } catch (err) {
+        console.error('[workspace] version file missing:', row.storage_key);
+        return res.status(404).json({ error: 'Version file missing on disk' });
+      }
+
+      // Set Content-Type + Content-Disposition + stream
+      res.setHeader('Content-Type', row.mime_type || 'application/octet-stream');
+      const safeName = row.filename.replace(/"/g, '');
+      // Embed version timestamp in download filename so user knows which version they got
+      const baseExt = path.extname(safeName);
+      const baseName = path.basename(safeName, baseExt);
+      const versionStamp = new Date(row.uploaded_at).toISOString().replace(/[:.]/g, '-');
+      const downloadName = `${baseName}-v${versionStamp}${baseExt}`;
+      res.setHeader('Content-Disposition', `attachment; filename="${downloadName}"`);
+
+      fs.createReadStream(row.storage_key).pipe(res);
+    } catch (err) {
+      console.error('[workspace] version download error:', err);
+      res.status(500).json({ error: 'Internal error' });
+    }
+  });
+
+  /**
    * GET /api/workspace/manager/user-homes
    * Admin/manager-only: list all user-home roots
    */
