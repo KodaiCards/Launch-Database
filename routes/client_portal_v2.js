@@ -168,6 +168,105 @@ module.exports = function installClientPortalV2(app, pool, { requireAuth }) {
     }
   });
 
+  // ── Client workspace files (folders + download) ─────────────────────────
+  // Returns workspace folders (with their files) attached to a project.
+  // Only returns public folders. Validates client_org ownership via EC chain.
+  app.get('/api/client/projects/:project_id/workspace-files', requireClientAuthMW, async (req, res) => {
+    try {
+      const { project_id } = req.params;
+      if (!isValidUUID(project_id)) return res.status(400).json({ error: 'invalid project id' });
+
+      // Scope check: project must belong to caller's client_org via the EC FK chain
+      const scopeCheck = await pool.query(`
+        SELECT p.id FROM projects p
+        JOIN engineering_contracts ec ON ec.id = p.engineering_contract_id
+        WHERE p.id = $1 AND ec.client_org_id = $2
+      `, [project_id, req.client_org.id]);
+
+      if (!scopeCheck.rows.length) return res.status(404).json({ error: 'project not found' });
+
+      // Fetch public folders attached to the project + their file counts
+      const { rows: folders } = await pool.query(`
+        SELECT
+          wf.id,
+          wf.name,
+          wf.share_mode,
+          wf.created_at,
+          (SELECT COUNT(*) FROM workspace_files WHERE folder_id = wf.id)::int AS file_count
+        FROM workspace_folders wf
+        WHERE wf.project_id = $1
+          AND wf.share_mode = 'public'
+        ORDER BY wf.name
+      `, [project_id]);
+
+      // Fetch files for each folder
+      const result = [];
+      for (const folder of folders) {
+        const { rows: files } = await pool.query(`
+          SELECT
+            wfile.id,
+            wfile.filename,
+            wfile.mime_type,
+            wfile.size_bytes,
+            wfile.uploaded_at,
+            (SELECT username FROM users WHERE id = wfile.uploaded_by) AS uploaded_by_name
+          FROM workspace_files wfile
+          WHERE wfile.folder_id = $1
+          ORDER BY wfile.uploaded_at DESC
+          LIMIT 20
+        `, [folder.id]);
+        result.push({ ...folder, files });
+      }
+
+      res.json({ folders: result });
+    } catch (e) {
+      console.error('[client_portal_v2] workspace files:', e && e.message);
+      res.status(500).json({ error: 'failed to load workspace files' });
+    }
+  });
+
+  // Download a workspace file. Caller's client_org must own a project that has the parent folder attached.
+  app.get('/api/client/workspace-files/:file_id/download', requireClientAuthMW, async (req, res) => {
+    try {
+      const { file_id } = req.params;
+      if (!isValidUUID(file_id)) return res.status(400).json({ error: 'invalid file id' });
+
+      // IDOR scope: file's folder must be project-linked + public + linked to a project the client_org owns
+      const { rows } = await pool.query(`
+        SELECT wfile.storage_key, wfile.filename, wfile.mime_type
+        FROM workspace_files wfile
+        JOIN workspace_folders wf ON wf.id = wfile.folder_id
+        JOIN projects p ON p.id = wf.project_id
+        JOIN engineering_contracts ec ON ec.id = p.engineering_contract_id
+        WHERE wfile.id = $1
+          AND wf.share_mode = 'public'
+          AND ec.client_org_id = $2
+      `, [file_id, req.client_org.id]);
+
+      if (!rows.length) return res.status(404).json({ error: 'file not found' });
+      const row = rows[0];
+
+      // Stream the file
+      const fs = require('fs');
+      const path = require('path');
+      const UPLOAD_DIR = process.env.UPLOAD_DIR || './uploads';
+      const filePath = path.join(UPLOAD_DIR, row.storage_key);
+
+      try {
+        await fs.promises.access(filePath, fs.constants.R_OK);
+      } catch {
+        return res.status(404).json({ error: 'file missing on disk' });
+      }
+
+      res.setHeader('Content-Type', row.mime_type);
+      res.setHeader('Content-Disposition', `attachment; filename="${row.filename.replace(/"/g, '')}"`);
+      fs.createReadStream(filePath).pipe(res);
+    } catch (e) {
+      console.error('[client_portal_v2] download file:', e && e.message);
+      res.status(500).json({ error: 'download failed' });
+    }
+  });
+
   // ══════════════════════════════════════════════════════════════════════
   // Admin endpoints — all gated with requireAuth(['admin'])
   // ══════════════════════════════════════════════════════════════════════

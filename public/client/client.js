@@ -177,6 +177,7 @@
         group.projects.forEach(p => {
           const row = document.createElement('div');
           row.className = 'project-row';
+          row.dataset.projectId = p.id;
 
           // Program badge
           const prog = (p.program || 'other').toLowerCase();
@@ -201,7 +202,19 @@
             <span class="program-badge ${progBadgeClass}">${escHtml(p.program || 'Other')}</span>
             <span class="status-badge ${statusClass}">${escHtml(p.status || 'Pending')}</span>
             <span class="project-date">${formatDate(p.created_at)}</span>
+            <button class="expand-btn" data-project-id="${p.id}" title="View project files">
+              <i class="fa-solid fa-chevron-down"></i>
+            </button>
           `;
+
+          // Add click handler for expand button
+          const expandBtn = row.querySelector('.expand-btn');
+          if (expandBtn) {
+            expandBtn.addEventListener('click', (e) => {
+              e.stopPropagation();
+              toggleProjectFiles(p.id, listDiv);
+            });
+          }
 
           listDiv.appendChild(row);
         });
@@ -223,6 +236,104 @@
         errorMsg.textContent = e.message || 'An error occurred. Please try again.';
       }
       errorEl.style.display = 'flex';
+    }
+  }
+
+  // Load workspace files for a project
+  async function loadProjectWorkspaceFiles(projectId) {
+    try {
+      const res = await fetch(`/api/client/projects/${projectId}/workspace-files`, { credentials: 'include' });
+      if (!res.ok) {
+        if (res.status === 404) return [];
+        throw new Error('Failed to load workspace files');
+      }
+      const data = await res.json();
+      return data.folders || [];
+    } catch (e) {
+      console.error('Load workspace files error:', e);
+      return [];
+    }
+  }
+
+  // Toggle visibility of project files panel
+  async function toggleProjectFiles(projectId, containerElement) {
+    let filesPanel = containerElement.querySelector(`[data-files-panel="${projectId}"]`);
+
+    if (filesPanel) {
+      // Already exists, toggle visibility
+      if (filesPanel.style.display === 'none') {
+        filesPanel.style.display = 'block';
+      } else {
+        filesPanel.style.display = 'none';
+      }
+    } else {
+      // Create new files panel
+      filesPanel = document.createElement('div');
+      filesPanel.className = 'project-files-panel';
+      filesPanel.dataset.filesPanel = projectId;
+
+      filesPanel.innerHTML = `
+        <div class="files-loading">
+          <i class="fa-solid fa-spinner fa-spin"></i>
+          <span>Loading files...</span>
+        </div>
+      `;
+
+      // Insert after the corresponding project row
+      const projectRow = containerElement.querySelector(`[data-project-id="${projectId}"]`);
+      if (projectRow) {
+        projectRow.parentNode.insertBefore(filesPanel, projectRow.nextSibling);
+      }
+
+      // Load files
+      const folders = await loadProjectWorkspaceFiles(projectId);
+
+      if (folders.length === 0) {
+        filesPanel.innerHTML = `
+          <div class="files-empty">
+            <i class="fa-solid fa-folder-open"></i>
+            <p>No shared files for this project</p>
+          </div>
+        `;
+      } else {
+        let html = '<div class="files-list">';
+        folders.forEach(folder => {
+          html += `
+            <div class="folder-card">
+              <div class="folder-header">
+                <i class="fa-solid fa-folder"></i>
+                <span class="folder-name">${escHtml(folder.name)}</span>
+                <span class="file-count">${folder.file_count} file${folder.file_count !== 1 ? 's' : ''}</span>
+              </div>
+              <div class="files-in-folder">
+          `;
+          if (folder.files && folder.files.length > 0) {
+            folder.files.forEach(file => {
+              const sizeKb = (file.size_bytes / 1024).toFixed(1);
+              html += `
+                <div class="file-row">
+                  <i class="fa-solid fa-file"></i>
+                  <div class="file-info">
+                    <div class="file-name">${escHtml(file.filename)}</div>
+                    <div class="file-meta">${sizeKb} KB • ${formatDate(file.uploaded_at)}</div>
+                  </div>
+                  <a href="/api/client/workspace-files/${file.id}/download" class="download-btn" download>
+                    <i class="fa-solid fa-download"></i>
+                  </a>
+                </div>
+              `;
+            });
+          } else {
+            html += '<div class="file-empty">No files in this folder</div>';
+          }
+          html += `
+              </div>
+            </div>
+          `;
+        });
+        html += '</div>';
+        filesPanel.innerHTML = html;
+      }
     }
   }
 

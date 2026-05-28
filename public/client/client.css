@@ -209,7 +209,7 @@ body {
   border-radius: var(--radius);
   padding: 16px;
   display: grid;
-  grid-template-columns: 1fr auto auto auto auto;
+  grid-template-columns: 1fr auto auto auto auto auto;
   gap: 16px;
   align-items: center;
   transition: box-shadow 0.12s;
@@ -217,6 +217,169 @@ body {
 
 .project-row:hover {
   box-shadow: var(--shadow-md);
+}
+
+.expand-btn {
+  background: none;
+  border: none;
+  color: var(--text-2);
+  cursor: pointer;
+  font-size: 14px;
+  padding: 4px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: color 0.12s, transform 0.12s;
+}
+
+.expand-btn:hover {
+  color: var(--text-1);
+}
+
+.expand-btn i {
+  transition: transform 0.2s;
+}
+
+.project-files-panel {
+  background: var(--surface-2);
+  border: 1px solid var(--border-weak);
+  border-radius: var(--radius);
+  margin: 8px 0 0 0;
+  padding: 16px;
+  margin-left: 16px;
+}
+
+.files-loading,
+.files-empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 24px;
+  color: var(--text-2);
+  font-size: 13px;
+}
+
+.files-loading i {
+  font-size: 20px;
+}
+
+.files-list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.folder-card {
+  background: var(--surface-1);
+  border: 1px solid var(--border-weak);
+  border-radius: var(--radius);
+  overflow: hidden;
+}
+
+.folder-header {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 12px 14px;
+  background: var(--surface-2);
+  border-bottom: 1px solid var(--border-weak);
+  font-weight: 500;
+  font-size: 13px;
+  color: var(--text-1);
+}
+
+.folder-header i {
+  color: var(--primary);
+  flex-shrink: 0;
+}
+
+.folder-name {
+  flex: 1;
+}
+
+.file-count {
+  font-size: 11px;
+  color: var(--text-2);
+  background: var(--surface-2);
+  padding: 2px 8px;
+  border-radius: 3px;
+}
+
+.files-in-folder {
+  padding: 8px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.file-empty {
+  padding: 12px;
+  color: var(--text-3);
+  font-size: 12px;
+  text-align: center;
+}
+
+.file-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 12px;
+  border-radius: 4px;
+  transition: background 0.12s;
+}
+
+.file-row:hover {
+  background: var(--surface-2);
+}
+
+.file-row i {
+  color: var(--text-2);
+  flex-shrink: 0;
+  font-size: 12px;
+}
+
+.file-info {
+  flex: 1;
+  min-width: 0;
+}
+
+.file-name {
+  font-size: 13px;
+  color: var(--text-1);
+  font-weight: 500;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.file-meta {
+  font-size: 11px;
+  color: var(--text-3);
+  margin-top: 2px;
+}
+
+.download-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  color: var(--primary);
+  border-radius: 4px;
+  cursor: pointer;
+  transition: background 0.12s;
+  text-decoration: none;
+  flex-shrink: 0;
+}
+
+.download-btn:hover {
+  background: var(--primary-light);
+}
+
+.download-btn i {
+  font-size: 13px;
 }
 
 .project-name {

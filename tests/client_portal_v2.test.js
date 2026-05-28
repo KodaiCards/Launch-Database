@@ -940,3 +940,133 @@ test('POST /api/client/approvals/:id/respond returns 400 for invalid UUID', asyn
   });
   assert.equal(respondRes.status, 400, 'malformed UUID returns 400');
 });
+
+// ── Workspace Files (Wave 66) ───────────────────────────────────────────────
+
+test('GET /api/client/projects/:id/workspace-files returns public folders for client org', async () => {
+  const org = await insertOrg();
+  const user = await insertUser(org.id);
+  const { raw } = await insertToken(user.id);
+
+  // Create a project for the org's EC
+  const { rows: ecs } = await pool.query(
+    `SELECT id FROM engineering_contracts WHERE client_org_id = $1 LIMIT 1`,
+    [org.id]
+  );
+  if (!ecs.length) {
+    console.log('No test EC for org — creating one');
+    const { rows: newEc } = await pool.query(
+      `INSERT INTO engineering_contracts (client_org_id, program) VALUES ($1, 'rus') RETURNING id`,
+      [org.id]
+    );
+  }
+
+  const ecId = ecs[0]?.id || (await pool.query(
+    `INSERT INTO engineering_contracts (client_org_id, program) VALUES ($1, 'rus') RETURNING id`,
+    [org.id]
+  )).rows[0].id;
+
+  const { rows: projRows } = await pool.query(
+    `INSERT INTO projects (name, engineering_contract_id, status) VALUES ($1, $2, 'active') RETURNING id`,
+    ['Test Project', ecId]
+  );
+  const projectId = projRows[0].id;
+
+  const { baseUrl } = require('./_helpers');
+  const loginRes = await fetch(`${baseUrl()}/client/login/${raw}`, { redirect: 'manual' });
+  const cookie = loginRes.headers.get('set-cookie');
+
+  const res = await fetch(`${baseUrl()}/api/client/projects/${projectId}/workspace-files`, {
+    headers: { cookie }
+  });
+  assert.equal(res.status, 200, 'workspace-files endpoint returns 200');
+  const data = await res.json();
+  assert.ok(Array.isArray(data.folders), 'response.folders is array');
+});
+
+test('GET /api/client/projects/:id/workspace-files returns 404 for cross-org project (IDOR)', async () => {
+  const org1 = await insertOrg();
+  const org2 = await insertOrg();
+  const user = await insertUser(org1.id);
+  const { raw } = await insertToken(user.id);
+
+  // Create project in org2
+  const { rows: ec2Rows } = await pool.query(
+    `INSERT INTO engineering_contracts (client_org_id, program) VALUES ($1, 'rus') RETURNING id`,
+    [org2.id]
+  );
+  const ec2Id = ec2Rows[0].id;
+
+  const { rows: proj2Rows } = await pool.query(
+    `INSERT INTO projects (name, engineering_contract_id, status) VALUES ($1, $2, 'active') RETURNING id`,
+    ['Org2 Project', ec2Id]
+  );
+  const proj2Id = proj2Rows[0].id;
+
+  const { baseUrl } = require('./_helpers');
+  const loginRes = await fetch(`${baseUrl()}/client/login/${raw}`, { redirect: 'manual' });
+  const cookie = loginRes.headers.get('set-cookie');
+
+  const res = await fetch(`${baseUrl()}/api/client/projects/${proj2Id}/workspace-files`, {
+    headers: { cookie }
+  });
+  assert.equal(res.status, 404, 'cross-org project access denied (IDOR)');
+});
+
+test('GET /api/client/projects/:id/workspace-files returns 400 for invalid UUID', async () => {
+  const org = await insertOrg();
+  const user = await insertUser(org.id);
+  const { raw } = await insertToken(user.id);
+
+  const { baseUrl } = require('./_helpers');
+  const loginRes = await fetch(`${baseUrl()}/client/login/${raw}`, { redirect: 'manual' });
+  const cookie = loginRes.headers.get('set-cookie');
+
+  const res = await fetch(`${baseUrl()}/api/client/projects/invalid-uuid/workspace-files`, {
+    headers: { cookie }
+  });
+  assert.equal(res.status, 400, 'malformed UUID returns 400');
+});
+
+test('GET /api/client/workspace-files/:id/download returns 404 for non-public folder (IDOR)', async () => {
+  // Test that private folders are not downloadable even if caller owns the project
+  const org = await insertOrg();
+  const user = await insertUser(org.id);
+  const { raw } = await insertToken(user.id);
+
+  const { rows: ecRows } = await pool.query(
+    `INSERT INTO engineering_contracts (client_org_id, program) VALUES ($1, 'rus') RETURNING id`,
+    [org.id]
+  );
+  const ecId = ecRows[0].id;
+
+  const { rows: projRows } = await pool.query(
+    `INSERT INTO projects (name, engineering_contract_id, status) VALUES ($1, $2, 'active') RETURNING id`,
+    ['Test Project', ecId]
+  );
+  const projectId = projRows[0].id;
+
+  // Create a private folder (not public)
+  const { rows: folderRows } = await pool.query(
+    `INSERT INTO workspace_folders (project_id, name, share_mode) VALUES ($1, 'Private', 'private') RETURNING id`,
+    [projectId]
+  );
+  const folderId = folderRows[0].id;
+
+  // Create a file in the private folder
+  const { rows: fileRows } = await pool.query(
+    `INSERT INTO workspace_files (folder_id, filename, mime_type, size_bytes, sha256, storage_key)
+     VALUES ($1, 'test.txt', 'text/plain', 100, 'deadbeef', 'test-key') RETURNING id`,
+    [folderId]
+  );
+  const fileId = fileRows[0].id;
+
+  const { baseUrl } = require('./_helpers');
+  const loginRes = await fetch(`${baseUrl()}/client/login/${raw}`, { redirect: 'manual' });
+  const cookie = loginRes.headers.get('set-cookie');
+
+  const res = await fetch(`${baseUrl()}/api/client/workspace-files/${fileId}/download`, {
+    headers: { cookie }
+  });
+  assert.equal(res.status, 404, 'private folder file download returns 404 (IDOR)');
+});
