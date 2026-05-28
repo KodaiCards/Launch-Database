@@ -482,6 +482,13 @@ app.get('/sw-dwg-sync.js', (req, res) => {
 // via the lfs_client_session cookie validated by requireClientAuth middleware.
 app.use('/client', express.static(path.join(__dirname, 'public', 'client')));
 
+// Wave 55: photos PWA — mobile-first photo upload with offline queue
+app.use('/photos', requireAuth(), express.static(path.join(__dirname, 'public', 'photos')));
+// SPA client-side routing fallback for PWA
+app.get('/photos/*', requireAuth(), (req, res) => {
+  res.sendFile(path.join(__dirname, 'public', 'photos', 'index.html'));
+});
+
 app.use(express.static(path.join(__dirname, 'public')));
 
 // Serve uploads with auth enforcement (item 6 fix).
@@ -710,6 +717,9 @@ require('./routes/revenue')(app, pool, { requireManagerOrAdmin });
 
 // Audit log viewer (read-only admin UI for compliance trail — Wave 41).
 require('./routes/audit_log')(app, pool, { requireAdmin });
+
+// Project photos — mobile PWA uploads (Wave 55).
+require('./routes/project_photos')(app, pool, { requireAuth, requireAdmin });
 
 
 // ─────────────────────────────────────────────────────────────────────────────

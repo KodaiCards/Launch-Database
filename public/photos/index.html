@@ -1,0 +1,129 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <meta name="theme-color" content="#1B5FA0">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="LF Photos">
+  <link rel="manifest" href="manifest.webmanifest">
+  <link rel="icon" type="image/svg+xml" href="icons/icon-192.svg">
+  <link rel="apple-touch-icon" href="icons/icon-192.svg">
+  <title>Launch Fiber Photos</title>
+  <link rel="stylesheet" href="photos.css">
+</head>
+<body>
+  <!-- Top header with branding -->
+  <header class="header">
+    <h1 class="header__title">Launch Fiber Photos</h1>
+    <p class="header__subtitle">Upload field documentation</p>
+  </header>
+
+  <!-- Main app container -->
+  <main class="app-container">
+    <div id="auth-check" class="spinner">Checking authentication...</div>
+
+    <div id="app" class="app" style="display: none;">
+      <!-- Tab bar (sticky bottom on mobile) -->
+      <nav class="tab-bar">
+        <button class="tab-bar__btn tab-bar__btn--active" data-tab="upload">
+          <span class="tab-bar__icon">📸</span>
+          <span class="tab-bar__label">Upload</span>
+        </button>
+        <button class="tab-bar__btn" data-tab="recent">
+          <span class="tab-bar__icon">🖼️</span>
+          <span class="tab-bar__label">Recent</span>
+        </button>
+        <button class="tab-bar__btn" data-tab="mine">
+          <span class="tab-bar__icon">👤</span>
+          <span class="tab-bar__label">My Uploads</span>
+        </button>
+      </nav>
+
+      <!-- Upload tab -->
+      <div id="tab-upload" class="tab-content tab-content--active">
+        <div class="upload-form-wrapper">
+          <div class="form-group">
+            <label for="project-picker" class="form-label">Project</label>
+            <select id="project-picker" class="form-input form-input--select" required>
+              <option value="">Select a project...</option>
+            </select>
+          </div>
+
+          <div class="form-group">
+            <label for="photo-input" class="form-label">Photo</label>
+            <div class="photo-input-wrapper">
+              <input type="file" id="photo-input" accept="image/*" capture="environment" class="photo-input" required>
+              <label for="photo-input" class="photo-input-label">
+                <span class="photo-input-text">📷 Take or select a photo</span>
+              </label>
+              <div id="photo-preview" class="photo-preview" style="display: none;">
+                <img id="preview-img" src="" alt="Preview" class="preview-img">
+                <button type="button" id="clear-photo" class="btn btn--secondary btn--small">Clear</button>
+              </div>
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label for="caption-input" class="form-label">Caption (optional)</label>
+            <textarea id="caption-input" class="form-input form-input--textarea" placeholder="Add notes about this photo..."></textarea>
+          </div>
+
+          <div class="form-group gps-group">
+            <label class="checkbox-label">
+              <input type="checkbox" id="gps-toggle" class="checkbox-input" checked>
+              <span class="checkbox-text">Capture GPS location</span>
+            </label>
+            <div id="gps-status" class="gps-status" style="display: none;"></div>
+          </div>
+
+          <button id="upload-btn" class="btn btn--primary btn--large">
+            <span id="upload-btn-text">Upload Photo</span>
+          </button>
+
+          <div id="upload-message" class="message message--hidden" style="display: none;"></div>
+        </div>
+      </div>
+
+      <!-- Recent photos tab -->
+      <div id="tab-recent" class="tab-content">
+        <div class="tab-header">
+          <h2 class="tab-title">Recent Photos</h2>
+          <select id="recent-project-picker" class="form-input form-input--select form-input--small">
+            <option value="">Select project...</option>
+          </select>
+        </div>
+        <div id="recent-grid" class="photo-grid">
+          <p class="text--muted">Select a project to view recent photos</p>
+        </div>
+        <div id="recent-pagination" class="pagination" style="display: none;"></div>
+      </div>
+
+      <!-- My uploads tab -->
+      <div id="tab-mine" class="tab-content">
+        <div class="tab-header">
+          <h2 class="tab-title">My Uploads</h2>
+        </div>
+        <div id="mine-grid" class="photo-grid">
+          <p class="text--muted">Loading your uploads...</p>
+        </div>
+        <div id="mine-pagination" class="pagination" style="display: none;"></div>
+      </div>
+    </div>
+  </main>
+
+  <!-- Toast notifications -->
+  <div id="toast" class="toast" style="display: none;"></div>
+
+  <script>
+    // PWA service worker registration
+    if ('serviceWorker' in navigator) {
+      navigator.serviceWorker.register('sw.js').catch(err => {
+        console.warn('SW registration failed:', err);
+      });
+    }
+  </script>
+  <script src="photos.js"></script>
+</body>
+</html>

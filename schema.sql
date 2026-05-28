@@ -3551,3 +3551,34 @@ ALTER TABLE ONLY public.dwg_staging
     ADD CONSTRAINT IF NOT EXISTS dwg_staging_project_id_fkey FOREIGN KEY (project_id) REFERENCES public.projects(id) ON DELETE CASCADE;
 ALTER TABLE ONLY public.dwg_staging
     ADD CONSTRAINT IF NOT EXISTS dwg_staging_reviewed_by_fkey FOREIGN KEY (reviewed_by) REFERENCES public.users(id) ON DELETE SET NULL;
+
+-- project_photos — mobile PWA photo uploads with GPS tracking
+CREATE TABLE IF NOT EXISTS public.project_photos (
+    id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+    project_id uuid NOT NULL,
+    uploaded_by uuid,
+    filename text NOT NULL,
+    mime_type text NOT NULL,
+    size_bytes bigint NOT NULL,
+    storage_key text NOT NULL,
+    caption text,
+    taken_at timestamp with time zone,
+    uploaded_at timestamp with time zone DEFAULT now() NOT NULL,
+    gps_lat double precision,
+    gps_lon double precision,
+    gps_accuracy_m real,
+    status text DEFAULT 'active'::text NOT NULL,
+    created_at timestamp with time zone DEFAULT now() NOT NULL,
+    CONSTRAINT project_photos_pkey PRIMARY KEY (id),
+    CONSTRAINT project_photos_status_check CHECK ((status = ANY (ARRAY['active'::text, 'archived'::text])))
+);
+
+CREATE INDEX IF NOT EXISTS idx_project_photos_project ON public.project_photos USING btree (project_id, uploaded_at DESC) WHERE (status = 'active'::text);
+CREATE INDEX IF NOT EXISTS idx_project_photos_user ON public.project_photos USING btree (uploaded_by, uploaded_at DESC);
+CREATE INDEX IF NOT EXISTS idx_project_photos_taken ON public.project_photos USING btree (taken_at) WHERE (taken_at IS NOT NULL);
+
+-- Foreign keys for project_photos
+ALTER TABLE ONLY public.project_photos
+    ADD CONSTRAINT IF NOT EXISTS project_photos_project_id_fkey FOREIGN KEY (project_id) REFERENCES public.projects(id) ON DELETE CASCADE;
+ALTER TABLE ONLY public.project_photos
+    ADD CONSTRAINT IF NOT EXISTS project_photos_uploaded_by_fkey FOREIGN KEY (uploaded_by) REFERENCES public.users(id) ON DELETE SET NULL;
