@@ -273,7 +273,8 @@ module.exports = function installSpliceRoutes(app, pool, mw) {
       if (!req.user) return res.status(401).json({ error: 'Login required' });
       if (req.user.role === 'admin') return next();
       if (Array.isArray(req.user.extra_teams) && req.user.extra_teams.includes('splice')) return next();
-      const projectId = typeof getProjectId === 'function' ? getProjectId(req) : getProjectId;
+      // Support both sync (req => req.params.id) and async (req => DB lookup) getters.
+      const projectId = typeof getProjectId === 'function' ? await getProjectId(req) : getProjectId;
       if (!projectId) return next(); // can't resolve — let the handler 404
       try {
         const { rows } = await pool.query(
@@ -843,7 +844,10 @@ module.exports = function installSpliceRoutes(app, pool, mw) {
     } catch (e) { console.error('[splice:add-location]', e && e.message); res.status(500).json({ error: 'Failed to add location.' }); }
   });
 
-  app.put('/api/splice/locations/:id', requireAuth(), async (req, res) => {
+  app.put('/api/splice/locations/:id', requireAuth(), requireSpliceAccess(async req => {
+    const r = await pool.query('SELECT project_id FROM splice_locations WHERE id = $1', [req.params.id]);
+    return r.rows[0]?.project_id || null;
+  }), async (req, res) => {
     // Phase 3A — accept latitude/longitude on the generic PUT too, so the
     // edit-attributes modal can move a closure on a single submit. The
     // dedicated /coords endpoint below is for drag-on-map updates that
@@ -874,7 +878,10 @@ module.exports = function installSpliceRoutes(app, pool, mw) {
   // Phase 3A — drag-a-marker fast path. Drops the rest of the location
   // payload off the wire so a drag that fires on every mouse-move (if
   // we add live-drag in 3B) doesn't carry a kilobyte of metadata.
-  app.put('/api/splice/locations/:id/coords', requireAuth(), async (req, res) => {
+  app.put('/api/splice/locations/:id/coords', requireAuth(), requireSpliceAccess(async req => {
+    const r = await pool.query('SELECT project_id FROM splice_locations WHERE id = $1', [req.params.id]);
+    return r.rows[0]?.project_id || null;
+  }), async (req, res) => {
     const lat = req.body?.latitude;
     const lon = req.body?.longitude;
     // Allow null on either axis to clear the geographic placement
@@ -903,7 +910,10 @@ module.exports = function installSpliceRoutes(app, pool, mw) {
     } catch (e) { console.error('[splice:update-location-coords]', e && e.message); res.status(500).json({ error: 'Failed to update location coordinates.' }); }
   });
 
-  app.delete('/api/splice/locations/:id', requireAuth(), async (req, res) => {
+  app.delete('/api/splice/locations/:id', requireAuth(), requireSpliceAccess(async req => {
+    const r = await pool.query('SELECT project_id FROM splice_locations WHERE id = $1', [req.params.id]);
+    return r.rows[0]?.project_id || null;
+  }), async (req, res) => {
     try {
       const cur = await pool.query(
         `SELECT project_id FROM splice_locations WHERE id = $1`,
@@ -1000,7 +1010,10 @@ module.exports = function installSpliceRoutes(app, pool, mw) {
     }
   });
 
-  app.put('/api/splice/cables/:id', requireAuth(), async (req, res) => {
+  app.put('/api/splice/cables/:id', requireAuth(), requireSpliceAccess(async req => {
+    const r = await pool.query('SELECT project_id FROM splice_cables WHERE id = $1', [req.params.id]);
+    return r.rows[0]?.project_id || null;
+  }), async (req, res) => {
     // Only metadata fields are mutable post-create. Changing fiber_count
     // would invalidate every fiber and splice underneath; if the designer
     // needs a different size, they delete and re-add.
@@ -1027,7 +1040,10 @@ module.exports = function installSpliceRoutes(app, pool, mw) {
     } catch (e) { console.error('[splice:update-cable]', e && e.message); res.status(500).json({ error: 'Failed to update cable.' }); }
   });
 
-  app.delete('/api/splice/cables/:id', requireAuth(), async (req, res) => {
+  app.delete('/api/splice/cables/:id', requireAuth(), requireSpliceAccess(async req => {
+    const r = await pool.query('SELECT project_id FROM splice_cables WHERE id = $1', [req.params.id]);
+    return r.rows[0]?.project_id || null;
+  }), async (req, res) => {
     try {
       const cur = await pool.query(`SELECT project_id FROM splice_cables WHERE id = $1`, [req.params.id]);
       if (!cur.rows.length) return res.status(404).json({ error: 'Cable not found' });
@@ -1045,7 +1061,10 @@ module.exports = function installSpliceRoutes(app, pool, mw) {
   // segments, or self-crossing paths — designers eyeball the satellite
   // and we trust the result. The schema rejects anything that fails
   // JSONB parse on its way in.
-  app.put('/api/splice/cables/:id/path', requireAuth(), async (req, res) => {
+  app.put('/api/splice/cables/:id/path', requireAuth(), requireSpliceAccess(async req => {
+    const r = await pool.query('SELECT project_id FROM splice_cables WHERE id = $1', [req.params.id]);
+    return r.rows[0]?.project_id || null;
+  }), async (req, res) => {
     const path = req.body?.path_geojson;
     if (path != null) {
       if (typeof path !== 'object' || path.type !== 'LineString' ||
@@ -1081,7 +1100,10 @@ module.exports = function installSpliceRoutes(app, pool, mw) {
 
   // ─── Closures ────────────────────────────────────────────────────────────
 
-  app.post('/api/splice/locations/:id/closures', requireAuth(), async (req, res) => {
+  app.post('/api/splice/locations/:id/closures', requireAuth(), requireSpliceAccess(async req => {
+    const r = await pool.query('SELECT project_id FROM splice_locations WHERE id = $1', [req.params.id]);
+    return r.rows[0]?.project_id || null;
+  }), async (req, res) => {
     const {
       model, tray_count = 6, tray_capacity = 12, notes,
     } = req.body;
@@ -1141,7 +1163,15 @@ module.exports = function installSpliceRoutes(app, pool, mw) {
     }
   });
 
-  app.put('/api/splice/closures/:id', requireAuth(), async (req, res) => {
+  app.put('/api/splice/closures/:id', requireAuth(), requireSpliceAccess(async req => {
+    const r = await pool.query(
+      `SELECT l.project_id FROM splice_closures cl
+       JOIN splice_locations l ON l.id = cl.location_id
+       WHERE cl.id = $1`,
+      [req.params.id]
+    );
+    return r.rows[0]?.project_id || null;
+  }), async (req, res) => {
     const allowed = ['model', 'tray_count', 'tray_capacity', 'notes'];
     // tray_count change: if increasing, append new trays; if decreasing,
     // refuse if any of the trays-to-drop already hold splices (avoids
@@ -1226,7 +1256,15 @@ module.exports = function installSpliceRoutes(app, pool, mw) {
     }
   });
 
-  app.delete('/api/splice/closures/:id', requireAuth(), async (req, res) => {
+  app.delete('/api/splice/closures/:id', requireAuth(), requireSpliceAccess(async req => {
+    const r = await pool.query(
+      `SELECT l.project_id FROM splice_closures cl
+       JOIN splice_locations l ON l.id = cl.location_id
+       WHERE cl.id = $1`,
+      [req.params.id]
+    );
+    return r.rows[0]?.project_id || null;
+  }), async (req, res) => {
     try {
       const cur = await pool.query(
         `SELECT cl.id, l.project_id
@@ -1246,7 +1284,17 @@ module.exports = function installSpliceRoutes(app, pool, mw) {
   // Bulk-delete multiple closures in one transaction.
   // Body: { ids: ['uuid', ...] }
   // Security: every id must belong to the same project (verified via join).
-  app.post('/api/splice/closures/bulk-delete', requireAuth(), async (req, res) => {
+  app.post('/api/splice/closures/bulk-delete', requireAuth(), requireSpliceAccess(async req => {
+    const ids = req.body?.ids;
+    if (!Array.isArray(ids) || !ids[0]) return null; // let handler validate fully
+    const r = await pool.query(
+      `SELECT l.project_id FROM splice_closures cl
+       JOIN splice_locations l ON l.id = cl.location_id
+       WHERE cl.id = $1`,
+      [ids[0]]
+    );
+    return r.rows[0]?.project_id || null;
+  }), async (req, res) => {
     const { ids } = req.body;
     if (!Array.isArray(ids) || ids.length === 0) {
       return res.status(400).json({ error: 'ids must be a non-empty array' });
@@ -1299,7 +1347,16 @@ module.exports = function installSpliceRoutes(app, pool, mw) {
 
   // ─── Splices ─────────────────────────────────────────────────────────────
 
-  app.post('/api/splice/trays/:id/splices', requireAuth(), async (req, res) => {
+  app.post('/api/splice/trays/:id/splices', requireAuth(), requireSpliceAccess(async req => {
+    const r = await pool.query(
+      `SELECT l.project_id FROM splice_trays t
+       JOIN splice_closures cl ON cl.id = t.closure_id
+       JOIN splice_locations l ON l.id = cl.location_id
+       WHERE t.id = $1`,
+      [req.params.id]
+    );
+    return r.rows[0]?.project_id || null;
+  }), async (req, res) => {
     const { fiber_a_id, fiber_b_id, splice_type = 'fusion' } = req.body;
     if (!fiber_a_id || !fiber_b_id) {
       return res.status(400).json({ error: 'fiber_a_id and fiber_b_id are required' });
@@ -1344,7 +1401,23 @@ module.exports = function installSpliceRoutes(app, pool, mw) {
   // location without needing a tray. Accepts closure_id OR location_id
   // (at least one required). Supports bulk creation via pairs[] array
   // (same shape as the tray endpoint) for the drag-drop UI.
-  app.post('/api/splice/trayless-splices', requireAuth(), async (req, res) => {
+  app.post('/api/splice/trayless-splices', requireAuth(), requireSpliceAccess(async req => {
+    const { closure_id, location_id } = req.body || {};
+    if (closure_id) {
+      const r = await pool.query(
+        `SELECT l.project_id FROM splice_closures cl
+         JOIN splice_locations l ON l.id = cl.location_id
+         WHERE cl.id = $1`,
+        [closure_id]
+      );
+      return r.rows[0]?.project_id || null;
+    }
+    if (location_id) {
+      const r = await pool.query('SELECT project_id FROM splice_locations WHERE id = $1', [location_id]);
+      return r.rows[0]?.project_id || null;
+    }
+    return null; // let handler validate
+  }), async (req, res) => {
     const { closure_id, location_id, fiber_a_id, fiber_b_id,
             splice_type = 'fusion', pairs } = req.body;
     if (!closure_id && !location_id) {
@@ -1403,7 +1476,16 @@ module.exports = function installSpliceRoutes(app, pool, mw) {
   // pairs of fiber IDs (one from each side, 12 pairs) — we create 12 splice
   // rows AND a ribbon group row that ties them together so the editor and
   // the PDF render them as a single ribbon-to-ribbon line.
-  app.post('/api/splice/trays/:id/ribbon-splice', requireAuth(), async (req, res) => {
+  app.post('/api/splice/trays/:id/ribbon-splice', requireAuth(), requireSpliceAccess(async req => {
+    const r = await pool.query(
+      `SELECT l.project_id FROM splice_trays t
+       JOIN splice_closures cl ON cl.id = t.closure_id
+       JOIN splice_locations l ON l.id = cl.location_id
+       WHERE t.id = $1`,
+      [req.params.id]
+    );
+    return r.rows[0]?.project_id || null;
+  }), async (req, res) => {
     const { pairs, splice_type = 'fusion' } = req.body;
     if (!Array.isArray(pairs) || pairs.length !== 12) {
       return res.status(400).json({ error: 'pairs must be an array of exactly 12 fiber pairs' });
@@ -1467,7 +1549,25 @@ module.exports = function installSpliceRoutes(app, pool, mw) {
     }
   });
 
-  app.delete('/api/splice/splices/:id', requireAuth(), async (req, res) => {
+  app.delete('/api/splice/splices/:id', requireAuth(), requireSpliceAccess(async req => {
+    // Splices can be tray-based (join via tray→closure→location) or trayless
+    // (direct closure_id or location_id column). Try tray path first, then direct.
+    const r = await pool.query(
+      `SELECT COALESCE(
+         (SELECT l.project_id FROM splice_trays t
+          JOIN splice_closures cl ON cl.id = t.closure_id
+          JOIN splice_locations l ON l.id = cl.location_id
+          WHERE t.id = s.tray_id),
+         (SELECT l2.project_id FROM splice_closures cl2
+          JOIN splice_locations l2 ON l2.id = cl2.location_id
+          WHERE cl2.id = s.closure_id),
+         (SELECT project_id FROM splice_locations WHERE id = s.location_id)
+       ) AS project_id
+       FROM splices s WHERE s.id = $1`,
+      [req.params.id]
+    );
+    return r.rows[0]?.project_id || null;
+  }), async (req, res) => {
     try {
       const cur = await pool.query(
         `SELECT s.id, l.project_id
@@ -1489,7 +1589,23 @@ module.exports = function installSpliceRoutes(app, pool, mw) {
   // Phase 4.4 — inline splice-type edit from the matrix tabular view.
   // Accepts { splice_type } and updates the row. Broadcasts splice_updated
   // so other designers see the change immediately.
-  app.put('/api/splice/splices/:id', requireAuth(), async (req, res) => {
+  app.put('/api/splice/splices/:id', requireAuth(), requireSpliceAccess(async req => {
+    const r = await pool.query(
+      `SELECT COALESCE(
+         (SELECT l.project_id FROM splice_trays t
+          JOIN splice_closures cl ON cl.id = t.closure_id
+          JOIN splice_locations l ON l.id = cl.location_id
+          WHERE t.id = s.tray_id),
+         (SELECT l2.project_id FROM splice_closures cl2
+          JOIN splice_locations l2 ON l2.id = cl2.location_id
+          WHERE cl2.id = s.closure_id),
+         (SELECT project_id FROM splice_locations WHERE id = s.location_id)
+       ) AS project_id
+       FROM splices s WHERE s.id = $1`,
+      [req.params.id]
+    );
+    return r.rows[0]?.project_id || null;
+  }), async (req, res) => {
     const { splice_type } = req.body || {};
     if (!splice_type || !['fusion', 'mechanical'].includes(splice_type)) {
       return res.status(400).json({ error: `splice_type must be 'fusion' or 'mechanical'` });
@@ -1515,7 +1631,17 @@ module.exports = function installSpliceRoutes(app, pool, mw) {
     } catch (e) { console.error('[splice:update-splice]', e && e.message); res.status(500).json({ error: 'Failed to update splice.' }); }
   });
 
-  app.delete('/api/splice/ribbon-groups/:id', requireAuth(), async (req, res) => {
+  app.delete('/api/splice/ribbon-groups/:id', requireAuth(), requireSpliceAccess(async req => {
+    const r = await pool.query(
+      `SELECT l.project_id FROM splice_ribbon_groups g
+       JOIN splice_trays t ON t.id = g.tray_id
+       JOIN splice_closures cl ON cl.id = t.closure_id
+       JOIN splice_locations l ON l.id = cl.location_id
+       WHERE g.id = $1`,
+      [req.params.id]
+    );
+    return r.rows[0]?.project_id || null;
+  }), async (req, res) => {
     try {
       const cur = await pool.query(
         `SELECT g.id, l.project_id
@@ -1540,7 +1666,16 @@ module.exports = function installSpliceRoutes(app, pool, mw) {
 
   // ─── Strand metadata (circuit naming, Phase 2A #4) ───────────────────────
 
-  app.put('/api/splice/fibers/:id', requireAuth(), async (req, res) => {
+  app.put('/api/splice/fibers/:id', requireAuth(), requireSpliceAccess(async req => {
+    const r = await pool.query(
+      `SELECT c.project_id FROM splice_fibers f
+       JOIN splice_buffer_tubes t ON t.id = f.buffer_tube_id
+       JOIN splice_cables c ON c.id = t.cable_id
+       WHERE f.id = $1`,
+      [req.params.id]
+    );
+    return r.rows[0]?.project_id || null;
+  }), async (req, res) => {
     const allowed = ['circuit_name', 'customer', 'notes'];
     const sets = [];
     const vals = [req.params.id];
@@ -1582,7 +1717,10 @@ module.exports = function installSpliceRoutes(app, pool, mw) {
   // { id, circuit_name?, customer?, notes? }; each row updates only the
   // provided fields. Performed in a transaction so a partial failure
   // doesn't leave rows in a half-saved state.
-  app.put('/api/splice/cables/:cableId/fiber-metadata', requireAuth(), async (req, res) => {
+  app.put('/api/splice/cables/:cableId/fiber-metadata', requireAuth(), requireSpliceAccess(async req => {
+    const r = await pool.query('SELECT project_id FROM splice_cables WHERE id = $1', [req.params.cableId]);
+    return r.rows[0]?.project_id || null;
+  }), async (req, res) => {
     const { fibers } = req.body;
     if (!Array.isArray(fibers) || !fibers.length) {
       return res.status(400).json({ error: 'fibers array is required' });
@@ -2528,7 +2666,7 @@ module.exports = function installSpliceRoutes(app, pool, mw) {
         );
 
         // Delete all live child rows (cascade handles children of children).
-        await client.query('DELETE FROM splice_splices WHERE project_id = $1', [projectId]);
+        await client.query('DELETE FROM splices WHERE project_id = $1', [projectId]);
         await client.query('DELETE FROM splice_ribbon_groups WHERE project_id = $1', [projectId]);
         await client.query('DELETE FROM splice_strand_states WHERE location_id IN (SELECT id FROM splice_locations WHERE project_id = $1)', [projectId]);
         await client.query('DELETE FROM splice_trays WHERE closure_id IN (SELECT id FROM splice_closures WHERE project_id = $1)', [projectId]);
@@ -2588,7 +2726,7 @@ module.exports = function installSpliceRoutes(app, pool, mw) {
         }
         for (const sp of (S.splices || [])) {
           await client.query(
-            `INSERT INTO splice_splices (id, project_id, closure_id, tray_id, fiber_a_id, fiber_b_id, splice_type, loss_db, notes)
+            `INSERT INTO splices (id, project_id, closure_id, tray_id, fiber_a_id, fiber_b_id, splice_type, loss_db, notes)
                VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9) ON CONFLICT (id) DO NOTHING`,
             [sp.id, projectId, sp.closure_id ?? null, sp.tray_id ?? null, sp.fiber_a_id, sp.fiber_b_id,
              sp.splice_type ?? 'fusion', sp.loss_db ?? null, sp.notes ?? null]
