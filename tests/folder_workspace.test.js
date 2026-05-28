@@ -1360,5 +1360,75 @@ describe('Folder Workspace Backend (Wave 57)', function() {
         );
       }
     });
+
+    it('Wave 117: Download folder as ZIP — successful case', async function() {
+      // Create folder with 2-3 files for ZIP
+      const treeRes = await request(app)
+        .get('/api/workspace/tree?root=user')
+        .set('Authorization', authToken);
+      assert.equal(treeRes.status, 200);
+      const homeId = treeRes.body.folders[0].id;
+
+      const folderRes = await request(app)
+        .post('/api/workspace/folders')
+        .set('Authorization', authToken)
+        .send({ name: 'ZipTest', parent_id: homeId, share_mode: 'private' });
+      assert.equal(folderRes.status, 200);
+      const folderId = folderRes.body.id;
+
+      // Insert 2 test files
+      const fsSync = require('fs');
+      for (let i = 1; i <= 2; i++) {
+        const path = `/tmp/ziptest-${i}.txt`;
+        try { fsSync.writeFileSync(path, `File ${i} content`); } catch (e) { /* ignore */ }
+        await pool.query(
+          `INSERT INTO workspace_files (folder_id, filename, mime_type, storage_key, sha256, size_bytes, uploaded_by)
+           VALUES ($1, $2, $3, $4, $5, $6, $7)`,
+          [folderId, `ziptest-${i}.txt`, 'text/plain', path, `hash-zip-${i}`, 15, testUserId]
+        );
+      }
+
+      // Download ZIP
+      const zipRes = await request(app)
+        .get(`/api/workspace/folders/${folderId}/download-zip`)
+        .set('Authorization', authToken);
+
+      assert.equal(zipRes.status, 200, `Expected 200, got ${zipRes.status}: ${JSON.stringify(zipRes.body)}`);
+      assert(zipRes.headers['content-type'].includes('application/zip'), 'Content-Type must be application/zip');
+      assert(zipRes.headers['content-disposition'], 'Must have Content-Disposition header');
+      assert(zipRes.body && zipRes.body.length > 0, 'ZIP body must not be empty');
+    });
+
+    it('Wave 117: Download folder as ZIP — IDOR check (cross-user folder)', async function() {
+      // Create folder as testUser in otherUser's namespace (impossible via API, but test direct DB)
+      // For real IDOR test: otherUser tries to download testUser's private folder
+      const treeRes = await request(app)
+        .get('/api/workspace/tree?root=user')
+        .set('Authorization', authToken);
+      assert.equal(treeRes.status, 200);
+      const homeId = treeRes.body.folders[0].id;
+
+      const folderRes = await request(app)
+        .post('/api/workspace/folders')
+        .set('Authorization', authToken)
+        .send({ name: 'ZipPrivate', parent_id: homeId, share_mode: 'private' });
+      assert.equal(folderRes.status, 200);
+      const folderId = folderRes.body.id;
+
+      // Try to download as otherUser
+      const zipRes = await request(app)
+        .get(`/api/workspace/folders/${folderId}/download-zip`)
+        .set('Authorization', otherToken);
+
+      assert.equal(zipRes.status, 404, `IDOR: should return 404 for cross-user private folder, got ${zipRes.status}`);
+    });
+
+    it('Wave 117: Download folder as ZIP — malformed UUID', async function() {
+      const zipRes = await request(app)
+        .get('/api/workspace/folders/not-a-uuid/download-zip')
+        .set('Authorization', authToken);
+
+      assert.equal(zipRes.status, 400, `Should return 400 for malformed UUID, got ${zipRes.status}`);
+    });
   });
 });

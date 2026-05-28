@@ -17,6 +17,7 @@ const { logAudit } = require('./_audit');
 const fs = require('fs').promises;
 const path = require('path');
 const crypto = require('crypto');
+const archiver = require('archiver');
 
 // Per-user upload rate limit: 10 uploads per minute (configurable via env).
 // Uses the same sliding-window helper as auth.js login rate limiting.
