@@ -11,11 +11,24 @@
  */
 
 const express = require('express');
-const { requireAuth } = require('../auth');
+const multer = require('multer');
+const { requireAuth, rateLimitOk } = require('../auth');
 const { logAudit } = require('./_audit');
 const fs = require('fs').promises;
 const path = require('path');
 const crypto = require('crypto');
+
+// Per-user upload rate limit: 10 uploads per minute (configurable via env).
+// Uses the same sliding-window helper as auth.js login rate limiting.
+const UPLOAD_RL_LIMIT = parseInt(process.env.WORKSPACE_UPLOAD_RL_LIMIT || '10', 10);
+const UPLOAD_RL_WINDOW_MS = 60 * 1000; // 1 minute
+
+// Multer: in-memory storage; 50MB cap per file; up to 10 files per request.
+// Consistent with project_photos.js pattern (no disk-temp files).
+const _workspaceUpload = multer({
+  storage: multer.memoryStorage(),
+  limits: { fileSize: 50 * 1024 * 1024 },
+});
 
 // Factory: instantiate routes with pool
 function createFolderWorkspaceRoutes(pool) {
@@ -592,41 +605,49 @@ function createFolderWorkspaceRoutes(pool) {
 
   /**
    * POST /api/workspace/folders/:id/files
-   * Multipart upload (reuses Wave 49 MIME patterns, 50MB cap)
+   * Multipart upload — multer memoryStorage, 50MB cap, 10 files max.
+   * F5 fix: replaced express-fileupload (req.files object API, not installed) with
+   * multer (req.files array API, already in package.json and consistent with
+   * project_photos.js pattern).  Added per-user upload rate limit (10/min).
    */
-  router.post('/folders/:id/files', requireAuth(), async (req, res) => {
+  router.post('/folders/:id/files', requireAuth(), _workspaceUpload.array('files', 10), async (req, res) => {
     try {
       const { id } = req.params;
       const userId = req.user.id;
+
+      // F5 fix: per-user upload rate limit (10 uploads per minute)
+      if (!rateLimitOk('workspace:upload:' + userId, UPLOAD_RL_LIMIT, UPLOAD_RL_WINDOW_MS)) {
+        return res.status(429).json({ error: 'Upload rate limit exceeded — please wait before uploading again' });
+      }
 
       const perm = await getEffectivePermission(id, userId, req.user.role);
       if (!perm.canEdit) {
         return res.status(403).json({ error: 'No permission to upload to this folder' });
       }
 
-      // Reuse Wave 49 upload logic (simplified for this spec)
-      // In production, use multer + appropriate MIME handling
-      if (!req.files || Object.keys(req.files).length === 0) {
+      // multer populates req.files as an array (or undefined if no files field sent)
+      if (!req.files || req.files.length === 0) {
         return res.status(400).json({ error: 'No files uploaded' });
       }
 
       const uploadedFiles = [];
 
-      for (const key of Object.keys(req.files)) {
-        const file = req.files[key];
+      for (const file of req.files) {
+        // multer already enforces the 50MB limit via limits.fileSize; this is a belt-and-suspenders check
         if (file.size > 50 * 1024 * 1024) {
           return res.status(400).json({ error: 'File exceeds 50MB limit' });
         }
 
         const fileId = crypto.randomUUID();
-        const sha256 = crypto.createHash('sha256').update(file.data).digest('hex');
+        // multer memoryStorage provides file.buffer (the raw bytes)
+        const sha256 = crypto.createHash('sha256').update(file.buffer).digest('hex');
         const uploadDir = process.env.UPLOAD_DIR || '/tmp/uploads';
         const userStorageDir = path.join(uploadDir, 'workspace', 'users', userId, id);
         await fs.mkdir(userStorageDir, { recursive: true });
 
-        const ext = path.extname(file.name);
+        const ext = path.extname(file.originalname);
         const storageKey = path.join(userStorageDir, `${fileId}${ext}`);
-        await fs.writeFile(storageKey, file.data);
+        await fs.writeFile(storageKey, file.buffer);
 
         // F2 fix: wrap the check-then-insert/update in a serialisable transaction with
         // SELECT ... FOR UPDATE to close the TOCTOU race. Two concurrent uploads of the
@@ -643,11 +664,13 @@ function createFolderWorkspaceRoutes(pool) {
           // Lock the row (if it exists) to prevent concurrent INSERT race
           const existingResult = await client.query(
             'SELECT id FROM workspace_files WHERE folder_id = $1 AND filename = $2 FOR UPDATE',
-            [id, file.name]
+            [id, file.originalname]
           );
 
           let fileResultEntry;
+          let isOverwrite = false; // F6 fix: track overwrite path for audit details
           if (existingResult.rows.length > 0) {
+            isOverwrite = true;
             const existingId = existingResult.rows[0].id;
 
             // Snapshot current version
@@ -678,24 +701,25 @@ function createFolderWorkspaceRoutes(pool) {
 
             fileResultEntry = {
               id: existingId,
-              filename: file.name,
+              filename: file.originalname,
               mime_type: file.mimetype,
               size_bytes: file.size,
               uploaded_by_name: req.user.name,
               uploaded_at: new Date().toISOString(),
-              current_version_count: versionCount.rows[0].cnt + 1
+              current_version_count: versionCount.rows[0].cnt + 1,
+              _prevStorageKey: current.storage_key // used in F6 audit detail below, not sent to client
             };
           } else {
             // New file
             await client.query(
               `INSERT INTO workspace_files (id, folder_id, filename, mime_type, size_bytes, sha256, storage_key, uploaded_by, uploaded_at, current_version_count)
                VALUES ($1, $2, $3, $4, $5, $6, $7, $8, NOW(), 1)`,
-              [fileId, id, file.name, file.mimetype, file.size, sha256, storageKey, userId]
+              [fileId, id, file.originalname, file.mimetype, file.size, sha256, storageKey, userId]
             );
 
             fileResultEntry = {
               id: fileId,
-              filename: file.name,
+              filename: file.originalname,
               mime_type: file.mimetype,
               size_bytes: file.size,
               uploaded_by_name: req.user.name,
@@ -715,11 +739,20 @@ function createFolderWorkspaceRoutes(pool) {
 
         uploadedFiles.push(uploadResult);
 
+        // F6 fix: in the overwrite (version-snapshot) path, record entity_id as the existing
+        // workspace_files row ID (not the new disk UUID) and add version_action detail so the
+        // audit trail correctly links to the file record.
+        const auditDetails = isOverwrite
+          ? { filename: file.originalname, size_bytes: file.size, version_action: 'overwrite', new_storage_key: storageKey }
+          : { filename: file.originalname, size_bytes: file.size };
+        // Remove internal _prevStorageKey before sending response
+        delete uploadResult._prevStorageKey;
+
         await logAudit(req.user, {
           action: 'workspace.file_upload',
           entity_type: 'workspace_file',
           entity_id: uploadResult.id,
-          details: { filename: file.name, size_bytes: file.size }
+          details: auditDetails
         });
       }
 
@@ -764,7 +797,10 @@ function createFolderWorkspaceRoutes(pool) {
       }
 
       const fileData = await fs.readFile(file.storage_key);
-      res.set('Content-Disposition', `attachment; filename="${file.filename}"`);
+      // F8 fix: strip double-quotes and CRLF sequences from filename before embedding
+      // in the Content-Disposition header to prevent HTTP header injection.
+      const safeFilename = file.filename.replace(/["\r\n]/g, '_');
+      res.set('Content-Disposition', `attachment; filename="${safeFilename}"`);
       res.set('Content-Type', 'application/octet-stream');
       res.send(fileData);
     } catch (err) {
@@ -991,7 +1027,10 @@ function createFolderWorkspaceRoutes(pool) {
 
       // Set Content-Type + Content-Disposition + stream
       res.setHeader('Content-Type', row.mime_type || 'application/octet-stream');
-      const safeName = row.filename.replace(/"/g, '');
+      // F8 fix: strip double-quotes AND CRLF sequences from filename before embedding
+      // in the Content-Disposition header.  Prior code stripped only double-quotes,
+      // leaving CRLF sequences that allow HTTP header injection.
+      const safeName = row.filename.replace(/["\r\n]/g, '_');
       // Embed version timestamp in download filename so user knows which version they got
       const baseExt = path.extname(safeName);
       const baseName = path.basename(safeName, baseExt);
@@ -1064,18 +1103,22 @@ function createFolderWorkspaceRoutes(pool) {
         }
 
         // Get immediate files (first 20)
+        // F9 fix: (a) add deleted_at IS NULL — soft-deleted files must not appear here;
+        //         (b) replace non-existent column uploaded_by_name with a JOIN on users —
+        //         workspace_files has uploaded_by (UUID FK), not uploaded_by_name.
         const filesResult = await pool.query(
-          `SELECT id, filename, size_bytes, uploaded_at, uploaded_by_name
-           FROM workspace_files
-           WHERE folder_id = $1
-           ORDER BY filename
+          `SELECT wf.id, wf.filename, wf.size_bytes, wf.uploaded_at, u.name AS uploaded_by_name
+           FROM workspace_files wf
+           LEFT JOIN users u ON u.id = wf.uploaded_by
+           WHERE wf.folder_id = $1 AND wf.deleted_at IS NULL
+           ORDER BY wf.filename
            LIMIT 20`,
           [folder.id]
         );
 
-        // Get total file count
+        // Get total file count — also filter deleted files so count matches visible list
         const countResult = await pool.query(
-          `SELECT COUNT(*) as count FROM workspace_files WHERE folder_id = $1`,
+          `SELECT COUNT(*) as count FROM workspace_files WHERE folder_id = $1 AND deleted_at IS NULL`,
           [folder.id]
         );
 
@@ -1146,8 +1189,12 @@ function createFolderWorkspaceRoutes(pool) {
       const { id } = req.params;
       const userId = req.user.id;
 
+      // F7 fix: also fetch folder_id so we can re-check canEdit on the parent folder.
+      // Checking only deleted_by allows a user whose access was revoked after deletion
+      // to still restore the file indefinitely — deleted_by is a historical record, not
+      // a current permission grant.
       const fileResult = await pool.query(
-        'SELECT deleted_by FROM workspace_files WHERE id = $1 AND deleted_at IS NOT NULL',
+        'SELECT deleted_by, folder_id FROM workspace_files WHERE id = $1 AND deleted_at IS NOT NULL',
         [id]
       );
 
@@ -1158,9 +1205,16 @@ function createFolderWorkspaceRoutes(pool) {
       const file = fileResult.rows[0];
       const isManager = ['admin', 'manager'].includes(req.user.role);
 
-      // Only the deleter or a manager can restore
-      if (!isManager && file.deleted_by !== userId) {
-        return res.status(403).json({ error: 'No permission to restore this file' });
+      // Only the deleter or a manager can restore, AND non-managers must still have canEdit
+      // on the current folder (revoked access blocks restore even if they were the deleter).
+      if (!isManager) {
+        if (file.deleted_by !== userId) {
+          return res.status(403).json({ error: 'No permission to restore this file' });
+        }
+        const perm = await getEffectivePermission(file.folder_id, userId, req.user.role);
+        if (!perm.canEdit) {
+          return res.status(403).json({ error: 'No permission to restore this file' });
+        }
       }
 
       const restored = await pool.query(
