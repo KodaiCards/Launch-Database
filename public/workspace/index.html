@@ -100,6 +100,23 @@
           </button>
         </div>
 
+        <div id="selection-toolbar" class="selection-toolbar" style="display:none;">
+          <div class="selection-toolbar-content">
+            <span id="selection-count">0 selected</span>
+            <div class="selection-toolbar-actions">
+              <button class="btn btn-primary btn-sm" onclick="window.downloadAllSelected && window.downloadAllSelected()" title="Download all selected files">
+                <i class="fas fa-download"></i> Download All
+              </button>
+              <button class="btn btn-danger btn-sm" onclick="window.deleteAllSelected && window.deleteAllSelected()" title="Delete all selected files">
+                <i class="fas fa-trash"></i> Delete All
+              </button>
+              <button class="btn btn-secondary btn-sm" onclick="window.clearSelection && window.clearSelection()" title="Clear selection">
+                <i class="fas fa-times"></i> Clear
+              </button>
+            </div>
+          </div>
+        </div>
+
         <div id="file-panel" class="file-panel">
           <div id="dropzone-overlay" class="dropzone-overlay" style="display:none;">
             <div class="dropzone-message">Drop files here to upload to this folder</div>

@@ -25,3 +25,10 @@
 .tree-rename-input{padding:2px 6px;border:1px solid var(--primary);border-radius:2px;font-size:0.875rem;background:var(--bg-light);color:var(--text);font-family:inherit;flex:1;min-width:100px;}@media(prefers-color-scheme:dark){.tree-rename-input{background-color:var(--bg-dark);color:var(--text-light);}}
 .tree-rename-input:focus{outline:none;border-color:var(--primary);box-shadow:0 0 0 2px rgba(59,130,246,0.2);}
 .tree-item-name{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;}
+
+/* Wave 116: Bulk selection UI */
+.selection-toolbar{padding:0.75rem 1rem;border-bottom:1px solid var(--border);background-color:#f0f7ff;display:flex;align-items:center;justify-content:space-between;box-shadow:0 2px 4px rgba(59,130,246,0.15);}@media(prefers-color-scheme:dark){.selection-toolbar{background-color:#1e3a5f;box-shadow:0 2px 4px rgba(59,130,246,0.2);}}
+.selection-toolbar-content{display:flex;align-items:center;justify-content:space-between;width:100%;gap:1rem;}
+#selection-count{font-weight:600;color:var(--primary);white-space:nowrap;}@media(prefers-color-scheme:dark){#selection-count{color:#60a5fa;}}
+.selection-toolbar-actions{display:flex;gap:0.5rem;flex-wrap:wrap;}
+.file-row.selected{background-color:rgba(59,130,246,0.1);}@media(prefers-color-scheme:dark){.file-row.selected{background-color:rgba(59,130,246,0.2);}}
