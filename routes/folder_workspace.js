@@ -12,7 +12,7 @@
 
 const express = require('express');
 const { requireAuth } = require('../auth');
-const logAudit = require('../lib/audit');
+const { logAudit } = require('./_audit');
 const fs = require('fs').promises;
 const path = require('path');
 const crypto = require('crypto');
