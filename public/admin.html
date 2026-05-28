@@ -3004,6 +3004,7 @@ body.demo-blur .lf-financial:hover{filter:blur(0)}
 <script src="/js/audit_log_admin.js"></script>
 <script src="/js/training_admin.js"></script>
 <script src="/js/admin_project_files.js"></script>
+<script src="/js/admin_project_photos.js"></script>
 
 <script>
 
@@ -7619,6 +7620,22 @@ function renderProjectDetail(data, month, year) {
     </div>
   </div>`;
 
+  // ── Wave 62: Project Field Photos
+  // Async-loaded by admin_project_photos.js
+  html += `<div class="card" style="margin-top:14px">
+    <div class="card-header">
+      <span class="card-title">Photos <span id="proj-photos-count" style="color:var(--text-muted);font-weight:400;font-size:13px">(0)</span></span>
+    </div>
+    <div class="card-body">
+      <p style="font-size:0.85em;color:var(--text-muted);margin-bottom:12px">
+        Field photos uploaded via the mobile
+        <a href="/photos/" target="_blank" style="color:var(--primary)">Photos PWA</a>. GPS + timestamp captured when available.
+      </p>
+      <div id="proj-photos-grid" style="display:flex;flex-wrap:wrap;gap:0"></div>
+      <button id="proj-photos-load-more" style="display:none;margin-top:12px;padding:6px 12px;background:var(--primary);color:var(--primary-text);border:none;border-radius:4px;cursor:pointer;font-size:13px;font-weight:500" onmouseover="this.style.background='var(--primary-dark)'" onmouseout="this.style.background='var(--primary)'">Load more</button>
+    </div>
+  </div>`;
+
   // ── Notes
   if (p.notes) {
     html += `<div class="card" style="margin-top:14px"><div class="card-header"><span class="card-title">Notes</span></div>
@@ -7630,6 +7647,11 @@ function renderProjectDetail(data, month, year) {
   // Load project files asynchronously after detail renders
   if (window.AdminProjectFiles && typeof window.AdminProjectFiles.load === 'function') {
     window.AdminProjectFiles.load(p.id).catch(err => console.error('Failed to load project files:', err));
+  }
+
+  // Load project photos asynchronously after detail renders (Wave 62)
+  if (window.AdminProjectPhotos && typeof window.AdminProjectPhotos.load === 'function') {
+    window.AdminProjectPhotos.load(p.id).catch(err => console.error('Failed to load project photos:', err));
   }
 }
 
