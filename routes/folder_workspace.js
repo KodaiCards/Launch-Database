@@ -1255,6 +1255,7 @@ function createFolderWorkspaceRoutes(pool) {
   /**
    * POST /api/workspace/trash/purge-old
    * Admin-only: hard-delete items trashed > 30 days ago
+   * Wave 70: delegates to standalone purgeOldWorkspaceTrash helper for scheduler reuse
    */
   router.post('/trash/purge-old', requireAuth(), async (req, res) => {
     try {
@@ -1264,48 +1265,21 @@ function createFolderWorkspaceRoutes(pool) {
         return res.status(403).json({ error: 'Only admins can purge old trash' });
       }
 
-      const thirtyDaysAgo = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000);
-
-      // Get files to purge (storage cleanup)
-      const filesToPurge = await pool.query(
-        'SELECT storage_key FROM workspace_files WHERE deleted_at IS NOT NULL AND deleted_at < $1',
-        [thirtyDaysAgo]
-      );
-
-      // Delete storage files
-      let deletedCount = 0;
-      for (const file of filesToPurge.rows) {
-        try {
-          await fs.unlink(file.storage_key);
-          deletedCount++;
-        } catch (fsErr) {
-          console.warn('Could not delete storage file:', file.storage_key, fsErr);
-        }
-      }
-
-      // Hard delete from DB
-      const dbResult = await pool.query(
-        'DELETE FROM workspace_files WHERE deleted_at IS NOT NULL AND deleted_at < $1',
-        [thirtyDaysAgo]
-      );
-
-      // Also hard-delete trashed folders with no children (leaf folders)
-      await pool.query(`
-        DELETE FROM workspace_folders
-        WHERE deleted_at IS NOT NULL
-        AND deleted_at < $1
-        AND id NOT IN (SELECT DISTINCT parent_id FROM workspace_folders WHERE parent_id IS NOT NULL)
-      `, [thirtyDaysAgo]);
+      // Call the standalone helper function
+      const result = await purgeOldWorkspaceTrash(pool);
 
       await logAudit(req.user, {
         action: 'workspace.purge_old',
-        details: { files_purged: dbResult.rowCount, storage_files_deleted: deletedCount }
+        details: {
+          files_purged: result.rows_purged,
+          files_deleted: result.files_deleted,
+          folders_purged: result.folders_purged
+        }
       });
 
       res.json({
         success: true,
-        files_purged: dbResult.rowCount,
-        storage_files_deleted: deletedCount
+        ...result
       });
     } catch (err) {
       console.error('POST /trash/purge-old error:', err);
@@ -1316,4 +1290,63 @@ function createFolderWorkspaceRoutes(pool) {
   return router;
 }
 
+/**
+ * Wave 70: Standalone helper for scheduled trash purge.
+ * Hard-deletes workspace files and folders where deleted_at < now() - retention_days.
+ * Callable directly from scheduler without HTTP context.
+ */
+async function purgeOldWorkspaceTrash(pool, options = {}) {
+  try {
+    const retentionDays = options.retentionDays || 30;
+    const UPLOAD_DIR = process.env.UPLOAD_DIR || './uploads';
+
+    // Step 1: Find files past retention
+    const { rows: toPurge } = await pool.query(`
+      SELECT id, storage_key, filename
+      FROM workspace_files
+      WHERE deleted_at IS NOT NULL
+        AND deleted_at < now() - ($1 || ' days')::interval
+    `, [String(retentionDays)]);
+
+    if (!toPurge.length) {
+      console.log(`[workspace-purge] no files past ${retentionDays}-day retention`);
+      return { rows_purged: 0, files_deleted: 0, folders_purged: 0 };
+    }
+
+    // Step 2: Delete each file from disk (best-effort) + DB row
+    let filesDeleted = 0;
+    for (const file of toPurge) {
+      try {
+        const filePath = path.join(UPLOAD_DIR, file.storage_key);
+        await fs.unlink(filePath).catch(() => null);
+        filesDeleted++;
+      } catch (err) {
+        console.error('[workspace-purge] failed to delete file:', file.storage_key, err.message);
+      }
+      // Hard-delete from DB
+      await pool.query('DELETE FROM workspace_files WHERE id = $1', [file.id]);
+    }
+
+    // Step 3: Also purge orphaned folders past retention (leaf folders only)
+    const { rowCount: foldersPurged } = await pool.query(`
+      DELETE FROM workspace_folders
+      WHERE deleted_at IS NOT NULL
+        AND deleted_at < now() - ($1 || ' days')::interval
+        AND id NOT IN (SELECT DISTINCT parent_id FROM workspace_folders WHERE parent_id IS NOT NULL)
+    `, [String(retentionDays)]);
+
+    console.log(`[workspace-purge] purged ${toPurge.length} files + ${foldersPurged} folders past ${retentionDays}-day retention`);
+
+    return {
+      rows_purged: toPurge.length,
+      files_deleted: filesDeleted,
+      folders_purged: foldersPurged || 0
+    };
+  } catch (e) {
+    console.error('[workspace-purge]', e && e.message);
+    throw e;
+  }
+}
+
 module.exports = createFolderWorkspaceRoutes;
+module.exports.purgeOldWorkspaceTrash = purgeOldWorkspaceTrash;

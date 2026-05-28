@@ -2081,6 +2081,31 @@ async function start(opts = {}) {
     } else {
       console.log('[audit-retention] auto-archive disabled (set AUDIT_AUTO_ARCHIVE_ENABLED=true to enable)');
     }
+
+    // Wave 70: workspace trash auto-purge daily scheduler
+    // Respects WORKSPACE_AUTO_PURGE_ENABLED env var (default: false).
+    if (process.env.WORKSPACE_AUTO_PURGE_ENABLED === 'true') {
+      const { purgeOldWorkspaceTrash } = require('./routes/folder_workspace');
+      if (typeof purgeOldWorkspaceTrash === 'function') {
+        // Run once on startup after a short delay (let pool settle)
+        setTimeout(() => {
+          purgeOldWorkspaceTrash(pool).catch(e => {
+            console.error('[workspace-purge] startup run failed:', e && (e.message || e));
+          });
+        }, 60000);
+        // Then run daily (24 hours)
+        setInterval(() => {
+          purgeOldWorkspaceTrash(pool).catch(e => {
+            console.error('[workspace-purge] daily run failed:', e && (e.message || e));
+          });
+        }, 24 * 60 * 60 * 1000);
+        console.log('[workspace-purge] auto-purge enabled (30-day retention, daily run)');
+      } else {
+        console.error('[workspace-purge] helper not found; check folder_workspace.js export');
+      }
+    } else {
+      console.log('[workspace-purge] auto-purge disabled (set WORKSPACE_AUTO_PURGE_ENABLED=true to enable)');
+    }
   }
   // listenPort: pass 0 from tests to bind to an ephemeral port; pass the
   // configured PORT in production. We log the resolved port (server.address())

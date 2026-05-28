@@ -895,4 +895,105 @@ describe('Folder Workspace Backend (Wave 57)', function() {
       assert.equal(dbRes.rows.length, 0, 'Old trashed file should be purged');
     });
   });
+
+  describe('Wave 70: Standalone purgeOldWorkspaceTrash helper', function() {
+    it('purgeOldWorkspaceTrash should hard-delete files past retention window', async function() {
+      const { purgeOldWorkspaceTrash } = require('../routes/folder_workspace');
+
+      // Create a user_home folder for this test
+      const homeRes = await pool.query(
+        `INSERT INTO workspace_folders (kind, owner_user_id, share_mode)
+         VALUES ($1, $2, $3) RETURNING id`,
+        ['user_home', testUserId, 'private']
+      );
+      const homeId = homeRes.rows[0].id;
+
+      // Insert an old trashed file (31 days ago)
+      const oldDeletedAt = new Date(Date.now() - 31 * 24 * 60 * 60 * 1000);
+      const oldFileRes = await pool.query(
+        `INSERT INTO workspace_files (folder_id, filename, storage_key, deleted_at, deleted_by)
+         VALUES ($1, 'old-file.txt', '/tmp/old', $2, $3) RETURNING id`,
+        [homeId, oldDeletedAt, testUserId]
+      );
+      const oldFileId = oldFileRes.rows[0].id;
+
+      // Insert a recent trashed file (5 days ago, still within 30-day window)
+      const recentDeletedAt = new Date(Date.now() - 5 * 24 * 60 * 60 * 1000);
+      const recentFileRes = await pool.query(
+        `INSERT INTO workspace_files (folder_id, filename, storage_key, deleted_at, deleted_by)
+         VALUES ($1, 'recent-file.txt', '/tmp/recent', $2, $3) RETURNING id`,
+        [homeId, recentDeletedAt, testUserId]
+      );
+      const recentFileId = recentFileRes.rows[0].id;
+
+      // Call the helper (default 30-day retention)
+      const result = await purgeOldWorkspaceTrash(pool);
+
+      assert.ok(result.rows_purged >= 1, 'Should purge at least 1 file');
+
+      // Verify old file is hard-deleted
+      const oldCheckRes = await pool.query(
+        'SELECT id FROM workspace_files WHERE id = $1',
+        [oldFileId]
+      );
+      assert.equal(oldCheckRes.rows.length, 0, 'Old file should be hard-deleted');
+
+      // Verify recent file still exists
+      const recentCheckRes = await pool.query(
+        'SELECT id FROM workspace_files WHERE id = $1',
+        [recentFileId]
+      );
+      assert.equal(recentCheckRes.rows.length, 1, 'Recent file should still exist');
+    });
+
+    it('purgeOldWorkspaceTrash should respect retentionDays option', async function() {
+      const { purgeOldWorkspaceTrash } = require('../routes/folder_workspace');
+
+      // Create a user_home folder for this test
+      const homeRes = await pool.query(
+        `INSERT INTO workspace_folders (kind, owner_user_id, share_mode)
+         VALUES ($1, $2, $3) RETURNING id`,
+        ['user_home', otherUserId, 'private']
+      );
+      const homeId = homeRes.rows[0].id;
+
+      // Insert a file deleted 2 days ago
+      const twoAgo = new Date(Date.now() - 2 * 24 * 60 * 60 * 1000);
+      const fileRes = await pool.query(
+        `INSERT INTO workspace_files (folder_id, filename, storage_key, deleted_at, deleted_by)
+         VALUES ($1, 'test-file.txt', '/tmp/test', $2, $3) RETURNING id`,
+        [homeId, twoAgo, otherUserId]
+      );
+      const fileId = fileRes.rows[0].id;
+
+      // Purge with 1-day retention (should purge the 2-day-old file)
+      const result1 = await purgeOldWorkspaceTrash(pool, { retentionDays: 1 });
+      assert.ok(result1.rows_purged >= 1, 'Should purge file deleted > 1 day ago');
+
+      // Verify file is gone
+      const checkRes = await pool.query(
+        'SELECT id FROM workspace_files WHERE id = $1',
+        [fileId]
+      );
+      assert.equal(checkRes.rows.length, 0, 'File should be purged with retentionDays=1');
+
+      // Insert another file deleted 2 days ago
+      const fileRes2 = await pool.query(
+        `INSERT INTO workspace_files (folder_id, filename, storage_key, deleted_at, deleted_by)
+         VALUES ($1, 'test-file-2.txt', '/tmp/test2', $2, $3) RETURNING id`,
+        [homeId, twoAgo, otherUserId]
+      );
+      const fileId2 = fileRes2.rows[0].id;
+
+      // Purge with 30-day retention (should NOT purge the 2-day-old file)
+      const result2 = await purgeOldWorkspaceTrash(pool, { retentionDays: 30 });
+
+      // Verify file still exists
+      const checkRes2 = await pool.query(
+        'SELECT id FROM workspace_files WHERE id = $1',
+        [fileId2]
+      );
+      assert.equal(checkRes2.rows.length, 1, 'File should NOT be purged with retentionDays=30');
+    });
+  });
 });
