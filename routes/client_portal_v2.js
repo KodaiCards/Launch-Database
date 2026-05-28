@@ -21,6 +21,47 @@
 const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 function isValidUUID(v) { return typeof v === 'string' && UUID_RE.test(v); }
 
+// W107-HIGH-2: Magic-byte allowlist.
+// We inspect actual file bytes on disk rather than trusting the client-supplied
+// Content-Type header, which can be trivially spoofed.
+const MIME_MAGIC = {
+  'application/pdf':   [[0, '25504446']],
+  'image/png':         [[0, '89504e47']],
+  'image/jpeg':        [[0, 'ffd8ff']],
+  'application/vnd.openxmlformats-officedocument.wordprocessingml.document':
+                       [[0, '504b0304']],
+  'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet':
+                       [[0, '504b0304']],
+  'image/vnd.dwg':     [[0, '41433130']],
+  'image/x-dwg':       [[0, '41433130']],
+  'application/vnd.dwg': [[0, '41433130']],
+};
+const ALLOWED_UPLOAD_MIMES = Object.keys(MIME_MAGIC);
+
+async function _verifyMagicBytes(filePath, mimeType) {
+  const fs = require('fs');
+  const signatures = MIME_MAGIC[mimeType];
+  if (!signatures) return false;
+  for (const [offset, hexStr] of signatures) {
+    const needed = offset + hexStr.length / 2;
+    const buf = Buffer.alloc(needed);
+    let fd;
+    try {
+      fd = await fs.promises.open(filePath, 'r');
+      const { bytesRead } = await fd.read(buf, 0, needed, 0);
+      await fd.close();
+      fd = null;
+      if (bytesRead < needed) return false;
+      const actual = buf.slice(offset, offset + hexStr.length / 2).toString('hex');
+      if (!actual.startsWith(hexStr.toLowerCase())) return false;
+    } catch {
+      if (fd) { try { await fd.close(); } catch { /* ignore */ } }
+      return false;
+    }
+  }
+  return true;
+}
+
 module.exports = function installClientPortalV2(app, pool, { requireAuth }) {
   const {
     generateRawToken,
@@ -28,6 +69,8 @@ module.exports = function installClientPortalV2(app, pool, { requireAuth }) {
     requireClientAuth,
     CLIENT_SESSION_COOKIE,
   } = require('./_client_auth');
+
+  const { logAudit } = require('./_audit');
 
   const requireClientAuthMW = requireClientAuth(pool);
 
@@ -69,6 +112,9 @@ module.exports = function installClientPortalV2(app, pool, { requireAuth }) {
       if (r.user_status !== 'active') return res.status(401).send(DENY_MSG);
       if (r.org_status !== 'active') return res.status(401).send(DENY_MSG);
 
+      // W107-MED-2: audit successful logins.
+      logAudit(pool, { req, action: 'client_portal.login', entity_type: 'client_token', entity_id: r.id, source: 'client_portal', actor_type: 'client_user' });
+
       res.cookie(CLIENT_SESSION_COOKIE, raw, clientCookieOpts());
       return res.redirect('/client/');
     } catch (e) {
@@ -90,6 +136,9 @@ module.exports = function installClientPortalV2(app, pool, { requireAuth }) {
           [tokenHash]
         );
       }
+      // W107-MED-2: audit logout.
+      logAudit(pool, { req, action: 'client_portal.logout', entity_type: 'client_session', entity_id: null, source: 'client_portal', actor_type: 'client_user' });
+
       res.clearCookie(CLIENT_SESSION_COOKIE, clientCookieOpts());
       return res.json({ ok: true });
     } catch (e) {
@@ -249,8 +298,12 @@ module.exports = function installClientPortalV2(app, pool, { requireAuth }) {
       // Stream the file
       const fs = require('fs');
       const path = require('path');
-      const UPLOAD_DIR = process.env.UPLOAD_DIR || './uploads';
-      const filePath = path.join(UPLOAD_DIR, row.storage_key);
+      // W107-MED-4: use __dirname-anchored base and add traversal guard.
+      const uploadBase = path.join(__dirname, '..', 'uploads');
+      const filePath = path.resolve(uploadBase, row.storage_key);
+      if (!filePath.startsWith(uploadBase + path.sep) && filePath !== uploadBase) {
+        return res.status(403).json({ error: 'access denied' });
+      }
 
       try {
         await fs.promises.access(filePath, fs.constants.R_OK);
@@ -468,6 +521,9 @@ module.exports = function installClientPortalV2(app, pool, { requireAuth }) {
         RETURNING id, created_at, expires_at
       `, [req.params.uid, tokenHash, expiresAt]);
 
+      // W107-MED-2: audit token generation.
+      logAudit(pool, { req, action: 'client_portal.token_generate', entity_type: 'client_token', entity_id: rows[0].id, after: { client_user_id: req.params.uid }, source: 'admin_ui' });
+
       const loginUrl = `${req.protocol}://${req.get('host')}/client/login/${raw}`;
 
       res.status(201).json({
@@ -495,6 +551,10 @@ module.exports = function installClientPortalV2(app, pool, { requireAuth }) {
         RETURNING id, revoked_at
       `, [req.params.tid]);
       if (!rows.length) return res.status(404).json({ error: 'token not found or already revoked' });
+
+      // W107-MED-2: audit token revocation.
+      logAudit(pool, { req, action: 'client_portal.token_revoke', entity_type: 'client_token', entity_id: rows[0].id, source: 'admin_ui' });
+
       res.json({ ok: true, revoked_at: rows[0].revoked_at });
     } catch (e) {
       console.error('[client_portal_v2] revoke token:', e && e.message);
@@ -574,7 +634,9 @@ module.exports = function installClientPortalV2(app, pool, { requireAuth }) {
         return res.status(403).json({ error: 'access denied' });
       }
 
-      res.setHeader('Content-Disposition', `attachment; filename="${doc.filename}"`);
+      // W107-MED-3: strip CR/LF/quotes to prevent header injection.
+      const safeFilename = doc.filename.replace(/["\r\n]/g, '');
+      res.setHeader('Content-Disposition', `attachment; filename="${safeFilename}"`);
       const stream = fs.createReadStream(filePath);
       stream.on('error', (e) => {
         console.error('[client_portal_v2] download stream error:', e && e.message);
@@ -590,17 +652,7 @@ module.exports = function installClientPortalV2(app, pool, { requireAuth }) {
   // ── Upload document ────────────────────────────────────────────────────
   // Note: assumes multer middleware is mounted at app level.
   // This endpoint requires multipart/form-data with fields: file, project_id (optional), notes (optional).
-  app.post('/api/client/documents', requireClientAuthMW, (req, res, next) => {
-    // Multer middleware will be injected by calling code or server.js.
-    // For now, we'll implement as a simple middleware handler.
-    // The actual upload will be handled by multer middleware passed from server.js
-    // This route will receive req.file + req.body from multer.
-    next();
-  });
 
-  // We'll handle the actual POST /api/client/documents via a separate handler
-  // that wraps multer. This is registered in server.js.
-  // For now, create a placeholder handler.
   const path = require('path');
   function installClientDocumentUpload(uploadMW) {
     app.post('/api/client/documents', requireClientAuthMW, uploadMW.single('file'), async (req, res) => {
@@ -611,19 +663,19 @@ module.exports = function installClientPortalV2(app, pool, { requireAuth }) {
         const projectId = req.body.project_id;
         const notes = req.body.notes || null;
 
-        // Whitelist MIME types.
-        const allowedMimes = [
-          'application/pdf',
-          'image/png', 'image/jpeg',
-          'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
-          'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
-          'image/vnd.dwg', 'image/x-dwg', 'application/vnd.dwg'
-        ];
-        if (!allowedMimes.includes(req.file.mimetype)) {
-          // Clean up uploaded file.
+        // W107-HIGH-2: use module-level allowlist + magic-byte verification.
+        if (!ALLOWED_UPLOAD_MIMES.includes(req.file.mimetype)) {
           const fs = require('fs');
-          fs.unlink(req.file.path, (e) => {});
+          fs.unlink(req.file.path, () => {});
           return res.status(400).json({ error: 'file type not allowed' });
+        }
+
+        // W107-HIGH-2: verify file magic bytes match the claimed MIME type.
+        const magicOk = await _verifyMagicBytes(req.file.path, req.file.mimetype);
+        if (!magicOk) {
+          const fs = require('fs');
+          fs.unlink(req.file.path, () => {});
+          return res.status(400).json({ error: 'file content does not match declared type' });
         }
 
         // 50MB cap.
@@ -673,7 +725,7 @@ module.exports = function installClientPortalV2(app, pool, { requireAuth }) {
             client_org_id, project_id, filename, mime_type, size_bytes,
             storage_key, uploaded_by_client_user_id, direction, status, notes
           ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
-          RETURNING id, filename, mime_type, size_bytes, storage_key, direction,
+          RETURNING id, filename, mime_type, size_bytes, direction,
                     status, notes, created_at
         `, [
           orgId,
@@ -687,6 +739,9 @@ module.exports = function installClientPortalV2(app, pool, { requireAuth }) {
           'active',
           notes
         ]);
+
+        // W107-MED-2: audit document upload.
+        logAudit(pool, { req, action: 'client_portal.document_upload', entity_type: 'client_document', entity_id: rows[0].id, after: { filename: rows[0].filename, mime_type: rows[0].mime_type }, source: 'client_portal', actor_type: 'client_user' });
 
         res.status(201).json({ document: rows[0] });
       } catch (e) {
@@ -766,6 +821,9 @@ module.exports = function installClientPortalV2(app, pool, { requireAuth }) {
         RETURNING id, response, response_notes, responded_at, status
       `, [response, response_notes || null, req.client_user.id, approvalId]);
 
+      // W107-MED-2: audit approval response.
+      logAudit(pool, { req, action: 'client_portal.approval_respond', entity_type: 'client_approval', entity_id: approvalId, after: { response, status: 'responded' }, source: 'client_portal', actor_type: 'client_user' });
+
       res.json({ approval: rows[0] });
     } catch (e) {
       console.error('[client_portal_v2] respond approval:', e && e.message);
@@ -825,6 +883,9 @@ module.exports = function installClientPortalV2(app, pool, { requireAuth }) {
         req.user.id,
         'pending'
       ]);
+
+      // W107-MED-2: audit approval creation.
+      logAudit(pool, { req, action: 'client_portal.approval_create', entity_type: 'client_approval', entity_id: rows[0].id, after: { title, org_id: orgId }, source: 'admin_ui' });
 
       res.status(201).json({ approval: rows[0] });
     } catch (e) {

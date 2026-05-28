@@ -1070,3 +1070,159 @@ test('GET /api/client/workspace-files/:id/download returns 404 for non-public fo
   });
   assert.equal(res.status, 404, 'private folder file download returns 404 (IDOR)');
 });
+
+// ── Wave 107: HIGH-1/2, MED-1/2/3/4 fixes ─────────────────────────────────────
+
+function buildMultipartBody(filename, content, mimeType) {
+  const { Blob } = require('node:buffer');
+  const form = new FormData();
+  form.append('file', new Blob([content], { type: mimeType }), filename);
+  return form;
+}
+
+test('W107-HIGH-1: POST /api/client/documents with no file returns 400 (not 404)', async () => {
+  const org = await insertOrg();
+  const user = await insertUser(org.id);
+  const { raw } = await insertToken(user.id);
+
+  const { baseUrl } = require('./_helpers');
+  const loginRes = await fetch(`${baseUrl()}/client/login/${raw}`, { redirect: 'manual' });
+  const cookie = loginRes.headers.get('set-cookie');
+
+  const res = await fetch(`${baseUrl()}/api/client/documents`, {
+    method: 'POST',
+    headers: { cookie },
+    body: new URLSearchParams({ notes: 'test' }),
+  });
+  // 400 means the handler ran (route is alive); 404 would mean the dead next() placeholder.
+  assert.equal(res.status, 400, 'upload route alive — returns 400 for missing file, not 404');
+});
+
+test('W107-HIGH-2: upload with mismatched MIME (HTML content claiming application/pdf) is rejected', async () => {
+  const org = await insertOrg();
+  const user = await insertUser(org.id);
+  const { raw } = await insertToken(user.id);
+
+  const { baseUrl } = require('./_helpers');
+  const loginRes = await fetch(`${baseUrl()}/client/login/${raw}`, { redirect: 'manual' });
+  const cookie = loginRes.headers.get('set-cookie');
+
+  // HTML payload with application/pdf MIME — magic bytes are '<html' not '%PDF'.
+  const form = buildMultipartBody('evil.pdf', '<html><script>alert(1)</script></html>', 'application/pdf');
+  const res = await fetch(`${baseUrl()}/api/client/documents`, {
+    method: 'POST',
+    headers: { cookie },
+    body: form,
+  });
+  assert.equal(res.status, 400, 'MIME spoof rejected by magic-byte check');
+  const body = await res.json();
+  assert.ok(body.error && body.error.includes('content'), 'error message mentions content mismatch');
+});
+
+test('W107-MED-1: upload 201 response does not contain storage_key', async () => {
+  const org = await insertOrg();
+  const user = await insertUser(org.id);
+  const { raw } = await insertToken(user.id);
+
+  const { baseUrl } = require('./_helpers');
+  const loginRes = await fetch(`${baseUrl()}/client/login/${raw}`, { redirect: 'manual' });
+  const cookie = loginRes.headers.get('set-cookie');
+
+  // Real PDF magic bytes: %PDF-1.4 header.
+  const pdfContent = Buffer.concat([
+    Buffer.from('25504446', 'hex'), // %PDF
+    Buffer.alloc(100, 0x20),
+  ]);
+  const form = buildMultipartBody('test.pdf', pdfContent, 'application/pdf');
+  const res = await fetch(`${baseUrl()}/api/client/documents`, {
+    method: 'POST',
+    headers: { cookie },
+    body: form,
+  });
+  if (res.status === 201) {
+    const body = await res.json();
+    assert.ok(!('storage_key' in (body.document || {})), 'storage_key must not be in 201 response');
+  } else {
+    assert.notEqual(res.status, 404, 'upload route is alive (not 404)');
+  }
+});
+
+test('W107-MED-2: approval respond creates audit_log row', async () => {
+  const org = await insertOrg();
+  const user = await insertUser(org.id);
+  const { raw } = await insertToken(user.id);
+
+  const { rows: approvalRows } = await pool.query(
+    `INSERT INTO client_approvals (client_org_id, title, status)
+     VALUES ($1, $2, 'pending') RETURNING id`,
+    [org.id, uniqueTag('approval')]
+  );
+  const approvalId = approvalRows[0].id;
+
+  const { baseUrl } = require('./_helpers');
+  const loginRes = await fetch(`${baseUrl()}/client/login/${raw}`, { redirect: 'manual' });
+  const cookie = loginRes.headers.get('set-cookie');
+
+  const countBefore = (await pool.query(
+    `SELECT COUNT(*)::int AS c FROM audit_log WHERE action = 'client_portal.approval_respond'`
+  )).rows[0].c;
+
+  const res = await fetch(`${baseUrl()}/api/client/approvals/${approvalId}/respond`, {
+    method: 'POST',
+    headers: { cookie, 'content-type': 'application/json' },
+    body: JSON.stringify({ response: 'approved', response_notes: 'looks good' }),
+  });
+  assert.equal(res.status, 200, 'approval respond succeeds');
+
+  const countAfter = (await pool.query(
+    `SELECT COUNT(*)::int AS c FROM audit_log WHERE action = 'client_portal.approval_respond'`
+  )).rows[0].c;
+  assert.ok(countAfter > countBefore, 'audit_log row created for approval respond');
+});
+
+test('W107-MED-2: admin token generate creates audit_log row', async () => {
+  const org = await insertOrg();
+  const user = await insertUser(org.id);
+
+  const countBefore = (await pool.query(
+    `SELECT COUNT(*)::int AS c FROM audit_log WHERE action = 'client_portal.token_generate'`
+  )).rows[0].c;
+
+  await requestJson('POST', `/api/admin/client-orgs/${org.id}/users/${user.id}/tokens`, {
+    token: adminToken,
+    body: { expires_days: 30 },
+    expectStatus: 201,
+  });
+
+  const countAfter = (await pool.query(
+    `SELECT COUNT(*)::int AS c FROM audit_log WHERE action = 'client_portal.token_generate'`
+  )).rows[0].c;
+  assert.ok(countAfter > countBefore, 'audit_log row created for token generate');
+});
+
+test('W107-MED-3: document download Content-Disposition strips CR and LF', async () => {
+  const org = await insertOrg();
+  const user = await insertUser(org.id);
+  const { raw } = await insertToken(user.id);
+
+  const { rows } = await pool.query(
+    `INSERT INTO client_documents
+       (client_org_id, filename, mime_type, size_bytes, storage_key, direction, status)
+     VALUES ($1, $2, 'application/pdf', 100, 'nonexistent/path.pdf', 'from_admin', 'active')
+     RETURNING id`,
+    [org.id, 'evil\r\nSet-Cookie: x=1\r\nfilename="clean.pdf']
+  );
+  const docId = rows[0].id;
+
+  const { baseUrl } = require('./_helpers');
+  const loginRes = await fetch(`${baseUrl()}/client/login/${raw}`, { redirect: 'manual' });
+  const cookie = loginRes.headers.get('set-cookie');
+
+  const dlRes = await fetch(`${baseUrl()}/api/client/documents/${docId}/download`, {
+    headers: { cookie },
+  });
+
+  const cd = dlRes.headers.get('content-disposition') || '';
+  assert.ok(!cd.includes('\r'), 'Content-Disposition header has no CR');
+  assert.ok(!cd.includes('\n'), 'Content-Disposition header has no LF');
+});

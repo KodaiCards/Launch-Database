@@ -803,7 +803,13 @@ require('./routes/client_portal')(app, pool, { requireAuth });
 // Wave E2 (2026-05-27): client portal v1 — token-based auth + admin org/user/token management.
 // New portal at /client/login/:token and /api/admin/client-orgs/*.
 // The Wave 13 portal above stays operational until E6 retires it.
-require('./routes/client_portal_v2')(app, pool, { requireAuth });
+// W107-HIGH-1: Wire installClientDocumentUpload so POST /api/client/documents
+// reaches the multer-backed handler (not the dead next() placeholder).
+const _cpv2 = require('./routes/client_portal_v2');
+_cpv2(app, pool, { requireAuth });
+if (_cpv2.installClientDocumentUpload) {
+  _cpv2.installClientDocumentUpload(upload);
+}
 
 // ─────────────────────────────────────────────────────────────────────────────
 // FOLDER WORKSPACE — Wave 57
