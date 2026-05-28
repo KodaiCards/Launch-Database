@@ -11,6 +11,13 @@
       <header>
         <div class="header-content">
           <h1>Launch Fiber Desktop</h1>
+          <div class="header-middle">
+            <div class="sync-status">
+              <span id="syncBadge" class="sync-badge gray"></span>
+              <span id="syncStatusText">Ready</span>
+              <button id="syncNowBtn" class="sync-now-btn" title="Sync now">⟲ Sync</button>
+            </div>
+          </div>
           <div class="header-right">
             <span id="username" class="username"></span>
             <button id="logoutBtn" class="logout-btn">Logout</button>
@@ -35,8 +42,38 @@
           <div class="welcome-content">
             <h2>Welcome to Launch Fiber Desktop</h2>
             <p>Select a project from the workspace tree to get started.</p>
+
+            <div class="sync-panel">
+              <h3>File Sync Settings</h3>
+              <div class="sync-folder-row">
+                <label for="syncFolderPath">Local Sync Folder:</label>
+                <input type="text" id="syncFolderPath" class="sync-folder-input" readonly />
+                <button id="changeFolderBtn" class="change-folder-btn">Change Folder</button>
+              </div>
+              <p class="sync-help-text">
+                Auto-sync triggered on reconnect (5s countdown). Manual sync available via the Sync button above.
+              </p>
+            </div>
+
+            <div id="syncCountdownToast" class="sync-countdown-toast hidden">
+              <span id="countdownText">Syncing in 5s...</span>
+              <button id="cancelCountdownBtn" class="cancel-btn">Cancel</button>
+            </div>
+
+            <div class="sync-activity-panel">
+              <h3>Recent Activity</h3>
+              <div id="syncActivityLog" class="sync-activity-log"></div>
+            </div>
+
+            <div id="conflictPanel" class="conflict-panel hidden">
+              <h3>⚠ Sync Conflicts</h3>
+              <p>The following files were renamed to resolve conflicts:</p>
+              <ul id="conflictList"></ul>
+              <p class="conflict-help">Please manually review and delete the .conflict files if no longer needed.</p>
+            </div>
+
             <div class="info-panel">
-              <p><strong>Version:</strong> 0.1.0 (Scaffold)</p>
+              <p><strong>Version:</strong> 0.1.0 (Sync Engine)</p>
               <p id="connectionStatus"><strong>Status:</strong> Connected</p>
               <button id="webPortalBtn" class="portal-btn">
                 Open Web Portal

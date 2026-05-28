@@ -1,11 +1,14 @@
-const { app, BrowserWindow, Menu, ipcMain } = require('electron');
+const { app, BrowserWindow, Menu, ipcMain, dialog } = require('electron');
 const path = require('path');
 const Store = require('electron-store');
+const SyncEngine = require('./sync/engine');
 
 const store = new Store();
 
 let mainWindow;
 let backendUrl = process.env.BACKEND_URL || 'https://launchdb-production.up.railway.app';
+let syncEngine = null;
+let syncInterval = null;
 
 function createWindow(isLogin = false) {
   mainWindow = new BrowserWindow({
@@ -28,6 +31,10 @@ function createWindow(isLogin = false) {
 
   mainWindow.on('closed', () => {
     mainWindow = null;
+  });
+
+  mainWindow.webContents.on('did-finish-load', () => {
+    initializeSyncListeners();
   });
 
   createMenu();
@@ -183,5 +190,133 @@ ipcMain.handle('workspace:fetch-tree', async (event, { root = 'user' }) => {
     return { success: true, tree };
   } catch (err) {
     return { success: false, error: err.message };
+  }
+});
+
+// Sync handlers
+
+ipcMain.handle('sync:get-local-root', () => {
+  return store.get('localRootPath') || null;
+});
+
+ipcMain.handle('sync:set-local-root', async (event, folderPath) => {
+  try {
+    store.set('localRootPath', folderPath);
+    return { success: true, path: folderPath };
+  } catch (err) {
+    return { success: false, error: err.message };
+  }
+});
+
+ipcMain.handle('sync:pick-folder', async () => {
+  if (!mainWindow) {
+    return { success: false, error: 'No window' };
+  }
+
+  try {
+    const result = await dialog.showOpenDialog(mainWindow, {
+      properties: ['openDirectory'],
+      message: 'Select a folder to sync with Launch Fiber',
+    });
+
+    if (result.canceled || result.filePaths.length === 0) {
+      return { success: false, error: 'No folder selected' };
+    }
+
+    const folderPath = result.filePaths[0];
+    store.set('localRootPath', folderPath);
+    return { success: true, path: folderPath };
+  } catch (err) {
+    return { success: false, error: err.message };
+  }
+});
+
+ipcMain.handle('sync:now', async () => {
+  try {
+    const session = store.get('session');
+    const localRootPath = store.get('localRootPath');
+
+    if (!session || !localRootPath) {
+      return {
+        success: false,
+        error: 'Not authenticated or no folder selected',
+      };
+    }
+
+    if (!syncEngine) {
+      syncEngine = new SyncEngine(session.server, session.cookie);
+    }
+
+    const result = await syncEngine.runSync(localRootPath);
+
+    if (mainWindow) {
+      mainWindow.webContents.send('sync:completed', result);
+    }
+
+    return result;
+  } catch (err) {
+    return { success: false, error: err.message };
+  }
+});
+
+ipcMain.handle('sync:status', () => {
+  if (!syncEngine) {
+    return {
+      lastSyncAt: null,
+      isRunning: false,
+      errors: [],
+      conflicts: [],
+      events: [],
+    };
+  }
+
+  return syncEngine.getSyncStatus();
+});
+
+/**
+ * Initialize sync listeners and timers
+ */
+function initializeSyncListeners() {
+  if (!mainWindow) return;
+
+  ipcMain.on('sync:online', () => {
+    showSyncCountdownToast();
+  });
+
+  if (!syncInterval) {
+    syncInterval = setInterval(async () => {
+      const session = store.get('session');
+      const localRootPath = store.get('localRootPath');
+
+      if (session && localRootPath) {
+        if (!syncEngine) {
+          syncEngine = new SyncEngine(session.server, session.cookie);
+        }
+
+        const result = await syncEngine.runSync(localRootPath);
+        if (mainWindow) {
+          mainWindow.webContents.send('sync:completed', result);
+        }
+      }
+    }, 15 * 60 * 1000);
+  }
+}
+
+/**
+ * Show countdown toast for sync
+ */
+function showSyncCountdownToast() {
+  if (!mainWindow) return;
+
+  mainWindow.webContents.send('sync:countdown-start', {
+    seconds: 5,
+    message: 'Syncing in 5s... (click to cancel)',
+  });
+}
+
+// Clean up interval on app quit
+app.on('before-quit', () => {
+  if (syncInterval) {
+    clearInterval(syncInterval);
   }
 });
