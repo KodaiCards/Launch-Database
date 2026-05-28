@@ -2,3 +2,17 @@
 
 /* Wave 67: Search bar + Dropzone styles */
 .search-bar{position:relative;padding:8px 12px;border-bottom:1px solid var(--border);background-color:white;}@media(prefers-color-scheme:dark){.search-bar{background-color:var(--bg-dark);}}#workspace-search{width:100%;padding:8px 12px;font-size:0.95em;border:1px solid var(--border);border-radius:4px;background:var(--bg-light);color:var(--text);}@media(prefers-color-scheme:dark){#workspace-search{background-color:var(--bg-darker);}}#workspace-search:focus{outline:2px solid var(--primary);border-color:var(--primary);}.search-results{position:absolute;top:100%;left:12px;right:12px;background:var(--bg-light);border:1px solid var(--border);border-top:none;max-height:400px;overflow-y:auto;z-index:100;box-shadow:0 4px 12px rgba(0,0,0,0.1);}@media(prefers-color-scheme:dark){.search-results{background-color:var(--bg-dark);}}.search-hit{padding:8px 12px;cursor:pointer;border-bottom:1px solid var(--border);}.search-hit:hover{background:var(--bg-lighter);}@media(prefers-color-scheme:dark){.search-hit:hover{background-color:var(--bg-darker);}}.search-hit-name{font-weight:500;color:var(--text);}.search-hit-path{font-size:0.85em;color:var(--text-muted);margin-top:2px;}.search-hit-meta{font-size:0.8em;color:var(--text-muted);margin-top:2px;}.search-empty{padding:16px;text-align:center;color:var(--text-muted);}.file-panel{position:relative;}.dropzone-overlay{position:absolute;inset:0;background:rgba(59,130,246,0.1);border:2px dashed var(--primary);display:flex;align-items:center;justify-content:center;z-index:50;pointer-events:none;border-radius:0.5rem;}.dropzone-message{background:var(--primary);color:white;padding:12px 24px;border-radius:6px;font-weight:600;}
+
+/* Wave 69: Trash UI styles */
+.trash-item{display:flex;align-items:center;padding:8px;border-bottom:1px solid var(--border);gap:8px;font-size:0.88em;}
+.trash-item:hover{background:var(--bg-lighter);}
+.trash-item-icon{font-size:1.2em;}
+.trash-item-info{flex:1;min-width:0;}
+.trash-item-name{color:var(--text);font-weight:500;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.trash-item-meta{font-size:0.78em;color:var(--text-muted);}
+.days-until-purge{font-style:italic;}
+.trash-item-actions{display:flex;gap:4px;flex-shrink:0;}
+.btn-sm{padding:4px 8px;font-size:0.82em;}
+.btn-danger{background:var(--danger);color:white;}
+.btn-danger:hover{background:#b91c1c;}
+.badge{background:var(--primary);color:white;padding:2px 8px;border-radius:10px;font-size:0.75em;}

@@ -53,6 +53,19 @@
             <div class="tree-item disabled"><small>Not implemented in MVP</small></div>
           </div>
         </div>
+
+        <div class="tree-section">
+          <h3 class="tree-header">
+            <i class="fas fa-trash"></i> Trash
+            <span id="trash-count" class="badge" style="display:none;"></span>
+            <button class="collapse-toggle" data-section="trash" title="Toggle section">
+              <i class="fas fa-chevron-down"></i>
+            </button>
+          </h3>
+          <div class="tree-list" id="trash-tree">
+            <div class="loading">Loading trash...</div>
+          </div>
+        </div>
       </aside>
 
       <main class="center-panel">
@@ -221,6 +234,23 @@
       <div class="modal-footer">
         <button class="btn btn-secondary modal-close">Cancel</button>
         <button class="btn btn-primary" id="restore-version-submit">Restore</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="modal" id="purge-confirm-modal">
+    <div class="modal-dialog">
+      <div class="modal-header">
+        <h2>Permanently delete?</h2>
+        <button class="modal-close">&times;</button>
+      </div>
+      <div class="modal-body">
+        <p>This action cannot be undone. The file will be removed from disk and the database. Continue?</p>
+        <p id="purge-item-name" style="font-weight: 600; margin-top: 8px; word-break: break-word;"></p>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-secondary modal-close">Cancel</button>
+        <button class="btn btn-danger" data-action="confirm-purge">Delete permanently</button>
       </div>
     </div>
   </div>
