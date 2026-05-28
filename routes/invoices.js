@@ -42,7 +42,10 @@ module.exports = function installInvoicesRoutes(app, pool, mw) {
         ORDER BY i.invoice_date DESC
       `, [year]);
       res.json(rows);
-    } catch (e) { res.status(500).json({ error: e.message }); }
+    } catch (e) {
+      console.error('[invoices:list]', e && e.message);
+      res.status(500).json({ error: 'Failed to load invoices.' });
+    }
   });
 
   // ─── PSC RUS PDF generator ────────────────────────────────────────────────
@@ -192,36 +195,59 @@ module.exports = function installInvoicesRoutes(app, pool, mw) {
     if (wipe_hours === 'true' && req.user && req.user.role !== 'admin') {
       return res.status(403).json({ error: 'Only admins can delete invoice hours. Contact an administrator.' });
     }
+    // H-1 fix: wrap the entire void in a single transaction so a crash
+    // between the project-unbill UPDATE and the invoice DELETE never leaves
+    // orphaned invoices (projects back to 'completed', invoice still present).
+    const txClient = await pool.connect();
     try {
-      // Get invoice items to find linked projects
-      const { rows: items } = await pool.query(
+      await txClient.query('BEGIN');
+
+      // Get invoice items to find linked projects (inside txn so we see the
+      // consistent snapshot even if another request races).
+      const { rows: items } = await txClient.query(
         'SELECT project_id FROM invoice_items WHERE invoice_id=$1', [req.params.id]
       );
       const projectIds = items.map(i => i.project_id).filter(Boolean);
 
       // Unbill linked projects (set status back to completed, clear billed_date)
       for (const pid of projectIds) {
-        await pool.query(
+        await txClient.query(
           `UPDATE projects SET status='completed', billed_date=NULL WHERE id=$1 AND status='billed'`,
           [pid]
         );
       }
 
-      // Optionally wipe hours for those projects (admin-only — guarded above)
+      // Optionally wipe hours for those projects (admin-only — guarded above).
+      // updateProjectHours runs outside the txn (after COMMIT) so a logging
+      // failure never rolls back the delete.
       if (wipe_hours === 'true') {
         for (const pid of projectIds) {
-          await pool.query('DELETE FROM time_entries WHERE project_id=$1', [pid]);
-          await updateProjectHours(pid);
+          await txClient.query('DELETE FROM time_entries WHERE project_id=$1', [pid]);
         }
       }
 
       // Delete the invoice (cascade deletes invoice_items)
-      await pool.query('DELETE FROM invoices WHERE id=$1', [req.params.id]);
+      await txClient.query('DELETE FROM invoices WHERE id=$1', [req.params.id]);
+
+      await txClient.query('COMMIT');
+
+      // Post-commit: refresh cached project hours (non-transactional — best effort).
+      if (wipe_hours === 'true') {
+        for (const pid of projectIds) {
+          try { await updateProjectHours(pid); } catch (_) { /* best effort */ }
+        }
+      }
 
       broadcast('admin', 'invoice_voided', { id: req.params.id, unbilled_projects: projectIds.length });
       logAudit(pool, { req, action: 'void', entity_type: 'invoice', entity_id: req.params.id,
         meta: { unbilled_projects: projectIds.length, wipe_hours: wipe_hours === 'true' }, source: 'admin_ui' });
       res.json({ ok: true, unbilled_projects: projectIds.length });
-    } catch (e) { res.status(500).json({ error: e.message }); }
+    } catch (e) {
+      try { await txClient.query('ROLLBACK'); } catch (_) { /* ignore rollback error */ }
+      console.error('[invoices:delete]', e && e.message);
+      res.status(500).json({ error: 'Failed to void invoice.' });
+    } finally {
+      txClient.release();
+    }
   });
 };

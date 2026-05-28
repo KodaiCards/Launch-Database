@@ -79,7 +79,10 @@ module.exports = function installRevenueRoutes(app, pool, mw) {
         ORDER BY s.month
       `, [year]);
       res.json(rows);
-    } catch (e) { res.status(500).json({ error: e.message }); }
+    } catch (e) {
+      console.error('[revenue:monthly-summary]', e && e.message);
+      res.status(500).json({ error: 'Internal error.' });
+    }
   });
 
   // Revenue by client — filterable by month/year
@@ -168,7 +171,10 @@ module.exports = function installRevenueRoutes(app, pool, mw) {
       });
 
       res.json(rows);
-    } catch (e) { res.status(500).json({ error: e.message }); }
+    } catch (e) {
+      console.error('[revenue:by-client]', e && e.message);
+      res.status(500).json({ error: 'Internal error.' });
+    }
   });
 
   // Detailed project breakdown for a specific month
@@ -229,7 +235,10 @@ module.exports = function installRevenueRoutes(app, pool, mw) {
         ORDER BY cl.name, p.project_type, p.name
       `, params);
       res.json(rows);
-    } catch (e) { res.status(500).json({ error: e.message }); }
+    } catch (e) {
+      console.error('[revenue:details]', e && e.message);
+      res.status(500).json({ error: 'Internal error.' });
+    }
   });
 
   // Hours utilization for the Revenue tab tile: total hours, billed
@@ -279,8 +288,8 @@ module.exports = function installRevenueRoutes(app, pool, mw) {
         }
       });
     } catch (e) {
-      console.error('hours-utilization error:', e);
-      res.status(500).json({ error: e.message });
+      console.error('[revenue:hours-utilization]', e && e.message);
+      res.status(500).json({ error: 'Internal error.' });
     }
   });
 
@@ -389,8 +398,8 @@ module.exports = function installRevenueRoutes(app, pool, mw) {
         coverage_note: `${totalR.rows[0].with_projected} of ${(totalR.rows[0].with_projected || 0) + (totalR.rows[0].without_projected || 0)} projects have projected revenue set`,
       });
     } catch (e) {
-      console.error('projected-total error:', e);
-      res.status(500).json({ error: e.message });
+      console.error('[revenue:projected-total]', e && e.message);
+      res.status(500).json({ error: 'Internal error.' });
     }
   });
 
@@ -533,8 +542,8 @@ module.exports = function installRevenueRoutes(app, pool, mw) {
       });
       res.json(all);
     } catch (e) {
-      console.error('unbilled queue error:', e);
-      res.status(500).json({ error: e.message });
+      console.error('[revenue:unbilled]', e && e.message);
+      res.status(500).json({ error: 'Internal error.' });
     }
   });
 };

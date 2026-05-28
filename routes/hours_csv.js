@@ -1053,6 +1053,7 @@ module.exports = function installHoursCsvRoutes(app, pool, mw) {
 
       const importBatch = `csv_import_${Date.now()}`;
       let inserted = 0;
+      let modified = 0;
       let skipped_unknown_wo = 0;
       let skipped_unresolved_staff = 0;
       let skipped_billed_period = 0;
@@ -1076,6 +1077,21 @@ module.exports = function installHoursCsvRoutes(app, pool, mw) {
         if (skip_billed_period_rows && r.already_billed_period) { skipped_billed_period++; continue; }
         if (skipDuplicates && r.csv_classification === 'duplicate') {
           skipped_duplicate++;
+          continue;
+        }
+
+        // M-2 fix: 'modify' rows have a known existing time_entry that needs
+        // its hours corrected, not a new row inserted. Using INSERT here would
+        // create a second entry and double-count hours for the period.
+        if (r.csv_classification === 'modify' && r.csv_existing_id) {
+          const snappedHoursModify = snapHoursToQuarter(r.hours);
+          const finalJobTitleModify = r.job_title || r.project_job_name || apply_job_title || null;
+          await client.query(
+            `UPDATE time_entries SET hours=$1, job_title=$2 WHERE id=$3`,
+            [snappedHoursModify, finalJobTitleModify, r.csv_existing_id]
+          );
+          modified++;
+          if (r.project_id) projectIds.add(r.project_id);
           continue;
         }
 
@@ -1138,6 +1154,7 @@ module.exports = function installHoursCsvRoutes(app, pool, mw) {
         ok: true,
         batch: importBatch,
         inserted,
+        modified,
         skipped_unknown_wo,
         skipped_unresolved_staff,
         skipped_billed_period,

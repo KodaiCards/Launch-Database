@@ -1223,3 +1223,91 @@ test('batches GET: requires auth (401 without token)', async () => {
   assert.ok(res.status === 401 || res.status === 403,
     `expected 401/403, got ${res.status}`);
 });
+
+// ════════════════════════════════════════════════════════════════════════════
+// Wave 114 fixes — H-1, M-1, M-4
+// ════════════════════════════════════════════════════════════════════════════
+
+// M-1: negative override amounts must be rejected
+test('M-1: bill-multiple rejects negative override amount (400)', async () => {
+  const proj = await seedHourlyProject({
+    client_id: sharedClient.id,
+    billing_rate: 90,
+    staff_id: sharedStaff.id,
+    hours: [{ date: '2035-01-10', hours: 8 }],
+  });
+  await pool.query(`UPDATE projects SET actual_hours = 8 WHERE id = $1`, [proj.id]);
+
+  const res = await request('POST', '/api/billing/bill-multiple', {
+    token,
+    body: {
+      project_ids: [proj.id],
+      invoice_number: uniqueTag('INV-NEG'),
+      items: [{ project_id: proj.id, amount: -100 }],
+    },
+  });
+  assert.equal(res.status, 400, 'negative override amount must return 400');
+  const body = await res.json();
+  assert.match(body.error, /negative/i, 'error must mention negative');
+});
+
+// M-4: batch owner can delete their own batch; confirms non-owner is blocked
+// (limited to what the test environment can exercise — we only have one
+//  admin user, so we verify the admin path succeeds and the 404-vs-403
+//  distinction when the batch doesn't exist).
+test('M-4: batch DELETE returns 404 for unknown batch id', async () => {
+  const res = await request(
+    'DELETE',
+    '/api/billing/batches/00000000-0000-0000-0000-000000000000',
+    { token }
+  );
+  assert.equal(res.status, 404);
+});
+
+// H-1: invoice DELETE (void) — verify atomic behaviour: project status
+// reverts to 'completed' AND invoice row is gone in one shot.
+test('H-1: invoice DELETE reverts project status atomically', async () => {
+  const proj = await seedHourlyProject({
+    client_id: sharedClient.id,
+    billing_rate: 90,
+    staff_id: sharedStaff.id,
+    hours: [{ date: '2036-03-15', hours: 4 }],
+  });
+  await pool.query(`UPDATE projects SET actual_hours = 4 WHERE id = $1`, [proj.id]);
+
+  const inv = await requestJson('POST', '/api/billing/bill-multiple', {
+    token,
+    body: {
+      project_ids: [proj.id],
+      invoice_number: uniqueTag('INV-VOID-TXN'),
+      invoice_date: '2036-03-31',
+    },
+  });
+  assert.equal(inv.ok, true, 'invoice must be created for the test');
+  const invoiceId = inv.invoice_id;
+  // extraCleanup not needed — DELETE will remove the invoice below.
+
+  // Verify project is now billed.
+  const { rows: preVoid } = await pool.query(
+    `SELECT status FROM projects WHERE id = $1`, [proj.id]
+  );
+  assert.equal(preVoid[0].status, 'billed', 'project must be billed before void');
+
+  // Void the invoice via DELETE endpoint.
+  const voidRes = await requestJson('DELETE', `/api/invoices/${invoiceId}`, { token });
+  assert.equal(voidRes.ok, true, 'void must succeed');
+
+  // Both the invoice row AND project status revert must have committed
+  // atomically — if H-1 was still broken, a crash-induced partial execution
+  // would leave one but not the other; here we can verify the happy path.
+  const { rows: postVoid } = await pool.query(
+    `SELECT status FROM projects WHERE id = $1`, [proj.id]
+  );
+  assert.equal(postVoid[0].status, 'completed',
+    'project status must revert to completed after invoice void');
+
+  const { rows: invoiceRows } = await pool.query(
+    `SELECT 1 FROM invoices WHERE id = $1`, [invoiceId]
+  );
+  assert.equal(invoiceRows.length, 0, 'invoice must be deleted after void');
+});

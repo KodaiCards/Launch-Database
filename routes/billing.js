@@ -100,6 +100,15 @@ module.exports = function installBillingRoutes(app, pool, mw) {
         //   1. caller's per-line override.amount (UI / bulk-bill flow)
         //   2. project's manual_invoice_amount (flat fee override stored on project)
         //   3. calculated: footage → expected_revenue, hourly → hours × rate
+        // M-1 fix: reject negative override amounts before they pollute
+        // the totalCents accumulator and create negative invoices.
+        if (override.amount != null) {
+          const overrideAmt = parseFloat(override.amount);
+          if (!isNaN(overrideAmt) && overrideAmt < 0) {
+            await client.query('ROLLBACK');
+            return res.status(400).json({ error: 'Override amount cannot be negative' });
+          }
+        }
         const projManual = parseFloat(p.manual_invoice_amount);
         const hasManual = !isNaN(projManual) && projManual >= 0;
         const amount = override.amount != null ? parseFloat(override.amount)
@@ -421,11 +430,27 @@ module.exports = function installBillingRoutes(app, pool, mw) {
   // projects return to the unbilled queue. Items are cascade-deleted.
   app.delete('/api/billing/batches/:id', requireManagerOrAdmin, async (req, res) => {
     try {
+      // M-4 fix: verify the batch belongs to the requesting user unless they
+      // are an admin. Managers can only delete their own batches.
+      const isAdmin = req.user && req.user.role === 'admin';
+      const ownershipFilter = isAdmin
+        ? `WHERE id = $1`
+        : `WHERE id = $1 AND created_by_user_id = $2`;
+      const ownershipParams = isAdmin
+        ? [req.params.id]
+        : [req.params.id, req.user.id];
       const { rows } = await pool.query(
-        `DELETE FROM billing_batches WHERE id = $1 RETURNING id, name, total_amount`,
-        [req.params.id]
+        `DELETE FROM billing_batches ${ownershipFilter} RETURNING id, name, total_amount`,
+        ownershipParams
       );
-      if (!rows[0]) return res.status(404).json({ error: 'Batch not found' });
+      if (!rows[0]) {
+        // Disambiguate: does the batch exist at all?
+        const { rows: exists } = await pool.query(
+          `SELECT 1 FROM billing_batches WHERE id = $1`, [req.params.id]
+        );
+        if (exists.length) return res.status(403).json({ error: 'Not authorized to delete this batch.' });
+        return res.status(404).json({ error: 'Batch not found' });
+      }
 
       try {
         await logAudit(pool, {
@@ -458,11 +483,17 @@ module.exports = function installBillingRoutes(app, pool, mw) {
     if (!invoice_number || !String(invoice_number).trim()) {
       return res.status(400).json({ error: 'invoice_number required' });
     }
-    // Load the batch + items
+    // Load the batch + items.
+    // M-4 fix: apply ownership check — managers can only confirm their own
+    // batches; admins can confirm any.
+    const confirmIsAdmin = req.user && req.user.role === 'admin';
     const { rows: bRows } = await pool.query(
       `SELECT * FROM billing_batches WHERE id = $1`, [req.params.id]
     );
     if (!bRows[0]) return res.status(404).json({ error: 'Batch not found' });
+    if (!confirmIsAdmin && bRows[0].created_by_user_id !== req.user.id) {
+      return res.status(403).json({ error: 'Not authorized to confirm this batch.' });
+    }
     const { rows: itemRows } = await pool.query(
       `SELECT * FROM billing_batch_items WHERE batch_id = $1`, [req.params.id]
     );
@@ -609,6 +640,9 @@ module.exports = function installBillingRoutes(app, pool, mw) {
         ytd_revenue: parseFloat(ytdR.rows[0].ytd) || 0,
         invoices: invR.rows
       });
-    } catch (e) { res.status(500).json({ error: e.message }); }
+    } catch (e) {
+      console.error('[billing:report]', e && e.message);
+      res.status(500).json({ error: 'Internal error.' });
+    }
   });
 };
