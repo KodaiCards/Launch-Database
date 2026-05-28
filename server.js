@@ -283,6 +283,16 @@ const PORTAL_DEFS = [
     description: 'Sync DWG files to your laptop for offline AutoCAD use.',
     canAccess: u => ['admin', 'design_manager', 'design_engineer', 'permitting_manager', 'permitting_engineer'].includes(u.role),
   },
+  // Wave 59: workspace manager
+  {
+    id: 'workspace',
+    audience: 'employee',
+    url: '/workspace/',
+    name: 'Workspace',
+    icon: 'folder-tree',
+    description: 'Browse all employee workspaces, manage files and folders, and share documents.',
+    canAccess: u => ['admin', 'design_manager', 'permitting_manager'].includes(u.role),
+  },
 ];
 
 // GET /api/me/portals — returns the list of portals the current user can access.
@@ -487,6 +497,13 @@ app.use('/photos', requireAuth(), express.static(path.join(__dirname, 'public', 
 // SPA client-side routing fallback for PWA
 app.get('/photos/*', requireAuth(), (req, res) => {
   res.sendFile(path.join(__dirname, 'public', 'photos', 'index.html'));
+});
+
+// Wave 59: workspace manager — manager-facing file explorer
+app.use('/workspace', requireAuth(), express.static(path.join(__dirname, 'public', 'workspace')));
+// SPA client-side routing fallback
+app.get('/workspace/*', requireAuth(), (req, res) => {
+  res.sendFile(path.join(__dirname, 'public', 'workspace', 'index.html'));
 });
 
 app.use(express.static(path.join(__dirname, 'public')));

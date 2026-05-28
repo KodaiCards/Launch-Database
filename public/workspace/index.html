@@ -1,0 +1,207 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Workspace Manager</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <link rel="stylesheet" href="workspace.css">
+</head>
+<body>
+  <div class="workspace-container">
+    <header class="workspace-header">
+      <h1><i class="fas fa-folder-tree"></i> Workspace Manager</h1>
+      <a href="/" class="back-to-launcher" title="Back to launcher">
+        <i class="fas fa-arrow-left"></i> Back
+      </a>
+    </header>
+
+    <div class="workspace-content">
+      <aside class="tree-panel">
+        <div class="tree-section">
+          <h3 class="tree-header">
+            <i class="fas fa-users"></i> Users
+            <button class="collapse-toggle" data-section="users" title="Toggle section">
+              <i class="fas fa-chevron-down"></i>
+            </button>
+          </h3>
+          <div class="tree-list" id="users-tree">
+            <div class="loading">Loading users...</div>
+          </div>
+        </div>
+
+        <div class="tree-section">
+          <h3 class="tree-header">
+            <i class="fas fa-share"></i> Shared
+            <button class="collapse-toggle" data-section="shared" title="Toggle section">
+              <i class="fas fa-chevron-down"></i>
+            </button>
+          </h3>
+          <div class="tree-list" id="shared-tree">
+            <div class="loading">Loading shared folders...</div>
+          </div>
+        </div>
+
+        <div class="tree-section">
+          <h3 class="tree-header">
+            <i class="fas fa-briefcase"></i> Projects
+            <button class="collapse-toggle" data-section="projects" title="Toggle section">
+              <i class="fas fa-chevron-down"></i>
+            </button>
+          </h3>
+          <div class="tree-list" id="projects-tree">
+            <div class="tree-item disabled"><small>Not implemented in MVP</small></div>
+          </div>
+        </div>
+      </aside>
+
+      <main class="center-panel">
+        <div class="breadcrumb-bar">
+          <nav class="breadcrumb">
+            <a href="#" class="breadcrumb-link" data-folder-id="root">Workspace</a>
+            <span id="breadcrumb-items"></span>
+          </nav>
+          <button class="toggle-tree-btn" title="Toggle tree panel">
+            <i class="fas fa-bars"></i>
+          </button>
+        </div>
+
+        <div class="toolbar">
+          <button id="new-folder-btn" class="btn btn-primary" title="Create new folder">
+            <i class="fas fa-folder-plus"></i> New Folder
+          </button>
+          <button id="upload-file-btn" class="btn btn-primary" title="Upload file">
+            <i class="fas fa-cloud-arrow-up"></i> Upload File
+          </button>
+          <button id="share-btn" class="btn btn-secondary" disabled title="Share folder">
+            <i class="fas fa-share"></i> Share
+          </button>
+          <button id="delete-btn" class="btn btn-danger" disabled title="Delete selected">
+            <i class="fas fa-trash"></i> Delete
+          </button>
+        </div>
+
+        <div class="folder-view">
+          <table class="file-table">
+            <thead>
+              <tr>
+                <th style="width: 3rem;"><input type="checkbox" id="select-all-checkbox" title="Select all"></th>
+                <th>Name</th>
+                <th style="width: 6rem;">Type</th>
+                <th style="width: 8rem;">Size</th>
+                <th style="width: 12rem;">Uploaded By</th>
+                <th style="width: 10rem;">Uploaded At</th>
+                <th style="width: 12rem;">Actions</th>
+              </tr>
+            </thead>
+            <tbody id="file-table-body">
+              <tr class="loading-row">
+                <td colspan="7" class="loading">Select a folder to view contents</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </main>
+
+      <aside class="details-panel">
+        <div class="details-header">
+          <h3>Details</h3>
+          <button class="collapse-toggle details-close" title="Close details panel">
+            <i class="fas fa-times"></i>
+          </button>
+        </div>
+        <div class="details-content" id="details-content">
+          <p class="text-muted">Select a folder or file to view details</p>
+        </div>
+      </aside>
+    </div>
+  </div>
+
+  <div class="modal" id="new-folder-modal">
+    <div class="modal-dialog">
+      <div class="modal-header">
+        <h2>Create New Folder</h2>
+        <button class="modal-close">&times;</button>
+      </div>
+      <div class="modal-body">
+        <label for="new-folder-name">Folder Name</label>
+        <input type="text" id="new-folder-name" placeholder="e.g., Project Files" autofocus>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-secondary modal-close">Cancel</button>
+        <button class="btn btn-primary" id="create-folder-submit">Create</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="modal" id="share-modal">
+    <div class="modal-dialog">
+      <div class="modal-header">
+        <h2>Share Folder</h2>
+        <button class="modal-close">&times;</button>
+      </div>
+      <div class="modal-body">
+        <div class="form-group">
+          <label for="share-mode">Share Mode</label>
+          <select id="share-mode">
+            <option value="private">Private (only me)</option>
+            <option value="public">Public (all employees)</option>
+            <option value="specific">Specific Users</option>
+          </select>
+        </div>
+        <div class="form-group" id="specific-users-group" style="display: none;">
+          <label for="share-user-list">Grant Access To</label>
+          <div id="share-user-list" class="user-list"></div>
+          <button type="button" id="add-user-btn" class="btn btn-sm btn-secondary">
+            <i class="fas fa-user-plus"></i> Add User
+          </button>
+        </div>
+        <div class="form-group">
+          <label for="attach-project">Attach to Project (Optional)</label>
+          <select id="attach-project">
+            <option value="">— None —</option>
+          </select>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-secondary modal-close">Cancel</button>
+        <button class="btn btn-primary" id="share-submit">Save Changes</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="modal" id="delete-modal">
+    <div class="modal-dialog">
+      <div class="modal-header">
+        <h2>Confirm Delete</h2>
+        <button class="modal-close">&times;</button>
+      </div>
+      <div class="modal-body">
+        <p id="delete-message">Are you sure you want to delete this item?</p>
+        <p style="color: var(--text-danger); font-weight: bold;">This action cannot be undone.</p>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-secondary modal-close">Cancel</button>
+        <button class="btn btn-danger" id="delete-submit">Delete</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="modal" id="version-history-modal">
+    <div class="modal-dialog">
+      <div class="modal-header">
+        <h2>Version History</h2>
+        <button class="modal-close">&times;</button>
+      </div>
+      <div class="modal-body">
+        <div id="version-list"></div>
+      </div>
+    </div>
+  </div>
+
+  <div id="toast-container" class="toast-container"></div>
+  <input type="file" id="file-upload-input" style="display: none;">
+
+  <script src="workspace.js"></script>
+</body>
+</html>
