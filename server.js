@@ -728,6 +728,8 @@ require('./routes/dashboard')(app, pool, { requireAuth });
 require('./routes/design_pipeline')(app, pool, { requireAuth });
 require('./routes/inspection')(app, pool, { requireAuth }); // C-3: was {} — no-op stub fired instead of real requireAuth
 
+// Recent activity widget — surfaces photos + workspace file uploads on admin dashboard
+require('./routes/recent_activity')(app, pool, { requireAuth, requireAdmin });
 
 // Revenue endpoints extracted to routes/revenue.js (Track 1.3).
 require('./routes/revenue')(app, pool, { requireManagerOrAdmin });

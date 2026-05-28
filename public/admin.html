@@ -587,6 +587,16 @@ body.demo-blur .lf-financial{filter:blur(7px);user-select:none;transition:filter
 body.demo-blur .lf-financial:hover{filter:blur(0)}
 #demo-blur-btn.demo-active{background:var(--warning,#f59e0b);color:#fff;border-color:var(--warning,#f59e0b)}
 #demo-blur-btn.demo-active:hover{background:#d97706;border-color:#d97706}
+/* Recent Activity widget */
+#recent-activity-list{max-height:360px;overflow-y:auto}
+.activity-row{display:flex;align-items:center;padding:6px 8px;border-bottom:1px solid var(--border-weak);gap:8px;font-size:0.92em}
+.activity-row:hover{background:var(--surface-3)}
+.activity-icon{font-size:1.2em}
+.activity-desc{flex:1;color:var(--text)}
+.activity-desc strong{font-weight:600}
+.activity-desc em{font-style:italic;color:var(--text-secondary)}
+.activity-time{color:var(--text-muted);font-size:0.85em;white-space:nowrap}
+.badge{background:var(--primary);color:white;padding:2px 8px;border-radius:10px;font-size:0.75em}
 </style>
 <link rel="stylesheet" href="/app-shell.css">
 <script src="/toast.js" defer></script>
@@ -825,6 +835,17 @@ body.demo-blur .lf-financial:hover{filter:blur(0)}
         </div>
         <div class="card-body" id="needs-attention-body" style="padding:0">
           <div style="padding:16px;color:var(--text-muted)">Loading…</div>
+        </div>
+      </div>
+
+      <!-- Recent Activity widget — surfaces last photos + workspace file uploads -->
+      <div class="card lfs-widget" data-widget-id="recent-activity" style="margin-bottom:14px">
+        <div class="card-header" style="display:flex;justify-content:space-between;align-items:center">
+          <span class="card-title"><i class="fa-solid fa-history" style="color:var(--primary);margin-right:6px"></i>Recent Activity <span id="recent-activity-badge" class="badge" style="display:none;"></span></span>
+          <button class="btn btn-secondary btn-sm" id="recent-activity-refresh" title="Refresh"><i class="fa-solid fa-rotate"></i></button>
+        </div>
+        <div class="card-body" id="recent-activity-list" style="padding:0">
+          <div style="padding:16px;color:var(--text-muted)"><i class="fa-solid fa-spinner fa-spin"></i> Loading…</div>
         </div>
       </div>
 
@@ -3005,6 +3026,7 @@ body.demo-blur .lf-financial:hover{filter:blur(0)}
 <script src="/js/training_admin.js"></script>
 <script src="/js/admin_project_files.js"></script>
 <script src="/js/admin_project_photos.js"></script>
+<script src="/js/admin_recent_activity.js"></script>
 
 <script>
 
