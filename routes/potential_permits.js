@@ -13,6 +13,7 @@
 // Extracted from server.js as part of CLEANUP_PLAN.md Track 1.3.
 
 const { broadcast } = require('./_sse');
+const { logAudit } = require('./_audit');
 
 module.exports = function installPotentialPermitsRoutes(app, pool, mw) {
   const requireAuth = (mw && mw.requireAuth) || (() => (req, res, next) => next());

@@ -12,6 +12,45 @@
     }
   }
 
+  const ACTION_ICONS = {
+    'project.create': '🆕',
+    'project.update': '✏️',
+    'project.delete': '🗑️',
+    'invoice.generate': '💰',
+    'invoice.void': '🚫',
+    'engineering_contract.create': '📋',
+    'engineering_contract.update': '✏️',
+    'engineering_contract.delete': '🗑️',
+    'user.create': '👤',
+    'user.role_change': '🔑',
+    'permit.create': '📜',
+    'permit.update': '✏️',
+    'permit.delete': '🗑️',
+    'splice_project.create': '🔗',
+    'splice_project.update': '✏️'
+  };
+
+  function getActivityDescription(a) {
+    if (a.type === 'photo') {
+      return `uploaded <em>${escapeHtml(a.target_name)}</em>`;
+    } else if (a.type === 'file') {
+      return `uploaded <em>${escapeHtml(a.target_name)}</em>`;
+    } else if (a.type === 'audit') {
+      // Parse action to create a description
+      const verb = (() => {
+        if (a.action.endsWith('.create')) return 'created';
+        if (a.action.endsWith('.update')) return 'updated';
+        if (a.action.endsWith('.delete')) return 'deleted';
+        if (a.action === 'invoice.generate') return 'generated';
+        if (a.action === 'invoice.void') return 'voided';
+        if (a.action === 'user.role_change') return 'changed role for';
+        return a.action;
+      })();
+      return `${verb} ${escapeHtml(a.target_name)}`;
+    }
+    return `performed ${escapeHtml(a.action || 'activity')}`;
+  }
+
   function render(data) {
     const list = document.getElementById('recent-activity-list');
     const badge = document.getElementById('recent-activity-badge');
@@ -28,14 +67,20 @@
     }
 
     list.innerHTML = data.activities.map(a => {
-      const icon = a.type === 'photo' ? '📷' : '📄';
+      let icon = '📄';
+      if (a.type === 'photo') {
+        icon = '📷';
+      } else if (a.type === 'audit') {
+        icon = ACTION_ICONS[a.action] || '📋';
+      }
       const time = timeAgo(new Date(a.at));
       const project = a.project_name ? ` · ${escapeHtml(a.project_name)}` : '';
+      const desc = getActivityDescription(a);
       return `
         <div class="activity-row">
           <span class="activity-icon">${icon}</span>
           <span class="activity-desc">
-            <strong>${escapeHtml(a.actor_name || 'Unknown')}</strong> uploaded <em>${escapeHtml(a.target_name)}</em>${project}
+            <strong>${escapeHtml(a.actor_name || 'Unknown')}</strong> ${desc}${project}
           </span>
           <span class="activity-time">${time}</span>
         </div>

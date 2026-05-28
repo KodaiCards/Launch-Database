@@ -20,6 +20,7 @@
 // Extracted from server.js as part of CLEANUP_PLAN.md Track 1.3.
 
 const { broadcast } = require('./_sse');
+const { logAudit } = require('./_audit');
 
 module.exports = function installBillingRoutes(app, pool, mw) {
   const { requireManagerOrAdmin, invoiceGenerator } = mw;
@@ -211,6 +212,31 @@ module.exports = function installBillingRoutes(app, pool, mw) {
       }
 
       await client.query('COMMIT');
+
+      try {
+        await logAudit(pool, {
+          req,
+          action: 'created',
+          entity_type: 'invoice',
+          entity_id: invoiceId,
+          before: null,
+          after: {
+            id: invoiceId,
+            invoice_number,
+            invoice_date: billDate,
+            total_amount: total,
+            line_count: lineItems.length,
+            billing_period_start: billingPeriodStart,
+            billing_period_end: billingPeriodEnd,
+            project_count: lineItems.length
+          },
+          source: 'admin',
+          meta: { reason: 'Bulk invoice created' }
+        });
+      } catch (auditErr) {
+        console.error('[bill-multiple:audit]', auditErr && auditErr.message);
+      }
+
       broadcast('admin', 'invoice_created', { id: invoiceId, total, line_count: lineItems.length });
       res.json({ ok: true, invoice_id: invoiceId, total, line_count: lineItems.length });
     } catch (e) {
@@ -356,6 +382,30 @@ module.exports = function installBillingRoutes(app, pool, mw) {
         );
       }
       await client.query('COMMIT');
+
+      try {
+        await logAudit(pool, {
+          req,
+          action: 'created',
+          entity_type: 'billing_batch',
+          entity_id: batch.id,
+          before: null,
+          after: {
+            id: batch.id,
+            name: batch.name,
+            client_id: batch.client_id,
+            total_amount: batch.total_amount,
+            item_count: project_ids.length,
+            period_start: batch.period_start,
+            period_end: batch.period_end
+          },
+          source: 'admin',
+          meta: { reason: 'Billing batch created for review' }
+        });
+      } catch (auditErr) {
+        console.error('[batches:create:audit]', auditErr && auditErr.message);
+      }
+
       broadcast('admin', 'batch_committed', { id: batch.id, name: batch.name });
       res.json(batch);
     } catch (e) {
@@ -372,10 +422,26 @@ module.exports = function installBillingRoutes(app, pool, mw) {
   app.delete('/api/billing/batches/:id', requireManagerOrAdmin, async (req, res) => {
     try {
       const { rows } = await pool.query(
-        `DELETE FROM billing_batches WHERE id = $1 RETURNING id`,
+        `DELETE FROM billing_batches WHERE id = $1 RETURNING id, name, total_amount`,
         [req.params.id]
       );
       if (!rows[0]) return res.status(404).json({ error: 'Batch not found' });
+
+      try {
+        await logAudit(pool, {
+          req,
+          action: 'deleted',
+          entity_type: 'billing_batch',
+          entity_id: req.params.id,
+          before: { id: rows[0].id, name: rows[0].name, total_amount: rows[0].total_amount },
+          after: null,
+          source: 'admin',
+          meta: { reason: 'Billing batch deleted' }
+        });
+      } catch (auditErr) {
+        console.error('[batches:delete:audit]', auditErr && auditErr.message);
+      }
+
       broadcast('admin', 'batch_voided', { id: req.params.id });
       res.json({ ok: true });
     } catch (e) {
@@ -465,6 +531,31 @@ module.exports = function installBillingRoutes(app, pool, mw) {
       // Delete the batch (cascades items)
       await client.query(`DELETE FROM billing_batches WHERE id = $1`, [req.params.id]);
       await client.query('COMMIT');
+
+      try {
+        await logAudit(pool, {
+          req,
+          action: 'created',
+          entity_type: 'invoice',
+          entity_id: inv.id,
+          before: null,
+          after: {
+            id: inv.id,
+            invoice_number: inv.invoice_number,
+            invoice_date: inv.invoice_date,
+            total_amount: inv.total_amount,
+            line_count: lineCount,
+            billing_period_start: inv.billing_period_start,
+            billing_period_end: inv.billing_period_end,
+            from_batch_id: req.params.id
+          },
+          source: 'admin',
+          meta: { reason: 'Batch confirmed and converted to invoice' }
+        });
+      } catch (auditErr) {
+        console.error('[batches:confirm:audit]', auditErr && auditErr.message);
+      }
+
       broadcast('admin', 'invoice_created', { id: inv.id, batch_id: req.params.id, total: bRows[0].total_amount });
       broadcast('admin', 'batch_committed', { id: req.params.id, invoice_id: inv.id });
       res.json({ ok: true, invoice: inv, line_count: lineCount, total: bRows[0].total_amount });
