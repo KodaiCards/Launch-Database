@@ -285,11 +285,13 @@
   function createPhotoCard(photo) {
     const card = document.createElement('div');
     card.className = 'photo-card';
+    // HIGH-2 fix: esc() all user-controlled values before inserting into innerHTML
+    // to prevent stored XSS via malicious caption, uploader_name, or filename.
     card.innerHTML = `
-      <img src="/api/project-photos/${photo.id}/download" alt="${photo.filename}" class="photo-card__img">
+      <img src="/api/project-photos/${esc(photo.id)}/download" alt="${esc(photo.filename)}" class="photo-card__img">
       <div class="photo-card__info">
-        ${photo.caption ? `<div>${photo.caption}</div>` : ''}
-        <div style="font-size: 0.7rem; opacity: 0.8;">${photo.uploader_name || 'Unknown'}</div>
+        ${photo.caption ? `<div>${esc(photo.caption)}</div>` : ''}
+        <div style="font-size: 0.7rem; opacity: 0.8;">${esc(photo.uploader_name || 'Unknown')}</div>
       </div>
     `;
     return card;

@@ -408,18 +408,20 @@ async function uploadPhoto() {
     });
 
     // Build FormData
+    // HIGH-3 fix: field name must be 'photo' (multer uses upload.single('photo'))
+    // and GPS field names must match backend: gps_lat, gps_lon, gps_accuracy_m.
     const formData = new FormData();
     formData.append('project_id', elements.enhanceProject.value);
-    formData.append('file', blob, `scan-${Date.now()}.jpg`);
+    formData.append('photo', blob, `scan-${Date.now()}.jpg`);
 
     if (elements.enhanceCaption.value) {
       formData.append('caption', elements.enhanceCaption.value);
     }
 
     if (state.gpsData) {
-      formData.append('latitude', state.gpsData.latitude);
-      formData.append('longitude', state.gpsData.longitude);
-      formData.append('gps_accuracy', state.gpsData.accuracy);
+      formData.append('gps_lat', state.gpsData.latitude);
+      formData.append('gps_lon', state.gpsData.longitude);
+      formData.append('gps_accuracy_m', state.gpsData.accuracy);
     }
 
     // Submit

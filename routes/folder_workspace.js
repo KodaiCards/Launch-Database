@@ -35,6 +35,9 @@ function createFolderWorkspaceRoutes(pool) {
 
     let currentId = folderId;
     let folder = null;
+    // F4 fix: track the ID of the folder that resolved the effective mode,
+    // so that shared_specific share lookups query the ancestor (not the original child).
+    let effectiveAncestorId = folderId;
 
     // Walk up parent chain to find effective share_mode
     while (currentId) {
@@ -46,8 +49,9 @@ function createFolderWorkspaceRoutes(pool) {
 
       folder = result.rows[0];
 
-      // If share_mode is not 'inherit', use this folder's settings
+      // If share_mode is not 'inherit', this folder resolved the effective mode
       if (folder.share_mode !== 'inherit') {
+        effectiveAncestorId = currentId; // record the ancestor that owns the ACL
         break;
       }
 
@@ -81,11 +85,12 @@ function createFolderWorkspaceRoutes(pool) {
     }
 
     if (folder.kind === 'shared_specific' || effectiveMode === 'specific') {
-      // Check workspace_folder_shares table for this user
-      const rootId = folderId; // For shared_specific roots
+      // F4 fix: use effectiveAncestorId (the folder that owns the ACL), not the original
+      // child folderId. workspace_folder_shares rows are keyed to the root that set
+      // share_mode='specific'; using the child's ID caused a miss for all descendants.
       const shareResult = await pool.query(
         'SELECT permission FROM workspace_folder_shares WHERE folder_id = $1 AND user_id = $2',
-        [rootId, requestingUserId]
+        [effectiveAncestorId, requestingUserId]
       );
 
       if (shareResult.rows.length > 0) {
@@ -623,73 +628,97 @@ function createFolderWorkspaceRoutes(pool) {
         const storageKey = path.join(userStorageDir, `${fileId}${ext}`);
         await fs.writeFile(storageKey, file.data);
 
-        // Check if file with same name already exists (snapshot version)
-        const existingResult = await pool.query(
-          'SELECT id FROM workspace_files WHERE folder_id = $1 AND filename = $2',
-          [id, file.name]
-        );
+        // F2 fix: wrap the check-then-insert/update in a serialisable transaction with
+        // SELECT ... FOR UPDATE to close the TOCTOU race. Two concurrent uploads of the
+        // same filename to the same folder would previously both read 0 rows on the SELECT,
+        // then both attempt an INSERT, causing a 23505 unique-constraint crash and orphaning
+        // one of the uploaded disk files.  With FOR UPDATE the second transaction blocks
+        // until the first commits, then reads the now-existing row and enters the UPDATE
+        // (version-snapshot) branch.
+        const client = await pool.connect();
+        let uploadResult;
+        try {
+          await client.query('BEGIN');
 
-        if (existingResult.rows.length > 0) {
-          const existingId = existingResult.rows[0].id;
-
-          // Snapshot current version
-          const currentResult = await pool.query(
-            'SELECT sha256, storage_key, size_bytes, uploaded_by FROM workspace_files WHERE id = $1',
-            [existingId]
-          );
-          const current = currentResult.rows[0];
-
-          await pool.query(
-            `INSERT INTO workspace_file_versions (file_id, sha256, storage_key, size_bytes, uploaded_by, uploaded_at)
-             VALUES ($1, $2, $3, $4, $5, NOW())`,
-            [existingId, current.sha256, current.storage_key, current.size_bytes, current.uploaded_by]
+          // Lock the row (if it exists) to prevent concurrent INSERT race
+          const existingResult = await client.query(
+            'SELECT id FROM workspace_files WHERE folder_id = $1 AND filename = $2 FOR UPDATE',
+            [id, file.name]
           );
 
-          // Update file with new version
-          const versionCount = await pool.query(
-            'SELECT COUNT(*) as cnt FROM workspace_file_versions WHERE file_id = $1',
-            [existingId]
-          );
+          let fileResultEntry;
+          if (existingResult.rows.length > 0) {
+            const existingId = existingResult.rows[0].id;
 
-          await pool.query(
-            `UPDATE workspace_files SET sha256 = $1, storage_key = $2, size_bytes = $3, uploaded_by = $4,
-             uploaded_at = NOW(), current_version_count = $5
-             WHERE id = $6`,
-            [sha256, storageKey, file.size, userId, versionCount.rows[0].cnt + 1, existingId]
-          );
+            // Snapshot current version
+            const currentResult = await client.query(
+              'SELECT sha256, storage_key, size_bytes, uploaded_by FROM workspace_files WHERE id = $1',
+              [existingId]
+            );
+            const current = currentResult.rows[0];
 
-          uploadedFiles.push({
-            id: existingId,
-            filename: file.name,
-            mime_type: file.mimetype,
-            size_bytes: file.size,
-            uploaded_by_name: req.user.name,
-            uploaded_at: new Date().toISOString(),
-            current_version_count: versionCount.rows[0].cnt + 1
-          });
-        } else {
-          // New file
-          await pool.query(
-            `INSERT INTO workspace_files (id, folder_id, filename, mime_type, size_bytes, sha256, storage_key, uploaded_by, uploaded_at, current_version_count)
-             VALUES ($1, $2, $3, $4, $5, $6, $7, $8, NOW(), 1)`,
-            [fileId, id, file.name, file.mimetype, file.size, sha256, storageKey, userId]
-          );
+            await client.query(
+              `INSERT INTO workspace_file_versions (file_id, sha256, storage_key, size_bytes, uploaded_by, uploaded_at)
+               VALUES ($1, $2, $3, $4, $5, NOW())`,
+              [existingId, current.sha256, current.storage_key, current.size_bytes, current.uploaded_by]
+            );
 
-          uploadedFiles.push({
-            id: fileId,
-            filename: file.name,
-            mime_type: file.mimetype,
-            size_bytes: file.size,
-            uploaded_by_name: req.user.name,
-            uploaded_at: new Date().toISOString(),
-            current_version_count: 1
-          });
+            // Update file with new version
+            const versionCount = await client.query(
+              'SELECT COUNT(*) as cnt FROM workspace_file_versions WHERE file_id = $1',
+              [existingId]
+            );
+
+            await client.query(
+              `UPDATE workspace_files SET sha256 = $1, storage_key = $2, size_bytes = $3, uploaded_by = $4,
+               uploaded_at = NOW(), current_version_count = $5
+               WHERE id = $6`,
+              [sha256, storageKey, file.size, userId, versionCount.rows[0].cnt + 1, existingId]
+            );
+
+            fileResultEntry = {
+              id: existingId,
+              filename: file.name,
+              mime_type: file.mimetype,
+              size_bytes: file.size,
+              uploaded_by_name: req.user.name,
+              uploaded_at: new Date().toISOString(),
+              current_version_count: versionCount.rows[0].cnt + 1
+            };
+          } else {
+            // New file
+            await client.query(
+              `INSERT INTO workspace_files (id, folder_id, filename, mime_type, size_bytes, sha256, storage_key, uploaded_by, uploaded_at, current_version_count)
+               VALUES ($1, $2, $3, $4, $5, $6, $7, $8, NOW(), 1)`,
+              [fileId, id, file.name, file.mimetype, file.size, sha256, storageKey, userId]
+            );
+
+            fileResultEntry = {
+              id: fileId,
+              filename: file.name,
+              mime_type: file.mimetype,
+              size_bytes: file.size,
+              uploaded_by_name: req.user.name,
+              uploaded_at: new Date().toISOString(),
+              current_version_count: 1
+            };
+          }
+
+          await client.query('COMMIT');
+          uploadResult = fileResultEntry;
+        } catch (txErr) {
+          await client.query('ROLLBACK');
+          throw txErr;
+        } finally {
+          client.release();
         }
+
+        uploadedFiles.push(uploadResult);
 
         await logAudit(req.user, {
           action: 'workspace.file_upload',
           entity_type: 'workspace_file',
-          entity_id: fileId,
+          entity_id: uploadResult.id,
           details: { filename: file.name, size_bytes: file.size }
         });
       }
@@ -710,8 +739,9 @@ function createFolderWorkspaceRoutes(pool) {
       const { id } = req.params;
       const userId = req.user.id;
 
+      // F3 fix: add deleted_at IS NULL so trashed files cannot be downloaded
       const fileResult = await pool.query(
-        'SELECT id, folder_id, filename, storage_key FROM workspace_files WHERE id = $1',
+        'SELECT id, folder_id, filename, storage_key FROM workspace_files WHERE id = $1 AND deleted_at IS NULL',
         [id]
       );
 
@@ -724,6 +754,12 @@ function createFolderWorkspaceRoutes(pool) {
       // IDOR check: verify caller can read the parent folder
       const perm = await getEffectivePermission(file.folder_id, userId, req.user.role);
       if (!perm.canRead) {
+        return res.status(404).json({ error: 'File not found' });
+      }
+
+      // F1 fix: containment check before reading storage_key from DB
+      if (!isStorageKeyContained(file.storage_key)) {
+        console.error('[workspace] storage_key containment failure on download:', file.storage_key);
         return res.status(404).json({ error: 'File not found' });
       }
 
@@ -791,8 +827,9 @@ function createFolderWorkspaceRoutes(pool) {
       const { id } = req.params;
       const userId = req.user.id;
 
+      // F3 fix: add deleted_at IS NULL so trashed files' version history is inaccessible
       const fileResult = await pool.query(
-        'SELECT folder_id FROM workspace_files WHERE id = $1',
+        'SELECT folder_id FROM workspace_files WHERE id = $1 AND deleted_at IS NULL',
         [id]
       );
 
@@ -936,6 +973,12 @@ function createFolderWorkspaceRoutes(pool) {
       const perm = await getEffectivePermission(row.folder_id, userId, req.user.role);
       if (!perm.canRead) {
         return res.status(404).json({ error: 'Version not found' }); // 404 not 403 to avoid existence leak
+      }
+
+      // F1 fix: containment check on version storage_key before streaming
+      if (!isStorageKeyContained(row.storage_key)) {
+        console.error('[workspace] storage_key containment failure on version download:', row.storage_key);
+        return res.status(404).json({ error: 'Version not found' });
       }
 
       // Verify file exists on disk
@@ -1228,6 +1271,12 @@ function createFolderWorkspaceRoutes(pool) {
       }
 
       const file = fileResult.rows[0];
+
+      // F1 fix: containment check before deleting storage_key from disk
+      if (!isStorageKeyContained(file.storage_key)) {
+        console.error('[workspace] storage_key containment failure on purge:', file.storage_key);
+        return res.status(500).json({ error: 'Storage path error' });
+      }
 
       // Delete storage file
       try {
