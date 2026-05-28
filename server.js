@@ -787,6 +787,14 @@ require('./routes/client_portal')(app, pool, { requireAuth });
 require('./routes/client_portal_v2')(app, pool, { requireAuth });
 
 // ─────────────────────────────────────────────────────────────────────────────
+// FOLDER WORKSPACE — Wave 57
+// Hierarchical folder tree with file versioning, ACL-based sharing
+// Schema: migration 0053_folder_workspace.sql
+// ─────────────────────────────────────────────────────────────────────────────
+const createFolderWorkspaceRoutes = require('./routes/folder_workspace');
+app.use('/api/workspace', createFolderWorkspaceRoutes(pool));
+
+// ─────────────────────────────────────────────────────────────────────────────
 // DWG OFFLINE-SYNC — Wave 35 / C1
 // Backend endpoints for field-tech laptop sync of raw DWG/DXF files.
 // Schema: migration 0044_dwg_offline_sync.sql

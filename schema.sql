@@ -3582,3 +3582,63 @@ ALTER TABLE ONLY public.project_photos
     ADD CONSTRAINT IF NOT EXISTS project_photos_project_id_fkey FOREIGN KEY (project_id) REFERENCES public.projects(id) ON DELETE CASCADE;
 ALTER TABLE ONLY public.project_photos
     ADD CONSTRAINT IF NOT EXISTS project_photos_uploaded_by_fkey FOREIGN KEY (uploaded_by) REFERENCES public.users(id) ON DELETE SET NULL;
+
+-- Wave 57: Folder Workspace Backend
+-- Hierarchical folders with file versioning and ACL-based sharing
+
+CREATE TABLE IF NOT EXISTS public.workspace_folders (
+    id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+    parent_id uuid REFERENCES public.workspace_folders(id) ON DELETE CASCADE,
+    name text NOT NULL,
+    kind text NOT NULL CHECK (kind IN ('user_home', 'shared_public', 'shared_managers', 'shared_specific', 'regular')),
+    owner_user_id uuid REFERENCES public.users(id) ON DELETE CASCADE,
+    project_id uuid REFERENCES public.projects(id) ON DELETE SET NULL,
+    share_mode text NOT NULL DEFAULT 'inherit' CHECK (share_mode IN ('inherit', 'private', 'public', 'specific')),
+    created_by uuid REFERENCES public.users(id) ON DELETE SET NULL,
+    created_at timestamptz NOT NULL DEFAULT now(),
+    updated_at timestamptz NOT NULL DEFAULT now(),
+    UNIQUE (parent_id, name)
+);
+
+CREATE INDEX IF NOT EXISTS idx_workspace_folders_parent ON public.workspace_folders (parent_id);
+CREATE INDEX IF NOT EXISTS idx_workspace_folders_owner ON public.workspace_folders (owner_user_id, kind);
+CREATE INDEX IF NOT EXISTS idx_workspace_folders_project ON public.workspace_folders (project_id) WHERE project_id IS NOT NULL;
+
+CREATE TABLE IF NOT EXISTS public.workspace_files (
+    id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+    folder_id uuid NOT NULL REFERENCES public.workspace_folders(id) ON DELETE CASCADE,
+    filename text NOT NULL,
+    mime_type text NOT NULL,
+    size_bytes bigint NOT NULL,
+    sha256 text NOT NULL,
+    storage_key text NOT NULL,
+    uploaded_by uuid REFERENCES public.users(id) ON DELETE SET NULL,
+    uploaded_at timestamptz NOT NULL DEFAULT now(),
+    current_version_count int NOT NULL DEFAULT 1,
+    UNIQUE (folder_id, filename)
+);
+
+CREATE INDEX IF NOT EXISTS idx_workspace_files_folder ON public.workspace_files (folder_id);
+
+CREATE TABLE IF NOT EXISTS public.workspace_file_versions (
+    id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+    file_id uuid NOT NULL REFERENCES public.workspace_files(id) ON DELETE CASCADE,
+    size_bytes bigint NOT NULL,
+    sha256 text NOT NULL,
+    storage_key text NOT NULL,
+    uploaded_by uuid REFERENCES public.users(id) ON DELETE SET NULL,
+    uploaded_at timestamptz NOT NULL DEFAULT now()
+);
+
+CREATE INDEX IF NOT EXISTS idx_workspace_file_versions_file ON public.workspace_file_versions (file_id, uploaded_at DESC);
+
+CREATE TABLE IF NOT EXISTS public.workspace_folder_shares (
+    folder_id uuid NOT NULL REFERENCES public.workspace_folders(id) ON DELETE CASCADE,
+    user_id uuid NOT NULL REFERENCES public.users(id) ON DELETE CASCADE,
+    permission text NOT NULL CHECK (permission IN ('view', 'edit')),
+    granted_by uuid REFERENCES public.users(id) ON DELETE SET NULL,
+    granted_at timestamptz NOT NULL DEFAULT now(),
+    PRIMARY KEY (folder_id, user_id)
+);
+
+CREATE INDEX IF NOT EXISTS idx_workspace_folder_shares_user ON public.workspace_folder_shares (user_id);
