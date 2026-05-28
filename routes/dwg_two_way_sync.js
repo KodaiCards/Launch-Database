@@ -1,0 +1,389 @@
+const express = require('express');
+const { requireAuth } = require('../middleware/auth');
+const { logAudit } = require('../utils/audit');
+const crypto = require('crypto');
+const fs = require('fs');
+const path = require('path');
+
+const router = express.Router();
+
+// Middleware
+const authenticated = requireAuth();
+
+// Helpers
+function isValidUUID(str) {
+  const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+  return uuidRegex.test(str);
+}
+
+function sanitizeFilename(filename) {
+  // Reject path traversal attempts
+  if (filename.includes('..') || filename.startsWith('/')) {
+    throw new Error('Invalid filename: path traversal detected');
+  }
+  // Allow alphanumeric, spaces, dots, dashes, underscores
+  return filename.replace(/[^a-zA-Z0-9._\- ]/g, '_');
+}
+
+const ALLOWED_MIMES = ['application/vnd.dwg', 'application/vnd.dxf', 'application/vnd.google-earth.kml+xml', 'application/pdf', 'image/png', 'image/jpeg'];
+const MAX_FILE_SIZE = 50 * 1024 * 1024; // 50MB
+
+// GET /api/dwg-sync/v2/manifest?project_id=X
+router.get('/manifest', authenticated, async (req, res) => {
+  try {
+    const { project_id } = req.query;
+    if (!project_id || !isValidUUID(project_id)) {
+      return res.status(400).json({ error: 'Invalid project_id' });
+    }
+
+    const result = await req.db.query(
+      `SELECT id, filename, size_bytes, sha256, last_modified_at, 
+              (SELECT name FROM users WHERE id = last_modified_by) as last_modified_by_name
+       FROM dwg_canonical_files
+       WHERE project_id = $1
+       ORDER BY filename`,
+      [project_id]
+    );
+
+    res.json({
+      project_id,
+      files: result.rows.map(row => ({
+        id: row.id,
+        filename: row.filename,
+        size_bytes: row.size_bytes,
+        sha256: row.sha256,
+        last_modified_at: row.last_modified_at,
+        last_modified_by_name: row.last_modified_by_name
+      })),
+      server_time: new Date().toISOString()
+    });
+  } catch (err) {
+    console.error('GET /manifest error:', err);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+// POST /api/dwg-sync/v2/push (multipart)
+router.post('/push', authenticated, async (req, res) => {
+  try {
+    // Expect: project_id, filename, sha256 (fields); file (file)
+    const { project_id, filename, sha256 } = req.body;
+    
+    if (!project_id || !isValidUUID(project_id)) {
+      return res.status(400).json({ error: 'Invalid project_id' });
+    }
+    if (!filename || filename.trim().length === 0) {
+      return res.status(400).json({ error: 'Filename required' });
+    }
+    if (!sha256 || !/^[a-f0-9]{64}$/.test(sha256)) {
+      return res.status(400).json({ error: 'Invalid SHA256 hash' });
+    }
+    if (!req.file) {
+      return res.status(400).json({ error: 'No file uploaded' });
+    }
+
+    // Check file size
+    if (req.file.size > MAX_FILE_SIZE) {
+      fs.unlinkSync(req.file.path);
+      return res.status(413).json({ error: `File too large: max ${MAX_FILE_SIZE / 1024 / 1024}MB` });
+    }
+
+    // Check MIME type
+    if (!ALLOWED_MIMES.includes(req.file.mimetype)) {
+      fs.unlinkSync(req.file.path);
+      return res.status(400).json({ error: `File type not allowed: ${req.file.mimetype}` });
+    }
+
+    // Sanitize filename
+    const safeName = sanitizeFilename(filename);
+
+    // Verify project exists
+    const projectCheck = await req.db.query('SELECT id FROM projects WHERE id = $1', [project_id]);
+    if (projectCheck.rows.length === 0) {
+      fs.unlinkSync(req.file.path);
+      return res.status(404).json({ error: 'Project not found' });
+    }
+
+    // Generate storage key: dwg-staging/<user_id>/<project_id>/<uuid>.<ext>
+    const ext = path.extname(safeName) || '.dwg';
+    const uuid = require('crypto').randomUUID();
+    const uploadDir = path.join(process.env.UPLOAD_DIR || './uploads', 'dwg-staging', req.user.id, project_id);
+    const storageKey = path.join('dwg-staging', req.user.id, project_id, uuid + ext);
+    const fullPath = path.join(process.env.UPLOAD_DIR || './uploads', storageKey);
+
+    // Ensure directory exists
+    fs.mkdirSync(path.dirname(fullPath), { recursive: true });
+    fs.renameSync(req.file.path, fullPath);
+
+    // Mark any existing pending staging row for this (user, project, filename) as superseded
+    await req.db.query(
+      `UPDATE dwg_staging 
+       SET status = 'superseded'
+       WHERE user_id = $1 AND project_id = $2 AND filename = $3 AND status = 'pending'`,
+      [req.user.id, project_id, safeName]
+    );
+
+    // Insert new staging row
+    const insertResult = await req.db.query(
+      `INSERT INTO dwg_staging (user_id, project_id, filename, size_bytes, sha256, storage_key, status)
+       VALUES ($1, $2, $3, $4, $5, $6, 'pending')
+       RETURNING id, status`,
+      [req.user.id, project_id, safeName, req.file.size, sha256, storageKey]
+    );
+
+    const staging_id = insertResult.rows[0].id;
+    await logAudit({
+      db: req.db,
+      user_id: req.user.id,
+      action: 'dwg.push',
+      entity_type: 'dwg_staging',
+      entity_id: staging_id,
+      details: { project_id, filename: safeName, size_bytes: req.file.size }
+    });
+
+    res.json({ staging_id, status: 'pending' });
+  } catch (err) {
+    console.error('POST /push error:', err);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+// GET /api/dwg-sync/v2/staging?status=pending&project_id=X
+router.get('/staging', authenticated, async (req, res) => {
+  try {
+    const { status = 'pending', project_id, user_id } = req.query;
+    
+    // Authorization: regular users see own staging; admin/manager see all
+    const isManager = req.user && (req.user.roles?.includes('admin') || req.user.roles?.includes('manager'));
+    let filterUserID = req.user.id;
+    if (isManager && user_id && isValidUUID(user_id)) {
+      filterUserID = user_id;
+    } else if (!isManager && user_id && user_id !== req.user.id) {
+      return res.status(403).json({ error: 'Cannot view other users\' staging' });
+    }
+
+    let query = `
+      SELECT ds.id, ds.filename, p.name as project_name, ds.project_id, 
+             u.name as user_name, ds.user_id, ds.size_bytes, ds.sha256, 
+             ds.pushed_at, ds.status
+      FROM dwg_staging ds
+      JOIN projects p ON ds.project_id = p.id
+      JOIN users u ON ds.user_id = u.id
+      WHERE ds.status = $1 AND ds.user_id = $2
+    `;
+    const params = [status, filterUserID];
+
+    if (project_id && isValidUUID(project_id)) {
+      query += ` AND ds.project_id = $3`;
+      params.push(project_id);
+    }
+
+    query += ` ORDER BY ds.pushed_at DESC`;
+
+    const result = await req.db.query(query, params);
+    res.json(result.rows);
+  } catch (err) {
+    console.error('GET /staging error:', err);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+// POST /api/dwg-sync/v2/promote/:staging_id
+router.post('/promote/:staging_id', authenticated, async (req, res) => {
+  try {
+    const { staging_id } = req.params;
+    
+    // Authorization: admin/manager only
+    const isManager = req.user && (req.user.roles?.includes('admin') || req.user.roles?.includes('manager'));
+    if (!isManager) {
+      return res.status(403).json({ error: 'Admin/manager required' });
+    }
+
+    if (!isValidUUID(staging_id)) {
+      return res.status(400).json({ error: 'Invalid staging_id' });
+    }
+
+    // Fetch staging row
+    const stagingResult = await req.db.query(
+      'SELECT id, user_id, project_id, filename, size_bytes, sha256, storage_key FROM dwg_staging WHERE id = $1',
+      [staging_id]
+    );
+    if (stagingResult.rows.length === 0) {
+      return res.status(404).json({ error: 'Staging record not found' });
+    }
+
+    const staging = stagingResult.rows[0];
+    const { project_id, filename, size_bytes, sha256, storage_key } = staging;
+
+    // Begin transaction
+    await req.db.query('BEGIN');
+
+    try {
+      // Check if canonical exists for (project, filename)
+      const canonicalResult = await req.db.query(
+        'SELECT id FROM dwg_canonical_files WHERE project_id = $1 AND filename = $2 FOR UPDATE',
+        [project_id, filename]
+      );
+
+      let canonical_id;
+      if (canonicalResult.rows.length > 0) {
+        canonical_id = canonicalResult.rows[0].id;
+        // Snapshot the current canonical to dwg_versions
+        const currentCanonical = await req.db.query(
+          'SELECT size_bytes, sha256, storage_key, last_modified_by FROM dwg_canonical_files WHERE id = $1',
+          [canonical_id]
+        );
+        const cur = currentCanonical.rows[0];
+        await req.db.query(
+          `INSERT INTO dwg_versions (canonical_file_id, size_bytes, sha256, storage_key, uploaded_by)
+           VALUES ($1, $2, $3, $4, $5)`,
+          [canonical_id, cur.size_bytes, cur.sha256, cur.storage_key, cur.last_modified_by]
+        );
+
+        // Update canonical
+        await req.db.query(
+          `UPDATE dwg_canonical_files 
+           SET size_bytes = $1, sha256 = $2, storage_key = $3, last_modified_by = $4, last_modified_at = now()
+           WHERE id = $5`,
+          [size_bytes, sha256, storage_key, req.user.id, canonical_id]
+        );
+      } else {
+        // Create new canonical
+        const newCanonicalResult = await req.db.query(
+          `INSERT INTO dwg_canonical_files (project_id, filename, size_bytes, sha256, storage_key, last_modified_by)
+           VALUES ($1, $2, $3, $4, $5, $6)
+           RETURNING id`,
+          [project_id, filename, size_bytes, sha256, storage_key, req.user.id]
+        );
+        canonical_id = newCanonicalResult.rows[0].id;
+      }
+
+      // Purge old versions (keep only last 10)
+      await req.db.query(
+        `DELETE FROM dwg_versions 
+         WHERE canonical_file_id = $1 
+         AND id NOT IN (
+           SELECT id FROM dwg_versions 
+           WHERE canonical_file_id = $1 
+           ORDER BY uploaded_at DESC 
+           LIMIT 10
+         )`,
+        [canonical_id]
+      );
+
+      // Mark staging as promoted
+      await req.db.query(
+        `UPDATE dwg_staging SET status = 'promoted', reviewed_by = $1, reviewed_at = now() WHERE id = $2`,
+        [req.user.id, staging_id]
+      );
+
+      await req.db.query('COMMIT');
+
+      // Count versions
+      const versionCount = await req.db.query(
+        'SELECT COUNT(*) as cnt FROM dwg_versions WHERE canonical_file_id = $1',
+        [canonical_id]
+      );
+
+      await logAudit({
+        db: req.db,
+        user_id: req.user.id,
+        action: 'dwg.promote',
+        entity_type: 'dwg_canonical_files',
+        entity_id: canonical_id,
+        details: { staging_id, project_id, filename }
+      });
+
+      res.json({
+        canonical_file_id: canonical_id,
+        version_count: versionCount.rows[0].cnt
+      });
+    } catch (err) {
+      await req.db.query('ROLLBACK');
+      throw err;
+    }
+  } catch (err) {
+    console.error('POST /promote error:', err);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+// POST /api/dwg-sync/v2/reject/:staging_id
+router.post('/reject/:staging_id', authenticated, async (req, res) => {
+  try {
+    const { staging_id } = req.params;
+    const { notes } = req.body || {};
+
+    if (!isValidUUID(staging_id)) {
+      return res.status(400).json({ error: 'Invalid staging_id' });
+    }
+
+    // Verify staging exists
+    const stagingResult = await req.db.query(
+      'SELECT id FROM dwg_staging WHERE id = $1',
+      [staging_id]
+    );
+    if (stagingResult.rows.length === 0) {
+      return res.status(404).json({ error: 'Staging record not found' });
+    }
+
+    // Update status to rejected
+    const updateResult = await req.db.query(
+      `UPDATE dwg_staging 
+       SET status = 'rejected', reviewed_by = $1, reviewed_at = now(), review_notes = $2
+       WHERE id = $3
+       RETURNING *`,
+      [req.user.id, notes || null, staging_id]
+    );
+
+    await logAudit({
+      db: req.db,
+      user_id: req.user.id,
+      action: 'dwg.reject',
+      entity_type: 'dwg_staging',
+      entity_id: staging_id,
+      details: { notes }
+    });
+
+    res.json(updateResult.rows[0]);
+  } catch (err) {
+    console.error('POST /reject error:', err);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+// GET /api/dwg-sync/v2/download/:canonical_file_id
+router.get('/download/:canonical_file_id', authenticated, async (req, res) => {
+  try {
+    const { canonical_file_id } = req.params;
+
+    if (!isValidUUID(canonical_file_id)) {
+      return res.status(400).json({ error: 'Invalid canonical_file_id' });
+    }
+
+    // Fetch canonical file
+    const fileResult = await req.db.query(
+      'SELECT id, filename, storage_key FROM dwg_canonical_files WHERE id = $1',
+      [canonical_file_id]
+    );
+    if (fileResult.rows.length === 0) {
+      return res.status(404).json({ error: 'File not found' });
+    }
+
+    const file = fileResult.rows[0];
+    const fullPath = path.join(process.env.UPLOAD_DIR || './uploads', file.storage_key);
+
+    // Verify file exists
+    if (!fs.existsSync(fullPath)) {
+      return res.status(404).json({ error: 'File not found on disk' });
+    }
+
+    res.setHeader('Content-Disposition', `attachment; filename="${file.filename}"`);
+    res.download(fullPath);
+  } catch (err) {
+    console.error('GET /download error:', err);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+module.exports = router;

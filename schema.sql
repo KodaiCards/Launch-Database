@@ -3482,3 +3482,72 @@ ALTER TABLE ONLY public.client_approvals
     ADD CONSTRAINT IF NOT EXISTS client_approvals_requested_by_fkey FOREIGN KEY (requested_by) REFERENCES public.users(id) ON DELETE SET NULL;
 ALTER TABLE ONLY public.client_approvals
     ADD CONSTRAINT IF NOT EXISTS client_approvals_responded_by_client_user_id_fkey FOREIGN KEY (responded_by_client_user_id) REFERENCES public.client_users(id) ON DELETE SET NULL;
+
+-- Wave 52: DWG two-way sync tables
+CREATE TABLE IF NOT EXISTS public.dwg_canonical_files (
+    id uuid DEFAULT gen_random_uuid() NOT NULL,
+    project_id uuid NOT NULL,
+    filename text NOT NULL,
+    size_bytes bigint NOT NULL,
+    sha256 text NOT NULL,
+    storage_key text NOT NULL,
+    last_modified_by uuid,
+    last_modified_at timestamp with time zone DEFAULT now() NOT NULL,
+    created_at timestamp with time zone DEFAULT now() NOT NULL,
+    CONSTRAINT dwg_canonical_files_pkey PRIMARY KEY (id),
+    CONSTRAINT dwg_canonical_files_project_filename_key UNIQUE (project_id, filename)
+);
+
+CREATE INDEX IF NOT EXISTS idx_dwg_canonical_project ON public.dwg_canonical_files USING btree (project_id);
+CREATE INDEX IF NOT EXISTS idx_dwg_canonical_modified ON public.dwg_canonical_files USING btree (last_modified_at DESC);
+
+CREATE TABLE IF NOT EXISTS public.dwg_versions (
+    id uuid DEFAULT gen_random_uuid() NOT NULL,
+    canonical_file_id uuid NOT NULL,
+    size_bytes bigint NOT NULL,
+    sha256 text NOT NULL,
+    storage_key text NOT NULL,
+    uploaded_by uuid,
+    uploaded_at timestamp with time zone DEFAULT now() NOT NULL,
+    CONSTRAINT dwg_versions_pkey PRIMARY KEY (id)
+);
+
+CREATE INDEX IF NOT EXISTS idx_dwg_versions_canonical_uploaded ON public.dwg_versions USING btree (canonical_file_id, uploaded_at DESC);
+
+CREATE TABLE IF NOT EXISTS public.dwg_staging (
+    id uuid DEFAULT gen_random_uuid() NOT NULL,
+    user_id uuid NOT NULL,
+    project_id uuid NOT NULL,
+    filename text NOT NULL,
+    size_bytes bigint NOT NULL,
+    sha256 text NOT NULL,
+    storage_key text NOT NULL,
+    pushed_at timestamp with time zone DEFAULT now() NOT NULL,
+    status text DEFAULT 'pending'::text NOT NULL,
+    reviewed_by uuid,
+    reviewed_at timestamp with time zone,
+    review_notes text,
+    CONSTRAINT dwg_staging_pkey PRIMARY KEY (id),
+    CONSTRAINT dwg_staging_status_check CHECK ((status = ANY (ARRAY['pending'::text, 'promoted'::text, 'rejected'::text, 'superseded'::text]))),
+    CONSTRAINT dwg_staging_user_project_filename_pushed_key UNIQUE (user_id, project_id, filename, pushed_at)
+);
+
+CREATE INDEX IF NOT EXISTS idx_dwg_staging_pending ON public.dwg_staging USING btree (status, pushed_at DESC) WHERE (status = 'pending'::text);
+CREATE INDEX IF NOT EXISTS idx_dwg_staging_user ON public.dwg_staging USING btree (user_id, status, pushed_at DESC);
+CREATE INDEX IF NOT EXISTS idx_dwg_staging_project ON public.dwg_staging USING btree (project_id, status);
+
+-- Foreign keys
+ALTER TABLE ONLY public.dwg_canonical_files
+    ADD CONSTRAINT IF NOT EXISTS dwg_canonical_files_project_id_fkey FOREIGN KEY (project_id) REFERENCES public.projects(id) ON DELETE CASCADE;
+ALTER TABLE ONLY public.dwg_canonical_files
+    ADD CONSTRAINT IF NOT EXISTS dwg_canonical_files_last_modified_by_fkey FOREIGN KEY (last_modified_by) REFERENCES public.users(id) ON DELETE SET NULL;
+ALTER TABLE ONLY public.dwg_versions
+    ADD CONSTRAINT IF NOT EXISTS dwg_versions_canonical_file_id_fkey FOREIGN KEY (canonical_file_id) REFERENCES public.dwg_canonical_files(id) ON DELETE CASCADE;
+ALTER TABLE ONLY public.dwg_versions
+    ADD CONSTRAINT IF NOT EXISTS dwg_versions_uploaded_by_fkey FOREIGN KEY (uploaded_by) REFERENCES public.users(id) ON DELETE SET NULL;
+ALTER TABLE ONLY public.dwg_staging
+    ADD CONSTRAINT IF NOT EXISTS dwg_staging_user_id_fkey FOREIGN KEY (user_id) REFERENCES public.users(id) ON DELETE CASCADE;
+ALTER TABLE ONLY public.dwg_staging
+    ADD CONSTRAINT IF NOT EXISTS dwg_staging_project_id_fkey FOREIGN KEY (project_id) REFERENCES public.projects(id) ON DELETE CASCADE;
+ALTER TABLE ONLY public.dwg_staging
+    ADD CONSTRAINT IF NOT EXISTS dwg_staging_reviewed_by_fkey FOREIGN KEY (reviewed_by) REFERENCES public.users(id) ON DELETE SET NULL;
