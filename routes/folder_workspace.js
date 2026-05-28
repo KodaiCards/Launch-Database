@@ -131,7 +131,7 @@ function createFolderWorkspaceRoutes(pool) {
       if (root === 'user' || root === 'all') {
         // User's own home tree
         const userHomeResult = await pool.query(
-          'SELECT id FROM workspace_folders WHERE kind = $1 AND owner_user_id = $2 AND parent_id IS NULL',
+          'SELECT id FROM workspace_folders WHERE kind = $1 AND owner_user_id = $2 AND parent_id IS NULL AND deleted_at IS NULL',
           ['user_home', userId]
         );
 
@@ -145,7 +145,7 @@ function createFolderWorkspaceRoutes(pool) {
       if (root === 'shared' || root === 'all') {
         // Shared roots visible to caller
         const sharedResult = await pool.query(
-          "SELECT id FROM workspace_folders WHERE kind LIKE 'shared_%' AND parent_id IS NULL ORDER BY name"
+          "SELECT id FROM workspace_folders WHERE kind LIKE 'shared_%' AND parent_id IS NULL AND deleted_at IS NULL ORDER BY name"
         );
 
         for (const sharedRow of sharedResult.rows) {
@@ -159,7 +159,7 @@ function createFolderWorkspaceRoutes(pool) {
       if (root === 'all' && ['manager', 'admin'].includes(userRole)) {
         // Manager view: all users' home trees
         const allUsersResult = await pool.query(
-          'SELECT id, owner_user_id FROM workspace_folders WHERE kind = $1 AND parent_id IS NULL ORDER BY owner_user_id',
+          'SELECT id, owner_user_id FROM workspace_folders WHERE kind = $1 AND parent_id IS NULL AND deleted_at IS NULL ORDER BY owner_user_id',
           ['user_home']
         );
 
@@ -186,16 +186,16 @@ function createFolderWorkspaceRoutes(pool) {
     if (!perm.canRead) return null;
 
     const folderResult = await pool.query(
-      'SELECT id, parent_id, name, kind, owner_user_id, project_id, share_mode FROM workspace_folders WHERE id = $1',
+      'SELECT id, parent_id, name, kind, owner_user_id, project_id, share_mode FROM workspace_folders WHERE id = $1 AND deleted_at IS NULL',
       [folderId]
     );
 
     if (folderResult.rows.length === 0) return null;
     const folder = folderResult.rows[0];
 
-    // Get children
+    // Get children (active only)
     const childrenResult = await pool.query(
-      'SELECT id FROM workspace_folders WHERE parent_id = $1 ORDER BY name',
+      'SELECT id FROM workspace_folders WHERE parent_id = $1 AND deleted_at IS NULL ORDER BY name',
       [folderId]
     );
 
@@ -330,7 +330,7 @@ function createFolderWorkspaceRoutes(pool) {
 
   /**
    * DELETE /api/workspace/folders/:id
-   * Recursive delete (cannot delete user_home or shared_* roots)
+   * Recursive soft-delete (mark folder + descendants as deleted_at)
    */
   router.delete('/folders/:id', requireAuth(), async (req, res) => {
     try {
@@ -338,7 +338,7 @@ function createFolderWorkspaceRoutes(pool) {
       const userId = req.user.id;
 
       const folderResult = await pool.query(
-        'SELECT kind FROM workspace_folders WHERE id = $1',
+        'SELECT kind FROM workspace_folders WHERE id = $1 AND deleted_at IS NULL',
         [id]
       );
 
@@ -356,10 +356,36 @@ function createFolderWorkspaceRoutes(pool) {
         return res.status(403).json({ error: 'No permission to delete this folder' });
       }
 
-      await pool.query('DELETE FROM workspace_folders WHERE id = $1', [id]);
+      // Recursive soft-delete: mark folder + all descendants + their files
+      await pool.query(`
+        WITH RECURSIVE descendants AS (
+          SELECT id FROM workspace_folders WHERE id = $1
+          UNION ALL
+          SELECT f.id FROM workspace_folders f
+          JOIN descendants d ON f.parent_id = d.id
+        )
+        UPDATE workspace_folders
+        SET deleted_at = now(), deleted_by = $2
+        WHERE id IN (SELECT id FROM descendants)
+      `, [id, userId]);
+
+      // Also mark all files in deleted folders
+      await pool.query(`
+        UPDATE workspace_files
+        SET deleted_at = now(), deleted_by = $1
+        WHERE folder_id IN (
+          WITH RECURSIVE descendants AS (
+            SELECT id FROM workspace_folders WHERE id = $2
+            UNION ALL
+            SELECT f.id FROM workspace_folders f
+            JOIN descendants d ON f.parent_id = d.id
+          )
+          SELECT id FROM descendants
+        )
+      `, [userId, id]);
 
       await logAudit(req.user, {
-        action: 'workspace.folder_delete',
+        action: 'workspace.trash',
         entity_type: 'workspace_folder',
         entity_id: id
       });
@@ -481,7 +507,7 @@ function createFolderWorkspaceRoutes(pool) {
                 u.name as uploaded_by_name
          FROM workspace_files f
          LEFT JOIN users u ON f.uploaded_by = u.id
-         WHERE f.folder_id = $1
+         WHERE f.folder_id = $1 AND f.deleted_at IS NULL
          ORDER BY f.filename`,
         [id]
       );
@@ -512,14 +538,16 @@ function createFolderWorkspaceRoutes(pool) {
 
       // Query all files where filename ILIKE %q%, JOIN to folders
       // Use a recursive CTE to build folder_path strings
+      // Exclude trashed files and folders
       const { rows } = await pool.query(`
         WITH RECURSIVE folder_paths AS (
           SELECT id, name AS path, parent_id, kind, owner_user_id, share_mode, project_id
-          FROM workspace_folders WHERE parent_id IS NULL
+          FROM workspace_folders WHERE parent_id IS NULL AND deleted_at IS NULL
           UNION ALL
           SELECT f.id, fp.path || ' / ' || f.name, f.parent_id, f.kind, f.owner_user_id, f.share_mode, f.project_id
           FROM workspace_folders f
           JOIN folder_paths fp ON f.parent_id = fp.id
+          WHERE f.deleted_at IS NULL
         )
         SELECT
           wf.id AS file_id, wf.filename, wf.size_bytes, wf.uploaded_at,
@@ -527,7 +555,7 @@ function createFolderWorkspaceRoutes(pool) {
           (SELECT username FROM users WHERE id = wf.uploaded_by) AS uploaded_by_name
         FROM workspace_files wf
         JOIN folder_paths fp ON fp.id = wf.folder_id
-        WHERE wf.filename ILIKE $1
+        WHERE wf.filename ILIKE $1 AND wf.deleted_at IS NULL
         ORDER BY wf.uploaded_at DESC
         LIMIT $2
       `, ['%' + q + '%', limit * 3]); // over-fetch since we filter post-query
@@ -711,7 +739,7 @@ function createFolderWorkspaceRoutes(pool) {
 
   /**
    * DELETE /api/workspace/files/:id
-   * Hard delete file + storage
+   * Soft-delete file (mark deleted_at, keep storage file)
    */
   router.delete('/files/:id', requireAuth(), async (req, res) => {
     try {
@@ -719,7 +747,7 @@ function createFolderWorkspaceRoutes(pool) {
       const userId = req.user.id;
 
       const fileResult = await pool.query(
-        'SELECT folder_id, storage_key FROM workspace_files WHERE id = $1',
+        'SELECT folder_id FROM workspace_files WHERE id = $1 AND deleted_at IS NULL',
         [id]
       );
 
@@ -735,19 +763,14 @@ function createFolderWorkspaceRoutes(pool) {
         return res.status(403).json({ error: 'No permission to delete this file' });
       }
 
-      // Delete storage file
-      try {
-        await fs.unlink(file.storage_key);
-      } catch (fsErr) {
-        // Storage file may not exist; continue anyway
-        console.warn('Could not delete storage file:', file.storage_key, fsErr);
-      }
-
-      // Delete from DB (cascade handles versions)
-      await pool.query('DELETE FROM workspace_files WHERE id = $1', [id]);
+      // Soft delete: mark deleted_at, keep storage file
+      await pool.query(
+        'UPDATE workspace_files SET deleted_at = now(), deleted_by = $1 WHERE id = $2',
+        [userId, id]
+      );
 
       await logAudit(req.user, {
-        action: 'workspace.file_delete',
+        action: 'workspace.trash',
         entity_type: 'workspace_file',
         entity_id: id
       });
@@ -1026,6 +1049,267 @@ function createFolderWorkspaceRoutes(pool) {
     } catch (err) {
       console.error('GET /by-project/:project_id error:', err);
       res.status(500).json({ error: 'Failed to load project folders' });
+    }
+  });
+
+  /**
+   * GET /api/workspace/trash
+   * List trashed items visible to caller
+   * Managers/admins see all; others see only their own deletions
+   */
+  router.get('/trash', requireAuth(), async (req, res) => {
+    try {
+      const userId = req.user.id;
+      const isManager = ['admin', 'manager'].includes(req.user.role);
+
+      const [trashedFiles, trashedFolders] = await Promise.all([
+        pool.query(`
+          SELECT wf.id, wf.filename, wf.size_bytes, wf.deleted_at, wf.deleted_by,
+                 u.username AS deleted_by_name,
+                 wf.folder_id
+          FROM workspace_files wf
+          LEFT JOIN users u ON u.id = wf.deleted_by
+          WHERE wf.deleted_at IS NOT NULL
+          ${isManager ? '' : 'AND wf.deleted_by = $1'}
+          ORDER BY wf.deleted_at DESC
+          LIMIT 200
+        `, isManager ? [] : [userId]),
+        pool.query(`
+          SELECT id, name, deleted_at, deleted_by, parent_id, kind
+          FROM workspace_folders
+          WHERE deleted_at IS NOT NULL
+          ${isManager ? '' : 'AND deleted_by = $1'}
+          ORDER BY deleted_at DESC
+          LIMIT 200
+        `, isManager ? [] : [userId]),
+      ]);
+
+      res.json({
+        files: trashedFiles.rows,
+        folders: trashedFolders.rows
+      });
+    } catch (err) {
+      console.error('GET /trash error:', err);
+      res.status(500).json({ error: 'Failed to list trash' });
+    }
+  });
+
+  /**
+   * POST /api/workspace/files/:id/restore
+   * Restore trashed file (clear deleted_at + deleted_by)
+   */
+  router.post('/files/:id/restore', requireAuth(), async (req, res) => {
+    try {
+      const { id } = req.params;
+      const userId = req.user.id;
+
+      const fileResult = await pool.query(
+        'SELECT deleted_by FROM workspace_files WHERE id = $1 AND deleted_at IS NOT NULL',
+        [id]
+      );
+
+      if (fileResult.rows.length === 0) {
+        return res.status(404).json({ error: 'Trashed file not found' });
+      }
+
+      const file = fileResult.rows[0];
+      const isManager = ['admin', 'manager'].includes(req.user.role);
+
+      // Only the deleter or a manager can restore
+      if (!isManager && file.deleted_by !== userId) {
+        return res.status(403).json({ error: 'No permission to restore this file' });
+      }
+
+      const restored = await pool.query(
+        'UPDATE workspace_files SET deleted_at = NULL, deleted_by = NULL WHERE id = $1 RETURNING *',
+        [id]
+      );
+
+      await logAudit(req.user, {
+        action: 'workspace.restore',
+        entity_type: 'workspace_file',
+        entity_id: id
+      });
+
+      res.json(restored.rows[0]);
+    } catch (err) {
+      console.error('POST /files/:id/restore error:', err);
+      res.status(500).json({ error: 'Failed to restore file' });
+    }
+  });
+
+  /**
+   * POST /api/workspace/folders/:id/restore
+   * Restore trashed folder + all descendants + their files
+   */
+  router.post('/folders/:id/restore', requireAuth(), async (req, res) => {
+    try {
+      const { id } = req.params;
+      const userId = req.user.id;
+
+      const folderResult = await pool.query(
+        'SELECT deleted_by FROM workspace_folders WHERE id = $1 AND deleted_at IS NOT NULL',
+        [id]
+      );
+
+      if (folderResult.rows.length === 0) {
+        return res.status(404).json({ error: 'Trashed folder not found' });
+      }
+
+      const folder = folderResult.rows[0];
+      const isManager = ['admin', 'manager'].includes(req.user.role);
+
+      if (!isManager && folder.deleted_by !== userId) {
+        return res.status(403).json({ error: 'No permission to restore this folder' });
+      }
+
+      // Recursive restore: folder + descendants
+      await pool.query(`
+        WITH RECURSIVE descendants AS (
+          SELECT id FROM workspace_folders WHERE id = $1
+          UNION ALL
+          SELECT f.id FROM workspace_folders f
+          JOIN descendants d ON f.parent_id = d.id
+        )
+        UPDATE workspace_folders
+        SET deleted_at = NULL, deleted_by = NULL
+        WHERE id IN (SELECT id FROM descendants)
+      `, [id]);
+
+      // Also restore files in those folders
+      await pool.query(`
+        UPDATE workspace_files
+        SET deleted_at = NULL, deleted_by = NULL
+        WHERE folder_id IN (
+          WITH RECURSIVE descendants AS (
+            SELECT id FROM workspace_folders WHERE id = $1
+            UNION ALL
+            SELECT f.id FROM workspace_folders f
+            JOIN descendants d ON f.parent_id = d.id
+          )
+          SELECT id FROM descendants
+        )
+      `, [id]);
+
+      await logAudit(req.user, {
+        action: 'workspace.restore',
+        entity_type: 'workspace_folder',
+        entity_id: id
+      });
+
+      res.json({ success: true });
+    } catch (err) {
+      console.error('POST /folders/:id/restore error:', err);
+      res.status(500).json({ error: 'Failed to restore folder' });
+    }
+  });
+
+  /**
+   * DELETE /api/workspace/files/:id/purge
+   * Permanently hard-delete trashed file + storage
+   * Admin only
+   */
+  router.delete('/files/:id/purge', requireAuth(), async (req, res) => {
+    try {
+      const { id } = req.params;
+      const isAdmin = req.user.role === 'admin';
+
+      if (!isAdmin) {
+        return res.status(403).json({ error: 'Only admins can purge files' });
+      }
+
+      const fileResult = await pool.query(
+        'SELECT storage_key FROM workspace_files WHERE id = $1 AND deleted_at IS NOT NULL',
+        [id]
+      );
+
+      if (fileResult.rows.length === 0) {
+        return res.status(404).json({ error: 'Trashed file not found' });
+      }
+
+      const file = fileResult.rows[0];
+
+      // Delete storage file
+      try {
+        await fs.unlink(file.storage_key);
+      } catch (fsErr) {
+        console.warn('Could not delete storage file:', file.storage_key, fsErr);
+      }
+
+      // Hard delete from DB
+      await pool.query('DELETE FROM workspace_files WHERE id = $1', [id]);
+
+      await logAudit(req.user, {
+        action: 'workspace.purge',
+        entity_type: 'workspace_file',
+        entity_id: id
+      });
+
+      res.json({ success: true });
+    } catch (err) {
+      console.error('DELETE /files/:id/purge error:', err);
+      res.status(500).json({ error: 'Failed to purge file' });
+    }
+  });
+
+  /**
+   * POST /api/workspace/trash/purge-old
+   * Admin-only: hard-delete items trashed > 30 days ago
+   */
+  router.post('/trash/purge-old', requireAuth(), async (req, res) => {
+    try {
+      const isAdmin = req.user.role === 'admin';
+
+      if (!isAdmin) {
+        return res.status(403).json({ error: 'Only admins can purge old trash' });
+      }
+
+      const thirtyDaysAgo = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000);
+
+      // Get files to purge (storage cleanup)
+      const filesToPurge = await pool.query(
+        'SELECT storage_key FROM workspace_files WHERE deleted_at IS NOT NULL AND deleted_at < $1',
+        [thirtyDaysAgo]
+      );
+
+      // Delete storage files
+      let deletedCount = 0;
+      for (const file of filesToPurge.rows) {
+        try {
+          await fs.unlink(file.storage_key);
+          deletedCount++;
+        } catch (fsErr) {
+          console.warn('Could not delete storage file:', file.storage_key, fsErr);
+        }
+      }
+
+      // Hard delete from DB
+      const dbResult = await pool.query(
+        'DELETE FROM workspace_files WHERE deleted_at IS NOT NULL AND deleted_at < $1',
+        [thirtyDaysAgo]
+      );
+
+      // Also hard-delete trashed folders with no children (leaf folders)
+      await pool.query(`
+        DELETE FROM workspace_folders
+        WHERE deleted_at IS NOT NULL
+        AND deleted_at < $1
+        AND id NOT IN (SELECT DISTINCT parent_id FROM workspace_folders WHERE parent_id IS NOT NULL)
+      `, [thirtyDaysAgo]);
+
+      await logAudit(req.user, {
+        action: 'workspace.purge_old',
+        details: { files_purged: dbResult.rowCount, storage_files_deleted: deletedCount }
+      });
+
+      res.json({
+        success: true,
+        files_purged: dbResult.rowCount,
+        storage_files_deleted: deletedCount
+      });
+    } catch (err) {
+      console.error('POST /trash/purge-old error:', err);
+      res.status(500).json({ error: 'Failed to purge old trash' });
     }
   });
 

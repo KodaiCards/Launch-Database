@@ -3597,12 +3597,16 @@ CREATE TABLE IF NOT EXISTS public.workspace_folders (
     created_by uuid REFERENCES public.users(id) ON DELETE SET NULL,
     created_at timestamptz NOT NULL DEFAULT now(),
     updated_at timestamptz NOT NULL DEFAULT now(),
+    deleted_at timestamptz,
+    deleted_by uuid REFERENCES public.users(id) ON DELETE SET NULL,
     UNIQUE (parent_id, name)
 );
 
 CREATE INDEX IF NOT EXISTS idx_workspace_folders_parent ON public.workspace_folders (parent_id);
 CREATE INDEX IF NOT EXISTS idx_workspace_folders_owner ON public.workspace_folders (owner_user_id, kind);
 CREATE INDEX IF NOT EXISTS idx_workspace_folders_project ON public.workspace_folders (project_id) WHERE project_id IS NOT NULL;
+CREATE INDEX IF NOT EXISTS idx_workspace_folders_active ON public.workspace_folders (parent_id) WHERE deleted_at IS NULL;
+CREATE INDEX IF NOT EXISTS idx_workspace_folders_trash ON public.workspace_folders (deleted_at DESC) WHERE deleted_at IS NOT NULL;
 
 CREATE TABLE IF NOT EXISTS public.workspace_files (
     id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -3615,10 +3619,14 @@ CREATE TABLE IF NOT EXISTS public.workspace_files (
     uploaded_by uuid REFERENCES public.users(id) ON DELETE SET NULL,
     uploaded_at timestamptz NOT NULL DEFAULT now(),
     current_version_count int NOT NULL DEFAULT 1,
+    deleted_at timestamptz,
+    deleted_by uuid REFERENCES public.users(id) ON DELETE SET NULL,
     UNIQUE (folder_id, filename)
 );
 
 CREATE INDEX IF NOT EXISTS idx_workspace_files_folder ON public.workspace_files (folder_id);
+CREATE INDEX IF NOT EXISTS idx_workspace_files_active ON public.workspace_files (folder_id) WHERE deleted_at IS NULL;
+CREATE INDEX IF NOT EXISTS idx_workspace_files_trash ON public.workspace_files (deleted_at DESC) WHERE deleted_at IS NOT NULL;
 
 CREATE TABLE IF NOT EXISTS public.workspace_file_versions (
     id uuid PRIMARY KEY DEFAULT gen_random_uuid(),

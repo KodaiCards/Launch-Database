@@ -662,4 +662,237 @@ describe('Folder Workspace Backend (Wave 57)', function() {
     const hasSecret = hits.some(h => h.filename === 'secret-wave67.doc');
     assert.equal(hasSecret, false, 'User should not see files in private folders');
   });
+
+  // ===== Wave 68: Soft-delete + trash zone tests =====
+
+  describe('Wave 68: Soft-delete + trash', function() {
+    let trashFolderId, trashFileId;
+
+    it('DELETE file should soft-delete (set deleted_at)', async function() {
+      // Create a file in user's home
+      const createRes = await request(app)
+        .post(`/api/workspace/folders/${userHomeId}/files`)
+        .set('Authorization', authToken)
+        .field('filename', 'to-trash.txt')
+        .attach('file', Buffer.from('trash content'), 'to-trash.txt');
+
+      const fileId = createRes.body.file_id;
+      trashFileId = fileId;
+
+      // Delete it (soft-delete)
+      const delRes = await request(app)
+        .delete(`/api/workspace/files/${fileId}`)
+        .set('Authorization', authToken);
+
+      assert.equal(delRes.status, 200);
+      assert.equal(delRes.body.success, true);
+
+      // Verify it's marked deleted_at in DB
+      const dbRes = await pool.query(
+        'SELECT deleted_at, deleted_by FROM workspace_files WHERE id = $1',
+        [fileId]
+      );
+      assert.equal(dbRes.rows.length, 1);
+      assert.ok(dbRes.rows[0].deleted_at, 'deleted_at should be set');
+      assert.equal(dbRes.rows[0].deleted_by.toString(), testUserId.toString());
+    });
+
+    it('Deleted file should NOT appear in folder listing', async function() {
+      const listRes = await request(app)
+        .get(`/api/workspace/folders/${userHomeId}/files`)
+        .set('Authorization', authToken);
+
+      const hasTrash = listRes.body.some(f => f.id.toString() === trashFileId.toString());
+      assert.equal(hasTrash, false, 'Trashed file should not appear in listings');
+    });
+
+    it('GET /trash should list trashed items', async function() {
+      const res = await request(app)
+        .get('/api/workspace/trash')
+        .set('Authorization', authToken);
+
+      assert.equal(res.status, 200);
+      const hasTrash = res.body.files.some(f => f.id.toString() === trashFileId.toString());
+      assert.equal(hasTrash, true, 'Trashed file should appear in trash list');
+    });
+
+    it('POST /files/:id/restore should restore file', async function() {
+      const res = await request(app)
+        .post(`/api/workspace/files/${trashFileId}/restore`)
+        .set('Authorization', authToken);
+
+      assert.equal(res.status, 200);
+
+      // Verify deleted_at is cleared
+      const dbRes = await pool.query(
+        'SELECT deleted_at FROM workspace_files WHERE id = $1',
+        [trashFileId]
+      );
+      assert.equal(dbRes.rows[0].deleted_at, null, 'deleted_at should be NULL after restore');
+
+      // File should reappear in listings
+      const listRes = await request(app)
+        .get(`/api/workspace/folders/${userHomeId}/files`)
+        .set('Authorization', authToken);
+      const hasRestored = listRes.body.some(f => f.id.toString() === trashFileId.toString());
+      assert.equal(hasRestored, true, 'Restored file should reappear in listing');
+    });
+
+    it('DELETE folder should recursively soft-delete descendants', async function() {
+      // Create a folder structure: parent > child > file
+      const parentRes = await request(app)
+        .post(`/api/workspace/folders/${userHomeId}`)
+        .set('Authorization', authToken)
+        .send({ name: 'parent-to-trash', kind: 'regular' });
+      const parentId = parentRes.body.id;
+
+      const childRes = await request(app)
+        .post(`/api/workspace/folders/${parentId}`)
+        .set('Authorization', authToken)
+        .send({ name: 'child', kind: 'regular' });
+      const childId = childRes.body.id;
+
+      // Delete parent (should cascade to child)
+      const delRes = await request(app)
+        .delete(`/api/workspace/folders/${parentId}`)
+        .set('Authorization', authToken);
+      assert.equal(delRes.status, 200);
+
+      // Both parent and child should have deleted_at set
+      const parentDb = await pool.query(
+        'SELECT deleted_at FROM workspace_folders WHERE id = $1',
+        [parentId]
+      );
+      const childDb = await pool.query(
+        'SELECT deleted_at FROM workspace_folders WHERE id = $1',
+        [childId]
+      );
+      assert.ok(parentDb.rows[0].deleted_at, 'Parent deleted_at should be set');
+      assert.ok(childDb.rows[0].deleted_at, 'Child deleted_at should be set');
+
+      trashFolderId = parentId;
+    });
+
+    it('POST /folders/:id/restore should recursively restore folder + descendants', async function() {
+      const res = await request(app)
+        .post(`/api/workspace/folders/${trashFolderId}/restore`)
+        .set('Authorization', authToken);
+
+      assert.equal(res.status, 200);
+
+      // Verify both parent and child are restored
+      const parentDb = await pool.query(
+        'SELECT deleted_at FROM workspace_folders WHERE id = $1',
+        [trashFolderId]
+      );
+      assert.equal(parentDb.rows[0].deleted_at, null, 'Parent should be restored');
+    });
+
+    it('Non-deleter cannot restore another user\'s trash', async function() {
+      // Trash a file as testUser
+      const createRes = await request(app)
+        .post(`/api/workspace/folders/${userHomeId}/files`)
+        .set('Authorization', authToken)
+        .field('filename', 'not-mine-to-restore.txt')
+        .attach('file', Buffer.from('content'), 'not-mine-to-restore.txt');
+      const fileId = createRes.body.file_id;
+
+      const delRes = await request(app)
+        .delete(`/api/workspace/files/${fileId}`)
+        .set('Authorization', authToken);
+      assert.equal(delRes.status, 200);
+
+      // Try to restore as otherUser (non-manager)
+      const restoreRes = await request(app)
+        .post(`/api/workspace/files/${fileId}/restore`)
+        .set('Authorization', otherToken);
+
+      assert.equal(restoreRes.status, 403, 'Non-deleter should not restore');
+    });
+
+    it('Manager can restore any user\'s trash', async function() {
+      // Trash a file as testUser
+      const createRes = await request(app)
+        .post(`/api/workspace/folders/${userHomeId}/files`)
+        .set('Authorization', authToken)
+        .field('filename', 'manager-can-restore.txt')
+        .attach('file', Buffer.from('content'), 'manager-can-restore.txt');
+      const fileId = createRes.body.file_id;
+
+      const delRes = await request(app)
+        .delete(`/api/workspace/files/${fileId}`)
+        .set('Authorization', authToken);
+      assert.equal(delRes.status, 200);
+
+      // Manager restores it
+      const restoreRes = await request(app)
+        .post(`/api/workspace/files/${fileId}/restore`)
+        .set('Authorization', managerToken);
+
+      assert.equal(restoreRes.status, 200);
+    });
+
+    it('DELETE /files/:id/purge should hard-delete (admin only)', async function() {
+      // Create and trash a file
+      const createRes = await request(app)
+        .post(`/api/workspace/folders/${userHomeId}/files`)
+        .set('Authorization', authToken)
+        .field('filename', 'purge-me.txt')
+        .attach('file', Buffer.from('content'), 'purge-me.txt');
+      const fileId = createRes.body.file_id;
+
+      const delRes = await request(app)
+        .delete(`/api/workspace/files/${fileId}`)
+        .set('Authorization', authToken);
+      assert.equal(delRes.status, 200);
+
+      // Only admin can purge
+      const nonAdminRes = await request(app)
+        .delete(`/api/workspace/files/${fileId}/purge`)
+        .set('Authorization', authToken);
+      assert.equal(nonAdminRes.status, 403);
+
+      // Purge as admin
+      const adminToken = `Bearer ${Buffer.from(JSON.stringify({id: managerId, role: 'admin'})).toString('base64')}`;
+      const purgeRes = await request(app)
+        .delete(`/api/workspace/files/${fileId}/purge`)
+        .set('Authorization', adminToken);
+      assert.equal(purgeRes.status, 200);
+
+      // File should be completely gone
+      const dbRes = await pool.query(
+        'SELECT id FROM workspace_files WHERE id = $1',
+        [fileId]
+      );
+      assert.equal(dbRes.rows.length, 0, 'File should be hard-deleted');
+    });
+
+    it('POST /trash/purge-old should purge items > 30 days old (admin only)', async function() {
+      const adminToken = `Bearer ${Buffer.from(JSON.stringify({id: managerId, role: 'admin'})).toString('base64')}`;
+
+      // Manually insert an old trashed file
+      const oldDeletedAt = new Date(Date.now() - 31 * 24 * 60 * 60 * 1000);
+      const oldFileRes = await pool.query(
+        `INSERT INTO workspace_files (folder_id, filename, storage_key, deleted_at, deleted_by)
+         VALUES ($1, 'old-trash.txt', '/tmp/old', $2, $3) RETURNING id`,
+        [userHomeId, oldDeletedAt, testUserId]
+      );
+      const oldFileId = oldFileRes.rows[0].id;
+
+      // Purge old trash
+      const res = await request(app)
+        .post('/api/workspace/trash/purge-old')
+        .set('Authorization', adminToken);
+
+      assert.equal(res.status, 200);
+      assert.ok(res.body.files_purged > 0, 'Should purge old files');
+
+      // Verify old file is gone
+      const dbRes = await pool.query(
+        'SELECT id FROM workspace_files WHERE id = $1',
+        [oldFileId]
+      );
+      assert.equal(dbRes.rows.length, 0, 'Old trashed file should be purged');
+    });
+  });
 });
