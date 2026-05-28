@@ -841,6 +841,67 @@ function createFolderWorkspaceRoutes(pool) {
     }
   });
 
+  /**
+   * GET /api/workspace/by-project/:project_id
+   * Returns folders attached to a project + their immediate files (1 level deep).
+   * Response: { folders: [{id, name, share_mode, file_count, files: [{id, filename, size_bytes, uploaded_at, uploaded_by_name}]}] }
+   * Filters by visibility (caller must have canRead permission on each folder).
+   */
+  router.get('/by-project/:project_id', requireAuth(), async (req, res) => {
+    try {
+      const { project_id } = req.params;
+      const userId = req.user.id;
+      const userRole = req.user.role;
+
+      // Get all folders linked to this project
+      const foldersResult = await pool.query(
+        `SELECT id, name, share_mode FROM workspace_folders
+         WHERE project_id = $1 AND kind = 'regular'
+         ORDER BY name`,
+        [project_id]
+      );
+
+      const folders = [];
+
+      for (const folder of foldersResult.rows) {
+        // Check if caller has canRead permission on this folder
+        const perm = await getEffectivePermission(folder.id, userId, userRole);
+        if (!perm.canRead) {
+          continue; // Skip folders user cannot read
+        }
+
+        // Get immediate files (first 20)
+        const filesResult = await pool.query(
+          `SELECT id, filename, size_bytes, uploaded_at, uploaded_by_name
+           FROM workspace_files
+           WHERE folder_id = $1
+           ORDER BY filename
+           LIMIT 20`,
+          [folder.id]
+        );
+
+        // Get total file count
+        const countResult = await pool.query(
+          `SELECT COUNT(*) as count FROM workspace_files WHERE folder_id = $1`,
+          [folder.id]
+        );
+
+        folders.push({
+          id: folder.id,
+          name: folder.name,
+          share_mode: folder.share_mode,
+          file_count: parseInt(countResult.rows[0].count, 10),
+          files: filesResult.rows
+        });
+      }
+
+      res.json({ folders });
+    } catch (err) {
+      console.error('GET /by-project/:project_id error:', err);
+      res.status(500).json({ error: 'Failed to load project folders' });
+    }
+  });
+
   return router;
 }
 

@@ -362,4 +362,103 @@ describe('Folder Workspace Backend (Wave 57)', function() {
     assert.equal(createRes.status, 200);
     assert.equal(createRes.body.project_id, testProjectId);
   });
+
+  it('19. GET /api/workspace/by-project/:project_id returns folders attached to a project', async function() {
+    // Setup: create a test project + attach a folder to it
+    const projRes = await pool.query(
+      "INSERT INTO projects (name, client_id) VALUES ($1, NULL) RETURNING id",
+      ['Wave 61 Test Project']
+    );
+    const projectId = projRes.rows[0].id;
+
+    // Get user's home folder
+    const treeRes = await request(app)
+      .get('/api/workspace/tree?root=user')
+      .set('Authorization', authToken);
+    const homeId = treeRes.body.folders[0].id;
+
+    // Create a folder linked to the project
+    const folderRes = await request(app)
+      .post('/api/workspace/folders')
+      .set('Authorization', authToken)
+      .send({
+        name: 'Project Files',
+        parent_id: homeId,
+        project_id: projectId,
+        share_mode: 'shared_public'
+      });
+    assert.equal(folderRes.status, 200);
+    const folderId = folderRes.body.id;
+
+    // Get folders by project
+    const byProjRes = await request(app)
+      .get(`/api/workspace/by-project/${projectId}`)
+      .set('Authorization', authToken);
+
+    assert.equal(byProjRes.status, 200);
+    assert(Array.isArray(byProjRes.body.folders));
+    assert(byProjRes.body.folders.length > 0);
+
+    const folder = byProjRes.body.folders.find(f => f.id === folderId);
+    assert(folder);
+    assert.equal(folder.name, 'Project Files');
+    assert.equal(folder.share_mode, 'shared_public');
+    assert.equal(folder.file_count, 0);
+    assert(Array.isArray(folder.files));
+  });
+
+  it('20. GET /api/workspace/by-project/:project_id returns empty array if no folders linked', async function() {
+    // Create a project with no linked folders
+    const projRes = await pool.query(
+      "INSERT INTO projects (name, client_id) VALUES ($1, NULL) RETURNING id",
+      ['Empty Project']
+    );
+    const projectId = projRes.rows[0].id;
+
+    const byProjRes = await request(app)
+      .get(`/api/workspace/by-project/${projectId}`)
+      .set('Authorization', authToken);
+
+    assert.equal(byProjRes.status, 200);
+    assert(Array.isArray(byProjRes.body.folders));
+    assert.equal(byProjRes.body.folders.length, 0);
+  });
+
+  it('21. GET /api/workspace/by-project/:project_id filters by visibility (user cannot read private folder)', async function() {
+    // Setup: create a project + a private folder linked to it (owned by otherUser)
+    const projRes = await pool.query(
+      "INSERT INTO projects (name, client_id) VALUES ($1, NULL) RETURNING id",
+      ['Privacy Test Project']
+    );
+    const projectId = projRes.rows[0].id;
+
+    // Get otherUser's home folder
+    const otherTreeRes = await request(app)
+      .get('/api/workspace/tree?root=user')
+      .set('Authorization', otherToken);
+    const otherHomeId = otherTreeRes.body.folders[0].id;
+
+    // Create a private folder in otherUser's home, linked to the project
+    const folderRes = await request(app)
+      .post('/api/workspace/folders')
+      .set('Authorization', otherToken)
+      .send({
+        name: 'Private Project Folder',
+        parent_id: otherHomeId,
+        project_id: projectId,
+        share_mode: 'private'
+      });
+    assert.equal(folderRes.status, 200);
+
+    // testUser attempts to get folders by project — should NOT see the private folder
+    const byProjRes = await request(app)
+      .get(`/api/workspace/by-project/${projectId}`)
+      .set('Authorization', authToken);
+
+    assert.equal(byProjRes.status, 200);
+    assert(Array.isArray(byProjRes.body.folders));
+    // Should be empty (or not contain the private folder)
+    const hasPrivate = byProjRes.body.folders.some(f => f.name === 'Private Project Folder');
+    assert.equal(hasPrivate, false);
+  });
 });

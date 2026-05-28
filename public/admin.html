@@ -3003,6 +3003,7 @@ body.demo-blur .lf-financial:hover{filter:blur(0)}
 <script src="/js/projects_tab.js?v=w11"></script>
 <script src="/js/audit_log_admin.js"></script>
 <script src="/js/training_admin.js"></script>
+<script src="/js/admin_project_files.js"></script>
 
 <script>
 
@@ -7604,6 +7605,20 @@ function renderProjectDetail(data, month, year) {
       </tr>`).join('')}</tbody></table></div>`;
   }
 
+  // ── Workspace Files (Wave 61: project-linked folders)
+  // Async-loaded by admin_project_files.js
+  html += `<div class="card" style="margin-top:14px">
+    <div class="card-header">
+      <span class="card-title">Files <span id="proj-files-count" style="color:var(--text-muted);font-weight:400;font-size:13px">(0)</span></span>
+    </div>
+    <div class="card-body" id="proj-files-list">
+      <p style="font-size:0.85em;color:var(--text-muted);margin:0">
+        Workspace folders attached to this project.
+        <a href="/workspace/" target="_blank" style="color:var(--primary)">Manage in the Workspace tab</a>.
+      </p>
+    </div>
+  </div>`;
+
   // ── Notes
   if (p.notes) {
     html += `<div class="card" style="margin-top:14px"><div class="card-header"><span class="card-title">Notes</span></div>
@@ -7611,6 +7626,11 @@ function renderProjectDetail(data, month, year) {
   }
 
   document.getElementById('pd-body').innerHTML = html;
+
+  // Load project files asynchronously after detail renders
+  if (window.AdminProjectFiles && typeof window.AdminProjectFiles.load === 'function') {
+    window.AdminProjectFiles.load(p.id).catch(err => console.error('Failed to load project files:', err));
+  }
 }
 
 // Used by the month switcher tabs at the top of the project detail popup.
