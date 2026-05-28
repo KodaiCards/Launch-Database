@@ -22,6 +22,7 @@ const { v4: uuidv4 } = require('uuid');
 const { csvStage, CSV_STAGE_TTL_MS } = require('./_csv_stage');
 const { snapHoursToQuarter } = require('./_helpers');
 const { updateProjectHours } = require('./_helpers');
+const { logAudit } = require('./_audit');
 
 // ─── Upload concurrency semaphore ─────────────────────────────────────────
 // XLSX.readFile has no async API; limit concurrent uploads so a burst of
@@ -1183,6 +1184,22 @@ module.exports = function installHoursCsvRoutes(app, pool, mw) {
         queued++;
       }
       await client.query('COMMIT');
+
+      try {
+        await logAudit(pool, {
+          req,
+          action: 'created',
+          entity_type: 'csv_review_queue',
+          entity_id: null,
+          before: null,
+          after: { queued, csv_filename: csv_filename || null, row_count: unmatchedRows.length },
+          source: 'csv_review',
+          meta: { reason: 'Unmatched rows from CSV import queued for manual review' }
+        });
+      } catch (auditErr) {
+        console.error('[csv-queue-unmatched:audit]', auditErr && auditErr.message);
+      }
+
       res.json({ ok: true, queued });
     } catch (e) {
       await client.query('ROLLBACK');
@@ -1316,6 +1333,22 @@ module.exports = function installHoursCsvRoutes(app, pool, mw) {
         [req.user?.id || null, req.body?.notes || null, req.params.id]
       );
       if (!result.rows.length) return res.status(404).json({ error: 'Queued row not found or not pending' });
+
+      try {
+        await logAudit(pool, {
+          req,
+          action: 'updated',
+          entity_type: 'csv_review_queue',
+          entity_id: req.params.id,
+          before: { status: 'pending' },
+          after: { status: 'discarded', notes: req.body?.notes || null },
+          source: 'csv_review',
+          meta: { reason: 'Queued CSV row discarded by admin' }
+        });
+      } catch (auditErr) {
+        console.error('[csv-review-queue:discard:audit]', auditErr && auditErr.message);
+      }
+
       res.json({ ok: true });
     } catch (e) {
       console.error('[csv-review-queue:discard]', e && e.message);

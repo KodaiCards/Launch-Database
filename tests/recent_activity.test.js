@@ -88,4 +88,45 @@ describe('Recent Activity Route', () => {
     assert(typeof data.total_today === 'number');
     assert(data.total_today >= 0);
   });
+
+  it('GET /api/admin/recent-activity includes audit_log events', async function () {
+    this.timeout(5000);
+    // Insert a test audit_log record
+    await pool.query(`
+      INSERT INTO audit_log (actor_username, action, entity_type, entity_id, source, at)
+      VALUES ($1, $2, $3, $4, $5, now())
+    `, ['test-user', 'project.create', 'project', 'test-proj-id', 'api']);
+
+    const res = await fetch(`${baseUrl}/api/admin/recent-activity?limit=50`, { credentials: 'include' });
+    assert.strictEqual(res.status, 200);
+    const data = await res.json();
+    assert(Array.isArray(data.activities));
+
+    // Check for the audit event in the response
+    const auditEvent = data.activities.find(a => a.type === 'audit' && a.action === 'project.create');
+    assert(auditEvent, 'Should include audit_log event with type=audit and action=project.create');
+    assert.strictEqual(auditEvent.actor_name, 'test-user');
+  });
+
+  it('GET /api/admin/recent-activity filters audit events by action', async function () {
+    this.timeout(5000);
+    // Insert multiple audit events, some filtered and some not
+    await pool.query(`
+      INSERT INTO audit_log (actor_username, action, entity_type, entity_id, source, at)
+      VALUES
+        ($1, $2, $3, $4, $5, now()),
+        ($1, $6, $3, $4, $5, now())
+    `, ['test-user', 'invoice.generate', 'invoice', 'inv-123', 'api', 'ai_assistant.execute']);
+
+    const res = await fetch(`${baseUrl}/api/admin/recent-activity?limit=50`, { credentials: 'include' });
+    assert.strictEqual(res.status, 200);
+    const data = await res.json();
+
+    // Should include invoice.generate but not ai_assistant.execute
+    const invoiceEvent = data.activities.find(a => a.type === 'audit' && a.action === 'invoice.generate');
+    assert(invoiceEvent, 'Should include invoice.generate audit event');
+
+    const assistantEvent = data.activities.find(a => a.type === 'audit' && a.action === 'ai_assistant.execute');
+    assert(!assistantEvent, 'Should NOT include ai_assistant.execute audit event (filtered out)');
+  });
 });

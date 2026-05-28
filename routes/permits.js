@@ -11,6 +11,7 @@
 
 const PERMIT_STAGES = ['potential','started','submitted','approved','checklist'];
 const { broadcast } = require('./_sse');
+const { logAudit } = require('./_audit');
 
 module.exports = function installPermitsRoutes(app, pool, mw) {
   const { upload } = mw;
@@ -74,6 +75,16 @@ module.exports = function installPermitsRoutes(app, pool, mw) {
       );
       broadcast('admin', 'permit_updated', { project_id: projectId, stage: nextStage });
       broadcast('team:permitting', 'permit_updated', { project_id: projectId, stage: nextStage });
+      await logAudit(pool, {
+        req,
+        action: 'permit.stage_advance',
+        entity_type: 'project',
+        entity_id: projectId,
+        before: { stage: currentStage },
+        after: { stage: nextStage, notes },
+        source: 'admin_ui',
+        meta: { previous_stage: currentStage, next_stage: nextStage },
+      });
       res.json({ previous: currentStage, current: nextStage });
     } catch (e) {
       console.error('[permits:advance]', e && e.message);
@@ -109,6 +120,16 @@ module.exports = function installPermitsRoutes(app, pool, mw) {
       );
       broadcast('admin', 'permit_updated', { project_id: projectId, stage: prevStage });
       broadcast('team:permitting', 'permit_updated', { project_id: projectId, stage: prevStage });
+      await logAudit(pool, {
+        req,
+        action: 'permit.stage_regress',
+        entity_type: 'project',
+        entity_id: projectId,
+        before: { stage: currentStage },
+        after: { stage: prevStage },
+        source: 'admin_ui',
+        meta: { regressed_from: currentStage, regressed_to: prevStage },
+      });
       res.json({ previous: currentStage, current: prevStage });
     } catch (e) {
       console.error('[permits:regress]', e && e.message);
@@ -132,6 +153,16 @@ module.exports = function installPermitsRoutes(app, pool, mw) {
       `, [req.params.projectId, doc_type, req.file.originalname, req.file.filename, req.file.size, revision_number || 1, uploadedBy, notes]);
       broadcast('admin', 'permit_updated', { project_id: req.params.projectId, doc_added: true });
       broadcast('team:permitting', 'permit_updated', { project_id: req.params.projectId, doc_added: true });
+      await logAudit(pool, {
+        req,
+        action: 'permit.document_upload',
+        entity_type: 'permit_document',
+        entity_id: rows[0].id,
+        before: null,
+        after: { doc_type, file_name: req.file.originalname, file_size: req.file.size, notes },
+        source: 'admin_ui',
+        meta: { project_id: req.params.projectId, revision: revision_number || 1 },
+      });
       res.json(rows[0]);
     } catch (e) {
       console.error('[permits:upload-document]', e && e.message);
