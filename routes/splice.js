@@ -77,6 +77,7 @@ function _removeSseClient(projectId, res) {
 // Phase 2A #2 — validation rule engine. Pure functions over the hydrate;
 // no DB access, cheap to call on every save.
 const { validateProject } = require('./_splice_validation');
+const { logAudit } = require('./_audit');
 
 const crypto = require('crypto');
 
@@ -295,6 +296,9 @@ module.exports = function installSpliceRoutes(app, pool, mw) {
 
   app.get('/api/splice/projects', requireAuth(), async (req, res) => {
     try {
+      // MED-8: cap result set; client can paginate via ?offset=N&limit=N (max 500).
+      const limit  = Math.min(500, Math.max(1, parseInt(req.query.limit,  10) || 200));
+      const offset = Math.max(0,             parseInt(req.query.offset, 10) || 0);
       const { rows } = await pool.query(`
         SELECT
           p.*,
@@ -309,7 +313,8 @@ module.exports = function installSpliceRoutes(app, pool, mw) {
         FROM splice_projects p
         LEFT JOIN staff s ON s.id = p.designer_id
         ORDER BY p.updated_at DESC, p.created_at DESC
-      `);
+        LIMIT $1 OFFSET $2
+      `, [limit, offset]);
       res.json(rows);
     } catch (e) { console.error('[splice:list-projects]', e && e.message); res.status(500).json({ error: 'Failed to list splice projects.' }); }
   });
@@ -327,6 +332,8 @@ module.exports = function installSpliceRoutes(app, pool, mw) {
          RETURNING *`,
         [String(name).trim(), designerId, notes || null]
       );
+      logAudit(pool, { req, action: 'create', entity_type: 'splice_project', entity_id: rows[0].id,
+        after: { name: rows[0].name }, source: 'splice_api' });
       res.json(rows[0]);
     } catch (e) { console.error('[splice:create-project]', e && e.message); res.status(500).json({ error: 'Failed to create splice project.' }); }
   });
@@ -712,6 +719,8 @@ module.exports = function installSpliceRoutes(app, pool, mw) {
     try {
       const r = await pool.query('DELETE FROM splice_projects WHERE id = $1', [req.params.id]);
       if (!r.rowCount) return res.status(404).json({ error: 'Project not found' });
+      logAudit(pool, { req, action: 'delete', entity_type: 'splice_project', entity_id: req.params.id,
+        source: 'splice_api' });
       _broadcast(req.params.id, 'project_deleted', { id: req.params.id });
       res.json({ ok: true });
     } catch (e) { console.error('[splice:delete-project]', e && e.message); res.status(500).json({ error: 'Failed to delete splice project.' }); }
@@ -751,6 +760,8 @@ module.exports = function installSpliceRoutes(app, pool, mw) {
          RETURNING locked_by_staff_id, locked_by_name, locked_at`,
         [projectId, staffId, name]
       );
+      logAudit(pool, { req, action: 'lock', entity_type: 'splice_project', entity_id: projectId,
+        after: { locked_by: name }, source: 'splice_api' });
       _broadcast(projectId, 'lock_acquired', rows[0]);
       res.json({ ok: true, ...rows[0] });
     } catch (e) { console.error('[splice:acquire-lock]', e && e.message); res.status(500).json({ error: 'Failed to acquire project lock.' }); }
@@ -789,6 +800,7 @@ module.exports = function installSpliceRoutes(app, pool, mw) {
       const r = await pool.query(sql, params);
       if (!r.rowCount) return res.status(409).json({ error: 'Lock not held by you' });
       _broadcast(req.params.id, 'lock_released', { by: staffId });
+      logAudit(pool, { req, action: 'unlock', entity_type: 'splice_project', entity_id: req.params.id, source: 'splice_api' });
       res.json({ ok: true });
     } catch (e) { console.error('[splice:release-lock]', e && e.message); res.status(500).json({ error: 'Failed to release project lock.' }); }
   });
@@ -818,6 +830,7 @@ module.exports = function installSpliceRoutes(app, pool, mw) {
         [req.params.id, staffId, name]
       );
       _broadcast(req.params.id, 'lock_taken_over', rows[0]);
+      logAudit(pool, { req, action: 'lock_takeover', entity_type: 'splice_project', entity_id: req.params.id, after: { locked_by: name }, source: 'splice_api' });
       res.json({ ok: true, ...rows[0] });
     } catch (e) { console.error('[splice:take-over-lock]', e && e.message); res.status(500).json({ error: 'Failed to take over project lock.' }); }
   });
@@ -1367,34 +1380,50 @@ module.exports = function installSpliceRoutes(app, pool, mw) {
     if (!['fusion', 'mechanical'].includes(splice_type)) {
       return res.status(400).json({ error: `splice_type must be 'fusion' or 'mechanical'` });
     }
+    // MED-5: use a transaction with SELECT FOR UPDATE OF t to prevent TOCTOU
+    // race where two concurrent requests both pass the capacity check and
+    // both insert, exceeding tray capacity.
+    const client = await pool.connect();
     try {
-      const tray = await pool.query(
+      await client.query('BEGIN');
+      const tray = await client.query(
         `SELECT t.id, t.closure_id, cl.tray_capacity, l.project_id
          FROM splice_trays t
          JOIN splice_closures cl ON cl.id = t.closure_id
          JOIN splice_locations l ON l.id = cl.location_id
-         WHERE t.id = $1`,
+         WHERE t.id = $1
+         FOR UPDATE OF t`,
         [req.params.id]
       );
-      if (!tray.rows.length) return res.status(404).json({ error: 'Tray not found' });
+      if (!tray.rows.length) {
+        await client.query('ROLLBACK');
+        return res.status(404).json({ error: 'Tray not found' });
+      }
 
-      const used = await pool.query(`SELECT COUNT(*)::int AS n FROM splices WHERE tray_id = $1`, [req.params.id]);
+      const used = await client.query(`SELECT COUNT(*)::int AS n FROM splices WHERE tray_id = $1`, [req.params.id]);
       if (used.rows[0].n >= tray.rows[0].tray_capacity) {
+        await client.query('ROLLBACK');
         return res.status(409).json({
           error: `Tray is at capacity (${tray.rows[0].tray_capacity}); pick another tray or raise capacity`,
         });
       }
 
-      const { rows } = await pool.query(
+      const { rows } = await client.query(
         `INSERT INTO splices (tray_id, fiber_a_id, fiber_b_id, splice_type)
          VALUES ($1, $2, $3, $4)
          RETURNING *`,
         [req.params.id, fiber_a_id, fiber_b_id, splice_type]
       );
+      await client.query('COMMIT');
       _bumpProjectMtime(pool, tray.rows[0].project_id);
       _broadcast(tray.rows[0].project_id, 'splice_added', { splice: rows[0] });
       res.json(rows[0]);
-    } catch (e) { console.error('[splice:add-splice]', e && e.message); res.status(500).json({ error: 'Failed to add splice.' }); }
+    } catch (e) {
+      try { await client.query('ROLLBACK'); } catch {}
+      console.error('[splice:add-splice]', e && e.message); res.status(500).json({ error: 'Failed to add splice.' });
+    } finally {
+      client.release();
+    }
   });
 
   // 5.B.3 — Trayless splice endpoint: splice anchored to a closure or
@@ -2747,6 +2776,8 @@ module.exports = function installSpliceRoutes(app, pool, mw) {
         reverted_to_label:   target.label || null,
         reverted_at:         new Date().toISOString(),
       });
+      logAudit(pool, { req, action: 'undo', entity_type: 'splice_project', entity_id: projectId,
+        after: { reverted_to_version: target.version_number, reverted_to_label: target.label || null }, source: 'splice_api' });
 
       res.json({
         ok: true,
@@ -3407,6 +3438,9 @@ module.exports = function installSpliceRoutes(app, pool, mw) {
 
     let inserted = 0;
     let autoBound = 0;
+    // MED-3: collect inserts into a batch and commit atomically so a crash
+    // mid-loop can't leave a partial set of loss records in the DB.
+    const pendingInserts = [];
 
     for (const rec of records) {
       const gpsLat  = rec.gps?.latitude  ?? null;
@@ -3478,33 +3512,51 @@ module.exports = function installSpliceRoutes(app, pool, mw) {
 
       if (bindMethod === 'auto') autoBound++;
 
-      await pool.query(
-        `INSERT INTO splice_loss_records
-           (project_id, splice_id, closure_id, location_id,
-            source, splicer_serial, operator_name,
-            splice_loss_db, measured_at, gps_lat, gps_lon,
-            bind_method, raw_payload_jsonb,
-            uploaded_by_user_id, field_token)
-         VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15)`,
-        [
-          projectId,
-          bindSpliceId  || null,
-          bindClosureId || null,
-          bindLocationId || null,
-          'fujikura_splice_plus',
-          serial,
-          opName,
-          lossDb != null ? Number(lossDb) : null,
-          measAt || null,
-          gpsLat != null ? Number(gpsLat) : null,
-          gpsLon != null ? Number(gpsLon) : null,
-          bindMethod || null,
-          JSON.stringify(rec),
-          userId || null,
-          fieldToken || null,
-        ]
-      );
+      pendingInserts.push([
+        projectId,
+        bindSpliceId  || null,
+        bindClosureId || null,
+        bindLocationId || null,
+        'fujikura_splice_plus',
+        serial,
+        opName,
+        lossDb != null ? Number(lossDb) : null,
+        measAt || null,
+        gpsLat != null ? Number(gpsLat) : null,
+        gpsLon != null ? Number(gpsLon) : null,
+        bindMethod || null,
+        JSON.stringify(rec),
+        userId || null,
+        fieldToken || null,
+      ]);
       inserted++;
+    }
+
+    // Commit all inserts atomically so a mid-batch failure never leaves
+    // partial loss records that could skew splice-loss analytics.
+    if (pendingInserts.length > 0) {
+      const txClient = await pool.connect();
+      try {
+        await txClient.query('BEGIN');
+        for (const params of pendingInserts) {
+          await txClient.query(
+            `INSERT INTO splice_loss_records
+               (project_id, splice_id, closure_id, location_id,
+                source, splicer_serial, operator_name,
+                splice_loss_db, measured_at, gps_lat, gps_lon,
+                bind_method, raw_payload_jsonb,
+                uploaded_by_user_id, field_token)
+             VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15)`,
+            params
+          );
+        }
+        await txClient.query('COMMIT');
+      } catch (e) {
+        try { await txClient.query('ROLLBACK'); } catch {}
+        throw e;
+      } finally {
+        txClient.release();
+      }
     }
 
     return { inserted, auto_bound: autoBound, unbound: inserted - autoBound };
@@ -3780,7 +3832,10 @@ module.exports = function installSpliceRoutes(app, pool, mw) {
     // 2 consecutive failed ticks, terminate the channel (fail-closed) — the
     // client can reconnect once the DB is back, and the reconnect re-runs
     // authMiddleware end-to-end. A single transient failure is still tolerated.
+    // MED-6: also track total DB errors to close channels that fail intermittently
+    // (alternating success/failure) and would never hit the consecutive-2 threshold.
     let consecutiveDbErrors = 0;
+    let totalDbErrors = 0;
     // Keep-alive ping every 25s with session re-validation so deactivated
     // or logged-out users stop receiving events within one heartbeat interval.
     const pingTimer = setInterval(async () => {
@@ -3809,11 +3864,13 @@ module.exports = function installSpliceRoutes(app, pool, mw) {
           consecutiveDbErrors = 0;
         } catch (dbErr) {
           // Transient DB error — log and tolerate ONE tick. On the second
-          // consecutive failure, fail-closed: terminate the channel so a
-          // logout during sustained DB degradation isn't left dangling.
+          // consecutive failure OR 5th total failure (alternating pattern),
+          // fail-closed: terminate the channel so a logout during sustained
+          // DB degradation isn't left dangling.
           console.error('[splice:SSE:revalidate]', dbErr && dbErr.message);
           consecutiveDbErrors++;
-          if (consecutiveDbErrors >= 2) {
+          totalDbErrors++;
+          if (consecutiveDbErrors >= 2 || totalDbErrors >= 5) {
             try {
               res.write(`event: session_invalid\ndata: ${JSON.stringify({ reason: 'revalidate_unavailable' })}\n\n`);
             } catch {}
@@ -3964,6 +4021,7 @@ module.exports = function installSpliceRoutes(app, pool, mw) {
           'Content-Type': 'application/pdf',
           'Content-Disposition': `inline; filename="${filename}"`,
         });
+        logAudit(pool, { req, action: 'export_pdf', entity_type: 'splice_project', entity_id: req.params.id, source: 'splice_api' });
         res.send(pdf);
       } finally {
         await releasePage(page);
@@ -4042,9 +4100,12 @@ module.exports = function installSpliceRoutes(app, pool, mw) {
     upload.single('file')(req, res, next);
   };
 
+  // MED-2: requireAuth + requireSpliceAccess MUST run before _designImportMiddleware
+  // to prevent unauthenticated callers from forcing a 25 MB body parse (DoS vector).
   app.post('/api/splice/projects/:id/imports',
-    _designImportMiddleware,
     requireAuth(),
+    requireSpliceAccess(req => req.params.id),
+    _designImportMiddleware,
     async (req, res) => {
       const projectId = req.params.id;
       const file = req.file;
@@ -4245,6 +4306,8 @@ module.exports = function installSpliceRoutes(app, pool, mw) {
       _broadcast(projectId, 'design_import_applied', {
         import_id: importId, applied: appliedCount, status: finalStatus,
       });
+      logAudit(pool, { req, action: 'design_import_apply', entity_type: 'splice_project', entity_id: projectId,
+        after: { import_id: importId, applied: appliedCount, status: finalStatus }, source: 'splice_api' });
       res.json({ ok: true, applied: appliedCount, status: finalStatus });
     } catch (e) {
       try { await client.query('ROLLBACK'); } catch {}
