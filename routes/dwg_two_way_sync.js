@@ -1,14 +1,11 @@
-const express = require('express');
-const { requireAuth } = require('../middleware/auth');
-const { logAudit } = require('../utils/audit');
+const { logAudit } = require('./_audit');
 const crypto = require('crypto');
 const fs = require('fs');
 const path = require('path');
 
-const router = express.Router();
-
-// Middleware
-const authenticated = requireAuth();
+module.exports = function installDwgSyncRoutes(app, pool, mw) {
+  const requireAuth = (mw && mw.requireAuth) || ((req, res, next) => next());
+  const requireManagerOrAdmin = (mw && mw.requireManagerOrAdmin) || ((req, res, next) => next());
 
 // Helpers
 function isValidUUID(str) {
@@ -29,15 +26,15 @@ const ALLOWED_MIMES = ['application/vnd.dwg', 'application/vnd.dxf', 'applicatio
 const MAX_FILE_SIZE = 50 * 1024 * 1024; // 50MB
 
 // GET /api/dwg-sync/v2/manifest?project_id=X
-router.get('/manifest', authenticated, async (req, res) => {
+app.get('/api/dwg-sync/v2/manifest', requireAuth(), async (req, res) => {
   try {
     const { project_id } = req.query;
     if (!project_id || !isValidUUID(project_id)) {
       return res.status(400).json({ error: 'Invalid project_id' });
     }
 
-    const result = await req.db.query(
-      `SELECT id, filename, size_bytes, sha256, last_modified_at, 
+    const result = await pool.query(
+      `SELECT id, filename, size_bytes, sha256, last_modified_at,
               (SELECT name FROM users WHERE id = last_modified_by) as last_modified_by_name
        FROM dwg_canonical_files
        WHERE project_id = $1
@@ -64,7 +61,9 @@ router.get('/manifest', authenticated, async (req, res) => {
 });
 
 // POST /api/dwg-sync/v2/push (multipart)
-router.post('/push', authenticated, async (req, res) => {
+// Note: multer configured in server.js as 'upload' middleware; passed via mw.upload if available
+const upload = (mw && mw.upload) || ((req, res, next) => next());
+app.post('/api/dwg-sync/v2/push', requireAuth(), upload.single('file'), async (req, res) => {
   try {
     // Expect: project_id, filename, sha256 (fields); file (file)
     const { project_id, filename, sha256 } = req.body;
@@ -98,7 +97,7 @@ router.post('/push', authenticated, async (req, res) => {
     const safeName = sanitizeFilename(filename);
 
     // Verify project exists
-    const projectCheck = await req.db.query('SELECT id FROM projects WHERE id = $1', [project_id]);
+    const projectCheck = await pool.query('SELECT id FROM projects WHERE id = $1', [project_id]);
     if (projectCheck.rows.length === 0) {
       fs.unlinkSync(req.file.path);
       return res.status(404).json({ error: 'Project not found' });
@@ -116,15 +115,15 @@ router.post('/push', authenticated, async (req, res) => {
     fs.renameSync(req.file.path, fullPath);
 
     // Mark any existing pending staging row for this (user, project, filename) as superseded
-    await req.db.query(
-      `UPDATE dwg_staging 
+    await pool.query(
+      `UPDATE dwg_staging
        SET status = 'superseded'
        WHERE user_id = $1 AND project_id = $2 AND filename = $3 AND status = 'pending'`,
       [req.user.id, project_id, safeName]
     );
 
     // Insert new staging row
-    const insertResult = await req.db.query(
+    const insertResult = await pool.query(
       `INSERT INTO dwg_staging (user_id, project_id, filename, size_bytes, sha256, storage_key, status)
        VALUES ($1, $2, $3, $4, $5, $6, 'pending')
        RETURNING id, status`,
@@ -133,7 +132,7 @@ router.post('/push', authenticated, async (req, res) => {
 
     const staging_id = insertResult.rows[0].id;
     await logAudit({
-      db: req.db,
+      pool,
       user_id: req.user.id,
       action: 'dwg.push',
       entity_type: 'dwg_staging',
@@ -149,7 +148,7 @@ router.post('/push', authenticated, async (req, res) => {
 });
 
 // GET /api/dwg-sync/v2/staging?status=pending&project_id=X
-router.get('/staging', authenticated, async (req, res) => {
+app.get('/api/dwg-sync/v2/staging', requireAuth(), async (req, res) => {
   try {
     const { status = 'pending', project_id, user_id } = req.query;
     
@@ -180,7 +179,7 @@ router.get('/staging', authenticated, async (req, res) => {
 
     query += ` ORDER BY ds.pushed_at DESC`;
 
-    const result = await req.db.query(query, params);
+    const result = await pool.query(query, params);
     res.json(result.rows);
   } catch (err) {
     console.error('GET /staging error:', err);
@@ -189,7 +188,7 @@ router.get('/staging', authenticated, async (req, res) => {
 });
 
 // POST /api/dwg-sync/v2/promote/:staging_id
-router.post('/promote/:staging_id', authenticated, async (req, res) => {
+app.post('/api/dwg-sync/v2/promote/:staging_id', requireManagerOrAdmin, async (req, res) => {
   try {
     const { staging_id } = req.params;
     
@@ -204,7 +203,7 @@ router.post('/promote/:staging_id', authenticated, async (req, res) => {
     }
 
     // Fetch staging row
-    const stagingResult = await req.db.query(
+    const stagingResult = await pool.query(
       'SELECT id, user_id, project_id, filename, size_bytes, sha256, storage_key FROM dwg_staging WHERE id = $1',
       [staging_id]
     );
@@ -216,11 +215,11 @@ router.post('/promote/:staging_id', authenticated, async (req, res) => {
     const { project_id, filename, size_bytes, sha256, storage_key } = staging;
 
     // Begin transaction
-    await req.db.query('BEGIN');
+    await pool.query('BEGIN');
 
     try {
       // Check if canonical exists for (project, filename)
-      const canonicalResult = await req.db.query(
+      const canonicalResult = await pool.query(
         'SELECT id FROM dwg_canonical_files WHERE project_id = $1 AND filename = $2 FOR UPDATE',
         [project_id, filename]
       );
@@ -229,27 +228,27 @@ router.post('/promote/:staging_id', authenticated, async (req, res) => {
       if (canonicalResult.rows.length > 0) {
         canonical_id = canonicalResult.rows[0].id;
         // Snapshot the current canonical to dwg_versions
-        const currentCanonical = await req.db.query(
+        const currentCanonical = await pool.query(
           'SELECT size_bytes, sha256, storage_key, last_modified_by FROM dwg_canonical_files WHERE id = $1',
           [canonical_id]
         );
         const cur = currentCanonical.rows[0];
-        await req.db.query(
+        await pool.query(
           `INSERT INTO dwg_versions (canonical_file_id, size_bytes, sha256, storage_key, uploaded_by)
            VALUES ($1, $2, $3, $4, $5)`,
           [canonical_id, cur.size_bytes, cur.sha256, cur.storage_key, cur.last_modified_by]
         );
 
         // Update canonical
-        await req.db.query(
-          `UPDATE dwg_canonical_files 
+        await pool.query(
+          `UPDATE dwg_canonical_files
            SET size_bytes = $1, sha256 = $2, storage_key = $3, last_modified_by = $4, last_modified_at = now()
            WHERE id = $5`,
           [size_bytes, sha256, storage_key, req.user.id, canonical_id]
         );
       } else {
         // Create new canonical
-        const newCanonicalResult = await req.db.query(
+        const newCanonicalResult = await pool.query(
           `INSERT INTO dwg_canonical_files (project_id, filename, size_bytes, sha256, storage_key, last_modified_by)
            VALUES ($1, $2, $3, $4, $5, $6)
            RETURNING id`,
@@ -259,34 +258,34 @@ router.post('/promote/:staging_id', authenticated, async (req, res) => {
       }
 
       // Purge old versions (keep only last 10)
-      await req.db.query(
-        `DELETE FROM dwg_versions 
-         WHERE canonical_file_id = $1 
+      await pool.query(
+        `DELETE FROM dwg_versions
+         WHERE canonical_file_id = $1
          AND id NOT IN (
-           SELECT id FROM dwg_versions 
-           WHERE canonical_file_id = $1 
-           ORDER BY uploaded_at DESC 
+           SELECT id FROM dwg_versions
+           WHERE canonical_file_id = $1
+           ORDER BY uploaded_at DESC
            LIMIT 10
          )`,
         [canonical_id]
       );
 
       // Mark staging as promoted
-      await req.db.query(
+      await pool.query(
         `UPDATE dwg_staging SET status = 'promoted', reviewed_by = $1, reviewed_at = now() WHERE id = $2`,
         [req.user.id, staging_id]
       );
 
-      await req.db.query('COMMIT');
+      await pool.query('COMMIT');
 
       // Count versions
-      const versionCount = await req.db.query(
+      const versionCount = await pool.query(
         'SELECT COUNT(*) as cnt FROM dwg_versions WHERE canonical_file_id = $1',
         [canonical_id]
       );
 
       await logAudit({
-        db: req.db,
+        pool,
         user_id: req.user.id,
         action: 'dwg.promote',
         entity_type: 'dwg_canonical_files',
@@ -299,7 +298,7 @@ router.post('/promote/:staging_id', authenticated, async (req, res) => {
         version_count: versionCount.rows[0].cnt
       });
     } catch (err) {
-      await req.db.query('ROLLBACK');
+      await pool.query('ROLLBACK');
       throw err;
     }
   } catch (err) {
@@ -309,7 +308,7 @@ router.post('/promote/:staging_id', authenticated, async (req, res) => {
 });
 
 // POST /api/dwg-sync/v2/reject/:staging_id
-router.post('/reject/:staging_id', authenticated, async (req, res) => {
+app.post('/api/dwg-sync/v2/reject/:staging_id', requireManagerOrAdmin, async (req, res) => {
   try {
     const { staging_id } = req.params;
     const { notes } = req.body || {};
@@ -319,7 +318,7 @@ router.post('/reject/:staging_id', authenticated, async (req, res) => {
     }
 
     // Verify staging exists
-    const stagingResult = await req.db.query(
+    const stagingResult = await pool.query(
       'SELECT id FROM dwg_staging WHERE id = $1',
       [staging_id]
     );
@@ -328,8 +327,8 @@ router.post('/reject/:staging_id', authenticated, async (req, res) => {
     }
 
     // Update status to rejected
-    const updateResult = await req.db.query(
-      `UPDATE dwg_staging 
+    const updateResult = await pool.query(
+      `UPDATE dwg_staging
        SET status = 'rejected', reviewed_by = $1, reviewed_at = now(), review_notes = $2
        WHERE id = $3
        RETURNING *`,
@@ -337,7 +336,7 @@ router.post('/reject/:staging_id', authenticated, async (req, res) => {
     );
 
     await logAudit({
-      db: req.db,
+      pool,
       user_id: req.user.id,
       action: 'dwg.reject',
       entity_type: 'dwg_staging',
@@ -353,7 +352,7 @@ router.post('/reject/:staging_id', authenticated, async (req, res) => {
 });
 
 // GET /api/dwg-sync/v2/download/:canonical_file_id
-router.get('/download/:canonical_file_id', authenticated, async (req, res) => {
+app.get('/api/dwg-sync/v2/download/:canonical_file_id', requireAuth(), async (req, res) => {
   try {
     const { canonical_file_id } = req.params;
 
@@ -362,7 +361,7 @@ router.get('/download/:canonical_file_id', authenticated, async (req, res) => {
     }
 
     // Fetch canonical file
-    const fileResult = await req.db.query(
+    const fileResult = await pool.query(
       'SELECT id, filename, storage_key FROM dwg_canonical_files WHERE id = $1',
       [canonical_file_id]
     );
@@ -386,4 +385,4 @@ router.get('/download/:canonical_file_id', authenticated, async (req, res) => {
   }
 });
 
-module.exports = router;
+};

@@ -680,8 +680,7 @@ require('./routes/permits')(app, pool, { upload, requireAuth });
 require('./routes/project_documents')(app, pool, { upload, uploadDir: UPLOAD_DIR, requireAuth, requireAdmin });
 
 // DWG two-way sync (Wave 52) — per-user staging, manual promotion to canonical
-const dwgSyncRouter = require('./routes/dwg_two_way_sync');
-app.use('/api/dwg-sync/v2', dwgSyncRouter);
+require('./routes/dwg_two_way_sync')(app, pool, { requireAuth, requireAdmin, requireManagerOrAdmin, upload });
 
 // Admin migration / cleanup endpoints (migrate-nesting, orphan-files,
 // adopt-orphan, adopt-orphans-bulk, hours-backfill-preview, hours-backfill)
