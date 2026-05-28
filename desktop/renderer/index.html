@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Launch Fiber Desktop</title>
+    <link rel="stylesheet" href="app.css" />
+  </head>
+  <body>
+    <div id="app">
+      <header>
+        <div class="header-content">
+          <h1>Launch Fiber Desktop</h1>
+          <div class="header-right">
+            <span id="username" class="username"></span>
+            <button id="logoutBtn" class="logout-btn">Logout</button>
+          </div>
+        </div>
+      </header>
+
+      <div class="container">
+        <aside class="sidebar">
+          <div class="sidebar-header">
+            <h3>Workspace</h3>
+            <button id="refreshBtn" class="refresh-btn" title="Refresh workspace tree">
+              ↻ Refresh
+            </button>
+          </div>
+          <div id="workspaceTree" class="workspace-tree">
+            <p class="loading">Loading workspace...</p>
+          </div>
+        </aside>
+
+        <main class="main-pane">
+          <div class="welcome-content">
+            <h2>Welcome to Launch Fiber Desktop</h2>
+            <p>Select a project from the workspace tree to get started.</p>
+            <div class="info-panel">
+              <p><strong>Version:</strong> 0.1.0 (Scaffold)</p>
+              <p id="connectionStatus"><strong>Status:</strong> Connected</p>
+              <button id="webPortalBtn" class="portal-btn">
+                Open Web Portal
+              </button>
+            </div>
+          </div>
+        </main>
+      </div>
+    </div>
+
+    <script src="app.js"></script>
+  </body>
+</html>

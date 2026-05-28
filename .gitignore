@@ -40,3 +40,8 @@ test-results/
 # OSP Design Training sub-project — built at deploy time by Railway, not committed
 osp-training/node_modules/
 osp-training/dist/
+
+# Launch Fiber Desktop Electron app — built locally, not committed
+desktop/node_modules/
+desktop/dist/
+desktop/out/
