@@ -31,6 +31,15 @@ const _workspaceUpload = multer({
   limits: { fileSize: 50 * 1024 * 1024 },
 });
 
+// F1-style path containment guard: verify storage_key is within UPLOAD_DIR
+// to prevent directory traversal attacks (e.g., ../ or absolute paths).
+function isStorageKeyContained(storageKey) {
+  const UPLOAD_DIR = process.env.UPLOAD_DIR || './uploads';
+  const uploadDirAbs = path.resolve(UPLOAD_DIR);
+  const keyAbs = path.resolve(storageKey);
+  return keyAbs.startsWith(uploadDirAbs + path.sep) || keyAbs === uploadDirAbs;
+}
+
 // Factory: instantiate routes with pool
 function createFolderWorkspaceRoutes(pool) {
   const router = express.Router();
@@ -1388,6 +1397,85 @@ function createFolderWorkspaceRoutes(pool) {
     } catch (err) {
       console.error('POST /trash/purge-old error:', err);
       res.status(500).json({ error: 'Failed to purge old trash' });
+    }
+  });
+
+  router.get('/folders/:id/download-zip', requireAuth(), async (req, res) => {
+    try {
+      const { id } = req.params;
+      const userId = req.user.id;
+
+      if (!/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(id)) {
+        return res.status(400).json({ error: 'Invalid folder ID format' });
+      }
+
+      const folderResult = await pool.query(
+        'SELECT id, name FROM workspace_folders WHERE id = $1 AND deleted_at IS NULL',
+        [id]
+      );
+
+      if (folderResult.rows.length === 0) {
+        return res.status(404).json({ error: 'Folder not found' });
+      }
+
+      const folder = folderResult.rows[0];
+      const perm = await getEffectivePermission(id, userId, req.user.role);
+      if (!perm.canRead) {
+        return res.status(404).json({ error: 'Folder not found' });
+      }
+
+      const filesResult = await pool.query(`
+        WITH RECURSIVE folder_tree AS (
+          SELECT id FROM workspace_folders WHERE id = $1 AND deleted_at IS NULL
+          UNION ALL
+          SELECT wf.id
+          FROM workspace_folders wf
+          INNER JOIN folder_tree ft ON wf.parent_id = ft.id
+          WHERE wf.deleted_at IS NULL
+        )
+        SELECT f.id, f.filename, f.storage_key, f.folder_id, wf.name as folder_name
+        FROM workspace_files f
+        INNER JOIN folder_tree ft ON f.folder_id = ft.id
+        INNER JOIN workspace_folders wf ON f.folder_id = wf.id
+        WHERE f.deleted_at IS NULL
+        ORDER BY f.folder_id, f.filename
+      `, [id]);
+
+      const archive = archiver('zip', { zlib: { level: 6 } });
+      res.set('Content-Type', 'application/zip');
+      const safeFolderName = (folder.name || 'folder').replace(/["\r\n]/g, '_');
+      res.set('Content-Disposition', `attachment; filename="${safeFolderName}.zip"`);
+      archive.pipe(res);
+
+      for (const file of filesResult.rows) {
+        if (!isStorageKeyContained(file.storage_key)) {
+          console.error('[workspace] storage_key containment failure on zip download:', file.storage_key);
+          archive.abort();
+          return res.status(500).json({ error: 'Storage path error' });
+        }
+
+        try {
+          const fileData = await fs.readFile(file.storage_key);
+          const entryPath = `${file.folder_name}/${file.filename}`;
+          archive.append(fileData, { name: entryPath });
+        } catch (fsErr) {
+          console.warn(`[workspace] could not read file ${file.id} from storage:`, fsErr);
+        }
+      }
+
+      await archive.finalize();
+
+      await logAudit(req.user, {
+        action: 'workspace.download_zip',
+        entity_type: 'workspace_folder',
+        entity_id: id,
+        details: { file_count: filesResult.rows.length }
+      });
+    } catch (err) {
+      console.error('GET /folders/:id/download-zip error:', err);
+      if (!res.headersSent) {
+        res.status(500).json({ error: 'Failed to create ZIP archive' });
+      }
     }
   });
 
