@@ -1,0 +1,124 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Document Scanner - Launch Fiber Photos</title>
+  <link rel="stylesheet" href="photos.css">
+  <link rel="stylesheet" href="scanner.css">
+  <meta name="theme-color" content="#0d1117">
+</head>
+<body>
+  <div id="app" class="scanner-app">
+    <!-- Back button / header -->
+    <div class="scanner-header">
+      <a href="index.html" class="btn-back" aria-label="Back to photos">← Back</a>
+      <h1>Document Scanner</h1>
+    </div>
+
+    <!-- Step 1: Capture -->
+    <section id="step-capture" class="scanner-step active">
+      <div class="capture-container">
+        <div id="camera-wrapper" class="camera-wrapper">
+          <video id="camera-video" playsinline></video>
+          <div id="camera-error" class="camera-error" style="display: none;">
+            <p>Camera permission required</p>
+            <button id="retry-camera" class="btn btn-primary">Retry</button>
+          </div>
+        </div>
+        <div class="capture-controls">
+          <button id="btn-capture" class="btn btn-primary btn-large">📷 Capture</button>
+        </div>
+      </div>
+    </section>
+
+    <!-- Step 2: Adjust corners -->
+    <section id="step-adjust" class="scanner-step" style="display: none;">
+      <div class="adjust-container">
+        <div class="adjust-main">
+          <canvas id="adjust-canvas"></canvas>
+          <div id="corner-handles" class="corner-handles">
+            <div class="corner-handle" id="handle-tl" data-corner="tl"></div>
+            <div class="corner-handle" id="handle-tr" data-corner="tr"></div>
+            <div class="corner-handle" id="handle-bl" data-corner="bl"></div>
+            <div class="corner-handle" id="handle-br" data-corner="br"></div>
+          </div>
+        </div>
+        <div class="adjust-preview">
+          <canvas id="preview-canvas"></canvas>
+          <p class="preview-label">Preview</p>
+        </div>
+      </div>
+      <div class="adjust-controls">
+        <button id="btn-retake" class="btn btn-secondary">Retake</button>
+        <button id="btn-next" class="btn btn-primary">Next</button>
+      </div>
+    </section>
+
+    <!-- Step 3: Enhance & Upload -->
+    <section id="step-enhance" class="scanner-step" style="display: none;">
+      <div class="enhance-container">
+        <div class="enhance-preview">
+          <canvas id="enhance-canvas"></canvas>
+        </div>
+
+        <div class="enhance-controls">
+          <!-- Filter tabs -->
+          <div class="filter-tabs" role="tablist">
+            <button role="tab" aria-selected="true" data-filter="color" class="tab-btn active">
+              Color
+            </button>
+            <button role="tab" aria-selected="false" data-filter="gray" class="tab-btn">
+              Grayscale
+            </button>
+            <button role="tab" aria-selected="false" data-filter="bw" class="tab-btn">
+              B&W
+            </button>
+          </div>
+
+          <!-- Caption input -->
+          <div class="form-group">
+            <label for="enhance-caption">Caption (optional)</label>
+            <textarea id="enhance-caption" placeholder="e.g., AS-BUILT DRAWING - SMITH RESIDENCE PHASE 2"></textarea>
+          </div>
+
+          <!-- Project picker -->
+          <div class="form-group">
+            <label for="enhance-project">Project</label>
+            <select id="enhance-project" required>
+              <option value="">Select a project...</option>
+            </select>
+          </div>
+
+          <!-- GPS toggle -->
+          <div class="form-group form-checkbox">
+            <label>
+              <input type="checkbox" id="enhance-gps" checked>
+              Include GPS & timestamp
+            </label>
+          </div>
+
+          <!-- Upload button -->
+          <button id="btn-upload" class="btn btn-primary btn-large">Upload</button>
+        </div>
+      </div>
+    </section>
+
+    <!-- Loading overlay -->
+    <div id="loading-overlay" class="loading-overlay" style="display: none;">
+      <div class="spinner"></div>
+      <p id="loading-message">Processing...</p>
+    </div>
+
+    <!-- Success toast -->
+    <div id="success-toast" class="toast" style="display: none;">
+      <p>Photo uploaded successfully</p>
+    </div>
+  </div>
+
+  <!-- Vendor libraries (OpenCV.js must come before jscanify) -->
+  <script async src="vendor/opencv.min.js" onload="onOpenCvReady();"></script>
+  <script src="vendor/jscanify.min.js"></script>
+  <script src="scanner.js"></script>
+</body>
+</html>

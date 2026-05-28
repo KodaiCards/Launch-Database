@@ -1,13 +1,18 @@
 // Launch Fiber Photos — Service Worker
 // Provides offline support and caching strategy
 
-const CACHE_NAME = 'launch-fiber-photos-v1';
+const CACHE_NAME = 'launch-fiber-photos-v2';
 const STATIC_ASSETS = [
   '/',
   '/photos/',
   '/photos/index.html',
   '/photos/photos.js',
   '/photos/photos.css',
+  '/photos/scanner.html',
+  '/photos/scanner.js',
+  '/photos/scanner.css',
+  '/photos/vendor/opencv.min.js',
+  '/photos/vendor/jscanify.min.js',
   '/photos/manifest.webmanifest',
   '/photos/icons/icon-192.svg',
   '/photos/icons/icon-512.svg'
