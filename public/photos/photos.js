@@ -2,6 +2,27 @@
 (function() {
   'use strict';
 
+  // ── Security helpers ──────────────────────────────────────────────────────
+  // esc() — HTML-escape a value before inserting into innerHTML.
+  // Prevents stored XSS via user-supplied caption / uploader_name / filename
+  // returned by the API (HIGH-2 fix).
+  function esc(val) {
+    if (val == null) return '';
+    return String(val)
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;')
+      .replace(/'/g, '&#x27;');
+  }
+
+  // ── IndexedDB constants (MED-2) ───────────────────────────────────────────
+  // Version bumped 1→2 to trigger onupgradeneeded if needed (store already
+  // exists, so upgrade is a no-op).
+  const IDB_NAME    = 'LaunchFiberPhotos';
+  const IDB_VERSION = 2;
+  const QUEUE_TTL_MS = 7 * 24 * 60 * 60 * 1000; // 7 days
+
   // App state
   const state = {
     user: null,
@@ -119,6 +140,15 @@
 
     // Online/offline event listeners
     window.addEventListener('online', drainOfflineQueue);
+
+    // MED-2: clear offline queue on logout to wipe persistent sensitive data
+    // (GPS coordinates + full-resolution photo base64) from shared-device storage.
+    // Hook logout button clicks and the lfs:logout custom event.
+    const logoutEls = document.querySelectorAll('[data-logout], #logout-btn, .logout-btn');
+    logoutEls.forEach(el => el.addEventListener('click', clearOfflineQueue));
+    window.addEventListener('lfs:logout', clearOfflineQueue);
+    // Also clear on session expiry detected by other tabs/code.
+    window.addEventListener('lfs:session-expired', clearOfflineQueue);
   }
 
   function onPhotoSelected(e) {
@@ -237,12 +267,14 @@
       console.error('Upload error:', e);
 
       if (!navigator.onLine) {
-        // Queue for offline retry
+        // Queue for offline retry — MED-2: include userId so drain skips
+        // items enqueued by a different user on shared devices.
         const photoData = {
           projectId: state.selectedProjectId,
           caption: captionInput.value,
           gps: state.gpsCoordinates,
           timestamp: Date.now(),
+          userId: state.user && state.user.id,
           photoBase64: await fileToBase64(state.currentPhoto)
         };
 
@@ -336,58 +368,116 @@
     }
   }
 
-  // Offline queue (IndexedDB)
-  function queueOfflineUpload(photoData) {
-    if (!('indexedDB' in window)) {
-      console.warn('IndexedDB not supported');
-      return;
-    }
+  // ── Offline queue (IndexedDB) — MED-2 hardened ───────────────────────────
+  // Version 2 stores { userId, timestamp, ... } per item so:
+  //   (a) drain skips items belonging to a different logged-in user
+  //       (session-mismatch protection on shared / kiosk devices)
+  //   (b) items older than QUEUE_TTL_MS (7 days) are purged on load
+  //   (c) clearOfflineQueue() wipes IndexedDB on logout, removing persistent
+  //       GPS coordinates + full-resolution photo base64 blobs
 
-    const request = indexedDB.open('LaunchFiberPhotos', 1);
-    request.onupgradeneeded = (e) => {
-      const db = e.target.result;
-      if (!db.objectStoreNames.contains('queue')) {
-        db.createObjectStore('queue', { autoIncrement: true });
+  function openIdb() {
+    return new Promise((resolve, reject) => {
+      if (!('indexedDB' in window)) {
+        reject(new Error('IndexedDB not supported'));
+        return;
       }
-    };
+      const req = indexedDB.open(IDB_NAME, IDB_VERSION);
+      req.onupgradeneeded = (e) => {
+        const db = e.target.result;
+        if (!db.objectStoreNames.contains('queue')) {
+          db.createObjectStore('queue', { autoIncrement: true });
+        }
+        // No schema changes needed for v2 — items simply gain new fields.
+      };
+      req.onsuccess = (e) => resolve(e.target.result);
+      req.onerror   = (e) => reject(e.target.error);
+    });
+  }
 
-    request.onsuccess = (e) => {
-      const db = e.target.result;
+  function queueOfflineUpload(photoData) {
+    openIdb().then((db) => {
       const tx = db.transaction('queue', 'readwrite');
-      const store = tx.objectStore('queue');
-      store.add(photoData);
-    };
+      tx.objectStore('queue').add(photoData);
+    }).catch((e) => {
+      console.error('IndexedDB queue error:', e);
+    });
+  }
 
-    request.onerror = (e) => {
-      console.error('IndexedDB error:', e);
-    };
+  // MED-2: wipe all queued items from IndexedDB on logout.
+  function clearOfflineQueue() {
+    openIdb().then((db) => {
+      const tx = db.transaction('queue', 'readwrite');
+      tx.objectStore('queue').clear();
+    }).catch((e) => {
+      console.warn('IndexedDB clear error (non-fatal):', e);
+    });
+    state.offlineQueue = [];
   }
 
   function loadOfflineQueue() {
-    if (!('indexedDB' in window)) return;
-
-    const request = indexedDB.open('LaunchFiberPhotos', 1);
-    request.onsuccess = (e) => {
-      const db = e.target.result;
-      if (!db.objectStoreNames.contains('queue')) return;
-
-      const tx = db.transaction('queue', 'readonly');
+    openIdb().then((db) => {
+      const tx = db.transaction('queue', 'readwrite');
       const store = tx.objectStore('queue');
-      const allReq = store.getAll();
+      const allReq    = store.getAll();
+      const allKeysReq = store.getAllKeys();
 
-      allReq.onsuccess = () => {
-        state.offlineQueue = allReq.result;
-        if (navigator.onLine && state.offlineQueue.length > 0) {
+      let items = null;
+      let keys  = null;
+
+      function maybeProcess() {
+        if (items === null || keys === null) return;
+        const now = Date.now();
+        const currentUserId = state.user && state.user.id;
+        const keysToDelete = [];
+        const validItems   = [];
+
+        for (let i = 0; i < items.length; i++) {
+          const item = items[i];
+          const key  = keys[i];
+          // MED-2(b): TTL purge — drop stale items.
+          if (item.timestamp && (now - item.timestamp) > QUEUE_TTL_MS) {
+            keysToDelete.push(key);
+            continue;
+          }
+          // MED-2(a): skip items from other users on shared devices.
+          // Items without a userId (legacy, pre-v2) are kept as-is.
+          if (item.userId && currentUserId && item.userId !== currentUserId) {
+            keysToDelete.push(key);
+            continue;
+          }
+          validItems.push(item);
+        }
+
+        if (keysToDelete.length > 0) {
+          const delTx = db.transaction('queue', 'readwrite');
+          const delStore = delTx.objectStore('queue');
+          keysToDelete.forEach(k => delStore.delete(k));
+        }
+
+        state.offlineQueue = validItems;
+        if (navigator.onLine && validItems.length > 0) {
           drainOfflineQueue();
         }
-      };
-    };
+      }
+
+      allReq.onsuccess     = () => { items = allReq.result;     maybeProcess(); };
+      allKeysReq.onsuccess = () => { keys  = allKeysReq.result; maybeProcess(); };
+    }).catch((e) => {
+      console.error('loadOfflineQueue IDB error:', e);
+    });
   }
 
   async function drainOfflineQueue() {
     if (state.offlineQueue.length === 0) return;
+    const currentUserId = state.user && state.user.id;
 
     for (const item of state.offlineQueue) {
+      // MED-2(a): don't submit another user's queued photo via current session.
+      if (item.userId && currentUserId && item.userId !== currentUserId) {
+        continue;
+      }
+
       try {
         const formData = new FormData();
         formData.append('project_id', item.projectId);
@@ -419,19 +509,14 @@
   }
 
   function saveOfflineQueueToDb() {
-    if (!('indexedDB' in window)) return;
-
-    const request = indexedDB.open('LaunchFiberPhotos', 1);
-    request.onsuccess = (e) => {
-      const db = e.target.result;
+    openIdb().then((db) => {
       const tx = db.transaction('queue', 'readwrite');
       const store = tx.objectStore('queue');
       store.clear();
-
-      state.offlineQueue.forEach(item => {
-        store.add(item);
-      });
-    };
+      state.offlineQueue.forEach(item => store.add(item));
+    }).catch((e) => {
+      console.error('saveOfflineQueueToDb error:', e);
+    });
   }
 
   function showToast(message, type = 'success') {

@@ -18,8 +18,68 @@ const fs = require('fs');
 const crypto = require('crypto');
 
 module.exports = function installProjectPhotoRoutes(app, pool, mw) {
-  const requireAuth = (mw && mw.requireAuth) || ((req, res, next) => next());
+  // MED-5 fix: hard fail on missing middleware instead of silently open-gating
+  if (!mw || !mw.requireAuth) {
+    throw new Error('[project-photos] requireAuth middleware required');
+  }
+  const requireAuth = mw.requireAuth;
   const requireAdmin = (mw && mw.requireAdmin) || ((req, res, next) => next());
+
+  // ── MED-1: Project ownership check ────────────────────────────────────────
+  // Returns true if userId may read/write photos on projectId.
+  // Admin and manager roles bypass; customer role is always denied.
+  // Other authenticated users are checked via the project's client/EC linkage
+  // through job_assignments and ec_job_visibility.
+  async function userHasProjectAccess(userId, userRole, projectId) {
+    if (!userId || !projectId) return false;
+
+    // Admin / managers always allowed
+    if (userRole === 'admin' ||
+        userRole === 'design_manager' ||
+        userRole === 'permitting_manager') {
+      return true;
+    }
+
+    // Customers never allowed to access project photos
+    if (userRole === 'customer') return false;
+
+    // For other employee roles: check project linkage through assignments
+    const { rows } = await pool.query(`
+      SELECT 1
+      FROM projects p
+      WHERE p.id = $1
+        AND p.is_rollup IS NOT TRUE
+        AND (
+          -- No client scoping — open to all employees (e.g. internal projects)
+          p.client_id IS NULL
+          OR
+          -- User previously uploaded to this project (owns photos)
+          EXISTS (
+            SELECT 1 FROM project_photos pp2
+            WHERE pp2.project_id = p.id AND pp2.uploaded_by = $2
+          )
+          OR
+          -- Linked via job_assignments (client or EC scoped assignment)
+          EXISTS (
+            SELECT 1 FROM job_assignments ja
+            WHERE (ja.client_id = p.client_id
+                   OR ja.engineering_contract_id = p.engineering_contract_id)
+              AND ja.engineering_contract_id IS NOT DISTINCT FROM p.engineering_contract_id
+            LIMIT 1
+          )
+          OR
+          -- Linked via EC job visibility
+          EXISTS (
+            SELECT 1 FROM ec_job_visibility ejv
+            WHERE ejv.engineering_contract_id = p.engineering_contract_id
+              AND p.engineering_contract_id IS NOT NULL
+            LIMIT 1
+          )
+        )
+      LIMIT 1
+    `, [projectId, userId]);
+    return rows.length > 0;
+  }
 
   // Multer config for in-memory buffering (will write to disk in handler)
   const upload = multer({
@@ -61,12 +121,16 @@ module.exports = function installProjectPhotoRoutes(app, pool, mw) {
         return res.status(400).json({ error: 'project_id required' });
       }
 
-      // Validate user has access to project (assigned or admin)
-      // Simple approach: any logged-in user can upload to any project
-      // If assignment tables are complex, fall back to this simpler version
       const uploadedBy = req.user && req.user.id;
       if (!uploadedBy) {
         return res.status(401).json({ error: 'Not authenticated' });
+      }
+
+      // MED-1: verify user has access to this project before allowing upload
+      const userRole = req.user && req.user.role;
+      const canAccess = await userHasProjectAccess(uploadedBy, userRole, project_id);
+      if (!canAccess) {
+        return res.status(403).json({ error: 'Not authorized to upload photos to this project' });
       }
 
       // Validate project exists
@@ -136,6 +200,14 @@ module.exports = function installProjectPhotoRoutes(app, pool, mw) {
         return res.status(400).json({ error: 'project_id query param required' });
       }
 
+      // MED-1: verify user has access to this project
+      const userId = req.user && req.user.id;
+      const userRole = req.user && req.user.role;
+      const canAccess = await userHasProjectAccess(userId, userRole, project_id);
+      if (!canAccess) {
+        return res.status(403).json({ error: 'Not authorized to view photos for this project' });
+      }
+
       let limit = Math.min(parseInt(req.query.limit) || 50, 200);
       let offset = Math.max(parseInt(req.query.offset) || 0, 0);
 
@@ -175,9 +247,10 @@ module.exports = function installProjectPhotoRoutes(app, pool, mw) {
         return res.status(400).json({ error: 'Invalid photo ID format' });
       }
 
-      // Fetch photo metadata
+      // Fetch photo metadata including project_id for access check
+      // Also enforce status='active' so archived photos are not downloadable (LOW-1 fix)
       const { rows } = await pool.query(
-        'SELECT id, mime_type, storage_key FROM project_photos WHERE id=$1',
+        "SELECT id, project_id, mime_type, storage_key FROM project_photos WHERE id=$1 AND status='active'",
         [photoId]
       );
 
@@ -186,6 +259,15 @@ module.exports = function installProjectPhotoRoutes(app, pool, mw) {
       }
 
       const photo = rows[0];
+
+      // MED-1: verify user has access to the project this photo belongs to
+      const userId = req.user && req.user.id;
+      const userRole = req.user && req.user.role;
+      const canAccess = await userHasProjectAccess(userId, userRole, photo.project_id);
+      if (!canAccess) {
+        return res.status(403).json({ error: 'Not authorized to download this photo' });
+      }
+
       const uploadDir = process.env.UPLOAD_DIR || './uploads';
       const filePath = path.join(uploadDir, photo.storage_key);
 
