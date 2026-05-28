@@ -40,19 +40,18 @@ test('audit_log INSERT works with all columns', async () => {
   assert.ok(rows[0].at instanceof Date);
 });
 
-test('audit_log DELETE raises trigger exception (tamper-resistance)', async () => {
+test('audit_log DELETE now succeeds (rows are malleable)', async () => {
   const { rows } = await pool.query(
     `INSERT INTO audit_log (actor_type, action, entity_type, source)
      VALUES ('system', 'test-delete', 'project', 'test')
      RETURNING id`
   );
   const id = rows[0].id;
-  await assert.rejects(
-    () => pool.query(`DELETE FROM audit_log WHERE id = $1`, [id]),
-    /audit_log rows cannot be deleted/
-  );
+  // DELETE should now succeed instead of raising an exception
+  const result = await pool.query(`DELETE FROM audit_log WHERE id = $1`, [id]);
+  assert.equal(result.rowCount, 1, 'DELETE must succeed and remove 1 row');
   const { rowCount } = await pool.query(`SELECT 1 FROM audit_log WHERE id = $1`, [id]);
-  assert.equal(rowCount, 1, 'row must still exist after blocked delete');
+  assert.equal(rowCount, 0, 'row must be deleted');
 });
 
 test('POST /api/projects produces an audit_log row with action=create', async () => {
@@ -379,4 +378,116 @@ test('POST /api/admin/audit-log/retention/archive-now triggers archive + logs ac
   assert.ok(auditRows.length > 0, 'should have logged the archive action');
   assert.equal(auditRows[0].action, 'audit.archive_run', 'action should be audit.archive_run');
   assert.equal(auditRows[0].meta.trigger, 'manual', 'meta.trigger should be manual');
+});
+
+test('PUT /api/admin/audit-log/:id updates row fields + logs edit action', async () => {
+  const token = await adminLogin();
+  const tag = uniqueTag();
+
+  // Insert a row to update
+  const { rows: inserted } = await pool.query(
+    `INSERT INTO audit_log
+       (actor_type, action, entity_type, entity_id, source, meta)
+     VALUES ('user', 'update.test', 'project', $1, 'test', '{"info":"original"}'::jsonb)
+     RETURNING id`,
+    [`proj-${tag}-put`]
+  );
+  const id = inserted[0].id;
+
+  // Update the row
+  const updateBody = {
+    action: 'update.test.modified',
+    meta: { info: 'modified' },
+    source: 'admin_edit',
+  };
+  const r = await requestJson('PUT', `/api/admin/audit-log/${id}`, { token, body: updateBody });
+
+  assert.equal(r.id, id, 'should return the id');
+  assert.equal(r.action, 'update.test.modified', 'action should be updated');
+  assert.deepEqual(r.meta, { info: 'modified' }, 'meta should be updated');
+  assert.equal(r.source, 'admin_edit', 'source should be updated');
+
+  // Verify the edit was logged as an audit action
+  const { rows: editRows } = await pool.query(
+    `SELECT action, entity_type, entity_id, meta FROM audit_log
+     WHERE action = 'audit.edit' AND entity_type = 'audit_log' AND entity_id = $1
+     ORDER BY at DESC LIMIT 1`,
+    [id.toString()]
+  );
+  assert.equal(editRows.length, 1, 'should log the edit action');
+  assert.deepEqual(editRows[0].meta.fields_updated, ['action', 'meta', 'source']);
+});
+
+test('PUT /api/admin/audit-log/:id requires admin role', async () => {
+  const r = await requestJson('PUT', '/api/admin/audit-log/1', { token: null, body: { action: 'test' } });
+  assert.equal(r.status, 401, 'non-admin should be rejected');
+});
+
+test('PUT /api/admin/audit-log/:id returns 404 for nonexistent id', async () => {
+  const token = await adminLogin();
+  const r = await requestJson('PUT', '/api/admin/audit-log/999999999', { token, body: { action: 'test' } });
+  assert.equal(r.status, 404, 'should return 404 for missing row');
+});
+
+test('PUT /api/admin/audit-log/:id returns 400 for no fields to update', async () => {
+  const token = await adminLogin();
+  const tag = uniqueTag();
+
+  // Insert a row
+  const { rows: inserted } = await pool.query(
+    `INSERT INTO audit_log (actor_type, action, entity_type, source)
+     VALUES ('user', 'test', 'project', 'test')
+     RETURNING id`
+  );
+  const id = inserted[0].id;
+
+  // Try to update with empty body
+  const r = await requestJson('PUT', `/api/admin/audit-log/${id}`, { token, body: {} });
+  assert.equal(r.status, 400, 'should return 400 when no fields to update');
+});
+
+test('DELETE /api/admin/audit-log/:id removes row + logs delete action', async () => {
+  const token = await adminLogin();
+  const tag = uniqueTag();
+
+  // Insert a row to delete
+  const { rows: inserted } = await pool.query(
+    `INSERT INTO audit_log
+       (actor_type, action, entity_type, entity_id, source)
+     VALUES ('user', 'delete.test', 'project', $1, 'test')
+     RETURNING id`,
+    [`proj-${tag}-delete`]
+  );
+  const id = inserted[0].id;
+
+  // Delete the row via API
+  const r = await requestJson('DELETE', `/api/admin/audit-log/${id}`, { token });
+
+  assert.equal(r.ok, true, 'should return ok=true');
+  assert.equal(r.id, id, 'should return the deleted id');
+
+  // Verify row is gone
+  const { rowCount } = await pool.query(`SELECT 1 FROM audit_log WHERE id = $1`, [id]);
+  assert.equal(rowCount, 0, 'row must be deleted from DB');
+
+  // Verify the delete was logged as an audit action
+  const { rows: deleteRows } = await pool.query(
+    `SELECT action, entity_type, entity_id, meta FROM audit_log
+     WHERE action = 'audit.delete' AND entity_type = 'audit_log' AND entity_id = $1
+     ORDER BY at DESC LIMIT 1`,
+    [id.toString()]
+  );
+  assert.equal(deleteRows.length, 1, 'should log the delete action');
+  assert.equal(deleteRows[0].meta.deleted_action, 'delete.test', 'meta should capture deleted_action');
+});
+
+test('DELETE /api/admin/audit-log/:id requires admin role', async () => {
+  const r = await requestJson('DELETE', '/api/admin/audit-log/1', { token: null });
+  assert.equal(r.status, 401, 'non-admin should be rejected');
+});
+
+test('DELETE /api/admin/audit-log/:id returns 404 for nonexistent id', async () => {
+  const token = await adminLogin();
+  const r = await requestJson('DELETE', '/api/admin/audit-log/999999999', { token });
+  assert.equal(r.status, 404, 'should return 404 for missing row');
 });

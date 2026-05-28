@@ -144,6 +144,7 @@
       }
 
       const row = await res.json();
+      modal.dataset.rowId = row.id;
 
       // Format timestamps
       const timestamp = row.at ? new Date(row.at).toLocaleString() : '—';
@@ -153,14 +154,20 @@
       if (detailBody) {
         let html = '<div style="display:flex;flex-direction:column;gap:12px">';
 
-        // Header info
+        // Header info with action buttons
         html += '<div style="border-bottom:1px solid var(--border-weak);padding-bottom:8px">';
-        html += '<div style="display:flex;justify-content:space-between;align-items:flex-start">';
+        html += '<div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:12px">';
         html += '<div>';
         html += '<div style="font-weight:600;margin-bottom:4px">' + escapeHtml(row.action || '—') + '</div>';
         html += '<div style="font-size:12px;color:var(--text-muted)">' + escapeHtml(timestamp) + ' by ' + escapeHtml(row.actor_username || row.actor_user_id || '—') + '</div>';
         html += '</div>';
         html += '<span style="font-size:11px;background:var(--surface-2);padding:4px 8px;border-radius:3px">ID: ' + row.id + '</span>';
+        html += '</div>';
+        html += '<div style="display:flex;gap:8px;margin-top:8px">';
+        html += '<button id="audit-log-edit-btn" style="background:var(--primary);color:white;border:none;padding:6px 12px;border-radius:4px;cursor:pointer;font-size:12px"><i class="fa-solid fa-pencil"></i> Edit</button>';
+        html += '<button id="audit-log-delete-btn" style="background:var(--danger);color:white;border:none;padding:6px 12px;border-radius:4px;cursor:pointer;font-size:12px"><i class="fa-solid fa-trash"></i> Delete</button>';
+        html += '<button id="audit-log-save-btn" style="display:none;background:var(--primary);color:white;border:none;padding:6px 12px;border-radius:4px;cursor:pointer;font-size:12px"><i class="fa-solid fa-check"></i> Save</button>';
+        html += '<button id="audit-log-cancel-btn" style="display:none;background:var(--surface-3);color:var(--text-primary);border:none;padding:6px 12px;border-radius:4px;cursor:pointer;font-size:12px"><i class="fa-solid fa-times"></i> Cancel</button>';
         html += '</div>';
         html += '</div>';
 
@@ -203,6 +210,146 @@
 
         html += '</div>';
         detailBody.innerHTML = html;
+
+        // Attach event handlers for Edit/Delete/Save/Cancel buttons
+        const editBtn = detailBody.querySelector('#audit-log-edit-btn');
+        const deleteBtn = detailBody.querySelector('#audit-log-delete-btn');
+        const saveBtn = detailBody.querySelector('#audit-log-save-btn');
+        const cancelBtn = detailBody.querySelector('#audit-log-cancel-btn');
+        const rowId = modal.dataset.rowId;
+
+        if (editBtn) {
+          editBtn.addEventListener('click', () => {
+            // Switch to edit mode: hide Edit/Delete, show Save/Cancel
+            // Replace JSON display areas with editable textareas
+            editBtn.style.display = 'none';
+            deleteBtn.style.display = 'none';
+            saveBtn.style.display = 'inline-block';
+            cancelBtn.style.display = 'inline-block';
+
+            // Convert before_data, after_data, meta to textareas for editing
+            const beforePre = detailBody.querySelector('pre');
+            if (beforePre) {
+              const beforeContent = beforePre.textContent;
+              const textarea = document.createElement('textarea');
+              textarea.className = 'edit-field-before';
+              textarea.style.cssText = 'width:100%;padding:8px;border:1px solid var(--border-weak);border-radius:4px;font-family:monospace;font-size:11px;min-height:120px';
+              textarea.value = beforeContent;
+              beforePre.replaceWith(textarea);
+            }
+
+            // Similar for after_data and meta if they exist
+            const allPres = detailBody.querySelectorAll('pre');
+            let fieldIndex = 0;
+            allPres.forEach(pre => {
+              const textarea = document.createElement('textarea');
+              textarea.className = fieldIndex === 0 ? 'edit-field-after' : 'edit-field-meta';
+              textarea.style.cssText = 'width:100%;padding:8px;border:1px solid var(--border-weak);border-radius:4px;font-family:monospace;font-size:11px;min-height:120px';
+              textarea.value = pre.textContent;
+              pre.replaceWith(textarea);
+              fieldIndex++;
+            });
+          });
+        }
+
+        if (saveBtn) {
+          saveBtn.addEventListener('click', async () => {
+            try {
+              // Collect edited values from textareas
+              const updates = {};
+
+              const beforeField = detailBody.querySelector('.edit-field-before');
+              const afterField = detailBody.querySelector('.edit-field-after');
+              const metaField = detailBody.querySelector('.edit-field-meta');
+
+              if (beforeField) {
+                try {
+                  updates.before_data = JSON.parse(beforeField.value);
+                } catch (e) {
+                  alert('Invalid JSON in "Before" field: ' + e.message);
+                  return;
+                }
+              }
+
+              if (afterField) {
+                try {
+                  updates.after_data = JSON.parse(afterField.value);
+                } catch (e) {
+                  alert('Invalid JSON in "After" field: ' + e.message);
+                  return;
+                }
+              }
+
+              if (metaField) {
+                try {
+                  updates.meta = JSON.parse(metaField.value);
+                } catch (e) {
+                  alert('Invalid JSON in "Additional Metadata" field: ' + e.message);
+                  return;
+                }
+              }
+
+              if (Object.keys(updates).length === 0) {
+                alert('No changes to save');
+                return;
+              }
+
+              // Send PUT request
+              const putRes = await fetch(`/api/admin/audit-log/${rowId}`, {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(updates)
+              });
+
+              if (!putRes.ok) {
+                const errorData = await putRes.json();
+                alert('Failed to update: ' + (errorData.error || putRes.status));
+                return;
+              }
+
+              alert('Audit log entry updated successfully.');
+              closeDetailModal();
+              fetchAuditLog(); // Refresh the table
+            } catch (err) {
+              console.error('[audit-log:save] error:', err);
+              alert('Error saving: ' + (err.message || err));
+            }
+          });
+        }
+
+        if (cancelBtn) {
+          cancelBtn.addEventListener('click', () => {
+            // Re-render the detail view (discard edits)
+            showDetailModal(id);
+          });
+        }
+
+        if (deleteBtn) {
+          deleteBtn.addEventListener('click', () => {
+            if (confirm('Permanently delete this audit log entry? This action is itself logged.')) {
+              (async () => {
+                try {
+                  const delRes = await fetch(`/api/admin/audit-log/${rowId}`, {
+                    method: 'DELETE'
+                  });
+
+                  if (!delRes.ok) {
+                    const errorData = await delRes.json();
+                    alert('Failed to delete: ' + (errorData.error || delRes.status));
+                    return;
+                  }
+
+                  alert('Audit log entry deleted successfully.');
+                  closeDetailModal();
+                  fetchAuditLog(); // Refresh the table
+                } catch (err) {
+                  console.error('[audit-log:delete] error:', err);
+                  alert('Error deleting: ' + (err.message || err));
+                }
+              })();
+            }
+          });
+        }
       }
 
       // Show modal

@@ -3390,19 +3390,6 @@ CREATE INDEX IF NOT EXISTS idx_audit_log_action ON public.audit_log USING btree 
 ALTER TABLE ONLY public.audit_log
     ADD CONSTRAINT IF NOT EXISTS audit_log_actor_user_id_fkey FOREIGN KEY (actor_user_id) REFERENCES public.users(id) ON DELETE SET NULL;
 
-CREATE OR REPLACE FUNCTION public.prevent_audit_delete() RETURNS trigger
-    LANGUAGE plpgsql
-    AS $$
-BEGIN
-  RAISE EXCEPTION 'audit_log rows cannot be deleted (compliance + tamper-resistance)';
-END;
-$$;
-
-DROP TRIGGER IF EXISTS trg_audit_log_no_delete ON public.audit_log;
-CREATE TRIGGER trg_audit_log_no_delete
-    BEFORE DELETE ON public.audit_log
-    FOR EACH ROW EXECUTE FUNCTION public.prevent_audit_delete();
-
 -- archived_at column (soft-archive marker, not deletion)
 -- Migration 0048: retention policy tracking
 ALTER TABLE IF EXISTS public.audit_log

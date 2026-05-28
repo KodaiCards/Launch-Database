@@ -228,4 +228,125 @@ module.exports = function installAuditLogRoutes(app, pool, mw) {
       serverError(res, e, 'POST /api/admin/audit-log/retention/archive-now');
     }
   });
+
+  // PUT /api/admin/audit-log/:id — update an audit_log row
+  // Body can include: before_data, after_data, meta, action, entity_type, entity_id, actor_username, source, ip, user_agent
+  // Returns: updated row (with PII redacted)
+  app.put('/api/admin/audit-log/:id', requireAdmin, async (req, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      if (!Number.isInteger(id) || id < 1) {
+        return res.status(400).json({ error: 'Invalid id' });
+      }
+
+      // Build dynamic UPDATE query from request body
+      const updates = [];
+      const params = [];
+      let paramCount = 1;
+
+      const allowedFields = [
+        'before_data', 'after_data', 'meta', 'action', 'entity_type',
+        'entity_id', 'actor_username', 'source', 'ip', 'user_agent'
+      ];
+
+      for (const field of allowedFields) {
+        if (req.body[field] !== undefined) {
+          updates.push(`${field} = $${++paramCount}`);
+          // JSON fields are passed as strings and need to be cast
+          if (['before_data', 'after_data', 'meta'].includes(field)) {
+            params.push(typeof req.body[field] === 'string' ? req.body[field] : JSON.stringify(req.body[field]));
+          } else {
+            params.push(req.body[field]);
+          }
+        }
+      }
+
+      if (updates.length === 0) {
+        return res.status(400).json({ error: 'No fields to update' });
+      }
+
+      params.unshift(id);
+      const query = `
+        UPDATE audit_log
+        SET ${updates.join(', ')}
+        WHERE id = $1
+        RETURNING id, at, actor_user_id, actor_username, actor_type, action, entity_type, entity_id,
+                  before_data, after_data, source, ip, user_agent, meta
+      `;
+
+      const { rows } = await pool.query(query, params);
+
+      if (rows.length === 0) {
+        return res.status(404).json({ error: 'Audit log entry not found' });
+      }
+
+      const updatedRow = rows[0];
+      // Log the edit action
+      await logAudit(pool, {
+        req,
+        action: 'audit.edit',
+        entity_type: 'audit_log',
+        entity_id: id.toString(),
+        source: 'admin_ui',
+        meta: { fields_updated: Object.keys(req.body) },
+      });
+
+      // Redact PII before returning
+      const redactedRow = {
+        ...updatedRow,
+        before_data: redactPII(updatedRow.before_data),
+        after_data: redactPII(updatedRow.after_data),
+        meta: redactPII(updatedRow.meta),
+      };
+
+      res.set('X-Audit-Redacted', 'true');
+      res.json(redactedRow);
+    } catch (e) {
+      serverError(res, e, 'PUT /api/admin/audit-log/:id');
+    }
+  });
+
+  // DELETE /api/admin/audit-log/:id — hard delete an audit_log row
+  // Returns: {ok: true, id}
+  app.delete('/api/admin/audit-log/:id', requireAdmin, async (req, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      if (!Number.isInteger(id) || id < 1) {
+        return res.status(400).json({ error: 'Invalid id' });
+      }
+
+      // Fetch the row before deleting (for audit trail)
+      const { rows: beforeRows } = await pool.query(
+        `SELECT action, entity_type, entity_id FROM audit_log WHERE id = $1`,
+        [id]
+      );
+
+      if (beforeRows.length === 0) {
+        return res.status(404).json({ error: 'Audit log entry not found' });
+      }
+
+      const beforeRow = beforeRows[0];
+
+      // Perform the delete
+      await pool.query('DELETE FROM audit_log WHERE id = $1', [id]);
+
+      // Log the delete action itself
+      await logAudit(pool, {
+        req,
+        action: 'audit.delete',
+        entity_type: 'audit_log',
+        entity_id: id.toString(),
+        source: 'admin_ui',
+        meta: {
+          deleted_action: beforeRow.action,
+          deleted_entity_type: beforeRow.entity_type,
+          deleted_entity_id: beforeRow.entity_id,
+        },
+      });
+
+      res.json({ ok: true, id });
+    } catch (e) {
+      serverError(res, e, 'DELETE /api/admin/audit-log/:id');
+    }
+  });
 };
