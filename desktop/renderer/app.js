@@ -83,8 +83,14 @@ function setupEventListeners() {
 
   const webPortalBtn = document.getElementById('webPortalBtn');
   if (webPortalBtn && currentSession) {
-    webPortalBtn.addEventListener('click', () => {
-      require('electron').shell.openExternal(currentSession.server);
+    webPortalBtn.addEventListener('click', async () => {
+      // M-1/M-4 (Wave 99): use IPC bridge instead of require('electron').shell
+      // directly in the renderer.  The main process validates the URL before
+      // calling shell.openExternal.
+      const result = await window.api.openExternal(currentSession.server);
+      if (result && !result.success) {
+        console.warn('openExternal blocked:', result.error);
+      }
     });
   }
 

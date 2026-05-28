@@ -50,7 +50,11 @@ class SyncEngine {
     if (!Array.isArray(items)) return;
 
     for (const item of items) {
-      const currentPath = parentPath ? `${parentPath}/${item.name}` : item.name;
+      // H-3 (Wave 99): strip path-separator characters from server-supplied
+      // item names so a malicious server cannot inject traversal segments like
+      // "../../evil" into the accumulated relative path.
+      const safeName = (item.name || '').replace(/[/\\]/g, '_').replace(/\.\./g, '__');
+      const currentPath = parentPath ? `${parentPath}/${safeName}` : safeName;
 
       if (item.type === 'folder') {
         if (item.id && this._shouldFetchFolderContents()) {
@@ -125,6 +129,29 @@ class SyncEngine {
   }
 
   /**
+   * H-3 (Wave 99): Verify that a resolved path stays inside localRootPath.
+   * Throws if the path would escape the sync root (path traversal guard).
+   * @param {string} localRootPath  Absolute path to the sync root directory.
+   * @param {string} relativePath   Server-supplied relative path.
+   * @returns {string}              The safe absolute path.
+   */
+  _safeJoin(localRootPath, relativePath) {
+    const resolvedRoot = path.resolve(localRootPath);
+    // Strip any leading slashes or drive-letter prefixes from the relative path
+    // to prevent the server supplying an absolute path component.
+    const sanitized = relativePath.replace(/^[/\\]+/, '').replace(/^[a-zA-Z]:/, '');
+    const fullPath = path.resolve(resolvedRoot, sanitized);
+    // Ensure the resolved path starts with the root (+ separator) so a path
+    // that resolves exactly to the root is allowed but nothing above it.
+    if (fullPath !== resolvedRoot && !fullPath.startsWith(resolvedRoot + path.sep)) {
+      throw new Error(
+        `[security] Path traversal detected: "${relativePath}" resolves outside sync root`
+      );
+    }
+    return fullPath;
+  }
+
+  /**
    * Pull a file from server
    */
   async pullFile(localRootPath, relativePath, fileId) {
@@ -140,7 +167,8 @@ class SyncEngine {
 
       const buffer = await response.buffer();
 
-      const fullPath = path.join(localRootPath, relativePath);
+      // H-3 (Wave 99): validate path before writing to filesystem.
+      const fullPath = this._safeJoin(localRootPath, relativePath);
       const dir = path.dirname(fullPath);
       await fs.mkdir(dir, { recursive: true });
       await fs.writeFile(fullPath, buffer);
@@ -187,7 +215,8 @@ class SyncEngine {
    */
   async resolveConflict(localRootPath, relativePath, serverFile) {
     try {
-      const fullPath = path.join(localRootPath, relativePath);
+      // H-3 (Wave 99): validate path before any filesystem operation.
+      const fullPath = this._safeJoin(localRootPath, relativePath);
       const ext = path.extname(relativePath);
       const baseName = path.basename(relativePath, ext);
       const ts = Date.now();

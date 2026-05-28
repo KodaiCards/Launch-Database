@@ -29,6 +29,24 @@ function createWindow(isLogin = false) {
   // Open DevTools in development (comment out for production)
   // mainWindow.webContents.openDevTools();
 
+  // M-2 (Wave 99): prevent renderer from navigating to external URLs.
+  // All legitimate navigation (login → index) uses window.location.href with
+  // local file:// paths.  Block anything that isn't a file:// URL.
+  mainWindow.webContents.on('will-navigate', (event, navUrl) => {
+    try {
+      const parsed = new URL(navUrl);
+      if (parsed.protocol !== 'file:') {
+        event.preventDefault();
+        console.warn('[security] Blocked navigation to non-file URL:', navUrl);
+      }
+    } catch (_) {
+      event.preventDefault();
+    }
+  });
+
+  // M-2 (Wave 99): block window.open() calls that would open external windows.
+  mainWindow.webContents.setWindowOpenHandler(() => ({ action: 'deny' }));
+
   mainWindow.on('closed', () => {
     mainWindow = null;
   });
@@ -273,15 +291,26 @@ ipcMain.handle('sync:status', () => {
   return syncEngine.getSyncStatus();
 });
 
+// M-3 (Wave 99): guard against re-registering the sync:online listener on
+// every did-finish-load event (login→index navigation fires it twice).
+// Using a module-level flag and ipcMain.once prevents listener accumulation
+// and the resulting MaxListenersExceededWarning / multiple-toast bug.
+let syncOnlineListenerRegistered = false;
+
 /**
- * Initialize sync listeners and timers
+ * Initialize sync listeners and timers.
+ * Safe to call multiple times — guarded against duplicate registration.
  */
 function initializeSyncListeners() {
   if (!mainWindow) return;
 
-  ipcMain.on('sync:online', () => {
-    showSyncCountdownToast();
-  });
+  // M-3: Only register sync:online once; subsequent did-finish-load calls skip.
+  if (!syncOnlineListenerRegistered) {
+    syncOnlineListenerRegistered = true;
+    ipcMain.on('sync:online', () => {
+      showSyncCountdownToast();
+    });
+  }
 
   if (!syncInterval) {
     syncInterval = setInterval(async () => {

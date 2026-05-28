@@ -16,4 +16,7 @@ contextBridge.exposeInMainWorld('api', {
   onSyncCountdownStart: (callback) =>
     ipcRenderer.on('sync:countdown-start', (event, data) => callback(data)),
   sendSyncOnline: () => ipcRenderer.send('sync:online'),
+  // M-1/M-4 (Wave 99): openExternal moved to main process with URL validation;
+  // renderer must use this bridge method rather than require('electron').shell.
+  openExternal: (url) => ipcRenderer.invoke('shell:open-external', url),
 });
