@@ -10,6 +10,7 @@
 //   require('./routes/clients')(app, pool, { requireAdmin });
 
 const { broadcast } = require('./_sse');
+const { logAudit } = require('./_audit');
 
 const ALLOWED_PROGRAMS = ['rus', 'bau', 'gfr', 'other'];
 
@@ -37,11 +38,28 @@ module.exports = function installClientsRoutes(app, pool, mw) {
   // Item 2 fix: requireAdmin added — creating clients is an admin-only operation
   app.post('/api/clients', requireAdmin, async (req, res) => {
     const { name, notes } = req.body;
+
+    // CL-2 LOW: validate required fields
+    if (!name || typeof name !== 'string' || !name.trim()) {
+      return res.status(400).json({ error: 'name required' });
+    }
+
     try {
       const { rows } = await pool.query(
         'INSERT INTO clients (name, notes) VALUES ($1,$2) RETURNING *',
         [name, notes]
       );
+
+      // CL-1 MED: add audit log on client creation
+      await logAudit(pool, {
+        req,
+        action: 'client.create',
+        entity_type: 'client',
+        entity_id: rows[0].id,
+        after: rows[0],
+        source: 'admin'
+      }).catch(() => {});
+
       broadcast('admin', 'client_added', { id: rows[0].id, name: rows[0].name });
       res.json(rows[0]);
     } catch (e) {
@@ -66,6 +84,17 @@ module.exports = function installClientsRoutes(app, pool, mw) {
          show_work_order === undefined ? null : show_work_order]
       );
       if (!rows[0]) return res.status(404).json({ error: 'Client not found' });
+
+      // CL-1 MED: add audit log on client update
+      await logAudit(pool, {
+        req,
+        action: 'client.update',
+        entity_type: 'client',
+        entity_id: rows[0].id,
+        after: rows[0],
+        source: 'admin'
+      }).catch(() => {});
+
       broadcast('admin', 'client_updated', { id: rows[0].id, name: rows[0].name });
       res.json(rows[0]);
     } catch (e) {
@@ -146,8 +175,19 @@ module.exports = function installClientsRoutes(app, pool, mw) {
         `, [req.params.id]);
         return res.json(counts.rows[0]);
       }
-      const r = await pool.query('DELETE FROM clients WHERE id=$1 RETURNING name', [req.params.id]);
+      const r = await pool.query('DELETE FROM clients WHERE id=$1 RETURNING *', [req.params.id]);
       if (!r.rows[0]) return res.status(404).json({ error: 'Client not found' });
+
+      // CL-1 MED: add audit log on client deletion
+      await logAudit(pool, {
+        req,
+        action: 'client.delete',
+        entity_type: 'client',
+        entity_id: req.params.id,
+        before: r.rows[0],
+        source: 'admin'
+      }).catch(() => {});
+
       broadcast('admin', 'client_deleted', { id: req.params.id, name: r.rows[0].name });
       res.json({ ok: true, deleted_name: r.rows[0].name });
     } catch (e) {

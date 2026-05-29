@@ -153,8 +153,8 @@ module.exports = function installContractsRoutes(app, pool, mw) {
         }
 
         await client.query('DELETE FROM contracts WHERE id = $1', [req.params.id]);
-        await client.query('COMMIT');
 
+        // C-3 MED: save undo bucket INSIDE transaction so data integrity is atomic
         const undo = await saveUndoBucket(req.user && req.user.id, 'contract_cascade', {
           contract: contractRow.rows[0],
           project_tree: cascade ? {
@@ -165,6 +165,19 @@ module.exports = function installContractsRoutes(app, pool, mw) {
             permit_documents: cascadePermitDocuments,
           } : null,
         });
+
+        await client.query('COMMIT');
+
+        // C-2 MED: add audit log on contract deletion
+        await logAudit(pool, {
+          req,
+          action: 'contract.delete',
+          entity_type: 'contract',
+          entity_id: req.params.id,
+          before: contractRow.rows[0],
+          source: 'admin'
+        }).catch(() => {});
+
         broadcast('admin', 'contract_deleted', { id: req.params.id, cascade, deleted_projects: cascadeProjects.length });
         res.json({
           ok: true,
@@ -182,7 +195,7 @@ module.exports = function installContractsRoutes(app, pool, mw) {
       }
     } catch (e) {
       console.error('[contracts:delete]', e && e.message);
-      res.status(500).json({ error: 'Failed to delete contract: ' + e.message });
+      res.status(500).json({ error: 'Internal error.' });
     }
   });
 };
