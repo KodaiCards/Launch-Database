@@ -22,7 +22,7 @@ function normalizeProgram(input) {
   if (input === null || input === undefined || input === '') return null;
   const v = String(input).trim().toLowerCase();
   if (!ALLOWED_PROGRAMS.includes(v)) {
-    const err = new Error(`Invalid program "${input}" — allowed: ${ALLOWED_PROGRAMS.join(', ')}.`);
+    const err = new Error(`Invalid program — allowed: ${ALLOWED_PROGRAMS.join(', ')}.`);
     err.statusCode = 400;
     throw err;
   }
@@ -323,6 +323,22 @@ module.exports = function installEngineeringContractsRoutes(app, pool, mw) {
   app.put('/api/ec-work-orders/:id', requireAdmin, async (req, res) => {
     const { number, description, service_area_id } = req.body || {};
     try {
+      // Validate service_area_id belongs to the same EC as the work order.
+      if (service_area_id != null) {
+        const { rows: woRows } = await pool.query(
+          `SELECT engineering_contract_id FROM ec_work_orders WHERE id = $1`,
+          [req.params.id]
+        );
+        if (!woRows.length) return res.status(404).json({ error: 'Work order not found' });
+        const { rows: saRows } = await pool.query(
+          `SELECT id FROM ec_service_areas WHERE id = $1 AND engineering_contract_id = $2`,
+          [service_area_id, woRows[0].engineering_contract_id]
+        );
+        if (!saRows.length) {
+          return res.status(400).json({ error: 'Service area does not belong to this work order\'s EC' });
+        }
+      }
+
       const sets = [];
       const params = [req.params.id];
       let i = 2;
