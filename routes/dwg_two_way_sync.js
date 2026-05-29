@@ -25,6 +25,54 @@ function sanitizeFilename(filename) {
 const ALLOWED_MIMES = ['application/vnd.dwg', 'application/vnd.dxf', 'application/vnd.google-earth.kml+xml', 'application/pdf', 'image/png', 'image/jpeg'];
 const MAX_FILE_SIZE = 50 * 1024 * 1024; // 50MB
 
+// HIGH-3 fix: extension allowlist — checked in fileFilter before disk write.
+// sanitizeFilename() only restricts chars, not extensions; this adds extension gating.
+const ALLOWED_EXTS = new Set(['.dwg', '.dxf', '.kml', '.kmz', '.pdf', '.png', '.jpg', '.jpeg']);
+
+// HIGH-3 fix: magic-byte signatures keyed by extension.
+// DWG: AutoCAD drawing starts with "AC10" or "AC12" ASCII (versions AC1009..AC1032).
+// DXF: text-based, starts with "0\n" or "0\r\n" followed by "SECTION".
+// KML/KMZ: XML/ZIP — KML starts with "<?xml" or "<kml"; KMZ starts with PK ZIP magic.
+// PDF: starts with "%PDF-".
+// PNG: starts with \x89PNG.
+// JPEG: starts with \xff\xd8\xff.
+// Each entry is [ [byteOffset, hexPattern], ... ] — ALL must match.
+// null-pattern entries match any byte at that offset (wildcard).
+const MIME_MAGIC = {
+  '.dwg':  [[0, '4143']],                       // "AC" — covers AC10xx..AC1032
+  '.dxf':  [[0, '30']],                         // "0" text start
+  '.kml':  [[0, '3c']],                         // "<" (XML/KML tag open)
+  '.kmz':  [[0, '504b0304']],                   // PK ZIP header
+  '.pdf':  [[0, '255044462d']],                 // "%PDF-"
+  '.png':  [[0, '89504e47']],                   // \x89PNG
+  '.jpg':  [[0, 'ffd8ff']],                     // JPEG SOI + APP marker
+  '.jpeg': [[0, 'ffd8ff']],
+};
+
+// HIGH-3 fix: read first bytes of a disk-based file, test against magic-byte signatures.
+// Used AFTER multer writes to disk (unlike project_photos.js which uses memoryStorage).
+function hasValidMagicBytes(filePath, ext) {
+  const signatures = MIME_MAGIC[ext.toLowerCase()];
+  if (!signatures) return false; // unknown extension — reject
+  try {
+    // Read first 12 bytes — enough for any of the above signatures.
+    const fd = fs.openSync(filePath, 'r');
+    const buf = Buffer.alloc(12);
+    const bytesRead = fs.readSync(fd, buf, 0, 12, 0);
+    fs.closeSync(fd);
+    const available = buf.slice(0, bytesRead);
+    for (const [offset, hexStr] of signatures) {
+      const needed = offset + Math.ceil(hexStr.length / 2);
+      if (available.length < needed) return false;
+      const actual = available.slice(offset, offset + Math.ceil(hexStr.length / 2)).toString('hex');
+      if (!actual.startsWith(hexStr.toLowerCase())) return false;
+    }
+    return true;
+  } catch (_) {
+    return false; // Cannot read file — fail safe
+  }
+}
+
 // GET /api/dwg-sync/v2/manifest?project_id=X
 app.get('/api/dwg-sync/v2/manifest', requireAuth(), async (req, res) => {
   try {
@@ -64,6 +112,9 @@ app.get('/api/dwg-sync/v2/manifest', requireAuth(), async (req, res) => {
 // Note: multer configured in server.js as 'upload' middleware; passed via mw.upload if available
 const upload = (mw && mw.upload) || ((req, res, next) => next());
 app.post('/api/dwg-sync/v2/push', requireAuth(), upload.single('file'), async (req, res) => {
+  // Hoist outside try so catch can reference for MED-3 orphan cleanup.
+  let fileRenamed = false;
+  let fullPath = null;
   try {
     // Expect: project_id, filename, sha256 (fields); file (file)
     const { project_id, filename, sha256 } = req.body;
@@ -87,7 +138,7 @@ app.post('/api/dwg-sync/v2/push', requireAuth(), upload.single('file'), async (r
       return res.status(413).json({ error: `File too large: max ${MAX_FILE_SIZE / 1024 / 1024}MB` });
     }
 
-    // Check MIME type
+    // Check MIME type (client-declared — secondary gate only)
     if (!ALLOWED_MIMES.includes(req.file.mimetype)) {
       fs.unlinkSync(req.file.path);
       return res.status(400).json({ error: `File type not allowed: ${req.file.mimetype}` });
@@ -95,6 +146,14 @@ app.post('/api/dwg-sync/v2/push', requireAuth(), upload.single('file'), async (r
 
     // Sanitize filename
     const safeName = sanitizeFilename(filename);
+
+    // HIGH-3 fix: extension allowlist check — before any disk operations.
+    // sanitizeFilename() only restricts chars; this gates on extension.
+    const uploadedExt = path.extname(safeName).toLowerCase();
+    if (!ALLOWED_EXTS.has(uploadedExt)) {
+      fs.unlinkSync(req.file.path);
+      return res.status(400).json({ error: `File extension '${uploadedExt || '(none)'}' not permitted` });
+    }
 
     // Verify project exists
     const projectCheck = await pool.query('SELECT id FROM projects WHERE id = $1', [project_id]);
@@ -106,13 +165,39 @@ app.post('/api/dwg-sync/v2/push', requireAuth(), upload.single('file'), async (r
     // Generate storage key: dwg-staging/<user_id>/<project_id>/<uuid>.<ext>
     const ext = path.extname(safeName) || '.dwg';
     const uuid = require('crypto').randomUUID();
-    const uploadDir = path.join(process.env.UPLOAD_DIR || './uploads', 'dwg-staging', req.user.id, project_id);
     const storageKey = path.join('dwg-staging', req.user.id, project_id, uuid + ext);
-    const fullPath = path.join(process.env.UPLOAD_DIR || './uploads', storageKey);
+    fullPath = path.join(process.env.UPLOAD_DIR || './uploads', storageKey);
 
     // Ensure directory exists
     fs.mkdirSync(path.dirname(fullPath), { recursive: true });
     fs.renameSync(req.file.path, fullPath);
+    fileRenamed = true; // Track so catch block can clean up orphaned file (MED-3).
+
+    // HIGH-3 fix: magic-byte verification — read actual file bytes after disk write.
+    // Catches attacks like "file.dwg extension + PHP body" that pass extension check.
+    if (!hasValidMagicBytes(fullPath, uploadedExt)) {
+      fs.unlinkSync(fullPath);
+      fileRenamed = false;
+      return res.status(400).json({ error: 'File content does not match its extension' });
+    }
+
+    // HIGH-4 fix: server-side sha256 verification.
+    // Client supplies sha256; we compute from disk and compare. Store ONLY server-computed value.
+    // Prevents integrity poisoning: file A uploaded with sha256 of file B.
+    const serverSha256 = await new Promise((resolve, reject) => {
+      const hash = crypto.createHash('sha256');
+      const stream = fs.createReadStream(fullPath);
+      stream.on('data', chunk => hash.update(chunk));
+      stream.on('end', () => resolve(hash.digest('hex')));
+      stream.on('error', reject);
+    });
+    if (serverSha256 !== sha256) {
+      fs.unlinkSync(fullPath);
+      fileRenamed = false;
+      return res.status(400).json({ error: 'sha256 hash does not match file content' });
+    }
+    // Use server-computed sha256 for storage — never trust client value.
+    const verifiedSha256 = serverSha256;
 
     // Mark any existing pending staging row for this (user, project, filename) as superseded
     await pool.query(
@@ -122,12 +207,12 @@ app.post('/api/dwg-sync/v2/push', requireAuth(), upload.single('file'), async (r
       [req.user.id, project_id, safeName]
     );
 
-    // Insert new staging row
+    // Insert new staging row — store server-computed sha256, not client's value.
     const insertResult = await pool.query(
       `INSERT INTO dwg_staging (user_id, project_id, filename, size_bytes, sha256, storage_key, status)
        VALUES ($1, $2, $3, $4, $5, $6, 'pending')
        RETURNING id, status`,
-      [req.user.id, project_id, safeName, req.file.size, sha256, storageKey]
+      [req.user.id, project_id, safeName, req.file.size, verifiedSha256, storageKey]
     );
 
     const staging_id = insertResult.rows[0].id;
@@ -142,18 +227,28 @@ app.post('/api/dwg-sync/v2/push', requireAuth(), upload.single('file'), async (r
 
     res.json({ staging_id, status: 'pending' });
   } catch (err) {
+    // MED-3 fix: unlink orphaned file on disk if DB operations failed after renameSync.
+    if (fileRenamed && fullPath) {
+      try { fs.unlinkSync(fullPath); } catch (_) {}
+    }
     console.error('POST /push error:', err);
     res.status(500).json({ error: 'Internal server error' });
   }
 });
 
 // GET /api/dwg-sync/v2/staging?status=pending&project_id=X
+// HIGH-2 fix: replaced req.user.roles (undefined) with req.user.role string check.
+// auth.js sets req.user.role as singular string ('admin', 'design_manager', etc.).
 app.get('/api/dwg-sync/v2/staging', requireAuth(), async (req, res) => {
   try {
     const { status = 'pending', project_id, user_id } = req.query;
-    
-    // Authorization: regular users see own staging; admin/manager see all
-    const isManager = req.user && (req.user.roles?.includes('admin') || req.user.roles?.includes('manager'));
+
+    // Authorization: regular users see own staging; admin/manager see all.
+    // Use req.user.role (singular string) — auth.js does not set req.user.roles.
+    const role = req.user.role || '';
+    const isManager = role === 'admin' ||
+      role === 'design_manager' ||
+      role === 'permitting_manager';
     let filterUserID = req.user.id;
     if (isManager && user_id && isValidUUID(user_id)) {
       filterUserID = user_id;
@@ -188,15 +283,12 @@ app.get('/api/dwg-sync/v2/staging', requireAuth(), async (req, res) => {
 });
 
 // POST /api/dwg-sync/v2/promote/:staging_id
+// HIGH-2 fix: removed inner isManager check — req.user.roles is undefined (auth.js sets
+// req.user.role as a string, not roles array). requireManagerOrAdmin middleware already
+// correctly gates this route; the inner check was redundant and always-403.
 app.post('/api/dwg-sync/v2/promote/:staging_id', requireManagerOrAdmin, async (req, res) => {
   try {
     const { staging_id } = req.params;
-    
-    // Authorization: admin/manager only
-    const isManager = req.user && (req.user.roles?.includes('admin') || req.user.roles?.includes('manager'));
-    if (!isManager) {
-      return res.status(403).json({ error: 'Admin/manager required' });
-    }
 
     if (!isValidUUID(staging_id)) {
       return res.status(400).json({ error: 'Invalid staging_id' });

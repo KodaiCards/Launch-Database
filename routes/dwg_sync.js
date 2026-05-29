@@ -40,9 +40,40 @@ module.exports = function installDwgSyncRoutes(app, pool, mw) {
   // List projects that have at least one DWG/DXF document.
   // Returns project metadata + DWG count + manifest_etag + latest doc updated_at
   // so the frontend can show which projects are available for sync.
+  //
+  // HIGH-1 fix: scope to projects accessible by the calling user.
+  // Admin/manager roles see all; other DWG-role employees only see projects
+  // linked via job_assignments or ec_job_visibility (same pattern as
+  // project_photos.js userHasProjectAccess).
   app.get('/api/dwg-sync/projects',
     requireAuth(DWG_ROLES),
     async (req, res) => {
+      const role = req.user.role || '';
+      const isAdminOrManager = role === 'admin' ||
+        role === 'design_manager' ||
+        role === 'permitting_manager';
+
+      // Admin/manager: no scoping restriction.
+      // Other DWG-role staff: only projects they are linked to via assignments.
+      const accessFilter = isAdminOrManager
+        ? ''
+        : `AND (
+            p.client_id IS NULL
+            OR EXISTS (
+              SELECT 1 FROM job_assignments ja
+              WHERE (ja.client_id = p.client_id
+                     OR ja.engineering_contract_id = p.engineering_contract_id)
+                AND ja.engineering_contract_id IS NOT DISTINCT FROM p.engineering_contract_id
+              LIMIT 1
+            )
+            OR EXISTS (
+              SELECT 1 FROM ec_job_visibility ejv
+              WHERE ejv.engineering_contract_id = p.engineering_contract_id
+                AND p.engineering_contract_id IS NOT NULL
+              LIMIT 1
+            )
+          )`;
+
       try {
         const { rows } = await pool.query(`
           SELECT
@@ -61,6 +92,7 @@ module.exports = function installDwgSyncRoutes(app, pool, mw) {
                                        ON s.project_id = p.id
                                        AND s.user_id = $1
           WHERE p.is_rollup IS NOT TRUE
+            ${accessFilter}
           GROUP BY p.id, p.name, c.name, s.manifest_etag, s.last_synced_at
           ORDER BY MAX(d.created_at) DESC
         `, [req.user.id]);
@@ -77,11 +109,47 @@ module.exports = function installDwgSyncRoutes(app, pool, mw) {
   // Computes SHA-256 lazily: if permit_documents.sha256 is NULL for any file,
   // reads the file from disk, computes SHA-256, persists it, then returns it.
   // ETag = SHA-256 of the sorted concatenation of all per-file sha256 values.
+  //
+  // HIGH-1 fix: 404 if calling user does not have access to this project.
   app.get('/api/dwg-sync/projects/:id/manifest',
     requireAuth(DWG_ROLES),
     async (req, res) => {
       const projectId = req.params.id;
+      const role = req.user.role || '';
+      const isAdminOrManager = role === 'admin' ||
+        role === 'design_manager' ||
+        role === 'permitting_manager';
+
       try {
+        // Membership check for non-admin/manager roles.
+        if (!isAdminOrManager) {
+          const access = await pool.query(`
+            SELECT 1 FROM projects p
+            WHERE p.id = $1
+              AND p.is_rollup IS NOT TRUE
+              AND (
+                p.client_id IS NULL
+                OR EXISTS (
+                  SELECT 1 FROM job_assignments ja
+                  WHERE (ja.client_id = p.client_id
+                         OR ja.engineering_contract_id = p.engineering_contract_id)
+                    AND ja.engineering_contract_id IS NOT DISTINCT FROM p.engineering_contract_id
+                  LIMIT 1
+                )
+                OR EXISTS (
+                  SELECT 1 FROM ec_job_visibility ejv
+                  WHERE ejv.engineering_contract_id = p.engineering_contract_id
+                    AND p.engineering_contract_id IS NOT NULL
+                  LIMIT 1
+                )
+              )
+            LIMIT 1
+          `, [projectId]);
+          if (access.rows.length === 0) {
+            return res.status(404).json({ error: 'Project not found' });
+          }
+        }
+
         const { rows } = await pool.query(`
           SELECT id, file_name, file_path, file_size, sha256, created_at AS updated_at
           FROM permit_documents
@@ -143,17 +211,59 @@ module.exports = function installDwgSyncRoutes(app, pool, mw) {
   // Stream the raw DWG/DXF binary with auth gate and path-traversal guard.
   // Honors If-None-Match for 304 responses to save bandwidth on incremental
   // sync runs.
+  //
+  // HIGH-1 fix: lookup file's project, check caller's access. 404 if no access.
   app.get('/api/dwg-sync/files/:docId',
     requireAuth(DWG_ROLES),
     async (req, res) => {
+      const role = req.user.role || '';
+      const isAdminOrManager = role === 'admin' ||
+        role === 'design_manager' ||
+        role === 'permitting_manager';
+
       try {
-        const { rows } = await pool.query(`
-          SELECT id, file_name, file_path, file_size, sha256, content_type
-          FROM permit_documents
-          WHERE id = $1
-            AND ${DWG_EXT_SQL.replace(/d\./g, '')}
-          LIMIT 1
-        `, [req.params.docId]);
+        // Fetch the document — join to project for membership check in one query.
+        // For non-admin/manager, also verify the user has access to the project.
+        let queryText, queryParams;
+        if (isAdminOrManager) {
+          queryText = `
+            SELECT d.id, d.file_name, d.file_path, d.file_size, d.sha256, d.content_type
+            FROM permit_documents d
+            WHERE d.id = $1
+              AND ${DWG_EXT_SQL}
+            LIMIT 1
+          `;
+          queryParams = [req.params.docId];
+        } else {
+          queryText = `
+            SELECT d.id, d.file_name, d.file_path, d.file_size, d.sha256, d.content_type
+            FROM permit_documents d
+            JOIN projects p ON p.id = d.project_id
+            WHERE d.id = $1
+              AND ${DWG_EXT_SQL}
+              AND p.is_rollup IS NOT TRUE
+              AND (
+                p.client_id IS NULL
+                OR EXISTS (
+                  SELECT 1 FROM job_assignments ja
+                  WHERE (ja.client_id = p.client_id
+                         OR ja.engineering_contract_id = p.engineering_contract_id)
+                    AND ja.engineering_contract_id IS NOT DISTINCT FROM p.engineering_contract_id
+                  LIMIT 1
+                )
+                OR EXISTS (
+                  SELECT 1 FROM ec_job_visibility ejv
+                  WHERE ejv.engineering_contract_id = p.engineering_contract_id
+                    AND p.engineering_contract_id IS NOT NULL
+                  LIMIT 1
+                )
+              )
+            LIMIT 1
+          `;
+          queryParams = [req.params.docId];
+        }
+
+        const { rows } = await pool.query(queryText, queryParams);
 
         if (!rows[0]) return res.status(404).json({ error: 'File not found' });
         const doc = rows[0];

@@ -4,8 +4,10 @@ const fs = require('fs');
 const path = require('path');
 
 let app, db;
-const testUser = { id: 'user-1', name: 'Test User', roles: ['employee'] };
-const testAdmin = { id: 'admin-1', name: 'Admin User', roles: ['admin'] };
+// HIGH-2 fix: test mocks use req.user.role (singular string) matching auth.js shape.
+// auth.js sets req.user.role from DB SELECT 'role' column (not 'roles' array).
+const testUser = { id: 'user-1', name: 'Test User', role: 'employee' };
+const testAdmin = { id: 'admin-1', name: 'Admin User', role: 'admin' };
 const testProject = { id: 'proj-1', name: 'Test Project' };
 
 describe('DWG Two-Way Sync API', () => {
@@ -153,6 +155,71 @@ describe('DWG Two-Way Sync API', () => {
       expect(res.status).toBe(400);
 
       fs.unlinkSync(testFile);
+    });
+
+    // HIGH-3 tests: extension allowlist + magic-byte verification
+    test('HIGH-3: rejects .php extension with DWG magic bytes — extension gate fires first', async () => {
+      // DWG magic: starts with "AC10"
+      const dwgMagic = Buffer.from('AC1015\x00\x00', 'ascii');
+      const testFile = path.join(__dirname, 'test_webshell.php');
+      fs.writeFileSync(testFile, dwgMagic);
+
+      const res = await request(app)
+        .post('/api/dwg-sync/v2/push')
+        .set('Authorization', `Bearer ${testUser.id}`)
+        .field('project_id', 'proj-1')
+        .field('filename', 'webshell.php')
+        .field('sha256', 'a'.repeat(64))
+        .attach('file', testFile, { contentType: 'application/vnd.dwg' });
+
+      expect(res.status).toBe(400);
+      expect(res.body.error).toMatch(/extension.*not permitted/i);
+
+      if (fs.existsSync(testFile)) fs.unlinkSync(testFile);
+    });
+
+    test('HIGH-3: rejects .dwg extension with PHP content — magic-byte check fires', async () => {
+      // PHP content that passes extension check (.dwg) but fails magic-byte check
+      const phpContent = Buffer.from('<?php system($_GET["cmd"]); ?>', 'ascii');
+      const testFile = path.join(__dirname, 'test_php_as_dwg.dwg');
+      fs.writeFileSync(testFile, phpContent);
+
+      const res = await request(app)
+        .post('/api/dwg-sync/v2/push')
+        .set('Authorization', `Bearer ${testUser.id}`)
+        .field('project_id', 'proj-1')
+        .field('filename', 'malicious.dwg')
+        .field('sha256', 'a'.repeat(64))
+        .attach('file', testFile, { contentType: 'application/vnd.dwg' });
+
+      expect(res.status).toBe(400);
+      expect(res.body.error).toMatch(/content does not match/i);
+
+      if (fs.existsSync(testFile)) fs.unlinkSync(testFile);
+    });
+
+    // HIGH-4 test: server-side sha256 verification
+    test('HIGH-4: rejects upload with wrong sha256 — 400 + file unlinked', async () => {
+      // Valid DWG magic bytes so it passes magic-byte check
+      const dwgContent = Buffer.from('AC1015\x00\x00' + 'x'.repeat(100), 'ascii');
+      const testFile = path.join(__dirname, 'test_wrong_hash.dwg');
+      fs.writeFileSync(testFile, dwgContent);
+
+      // Supply sha256 of a DIFFERENT file (all 'a' — wrong hash)
+      const wrongHash = 'a'.repeat(64);
+
+      const res = await request(app)
+        .post('/api/dwg-sync/v2/push')
+        .set('Authorization', `Bearer ${testUser.id}`)
+        .field('project_id', 'proj-1')
+        .field('filename', 'real.dwg')
+        .field('sha256', wrongHash)
+        .attach('file', testFile, { contentType: 'application/vnd.dwg' });
+
+      expect(res.status).toBe(400);
+      expect(res.body.error).toMatch(/sha256.*does not match/i);
+
+      if (fs.existsSync(testFile)) fs.unlinkSync(testFile);
     });
 
     test('second push of same (user, project, filename) supersedes first', async () => {
