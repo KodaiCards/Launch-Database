@@ -244,10 +244,11 @@ module.exports = function installJobsRoutes(app, pool, mw) {
          mirrorPsc, mirrorGen, resolvedScope]
       );
       const createdJob = rows[0];
-      logAudit({pool, action: 'job.create', entity_type: 'job', entity_id: createdJob.id,
-                actor_user_id: req.user?.id, actor_username: req.user?.username,
-                after_data: {name: createdJob.name, program_scope: createdJob.program_scope},
-                source: 'admin'}).catch(()=>{});
+      logAudit(pool, {
+        req, action: 'job.create', entity_type: 'job', entity_id: createdJob.id,
+        after: {name: createdJob.name, program_scope: createdJob.program_scope},
+        source: 'admin',
+      }).catch(()=>{});
       res.json(createdJob);
     } catch (e) {
       console.error('[jobs:create', e && e.message);
@@ -334,10 +335,11 @@ module.exports = function installJobsRoutes(app, pool, mw) {
       const { rows } = await pool.query(sql, values);
       if (!rows[0]) return res.status(404).json({ error: 'Job not found' });
       const updatedJob = rows[0];
-      logAudit({pool, action: 'job.update', entity_type: 'job', entity_id: updatedJob.id,
-                actor_user_id: req.user?.id, actor_username: req.user?.username,
-                after_data: {name: updatedJob.name, program_scope: updatedJob.program_scope, default_rate: updatedJob.default_rate},
-                source: 'admin'}).catch(()=>{});
+      logAudit(pool, {
+        req, action: 'job.update', entity_type: 'job', entity_id: updatedJob.id,
+        after: {name: updatedJob.name, program_scope: updatedJob.program_scope, default_rate: updatedJob.default_rate},
+        source: 'admin',
+      }).catch(()=>{});
       res.json(updatedJob);
     } catch (e) {
       console.error('[jobs:update', e && e.message);
@@ -357,9 +359,10 @@ module.exports = function installJobsRoutes(app, pool, mw) {
         [req.params.id]
       );
       if (!rows[0]) return res.status(404).json({ error: 'Job not found' });
-      logAudit({pool, action: 'job.reset_override', entity_type: 'job', entity_id: rows[0].id,
-                actor_user_id: req.user?.id, actor_username: req.user?.username,
-                source: 'admin'}).catch(()=>{});
+      logAudit(pool, {
+        req, action: 'job.reset_override', entity_type: 'job', entity_id: rows[0].id,
+        source: 'admin',
+      }).catch(()=>{});
       res.json({ ok: true, name: rows[0].name });
     } catch (e) {
       console.error('[jobs:reset-override]', e && e.message);
@@ -377,16 +380,35 @@ module.exports = function installJobsRoutes(app, pool, mw) {
       const j = await pool.query('SELECT default_rate FROM jobs WHERE id = $1', [req.params.id]);
       if (!j.rows.length) return res.status(404).json({ error: 'Job not found' });
       const rate = j.rows[0].default_rate;
+
+      // ?dry_run=true — preview which projects would be updated without writing.
+      if (req.query.dry_run === 'true' || req.query.dryRun === 'true') {
+        const preview = await pool.query(
+          `SELECT id, name, billing_rate AS current_rate
+             FROM projects
+            WHERE job_id = $1 AND COALESCE(is_rollup, false) = false
+            ORDER BY name`,
+          [req.params.id]
+        );
+        return res.json({
+          dry_run: true,
+          would_update: preview.rowCount,
+          new_rate: rate,
+          projects: preview.rows,
+        });
+      }
+
       const r = await pool.query(
         `UPDATE projects
            SET billing_rate = $2
          WHERE job_id = $1 AND COALESCE(is_rollup, false) = false`,
         [req.params.id, rate]
       );
-      logAudit({pool, action: 'job.propagate_rate', entity_type: 'job', entity_id: req.params.id,
-                actor_user_id: req.user?.id, actor_username: req.user?.username,
-                after_data: {applied_rate: rate, updated_projects: r.rowCount},
-                source: 'admin'}).catch(()=>{});
+      logAudit(pool, {
+        req, action: 'job.propagate_rate', entity_type: 'job', entity_id: req.params.id,
+        after: {applied_rate: rate, updated_projects: r.rowCount},
+        source: 'admin',
+      }).catch(()=>{});
       res.json({ ok: true, updated: r.rowCount, applied_rate: rate });
     } catch (e) {
       console.error('[jobs:propagate-rate]', e && e.message);
@@ -397,10 +419,13 @@ module.exports = function installJobsRoutes(app, pool, mw) {
   app.delete('/api/jobs/:id', requireAdmin, async (req, res) => {
     try {
       // Soft-delete via active=false to preserve historical references in projects
-      await pool.query('UPDATE jobs SET active = false WHERE id = $1', [req.params.id]);
-      logAudit({pool, action: 'job.delete', entity_type: 'job', entity_id: req.params.id,
-                actor_user_id: req.user?.id, actor_username: req.user?.username,
-                source: 'admin'}).catch(()=>{});
+      const { rowCount } = await pool.query('UPDATE jobs SET active = false WHERE id = $1', [req.params.id]);
+      // J-2: return 404 when the ID does not match any row
+      if (rowCount === 0) return res.status(404).json({ error: 'Job not found' });
+      logAudit(pool, {
+        req, action: 'job.delete', entity_type: 'job', entity_id: req.params.id,
+        source: 'admin',
+      }).catch(()=>{});
       res.json({ ok: true });
     } catch (e) {
       console.error('[jobs:delete]', e && e.message);
@@ -461,10 +486,11 @@ module.exports = function installJobsRoutes(app, pool, mw) {
         return res.status(409).json({ error: 'This assignment already exists.' });
       }
       const newAssignment = rows[0];
-      logAudit({pool, action: 'job.assign', entity_type: 'job_assignment', entity_id: newAssignment.id,
-                actor_user_id: req.user?.id, actor_username: req.user?.username,
-                after_data: {job_id: newAssignment.job_id, client_id: newAssignment.client_id, ec_id: newAssignment.engineering_contract_id},
-                source: 'admin'}).catch(()=>{});
+      logAudit(pool, {
+        req, action: 'job.assign', entity_type: 'job_assignment', entity_id: newAssignment.id,
+        after: {job_id: newAssignment.job_id, client_id: newAssignment.client_id, ec_id: newAssignment.engineering_contract_id},
+        source: 'admin',
+      }).catch(()=>{});
       res.status(201).json(newAssignment);
     } catch (e) {
       console.error('[job-assignments:create]', e && e.message);
@@ -480,9 +506,10 @@ module.exports = function installJobsRoutes(app, pool, mw) {
         [req.params.id]
       );
       if (!rowCount) return res.status(404).json({ error: 'Assignment not found.' });
-      logAudit({pool, action: 'job.assignment_delete', entity_type: 'job_assignment', entity_id: req.params.id,
-                actor_user_id: req.user?.id, actor_username: req.user?.username,
-                source: 'admin'}).catch(()=>{});
+      logAudit(pool, {
+        req, action: 'job.assignment_delete', entity_type: 'job_assignment', entity_id: req.params.id,
+        source: 'admin',
+      }).catch(()=>{});
       res.json({ ok: true });
     } catch (e) {
       console.error('[job-assignments:delete]', e && e.message);
