@@ -732,19 +732,27 @@ module.exports = function installSpliceRoutes(app, pool, mw) {
     const projectId = req.params.id;
     const staffId = req.user?.staff_id || null;
     const name = req.user?.full_name || req.user?.username || 'unknown';
+    // HIGH-1 fix: wrap in transaction with FOR UPDATE so concurrent lock
+    // requests cannot both read "unlocked" and both succeed.
+    const client = await pool.connect();
     try {
-      const cur = await pool.query(
+      await client.query('BEGIN');
+      const cur = await client.query(
         `SELECT locked_by_staff_id, locked_by_name, locked_at
-         FROM splice_projects WHERE id = $1`,
+         FROM splice_projects WHERE id = $1 FOR UPDATE`,
         [projectId]
       );
-      if (!cur.rows.length) return res.status(404).json({ error: 'Project not found' });
+      if (!cur.rows.length) {
+        await client.query('ROLLBACK');
+        return res.status(404).json({ error: 'Project not found' });
+      }
       const row = cur.rows[0];
       const lockedAt = row.locked_at ? new Date(row.locked_at).getTime() : 0;
       const isStale = !row.locked_by_staff_id || (Date.now() - lockedAt > STALE_LOCK_MS);
       const isMine = row.locked_by_staff_id && row.locked_by_staff_id === staffId;
 
       if (!isMine && !isStale) {
+        await client.query('ROLLBACK');
         return res.status(409).json({
           error: 'Project is locked by another designer',
           locked_by_name: row.locked_by_name,
@@ -753,39 +761,61 @@ module.exports = function installSpliceRoutes(app, pool, mw) {
         });
       }
 
-      const { rows } = await pool.query(
+      const { rows } = await client.query(
         `UPDATE splice_projects
          SET locked_by_staff_id = $2, locked_by_name = $3, locked_at = NOW()
          WHERE id = $1
          RETURNING locked_by_staff_id, locked_by_name, locked_at`,
         [projectId, staffId, name]
       );
+      await client.query('COMMIT');
       logAudit(pool, { req, action: 'lock', entity_type: 'splice_project', entity_id: projectId,
         after: { locked_by: name }, source: 'splice_api' });
       _broadcast(projectId, 'lock_acquired', rows[0]);
       res.json({ ok: true, ...rows[0] });
-    } catch (e) { console.error('[splice:acquire-lock]', e && e.message); res.status(500).json({ error: 'Failed to acquire project lock.' }); }
+    } catch (e) {
+      await client.query('ROLLBACK');
+      console.error('[splice:acquire-lock]', e && e.message);
+      res.status(500).json({ error: 'Failed to acquire project lock.' });
+    } finally {
+      client.release();
+    }
   });
 
   // 60-second heartbeat — extends my lock. Returns 409 if the lock has
   // moved to someone else (because I went stale and they took over).
   app.post('/api/splice/projects/:id/heartbeat', requireAuth(), requireSpliceAccess(req => req.params.id), async (req, res) => {
     const staffId = req.user?.staff_id || null;
+    // HIGH-1 fix: FOR UPDATE ensures the ownership check and timestamp
+    // extension are atomic — no concurrent take-over can slip between them.
+    const client = await pool.connect();
     try {
-      const cur = await pool.query(
-        `SELECT locked_by_staff_id FROM splice_projects WHERE id = $1`,
+      await client.query('BEGIN');
+      const cur = await client.query(
+        `SELECT locked_by_staff_id FROM splice_projects WHERE id = $1 FOR UPDATE`,
         [req.params.id]
       );
-      if (!cur.rows.length) return res.status(404).json({ error: 'Project not found' });
+      if (!cur.rows.length) {
+        await client.query('ROLLBACK');
+        return res.status(404).json({ error: 'Project not found' });
+      }
       if (cur.rows[0].locked_by_staff_id !== staffId) {
+        await client.query('ROLLBACK');
         return res.status(409).json({ error: 'Lock no longer held by you' });
       }
-      await pool.query(
+      await client.query(
         `UPDATE splice_projects SET locked_at = NOW() WHERE id = $1`,
         [req.params.id]
       );
+      await client.query('COMMIT');
       res.json({ ok: true, locked_at: new Date().toISOString() });
-    } catch (e) { console.error('[splice:lock-heartbeat]', e && e.message); res.status(500).json({ error: 'Failed to update lock heartbeat.' }); }
+    } catch (e) {
+      await client.query('ROLLBACK');
+      console.error('[splice:lock-heartbeat]', e && e.message);
+      res.status(500).json({ error: 'Failed to update lock heartbeat.' });
+    } finally {
+      client.release();
+    }
   });
 
   app.post('/api/splice/projects/:id/unlock', requireAuth(), requireSpliceAccess(req => req.params.id), async (req, res) => {
@@ -810,29 +840,44 @@ module.exports = function installSpliceRoutes(app, pool, mw) {
   app.post('/api/splice/projects/:id/take-over', requireAuth(), requireSpliceAccess(req => req.params.id), async (req, res) => {
     const staffId = req.user?.staff_id || null;
     const name = req.user?.full_name || req.user?.username || 'unknown';
+    // HIGH-1 fix: FOR UPDATE prevents two concurrent take-over requests from
+    // both reading a stale lock and both succeeding.
+    const client = await pool.connect();
     try {
-      const cur = await pool.query(
-        `SELECT locked_by_staff_id, locked_at FROM splice_projects WHERE id = $1`,
+      await client.query('BEGIN');
+      const cur = await client.query(
+        `SELECT locked_by_staff_id, locked_at FROM splice_projects WHERE id = $1 FOR UPDATE`,
         [req.params.id]
       );
-      if (!cur.rows.length) return res.status(404).json({ error: 'Project not found' });
+      if (!cur.rows.length) {
+        await client.query('ROLLBACK');
+        return res.status(404).json({ error: 'Project not found' });
+      }
       const row = cur.rows[0];
       const lockedAt = row.locked_at ? new Date(row.locked_at).getTime() : 0;
       const isStale = !row.locked_by_staff_id || (Date.now() - lockedAt > STALE_LOCK_MS);
       if (!isStale && req.user?.role !== 'admin') {
+        await client.query('ROLLBACK');
         return res.status(409).json({ error: 'Lock is fresh; ask the current holder to release it' });
       }
-      const { rows } = await pool.query(
+      const { rows } = await client.query(
         `UPDATE splice_projects
          SET locked_by_staff_id = $2, locked_by_name = $3, locked_at = NOW()
          WHERE id = $1
          RETURNING locked_by_staff_id, locked_by_name, locked_at`,
         [req.params.id, staffId, name]
       );
+      await client.query('COMMIT');
       _broadcast(req.params.id, 'lock_taken_over', rows[0]);
       logAudit(pool, { req, action: 'lock_takeover', entity_type: 'splice_project', entity_id: req.params.id, after: { locked_by: name }, source: 'splice_api' });
       res.json({ ok: true, ...rows[0] });
-    } catch (e) { console.error('[splice:take-over-lock]', e && e.message); res.status(500).json({ error: 'Failed to take over project lock.' }); }
+    } catch (e) {
+      await client.query('ROLLBACK');
+      console.error('[splice:take-over-lock]', e && e.message);
+      res.status(500).json({ error: 'Failed to take over project lock.' });
+    } finally {
+      client.release();
+    }
   });
 
   // ─── Locations ───────────────────────────────────────────────────────────
