@@ -211,7 +211,9 @@ function validateAuditCoverage() {
       auditedTables.add(table);
     }
 
-    const tableMatches = content.match(/(?:INSERT INTO|UPDATE|DELETE FROM)\s+(\w+)/gi) || [];
+    // Word-boundary anchored so 'has', 'from', 'would' etc. (SQL kw / English words)
+    // don't get matched as table names. Tables must start with letter/underscore.
+    const tableMatches = content.match(/(?:INSERT INTO|UPDATE|DELETE FROM)\s+([a-z_]\w*)\b/gi) || [];
     for (const match of tableMatches) {
       const table = match.replace(/(?:INSERT INTO|UPDATE|DELETE FROM)\s+/i, '').toLowerCase();
       if (!routeTableRefs.has(table)) routeTableRefs.set(table, []);
