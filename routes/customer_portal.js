@@ -23,10 +23,17 @@
 // Money values (rates, expected revenue, billing amounts) are surfaced
 // only on invoices that are EXPLICITLY billed to them.
 
+const { logAudit } = require('./_audit');
+
+// F8: UUID guard — prevents Postgres 22P02 "invalid input syntax for type uuid"
+// 500s when a non-UUID path param is passed.
+const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+function isValidUUID(v) { return UUID_RE.test(v); }
+
 module.exports = function installCustomerPortalRoutes(app, pool, mw) {
   const { requireAuth, requireAdmin } = mw;
 
-  // ─── Helper: load the client_id list for the current user ─────────────
+  // --- Helper: load the client_id list for the current user ---
   // Returns []  when the user has no customer_clients rows.
   async function clientIdsForUser(userId) {
     if (!userId) return [];
@@ -36,15 +43,12 @@ module.exports = function installCustomerPortalRoutes(app, pool, mw) {
     return rows.map(r => r.client_id);
   }
 
-  // ─── Customer me ──────────────────────────────────────────────────────
+  // --- Customer me ---
   app.get('/api/customer/me', requireAuth(['customer']), async (req, res) => {
     try {
       const ids = await clientIdsForUser(req.user.id);
       let clients = [];
       if (ids.length) {
-        // Customer portal doesn't need is_rus — program classification lives
-        // on engineering contracts and is irrelevant to the per-client
-        // view the customer sees.
         const { rows } = await pool.query(
           `SELECT id, name FROM clients WHERE id = ANY($1::uuid[]) ORDER BY name`,
           [ids]
@@ -67,13 +71,9 @@ module.exports = function installCustomerPortalRoutes(app, pool, mw) {
     }
   });
 
-  // ─── Customer project list with progress ──────────────────────────────
-  // Returns leaf projects only — the customer doesn't care about rollup
-  // folders. Each row carries:
-  //   - basic identity (name, work order, status, project_type)
-  //   - completion: hours used / expected_hours; expected_revenue;
-  //   - last activity: date of latest time_entry
-  //   - pipeline stage: design or permitting stage label, when relevant
+  // --- Customer project list with progress ---
+  // Returns leaf projects only.
+  // F4: expected_revenue removed — internal billing estimate, not customer-facing.
   app.get('/api/customer/projects', requireAuth(['customer']), async (req, res) => {
     try {
       const clientIds = await clientIdsForUser(req.user.id);
@@ -84,7 +84,6 @@ module.exports = function installCustomerPortalRoutes(app, pool, mw) {
           p.start_date, p.completed_date, p.billed_date,
           p.actual_hours,
           p.expected_hours,
-          p.expected_revenue,
           p.footage,
           p.client_id,
           cl.name AS client_name,
@@ -114,9 +113,6 @@ module.exports = function installCustomerPortalRoutes(app, pool, mw) {
           p.name
       `, [clientIds]);
 
-      // Compute completion + days-since-activity in JS so the SQL stays
-      // readable. completion_pct caps at 100% and falls to NULL when
-      // expected_hours isn't set (some footage projects don't track hours).
       const today = new Date();
       const enriched = rows.map(p => {
         const expected = parseFloat(p.expected_hours || 0);
@@ -142,19 +138,21 @@ module.exports = function installCustomerPortalRoutes(app, pool, mw) {
     }
   });
 
-  // ─── Single project detail ─────────────────────────────────────────────
-  // Same shape as the list row + a recent-activity summary (last 25
-  // time_entries rolled up by week). Money fields stay summarized; the
-  // raw rates / individual entries aren't exposed to customers.
+  // --- Single project detail ---
+  // F4: expected_revenue removed. F6: notes removed (internal staff field).
+  // F8: UUID guard on :id.
   app.get('/api/customer/projects/:id', requireAuth(['customer']), async (req, res) => {
+    if (!isValidUUID(req.params.id)) {
+      return res.status(400).json({ error: 'Invalid project id.' });
+    }
     try {
       const clientIds = await clientIdsForUser(req.user.id);
       if (!clientIds.length) return res.status(404).json({ error: 'Not found' });
       const { rows: projRows } = await pool.query(`
         SELECT p.id, p.name, p.work_order_number, p.status, p.project_type,
                p.start_date, p.completed_date, p.billed_date,
-               p.actual_hours, p.expected_hours, p.expected_revenue,
-               p.footage, p.notes,
+               p.actual_hours, p.expected_hours,
+               p.footage,
                p.client_id, cl.name AS client_name, j.name AS job_name
           FROM projects p
           LEFT JOIN clients cl ON cl.id = p.client_id
@@ -164,7 +162,6 @@ module.exports = function installCustomerPortalRoutes(app, pool, mw) {
       if (!projRows[0]) return res.status(404).json({ error: 'Not found' });
       const p = projRows[0];
 
-      // Weekly hours roll-up over the last 12 weeks, scoped to this project.
       const { rows: weekly } = await pool.query(`
         SELECT
           to_char(date_trunc('week', entry_date), 'IYYY-IW') AS week,
@@ -192,7 +189,8 @@ module.exports = function installCustomerPortalRoutes(app, pool, mw) {
     }
   });
 
-  // ─── Customer invoice list ────────────────────────────────────────────
+  // --- Customer invoice list ---
+  // F5: AND i.status NOT IN ('draft') — customers must not see draft invoices.
   app.get('/api/customer/invoices', requireAuth(['customer']), async (req, res) => {
     try {
       const clientIds = await clientIdsForUser(req.user.id);
@@ -204,6 +202,7 @@ module.exports = function installCustomerPortalRoutes(app, pool, mw) {
           FROM invoices i
           LEFT JOIN clients cl ON cl.id = i.client_id
          WHERE i.client_id = ANY($1::uuid[])
+           AND i.status NOT IN ('draft')
          ORDER BY i.invoice_date DESC NULLS LAST, i.created_at DESC
       `, [clientIds]);
       res.json(rows);
@@ -213,12 +212,24 @@ module.exports = function installCustomerPortalRoutes(app, pool, mw) {
     }
   });
 
+  // --- Customer invoice detail ---
+  // F5: AND i.status NOT IN ('draft').
+  // F7: replaced SELECT i.* with explicit column list.
+  // F8: UUID guard on :id.
+  // F11 (INTENTIONAL): rate retained in line items — customers on sent invoices
+  //     are entitled to see unit rates per the billing contract (header lines 21-24).
   app.get('/api/customer/invoices/:id', requireAuth(['customer']), async (req, res) => {
+    if (!isValidUUID(req.params.id)) {
+      return res.status(400).json({ error: 'Invalid invoice id.' });
+    }
     try {
       const clientIds = await clientIdsForUser(req.user.id);
       if (!clientIds.length) return res.status(404).json({ error: 'Not found' });
       const { rows } = await pool.query(`
-        SELECT i.*, cl.name AS client_name,
+        SELECT i.id, i.invoice_number, i.invoice_date,
+               i.billing_period_start, i.billing_period_end,
+               i.total_amount, i.status, i.notes, i.client_id, i.created_at,
+               cl.name AS client_name,
                json_agg(json_build_object(
                  'id', ii.id,
                  'project_id', ii.project_id,
@@ -234,8 +245,13 @@ module.exports = function installCustomerPortalRoutes(app, pool, mw) {
           LEFT JOIN clients cl ON cl.id = i.client_id
           LEFT JOIN invoice_items ii ON ii.invoice_id = i.id
           LEFT JOIN projects p ON p.id = ii.project_id
-         WHERE i.id = $1 AND i.client_id = ANY($2::uuid[])
-         GROUP BY i.id, cl.name
+         WHERE i.id = $1
+           AND i.client_id = ANY($2::uuid[])
+           AND i.status NOT IN ('draft')
+         GROUP BY i.id, i.invoice_number, i.invoice_date,
+                  i.billing_period_start, i.billing_period_end,
+                  i.total_amount, i.status, i.notes, i.client_id, i.created_at,
+                  cl.name
       `, [req.params.id, clientIds]);
       if (!rows[0]) return res.status(404).json({ error: 'Not found' });
       res.json(rows[0]);
@@ -245,12 +261,8 @@ module.exports = function installCustomerPortalRoutes(app, pool, mw) {
     }
   });
 
-  // ─── Admin: Client Progress view ──────────────────────────────────────
-  // Internal mirror of the customer portal's data, but unscoped so admin
-  // sees every client. The data shape matches /api/customer/projects so
-  // both UIs can share render code if useful in the future. Returned as
-  // a clients-grouped tree instead of a flat project list because the
-  // admin tab groups by client at the top level.
+  // --- Admin: Client Progress view ---
+  // NOTE: expected_revenue intentionally retained — admin-only endpoint.
   app.get('/api/admin/client-progress', requireAdmin, async (req, res) => {
     try {
       const { rows } = await pool.query(`
@@ -308,7 +320,7 @@ module.exports = function installCustomerPortalRoutes(app, pool, mw) {
             total_hours: 0,
             total_expected_hours: 0,
             total_expected_revenue: 0,
-            stale_count: 0,        // > 30 days since activity AND status=active
+            stale_count: 0,
             projects: [],
           });
         }
@@ -330,8 +342,12 @@ module.exports = function installCustomerPortalRoutes(app, pool, mw) {
     }
   });
 
-  // ─── Admin endpoints — manage customer ↔ client links ────────────────
+  // --- Admin: manage customer <-> client links ---
+  // F8: UUID guard on user_id.
   app.get('/api/customer-clients/:user_id', requireAdmin, async (req, res) => {
+    if (!isValidUUID(req.params.user_id)) {
+      return res.status(400).json({ error: 'Invalid user_id.' });
+    }
     try {
       const { rows } = await pool.query(`
         SELECT cc.user_id, cc.client_id, cc.created_at, cl.name AS client_name
@@ -347,13 +363,11 @@ module.exports = function installCustomerPortalRoutes(app, pool, mw) {
     }
   });
 
+  // F9: audit-log authorization-control grant.
   app.post('/api/customer-clients', requireAdmin, async (req, res) => {
     const { user_id, client_id } = req.body || {};
     if (!user_id || !client_id) return res.status(400).json({ error: 'user_id and client_id required' });
     try {
-      // Sanity: target user must exist and be customer-role. Mis-linking
-      // an admin user to a single client could trick the customer
-      // endpoints into showing them less data than expected.
       const { rows: u } = await pool.query(`SELECT role FROM users WHERE id = $1`, [user_id]);
       if (!u[0]) return res.status(404).json({ error: 'User not found' });
       if (u[0].role !== 'customer') {
@@ -365,6 +379,15 @@ module.exports = function installCustomerPortalRoutes(app, pool, mw) {
          ON CONFLICT (user_id, client_id) DO NOTHING`,
         [user_id, client_id]
       );
+      // F9: audit-log grant so authorization-control changes are traceable.
+      await logAudit(pool, {
+        req,
+        action: 'customer_access.grant',
+        entity_type: 'customer_client',
+        entity_id: user_id,
+        source: 'customer_portal',
+        details: { user_id, client_id },
+      });
       res.json({ ok: true });
     } catch (e) {
       console.error('[customer-clients:create]', e && e.message);
@@ -372,12 +395,34 @@ module.exports = function installCustomerPortalRoutes(app, pool, mw) {
     }
   });
 
+  // F8: UUID guards on both params.
+  // F9: audit-log authorization-control revoke.
+  // F10: 404 when link does not exist (rowCount === 0).
   app.delete('/api/customer-clients/:user_id/:client_id', requireAdmin, async (req, res) => {
+    if (!isValidUUID(req.params.user_id)) {
+      return res.status(400).json({ error: 'Invalid user_id.' });
+    }
+    if (!isValidUUID(req.params.client_id)) {
+      return res.status(400).json({ error: 'Invalid client_id.' });
+    }
     try {
-      await pool.query(
+      const result = await pool.query(
         `DELETE FROM customer_clients WHERE user_id = $1 AND client_id = $2`,
         [req.params.user_id, req.params.client_id]
       );
+      // F10: distinguish "deleted" from "never existed".
+      if (result.rowCount === 0) {
+        return res.status(404).json({ error: 'Link not found.' });
+      }
+      // F9: audit-log the revoke so authorization-control changes are traceable.
+      await logAudit(pool, {
+        req,
+        action: 'customer_access.revoke',
+        entity_type: 'customer_client',
+        entity_id: req.params.user_id,
+        source: 'customer_portal',
+        details: { user_id: req.params.user_id, client_id: req.params.client_id },
+      });
       res.json({ ok: true });
     } catch (e) {
       console.error('[customer-clients:delete]', e && e.message);
