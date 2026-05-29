@@ -7,6 +7,7 @@
 
 const { collectProjectTree, saveUndoBucket } = require('./_helpers');
 const { broadcast } = require('./_sse');
+const { logAudit } = require('./_audit');
 
 module.exports = function installContractsRoutes(app, pool, mw) {
   const { requireAdmin } = mw;
@@ -46,12 +47,32 @@ module.exports = function installContractsRoutes(app, pool, mw) {
   // Item 2 fix: requireAdmin added — creating contracts is an admin-only operation
   app.post('/api/contracts', requireAdmin, async (req, res) => {
     const { client_id, contract_number, name, engineering_contract_id, friendly_label } = req.body;
+
+    // C-4 LOW: validate required fields
+    if (!contract_number || typeof contract_number !== 'string' || !contract_number.trim()) {
+      return res.status(400).json({ error: 'contract_number required' });
+    }
+    if (!client_id) {
+      return res.status(400).json({ error: 'client_id required' });
+    }
+
     try {
       const { rows } = await pool.query(
         `INSERT INTO contracts (client_id, contract_number, name, engineering_contract_id, friendly_label)
            VALUES ($1,$2,$3,$4,$5) RETURNING *`,
         [client_id, contract_number, name, engineering_contract_id || null, friendly_label || null]
       );
+
+      // C-2 MED: add audit log on contract creation
+      await logAudit(pool, {
+        req,
+        action: 'contract.create',
+        entity_type: 'contract',
+        entity_id: rows[0].id,
+        after: rows[0],
+        source: 'admin'
+      }).catch(() => {});
+
       broadcast('admin', 'contract_added', { id: rows[0].id, name: rows[0].name });
       res.json(rows[0]);
     } catch (e) {
@@ -82,6 +103,17 @@ module.exports = function installContractsRoutes(app, pool, mw) {
         params
       );
       if (!rows[0]) return res.status(404).json({ error: 'Contract not found' });
+
+      // C-2 MED: add audit log on contract update
+      await logAudit(pool, {
+        req,
+        action: 'contract.update',
+        entity_type: 'contract',
+        entity_id: rows[0].id,
+        after: rows[0],
+        source: 'admin'
+      }).catch(() => {});
+
       broadcast('admin', 'contract_updated', { id: rows[0].id, name: rows[0].name });
       res.json(rows[0]);
     } catch (e) {
