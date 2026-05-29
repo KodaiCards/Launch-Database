@@ -17,6 +17,37 @@ const path = require('path');
 const fs = require('fs');
 const crypto = require('crypto');
 
+// W94-HIGH-1: Extension allowlist — only these extensions are permitted regardless
+// of what Content-Type the client claims.
+const ALLOWED_EXTS = new Set(['.jpg', '.jpeg', '.png', '.heic', '.heif', '.webp']);
+
+// W94-HIGH-1: Magic-byte signatures keyed by MIME type.
+// Each entry is an array of [byteOffset, hexPattern] pairs that must ALL match.
+// null bytes in the pattern are wildcard positions (e.g. RIFF chunk size in WebP).
+// We use a hex-string approach identical to routes/client_portal_v2.js for consistency,
+// but adapted for in-memory buffers (memoryStorage) rather than disk files.
+const MIME_MAGIC = {
+  'image/jpeg': [[0, 'ffd8ff']],
+  'image/png':  [[0, '89504e47']],
+  'image/webp': [[0, '52494646'], [8, '57454250']], // RIFF....WEBP (two separate checks)
+  'image/heic': [[4, '667479706865696300']], // ....ftypheic (ftyp box at offset 4)
+  'image/heif': [[4, '66747970']],           // ....ftyp (general ftyp box)
+};
+
+// Returns true if the buffer's bytes match the magic-byte signatures for mimeType.
+// Uses buffer slicing — no disk I/O needed since multer uses memoryStorage here.
+function hasValidMagicBytes(buffer, mimeType) {
+  const signatures = MIME_MAGIC[mimeType];
+  if (!signatures) return false;
+  for (const [offset, hexStr] of signatures) {
+    const needed = offset + hexStr.length / 2;
+    if (buffer.length < needed) return false;
+    const actual = buffer.slice(offset, offset + hexStr.length / 2).toString('hex');
+    if (!actual.startsWith(hexStr.toLowerCase())) return false;
+  }
+  return true;
+}
+
 module.exports = function installProjectPhotoRoutes(app, pool, mw) {
   // MED-5 fix: hard fail on missing middleware instead of silently open-gating
   if (!mw || !mw.requireAuth) {
@@ -86,14 +117,20 @@ module.exports = function installProjectPhotoRoutes(app, pool, mw) {
     storage: multer.memoryStorage(),
     limits: { fileSize: 20 * 1024 * 1024 },
     fileFilter: (req, file, cb) => {
-      const allowedMimes = [
-        'image/jpeg', 'image/png', 'image/heic', 'image/heif', 'image/webp'
-      ];
-      if (allowedMimes.includes(file.mimetype)) {
-        cb(null, true);
-      } else {
-        cb(new Error(`MIME type ${file.mimetype} not allowed`));
+      // W94-HIGH-1 (extension check): reject disallowed extensions before buffering.
+      // This catches attackers who send image/jpeg Content-Type but name the file shell.php.
+      const ext = path.extname(file.originalname).toLowerCase();
+      if (!ALLOWED_EXTS.has(ext)) {
+        return cb(new Error(`File extension '${ext || '(none)'}' not permitted`));
       }
+
+      // MIME type check (secondary — extension check is the primary gate)
+      const allowedMimes = Object.keys(MIME_MAGIC);
+      if (!allowedMimes.includes(file.mimetype)) {
+        return cb(new Error(`MIME type ${file.mimetype} not allowed`));
+      }
+
+      cb(null, true);
     }
   });
 
@@ -137,6 +174,14 @@ module.exports = function installProjectPhotoRoutes(app, pool, mw) {
       const projRes = await pool.query('SELECT id FROM projects WHERE id=$1', [project_id]);
       if (projRes.rows.length === 0) {
         return res.status(404).json({ error: 'Project not found' });
+      }
+
+      // W94-HIGH-1 (magic-byte check): verify actual file content matches the declared
+      // MIME type. The extension check in fileFilter handles wrong-extension attacks;
+      // this handles wrong-content attacks (.jpg extension + PHP body).
+      // multer.memoryStorage() provides req.file.buffer — no disk read needed.
+      if (!hasValidMagicBytes(req.file.buffer, req.file.mimetype)) {
+        return res.status(400).json({ error: 'File content does not match declared type' });
       }
 
       // Sanitize filename, generate storage key

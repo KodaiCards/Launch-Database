@@ -280,6 +280,34 @@ test('HIGH-1: upload with valid .jpg extension but non-image body rejected with 
   assert.ok(body.error, 'error message present');
 });
 
+test('HIGH-1: upload with valid .jpg extension and real JPEG magic bytes succeeds (201)', async () => {
+  const token = await adminLogin();
+
+  const projRes = await fetch(`${baseUrl()}/api/projects`, {
+    method: 'POST',
+    headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' },
+    body: JSON.stringify({ name: 'W143 Good JPEG Test', client_id: fixtures.clients.psc, is_rollup: false }),
+  });
+  const proj = await projRes.json();
+  assert.ok(proj.id, 'project created');
+  trash.projects.push(proj.id);
+
+  // VALID_JPEG starts with FF D8 FF — correct magic bytes for image/jpeg
+  const fd = new FormData();
+  fd.append('project_id', proj.id);
+  fd.append('photo', new Blob([VALID_JPEG], { type: 'image/jpeg' }), 'photo.jpg');
+
+  const res = await fetch(`${baseUrl()}/api/project-photos`, {
+    method: 'POST',
+    headers: { 'Authorization': `Bearer ${token}` },
+    body: fd,
+  });
+  const body = await res.json();
+  assert.strictEqual(res.status, 201, `expected 201 for valid JPEG, got ${res.status}: ${JSON.stringify(body)}`);
+  assert.ok(body.id, 'photo id returned');
+  assert.strictEqual(body.mime_type, 'image/jpeg', 'mime_type is image/jpeg');
+});
+
 // ─── Wave 106: HIGH-2 — Stored XSS caption is escaped in API response ──────
 
 test('HIGH-2: caption with XSS payload stored raw in DB, returned raw by API (escaping is client-side)', async () => {
