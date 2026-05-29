@@ -265,10 +265,14 @@ module.exports = function installProjectsRoutes(app, pool, mw) {
       // letting ensureRollupChain derive one), verify the target parent
       // actually exists. This prevents re-parenting a project under a
       // non-existent or attacker-controlled UUID.
+      // M-4 fix: also verify parent's client_id matches the project's client_id.
       if (parent_id) {
-        const parentCheck = await pool.query('SELECT id FROM projects WHERE id = $1', [parent_id]);
+        const parentCheck = await pool.query('SELECT id, client_id FROM projects WHERE id = $1', [parent_id]);
         if (!parentCheck.rows.length) {
           return res.status(400).json({ error: 'parent_id does not reference an existing project' });
+        }
+        if (parentCheck.rows[0].client_id !== client_id) {
+          return res.status(400).json({ error: 'Cannot re-parent under a foreign client\'s tree' });
         }
       }
 
@@ -462,7 +466,9 @@ module.exports = function installProjectsRoutes(app, pool, mw) {
   // Item 22 fix: parent_id validation — verify the target parent exists
   // before accepting a re-parent operation.
   // Wave 15: requireProjectCreate gates edits to admin/manager + grant holders.
+  // M-3 fix: validateUUID on id parameter.
   app.put('/api/projects/:id', requireAuth(), requireProjectCreate, async (req, res) => {
+    if (!validateUUID(req.params.id, res)) return;
     let {
       name, client_id, contract_id, work_order_number,
       project_type, program, job_id,
@@ -506,10 +512,16 @@ module.exports = function installProjectsRoutes(app, pool, mw) {
       // Item 22 fix: verify the target parent exists when caller specifies
       // an explicit parent_id (re-parent operation). This prevents tree
       // corruption from attacker-controlled parent UUIDs.
+      // M-4 fix: also verify parent's client_id matches the project's client_id.
       if (parent_id !== undefined && parent_id !== null) {
-        const parentCheck = await pool.query('SELECT id FROM projects WHERE id = $1', [parent_id]);
+        const parentCheck = await pool.query('SELECT id, client_id FROM projects WHERE id = $1', [parent_id]);
         if (!parentCheck.rows.length) {
           return res.status(400).json({ error: 'parent_id does not reference an existing project' });
+        }
+        // Get project's client_id (either from body or existing row)
+        const projectClientId = client_id !== undefined ? client_id : (await pool.query('SELECT client_id FROM projects WHERE id=$1', [req.params.id])).rows[0]?.client_id;
+        if (parentCheck.rows[0].client_id !== projectClientId) {
+          return res.status(400).json({ error: 'Cannot re-parent under a foreign client\'s tree' });
         }
       }
 
@@ -736,7 +748,9 @@ module.exports = function installProjectsRoutes(app, pool, mw) {
   // Recalculate actual_hours for a single project from its time_entries.
   // requireAuth() added — endpoint was unguarded (any network request could
   // trigger a full upward propagation walk without being authenticated).
+  // M-3 fix: validateUUID on id parameter.
   app.post('/api/projects/:id/recalc-hours', requireAuth(), async (req, res) => {
+    if (!validateUUID(req.params.id, res)) return;
     try {
       await updateProjectHours(req.params.id);
       const { rows } = await pool.query('SELECT actual_hours FROM projects WHERE id=$1', [req.params.id]);
@@ -788,7 +802,9 @@ module.exports = function installProjectsRoutes(app, pool, mw) {
   // Delete a billed project entirely (removes from revenue, hours, everything).
   // ?dry_run=1 returns impact counts without deleting (opt-in).
   // No confirm flag required — undo-bucket is the safety net.
+  // M-3 fix: validateUUID on id parameter.
   app.delete('/api/projects/:id/with-hours', requireAdmin, async (req, res) => {
+    if (!validateUUID(req.params.id, res)) return;
     const dryRun = req.query.dry_run === '1' || req.query.dry_run === 'true';
     if (dryRun) {
       try {
@@ -1191,7 +1207,9 @@ module.exports = function installProjectsRoutes(app, pool, mw) {
   // (projects, time entries) WITHOUT deleting anything. Pass confirm:true in
   // the request body to execute. This prevents accidental mass-deletion of
   // large project trees triggered by a single mistimed click.
+  // M-3 fix: validateUUID on id parameter.
   app.delete('/api/projects/:id/with-tree', requireAdmin, async (req, res) => {
+    if (!validateUUID(req.params.id, res)) return;
     const dryRun  = req.query.dry_run === '1' || req.query.dry_run === 'true';
     const confirm = req.body && (req.body.confirm === true || req.body.confirm === 'true');
     let projects;
@@ -1297,7 +1315,9 @@ module.exports = function installProjectsRoutes(app, pool, mw) {
   // view for ongoing (monthly-recurring) projects. Works for any project with
   // time entries, not just is_ongoing=true — the UI gates visibility, but the
   // endpoint is unrestricted so the same data feeds the monthly breakdown table.
+  // M-3 fix: validateUUID on id parameter.
   app.get('/api/projects/:id/monthly-hours-breakdown', requireAuth(), async (req, res) => {
+    if (!validateUUID(req.params.id, res)) return;
     try {
       const { rows } = await pool.query(`
         SELECT
