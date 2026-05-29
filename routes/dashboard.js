@@ -88,7 +88,10 @@ module.exports = function installDashboardRoutes(app, pool, mw) {
         ORDER BY cl.name, pp.name, p.name
       `);
       res.json({ count: rows.length, projects: rows });
-    } catch (e) { res.status(500).json({ error: e.message }); }
+    } catch (e) {
+      console.error('[dashboard:active-list]', e && e.message);
+      res.status(500).json({ error: 'Dashboard data unavailable' });
+    }
   });
 
   app.get('/api/dashboard', requireAuth(['admin', 'design_manager', 'permitting_manager']), async (req, res) => {
@@ -227,6 +230,9 @@ module.exports = function installDashboardRoutes(app, pool, mw) {
         recent_projects: recentR.rows,
         unbilled_projects: alertR.rows
       });
-    } catch (e) { res.status(500).json({ error: e.message }); }
+    } catch (e) {
+      console.error('[dashboard:main]', e && e.message);
+      res.status(500).json({ error: 'Dashboard data unavailable' });
+    }
   });
 };

@@ -125,7 +125,7 @@ module.exports = function installPortalAccessRoutes(app, pool, mw, portalDefs) {
     const { userId, portalKey } = req.params;
     try {
       const { rows: userRows } = await pool.query(
-        `SELECT id, role FROM users WHERE id = $1`,
+        `SELECT id, role FROM users WHERE id = $1 AND active = true AND role <> 'customer'`,
         [userId]
       );
       if (!userRows[0]) return res.status(404).json({ error: 'User not found' });

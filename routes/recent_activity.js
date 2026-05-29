@@ -89,7 +89,7 @@ module.exports = function installRecentActivityRoutes(app, pool, mw) {
         total_today: parseInt(todayCount.rows[0].c || 0, 10)
       });
     } catch (err) {
-      console.error('recent-activity error:', err);
+      console.error('[recent-activity]', err && err.message);
       res.status(500).json({ error: 'Failed to load recent activities' });
     }
   });

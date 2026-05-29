@@ -174,6 +174,10 @@ module.exports = function installTrainingRoutes(app, pool, { requireAuth }) {
       if (typeof domain_scores !== 'object' || Array.isArray(domain_scores)) {
         return res.status(400).json({ error: 'domain_scores must be a plain object when provided' });
       }
+      const dsStr = JSON.stringify(domain_scores);
+      if (dsStr.length > 8192) {
+        return res.status(400).json({ error: 'domain_scores exceeds 8KB limit' });
+      }
     }
 
     try {
@@ -260,12 +264,8 @@ module.exports = function installTrainingRoutes(app, pool, { requireAuth }) {
   // Gated to: admin, design_manager, permitting_manager.
   // Returns per-user aggregated progress: lessons_completed, last_seen_at,
   // and a per-course breakdown.
-  const ADMIN_ROLES = ['admin', 'design_manager', 'permitting_manager'];
 
-  app.get('/api/training/admin/progress-overview', requireAuth(), async (req, res) => {
-    if (!ADMIN_ROLES.includes(req.user.role)) {
-      return res.status(403).json({ error: 'Insufficient permissions' });
-    }
+  app.get('/api/training/admin/progress-overview', requireAuth(['admin', 'design_manager', 'permitting_manager']), async (req, res) => {
 
     try {
       // Per-user, per-course rollup: lessons_completed, last_seen_at
