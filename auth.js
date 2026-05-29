@@ -325,12 +325,29 @@ function authMiddleware(pool) {
       const impPayload = verifyToken(req.cookies[IMPERSONATION_COOKIE]);
       if (impPayload && impPayload.impersonator_id) {
         try {
-          // Verify the target user still exists and is active.
-          const { rows } = await pool.query(
-            `SELECT id, username, role, team, extra_teams, full_name, email, active, staff_id FROM users WHERE id = $1 LIMIT 1`,
-            [impPayload.id]
-          );
-          const target = rows[0];
+          // HIGH-1 fix (Wave 166): fetch target user AND impersonator's
+          // tokens_invalid_after.  Revoking the admin closes this session too.
+          const [tR, iR] = await Promise.all([
+            pool.query(
+              `SELECT id, username, role, team, extra_teams, full_name, email, active, staff_id
+               FROM users WHERE id = $1 LIMIT 1`,
+              [impPayload.id]
+            ),
+            pool.query(
+              `SELECT tokens_invalid_after FROM users WHERE id = $1 LIMIT 1`,
+              [impPayload.impersonator_id]
+            ),
+          ]);
+          const target = tR.rows[0];
+          const impRow = iR.rows[0];
+          if (!impRow) {
+            return res.status(401).json({ error: 'Impersonation session revoked.' });
+          }
+          if (impRow.tokens_invalid_after && impPayload.iat) {
+            if (new Date(impRow.tokens_invalid_after).getTime() > impPayload.iat * 1000) {
+              return res.status(401).json({ error: 'Impersonation session revoked.' });
+            }
+          }
           if (target && target.active) {
             req.user = {
               ...target,

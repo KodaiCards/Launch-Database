@@ -946,7 +946,7 @@ app.get('/api/admin/diag/rollup-state', requireAdmin, async (req, res) => {
 // Wave 13C: admin impersonation ("View as Staff / Customer").
 // Registered AFTER auth middleware so req.user is always populated before the
 // requireAdmin guard fires.
-require('./routes/impersonation')(app, pool, { requireAdmin, signImpersonationToken, cookieOpts });
+require('./routes/impersonation')(app, pool, { requireAdmin, requireAuth, signImpersonationToken, cookieOpts, rateLimitOk });
 
 // ─── Mapbox token endpoint (Splice 5.D.1) ────────────────────────────────────
 // Returns the MAPBOX_TOKEN env var to authenticated clients so it can be used
