@@ -1509,8 +1509,14 @@ async function purgeOldWorkspaceTrash(pool, options = {}) {
     let filesDeleted = 0;
     for (const file of toPurge) {
       try {
-        const filePath = path.join(UPLOAD_DIR, file.storage_key);
-        await fs.unlink(filePath).catch(() => null);
+        // W85-F14: use storage_key directly (it is already absolute) after containment
+        // check. path.join(UPLOAD_DIR, absoluteKey) silently ignores UPLOAD_DIR when
+        // storage_key is absolute, making the containment check inconsistent.
+        if (!isStorageKeyContained(file.storage_key)) {
+          console.error('[workspace-purge] storage_key escapes upload dir, skipping:', file.storage_key);
+          continue;
+        }
+        await fs.unlink(file.storage_key).catch(() => null);
         filesDeleted++;
       } catch (err) {
         console.error('[workspace-purge] failed to delete file:', file.storage_key, err.message);

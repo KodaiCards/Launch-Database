@@ -957,7 +957,7 @@ function suggestedFilename(data) {
   // Sanitize for filesystem use — no slashes, no quotes
   const clean = (s) => String(s || '').replace(/[\\/:*?"<>|]/g, '').trim();
   const parts = [
-    m.month_year,
+    clean(m.month_year), // W102-L3: pass through clean() for consistent sanitization
     clean(m.job_name),
     clean(m.engineering_contract.loan_name || m.engineering_contract.contract_number || 'Invoice'),
     'Summary',

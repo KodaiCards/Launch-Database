@@ -179,7 +179,18 @@ module.exports = function installProjectsRoutes(app, pool, mw) {
     }
   });
 
+  // W127-F8: UUID format validation helper — reused by GET, DELETE, and invoice routes.
+  const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+  function validateUUID(id, res) {
+    if (!UUID_RE.test(id)) {
+      res.status(400).json({ error: 'Invalid project id format.' });
+      return false;
+    }
+    return true;
+  }
+
   app.get('/api/projects/:id', requireAuth(), async (req, res) => {
+    if (!validateUUID(req.params.id, res)) return;
     try {
       const { rows } = await pool.query(`
         SELECT p.*,
@@ -676,6 +687,7 @@ module.exports = function installProjectsRoutes(app, pool, mw) {
   // ?dry_run=1 returns an impact preview without deleting (opt-in).
   // No confirm flag required — single-row delete; undo-bucket is safety net.
   app.delete('/api/projects/:id', requireAdmin, async (req, res) => {
+    if (!validateUUID(req.params.id, res)) return;
     const dryRun = req.query.dry_run === '1' || req.query.dry_run === 'true';
     try {
       const proj = await pool.query(
@@ -698,8 +710,19 @@ module.exports = function installProjectsRoutes(app, pool, mw) {
       // Remove from any pending billing batches first — billing_batch_items
       // has ON DELETE RESTRICT on project_id, so leaving stale rows here would
       // make the project undeletable AND keep it visible in the batch UI.
-      await pool.query('DELETE FROM billing_batch_items WHERE project_id=$1', [req.params.id]);
-      await pool.query('DELETE FROM projects WHERE id=$1', [req.params.id]);
+      // W127-F7: wrap both DELETEs in a transaction so they're atomic.
+      const delClient = await pool.connect();
+      try {
+        await delClient.query('BEGIN');
+        await delClient.query('DELETE FROM billing_batch_items WHERE project_id=$1', [req.params.id]);
+        await delClient.query('DELETE FROM projects WHERE id=$1', [req.params.id]);
+        await delClient.query('COMMIT');
+      } catch (txErr) {
+        await delClient.query('ROLLBACK');
+        throw txErr;
+      } finally {
+        delClient.release();
+      }
       broadcast('admin', 'project_deleted', { id: req.params.id });
       logAudit(pool, { req, action: 'delete', entity_type: 'project', entity_id: req.params.id,
         before: { id: proj.rows[0].id, name: proj.rows[0].name }, source: 'admin_ui' });
@@ -880,7 +903,10 @@ module.exports = function installProjectsRoutes(app, pool, mw) {
         resolvedJobDefaultBillingType = j.default_billing_type || null;
         resolvedJobDefaultRate = j.default_rate || null;
       }
-    } catch (_) {}
+    } catch (jobErr) {
+      // Non-fatal: job lookup is advisory; proceed with defaults if it fails.
+      console.error('[projects:resolve-or-create] job lookup error:', jobErr && jobErr.message);
+    }
 
     // Determine project_type. When the caller supplies an explicit value (e.g. the design
     // portal always sends project_type:'design'), use it directly so the project appears in
@@ -1298,6 +1324,7 @@ module.exports = function installProjectsRoutes(app, pool, mw) {
   // Body: { month?: 1-12, year?: YYYY } — defaults to current month/year.
   // Idempotent: returns existing invoice row when one already covers this period.
   app.post('/api/projects/:id/generate-monthly-invoice', requireManagerOrAdmin, async (req, res) => {
+    if (!validateUUID(req.params.id, res)) return;
     const projectId = req.params.id;
     const now = new Date();
     const month = parseInt(req.body.month, 10) || (now.getMonth() + 1);
@@ -1316,6 +1343,8 @@ module.exports = function installProjectsRoutes(app, pool, mw) {
       );
       if (!proj.rows.length) return res.status(404).json({ error: 'Project not found.' });
       const p = proj.rows[0];
+      // W127-F10: guard — only ongoing projects should generate monthly invoices.
+      if (!p.is_ongoing) return res.status(400).json({ error: 'Project is not flagged as ongoing. Enable the ongoing flag before generating monthly invoices.' });
 
       // Idempotency: check for an existing invoice whose period overlaps this month
       // keyed by project via invoice_items join.

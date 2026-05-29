@@ -46,12 +46,15 @@ function requireClientAuth(pool) {
         WHERE ct.token_hash = $1
       `, [tokenHash]);
 
-      if (!rows.length) return res.status(401).json({ error: 'invalid token' });
+      // W100-F7: use a single uniform 401 message to prevent token oracle /
+      // enumeration attacks. Callers cannot distinguish "wrong token" from
+      // "revoked" or "expired" — all surface as "Authentication required".
+      if (!rows.length) return res.status(401).json({ error: 'Authentication required' });
       const r = rows[0];
-      if (r.revoked_at) return res.status(401).json({ error: 'token revoked' });
-      if (r.expires_at && new Date(r.expires_at) < new Date()) return res.status(401).json({ error: 'token expired' });
-      if (r.user_status !== 'active') return res.status(401).json({ error: 'user inactive' });
-      if (r.org_status !== 'active') return res.status(401).json({ error: 'organization inactive' });
+      if (r.revoked_at) return res.status(401).json({ error: 'Authentication required' });
+      if (r.expires_at && new Date(r.expires_at) < new Date()) return res.status(401).json({ error: 'Authentication required' });
+      if (r.user_status !== 'active') return res.status(401).json({ error: 'Authentication required' });
+      if (r.org_status !== 'active') return res.status(401).json({ error: 'Authentication required' });
 
       req.client_user = {
         id:         r.client_user_id,

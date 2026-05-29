@@ -692,6 +692,11 @@ module.exports = function installSpliceRoutes(app, pool, mw) {
   });
 
   app.put('/api/splice/projects/:id', requireAuth(), requireSpliceAccess(req => req.params.id), async (req, res) => {
+    // W104-L6: enforce status enum so arbitrary strings can't corrupt the state machine.
+    const VALID_SPLICE_STATUS = ['pending', 'in_progress', 'complete', 'archived'];
+    if (req.body.status !== undefined && !VALID_SPLICE_STATUS.includes(req.body.status)) {
+      return res.status(400).json({ error: `Invalid status. Must be one of: ${VALID_SPLICE_STATUS.join(', ')}` });
+    }
     const allowed = ['name', 'status', 'notes'];
     const sets = [];
     const vals = [req.params.id];
@@ -2901,6 +2906,7 @@ module.exports = function installSpliceRoutes(app, pool, mw) {
           format: 'Letter',
           printBackground: true,
           margin: { top: '0.4in', right: '0.4in', bottom: '0.4in', left: '0.4in' },
+          timeout: 30000, // W104-L3: prevent unbounded PDF generation from hanging Puppeteer
         });
         const filename = `splice_diff_${_safeFilename(b.snapshot.project?.name || 'project')}_v${a.version_number}_to_v${b.version_number}.pdf`;
         res.set({
@@ -4060,6 +4066,7 @@ module.exports = function installSpliceRoutes(app, pool, mw) {
           format: pageSize,
           printBackground: true,
           margin: { top: '0.4in', right: '0.4in', bottom: '0.4in', left: '0.4in' },
+          timeout: 30000, // W104-L3: prevent unbounded PDF generation from hanging Puppeteer
         });
         const filename = `splice_${_safeFilename(data.project.name)}_${new Date().toISOString().slice(0,10)}.pdf`;
         res.set({
@@ -5921,8 +5928,12 @@ ${closurePages || '<div class="empty-section">No splice changes between these re
 
 // Resolve a project-level public token. Returns { token, project_id, ... }
 // or null when unknown/expired.
+// W104-L2: safe token charset — only URL-safe alphanumeric plus - and _.
+// Rejects tokens with unusual chars before they reach the DB query.
+const _TOKEN_RE = /^[A-Za-z0-9_\-]{1,64}$/;
+
 async function _resolveProjectToken(pool, token) {
-  if (!token || typeof token !== 'string' || token.length > 64) return null;
+  if (!token || typeof token !== 'string' || !_TOKEN_RE.test(token)) return null;
   const { rows } = await pool.query(
     `SELECT token, project_id, expires_at, created_at, label
        FROM splice_project_public_tokens
@@ -5959,7 +5970,7 @@ function _renderViewErrorHtml(message) {
 // expires_at when set. Returns null when the token is unknown or
 // expired so the caller can 404 cleanly.
 async function _resolveFieldToken(pool, token) {
-  if (!token || typeof token !== 'string' || token.length > 64) return null;
+  if (!token || typeof token !== 'string' || !_TOKEN_RE.test(token)) return null;
   const { rows } = await pool.query(
     `SELECT token, closure_id, project_id, expires_at, created_at
        FROM splice_closure_public_tokens

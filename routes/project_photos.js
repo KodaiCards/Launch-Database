@@ -136,6 +136,10 @@ module.exports = function installProjectPhotoRoutes(app, pool, mw) {
 
   function serverError(res, e, where) {
     console.error(`[project-photos:${where}]`, e && e.message);
+    // W94-L4: multer file-size errors return 413, not 500.
+    if (e && e.code === 'LIMIT_FILE_SIZE') {
+      return res.status(413).json({ error: 'File too large. Maximum size is 20 MB.' });
+    }
     const msg = e && e.message && e.message.includes('MIME')
       ? e.message
       : 'Internal server error';

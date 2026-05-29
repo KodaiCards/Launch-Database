@@ -19,6 +19,10 @@ async function scanLocalFolder(localRootPath) {
         const fullPath = path.join(dir, entry.name);
         const relativePath = relativePrefix ? `${relativePrefix}/${entry.name}` : entry.name;
 
+        // W99-L2: skip symlinks to prevent traversal outside the root folder.
+        // entry.isFile() follows symlinks (returns true for symlinked files),
+        // so we must explicitly skip symbolic links before the isFile check.
+        if (entry.isSymbolicLink()) continue;
         if (entry.isDirectory()) {
           await walk(fullPath, relativePath);
         } else if (entry.isFile()) {

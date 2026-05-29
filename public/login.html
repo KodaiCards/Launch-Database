@@ -159,7 +159,11 @@ function toggleDark(){
 // for cases like "you tried to access /something but weren't logged in".
 function getRedirectTarget() {
   const params = new URLSearchParams(window.location.search);
-  return params.get('next') || '/';
+  const next = params.get('next') || '/';
+  // W98-F4: block open redirect — only allow same-origin paths.
+  // Reject protocol-relative (//) and absolute URLs (http:// / https://).
+  if (/^\/\//i.test(next) || /^https?:\/\//i.test(next)) return '/';
+  return next;
 }
 
 async function doLogin(ev){

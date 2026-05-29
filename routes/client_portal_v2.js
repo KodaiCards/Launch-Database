@@ -765,6 +765,12 @@ module.exports = function installClientPortalV2(app, pool, { requireAuth }) {
       const orgId = req.client_org.id;
       const statusFilter = req.query.status || 'pending';
 
+      // W100-F8: allowlist statusFilter values to prevent unexpected filter strings.
+      const ALLOWED_STATUS_FILTERS = ['pending', 'responded', 'all'];
+      if (!ALLOWED_STATUS_FILTERS.includes(statusFilter)) {
+        return res.status(400).json({ error: `Invalid status filter. Allowed values: ${ALLOWED_STATUS_FILTERS.join(', ')}` });
+      }
+
       let whereClause = 'client_org_id = $1';
       const params = [orgId];
 

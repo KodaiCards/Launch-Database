@@ -258,27 +258,31 @@ module.exports = function installHoursCsvRoutes(app, pool, mw) {
       // Serialise XLSX/CSV parsing through a concurrency slot (max 2 simultaneous).
       // XLSX.readFile has no async API; the semaphore prevents unbounded parallel
       // sync reads from stacking up on the event loop under concurrent uploads.
-      await withUploadSlot(async () => {
-        if (ext === '.xlsx' || ext === '.xls') {
-          const wb = XLSX.readFile(req.file.path);
-          const sheet = wb.Sheets[wb.SheetNames[0]];
-          rows2d = XLSX.utils.sheet_to_json(sheet, { header: 1, defval: '', raw: false, dateNF: 'yyyy-mm-dd', blankrows: false });
-        } else if (ext === '.csv' || ext === '.tsv') {
-          const content = await fs.promises.readFile(req.file.path, 'utf8');
-          const wb = XLSX.read(content, { type: 'string' });
-          const sheet = wb.Sheets[wb.SheetNames[0]];
-          rows2d = XLSX.utils.sheet_to_json(sheet, { header: 1, defval: '', raw: false, dateNF: 'yyyy-mm-dd', blankrows: false });
-        } else {
-          await fs.promises.unlink(req.file.path);
-          // Signal unsupported type via a thrown error with a special code so the
-          // outer handler can send the 400 without re-throwing as a 500.
-          const err = new Error('Unsupported file type. Use .csv, .xlsx, or .xls.');
-          err.code = 'UNSUPPORTED_FILE_TYPE';
-          throw err;
-        }
-      });
-
-      await fs.promises.unlink(req.file.path);
+      // W102-L1: wrap in try/finally so temp file is always cleaned up even when
+      // XLSX.readFile throws on a corrupt file (parse error escapes the slot).
+      try {
+        await withUploadSlot(async () => {
+          if (ext === '.xlsx' || ext === '.xls') {
+            const wb = XLSX.readFile(req.file.path);
+            const sheet = wb.Sheets[wb.SheetNames[0]];
+            rows2d = XLSX.utils.sheet_to_json(sheet, { header: 1, defval: '', raw: false, dateNF: 'yyyy-mm-dd', blankrows: false });
+          } else if (ext === '.csv' || ext === '.tsv') {
+            const content = await fs.promises.readFile(req.file.path, 'utf8');
+            const wb = XLSX.read(content, { type: 'string' });
+            const sheet = wb.Sheets[wb.SheetNames[0]];
+            rows2d = XLSX.utils.sheet_to_json(sheet, { header: 1, defval: '', raw: false, dateNF: 'yyyy-mm-dd', blankrows: false });
+          } else {
+            // Signal unsupported type via a thrown error with a special code so the
+            // outer handler can send the 400 without re-throwing as a 500.
+            const err = new Error('Unsupported file type. Use .csv, .xlsx, or .xls.');
+            err.code = 'UNSUPPORTED_FILE_TYPE';
+            throw err;
+          }
+        });
+      } finally {
+        // Best-effort temp file cleanup — runs even if parse throws.
+        await fs.promises.unlink(req.file.path).catch(() => null);
+      }
 
       const headerIdx = findHeaderRow(rows2d);
       if (headerIdx < 0) {
@@ -1175,6 +1179,18 @@ module.exports = function installHoursCsvRoutes(app, pool, mw) {
 
   // ─── CSV Review Queue endpoints ────────────────────────────────────────────
 
+  // W102-L2: sanitize cell values before storing in csv_review_queue.raw_row to
+  // prevent CSV injection when an admin later exports the queue to a spreadsheet.
+  // Cells starting with =, +, -, @ are prefixed with a single-quote per OWASP guidance.
+  function sanitizeCsvCell(v) {
+    if (typeof v === 'string' && /^[=+\-@]/.test(v)) return "'" + v;
+    return v;
+  }
+  function sanitizeCsvRow(row) {
+    if (!row || typeof row !== 'object') return row;
+    return Object.fromEntries(Object.entries(row).map(([k, v]) => [k, sanitizeCsvCell(v)]));
+  }
+
   // Persist unmatched rows from a completed CSV import session into the
   // review queue so admins can manually map them instead of silently losing them.
   app.post('/api/hours/csv-queue-unmatched', requireAdmin, async (req, res) => {
@@ -1192,11 +1208,12 @@ module.exports = function installHoursCsvRoutes(app, pool, mw) {
       await client.query('BEGIN');
       let queued = 0;
       for (const row of unmatchedRows) {
+        const safeRow = sanitizeCsvRow(row);
         await client.query(
           `INSERT INTO csv_review_queue
              (imported_by_user_id, csv_filename, raw_row, match_attempts, status)
            VALUES ($1, $2, $3, $4, 'pending')`,
-          [userId, csv_filename || null, JSON.stringify(row), JSON.stringify(row.match_attempts || [])]
+          [userId, csv_filename || null, JSON.stringify(safeRow), JSON.stringify(row.match_attempts || [])]
         );
         queued++;
       }
