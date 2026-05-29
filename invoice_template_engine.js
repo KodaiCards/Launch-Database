@@ -608,6 +608,7 @@ module.exports = {
   substituteTemplate,
   renderHtmlToPdf,
   adaptInvoiceDataForTemplate,
+  sanitizeTemplateHtml,
   // exported for tests / ad-hoc use
   _internal: { _esc, _tokenize, _parse, _render, _isFalsy, DATA_SCHEMA_DOC },
 };

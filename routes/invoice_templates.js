@@ -27,6 +27,7 @@ const fsp = fs.promises;
 const multer = require('multer');
 const invoiceGenerator = require('../invoice_generator');
 const tplEngine = require('../invoice_template_engine');
+const { logAudit } = require('./_audit');
 
 module.exports = function installInvoiceTemplatesRoutes(app, pool, mw) {
   const { requireManagerOrAdmin, uploadDir } = mw;
@@ -223,6 +224,13 @@ module.exports = function installInvoiceTemplatesRoutes(app, pool, mw) {
            FROM invoice_templates WHERE id = $1`,
         [templateId]
       );
+      logAudit(pool, {
+        req,
+        action: 'invoice_template.create',
+        entity_type: 'invoice_template',
+        entity_id: templateId,
+        source: 'admin',
+      }).catch(()=>{});
       res.json({ ...out[0], analysis: result });
     } catch (e) {
       console.error('[invoice-templates:create]', e && e.stack || e);
@@ -234,6 +242,7 @@ module.exports = function installInvoiceTemplatesRoutes(app, pool, mw) {
   // ─── Update (name, notes, manually-edited HTML) ───────────────────────
   app.put('/api/invoice-templates/:id', requireManagerOrAdmin, async (req, res) => {
     const { name, notes, generated_html } = req.body || {};
+    const sanitized_html = generated_html ? tplEngine.sanitizeTemplateHtml(generated_html) : null;
     try {
       const { rows } = await pool.query(
         `UPDATE invoice_templates
@@ -244,9 +253,16 @@ module.exports = function installInvoiceTemplatesRoutes(app, pool, mw) {
                 updated_at = NOW()
           WHERE id = $1
           RETURNING id, job_id, client_id, name, analysis_status, analyzed_at`,
-        [req.params.id, name || null, notes || null, generated_html || null]
+        [req.params.id, name || null, notes || null, sanitized_html]
       );
       if (!rows[0]) return res.status(404).json({ error: 'Template not found.' });
+      logAudit(pool, {
+        req,
+        action: 'invoice_template.update',
+        entity_type: 'invoice_template',
+        entity_id: req.params.id,
+        source: 'admin',
+      }).catch(()=>{});
       res.json(rows[0]);
     } catch (e) {
       console.error('[invoice-templates:update]', e && e.message);
@@ -296,6 +312,13 @@ module.exports = function installInvoiceTemplatesRoutes(app, pool, mw) {
       if (rows[0].reference_pdf_path) {
         try { await fsp.unlink(rows[0].reference_pdf_path); } catch {}
       }
+      logAudit(pool, {
+        req,
+        action: 'invoice_template.delete',
+        entity_type: 'invoice_template',
+        entity_id: req.params.id,
+        source: 'admin',
+      }).catch(()=>{});
       res.json({ ok: true });
     } catch (e) {
       console.error('[invoice-templates:delete]', e && e.message);
@@ -386,10 +409,11 @@ module.exports = function installInvoiceTemplatesRoutes(app, pool, mw) {
       });
     }
     const html = tplEngine.substituteTemplate(template.generated_html, adapted);
+    const sanitized = tplEngine.sanitizeTemplateHtml(html);
     res.json({
       has_template: true,
       template_id: template.id,
-      html,
+      html: sanitized,
       data: adapted,
     });
   });
@@ -432,14 +456,19 @@ module.exports = function installInvoiceTemplatesRoutes(app, pool, mw) {
     // Look up by job NAME via the jobs table since data.meta carries job_name not job_id.
     const jobName = data && data.meta && data.meta.job_name;
     if (clientId && jobName) {
-      const tq = await pool.query(`
+      const { rows: matches } = await pool.query(`
         SELECT it.id, it.generated_html, it.analysis_status
           FROM invoice_templates it
           JOIN jobs j ON j.id = it.job_id
          WHERE LOWER(j.name) = LOWER($1) AND it.client_id = $2
-         LIMIT 1
       `, [jobName, clientId]);
-      template = tq.rows[0] || null;
+      if (matches.length === 0) {
+        template = null;
+      } else if (matches.length > 1) {
+        return res.status(400).json({ error: 'Multiple templates match that job name — use template_id instead' });
+      } else {
+        template = matches[0];
+      }
     }
     const adapted = tplEngine.adaptInvoiceDataForTemplate(data);
     if (!template || !template.generated_html || template.analysis_status !== 'ready') {
@@ -450,11 +479,12 @@ module.exports = function installInvoiceTemplatesRoutes(app, pool, mw) {
       });
     }
     const html = tplEngine.substituteTemplate(template.generated_html, adapted);
+    const sanitized = tplEngine.sanitizeTemplateHtml(html);
     res.json({
       has_template: true,
       template_id: template.id,
       makeup: { engineering_contract_id: ecId, client_id: clientId, job_name: jobName },
-      html,
+      html: sanitized,
       data: adapted,
     });
   });
