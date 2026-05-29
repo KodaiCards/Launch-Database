@@ -11,6 +11,8 @@
 // program with no pricing_entries row at all — billing-code breakdowns
 // are optional).
 
+const { logAudit } = require('./_audit');
+
 const ALLOWED_PROGRAMS = ['rus', 'bau', 'gfr', 'other'];
 
 function normalizeProgram(input, opts) {
@@ -91,6 +93,7 @@ module.exports = function installPricingRoutes(app, pool, mw) {
         DO UPDATE SET billing_type = $4, rate = $5, notes = $6, updated_at = NOW()
         RETURNING *
       `, [job_id, normalizedProgram, billing_code || null, billing_type || 'hourly', rate, notes || null]);
+      logAudit(pool, { req, action: 'pricing.create', entity_type: 'pricing_entry', entity_id: rows[0].id, after: rows[0], source: 'admin' }).catch(() => {});
       res.json(rows[0]);
     } catch (e) {
       console.error('[pricing:create]', e && e.message);
@@ -111,12 +114,14 @@ module.exports = function installPricingRoutes(app, pool, mw) {
         UPDATE pricing_entries SET
           billing_type = COALESCE($2, billing_type),
           rate = COALESCE($3, rate),
-          notes = $4,
+          notes = COALESCE($4, notes),
           billing_code = COALESCE($5, billing_code),
           program = COALESCE($6, program),
           updated_at = NOW()
         WHERE id = $1 RETURNING *
       `, [req.params.id, billing_type, rate, notes, billing_code, normalizedProgram === undefined ? null : normalizedProgram]);
+      if (!rows[0]) return res.status(404).json({ error: 'Pricing entry not found' });
+      logAudit(pool, { req, action: 'pricing.update', entity_type: 'pricing_entry', entity_id: rows[0].id, after: rows[0], source: 'admin' }).catch(() => {});
       res.json(rows[0]);
     } catch (e) {
       console.error('[pricing:update]', e && e.message);
@@ -127,7 +132,9 @@ module.exports = function installPricingRoutes(app, pool, mw) {
   // Item 2 fix: requireManagerOrAdmin added
   app.delete('/api/pricing/:id', requireManagerOrAdmin, async (req, res) => {
     try {
-      await pool.query('DELETE FROM pricing_entries WHERE id = $1', [req.params.id]);
+      const { rows } = await pool.query('DELETE FROM pricing_entries WHERE id = $1 RETURNING id', [req.params.id]);
+      if (rows.length === 0) return res.status(404).json({ error: 'Pricing entry not found' });
+      logAudit(pool, { req, action: 'pricing.delete', entity_type: 'pricing_entry', entity_id: req.params.id, source: 'admin' }).catch(() => {});
       res.json({ ok: true });
     } catch (e) {
       console.error('[pricing:delete]', e && e.message);

@@ -13,6 +13,7 @@
 // Extracted from server.js as part of CLEANUP_PLAN.md Track 1.3.
 
 const { broadcast } = require('./_sse');
+const { logAudit } = require('./_audit');
 
 module.exports = function installStaffRoutes(app, pool, mw) {
   const requireAdmin = (mw && mw.requireAdmin) || ((req, res, next) => next());
@@ -22,7 +23,7 @@ module.exports = function installStaffRoutes(app, pool, mw) {
 
   app.get('/api/staff', requireAuth(), async (req, res) => {
     try {
-      const { rows } = await pool.query('SELECT * FROM staff WHERE active=true ORDER BY name');
+      const { rows } = await pool.query('SELECT id, name, active, created_at FROM staff WHERE active=true ORDER BY name');
       res.json(rows);
     } catch (e) {
       console.error('[staff:list]', e && e.message);
@@ -53,6 +54,7 @@ module.exports = function installStaffRoutes(app, pool, mw) {
         'INSERT INTO staff (name) VALUES ($1) ON CONFLICT (name) DO UPDATE SET active=true RETURNING *',
         [String(name).trim()]
       );
+      logAudit(pool, { req, action: 'staff.create', entity_type: 'staff', entity_id: rows[0].id, after: rows[0], source: 'admin' }).catch(() => {});
       broadcast('admin', 'staff_added', { id: rows[0].id, name: rows[0].name });
       broadcast('team:design', 'staff_added', { id: rows[0].id, name: rows[0].name });
       broadcast('team:permitting', 'staff_added', { id: rows[0].id, name: rows[0].name });
@@ -87,6 +89,7 @@ module.exports = function installStaffRoutes(app, pool, mw) {
         params
       );
       if (!rows[0]) return res.status(404).json({ error: 'Staff member not found' });
+      logAudit(pool, { req, action: 'staff.update', entity_type: 'staff', entity_id: rows[0].id, after: rows[0], source: 'admin' }).catch(() => {});
       broadcast('admin', 'staff_updated', { id: rows[0].id, name: rows[0].name, active: rows[0].active });
       broadcast('team:design', 'staff_updated', { id: rows[0].id, name: rows[0].name, active: rows[0].active });
       broadcast('team:permitting', 'staff_updated', { id: rows[0].id, name: rows[0].name, active: rows[0].active });
@@ -142,6 +145,7 @@ module.exports = function installStaffRoutes(app, pool, mw) {
           });
         }
         await pool.query('DELETE FROM staff WHERE id = $1', [id]);
+        logAudit(pool, { req, action: 'staff.delete', entity_type: 'staff', entity_id: id, source: 'admin' }).catch(() => {});
         broadcast('admin', 'staff_deleted', { id, name: cur.rows[0].name, mode: 'hard' });
         broadcast('team:design', 'staff_deleted', { id, name: cur.rows[0].name, mode: 'hard' });
         broadcast('team:permitting', 'staff_deleted', { id, name: cur.rows[0].name, mode: 'hard' });
@@ -151,6 +155,7 @@ module.exports = function installStaffRoutes(app, pool, mw) {
 
       // Soft-delete: flip active=false. Re-activate by PUT { active: true }.
       await pool.query('UPDATE staff SET active = false WHERE id = $1', [id]);
+      logAudit(pool, { req, action: 'staff.delete', entity_type: 'staff', entity_id: id, source: 'admin' }).catch(() => {});
       broadcast('admin', 'staff_deleted', { id, name: cur.rows[0].name, mode: 'soft' });
       broadcast('team:design', 'staff_deleted', { id, name: cur.rows[0].name, mode: 'soft' });
       broadcast('team:permitting', 'staff_deleted', { id, name: cur.rows[0].name, mode: 'soft' });

@@ -29,6 +29,12 @@ module.exports = function installConcentratorsRoutes(app, pool, mw) {
   // Item 2 fix: requireAdmin added
   app.post('/api/concentrators', requireAdmin, async (req, res) => {
     const { contract_label, area_name, work_order_number, notes } = req.body;
+    if (!contract_label || typeof contract_label !== 'string' || !contract_label.trim()) {
+      return res.status(400).json({ error: 'contract_label required' });
+    }
+    if (!area_name || typeof area_name !== 'string' || !area_name.trim()) {
+      return res.status(400).json({ error: 'area_name required' });
+    }
     try {
       const { rows } = await pool.query(
         `INSERT INTO concentrators (contract_label, area_name, work_order_number, notes)
