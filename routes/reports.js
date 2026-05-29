@@ -8,6 +8,10 @@
 // internal tool. Reports include staff names, project names, client names,
 // and billing amounts. Now gated to admin + managers.
 //
+// Wave 176:
+//   F8: month/year params validated (parseInt + range check) before use in
+//       SQL EXTRACT — prevents PG cast error on non-numeric input.
+//
 // /api/reports/billing has a similar shape to /api/revenue/unbilled but
 // with different filtering — kept as separate endpoints because the UI
 // flows are distinct (Reports tab vs Revenue tab).
@@ -19,8 +23,24 @@ module.exports = function installReportsRoutes(app, pool, mw) {
 
   app.get('/api/reports/hours', requireAuth(['admin', 'design_manager', 'permitting_manager']), async (req, res) => {
     const { month, year } = req.query;
-    const m = month || new Date().getMonth() + 1;
-    const y = year || new Date().getFullYear();
+    // F8: validate month/year when supplied as query params
+    let m, y;
+    if (month !== undefined) {
+      m = parseInt(month, 10);
+      if (!Number.isInteger(m) || m < 1 || m > 12) {
+        return res.status(400).json({ error: 'month must be 1-12' });
+      }
+    } else {
+      m = new Date().getMonth() + 1;
+    }
+    if (year !== undefined) {
+      y = parseInt(year, 10);
+      if (!Number.isInteger(y) || y < 2000 || y > 2100) {
+        return res.status(400).json({ error: 'year must be 2000-2100' });
+      }
+    } else {
+      y = new Date().getFullYear();
+    }
     try {
       const { rows } = await pool.query(`
         SELECT
@@ -49,8 +69,24 @@ module.exports = function installReportsRoutes(app, pool, mw) {
 
   app.get('/api/reports/billing', requireAuth(['admin', 'design_manager', 'permitting_manager']), async (req, res) => {
     const { month, year } = req.query;
-    const m = month || new Date().getMonth() + 1;
-    const y = year || new Date().getFullYear();
+    // F8: validate month/year when supplied as query params
+    let m, y;
+    if (month !== undefined) {
+      m = parseInt(month, 10);
+      if (!Number.isInteger(m) || m < 1 || m > 12) {
+        return res.status(400).json({ error: 'month must be 1-12' });
+      }
+    } else {
+      m = new Date().getMonth() + 1;
+    }
+    if (year !== undefined) {
+      y = parseInt(year, 10);
+      if (!Number.isInteger(y) || y < 2000 || y > 2100) {
+        return res.status(400).json({ error: 'year must be 2000-2100' });
+      }
+    } else {
+      y = new Date().getFullYear();
+    }
     try {
       // ── PART 1: One-time projects ──
       // Same shape as before — one row per project. Excludes containers.
