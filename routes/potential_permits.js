@@ -58,6 +58,8 @@ module.exports = function installPotentialPermitsRoutes(app, pool, mw) {
         // Broadcast failure should not break the POST response.
         console.error('[potential_permits:POST] broadcast error:', broadcastErr && broadcastErr.message);
       }
+      // PP-L1: Log the audit
+      logAudit(pool, { req, action: 'create', entity_type: 'potential_permit', entity_id: rows[0].id, after: { status: rows[0].status }, source: 'design_portal' }).catch(() => {});
       res.json(rows[0]);
     } catch (e) {
       console.error('[potential_permits:POST]', e && e.message);
@@ -70,12 +72,21 @@ module.exports = function installPotentialPermitsRoutes(app, pool, mw) {
     const { status, project_id, notes } = req.body;
     // reviewed_by is always the authenticated user, not body-supplied.
     const reviewedBy = req.user.full_name || req.user.username;
+    // PP-M2: Validate status against allowlist
+    const ALLOWED_STATUSES = ['pending', 'approved', 'rejected', 'withdrawn'];
+    if (status != null && !ALLOWED_STATUSES.includes(status)) {
+      return res.status(400).json({ error: 'Invalid status — allowed: ' + ALLOWED_STATUSES.join(', ') });
+    }
     try {
       const { rows } = await pool.query(
         `UPDATE potential_permits SET status=$1, reviewed_by=$2, project_id=$3, notes=COALESCE($4,notes), updated_at=NOW()
          WHERE id=$5 RETURNING *`,
         [status || 'pending', reviewedBy, project_id || null, notes, req.params.id]
       );
+      // PP-M1: 404 on non-existent ID
+      if (!rows[0]) return res.status(404).json({ error: 'Potential permit not found' });
+      // PP-L1: Log the audit
+      logAudit(pool, { req, action: 'update', entity_type: 'potential_permit', entity_id: req.params.id, after: { status: rows[0].status }, source: 'permitting_portal' }).catch(() => {});
       res.json(rows[0]);
     } catch (e) {
       console.error('[potential_permits:PUT]', e && e.message);
@@ -85,7 +96,11 @@ module.exports = function installPotentialPermitsRoutes(app, pool, mw) {
 
   app.delete('/api/potential-permits/:id', requireAuth(['admin', 'permitting_manager']), async (req, res) => {
     try {
-      await pool.query('DELETE FROM potential_permits WHERE id=$1', [req.params.id]);
+      const { rowCount } = await pool.query('DELETE FROM potential_permits WHERE id=$1', [req.params.id]);
+      // PP-L2: 404 on non-existent ID
+      if (rowCount === 0) return res.status(404).json({ error: 'Potential permit not found' });
+      // PP-L1: Log the audit
+      logAudit(pool, { req, action: 'delete', entity_type: 'potential_permit', entity_id: req.params.id, source: 'permitting_portal' }).catch(() => {});
       res.json({ ok: true });
     } catch (e) {
       console.error('[potential_permits:DELETE]', e && e.message);
