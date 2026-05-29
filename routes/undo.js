@@ -10,6 +10,14 @@
 // either the whole undo succeeds or none of it lands.
 
 const { popUndoBucket, updateProjectHours } = require('./_helpers');
+const { logAudit } = require('./_audit');
+
+// escapeIdent quotes a column identifier for safe interpolation into SQL.
+// Values are always parameterized ($N); only column names come through here.
+// The undo_buckets payload is server-generated, so this is defence-in-depth:
+// if payload storage were ever tampered with, an attacker could not inject via
+// a column name because quotes and embedded double-quotes are escaped.
+function escapeIdent(s) { return '"' + String(s).replace(/"/g, '""') + '"'; }
 
 module.exports = function installUndoRoutes(app, pool, mw) {
   const { requireAuth } = mw;
@@ -19,12 +27,14 @@ module.exports = function installUndoRoutes(app, pool, mw) {
   // returns a new middleware that's never registered. The endpoint was
   // silently auth-bypassed for weeks (HANDOFF.md flagged this). Fixed
   // by calling with the empty role set, which means "any authenticated
-  // user" — the undo replay's safety comes from the short TTL on tokens
-  // and the per-user attribution in saveUndoBucket.
+  // user" — the undo replay's safety comes from the short TTL on tokens,
+  // the UUID entropy of undo tokens, and the user_id ownership check
+  // enforced in popUndoBucket (user_id = req.user.id, or IS NULL for
+  // system-emitted buckets).
   app.post('/api/undo/:token', requireAuth(), async (req, res) => {
     let bucket;
     try {
-      bucket = await popUndoBucket(req.params.token);
+      bucket = await popUndoBucket(req.params.token, req.user.id);
     } catch (e) {
       return res.status(500).json({ error: 'Undo lookup failed.' });
     }
@@ -50,6 +60,7 @@ module.exports = function installUndoRoutes(app, pool, mw) {
           try { await updateProjectHours(pid); } catch (uerr) { /* keep going */ }
         }
         await client.query('COMMIT');
+        logAudit(pool, { req, action: 'undo.replay', entity_type: 'undo_bucket', entity_id: req.params.token, after: { restored_rows: entries.length }, source: 'admin' }).catch(() => {});
         return res.json({ ok: true, restored: entries.length });
       }
 
@@ -63,35 +74,35 @@ module.exports = function installUndoRoutes(app, pool, mw) {
           const placeholders = cols.map((_, i) => `$${i + 1}`).join(', ');
           const vals = cols.map(k => p[k]);
           await client.query(
-            `INSERT INTO projects (${cols.join(', ')}) VALUES (${placeholders}) ON CONFLICT (id) DO NOTHING`,
+            `INSERT INTO projects (${cols.map(escapeIdent).join(', ')}) VALUES (${placeholders}) ON CONFLICT (id) DO NOTHING`,
             vals
           );
         }
         for (const r of time_entries) {
           const cols = Object.keys(r);
           await client.query(
-            `INSERT INTO time_entries (${cols.join(', ')}) VALUES (${cols.map((_, i) => `$${i + 1}`).join(', ')}) ON CONFLICT (id) DO NOTHING`,
+            `INSERT INTO time_entries (${cols.map(escapeIdent).join(', ')}) VALUES (${cols.map((_, i) => `$${i + 1}`).join(', ')}) ON CONFLICT (id) DO NOTHING`,
             cols.map(k => r[k])
           );
         }
         for (const r of invoice_items) {
           const cols = Object.keys(r);
           await client.query(
-            `INSERT INTO invoice_items (${cols.join(', ')}) VALUES (${cols.map((_, i) => `$${i + 1}`).join(', ')}) ON CONFLICT (id) DO NOTHING`,
+            `INSERT INTO invoice_items (${cols.map(escapeIdent).join(', ')}) VALUES (${cols.map((_, i) => `$${i + 1}`).join(', ')}) ON CONFLICT (id) DO NOTHING`,
             cols.map(k => r[k])
           );
         }
         for (const r of permit_stages) {
           const cols = Object.keys(r);
           await client.query(
-            `INSERT INTO permit_stages (${cols.join(', ')}) VALUES (${cols.map((_, i) => `$${i + 1}`).join(', ')}) ON CONFLICT (id) DO NOTHING`,
+            `INSERT INTO permit_stages (${cols.map(escapeIdent).join(', ')}) VALUES (${cols.map((_, i) => `$${i + 1}`).join(', ')}) ON CONFLICT (id) DO NOTHING`,
             cols.map(k => r[k])
           );
         }
         for (const r of permit_documents) {
           const cols = Object.keys(r);
           await client.query(
-            `INSERT INTO permit_documents (${cols.join(', ')}) VALUES (${cols.map((_, i) => `$${i + 1}`).join(', ')}) ON CONFLICT (id) DO NOTHING`,
+            `INSERT INTO permit_documents (${cols.map(escapeIdent).join(', ')}) VALUES (${cols.map((_, i) => `$${i + 1}`).join(', ')}) ON CONFLICT (id) DO NOTHING`,
             cols.map(k => r[k])
           );
         }
@@ -101,7 +112,7 @@ module.exports = function installUndoRoutes(app, pool, mw) {
           const cols = Object.keys(r);
           try {
             await client.query(
-              `INSERT INTO billing_batch_items (${cols.join(', ')}) VALUES (${cols.map((_, i) => `$${i + 1}`).join(', ')})`,
+              `INSERT INTO billing_batch_items (${cols.map(escapeIdent).join(', ')}) VALUES (${cols.map((_, i) => `$${i + 1}`).join(', ')})`,
               cols.map(k => r[k])
             );
           } catch (bbiErr) {
@@ -109,6 +120,7 @@ module.exports = function installUndoRoutes(app, pool, mw) {
           }
         }
         await client.query('COMMIT');
+        logAudit(pool, { req, action: 'undo.replay', entity_type: 'undo_bucket', entity_id: req.params.token, after: { restored_rows: projects.length + time_entries.length }, source: 'admin' }).catch(() => {});
 
         // Recompute hours on every restored root after the transaction commits
         // so actual_hours reflects the current state rather than the snapshot
@@ -132,7 +144,7 @@ module.exports = function installUndoRoutes(app, pool, mw) {
         if (contract) {
           const cols = Object.keys(contract);
           await client.query(
-            `INSERT INTO contracts (${cols.join(', ')}) VALUES (${cols.map((_, i) => `$${i + 1}`).join(', ')}) ON CONFLICT (id) DO NOTHING`,
+            `INSERT INTO contracts (${cols.map(escapeIdent).join(', ')}) VALUES (${cols.map((_, i) => `$${i + 1}`).join(', ')}) ON CONFLICT (id) DO NOTHING`,
             cols.map(k => contract[k])
           );
         }
@@ -143,40 +155,41 @@ module.exports = function installUndoRoutes(app, pool, mw) {
           for (const p of ordered) {
             const cols = Object.keys(p).filter(k => !k.startsWith('__'));
             await client.query(
-              `INSERT INTO projects (${cols.join(', ')}) VALUES (${cols.map((_, i) => `$${i + 1}`).join(', ')}) ON CONFLICT (id) DO NOTHING`,
+              `INSERT INTO projects (${cols.map(escapeIdent).join(', ')}) VALUES (${cols.map((_, i) => `$${i + 1}`).join(', ')}) ON CONFLICT (id) DO NOTHING`,
               cols.map(k => p[k])
             );
           }
           for (const r of time_entries) {
             const cols = Object.keys(r);
             await client.query(
-              `INSERT INTO time_entries (${cols.join(', ')}) VALUES (${cols.map((_, i) => `$${i + 1}`).join(', ')}) ON CONFLICT (id) DO NOTHING`,
+              `INSERT INTO time_entries (${cols.map(escapeIdent).join(', ')}) VALUES (${cols.map((_, i) => `$${i + 1}`).join(', ')}) ON CONFLICT (id) DO NOTHING`,
               cols.map(k => r[k])
             );
           }
           for (const r of invoice_items) {
             const cols = Object.keys(r);
             await client.query(
-              `INSERT INTO invoice_items (${cols.join(', ')}) VALUES (${cols.map((_, i) => `$${i + 1}`).join(', ')}) ON CONFLICT (id) DO NOTHING`,
+              `INSERT INTO invoice_items (${cols.map(escapeIdent).join(', ')}) VALUES (${cols.map((_, i) => `$${i + 1}`).join(', ')}) ON CONFLICT (id) DO NOTHING`,
               cols.map(k => r[k])
             );
           }
           for (const r of permit_stages) {
             const cols = Object.keys(r);
             await client.query(
-              `INSERT INTO permit_stages (${cols.join(', ')}) VALUES (${cols.map((_, i) => `$${i + 1}`).join(', ')}) ON CONFLICT (id) DO NOTHING`,
+              `INSERT INTO permit_stages (${cols.map(escapeIdent).join(', ')}) VALUES (${cols.map((_, i) => `$${i + 1}`).join(', ')}) ON CONFLICT (id) DO NOTHING`,
               cols.map(k => r[k])
             );
           }
           for (const r of permit_documents) {
             const cols = Object.keys(r);
             await client.query(
-              `INSERT INTO permit_documents (${cols.join(', ')}) VALUES (${cols.map((_, i) => `$${i + 1}`).join(', ')}) ON CONFLICT (id) DO NOTHING`,
+              `INSERT INTO permit_documents (${cols.map(escapeIdent).join(', ')}) VALUES (${cols.map((_, i) => `$${i + 1}`).join(', ')}) ON CONFLICT (id) DO NOTHING`,
               cols.map(k => r[k])
             );
           }
         }
         await client.query('COMMIT');
+        logAudit(pool, { req, action: 'undo.replay', entity_type: 'undo_bucket', entity_id: req.params.token, after: { restored_rows: (project_tree ? (project_tree.projects || []).length : 0) + (contract ? 1 : 0) }, source: 'admin' }).catch(() => {});
         return res.json({ ok: true });
       }
 
@@ -184,8 +197,8 @@ module.exports = function installUndoRoutes(app, pool, mw) {
       return res.status(400).json({ error: `Unknown undo kind: ${bucket.kind}` });
     } catch (e) {
       try { await client.query('ROLLBACK'); } catch {}
-      console.error('[undo:replay]', bucket.kind, e && e.message);
-      return res.status(500).json({ error: 'Undo failed: ' + (e.message || 'unknown error') });
+      console.error('[undo:replay]', bucket && bucket.kind, e && e.message);
+      return res.status(500).json({ error: 'Undo failed' });
     } finally {
       client.release();
     }

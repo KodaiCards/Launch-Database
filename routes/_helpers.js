@@ -63,10 +63,14 @@ async function saveUndoBucket(userId, kind, payload) {
   return { token: rows[0].id, expires_at: rows[0].expires_at };
 }
 
-async function popUndoBucket(token) {
+async function popUndoBucket(token, userId) {
   const { rows } = await pool.query(
-    `DELETE FROM undo_buckets WHERE id = $1 AND expires_at >= NOW() RETURNING kind, payload`,
-    [token]
+    `DELETE FROM undo_buckets
+     WHERE id = $1
+       AND expires_at >= NOW()
+       AND (user_id IS NULL OR user_id = $2)
+     RETURNING kind, payload`,
+    [token, userId]
   );
   return rows[0] || null;
 }
