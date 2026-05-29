@@ -216,14 +216,13 @@ app.post('/api/dwg-sync/v2/push', requireAuth(), upload.single('file'), async (r
     );
 
     const staging_id = insertResult.rows[0].id;
-    await logAudit({
-      pool,
-      user_id: req.user.id,
+    await logAudit(pool, {
+      req,
       action: 'dwg.push',
       entity_type: 'dwg_staging',
       entity_id: staging_id,
-      details: { project_id, filename: safeName, size_bytes: req.file.size }
-    });
+      source: 'dwg_sync'
+    }).catch(() => {});
 
     res.json({ staging_id, status: 'pending' });
   } catch (err) {
@@ -376,14 +375,13 @@ app.post('/api/dwg-sync/v2/promote/:staging_id', requireManagerOrAdmin, async (r
         [canonical_id]
       );
 
-      await logAudit({
-        pool,
-        user_id: req.user.id,
+      await logAudit(pool, {
+        req,
         action: 'dwg.promote',
         entity_type: 'dwg_canonical_files',
         entity_id: canonical_id,
-        details: { staging_id, project_id, filename }
-      });
+        source: 'dwg_sync'
+      }).catch(() => {});
 
       res.json({
         canonical_file_id: canonical_id,
@@ -427,14 +425,13 @@ app.post('/api/dwg-sync/v2/reject/:staging_id', requireManagerOrAdmin, async (re
       [req.user.id, notes || null, staging_id]
     );
 
-    await logAudit({
-      pool,
-      user_id: req.user.id,
+    await logAudit(pool, {
+      req,
       action: 'dwg.reject',
       entity_type: 'dwg_staging',
       entity_id: staging_id,
-      details: { notes }
-    });
+      source: 'dwg_sync'
+    }).catch(() => {});
 
     res.json(updateResult.rows[0]);
   } catch (err) {
