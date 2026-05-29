@@ -26,7 +26,8 @@
 | **Project photos** | ✅ shipped | Upload photos to projects. MIME validation + magic-byte check. Migration 0052 + project_photos.js + /uploads/ auth-gating. | None |
 | **Photo PWA + offline queue** | ✅ shipped | Mobile web app (public/photos/). Camera access. IndexedDB offline sync. | Doc scanner vendor libs (opencv.js + jscanify.js) for edge detection |
 | **Doc scanner UI** | ⏳ scaffold | Edge-detection wrapper around opencv + jscanify. UI complete, libs missing. | Manual download: opencv.min.js (~10MB) + jscanify.min.js (~50KB) from CDN → public/photos/vendor/ |
-| **Offline DWG sync** | ⏳ scaffold | Service worker + selective sync. Routes exist but not wired into server.js. | (1) wire routes/dwg_sync.js into server.js, (2) configure storage backend (S3 / Railway volume / read-only) |
+| **Offline DWG sync (v1)** | ✅ shipped + wired | `routes/dwg_sync.js` (5 endpoints: projects, manifest, files, state GET/POST) mounted at `server.js:843`. Service worker + IndexedDB at `public/sw-dwg-sync.js` + `public/js/offline_sync.js`. Frontend actively uses v1. | None |
+| **Offline DWG sync (v2) — staging + promotion** | ⏳ backend-only | `routes/dwg_two_way_sync.js` (6 endpoints: v2/manifest, v2/push, v2/staging, v2/promote, v2/reject, v2/download) mounted at `server.js:723`. Manager-review staging flow. No UI yet. | UI to surface the v2 push → review → promote flow |
 | **Electron desktop app** | ⏳ scaffold | `cd desktop && npm run dist` builds unsigned installer. Works locally; not hosted. | User decision: deploy to CI + host? Or defer? |
 
 ---
