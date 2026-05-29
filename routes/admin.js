@@ -29,6 +29,7 @@ const path = require('path');
 const crypto = require('crypto');
 const bcrypt = require('bcryptjs');
 const { ensureRollupChain } = require('../portal_module');
+const { logAudit } = require('./_audit');
 
 module.exports = function installAdminRoutes(app, pool, mw) {
   const { requireAdmin, uploadDir } = mw;
@@ -97,6 +98,11 @@ module.exports = function installAdminRoutes(app, pool, mw) {
         await client.query('ROLLBACK');
       } else {
         await client.query('COMMIT');
+        // HIGH-1 fix: audit all mutating admin operations
+        logAudit(pool, {
+          req, action: 'admin.migrate_nesting', entity_type: 'project', entity_id: null,
+          after: { processed, moved, skipped, failed }, source: 'admin',
+        }).catch(() => {});
       }
 
       res.json({
@@ -177,7 +183,10 @@ module.exports = function installAdminRoutes(app, pool, mw) {
   });
 
   app.post('/api/_admin/adopt-orphan', requireAdmin, async (req, res) => {
-    const { project_id, file_path, doc_type, uploaded_by } = req.body;
+    const { project_id, file_path, doc_type } = req.body;
+    // M-1 fix: never trust uploaded_by from req.body — admin could impersonate any user.
+    // Always attribute the document to the acting admin.
+    const uploaded_by = req.user.id;
     if (!project_id || !file_path) {
       return res.status(400).json({ error: 'project_id and file_path required' });
     }
@@ -213,8 +222,13 @@ module.exports = function installAdminRoutes(app, pool, mw) {
         VALUES ($1, $2, $3, $4, $5, 1, $6, $7)
         RETURNING *`,
         [project_id, doc_type || 'document', original, file_path, stat.size,
-         uploaded_by || 'migrated', 'Adopted from disk via migration tool']
+         uploaded_by, 'Adopted from disk via migration tool']
       );
+      // HIGH-1 fix: audit all mutating admin operations
+      logAudit(pool, {
+        req, action: 'admin.adopt_orphan', entity_type: 'permit_document',
+        entity_id: rows[0].id, after: { project_id, file_path }, source: 'admin',
+      }).catch(() => {});
       res.json({ adopted: rows[0], project_name: proj.rows[0].name });
     } catch (e) {
       console.error('[admin:adopt-orphan]', e && e.message);
@@ -227,7 +241,9 @@ module.exports = function installAdminRoutes(app, pool, mw) {
   // More commonly, use /api/_admin/orphan-files + targeted POSTs to /adopt-orphan
   // for each file individually.
   app.post('/api/_admin/adopt-orphans-bulk', requireAdmin, async (req, res) => {
-    const { project_id, doc_type, uploaded_by } = req.body;
+    const { project_id, doc_type } = req.body;
+    // M-1 fix: never trust uploaded_by from req.body — always attribute to acting admin.
+    const uploaded_by = req.user.id;
     if (!project_id) return res.status(400).json({ error: 'project_id required' });
     try {
       const proj = await pool.query('SELECT name FROM projects WHERE id = $1', [project_id]);
@@ -249,10 +265,15 @@ module.exports = function installAdminRoutes(app, pool, mw) {
             (project_id, doc_type, file_name, file_path, file_size, revision_number, uploaded_by, notes)
           VALUES ($1, $2, $3, $4, $5, 1, $6, $7)`,
           [project_id, doc_type || 'document', original, f, stat.size,
-           uploaded_by || 'migrated', 'Bulk-adopted from disk via migration tool']
+           uploaded_by, 'Bulk-adopted from disk via migration tool']
         );
         adopted++;
       }
+      // HIGH-1 fix: audit all mutating admin operations
+      logAudit(pool, {
+        req, action: 'admin.adopt_orphans_bulk', entity_type: 'permit_document',
+        entity_id: project_id, after: { adopted, project_id }, source: 'admin',
+      }).catch(() => {});
       res.json({ adopted, project_name: proj.rows[0].name });
     } catch (e) {
       console.error('[admin:adopt-orphans-bulk]', e && e.message);
@@ -343,6 +364,11 @@ module.exports = function installAdminRoutes(app, pool, mw) {
         ) matched
         WHERE te.staff_id = matched.staff_id AND te.user_id IS NULL
       `);
+      // HIGH-1 fix: audit all mutating admin operations
+      logAudit(pool, {
+        req, action: 'admin.hours_backfill', entity_type: 'time_entry', entity_id: null,
+        after: { time_entries_updated: result.rowCount }, source: 'admin',
+      }).catch(() => {});
       res.json({
         ok: true,
         time_entries_updated: result.rowCount,
@@ -373,6 +399,14 @@ module.exports = function installAdminRoutes(app, pool, mw) {
       : 7 * 24;  // default: 7 days
     try {
       const result = await pruneOrphanFiles({ pool, uploadDir, olderThanHours, dryRun });
+      if (!dryRun) {
+        // HIGH-1 fix: audit all mutating admin operations
+        logAudit(pool, {
+          req, action: 'admin.prune_orphan_files', entity_type: 'file', entity_id: null,
+          after: { deleted: result.deleted, bytes_freed: result.bytesFreed, older_than_hours: olderThanHours },
+          source: 'admin',
+        }).catch(() => {});
+      }
       res.json({
         dry_run: dryRun,
         older_than_hours: olderThanHours,
@@ -467,6 +501,12 @@ module.exports = function installAdminRoutes(app, pool, mw) {
           vacuumFullError = e.message;
         }
       }
+      // HIGH-1 fix: audit all mutating admin operations (even the audit cleanup itself)
+      logAudit(pool, {
+        req, action: 'admin.audit_cleanup', entity_type: 'audit_log', entity_id: null,
+        after: { trivial_deleted: result.trivial_deleted, hard_deleted: result.hard_deleted,
+                 vacuum_full_ran: vacuumFullRan }, source: 'admin',
+      }).catch(() => {});
       res.json({
         ...result,
         vacuum_full_ran:  vacuumFullRan,
@@ -888,6 +928,12 @@ module.exports = function installAdminRoutes(app, pool, mw) {
         catch (e) { console.error('[reattribute] updateProjectHours failed:', pid, e.message); }
       }
 
+      // HIGH-1 fix: audit all mutating admin operations
+      logAudit(pool, {
+        req, action: 'admin.reattribute_rollup_hours', entity_type: 'time_entry', entity_id: null,
+        after: { moved: moves.length, skipped: skipped.length, affected_projects: affectedProjects.size },
+        source: 'admin',
+      }).catch(() => {});
       res.json({
         dry_run: false,
         moved: moves.length,
@@ -1249,6 +1295,18 @@ module.exports = function installAdminRoutes(app, pool, mw) {
       }
     }
 
+    // M-2 / HIGH-1 fix: audit the destructive delete even when called via bypass-token path.
+    // req.user may be undefined in bypass path — use a sentinel actor in that case.
+    const auditReq = (req.user)
+      ? req
+      : { user: { id: null, username: '[bypass-token]' }, ip: req.ip };
+    logAudit(pool, {
+      req: auditReq, action: 'admin.uploads_cleanup', entity_type: 'file', entity_id: null,
+      after: { deleted, freed_bytes: freedBytes, older_than_days: olderThanDays,
+               via_bypass_token: !req.user },
+      source: 'admin',
+    }).catch(() => {});
+
     return res.json({
       dry_run: false,
       older_than_days: olderThanDays,
@@ -1330,6 +1388,12 @@ module.exports = function installAdminRoutes(app, pool, mw) {
       const user = userRows[0];
 
       await client.query('COMMIT');
+      // HIGH-1 fix: audit all mutating admin operations
+      logAudit(pool, {
+        req, action: 'admin.staff_with_user', entity_type: 'user',
+        entity_id: user.id, after: { username: user.username, role: user.role, staff_id: staff.id },
+        source: 'admin',
+      }).catch(() => {});
       res.json({ staff, user });
     } catch (e) {
       await client.query('ROLLBACK');
