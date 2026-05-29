@@ -8304,7 +8304,7 @@ function renderUsersList() {
       const isSelf = currentUser && currentUser.id === u.id;
       const viewAsBtn = isSelf ? '' :
         `<button class="btn btn-sm btn-secondary btn-icon"
-           onclick="viewAsUser('${u.id}','${esc(u.full_name || u.username)}','${u.role}')"
+           onclick="viewAsUser('${u.id}','${esc(u.full_name || u.username)}','${esc(u.role)}')"
            title="${u.role === 'customer' ? 'View customer portal as this user' : 'View staff portal as this user'}"
            style="margin-right:2px">
           <i class="fa-solid fa-eye"></i>
@@ -8803,7 +8803,7 @@ async function callAI(messages) {
             successDiv.innerHTML = '<strong>✓ Status updated:</strong> ' + esc(tr.result.project?.name || '') + ' → ' + esc(tr.result.project?.status || '');
             loadProjects(); loadDashboard(); loadRevenue();
           } else if (tr.tool === 'advance_permit_stage') {
-            successDiv.innerHTML = '<strong>✓ Stage advanced:</strong> ' + tr.result.previous + ' → ' + tr.result.current;
+            successDiv.innerHTML = '<strong>✓ Stage advanced:</strong> ' + esc(tr.result.previous) + ' → ' + esc(tr.result.current); // MED-1
             loadPermits();
           } else if (tr.tool === 'create_budget') {
             successDiv.innerHTML = '<strong>✓ Budget created:</strong> ' + esc(tr.result.budget?.name || '');
@@ -8834,7 +8834,8 @@ function appendAIMessage(role, text, action=null) {
   const msgs = document.getElementById('ai-messages');
   const div = document.createElement('div');
   div.className = 'ai-msg ' + role;
-  div.innerHTML = text.replace(/\n/g,'<br>').replace(/\*\*(.*?)\*\*/g,'<strong>$1</strong>').replace(/\*(.*?)\*/g,'<em>$1</em>');
+  const escaped = esc(text); // HIGH-1: HTML-encode before markdown transforms (& < > " neutralised)
+  div.innerHTML = escaped.replace(/\n/g,'<br>').replace(/\*\*(.*?)\*\*/g,'<strong>$1</strong>').replace(/\*(.*?)\*/g,'<em>$1</em>');
   if (action) {
     const btn = document.createElement('button');
     btn.className = 'ai-action-btn';
