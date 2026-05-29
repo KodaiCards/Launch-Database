@@ -124,6 +124,20 @@ module.exports = function installTimeEntriesRoutes(app, pool, mw) {
     if (!project_id && !pending_project_request_id) {
       return res.status(400).json({ error: 'project_id or pending_project_request_id required' });
     }
+    // TE-6: entry_date must be parseable, not in the future, and not older
+    // than 365 days. This prevents ghost entries from bad clocks and
+    // blocks back-dating that could manipulate billing cycles.
+    if (entry_date) {
+      const d = new Date(entry_date);
+      if (isNaN(d.getTime())) return res.status(400).json({ error: 'Invalid entry_date.' });
+      const now = new Date();
+      const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+      const entryDay = new Date(d.getFullYear(), d.getMonth(), d.getDate());
+      if (entryDay > today) return res.status(400).json({ error: 'entry_date cannot be in the future.' });
+      const maxPast = new Date(today);
+      maxPast.setDate(maxPast.getDate() - 365);
+      if (entryDay < maxPast) return res.status(400).json({ error: 'entry_date cannot be older than 365 days.' });
+    }
     // Engineer-scope: engineers may only log time as themselves. Coerce
     // the staff_id to the user's linked staff record so a forged body can
     // never assign hours to another employee.
@@ -201,6 +215,21 @@ module.exports = function installTimeEntriesRoutes(app, pool, mw) {
     const { entries } = req.body; // [{project_id, staff_id, entry_date, hours, job_title}]
     if (!entries || !entries.length) return res.status(400).json({ error: 'No entries' });
 
+    // TE-6: validate all entry_dates up front before starting the transaction.
+    const now = new Date();
+    const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+    const maxPast = new Date(today);
+    maxPast.setDate(maxPast.getDate() - 365);
+    for (const e of entries) {
+      if (e.entry_date) {
+        const d = new Date(e.entry_date);
+        if (isNaN(d.getTime())) return res.status(400).json({ error: 'Invalid entry_date in bulk entries.' });
+        const entryDay = new Date(d.getFullYear(), d.getMonth(), d.getDate());
+        if (entryDay > today) return res.status(400).json({ error: 'entry_date cannot be in the future.' });
+        if (entryDay < maxPast) return res.status(400).json({ error: 'entry_date cannot be older than 365 days.' });
+      }
+    }
+
     const importBatch = `import_${Date.now()}`;
     const client = await pool.connect();
     try {
@@ -233,6 +262,18 @@ module.exports = function installTimeEntriesRoutes(app, pool, mw) {
       for (const pid of projectIds) {
         await updateProjectHours(pid);
       }
+      // TE-4: audit each inserted entry. Failures are isolated (no 500 on audit hiccup).
+      for (const row of inserted) {
+        try {
+          await auditTimeEntry({
+            req, timeEntryId: row.id, action: 'created',
+            before: null, after: row,
+            source: portalMode || 'admin',
+          });
+        } catch (auditErr) {
+          console.error('[time-entries:bulk-insert-audit]', auditErr && auditErr.message);
+        }
+      }
       broadcast('admin', 'time_entry_added', { batch: importBatch, count: inserted.length });
       broadcast('team:design', 'time_entry_added', { batch: importBatch, count: inserted.length });
       broadcast('team:permitting', 'time_entry_added', { batch: importBatch, count: inserted.length });
@@ -261,6 +302,18 @@ module.exports = function installTimeEntriesRoutes(app, pool, mw) {
   // changing the staff_id to another employee's record.
   app.put('/api/time-entries/:id', requireAuth(), async (req, res) => {
     const { project_id, staff_id, entry_date, hours, job_title, notes } = req.body;
+    // TE-6: entry_date range guard on edits — same rules as POST.
+    if (entry_date !== undefined) {
+      const d = new Date(entry_date);
+      if (isNaN(d.getTime())) return res.status(400).json({ error: 'Invalid entry_date.' });
+      const now = new Date();
+      const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+      const entryDay = new Date(d.getFullYear(), d.getMonth(), d.getDate());
+      if (entryDay > today) return res.status(400).json({ error: 'entry_date cannot be in the future.' });
+      const maxPast = new Date(today);
+      maxPast.setDate(maxPast.getDate() - 365);
+      if (entryDay < maxPast) return res.status(400).json({ error: 'entry_date cannot be older than 365 days.' });
+    }
     try {
       // Fetch existing for audit + permission check
       const { rows: existing } = await pool.query(
@@ -269,10 +322,35 @@ module.exports = function installTimeEntriesRoutes(app, pool, mw) {
       const before = existing[0];
       if (!before) return res.status(404).json({ error: 'Entry not found' });
 
+      // TE-5: Ownership note — te.user_id is the account that CREATED the
+      // entry, not necessarily who the hours belong to. Admins entering time
+      // on behalf of an engineer set user_id=admin.id while staff_id=engineer's
+      // staff record. Engineers editing via the timeclock use user_id to scope
+      // their own entries. Managers are scoped via jobs.team (see below) so
+      // they never hit the user_id check.
+
       // Ownership check for engineers — they can only edit their own
       if (req.user?.role === 'design_engineer' || req.user?.role === 'permitting_engineer') {
         if (String(before.user_id) !== String(req.user.id)) {
           return res.status(403).json({ error: 'You can only edit your own time entries' });
+        }
+      }
+
+      // TE-1: Manager team-scope check. Managers may only edit entries that
+      // belong to projects on their team (via the project's job.team).
+      // Projects with job.team='both' or NULL are shared. Admin bypasses this.
+      if (req.user?.role === 'design_manager' || req.user?.role === 'permitting_manager') {
+        const managerTeam = req.user.role === 'design_manager' ? 'design' : 'permitting';
+        const { rows: scopeCheck } = await pool.query(
+          `SELECT te.id FROM time_entries te
+           LEFT JOIN projects p ON p.id = te.project_id
+           LEFT JOIN jobs j ON j.id = p.job_id
+           WHERE te.id = $1
+             AND (j.team = $2 OR j.team = 'both' OR j.team IS NULL OR p.job_id IS NULL)`,
+          [req.params.id, managerTeam]
+        );
+        if (!scopeCheck.length) {
+          return res.status(404).json({ error: 'Entry not found' });
         }
       }
 
@@ -354,6 +432,24 @@ module.exports = function installTimeEntriesRoutes(app, pool, mw) {
         }
       }
 
+      // TE-1: Manager team-scope check for single delete. Managers may only
+      // delete entries that belong to projects on their team (via job.team).
+      // Projects with job.team='both' or NULL are shared. Admin bypasses this.
+      if (req.user?.role === 'design_manager' || req.user?.role === 'permitting_manager') {
+        const managerTeam = req.user.role === 'design_manager' ? 'design' : 'permitting';
+        const { rows: scopeCheck } = await pool.query(
+          `SELECT te.id FROM time_entries te
+           LEFT JOIN projects p ON p.id = te.project_id
+           LEFT JOIN jobs j ON j.id = p.job_id
+           WHERE te.id = $1
+             AND (j.team = $2 OR j.team = 'both' OR j.team IS NULL OR p.job_id IS NULL)`,
+          [req.params.id, managerTeam]
+        );
+        if (!scopeCheck.length) {
+          return res.status(404).json({ error: 'Entry not found.' });
+        }
+      }
+
       const { rows } = await pool.query('DELETE FROM time_entries WHERE id=$1 RETURNING project_id', [req.params.id]);
       if (rows[0] && rows[0].project_id) {
         await updateProjectHours(rows[0].project_id);
@@ -411,6 +507,22 @@ module.exports = function installTimeEntriesRoutes(app, pool, mw) {
   // by calling the factory with the manager+admin role set.
   app.delete('/api/time-entries/by-staff/:staffId', requireAuth(['admin', 'design_manager', 'permitting_manager']), async (req, res) => {
     const { month, year } = req.query;
+
+    // TE-2: Manager team-scope check. Managers may only bulk-delete entries
+    // for staff members who are linked to their team via users.team.
+    // The staff table has no team column; the link is through users.staff_id.
+    // Admins bypass this check.
+    if (req.user?.role === 'design_manager' || req.user?.role === 'permitting_manager') {
+      const managerTeam = req.user.role === 'design_manager' ? 'design' : 'permitting';
+      const { rows: userCheck } = await pool.query(
+        `SELECT id FROM users WHERE staff_id = $1 AND team = $2`,
+        [req.params.staffId, managerTeam]
+      );
+      if (!userCheck.length) {
+        return res.status(404).json({ error: 'Staff member not found on your team.' });
+      }
+    }
+
     const params = [req.params.staffId];
     let where = 'staff_id = $1';
     if (month && year) {
@@ -435,6 +547,19 @@ module.exports = function installTimeEntriesRoutes(app, pool, mw) {
       const undo = await saveUndoBucket(req.user && req.user.id, 'time_entries_bulk', {
         entries: snapshot.rows,
       });
+      // TE-3: audit each deleted row. Failures are isolated so a logging
+      // hiccup never turns a successful bulk-delete into a 500.
+      for (const row of snapshot.rows) {
+        try {
+          await auditTimeEntry({
+            req, timeEntryId: row.id, action: 'deleted',
+            before: row, after: null,
+            source: portalMode || 'admin',
+          });
+        } catch (auditErr) {
+          console.error('[time-entries:bulk-delete-audit]', auditErr && auditErr.message);
+        }
+      }
       broadcast('admin', 'time_entries_bulk_deleted', { staff_id: req.params.staffId, deleted: result.rowCount });
       broadcast('team:design', 'time_entries_bulk_deleted', { staff_id: req.params.staffId, deleted: result.rowCount });
       broadcast('team:permitting', 'time_entries_bulk_deleted', { staff_id: req.params.staffId, deleted: result.rowCount });
