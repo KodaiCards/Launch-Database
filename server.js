@@ -53,6 +53,20 @@ const upload = multer({ storage, limits: { fileSize: MAX_UPLOAD_BYTES } });
 // buckets every caller into one IP and the same-origin CSRF check breaks.
 app.set('trust proxy', 1);
 
+// Security response headers — defence-in-depth for all routes.
+// X-Content-Type-Options: stops browsers sniffing response MIME types.
+// X-Frame-Options: prevents clickjacking via <iframe> embedding.
+// Strict-Transport-Security: instructs browsers to use HTTPS for 1 year
+//   after first secure visit (Railway terminates TLS upstream).
+app.use((req, res, next) => {
+  res.setHeader('X-Content-Type-Options', 'nosniff');
+  res.setHeader('X-Frame-Options', 'DENY');
+  if (req.secure || req.headers['x-forwarded-proto'] === 'https') {
+    res.setHeader('Strict-Transport-Security', 'max-age=31536000');
+  }
+  next();
+});
+
 // CORS — locked down to the origins listed in ALLOWED_ORIGINS (comma-separated).
 // In dev, falls back to allowing localhost. Anything else is rejected.
 // Multi-service setups (admin + portals on different domains): list every
@@ -80,7 +94,7 @@ app.use(express.json({ limit: '10mb' }));
 // Form-encoded body parsing — activates only for matching Content-Type headers,
 // safe to leave globally enabled. (Previously documented as supporting the
 // removed Moodle OAuth2 token endpoint; that bridge was torn out in OSP-RW.6.)
-app.use(express.urlencoded({ extended: false }));
+app.use(express.urlencoded({ extended: false, limit: '1mb' }));
 
 // CSRF defense via Origin/Referer validation. Cookie-auth + a cross-site form
 // POST is the classic CSRF vector. For any state-changing request, require
@@ -529,7 +543,9 @@ app.use('/uploads', requireAuth(), (req, res) => {
   const ext = path.extname(resolved).toLowerCase();
   // Inline display only for PDFs and images; force download for everything else
   // to prevent stored-XSS via uploaded HTML/SVG/JS files.
-  const imageExts = new Set(['.jpg', '.jpeg', '.png', '.gif', '.webp', '.svg']);
+  // SVG excluded from inline set: SVG served inline executes embedded <script>
+  // tags, making it a stored-XSS vector. Force attachment disposition instead.
+  const imageExts = new Set(['.jpg', '.jpeg', '.png', '.gif', '.webp']);
   if (ext === '.pdf') {
     res.setHeader('Content-Type', 'application/pdf');
     res.setHeader('Content-Disposition', 'inline');

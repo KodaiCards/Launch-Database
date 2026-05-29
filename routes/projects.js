@@ -753,6 +753,8 @@ module.exports = function installProjectsRoutes(app, pool, mw) {
         changed = result.rowCount;
         iterations++;
       }
+      logAudit(pool, { req, action: 'recalc', entity_type: 'project', meta: { scope: 'all_projects', iterations },
+        source: 'admin_ui' });
       res.json({ ok: true, iterations });
     } catch (e) {
       console.error('[projects:recalc-all]', e && e.message);
@@ -805,6 +807,8 @@ module.exports = function installProjectsRoutes(app, pool, mw) {
         await updateProjectHours(proj[0].parent_id);
       }
       broadcast('admin', 'project_deleted', { id: req.params.id });
+      logAudit(pool, { req, action: 'delete', entity_type: 'project', entity_id: req.params.id,
+        before: { id: proj[0].id, name: proj[0].name }, meta: { with_hours: true }, source: 'admin_ui' });
       res.json({ ok: true });
     } catch (e) {
       console.error('[projects:with-hours:delete]', e && e.message);
@@ -1391,6 +1395,9 @@ module.exports = function installProjectsRoutes(app, pool, mw) {
         await client.query('COMMIT');
 
         broadcast('admin', 'invoice_generated', { invoice_id: invoice.id, project_id: projectId });
+        logAudit(pool, { req, action: 'create', entity_type: 'invoice', entity_id: invoice.id,
+          after: { id: invoice.id, invoice_number: invoice.invoice_number, project_id: projectId, amount: invoice.total_amount },
+          meta: { monthly_generation: true, month, year }, source: 'admin_ui' });
         res.status(201).json({ existing: false, invoice });
       } catch (e) {
         await client.query('ROLLBACK');
