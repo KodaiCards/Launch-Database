@@ -16,12 +16,61 @@
 //
 // Extracted from server.js as part of CLEANUP_PLAN.md Track 1.3.
 
+const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
+/**
+ * assertProjectAccess — checks that the requesting user is allowed to read
+ * the given project.
+ *
+ * Returns null on allow, or { status, body } on deny.
+ *
+ * Access rules:
+ *  - admin          → full access to all projects
+ *  - customer       → 404 (projects are internal records; customers have no
+ *                     project-detail surface in the current product)
+ *  - design roles   → may only read projects whose associated job belongs to
+ *                     the 'design' team
+ *  - permitting     → same, restricted to 'permitting' team
+ *  - any other role → 403 Forbidden
+ */
+async function assertProjectAccess(pool, req, projectId) {
+  if (!projectId || !UUID_RE.test(projectId)) {
+    return { status: 400, body: { error: 'Invalid project id' } };
+  }
+  const { rows } = await pool.query(
+    'SELECT p.id, j.team FROM projects p LEFT JOIN jobs j ON j.id = p.job_id WHERE p.id = $1',
+    [projectId]
+  );
+  if (!rows.length) return { status: 404, body: { error: 'Project not found' } };
+  const role = req.user && req.user.role;
+  if (role === 'admin') return null;
+  if (role === 'customer') return { status: 404, body: { error: 'Project not found' } };
+  const team = rows[0].team;
+  if (role === 'design_manager' && team !== 'design') return { status: 404, body: { error: 'Project not found' } };
+  if (role === 'permitting_manager' && team !== 'permitting') return { status: 404, body: { error: 'Project not found' } };
+  if (role === 'design_engineer' && team !== 'design') return { status: 404, body: { error: 'Project not found' } };
+  if (role === 'permitting_engineer' && team !== 'permitting') return { status: 404, body: { error: 'Project not found' } };
+  if (!['admin', 'design_manager', 'permitting_manager', 'design_engineer', 'permitting_engineer'].includes(role)) {
+    return { status: 403, body: { error: 'Forbidden' } };
+  }
+  return null;
+}
+
 module.exports = function installProjectDetailRoutes(app, pool, mw) {
   // Wave 1.5 [UNGATED]: GET /api/projects/:id/detail was missing auth.
-  const requireAuth = (mw && mw.requireAuth) || (() => (req, res, next) => next());
+  // Fail hard at startup if requireAuth is not provided (same class as b8666c8 hotfix).
+  if (!mw || !mw.requireAuth) {
+    throw new Error('project_detail: requireAuth middleware not provided — check server.js destructure');
+  }
+  const requireAuth = mw.requireAuth;
 
   app.get('/api/projects/:id/detail', requireAuth(), async (req, res) => {
     try {
+      // M-5 IDOR fix: gate every project read on role + team membership.
+      // UUID validation is embedded in assertProjectAccess.
+      const denial = await assertProjectAccess(pool, req, req.params.id);
+      if (denial) return res.status(denial.status).json(denial.body);
+
       const projR = await pool.query(`
         SELECT p.*, cl.name as client_name, co.contract_number, co.name as contract_name,
                pp.name as parent_name,
@@ -67,8 +116,18 @@ module.exports = function installProjectDetailRoutes(app, pool, mw) {
       `, [subtreeIds]);
       const activeBillableCount = parseInt(activeCountR.rows[0].n) || 0;
 
-      const month = req.query.month;
-      const year = req.query.year;
+      // LOW-3: validate month/year as integers with bounds to prevent type-cast
+      // schema disclosure from Postgres errors on non-numeric values.
+      const rawMonth = req.query.month;
+      const rawYear = req.query.year;
+      const month = rawMonth ? parseInt(rawMonth, 10) : null;
+      const year = rawYear ? parseInt(rawYear, 10) : null;
+      if (rawMonth && (isNaN(month) || month < 1 || month > 12)) {
+        return res.status(400).json({ error: 'Invalid month (must be 1–12)' });
+      }
+      if (rawYear && (isNaN(year) || year < 2000 || year > 2100)) {
+        return res.status(400).json({ error: 'Invalid year (must be 2000–2100)' });
+      }
       let dateFilter = '', params = [subtreeIds];
       if (month && year) {
         dateFilter = ' AND EXTRACT(MONTH FROM te.entry_date)=$2 AND EXTRACT(YEAR FROM te.entry_date)=$3';
