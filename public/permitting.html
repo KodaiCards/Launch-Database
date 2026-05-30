@@ -1884,10 +1884,10 @@ async function loadPipeline(){
         <td><span class="badge" style="background:${DC[s]};color:#fff">${DL[s]}</span></td>
         <td><div style="display:flex;gap:2px;min-width:120px">${pipe}</div></td>
         <td style="white-space:nowrap;text-align:right">
-          ${s!=='potential'?`<button class="btn btn-sm btn-secondary btn-icon" onclick="regressDesign('${p.id}','${esc(p.name)}')" title="Move back one stage"><i class="fa-solid fa-backward-step"></i></button>`:''}
-          ${s!=='checklist'?`<button class="btn btn-sm btn-primary" onclick="advanceDesign('${p.id}')" title="Advance stage"><i class="fa-solid fa-forward-step"></i></button>`:'<span style="color:var(--success);font-size:12px;font-weight:600;margin-right:4px"><i class="fa-solid fa-check-double"></i></span>'}
-          <button class="btn btn-sm btn-secondary btn-icon" onclick="editProject('${p.id}')" title="Edit project"><i class="fa-solid fa-pen"></i></button>
-          <button class="btn btn-sm btn-icon" style="color:var(--danger);background:transparent;border:1px solid var(--gray-border)" onclick="deleteProjectFromPipeline('${p.id}','${esc(p.name)}')" title="Delete project"><i class="fa-solid fa-trash"></i></button>
+          ${s!=='potential'?`<button class="btn btn-sm btn-secondary btn-icon" onclick="regressDesign('${esc(p.id)}','${esc(p.name)}')" title="Move back one stage"><i class="fa-solid fa-backward-step"></i></button>`:''}
+          ${s!=='checklist'?`<button class="btn btn-sm btn-primary" onclick="advanceDesign('${esc(p.id)}')" title="Advance stage"><i class="fa-solid fa-forward-step"></i></button>`:'<span style="color:var(--success);font-size:12px;font-weight:600;margin-right:4px"><i class="fa-solid fa-check-double"></i></span>'}
+          <button class="btn btn-sm btn-secondary btn-icon" onclick="editProject('${esc(p.id)}')" title="Edit project"><i class="fa-solid fa-pen"></i></button>
+          <button class="btn btn-sm btn-icon" style="color:var(--danger);background:transparent;border:1px solid var(--gray-border)" onclick="deleteProjectFromPipeline('${esc(p.id)}','${esc(p.name)}')" title="Delete project"><i class="fa-solid fa-trash"></i></button>
         </td></tr>`;
     }).join('') : '<tr><td colspan="6" class="empty-state">No permitting projects</td></tr>';
   } catch (e) {
@@ -1949,7 +1949,7 @@ async function loadPotential(){
         <td>${esc(p.county||'—')}</td>
         <td>${esc(p.route||'—')}</td>
         <td>${esc(p.submitted_by||'—')}</td>
-        <td><span style="background:${c};color:#fff;padding:2px 10px;border-radius:4px;font-size:11px;font-weight:600">${p.status}</span></td>
+        <td><span style="background:${c};color:#fff;padding:2px 10px;border-radius:4px;font-size:11px;font-weight:600">${esc(p.status)}</span></td>
         <td>${actions}</td>
       </tr>`;
     }).join('') : '<tr><td colspan="6" class="empty-state">No submissions match the filter</td></tr>';
@@ -2194,10 +2194,10 @@ function formatRequestRow(sr){
   const summary = payload.name || payload.contract_number || sr.entity_id || '';
   const time = new Date(sr.created_at).toLocaleString();
   const reviewedBit = sr.status !== 'pending'
-    ? `<span style="color:var(--text-muted)"> · ${sr.status} by ${esc(sr.reviewed_by||'—')}${sr.review_notes ? ' — "' + esc(sr.review_notes) + '"' : ''}</span>`
+    ? `<span style="color:var(--text-muted)"> · ${esc(sr.status)} by ${esc(sr.reviewed_by||'—')}${sr.review_notes ? ' — "' + esc(sr.review_notes) + '"' : ''}</span>`
     : '';
   return `<div style="padding:6px 10px;border-left:3px solid ${colors[sr.status]};background:var(--gray-light);margin-bottom:4px;border-radius:4px;font-size:12px">
-    <span style="font-weight:600;text-transform:uppercase;color:${colors[sr.status]}">${sr.status}</span> ·
+    <span style="font-weight:600;text-transform:uppercase;color:${colors[sr.status]}">${esc(sr.status)}</span> ·
     <span>${esc(sr.action)} ${esc(entityLabel)}: <b>${esc(summary)}</b></span>
     <span style="color:var(--text-muted)"> · ${esc(sr.proposed_by||'—')} · ${time}</span>${reviewedBit}
   </div>`;
