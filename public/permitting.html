@@ -396,7 +396,7 @@ body { background: var(--surface-1); color: var(--text-1); font-family: 'Inter',
     <select class="filter" id="ppf" onchange="loadPotential()" aria-label="Filter potential permits by status">
       <option value="pending" selected>Pending</option>
       <option value="">All</option>
-      <option value="accepted">Accepted</option>
+      <option value="approved">Accepted</option>
       <option value="rejected">Rejected</option>
     </select>
   </div>
@@ -1945,7 +1945,7 @@ async function loadPotential(){
   try {
     const d = await api(url);
     document.getElementById('ppb').innerHTML = d.length ? d.map(p => {
-      const c = { pending:'var(--portal-color)', accepted:'#28A745', rejected:'#DC3545' }[p.status] || '#ccc';
+      const c = { pending:'var(--portal-color)', approved:'#28A745', rejected:'#DC3545' }[p.status] || '#ccc';
       const actions = p.status === 'pending'
         ? `<button class="btn btn-sm btn-success" onclick="acceptPotential('${p.id}', '${esc(p.sr_hwy||'').replace(/'/g,"\\'")}')"><i class="fa-solid fa-check"></i> Accept</button>
            <button class="btn btn-sm btn-danger" onclick="rejectPotential('${p.id}')" style="margin-left:4px"><i class="fa-solid fa-xmark"></i> Reject</button>`
@@ -2010,7 +2010,7 @@ saveProject = async function() {
       }
       window._ppLastCreatedId = null;
       await api('/api/potential-permits/' + wasPending, 'PUT', {
-        status: 'accepted', reviewed_by: 'Permitting Portal', project_id: projectId
+        status: 'approved', reviewed_by: 'Permitting Portal', project_id: projectId
       });
     } catch (e) { /* non-fatal */ }
     pendingPotentialId = null;
