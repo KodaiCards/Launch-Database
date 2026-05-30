@@ -118,7 +118,7 @@ html[data-theme="dark"]{
      scrollbars, default form widgets) to use their dark variants. */
   color-scheme: dark;
 }
-html[data-theme="dark"] body{background:#0F1419}
+html[data-theme="dark"] body{background:var(--bg-deep)}
 html[data-theme="dark"] .card,
 html[data-theme="dark"] .modal-content,
 html[data-theme="dark"] .modal,
@@ -130,7 +130,7 @@ html[data-theme="dark"] textarea{background:var(--white);color:var(--text);borde
    the html-level color-scheme: dark covers them via OS theming. */
 html[data-theme="dark"] select option,
 html[data-theme="dark"] datalist option{
-  background:#1D2430!important;
+  background:var(--surface-deep)!important;
   color:#E8EAED!important;
 }
 html[data-theme="dark"] select option:checked,
@@ -143,8 +143,8 @@ html[data-theme="dark"] thead th{color:var(--text-muted)!important}
 html[data-theme="dark"] tbody tr{background:transparent;color:var(--text)}
 html[data-theme="dark"] tbody td{border-color:var(--gray-border)}
 html[data-theme="dark"] .header{background:var(--white);border-bottom-color:var(--gray-border)}
-html[data-theme="dark"] .btn-secondary{background:#3A4250;color:var(--text);border:1px solid var(--gray-border)}
-html[data-theme="dark"] .btn-secondary:hover{background:#4A5260}
+html[data-theme="dark"] .btn-secondary{background:var(--surface-hover);color:var(--text);border:1px solid var(--gray-border)}
+html[data-theme="dark"] .btn-secondary:hover{background:var(--surface-hover)}
 html[data-theme="dark"] .modal-overlay{background:rgba(0,0,0,.7)}
 html[data-theme="dark"] .modal-header,
 html[data-theme="dark"] .modal-footer{background:var(--white);border-color:var(--gray-border)}
@@ -4712,7 +4712,7 @@ async function editProject(id) {
           } else {
             concSel.innerHTML = '<option value="">No service areas configured</option>';
           }
-        } catch (e2) { console.warn('[editProject SA load]', e2); }
+        } catch (e2) { if (window.LFS_DEBUG) console.warn('[editProject SA load]', e2); }
       }
     } else if (effectiveProg) {
       ecRow.style.display = 'none';
@@ -5090,7 +5090,7 @@ async function projEcChanged() {
     }
   } catch (e) {
     concSel.innerHTML = '<option value="">Error loading service areas</option>';
-    console.warn('[projEcChanged]', e);
+    if (window.LFS_DEBUG) console.warn('[projEcChanged]', e);
   }
 
   // Refresh job scope
@@ -5422,7 +5422,7 @@ async function populateEcScopedWoSaForModal(ecId) {
     }
   } catch (e) {
     // Non-fatal: fall back to existing behaviour silently.
-    console.warn('[ec-wosa:modal]', e && e.message);
+    if (window.LFS_DEBUG) console.warn('[ec-wosa:modal]', e && e.message);
   }
 }
 
@@ -7873,7 +7873,7 @@ async function openSettings() {
   // server-side; non-managers get a 403 and the panel stays empty,
   // which is fine).
   try { await loadInvoiceTemplates(); renderInvoiceTemplatesList(); }
-  catch (e) { console.warn('invoice templates load skipped:', e.message); }
+  catch (e) { if (window.LFS_DEBUG) console.warn('invoice templates load skipped:', e.message); }
 
   // Legacy pricing fetch — kept for backward compat but isolated. If the
   // pricing endpoint errors or the cache is malformed, we swallow it so the
@@ -7883,7 +7883,7 @@ async function openSettings() {
     if (typeof populatePricingFormDropdowns === 'function') populatePricingFormDropdowns();
     if (typeof renderPricingList === 'function') renderPricingList();
   } catch (e) {
-    console.warn('Legacy pricing load skipped:', e.message);
+    if (window.LFS_DEBUG) console.warn('Legacy pricing load skipped:', e.message);
   }
 
   refreshSettingsDot();
@@ -7895,14 +7895,14 @@ async function openSettings() {
       dqSection.style.display = '';
       loadProjectionDQ().catch(() => {});
     }
-  } catch (e) { console.warn('proj-dq load skipped:', e.message); }
+  } catch (e) { if (window.LFS_DEBUG) console.warn('proj-dq load skipped:', e.message); }
 
   // Wave 12: load portal access matrix for admins
   try {
     if (typeof currentUser !== 'undefined' && currentUser && currentUser.role === 'admin') {
       if (typeof loadPortalAccessMatrix === 'function') loadPortalAccessMatrix().catch(() => {});
     }
-  } catch (e) { console.warn('portal-access load skipped:', e.message); }
+  } catch (e) { if (window.LFS_DEBUG) console.warn('portal-access load skipped:', e.message); }
 }
 
 
@@ -9601,9 +9601,9 @@ fetch('/api/me/portals',{credentials:'include'}).then(r=>r.json()).then(({portal
     if (!('EventSource' in window)) return;
     try {
       _sseSource = new EventSource('/api/events/stream', { withCredentials: true });
-      _sseSource.addEventListener('open', () => console.log('[sse] connected'));
+      _sseSource.addEventListener('open', () => { if (window.LFS_DEBUG) console.log('[sse] connected'); });
       _sseSource.addEventListener('error', () => {
-        console.warn('[sse] disconnected, reconnecting in 5 s…');
+        if (window.LFS_DEBUG) console.warn('[sse] disconnected, reconnecting in 5 s…');
         _sseSource.close();
         _sseSource = null;
         setTimeout(startSse, 5000);

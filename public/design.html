@@ -46,7 +46,7 @@ html[data-theme="dark"]{
   /* color-scheme:dark on the root prevents flicker on native select popups */
   color-scheme: dark;
 }
-html[data-theme="dark"] body{background:#0F1419}
+html[data-theme="dark"] body{background:var(--bg-deep)}
 html[data-theme="dark"] .card,
 html[data-theme="dark"] .modal-content,
 html[data-theme="dark"] .modal,
@@ -58,7 +58,7 @@ html[data-theme="dark"] textarea{background:var(--white);color:var(--text);borde
    color-scheme:dark covers them. */
 html[data-theme="dark"] select option,
 html[data-theme="dark"] datalist option{
-  background:#1D2430!important;
+  background:var(--surface-deep)!important;
   color:#E8EAED!important;
 }
 html[data-theme="dark"] select option:checked,
@@ -71,8 +71,8 @@ html[data-theme="dark"] thead th{color:var(--text-muted)!important}
 html[data-theme="dark"] tbody tr{background:transparent;color:var(--text)}
 html[data-theme="dark"] tbody td{border-color:var(--gray-border)}
 html[data-theme="dark"] .header{background:var(--white);border-bottom-color:var(--gray-border)}
-html[data-theme="dark"] .btn-secondary{background:#3A4250;color:var(--text);border:1px solid var(--gray-border)}
-html[data-theme="dark"] .btn-secondary:hover{background:#4A5260}
+html[data-theme="dark"] .btn-secondary{background:var(--surface-hover);color:var(--text);border:1px solid var(--gray-border)}
+html[data-theme="dark"] .btn-secondary:hover{background:var(--surface-hover)}
 html[data-theme="dark"] .modal-overlay{background:rgba(0,0,0,.7)}
 html[data-theme="dark"] .modal-header,
 html[data-theme="dark"] .modal-footer{background:var(--white);border-color:var(--gray-border)}
@@ -867,7 +867,7 @@ async function editProject(id){
       if (c2?.engineering_contract_id) {
         await populateEcScopedWoSaForModal(c2.engineering_contract_id);
       }
-    } catch (e) { console.warn('[ec-wosa:edit]', e && e.message); }
+    } catch (e) { if (window.LFS_DEBUG) console.warn('[ec-wosa:edit]', e && e.message); }
     const concSel = document.getElementById('proj-concentrator');
     if (concSel) {
       if (p.concentrator_id) {
@@ -1173,7 +1173,7 @@ async function populateEcScopedWoSaForModal(ecId) {
       if (woIn) woIn.style.display = '';
     }
   } catch (e) {
-    console.warn('[ec-wosa:modal]', e && e.message);
+    if (window.LFS_DEBUG) console.warn('[ec-wosa:modal]', e && e.message);
   }
 }
 

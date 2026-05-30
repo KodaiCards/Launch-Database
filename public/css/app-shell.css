@@ -132,6 +132,18 @@
 
   /* ── Chart ───────────────────────────────────────────── */
   --chart-bar: #BBDEFB;
+
+  /* ── Deep / hover / gradient surface tokens (Wave 202A) ──
+     Page-deep canvas (body), card-deep (overrides for popup
+     panels), interactive hover state, danger-button hover,
+     clock-card gradient stops. Light values keep parity with
+     existing surface system; dark block overrides below.    */
+  --bg-deep:         #F0F0F0;
+  --surface-deep:    #FFFFFF;
+  --surface-hover:   #F5F7FA;
+  --danger-dark:     #B02A37;
+  --clock-grad-from: #E8F0FB;
+  --clock-grad-to:   #C5D9EE;
 }
 
 /* ─────────────────────────────────────────────────────────────
@@ -182,6 +194,14 @@ html[data-theme="dark"] {
   --info-text:     #90CAF9;
 
   --chart-bar: #3D4A5C;
+
+  /* Wave 202A deep/hover/gradient tokens — dark overrides */
+  --bg-deep:         #0F1419;
+  --surface-deep:    #1D2430;
+  --surface-hover:   #3A4250;
+  --danger-dark:     #B02A37;
+  --clock-grad-from: #1E3A5C;
+  --clock-grad-to:   #0E2440;
 
   color-scheme: dark;
 }
