@@ -4,120 +4,37 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Launch Fiber Portal</title>
+<!-- Fonts -->
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<!-- Icons -->
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
-<link rel="stylesheet" href="/app-shell.css">
+<!-- Design system (loaded AFTER any legacy stylesheets so tokens take precedence) -->
+<link rel="stylesheet" href="/css/app-shell.css">
 <style>
 *{box-sizing:border-box;margin:0;padding:0}
 
-/* ── Design tokens (mirrors vetro token system + admin portal) ── */
+/* ── Legacy aliases for the launcher's existing layout vars ── */
 :root{
-  --primary:#1B5FA0;
-  --primary-dark:#134880;
-  --primary-light:#E8F0FB;
-  --vetro-primary:#003F72;
-  --vetro-primary-dark:#002B50;
-  --vetro-route-active:#68BD45;
-  --vetro-bg:#FAFAFA;
-  --vetro-bg-panel:#FFFFFF;
-  --vetro-bg-panel-secondary:#F0F2F5;
-  --vetro-bg-hover:#EBF2FF;
-  --vetro-divider:#E5E7EB;
-  --vetro-text-primary:#1F2937;
-  --vetro-text-secondary:#6B7280;
-  --vetro-text-muted:#9CA3AF;
   --font-stack:'Inter',-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;
   --radius-md:6px;
   --radius-lg:10px;
-  --shadow-panel:0 2px 8px rgba(0,0,0,0.12);
-  --shadow-lift:0 4px 16px rgba(0,0,0,0.16);
-  --topbar-h:84px;
+  --shadow-panel:var(--shadow-sm, 0 2px 8px rgba(0,0,0,0.12));
+  --shadow-lift:var(--shadow-md, 0 4px 16px rgba(0,0,0,0.16));
   --footer-h:48px;
-}
-html[data-theme="dark"]{
-  --vetro-bg:#111827;
-  --vetro-bg-panel:#1F2937;
-  --vetro-bg-panel-secondary:#1A1F2B;
-  --vetro-bg-hover:#1E3A5C;
-  --vetro-divider:#374151;
-  --vetro-text-primary:#F9FAFB;
-  --vetro-text-secondary:#D1D5DB;
-  --vetro-text-muted:#6B7280;
-  --primary-light:#1E3A5C;
-  color-scheme: dark;
 }
 
 html,body{height:100%}
 body{
   font-family:var(--font-stack);
-  background:var(--vetro-bg);
-  color:var(--vetro-text-primary);
+  background:var(--surface-1);
+  color:var(--text-1);
   min-height:100vh;
   display:flex;
   flex-direction:column;
   overflow:hidden;
 }
-
-/* ── Top bar ── */
-.topbar{
-  background:var(--vetro-primary);
-  color:#fff;
-  height:var(--topbar-h);
-  display:flex;
-  align-items:center;
-  padding:0 20px;
-  gap:12px;
-  flex-shrink:0;
-  box-shadow:0 2px 8px rgba(0,0,0,0.2);
-  position:relative;
-}
-.topbar-logo-img{
-  height:60px;
-  width:auto;
-  object-fit:contain;
-  display:block;
-  /* centered absolutely so user pill doesn't shift it */
-  position:absolute;
-  left:50%;
-  transform:translateX(-50%);
-  pointer-events:none;
-  /* logo's "FIBER SERVICES" is blue — invert+brightness on the blue topbar
-     so it reads as off-white instead of disappearing. */
-  filter:brightness(0) invert(1) opacity(0.95);
-}
-.topbar-spacer{flex:1}
-.user-pill{
-  display:flex;
-  align-items:center;
-  gap:7px;
-  background:rgba(255,255,255,0.12);
-  border:1px solid rgba(255,255,255,0.18);
-  border-radius:20px;
-  padding:4px 12px;
-  font-size:12px;
-  font-weight:500;
-  color:#fff;
-  cursor:default;
-}
-.user-pill i{font-size:11px;opacity:0.8}
-.logout-btn{
-  background:rgba(255,255,255,0.1);
-  border:1px solid rgba(255,255,255,0.2);
-  color:#fff;
-  padding:6px 12px;
-  border-radius:6px;
-  font-size:12px;
-  font-weight:500;
-  font-family:inherit;
-  cursor:pointer;
-  display:flex;
-  align-items:center;
-  gap:6px;
-  transition:background .12s;
-}
-.logout-btn:hover{background:rgba(255,255,255,0.22)}
 
 /* ── Main content (fills remaining viewport so the grid can expand) ── */
 .main{
@@ -175,8 +92,8 @@ body{
 
 /* ── Individual tile (base / small style) ── */
 .tile{
-  background:var(--vetro-bg-panel);
-  border:1px solid var(--vetro-divider);
+  background:var(--surface-2);
+  border:1px solid var(--border-strong);
   border-radius:var(--radius-lg);
   display:flex;
   flex-direction:column;
@@ -200,48 +117,40 @@ body{
 }
 .tile:hover{
   box-shadow:var(--shadow-lift);
-  border-color:var(--vetro-route-active);
+  border-color:var(--brand-primary);
 }
 /* Lift-on-hover only for count >= 2 (hero shouldn't lift) */
 .launcher-grid:not([data-count="1"]) .tile:hover{
   transform:translateY(-2px);
 }
-/* Outline on hover — black in light mode, white in dark mode */
+/* Outline on hover — uses text color so it adapts to theme */
 .launcher-grid:not([data-count="1"]) .tile:hover{
-  outline:2px solid #000;
-  outline-offset:-2px;
-}
-html[data-theme="dark"] .launcher-grid:not([data-count="1"]) .tile:hover{
-  outline:2px solid #fff;
+  outline:2px solid var(--text-1);
   outline-offset:-2px;
 }
 .tile-icon{
   width:clamp(44px, 7vw, 72px);
   height:clamp(44px, 7vw, 72px);
   border-radius:50%;
-  background:var(--primary-light);
+  background:var(--brand-primary-light);
   display:flex;
   align-items:center;
   justify-content:center;
-  color:var(--primary);
+  color:var(--brand-primary);
   flex-shrink:0;
 }
 .tile-icon i{
   font-size:clamp(18px, 3vw, 32px);
 }
-html[data-theme="dark"] .tile-icon{
-  background:rgba(27,95,160,0.2);
-  color:#60A5FA;
-}
 .tile-name{
   font-size:clamp(13px, 1.3vw, 18px);
   font-weight:600;
-  color:var(--vetro-text-primary);
+  color:var(--text-1);
   line-height:1.25;
 }
 .tile-desc{
   font-size:clamp(11px, 0.9vw, 13px);
-  color:var(--vetro-text-muted);
+  color:var(--text-muted);
   line-height:1.5;
   max-width:36ch;
 }
@@ -307,7 +216,7 @@ html[data-theme="dark"] .tile-icon{
   justify-content:center;
   text-align:center;
   padding:60px 24px;
-  color:var(--vetro-text-muted);
+  color:var(--text-muted);
   width:100%;
 }
 .empty-state i{font-size:40px;margin-bottom:16px;display:block;opacity:0.4}
@@ -320,7 +229,7 @@ html[data-theme="dark"] .tile-icon{
   justify-content:center;
   gap:12px;
   padding:60px 24px;
-  color:var(--vetro-text-muted);
+  color:var(--text-muted);
   font-size:14px;
   width:100%;
 }
@@ -334,27 +243,13 @@ html[data-theme="dark"] .tile-icon{
   align-items:center;
   justify-content:center;
   font-size:11px;
-  color:var(--vetro-text-muted);
-  border-top:1px solid var(--vetro-divider);
+  color:var(--text-muted);
+  border-top:1px solid var(--border-strong);
   flex-shrink:0;
-  background:var(--vetro-bg);
+  background:var(--surface-1);
 }
-.footer a{color:var(--vetro-text-muted);text-decoration:none}
+.footer a{color:var(--text-muted);text-decoration:none}
 .footer a:hover{text-decoration:underline}
-
-/* ── Theme toggle ── */
-.theme-btn{
-  background:rgba(255,255,255,0.1);
-  border:1px solid rgba(255,255,255,0.2);
-  color:#fff;
-  width:36px;height:36px;
-  border-radius:6px;
-  cursor:pointer;
-  display:flex;align-items:center;justify-content:center;
-  font-size:14px;
-  transition:background .12s;
-}
-.theme-btn:hover{background:rgba(255,255,255,0.22)}
 
 /* ── Mobile (< 600px) — scrollable, 2-column layout ── */
 @media(max-width:600px){
@@ -402,30 +297,15 @@ html[data-theme="dark"] .tile-icon{
 }
 </style>
 </head>
-<body>
+<body class="app-with-topbar">
 
 <!-- a11y: skip-nav — first focusable element so keyboard users can jump past the top bar -->
 <a href="#main-content" class="skip-nav">Skip to main content</a>
 
-<!-- Top bar -->
-<div class="topbar">
-  <img src="/img/launch-fiber-logo-transparent.png" alt="Launch Fiber" class="topbar-logo-img">
-  <div class="topbar-spacer"></div>
-  <button class="theme-btn" onclick="toggleTheme()" title="Toggle dark mode" aria-label="Toggle dark mode" id="theme-btn">
-    <i class="fa-solid fa-moon" id="theme-icon" aria-hidden="true"></i>
-  </button>
-  <div class="user-pill" id="user-pill" aria-label="Signed-in user">
-    <i class="fa-solid fa-user-circle" aria-hidden="true"></i>
-    <span id="user-name">Loading...</span>
-  </div>
-  <button class="logout-btn" onclick="doLogout()" aria-label="Sign out">
-    <i class="fa-solid fa-right-from-bracket" aria-hidden="true"></i>
-    Sign out
-  </button>
-</div>
+<!-- Topbar is mounted by AppShell.init() — see DOMContentLoaded script below. -->
 
 <!-- Main content area -->
-<main class="main" id="main-content">
+<main class="main app-content" id="main-content">
   <div id="tile-area">
     <div class="launcher-box">
       <div class="loading-state">
@@ -441,38 +321,16 @@ html[data-theme="dark"] .tile-icon{
   <span id="footer-user"></span>
 </div>
 
-<script>
-// ── Theme ──
-(function(){
-  let saved;
-  try { saved = localStorage.getItem('lfs-theme'); } catch(e){}
-  if (saved === 'dark' || (!saved && window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
-    document.documentElement.setAttribute('data-theme','dark');
-    const icon = document.getElementById('theme-icon');
-    if (icon) icon.className = 'fa-solid fa-sun';
-  }
-})();
-function toggleTheme(){
-  const isDark = document.documentElement.getAttribute('data-theme') === 'dark';
-  document.documentElement.setAttribute('data-theme', isDark ? 'light' : 'dark');
-  const icon = document.getElementById('theme-icon');
-  if (icon) icon.className = isDark ? 'fa-solid fa-moon' : 'fa-solid fa-sun';
-  try { localStorage.setItem('lfs-theme', isDark ? 'light' : 'dark'); } catch(e){}
-  // Persist to server if possible
-  fetch('/api/auth/me/theme', {
-    method:'PUT', credentials:'include',
-    headers:{'Content-Type':'application/json'},
-    body:JSON.stringify({theme: isDark ? 'light' : 'dark'})
-  }).catch(()=>{});
-}
+<!-- AppShell — design system topbar + theme + toast/modal helpers -->
+<script src="/js/app-shell.js" defer></script>
 
-// ── Logout ──
-async function doLogout(){
-  try {
-    await fetch('/api/auth/logout', {method:'POST', credentials:'include'});
-  } catch(e){}
-  window.location.href = '/login';
-}
+<script>
+// ── Init AppShell topbar (theme toggle + user menu + sign-out live here) ──
+document.addEventListener('DOMContentLoaded', function () {
+  if (window.AppShell && typeof AppShell.init === 'function') {
+    AppShell.init({ title: 'Launcher', portalId: 'launcher' });
+  }
+});
 
 // ── Render tiles ──
 function renderTile(p) {
@@ -516,16 +374,17 @@ function escHtml(v) {
     data = await r.json();
   } catch(e) {
     document.getElementById('tile-area').innerHTML = `<div class="empty-state"><i class="fa-solid fa-triangle-exclamation"></i><p>Could not load portals. Please refresh or sign in again.</p></div>`;
+    if (window.AppShell && typeof AppShell.toast === 'function') {
+      AppShell.toast('Could not load portals. Please refresh or sign in again.', 'error');
+    }
     return;
   }
 
   const portals = data.portals || [];
   const user = data.user || {};
 
-  // Update user pill + footer
+  // Update footer (user menu is handled by AppShell topbar)
   const name = user.name || '';
-  const uNameEl = document.getElementById('user-name');
-  if (uNameEl) uNameEl.textContent = name;
   const footerEl = document.getElementById('footer-user');
   if (footerEl) footerEl.textContent = name ? `Signed in as ${name}` : '';
 
