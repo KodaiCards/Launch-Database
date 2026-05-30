@@ -1,32 +1,29 @@
-/* Launch Fiber Photos — Mobile-first PWA styles */
+/* Launch Fiber Photos — Mobile-first PWA styles
+ *
+ * Color tokens are aliased to the design-system tokens shipped in
+ * /css/app-shell.css so the PWA inherits theme + dark-mode flips for
+ * free. PWA-specific layout vars (--tab-height, --header-height) stay
+ * local because they're mobile-bottom-bar specific and not in the shell.
+ */
 
 :root {
-  --primary: #1B5FA0;
-  --primary-dark: #143a6b;
-  --surface-bg: #0f1419;
-  --surface-card: #1a1f2e;
-  --surface-input: #252d3d;
-  --text-primary: #e4e6eb;
-  --text-secondary: #a8adb8;
-  --text-muted: #6b7280;
-  --border: #3a4255;
-  --success: #10b981;
-  --error: #ef4444;
-  --warning: #f59e0b;
+  /* Aliases to design-system tokens (app-shell.css must load first) */
+  --primary: var(--brand-primary, #1B5FA0);
+  --primary-dark: var(--brand-primary-dark, #134880);
+  --surface-bg: var(--surface-1, #F5F7FA);
+  --surface-card: var(--surface-2, #ffffff);
+  --surface-input: var(--surface-3, #F0F0F0);
+  --text-primary: var(--text-1, #212529);
+  --text-secondary: var(--text-2, #495057);
+  /* --text-muted already exists in the design system; reuse it */
+  --border: var(--border-strong, #DEE2E6);
+
+  /* Status aliases — design system uses --danger; PWA code uses --error */
+  --error: var(--danger, #DC3545);
+
+  /* PWA-local layout (not in design system) */
   --tab-height: 80px;
   --header-height: 140px;
-}
-
-@media (prefers-color-scheme: light) {
-  :root {
-    --surface-bg: #f9fafb;
-    --surface-card: #ffffff;
-    --surface-input: #f3f4f6;
-    --text-primary: #1f2937;
-    --text-secondary: #6b7280;
-    --text-muted: #9ca3af;
-    --border: #e5e7eb;
-  }
 }
 
 * {

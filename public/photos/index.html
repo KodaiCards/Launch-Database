@@ -11,9 +11,23 @@
   <link rel="icon" type="image/svg+xml" href="icons/icon-192.svg">
   <link rel="apple-touch-icon" href="icons/icon-192.svg">
   <title>Launch Fiber Photos</title>
+
+  <!-- Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+
+  <!-- Icons -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+
+  <!-- Design system shell -->
+  <link rel="stylesheet" href="/css/app-shell.css">
+
+  <!-- PWA-specific styles (after shell so PWA layout wins where it overlaps) -->
   <link rel="stylesheet" href="photos.css">
 </head>
-<body>
+<body class="app-with-topbar">
+  <a href="#main-content" class="skip-nav">Skip to main content</a>
   <!-- Top header with branding -->
   <header class="header">
     <h1 class="header__title">Launch Fiber Photos</h1>
@@ -21,7 +35,7 @@
   </header>
 
   <!-- Main app container -->
-  <main class="app-container">
+  <main id="main-content" class="app-container">
     <div id="auth-check" class="spinner">Checking authentication...</div>
 
     <div id="app" class="app" style="display: none;">
@@ -132,5 +146,15 @@
     }
   </script>
   <script src="photos.js"></script>
+
+  <!-- Design system shell — load last -->
+  <script src="/js/app-shell.js" defer></script>
+  <script>
+    document.addEventListener('DOMContentLoaded', function () {
+      if (typeof AppShell !== 'undefined' && AppShell.init) {
+        AppShell.init({ title: 'Photos', portalId: 'photos' });
+      }
+    });
+  </script>
 </body>
 </html>
