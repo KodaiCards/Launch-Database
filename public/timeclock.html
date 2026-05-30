@@ -984,7 +984,7 @@ async function quickClockIn(projectId, jobId, jobTitle){
     await loadWeek();
   } catch (e){
     if (window.LFS && window.LFS.toast) window.LFS.toast.error('Clock-in failed: ' + (e.message||e));
-    else alert('Clock-in failed: ' + (e.message||e));
+    else { const MSG = 'Clock-in failed: ' + (e.message||e); (window.AppShell ? AppShell.toast(MSG, 'error') : alert(MSG)); }
   }
 }
 
@@ -994,7 +994,7 @@ async function clockIn(){
     const resolved = resolveFromCascadeOnly('ci');
     project_id = resolved.id;
   } catch(e){
-    alert(e.message || 'Please complete all fields before clocking in.');
+    { const MSG = e.message || 'Please complete all fields before clocking in.'; (window.AppShell ? AppShell.toast(MSG, 'error') : alert(MSG)); }
     return;
   }
   try {
@@ -1003,7 +1003,7 @@ async function clockIn(){
     await loadActiveSession();
     await loadWeek();
   } catch(e){
-    alert('Clock in failed: ' + e.message);
+    { const MSG = 'Clock in failed: ' + e.message; (window.AppShell ? AppShell.toast(MSG, 'error') : alert(MSG)); }
   }
 }
 
@@ -1014,7 +1014,7 @@ async function clockOut(){
     await loadActiveSession();
     await loadWeek();
   } catch(e){
-    alert('Clock out failed: ' + e.message);
+    { const MSG = 'Clock out failed: ' + e.message; (window.AppShell ? AppShell.toast(MSG, 'error') : alert(MSG)); }
   }
 }
 
@@ -1074,7 +1074,7 @@ async function doSwitch(){
     const resolved = resolveFromCascadeOnly('sw');
     project_id = resolved.id;
   } catch(e){
-    alert(e.message || 'Please complete all fields before switching.');
+    { const MSG = e.message || 'Please complete all fields before switching.'; (window.AppShell ? AppShell.toast(MSG, 'error') : alert(MSG)); }
     return;
   }
   try {
@@ -1084,7 +1084,7 @@ async function doSwitch(){
     await loadActiveSession();
     await loadWeek();
   } catch(e){
-    alert('Switch failed: ' + e.message);
+    { const MSG = 'Switch failed: ' + e.message; (window.AppShell ? AppShell.toast(MSG, 'error') : alert(MSG)); }
   }
 }
 
@@ -1207,7 +1207,7 @@ function openManualEntryModal(){
 
 function openEditEntryModal(id){
   const e = weekData?.entries.find(x => String(x.id) === String(id));
-  if (!e){ alert('Entry not found in current view'); return; }
+  if (!e){ const MSG = 'Entry not found in current view'; (window.AppShell ? AppShell.toast(MSG, 'error') : alert(MSG)); return; }
   _entryModalIsEdit = true;
   document.getElementById('entry-modal-title').textContent = 'Edit Time Entry';
   document.getElementById('entry-id').value = e.id;
@@ -1744,9 +1744,9 @@ async function saveEntry(){
   const hours = parseFloat(document.getElementById('entry-hours').value);
   const notes = document.getElementById('entry-notes').value || null;
 
-  if (!entry_date){ alert('Date is required'); return; }
-  if (isNaN(hours) || hours <= 0){ alert('Hours must be greater than 0'); return; }
-  if (hours > 24){ alert('Hours cannot exceed 24 per entry'); return; }
+  if (!entry_date){ const MSG = 'Date is required'; (window.AppShell ? AppShell.toast(MSG, 'error') : alert(MSG)); return; }
+  if (isNaN(hours) || hours <= 0){ const MSG = 'Hours must be greater than 0'; (window.AppShell ? AppShell.toast(MSG, 'error') : alert(MSG)); return; }
+  if (hours > 24){ const MSG = 'Hours cannot exceed 24 per entry'; (window.AppShell ? AppShell.toast(MSG, 'error') : alert(MSG)); return; }
 
   let project_id = null;
   let job_title = null;
@@ -1765,7 +1765,7 @@ async function saveEntry(){
       project_id = document.getElementById('entry-resolved-project-id').value || null;
       const jobEl = document.getElementById('entry-job');
       job_title = (jobEl && jobEl.value.trim()) || null;
-      if (!project_id) { alert('Project is required (or use Add New to request one).'); return; }
+      if (!project_id) { const MSG = 'Project is required (or use Add New to request one).'; (window.AppShell ? AppShell.toast(MSG, 'error') : alert(MSG)); return; }
     }
   }
 
@@ -1781,7 +1781,7 @@ async function saveEntry(){
     closeEntryModal();
     await loadWeek();
   } catch(e){
-    alert('Save failed: ' + e.message);
+    { const MSG = 'Save failed: ' + e.message; (window.AppShell ? AppShell.toast(MSG, 'error') : alert(MSG)); }
   }
 }
 
@@ -1800,7 +1800,7 @@ async function deleteEntry(){
       showUndoBar('Time entry deleted.', resp.undo_token);
     }
   } catch(e){
-    alert('Delete failed: ' + e.message);
+    { const MSG = 'Delete failed: ' + e.message; (window.AppShell ? AppShell.toast(MSG, 'error') : alert(MSG)); }
   }
 }
 
