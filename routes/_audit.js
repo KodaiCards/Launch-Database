@@ -16,13 +16,30 @@
 // Errors are caught + console.error'd (never break the actual operation).
 
 async function logAudit(pool, opts) {
-  const {
-    req, action, entity_type, entity_id,
-    before = null, after = null,
-    source = 'api', meta = null,
-    actor_type = 'user',
-  } = opts;
   try {
+    // HIGH-1: guard opts missing or wrong-signature caller (pool bundled inside opts)
+    if (!opts || typeof opts !== 'object') {
+      console.error('[logAudit] opts is missing or not an object — likely wrong-signature caller');
+      return;
+    }
+    if (!pool || typeof pool.query !== 'function') {
+      console.error('[logAudit] pool is missing or not a pg pool — wrong-signature caller (likely passing pool inside opts)');
+      return;
+    }
+
+    const {
+      req, action, entity_type, entity_id,
+      before = null, after = null,
+      source = 'api', meta = null,
+      actor_type = 'user',
+    } = opts;
+
+    // HIGH-3: validate required fields BEFORE insert
+    if (!action || !entity_type) {
+      console.error('[logAudit] missing required field: action and entity_type are required (got action=' + action + ', entity_type=' + entity_type + ')');
+      return;
+    }
+
     const user = req && req.user ? req.user : null;
     const actor_user_id = user ? user.id : null;
     const actor_username = user ? (user.username || user.email || null) : null;
@@ -44,55 +61,71 @@ async function logAudit(pool, opts) {
 }
 
 /**
+ * Sensitive key patterns — use precise regex to avoid false positives on
+ * operational fields like commit_hash, content_hash, token_count, hashtag.
+ *
+ * MED-1: replaced bare-substring 'hash'/'token' with targeted patterns.
+ * MED-2: added jwt, session_id, lfs_session, cookie, authorization, pin, mfa_code, otp.
+ */
+const SENSITIVE_KEY_PATTERNS = [
+  // password variants
+  /^password/i, /password$/i, /password_/i,
+  // token: only credential tokens, not token_count / tokenize / token_type
+  /^token$/i, /_token$/i, /^raw_token/i, /^access_token/i, /^refresh_token/i,
+  // secret, api_key, private_key
+  /^secret/i, /_secret$/i, /_secret_/i,
+  /^api[_-]?key/i, /_api[_-]?key/i,
+  /^private[_-]?key/i, /privatekey/i,
+  // hash: only credential-hash fields, not commit_hash / content_hash / hashtag
+  /password_hash/i, /token_hash/i, /pin_hash/i, /otp_hash/i, /session_hash/i,
+  // jwt
+  /^jwt/i, /_jwt$/i,
+  // session identifiers
+  /^session_id$/i, /_session_id$/i, /^lfs_session/i,
+  // HTTP credential headers
+  /^cookie$/i, /^authorization$/i,
+  // PINs and one-time codes
+  /^pin$/i, /^mfa_code/i, /^otp$/i, /^mfa$/i,
+  // PII / financial
+  /ssn/i, /social_security/i, /tax_id/i, /ein/i,
+  /credit_card/i, /card_number/i, /cvv/i,
+  /bank_account/i, /routing_number/i,
+  /^dob$/i, /date_of_birth/i,
+];
+
+function isSensitiveKey(key) {
+  return SENSITIVE_KEY_PATTERNS.some(p => p.test(key));
+}
+
+/**
  * Deep clone an object and redact sensitive keys.
- * Sensitive key patterns (case-insensitive substring match):
- *   - password, password_hash, passwordHash, hash
- *   - token, raw_token, rawToken, api_key, apiKey, secret, private_key, privateKey
- *   - ssn, social_security, socialSecurity, tax_id, taxId, ein
- *   - credit_card, creditCard, card_number, cardNumber, cvv
- *   - bank_account, bankAccount, routing_number, routingNumber
- *   - dob, date_of_birth, dateOfBirth
+ *
+ * HIGH-2: cycle detection via WeakSet prevents RangeError on circular refs.
+ * MED-1+MED-2: regex-based key matching replaces substring match.
  *
  * Recursively walks nested objects and arrays.
  * Does NOT redact emails, phone numbers, names, addresses (operational fields).
  */
-function redactPII(obj) {
-  if (obj === null || obj === undefined) {
-    return obj;
-  }
+function redactPII(obj, _seen) {
+  if (obj === null || obj === undefined) return obj;
+  if (typeof obj !== 'object') return obj;
 
-  if (Array.isArray(obj)) {
-    return obj.map(item => redactPII(item));
-  }
+  // HIGH-2: cycle detection
+  _seen = _seen || new WeakSet();
+  if (_seen.has(obj)) return '[Circular]';
+  _seen.add(obj);
 
-  if (typeof obj === 'object') {
-    const redacted = {};
-    const sensitivePatternsLower = [
-      'password', 'password_hash', 'passwordhash', 'hash',
-      'token', 'raw_token', 'rawtoken', 'api_key', 'apikey', 'secret', 'private_key', 'privatekey',
-      'ssn', 'social_security', 'socialsecurity', 'tax_id', 'taxid', 'ein',
-      'credit_card', 'creditcard', 'card_number', 'cardnumber', 'cvv',
-      'bank_account', 'bankaccount', 'routing_number', 'routingnumber',
-      'dob', 'date_of_birth', 'dateofbirth',
-    ];
+  if (Array.isArray(obj)) return obj.map(v => redactPII(v, _seen));
 
-    for (const key in obj) {
-      if (Object.prototype.hasOwnProperty.call(obj, key)) {
-        const keyLower = key.toLowerCase();
-        const isSensitive = sensitivePatternsLower.some(pattern => keyLower.includes(pattern));
-
-        if (isSensitive) {
-          redacted[key] = '[REDACTED]';
-        } else {
-          redacted[key] = redactPII(obj[key]);
-        }
-      }
+  const out = {};
+  for (const key of Object.keys(obj)) {
+    if (isSensitiveKey(key)) {
+      out[key] = '[REDACTED]';
+    } else {
+      out[key] = redactPII(obj[key], _seen);
     }
-    return redacted;
   }
-
-  // Primitives (string, number, boolean) returned as-is
-  return obj;
+  return out;
 }
 
 /**
@@ -111,14 +144,16 @@ async function archiveOldAuditRows(pool, options = {}) {
     const configResult = await pool.query(
       `SELECT hot_retention_days FROM audit_retention_config WHERE id = 1`
     );
-    const hotRetentionDays = options.hot_retention_days ||
-      (configResult.rows[0]?.hot_retention_days ?? 730);
 
-    // Calculate cutoff: rows older than hot_retention_days get archived
+    // MED-4: use ?? instead of || so hot_retention_days=0 doesn't fall through
+    // MED-5: Math.max(7, ...) enforces minimum 7-day floor to prevent archiving everything
+    const retentionDays = Math.max(7, options.hot_retention_days ?? (configResult.rows[0]?.hot_retention_days ?? 730));
+
+    // Calculate cutoff: rows older than retentionDays get archived
     const cutoffDate = new Date();
-    cutoffDate.setDate(cutoffDate.getDate() - hotRetentionDays);
+    cutoffDate.setDate(cutoffDate.getDate() - retentionDays);
 
-    // Update rows to set archived_at (transactional)
+    // Update rows to set archived_at
     const updateResult = await pool.query(
       `UPDATE audit_log
        SET archived_at = now()
@@ -139,7 +174,7 @@ async function archiveOldAuditRows(pool, options = {}) {
       [rowsArchived]
     );
 
-    console.log(`[audit-retention] archived ${rowsArchived} rows older than ${hotRetentionDays} days (cutoff: ${cutoffDate.toISOString()})`);
+    console.log(`[audit-retention] archived ${rowsArchived} rows older than ${retentionDays} days (cutoff: ${cutoffDate.toISOString()})`);
 
     return {
       rows_archived: rowsArchived,

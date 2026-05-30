@@ -491,3 +491,127 @@ test('DELETE /api/admin/audit-log/:id returns 404 for nonexistent id', async () 
   const r = await requestJson('DELETE', '/api/admin/audit-log/999999999', { token });
   assert.equal(r.status, 404, 'should return 404 for missing row');
 });
+
+// ── Wave-191 fix tests ────────────────────────────────────────────────────────
+
+test('logAudit HIGH-1: missing opts does not throw, logs error', async () => {
+  const { logAudit } = require('../routes/_audit');
+  const errors = [];
+  const origErr = console.error;
+  console.error = (...args) => errors.push(args.join(' '));
+  try {
+    // Call with opts missing (undefined)
+    await logAudit({ query: async () => {} });
+    assert.ok(errors.length > 0, 'should console.error');
+    assert.ok(errors[0].includes('opts is missing'), 'error message should mention opts');
+  } finally {
+    console.error = origErr;
+  }
+});
+
+test('logAudit HIGH-1: wrong-signature (pool bundled inside opts) does not throw', async () => {
+  const { logAudit } = require('../routes/_audit');
+  const errors = [];
+  const origErr = console.error;
+  console.error = (...args) => errors.push(args.join(' '));
+  try {
+    // Wrong-signature: pool is an opts-shaped object, opts is undefined
+    const fakePool = { query: async () => ({ rows: [] }) };
+    const wrongOpts = { pool: fakePool, action: 'test', entity_type: 'project' };
+    await logAudit(wrongOpts); // opts = undefined
+    assert.ok(errors.length > 0, 'should console.error on missing opts');
+  } finally {
+    console.error = origErr;
+  }
+});
+
+test('logAudit HIGH-3: missing action does not throw, logs error, does not insert', async () => {
+  const { logAudit } = require('../routes/_audit');
+  const errors = [];
+  const queries = [];
+  const origErr = console.error;
+  console.error = (...args) => errors.push(args.join(' '));
+  const mockPool = { query: async (sql) => { queries.push(sql); return { rows: [] }; } };
+  try {
+    await logAudit(mockPool, { entity_type: 'project', entity_id: '1' }); // action missing
+    assert.ok(errors.length > 0, 'should console.error on missing action');
+    assert.ok(errors[0].includes('missing required field'), 'error should mention required field');
+    assert.equal(queries.length, 0, 'no DB query should be issued');
+  } finally {
+    console.error = origErr;
+  }
+});
+
+test('redactPII HIGH-2: circular object returns [Circular] without throwing', () => {
+  const { redactPII } = require('../routes/_audit');
+  const a = { name: 'test', nested: {} };
+  a.nested.self = a; // circular
+  let result;
+  assert.doesNotThrow(() => {
+    result = redactPII(a);
+  }, 'circular reference must not throw RangeError');
+  assert.equal(result.name, 'test', 'non-circular fields preserved');
+  assert.equal(result.nested.self, '[Circular]', 'circular reference returns [Circular]');
+});
+
+test('redactPII MED-1: content_hash and token_count NOT redacted (false-positive fix)', () => {
+  const { redactPII } = require('../routes/_audit');
+  const obj = {
+    content_hash: 'abc123',       // structural dedup key — must NOT be redacted
+    commit_hash: 'def456',        // git hash — must NOT be redacted
+    token_count: 42,              // integer count — must NOT be redacted
+    password_hash: 'hashed_pw',   // credential hash — MUST be redacted
+  };
+  const result = redactPII(obj);
+  assert.equal(result.content_hash, 'abc123', 'content_hash must NOT be redacted');
+  assert.equal(result.commit_hash, 'def456', 'commit_hash must NOT be redacted');
+  assert.equal(result.token_count, 42, 'token_count must NOT be redacted');
+  assert.equal(result.password_hash, '[REDACTED]', 'password_hash MUST be redacted');
+});
+
+test('redactPII MED-2: jwt, cookie, authorization, pin, otp keys ARE redacted', () => {
+  const { redactPII } = require('../routes/_audit');
+  const obj = {
+    jwt: 'eyJhbGciOiJIUzI1NiJ9.payload.sig',
+    cookie: 'lfs_session=abc123',
+    authorization: 'Bearer token-value',
+    pin: '1234',
+    otp: '654321',
+    mfa_code: '123456',
+    email: 'user@example.com', // must NOT be redacted
+  };
+  const result = redactPII(obj);
+  assert.equal(result.jwt, '[REDACTED]', 'jwt must be redacted');
+  assert.equal(result.cookie, '[REDACTED]', 'cookie must be redacted');
+  assert.equal(result.authorization, '[REDACTED]', 'authorization must be redacted');
+  assert.equal(result.pin, '[REDACTED]', 'pin must be redacted');
+  assert.equal(result.otp, '[REDACTED]', 'otp must be redacted');
+  assert.equal(result.mfa_code, '[REDACTED]', 'mfa_code must be redacted');
+  assert.equal(result.email, 'user@example.com', 'email must NOT be redacted');
+});
+
+test('archiveOldAuditRows MED-4+MED-5: hot_retention_days=0 bounded to 7 days minimum', async () => {
+  const { archiveOldAuditRows } = require('../routes/_audit');
+  let usedCutoff;
+  const mockPool = {
+    query: async (sql, params) => {
+      if (sql.includes('audit_retention_config') && sql.includes('SELECT')) {
+        return { rows: [{ hot_retention_days: 730 }] };
+      }
+      if (sql.includes('UPDATE audit_log')) {
+        usedCutoff = params && params[0];
+        return { rowCount: 0 };
+      }
+      if (sql.includes('UPDATE audit_retention_config')) {
+        return { rowCount: 1 };
+      }
+      return { rows: [] };
+    },
+  };
+  // hot_retention_days = 0 should be treated as 7 minimum (MED-4 ?? + MED-5 Math.max)
+  await archiveOldAuditRows(mockPool, { hot_retention_days: 0 });
+  assert.ok(usedCutoff instanceof Date, 'cutoff should be a Date');
+  const daysAgo = Math.round((Date.now() - usedCutoff.getTime()) / 86400000);
+  assert.ok(daysAgo >= 7, 'cutoff must be at least 7 days ago (minimum floor)');
+  assert.ok(daysAgo < 365, 'cutoff must not use 730-day default when 0 was passed (MED-4 ?? fix)');
+});
