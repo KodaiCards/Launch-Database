@@ -3650,3 +3650,17 @@ CREATE TABLE IF NOT EXISTS public.workspace_folder_shares (
 );
 
 CREATE INDEX IF NOT EXISTS idx_workspace_folder_shares_user ON public.workspace_folder_shares (user_id);
+
+-- Migration 0056: DB-level invariants (budgets.total_amount ≥ 0; potential_permits.status enum)
+
+ALTER TABLE public.budgets
+    DROP CONSTRAINT IF EXISTS budgets_total_amount_nonneg;
+ALTER TABLE public.budgets
+    ADD CONSTRAINT budgets_total_amount_nonneg
+        CHECK (total_amount IS NULL OR total_amount >= 0);
+
+ALTER TABLE public.potential_permits
+    DROP CONSTRAINT IF EXISTS potential_permits_status_enum;
+ALTER TABLE public.potential_permits
+    ADD CONSTRAINT potential_permits_status_enum
+        CHECK (status IS NULL OR status IN ('pending', 'approved', 'accepted', 'rejected', 'withdrawn'));
