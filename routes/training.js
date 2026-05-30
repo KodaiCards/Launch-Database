@@ -7,8 +7,10 @@
 //   GET  /api/training/cert-attempts             — current user's cert attempt history
 //   POST /api/training/capstone-attempt          — record per-topic capstone attempt
 //   GET  /api/training/admin/progress-overview   — manager/admin view of all users
+//   GET  /api/training/admin/user/:userId/detail — per-user breakdown (admin)
+//   GET  /api/training/admin/cert-attempts       — cert attempt history (admin, optional ?user_id=)
 //
-// Security: every route behind requireAuth(). Admin endpoint further gated
+// Security: every route behind requireAuth(). Admin endpoints further gated
 // to admin / design_manager / permitting_manager roles.
 //
 // DB error messages are NOT forwarded to clients (Wave 1.6 lesson).
@@ -344,6 +346,129 @@ module.exports = function installTrainingRoutes(app, pool, { requireAuth }) {
     } catch (err) {
       console.error('[training] GET /admin/progress-overview error:', err.message);
       res.status(500).json({ error: 'Failed to load progress overview' });
+    }
+  });
+
+  // ─── GET /api/training/admin/user/:userId/detail ─────────────────────────────
+  // Per-user training breakdown. Returns the user identity plus all their
+  // lesson progress (grouped by course), cert attempts, and capstone attempts.
+  // Gated to: admin, design_manager, permitting_manager.
+  app.get('/api/training/admin/user/:userId/detail', requireAuth(['admin', 'design_manager', 'permitting_manager']), async (req, res) => {
+    const userId = Number(req.params.userId);
+    if (!Number.isInteger(userId) || userId < 1) {
+      return res.status(400).json({ error: 'userId must be a positive integer' });
+    }
+    try {
+      // ── User identity ────────────────────────────────────────────────────────
+      const userRes = await pool.query(
+        `SELECT id, full_name AS name, username, role
+           FROM users
+          WHERE id = $1 AND active = TRUE`,
+        [userId]
+      );
+      if (userRes.rows.length === 0) {
+        return res.status(404).json({ error: 'User not found' });
+      }
+      const user = userRes.rows[0];
+
+      // ── Lesson progress (grouped by course) ──────────────────────────────────
+      const progRes = await pool.query(
+        `SELECT course_id, lesson_id, status, completion_pct,
+                best_score, attempts, started_at, completed_at, last_seen_at
+           FROM training_progress
+          WHERE user_id = $1
+          ORDER BY course_id, lesson_id
+          LIMIT 2000`,
+        [userId]
+      );
+      const courseMap = new Map();
+      for (const row of progRes.rows) {
+        if (!courseMap.has(row.course_id)) {
+          courseMap.set(row.course_id, { course_id: row.course_id, lessons: [] });
+        }
+        courseMap.get(row.course_id).lessons.push({
+          lesson_id:      row.lesson_id,
+          status:         row.status,
+          completion_pct: row.completion_pct,
+          best_score:     row.best_score,
+          attempts:       row.attempts,
+          started_at:     row.started_at,
+          completed_at:   row.completed_at,
+          last_seen_at:   row.last_seen_at,
+        });
+      }
+      const courses = Array.from(courseMap.values());
+
+      // ── Cert attempts (newest first) ─────────────────────────────────────────
+      const certRes = await pool.query(
+        `SELECT id, cert_track, attempt_date, score, passed,
+                time_taken_seconds, domain_scores, total_items, correct_items
+           FROM training_cert_attempts
+          WHERE user_id = $1
+          ORDER BY attempt_date DESC
+          LIMIT 200`,
+        [userId]
+      );
+
+      // ── Capstone attempts (newest first) ─────────────────────────────────────
+      const capRes = await pool.query(
+        `SELECT id, course_id, attempt_date, score, passed,
+                total_items, correct_items
+           FROM training_topic_capstone_attempts
+          WHERE user_id = $1
+          ORDER BY attempt_date DESC
+          LIMIT 200`,
+        [userId]
+      );
+
+      res.json({
+        user,
+        courses,
+        cert_attempts:     certRes.rows,
+        capstone_attempts: capRes.rows,
+      });
+    } catch (err) {
+      console.error('[training] GET /admin/user/:userId/detail error:', err.message);
+      res.status(500).json({ error: 'Failed to load user training detail' });
+    }
+  });
+
+  // ─── GET /api/training/admin/cert-attempts ───────────────────────────────────
+  // Cert attempt history across all users (admin). Optional ?user_id= filter.
+  // Gated to: admin, design_manager, permitting_manager.
+  app.get('/api/training/admin/cert-attempts', requireAuth(['admin', 'design_manager', 'permitting_manager']), async (req, res) => {
+    const userIdRaw = req.query.user_id;
+    let userId = null;
+    if (userIdRaw !== undefined && userIdRaw !== '') {
+      const n = Number(userIdRaw);
+      if (!Number.isInteger(n) || n < 1) {
+        return res.status(400).json({ error: 'user_id must be a positive integer when provided' });
+      }
+      userId = n;
+    }
+    try {
+      const params = [];
+      let whereClause = '';
+      if (userId !== null) {
+        params.push(userId);
+        whereClause = 'WHERE tca.user_id = $1';
+      }
+      const { rows } = await pool.query(
+        `SELECT tca.id, tca.user_id, u.full_name AS user_name, u.username,
+                tca.cert_track, tca.attempt_date, tca.score, tca.passed,
+                tca.time_taken_seconds, tca.domain_scores,
+                tca.total_items, tca.correct_items
+           FROM training_cert_attempts tca
+           JOIN users u ON u.id = tca.user_id
+           ${whereClause}
+          ORDER BY tca.attempt_date DESC
+          LIMIT 1000`,
+        params
+      );
+      res.json({ attempts: rows });
+    } catch (err) {
+      console.error('[training] GET /admin/cert-attempts error:', err.message);
+      res.status(500).json({ error: 'Failed to load cert attempts' });
     }
   });
 };
