@@ -35,7 +35,7 @@ module.exports = function installStaffRoutes(app, pool, mw) {
   // rows so admin can reactivate or hard-delete them.
   app.get('/api/staff/all', requireAdmin, async (req, res) => {
     try {
-      const { rows } = await pool.query('SELECT * FROM staff ORDER BY active DESC, name');
+      const { rows } = await pool.query('SELECT id, name, active, created_at FROM staff ORDER BY active DESC, name');
       res.json(rows);
     } catch (e) {
       console.error('[staff:list-all]', e && e.message);
