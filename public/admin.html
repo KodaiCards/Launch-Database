@@ -9666,5 +9666,108 @@ fetch('/api/me/portals',{credentials:'include'}).then(r=>r.json()).then(({portal
     if (window.AppShell) AppShell.initTheme();
   });
 </script>
+<!--
+  Wave 213 — Projects list loading / empty / error states.
+  Wraps loadProjects + renderProjects (defined in projects_tab.js) to layer
+  the design-system skeleton + empty-state + error-state patterns from
+  W192 app-shell.css on top of the existing tbody rendering. Surgical
+  enhancement only — does not touch the underlying fetch or render logic.
+-->
+<script>
+(function () {
+  function w213InjectSkeleton() {
+    var tbody = document.getElementById('projects-body');
+    if (!tbody) return;
+    var html = '';
+    for (var i = 0; i < 6; i++) {
+      html += '<tr aria-hidden="true">'
+           +    '<td colspan="9" style="padding:10px 12px">'
+           +      '<div class="skeleton skeleton-text" style="width:' + (i % 2 === 0 ? '85%' : '70%') + ';height:18px"></div>'
+           +    '</td>'
+           +  '</tr>';
+    }
+    tbody.innerHTML = html;
+  }
+
+  function w213UpgradeEmptyState() {
+    var tbody = document.getElementById('projects-body');
+    if (!tbody) return;
+    var text = tbody.textContent || '';
+    if (!/No projects found/i.test(text)) return;
+    if (tbody.querySelector('.empty-state-title')) return;
+    tbody.innerHTML =
+      '<tr><td colspan="9">'
+    +   '<div class="empty-state">'
+    +     '<div class="empty-state-icon"><i class="fa-solid fa-folder-open" aria-hidden="true"></i></div>'
+    +     '<p class="empty-state-title">No projects yet</p>'
+    +     '<p class="empty-state-desc">Create your first project to start tracking work.</p>'
+    +     '<button type="button" class="btn btn-primary" onclick="if(typeof openProjectModal===&quot;function&quot;)openProjectModal()">'
+    +       '<i class="fa-solid fa-plus" aria-hidden="true"></i> New Project'
+    +     '</button>'
+    +   '</div>'
+    + '</td></tr>';
+  }
+
+  function w213UpgradeErrorState() {
+    var tbody = document.getElementById('projects-body');
+    if (!tbody) return;
+    var text = tbody.textContent || '';
+    if (!/Failed to load projects/i.test(text)) return;
+    if (tbody.querySelector('.empty-state-title')) return;
+    var msg = (text.match(/Failed to load projects:\s*(.*)$/i) || [])[1] || 'Network or server error';
+    tbody.innerHTML =
+      '<tr><td colspan="9">'
+    +   '<div class="empty-state">'
+    +     '<div class="empty-state-icon" style="color:var(--danger)"><i class="fa-solid fa-circle-exclamation" aria-hidden="true"></i></div>'
+    +     '<p class="empty-state-title">Couldn’t load projects</p>'
+    +     '<p class="empty-state-desc">' + msg.replace(/[<>&]/g, '') + '</p>'
+    +     '<button type="button" class="btn btn-primary" onclick="if(typeof loadProjects===&quot;function&quot;)loadProjects()">'
+    +       '<i class="fa-solid fa-rotate-right" aria-hidden="true"></i> Retry'
+    +     '</button>'
+    +   '</div>'
+    + '</td></tr>';
+  }
+
+  function w213WireWrappers() {
+    if (typeof window.loadProjects === 'function' && !window.loadProjects.__w213) {
+      var origLoad = window.loadProjects;
+      var wrapped = async function () {
+        w213InjectSkeleton();
+        try {
+          var r = await origLoad.apply(this, arguments);
+          w213UpgradeEmptyState();
+          w213UpgradeErrorState();
+          return r;
+        } catch (e) {
+          w213UpgradeErrorState();
+          throw e;
+        }
+      };
+      wrapped.__w213 = true;
+      window.loadProjects = wrapped;
+    }
+    if (typeof window.renderProjects === 'function' && !window.renderProjects.__w213) {
+      var origRender = window.renderProjects;
+      var wrappedRender = function () {
+        var r = origRender.apply(this, arguments);
+        w213UpgradeEmptyState();
+        return r;
+      };
+      wrappedRender.__w213 = true;
+      window.renderProjects = wrappedRender;
+    }
+  }
+
+  function w213Init() {
+    w213WireWrappers();
+    setTimeout(w213WireWrappers, 250);
+  }
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', w213Init);
+  } else {
+    w213Init();
+  }
+})();
+</script>
 </body>
 </html>
