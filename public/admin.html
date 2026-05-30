@@ -145,7 +145,7 @@ html[data-theme="dark"] tbody td{border-color:var(--gray-border)}
 html[data-theme="dark"] .header{background:var(--white);border-bottom-color:var(--gray-border)}
 html[data-theme="dark"] .btn-secondary{background:var(--surface-hover);color:var(--text);border:1px solid var(--gray-border)}
 html[data-theme="dark"] .btn-secondary:hover{background:var(--surface-hover)}
-html[data-theme="dark"] .modal-overlay{background:rgba(0,0,0,.7)}
+/* dark-mode backdrop now flows via var(--modal-backdrop) token (Wave 203) */
 html[data-theme="dark"] .modal-header,
 html[data-theme="dark"] .modal-footer{background:var(--white);border-color:var(--gray-border)}
 html[data-theme="dark"] .empty-state{color:var(--text-muted)}
@@ -349,6 +349,41 @@ tbody tr:hover td{background:var(--gray-light)}
 .badge-stage-checklist{background:#D6D8FF;color:#2D2F8E}
 .badge-stage-billed{background:#CCE5FF;color:#004085}
 
+/* Wave 203 — Dark-mode stage badge variants. Backgrounds tinted at ~18% alpha
+   from the light-mode hex; text lightened to maintain WCAG AA contrast on
+   dark surfaces. Selectors duplicated under .stage-badge-* aliases so future
+   markup using either naming convention picks up the dark styling. */
+html[data-theme="dark"] .badge-stage-potential,
+html[data-theme="dark"] .stage-badge-potential{background:rgba(226,227,229,0.18);color:#D0D2D6}
+html[data-theme="dark"] .badge-stage-started,
+html[data-theme="dark"] .stage-badge-started{background:rgba(212,237,218,0.18);color:#9FE0AC}
+html[data-theme="dark"] .badge-stage-submitted,
+html[data-theme="dark"] .stage-badge-submitted{background:rgba(209,236,241,0.18);color:#9FD8E0}
+html[data-theme="dark"] .badge-stage-approved,
+html[data-theme="dark"] .stage-badge-approved,
+html[data-theme="dark"] .badge-permitting,
+html[data-theme="dark"] .stage-badge-pre-permit{background:rgba(253,227,208,0.18);color:#FFCBA5}
+html[data-theme="dark"] .badge-stage-checklist,
+html[data-theme="dark"] .stage-badge-checklist,
+html[data-theme="dark"] .badge-re,
+html[data-theme="dark"] .stage-badge-re{background:rgba(214,216,255,0.18);color:#B8BCFF}
+html[data-theme="dark"] .badge-stage-billed,
+html[data-theme="dark"] .stage-badge-billed,
+html[data-theme="dark"] .badge-billed,
+html[data-theme="dark"] .stage-badge-billed-2{background:rgba(204,229,255,0.18);color:#A8C8FF}
+html[data-theme="dark"] .badge-design,
+html[data-theme="dark"] .stage-badge-design{background:rgba(208,240,253,0.18);color:#9CD8EF}
+html[data-theme="dark"] .badge-other,
+html[data-theme="dark"] .stage-badge-other{background:rgba(240,230,255,0.18);color:#C9B0F0}
+html[data-theme="dark"] .badge-inspection,
+html[data-theme="dark"] .stage-badge-inspection{background:rgba(226,227,229,0.18);color:#D0D2D6}
+html[data-theme="dark"] .badge-active,
+html[data-theme="dark"] .stage-badge-active{background:rgba(212,237,218,0.18);color:#9FE0AC}
+html[data-theme="dark"] .badge-completed,
+html[data-theme="dark"] .stage-badge-completed{background:rgba(209,236,241,0.18);color:#9FD8E0}
+html[data-theme="dark"] .badge-hold,
+html[data-theme="dark"] .stage-badge-hold{background:rgba(255,243,205,0.18);color:#F0D88C}
+
 /* BUTTONS */
 .btn{display:inline-flex;align-items:center;gap:6px;padding:7px 14px;border-radius:7px;font-size:13px;font-weight:500;cursor:pointer;border:none;transition:all .15s;white-space:nowrap;text-decoration:none;font-family:var(--font)}
 .btn-primary{background:var(--primary);color:#fff}
@@ -379,7 +414,7 @@ textarea{resize:vertical;min-height:72px}
 .input-group .input-addon{background:var(--gray-light);border:1px solid var(--gray-border);border-left:none;padding:8px 10px;border-radius:0 7px 7px 0;font-size:13px;color:var(--text-muted);white-space:nowrap;display:flex;align-items:center}
 
 /* MODAL */
-.modal-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:1000;align-items:center;justify-content:center}
+.modal-overlay{display:none;position:fixed;inset:0;background:var(--modal-backdrop);z-index:1000;align-items:center;justify-content:center}
 .modal-overlay.open{display:flex}
 .modal,.modal-content{background:var(--white);border-radius:12px;width:90%;max-width:680px;max-height:90vh;overflow-y:auto;box-shadow:0 20px 60px rgba(0,0,0,.2)}
 .modal-header{padding:18px 22px;border-bottom:1px solid var(--gray-border);display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;background:var(--white);z-index:1}

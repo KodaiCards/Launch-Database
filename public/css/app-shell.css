@@ -144,6 +144,9 @@
   --danger-dark:     #B02A37;
   --clock-grad-from: #E8F0FB;
   --clock-grad-to:   #C5D9EE;
+
+  /* Modal backdrop — Wave 203 */
+  --modal-backdrop:  rgba(0, 0, 0, 0.45);
 }
 
 /* ─────────────────────────────────────────────────────────────
@@ -202,6 +205,9 @@ html[data-theme="dark"] {
   --danger-dark:     #B02A37;
   --clock-grad-from: #1E3A5C;
   --clock-grad-to:   #0E2440;
+
+  /* Modal backdrop — Wave 203 (higher opacity on dark) */
+  --modal-backdrop:  rgba(0, 0, 0, 0.70);
 
   color-scheme: dark;
 }
