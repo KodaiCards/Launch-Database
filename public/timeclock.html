@@ -1108,12 +1108,32 @@ function scrollbackChanged(){
 }
 
 async function loadWeek(){
+  const tbody = document.getElementById('entries-body');
+  // Skeleton on fetch start (5 rows ≈ 5 skeleton lines inside a full-width cell)
+  if (tbody){
+    if (window.AppShell){
+      tbody.innerHTML = '<tr><td colspan="6" id="entries-skeleton-cell"></td></tr>';
+      AppShell.showSkeleton(document.getElementById('entries-skeleton-cell'), 5);
+    } else {
+      tbody.innerHTML = '<tr><td colspan="6" class="empty-state">Loading…</td></tr>';
+    }
+  }
   try {
     weekData = await api('/api/timeclock/week?week_offset=' + currentWeekOffset);
     renderWeek();
     renderEntries();
   } catch(e){
     document.getElementById('week-grid').innerHTML = `<div style="grid-column:1/-1;padding:20px;text-align:center;color:var(--danger)">Failed to load: ${esc(e.message)}</div>`;
+    if (tbody){
+      tbody.innerHTML = `<tr><td colspan="6">
+        <div class="empty-state">
+          <div class="empty-state-icon"><i class="fa-solid fa-circle-exclamation" aria-hidden="true"></i></div>
+          <p class="empty-state-title">Couldn't load hours</p>
+          <p class="empty-state-desc">${esc(e.message || 'Network error. Check your connection and try again.')}</p>
+          <button class="btn btn-secondary btn-sm" onclick="loadWeek()"><i class="fa-solid fa-rotate-right" aria-hidden="true"></i> Retry</button>
+        </div>
+      </td></tr>`;
+    }
   }
 }
 
@@ -1159,7 +1179,13 @@ function renderEntries(){
   if (!weekData) return;
   const tbody = document.getElementById('entries-body');
   if (!weekData.entries.length){
-    tbody.innerHTML = '<tr><td colspan="6" class="empty-state">No entries for this week yet.</td></tr>';
+    tbody.innerHTML = `<tr><td colspan="6">
+      <div class="empty-state">
+        <div class="empty-state-icon"><i class="fa-solid fa-clock" aria-hidden="true"></i></div>
+        <p class="empty-state-title">No time entries</p>
+        <p class="empty-state-desc">No entries for the selected period. Try a different date range or add an entry.</p>
+      </div>
+    </td></tr>`;
     return;
   }
   tbody.innerHTML = weekData.entries.map(e => `
