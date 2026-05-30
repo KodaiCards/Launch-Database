@@ -8,6 +8,7 @@
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
 <link rel="stylesheet" href="/launcher-back.css">
+<link rel="stylesheet" href="/css/app-shell.css">
 <style>
 *{box-sizing:border-box;margin:0;padding:0}
 :root{
@@ -597,13 +598,15 @@ body.demo-blur .lf-financial:hover{filter:blur(0)}
 .activity-desc em{font-style:italic;color:var(--text-secondary)}
 .activity-time{color:var(--text-muted);font-size:0.85em;white-space:nowrap}
 .badge{background:var(--primary);color:white;padding:2px 8px;border-radius:10px;font-size:0.75em}
+/* Wave 193B — app-shell baseline (font + theme tokens) */
+body { background: var(--surface-1); color: var(--text-1); font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; }
 </style>
 <link rel="stylesheet" href="/app-shell.css">
 <script src="/toast.js" defer></script>
 <script src="/keyboard.js" defer></script>
 <script src="/js/dialog.js" defer></script>
 </head>
-<body>
+<body class="app-with-topbar">
 
 <!-- a11y: skip-nav — first focusable element so keyboard users can jump past nav -->
 <a href="#main-content" class="skip-nav">Skip to main content</a>
@@ -9620,6 +9623,13 @@ fetch('/api/me/portals',{credentials:'include'}).then(r=>r.json()).then(({portal
 
   window.addEventListener('load', startSse);
 })();
+</script>
+<!-- Wave 193B — app-shell theme init (admin retains legacy top nav; do not mount topbar) -->
+<script src="/js/app-shell.js" defer></script>
+<script>
+  document.addEventListener('DOMContentLoaded', function () {
+    if (window.AppShell) AppShell.initTheme();
+  });
 </script>
 </body>
 </html>
