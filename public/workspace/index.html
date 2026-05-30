@@ -3,11 +3,17 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Workspace Manager</title>
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <title>Launch Fiber — Workspace</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+  <link rel="stylesheet" href="/css/app-shell.css">
   <link rel="stylesheet" href="workspace.css">
 </head>
-<body>
+<body class="app-with-topbar">
+  <a href="#main-content" class="skip-nav">Skip to main content</a>
+  <main id="main-content" class="app-content">
   <div class="workspace-container">
     <header class="workspace-header">
       <h1><i class="fas fa-folder-tree"></i> Workspace Manager</h1>
@@ -68,7 +74,7 @@
         </div>
       </aside>
 
-      <main class="center-panel">
+      <section class="center-panel">
         <div class="breadcrumb-bar">
           <nav class="breadcrumb">
             <a href="#" class="breadcrumb-link" data-folder-id="root">Workspace</a>
@@ -140,7 +146,7 @@
             </tbody>
           </table>
         </div>
-      </main>
+      </section>
 
       <aside class="details-panel">
         <div class="details-header">
@@ -274,7 +280,16 @@
 
   <div id="toast-container" class="toast-container"></div>
   <input type="file" id="file-upload-input" style="display: none;">
+  </main>
 
+  <script src="/js/app-shell.js" defer></script>
   <script src="workspace.js"></script>
+  <script>
+    document.addEventListener('DOMContentLoaded', function () {
+      if (window.AppShell && typeof AppShell.init === 'function') {
+        AppShell.init({ title: 'Workspace', portalId: 'workspace' });
+      }
+    });
+  </script>
 </body>
 </html>
