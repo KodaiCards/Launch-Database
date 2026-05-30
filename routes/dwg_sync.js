@@ -20,6 +20,7 @@ const fs   = require('fs');
 const fsp  = fs.promises;
 const path = require('path');
 const crypto = require('crypto');
+const { logAudit } = require('./_audit');
 
 const DWG_ROLES = [
   'admin',
@@ -349,6 +350,14 @@ module.exports = function installDwgSyncRoutes(app, pool, mw) {
                 client_label   = EXCLUDED.client_label
           RETURNING last_synced_at
         `, [req.user.id, project_id, manifest_etag || null, client_label || null]);
+        logAudit(pool, {
+          req,
+          action: 'dwg_sync.state_upsert',
+          entity_type: 'dwg_sync_state',
+          entity_id: project_id,
+          after: { project_id, manifest_etag: manifest_etag || null, client_label: client_label || null, last_synced_at: rows[0].last_synced_at },
+          source: 'user',
+        }).catch(() => {});
         res.json({ ok: true, last_synced_at: rows[0].last_synced_at });
       } catch (err) {
         console.error('[dwg-sync] POST /state error:', err.message);

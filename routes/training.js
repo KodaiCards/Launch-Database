@@ -14,6 +14,8 @@
 // DB error messages are NOT forwarded to clients (Wave 1.6 lesson).
 // All queries use parameterized placeholders — no string concat.
 
+const { logAudit } = require('./_audit');
+
 module.exports = function installTrainingRoutes(app, pool, { requireAuth }) {
 
   // ─── GET /api/training/progress ─────────────────────────────────────────────
@@ -130,6 +132,15 @@ module.exports = function installTrainingRoutes(app, pool, { requireAuth }) {
       // (e.g. in_progress update with no score).
       const isInsert = rows[0].is_insert;
       const { is_insert: _drop, ...progress } = rows[0];
+      logAudit(pool, {
+        req,
+        action: isInsert ? 'training.progress_create' : 'training.progress_update',
+        entity_type: 'training_progress',
+        entity_id: progress.id,
+        after: progress,
+        source: 'user',
+        meta: { course_id, lesson_id, status, completion_pct: Math.round(pct) },
+      }).catch(() => {});
       res.status(isInsert ? 201 : 200).json({ progress });
     } catch (err) {
       console.error('[training] POST /progress error:', err.message);
@@ -195,6 +206,15 @@ module.exports = function installTrainingRoutes(app, pool, { requireAuth }) {
           domain_scores ? JSON.stringify(domain_scores) : null,
           totalN, correctN]
       );
+      logAudit(pool, {
+        req,
+        action: 'training.cert_attempt',
+        entity_type: 'training_cert_attempt',
+        entity_id: rows[0].id,
+        after: rows[0],
+        source: 'user',
+        meta: { cert_track, score, passed, total_items: totalN, correct_items: correctN },
+      }).catch(() => {});
       res.status(201).json({ attempt: rows[0] });
     } catch (err) {
       console.error('[training] POST /cert-attempt error:', err.message);
@@ -257,6 +277,15 @@ module.exports = function installTrainingRoutes(app, pool, { requireAuth }) {
          RETURNING *`,
         [req.user.id, course_id, score, passed, totalN, correctN]
       );
+      logAudit(pool, {
+        req,
+        action: 'training.capstone_attempt',
+        entity_type: 'training_capstone_attempt',
+        entity_id: rows[0].id,
+        after: rows[0],
+        source: 'user',
+        meta: { course_id, score, passed, total_items: totalN, correct_items: correctN },
+      }).catch(() => {});
       res.status(201).json({ attempt: rows[0] });
     } catch (err) {
       console.error('[training] POST /capstone-attempt error:', err.message);

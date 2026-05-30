@@ -12,6 +12,7 @@
 
 const { updateProjectHours, saveUndoBucket, snapHoursToQuarter } = require('./_helpers');
 const { broadcast } = require('./_sse');
+const { logAudit } = require('./_audit');
 
 module.exports = function installTimeEntriesRoutes(app, pool, mw) {
   const { requireAuth, auditTimeEntry, portalMode } = mw;
@@ -201,6 +202,14 @@ module.exports = function installTimeEntriesRoutes(app, pool, mw) {
     } catch (auditErr) {
       console.error('[time-entries:create-audit]', auditErr && auditErr.message);
     }
+    logAudit(pool, {
+      req,
+      action: 'time_entry.create',
+      entity_type: 'time_entry',
+      entity_id: inserted.id,
+      after: inserted,
+      source: portalMode || 'admin',
+    }).catch(() => {});
     broadcast('admin', 'time_entry_added', { id: inserted.id, project_id: inserted.project_id, staff_id: inserted.staff_id });
     broadcast('team:design', 'time_entry_added', { id: inserted.id, project_id: inserted.project_id });
     broadcast('team:permitting', 'time_entry_added', { id: inserted.id, project_id: inserted.project_id });
@@ -273,6 +282,15 @@ module.exports = function installTimeEntriesRoutes(app, pool, mw) {
         } catch (auditErr) {
           console.error('[time-entries:bulk-insert-audit]', auditErr && auditErr.message);
         }
+        logAudit(pool, {
+          req,
+          action: 'time_entry.create',
+          entity_type: 'time_entry',
+          entity_id: row.id,
+          after: row,
+          source: portalMode || 'admin',
+          meta: { batch: importBatch },
+        }).catch(() => {});
       }
       broadcast('admin', 'time_entry_added', { batch: importBatch, count: inserted.length });
       broadcast('team:design', 'time_entry_added', { batch: importBatch, count: inserted.length });
@@ -404,6 +422,15 @@ module.exports = function installTimeEntriesRoutes(app, pool, mw) {
       } catch (auditErr) {
         console.error('[time-entries:update-audit]', auditErr && auditErr.message);
       }
+      logAudit(pool, {
+        req,
+        action: 'time_entry.update',
+        entity_type: 'time_entry',
+        entity_id: req.params.id,
+        before,
+        after: updated,
+        source: portalMode || 'admin',
+      }).catch(() => {});
       broadcast('admin', 'time_entry_updated', { id: req.params.id, project_id: updated && updated.project_id });
       broadcast('team:design', 'time_entry_updated', { id: req.params.id, project_id: updated && updated.project_id });
       broadcast('team:permitting', 'time_entry_updated', { id: req.params.id, project_id: updated && updated.project_id });
@@ -486,6 +513,14 @@ module.exports = function installTimeEntriesRoutes(app, pool, mw) {
       } catch (auditErr) {
         console.error('[time-entries:delete-audit]', auditErr && auditErr.message);
       }
+      logAudit(pool, {
+        req,
+        action: 'time_entry.delete',
+        entity_type: 'time_entry',
+        entity_id: req.params.id,
+        before,
+        source: portalMode || 'admin',
+      }).catch(() => {});
     }
     broadcast('admin', 'time_entry_deleted', { id: req.params.id, project_id: before && before.project_id });
     broadcast('team:design', 'time_entry_deleted', { id: req.params.id, project_id: before && before.project_id });
@@ -559,6 +594,15 @@ module.exports = function installTimeEntriesRoutes(app, pool, mw) {
         } catch (auditErr) {
           console.error('[time-entries:bulk-delete-audit]', auditErr && auditErr.message);
         }
+        logAudit(pool, {
+          req,
+          action: 'time_entry.delete',
+          entity_type: 'time_entry',
+          entity_id: row.id,
+          before: row,
+          source: portalMode || 'admin',
+          meta: { bulk_by_staff: req.params.staffId, month: month || null, year: year || null },
+        }).catch(() => {});
       }
       broadcast('admin', 'time_entries_bulk_deleted', { staff_id: req.params.staffId, deleted: result.rowCount });
       broadcast('team:design', 'time_entries_bulk_deleted', { staff_id: req.params.staffId, deleted: result.rowCount });
