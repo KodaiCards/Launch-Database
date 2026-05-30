@@ -2528,5 +2528,115 @@ document.addEventListener('DOMContentLoaded', function () {
     if (window.AppShell) AppShell.initTheme();
   });
 </script>
+<!--
+  Wave 214 — Design pipeline + potential-permits skeleton/empty/error states.
+  Wraps loadPipeline (#dplb, 6 cols) and loadPotential (#ppb, 5 cols) to layer
+  AppShell.showSkeleton on fetch start and upgrade the legacy empty/error
+  cells to the design-system .empty-state pattern from W192 app-shell.css.
+  Surgical enhancement — does not touch fetch URLs, sort logic, or actions.
+-->
+<script>
+(function () {
+  function w214Skeleton(tbodyId, colspan, rows) {
+    var tbody = document.getElementById(tbodyId);
+    if (!tbody) return;
+    if (window.AppShell && AppShell.showSkeleton) {
+      tbody.innerHTML = '<tr><td colspan="' + colspan + '" id="' + tbodyId + '-skel"></td></tr>';
+      AppShell.showSkeleton(document.getElementById(tbodyId + '-skel'), rows || 5);
+    } else {
+      tbody.innerHTML = '<tr><td colspan="' + colspan + '" class="empty-state">Loading…</td></tr>';
+    }
+  }
+
+  function w214UpgradeDplb() {
+    var tbody = document.getElementById('dplb');
+    if (!tbody) return;
+    var text = tbody.textContent || '';
+    if (tbody.querySelector('.empty-state-title')) return;
+    if (/^\s*No design projects\s*$/i.test(text)) {
+      tbody.innerHTML =
+        '<tr><td colspan="6">'
+      +   '<div class="empty-state">'
+      +     '<div class="empty-state-icon"><i class="fa-solid fa-folder-open" aria-hidden="true"></i></div>'
+      +     '<p class="empty-state-title">No design projects</p>'
+      +     '<p class="empty-state-desc">Projects you create or get assigned will appear here in the pipeline.</p>'
+      +     '<button type="button" class="btn btn-primary btn-sm" onclick="if(typeof openProjectModal===&quot;function&quot;)openProjectModal()">'
+      +       '<i class="fa-solid fa-plus" aria-hidden="true"></i> Add Project'
+      +     '</button>'
+      +   '</div>'
+      + '</td></tr>';
+    } else if (/^\s*Error:/i.test(text)) {
+      var msg = (text.match(/Error:\s*(.*)$/i) || [])[1] || 'Network or server error';
+      tbody.innerHTML =
+        '<tr><td colspan="6">'
+      +   '<div class="empty-state">'
+      +     '<div class="empty-state-icon" style="color:var(--danger)"><i class="fa-solid fa-circle-exclamation" aria-hidden="true"></i></div>'
+      +     '<p class="empty-state-title">Couldn’t load pipeline</p>'
+      +     '<p class="empty-state-desc">' + msg.replace(/[<>&]/g, '') + '</p>'
+      +     '<button type="button" class="btn btn-secondary btn-sm" onclick="if(typeof loadPipeline===&quot;function&quot;)loadPipeline()">'
+      +       '<i class="fa-solid fa-rotate-right" aria-hidden="true"></i> Retry'
+      +     '</button>'
+      +   '</div>'
+      + '</td></tr>';
+    }
+  }
+
+  function w214UpgradePpb() {
+    var tbody = document.getElementById('ppb');
+    if (!tbody) return;
+    var text = tbody.textContent || '';
+    if (tbody.querySelector('.empty-state-title')) return;
+    if (/^\s*No submissions yet\s*$/i.test(text)) {
+      tbody.innerHTML =
+        '<tr><td colspan="5">'
+      +   '<div class="empty-state">'
+      +     '<div class="empty-state-icon"><i class="fa-solid fa-paper-plane" aria-hidden="true"></i></div>'
+      +     '<p class="empty-state-title">No submissions yet</p>'
+      +     '<p class="empty-state-desc">Submit a potential permit so the Permitting team can review it.</p>'
+      +     '<button type="button" class="btn btn-primary btn-sm" onclick="if(typeof om===&quot;function&quot;)om(&quot;ppm&quot;)">'
+      +       '<i class="fa-solid fa-plus" aria-hidden="true"></i> Submit New'
+      +     '</button>'
+      +   '</div>'
+      + '</td></tr>';
+    }
+  }
+
+  function w214Wire() {
+    if (typeof window.loadPipeline === 'function' && !window.loadPipeline.__w214) {
+      var origPipe = window.loadPipeline;
+      var wrapped = async function () {
+        w214Skeleton('dplb', 6, 6);
+        try {
+          var r = await origPipe.apply(this, arguments);
+          w214UpgradeDplb();
+          return r;
+        } catch (e) { w214UpgradeDplb(); throw e; }
+      };
+      wrapped.__w214 = true;
+      window.loadPipeline = wrapped;
+    }
+    if (typeof window.loadPotential === 'function' && !window.loadPotential.__w214) {
+      var origPot = window.loadPotential;
+      var wrappedPot = async function () {
+        w214Skeleton('ppb', 5, 4);
+        try {
+          var r = await origPot.apply(this, arguments);
+          w214UpgradePpb();
+          return r;
+        } catch (e) { w214UpgradePpb(); throw e; }
+      };
+      wrappedPot.__w214 = true;
+      window.loadPotential = wrappedPot;
+    }
+  }
+
+  function w214Init() { w214Wire(); setTimeout(w214Wire, 250); }
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', w214Init);
+  } else {
+    w214Init();
+  }
+})();
+</script>
 </body>
 </html>
