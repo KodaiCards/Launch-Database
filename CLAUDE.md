@@ -26,7 +26,7 @@
 - W202C `LFS_DEBUG`-gated 14 production `console.warn` calls
 - W203 modal-backdrop tokenization + admin stage-badge dark-mode variants
 
-**Security + correctness (Waves 191/197/199/202B/73):**
+**Security + correctness (Waves 191/197/199/202B/73/205/207):**
 - W191-fix audit infra `aa37232` — 3 HIGH + 4 MED in `routes/_audit.js` (destructure-in-try, WeakSet cycle detection, NULL field validation, tighter sensitive-key regex, `Math.max(7, retentionDays)` floor)
 - W197 DB CHECK constraints `migrations/0056_check_constraints.sql` — `budgets.total_amount >= 0` + `potential_permits.status` enum
 - W199 frontend canonicalization `accepted` → `approved` in `public/permitting.html` (3 sites)
@@ -35,6 +35,11 @@
 - W82-redo admin user management UI (`public/js/admin_users.js`, 473 lines)
 - W122 file activity admin view (`routes/file_activity.js` + `public/admin/file-activity.{html,js,css}`)
 - W198 server.js wired W120 downloads + W122 file_activity routes + PORTAL_DEFS tiles
+- W205 monthly billing idempotency `migrations/0058_invoices_monthly_unique.sql` — partial unique index + 23505 handler in `projects.js` (`/generate-monthly-invoice`) + `billing.js` (`/batches/:id/confirm`); pre-existing canonical handler on `/bill-multiple` (mig 0043) is the pattern
+- W206 invoices indexes — ALREADY DONE in migration 0045 (agent caught redundancy, no no-op file created)
+- W207 `47a40e3` audit_log INSERT wiring on 4 untracked routes — `time_entries.js` (5 sites), `training.js` (3), `dwg_sync.js` (1), `concentrators.js` (1); all use correct positional `logAudit(pool, {...})` (W86 silent-no-op lesson preserved)
+- W208 `9ca399c` Playwright 375px mobile snapshot test — `tests/browser/mobile_portals_375.spec.js` covers workspace/photos/downloads/customer/offline-sync/login (the 6 portals with no inline @media)
+- W204 read-only re-verify SHIP-READY verdict — all 9 recent waves grep-verified, boot smoke clean, zero FAIL items
 
 **Backend route audits earlier in session (pre-compaction):**
 - 190+ findings closed: 42 HIGH / 80+ MED / 70+ LOW across `routes/_audit.js`, `_sse.js`, `_helpers.js`, `_csv_stage.js`, `_splice_validation.js`, `admin.js`, `ai.js`, `audit_log.js`, `billing.js`, `budgets.js`, `clients.js`, `client_portal_v2.js`, `concentrators.js`, `contracts.js`, `customer_portal.js`, `design_pipeline.js`, `dwg_sync.js`, `dwg_two_way_sync.js`, `engineering_contracts.js`, `folder_workspace.js`, `hours_csv.js`, `impersonation.js`, `invoices.js`, `invoice_templates.js`, `jobs.js`, `permits.js`, `potential_permits.js`, `pricing.js`, `project_billing.js`, `project_detail.js`, `project_documents.js`, `project_photos.js`, `projects.js`, `revenue.js`, `splice.js`, `staff.js`, `time_entries.js`, `training.js`, `undo.js`
