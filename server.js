@@ -179,7 +179,7 @@ if (PORTAL_MODE) {
 // portal routes can read req.user / req.cookies. Express middleware runs in
 // registration order, so a route registered before authMiddleware never
 // sees req.user.
-const { bootstrapAuthSchema, installAuthRoutes, requireAuth, requireAdmin, requireManagerOrAdmin, canAccessPortal, signToken, signImpersonationToken, verifyToken, rateLimitOk, cookieOpts } = require('./auth');
+const { bootstrapAuthSchema, installAuthRoutes, requireAuth, requireAdmin, requireManagerOrAdmin, canAccessPortal, canCreateProjects, signToken, signImpersonationToken, verifyToken, rateLimitOk, cookieOpts } = require('./auth');
 installAuthRoutes(app, pool);
 
 // Customer scope guard. Per auth.js's role doc: "Customers are external —
