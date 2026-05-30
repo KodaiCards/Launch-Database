@@ -73,12 +73,19 @@ module.exports = function installAuditLogRoutes(app, pool, mw) {
       }
 
       if (req.query.search) {
-        const searchTerm = `%${req.query.search}%`;
-        filters.push(`(action ILIKE $${++paramCount} OR entity_type ILIKE $${paramCount} OR actor_username ILIKE $${paramCount})`);
-        params.push(searchTerm);
-        params.push(searchTerm);
-        params.push(searchTerm);
-        paramCount += 2;
+        // Escape ILIKE metacharacters so '_' and '%' in the search term are
+        // treated as literals, not wildcards. Prevents full-table scans when
+        // users type e.g. search=_.
+        const escaped = req.query.search.replace(/[%_\\]/g, '\\$&');
+        const searchTerm = `%${escaped}%`;
+        // Use three distinct parameter slots — one per ILIKE column — so the
+        // query is unambiguous and can be extended without adjusting offsets.
+        filters.push(
+          `(action ILIKE $${++paramCount} OR entity_type ILIKE $${++paramCount} OR actor_username ILIKE $${++paramCount})`
+        );
+        params.push(searchTerm); // $N   — action
+        params.push(searchTerm); // $N+1 — entity_type
+        params.push(searchTerm); // $N+2 — actor_username
       }
 
       const whereClause = filters.length > 0 ? `WHERE ${filters.join(' AND ')}` : '';
@@ -230,7 +237,8 @@ module.exports = function installAuditLogRoutes(app, pool, mw) {
   });
 
   // PUT /api/admin/audit-log/:id — update an audit_log row
-  // Body can include: before_data, after_data, meta, action, entity_type, entity_id, actor_username, source, ip, user_agent
+  // Body can include: before_data, after_data, meta, action, entity_type, entity_id, source, ip, user_agent
+  // NOTE: actor_username is intentionally excluded (forensic non-repudiation; see allowedFields below).
   // Returns: updated row (with PII redacted)
   app.put('/api/admin/audit-log/:id', requireAdmin, async (req, res) => {
     try {
@@ -244,9 +252,13 @@ module.exports = function installAuditLogRoutes(app, pool, mw) {
       const params = [];
       let paramCount = 1;
 
+      // actor_username is intentionally excluded: allowing admins to rewrite
+      // the display name of who performed an action breaks forensic non-
+      // repudiation. actor_user_id (the FK) is the authoritative identity;
+      // actor_username is derived from it and must not be independently editable.
       const allowedFields = [
         'before_data', 'after_data', 'meta', 'action', 'entity_type',
-        'entity_id', 'actor_username', 'source', 'ip', 'user_agent'
+        'entity_id', 'source', 'ip', 'user_agent'
       ];
 
       for (const field of allowedFields) {
@@ -313,6 +325,12 @@ module.exports = function installAuditLogRoutes(app, pool, mw) {
       const id = parseInt(req.params.id);
       if (!Number.isInteger(id) || id < 1) {
         return res.status(400).json({ error: 'Invalid id' });
+      }
+
+      // Rate limit: 20 hard-deletes per admin per hour.
+      // Mitigates scripted cover-tracks attacks (delete evidence rows in a loop).
+      if (!rateLimitOk('audit_log:delete:' + req.user.id, 20, 3600000)) {
+        return res.status(429).json({ error: 'Too many delete requests — try again later' });
       }
 
       // Fetch the row before deleting (for audit trail)

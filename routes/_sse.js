@@ -38,9 +38,10 @@ const _channels = new Map(); // channel -> Set<res>
 // scan every channel to remove a single dead connection.
 const _resChanMap = new Map(); // res -> Set<channel>
 
-// Per-connection metadata: userId, tokenIssuedAt (iat from JWT, seconds).
-// Used by heartbeat re-validation to detect session revocation.
-const _resMeta = new Map(); // res -> { userId, tokenIssuedAt }
+// Per-connection metadata: userId, tokenIssuedAt (iat from JWT, seconds),
+// connectedRole (role at connect time).
+// Used by heartbeat re-validation to detect session revocation and role changes.
+const _resMeta = new Map(); // res -> { userId, tokenIssuedAt, connectedRole }
 
 function _subscribe(channel, res) {
   if (!_channels.has(channel)) _channels.set(channel, new Set());
@@ -137,6 +138,8 @@ function attach(app, mw) {
       myChannels.push('team:design');
     } else if (role === 'permitting_engineer') {
       myChannels.push('team:permitting');
+    } else if (role === 'construction_manager' || role === 'construction_engineer') {
+      myChannels.push('team:construction');
     }
     // 'customer' role gets no channels — the customer portal doesn't need
     // real-time push (it's read-only and low-frequency).
@@ -147,9 +150,12 @@ function attach(app, mw) {
     // req.user.iat is the JWT issued-at timestamp (seconds since epoch),
     // set by verifyToken. We compare it against users.tokens_invalid_after
     // to detect password changes or explicit session revocations.
+    // connectedRole captures the role at connect time so the heartbeat can
+    // detect demotions / promotions and close the stale channel subscription.
     _resMeta.set(res, {
       userId: req.user.id,
       tokenIssuedAt: req.user.iat || 0,
+      connectedRole: role || null,
     });
 
     // Send an initial ping so the browser marks the connection as open
@@ -191,9 +197,12 @@ function attach(app, mw) {
               [meta.userId]
             );
             const user = rows[0];
+            const roleChanged = user && meta.connectedRole !== null &&
+              user.role !== meta.connectedRole;
             const invalid =
               !user ||
               !user.active ||
+              roleChanged ||
               (user.tokens_invalid_after &&
                 meta.tokenIssuedAt < Math.floor(new Date(user.tokens_invalid_after).getTime() / 1000));
             if (invalid) {

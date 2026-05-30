@@ -139,21 +139,20 @@ module.exports = function installTrainingRoutes(app, pool, { requireAuth }) {
 
   // ─── POST /api/training/cert-attempt ────────────────────────────────────────
   // Records a completed cert mock exam attempt.
-  // Body: { cert_track, score, passed, time_taken_seconds?, domain_scores?, total_items, correct_items }
+  // Body: { cert_track, time_taken_seconds?, domain_scores?, total_items, correct_items }
+  //
+  // SECURITY: client-supplied `score` and `passed` are intentionally ignored.
+  // Both are derived server-side from total_items / correct_items so a client
+  // cannot fabricate a passing attempt with a score of 0.
+  //   score  = Math.round(correct_items / total_items * 100)
+  //   passed = score >= 80  (80% pass threshold)
   app.post('/api/training/cert-attempt', requireAuth(), async (req, res) => {
-    const { cert_track, score, passed, time_taken_seconds, domain_scores,
+    const { cert_track, time_taken_seconds, domain_scores,
             total_items, correct_items } = req.body || {};
 
     const validTracks = ['osp-general', 'OSP-Designer', 'RCDD', 'CFOT', 'CFOS-O'];
     if (!cert_track || !validTracks.includes(cert_track)) {
       return res.status(400).json({ error: `cert_track must be one of: ${validTracks.join(', ')}` });
-    }
-    const scoreN = Number(score);
-    if (!Number.isFinite(scoreN) || scoreN < 0 || scoreN > 100) {
-      return res.status(400).json({ error: 'score must be 0–100' });
-    }
-    if (typeof passed !== 'boolean') {
-      return res.status(400).json({ error: 'passed must be a boolean' });
     }
     const totalN = Number(total_items);
     const correctN = Number(correct_items);
@@ -163,6 +162,10 @@ module.exports = function installTrainingRoutes(app, pool, { requireAuth }) {
     if (!Number.isInteger(correctN) || correctN < 0 || correctN > totalN) {
       return res.status(400).json({ error: 'correct_items must be 0–total_items' });
     }
+
+    // Derive score and passed server-side — client values are ignored.
+    const score = Math.round(correctN / totalN * 100);
+    const passed = score >= 80;
 
     const timeTaken = time_taken_seconds !== undefined && time_taken_seconds !== null
       ? Number(time_taken_seconds) : null;
@@ -187,7 +190,7 @@ module.exports = function installTrainingRoutes(app, pool, { requireAuth }) {
             domain_scores, total_items, correct_items)
          VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
          RETURNING *`,
-        [req.user.id, cert_track, Math.round(scoreN), passed,
+        [req.user.id, cert_track, score, passed,
           timeTaken !== null ? Math.round(timeTaken) : null,
           domain_scores ? JSON.stringify(domain_scores) : null,
           totalN, correctN]
@@ -222,18 +225,16 @@ module.exports = function installTrainingRoutes(app, pool, { requireAuth }) {
   // ─── POST /api/training/capstone-attempt ────────────────────────────────────
   // Records a per-topic capstone quiz attempt.
   // Body: { course_id, score, passed, total_items, correct_items }
+  // SECURITY: client-supplied `score` and `passed` are intentionally ignored.
+  // Both are derived server-side from total_items / correct_items so a client
+  // cannot fabricate a passing attempt with score=0 and passed=true.
+  //   score  = Math.round(correct_items / total_items * 100)
+  //   passed = score >= 80  (80% pass threshold)
   app.post('/api/training/capstone-attempt', requireAuth(), async (req, res) => {
-    const { course_id, score, passed, total_items, correct_items } = req.body || {};
+    const { course_id, total_items, correct_items } = req.body || {};
 
     if (!course_id || typeof course_id !== 'string' || course_id.length > 50) {
       return res.status(400).json({ error: 'course_id is required (string, max 50 chars)' });
-    }
-    const scoreN = Number(score);
-    if (!Number.isFinite(scoreN) || scoreN < 0 || scoreN > 100) {
-      return res.status(400).json({ error: 'score must be 0–100' });
-    }
-    if (typeof passed !== 'boolean') {
-      return res.status(400).json({ error: 'passed must be a boolean' });
     }
     const totalN = Number(total_items);
     const correctN = Number(correct_items);
@@ -244,13 +245,17 @@ module.exports = function installTrainingRoutes(app, pool, { requireAuth }) {
       return res.status(400).json({ error: 'correct_items must be 0–total_items' });
     }
 
+    // Derive score and passed server-side — client-supplied values are ignored.
+    const score = Math.round(correctN / totalN * 100);
+    const passed = score >= 80;
+
     try {
       const { rows } = await pool.query(
         `INSERT INTO training_topic_capstone_attempts
            (user_id, course_id, score, passed, total_items, correct_items)
          VALUES ($1, $2, $3, $4, $5, $6)
          RETURNING *`,
-        [req.user.id, course_id, Math.round(scoreN), passed, totalN, correctN]
+        [req.user.id, course_id, score, passed, totalN, correctN]
       );
       res.status(201).json({ attempt: rows[0] });
     } catch (err) {
