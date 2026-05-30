@@ -25,6 +25,7 @@
   let currentClientId = ''; // '' = all, '<uuid>' = single-client filter
   let lastUpdated  = null;
   let pollTimer    = null;
+  let lastFetchFailed = false; // tracks polling drop → recovery for reconnect toast
 
   // ─── Session-persisted collapse state ────────────────────────────────────
   // Keys stored: 'cp_collapsed_<nodeId>' = '1'
@@ -632,14 +633,92 @@
 
   // ─── Fetch and render ─────────────────────────────────────────────────────
 
+  // ─── Loading / error / empty state helpers ───────────────────────────────
+
+  function renderServerErrorState() {
+    const content = document.getElementById('cp-content');
+    if (!content) return;
+    content.innerHTML =
+      '<div class="empty-state">' +
+        '<div class="empty-state-icon">' +
+          '<i class="fa-solid fa-triangle-exclamation" aria-hidden="true"></i>' +
+        '</div>' +
+        '<p class="empty-state-title">Couldn\'t load projects</p>' +
+        '<p class="empty-state-desc">Something went wrong. Try again.</p>' +
+        '<button class="btn btn-primary" id="cp-retry-btn" type="button">' +
+          '<i class="fa-solid fa-rotate-right" aria-hidden="true"></i> Retry' +
+        '</button>' +
+      '</div>';
+    const btn = document.getElementById('cp-retry-btn');
+    if (btn) btn.addEventListener('click', fetchAndRender);
+  }
+
+  function renderEmptyListState() {
+    const content = document.getElementById('cp-content');
+    if (!content) return;
+    content.innerHTML =
+      '<div class="empty-state">' +
+        '<div class="empty-state-icon">' +
+          '<i class="fa-solid fa-folder-open" aria-hidden="true"></i>' +
+        '</div>' +
+        '<p class="empty-state-title">No projects assigned yet</p>' +
+        '<p class="empty-state-desc">' +
+          'When projects are assigned to you they will appear here automatically.' +
+        '</p>' +
+      '</div>';
+  }
+
   async function fetchAndRender() {
+    const content = document.getElementById('cp-content');
+
+    // Skeleton: only show on the FIRST fetch (when no data has loaded yet)
+    // so polling refreshes don't flash empty state.
+    const isFirstFetch = lastUpdated === null;
+    if (isFirstFetch && content && window.AppShell && typeof AppShell.showSkeleton === 'function') {
+      AppShell.showSkeleton(content, 6);
+    }
+
     try {
       let url = '/api/client-portal/projects';
       if (currentClientId) url += '?client_id=' + encodeURIComponent(currentClientId);
 
       const resp = await fetch(url, { credentials: 'same-origin' });
-      if (!resp.ok) throw new Error('HTTP ' + resp.status);
+
+      // 401 → kick to login with return path
+      if (resp.status === 401) {
+        location.href = '/login.html?next=' + encodeURIComponent(location.pathname);
+        return;
+      }
+
+      // 5xx (and other non-2xx) → empty-state with retry
+      if (!resp.ok) {
+        if (content && window.AppShell && typeof AppShell.hideSkeleton === 'function') {
+          AppShell.hideSkeleton(content);
+        }
+        renderServerErrorState();
+        lastFetchFailed = true;
+        return;
+      }
+
       const projects = await resp.json();
+
+      if (content && window.AppShell && typeof AppShell.hideSkeleton === 'function') {
+        AppShell.hideSkeleton(content);
+      }
+
+      // Empty list → empty-state (no retry button)
+      if (!Array.isArray(projects) || projects.length === 0) {
+        updatePageTitle();
+        renderEmptyListState();
+        lastUpdated = Date.now();
+        updateLastUpdated();
+        // Recovery toast if the prior poll had failed
+        if (lastFetchFailed && window.AppShell && typeof AppShell.toast === 'function') {
+          AppShell.toast('Reconnected', 'success');
+        }
+        lastFetchFailed = false;
+        return;
+      }
 
       const isCustomer   = currentUser && currentUser.role === 'customer';
       const singleClient = isCustomer || !!currentClientId;
@@ -654,8 +733,19 @@
 
       lastUpdated = Date.now();
       updateLastUpdated();
+
+      // Recovery toast: previous polling cycle failed, this one succeeded.
+      if (lastFetchFailed && window.AppShell && typeof AppShell.toast === 'function') {
+        AppShell.toast('Reconnected', 'success');
+      }
+      lastFetchFailed = false;
     } catch (err) {
       console.error('[client_portal] fetch failed', err);
+      if (content && window.AppShell && typeof AppShell.hideSkeleton === 'function') {
+        AppShell.hideSkeleton(content);
+      }
+      renderServerErrorState();
+      lastFetchFailed = true;
     }
   }
 
