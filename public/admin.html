@@ -2814,15 +2814,21 @@ body.demo-blur .lf-financial:hover{filter:blur(0)}
       </div>
 
       <!-- ── User Management ── -->
-      <div class="settings-section" style="margin-top:24px">
+      <div class="settings-section" id="settings-section-users" style="margin-top:24px">
         <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px">
-          <h4 style="font-size:14px;font-weight:600;margin:0"><i class="fa-solid fa-users-gear" style="margin-right:6px;color:var(--text-muted)"></i>Users &amp; Roles</h4>
-          <div style="display:flex;gap:6px">
+          <h4 style="font-size:14px;font-weight:600;margin:0"><i class="fa-solid fa-users" style="margin-right:6px;color:var(--text-muted)"></i>User Management</h4>
+          <div style="display:flex;gap:6px;align-items:center">
             <button class="btn btn-secondary btn-sm" onclick="openStaffUserModal()" title="Create staff record + login in one step"><i class="fa-solid fa-id-badge"></i> Add Staff + Login</button>
-            <button class="btn btn-primary btn-sm" onclick="openCreateUserModal()"><i class="fa-solid fa-user-plus"></i> Add User</button>
+            <button class="btn btn-secondary btn-sm" onclick="openCreateUserModal()"><i class="fa-solid fa-user-plus"></i> Add User</button>
+            <button id="open-user-mgmt-btn" class="btn btn-primary btn-sm">
+              <i class="fa-solid fa-users-gear" aria-hidden="true"></i> Open User Management
+            </button>
           </div>
         </div>
-        <p style="font-size:12px;color:var(--text-muted);margin:0 0 12px 0">Manage logins for everyone who accesses the system. Admins see everything; managers see their team's data; engineers see only their own time entries.</p>
+        <p style="font-size:12px;color:var(--text-muted);margin:0 0 12px 0">
+          Manage user accounts, roles, and access. Every action is logged to the audit trail.
+          Use <strong>Open User Management</strong> for the full user table with search, filters, role changes, and password resets.
+        </p>
         <div id="users-list-body" style="font-size:13px"></div>
       </div>
 
@@ -3027,6 +3033,7 @@ body.demo-blur .lf-financial:hover{filter:blur(0)}
 <script src="/js/admin_project_files.js"></script>
 <script src="/js/admin_project_photos.js"></script>
 <script src="/js/admin_recent_activity.js"></script>
+<script src="/js/admin_users.js"></script>
 
 <script>
 

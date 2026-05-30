@@ -1,0 +1,155 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>File Activity — Launch Fiber Services</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" crossorigin="anonymous" />
+  <link rel="stylesheet" href="file-activity.css" />
+</head>
+<body>
+
+  <!-- ── Page header ──────────────────────────────────────────────────────── -->
+  <header class="fa-page-header" role="banner">
+    <a href="/admin.html" class="back-link" aria-label="Back to admin dashboard">
+      <i class="fa-solid fa-arrow-left" aria-hidden="true"></i>
+      Admin
+    </a>
+    <h1>
+      <i class="fa-solid fa-file-magnifying-glass" aria-hidden="true" style="margin-right:8px;color:var(--primary)"></i>
+      File Activity
+    </h1>
+    <div class="header-stats" aria-label="Summary statistics">
+      <div class="stat-chip">
+        <span class="stat-val" id="stat-total">—</span>
+        <span class="stat-label">Total (filtered)</span>
+      </div>
+      <div class="stat-chip">
+        <span class="stat-val" id="stat-today">—</span>
+        <span class="stat-label">Last 24 h</span>
+      </div>
+    </div>
+  </header>
+
+  <!-- ── Main content ─────────────────────────────────────────────────────── -->
+  <main class="fa-main" id="fa-main" role="main">
+
+    <!-- Filter bar -->
+    <form class="fa-filter-bar" id="fa-filter-form" role="search" aria-label="Filter file activity events" onsubmit="return false;">
+
+      <div class="fa-filter-group">
+        <label for="filter-action">Action</label>
+        <select id="filter-action" name="action" aria-label="Filter by action">
+          <option value="">All actions</option>
+          <!-- Populated by JS from file_actions enum in API response -->
+        </select>
+      </div>
+
+      <div class="fa-filter-group">
+        <label for="filter-entity-type">Entity type</label>
+        <select id="filter-entity-type" name="entity_type" aria-label="Filter by entity type">
+          <option value="">All types</option>
+          <option value="workspace_file">Workspace file</option>
+          <option value="project_photo">Project photo</option>
+          <option value="project_document">Project document</option>
+          <option value="client_portal_document">Client portal doc</option>
+          <option value="dwg_revision">DWG revision</option>
+        </select>
+      </div>
+
+      <div class="fa-filter-group">
+        <label for="filter-actor">Actor</label>
+        <input type="text" id="filter-actor" name="actor" placeholder="Username…" aria-label="Filter by actor username" />
+      </div>
+
+      <div class="fa-filter-group">
+        <label for="filter-from">From date</label>
+        <input type="date" id="filter-from" name="from" aria-label="Filter from date" />
+      </div>
+
+      <div class="fa-filter-group">
+        <label for="filter-to">To date</label>
+        <input type="date" id="filter-to" name="to" aria-label="Filter to date" />
+      </div>
+
+      <div class="fa-filter-group">
+        <label for="filter-q">Free text search</label>
+        <input type="text" id="filter-q" name="q" placeholder="Search…" aria-label="Free text search across action, entity type, entity ID" />
+      </div>
+
+      <div class="fa-filter-actions">
+        <button type="submit" class="btn btn-primary" id="btn-apply" onclick="FileActivity.applyFilters()">
+          <i class="fa-solid fa-magnifying-glass" aria-hidden="true"></i>
+          Apply
+        </button>
+        <button type="button" class="btn btn-secondary" id="btn-clear" onclick="FileActivity.clearFilters()">
+          <i class="fa-solid fa-xmark" aria-hidden="true"></i>
+          Clear
+        </button>
+      </div>
+    </form>
+
+    <!-- Table card -->
+    <div class="fa-table-card" role="region" aria-label="File activity events table" aria-live="polite">
+      <table aria-describedby="fa-table-caption">
+        <caption id="fa-table-caption" class="sr-only">File activity audit log. Click a row for full details.</caption>
+        <thead>
+          <tr>
+            <th scope="col">Timestamp</th>
+            <th scope="col">Action</th>
+            <th scope="col">Actor</th>
+            <th scope="col">Entity type</th>
+            <th scope="col">Entity ID</th>
+            <th scope="col">Source</th>
+            <th scope="col">IP</th>
+          </tr>
+        </thead>
+        <tbody id="fa-tbody">
+          <tr>
+            <td colspan="7"><div class="fa-loading"><i class="fa-solid fa-spinner fa-spin" aria-hidden="true"></i> Loading…</div></td>
+          </tr>
+        </tbody>
+      </table>
+
+      <!-- Pagination -->
+      <div class="fa-pagination" role="navigation" aria-label="Table pagination">
+        <span class="pager-info" id="pager-info" aria-live="polite">Loading…</span>
+        <div class="pager-controls">
+          <button class="btn btn-secondary" id="btn-prev" onclick="FileActivity.prevPage()" disabled aria-label="Previous page">
+            <i class="fa-solid fa-chevron-left" aria-hidden="true"></i> Prev
+          </button>
+          <button class="btn btn-secondary" id="btn-next" onclick="FileActivity.nextPage()" disabled aria-label="Next page">
+            Next <i class="fa-solid fa-chevron-right" aria-hidden="true"></i>
+          </button>
+        </div>
+      </div>
+    </div>
+
+  </main>
+
+  <!-- ── Detail modal ──────────────────────────────────────────────────────── -->
+  <div class="fa-modal-overlay" id="fa-modal-overlay" role="dialog" aria-modal="true" aria-labelledby="modal-title" aria-hidden="true"
+       onclick="FileActivity.closeModal(event)">
+    <div class="fa-modal" onclick="event.stopPropagation()">
+      <div class="fa-modal-header">
+        <h2 id="modal-title">Event Detail</h2>
+        <button class="fa-modal-close" onclick="FileActivity.closeModal()" aria-label="Close event detail">
+          <i class="fa-solid fa-xmark" aria-hidden="true"></i>
+        </button>
+      </div>
+      <div class="fa-modal-body" id="fa-modal-body">
+        <!-- Populated by JS -->
+      </div>
+    </div>
+  </div>
+
+  <!-- sr-only utility (in case app-shell.css isn't loaded) -->
+  <style>
+    .sr-only{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0}
+  </style>
+
+  <script src="file-activity.js"></script>
+</body>
+</html>
