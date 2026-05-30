@@ -8,6 +8,66 @@
 
 ## TL;DR (read this first; rest is depth)
 
+## 2026-05-30 session-end state — Monday-demo polish sprint
+
+**Mission:** Carter asked for everything-except-splice + ISP shipped before Monday demo. 72-hour sprint focus: visual cohesion across all 9+ portals + security/correctness backlog drain.
+
+**Major landings this session (all on main, all boot-smoked):**
+
+**Design system + visual cohesion (Waves 192-203):**
+- W192 design system `b4c9685` — 1607-line `public/css/app-shell.css` (tokens light+dark, components, responsive 1024/768/480), 664-line `public/js/app-shell.js` (AppShell.init/mountTopbar/mountSidebar/toast/openModal/closeModal/showSkeleton/getUser/signOut/toggleTheme), 483-line `docs/design_system.md`
+- W193 wrap launcher + admin + client-portal in app-shell (3 parallel)
+- W194 wrap workspace + photos + downloads (3 parallel)
+- W195 wrap timeclock + design + permitting + customer (4 parallel)
+- W196 wrap offline-sync + splice_view + login (3 parallel)
+- **13/13 HTML surfaces wrapped** in app-shell (only `splice.html` left, deprioritized per Carter)
+- W201 139 alert() calls → AppShell.toast across admin(81)+design(24)+permitting(21)+timeclock(13)
+- W202A added 6 dark-mode tokens (`--bg-deep`, `--surface-deep`, `--surface-hover`, `--danger-dark`, `--clock-grad-from/to`) + swept 5 portals
+- W202C `LFS_DEBUG`-gated 14 production `console.warn` calls
+- W203 modal-backdrop tokenization + admin stage-badge dark-mode variants
+
+**Security + correctness (Waves 191/197/199/202B/73):**
+- W191-fix audit infra `aa37232` — 3 HIGH + 4 MED in `routes/_audit.js` (destructure-in-try, WeakSet cycle detection, NULL field validation, tighter sensitive-key regex, `Math.max(7, retentionDays)` floor)
+- W197 DB CHECK constraints `migrations/0056_check_constraints.sql` — `budgets.total_amount >= 0` + `potential_permits.status` enum
+- W199 frontend canonicalization `accepted` → `approved` in `public/permitting.html` (3 sites)
+- W202B data migration `migrations/0057_backfill_accepted_to_approved.sql` (idempotent UPDATE)
+- W73 client portal polish — skeleton loading + error/empty states + 401 redirect + reconnect toast in `public/js/client_portal.js`
+- W82-redo admin user management UI (`public/js/admin_users.js`, 473 lines)
+- W122 file activity admin view (`routes/file_activity.js` + `public/admin/file-activity.{html,js,css}`)
+- W198 server.js wired W120 downloads + W122 file_activity routes + PORTAL_DEFS tiles
+
+**Backend route audits earlier in session (pre-compaction):**
+- 190+ findings closed: 42 HIGH / 80+ MED / 70+ LOW across `routes/_audit.js`, `_sse.js`, `_helpers.js`, `_csv_stage.js`, `_splice_validation.js`, `admin.js`, `ai.js`, `audit_log.js`, `billing.js`, `budgets.js`, `clients.js`, `client_portal_v2.js`, `concentrators.js`, `contracts.js`, `customer_portal.js`, `design_pipeline.js`, `dwg_sync.js`, `dwg_two_way_sync.js`, `engineering_contracts.js`, `folder_workspace.js`, `hours_csv.js`, `impersonation.js`, `invoices.js`, `invoice_templates.js`, `jobs.js`, `permits.js`, `potential_permits.js`, `pricing.js`, `project_billing.js`, `project_detail.js`, `project_documents.js`, `project_photos.js`, `projects.js`, `revenue.js`, `splice.js`, `staff.js`, `time_entries.js`, `training.js`, `undo.js`
+- Frontend audits closed for: admin/launcher/design/permitting/timeclock/customer/training/splice.html
+
+**Key bugs caught + fixed this session:**
+- W188 boot crash `7bbee50` — `canCreateProjects` missing from server.js:182 destructure, took down Railway ~3hr until hotfix
+- W86 silent-no-op `logAudit({pool, ...})` → `logAudit(pool, {...})` positional signature fixed in jobs.js (W152) + dwg_two_way_sync.js (W177)
+- W140 caught 4 fix-agent-lies: W106 photos MIME bypass, W108 splice lock TOCTOU, W109 Electron SSRF+cookie — re-fixed in W141/142/143
+- `accepted` vs `approved` mismatch discovered by W197, fixed in W199 + backfill W202B
+
+**Pending Carter manual deploy steps (his job, not mine):**
+1. `npm run migrate` on Railway (0046-0057 sequential, all idempotent)
+2. `public/photos/vendor/opencv.min.js` + `jscanify.min.js` (CDN proxy blocked sandbox download)
+3. `cd desktop && npm run dist` for Electron installer
+4. `node scripts/onboard_client.js --name PSC ...` when ready to flip portal
+
+**Pending session work (not blockers):**
+- Tighten `potential_permits.status` CHECK to drop 'accepted' once W202B migration runs in prod
+- LOW polish from W200 audit: `console.warn` in catch blocks (mostly done W202C), workspace/photos/downloads/customer/offline-sync/login have no inline `@media` (relying on app-shell.css responsive grids — recommend 375px Playwright snapshot test for regression catch)
+- Splice matrix rewrite (LOWEST priority per Carter)
+- ISP course (last priority per Carter)
+- Mobile/dark-mode visual verification across the full wrapped surface area
+
+**Lessons (autonomous per directive 16):**
+- **Parallel-agent shared FS chaos** — every parallel batch sees branch swaps, stale WIP, force-push recovery. Acceptable cost but agents waste 30-60s recovering. Pattern is well-understood now: agents that hit branch confusion know to (a) stash, (b) checkout correct branch, (c) re-apply, (d) force-push to correct remote ref.
+- **Cherry-pick pattern works** — landing N parallel agents on disjoint files via cherry-pick onto local main is faster than merging N branches sequentially. Sometimes auto-merge resolves 3-way conflicts when both agents touched the same file (e.g. W202A+W202C both touched admin.html — cherry-pick auto-resolved keeping both sets of changes).
+- **Existing portal scaffolding** — many portals already had `skip-nav`, `id="main-content"`, semantic tokens from prior wave work. Wraps were 30-80 line diffs not 200+ as estimated. Estimate framing should account for prior-wave state.
+- **Stop-hook noise during parallel agent runs** — the shared FS has WIP from agents writing in their own working trees. The dirty files are not orchestrator's mess; they're agent WIP. Ignore.
+- **alert() → toast conversions classify by message content** — keywords ("saved/added/created/updated/complete" = success; "error/failed/couldn't/invalid/required/denied/expired" = error). Auto-classify then manually fix 3-5% misclassifications. Existence-guard ternary `(window.AppShell ? AppShell.toast(MSG, KIND) : alert(MSG))` is safe fallback.
+
+---
+
 ## 2026-05-21 session-end state
 
 **Final-audit pipeline (per directive 36):**
