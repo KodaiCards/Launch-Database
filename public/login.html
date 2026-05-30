@@ -4,72 +4,47 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Sign in — Launch Fiber Services</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+<link rel="stylesheet" href="/css/app-shell.css">
 <style>
-:root{
-  --primary:#1B5FA0;--primary-dark:#134880;--primary-light:#E8F0FB;
-  --gray-light:#F5F7FA;--gray-border:#DEE2E6;--white:#FFF;
-  --success:#28A745;--warning:#FFC107;--danger:#DC3545;
-  --text:#212529;--text-muted:#5A6470;--font:'Inter',sans-serif;
-}
-html[data-theme="dark"]{
-  --gray-light:#1A1F26;--gray-border:#2D3540;--white:#1D2430;
-  --text:#E8EAED;--text-muted:#9BA1A8;--primary-light:#1E3A5C;
-  color-scheme: dark;
-}
-*{box-sizing:border-box;margin:0;padding:0}
+/* Login screen — uses design system tokens from /css/app-shell.css */
 body{
-  font-family:var(--font);background:var(--gray-light);color:var(--text);
+  background:var(--surface-1);color:var(--text-1);
   min-height:100vh;display:flex;align-items:center;justify-content:center;
-  padding:20px;
+  padding:var(--space-5);
 }
 .login-card{
-  background:var(--white);border:1px solid var(--gray-border);border-radius:14px;
-  padding:32px;max-width:420px;width:100%;
-  box-shadow:0 4px 24px rgba(0,0,0,.06);
+  max-width:420px;width:100%;padding:var(--space-8);
 }
-.logo{display:flex;justify-content:center;margin-bottom:24px}
+.logo{display:flex;justify-content:center;margin-bottom:var(--space-6)}
 .logo img{height:96px;width:auto;max-width:100%;object-fit:contain}
 html[data-theme="dark"] .logo img{filter:brightness(0) invert(1) opacity(0.92)}
-h1{font-size:22px;font-weight:600;text-align:center;margin-bottom:6px}
-.subtitle{font-size:13px;color:var(--text-muted);text-align:center;margin-bottom:24px}
-label{display:block;font-size:12px;font-weight:600;text-transform:uppercase;letter-spacing:.04em;color:var(--text-muted);margin-bottom:6px}
-input{
-  width:100%;padding:10px 12px;font-size:14px;font-family:inherit;
-  background:var(--white);color:var(--text);
-  border:1px solid var(--gray-border);border-radius:8px;
-}
-input:focus{outline:2px solid var(--primary);outline-offset:1px;border-color:var(--primary);box-shadow:0 0 0 3px var(--primary-light)}
-.field{margin-bottom:16px}
-.btn-primary{
-  width:100%;padding:11px;font-size:14px;font-weight:600;font-family:inherit;
-  background:var(--primary);color:#fff;border:none;border-radius:8px;cursor:pointer;
-  transition:background .15s;
-}
-.btn-primary:hover{background:var(--primary-dark)}
-.btn-primary:disabled{opacity:.5;cursor:not-allowed}
+h1{font-size:var(--text-2xl);font-weight:600;text-align:center;margin-bottom:var(--space-1);color:var(--text-1)}
+.subtitle{font-size:var(--text-sm);color:var(--text-muted);text-align:center;margin-bottom:var(--space-6)}
+.field{margin-bottom:var(--space-4)}
+.btn-primary.btn-block{width:100%;justify-content:center}
 .error{
-  background:#FEE;color:var(--danger);border:1px solid #FCC;
-  padding:9px 12px;border-radius:8px;font-size:13px;margin-bottom:16px;
-  display:none;
+  background:var(--danger-light);color:var(--danger-text);border:1px solid var(--danger);
+  padding:var(--space-2) var(--space-3);border-radius:var(--radius-md);
+  font-size:var(--text-sm);margin-bottom:var(--space-4);display:none;
 }
-html[data-theme="dark"] .error{background:#3D1F23;border-color:#5C2A30;color:#F8B4BD}
 .error.show{display:block}
-.footer{text-align:center;font-size:11px;color:var(--text-muted);margin-top:18px}
+.footer{text-align:center;font-size:var(--text-xs);color:var(--text-muted);margin-top:var(--space-5)}
 .theme-toggle{
-  position:absolute;top:16px;right:16px;background:none;border:1px solid var(--gray-border);
-  width:36px;height:36px;border-radius:8px;cursor:pointer;color:var(--text-muted);
+  position:absolute;top:var(--space-4);right:var(--space-4);background:none;
+  border:1px solid var(--border-strong);
+  width:36px;height:36px;border-radius:var(--radius-md);cursor:pointer;
+  color:var(--text-muted);
   display:flex;align-items:center;justify-content:center;
 }
-.theme-toggle:hover{border-color:var(--primary);color:var(--primary)}
+.theme-toggle:hover{border-color:var(--brand-primary);color:var(--brand-primary)}
 /* a11y: skip-nav */
 .skip-nav{position:absolute;left:-9999px;top:auto;width:1px;height:1px;overflow:hidden;z-index:9999;text-decoration:none}
-.skip-nav:focus{position:fixed;left:50%;top:8px;transform:translateX(-50%);width:auto;height:auto;padding:10px 20px;background:var(--primary);color:#fff;font-weight:600;border-radius:6px;font-size:14px;z-index:9999}
+.skip-nav:focus{position:fixed;left:50%;top:8px;transform:translateX(-50%);width:auto;height:auto;padding:var(--space-2) var(--space-5);background:var(--brand-primary);color:var(--surface-0);font-weight:600;border-radius:var(--radius-sm);font-size:var(--text-base);z-index:9999}
 </style>
-<link rel="stylesheet" href="/app-shell.css">
-<script src="/toast.js" defer></script>
-<script src="/keyboard.js" defer></script>
 </head>
 <body>
 
@@ -80,7 +55,7 @@ html[data-theme="dark"] .error{background:#3D1F23;border-color:#5C2A30;color:#F8
 </button>
 
 <main id="main-content">
-<div class="login-card">
+<div class="card login-card">
   <div class="logo">
     <img src="/img/launch-fiber-logo-transparent.png" alt="Launch Fiber Services">
   </div>
@@ -90,16 +65,16 @@ html[data-theme="dark"] .error{background:#3D1F23;border-color:#5C2A30;color:#F8
   <div class="error" id="error-msg" role="alert" aria-live="assertive" aria-atomic="true"></div>
 
   <form id="login-form" onsubmit="return doLogin(event)">
-    <div class="field">
-      <label for="username">Username</label>
-      <input type="text" id="username" name="username" autocomplete="username" required autofocus>
+    <div class="field form-group">
+      <label class="form-label" for="username">Username</label>
+      <input class="input" type="text" id="username" name="username" autocomplete="username" required autofocus>
     </div>
-    <div class="field">
-      <label for="password">Password</label>
-      <input type="password" id="password" name="password" autocomplete="current-password" required>
+    <div class="field form-group">
+      <label class="form-label" for="password">Password</label>
+      <input class="input" type="password" id="password" name="password" autocomplete="current-password" required>
     </div>
-    <button type="submit" class="btn-primary" id="submit-btn">
-      <i class="fa-solid fa-right-to-bracket" style="margin-right:6px"></i>Sign in
+    <button type="submit" class="btn btn-primary btn-block" id="submit-btn">
+      <i class="fa-solid fa-right-to-bracket" aria-hidden="true"></i> Sign in
     </button>
   </form>
 
@@ -107,6 +82,7 @@ html[data-theme="dark"] .error{background:#3D1F23;border-color:#5C2A30;color:#F8
 </div>
 </main>
 
+<script src="/js/app-shell.js" defer></script>
 <script>
 // Apply saved theme before paint. Resolution order:
 //   1. lfs-theme (set by toggle on this screen or any other screen the user
@@ -139,6 +115,14 @@ html[data-theme="dark"] .error{background:#3D1F23;border-color:#5C2A30;color:#F8
   const icon = document.getElementById('dm-icon');
   if (document.documentElement.getAttribute('data-theme') === 'dark' && icon) icon.className = 'fa-solid fa-sun';
 })();
+
+// Initialize AppShell theme system once DOM is ready (after defer script loads).
+document.addEventListener('DOMContentLoaded', function(){
+  if (window.AppShell && typeof window.AppShell.initTheme === 'function') {
+    window.AppShell.initTheme();
+  }
+});
+
 function toggleDark(){
   const isDark = document.documentElement.getAttribute('data-theme') === 'dark';
   const next = !isDark;
@@ -174,7 +158,7 @@ async function doLogin(ev){
   const btn = document.getElementById('submit-btn');
   errEl.classList.remove('show');
   btn.disabled = true;
-  btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin" style="margin-right:6px"></i>Signing in...';
+  btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin" aria-hidden="true"></i> Signing in...';
   try {
     const r = await fetch('/api/auth/login', {
       method: 'POST',
@@ -198,8 +182,12 @@ async function doLogin(ev){
   } catch (e) {
     errEl.textContent = e.message;
     errEl.classList.add('show');
+    // Also surface via AppShell toast for consistency with the rest of the app.
+    if (window.AppShell && typeof window.AppShell.toast === 'function') {
+      window.AppShell.toast(e.message, 'error');
+    }
     btn.disabled = false;
-    btn.innerHTML = '<i class="fa-solid fa-right-to-bracket" style="margin-right:6px"></i>Sign in';
+    btn.innerHTML = '<i class="fa-solid fa-right-to-bracket" aria-hidden="true"></i> Sign in';
   }
   return false;
 }
