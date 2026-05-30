@@ -5366,8 +5366,8 @@ async function deleteCable(cableId) {
     fiberIds.has(s.fiber_a_id) || fiberIds.has(s.fiber_b_id)
   ).length;
   const _cableBody = dependentSplices
-    ? `Cable "${cable.name}" has ${dependentSplices} splice record${dependentSplices===1?'':'s'} on its fibers that will be cascade-deleted.`
-    : `Cable "${cable.name}" will be permanently removed.`;
+    ? `Cable "${esc(cable.name)}" has ${dependentSplices} splice record${dependentSplices===1?'':'s'} on its fibers that will be cascade-deleted.`
+    : `Cable "${esc(cable.name)}" will be permanently removed.`;
   if (!await confirmDialog({ title: `Delete cable "${esc(cable.name)}"?`, body: _cableBody, confirmLabel: 'Delete', danger: true })) return;
   try {
     await api('/api/splice/cables/' + cableId, 'DELETE');
@@ -5482,7 +5482,7 @@ async function deleteLocation(locationId) {
   const cableCount   = state.data.cables.filter(c =>
     c.from_location_id === locationId || c.to_location_id === locationId
   ).length;
-  const _locBodyParts = [`Location "${loc.name}" will be permanently deleted.`];
+  const _locBodyParts = [`Location "${esc(loc.name)}" will be permanently deleted.`];
   if (closureCount) _locBodyParts.push(`${closureCount} closure${closureCount===1?'':'s'} at this location will also be deleted (along with their trays and splices).`);
   if (cableCount)   _locBodyParts.push(`${cableCount} cable${cableCount===1?'':'s'} referencing this location will become unrouted (endpoints cleared; cables are kept).`);
   if (!await confirmDialog({ title: `Delete location "${esc(loc.name)}"?`, body: _locBodyParts.join('\n\n'), confirmLabel: 'Delete', danger: true })) return;
@@ -5684,7 +5684,7 @@ window.renderFiberPicker = function(side) {
   const tubes = state.data.buffer_tubes.filter(t => t.cable_id === cableId).sort((a,b)=>a.position-b.position);
   tubeWrap.style.display = 'block';
   tubeSel.innerHTML = '<option value="">Pick tube…</option>' + tubes.map(t =>
-    `<option value="${t.id}">${t.position}. ${t.color}</option>`
+    `<option value="${t.id}">${esc(t.position)}. ${esc(t.color)}</option>`
   ).join('');
   if (!ribbon) {
     document.getElementById('sp-fibers-' + side).innerHTML = '<div class="empty-pane">Pick a tube</div>';
