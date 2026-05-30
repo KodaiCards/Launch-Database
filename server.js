@@ -342,7 +342,7 @@ app.get('/api/me/portals', requireAuth(), async (req, res) => {
 
 // Wire up portal-mode route overrides + setting-approval flow. Now that
 // authMiddleware is installed, portal_module routes can use requireAuth/Admin.
-installPortalExtensions(app, pool, PORTAL_MODE, { requireAuth, requireAdmin });
+installPortalExtensions(app, pool, PORTAL_MODE, { requireAuth, requireAdmin, canCreateProjects });
 
 // Time Clock module — exposes /api/timeclock/* routes for the Launch Time
 // Clock portal AND wires audit logging for time_entries mutations across

@@ -442,8 +442,9 @@ function installPortalExtensions(app, pool, PORTAL_MODE, authHelpers) {
   if (!authHelpers || !authHelpers.requireAuth || !authHelpers.requireAdmin) {
     throw new Error('installPortalExtensions: authHelpers { requireAuth, requireAdmin } is required');
   }
-  const requireAuth  = authHelpers.requireAuth;
-  const requireAdmin = authHelpers.requireAdmin;
+  const requireAuth        = authHelpers.requireAuth;
+  const requireAdmin       = authHelpers.requireAdmin;
+  const canCreateProjects  = authHelpers.canCreateProjects || null;
   // Wave 1.5 H-4: actor for proposed_by / updated_by columns sources STRICTLY
   // from the authenticated user (req.user). The previous body-fallback (`||
   // req.body?.proposed_by`) allowed an attacker on any path where requireAuth
@@ -753,6 +754,13 @@ function installPortalExtensions(app, pool, PORTAL_MODE, authHelpers) {
   // newly-created project's id. On rejection, held entries surface in
   // admin's Hours tab as orphan rows needing manual project assignment.
   app.post('/api/portal/projects/request-create', requireAuth(), async (req, res) => {
+    // Server-side capability gate — mirrors the client-side can_create_projects flag.
+    // canCreateProjects() returns true for managers/admins and for employees with the
+    // portal_access row granting CAP_CREATE_PROJECTS. Reject anyone else with 403.
+    if (canCreateProjects) {
+      const allowed = await canCreateProjects(req.user, pool).catch(() => false);
+      if (!allowed) return res.status(403).json({ error: 'You do not have permission to request project creation.' });
+    }
     const { name, work_order_number, client_id, notes, project_type, billing_type } = req.body || {};
     if (!name || !String(name).trim()) {
       return res.status(400).json({ error: 'Project name is required' });
