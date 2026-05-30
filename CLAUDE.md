@@ -38,6 +38,21 @@ Carter asked "does retention mean I can still edit/delete projects" — the answ
 
 **Lesson (autonomous):** W216 polish dispatch added refresh button + banner + count badges to client_portal.js without verifying the endpoints those JS calls hit still existed. Wave 169's deletion of `routes/client_portal.js` orphaned the JS. Pattern: when polish-stage work edits a JS file, the polish-agent prompt should require boot-smoke + endpoint existence check on every fetch URL in that file. Add to agent-protocol.md.
 
+**Post-P0 defensive sweeps (W229-W232):**
+- W229 orphan-endpoint scan — comprehensive grep of all `fetch()` + `api()` calls across `public/` vs route registrations. Found 2 P1 orphans (both Training Progress admin tab, not in demo flows): `/api/training/admin/user/:userId/detail` + `/api/training/admin/cert-attempts`. All 4 demo flows verified GREEN post-W228.
+- W230 `9747473` implemented both training admin endpoints (`routes/training.js` +126 lines). Admin/manager-gated, parameterized queries, response shape matches `renderUserDetail` modal.
+- W231 `5a82a92` Playwright spec hygiene — 3 specs had DOM-ID drift: `design_cascade.spec.js` (`#dpb`→`#dplb`, `#dp-job-input`→`#dp-job-select`, `#dp-service-area` select→input+datalist), `permitting_cascade.spec.js` (multiple ID renames), `design_picker_regression.spec.js` (`#dpb`→`#dplb`). 4 tests flagged for removed-feature (free-text job creation, removed `ppCascadeSubmit`).
+- W232 `62eb676` deleted the 4 flagged dead tests (197 lines removed). 13 tests remain across both specs.
+
+**A4 cascade port progress (post-demo work, NOT merged to main):**
+- W212B `66589f7` design.html cascade port to `ProjectCascade` module — ON `agent/wave-212b-design-cascade-port` branch only. Agent reported MEDIUM-HIGH confidence with caveats: (1) `typeof event !== 'undefined'` browser-quirk for double-fire prevention, (2) preserves `<select>` job picker vs module's typeahead (option a per W221 playbook). NOT merged pre-demo — invisible refactor with non-zero regression risk on a demo-flow surface. Resume post-Monday with browser verification.
+
+**Monday demo SHIP-READY state (2026-05-30 session-end):**
+- All 4 demo flows verified GREEN (W226 trace audit caught P0; W228 fixed it; W229 confirmed no other orphans in demo flows)
+- All 13 wrapped portals have skeleton+empty+error states
+- Demo script doc at `docs/MONDAY_DEMO_SCRIPT.md` (W227)
+- Post-demo decision docs at `audit-output/post-demo-queue/` (W224)
+
 ---
 
 ## 2026-05-30 session-end state — Monday-demo polish sprint
