@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Launch Fiber Desktop — Download</title>
+  <link rel="stylesheet" href="downloads.css" />
+</head>
+<body>
+  <div class="downloads-container">
+    <header class="downloads-header">
+      <h1>Launch Fiber Desktop</h1>
+      <p class="subtitle">Engineering operations platform for your desk</p>
+    </header>
+
+    <main class="downloads-main">
+      <section class="installer-section">
+        <div id="installer-card" class="installer-card">
+          <div id="installer-placeholder" class="installer-placeholder">
+            <p>Loading available installers...</p>
+          </div>
+          <div id="installer-content" class="installer-content" style="display: none;">
+            <h2 id="platform-name"></h2>
+            <p class="installer-info">
+              <span class="label">Size:</span>
+              <span id="installer-size"></span>
+            </p>
+            <p class="installer-info">
+              <span class="label">Released:</span>
+              <span id="installer-date"></span>
+            </p>
+            <a id="download-button" href="#" class="download-button" download>
+              Download Installer
+            </a>
+            <p class="installer-note">
+              SmartScreen may warn on first run. Click "More info" then "Run anyway". Log in with your Launch Fiber account.
+            </p>
+          </div>
+        </div>
+      </section>
+
+      <section class="instructions-section">
+        <h2>Installation Instructions</h2>
+        <ol class="instructions-list">
+          <li><strong>Download</strong> the installer above.</li>
+          <li><strong>Run</strong> the installer and follow the prompts.</li>
+          <li><strong>Launch</strong> the desktop app and sign in with your account.</li>
+          <li><strong>Start working</strong> — your projects and data are synced in real-time.</li>
+        </ol>
+      </section>
+
+      <section class="system-requirements">
+        <h2>System Requirements</h2>
+        <ul>
+          <li><strong>Windows:</strong> Windows 10 or later</li>
+          <li><strong>macOS:</strong> macOS 10.13 or later</li>
+          <li><strong>Linux:</strong> Ubuntu 18.04 LTS or compatible distribution</li>
+        </ul>
+      </section>
+    </main>
+
+    <footer class="downloads-footer">
+      <p>&copy; 2026 Launch Fiber Services. All rights reserved.</p>
+    </footer>
+  </div>
+
+  <script src="downloads.js"></script>
+</body>
+</html>

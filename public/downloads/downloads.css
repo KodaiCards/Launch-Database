@@ -1,0 +1,241 @@
+:root {
+  --primary-color: #1b5fa0;
+  --primary-hover: #154b7d;
+  --surface: #ffffff;
+  --surface-dark: #f5f5f5;
+  --text-primary: #1a1a1a;
+  --text-secondary: #666666;
+  --border-color: #e0e0e0;
+  --background: #ffffff;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --surface: #1e1e1e;
+    --surface-dark: #2a2a2a;
+    --text-primary: #e0e0e0;
+    --text-secondary: #b0b0b0;
+    --border-color: #404040;
+    --background: #1a1a1a;
+  }
+}
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+body {
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+  background-color: var(--background);
+  color: var(--text-primary);
+  line-height: 1.6;
+  font-size: 16px;
+}
+
+.downloads-container {
+  max-width: 900px;
+  margin: 0 auto;
+  padding: 40px 20px;
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+}
+
+.downloads-header {
+  text-align: center;
+  margin-bottom: 50px;
+}
+
+.downloads-header h1 {
+  font-size: 2.5rem;
+  font-weight: 700;
+  margin-bottom: 10px;
+  color: var(--primary-color);
+}
+
+.downloads-header .subtitle {
+  font-size: 1.1rem;
+  color: var(--text-secondary);
+}
+
+.downloads-main {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 50px;
+}
+
+/* Installer Card */
+.installer-section {
+  display: flex;
+  justify-content: center;
+}
+
+.installer-card {
+  background-color: var(--surface);
+  border: 1px solid var(--border-color);
+  border-radius: 12px;
+  padding: 40px;
+  max-width: 500px;
+  width: 100%;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+@media (prefers-color-scheme: dark) {
+  .installer-card {
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+  }
+}
+
+.installer-placeholder {
+  text-align: center;
+  padding: 30px 20px;
+  color: var(--text-secondary);
+}
+
+.installer-placeholder.coming-soon {
+  font-size: 1.1rem;
+  font-weight: 600;
+}
+
+.installer-content h2 {
+  font-size: 1.5rem;
+  margin-bottom: 20px;
+  color: var(--text-primary);
+}
+
+.installer-info {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 12px 0;
+  border-bottom: 1px solid var(--border-color);
+  font-size: 0.95rem;
+}
+
+.installer-info .label {
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.installer-info span:last-child {
+  color: var(--text-secondary);
+}
+
+.download-button {
+  display: block;
+  width: 100%;
+  padding: 16px;
+  margin-top: 30px;
+  background-color: var(--primary-color);
+  color: white;
+  border: none;
+  border-radius: 8px;
+  font-size: 1.1rem;
+  font-weight: 600;
+  cursor: pointer;
+  text-align: center;
+  text-decoration: none;
+  transition: background-color 0.2s ease;
+}
+
+.download-button:hover {
+  background-color: var(--primary-hover);
+}
+
+.download-button:active {
+  opacity: 0.9;
+}
+
+.installer-note {
+  font-size: 0.9rem;
+  color: var(--text-secondary);
+  margin-top: 20px;
+  padding: 15px;
+  background-color: var(--surface-dark);
+  border-radius: 6px;
+  border-left: 4px solid var(--primary-color);
+}
+
+/* Instructions Section */
+.instructions-section,
+.system-requirements {
+  padding: 30px;
+  background-color: var(--surface);
+  border: 1px solid var(--border-color);
+  border-radius: 12px;
+}
+
+.instructions-section h2,
+.system-requirements h2 {
+  font-size: 1.5rem;
+  margin-bottom: 20px;
+  color: var(--text-primary);
+}
+
+.instructions-list {
+  list-style: decimal inside;
+  padding-left: 20px;
+}
+
+.instructions-list li {
+  margin-bottom: 15px;
+  color: var(--text-primary);
+}
+
+.instructions-list strong {
+  color: var(--text-primary);
+}
+
+.system-requirements ul {
+  list-style: disc inside;
+  padding-left: 20px;
+}
+
+.system-requirements li {
+  margin-bottom: 12px;
+  color: var(--text-primary);
+}
+
+.system-requirements strong {
+  color: var(--text-primary);
+}
+
+/* Error Message */
+.error-message {
+  color: #d32f2f;
+  font-weight: 600;
+}
+
+/* Footer */
+.downloads-footer {
+  text-align: center;
+  padding-top: 40px;
+  border-top: 1px solid var(--border-color);
+  margin-top: auto;
+  color: var(--text-secondary);
+  font-size: 0.9rem;
+}
+
+/* Mobile Responsive */
+@media (max-width: 600px) {
+  .downloads-header h1 {
+    font-size: 2rem;
+  }
+
+  .installer-card {
+    padding: 30px 20px;
+  }
+
+  .instructions-section,
+  .system-requirements {
+    padding: 20px;
+  }
+
+  .instructions-section h2,
+  .system-requirements h2 {
+    font-size: 1.3rem;
+  }
+}
