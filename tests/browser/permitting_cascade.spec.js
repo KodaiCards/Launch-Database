@@ -52,20 +52,20 @@ test('project-create modal has cascade picker elements', async ({ page }) => {
   await expect(page.locator('#pp-cascade-wrap')).toBeVisible({ timeout: 5_000 });
 
   // All four cascade elements present.
-  await expect(page.locator('#pp-client')).toHaveCount(1);
-  await expect(page.locator('#pp-program')).toHaveCount(1);
+  await expect(page.locator('#proj-client')).toHaveCount(1);
+  await expect(page.locator('#pp-prog-sel')).toHaveCount(1);
   await expect(page.locator('#pp-service-area')).toHaveCount(1);
-  await expect(page.locator('#pp-job')).toHaveCount(1);
-  await expect(page.locator('#pp-job-list')).toHaveCount(1);
-
-  // Submit button and error div present.
-  await expect(page.locator('#pp-cascade-submit')).toHaveCount(1);
+  await expect(page.locator('#pp-job-select')).toHaveCount(1);
+  // Datalist for SA + inline error div present (post-W212B cascade refactor:
+  // #pp-cascade-submit no longer exists — the standard saveProject() button
+  // handles validation + submission).
+  await expect(page.locator('#pp-sa-list')).toHaveCount(1);
   await expect(page.locator('#pp-cascade-error')).toHaveCount(1);
 
-  // Program and SA start disabled; submit disabled with empty fields.
-  await expect(page.locator('#pp-program')).toBeDisabled();
+  // Program and SA start disabled.
+  await expect(page.locator('#pp-prog-sel')).toBeDisabled();
   await expect(page.locator('#pp-service-area')).toBeDisabled();
-  await expect(page.locator('#pp-cascade-submit')).toBeDisabled();
+  await expect(page.locator('#pp-job-select')).toBeDisabled();
 
   expect(pageErrors.map(e => e.message)).toEqual([]);
 });
@@ -191,14 +191,14 @@ test('cascade: client selection unlocks program select', async ({ page }) => {
   await login(page);
   await openCreateModal(page);
 
-  await page.locator('#pp-client').selectOption({ label: fixtures.client.name });
+  await page.locator('#proj-client').selectOption({ label: fixtures.client.name });
   await page.waitForFunction(() => {
-    const s = document.getElementById('pp-program');
+    const s = document.getElementById('pp-prog-sel');
     return s && !s.disabled && s.options.length > 1;
   }, { timeout: 8_000 });
 
-  await expect(page.locator('#pp-program')).toBeEnabled();
-  const opts = await page.locator('#pp-program option').allTextContents();
+  await expect(page.locator('#pp-prog-sel')).toBeEnabled();
+  const opts = await page.locator('#pp-prog-sel option').allTextContents();
   expect(opts.some(t => t.toLowerCase().includes('rus'))).toBe(true);
 
   expect(pageErrors.map(e => e.message)).toEqual([]);
@@ -216,15 +216,19 @@ test('cascade: program selection populates service areas', async ({ page }) => {
   await login(page);
   await openCreateModal(page);
 
-  await page.locator('#pp-client').selectOption({ label: fixtures.client.name });
-  await page.waitForFunction(() => !document.getElementById('pp-program').disabled, { timeout: 8_000 });
-  await page.locator('#pp-program').selectOption('rus');
+  await page.locator('#proj-client').selectOption({ label: fixtures.client.name });
+  await page.waitForFunction(() => !document.getElementById('pp-prog-sel').disabled, { timeout: 8_000 });
+  await page.locator('#pp-prog-sel').selectOption('rus');
+  // #pp-service-area is now an <input list="pp-sa-list">. The datalist
+  // #pp-sa-list holds the SA options. Wait for the input to enable and the
+  // datalist to populate.
   await page.waitForFunction(() => {
     const s = document.getElementById('pp-service-area');
-    return s && !s.disabled && s.options.length > 1;
+    const dl = document.getElementById('pp-sa-list');
+    return s && !s.disabled && dl && dl.options.length >= 1;
   }, { timeout: 10_000 });
 
-  const saOpts = await page.locator('#pp-service-area option').allTextContents();
+  const saOpts = await page.locator('#pp-sa-list option').allTextContents();
   expect(saOpts.some(t => t.includes(`SA-${fixtures.tag}`))).toBe(true);
 
   expect(pageErrors.map(e => e.message)).toEqual([]);
@@ -233,7 +237,14 @@ test('cascade: program selection populates service areas', async ({ page }) => {
 // ---------------------------------------------------------------------------
 // Test 6: new job name -> resolve-or-create returns 201
 // ---------------------------------------------------------------------------
-test('cascade: new job name creates project (201)', async ({ page }) => {
+// FLAGGED FOR ORCHESTRATOR (Wave 231): like design Test 5, the permitting
+// cascade no longer accepts free-text job names — #pp-job-select is a <select>
+// populated from /api/jobs. Also #pp-cascade-submit was removed; saveProject()
+// is the unified submit entry. Test intent ("type new job → 201") no longer
+// maps to a valid UI path. Skipping until orchestrator decides between
+// (a) delete, (b) rewrite against the unified saveProject() flow with a
+// pre-defined job, or (c) keep as API-only test via direct fetch().
+test.skip('cascade: new job name creates project (201)', async ({ page }) => {
   if (!HAS_DB) test.skip('Requires DATABASE_URL');
 
   const pageErrors = [];
@@ -242,15 +253,15 @@ test('cascade: new job name creates project (201)', async ({ page }) => {
   await login(page);
   await openCreateModal(page);
 
-  await page.locator('#pp-client').selectOption({ label: fixtures.client.name });
-  await page.waitForFunction(() => !document.getElementById('pp-program').disabled, { timeout: 8_000 });
-  await page.locator('#pp-program').selectOption('rus');
+  await page.locator('#proj-client').selectOption({ label: fixtures.client.name });
+  await page.waitForFunction(() => !document.getElementById('pp-prog-sel').disabled, { timeout: 8_000 });
+  await page.locator('#pp-prog-sel').selectOption('rus');
   await page.waitForFunction(() => !document.getElementById('pp-service-area').disabled, { timeout: 10_000 });
   await page.locator('#pp-service-area').selectOption({ index: 1 });
-  await page.waitForFunction(() => !document.getElementById('pp-job').disabled, { timeout: 8_000 });
+  await page.waitForFunction(() => !document.getElementById('pp-job-select').disabled, { timeout: 8_000 });
 
   const jobName = `NewJob-${Date.now()}`;
-  await page.locator('#pp-job').fill(jobName);
+  await page.locator('#pp-job-select').fill(jobName);
 
   // Submit button should now be enabled.
   await expect(page.locator('#pp-cascade-submit')).toBeEnabled({ timeout: 3_000 });
@@ -272,7 +283,12 @@ test('cascade: new job name creates project (201)', async ({ page }) => {
 // ---------------------------------------------------------------------------
 // Test 7: SA-not-initialized returns 404 -> inline error shown
 // ---------------------------------------------------------------------------
-test('cascade: SA not initialized shows inline error on 404', async ({ page }) => {
+// FLAGGED FOR ORCHESTRATOR (Wave 231): test references ppCascadeSubmit() which
+// was removed during the W212B cascade refactor. The validation/error path is
+// now inside saveProject(). The test intent (404 → "not initialized" inline
+// error) is still valuable but needs a rewrite to drive saveProject() with the
+// new SA-input + Job-select shape. Skipping pending orchestrator decision.
+test.skip('cascade: SA not initialized shows inline error on 404', async ({ page }) => {
   const pageErrors = [];
   page.on('pageerror', err => pageErrors.push(err));
 
@@ -286,8 +302,8 @@ test('cascade: SA not initialized shows inline error on 404', async ({ page }) =
 
   // Directly invoke ppCascadeSubmit with fields set via evaluate.
   await page.evaluate(() => {
-    document.getElementById('pp-client').value = 'fake-client';
-    document.getElementById('pp-program').value = 'rus';
+    document.getElementById('proj-client').value = 'fake-client';
+    document.getElementById('pp-prog-sel').value = 'rus';
     const saSel = document.getElementById('pp-service-area');
     saSel.disabled = false;
     const opt = document.createElement('option');
@@ -295,7 +311,7 @@ test('cascade: SA not initialized shows inline error on 404', async ({ page }) =
     opt.textContent = 'Fake SA';
     saSel.appendChild(opt);
     saSel.value = 'fake-sa-id';
-    const jobIn = document.getElementById('pp-job');
+    const jobIn = document.getElementById('pp-job-select');
     jobIn.disabled = false;
     jobIn.value = 'Some Job';
   });
@@ -324,9 +340,9 @@ test('cascade: sessionStorage stickiness saves client and program', async ({ pag
   await login(page);
   await openCreateModal(page);
 
-  await page.locator('#pp-client').selectOption({ label: fixtures.client.name });
-  await page.waitForFunction(() => !document.getElementById('pp-program').disabled, { timeout: 8_000 });
-  await page.locator('#pp-program').selectOption('rus');
+  await page.locator('#proj-client').selectOption({ label: fixtures.client.name });
+  await page.waitForFunction(() => !document.getElementById('pp-prog-sel').disabled, { timeout: 8_000 });
+  await page.locator('#pp-prog-sel').selectOption('rus');
 
   const storedClient = await page.evaluate(() => sessionStorage.getItem('lf_pp_cascade_client'));
   const storedProgram = await page.evaluate(() => sessionStorage.getItem('lf_pp_cascade_program'));
@@ -339,7 +355,13 @@ test('cascade: sessionStorage stickiness saves client and program', async ({ pag
 // ---------------------------------------------------------------------------
 // Test 9: submit button disabled until all four fields filled
 // ---------------------------------------------------------------------------
-test('cascade: submit stays disabled until all four fields filled', async ({ page }) => {
+// FLAGGED FOR ORCHESTRATOR (Wave 231): #pp-cascade-submit + ppUpdateSubmitState
+// no longer exist — the W212B refactor folded validation/enable logic into the
+// standard saveProject() click handler. The "submit disabled until all four
+// filled" intent could be reframed as "saveProject() rejects/shows error until
+// all four are filled", but the assertion semantics differ. Skipping pending
+// orchestrator decision (rewrite vs delete).
+test.skip('cascade: submit stays disabled until all four fields filled', async ({ page }) => {
   const pageErrors = [];
   page.on('pageerror', err => pageErrors.push(err));
 
@@ -351,7 +373,7 @@ test('cascade: submit stays disabled until all four fields filled', async ({ pag
 
   // Set client — still no program/sa/job, still disabled.
   await page.evaluate(() => {
-    const s = document.getElementById('pp-client');
+    const s = document.getElementById('proj-client');
     const opt = document.createElement('option');
     opt.value = 'fake-c';
     opt.textContent = 'Fake C';
@@ -363,7 +385,7 @@ test('cascade: submit stays disabled until all four fields filled', async ({ pag
 
   // Fill all four via evaluate.
   await page.evaluate(() => {
-    ['pp-program', 'pp-service-area'].forEach(id => {
+    ['pp-prog-sel', 'pp-service-area'].forEach(id => {
       const s = document.getElementById(id);
       s.disabled = false;
       const opt = document.createElement('option');
@@ -372,7 +394,7 @@ test('cascade: submit stays disabled until all four fields filled', async ({ pag
       s.appendChild(opt);
       s.value = 'x';
     });
-    const j = document.getElementById('pp-job');
+    const j = document.getElementById('pp-job-select');
     j.disabled = false;
     j.value = 'Some Job Name';
     ppUpdateSubmitState();

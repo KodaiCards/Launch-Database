@@ -30,10 +30,11 @@ async function loginAndGo(page) {
   await page.click('#submit-btn');
   await page.waitForURL((url) => !url.pathname.startsWith('/login'), { timeout: 15_000 });
   await page.goto('/design');
-  // Wait for the project table to populate (init() populates it)
+  // Wait for the project table to populate (init() populates it).
+  // The active tbody is #dplb (was #dpb pre-rename; #dpb removed entirely).
   await page.waitForFunction(() => {
-    const dpb = document.getElementById('dpb');
-    return dpb && !dpb.textContent.includes('Loading');
+    const dplb = document.getElementById('dplb');
+    return dplb && !dplb.textContent.includes('Loading');
   }, { timeout: 15_000 });
 }
 
@@ -108,12 +109,12 @@ test.describe('Design portal cascade picker', () => {
     await expect(page.locator('#proj-client')).toBeVisible();
     await expect(page.locator('#proj-ptype')).toBeVisible();
     await expect(page.locator('#dp-service-area')).toBeVisible();
-    await expect(page.locator('#dp-job-input')).toBeVisible();
+    await expect(page.locator('#dp-job-select')).toBeVisible();
 
     // Program, SA, job disabled until client is chosen
     await expect(page.locator('#proj-ptype')).toBeDisabled();
     await expect(page.locator('#dp-service-area')).toBeDisabled();
-    await expect(page.locator('#dp-job-input')).toBeDisabled();
+    await expect(page.locator('#dp-job-select')).toBeDisabled();
 
     // Client must have placeholder option
     const clientOptions = await page.locator('#proj-client option').count();
@@ -137,8 +138,8 @@ test.describe('Design portal cascade picker', () => {
     // Reload so the client appears in clientsCache + engineeringContractsCache
     await page.reload();
     await page.waitForFunction(() => {
-      const dpb = document.getElementById('dpb');
-      return dpb && !dpb.textContent.includes('Loading');
+      const dplb = document.getElementById('dplb');
+      return dplb && !dplb.textContent.includes('Loading');
     }, { timeout: 15_000 });
 
     await openNewProjectModal(page);
@@ -163,8 +164,8 @@ test.describe('Design portal cascade picker', () => {
 
     await page.reload();
     await page.waitForFunction(() => {
-      const dpb = document.getElementById('dpb');
-      return dpb && !dpb.textContent.includes('Loading');
+      const dplb = document.getElementById('dplb');
+      return dplb && !dplb.textContent.includes('Loading');
     }, { timeout: 15_000 });
 
     await openNewProjectModal(page);
@@ -172,21 +173,32 @@ test.describe('Design portal cascade picker', () => {
     await expect(page.locator('#proj-ptype')).toBeEnabled({ timeout: 8_000 });
     await page.selectOption('#proj-ptype', { value: 'rus' });
 
-    // SA should populate and enable
+    // SA should populate and enable. #dp-service-area is now an <input list="dp-sa-list">
+    // backed by a <datalist id="dp-sa-list">. Read options from the datalist, not the input.
     await expect(page.locator('#dp-service-area')).toBeEnabled({ timeout: 10_000 });
-    const saOptions = await page.locator('#dp-service-area option').count();
-    expect(saOptions).toBeGreaterThan(1); // placeholder + East Zone
+    const saOptions = await page.locator('#dp-sa-list option').count();
+    expect(saOptions).toBeGreaterThanOrEqual(1); // at least East Zone
 
-    // Select SA → job input enables
-    const saOpts = await page.locator('#dp-service-area option').all();
-    const firstSaVal = await saOpts[1].getAttribute('value');
-    await page.selectOption('#dp-service-area', firstSaVal);
-    await expect(page.locator('#dp-job-input')).toBeEnabled({ timeout: 8_000 });
+    // Select SA → job select enables. The input is free-text + datalist; fill the value.
+    const saOpts = await page.locator('#dp-sa-list option').all();
+    const firstSaVal = await saOpts[0].getAttribute('value');
+    await page.fill('#dp-service-area', firstSaVal);
+    // Trigger the oninput="dpSaChanged()" handler that wires SA → Job cascade.
+    await page.locator('#dp-service-area').dispatchEvent('input');
+    await expect(page.locator('#dp-job-select')).toBeEnabled({ timeout: 8_000 });
 
     expect(pageErrors).toHaveLength(0);
   });
 
-  test('5. New job name → resolve-or-create 201, modal closes', async ({ page }) => {
+  // FLAGGED FOR ORCHESTRATOR (Wave 231): the cascade no longer accepts free-text
+  // job names — #dp-job-select is a <select> populated from /api/jobs, not an
+  // input. To create a new job, an admin must pre-define it in the Jobs admin.
+  // This test's premise ("type a brand new job name → 201") no longer maps to a
+  // valid user flow through the cascade UI. Skipping until orchestrator decides
+  // whether to (a) delete the test, (b) rewrite it to select a pre-defined job
+  // that doesn't yet have a leaf project for this SA, or (c) call the API
+  // directly (already covered by Test 6's pattern).
+  test.skip('5. New job name → resolve-or-create 201, modal closes', async ({ page }) => {
     test.skip(!HAS_DB, 'Requires DATABASE_URL');
     const pageErrors = [];
     page.on('pageerror', (err) => { pageErrors.push(err); console.error('[pageerror]', err.message); });
@@ -197,8 +209,8 @@ test.describe('Design portal cascade picker', () => {
 
     await page.reload();
     await page.waitForFunction(() => {
-      const dpb = document.getElementById('dpb');
-      return dpb && !dpb.textContent.includes('Loading');
+      const dplb = document.getElementById('dplb');
+      return dplb && !dplb.textContent.includes('Loading');
     }, { timeout: 15_000 });
 
     await openNewProjectModal(page);
@@ -206,12 +218,13 @@ test.describe('Design portal cascade picker', () => {
     await expect(page.locator('#proj-ptype')).toBeEnabled({ timeout: 8_000 });
     await page.selectOption('#proj-ptype', { value: 'rus' });
     await expect(page.locator('#dp-service-area')).toBeEnabled({ timeout: 10_000 });
-    const saOpts = await page.locator('#dp-service-area option').all();
-    await page.selectOption('#dp-service-area', await saOpts[1].getAttribute('value'));
-    await expect(page.locator('#dp-job-input')).toBeEnabled({ timeout: 8_000 });
+    const saOpts = await page.locator('#dp-sa-list option').all();
+    await page.fill('#dp-service-area', await saOpts[0].getAttribute('value'));
+    await page.locator('#dp-service-area').dispatchEvent('input');
+    await expect(page.locator('#dp-job-select')).toBeEnabled({ timeout: 8_000 });
 
     const newJobName = 'DesignNewJob_' + Date.now();
-    await page.fill('#dp-job-input', newJobName);
+    await page.fill('#dp-job-select', newJobName);
 
     // Intercept the resolve-or-create request to confirm 201
     let resolveStatus = null;
@@ -309,8 +322,8 @@ test.describe('Design portal cascade picker', () => {
 
     await page.reload();
     await page.waitForFunction(() => {
-      const dpb = document.getElementById('dpb');
-      return dpb && !dpb.textContent.includes('Loading');
+      const dplb = document.getElementById('dplb');
+      return dplb && !dplb.textContent.includes('Loading');
     }, { timeout: 15_000 });
 
     await openNewProjectModal(page);
@@ -318,19 +331,23 @@ test.describe('Design portal cascade picker', () => {
     await expect(page.locator('#proj-ptype')).toBeEnabled({ timeout: 8_000 });
     await page.selectOption('#proj-ptype', { value: 'rus' });
     await expect(page.locator('#dp-service-area')).toBeEnabled({ timeout: 10_000 });
-    const saOpts = await page.locator('#dp-service-area option').all();
-    const firstSaVal = await saOpts[1].getAttribute('value');
-    await page.selectOption('#dp-service-area', firstSaVal);
+    // #dp-service-area is an <input list="dp-sa-list">; options live in the datalist.
+    const saOpts = await page.locator('#dp-sa-list option').all();
+    const firstSaVal = await saOpts[0].getAttribute('value');
+    await page.fill('#dp-service-area', firstSaVal);
+    await page.locator('#dp-service-area').dispatchEvent('input');
 
     // Wait for sessionStorage to write (dpSaChanged sets lf_dp_cascade_sa)
-    await page.waitForTimeout(200);
+    await page.waitForTimeout(400);
 
     const storedClient = await page.evaluate(() => sessionStorage.getItem('lf_dp_cascade_client'));
     const storedProgram = await page.evaluate(() => sessionStorage.getItem('lf_dp_cascade_program'));
     const storedSa = await page.evaluate(() => sessionStorage.getItem('lf_dp_cascade_sa'));
     expect(storedClient).toBe(fx.clientId);
     expect(storedProgram).toBe('rus');
-    expect(storedSa).toBe(firstSaVal);
+    // lf_dp_cascade_sa holds the SA UUID (resolved from datalist option's data-id),
+    // not the typed text value. Compare against the seeded fixture UUID.
+    expect(storedSa).toBe(fx.saUuid);
 
     // Close modal and reopen — sessionStorage should restore selections
     await page.press('body', 'Escape');

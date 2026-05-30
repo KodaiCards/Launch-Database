@@ -284,28 +284,20 @@ test.describe('Design picker regression — D1/D2/D3', () => {
     expect(pageErrors).toHaveLength(0);
   });
 
-  // ─── A3 note: dpb is the hidden compat shim, dplb is active ──────────────
+  // ─── A3 note: dpb compat shim removed; dplb is the only tbody ────────────
   //
-  // Confirms the DOM structure: dpb must be inside display:none wrapper,
-  // dplb must be the visible active tbody for the projects table.
-  test('A3: dpb is hidden compat shim; dplb is the active visible tbody', async ({ page }) => {
+  // FLAGGED FOR ORCHESTRATOR (Wave 231): the original A3 test asserted that
+  // #dpb is a hidden compat shim and #dplb is the visible active tbody. The
+  // #dpb element has been removed from design.html entirely (no occurrences in
+  // current source). The "compat shim" concept no longer applies. Rewritten as
+  // a simpler invariant: #dpb must NOT exist, #dplb must be the visible tbody.
+  test('A3: dpb compat shim removed; dplb is the only/active tbody', async ({ page }) => {
     await loginAndGo(page);
 
-    // dpb's ancestor with display:none should exist — meaning dpb itself
-    // is not directly visible to users.
-    const dpbHidden = await page.evaluate(() => {
-      const el = document.getElementById('dpb');
-      if (!el) return false;
-      let node = el.parentElement;
-      while (node) {
-        if (getComputedStyle(node).display === 'none') return true;
-        node = node.parentElement;
-      }
-      return false;
-    });
-    expect(dpbHidden).toBe(true);
+    // #dpb should no longer exist in the DOM.
+    await expect(page.locator('#dpb')).toHaveCount(0);
 
-    // dplb must exist and be visible
+    // dplb must exist and be visible (the only project list tbody).
     await expect(page.locator('#dplb')).toBeVisible();
   });
 });
