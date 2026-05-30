@@ -307,6 +307,26 @@ const PORTAL_DEFS = [
     description: 'Browse all employee workspaces, manage files and folders, and share documents.',
     canAccess: u => ['admin', 'design_manager', 'permitting_manager'].includes(u.role),
   },
+  // Wave 120: desktop installer downloads.
+  {
+    id: 'downloads',
+    audience: 'employee',
+    url: '/downloads/',
+    name: 'Downloads',
+    icon: 'download',
+    description: 'Download desktop installers for Windows, macOS, and Linux.',
+    canAccess: u => u.role !== 'customer',
+  },
+  // Wave 122: file-activity admin view.
+  {
+    id: 'file_activity',
+    audience: 'employee',
+    url: '/admin/file-activity.html',
+    name: 'File Activity',
+    icon: 'list-check',
+    description: 'Audit trail of all file uploads, downloads, trashes, and purges.',
+    canAccess: u => u.role === 'admin',
+  },
 ];
 
 // GET /api/me/portals — returns the list of portals the current user can access.
@@ -755,6 +775,12 @@ require('./routes/audit_log')(app, pool, { requireAdmin });
 
 // Project photos — mobile PWA uploads (Wave 55).
 require('./routes/project_photos')(app, pool, { requireAuth, requireAdmin });
+
+// Desktop installer downloads page (Wave 120).
+require('./routes/downloads')(app, pool, { requireAuth });
+
+// File-activity admin view — read-only slice of audit_log (Wave 122).
+require('./routes/file_activity')(app, pool, { requireAdmin });
 
 
 // ─────────────────────────────────────────────────────────────────────────────
