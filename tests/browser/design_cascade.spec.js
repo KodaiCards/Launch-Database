@@ -190,58 +190,6 @@ test.describe('Design portal cascade picker', () => {
     expect(pageErrors).toHaveLength(0);
   });
 
-  // FLAGGED FOR ORCHESTRATOR (Wave 231): the cascade no longer accepts free-text
-  // job names — #dp-job-select is a <select> populated from /api/jobs, not an
-  // input. To create a new job, an admin must pre-define it in the Jobs admin.
-  // This test's premise ("type a brand new job name → 201") no longer maps to a
-  // valid user flow through the cascade UI. Skipping until orchestrator decides
-  // whether to (a) delete the test, (b) rewrite it to select a pre-defined job
-  // that doesn't yet have a leaf project for this SA, or (c) call the API
-  // directly (already covered by Test 6's pattern).
-  test.skip('5. New job name → resolve-or-create 201, modal closes', async ({ page }) => {
-    test.skip(!HAS_DB, 'Requires DATABASE_URL');
-    const pageErrors = [];
-    page.on('pageerror', (err) => { pageErrors.push(err); console.error('[pageerror]', err.message); });
-
-    await loginAndGo(page);
-    const fx = await seedCascadeFixtures(page);
-    test.skip(!fx, 'Fixture seed failed — skipping');
-
-    await page.reload();
-    await page.waitForFunction(() => {
-      const dplb = document.getElementById('dplb');
-      return dplb && !dplb.textContent.includes('Loading');
-    }, { timeout: 15_000 });
-
-    await openNewProjectModal(page);
-    await page.selectOption('#proj-client', { label: fx.clientName });
-    await expect(page.locator('#proj-ptype')).toBeEnabled({ timeout: 8_000 });
-    await page.selectOption('#proj-ptype', { value: 'rus' });
-    await expect(page.locator('#dp-service-area')).toBeEnabled({ timeout: 10_000 });
-    const saOpts = await page.locator('#dp-sa-list option').all();
-    await page.fill('#dp-service-area', await saOpts[0].getAttribute('value'));
-    await page.locator('#dp-service-area').dispatchEvent('input');
-    await expect(page.locator('#dp-job-select')).toBeEnabled({ timeout: 8_000 });
-
-    const newJobName = 'DesignNewJob_' + Date.now();
-    await page.fill('#dp-job-select', newJobName);
-
-    // Intercept the resolve-or-create request to confirm 201
-    let resolveStatus = null;
-    page.on('response', (resp) => {
-      if (resp.url().includes('/api/projects/resolve-or-create')) {
-        resolveStatus = resp.status();
-      }
-    });
-
-    await page.click('button[onclick="saveProject()"]');
-    // Wait for modal to close
-    await expect(page.locator('#project-modal')).not.toBeVisible({ timeout: 10_000 });
-    expect(resolveStatus).toBe(201);
-
-    expect(pageErrors).toHaveLength(0);
-  });
-
   test('6. Existing job name → resolve-or-create 200 (no duplicate)', async ({ page }) => {
     test.skip(!HAS_DB, 'Requires DATABASE_URL');
     const pageErrors = [];
