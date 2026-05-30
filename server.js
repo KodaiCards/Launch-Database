@@ -839,6 +839,13 @@ require('./routes/training')(app, pool, { requireAuth });
 // ─────────────────────────────────────────────────────────────────────────────
 require('./routes/portal_access')(app, pool, { requireAdmin }, PORTAL_DEFS);
 
+// Wave 228 (2026-05-30): restored Wave 13 client portal API for admin-impersonation flow.
+// Frontend at public/js/client_portal.js still calls /api/client-portal/projects +
+// /api/client-portal/clients-with-active-projects (was deleted in Wave 169 — those calls
+// went to 404, breaking the /client-portal admin-view-as flow for Monday demo).
+// The newer token-based /client/ portal is separate (routes/client_portal_v2.js below).
+require('./routes/client_portal')(app, pool, { requireAuth });
+
 // Wave E2 (2026-05-27): client portal v1 — token-based auth + admin org/user/token management.
 // New portal at /client/login/:token and /api/admin/client-orgs/*.
 // W107-HIGH-1: Wire installClientDocumentUpload so POST /api/client/documents
