@@ -870,7 +870,7 @@ async function editProject(id){
 
   let p;
   try { p = await api('/api/projects/' + id); }
-  catch (e) { alert('Failed to load project: ' + e.message); return; }
+  catch (e) { const MSG = 'Failed to load project: ' + e.message; (window.AppShell ? AppShell.toast(MSG, 'error') : alert(MSG)); return; }
 
   // STEP 2 — set independent fields immediately
   document.getElementById('proj-id').value     = p.id;
@@ -1785,9 +1785,9 @@ async function saveProject(){
   const name = document.getElementById('proj-name').value.trim();
   const client_id = document.getElementById('proj-client').value;
   const job_id = document.getElementById('proj-job').value;
-  if (!name) return alert('Project name is required');
-  if (!client_id) return alert('Client is required');
-  if (!job_id) return alert('Job is required');
+  if (!name) { const MSG = 'Project name is required'; return (window.AppShell ? AppShell.toast(MSG, 'error') : alert(MSG)); }
+  if (!client_id) { const MSG = 'Client is required'; return (window.AppShell ? AppShell.toast(MSG, 'error') : alert(MSG)); }
+  if (!job_id) { const MSG = 'Job is required'; return (window.AppShell ? AppShell.toast(MSG, 'error') : alert(MSG)); }
 
   // Map the single Footage/Hours field to the right backend field
   const opt = document.getElementById('proj-job').selectedOptions[0];
@@ -1829,9 +1829,9 @@ async function saveProject(){
     loadPipeline();
   } catch (e) {
     if (/duplicate|already exists/i.test(e.message)) {
-      alert('Duplicate: ' + e.message);
+      const MSG = 'Duplicate: ' + e.message; (window.AppShell ? AppShell.toast(MSG, 'error') : alert(MSG));
     } else {
-      alert('Save failed: ' + e.message);
+      const MSG = 'Save failed: ' + e.message; (window.AppShell ? AppShell.toast(MSG, 'error') : alert(MSG));
     }
   }
 }
@@ -1911,11 +1911,11 @@ async function deleteProjectFromPipeline(id, name){
     const resp = await api('/api/projects/' + id, 'DELETE');
     if (resp && resp.pending) {
       if (window.LFS && window.LFS.toast) window.LFS.toast.info(`Delete request sent for "${name}" — admin will review.`);
-      else alert('Delete request sent — admin will review.');
+      else { const MSG = 'Delete request sent — admin will review.'; (window.AppShell ? AppShell.toast(MSG, 'success') : alert(MSG)); }
     }
     loadPipeline();
     if (typeof loadPotential === 'function') loadPotential();
-  } catch (e) { alert('Delete request failed: ' + e.message); }
+  } catch (e) { const MSG = 'Delete request failed: ' + e.message; (window.AppShell ? AppShell.toast(MSG, 'error') : alert(MSG)); }
 }
 
 
@@ -1924,7 +1924,7 @@ async function regressDesign(id, name){
   try {
     await api('/api/permits/' + id + '/regress', 'PUT', {});
     loadPipeline();
-  } catch (e) { alert('Regress failed: ' + e.message); }
+  } catch (e) { const MSG = 'Regress failed: ' + e.message; (window.AppShell ? AppShell.toast(MSG, 'error') : alert(MSG)); }
 }
 
 async function advanceDesign(id){
@@ -1932,7 +1932,7 @@ async function advanceDesign(id){
   try {
     await api('/api/permits/' + id + '/advance', 'PUT', { _: 'Permitting Portal' });
     loadPipeline(); loadProjects();
-  } catch (e) { alert(e.message); }
+  } catch (e) { const MSG = e.message; (window.AppShell ? AppShell.toast(MSG, 'error') : alert(MSG)); }
 }
 
 // ═══════════════════════════════════════════════════════════════════════════
@@ -1989,7 +1989,7 @@ async function rejectPotential(id){
   try {
     await api('/api/potential-permits/' + id, 'PUT', { status:'rejected', reviewed_by:'Permitting Portal' });
     loadPotential();
-  } catch (e) { alert(e.message); }
+  } catch (e) { const MSG = e.message; (window.AppShell ? AppShell.toast(MSG, 'error') : alert(MSG)); }
 }
 
 // Hook saveProject so that when we're accepting a submission, we mark it
@@ -2108,7 +2108,7 @@ async function loadContractList(){
 // stages it as a setting_change_request and returns { pending: true, ... }.
 async function proposeJob(){
   const name = document.getElementById('njob-name').value.trim();
-  if (!name) return alert('Job name required');
+  if (!name) { const MSG = 'Job name required'; return (window.AppShell ? AppShell.toast(MSG, 'error') : alert(MSG)); }
   try {
     const r = await api('/api/jobs', 'POST', {
       name,
@@ -2121,24 +2121,24 @@ async function proposeJob(){
     ['njob-name','njob-by'].forEach(id => document.getElementById(id).value='');
     document.getElementById('njob-perm').checked = false;
     loadMyRequests();
-  } catch (e) { alert('Failed: ' + e.message); }
+  } catch (e) { const MSG = 'Failed: ' + e.message; (window.AppShell ? AppShell.toast(MSG, 'error') : alert(MSG)); }
 }
 
 async function proposePtype(){
   const name = document.getElementById('nptype-name').value.trim();
-  if (!name) return alert('Type name required');
+  if (!name) { const MSG = 'Type name required'; return (window.AppShell ? AppShell.toast(MSG, 'error') : alert(MSG)); }
   try {
     const r = await api('/api/project-types', 'POST', { name, proposed_by: document.getElementById('nptype-by').value.trim() || null });
     notifyProposal(r);
     document.getElementById('ptype-add-form').style.display='none';
     ['nptype-name','nptype-by'].forEach(id => document.getElementById(id).value='');
     loadMyRequests();
-  } catch (e) { alert('Failed: ' + e.message); }
+  } catch (e) { const MSG = 'Failed: ' + e.message; (window.AppShell ? AppShell.toast(MSG, 'error') : alert(MSG)); }
 }
 
 async function proposeClient(){
   const name = document.getElementById('nclient-name').value.trim();
-  if (!name) return alert('Client name required');
+  if (!name) { const MSG = 'Client name required'; return (window.AppShell ? AppShell.toast(MSG, 'error') : alert(MSG)); }
   try {
     const r = await api('/api/clients', 'POST', {
       name,
@@ -2149,14 +2149,14 @@ async function proposeClient(){
     document.getElementById('client-add-form').style.display='none';
     ['nclient-name','nclient-by','nclient-notes'].forEach(id => document.getElementById(id).value='');
     loadMyRequests();
-  } catch (e) { alert('Failed: ' + e.message); }
+  } catch (e) { const MSG = 'Failed: ' + e.message; (window.AppShell ? AppShell.toast(MSG, 'error') : alert(MSG)); }
 }
 
 async function proposeContract(){
   const client_id = document.getElementById('ncontract-client').value;
   const contract_number = document.getElementById('ncontract-num').value.trim();
-  if (!client_id) return alert('Client required');
-  if (!contract_number) return alert('Contract # required');
+  if (!client_id) { const MSG = 'Client required'; return (window.AppShell ? AppShell.toast(MSG, 'error') : alert(MSG)); }
+  if (!contract_number) { const MSG = 'Contract # required'; return (window.AppShell ? AppShell.toast(MSG, 'error') : alert(MSG)); }
   try {
     const r = await api('/api/contracts', 'POST', {
       client_id, contract_number,
@@ -2167,12 +2167,12 @@ async function proposeContract(){
     document.getElementById('contract-add-form').style.display='none';
     ['ncontract-num','ncontract-name','ncontract-by'].forEach(id => document.getElementById(id).value='');
     loadMyRequests();
-  } catch (e) { alert('Failed: ' + e.message); }
+  } catch (e) { const MSG = 'Failed: ' + e.message; (window.AppShell ? AppShell.toast(MSG, 'error') : alert(MSG)); }
 }
 
 function notifyProposal(r){
   if (r && r.pending) {
-    alert('✓ ' + (r.message || 'Submitted to admin for approval'));
+    const MSG = '✓ ' + (r.message || 'Submitted to admin for approval'); (window.AppShell ? AppShell.toast(MSG, 'success') : alert(MSG));
   }
 }
 
