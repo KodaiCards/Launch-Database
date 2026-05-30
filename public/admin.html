@@ -3039,6 +3039,12 @@ body { background: var(--surface-1); color: var(--text-1); font-family: 'Inter',
 <script src="/js/overlay_modal.js"></script>
 <script src="/js/focus_trap.js"></script>
 <script src="/js/project_picker.js"></script>
+<!-- W212 A4: shared Client→Program→SA→Job cascade picker module.
+     Loaded as API-only in this wave (admin's inline cascade still owns
+     the project modal). Admin port is queued for a follow-up wave; the
+     design/permitting/timeclock ports (W212B/C/D) consume this module
+     directly. ProjectCascade.{mount, resolveOrCreate} on window. -->
+<script src="/js/project_cascade.js"></script>
 <script src="/js/audit_drawer.js"></script>
 <script src="/js/bulk_bill_modal.js"></script>
 <script src="/js/held_timecards.js"></script>
