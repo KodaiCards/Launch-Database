@@ -231,7 +231,10 @@ html[data-theme="dark"] .tag-team-construction,html[data-theme="dark"] .tag-team
 .skip-nav:focus{position:fixed;left:50%;top:8px;transform:translateX(-50%);width:auto;height:auto;padding:10px 20px;background:var(--primary,#1B5FA0);color:#fff;font-weight:600;border-radius:6px;font-size:14px;z-index:9999}
 .sr-only{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0}
 </style>
-<link rel="stylesheet" href="/app-shell.css">
+<link rel="stylesheet" href="/css/app-shell.css">
+<style>
+body { background: var(--surface-1); color: var(--text); font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; }
+</style>
 <script src="/toast.js" defer></script>
 <script src="/keyboard.js" defer></script>
 <script src="/js/undo_bar.js" defer></script>
@@ -239,7 +242,7 @@ html[data-theme="dark"] .tag-team-construction,html[data-theme="dark"] .tag-team
 <script src="/js/change_password_modal.js" defer></script>
 <script src="/js/project_picker.js" defer></script>
 </head>
-<body>
+<body class="app-with-topbar">
 
 <a href="#main-content" class="skip-nav">Skip to main content</a>
 
@@ -1867,6 +1870,12 @@ fetch('/api/me/portals',{credentials:'include'}).then(r=>r.json()).then(({portal
 
   window.addEventListener('load', startSse);
 })();
+</script>
+<script src="/js/app-shell.js" defer></script>
+<script>
+  document.addEventListener('DOMContentLoaded', function () {
+    if (window.AppShell) AppShell.initTheme();
+  });
 </script>
 </body>
 </html>
