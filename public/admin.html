@@ -2989,7 +2989,7 @@ body { background: var(--surface-1); color: var(--text-1); font-family: 'Inter',
       <span id="pricing-gaps-summary" style="font-size:12px;color:var(--text-muted);flex:1"></span>
       <!-- Clear all saved UI state (filter values + form drafts). Useful
            when switching users on the same browser or resetting after testing. -->
-      <button class="btn btn-secondary btn-sm" title="Wipes all lf_filter:* and lf_form:* localStorage keys" onclick="(function(){const n=clearAllPersistedUiState();alert('Cleared '+n+' saved UI state key'+(n===1?'':'s')+'. Reload to apply.');})()" style="margin-right:auto"><i class="fa-solid fa-eraser"></i> Clear all saved UI state</button>
+      <button class="btn btn-secondary btn-sm" title="Wipes all lf_filter:* and lf_form:* localStorage keys" onclick="(function(){const n=clearAllPersistedUiState();(window.AppShell ? AppShell.toast('Cleared '+n+' saved UI state key'+(n===1?'':'s')+'. Reload to apply.', 'success') : alert('Cleared '+n+' saved UI state key'+(n===1?'':'s')+'. Reload to apply.'));})()" style="margin-right:auto"><i class="fa-solid fa-eraser"></i> Clear all saved UI state</button>
       <button class="btn btn-primary" onclick="closeModal('settings-modal')">Done</button>
     </div>
   </div>
@@ -3939,7 +3939,7 @@ function toggleQuickAdd(which, force) {
 
 async function quickAddClient() {
   const name = document.getElementById('qa-client-name').value.trim();
-  if (!name) return alert('Client name is required.');
+  if (!name) return (window.AppShell ? AppShell.toast('Client name is required.', 'error') : alert('Client name is required.'));
   try {
     // Path B: program lives on engineering contracts, not clients. The
     // RUS checkbox here was dropped — admin sets program when creating
@@ -3950,15 +3950,15 @@ async function quickAddClient() {
     await clientChanged();
     document.getElementById('qa-client-name').value = '';
     toggleQuickAdd('client', false);
-  } catch (e) { alert('Failed: ' + e.message); }
+  } catch (e) { (window.AppShell ? AppShell.toast('Failed: ' + e.message, 'error') : alert('Failed: ' + e.message)); }
 }
 
 async function quickAddContract() {
   const clientId = document.getElementById('proj-client').value;
-  if (!clientId) return alert('Pick a client first.');
+  if (!clientId) return (window.AppShell ? AppShell.toast('Pick a client first.', 'error') : alert('Pick a client first.'));
   const num = document.getElementById('qa-contract-num').value.trim();
   const name = document.getElementById('qa-contract-name').value.trim() || num;
-  if (!num) return alert('Contract number is required.');
+  if (!num) return (window.AppShell ? AppShell.toast('Contract number is required.', 'error') : alert('Contract number is required.'));
   try {
     const c = await api('/api/contracts', 'POST', { client_id: clientId, contract_number: num, name });
     await clientChanged(); // re-pulls contracts for current client
@@ -3966,14 +3966,14 @@ async function quickAddContract() {
     document.getElementById('qa-contract-num').value = '';
     document.getElementById('qa-contract-name').value = '';
     toggleQuickAdd('contract', false);
-  } catch (e) { alert('Failed: ' + e.message); }
+  } catch (e) { (window.AppShell ? AppShell.toast('Failed: ' + e.message, 'error') : alert('Failed: ' + e.message)); }
 }
 
 async function quickAddConcentrator() {
   const contractLabel = document.getElementById('qa-conc-contract').value.trim();
   const areaName = document.getElementById('qa-conc-area').value.trim();
   const wo = document.getElementById('qa-conc-wo').value.trim();
-  if (!contractLabel || !areaName) return alert('Contract label and area name are required.');
+  if (!contractLabel || !areaName) return (window.AppShell ? AppShell.toast('Contract label and area name are required.', 'error') : alert('Contract label and area name are required.'));
   try {
     const c = await api('/api/concentrators', 'POST', {
       contract_label: contractLabel, area_name: areaName, work_order_number: wo || null
@@ -3985,12 +3985,12 @@ async function quickAddConcentrator() {
     document.getElementById('qa-conc-area').value = '';
     document.getElementById('qa-conc-wo').value = '';
     toggleQuickAdd('conc', false);
-  } catch (e) { alert('Failed: ' + e.message); }
+  } catch (e) { (window.AppShell ? AppShell.toast('Failed: ' + e.message, 'error') : alert('Failed: ' + e.message)); }
 }
 
 async function quickAddParent() {
   const name = document.getElementById('qa-parent-name').value.trim();
-  if (!name) return alert('Parent project name is required.');
+  if (!name) return (window.AppShell ? AppShell.toast('Parent project name is required.', 'error') : alert('Parent project name is required.'));
   const clientId = document.getElementById('proj-client').value || null;
   const contractId = document.getElementById('proj-contract').value || null;
   // Parent is a top-level container with type 'other'. The user can edit details later.
@@ -4006,15 +4006,15 @@ async function quickAddParent() {
     document.getElementById('proj-parent').value = p.id;
     document.getElementById('qa-parent-name').value = '';
     toggleQuickAdd('parent', false);
-  } catch (e) { alert('Failed: ' + e.message); }
+  } catch (e) { (window.AppShell ? AppShell.toast('Failed: ' + e.message, 'error') : alert('Failed: ' + e.message)); }
 }
 
 async function quickAddBudgetCode() {
   const parentId = document.getElementById('proj-parent').value;
-  if (!parentId) return alert('Pick a parent project first.');
+  if (!parentId) return (window.AppShell ? AppShell.toast('Pick a parent project first.', 'error') : alert('Pick a parent project first.'));
   const code = document.getElementById('qa-bcode-code').value.trim();
   const amount = parseFloat(document.getElementById('qa-bcode-amount').value) || 0;
-  if (!code) return alert('Budget code is required.');
+  if (!code) return (window.AppShell ? AppShell.toast('Budget code is required.', 'error') : alert('Budget code is required.'));
   try {
     // Find or create a budget for the parent
     let budgets = await api('/api/budgets?project_id=' + parentId);
@@ -4030,7 +4030,7 @@ async function quickAddBudgetCode() {
     document.getElementById('qa-bcode-code').value = '';
     document.getElementById('qa-bcode-amount').value = '';
     toggleQuickAdd('bcode', false);
-  } catch (e) { alert('Failed: ' + e.message); }
+  } catch (e) { (window.AppShell ? AppShell.toast('Failed: ' + e.message, 'error') : alert('Failed: ' + e.message)); }
 }
 
 // ─── Print PDF modal (selection-driven) ────────────────────────────────
@@ -4043,7 +4043,7 @@ async function quickAddBudgetCode() {
 //      "Confirm Billed" / "Save as Batch" / "Cancel" actions.
 async function openPrintPdfModal() {
   const sel = getSelectedBillRows();
-  if (!sel.length) return alert('Select at least one project first.');
+  if (!sel.length) return (window.AppShell ? AppShell.toast('Select at least one project first.', 'error') : alert('Select at least one project first.'));
   openModal('print-pdf-modal');
   document.getElementById('print-pdf-body').innerHTML =
     '<div style="padding:14px;color:var(--text-muted)">Loading makeup…</div>';
@@ -4164,7 +4164,7 @@ async function printPdfGenerate() {
   const monthInput = document.getElementById('print-pdf-billing-month');
   const monthVal = monthInput && monthInput.value ? monthInput.value : null;
   const range = monthVal ? billingMonthToRange(monthVal) : null;
-  if (!range) return alert('Pick a billing month first.');
+  if (!range) return (window.AppShell ? AppShell.toast('Pick a billing month first.', 'error') : alert('Pick a billing month first.'));
   const btn = document.querySelector('#print-pdf-footer .btn-primary');
   if (btn) { btn.disabled = true; btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Checking template…'; }
   try {
@@ -4228,7 +4228,7 @@ async function printPdfGenerate() {
     renderPrintPdfAfterActions();
   } catch (e) {
     if (btn) { btn.disabled = false; btn.innerHTML = '<i class="fa-solid fa-file-pdf"></i> Generate PDF'; }
-    alert('Failed: ' + e.message);
+    (window.AppShell ? AppShell.toast('Failed: ' + e.message, 'error') : alert('Failed: ' + e.message));
   }
 }
 
@@ -4297,7 +4297,7 @@ async function printPdfSaveBatch() {
     loadBilling();
     loadBatches();
   } catch (e) {
-    alert('Failed to save batch: ' + e.message);
+    (window.AppShell ? AppShell.toast('Failed to save batch: ' + e.message, 'error') : alert('Failed to save batch: ' + e.message));
   }
 }
 
@@ -4356,7 +4356,7 @@ async function confirmBatch(batchId, name, total) {
     loadBatches();
     if (currentView === 'revenue') loadRevenue();
   } catch (e) {
-    alert('Failed: ' + e.message);
+    (window.AppShell ? AppShell.toast('Failed: ' + e.message, 'error') : alert('Failed: ' + e.message));
   }
 }
 
@@ -4368,7 +4368,7 @@ async function breakBatch(batchId, name) {
     loadBatches();
     loadBilling();
   } catch (e) {
-    alert('Failed: ' + e.message);
+    (window.AppShell ? AppShell.toast('Failed: ' + e.message, 'error') : alert('Failed: ' + e.message));
   }
 }
 
@@ -4449,7 +4449,7 @@ async function prpRunPreview() {
   const job = document.getElementById('prp-job').value;
   const start = document.getElementById('prp-start').value;
   const end = document.getElementById('prp-end').value;
-  if (!ec || !job || !start || !end) return alert('Fill in every field first.');
+  if (!ec || !job || !start || !end) return (window.AppShell ? AppShell.toast('Fill in every field first.', 'error') : alert('Fill in every field first.'));
   const previewEl = document.getElementById('prp-preview');
   const previewText = document.getElementById('prp-preview-text');
   previewEl.style.display = '';
@@ -4479,7 +4479,7 @@ async function prpGeneratePdf() {
   const job = document.getElementById('prp-job').value;
   const start = document.getElementById('prp-start').value;
   const end = document.getElementById('prp-end').value;
-  if (!ec || !job || !start || !end) return alert('Fill in every field first.');
+  if (!ec || !job || !start || !end) return (window.AppShell ? AppShell.toast('Fill in every field first.', 'error') : alert('Fill in every field first.'));
   // POST returns the PDF inline. We use fetch + blob → object URL → open
   // in new tab so the browser uses its built-in PDF viewer.
   try {
@@ -4495,7 +4495,7 @@ async function prpGeneratePdf() {
     if (!resp.ok) {
       let err = 'PDF generation failed.';
       try { const j = await resp.json(); err = j.error || err; } catch {}
-      return alert(err);
+      return (window.AppShell ? AppShell.toast(err, 'error') : alert(err));
     }
     const blob = await resp.blob();
     const url = URL.createObjectURL(blob);
@@ -4503,7 +4503,7 @@ async function prpGeneratePdf() {
     // Revoke later so the new tab has time to load
     setTimeout(() => URL.revokeObjectURL(url), 60000);
   } catch (e) {
-    alert('PDF generation failed: ' + e.message);
+    (window.AppShell ? AppShell.toast('PDF generation failed: ' + e.message, 'error') : alert('PDF generation failed: ' + e.message));
   }
 }
 
@@ -4593,7 +4593,7 @@ async function editProject(id) {
   try {
     p = await api('/api/projects/' + id);
   } catch (e) {
-    alert('Failed to load project: ' + e.message);
+    (window.AppShell ? AppShell.toast('Failed to load project: ' + e.message, 'error') : alert('Failed to load project: ' + e.message));
     return;
   }
 
@@ -5556,12 +5556,12 @@ async function quickAddProjectType() {
   // Phase 3b (2026-05-04): programs are a fixed enum; quick-add was
   // retired. The form is left in the DOM so existing inline handlers
   // don't 404, but it just nudges the user toward the program select.
-  alert('Programs (RUS / BAU / GF(R) / Other) are a fixed enum. Pick from the dropdown — there is no Add to perform.');
+  (window.AppShell ? AppShell.toast('Programs (RUS / BAU / GF(R) / Other) are a fixed enum. Pick from the dropdown — there is no Add to perform.', 'info') : alert('Programs (RUS / BAU / GF(R) / Other) are a fixed enum. Pick from the dropdown — there is no Add to perform.'));
   return;
   // The unreachable code below is kept verbatim so a `git log -p` shows
   // exactly what was decommissioned.
   const name = document.getElementById('qa-ptype-name').value.trim();
-  if (!name) return alert('Type name required');
+  if (!name) return (window.AppShell ? AppShell.toast('Type name required', 'error') : alert('Type name required'));
   try {
     const t = await api('/api/project-types', 'POST', { name });
     await loadProjectTypes();
@@ -5570,7 +5570,7 @@ async function quickAddProjectType() {
     document.getElementById('qa-ptype-name').value = '';
     toggleQuickAdd('ptype', false);
     refreshSettingsDot();
-  } catch (e) { alert('Failed: ' + e.message); }
+  } catch (e) { (window.AppShell ? AppShell.toast('Failed: ' + e.message, 'error') : alert('Failed: ' + e.message)); }
 }
 
 async function quickAddJob() {
@@ -5578,7 +5578,7 @@ async function quickAddJob() {
   const default_rate = parseFloat(document.getElementById('qa-job-rate').value) || null;
   const default_billing_type = document.getElementById('qa-job-billing').value;
   const is_permitting = document.getElementById('qa-job-permit').checked;
-  if (!name) return alert('Job name required');
+  if (!name) return (window.AppShell ? AppShell.toast('Job name required', 'error') : alert('Job name required'));
   try {
     const j = await api('/api/jobs', 'POST', { name, default_rate, default_billing_type, is_permitting });
     await loadJobs();
@@ -5592,7 +5592,7 @@ async function quickAddJob() {
     toggleQuickAdd('job', false);
     jobChanged();
     refreshSettingsDot();
-  } catch (e) { alert('Failed: ' + e.message); }
+  } catch (e) { (window.AppShell ? AppShell.toast('Failed: ' + e.message, 'error') : alert('Failed: ' + e.message)); }
 }
 
 async function saveProject(opts) {
@@ -5605,9 +5605,9 @@ async function saveProject(opts) {
   const clientId = document.getElementById('proj-client').value;
   const rate = document.getElementById('proj-rate').value;
   const isRollup = !!document.getElementById('proj-rollup')?.checked;
-  if (!name) return silent ? false : alert('Project name is required');
-  if (!clientId) return silent ? false : alert('Client is required');
-  if (!isRollup && !projectTypeId) return silent ? false : alert('Program is required');
+  if (!name) return silent ? false : (window.AppShell ? AppShell.toast('Project name is required', 'error') : alert('Project name is required'));
+  if (!clientId) return silent ? false : (window.AppShell ? AppShell.toast('Client is required', 'error') : alert('Client is required'));
+  if (!isRollup && !projectTypeId) return silent ? false : (window.AppShell ? AppShell.toast('Program is required', 'error') : alert('Program is required'));
 
   // Handle "+ Create new job" branch: POST /api/jobs first, then use the new id.
   let jobId = document.getElementById('proj-job').value;
@@ -5620,13 +5620,13 @@ async function saveProject(opts) {
         projectModalState.job_id = jobId;
         projectModalState.new_job_name = null;
         await loadJobs(); // refresh global jobsCache
-      } catch (e) { return alert('Failed to create job: ' + e.message); }
+      } catch (e) { return (window.AppShell ? AppShell.toast('Failed to create job: ' + e.message, 'error') : alert('Failed to create job: ' + e.message)); }
     } else {
       return false; // autosave can't create jobs
     }
   }
 
-  if (!isRollup && !jobId) return silent ? false : alert('Job is required');
+  if (!isRollup && !jobId) return silent ? false : (window.AppShell ? AppShell.toast('Job is required', 'error') : alert('Job is required'));
 
   const job = jobsCache.find(j => j.id === jobId);
   const isPermit = !!job?.is_permitting;
@@ -5716,7 +5716,7 @@ async function saveProject(opts) {
       _autosaveRenderStatus();
       return false;
     }
-    alert('Error: ' + e.message);
+    (window.AppShell ? AppShell.toast('Error: ' + e.message, 'error') : alert('Error: ' + e.message));
   }
 }
 
@@ -5831,7 +5831,7 @@ async function confirmDeleteProject(id, name, afterDelete) {
   try {
     preview = await api('/api/projects/' + id + '/with-tree?dry_run=1', 'DELETE');
   } catch (e) {
-    alert('Could not fetch delete preview: ' + e.message);
+    (window.AppShell ? AppShell.toast('Could not fetch delete preview: ' + e.message, 'error') : alert('Could not fetch delete preview: ' + e.message));
     return;
   }
   const p = preview && preview.preview;
@@ -5857,7 +5857,7 @@ async function confirmDeleteProject(id, name, afterDelete) {
       showUndoBar(summary, r.undo_token);
     }
   } catch (e) {
-    alert('Delete failed: ' + e.message);
+    (window.AppShell ? AppShell.toast('Delete failed: ' + e.message, 'error') : alert('Delete failed: ' + e.message));
   }
 }
 
@@ -5960,12 +5960,12 @@ function clearBillSelection() {
 
 async function openBillSelectedModal() {
   const sel = getSelectedBillRows();
-  if (sel.length === 0) return alert('Select at least one project to bill.');
+  if (sel.length === 0) return (window.AppShell ? AppShell.toast('Select at least one project to bill.', 'error') : alert('Select at least one project to bill.'));
 
   // Validate same client
   const clients = [...new Set(sel.map(r => r.client_id))];
   if (clients.length > 1) {
-    return alert('All selected projects must belong to the same client. Please uncheck the mismatched projects.');
+    return (window.AppShell ? AppShell.toast('All selected projects must belong to the same client. Please uncheck the mismatched projects.', 'error') : alert('All selected projects must belong to the same client. Please uncheck the mismatched projects.'));
   }
 
   // Pull full project data for the distinct ids so we can show a preview
@@ -6018,7 +6018,7 @@ async function openBillSelectedModal() {
 
   document.getElementById('bill-selected-confirm-btn').onclick = async () => {
     const invoice_number = document.getElementById('bs-invoice-num').value.trim();
-    if (!invoice_number) return alert('Invoice number is required.');
+    if (!invoice_number) return (window.AppShell ? AppShell.toast('Invoice number is required.', 'error') : alert('Invoice number is required.'));
     const invoice_date = document.getElementById('bs-invoice-date').value || today;
     const invoice_name = document.getElementById('bs-invoice-name').value.trim() || null;
 
@@ -6041,13 +6041,13 @@ async function openBillSelectedModal() {
         }))
       });
       closeModal('bill-selected-modal');
-      alert(`Invoice ${invoice_number} created for ${fmtMoney(res.total)} (${res.line_count} line items).`);
+      (window.AppShell ? AppShell.toast(`Invoice ${invoice_number} created for ${fmtMoney(res.total)} (${res.line_count} line items).`, 'success') : alert(`Invoice ${invoice_number} created for ${fmtMoney(res.total)} (${res.line_count} line items).`));
       clearBillSelection();
       loadBilling();
       loadDashboard();
       if (currentView === 'revenue') loadRevenue();
     } catch (e) {
-      alert('Failed: ' + e.message);
+      (window.AppShell ? AppShell.toast('Failed: ' + e.message, 'error') : alert('Failed: ' + e.message));
     } finally {
       btn.disabled = false;
       btn.innerHTML = '<i class="fa-solid fa-check"></i> Create Invoice';
@@ -6063,7 +6063,7 @@ async function markBilled(id) {
   let p;
   try {
     p = await api('/api/projects/' + id);
-  } catch (e) { return alert('Failed to load project: ' + e.message); }
+  } catch (e) { return (window.AppShell ? AppShell.toast('Failed to load project: ' + e.message, 'error') : alert('Failed to load project: ' + e.message)); }
 
   const isHourly = p.billing_type === 'hourly';
   const isOngoing = p.status === 'active' && isHourly;
@@ -6165,13 +6165,13 @@ async function markBilled(id) {
       closeModal('bill-verify-modal');
       let msg = `Project marked as billed for ${fmtMoney(billable)}.`;
       if (result.follow_on) msg += `\n\nFollow-on project created: "${result.follow_on.name}" — new hours will accumulate there.`;
-      alert(msg);
+      (window.AppShell ? AppShell.toast(msg, 'success') : alert(msg));
       loadProjects();
       loadDashboard();
       loadRevenue();
       if (typeof loadBilling === 'function') loadBilling();
     } catch (e) {
-      alert('Billing failed: ' + e.message);
+      (window.AppShell ? AppShell.toast('Billing failed: ' + e.message, 'error') : alert('Billing failed: ' + e.message));
     } finally {
       btn.disabled = false;
       btn.innerHTML = '<i class="fa-solid fa-check"></i> Confirm and Mark Billed';
@@ -6309,7 +6309,7 @@ function openBudgetModal(projectId, budgetId) {
 
 async function saveBudget() {
   const name = document.getElementById('budget-name').value.trim();
-  if (!name) return alert('Budget name is required');
+  if (!name) return (window.AppShell ? AppShell.toast('Budget name is required', 'error') : alert('Budget name is required'));
   const projectId = document.getElementById('budget-project-id').value;
   const budgetId = document.getElementById('budget-id').value;
   const body = { name, notes: document.getElementById('budget-notes').value, project_id: projectId };
@@ -6322,7 +6322,7 @@ async function saveBudget() {
     }
     closeModal('budget-modal');
     showBudgetForProject(projectId, '');
-  } catch (e) { alert('Error: ' + e.message); }
+  } catch (e) { (window.AppShell ? AppShell.toast('Error: ' + e.message, 'error') : alert('Error: ' + e.message)); }
 }
 
 async function deleteBudget() {
@@ -6343,7 +6343,7 @@ function populateBudgetCodeJobDropdown(selectedJobId) {
 }
 
 function openBudgetCodeModal() {
-  if (!currentBudgetId) return alert('Create a budget first');
+  if (!currentBudgetId) return (window.AppShell ? AppShell.toast('Create a budget first', 'error') : alert('Create a budget first'));
   document.getElementById('bc-id').value = '';
   document.getElementById('bc-code').value = '';
   document.getElementById('bc-amount').value = '';
@@ -6368,8 +6368,8 @@ function editBudgetCode(id, code, description, amount, jobId) {
 async function saveBudgetCode() {
   const code = document.getElementById('bc-code').value.trim();
   const amount = document.getElementById('bc-amount').value;
-  if (!code) return alert('Code name is required');
-  if (!amount) return alert('Allocated amount is required');
+  if (!code) return (window.AppShell ? AppShell.toast('Code name is required', 'error') : alert('Code name is required'));
+  if (!amount) return (window.AppShell ? AppShell.toast('Allocated amount is required', 'error') : alert('Allocated amount is required'));
 
   const id = document.getElementById('bc-id').value;
   const body = {
@@ -6388,7 +6388,7 @@ async function saveBudgetCode() {
     }
     closeModal('budget-code-modal');
     showBudgetForProject(currentBudgetProjectId, '');
-  } catch (e) { alert('Error: ' + e.message); }
+  } catch (e) { (window.AppShell ? AppShell.toast('Error: ' + e.message, 'error') : alert('Error: ' + e.message)); }
 }
 
 async function deleteBudgetCode() {
@@ -6963,7 +6963,7 @@ async function csvLedgerEdit(rowNum, field, value) {
     patch[field] = value || null;
   } else if (field === 'hours') {
     const n = parseFloat(value);
-    if (isNaN(n) || n <= 0) { alert('Hours must be a positive number'); return; }
+    if (isNaN(n) || n <= 0) { (window.AppShell ? AppShell.toast('Hours must be a positive number', 'error') : alert('Hours must be a positive number')); return; }
     patch[field] = n;
   } else {
     patch[field] = value;
@@ -6985,7 +6985,7 @@ async function csvLedgerEdit(rowNum, field, value) {
       setTimeout(() => { tr.style.backgroundColor = prev; }, 600);
     }
   } catch (e) {
-    alert('Failed to save edit: ' + e.message);
+    (window.AppShell ? AppShell.toast('Failed to save edit: ' + e.message, 'error') : alert('Failed to save edit: ' + e.message));
   }
 }
 
@@ -7165,7 +7165,7 @@ async function csvImportCommit() {
     if (typeof loadProjects === 'function') loadProjects();
     if (typeof loadBilling === 'function' && currentView === 'billing') loadBilling();
   } catch (e) {
-    alert('Import failed: ' + e.message);
+    (window.AppShell ? AppShell.toast('Import failed: ' + e.message, 'error') : alert('Import failed: ' + e.message));
   } finally {
     btn.disabled = false;
     btn.innerHTML = '<i class="fa-solid fa-check"></i> Import Valid Rows';
@@ -7193,7 +7193,7 @@ async function csvQueueUnmatched() {
     if (typeof loadCsvReviewQueue === 'function') loadCsvReviewQueue();
   } catch (e) {
     if (btn) { btn.disabled = false; btn.innerHTML = '<i class="fa-solid fa-inbox"></i> Queue for Review'; }
-    alert('Failed to queue rows: ' + e.message);
+    (window.AppShell ? AppShell.toast('Failed to queue rows: ' + e.message, 'error') : alert('Failed to queue rows: ' + e.message));
   }
 }
 
@@ -7249,7 +7249,7 @@ async function loadCsvReviewQueue() {
 
 async function csvRqMatch(id) {
   const sel = document.querySelector(`.csv-rq-proj[data-rq-id="${id}"]`);
-  if (!sel || !sel.value) { alert('Pick a project first.'); return; }
+  if (!sel || !sel.value) { (window.AppShell ? AppShell.toast('Pick a project first.', 'error') : alert('Pick a project first.')); return; }
   const tr = document.querySelector(`tr[data-rq-id="${id}"]`);
   const btns = tr ? tr.querySelectorAll('button') : [];
   btns.forEach(b => { b.disabled = true; });
@@ -7260,7 +7260,7 @@ async function csvRqMatch(id) {
     loadHours();
   } catch (e) {
     btns.forEach(b => { b.disabled = false; });
-    alert('Failed to assign: ' + e.message);
+    (window.AppShell ? AppShell.toast('Failed to assign: ' + e.message, 'error') : alert('Failed to assign: ' + e.message));
   }
 }
 
@@ -7275,7 +7275,7 @@ async function csvRqDiscard(id) {
     loadCsvReviewQueue();
   } catch (e) {
     btns.forEach(b => { b.disabled = false; });
-    alert('Failed to discard: ' + e.message);
+    (window.AppShell ? AppShell.toast('Failed to discard: ' + e.message, 'error') : alert('Failed to discard: ' + e.message));
   }
 }
 
@@ -7697,14 +7697,14 @@ async function generateMonthlyInvoice(projectId, month, year) {
   try {
     const result = await api(`/api/projects/${projectId}/generate-monthly-invoice`, 'POST', { month: m, year: y });
     if (result.existing) {
-      alert(`Invoice already exists for this month: ${result.invoice.invoice_number || result.invoice.id}`);
+      (window.AppShell ? AppShell.toast(`Invoice already exists for this month: ${result.invoice.invoice_number || result.invoice.id}`, 'info') : alert(`Invoice already exists for this month: ${result.invoice.invoice_number || result.invoice.id}`));
     } else {
-      alert(`Invoice created: ${result.invoice.invoice_number || result.invoice.id}`);
+      (window.AppShell ? AppShell.toast(`Invoice created: ${result.invoice.invoice_number || result.invoice.id}`, 'success') : alert(`Invoice created: ${result.invoice.invoice_number || result.invoice.id}`));
       // Reload detail to show updated invoice history
       reloadProjectDetail(projectId, m, y);
     }
   } catch (e) {
-    alert('Failed to generate invoice: ' + e.message);
+    (window.AppShell ? AppShell.toast('Failed to generate invoice: ' + e.message, 'error') : alert('Failed to generate invoice: ' + e.message));
   } finally {
     if (btn) { btn.disabled = false; btn.innerHTML = '<i class="fa-solid fa-file-invoice-dollar"></i> Generate this month\'s invoice'; }
   }
@@ -8086,7 +8086,7 @@ async function approveRequest(id, entityType, action) {
       if (typeof loadJobs === 'function') await loadJobs();
       if (typeof loadProjectTypes === 'function') await loadProjectTypes();
     }
-  } catch (e) { alert('Approve failed: ' + e.message); }
+  } catch (e) { (window.AppShell ? AppShell.toast('Approve failed: ' + e.message, 'error') : alert('Approve failed: ' + e.message)); }
 }
 
 async function rejectRequest(id) {
@@ -8098,7 +8098,7 @@ async function rejectRequest(id) {
       { reviewed_by: reviewer || 'Admin', review_notes: reason || null });
     await loadApprovals();
     refreshApprovalsBadge();
-  } catch (e) { alert('Reject failed: ' + e.message); }
+  } catch (e) { (window.AppShell ? AppShell.toast('Reject failed: ' + e.message, 'error') : alert('Reject failed: ' + e.message)); }
 }
 
 // Poll the badge every 30s so admin sees new requests without refreshing
@@ -8237,9 +8237,9 @@ async function submitChangePassword() {
   const cur = document.getElementById('cp-current').value;
   const newp = document.getElementById('cp-new').value;
   const conf = document.getElementById('cp-confirm').value;
-  if (!cur || !newp) return alert('Both passwords required');
-  if (newp !== conf) return alert('New passwords do not match');
-  if (newp.length < 6) return alert('New password must be at least 6 characters');
+  if (!cur || !newp) return (window.AppShell ? AppShell.toast('Both passwords required', 'error') : alert('Both passwords required'));
+  if (newp !== conf) return (window.AppShell ? AppShell.toast('New passwords do not match', 'error') : alert('New passwords do not match'));
+  if (newp.length < 6) return (window.AppShell ? AppShell.toast('New password must be at least 6 characters', 'error') : alert('New password must be at least 6 characters'));
   try {
     const r = await fetch('/api/auth/change-password', {
       method: 'POST', headers: {'Content-Type': 'application/json'},
@@ -8252,8 +8252,8 @@ async function submitChangePassword() {
     document.getElementById('cp-current').value = '';
     document.getElementById('cp-new').value = '';
     document.getElementById('cp-confirm').value = '';
-    alert('Password updated.');
-  } catch (e) { alert('Failed: ' + e.message); }
+    (window.AppShell ? AppShell.toast('Password updated.', 'success') : alert('Password updated.'));
+  } catch (e) { (window.AppShell ? AppShell.toast('Failed: ' + e.message, 'error') : alert('Failed: ' + e.message)); }
 }
 
 // ─── User management (admin only) ──────────────────────────────────────────
@@ -8381,7 +8381,7 @@ async function populateStaffDropdown(selectedStaffId) {
 async function quickAddStaff() {
   const inp = document.getElementById('qa-staff-name');
   const name = (inp?.value || '').trim();
-  if (!name) return alert('Staff name is required.');
+  if (!name) return (window.AppShell ? AppShell.toast('Staff name is required.', 'error') : alert('Staff name is required.'));
   try {
     const created = await api('/api/staff', 'POST', { name });
     staffListCache = null;
@@ -8389,7 +8389,7 @@ async function quickAddStaff() {
     if (typeof loadStaff === 'function') loadStaff();
     inp.value = '';
     toggleQuickAdd('staff', false);
-  } catch (e) { alert('Could not create staff: ' + e.message); }
+  } catch (e) { (window.AppShell ? AppShell.toast('Could not create staff: ' + e.message, 'error') : alert('Could not create staff: ' + e.message)); }
 }
 
 function openStaffUserModal() {
@@ -8407,17 +8407,17 @@ async function saveStaffWithUser() {
   const password = document.getElementById('su-password').value;
   const full_name = document.getElementById('su-fullname').value.trim() || null;
   const role = document.getElementById('su-role').value;
-  if (!staff_name) return alert('Staff name is required');
-  if (!username) return alert('Username is required');
-  if (/\s/.test(username)) return alert('Username cannot contain spaces');
-  if (!password || password.length < 6) return alert('Password must be at least 6 characters');
+  if (!staff_name) return (window.AppShell ? AppShell.toast('Staff name is required', 'error') : alert('Staff name is required'));
+  if (!username) return (window.AppShell ? AppShell.toast('Username is required', 'error') : alert('Username is required'));
+  if (/\s/.test(username)) return (window.AppShell ? AppShell.toast('Username cannot contain spaces', 'error') : alert('Username cannot contain spaces'));
+  if (!password || password.length < 6) return (window.AppShell ? AppShell.toast('Password must be at least 6 characters', 'error') : alert('Password must be at least 6 characters'));
   try {
     await api('/api/admin/staff-with-user', 'POST', { staff_name, username, password, full_name, role });
     closeModal('staff-user-modal');
     staffListCache = null;
     loadUsers();
     if (typeof loadStaff === 'function') loadStaff();
-  } catch (e) { alert('Failed: ' + e.message); }
+  } catch (e) { (window.AppShell ? AppShell.toast('Failed: ' + e.message, 'error') : alert('Failed: ' + e.message)); }
 }
 
 function openCreateUserModal() {
@@ -8492,10 +8492,10 @@ async function saveUser() {
   const extra_teams = [...document.querySelectorAll('.user-extra-team:checked')]
     .map(cb => cb.value)
     .filter(t => t !== primaryTeam);
-  if (!username) return alert('Username is required');
-  if (/\s/.test(username)) return alert('Username cannot contain spaces');
-  if (!id && !password) return alert('Password is required for new users');
-  if (password && password.length < 6) return alert('Password must be at least 6 characters');
+  if (!username) return (window.AppShell ? AppShell.toast('Username is required', 'error') : alert('Username is required'));
+  if (/\s/.test(username)) return (window.AppShell ? AppShell.toast('Username cannot contain spaces', 'error') : alert('Username cannot contain spaces'));
+  if (!id && !password) return (window.AppShell ? AppShell.toast('Password is required for new users', 'error') : alert('Password is required for new users'));
+  if (password && password.length < 6) return (window.AppShell ? AppShell.toast('Password must be at least 6 characters', 'error') : alert('Password must be at least 6 characters'));
   try {
     if (id) {
       const body = { username, role, full_name, email, active, extra_teams, staff_id };
@@ -8508,7 +8508,7 @@ async function saveUser() {
     // Refresh the staff list cache too in case the admin will edit another user
     staffListCache = null;
     loadUsers();
-  } catch (e) { alert('Save failed: ' + e.message); }
+  } catch (e) { (window.AppShell ? AppShell.toast('Save failed: ' + e.message, 'error') : alert('Save failed: ' + e.message)); }
 }
 
 async function deactivateUser(id, username) {
@@ -8516,7 +8516,7 @@ async function deactivateUser(id, username) {
   try {
     await api('/api/users/' + id, 'DELETE');
     loadUsers();
-  } catch (e) { alert('Failed: ' + e.message); }
+  } catch (e) { (window.AppShell ? AppShell.toast('Failed: ' + e.message, 'error') : alert('Failed: ' + e.message)); }
 }
 
 // Load users when settings modal opens (admin only — silently fails for non-admin)
