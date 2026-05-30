@@ -4,9 +4,10 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>Offline DWG Sync — Launch Fiber Services</title>
-<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+<link rel="stylesheet" href="/css/app-shell.css">
 <style>
 /* Token system — mirrors the rest of Launch Fiber. Edit tokens here and every
    component updates automatically. Dark mode flips without per-component overrides. */
@@ -34,7 +35,6 @@ html[data-theme="dark"]{
 }
 *{box-sizing:border-box;margin:0;padding:0}
 html,body{font-family:var(--font);background:var(--surface-1);color:var(--text);min-height:100vh}
-html[data-theme="dark"] body{background:#0F1419}
 button{font-family:inherit;cursor:pointer;border:none;background:none;color:inherit}
 
 /* Header */
@@ -138,7 +138,7 @@ button{font-family:inherit;cursor:pointer;border:none;background:none;color:inhe
   border-left:4px solid var(--primary);
   border-radius:8px;
   padding:10px 14px;font-size:13px;
-  box-shadow:0 6px 20px rgba(0,0,0,.12);
+  box-shadow:var(--shadow-lg, 0 6px 20px rgba(0,0,0,.12));
   min-width:240px;max-width:380px;
   pointer-events:auto;
 }
@@ -177,7 +177,7 @@ button{font-family:inherit;cursor:pointer;border:none;background:none;color:inhe
 @keyframes spin{to{transform:rotate(360deg)}}
 </style>
 </head>
-<body>
+<body class="app-with-topbar">
 
 <a href="#main-content" class="skip-nav">Skip to main content</a>
 
@@ -199,7 +199,7 @@ button{font-family:inherit;cursor:pointer;border:none;background:none;color:inhe
   </div>
 </header>
 
-<main class="container" id="main-content">
+<main class="app-content container" id="main-content">
   <div class="page-header">
     <h1 class="page-title">Offline DWG Sync</h1>
     <p class="page-sub">Sync project DWG files to a folder on this device so you can open them in AutoCAD without internet access.</p>
@@ -218,7 +218,7 @@ button{font-family:inherit;cursor:pointer;border:none;background:none;color:inhe
   </div>
 
   <!-- Section 1: Setup -->
-  <section class="section" aria-labelledby="setup-title">
+  <section class="section card" aria-labelledby="setup-title">
     <h2 class="section-title" id="setup-title">
       <i class="fa-solid fa-folder-tree" aria-hidden="true"></i>
       Sync folder
@@ -248,7 +248,7 @@ button{font-family:inherit;cursor:pointer;border:none;background:none;color:inhe
   </section>
 
   <!-- Section 2: Available projects -->
-  <section class="section" aria-labelledby="available-title">
+  <section class="section card" aria-labelledby="available-title">
     <h2 class="section-title" id="available-title">
       <i class="fa-solid fa-cloud" aria-hidden="true"></i>
       Available projects
@@ -262,7 +262,7 @@ button{font-family:inherit;cursor:pointer;border:none;background:none;color:inhe
   </section>
 
   <!-- Section 3: Synced offline -->
-  <section class="section" aria-labelledby="synced-title">
+  <section class="section card" aria-labelledby="synced-title">
     <h2 class="section-title" id="synced-title">
       <i class="fa-solid fa-hard-drive" aria-hidden="true"></i>
       Synced offline
@@ -292,5 +292,11 @@ document.getElementById('theme-toggle').addEventListener('click', function(){
 });
 </script>
 <script src="/js/offline_sync.js" defer></script>
+<script src="/js/app-shell.js" defer></script>
+<script>
+  document.addEventListener('DOMContentLoaded', function () {
+    if (window.AppShell) AppShell.init({ title: 'Offline DWG Sync', portalId: 'offline_sync' });
+  });
+</script>
 </body>
 </html>
