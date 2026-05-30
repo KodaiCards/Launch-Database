@@ -7,7 +7,9 @@
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
 <link rel="stylesheet" href="/launcher-back.css">
 <link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="/css/app-shell.css">
 <style>
 /* Token system mirrors the admin app + 3 internal portals. Surfaces,
    text, status colors, and brand all flip in dark mode without per-
@@ -102,11 +104,10 @@ button{font-family:inherit;cursor:pointer;border:none;background:none;color:inhe
 .skip-nav:focus{position:fixed;left:50%;top:8px;transform:translateX(-50%);width:auto;height:auto;padding:10px 20px;background:var(--primary);color:#fff;font-weight:600;border-radius:6px;font-size:14px;z-index:9999}
 .sr-only{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0}
 </style>
-<link rel="stylesheet" href="/app-shell.css">
 <script src="/toast.js" defer></script>
 <script src="/js/change_password_modal.js" defer></script>
 </head>
-<body>
+<body class="app-with-topbar">
 
 <a href="#main-content" class="skip-nav">Skip to main content</a>
 
@@ -129,7 +130,7 @@ button{font-family:inherit;cursor:pointer;border:none;background:none;color:inhe
   </div>
 </header>
 
-<main class="container" id="main-content">
+<main class="app-content container" id="main-content">
   <!-- ═════════════ UNDER CONSTRUCTION ═════════════
        Owner explicitly asked that the client portal stay un-populated
        until they finalize the UI + decide what data should surface.
@@ -423,5 +424,11 @@ fetch('/api/me/portals?audience=client',{credentials:'include'}).then(r=>r.json(
 }).catch(()=>{});
 </script>
 <script src="/js/impersonation_banner.js"></script>
+<script src="/js/app-shell.js" defer></script>
+<script>
+  document.addEventListener('DOMContentLoaded', function () {
+    if (window.AppShell) AppShell.init({ title: 'Customer Portal', portalId: 'customer' });
+  });
+</script>
 </body>
 </html>
