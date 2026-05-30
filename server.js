@@ -1032,7 +1032,6 @@ app.use('/api', (err, req, res, next) => {
 app.get('/permitting', (req, res) => res.sendFile(path.join(__dirname, 'public', 'permitting.html')));
 app.get('/design', (req, res) => res.sendFile(path.join(__dirname, 'public', 'design.html')));
 // Wave 13: client portal — real three-column project status view.
-// Placeholder kept at client-portal-placeholder.html for rollback.
 app.get('/client-portal', requireAuth(), (req, res) => {
   res.sendFile(path.join(__dirname, 'public', 'client-portal.html'));
 });
