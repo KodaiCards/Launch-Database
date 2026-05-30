@@ -8,6 +8,27 @@
 
 ## TL;DR (read this first; rest is depth)
 
+**Carter answer-set 2026-05-30 (locked):**
+- Client Portal v1: start now without logo (E1 already on main via mig 0047/0049 + `routes/_client_auth.js`; mig 0061 consolidation)
+- A4 shared cascade-picker: start now (module-only shipped W212 — admin port deferred — agent flagged too risky pre-demo)
+- RUS retention: bump global default to 1100 days (~3 years) — W210 landed
+- Monday demo flows: all four (admin projects + design/permitting pipeline + timeclock/hours + client portal)
+
+**Monday-demo polish landed (W210-W216):**
+- W210 `b1b899a` audit_log retention 730→1100 days (mig 0060 + `_audit.js` default + schema.sql)
+- W211 `bc9f468` Client Portal v1 E1 consolidation — mig 0061 closes schema.sql drift; foundation tables/middleware already on main from mig 0047/0049 + `routes/_client_auth.js`
+- W212 `840f8e0` shared cascade module `public/js/project_cascade.js` (584 lines) — admin port deferred per agent risk-assessment; W212B-D for design/permitting/timeclock ports queued for post-demo
+- W213 `3c6adbf` admin projects list empty/skeleton/error states
+- W214 `aa7585f` design + permitting — 5 lists wired with empty/skeleton/error
+- W215 `f06bda5` timeclock entries empty/skeleton/error
+- W216 `764419c` client portal — admin-impersonation warning banner + Refresh button + column count badges
+- All 4 Monday demo surfaces have full skeleton + empty + error state polish
+
+**Carter's "retention ≠ project deletability" clarification (autonomous lesson):**
+Carter asked "does retention mean I can still edit/delete projects" — the answer is YES. Retention is a separate concept that controls how long `audit_log` history rows are kept before archival (NEVER deleted — DELETE trigger blocks it). Projects/invoices/time-entries themselves live in their own tables and can be created/edited/deleted as normal. The audit_log only RECORDS those actions for compliance. Lesson: when introducing technical terms (retention, audit, archive), verify Carter understands the boundary between *historical-record retention* and *operational-data lifecycle*.
+
+---
+
 ## 2026-05-30 session-end state — Monday-demo polish sprint
 
 **Mission:** Carter asked for everything-except-splice + ISP shipped before Monday demo. 72-hour sprint focus: visual cohesion across all 9+ portals + security/correctness backlog drain.
