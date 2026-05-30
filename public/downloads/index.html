@@ -4,10 +4,25 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Launch Fiber Desktop — Download</title>
+
+  <!-- Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+
+  <!-- Icons -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+
+  <!-- Design system -->
+  <link rel="stylesheet" href="/css/app-shell.css">
+
+  <!-- Page-local styles -->
   <link rel="stylesheet" href="downloads.css" />
 </head>
-<body>
-  <div class="downloads-container">
+<body class="app-with-topbar">
+  <a href="#main-content" class="skip-nav">Skip to main content</a>
+
+  <div id="main-content" class="downloads-container">
     <header class="downloads-header">
       <h1>Launch Fiber Desktop</h1>
       <p class="subtitle">Engineering operations platform for your desk</p>
@@ -15,7 +30,7 @@
 
     <main class="downloads-main">
       <section class="installer-section">
-        <div id="installer-card" class="installer-card">
+        <div id="installer-card" class="card installer-card">
           <div id="installer-placeholder" class="installer-placeholder">
             <p>Loading available installers...</p>
           </div>
@@ -29,17 +44,22 @@
               <span class="label">Released:</span>
               <span id="installer-date"></span>
             </p>
-            <a id="download-button" href="#" class="download-button" download>
-              Download Installer
+            <p class="installer-info">
+              <span class="label">SHA-256:</span>
+              <span id="installer-sha256" class="sha256-value"></span>
+            </p>
+            <a id="download-button" href="#" class="btn btn-primary download-button" download>
+              <i class="fa-solid fa-download" aria-hidden="true"></i> Download Installer
             </a>
             <p class="installer-note">
-              SmartScreen may warn on first run. Click "More info" then "Run anyway". Log in with your Launch Fiber account.
+              <i class="fa-solid fa-shield-halved" aria-hidden="true"></i>
+              Signed installer. SmartScreen may warn on first run. Click "More info" then "Run anyway". Log in with your Launch Fiber account.
             </p>
           </div>
         </div>
       </section>
 
-      <section class="instructions-section">
+      <section class="card instructions-section">
         <h2>Installation Instructions</h2>
         <ol class="instructions-list">
           <li><strong>Download</strong> the installer above.</li>
@@ -49,7 +69,7 @@
         </ol>
       </section>
 
-      <section class="system-requirements">
+      <section class="card system-requirements">
         <h2>System Requirements</h2>
         <ul>
           <li><strong>Windows:</strong> Windows 10 or later</li>
@@ -65,5 +85,13 @@
   </div>
 
   <script src="downloads.js"></script>
+  <script src="/js/app-shell.js" defer></script>
+  <script>
+    document.addEventListener('DOMContentLoaded', function () {
+      if (window.AppShell && typeof AppShell.init === 'function') {
+        AppShell.init({ title: 'Downloads', portalId: 'downloads' });
+      }
+    });
+  </script>
 </body>
 </html>
