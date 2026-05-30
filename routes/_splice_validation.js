@@ -1,6 +1,6 @@
 // routes/_splice_validation.js — splice plan validation rules.
 //
-// Per SPLICE_BUILD_PLAN.md Phase 2A #2: a loud, opinionated validator
+// Per docs/archive/2026-05-09/SPLICE_BUILD_PLAN.md Phase 2A #2: a loud, opinionated validator
 // that catches the kinds of design-time mistakes that cause $50k truck
 // rolls. Every commercial competitor has shallow rule sets; the bar to
 // clear is "catch what splicers find in the field, before the truck

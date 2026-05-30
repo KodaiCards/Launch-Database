@@ -8,7 +8,7 @@
 // staff(id) for designer attribution and lock ownership.
 //
 // Schema lives in migrations/0001_splice_schema.sql (already applied in
-// production per PROJECT_NORTH_STAR §6.B).
+// production per docs/archive/2026-05-09/PROJECT_NORTH_STAR.md §6.B).
 //
 // Endpoint groups
 //   Projects        : list, create, hydrate, update, delete

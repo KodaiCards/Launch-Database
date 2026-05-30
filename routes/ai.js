@@ -2205,7 +2205,7 @@ const DESTRUCTIVE_AI_TOOLS = new Set([
   'csv_smart_import',
   // update_engineering_contract was missing — the AI could mutate EC fields
   // (name, program, active) without triggering an approval card. Gated now
-  // alongside create_engineering_contract per PROJECT_NORTH_STAR §7.
+  // alongside create_engineering_contract per docs/archive/2026-05-09/PROJECT_NORTH_STAR.md §7.
   'create_engineering_contract', 'update_engineering_contract',
   'bulk_update_projects',
   'write_sql',

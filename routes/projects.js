@@ -394,7 +394,7 @@ module.exports = function installProjectsRoutes(app, pool, mw) {
       // When is_rollup=true, blank out the trait fields (job, rate,
       // footage, projections). A rollup is purely organizational — it
       // carries no billing semantics, no time entries, no calculated
-      // hours. The Path B post-Path-B note in PROJECT_NORTH_STAR §6.B
+      // hours. The Path B post-Path-B note in docs/archive/2026-05-09/PROJECT_NORTH_STAR.md §6.B
       // already filters is_rollup=TRUE rows out of count queries, so
       // wiping the traits here keeps the row consistent with the rest
       // of the system.
