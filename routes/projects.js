@@ -1436,10 +1436,27 @@ module.exports = function installProjectsRoutes(app, pool, mw) {
           }
         }
 
-        await client.query(`
-          INSERT INTO invoice_items (invoice_id, project_id, description, quantity, unit, rate, amount)
-          VALUES ($1, $2, $3, $4, 'hrs', $5, $6)
-        `, [invoice.id, projectId, description, hours, rate, amount]);
+        // W205: pass period_year/period_month so the unique partial index
+        // (idx_invoice_items_project_period, migration 0043/0058) catches a
+        // race-condition duplicate that slipped past the existing SELECT
+        // probe at the top of this handler. A 23505 here means another
+        // request beat us to it — return 409 with the existing invoice.
+        try {
+          await client.query(`
+            INSERT INTO invoice_items (invoice_id, project_id, description, quantity, unit, rate, amount, period_year, period_month)
+            VALUES ($1, $2, $3, $4, 'hrs', $5, $6, $7, $8)
+          `, [invoice.id, projectId, description, hours, rate, amount, year, month]);
+        } catch (itemErr) {
+          if (itemErr.code === '23505' && itemErr.constraint === 'idx_invoice_items_project_period') {
+            await client.query('ROLLBACK');
+            return res.status(409).json({
+              error: 'Already invoiced for this period',
+              period_year: year,
+              period_month: month,
+            });
+          }
+          throw itemErr;
+        }
 
         await client.query('COMMIT');
 

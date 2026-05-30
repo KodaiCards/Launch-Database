@@ -538,19 +538,37 @@ module.exports = function installBillingRoutes(app, pool, mw) {
       let lineCount = 0;
       // Collect one_time project IDs for a single bulk UPDATE at the end.
       const oneTimeIds = [];
-      for (const it of itemRows) {
-        const proj = projMap.get(it.project_id);
-        const desc = proj ? proj.name : 'Project';
-        const cadence = proj?.billing_cadence || 'one_time';
-        await client.query(
-          `INSERT INTO invoice_items (invoice_id, project_id, description, amount)
-             VALUES ($1, $2, $3, $4)`,
-          [inv.id, it.project_id, desc, it.snapshot_amount || 0]
-        );
-        if (cadence !== 'monthly') {
-          oneTimeIds.push(it.project_id);
+      // W205: pass snapshot_period_year/_month through to invoice_items so
+      // the unique partial index (idx_invoice_items_project_period) catches
+      // a second batch confirm for the same project+month. Without these
+      // columns the index silently no-ops (NULLs aren't compared).
+      try {
+        for (const it of itemRows) {
+          const proj = projMap.get(it.project_id);
+          const desc = proj ? proj.name : 'Project';
+          const cadence = proj?.billing_cadence || 'one_time';
+          await client.query(
+            `INSERT INTO invoice_items (invoice_id, project_id, description, amount, period_year, period_month)
+               VALUES ($1, $2, $3, $4, $5, $6)`,
+            [inv.id, it.project_id, desc, it.snapshot_amount || 0,
+             it.snapshot_period_year || null, it.snapshot_period_month || null]
+          );
+          if (cadence !== 'monthly') {
+            oneTimeIds.push(it.project_id);
+          }
+          lineCount++;
         }
-        lineCount++;
+      } catch (itemErr) {
+        if (itemErr.code === '23505' && itemErr.constraint === 'idx_invoice_items_project_period') {
+          await client.query('ROLLBACK');
+          const dupItem = itemErr.detail && itemErr.detail.match(/project_id, period_year, period_month\)=\(([^,]+), (\d+), (\d+)\)/);
+          return res.status(409).json({
+            error: 'Already invoiced for this period',
+            period_year: dupItem ? parseInt(dupItem[2]) : null,
+            period_month: dupItem ? parseInt(dupItem[3]) : null,
+          });
+        }
+        throw itemErr;
       }
       // Batch close-out for one_time projects (one UPDATE instead of N).
       if (oneTimeIds.length) {
