@@ -27,6 +27,17 @@
 **Carter's "retention ≠ project deletability" clarification (autonomous lesson):**
 Carter asked "does retention mean I can still edit/delete projects" — the answer is YES. Retention is a separate concept that controls how long `audit_log` history rows are kept before archival (NEVER deleted — DELETE trigger blocks it). Projects/invoices/time-entries themselves live in their own tables and can be created/edited/deleted as normal. The audit_log only RECORDS those actions for compliance. Lesson: when introducing technical terms (retention, audit, archive), verify Carter understands the boundary between *historical-record retention* and *operational-data lifecycle*.
 
+**Post-W216 cleanup + P0 demo-blocker catch (W222-W228):**
+- W222 `dd99f57` deleted dead `public/client-portal-placeholder.html`
+- W223 `8abb270`+`e02fd41` archived 4 planning docs to `docs/archive/2026-05-09/` + updated 4 inline comment refs
+- W224 `845f2d4` post-demo decision docs at `audit-output/post-demo-queue/` (client-portal-e2-verdict + splice-rebaseline + cascade-port-playbook + README)
+- W225 `4f848b1` refreshed `CLEANUP_CANDIDATES.md` to current state
+- W226 read-only flow trace audit caught **P0 Monday-demo blocker** — `/client-portal` admin impersonation view called 2 endpoints deleted in Wave 169 (commit `1fb8396`). Frontend `public/js/client_portal.js:686+766` still hits `/api/client-portal/projects` + `/api/client-portal/clients-with-active-projects` (both 404). W216 polish landed on the broken view; nobody verified the endpoints existed.
+- W227 `7e9c179` Monday demo script `docs/MONDAY_DEMO_SCRIPT.md`
+- W228 `d3eb962` P0 fix — RESTORED `routes/client_portal.js` from `1fb8396^` (pre-deletion content was clean) + re-wired in server.js. Admin impersonation flow at `/client-portal` works again. Token-based `/client/` flow untouched.
+
+**Lesson (autonomous):** W216 polish dispatch added refresh button + banner + count badges to client_portal.js without verifying the endpoints those JS calls hit still existed. Wave 169's deletion of `routes/client_portal.js` orphaned the JS. Pattern: when polish-stage work edits a JS file, the polish-agent prompt should require boot-smoke + endpoint existence check on every fetch URL in that file. Add to agent-protocol.md.
+
 ---
 
 ## 2026-05-30 session-end state — Monday-demo polish sprint
