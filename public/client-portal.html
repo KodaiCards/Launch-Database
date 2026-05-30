@@ -234,7 +234,10 @@ html[data-theme="dark"] .cp-clickable:hover{
   font-size:13px;color:var(--text-muted);
 }
 
-/* Admin toolbar */
+/* Admin toolbar — uses .alert-info treatment when actively impersonating
+   (a client is selected) so it's unmistakable that an LF admin is viewing
+   the portal as that client. When no client is selected (admin overview)
+   we keep the lighter neutral treatment. */
 .cp-admin-toolbar{
   background:var(--surface-2);
   border:1px solid var(--gray-border);
@@ -244,8 +247,17 @@ html[data-theme="dark"] .cp-clickable:hover{
   display:flex;align-items:center;gap:12px;
   flex-wrap:wrap;
 }
+.cp-admin-toolbar.cp-admin-impersonating{
+  background:var(--warning-light);
+  border-color:var(--warning-text);
+  color:var(--warning-text);
+}
+.cp-admin-toolbar.cp-admin-impersonating label,
+.cp-admin-toolbar.cp-admin-impersonating .cp-view-as-notice{
+  color:var(--warning-text);
+}
 .cp-admin-toolbar label{
-  font-size:13px;font-weight:500;color:var(--text-secondary);
+  font-size:13px;font-weight:600;color:var(--text-secondary);
   display:flex;align-items:center;gap:8px;
 }
 .cp-admin-toolbar select{
@@ -258,7 +270,28 @@ html[data-theme="dark"] .cp-clickable:hover{
 .cp-admin-toolbar select:focus{outline:2px solid var(--primary);outline-offset:2px}
 .cp-view-as-notice{
   font-size:12px;color:var(--text-muted);margin-left:4px;
-  font-style:italic;
+  font-style:italic;font-weight:500;
+}
+
+/* Page header refresh button + count badge in column headers */
+.cp-page-header-row{
+  display:flex;align-items:flex-start;justify-content:space-between;gap:12px;
+  margin-bottom:24px;flex-wrap:wrap;
+}
+.cp-page-header-row .page-header{margin-bottom:0;flex:1;min-width:240px}
+.cp-refresh-btn{
+  flex-shrink:0;
+}
+.cp-refresh-btn .fa-rotate-right{transition:transform .3s ease}
+.cp-refresh-btn.is-loading .fa-rotate-right{
+  animation:cp-spin .8s linear infinite;
+}
+@keyframes cp-spin{from{transform:rotate(0)}to{transform:rotate(360deg)}}
+
+/* Count badge inside column headers — placed before the existing overview block */
+.cp-col-count{
+  margin-left:4px;
+  flex-shrink:0;
 }
 
 /* Client section header (admin all-clients overview) */
@@ -295,16 +328,25 @@ html[data-theme="dark"] .cp-clickable:hover{
 
 <main id="main-content" class="app-content">
   <div class="container">
-    <div class="page-header">
-      <h1 class="page-title" id="cp-page-title">Your Projects</h1>
-      <p class="page-sub" id="cp-page-sub">Design and permitting activity — updates automatically.</p>
+    <div class="cp-page-header-row">
+      <div class="page-header">
+        <h1 class="page-title" id="cp-page-title">Your Projects</h1>
+        <p class="page-sub" id="cp-page-sub">Design and permitting activity — updates automatically.</p>
+      </div>
+      <button type="button" class="btn btn-secondary cp-refresh-btn" id="cp-refresh-btn"
+              aria-label="Refresh project data">
+        <i class="fa-solid fa-rotate-right" aria-hidden="true"></i>
+        Refresh
+      </button>
     </div>
 
-    <!-- Admin toolbar: visible only for non-customer roles, populated by JS -->
-    <div id="cp-admin-toolbar" class="cp-admin-toolbar card" style="display:none" role="search" aria-label="Admin view controls">
+    <!-- Admin toolbar: visible only for non-customer roles, populated by JS.
+         Switches to a warning-tinted "impersonating" treatment when a specific
+         client is selected so it's unambiguous in the demo / day-to-day. -->
+    <div id="cp-admin-toolbar" class="cp-admin-toolbar" style="display:none" role="search" aria-label="Admin view controls">
       <label for="cp-view-as">
-        <i class="fa-solid fa-eye" aria-hidden="true"></i>
-        View as:
+        <i class="fa-solid fa-user-shield" aria-hidden="true"></i>
+        Admin view as:
       </label>
       <select id="cp-view-as" aria-label="Select client to view as">
         <option value="">All clients (admin overview)</option>

@@ -483,10 +483,14 @@
     // Column-level overview
     const colOv = computeOverview(projects);
     const colNodeId = `cp-col-${type}`;
+    const countBadge = `<span class="badge badge-primary cp-col-count"
+                              aria-label="${projects.length} project${projects.length !== 1 ? 's' : ''}"
+                              >${projects.length}</span>`;
     const { header: colHeader, startCollapsed: colCollapsed } = buildCollapseHeader({
       nodeId: colNodeId,
       content: `<i class="fa-solid ${icon} cp-col-icon" aria-hidden="true"></i>
-                <span class="cp-col-title" id="col-${type}-heading">${title}</span>`,
+                <span class="cp-col-title" id="col-${type}-heading">${title}</span>
+                ${countBadge}`,
       overview: colOv,
       className: 'cp-col-header',
       defaultCollapsed: false, // top-level columns always open by default
@@ -775,14 +779,24 @@
 
     sel.addEventListener('change', function () {
       currentClientId = this.value;
-      const notice = document.getElementById('cp-view-as-notice');
-      if (notice) {
-        notice.textContent = currentClientId
-          ? 'Showing exactly what this client sees.'
-          : '';
-      }
+      updateImpersonationState();
       fetchAndRender();
     });
+  }
+
+  // Toggle the "impersonating" warning treatment on the admin toolbar
+  // whenever a specific client is selected. Pure visual — no data effect.
+  function updateImpersonationState() {
+    const toolbar = document.getElementById('cp-admin-toolbar');
+    const notice  = document.getElementById('cp-view-as-notice');
+    if (!toolbar) return;
+    if (currentClientId) {
+      toolbar.classList.add('cp-admin-impersonating');
+      if (notice) notice.textContent = 'Viewing exactly what this client sees.';
+    } else {
+      toolbar.classList.remove('cp-admin-impersonating');
+      if (notice) notice.textContent = '';
+    }
   }
 
   // ─── Time label ──────────────────────────────────────────────────────────
@@ -804,6 +818,22 @@
 
   // ─── Boot ─────────────────────────────────────────────────────────────────
 
+  // Manual refresh — same call path as polling, with a brief spin on the icon
+  // and a confirmation toast so the user knows something happened (since
+  // polling refreshes are otherwise silent).
+  async function manualRefresh() {
+    const btn = document.getElementById('cp-refresh-btn');
+    if (btn) { btn.classList.add('is-loading'); btn.disabled = true; }
+    try {
+      await fetchAndRender();
+      if (window.AppShell && typeof AppShell.toast === 'function') {
+        AppShell.toast('Refreshed', 'success');
+      }
+    } finally {
+      if (btn) { btn.classList.remove('is-loading'); btn.disabled = false; }
+    }
+  }
+
   document.addEventListener('DOMContentLoaded', async function () {
     try {
       const meResp = await fetch('/api/auth/me', { credentials: 'same-origin' });
@@ -814,6 +844,9 @@
     if (!isCustomer) {
       await initAdminToolbar();
     }
+
+    const refreshBtn = document.getElementById('cp-refresh-btn');
+    if (refreshBtn) refreshBtn.addEventListener('click', manualRefresh);
 
     await fetchAndRender();
     startPolling();
