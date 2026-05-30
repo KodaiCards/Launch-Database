@@ -147,7 +147,7 @@ async function archiveOldAuditRows(pool, options = {}) {
 
     // MED-4: use ?? instead of || so hot_retention_days=0 doesn't fall through
     // MED-5: Math.max(7, ...) enforces minimum 7-day floor to prevent archiving everything
-    const retentionDays = Math.max(7, options.hot_retention_days ?? (configResult.rows[0]?.hot_retention_days ?? 730));
+    const retentionDays = Math.max(7, options.hot_retention_days ?? (configResult.rows[0]?.hot_retention_days ?? 1100));
 
     // Calculate cutoff: rows older than retentionDays get archived
     const cutoffDate = new Date();

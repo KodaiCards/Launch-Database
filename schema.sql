@@ -3401,7 +3401,7 @@ CREATE INDEX IF NOT EXISTS idx_audit_log_archived ON public.audit_log (archived_
 -- audit_retention_config: singleton retention policy + archive run state
 CREATE TABLE IF NOT EXISTS public.audit_retention_config (
     id                    integer NOT NULL PRIMARY KEY,
-    hot_retention_days    integer NOT NULL DEFAULT 730,
+    hot_retention_days    integer NOT NULL DEFAULT 1100,
     total_retention_days  integer NOT NULL DEFAULT 2557,
     last_archive_run_at   timestamp with time zone,
     last_archive_row_count integer,
