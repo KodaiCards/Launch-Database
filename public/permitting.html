@@ -1624,6 +1624,10 @@ async function ppSubmitCascade() {
   const jobSel = document.getElementById('pp-job-select');
   const jobId = jobSel?.value;
   const jobName = jobSel?.selectedOptions[0]?.dataset?.name || jobSel?.selectedOptions[0]?.text || '';
+  // W243: capture the user-typed project name BEFORE resolve-or-create.
+  // resolve-or-create uses job_name as the project name; if the user typed
+  // a custom name in #proj-name we rename the project via PUT after create.
+  const typedName = (document.getElementById('proj-name')?.value || '').trim();
 
   ppClearError();
 
@@ -1672,9 +1676,22 @@ async function ppSubmitCascade() {
     sessionStorage.setItem('lf_pp_cascade_program', program);
     sessionStorage.setItem('lf_pp_cascade_job', jobName);
 
+    // W243: if user typed a custom name that differs from what the server
+    // assigned (which is the job_name), rename via PUT. Non-fatal — failure
+    // surfaces as a toast but the project still exists.
+    if (typedName && result.id && result.name !== typedName) {
+      try {
+        await api('/api/projects/' + result.id, 'PUT', { name: typedName });
+      } catch (renameErr) {
+        const MSG = 'Project created. Rename failed: ' + (renameErr.message || 'error');
+        if (window.LFS && window.LFS.toast) window.LFS.toast(MSG, 'error');
+        else (window.AppShell ? AppShell.toast(MSG, 'error') : alert(MSG));
+      }
+    }
 
     if (created) {
-      if (window.LFS && window.LFS.toast) window.LFS.toast('Created new job: ' + jobName, 'success');
+      const displayName = typedName || jobName;
+      if (window.LFS && window.LFS.toast) window.LFS.toast('Created new job: ' + displayName, 'success');
     }
     // Expose the resolved project id so the _origSaveProject wrapper can link
     // it to the pending potential permit without guessing via most-recent query.
