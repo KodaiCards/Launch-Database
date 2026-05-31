@@ -7,7 +7,7 @@
 
 import React from 'react';
 import { Link, useParams } from 'react-router-dom';
-import { certTracks } from '../data/course-catalog.js';
+import { certTracks, lessonTitleIndex } from '../data/course-catalog.js';
 import { useAllProgress } from '../hooks/useProgress.js';
 
 const STATUS_CONFIG = {
@@ -41,6 +41,7 @@ export default function CertTrack() {
     return {
       order,
       lessonId,
+      title: lessonTitleIndex[lessonId] || `Lesson ${order}`,  // fallback for unauthored lessons
       status: entry?.status || 'not_started',
       path: `/course/${certId}/lesson/${String(order).padStart(2, '0')}`,
     };
@@ -135,7 +136,7 @@ export default function CertTrack() {
                     {String(lesson.order).padStart(2, '0')}
                   </span>
                   <span className="flex-1 text-sm text-slate-200 group-hover:text-purple-200 transition">
-                    Lesson {lesson.order}
+                    {lesson.title}
                   </span>
                   <span className={`text-xs px-2 py-0.5 rounded-full border ${cfg.badge}`}>
                     {cfg.label}

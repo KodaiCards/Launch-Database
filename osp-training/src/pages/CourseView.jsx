@@ -5,7 +5,7 @@
 
 import React from 'react';
 import { Link, useParams } from 'react-router-dom';
-import { courses, certTracks } from '../data/course-catalog.js';
+import { courses, certTracks, lessonTitleIndex } from '../data/course-catalog.js';
 import { useAllProgress } from '../hooks/useProgress.js';
 
 // Map course section → back-link info
@@ -56,6 +56,7 @@ export default function CourseView() {
     return {
       order,
       lessonId,
+      title: lessonTitleIndex[lessonId] || `Lesson ${order}`,  // fallback for unauthored lessons
       status: entry?.status || 'not_started',
       bestScore: entry?.best_score ?? null,
       path: `/course/${courseId}/lesson/${paddedOrder}`,  // Padded to match LessonRouter key lookup
@@ -151,8 +152,7 @@ export default function CourseView() {
                     {String(lesson.order).padStart(2, '0')}
                   </span>
                   <span className="flex-1 text-sm text-slate-200 group-hover:text-amber-200 transition">
-                    {/* Title will be populated once lesson files are authored (OSP-RW.4/5) */}
-                    Lesson {lesson.order}
+                    {lesson.title}
                   </span>
                   {lesson.bestScore !== null && (
                     <span className="text-xs text-slate-400">{lesson.bestScore}%</span>

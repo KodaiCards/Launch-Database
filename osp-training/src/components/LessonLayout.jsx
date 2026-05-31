@@ -222,7 +222,7 @@ export function LessonLayout({ meta, children }) {
         <div className="flex items-start justify-between gap-4 flex-wrap">
           <div>
             <div className="text-xs uppercase tracking-widest text-slate-300/60 mb-1">
-              {meta.course_id} &middot; Lesson {String(meta.order).padStart(2, '0')}
+              {meta.course_id} &middot; {meta.title}
             </div>
             <h1 className="text-2xl font-bold text-slate-50">{meta.title}</h1>
           </div>
