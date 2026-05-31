@@ -5,6 +5,8 @@
   "main": "server.js",
   "scripts": {
     "start": "node server.js",
+    "prestart": "node scripts/auto_migrate.js",
+    "migrate": "node scripts/run_migrations.js",
     "dev": "nodemon server.js",
     "test": "node --test --test-concurrency=1 --test-timeout=180000 tests/*.test.js",
     "test:browser": "playwright test",
