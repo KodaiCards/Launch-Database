@@ -1901,21 +1901,33 @@ async function loadPipeline(){
   }
 }
 
-// Portal deletes don't act directly anymore — the request is queued for
-// admin approval (server stages a setting_change_request and returns
+// Portal deletes don't act directly for non-admins — the request is queued
+// for admin approval (server stages a setting_change_request and returns
 // 202 + { pending: true }). The project stays visible in the pipeline
 // until admin approves, so the UI just shows a confirmation and reloads.
+// W244: admin users bypass the queue — direct delete with destructive
+// confirm, server returns { ok: true, deleted: true }. Both paths are
+// enforced server-side in portal_module.js, so a stale currentUser can't
+// trick the server into a destructive path.
 async function deleteProjectFromPipeline(id, name){
-  if (!await confirmDialog({ title: `Request deletion of "${name}"?`, message: `This sends the request to admin for approval. The project stays in the pipeline until admin approves, then it's removed along with:\n  • All time entries logged to this project\n  • All uploaded permit documents\n  • Any child sub-projects\n\nIf admin rejects, nothing happens.`, confirmLabel: 'Send Request', danger: true })) return;
+  const isAdmin = currentUser && currentUser.role === 'admin';
+  const confirmOpts = isAdmin
+    ? { title: `Delete "${name}"?`, message: `This permanently deletes the project along with:\n  • All time entries logged to this project\n  • All uploaded permit documents\n  • Any child sub-projects\n\nThis cannot be undone.`, confirmLabel: 'Delete', danger: true }
+    : { title: `Request deletion of "${name}"?`, message: `This sends the request to admin for approval. The project stays in the pipeline until admin approves, then it's removed along with:\n  • All time entries logged to this project\n  • All uploaded permit documents\n  • Any child sub-projects\n\nIf admin rejects, nothing happens.`, confirmLabel: 'Send Request', danger: true };
+  if (!await confirmDialog(confirmOpts)) return;
   try {
     const resp = await api('/api/projects/' + id, 'DELETE');
-    if (resp && resp.pending) {
+    if (resp && resp.deleted) {
+      const MSG = `"${name}" deleted.`;
+      if (window.LFS && window.LFS.toast) window.LFS.toast.success(MSG);
+      else (window.AppShell ? AppShell.toast(MSG, 'success') : alert(MSG));
+    } else if (resp && resp.pending) {
       if (window.LFS && window.LFS.toast) window.LFS.toast.info(`Delete request sent for "${name}" — admin will review.`);
       else { const MSG = 'Delete request sent — admin will review.'; (window.AppShell ? AppShell.toast(MSG, 'success') : alert(MSG)); }
     }
     loadPipeline();
     if (typeof loadPotential === 'function') loadPotential();
-  } catch (e) { const MSG = 'Delete request failed: ' + e.message; (window.AppShell ? AppShell.toast(MSG, 'error') : alert(MSG)); }
+  } catch (e) { const MSG = 'Delete failed: ' + e.message; (window.AppShell ? AppShell.toast(MSG, 'error') : alert(MSG)); }
 }
 
 

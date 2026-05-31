@@ -1102,6 +1102,12 @@ function installPortalExtensions(app, pool, PORTAL_MODE, authHelpers) {
   // with no audit trail and no admin oversight). The timeclock portal
   // doesn't expose a project-delete UI, so this branch only fires for
   // design + permitting.
+  //
+  // W244 admin-bypass: if the caller is an admin, perform the actual
+  // delete inline (mirrors routes/projects.js:701 admin DELETE). Carter:
+  // "When someone has admin perms and deletes a project from a portal it
+  // should delete on all portals, shouldn't send a request." Non-admin
+  // users still go through the request/approval queue unchanged.
   app.delete('/api/projects/:id', requireAuth(), async (req, res) => {
     try {
       // Visibility check — the portal user must be allowed to see the
@@ -1115,6 +1121,49 @@ function installPortalExtensions(app, pool, PORTAL_MODE, authHelpers) {
       `, [req.params.id, portal]);
       if (!vis.rows.length) return res.status(404).json({ error: 'Not found' });
       const snapshot = vis.rows[0];
+
+      // W244 admin-bypass branch — direct delete, no proposal.
+      if (req.user && req.user.role === 'admin') {
+        // Mirror routes/projects.js:701 admin DELETE logic: clear pending
+        // billing batch items first (ON DELETE RESTRICT), then drop the
+        // project itself. Wrap in a transaction so a failure mid-flow
+        // doesn't leave the billing_batch_items orphan-deleted.
+        const delClient = await pool.connect();
+        try {
+          await delClient.query('BEGIN');
+          await delClient.query('DELETE FROM billing_batch_items WHERE project_id = $1', [req.params.id]);
+          await delClient.query('DELETE FROM projects WHERE id = $1', [req.params.id]);
+          await delClient.query('COMMIT');
+        } catch (txErr) {
+          try { await delClient.query('ROLLBACK'); } catch {}
+          delClient.release();
+          throw txErr;
+        }
+        delClient.release();
+        // Audit log — matches routes/projects.js admin DELETE shape.
+        try {
+          const { logAudit } = require('./routes/_audit');
+          await logAudit(pool, {
+            req, action: 'delete', entity_type: 'project', entity_id: req.params.id,
+            before: { id: snapshot.id, name: snapshot.name },
+            source: `${portal}_portal_admin_bypass`,
+          });
+        } catch (auditErr) {
+          // Don't fail the request if audit logging blows up — the
+          // delete already committed. Surface to logs for follow-up.
+          console.error('[portal:projects:delete:audit]', auditErr && auditErr.message);
+        }
+        // Broadcast deletion to admin SSE channel so admin-side lists
+        // refresh in real time. Best-effort — if SSE module can't be
+        // required (in odd test envs), skip silently.
+        try {
+          const { broadcast } = require('./routes/_sse');
+          broadcast('admin', 'project_deleted', { id: req.params.id });
+        } catch (sseErr) {
+          console.error('[portal:projects:delete:broadcast]', sseErr && sseErr.message);
+        }
+        return res.json({ ok: true, deleted: true });
+      }
 
       // Stage as a setting_change_request and surface in admin's review
       // queue. Apply happens in applySettingChange's project/delete branch.
