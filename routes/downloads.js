@@ -138,10 +138,18 @@ module.exports = function installDownloadsRoutes(app, pool, mw) {
     if (process.env.GITHUB_TOKEN) headers.Authorization = `Bearer ${process.env.GITHUB_TOKEN}`;
     const r = await fetch(url, { headers });
     if (!r.ok) {
-      // 404 = no release yet, treat as empty so the page shows "Coming soon"
+      // 404 on a private repo without auth is indistinguishable from
+      // "no release yet" — log both cases so we can diagnose.
       if (r.status === 404) {
+        const reason = process.env.GITHUB_TOKEN
+          ? 'no release tagged yet'
+          : 'repo may be private — set GITHUB_TOKEN env var with Contents:Read';
+        console.log(`[downloads:manifest] GitHub 404 for ${GITHUB_REPO} — ${reason}`);
         ghReleaseCache = { ts: now, value: { installers: [] } };
         return ghReleaseCache.value;
+      }
+      if (r.status === 401 || r.status === 403) {
+        console.error(`[downloads:manifest] GitHub auth failed (${r.status}) — check GITHUB_TOKEN scopes`);
       }
       throw new Error(`GitHub API ${r.status}`);
     }
