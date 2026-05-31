@@ -546,6 +546,17 @@ app.get('/workspace/*', requireAuth(), (req, res) => {
   res.sendFile(path.join(__dirname, 'public', 'workspace', 'index.html'));
 });
 
+// Wave 238: persistent installer storage. Resolve INSTALLERS_DIR (env or
+// in-tree fallback), ensure it exists, and serve it as an auth-gated static
+// mount at /downloads/installers. This sits BEFORE express.static(public) so
+// that requests for /downloads/installers/* never fall through to the
+// (possibly empty) in-tree directory when INSTALLERS_DIR points at a
+// Railway volume mount.
+const _downloadsModule = require('./routes/downloads');
+const INSTALLERS_DIR = _downloadsModule.resolveInstallersDir();
+_downloadsModule.ensureInstallersDir(INSTALLERS_DIR);
+app.use('/downloads/installers', requireAuth(), express.static(INSTALLERS_DIR));
+
 app.use(express.static(path.join(__dirname, 'public')));
 
 // Serve uploads with auth enforcement (item 6 fix).
@@ -782,8 +793,8 @@ require('./routes/audit_log')(app, pool, { requireAdmin });
 // Project photos — mobile PWA uploads (Wave 55).
 require('./routes/project_photos')(app, pool, { requireAuth, requireAdmin });
 
-// Desktop installer downloads page (Wave 120).
-require('./routes/downloads')(app, pool, { requireAuth });
+// Desktop installer downloads page (Wave 120) + admin upload/delete (Wave 238).
+require('./routes/downloads')(app, pool, { requireAuth, requireAdmin });
 
 // File-activity admin view — read-only slice of audit_log (Wave 122).
 require('./routes/file_activity')(app, pool, { requireAdmin });

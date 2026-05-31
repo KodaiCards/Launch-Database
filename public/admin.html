@@ -702,6 +702,11 @@ body { background: var(--surface-1); color: var(--text-1); font-family: 'Inter',
           <i class="fa-solid fa-network-wired" style="color:var(--primary);width:16px"></i>
           <span><b>Splice Matrix</b><div style="font-size:11px;color:var(--text-muted)">Same-origin /splice.html</div></span>
         </a>
+        <!-- Wave 238: admin-only desktop installer manager. -->
+        <a href="/admin/installers.html" onclick="document.getElementById('portals-menu').style.display='none'" style="display:flex;align-items:center;gap:8px;padding:8px 10px;border-radius:4px;text-decoration:none;color:var(--text)" onmouseover="this.style.background='var(--primary-light)'" onmouseout="this.style.background='transparent'">
+          <i class="fa-solid fa-box-archive" style="color:var(--primary);width:16px"></i>
+          <span><b>Desktop Installers</b><div style="font-size:11px;color:var(--text-muted)">Upload + delete .exe / .dmg / .deb / .AppImage</div></span>
+        </a>
       </div>
     </div>
     <button class="btn btn-secondary btn-sm" onclick="toggleAI()"><i class="fa-solid fa-robot"></i> AI Assistant</button>

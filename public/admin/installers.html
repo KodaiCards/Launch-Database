@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Desktop Installers — Launch Fiber Services</title>
+
+  <!-- Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
+
+  <!-- Icons -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" crossorigin="anonymous" />
+
+  <!-- Design system -->
+  <link rel="stylesheet" href="/css/app-shell.css" />
+
+  <!-- Page-local styles -->
+  <link rel="stylesheet" href="installers.css" />
+</head>
+<body class="app-with-topbar">
+  <a href="#main-content" class="skip-nav">Skip to main content</a>
+
+  <div id="main-content" class="installers-container">
+    <header class="installers-header">
+      <div>
+        <a href="/admin.html" class="back-link" aria-label="Back to admin dashboard">
+          <i class="fa-solid fa-arrow-left" aria-hidden="true"></i> Admin
+        </a>
+        <h1>
+          <i class="fa-solid fa-box-archive" aria-hidden="true" style="margin-right:8px;color:var(--primary)"></i>
+          Desktop Installers
+        </h1>
+        <p class="subtitle">Upload and manage desktop app installers for crew distribution.</p>
+      </div>
+      <button type="button" class="btn btn-secondary" id="btn-refresh" onclick="Installers.refresh()" aria-label="Refresh installer list">
+        <i class="fa-solid fa-arrows-rotate" aria-hidden="true"></i> Refresh
+      </button>
+    </header>
+
+    <main class="installers-main">
+
+      <!-- ── Upload zone ──────────────────────────────────────────────── -->
+      <section class="card upload-card" aria-labelledby="upload-heading">
+        <h2 id="upload-heading"><i class="fa-solid fa-cloud-arrow-up" aria-hidden="true"></i> Upload installer</h2>
+        <p class="hint">Accepts <code>.exe</code> (Windows), <code>.dmg</code> (macOS), <code>.deb</code> / <code>.AppImage</code> (Linux). Max 200&nbsp;MB.</p>
+
+        <div id="drop-zone" class="drop-zone" tabindex="0" role="button" aria-label="Drop installer file here or click to pick">
+          <i class="fa-solid fa-file-arrow-up drop-icon" aria-hidden="true"></i>
+          <div class="drop-text">
+            <strong>Drag &amp; drop</strong> an installer here, or
+            <button type="button" class="link-btn" id="btn-pick">browse files</button>
+          </div>
+          <div class="drop-hint">Single file. Replaces nothing — duplicate filenames are rejected.</div>
+        </div>
+
+        <input type="file" id="file-input" accept=".exe,.dmg,.deb,.AppImage" hidden />
+
+        <div id="upload-progress" class="upload-progress" hidden>
+          <div class="progress-row">
+            <span class="progress-name" id="progress-name"></span>
+            <span class="progress-pct" id="progress-pct">0%</span>
+          </div>
+          <div class="progress-bar"><div class="progress-fill" id="progress-fill"></div></div>
+        </div>
+      </section>
+
+      <!-- ── Installer list ──────────────────────────────────────────── -->
+      <section class="card list-card" aria-labelledby="list-heading">
+        <h2 id="list-heading"><i class="fa-solid fa-list" aria-hidden="true"></i> Current installers</h2>
+
+        <!-- Skeleton -->
+        <div id="list-skeleton" class="list-skeleton" aria-hidden="true">
+          <div class="skel-row"></div>
+          <div class="skel-row"></div>
+          <div class="skel-row"></div>
+        </div>
+
+        <!-- Empty state -->
+        <div id="list-empty" class="state empty-state" hidden>
+          <i class="fa-solid fa-box-open" aria-hidden="true"></i>
+          <p>No installers uploaded yet.</p>
+          <p class="muted">Upload one using the form above — it'll appear on the Downloads page for the crew.</p>
+        </div>
+
+        <!-- Error state -->
+        <div id="list-error" class="state error-state" hidden role="alert">
+          <i class="fa-solid fa-triangle-exclamation" aria-hidden="true"></i>
+          <p id="list-error-msg">Failed to load installers.</p>
+          <button type="button" class="btn btn-secondary" onclick="Installers.refresh()">
+            <i class="fa-solid fa-rotate-right" aria-hidden="true"></i> Retry
+          </button>
+        </div>
+
+        <!-- Table -->
+        <div id="list-table-wrap" class="list-table-wrap" hidden>
+          <table class="installers-table" aria-describedby="list-heading">
+            <thead>
+              <tr>
+                <th scope="col">Platform</th>
+                <th scope="col">Filename</th>
+                <th scope="col">Size</th>
+                <th scope="col">Uploaded</th>
+                <th scope="col" class="col-actions">Actions</th>
+              </tr>
+            </thead>
+            <tbody id="list-tbody"></tbody>
+          </table>
+        </div>
+      </section>
+    </main>
+  </div>
+
+  <script src="/js/app-shell.js" defer></script>
+  <script src="installers.js" defer></script>
+  <script>
+    document.addEventListener('DOMContentLoaded', function () {
+      if (window.AppShell && typeof AppShell.init === 'function') {
+        AppShell.init({ title: 'Installers', portalId: 'admin' });
+      }
+      if (window.Installers && typeof Installers.init === 'function') {
+        Installers.init();
+      }
+    });
+  </script>
+</body>
+</html>
