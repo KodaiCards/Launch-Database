@@ -111,24 +111,82 @@ module.exports = function installDownloadsRoutes(app, pool, mw) {
     },
   });
 
+  // Source priority for the manifest endpoint:
+  //   1. GitHub Releases (if GITHUB_REPO env var is set, e.g. "owner/repo")
+  //      — the canonical source for production. CI builds the proper
+  //      Windows NSIS installer on a Windows runner and publishes it as a
+  //      Release asset, so this is always the freshest build.
+  //   2. Local INSTALLERS_DIR scan — used in dev or as a fallback when the
+  //      GitHub API is unreachable.
+  //   3. manifest.json file inside INSTALLERS_DIR — used by anyone who
+  //      wants to curate the list manually.
+  //
+  // Each source returns the same shape: { installers: [...] }
+  const GITHUB_REPO = (process.env.GITHUB_REPO || '').trim();
+  // Short-lived in-memory cache so the manifest endpoint doesn't hammer
+  // the GitHub API on every page load.
+  let ghReleaseCache = { ts: 0, value: null };
+
+  async function fetchLatestGitHubRelease() {
+    if (!GITHUB_REPO) return null;
+    const now = Date.now();
+    if (ghReleaseCache.value && (now - ghReleaseCache.ts) < 60 * 1000) {
+      return ghReleaseCache.value;
+    }
+    const url = `https://api.github.com/repos/${GITHUB_REPO}/releases/latest`;
+    const headers = { 'Accept': 'application/vnd.github+json', 'User-Agent': 'launch-fiber' };
+    if (process.env.GITHUB_TOKEN) headers.Authorization = `Bearer ${process.env.GITHUB_TOKEN}`;
+    const r = await fetch(url, { headers });
+    if (!r.ok) {
+      // 404 = no release yet, treat as empty so the page shows "Coming soon"
+      if (r.status === 404) {
+        ghReleaseCache = { ts: now, value: { installers: [] } };
+        return ghReleaseCache.value;
+      }
+      throw new Error(`GitHub API ${r.status}`);
+    }
+    const data = await r.json();
+    const assets = Array.isArray(data.assets) ? data.assets : [];
+    const installers = assets
+      .filter(a => /\.(exe|dmg|deb|AppImage)$/i.test(a.name))
+      .map(a => ({
+        platform: platformFromFilename(a.name),
+        filename: a.name,
+        size_bytes: a.size,
+        download_url: a.browser_download_url,
+        released_at: a.updated_at || data.published_at,
+      }));
+    ghReleaseCache = { ts: now, value: { installers, release_tag: data.tag_name, release_url: data.html_url } };
+    return ghReleaseCache.value;
+  }
+
   // ── GET /api/downloads/manifest ────────────────────────────────────────
   // list of available installers (auth-gated, any role)
   app.get('/api/downloads/manifest', requireAuthMW, async (req, res) => {
     try {
+      // 1. GitHub Releases first (production path)
+      if (GITHUB_REPO) {
+        try {
+          const ghResult = await fetchLatestGitHubRelease();
+          if (ghResult && ghResult.installers.length > 0) return res.json(ghResult);
+          // empty release → fall through to local fallback so dev installs still work
+        } catch (ghErr) {
+          console.error('[downloads:manifest] GitHub fetch failed, falling back:', ghErr && ghErr.message);
+        }
+      }
+
+      // 2. Local manifest.json override
       const installersDir = INSTALLERS_DIR;
       const manifestPath = path.join(installersDir, 'manifest.json');
-
-      // If manifest.json exists, return it; otherwise scan the dir
       if (fs.existsSync(manifestPath)) {
         const manifest = JSON.parse(fs.readFileSync(manifestPath, 'utf8'));
         return res.json(manifest);
       }
 
-      // Auto-scan fallback: list .exe / .dmg / .deb / .AppImage files
+      // 3. Local dir auto-scan
       if (!fs.existsSync(installersDir)) {
         return res.json({ installers: [] });
       }
-
       const files = fs.readdirSync(installersDir).filter(f => /\.(exe|dmg|deb|AppImage)$/i.test(f));
       const installers = files.map(f => {
         const fullPath = path.join(installersDir, f);
