@@ -3,85 +3,120 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Launch Fiber Desktop</title>
+    <title>Launch Fiber Desktop — Setup</title>
     <link rel="stylesheet" href="app.css" />
+    <style>
+      body {
+        margin: 0;
+        font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+        background: #0b1220;
+        color: #f0f4ff;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        height: 100vh;
+      }
+      .setup-card {
+        background: #131c2f;
+        border-radius: 10px;
+        padding: 28px 32px;
+        max-width: 440px;
+        width: 90%;
+        box-shadow: 0 10px 40px rgba(0, 0, 0, 0.5);
+      }
+      .setup-card h1 {
+        margin: 0 0 6px;
+        font-size: 20px;
+      }
+      .setup-card p.subtitle {
+        margin: 0 0 18px;
+        color: #94a3b8;
+        font-size: 13px;
+      }
+      label {
+        display: block;
+        margin-bottom: 6px;
+        font-size: 13px;
+        color: #cbd5e1;
+      }
+      input[type='text'] {
+        width: 100%;
+        padding: 10px 12px;
+        font-size: 14px;
+        background: #0b1220;
+        color: #f0f4ff;
+        border: 1px solid #334155;
+        border-radius: 6px;
+        box-sizing: border-box;
+      }
+      input[type='text']:focus {
+        outline: none;
+        border-color: #60a5fa;
+      }
+      .actions {
+        display: flex;
+        gap: 10px;
+        margin-top: 20px;
+      }
+      button {
+        flex: 1;
+        padding: 10px 14px;
+        font-size: 14px;
+        border-radius: 6px;
+        border: none;
+        cursor: pointer;
+        font-weight: 600;
+      }
+      button.primary {
+        background: #2563eb;
+        color: #fff;
+      }
+      button.primary:hover {
+        background: #1d4ed8;
+      }
+      button.secondary {
+        background: #334155;
+        color: #f0f4ff;
+      }
+      button.secondary:hover {
+        background: #475569;
+      }
+      .error {
+        color: #f87171;
+        font-size: 13px;
+        margin-top: 10px;
+        min-height: 16px;
+      }
+      .hint {
+        font-size: 12px;
+        color: #64748b;
+        margin-top: 6px;
+      }
+    </style>
   </head>
   <body>
-    <div id="app">
-      <header>
-        <div class="header-content">
-          <h1>Launch Fiber Desktop</h1>
-          <div class="header-middle">
-            <div class="sync-status">
-              <span id="syncBadge" class="sync-badge gray"></span>
-              <span id="syncStatusText">Ready</span>
-              <button id="syncNowBtn" class="sync-now-btn" title="Sync now">⟲ Sync</button>
-            </div>
-          </div>
-          <div class="header-right">
-            <span id="username" class="username"></span>
-            <button id="logoutBtn" class="logout-btn">Logout</button>
-          </div>
-        </div>
-      </header>
+    <div class="setup-card">
+      <h1>Launch Fiber Desktop</h1>
+      <p class="subtitle">Set the server URL to connect to.</p>
 
-      <div class="container">
-        <aside class="sidebar">
-          <div class="sidebar-header">
-            <h3>Workspace</h3>
-            <button id="refreshBtn" class="refresh-btn" title="Refresh workspace tree">
-              ↻ Refresh
-            </button>
-          </div>
-          <div id="workspaceTree" class="workspace-tree">
-            <p class="loading">Loading workspace...</p>
-          </div>
-        </aside>
+      <label for="serverUrl">Server URL</label>
+      <input
+        type="text"
+        id="serverUrl"
+        placeholder="https://launchfiberadminportal.xyz"
+        autocomplete="off"
+        spellcheck="false"
+      />
+      <p class="hint">
+        Default: <code>https://launchfiberadminportal.xyz</code>. For local development use
+        <code>http://localhost:3000</code>.
+      </p>
 
-        <main class="main-pane">
-          <div class="welcome-content">
-            <h2>Welcome to Launch Fiber Desktop</h2>
-            <p>Select a project from the workspace tree to get started.</p>
-
-            <div class="sync-panel">
-              <h3>File Sync Settings</h3>
-              <div class="sync-folder-row">
-                <label for="syncFolderPath">Local Sync Folder:</label>
-                <input type="text" id="syncFolderPath" class="sync-folder-input" readonly />
-                <button id="changeFolderBtn" class="change-folder-btn">Change Folder</button>
-              </div>
-              <p class="sync-help-text">
-                Auto-sync triggered on reconnect (5s countdown). Manual sync available via the Sync button above.
-              </p>
-            </div>
-
-            <div id="syncCountdownToast" class="sync-countdown-toast hidden">
-              <span id="countdownText">Syncing in 5s...</span>
-              <button id="cancelCountdownBtn" class="cancel-btn">Cancel</button>
-            </div>
-
-            <div class="sync-activity-panel">
-              <h3>Recent Activity</h3>
-              <div id="syncActivityLog" class="sync-activity-log"></div>
-            </div>
-
-            <div id="conflictPanel" class="conflict-panel hidden">
-              <h3>⚠ Sync Conflicts</h3>
-              <p>The following files were renamed to resolve conflicts:</p>
-              <ul id="conflictList"></ul>
-              <p class="conflict-help">Please manually review and delete the .conflict files if no longer needed.</p>
-            </div>
-
-            <div class="info-panel">
-              <p><strong>Version:</strong> 0.1.0 (Sync Engine)</p>
-              <p id="connectionStatus"><strong>Status:</strong> Connected</p>
-              <button id="webPortalBtn" class="portal-btn">
-                Open Web Portal
-              </button>
-            </div>
-          </div>
-        </main>
+      <div class="actions">
+        <button id="saveBtn" class="primary">Save and Continue</button>
+        <button id="defaultBtn" class="secondary">Use Default</button>
       </div>
+      <div id="errorMsg" class="error"></div>
     </div>
 
     <script src="app.js"></script>

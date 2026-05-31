@@ -1,9 +1,39 @@
-const { app, BrowserWindow, Menu, ipcMain, dialog, safeStorage } = require('electron');
+const {
+  app,
+  BrowserWindow,
+  Menu,
+  Tray,
+  ipcMain,
+  dialog,
+  shell,
+  safeStorage,
+  session,
+} = require('electron');
 const path = require('path');
 const Store = require('electron-store');
 const SyncEngine = require('./sync/engine');
 
 const store = new Store();
+
+// Persistent session partition — cookies, localStorage, IndexedDB survive across launches.
+// Same partition used by main window + sync engine cookie reads.
+const SESSION_PARTITION = 'persist:launch-fiber';
+
+// Default cloud production URL. Overridden by SERVER_URL env var OR stored config.
+const DEFAULT_SERVER_URL = 'https://launchfiberadminportal.xyz';
+
+// CDNs the cloud app references — must be allowed through navigation + resource policies.
+const ALLOWED_CDN_HOSTS = new Set([
+  'fonts.googleapis.com',
+  'fonts.gstatic.com',
+  'cdnjs.cloudflare.com',
+  'cdn.jsdelivr.net',
+  // GitHub Releases (desktop download link in launcher)
+  'github.com',
+  'objects.githubusercontent.com',
+  'github-releases.githubusercontent.com',
+  'codeload.github.com',
+]);
 
 // H-1 (Wave 99): validate that a user-supplied server URL is safe before use.
 // Enforces https:// (or http://localhost / http://127.0.0.1 for local dev),
@@ -12,7 +42,6 @@ const store = new Store();
 function validateServerUrl(rawUrl) {
   try {
     const u = new URL(rawUrl);
-    // Allow https:// for production; allow http:// only for explicit localhost dev.
     if (
       u.protocol !== 'https:' &&
       !(u.protocol === 'http:' && (u.hostname === 'localhost' || u.hostname === '127.0.0.1'))
@@ -23,7 +52,6 @@ function validateServerUrl(rawUrl) {
       };
     }
     const host = u.hostname;
-    // Reject RFC-1918 + link-local + unspecified (except explicit localhost above).
     const isPrivate =
       /^10\./.test(host) ||
       /^192\.168\./.test(host) ||
@@ -33,11 +61,11 @@ function validateServerUrl(rawUrl) {
     if (isPrivate) {
       return { ok: false, error: 'Private/internal IP addresses are not allowed as server URL' };
     }
-    // Only an origin is valid — no path component beyond '/'.
     if (u.pathname && u.pathname !== '/' && u.pathname !== '') {
       return {
         ok: false,
-        error: 'Server URL must not include a path component — provide the origin only (e.g. https://example.com)',
+        error:
+          'Server URL must not include a path component — provide the origin only (e.g. https://example.com)',
       };
     }
     return { ok: true, origin: u.origin };
@@ -46,16 +74,17 @@ function validateServerUrl(rawUrl) {
   }
 }
 
-// H-2 (Wave 99): encrypt a string value using the OS credential store
-// (Windows DPAPI / macOS Keychain / Linux Secret Service via safeStorage).
-// Falls back to plain storage with a startup warning when safeStorage is
-// unavailable (e.g. Linux without a password manager).
+// H-2 (Wave 99): encrypt/decrypt small secrets via OS credential store.
+// Still used here for any sensitive bits we persist (config flags etc.); session
+// cookies now live in the Electron session partition rather than electron-store.
 function encryptCookie(raw) {
   if (safeStorage.isEncryptionAvailable()) {
     return { encrypted: true, data: safeStorage.encryptString(raw).toString('base64') };
   }
-  console.warn('[security] safeStorage unavailable — session cookie stored in plaintext. ' +
-    'Install a secrets manager (gnome-keyring, kwallet) for encrypted storage on Linux.');
+  console.warn(
+    '[security] safeStorage unavailable — value stored in plaintext. ' +
+      'Install a secrets manager (gnome-keyring, kwallet) for encrypted storage on Linux.'
+  );
   return { encrypted: false, data: raw };
 }
 
@@ -65,79 +94,266 @@ function decryptCookie(stored) {
     try {
       return safeStorage.decryptString(Buffer.from(stored.data, 'base64'));
     } catch (err) {
-      console.error('[security] Failed to decrypt session cookie:', err.message);
+      console.error('[security] Failed to decrypt stored value:', err.message);
       return null;
     }
   }
-  // Legacy plaintext value or unavailable safeStorage path.
   return stored.data;
 }
 
-let mainWindow;
-let backendUrl = process.env.BACKEND_URL || 'https://launchdb-production.up.railway.app';
+// --- Module state ----------------------------------------------------------
+
+let mainWindow = null;
+let configWindow = null;
+let tray = null;
 let syncEngine = null;
 let syncInterval = null;
+let serverUrl = null; // resolved at startup (env > store > prompt)
+let isQuittingExplicitly = false;
 
-function createWindow(isLogin = false) {
-  mainWindow = new BrowserWindow({
-    width: 1200,
-    height: 800,
+// Sync interval in minutes. Default 5; user-overridable via stored config.
+function getSyncIntervalMinutes() {
+  const v = store.get('syncIntervalMinutes');
+  return typeof v === 'number' && v >= 1 ? v : 5;
+}
+
+function getAutoSyncEnabled() {
+  const v = store.get('autoSyncEnabled');
+  return v === undefined ? true : !!v;
+}
+
+// --- URL / origin helpers --------------------------------------------------
+
+function getServerOrigin() {
+  if (!serverUrl) return null;
+  try {
+    return new URL(serverUrl).origin;
+  } catch (_) {
+    return null;
+  }
+}
+
+function isAllowedNavigationUrl(navUrl) {
+  try {
+    const parsed = new URL(navUrl);
+    if (parsed.protocol === 'about:' || parsed.protocol === 'data:') return false;
+    if (parsed.protocol === 'file:') return true; // local config screens
+    const origin = parsed.origin;
+    const allowedOrigin = getServerOrigin();
+    if (allowedOrigin && origin === allowedOrigin) return true;
+    if (ALLOWED_CDN_HOSTS.has(parsed.hostname)) return true;
+    return false;
+  } catch (_) {
+    return false;
+  }
+}
+
+// --- First-run config window ----------------------------------------------
+
+function createConfigWindow() {
+  configWindow = new BrowserWindow({
+    width: 520,
+    height: 420,
+    resizable: false,
+    title: 'Launch Fiber Desktop — Setup',
     webPreferences: {
       preload: path.join(__dirname, 'preload.js'),
       contextIsolation: true,
       nodeIntegration: false,
-      enableRemoteModule: false,
+      sandbox: true,
     },
   });
+  configWindow.setMenuBarVisibility(false);
+  configWindow.loadFile(path.join(__dirname, 'renderer', 'index.html'));
 
-  const file = isLogin ? 'login.html' : 'index.html';
-  const filePath = path.join(__dirname, 'renderer', file);
-  mainWindow.loadFile(filePath);
-
-  // Open DevTools in development (comment out for production)
-  // mainWindow.webContents.openDevTools();
-
-  // M-2 (Wave 99): prevent renderer from navigating to external URLs.
-  // All legitimate navigation (login -> index) uses window.location.href with
-  // local file:// paths.  Block anything that isn't a file:// URL.
-  mainWindow.webContents.on('will-navigate', (event, navUrl) => {
-    try {
-      const parsed = new URL(navUrl);
-      if (parsed.protocol !== 'file:') {
-        event.preventDefault();
-        console.warn('[security] Blocked navigation to non-file URL:', navUrl);
-      }
-    } catch (_) {
+  configWindow.webContents.on('will-navigate', (event, navUrl) => {
+    if (!navUrl.startsWith('file://')) {
       event.preventDefault();
     }
   });
+  configWindow.webContents.setWindowOpenHandler(() => ({ action: 'deny' }));
 
-  // M-2 (Wave 99): block window.open() calls that would open external windows.
-  mainWindow.webContents.setWindowOpenHandler(() => ({ action: 'deny' }));
+  configWindow.on('closed', () => {
+    configWindow = null;
+  });
+}
+
+// --- Main cloud-wrapping window -------------------------------------------
+
+function createMainWindow() {
+  const partitionSession = session.fromPartition(SESSION_PARTITION, { cache: true });
+
+  mainWindow = new BrowserWindow({
+    width: 1400,
+    height: 900,
+    minWidth: 1024,
+    minHeight: 700,
+    title: 'Launch Fiber Desktop',
+    icon: path.join(__dirname, 'renderer', 'icon.png'),
+    webPreferences: {
+      preload: path.join(__dirname, 'preload.js'),
+      contextIsolation: true,
+      nodeIntegration: false,
+      sandbox: true,
+      webSecurity: true,
+      partition: SESSION_PARTITION,
+    },
+  });
+
+  mainWindow.loadURL(serverUrl);
+
+  // Navigation policy: same origin OR allowlisted CDN OK; everything else blocked.
+  mainWindow.webContents.on('will-navigate', (event, navUrl) => {
+    if (!isAllowedNavigationUrl(navUrl)) {
+      event.preventDefault();
+      console.warn('[security] Blocked navigation to:', navUrl);
+      // External links open in the OS browser only if user-initiated AND http(s).
+      try {
+        const parsed = new URL(navUrl);
+        if (parsed.protocol === 'http:' || parsed.protocol === 'https:') {
+          shell.openExternal(navUrl);
+        }
+      } catch (_) {}
+    }
+  });
+
+  // window.open / target=_blank handler — same allowlist; external opens in OS browser.
+  mainWindow.webContents.setWindowOpenHandler(({ url }) => {
+    if (isAllowedNavigationUrl(url)) {
+      // Allow same-origin popups inside Electron only if they're our origin.
+      try {
+        const parsed = new URL(url);
+        if (parsed.origin === getServerOrigin()) {
+          return {
+            action: 'allow',
+            overrideBrowserWindowOptions: {
+              webPreferences: {
+                preload: path.join(__dirname, 'preload.js'),
+                contextIsolation: true,
+                nodeIntegration: false,
+                sandbox: true,
+                partition: SESSION_PARTITION,
+              },
+            },
+          };
+        }
+      } catch (_) {}
+    }
+    try {
+      const parsed = new URL(url);
+      if (parsed.protocol === 'http:' || parsed.protocol === 'https:') {
+        shell.openExternal(url);
+      }
+    } catch (_) {}
+    return { action: 'deny' };
+  });
+
+  // Loading errors -> friendly message + retry hint.
+  mainWindow.webContents.on('did-fail-load', (event, errorCode, errorDescription, validatedURL) => {
+    // -3 = ABORTED (often from in-progress redirect); ignore.
+    if (errorCode === -3) return;
+    console.error('[main] did-fail-load', errorCode, errorDescription, validatedURL);
+  });
+
+  // Notify sync that we're back online + window is ready.
+  mainWindow.webContents.on('did-finish-load', () => {
+    notifySyncWindowReady();
+  });
+
+  // Close-to-tray on Windows/Linux; macOS uses dock convention.
+  mainWindow.on('close', (event) => {
+    if (!isQuittingExplicitly && process.platform !== 'darwin') {
+      event.preventDefault();
+      mainWindow.hide();
+      return false;
+    }
+  });
 
   mainWindow.on('closed', () => {
     mainWindow = null;
   });
 
-  mainWindow.webContents.on('did-finish-load', () => {
-    initializeSyncListeners();
-  });
-
-  createMenu();
+  createApplicationMenu();
 }
 
-function createMenu() {
+// --- Native application menu ----------------------------------------------
+
+function createApplicationMenu() {
+  const isMac = process.platform === 'darwin';
   const template = [
+    ...(isMac
+      ? [
+          {
+            label: app.name,
+            submenu: [
+              { role: 'about' },
+              { type: 'separator' },
+              { role: 'services' },
+              { type: 'separator' },
+              { role: 'hide' },
+              { role: 'hideOthers' },
+              { role: 'unhide' },
+              { type: 'separator' },
+              { role: 'quit' },
+            ],
+          },
+        ]
+      : []),
     {
       label: 'File',
       submenu: [
         {
-          label: 'Exit',
-          accelerator: 'CmdOrCtrl+Q',
-          click: () => {
-            app.quit();
-          },
+          label: 'Reload',
+          accelerator: 'CmdOrCtrl+R',
+          click: () => mainWindow && mainWindow.webContents.reload(),
         },
+        {
+          label: 'Force Reload',
+          accelerator: 'CmdOrCtrl+Shift+R',
+          click: () => mainWindow && mainWindow.webContents.reloadIgnoringCache(),
+        },
+        { type: 'separator' },
+        {
+          label: 'Sync Now',
+          accelerator: 'CmdOrCtrl+S',
+          click: () => triggerManualSync(),
+        },
+        {
+          label: 'Change Server URL...',
+          click: () => promptChangeServerUrl(),
+        },
+        { type: 'separator' },
+        isMac ? { role: 'close' } : { role: 'quit', label: 'Exit', accelerator: 'CmdOrCtrl+Q' },
+      ],
+    },
+    {
+      label: 'Edit',
+      submenu: [
+        { role: 'undo' },
+        { role: 'redo' },
+        { type: 'separator' },
+        { role: 'cut' },
+        { role: 'copy' },
+        { role: 'paste' },
+        { role: 'selectAll' },
+      ],
+    },
+    {
+      label: 'View',
+      submenu: [
+        { role: 'resetZoom' },
+        { role: 'zoomIn' },
+        { role: 'zoomOut' },
+        { type: 'separator' },
+        { role: 'togglefullscreen' },
+        { role: 'toggleDevTools' },
+      ],
+    },
+    {
+      label: 'Window',
+      submenu: [
+        { role: 'minimize' },
+        ...(isMac ? [{ role: 'zoom' }, { type: 'separator' }, { role: 'front' }] : [{ role: 'close' }]),
       ],
     },
     {
@@ -145,325 +361,348 @@ function createMenu() {
       submenu: [
         {
           label: 'About Launch Fiber Desktop',
-          click: () => {
-            // Could show an about dialog here
-          },
+          click: () =>
+            dialog.showMessageBox(mainWindow || undefined, {
+              type: 'info',
+              title: 'About Launch Fiber Desktop',
+              message: 'Launch Fiber Desktop',
+              detail:
+                `Version ${app.getVersion()}\n` +
+                `Server: ${serverUrl || '(unset)'}\n` +
+                `Electron ${process.versions.electron}\n` +
+                `Node ${process.versions.node}`,
+            }),
+        },
+        {
+          label: 'GitHub',
+          click: () => shell.openExternal('https://github.com/KodaiCards/launch-database'),
         },
       ],
     },
   ];
 
-  const menu = Menu.buildFromTemplate(template);
-  Menu.setApplicationMenu(menu);
+  Menu.setApplicationMenu(Menu.buildFromTemplate(template));
 }
 
-app.on('ready', () => {
-  const session = store.get('session');
-  const isLogin = !session;
-  createWindow(isLogin);
+// --- System tray ----------------------------------------------------------
+
+function createTray() {
+  const trayModule = require('./sync/tray');
+  tray = trayModule.create({
+    iconPath: path.join(__dirname, 'renderer', 'icon.png'),
+    onShow: () => {
+      if (mainWindow) {
+        if (mainWindow.isMinimized()) mainWindow.restore();
+        mainWindow.show();
+        mainWindow.focus();
+      }
+    },
+    onSyncNow: () => triggerManualSync(),
+    onQuit: () => {
+      isQuittingExplicitly = true;
+      app.quit();
+    },
+    getStatus: () => (syncEngine ? syncEngine.getSyncStatus() : { lastSyncAt: null, isRunning: false }),
+  });
+}
+
+function updateTrayStatus(status) {
+  if (tray && typeof tray.updateStatus === 'function') {
+    tray.updateStatus(status);
+  }
+}
+
+// --- Sync engine integration ----------------------------------------------
+
+/**
+ * Read the Cookie header value to use against the launch-fiber backend.
+ * Pulled from the persistent session partition where the main window logs in.
+ */
+async function getSessionCookieHeader() {
+  const origin = getServerOrigin();
+  if (!origin) return '';
+  const ses = session.fromPartition(SESSION_PARTITION);
+  try {
+    const cookies = await ses.cookies.get({ url: origin });
+    if (!cookies || cookies.length === 0) return '';
+    return cookies.map((c) => `${c.name}=${c.value}`).join('; ');
+  } catch (err) {
+    console.warn('[sync] Failed to read session cookies:', err.message);
+    return '';
+  }
+}
+
+async function ensureSyncEngine() {
+  if (!syncEngine) {
+    const cookieHeader = await getSessionCookieHeader();
+    syncEngine = new SyncEngine(getServerOrigin(), cookieHeader);
+  } else {
+    // Refresh cookie in case the user re-logged in.
+    syncEngine.cookie = await getSessionCookieHeader();
+  }
+  return syncEngine;
+}
+
+async function triggerManualSync() {
+  try {
+    const localRootPath = store.get('localRootPath');
+    if (!localRootPath) {
+      if (mainWindow) {
+        const choice = await dialog.showMessageBox(mainWindow, {
+          type: 'question',
+          buttons: ['Choose folder...', 'Cancel'],
+          defaultId: 0,
+          cancelId: 1,
+          title: 'Choose Sync Folder',
+          message: 'Pick a local folder to sync with Launch Fiber.',
+        });
+        if (choice.response === 0) {
+          const pick = await dialog.showOpenDialog(mainWindow, {
+            properties: ['openDirectory'],
+            message: 'Select a folder to sync with Launch Fiber',
+          });
+          if (!pick.canceled && pick.filePaths[0]) {
+            store.set('localRootPath', pick.filePaths[0]);
+            return triggerManualSync();
+          }
+        }
+      }
+      return { success: false, error: 'No local sync folder configured' };
+    }
+    const cookieHeader = await getSessionCookieHeader();
+    if (!cookieHeader) {
+      return { success: false, error: 'Not signed in — log in via the main window first' };
+    }
+    const engine = await ensureSyncEngine();
+    const result = await engine.runSync(localRootPath);
+    const status = engine.getSyncStatus();
+    updateTrayStatus(status);
+    if (mainWindow) {
+      mainWindow.webContents.send('sync:completed', result);
+    }
+    return result;
+  } catch (err) {
+    console.error('[sync] manual sync failed:', err);
+    return { success: false, error: err.message };
+  }
+}
+
+function startSyncTimer() {
+  if (syncInterval) clearInterval(syncInterval);
+  if (!getAutoSyncEnabled()) return;
+  const minutes = getSyncIntervalMinutes();
+  syncInterval = setInterval(async () => {
+    try {
+      const localRootPath = store.get('localRootPath');
+      if (!localRootPath) return;
+      const cookieHeader = await getSessionCookieHeader();
+      if (!cookieHeader) return;
+      const engine = await ensureSyncEngine();
+      const result = await engine.runSync(localRootPath);
+      const status = engine.getSyncStatus();
+      updateTrayStatus(status);
+      if (mainWindow) {
+        mainWindow.webContents.send('sync:completed', result);
+      }
+    } catch (err) {
+      console.warn('[sync] scheduled sync error:', err.message);
+    }
+  }, minutes * 60 * 1000);
+}
+
+function notifySyncWindowReady() {
+  // Hook for renderer-side coordination (toast etc.). Currently a no-op
+  // because we delegate UI to the cloud app's own toasts.
+}
+
+// --- Change-server flow ---------------------------------------------------
+
+async function promptChangeServerUrl() {
+  if (!mainWindow) return;
+  const result = await dialog.showMessageBox(mainWindow, {
+    type: 'question',
+    buttons: ['Change Server', 'Cancel'],
+    defaultId: 0,
+    cancelId: 1,
+    title: 'Change Server URL',
+    message: 'Changing the server URL signs you out and reopens the app at the new URL.',
+  });
+  if (result.response !== 0) return;
+  // Clear cookies for current partition, then reopen config window.
+  try {
+    const ses = session.fromPartition(SESSION_PARTITION);
+    await ses.clearStorageData({ storages: ['cookies', 'localstorage', 'indexdb'] });
+  } catch (_) {}
+  store.delete('serverUrl');
+  serverUrl = null;
+  if (mainWindow) {
+    isQuittingExplicitly = true;
+    mainWindow.close();
+  }
+  startupResolveServerUrl().then(() => {
+    isQuittingExplicitly = false;
+    createMainWindow();
+  });
+}
+
+// --- Startup URL resolution ----------------------------------------------
+
+async function startupResolveServerUrl() {
+  // Priority: SERVER_URL env > stored config > default production URL.
+  const envUrl = process.env.SERVER_URL;
+  const stored = store.get('serverUrl');
+  const candidate = envUrl || stored || DEFAULT_SERVER_URL;
+  const validation = validateServerUrl(candidate);
+  if (validation.ok) {
+    serverUrl = validation.origin;
+    store.set('serverUrl', serverUrl);
+    return serverUrl;
+  }
+  // Invalid — fall back to default + warn.
+  console.warn('[startup] Stored/env server URL invalid:', validation.error);
+  const fallback = validateServerUrl(DEFAULT_SERVER_URL);
+  if (fallback.ok) {
+    serverUrl = fallback.origin;
+    store.set('serverUrl', serverUrl);
+    return serverUrl;
+  }
+  throw new Error('Cannot resolve a valid server URL');
+}
+
+// --- App lifecycle --------------------------------------------------------
+
+app.on('ready', async () => {
+  try {
+    await startupResolveServerUrl();
+  } catch (err) {
+    dialog.showErrorBox('Launch Fiber Desktop', `Startup failed: ${err.message}`);
+    app.quit();
+    return;
+  }
+  createMainWindow();
+  try {
+    createTray();
+  } catch (err) {
+    console.warn('[startup] Tray init failed (non-fatal):', err.message);
+  }
+  startSyncTimer();
 });
 
 app.on('window-all-closed', () => {
-  if (process.platform !== 'darwin') {
+  // Keep app alive in tray on Windows/Linux; quit on macOS only if user quit explicitly.
+  if (process.platform === 'darwin' && isQuittingExplicitly) {
+    app.quit();
+  } else if (process.platform !== 'darwin' && isQuittingExplicitly) {
     app.quit();
   }
 });
 
 app.on('activate', () => {
   if (mainWindow === null) {
-    const session = store.get('session');
-    const isLogin = !session;
-    createWindow(isLogin);
+    createMainWindow();
+  } else {
+    mainWindow.show();
   }
 });
 
-// IPC Handlers
-
-ipcMain.handle('auth:login', async (event, { server, username, password }) => {
-  try {
-    // H-1 (Wave 99): validate the user-supplied server URL before any fetch.
-    // Rejects non-https, RFC-1918 addresses, and URLs with path components.
-    const validation = validateServerUrl(server);
-    if (!validation.ok) {
-      return { success: false, error: validation.error };
-    }
-    // Use only the validated origin for all subsequent operations — not the raw input.
-    const safeServer = validation.origin;
-
-    const response = await fetch(`${safeServer}/api/auth/login`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ username, password }),
-      credentials: 'include',
-    });
-
-    if (!response.ok) {
-      return { success: false, error: 'Login failed' };
-    }
-
-    const data = await response.json();
-    const setCookie = response.headers.get('set-cookie');
-
-    // H-2 (Wave 99): encrypt session cookie at rest using the OS credential store.
-    // encryptCookie() uses safeStorage (DPAPI/Keychain) when available and falls
-    // back to plaintext with a warning when unavailable (e.g. headless Linux).
-    const encryptedCookie = encryptCookie(setCookie || '');
-
-    // Migrate any pre-existing plaintext cookie on first login after upgrade.
-    const existingSession = store.get('session');
-    if (existingSession && existingSession.cookie && typeof existingSession.cookie === 'string') {
-      // Old plaintext format — re-encrypt in place before overwriting.
-      store.set('session', {
-        ...existingSession,
-        cookie: encryptCookie(existingSession.cookie),
-      });
-    }
-
-    // Store session — safeServer (validated origin) replaces raw user input.
-    store.set('session', {
-      server: safeServer,
-      username,
-      cookie: encryptedCookie,
-      user: data.user,
-      timestamp: Date.now(),
-    });
-
-    // Store validated backend URL for future requests.
-    store.set('backendUrl', safeServer);
-
-    return { success: true, user: data.user };
-  } catch (err) {
-    return { success: false, error: err.message };
+app.on('before-quit', () => {
+  isQuittingExplicitly = true;
+  if (syncInterval) {
+    clearInterval(syncInterval);
+    syncInterval = null;
   }
 });
 
-ipcMain.handle('auth:logout', () => {
-  store.delete('session');
-  store.delete('backendUrl');
+// --- IPC: sync ------------------------------------------------------------
+
+ipcMain.handle('sync:run-now', async () => {
+  return triggerManualSync();
+});
+
+ipcMain.handle('sync:status', () => {
+  if (!syncEngine) {
+    return { lastSyncAt: null, isRunning: false, errors: [], conflicts: [], events: [] };
+  }
+  return syncEngine.getSyncStatus();
+});
+
+ipcMain.handle('sync:stop', () => {
+  if (syncInterval) {
+    clearInterval(syncInterval);
+    syncInterval = null;
+  }
+  store.set('autoSyncEnabled', false);
   return { success: true };
 });
 
-ipcMain.handle('auth:get-session', () => {
-  const session = store.get('session');
-  if (session) {
-    backendUrl = store.get('backendUrl') || backendUrl;
-    // H-2: decrypt the cookie before returning to the renderer (renderer only
-    // ever sees the decrypted string; it never touches the encrypted object).
-    if (session.cookie && typeof session.cookie === 'object' && 'encrypted' in session.cookie) {
-      return { ...session, cookie: decryptCookie(session.cookie) };
-    }
+ipcMain.handle('sync:start', () => {
+  store.set('autoSyncEnabled', true);
+  startSyncTimer();
+  return { success: true, intervalMinutes: getSyncIntervalMinutes() };
+});
+
+ipcMain.handle('sync:set-interval', (event, minutes) => {
+  const n = parseInt(minutes, 10);
+  if (!Number.isFinite(n) || n < 1) {
+    return { success: false, error: 'Interval must be ≥ 1 minute' };
   }
-  return session || null;
+  store.set('syncIntervalMinutes', n);
+  startSyncTimer();
+  return { success: true };
 });
 
-// H-2: helper to read the session from store and return a decrypted cookie string.
-// All IPC handlers that need to send the cookie to the backend use this so they
-// never accidentally send the raw encrypted object as a Cookie header value.
-function getSessionWithDecryptedCookie() {
-  const session = store.get('session');
-  if (!session) return null;
-  const rawCookie = session.cookie;
-  const cookieStr =
-    rawCookie && typeof rawCookie === 'object' && 'encrypted' in rawCookie
-      ? decryptCookie(rawCookie)
-      : rawCookie || '';
-  return { ...session, cookie: cookieStr };
-}
-
-ipcMain.handle('workspace:list-projects', async (event) => {
-  try {
-    const session = getSessionWithDecryptedCookie();
-    if (!session) {
-      return { success: false, error: 'Not authenticated' };
-    }
-
-    const url = `${session.server}/api/projects?leaves_only=true`;
-    const response = await fetch(url, {
-      method: 'GET',
-      headers: {
-        Cookie: session.cookie || '',
-      },
-    });
-
-    if (!response.ok) {
-      return { success: false, error: 'Failed to fetch projects' };
-    }
-
-    const projects = await response.json();
-    return { success: true, projects };
-  } catch (err) {
-    return { success: false, error: err.message };
-  }
-});
-
-ipcMain.handle('workspace:fetch-tree', async (event, { root = 'user' }) => {
-  try {
-    const session = getSessionWithDecryptedCookie();
-    if (!session) {
-      return { success: false, error: 'Not authenticated' };
-    }
-
-    const url = `${session.server}/api/workspace/tree?root=${root}`;
-    const response = await fetch(url, {
-      method: 'GET',
-      headers: {
-        Cookie: session.cookie || '',
-      },
-    });
-
-    if (!response.ok) {
-      return { success: false, error: 'Failed to fetch workspace tree' };
-    }
-
-    const tree = await response.json();
-    return { success: true, tree };
-  } catch (err) {
-    return { success: false, error: err.message };
-  }
-});
-
-// Sync handlers
-
-ipcMain.handle('sync:get-local-root', () => {
-  return store.get('localRootPath') || null;
-});
-
-ipcMain.handle('sync:set-local-root', async (event, folderPath) => {
-  try {
-    store.set('localRootPath', folderPath);
-    return { success: true, path: folderPath };
-  } catch (err) {
-    return { success: false, error: err.message };
-  }
-});
+ipcMain.handle('sync:get-local-root', () => store.get('localRootPath') || null);
 
 ipcMain.handle('sync:pick-folder', async () => {
-  if (!mainWindow) {
-    return { success: false, error: 'No window' };
-  }
-
+  if (!mainWindow) return { success: false, error: 'No window' };
   try {
     const result = await dialog.showOpenDialog(mainWindow, {
       properties: ['openDirectory'],
       message: 'Select a folder to sync with Launch Fiber',
     });
-
     if (result.canceled || result.filePaths.length === 0) {
       return { success: false, error: 'No folder selected' };
     }
-
-    const folderPath = result.filePaths[0];
-    store.set('localRootPath', folderPath);
-    return { success: true, path: folderPath };
+    store.set('localRootPath', result.filePaths[0]);
+    return { success: true, path: result.filePaths[0] };
   } catch (err) {
     return { success: false, error: err.message };
   }
 });
 
-ipcMain.handle('sync:now', async () => {
+// --- IPC: config / shell --------------------------------------------------
+
+ipcMain.handle('config:get-server-url', () => serverUrl || null);
+
+ipcMain.handle('config:set-server-url', async (event, newUrl) => {
+  const validation = validateServerUrl(newUrl);
+  if (!validation.ok) {
+    return { success: false, error: validation.error };
+  }
+  store.set('serverUrl', validation.origin);
+  return { success: true, origin: validation.origin };
+});
+
+ipcMain.handle('shell:open-external', async (event, url) => {
   try {
-    const session = getSessionWithDecryptedCookie();
-    const localRootPath = store.get('localRootPath');
-
-    if (!session || !localRootPath) {
-      return {
-        success: false,
-        error: 'Not authenticated or no folder selected',
-      };
+    const parsed = new URL(url);
+    if (parsed.protocol !== 'http:' && parsed.protocol !== 'https:') {
+      return { success: false, error: 'Only http(s) URLs may be opened externally' };
     }
-
-    if (!syncEngine) {
-      syncEngine = new SyncEngine(session.server, session.cookie);
-    }
-
-    const result = await syncEngine.runSync(localRootPath);
-
-    if (mainWindow) {
-      mainWindow.webContents.send('sync:completed', result);
-    }
-
-    return result;
+    await shell.openExternal(url);
+    return { success: true };
   } catch (err) {
     return { success: false, error: err.message };
   }
 });
 
-ipcMain.handle('sync:status', () => {
-  if (!syncEngine) {
-    return {
-      lastSyncAt: null,
-      isRunning: false,
-      errors: [],
-      conflicts: [],
-      events: [],
-    };
-  }
+// --- Exports for unit testing --------------------------------------------
 
-  return syncEngine.getSyncStatus();
-});
-
-// M-3 (Wave 99): guard against re-registering the sync:online listener on
-// every did-finish-load event (login->index navigation fires it twice).
-// Using a module-level flag and ipcMain.once prevents listener accumulation
-// and the resulting MaxListenersExceededWarning / multiple-toast bug.
-let syncOnlineListenerRegistered = false;
-
-/**
- * Initialize sync listeners and timers.
- * Safe to call multiple times -- guarded against duplicate registration.
- */
-function initializeSyncListeners() {
-  if (!mainWindow) return;
-
-  // M-3: Only register sync:online once; subsequent did-finish-load calls skip.
-  if (!syncOnlineListenerRegistered) {
-    syncOnlineListenerRegistered = true;
-    ipcMain.on('sync:online', () => {
-      showSyncCountdownToast();
-    });
-  }
-
-  if (!syncInterval) {
-    syncInterval = setInterval(async () => {
-      const session = getSessionWithDecryptedCookie();
-      const localRootPath = store.get('localRootPath');
-
-      if (session && localRootPath) {
-        if (!syncEngine) {
-          syncEngine = new SyncEngine(session.server, session.cookie);
-        }
-
-        const result = await syncEngine.runSync(localRootPath);
-        if (mainWindow) {
-          mainWindow.webContents.send('sync:completed', result);
-        }
-      }
-    }, 15 * 60 * 1000);
-  }
-}
-
-/**
- * Show countdown toast for sync
- */
-function showSyncCountdownToast() {
-  if (!mainWindow) return;
-
-  mainWindow.webContents.send('sync:countdown-start', {
-    seconds: 5,
-    message: 'Syncing in 5s... (click to cancel)',
-  });
-}
-
-// Clean up interval on app quit
-app.on('before-quit', () => {
-  if (syncInterval) {
-    clearInterval(syncInterval);
-  }
-});
-
-// Export security functions for unit testing (main.js is not require()'d in
-// production -- Electron loads it as the entry point -- but tests can exercise
-// the pure validation logic by requiring this file with Electron mocked).
 if (typeof module !== 'undefined') {
-  module.exports = { validateServerUrl, encryptCookie, decryptCookie };
+  module.exports = {
+    validateServerUrl,
+    encryptCookie,
+    decryptCookie,
+    isAllowedNavigationUrl,
+  };
 }
