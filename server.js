@@ -410,6 +410,12 @@ function pageRequiresAuth(reqPath) {
   // /favicon.ico is similarly noisy — let it through too.
   if (reqPath === '/toast.js' || reqPath === '/keyboard.js') return false;
   if (reqPath === '/app-shell.css') return false;
+  // Login page also pulls /css/app-shell.css + /js/app-shell.js + the logo.
+  // Without these in the allowlist the auth middleware 302s the asset to
+  // /login, the browser parses HTML as CSS/JS, and the page renders unstyled.
+  if (reqPath === '/css/app-shell.css') return false;
+  if (reqPath === '/js/app-shell.js') return false;
+  if (reqPath.startsWith('/img/')) return false;
   if (reqPath === '/favicon.ico') return false;
   // Splice Matrix Phase 2B #7 — no-login splicer field markup. The
   // splicer scans a QR code from a printed field document and lands
