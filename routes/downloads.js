@@ -2,10 +2,14 @@ const fs = require('fs');
 const path = require('path');
 
 module.exports = function installDownloadsRoutes(app, pool, mw) {
-  const requireAuth = (mw && mw.requireAuth) || ((req, res, next) => next());
+  // requireAuth from auth.js is a higher-order function — must be CALLED
+  // to get the middleware. Calling with no args means "any authenticated
+  // role." Without the parens, Express was passed the bare factory, which
+  // hangs the request and freezes the Downloads page on "Loading...".
+  const requireAuthMW = (mw && mw.requireAuth) ? mw.requireAuth() : ((req, res, next) => next());
 
   // GET /api/downloads/manifest - list of available installers
-  app.get('/api/downloads/manifest', requireAuth, async (req, res) => {
+  app.get('/api/downloads/manifest', requireAuthMW, async (req, res) => {
     try {
       const installersDir = path.join(__dirname, '..', 'public', 'downloads', 'installers');
       const manifestPath = path.join(installersDir, 'manifest.json');
