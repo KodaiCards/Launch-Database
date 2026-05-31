@@ -32,6 +32,9 @@ Thumbs.db
 !.claude/agents/
 !.claude/agents/**
 package-lock.json
+# desktop/package-lock.json is REQUIRED — GH Actions caches against it
+# and npm ci needs it for reproducible installs. Un-ignore explicitly.
+!desktop/package-lock.json
 
 # Playwright artifacts — regenerated each `npm run test:browser` run.
 playwright-report/
