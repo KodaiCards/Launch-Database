@@ -13,8 +13,9 @@
     "appId": "com.launchfiber.desktop",
     "productName": "Launch Fiber Desktop",
     "win": {
-      "target": "nsis",
-      "icon": "renderer/icon.ico"
+      "target": ["zip", "portable"],
+      "icon": "renderer/icon.ico",
+      "signAndEditExecutable": false
     },
     "nsis": {
       "oneClick": false,
