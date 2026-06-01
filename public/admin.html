@@ -5735,6 +5735,20 @@ async function saveProject(opts) {
     is_rollup: isRollup,
     is_ongoing: !!document.getElementById('proj-ongoing')?.checked,
   };
+  // W246: backend rejects is_rollup=true without rollup_level+rollup_key.
+  // The cascade picker (resolve-or-create → ensureRollupChain) populates these
+  // for the auto-created folder chain, but the admin "+ New Project" modal's
+  // manual "Organize-only (rollup)" checkbox creates a user-defined folder
+  // outside that chain. Derive rollup_level='category' (the only level that
+  // accepts arbitrary user-named folders) and a deterministic rollup_key
+  // scoped to (client, parent, lowercased-name) so dedup works across re-saves
+  // and doesn't collide with cascade-derived category rollups (whose keys are
+  // sa_key|job_team).
+  if (isRollup) {
+    const parentKey = body.parent_id || 'ROOT';
+    body.rollup_level = 'category';
+    body.rollup_key = `manual|${clientId}|${parentKey}|${name.toLowerCase()}`;
+  }
   // Double-submit guard: disable Save button for the duration of the manual
   // (non-silent) submit. Autosave ({silent:true}) doesn't touch the button.
   const saveBtn = silent ? null : document.querySelector('#project-modal .btn-primary[onclick*="saveProject"]');
