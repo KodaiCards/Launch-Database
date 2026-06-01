@@ -140,7 +140,7 @@ module.exports = function installAiRoutes(app, pool, mw) {
   const csvHelpers = require('./hours_csv')._helpers;
   const { normalizeName, normalizeWO, detectColumns, parseDateCell } = csvHelpers;
   const portalModule = require('../portal_module');
-  const { isDuplicateProject } = portalModule;
+  const { isDuplicateProject, findOrCreateRollup } = portalModule;
 
   // ensureRollupChain is set on app.locals by portal_module when the
   // portal extension installer runs. The case below uses it via that
@@ -1274,6 +1274,51 @@ async function executeTool(toolName, toolInput, actor = {}) {
             const realParent = s.parent_local_id
               ? idMap[s.parent_local_id]
               : (s.parent_id || null);
+
+            // W246: route rollup specs through findOrCreateRollup so they
+            // populate rollup_level + rollup_key (preventing the orphan-rollup
+            // pattern that produces duplicate folders) AND get deduped against
+            // existing rollups at the same parent. Derive level/key from the
+            // most-specific spec field present.
+            if (isSpecRollup) {
+              let rollupLevel = null;
+              let rollupKey = null;
+              if (concentratorId) {
+                rollupLevel = 'service_area';
+                rollupKey = concentratorId;
+              } else if (contractId) {
+                rollupLevel = 'contract';
+                rollupKey = contractId;
+              } else if (engineeringContractId) {
+                rollupLevel = 'engineering_contract';
+                rollupKey = engineeringContractId;
+              } else if (!realParent && clientId) {
+                rollupLevel = 'client';
+                rollupKey = clientId;
+              } else {
+                // Generic folder under a non-client parent — synthesize a
+                // stable key from parent + name so re-running bulk_create
+                // with the same tree dedupes instead of duplicating.
+                rollupLevel = 'category';
+                rollupKey = (realParent || 'ROOT') + '|' + String(s.name || '').toLowerCase();
+              }
+              const folderId = await findOrCreateRollup(pool, {
+                parent_id: realParent,
+                rollup_level: rollupLevel,
+                rollup_key: rollupKey,
+                name: s.name,
+                extras: {
+                  client_id: clientId,
+                  concentrator_id: concentratorId || null,
+                  engineering_contract_id: engineeringContractId || null,
+                  program: program || null,
+                },
+              }, txClient);
+              idMap[s.local_id] = folderId;
+              created.push({ local_id: s.local_id, id: folderId, name: s.name });
+              continue;
+            }
+
             const { rows } = await txClient.query(`
               INSERT INTO projects (
                 name, client_id, contract_id, work_order_number,

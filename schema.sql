@@ -2424,6 +2424,29 @@ CREATE UNIQUE INDEX uniq_pricing_entries_job_program_code ON public.pricing_entr
 
 CREATE UNIQUE INDEX uniq_project_name_per_parent ON public.projects USING btree (COALESCE((parent_id)::text, 'ROOT'::text), lower((name)::text)) WHERE (COALESCE(is_rollup, false) = false);
 
+
+--
+-- Name: uniq_rollup_per_parent; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE UNIQUE INDEX uniq_rollup_per_parent ON public.projects USING btree (COALESCE((parent_id)::text, 'ROOT'::text), rollup_level, rollup_key) WHERE (is_rollup = true AND rollup_level <> 'legacy_orphan');
+
+
+--
+-- Name: uniq_contracts_client_number; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE UNIQUE INDEX uniq_contracts_client_number ON public.contracts USING btree (client_id, contract_number) WHERE (client_id IS NOT NULL);
+
+
+--
+-- Name: projects projects_rollup_level_key_required; Type: CHECK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE public.projects
+    ADD CONSTRAINT projects_rollup_level_key_required CHECK (((is_rollup IS NOT TRUE) OR ((rollup_level)::text = 'legacy_orphan'::text) OR ((rollup_level IS NOT NULL) AND (rollup_key IS NOT NULL)))) NOT VALID;
+
+
 --
 -- Name: budgets budgets_updated_at; Type: TRIGGER; Schema: public; Owner: -
 --
