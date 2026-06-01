@@ -630,28 +630,9 @@ module.exports = function installProjectsRoutes(app, pool, mw) {
       // If neither engineering_contract_id nor contract_id was touched, leave it alone.
       const ecIdForUpdate = updEngContractId !== undefined ? updEngContractId : null;
 
-      // Build conditional SET clauses for fields that support explicit clearing.
-      // Semantic: omitted (undefined) = preserve existing; explicit value including
-      // null = write that value (allows clearing the field).
-      // $N slots are assigned dynamically starting after the 25 fixed params.
-      const conditionalParams = [];
-      let nextSlot = 26;
-
-      const ecIdSetClause = updEngContractId !== undefined
-        ? (() => { conditionalParams.push(ecIdForUpdate); return `, engineering_contract_id=$${nextSlot++}`; })()
-        : '';
-      const wonSetClause = work_order_number !== undefined
-        ? (() => { conditionalParams.push(work_order_number); return `, work_order_number=$${nextSlot++}`; })()
-        : '';
-      const concSetClause = concentrator_id !== undefined
-        ? (() => { conditionalParams.push(concentrator_id); return `, concentrator_id=$${nextSlot++}`; })()
-        : '';
-      const sanSetClause = service_area_name !== undefined
-        ? (() => { conditionalParams.push(service_area_name); return `, service_area_name=$${nextSlot++}`; })()
-        : '';
-      const ongoingSetClause = isOngoingFlag !== undefined
-        ? (() => { conditionalParams.push(isOngoingFlag); return `, is_ongoing=$${nextSlot++}`; })()
-        : '';
+      // Conditional clauses for fields that support explicit clearing
+      // (ec id, WO#, concentrator, service_area_name, is_ongoing) are now
+      // handled in the unified dynamic SET-clause builder below (condDefs).
 
       // Resolve the effective is_rollup for THIS save:
       //   - explicit param wins
@@ -660,51 +641,115 @@ module.exports = function installProjectsRoutes(app, pool, mw) {
       const existingRollup = !!existing.rows[0]?.is_rollup;
       const willBeRollup = (isRollupFlag === undefined) ? existingRollup : isRollupFlag;
 
-      // Same trait-blanking rule as POST: when the project is (or
-      // becomes) a rollup, every trait field is forced to NULL. This
-      // is intentional even when caller passed values — owner rule:
-      // rollups have NO traits.
-      const updJobId        = willBeRollup ? null : (job_id || null);
-      // billing_type is NOT NULL in schema; stamp the default for rollups.
-      const updBillingType  = willBeRollup ? 'hourly' : effectiveBillingType;
-      const updBillingRate  = willBeRollup ? null : (effectiveRate || null);
-      const updFootage      = willBeRollup ? null : (footage || null);
-      const updMiles        = willBeRollup ? null : fin.miles;
-      const updExpHours     = willBeRollup ? null : fin.expectedHours;
-      const updExpRev       = willBeRollup ? null : fin.expectedRevenue;
-      const updHrPerMi      = willBeRollup ? null : (fin.permittingHoursPerMile || existingHpm || null);
-      const updProjected    = willBeRollup ? null : newProjected;
-      const updManual       = willBeRollup ? null : newManual;
+      // RT-B H-1 fix (Wave 243-coalesce): partial PUT payloads (e.g. W243
+      // rename-only `{name}`) MUST preserve fields the caller didn't send
+      // — NOT NULL them via undefined→null coercion.
+      //
+      // Semantic: "key present in req.body" = caller is asserting a value
+      // (including explicit null = clear). "key absent" = preserve existing.
+      //
+      // We build the SET clause dynamically, emitting only columns the
+      // caller actually sent. The willBeRollup trait-blanking exception
+      // forces NULL on trait columns regardless of presence (rollup
+      // invariant: rollups have NO traits).
+      const TRAIT_COLS = new Set([
+        'job_id', 'billing_type', 'billing_rate',
+        'footage', 'miles', 'expected_hours', 'expected_revenue',
+        'permitting_hours_per_mile', 'projected_revenue', 'manual_invoice_amount',
+      ]);
 
-      // Fixed params: $1-$25. Conditional params appended after ($26+).
-      const updateParams = [
-        name, client_id, contract_id || null,
-        project_type, effectiveProgram === undefined ? null : effectiveProgram, updJobId,
-        status, updBillingType, updBillingRate,
-        updFootage, updMiles, updExpHours, updExpRev,
-        start_date || null, completed_date || null, billed_date || null,
-        notes, parent_id || null, budget_code_id || null,
-        updHrPerMi,
-        newCadence, updProjected, updManual,
-        req.params.id,
-        isRollupFlag === undefined ? null : isRollupFlag,
-        ...conditionalParams,
+      // present = was this column "asserted" by the caller?
+      // Derived columns (miles/expected_hours/etc.) follow their source
+      // body field's presence.
+      const hasFootage      = 'footage' in req.body;
+      const hasBillingRate  = 'billing_rate' in req.body;
+      const hasJobId        = 'job_id' in req.body;
+      const hasOngoing      = isOngoingFlag !== undefined;
+
+      const colSources = [
+        { col: 'name',                       present: 'name' in req.body,             value: name },
+        { col: 'client_id',                  present: 'client_id' in req.body,        value: client_id },
+        { col: 'contract_id',                present: 'contract_id' in req.body,      value: contract_id || null },
+        { col: 'project_type',               present: 'project_type' in req.body,     value: project_type },
+        { col: 'program',                    present: effectiveProgram !== undefined, value: effectiveProgram },
+        { col: 'job_id',                     present: hasJobId,                       value: job_id || null },
+        { col: 'status',                     present: 'status' in req.body,           value: status },
+        // billing_type/billing_rate are also re-derived when job_id is sent
+        // (jobs may flip billing_type to 'footage' and supply default_rate).
+        { col: 'billing_type',               present: ('billing_type' in req.body) || hasJobId, value: effectiveBillingType },
+        { col: 'billing_rate',               present: hasBillingRate || hasJobId,     value: effectiveRate || null },
+        { col: 'footage',                    present: hasFootage,                     value: footage || null },
+        // Derived from footage:
+        { col: 'miles',                      present: hasFootage,                     value: fin.miles },
+        { col: 'expected_hours',             present: hasFootage || hasBillingRate,   value: fin.expectedHours },
+        { col: 'expected_revenue',           present: hasFootage || hasBillingRate,   value: fin.expectedRevenue },
+        { col: 'start_date',                 present: 'start_date' in req.body,       value: start_date || null },
+        { col: 'completed_date',             present: 'completed_date' in req.body,   value: completed_date || null },
+        { col: 'billed_date',                present: 'billed_date' in req.body,      value: billed_date || null },
+        { col: 'notes',                      present: 'notes' in req.body,            value: notes },
+        { col: 'parent_id',                  present: 'parent_id' in req.body,        value: parent_id || null },
+        { col: 'budget_code_id',             present: 'budget_code_id' in req.body,   value: budget_code_id || null },
+        { col: 'permitting_hours_per_mile',  present: hasFootage,                     value: fin.permittingHoursPerMile || existingHpm || null },
+        // is_ongoing=true forces cadence='monthly' server-side, so include
+        // cadence in SET whenever ongoing flips on, even if caller didn't
+        // pass billing_cadence.
+        { col: 'billing_cadence',            present: ('billing_cadence' in req.body) || hasOngoing, value: newCadence },
+        { col: 'projected_revenue',          present: 'projected_revenue' in req.body, value: newProjected },
+        { col: 'manual_invoice_amount',      present: 'manual_invoice_amount' in req.body, value: newManual },
       ];
 
-      const { rows } = await pool.query(`
-        UPDATE projects SET
-          name=$1, client_id=$2, contract_id=$3,
-          project_type=COALESCE($4, project_type), program=COALESCE($5, program), job_id=$6,
-          status=$7, billing_type=$8, billing_rate=$9,
-          footage=$10, miles=$11, expected_hours=$12, expected_revenue=$13,
-          start_date=$14, completed_date=$15, billed_date=$16,
-          notes=$17, parent_id=$18, budget_code_id=$19,
-          permitting_hours_per_mile=$20,
-          billing_cadence=$21, projected_revenue=$22,
-          manual_invoice_amount=$23,
-          is_rollup=COALESCE($25, is_rollup)${ecIdSetClause}${wonSetClause}${concSetClause}${sanSetClause}${ongoingSetClause}
-        WHERE id=$24 RETURNING *
-      `, updateParams);
+      const setClauses = [];
+      const params = [];
+      let slot = 1;
+
+      for (const s of colSources) {
+        if (willBeRollup && TRAIT_COLS.has(s.col)) {
+          // Rollup trait-blanking invariant: traits MUST be NULL on a
+          // rollup, even when caller passed a value. billing_type is
+          // NOT NULL so stamp default.
+          if (s.col === 'billing_type') {
+            setClauses.push(`billing_type = 'hourly'`);
+          } else {
+            setClauses.push(`${s.col} = NULL`);
+          }
+          continue;
+        }
+        if (!s.present) continue; // Preserve existing — omit from SET.
+        setClauses.push(`${s.col} = $${slot}`);
+        params.push(s.value);
+        slot++;
+      }
+
+      // is_rollup: COALESCE preserves on undefined.
+      const isRollupSlot = slot++;
+      params.push(isRollupFlag === undefined ? null : isRollupFlag);
+      setClauses.push(`is_rollup = COALESCE($${isRollupSlot}, is_rollup)`);
+
+      // The 5 pre-existing conditional clauses (ec id, WO#, concentrator,
+      // service_area_name, is_ongoing) use the same "only emit if caller
+      // supplied" pattern. Re-slot them to align with the new layout.
+      const condDefs = [
+        { used: updEngContractId !== undefined, col: 'engineering_contract_id', value: ecIdForUpdate },
+        { used: work_order_number !== undefined, col: 'work_order_number',      value: work_order_number },
+        { used: concentrator_id !== undefined,   col: 'concentrator_id',        value: concentrator_id },
+        { used: service_area_name !== undefined, col: 'service_area_name',      value: service_area_name },
+        { used: hasOngoing,                      col: 'is_ongoing',             value: isOngoingFlag },
+      ];
+      for (const c of condDefs) {
+        if (!c.used) continue;
+        setClauses.push(`${c.col} = $${slot++}`);
+        params.push(c.value);
+      }
+
+      // WHERE id slot last.
+      const idSlot = slot;
+      params.push(req.params.id);
+
+      const sql = `UPDATE projects SET ${setClauses.join(', ')} WHERE id=$${idSlot} RETURNING *`;
+      const { rows } = await pool.query(sql, params);
+      if (!rows.length) {
+        return res.status(404).json({ error: 'Project not found.' });
+      }
       broadcast('admin', 'project_updated', { id: rows[0].id, name: rows[0].name, client_id: rows[0].client_id });
       logAudit(pool, { req, action: 'update', entity_type: 'project', entity_id: rows[0].id,
         after: { id: rows[0].id, name: rows[0].name, status: rows[0].status, program: rows[0].program },

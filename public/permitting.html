@@ -1691,7 +1691,7 @@ async function ppSubmitCascade() {
 
     if (created) {
       const displayName = typedName || jobName;
-      if (window.LFS && window.LFS.toast) window.LFS.toast('Created new job: ' + displayName, 'success');
+      if (window.LFS && window.LFS.toast) window.LFS.toast.success('Created new job: ' + displayName);
     }
     // Expose the resolved project id so the _origSaveProject wrapper can link
     // it to the pending potential permit without guessing via most-recent query.
