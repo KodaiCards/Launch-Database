@@ -260,6 +260,21 @@ module.exports = function installProjectsRoutes(app, pool, mw) {
       return res.status(400).json({ error: 'service_area_label must be 200 characters or fewer.' });
     }
 
+    // W246: rollup folders MUST be created through the cascade picker
+    // (resolve-or-create → ensureRollupChain) which derives rollup_level +
+    // rollup_key from the picker's selected node. Direct POSTs with
+    // is_rollup=true and no level/key produce orphan rollups that subsequent
+    // cascade calls can't dedupe against. Reject those — the admin UI should
+    // never hit this path post-W246.
+    if (isRollupFlag) {
+      const { rollup_level, rollup_key } = req.body;
+      if (!rollup_level || !rollup_key) {
+        return res.status(400).json({
+          error: 'Rollup folders must be created through the cascade picker (resolve-or-create) which assigns rollup_level + rollup_key. Direct rollup POSTs without those fields are no longer accepted.'
+        });
+      }
+    }
+
     try {
       // Item 22 fix: if the caller explicitly passes a parent_id (rather than
       // letting ensureRollupChain derive one), verify the target parent
@@ -411,6 +426,11 @@ module.exports = function installProjectsRoutes(app, pool, mw) {
       const insertManual      = isRollupFlag ? null : effectiveManual;
       const insertHrPerMi     = isRollupFlag ? null : (fin.permittingHoursPerMile || null);
 
+      // W246: propagate rollup_level/rollup_key from request body when
+      // is_rollup=true (validated above). For non-rollups, both are NULL.
+      const insertRollupLevel = isRollupFlag ? (req.body.rollup_level || null) : null;
+      const insertRollupKey   = isRollupFlag ? (req.body.rollup_key   || null) : null;
+
       const { rows } = await pool.query(`
         INSERT INTO projects (
           name, client_id, contract_id, work_order_number,
@@ -420,8 +440,8 @@ module.exports = function installProjectsRoutes(app, pool, mw) {
           start_date, notes, parent_id, budget_code_id, concentrator_id,
           permitting_hours_per_mile, billing_cadence, projected_revenue,
           manual_invoice_amount, is_rollup, engineering_contract_id, service_area_name,
-          is_ongoing
-        ) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18,$19,$20,$21,$22,$23,$24,$25,$26,$27)
+          is_ongoing, rollup_level, rollup_key
+        ) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18,$19,$20,$21,$22,$23,$24,$25,$26,$27,$28,$29)
         RETURNING *
       `, [
         name, client_id, contract_id || null, work_order_number,
@@ -431,7 +451,7 @@ module.exports = function installProjectsRoutes(app, pool, mw) {
         start_date || null, notes, parent_id || null, budget_code_id || null, concentrator_id || null,
         insertHrPerMi, effectiveCadence, insertProjected,
         insertManual, isRollupFlag, engineering_contract_id || null, service_area_label || null,
-        isOngoingFlag,
+        isOngoingFlag, insertRollupLevel, insertRollupKey,
       ]);
 
       // Auto-create permit / design stages — but ONLY for real projects.
