@@ -106,12 +106,25 @@ async function runMigrations(pool, opts = {}) {
       try { await client.query('ROLLBACK'); } catch {}
       log.push({ filename, status: 'failed', error: e.message });
       console.error(`[migrations] FAILED ${filename}:`, e.message);
-      // DO NOT throw — continue to next migration so a single broken file
-      // doesn't block all subsequent ones. The failed migration is NOT
-      // recorded in schema_migrations, so it will retry on next boot.
+      // Record + continue so subsequent migrations are still attempted (a
+      // failed file is NOT recorded in schema_migrations, so it retries on
+      // next boot). After the loop we throw a hard error if ANY file
+      // failed — so CLI / sync / auto_migrate exit non-zero and Railway
+      // aborts the deploy. The bootstrap path in server.js wraps this in
+      // a try/catch so a stale dev-DB doesn't crash local boot.
     } finally {
       client.release();
     }
+  }
+  const failed = log.filter(f => f.status === 'failed');
+  if (failed.length > 0) {
+    const summary = failed.map(f => `${f.filename}: ${f.error}`).join('; ');
+    const err = new Error(
+      `${failed.length} migration(s) failed — ${summary}`
+    );
+    err.failedFiles = failed;
+    err.result = { applied: appliedCount, skipped: skippedCount, files: log };
+    throw err;
   }
   return { applied: appliedCount, skipped: skippedCount, files: log };
 }
