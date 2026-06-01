@@ -48,3 +48,5 @@ osp-training/dist/
 desktop/node_modules/
 desktop/dist/
 desktop/out/
+tests/integration/client_portal_e2e.test.js
+tests/integration/project_photos_integration.test.js
