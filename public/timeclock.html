@@ -373,8 +373,7 @@ body { background: var(--surface-1); color: var(--text); font-family: 'Inter', -
         <label for="entry-job">Job *
           <button type="button" id="btn-request-new-project" class="btn btn-secondary btn-sm" style="float:right;font-size:11px;padding:2px 8px;display:none" onclick="openRequestNewProjectModal()" title="Request a new project — admin must approve before it merges into the project list"><i class="fa-solid fa-plus" aria-hidden="true"></i> Add New</button>
         </label>
-        <input id="entry-job" list="entry-job-list" placeholder="Type or select a job" autocomplete="off" oninput="cascadeJobInput('entry')" disabled>
-        <datalist id="entry-job-list"></datalist>
+        <select id="entry-job" onchange="cascadeJobChanged('entry')" disabled><option value="">— Select a job —</option></select>
         <div class="cascade-hint" id="entry-job-hint"></div>
         <div id="entry-pending-banner" style="display:none;margin-top:6px;padding:6px 10px;background:var(--warning-light);color:var(--warning-text);border:1px solid var(--warning);border-radius:6px;font-size:11px"><i class="fa-solid fa-clock" aria-hidden="true"></i> Pending project request — time will be held until admin approves.</div>
       </div>
@@ -913,8 +912,7 @@ function renderClockCard(){
         </div>
         <div class="form-group">
           <label for="ci-job">Job *</label>
-          <input id="ci-job" list="ci-job-list" placeholder="Type or select a job" autocomplete="off" oninput="cascadeJobInput('ci')" disabled>
-          <datalist id="ci-job-list"></datalist>
+          <select id="ci-job" onchange="cascadeJobChanged('ci')" disabled><option value="">— Select a job —</option></select>
           <div class="cascade-hint" id="ci-job-hint"></div>
         </div>
       </div>
@@ -1053,8 +1051,7 @@ function openSwitchModal(){
         </div>
         <div class="form-group">
           <label for="sw-job">Job *</label>
-          <input id="sw-job" list="sw-job-list" placeholder="Type or select a job" autocomplete="off" oninput="cascadeJobInput('sw')" disabled>
-          <datalist id="sw-job-list"></datalist>
+          <select id="sw-job" onchange="cascadeJobChanged('sw')" disabled><option value="">— Select a job —</option></select>
           <div class="cascade-hint" id="sw-job-hint"></div>
         </div>
       </div>
@@ -1443,16 +1440,17 @@ async function _populateSaSelect(prefix, client_id, program, savedSaId, savedSaL
       textInp.value = savedSaLabel || _ssGet('lf_tc_' + prefix + '_sa_label') || '';
     }
     if (jobInp) {
-      jobInp.disabled = false;
-      // Populate all active leaf jobs for this client (no SA scoping in no-EC mode).
-      const dl = document.getElementById(prefix + '-job-list');
-      if (dl) {
-        const allLeaves = projectsCache.filter(p =>
-          !p.is_rollup && !(Number(p.child_count) > 0) &&
-          String(p.client_id) === String(client_id)
-        );
-        dl.innerHTML = allLeaves.map(p => '<option value="' + esc(p.name) + '"></option>').join('');
+      // W249 P0: jobInp is now a <select>. Populate options directly.
+      const allLeaves = projectsCache.filter(p =>
+        !p.is_rollup && !(Number(p.child_count) > 0) &&
+        String(p.client_id) === String(client_id)
+      );
+      const html = ['<option value="">— Select a job —</option>'];
+      for (const p of allLeaves) {
+        html.push('<option value="' + esc(p.name) + '">' + esc(p.name) + '</option>');
       }
+      jobInp.innerHTML = html.join('');
+      jobInp.disabled = allLeaves.length === 0;
     }
     return;
   }
@@ -1480,19 +1478,23 @@ async function _populateSaSelect(prefix, client_id, program, savedSaId, savedSaL
 }
 
 async function _populateJobDatalist(prefix, sa_folder_id, includeCompleted, savedJob){
-  const inp = _el(prefix, 'job');
-  const dl = document.getElementById(prefix + '-job-list');
-  if (!inp || !dl) return;
-  inp.disabled = true;
-  dl.innerHTML = '';
+  // W249 P0: jobs render as <select> (was <input list>+<datalist>) so users pick
+  // an existing leaf project instead of free-typing a name. Eliminates the
+  // typo→error path on clock-in/switch (resolveFromCascadeOnly was throwing
+  // "Job X not found" when names didn't match exactly).
+  const sel = _el(prefix, 'job');
+  if (!sel) return;
+  sel.disabled = true;
+  sel.innerHTML = '<option value="">— Loading… —</option>';
   const jobs = await _fetchJobsForSa(sa_folder_id, includeCompleted);
+  const html = ['<option value="">— Select a job —</option>'];
   for (const j of jobs){
-    const opt = document.createElement('option');
-    opt.value = j.name || j.job_name || '';
-    dl.appendChild(opt);
+    const name = j.name || j.job_name || '';
+    const sel_ = (savedJob && String(savedJob) === String(name)) ? ' selected' : '';
+    html.push('<option value="' + esc(name) + '"' + sel_ + '>' + esc(name) + '</option>');
   }
-  inp.disabled = false;
-  if (savedJob) inp.value = savedJob;
+  sel.innerHTML = html.join('');
+  sel.disabled = jobs.length === 0;
 }
 
 async function mountCascade(prefix, opts){
@@ -1553,7 +1555,8 @@ async function cascadeChanged(prefix, tier){
   const progSel = _el(prefix, 'program');
   const saSel = _el(prefix, 'sa');
   const jobInp = _el(prefix, 'job');
-  const dl = document.getElementById(prefix + '-job-list');
+  // W249 P0: job is now a <select>; reset via innerHTML to clear stale options.
+  const JOB_PLACEHOLDER = '<option value="">— Select a job —</option>';
 
   if (tier === 'client'){
     const v = clientSel ? clientSel.value : '';
@@ -1569,8 +1572,7 @@ async function cascadeChanged(prefix, tier){
     const textRow = document.getElementById(prefix + '-sa-text-row');
     if (selectRow) selectRow.style.display = '';
     if (textRow) textRow.style.display = 'none';
-    if (jobInp){ jobInp.value = ''; jobInp.disabled = true; }
-    if (dl) dl.innerHTML = '';
+    if (jobInp){ jobInp.innerHTML = JOB_PLACEHOLDER; jobInp.disabled = true; }
     if (v) await _populateProgramSelect(prefix, v, null);
   } else if (tier === 'program'){
     const client = clientSel ? clientSel.value : '';
@@ -1582,8 +1584,7 @@ async function cascadeChanged(prefix, tier){
     if (saSel){ saSel.innerHTML = '<option value="">— Select service area —</option>'; saSel.disabled = true; }
     const textInp = _el(prefix, 'sa-text');
     if (textInp) textInp.value = '';
-    if (jobInp){ jobInp.value = ''; jobInp.disabled = true; }
-    if (dl) dl.innerHTML = '';
+    if (jobInp){ jobInp.innerHTML = JOB_PLACEHOLDER; jobInp.disabled = true; }
     if (v && client) await _populateSaSelect(prefix, client, v, null);
   } else if (tier === 'sa'){
     const v = saSel ? saSel.value : '';
@@ -1591,16 +1592,18 @@ async function cascadeChanged(prefix, tier){
     const saUuid = (opt && opt.dataset.saUuid) || v;
     _ssSet('lf_tc_' + prefix + '_sa_id', v || null);
     _ssDel('lf_tc_' + prefix + '_job');
-    if (jobInp){ jobInp.value = ''; jobInp.disabled = !v; }
-    if (dl) dl.innerHTML = '';
+    if (jobInp){ jobInp.innerHTML = JOB_PLACEHOLDER; jobInp.disabled = !v; }
     if (v) await _populateJobDatalist(prefix, v, false, null);
   }
 }
 
-function cascadeJobInput(prefix){
-  const inp = _el(prefix, 'job');
-  _ssSet('lf_tc_' + prefix + '_job', inp ? inp.value : null);
+function cascadeJobChanged(prefix){
+  // W249 P0: was cascadeJobInput (text input). Now a <select> change handler.
+  const sel = _el(prefix, 'job');
+  _ssSet('lf_tc_' + prefix + '_job', sel ? sel.value : null);
 }
+// Back-compat alias for any callers still referencing the old name.
+function cascadeJobInput(prefix){ return cascadeJobChanged(prefix); }
 
 function cascadeSaLabelInput(prefix){
   const textInp = _el(prefix, 'sa-text');
