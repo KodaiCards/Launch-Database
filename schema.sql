@@ -3687,3 +3687,67 @@ ALTER TABLE public.potential_permits
 ALTER TABLE public.potential_permits
     ADD CONSTRAINT potential_permits_status_enum
         CHECK (status IS NULL OR status IN ('pending', 'approved', 'accepted', 'rejected', 'withdrawn'));
+
+-- event_log: observability telemetry (migration 0063)
+-- Distinct from audit_log (compliance + tamper-resistant).
+-- Rows are hard-deleted by a scheduled prune job (default retention: 30 days).
+-- NOTE: schema:sync must be re-run against a live DB after migration 0063 is
+-- applied to regenerate this block from pg_dump. The block below is a
+-- manually-maintained approximation to bootstrap a fresh DB to parity.
+CREATE TABLE IF NOT EXISTS public.event_log (
+    id              bigserial NOT NULL,
+    occurred_at     timestamp with time zone NOT NULL DEFAULT now(),
+    program         text NOT NULL,
+    event_type      text NOT NULL,
+    source          text NOT NULL DEFAULT 'client',
+    actor_user_id   uuid,
+    actor_username  text,
+    actor_type      text NOT NULL DEFAULT 'user',
+    session_id      text,
+    request_id      text,
+    target          text,
+    url             text,
+    http_method     text,
+    http_status     integer,
+    duration_ms     integer,
+    message         text,
+    ip              text,
+    user_agent      text,
+    meta            jsonb,
+    CONSTRAINT event_log_pkey PRIMARY KEY (id)
+);
+
+CREATE INDEX IF NOT EXISTS idx_event_log_occurred_at
+  ON public.event_log USING btree (occurred_at DESC);
+
+CREATE INDEX IF NOT EXISTS idx_event_log_program
+  ON public.event_log USING btree (program, occurred_at DESC);
+
+CREATE INDEX IF NOT EXISTS idx_event_log_actor
+  ON public.event_log USING btree (actor_user_id, occurred_at DESC);
+
+CREATE INDEX IF NOT EXISTS idx_event_log_event_type
+  ON public.event_log USING btree (event_type, occurred_at DESC);
+
+CREATE INDEX IF NOT EXISTS idx_event_log_request_id
+  ON public.event_log USING btree (request_id)
+  WHERE request_id IS NOT NULL;
+
+CREATE INDEX IF NOT EXISTS idx_event_log_errors
+  ON public.event_log USING btree (occurred_at DESC)
+  WHERE event_type IN ('js_error', 'api_error', 'promise_rejection', 'login_failed');
+
+ALTER TABLE ONLY public.event_log
+    ADD CONSTRAINT IF NOT EXISTS event_log_actor_user_id_fkey FOREIGN KEY (actor_user_id) REFERENCES public.users(id) ON DELETE SET NULL;
+
+-- event_retention_config: singleton retention policy + prune run state
+CREATE TABLE IF NOT EXISTS public.event_retention_config (
+    id                   integer NOT NULL PRIMARY KEY,
+    retention_days       integer NOT NULL DEFAULT 30,
+    last_prune_run_at    timestamp with time zone,
+    last_prune_row_count integer,
+    updated_at           timestamp with time zone NOT NULL DEFAULT now(),
+    CONSTRAINT event_retention_config_id_check CHECK ((id = 1))
+);
+
+INSERT INTO public.event_retention_config (id, retention_days) VALUES (1, 30) ON CONFLICT DO NOTHING;
