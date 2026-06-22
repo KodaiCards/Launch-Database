@@ -2,42 +2,33 @@
 -- wipe_test_data.sql  —  CLEAN-SLATE WIPE of all business/test data
 -- ----------------------------------------------------------------------------
 -- KEEPS:  users (logins)  +  schema_migrations (migration history)
--- WIPES:  everything else in the public schema (clients, ECs, service areas,
---         projects, jobs, rates, contracts, time entries, invoices, splice,
---         permits, budgets, staff, etc.)
+-- WIPES:  everything else, including the staff directory (data only — table kept)
 --
--- SAFETY:
---   * Take a Railway Postgres snapshot/backup BEFORE running this.
---   * Runs in a single transaction. If anything would empty the users table,
---     it RAISES and the whole thing ROLLS BACK — you cannot get locked out.
---   * Idempotent: safe to run again; truncated tables just stay empty.
+-- WHY THE staff DANCE: users.staff_id has an FK to staff, so TRUNCATE staff
+-- CASCADE would pull users (logins) in. So we keep staff OUT of the cascade,
+-- then NULL the users->staff link and DELETE staff rows (FK + table stay intact).
 --
--- HOW TO RUN (pick one):
---   A) Railway -> your Postgres service -> "Data" tab -> query box -> paste + run
---   B) Railway CLI:   railway connect postgres   (then paste this file)
---   C) Any client (psql/TablePlus) using DATABASE_PUBLIC_URL (enable public
---      networking on the Postgres service first; the internal URL won't reach
---      from outside Railway).
+-- SAFETY: single transaction; if users ends up empty it RAISES and rolls back.
 -- ============================================================================
 
 BEGIN;
 
--- 1) Truncate every public table except the keep-list.
+-- 1) Truncate every public table except users, schema_migrations, staff.
 DO $$
 DECLARE r RECORD;
 BEGIN
   FOR r IN
-    SELECT tablename
-    FROM pg_tables
+    SELECT tablename FROM pg_tables
     WHERE schemaname = 'public'
-      AND tablename NOT IN ('users', 'schema_migrations')
+      AND tablename NOT IN ('users', 'schema_migrations', 'staff')
   LOOP
     EXECUTE format('TRUNCATE TABLE public.%I RESTART IDENTITY CASCADE', r.tablename);
   END LOOP;
 END $$;
 
--- 2) Clear any now-dangling staff link on the kept user rows.
+-- 2) Break the users->staff link, then clear the staff directory.
 UPDATE public.users SET staff_id = NULL WHERE staff_id IS NOT NULL;
+DELETE FROM public.staff;
 
 -- 3) Safety guard: never commit a wipe that emptied the logins.
 DO $$
