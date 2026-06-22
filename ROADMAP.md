@@ -88,7 +88,14 @@ Client
 
 **Goal:** replace the rollup tree with the clean model + auto-population + no pop-ups + fast bulk setup. Biggest daily-pain fix; everything downstream depends on it.
 
-- **Schema (new migration `0063+`):** service areas as first-class units, jobs as line items. Reuse `ec_service_areas`, `jobs`, `job_assignments`, `time_entries`, `pricing_entries`; retire `is_rollup`/`rollup_level`/`rollup_key` from the everyday model. Each job: discipline, employee, billing type, rate, hours, status, $, dates.
+- **Schema (new migration `0064+`):** service areas as first-class units, jobs as line items. Reuse `ec_service_areas`, `jobs`, `job_assignments`, `time_entries`, `pricing_entries`; retire `is_rollup`/`rollup_level`/`rollup_key` from the everyday model. Each job: discipline, employee, billing type, rate, hours, status, $, dates.
+- **Disciplines, jobs & statuses (locked 2026-06-22):**
+  - Structure = **teams → jobs**. Jobs are an admin-managed, **expandable** list (many to come), each scoped to a team.
+  - Starting jobs: **Permitting** → "DOT Permitting"; **Design** → "Staking"; **Construction** → "Inspection".
+  - Status pipeline is **per team**:
+    - **Permitting:** Potential → Started → Submitted → Approved → Issued. Plus an optional **Revision** state, entered via an advance-choice when changes are requested (typically from Submitted); once resolved it advances to **Approved**.
+    - **Design:** Potential → Started → Submitted → Client Approved. Same optional **Revision**; once resolved it advances to **Client Approved**.
+    - **Construction:** no pipeline yet — jobs (e.g. Inspection) just exist + track hours. Construction *management* gets its own pipeline later (with materials). Firm is engineering-only: inspections + construction-related work, not actual construction.
 - **Reserve future hooks now:** per-service-area materials table (BOM rows: item, qty, unit, optional cost) + map/KMZ attachment + client-visibility flag, plus a materials section stub in the projects-tab expanded detail view. Schema defined now; auto-populate + UI built in Phases 7 & 10.
 - **Admin UI rebuild** (`public/admin.html` + `public/js/projects_tab.js`, `project_cascade.js`, `project_picker.js`): Client → EC (RUS) / direct service areas (non-RUS) → **service-area detail = a clean inline-editable job table**.
 - **Auto-population & conditional logic** (`routes/projects.js`, `engineering_contracts.js`, `jobs.js`, `contracts.js` + cascade/picker JS).
@@ -116,6 +123,7 @@ Client
 - **Replace AI-vision template** (`routes/invoice_templates.js`) with a simple configurable template (logo, header/client fields, line-item columns, totals, per-client); render via existing puppeteer path.
 - One-time vs monthly/ongoing (existing `is_ongoing`/`billing_cadence`, simplified).
 - **Money view:** ready-to-bill queue (one-click invoice), estimate-vs-actual margin per service area, AR aging (draft/sent/paid), accounting CSV export.
+- **Hours utilization / overhead:** any time **not** logged against a billable project/job counts as **overhead**. The revenue tab shows utilization (billable vs overhead hours) and folds overhead into the margin view. Builds on `time_entries.is_billable` / `unbilled_category`.
 
 **Done when:** jobs sum into a clean templated PDF invoice; money view shows ready-to-bill, margin, and who owes what.
 
@@ -184,7 +192,7 @@ Client
 
 - KMZ merge semantics (latest-wins vs feature-merge) — Phase 7.
 - Desktop-app state / investment for folder-watching — Phase 7.
-- Canonical job disciplines + status sets per pipeline — Phase 2.
+- ~~Canonical job disciplines + status sets~~ — **resolved** (see Phase 2 → "Disciplines, jobs & statuses").
 - Exact invoice template fields + per-client variants — Phase 4.
 - Materials + map detailed workflow (source of truth, CSV shape) — design at Phase 2, build at Phase 10.
 
