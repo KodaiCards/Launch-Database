@@ -96,4 +96,47 @@ module.exports = function registerMyWork(app, pool, mw) {
       res.status(500).json({ error: 'Failed to load your hours.' });
     }
   });
+
+  // Caller's recent time entries — read-only, caller-scoped.
+  // Returns the most recent entries logged by this user (by user_id or staff_id),
+  // with job and service-area context for display.
+  app.get('/api/my/entries', requireAuth(), async (req, res) => {
+    try {
+      const userId = req.user && req.user.id;
+      if (!userId) return res.status(401).json({ error: 'Not authenticated' });
+
+      const staffRow = await pool.query('SELECT staff_id FROM users WHERE id = $1', [userId]);
+      const staffId = staffRow.rows[0]?.staff_id || null;
+
+      const limit = Math.min(Math.max(parseInt(req.query.limit) || 20, 1), 100);
+
+      const { rows } = await pool.query(
+        `SELECT
+           te.id,
+           te.entry_date::text  AS entry_date,
+           te.hours::float      AS hours,
+           te.notes,
+           te.created_at,
+           j.name               AS job_name,
+           saj.team             AS team,
+           sa.name              AS service_area_name,
+           c.name               AS client_name
+         FROM time_entries te
+         JOIN service_area_jobs saj ON saj.id = te.service_area_job_id
+         JOIN service_areas     sa  ON sa.id  = saj.service_area_id
+         LEFT JOIN clients      c   ON c.id   = sa.client_id
+         LEFT JOIN jobs         j   ON j.id   = saj.job_id
+         WHERE (te.user_id = $1 OR ($2::uuid IS NOT NULL AND te.staff_id = $2))
+           AND te.service_area_job_id IS NOT NULL
+         ORDER BY te.entry_date DESC, te.created_at DESC
+         LIMIT $3`,
+        [userId, staffId, limit]
+      );
+
+      res.json(rows);
+    } catch (e) {
+      console.error('[my-work:entries]', e && e.message);
+      res.status(500).json({ error: 'Failed to load your recent entries.' });
+    }
+  });
 };
