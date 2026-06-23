@@ -221,6 +221,19 @@ const PORTAL_DEFS = [
     description: 'Full administration: projects, clients, billing, staff, and system settings.',
     canAccess: u => u.role === 'admin',
   },
+  // Keystone operations UI (service areas → jobs → hours → billing). Deployed
+  // since the rebuild but previously only reachable by typing the URL — this
+  // tile surfaces it in the launcher. Lands on service-areas.html (carries the
+  // app_nav rail → Dashboard / Pipelines / Billing).
+  {
+    id: 'operations',
+    audience: 'employee',
+    url: '/service-areas.html',
+    name: 'Operations',
+    icon: 'diagram-project',
+    description: 'Service areas, jobs, pipelines, hours, and billing — the new operations model.',
+    canAccess: u => u.role === 'admin' || canAccessPortal(u, 'design') || canAccessPortal(u, 'permitting'),
+  },
   {
     id: 'splice',
     audience: 'employee',
