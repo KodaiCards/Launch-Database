@@ -508,6 +508,26 @@ module.exports = function installServiceAreaRoutes(app, pool, mw) {
     }
   });
 
+  // Invoices list (new model) with line items embedded, for the Billing view.
+  app.get('/api/billing/invoices', requireManagerOrAdmin, async (req, res) => {
+    try {
+      const inv = await pool.query(
+        `SELECT i.*, c.name AS client_name
+         FROM invoices i LEFT JOIN clients c ON c.id = i.client_id
+         ORDER BY i.created_at DESC LIMIT 200`
+      );
+      const ids = inv.rows.map(r => r.id);
+      let items = [];
+      if (ids.length) items = (await pool.query('SELECT * FROM invoice_items WHERE invoice_id = ANY($1) ORDER BY created_at', [ids])).rows;
+      const byInv = {};
+      items.forEach(it => (byInv[it.invoice_id] = byInv[it.invoice_id] || []).push(it));
+      res.json(inv.rows.map(r => ({ ...r, items: byInv[r.id] || [] })));
+    } catch (e) {
+      console.error('[billing:invoices]', e && e.message);
+      res.status(500).json({ error: 'Failed to load invoices.' });
+    }
+  });
+
   // Dashboard overview (new model): headline totals, pipeline tallies per
   // team/stage, recent service areas, and per-client rollups. Feeds dashboard.html.
   app.get('/api/dashboard/overview', requireAuth(STAFF_ROLES), async (req, res) => {

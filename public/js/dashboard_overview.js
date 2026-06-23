@@ -87,7 +87,7 @@
   function renderBill() {
     const r = d.ready_to_bill || {};
     $('tabContent').innerHTML = `<div class="card">
-      <div class="card-h">Ready to bill <a href="#">Open billing →</a></div>
+      <div class="card-h">Ready to bill <a href="/billing.html">Open billing →</a></div>
       <div class="bigrow">
         <div class="big">${num(r.count)}<span class="u">jobs done, unbilled</span></div>
         <div class="big">${money(r.total)}<span class="u">estimated value</span></div>

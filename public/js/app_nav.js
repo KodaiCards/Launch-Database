@@ -35,7 +35,7 @@
     + link('dashboard', '/dashboard.html', 'fa-gauge-high', 'Dashboard')
     + link('service-areas', '/service-areas.html', 'fa-diagram-project', 'Service areas')
     + link('pipelines', '/pipeline.html?team=permitting', 'fa-table-columns', 'Pipelines')
-    + soon('fa-file-invoice-dollar', 'Billing')
+    + link('billing', '/billing.html', 'fa-file-invoice-dollar', 'Billing')
     + soon('fa-clock', 'Hours')
     + soon('fa-users', 'Clients')
     + '<a class="app-nav" style="margin-top:auto" href="/admin.html"><i class="fa-solid fa-gear"></i> Admin</a>';
