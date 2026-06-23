@@ -107,6 +107,13 @@ button{font-family:inherit;cursor:pointer;border:none;background:none;color:inhe
 .sa-map-link{margin-top:12px;display:inline-flex;align-items:center;gap:8px;padding:8px 12px;border:1px solid var(--gray-border);border-radius:8px;color:var(--primary);font-size:12px;font-weight:600;text-decoration:none;background:var(--surface-1)}
 .sa-map-link:hover{background:var(--primary-light)}
 
+/* Service Areas summary header */
+.sa-summary{padding:14px 16px;margin-bottom:14px}
+.sa-summary-row{display:flex;justify-content:space-between;align-items:center;gap:14px;flex-wrap:wrap}
+.sa-summary-total{font-size:18px;font-weight:700;color:var(--text)}
+.sa-summary-sub{font-size:12px;color:var(--text-muted)}
+.sa-summary-prog{flex:1;min-width:180px;max-width:300px}
+
 /* Invoice status pills */
 .inv-status{padding:2px 8px;border-radius:8px;font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.4px;display:inline-block}
 .inv-sent{background:var(--info-light);color:var(--info-text)}
@@ -195,6 +202,7 @@ button{font-family:inherit;cursor:pointer;border:none;background:none;color:inhe
       <div id="cp-invoices-body"></div>
     </div>
     <div id="cp-tab-service-areas" class="cp-tab" style="display:none">
+      <div id="cp-sa-header"></div>
       <div class="stats-grid" id="cp-sa-stats"></div>
       <div id="cp-sa-body"></div>
     </div>
@@ -478,32 +486,66 @@ let _customerServiceAreas = [];
 const SA_TEAM_LABELS = { permitting: 'Permitting', design: 'Design', construction: 'Construction', other: 'Other' };
 const SA_DONE = new Set(['complete', 'billed']);
 
+function cpSaClearChrome(){
+  const header = document.getElementById('cp-sa-header');
+  const stats = document.getElementById('cp-sa-stats');
+  if (header) header.innerHTML = '';
+  if (stats) stats.innerHTML = '';
+}
+
 async function cpLoadServiceAreas(){
   const body = document.getElementById('cp-sa-body');
-  const stats = document.getElementById('cp-sa-stats');
-  body.innerHTML = '<div class="empty-state"><i class="fa-solid fa-spinner fa-spin"></i><p>Loading…</p></div>';
+  cpSaClearChrome();
+  body.innerHTML = '<div class="empty-state"><i class="fa-solid fa-spinner fa-spin"></i><p>Loading service areas…</p></div>';
   try {
     _customerServiceAreas = await api('/api/customer/service-areas');
     renderServiceAreas();
   } catch (e) {
-    if (stats) stats.innerHTML = '';
-    body.innerHTML = `<div class="empty-state" style="color:var(--danger-text)">Failed to load: ${esc(e.message)}</div>`;
+    cpSaClearChrome();
+    body.innerHTML = `<div class="empty-state" style="color:var(--danger-text)">
+      <i class="fa-solid fa-triangle-exclamation"></i>
+      <p>Couldn't load your service areas.</p>
+      <p style="font-size:12px">${esc(e.message)}</p>
+      <button class="btn btn-secondary btn-sm" style="margin-top:10px" onclick="cpLoadServiceAreas()">Try again</button>
+    </div>`;
   }
 }
 
 function renderServiceAreas(){
   const body = document.getElementById('cp-sa-body');
+  const header = document.getElementById('cp-sa-header');
   const stats = document.getElementById('cp-sa-stats');
   const areas = _customerServiceAreas || [];
   if (!areas.length){
-    stats.innerHTML = '';
-    body.innerHTML = '<div class="empty-state"><i class="fa-solid fa-map-location-dot"></i><p>No service areas to show yet.</p></div>';
+    cpSaClearChrome();
+    body.innerHTML = `<div class="empty-state">
+      <i class="fa-solid fa-map-location-dot"></i>
+      <p>No service areas to show yet.</p>
+      <p style="font-size:12px">When we publish one for you, it'll appear here.</p>
+    </div>`;
     return;
   }
   const isDone = s => ['completed','billed','complete'].includes(String(s || '').toLowerCase());
   const activeCount = areas.filter(a => String(a.status || '').toLowerCase() === 'active').length;
   const doneCount = areas.filter(a => isDone(a.status)).length;
   const totalJobs = areas.reduce((s, a) => s + (Number(a.jobs_total) || 0), 0);
+  const totalDone = areas.reduce((s, a) => s + (Number(a.jobs_done) || 0), 0);
+  // Overall completion is aggregate (all jobs done / all jobs), not an average
+  // of per-area %, so big areas weigh proportionally.
+  const overallPct = totalJobs > 0 ? Math.round(totalDone / totalJobs * 100) : null;
+  if (header) header.innerHTML = `
+    <div class="sa-summary card">
+      <div class="sa-summary-row">
+        <div>
+          <div class="sa-summary-total">${areas.length} service area${areas.length === 1 ? '' : 's'}</div>
+          <div class="sa-summary-sub">${activeCount} active · ${doneCount} completed</div>
+        </div>
+        <div class="sa-summary-prog">
+          <div class="sa-summary-sub" style="margin-bottom:4px">${overallPct != null ? overallPct + '% complete overall' : 'No jobs yet'}</div>
+          ${overallPct != null ? `<div class="progress-track" style="width:100%"><div class="progress-fill" style="width:${overallPct}%"></div></div>` : ''}
+        </div>
+      </div>
+    </div>`;
   stats.innerHTML = `
     <div class="stat-card"><div class="stat-label">Active Areas</div><div class="stat-value">${activeCount}</div></div>
     <div class="stat-card"><div class="stat-label">Completed Areas</div><div class="stat-value">${doneCount}</div></div>
