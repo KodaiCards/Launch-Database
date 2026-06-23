@@ -12,7 +12,7 @@
 
   const state = {
     clients: [], staff: [], jobs: [], ecs: [], pipelines: {}, approval: {},
-    areas: [], selectedId: null, detail: null,
+    areas: [], selectedId: null, detail: null, hoursJob: null,
   };
 
   // ── Theme ────────────────────────────────────────────────────────────────
@@ -30,8 +30,16 @@
     undoAction = action;
     $('undoMsg').textContent = msg;
     $('undoBar').classList.add('show');
+    $('undoBtn').style.display = '';
     clearTimeout(undoTimer);
     undoTimer = setTimeout(() => $('undoBar').classList.remove('show'), 6000);
+  }
+  function flash(msg) {
+    $('undoMsg').textContent = msg;
+    $('undoBtn').style.display = 'none';
+    $('undoBar').classList.add('show');
+    clearTimeout(undoTimer);
+    undoTimer = setTimeout(() => $('undoBar').classList.remove('show'), 5000);
   }
   $('undoBtn').addEventListener('click', async () => {
     $('undoBar').classList.remove('show');
@@ -114,7 +122,10 @@
     $('main').innerHTML = `
       <div class="sa-title-row">
         <div class="sa-title">${esc(sa.name)}</div>
-        <button class="btn btn-secondary btn-sm" id="delSaBtn"><i class="fa-solid fa-trash"></i></button>
+        <div style="display:flex;gap:6px">
+          <button class="btn btn-primary btn-sm" id="billBtn"><i class="fa-solid fa-file-invoice-dollar"></i> Bill ready jobs</button>
+          <button class="btn btn-secondary btn-sm" id="delSaBtn"><i class="fa-solid fa-trash"></i></button>
+        </div>
       </div>
       <div class="sa-sub">
         <span>${esc(sa.client_name || '')}</span>
@@ -145,6 +156,7 @@
       </div>`;
 
     $('delSaBtn').addEventListener('click', deleteArea);
+    $('billBtn').addEventListener('click', billArea);
     $('addJobSel').addEventListener('change', addJob);
     bindRowHandlers();
   }
@@ -168,7 +180,7 @@
       <td><select data-f="billing_type">${billOpts}</select></td>
       <td class="col-num"><input data-f="rate" type="number" step="0.01" value="${j.rate ?? ''}"></td>
       <td class="col-num"><input data-f="estimated_amount" type="number" step="0.01" value="${j.estimated_amount ?? ''}"></td>
-      <td class="col-num">${Number(j.actual_hours || 0).toFixed(2)}</td>
+      <td class="col-num">${Number(j.actual_hours || 0).toFixed(2)} <button class="btn-ghost" data-loghrs title="Log hours" style="padding:2px 5px"><i class="fa-solid fa-plus"></i></button></td>
       <td>${chipsHtml(j)}</td>
       <td><button class="btn-ghost" data-del><i class="fa-solid fa-xmark"></i></button></td>
     </tr>`;
@@ -197,6 +209,7 @@
       tr.querySelectorAll('[data-f]').forEach(el =>
         el.addEventListener('change', () => saveField(jobId, el.dataset.f, el.value)));
       tr.querySelector('[data-del]')?.addEventListener('click', () => deleteJob(jobId));
+      tr.querySelector('[data-loghrs]')?.addEventListener('click', () => openHoursModal(jobId));
       tr.querySelectorAll('[data-adv]').forEach(el =>
         el.addEventListener('click', () => advance(jobId, el.dataset.adv)));
     });
@@ -297,6 +310,44 @@
       selectArea(sa.id);
     } catch (e) { alert('Create failed: ' + e.message); }
   });
+
+  // ── Hours modal + billing ──────────────────────────────────────────────────
+  function openHoursModal(jobId) {
+    state.hoursJob = jobId;
+    const job = (state.detail.jobs || []).find(j => j.id === jobId);
+    $('h_jobname').textContent = job ? (job.job_name || job.team || 'job') : '';
+    $('h_staff').innerHTML = `<option value="">Me (my account)</option>` +
+      state.staff.map(s => `<option value="${s.id}">${esc(s.name)}</option>`).join('');
+    $('h_hours').value = ''; $('h_note').value = '';
+    $('h_entries').innerHTML = 'Loading…';
+    api('/api/service-area-jobs/' + jobId + '/time-entries').then(es => {
+      $('h_entries').innerHTML = es.length
+        ? es.map(e => `<div style="display:flex;justify-content:space-between;padding:2px 0;border-bottom:1px solid var(--border-weak)"><span>${esc(e.staff_name || '(unattributed)')}</span><span>${Number(e.hours).toFixed(2)}h</span></div>`).join('')
+        : '<span class="muted">No hours logged yet.</span>';
+    }).catch(() => { $('h_entries').innerHTML = ''; });
+    $('hoursModal').classList.add('open');
+  }
+  $('h_cancel').addEventListener('click', () => $('hoursModal').classList.remove('open'));
+  $('h_save').addEventListener('click', async () => {
+    const hours = parseFloat($('h_hours').value);
+    if (!hours || hours <= 0) { $('h_hours').focus(); return; }
+    const body = { hours, notes: $('h_note').value || null };
+    const staff = $('h_staff').value; if (staff) body.staff_id = staff;
+    try {
+      await api('/api/service-area-jobs/' + state.hoursJob + '/time-entries', 'POST', body);
+      $('hoursModal').classList.remove('open');
+      await refreshDetail();
+      flash('Hours logged');
+    } catch (e) { alert('Log failed: ' + e.message); }
+  });
+
+  async function billArea() {
+    try {
+      const r = await api('/api/service-areas/' + state.selectedId + '/bill', 'POST');
+      await refreshDetail();
+      flash('Invoice created: ' + money(r.invoice.total_amount) + ' · ' + r.item_count + ' item(s)');
+    } catch (e) { alert(e.message); }
+  }
 
   boot();
 })();

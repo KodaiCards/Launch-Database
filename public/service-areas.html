@@ -136,6 +136,21 @@ input,select{font-family:inherit;font-size:13px;color:var(--text);background:var
     </div>
   </div>
 
+  <!-- Log hours modal -->
+  <div class="modal-bg" id="hoursModal">
+    <div class="modal">
+      <h3>Log hours — <span id="h_jobname"></span></h3>
+      <div class="field"><label>Hours</label><input id="h_hours" type="number" step="0.25" min="0" placeholder="e.g. 4"></div>
+      <div class="field"><label>Who</label><select id="h_staff"></select></div>
+      <div class="field"><label>Note <span class="muted">(optional)</span></label><input id="h_note" placeholder="what was done"></div>
+      <div class="field"><label>Logged so far</label><div id="h_entries" style="font-size:12px"></div></div>
+      <div class="modal-actions">
+        <button class="btn btn-secondary" id="h_cancel">Cancel</button>
+        <button class="btn btn-primary" id="h_save">Log</button>
+      </div>
+    </div>
+  </div>
+
   <div class="undo-bar" id="undoBar"><span id="undoMsg"></span><button id="undoBtn">Undo</button></div>
 
   <script src="/js/api.js"></script>
