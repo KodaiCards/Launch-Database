@@ -13,6 +13,7 @@
     setTodayDate();
     loadJobs();
     loadWeek();
+    loadRecent();
   });
 
   // ── This-week recap ───────────────────────────────────────────────────────
@@ -40,6 +41,43 @@
       </div>`).join('');
     }
     strip.style.display = '';
+  }
+
+  // ── Recent entries ───────────────────────────────────────────────────────────
+
+  async function loadRecent() {
+    try {
+      const res = await fetch('/api/my/entries?limit=20', { credentials: 'include' });
+      if (!res.ok) return;
+      const entries = await res.json();
+      renderRecent(entries);
+    } catch { /* best-effort */ }
+  }
+
+  function renderRecent(entries) {
+    const card = document.getElementById('recent-card');
+    const list = document.getElementById('recent-list');
+    if (!entries.length) {
+      card.style.display = '';
+      list.innerHTML = '<div class="recent-empty">No entries yet.</div>';
+      return;
+    }
+    card.style.display = '';
+    list.innerHTML = entries.map(e => {
+      const dateStr = e.entry_date ? new Date(e.entry_date + 'T12:00:00').toLocaleDateString(undefined, { month: 'short', day: 'numeric' }) : '';
+      const meta = [e.client_name, e.service_area_name].filter(Boolean).join(' · ');
+      return `<div class="recent-row">
+        <div class="recent-left">
+          <div class="recent-job">${esc(e.job_name || 'Entry')}</div>
+          ${meta ? `<div class="recent-meta">${esc(meta)}</div>` : ''}
+          ${e.notes ? `<div class="recent-notes">${esc(e.notes)}</div>` : ''}
+        </div>
+        <div class="recent-right">
+          <div class="recent-hrs">${(e.hours || 0).toFixed(1)} hrs</div>
+          <div class="recent-date">${esc(dateStr)}</div>
+        </div>
+      </div>`;
+    }).join('');
   }
 
   // ── Jobs ────────────────────────────────────────────────────────────────────
@@ -159,7 +197,8 @@
       if (job && data.job) job.actual_hours = data.job.actual_hours;
       closeModal();
       renderJobs(document.getElementById('job-list'));
-      loadWeek(); // refresh the this-week recap
+      loadWeek();
+      loadRecent();
       toast(`Logged ${hoursVal.toFixed(1)} hrs — nice work!`, 'success');
     } catch (e) {
       toast(`Failed to log hours: ${e.message}`, 'error');
