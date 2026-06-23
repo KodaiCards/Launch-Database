@@ -96,6 +96,15 @@ input,select{font-family:inherit;font-size:13px;color:var(--text);background:var
 .undo-bar.show{transform:translateX(-50%) translateY(0)}
 .undo-bar button{color:var(--info);font-weight:700}
 .muted{color:var(--text-muted)}
+/* Skeleton loading */
+.skeleton{background:var(--border-strong);border-radius:4px;animation:sk-pulse 1.2s ease-in-out infinite}
+@keyframes sk-pulse{0%,100%{opacity:.6}50%{opacity:.25}}
+/* Responsive */
+@media(max-width:680px){
+  .layout{grid-template-columns:1fr;height:auto}
+  .sidebar{height:auto;border-right:none;border-bottom:1px solid var(--border-strong);max-height:260px}
+  .main{min-height:50vh}
+}
 </style>
 </head>
 <body>

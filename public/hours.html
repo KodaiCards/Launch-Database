@@ -99,6 +99,14 @@ td.num,th.num{text-align:right;font-variant-numeric:tabular-nums}
 .spinner{display:inline-block;width:14px;height:14px;border:2px solid currentColor;
   border-radius:50%;border-right-color:transparent;animation:spin .6s linear infinite;vertical-align:-2px;margin-right:6px}
 @keyframes spin{to{transform:rotate(360deg)}}
+.skeleton{background:var(--gray-border);border-radius:4px;animation:sk-pulse 1.2s ease-in-out infinite;height:14px;margin:4px 0}
+@keyframes sk-pulse{0%,100%{opacity:.6}50%{opacity:.25}}
+@media(max-width:700px){
+  .toolbar{flex-direction:column;align-items:stretch;gap:8px}
+  .toolbar-spacer{display:none}
+  .container{padding:0 10px}
+  .toolbar>div[style]{flex-wrap:wrap}
+}
 </style>
 </head>
 <body>
