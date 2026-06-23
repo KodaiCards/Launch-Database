@@ -14,6 +14,8 @@
 
   // ── Margin ────────────────────────────────────────────────────────────────
 
+  let _marginData = null;
+
   async function loadMargin() {
     const card = document.getElementById('margin-card');
     try {
@@ -22,12 +24,50 @@
         card.innerHTML = lockMsg(); return;
       }
       if (!res.ok) throw new Error(await res.text());
-      const data = await res.json();
-      renderMargin(data);
+      _marginData = await res.json();
+      populateMarginClientFilter(_marginData.rows || []);
+      renderMargin(_marginData);
     } catch (e) {
       card.innerHTML = errMsg(e);
     }
   }
+
+  function populateMarginClientFilter(rows) {
+    const sel = document.getElementById('margin-client');
+    if (!sel) return;
+    const seen = new Set();
+    rows.forEach(r => {
+      if (r.client_name && !seen.has(r.client_id)) {
+        seen.add(r.client_id);
+        const opt = document.createElement('option');
+        opt.value = r.client_id; opt.textContent = r.client_name;
+        sel.appendChild(opt);
+      }
+    });
+  }
+
+  window.applyMarginFilters = function () {
+    if (!_marginData) return;
+    const clientId = document.getElementById('margin-client').value;
+    const program  = document.getElementById('margin-program').value;
+    let rows = _marginData.rows || [];
+    if (clientId) rows = rows.filter(r => r.client_id === clientId);
+    if (program)  rows = rows.filter(r => (r.program || '') === program);
+    const totals = rows.reduce((t, r) => ({
+      estimated_total: t.estimated_total + r.estimated_total,
+      billed_total: t.billed_total + r.billed_total,
+    }), { estimated_total: 0, billed_total: 0 });
+    totals.variance = +(totals.billed_total - totals.estimated_total).toFixed(2);
+    renderMargin({ rows, totals });
+  };
+
+  window.clearMarginFilters = function () {
+    const mc = document.getElementById('margin-client');
+    const mp = document.getElementById('margin-program');
+    if (mc) mc.value = '';
+    if (mp) mp.value = '';
+    if (_marginData) renderMargin(_marginData);
+  };
 
   function renderMargin(data) {
     const rows = data.rows || [];
@@ -39,13 +79,14 @@
     const t = data.totals || {};
     card.innerHTML = `<div class="table-wrap"><table>
       <thead><tr>
-        <th>Client</th><th>Service Area</th><th class="num">Jobs</th>
+        <th>Client</th><th>Service Area</th><th>Program</th><th class="num">Jobs</th>
         <th class="num">Estimated</th><th class="num">Billed</th><th class="num">Variance</th>
       </tr></thead>
       <tbody>
         ${rows.map(r => `<tr>
           <td>${esc(r.client_name || '—')}</td>
           <td>${esc(r.service_area_name || '—')}</td>
+          <td>${r.program ? `<span class="tag">${esc(r.program.toUpperCase())}</span>` : '—'}</td>
           <td class="num">${r.job_count}</td>
           <td class="num">${fmt(r.estimated_total)}</td>
           <td class="num">${fmt(r.billed_total)}</td>
@@ -53,7 +94,7 @@
         </tr>`).join('')}
       </tbody>
       <tfoot><tr>
-        <td colspan="2">All service areas</td>
+        <td colspan="3">All service areas</td>
         <td></td>
         <td class="num">${fmt(t.estimated_total)}</td>
         <td class="num">${fmt(t.billed_total)}</td>

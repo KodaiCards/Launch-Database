@@ -36,6 +36,8 @@ module.exports = function installMoneyViewRoutes(app, pool, mw) {
         `SELECT
            sa.id                          AS service_area_id,
            sa.name                        AS service_area_name,
+           sa.program                     AS program,
+           c.id                           AS client_id,
            c.name                         AS client_name,
            COALESCE(SUM(saj.estimated_amount), 0)::float AS estimated_total,
            COALESCE(SUM(saj.actual_amount), 0)::float    AS actual_total,
@@ -46,7 +48,7 @@ module.exports = function installMoneyViewRoutes(app, pool, mw) {
          FROM service_areas sa
          LEFT JOIN clients c            ON c.id = sa.client_id
          LEFT JOIN service_area_jobs saj ON saj.service_area_id = sa.id
-         GROUP BY sa.id, sa.name, c.name
+         GROUP BY sa.id, sa.name, sa.program, c.id, c.name
          ORDER BY c.name, sa.name`
       );
       // variance = billed − estimated (positive = billed over estimate).
