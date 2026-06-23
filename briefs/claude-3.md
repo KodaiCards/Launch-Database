@@ -1,7 +1,7 @@
 # Claude 3 — Client portal: service-area status view (Phase 6)
 
-**Status:** NOT STARTED
-**Branch:** `claude-3/client-portal-status`
+**Status:** DONE — ready for review (Phase 6 + all 6 next-up items; CEO batch-merge)
+**Branch:** `claude/inspiring-bell-7jiwdf` (harness-assigned; supersedes the original `claude-3/client-portal-status`)
 **Read first:** `CLAUDE.md`, `ROADMAP.md` (Phase 6), `briefs/README.md`.
 
 ## Goal
