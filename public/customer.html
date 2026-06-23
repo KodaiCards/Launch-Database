@@ -117,6 +117,11 @@ button{font-family:inherit;cursor:pointer;border:none;background:none;color:inhe
 .sa-stage.current{color:var(--primary);border-color:var(--primary);background:var(--primary-light);font-weight:700}
 .sa-stage-sep{font-size:9px;color:var(--text-muted)}
 
+/* Portal landing summary (above the tabs, across all areas) */
+.cp-landing{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:14px;padding:16px;margin-bottom:14px;align-items:start}
+.cp-landing-num{font-size:26px;font-weight:700;color:var(--text);line-height:1.1}
+.cp-landing-lbl{font-size:11px;color:var(--text-muted);text-transform:uppercase;letter-spacing:.5px;margin-top:3px}
+
 /* Service Areas summary header */
 .sa-summary{padding:14px 16px;margin-bottom:14px}
 .sa-summary-row{display:flex;justify-content:space-between;align-items:center;gap:14px;flex-wrap:wrap}
@@ -203,6 +208,7 @@ button{font-family:inherit;cursor:pointer;border:none;background:none;color:inhe
     <i class="fa-solid fa-screwdriver-wrench" style="color:var(--warning)"></i>
     <span style="font-size:12px;color:var(--text-muted)">Preview — work in progress. Service areas show only when marked client-visible.</span>
   </div>
+  <div id="cp-landing"></div>
   <div>
     <div class="tabs" id="cp-tabs">
       <button class="active" data-tab="projects" onclick="cpSelectTab('projects')">Projects</button>
@@ -569,11 +575,39 @@ async function cpLoadServiceAreas(){
   }
 }
 
+// Landing summary above the tabs — aggregates across ALL the client's
+// service areas. Renders whenever SA data (re)loads (init lands on the SA
+// tab, so it populates on first paint).
+function cpRenderLanding(){
+  const el = document.getElementById('cp-landing');
+  if (!el) return;
+  const areas = _customerServiceAreas || [];
+  if (!areas.length){ el.innerHTML = ''; return; }
+  const isDone = s => ['completed','billed','complete'].includes(String(s || '').toLowerCase());
+  const active = areas.filter(a => String(a.status || '').toLowerCase() === 'active').length;
+  const done = areas.filter(a => isDone(a.status)).length;
+  const totalJobs = areas.reduce((s, a) => s + (Number(a.jobs_total) || 0), 0);
+  const totalDone = areas.reduce((s, a) => s + (Number(a.jobs_done) || 0), 0);
+  const overall = totalJobs > 0 ? Math.round(totalDone / totalJobs * 100) : null;
+  el.innerHTML = `
+    <div class="cp-landing card">
+      <div class="cp-landing-item"><div class="cp-landing-num">${areas.length}</div><div class="cp-landing-lbl">Service areas</div></div>
+      <div class="cp-landing-item"><div class="cp-landing-num">${active}</div><div class="cp-landing-lbl">Active</div></div>
+      <div class="cp-landing-item"><div class="cp-landing-num">${done}</div><div class="cp-landing-lbl">Completed</div></div>
+      <div class="cp-landing-item cp-landing-prog">
+        <div class="cp-landing-num">${overall != null ? overall + '%' : '—'}</div>
+        <div class="cp-landing-lbl">Overall complete</div>
+        ${overall != null ? `<div class="progress-track" style="width:100%;margin-top:6px"><div class="progress-fill" style="width:${overall}%"></div></div>` : ''}
+      </div>
+    </div>`;
+}
+
 function renderServiceAreas(){
   const body = document.getElementById('cp-sa-body');
   const header = document.getElementById('cp-sa-header');
   const stats = document.getElementById('cp-sa-stats');
   const areas = _customerServiceAreas || [];
+  cpRenderLanding();
   if (!areas.length){
     cpSaClearChrome();
     body.innerHTML = `<div class="empty-state">
