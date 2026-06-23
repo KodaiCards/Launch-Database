@@ -98,3 +98,36 @@ All additive; don't touch `routes/billing.js`/`invoices.js` core or the keystone
 - `routes/hours_summary.js` already mounted — `/api/hours/summary.csv?group=` extended in R4, no new mount needed.
 
 **Status:** DONE — ready for CEO review and merge.
+
+---
+
+## Round 6 — toward replacing the admin dashboard (CEO reviewed R4+R5, merged ✓)
+Nice work — fast and clean (good catch on the theme key + the export mount note). **Big picture:** Carter wants this keystone cluster to become **the** admin app, retiring the old `admin.html`. This round fills the gaps that still force people back to the old admin. CEO (head Claude) is on a usage reset — **run hard, push per task to your branch, CEO batch-merges + mounts when back.**
+
+**Same hard guardrails:** additive only; **OFF-LIMITS** `routes/service_areas.js`, `auth.js`, `server.js`, `migrations/`, `schema.sql`, and structural edits to `public/js/service_areas_ui.js`. New backend → NEW route files (note the mount line for CEO, like you did for export_bundle) or extend your own `money_view.js` / `hours_summary.js`. **Writes/mutations (create-client, change job status, record payment) are CEO-owned — build READ + link-out to the existing admin for those, don't rebuild the write path.** Schema need → `BLOCKED — needs CEO` + ping, skip to next. Manager/admin gate + parameterize everything; reuse `csvCell` for CSV.
+
+### E — Clients & search (the rail's "Clients — soon")
+- [ ] **22. Clients page.** `public/clients.html` + rail link (replace the `soon('fa-users','Clients')` stub with a real `link`). List clients with # active service areas, total billed, outstanding — via a NEW read endpoint (`routes/cluster_views.js`, or reuse `/api/money/statement`). Each row links to the EXISTING admin client editor (don't rebuild edit). Manager/admin.
+- [ ] **23. Client detail drill-in.** Click a client → inline panel with their service areas + the statement you already built (`/api/money/statement?client_id=`). Read-only.
+- [ ] **24. Global search.** New `routes/search.js`: `GET /api/search?q=` across service areas (name / WO#), clients (name), invoices (number) — parameterized `ILIKE`, manager/admin, capped results. A search box in the topbar/rail; results link to the right page. (Phase 9 groundwork.)
+
+### F — Money / reporting depth
+- [ ] **25. Program financials.** Extend `money_view.js`: revenue + margin split **RUS vs non-RUS** (use `service_areas.program`). Surface on `money.html`.
+- [ ] **26. Printable statement.** Print-friendly CSS + a Print button for the client statement (and margin) sections — clean black-on-white, no rail/nav in print.
+- [ ] **27. Dashboard period filter.** Let the dashboard KPIs filter by date range (this month / quarter / all) using the endpoints you already call; add a small month-over-month revenue figure.
+
+### G — Operations depth
+- [ ] **28. Job board grouping toggle.** Add group-by **team | client | status** to `job-board.html` (regroup existing data client-side; stays read-only — status *changes* are CEO core).
+- [ ] **29. Service-area read summary.** New `public/area.html?id=` — a read-only summary for one area (jobs, hours, billing status) linking into the editor. **New file; do NOT touch `service_areas_ui.js`.**
+
+### H — Robustness / polish (finish what R5 started)
+- [ ] **30. a11y + keyboard nav** across ALL cluster pages (dashboard, money, hours, job-board, clients, area, plus pipeline/billing if they're missing it).
+- [ ] **31. Dark-mode audit** across the cluster — replace any hardcoded colors with app-shell CSS vars; verify contrast in both themes.
+- [ ] **32. Loading/empty/error states** anywhere still missing them; consistent skeletons.
+- [ ] **33. Snappiness.** Debounce search/filter inputs; light client-side caching of slow GETs (invalidate on mutation). No premature complexity.
+
+### Likely-BLOCKED (don't guess — flag + skip if you hit them)
+- **Payment tracking / mark-invoice-paid** → needs a payments table/column = schema. `BLOCKED — needs CEO`.
+- **Editing clients/jobs/statuses from the cluster** → write paths are CEO-owned; link to existing admin instead.
+
+> Blow through all of this and CEO still resetting? Keep going on adjacent additive polish, logging each under a new `### Round 7` block with what you chose + why. Bias to shipping; flag risk as BLOCKED, never guess on schema or the off-limits files.
