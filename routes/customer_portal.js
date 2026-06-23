@@ -216,7 +216,9 @@ module.exports = function installCustomerPortalRoutes(app, pool, mw) {
                 'id', saj.id,
                 'job_name', j.name,
                 'team', saj.team,
-                'status', saj.status
+                'status', saj.status,
+                'start_date', saj.start_date,
+                'completed_date', saj.completed_date
               ) ORDER BY saj.team NULLS LAST, saj.created_at
             ) FILTER (WHERE saj.id IS NOT NULL),
             '[]'::json
