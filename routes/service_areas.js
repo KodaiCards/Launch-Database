@@ -431,9 +431,41 @@ module.exports = function installServiceAreaRoutes(app, pool, mw) {
                     FROM service_area_jobs GROUP BY service_area_id) jj ON jj.service_area_id = sa.id
          GROUP BY c.id, c.name ORDER BY estimated_total DESC`
       );
+      // Ready-to-bill: done stages with no billed_date, plus aging.
+      const ready = await pool.query(
+        `SELECT count(*)::int AS count, COALESCE(SUM(estimated_amount),0) AS total,
+                COALESCE(MAX((now()::date - completed_date)),0)::int AS oldest_days
+         FROM service_area_jobs
+         WHERE billed_date IS NULL AND status IN ('issued','client_approved','complete')`
+      );
+      // Estimated revenue split (RUS vs non-RUS) + actual (filled in by billing).
+      const rev = await pool.query(
+        `SELECT
+           COALESCE(SUM(CASE WHEN sa.engineering_contract_id IS NOT NULL THEN saj.estimated_amount END),0) AS est_rus,
+           COALESCE(SUM(CASE WHEN sa.engineering_contract_id IS NULL     THEN saj.estimated_amount END),0) AS est_non_rus,
+           COALESCE(SUM(saj.actual_amount),0) AS actual_total
+         FROM service_area_jobs saj JOIN service_areas sa ON sa.id = saj.service_area_id`
+      );
+      const alerts = await pool.query(
+        `SELECT
+           (SELECT count(*)::int FROM service_area_jobs WHERE status='revision') AS in_revision,
+           (SELECT count(*)::int FROM service_area_jobs
+              WHERE updated_at < now() - interval '14 days'
+                AND status NOT IN ('issued','client_approved','complete','billed','cancelled')) AS stale`
+      );
+      const hours = await pool.query(
+        `SELECT COALESCE(SUM(hours),0) AS total,
+                COALESCE(SUM(hours) FILTER (WHERE is_billable AND service_area_job_id IS NOT NULL),0) AS billable,
+                COALESCE(SUM(hours) FILTER (WHERE NOT is_billable OR service_area_job_id IS NULL),0) AS overhead
+         FROM time_entries`
+      );
       const t = totals.rows[0];
       res.json({
         totals: { ...t, sa_non_rus: t.service_areas - t.sa_rus },
+        ready_to_bill: ready.rows[0],
+        revenue: rev.rows[0],
+        alerts: { ...alerts.rows[0], permits_due: 0 },
+        hours: hours.rows[0],
         by_team_stage: byTeamStage.rows,
         recent: recent.rows,
         by_client: byClient.rows,
