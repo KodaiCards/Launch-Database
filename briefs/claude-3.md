@@ -9,7 +9,7 @@ A client-facing, read-only view: a `customer`-role user sees **their own clients
 
 ## Build
 1. Customer endpoint: `GET /api/customer/service-areas` → service areas for the clients linked to the logged-in user via `customer_clients` (`user_id` → `client_id`s), each with: name, program (RUS vs not), per-team job statuses, and a simple progress figure (e.g. jobs done / total). **Filter to `client_visible = true`** (CEO decision 2026-06-23: clients see only areas we choose to expose; the admin toggle to set the flag is CEO scope — head Claude adds it. Test by flagging a couple areas true.) **Exclude `rate`, `estimated_amount`, `actual_amount`, invoices.** Put it in `routes/customer_portal.js` (exists) — match its existing scope pattern.
-2. Client page: extend `public/customer.html` (exists) or add a clean view + JS that lists the client's service areas with status + a small progress indicator. App-shell themed.
+2. Client page: in `public/customer.html` (exists) **add a new "Service Areas" tab** — additive and non-destructive — that lists the client's service areas with status + a small progress indicator. App-shell themed. (CEO decision 2026-06-23: additive only. **Leave the legacy Projects tab exactly as-is — don't reorder, demote, or replace existing tabs.** CEO retires/hides the legacy Projects tab at merge when the projects-tree cutover lands.)
 
 ## Boundaries
 - **No financials leaked** — status/progress only. Double-check the SELECT excludes money columns.
