@@ -7,6 +7,7 @@
     applyStoredTheme();
     loadMargin();
     loadAging();
+    loadRevenue('month');
     loadClientList();
   });
 
@@ -164,6 +165,52 @@
         <td colspan="5">${data.invoice_count} outstanding</td>
         <td class="num">${fmt(data.grand_total)}</td>
       </tr></tfoot>
+    </table></div>`;
+  }
+
+  // ── Revenue rollup ────────────────────────────────────────────────────────
+
+  window.loadRevenue = async function (group) {
+    ['month','client','program'].forEach(g => {
+      const btn = document.getElementById(`rev-grp-${g}`);
+      if (!btn) return;
+      btn.style.background = g === group ? 'var(--primary)' : '';
+      btn.style.color = g === group ? '#fff' : '';
+    });
+    const card = document.getElementById('revenue-card');
+    card.innerHTML = '<div class="loading-row"><span class="spinner"></span>Loading…</div>';
+    try {
+      const res = await fetch(`/api/money/revenue?group=${group}`, { credentials: 'include' });
+      if (res.status === 401 || res.status === 403) { card.innerHTML = lockMsg(); return; }
+      if (!res.ok) throw new Error(await res.text());
+      const data = await res.json();
+      renderRevenue(data, card);
+    } catch (e) {
+      card.innerHTML = errMsg(e);
+    }
+  };
+
+  function renderRevenue(data, card) {
+    if (!data.rows.length) {
+      card.innerHTML = '<div class="empty-state"><i class="fa-solid fa-chart-bar"></i>No invoice data yet.</div>';
+      return;
+    }
+    const maxVal = Math.max(...data.rows.map(r => r.total), 1);
+    const rowsHtml = data.rows.map(r => {
+      const pct = Math.round((r.total / maxVal) * 100);
+      return `<tr>
+        <td>${esc(r.label || '—')}</td>
+        <td style="width:35%;padding-right:8px">
+          <div style="background:var(--primary);height:8px;border-radius:4px;width:${pct}%;min-width:${r.total>0?2:0}px;transition:width .3s"></div>
+        </td>
+        <td class="num">${r.invoice_count}</td>
+        <td class="num">${fmt(r.total)}</td>
+      </tr>`;
+    }).join('');
+    card.innerHTML = `<div class="table-wrap"><table>
+      <thead><tr><th>${esc(data.label)}</th><th></th><th class="num">Invoices</th><th class="num">Total</th></tr></thead>
+      <tbody>${rowsHtml}</tbody>
+      <tfoot><tr><td colspan="2">Grand total</td><td class="num">${data.rows.reduce((s,r)=>s+r.invoice_count,0)}</td><td class="num">${fmt(data.grand_total)}</td></tr></tfoot>
     </table></div>`;
   }
 

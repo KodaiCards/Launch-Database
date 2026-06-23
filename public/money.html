@@ -155,6 +155,21 @@ tfoot td{font-weight:700;border-top:2px solid var(--gray-border);background:var(
     </div>
   </div>
 
+  <!-- Revenue Rollup -->
+  <div class="section">
+    <div class="section-head">
+      <div class="section-title"><i class="fa-solid fa-chart-bar"></i> Revenue Rollup</div>
+      <div style="display:flex;gap:0;border:1px solid var(--gray-border);border-radius:6px;overflow:hidden">
+        <button class="btn btn-sm" id="rev-grp-month"   onclick="loadRevenue('month')"   style="border-radius:0;border:none;background:var(--primary);color:#fff">Month</button>
+        <button class="btn btn-sm" id="rev-grp-client"  onclick="loadRevenue('client')"  style="border-radius:0;border:none;border-left:1px solid var(--gray-border)">Client</button>
+        <button class="btn btn-sm" id="rev-grp-program" onclick="loadRevenue('program')" style="border-radius:0;border:none;border-left:1px solid var(--gray-border)">Program</button>
+      </div>
+    </div>
+    <div class="card" id="revenue-card">
+      <div class="loading-row"><span class="spinner"></span>Loading…</div>
+    </div>
+  </div>
+
   <!-- Client Statement -->
   <div class="section">
     <div class="section-head">

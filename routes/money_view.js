@@ -103,6 +103,53 @@ module.exports = function installMoneyViewRoutes(app, pool, mw) {
     }
   });
 
+  // ── Revenue rollup ───────────────────────────────────────────────────────
+  // GET /api/money/revenue?group=month|client|program (non-draft/void invoices only).
+  app.get('/api/money/revenue', requireManagerOrAdmin, async (req, res) => {
+    const group = req.query.group || 'month';
+    try {
+      let sql, label;
+      if (group === 'client') {
+        label = 'Client';
+        sql = `SELECT c.name AS label,
+                      COUNT(i.id)::int AS invoice_count,
+                      COALESCE(SUM(i.total_amount), 0)::float AS total
+               FROM invoices i
+               LEFT JOIN clients c ON c.id = i.client_id
+               WHERE i.status NOT IN ('draft','void')
+               GROUP BY c.name
+               ORDER BY total DESC`;
+      } else if (group === 'program') {
+        label = 'Program';
+        sql = `SELECT COALESCE(sa.program, 'unknown') AS label,
+                      COUNT(DISTINCT i.id)::int AS invoice_count,
+                      COALESCE(SUM(i.total_amount), 0)::float AS total
+               FROM invoices i
+               LEFT JOIN clients c ON c.id = i.client_id
+               LEFT JOIN service_areas sa ON sa.client_id = c.id
+               WHERE i.status NOT IN ('draft','void')
+               GROUP BY sa.program
+               ORDER BY total DESC`;
+      } else {
+        label = 'Month';
+        sql = `SELECT TO_CHAR(i.invoice_date, 'YYYY-MM') AS label,
+                      COUNT(i.id)::int AS invoice_count,
+                      COALESCE(SUM(i.total_amount), 0)::float AS total
+               FROM invoices i
+               WHERE i.status NOT IN ('draft','void')
+                 AND i.invoice_date IS NOT NULL
+               GROUP BY TO_CHAR(i.invoice_date, 'YYYY-MM')
+               ORDER BY label DESC`;
+      }
+      const { rows } = await pool.query(sql);
+      const grand_total = rows.reduce((s, r) => s + r.total, 0);
+      res.json({ group, label, rows, grand_total });
+    } catch (e) {
+      console.error('[money:revenue]', e && e.message);
+      res.status(500).json({ error: 'Failed to load revenue rollup.' });
+    }
+  });
+
   // ── Client statement ─────────────────────────────────────────────────────
   // GET /api/money/statement?client_id= → per-client service areas, billed, outstanding, aging buckets.
   app.get('/api/money/statement', requireManagerOrAdmin, async (req, res) => {
