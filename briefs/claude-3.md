@@ -34,4 +34,10 @@ Keep pushing to your **same branch** after **each** task (tell Carter the branch
 - [x] **5. Inline map preview.** Add `?inline=1` to your `GET /api/customer/service-areas/:id/map` — for `image/*` and `application/pdf` ONLY, serve inline with the correct `Content-Type` (keep `nosniff`); default (no param) stays `attachment`. Add a modal viewer on the card. Keep all the existing scope/traversal guards.
 - [x] **6. Per-area timeline.** Render each area's `start_date` → `completed_date` and a simple stage progression derived from job statuses. Frontend (data already fetched).
 
-> Note: the portal stays behind the under-construction shim until CEO flips it on (tied to readiness + the `client_visible` admin toggle CEO is adding). Build against flagged test areas.
+> Note: shim LIFTED by CEO 2026-06-23 — the portal is now live (WIP) at the URL, landing on the Service Areas tab. Data shows for `client_visible` areas only.
+
+### Round 3 — portal depth (frontend, additive; no schema)
+Reuse existing `/api/customer/*` data; no new money columns. Schema need → BLOCKED + ping.
+- [ ] **7. Client-facing invoice detail / print.** A clean printable invoice view (line items + totals) from existing `/api/customer/invoices` data + a Print button. No backend.
+- [ ] **8. Portal landing summary.** A top section across ALL the client's areas (active count, overall % complete, # ready/done) above the tabs. Frontend.
+- [ ] **9. Polish.** Responsive/mobile pass, a clear "no client-visible areas yet" empty state, and loading skeletons. Frontend.

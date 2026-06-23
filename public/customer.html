@@ -182,23 +182,14 @@ button{font-family:inherit;cursor:pointer;border:none;background:none;color:inhe
        the customer-visible UI. When ready, replace this block with the
        real Projects / Invoices tabs (the original render code lives in
        git history at the commit just before this one). -->
-  <div class="card" style="margin-top:20px;text-align:center;padding:48px 24px">
-    <div style="font-size:48px;color:var(--warning);margin-bottom:14px"><i class="fa-solid fa-screwdriver-wrench"></i></div>
-    <h2 style="font-size:22px;color:var(--text);margin:0 0 8px 0">Client Portal — Under Construction</h2>
-    <p style="font-size:14px;color:var(--text-muted);max-width:480px;margin:0 auto 14px auto;line-height:1.5">
-      We're still building this view. Your account is set up correctly &mdash;
-      check back soon for project status, hours, and invoices.
-    </p>
-    <p style="font-size:12px;color:var(--text-muted);max-width:480px;margin:0 auto">
-      Need something in the meantime? Email your project manager directly.
-    </p>
+  <!-- WIP preview: shim lifted by CEO 2026-06-23 so the live URL shows the
+       in-progress portal. Service-area data appears only for areas marked
+       client-visible (admin toggle on the service-area editor). -->
+  <div class="card" style="margin-top:16px;padding:10px 14px;display:flex;align-items:center;gap:10px;border-left:3px solid var(--warning)">
+    <i class="fa-solid fa-screwdriver-wrench" style="color:var(--warning)"></i>
+    <span style="font-size:12px;color:var(--text-muted)">Preview — work in progress. Service areas show only when marked client-visible.</span>
   </div>
-  <!-- Hidden but kept in DOM so the existing JS doesn't crash on null
-       lookups. The init() / loadCustomerData() / cpLoadInvoices()
-       functions still run on load (and silently fail if the user's
-       linked clients haven't been seeded yet) so the wiring is alive
-       and the API surface is exercised. -->
-  <div style="display:none">
+  <div>
     <div class="tabs" id="cp-tabs">
       <button class="active" data-tab="projects" onclick="cpSelectTab('projects')">Projects</button>
       <button data-tab="invoices" onclick="cpSelectTab('invoices')">Invoices</button>
@@ -753,6 +744,7 @@ async function signOut(){
 (async function init(){
   await loadCurrentUser();
   await loadCustomerData();
+  cpSelectTab('service-areas'); // WIP: land on the new Service Areas view
 })();
 </script>
 <script>
