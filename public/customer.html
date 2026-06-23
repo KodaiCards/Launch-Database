@@ -100,7 +100,20 @@ button{font-family:inherit;cursor:pointer;border:none;background:none;color:inhe
 .job-chip.cancelled{opacity:.5;text-decoration:line-through}
 .badge-rus{background:var(--info-light);color:var(--info-text);padding:2px 7px;border-radius:6px;font-size:10px;font-weight:700;letter-spacing:.5px;margin-left:6px;vertical-align:middle}
 .badge-prog{background:var(--surface-3);color:var(--text-muted);padding:2px 7px;border-radius:6px;font-size:10px;font-weight:600;letter-spacing:.4px;text-transform:uppercase;margin-left:6px;vertical-align:middle}
+.sa-toggle{margin-top:12px;font-size:12px;font-weight:600;color:var(--primary);display:inline-flex;align-items:center;gap:6px;padding:4px 0;background:none;border:none;cursor:pointer}
+.sa-detail{margin-top:4px}
+.sa-detail th{white-space:nowrap}
 .sa-map-ph{margin-top:12px;padding:10px 12px;border:1px dashed var(--gray-border);border-radius:8px;color:var(--text-muted);font-size:12px;display:flex;align-items:center;gap:8px}
+.sa-map-link{margin-top:12px;display:inline-flex;align-items:center;gap:8px;padding:8px 12px;border:1px solid var(--gray-border);border-radius:8px;color:var(--primary);font-size:12px;font-weight:600;text-decoration:none;background:var(--surface-1)}
+.sa-map-link:hover{background:var(--primary-light)}
+
+/* Invoice status pills */
+.inv-status{padding:2px 8px;border-radius:8px;font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.4px;display:inline-block}
+.inv-sent{background:var(--info-light);color:var(--info-text)}
+.inv-paid{background:var(--success-light);color:var(--success-text)}
+.inv-overdue{background:var(--danger-light);color:var(--danger-text)}
+.inv-partial{background:var(--warning-light);color:var(--warning-text)}
+.inv-void{background:var(--surface-3);color:var(--text-muted)}
 
 /* Modal */
 .modal-overlay{display:none;position:fixed;inset:0;background:var(--modal-backdrop);z-index:100;align-items:center;justify-content:center;padding:14px}
@@ -363,25 +376,94 @@ async function cpLoadInvoices(){
       body.innerHTML = '<div class="empty-state"><i class="fa-solid fa-receipt"></i><p>No invoices yet.</p></div>';
       return;
     }
+    const thL = 'padding:8px 12px;text-align:left;font-size:11px;color:var(--text-muted);text-transform:uppercase';
+    const thR = thL + ';text-align:right';
     body.innerHTML = `
+      <div style="font-size:12px;color:var(--text-muted);margin-bottom:8px">Click an invoice to see its line items.</div>
       <table style="width:100%;font-size:13px;border-collapse:collapse">
         <thead>
           <tr style="background:var(--surface-1);border-bottom:1px solid var(--gray-border)">
-            <th style="padding:8px 12px;text-align:left;font-size:11px;color:var(--text-muted);text-transform:uppercase">Invoice #</th>
-            <th style="padding:8px 12px;text-align:left;font-size:11px;color:var(--text-muted);text-transform:uppercase">Date</th>
-            <th style="padding:8px 12px;text-align:left;font-size:11px;color:var(--text-muted);text-transform:uppercase">Description</th>
-            <th style="padding:8px 12px;text-align:right;font-size:11px;color:var(--text-muted);text-transform:uppercase">Amount</th>
+            <th style="${thL}">Invoice #</th>
+            <th style="${thL}">Date</th>
+            <th style="${thL}">Description</th>
+            <th style="${thL}">Status</th>
+            <th style="${thR}">Amount</th>
           </tr>
         </thead>
         <tbody>
-          ${rows.map(inv => `<tr style="border-top:1px solid var(--gray-border)">
+          ${rows.map(inv => `<tr style="border-top:1px solid var(--gray-border);cursor:pointer" onclick="cpOpenInvoice('${esc(inv.id)}')">
             <td style="padding:8px 12px;font-family:monospace;font-weight:600">${esc(inv.invoice_number || '—')}</td>
             <td style="padding:8px 12px">${fmtDate(inv.invoice_date)}</td>
-            <td style="padding:8px 12px;color:var(--text-muted)">${esc(inv.invoice_name || '—')}</td>
+            <td style="padding:8px 12px;color:var(--text-muted)">${esc(inv.invoice_name || inv.notes || '—')}</td>
+            <td style="padding:8px 12px"><span class="inv-status ${invStatusClass(inv.status)}">${esc(String(inv.status || '').replace('_',' ') || '—')}</span></td>
             <td style="padding:8px 12px;text-align:right;font-weight:600">${fmtMoney(inv.total_amount)}</td>
           </tr>`).join('')}
         </tbody>
       </table>
+    `;
+  } catch (e) {
+    body.innerHTML = `<div class="empty-state" style="color:var(--danger-text)">Failed to load: ${esc(e.message)}</div>`;
+  }
+}
+
+function invStatusClass(s){
+  s = String(s || '').toLowerCase();
+  if (s === 'paid') return 'inv-paid';
+  if (s === 'overdue') return 'inv-overdue';
+  if (s === 'partial' || s === 'partially_paid') return 'inv-partial';
+  if (s === 'void' || s === 'cancelled' || s === 'canceled') return 'inv-void';
+  return 'inv-sent';
+}
+
+// Invoice line-item drill-in — reuses the shared detail modal. Money is
+// shown here intentionally: these are amounts the client is billed (sent/
+// paid invoices only; drafts are filtered server-side).
+async function cpOpenInvoice(id){
+  const m = document.getElementById('cp-detail-modal');
+  const body = document.getElementById('cp-detail-body');
+  document.getElementById('cp-detail-title').textContent = 'Loading…';
+  body.innerHTML = '<div class="empty-state"><i class="fa-solid fa-spinner fa-spin"></i><p>Loading…</p></div>';
+  m.style.display = 'flex';
+  try {
+    const inv = await api('/api/customer/invoices/' + encodeURIComponent(id));
+    document.getElementById('cp-detail-title').textContent = 'Invoice ' + (inv.invoice_number || '');
+    const items = inv.items || [];
+    const period = (inv.billing_period_start || inv.billing_period_end)
+      ? `${fmtDate(inv.billing_period_start)} – ${fmtDate(inv.billing_period_end)}` : null;
+    const thL = 'padding:6px 10px;text-align:left;font-size:11px;color:var(--text-muted);text-transform:uppercase';
+    const thR = thL + ';text-align:right';
+    body.innerHTML = `
+      <div style="display:grid;grid-template-columns:140px 1fr;gap:6px 12px;font-size:13px;margin-bottom:18px">
+        <div style="color:var(--text-muted)">Invoice #</div><div style="font-family:monospace">${esc(inv.invoice_number || '—')}</div>
+        <div style="color:var(--text-muted)">Date</div><div>${fmtDate(inv.invoice_date)}</div>
+        <div style="color:var(--text-muted)">Status</div><div><span class="inv-status ${invStatusClass(inv.status)}">${esc(String(inv.status||'').replace('_',' '))}</span></div>
+        ${period ? `<div style="color:var(--text-muted)">Billing period</div><div>${esc(period)}</div>` : ''}
+        ${inv.notes ? `<div style="color:var(--text-muted)">Description</div><div style="white-space:pre-wrap">${esc(inv.notes)}</div>` : ''}
+      </div>
+      ${items.length ? `
+        <table style="width:100%;font-size:12px;border-collapse:collapse">
+          <thead><tr style="background:var(--surface-1)">
+            <th style="${thL}">Description</th>
+            <th style="${thR}">Qty</th>
+            <th style="${thL}">Unit</th>
+            <th style="${thR}">Rate</th>
+            <th style="${thR}">Amount</th>
+          </tr></thead>
+          <tbody>
+            ${items.map(it => `<tr style="border-top:1px solid var(--gray-border)">
+              <td style="padding:6px 10px">${esc(it.description || it.project_name || '—')}</td>
+              <td style="padding:6px 10px;text-align:right">${it.quantity != null ? esc(it.quantity) : '—'}</td>
+              <td style="padding:6px 10px">${esc(it.unit || '')}</td>
+              <td style="padding:6px 10px;text-align:right">${it.rate != null ? fmtMoney(it.rate) : '—'}</td>
+              <td style="padding:6px 10px;text-align:right;font-weight:600">${fmtMoney(it.amount)}</td>
+            </tr>`).join('')}
+          </tbody>
+          <tfoot><tr style="border-top:2px solid var(--gray-border)">
+            <td colspan="4" style="padding:8px 10px;text-align:right;font-weight:600">Total</td>
+            <td style="padding:8px 10px;text-align:right;font-weight:700">${fmtMoney(inv.total_amount)}</td>
+          </tr></tfoot>
+        </table>
+      ` : '<div style="font-size:12px;color:var(--text-muted)">No line items.</div>'}
     `;
   } catch (e) {
     body.innerHTML = `<div class="empty-state" style="color:var(--danger-text)">Failed to load: ${esc(e.message)}</div>`;
@@ -448,6 +530,39 @@ function renderServiceAreas(){
     const badge = a.program === 'rus'
       ? '<span class="badge-rus">RUS</span>'
       : (a.program ? `<span class="badge-prog">${esc(a.program)}</span>` : '');
+    // Expandable job-by-job detail: status + start/completed dates.
+    const detailRows = (a.jobs || []).map(j => {
+      const cls = 'job-chip' + (SA_DONE.has(j.status) ? ' done' : '') + (j.status === 'cancelled' ? ' cancelled' : '');
+      return `<tr style="border-top:1px solid var(--gray-border)">
+        <td style="padding:6px 10px">${esc(j.job_name || '—')}</td>
+        <td style="padding:6px 10px;color:var(--text-muted)">${esc(SA_TEAM_LABELS[j.team] || j.team || '—')}</td>
+        <td style="padding:6px 10px"><span class="${cls}"><span class="dot"></span>${esc(String(j.status || '').replace(/_/g,' '))}</span></td>
+        <td style="padding:6px 10px">${fmtDate(j.start_date)}</td>
+        <td style="padding:6px 10px">${fmtDate(j.completed_date)}</td>
+      </tr>`;
+    }).join('');
+    const th = 'padding:6px 10px;text-align:left;font-size:11px;color:var(--text-muted);text-transform:uppercase';
+    const detail = (a.jobs && a.jobs.length)
+      ? `<button class="sa-toggle" type="button" aria-expanded="false" onclick="cpToggleArea('${esc(a.id)}', this)">
+           <i class="fa-solid fa-chevron-right" aria-hidden="true"></i> Job details
+         </button>
+         <div class="sa-detail" id="sa-det-${esc(a.id)}" hidden>
+           <table style="width:100%;font-size:12px;border-collapse:collapse;margin-top:6px">
+             <thead><tr style="background:var(--surface-1)">
+               <th style="${th}">Job</th><th style="${th}">Team</th><th style="${th}">Status</th>
+               <th style="${th}">Started</th><th style="${th}">Completed</th>
+             </tr></thead>
+             <tbody>${detailRows}</tbody>
+           </table>
+         </div>`
+      : '';
+    // Map: when one is on file (area is already client_visible), offer a
+    // scoped download; otherwise keep the Phase-7 placeholder.
+    const mapBlock = a.has_map
+      ? `<a class="sa-map-link" href="/api/customer/service-areas/${esc(a.id)}/map">
+           <i class="fa-solid fa-map-location-dot" aria-hidden="true"></i> Download map${a.map_filename ? ' — ' + esc(a.map_filename) : ''}
+         </a>`
+      : `<div class="sa-map-ph"><i class="fa-solid fa-map" aria-hidden="true"></i> Map view coming soon.</div>`;
     return `<div class="card" style="padding:14px 16px">
       <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:10px">
         <div>
@@ -461,9 +576,20 @@ function renderServiceAreas(){
       </div>
       ${prog}
       ${teams}
-      <div class="sa-map-ph"><i class="fa-solid fa-map" aria-hidden="true"></i> Map view coming soon.</div>
+      ${detail}
+      ${mapBlock}
     </div>`;
   }).join('');
+}
+
+function cpToggleArea(id, btn){
+  const d = document.getElementById('sa-det-' + id);
+  if (!d) return;
+  const opening = d.hasAttribute('hidden');
+  if (opening) d.removeAttribute('hidden'); else d.setAttribute('hidden', '');
+  btn.setAttribute('aria-expanded', opening ? 'true' : 'false');
+  const ic = btn.querySelector('i');
+  if (ic) ic.className = opening ? 'fa-solid fa-chevron-down' : 'fa-solid fa-chevron-right';
 }
 
 function cpSelectTab(name){

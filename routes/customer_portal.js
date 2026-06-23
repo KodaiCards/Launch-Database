@@ -24,6 +24,8 @@
 // only on invoices that are EXPLICITLY billed to them.
 
 const { logAudit } = require('./_audit');
+const path = require('path');
+const fs = require('fs');
 
 // F8: UUID guard — prevents Postgres 22P02 "invalid input syntax for type uuid"
 // 500s when a non-UUID path param is passed.
@@ -210,13 +212,16 @@ module.exports = function installCustomerPortalRoutes(app, pool, mw) {
           sa.id, sa.name, sa.work_order_number, sa.program, sa.status,
           sa.start_date, sa.completed_date, sa.billed_date,
           sa.client_id, cl.name AS client_name,
+          sa.map_filename, (sa.map_file_path IS NOT NULL) AS has_map,
           COALESCE(
             json_agg(
               json_build_object(
                 'id', saj.id,
                 'job_name', j.name,
                 'team', saj.team,
-                'status', saj.status
+                'status', saj.status,
+                'start_date', saj.start_date,
+                'completed_date', saj.completed_date
               ) ORDER BY saj.team NULLS LAST, saj.created_at
             ) FILTER (WHERE saj.id IS NOT NULL),
             '[]'::json
@@ -255,15 +260,58 @@ module.exports = function installCustomerPortalRoutes(app, pool, mw) {
     }
   });
 
+  // --- Customer service-area map (read-only, scoped) ---
+  // Serves the area's map file ONLY when it belongs to one of the caller's
+  // linked clients AND is client_visible AND has a map on file. The path is
+  // resolved from the DB (never client input) and contained within UPLOAD_DIR
+  // (same guard as routes/dwg_sync.js). attachment + nosniff so an uploaded
+  // file can't render inline. Read-only — no mutation, no $.
+  app.get('/api/customer/service-areas/:id/map', requireAuth(['customer']), async (req, res) => {
+    if (!isValidUUID(req.params.id)) return res.status(400).json({ error: 'Invalid service area id.' });
+    try {
+      const clientIds = await clientIdsForUser(req.user.id);
+      if (!clientIds.length) return res.status(404).json({ error: 'Not found' });
+      const { rows } = await pool.query(
+        `SELECT map_file_path, map_filename
+           FROM service_areas
+          WHERE id = $1 AND client_id = ANY($2::uuid[])
+            AND client_visible = TRUE AND map_file_path IS NOT NULL`,
+        [req.params.id, clientIds]
+      );
+      if (!rows[0]) return res.status(404).json({ error: 'Not found' });
+
+      const uploadDir = process.env.UPLOAD_DIR || './uploads';
+      const resolved = path.resolve(uploadDir, rows[0].map_file_path);
+      const uploadRoot = path.resolve(uploadDir) + path.sep;
+      if (!resolved.startsWith(uploadRoot) && resolved !== path.resolve(uploadDir)) {
+        return res.status(400).json({ error: 'Invalid file path' });
+      }
+      if (!fs.existsSync(resolved) || fs.statSync(resolved).isDirectory()) {
+        return res.status(404).json({ error: 'Map file not found on disk' });
+      }
+      const downloadName = String(rows[0].map_filename || 'service-area-map').replace(/[^\w.\-]+/g, '_');
+      res.setHeader('X-Content-Type-Options', 'nosniff');
+      res.setHeader('Content-Disposition', `attachment; filename="${downloadName}"`);
+      res.sendFile(resolved);
+    } catch (e) {
+      console.error('[customer:service-area-map]', e && e.message);
+      res.status(500).json({ error: 'Failed to load map.' });
+    }
+  });
+
   // --- Customer invoice list ---
   // F5: AND i.status NOT IN ('draft') — customers must not see draft invoices.
   app.get('/api/customer/invoices', requireAuth(['customer']), async (req, res) => {
     try {
       const clientIds = await clientIdsForUser(req.user.id);
       if (!clientIds.length) return res.json([]);
+      // status: drives the sent/paid pill (drafts already excluded below).
+      // notes: fallback label for service-area-billed invoices, which set
+      // notes ("Service area: <name>") rather than invoice_name. Already
+      // surfaced by the detail endpoint, so no new exposure.
       const { rows } = await pool.query(`
-        SELECT i.id, i.invoice_number, i.invoice_date, i.invoice_name,
-               i.total_amount, i.client_id, cl.name AS client_name,
+        SELECT i.id, i.invoice_number, i.invoice_date, i.invoice_name, i.notes,
+               i.total_amount, i.status, i.client_id, cl.name AS client_name,
                i.created_at
           FROM invoices i
           LEFT JOIN clients cl ON cl.id = i.client_id
