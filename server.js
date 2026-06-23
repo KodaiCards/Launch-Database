@@ -733,6 +733,9 @@ require('./routes/hours_summary')(app, pool, { requireManagerOrAdmin });
 // Phase 4 money view: estimate-vs-actual margin, AR aging, accounting CSV (manager/admin).
 require('./routes/money_view')(app, pool, { requireManagerOrAdmin });
 
+// Admin data-export bundle: GET /api/export/all.zip (service areas, jobs, invoices CSVs).
+require('./routes/export_bundle')(app, pool, { requireAdmin });
+
 // ─────────────────────────────────────────────────────────────────────────────
 // UNDO REPLAY — extracted to routes/undo.js (Track 1.3.6).
 // saveUndoBucket / popUndoBucket helpers live in routes/_helpers.js.
