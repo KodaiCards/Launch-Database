@@ -555,7 +555,7 @@ module.exports = function installServiceAreaRoutes(app, pool, mw) {
         `SELECT
            COALESCE(SUM(CASE WHEN sa.engineering_contract_id IS NOT NULL THEN saj.estimated_amount END),0) AS est_rus,
            COALESCE(SUM(CASE WHEN sa.engineering_contract_id IS NULL     THEN saj.estimated_amount END),0) AS est_non_rus,
-           COALESCE(SUM(saj.actual_amount),0) AS actual_total
+           (SELECT COALESCE(SUM(total_amount),0) FROM invoices) AS actual_total
          FROM service_area_jobs saj JOIN service_areas sa ON sa.id = saj.service_area_id`
       );
       const alerts = await pool.query(

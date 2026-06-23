@@ -77,7 +77,7 @@
       <div class="kv"><span class="k">RUS (engineering contracts)</span><strong>${money(r.est_rus)}</strong></div>
       <div class="kv"><span class="k">Non-RUS (BAU / GFR / Other)</span><strong>${money(r.est_non_rus)}</strong></div>
       <div class="kv"><span class="k">Actual billed</span><strong>${money(r.actual_total)}</strong></div>
-      <div class="note">Actual billed revenue (MTD/YTD) fills in once invoicing is wired onto the model — Phase 4.</div>
+      <div class="note">Actual billed = total of invoices created from billed jobs. (Period filter + per-client split coming.)</div>
     </div>
     <div class="card" style="margin-top:14px"><div class="card-h">By client</div>${
       bc.length ? bc.map(c => `<div class="kv"><span class="k">${esc(c.client_name)} <span class="muted">· ${c.sa_count} area(s)</span></span><strong>${money(c.estimated_total)}</strong></div>`).join('')
