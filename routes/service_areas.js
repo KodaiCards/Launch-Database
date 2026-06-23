@@ -62,6 +62,25 @@ module.exports = function installServiceAreaRoutes(app, pool, mw) {
 
   const uid = (req) => (req && req.user && req.user.id) || null;
 
+  // Recompute a job's actual_hours (sum of its time entries) + actual_amount by
+  // billing type: hourly = hours*rate; footage = footage*rate (hours tracked but
+  // NOT billed); fixed = estimated_amount. Hours are tracked on every job.
+  async function recomputeJob(jobId) {
+    const { rows } = await pool.query(
+      `UPDATE service_area_jobs saj SET
+         actual_hours = COALESCE((SELECT SUM(hours) FROM time_entries WHERE service_area_job_id = saj.id), 0),
+         actual_amount = CASE saj.billing_type
+           WHEN 'hourly'  THEN COALESCE((SELECT SUM(hours) FROM time_entries WHERE service_area_job_id = saj.id), 0) * COALESCE(saj.rate, 0)
+           WHEN 'footage' THEN COALESCE(saj.footage, 0) * COALESCE(saj.rate, 0)
+           ELSE COALESCE(saj.estimated_amount, 0)
+         END,
+         updated_at = now()
+       WHERE saj.id = $1 RETURNING *`,
+      [jobId]
+    );
+    return rows[0];
+  }
+
   // ─── Service Areas ───────────────────────────────────────────────────────
 
   // List service areas with rolled-up job totals. Filters: client_id,
@@ -298,9 +317,10 @@ module.exports = function installServiceAreaRoutes(app, pool, mw) {
       const { rows } = await pool.query(
         `UPDATE service_area_jobs SET ${sets.join(', ')} WHERE id = $1 RETURNING *`, vals);
       if (!rows[0]) return res.status(404).json({ error: 'Job not found' });
+      const job = await recomputeJob(req.params.id);  // keep actual_hours/$ consistent with rate/footage/type
       logAudit(pool, { req, action: 'service_area_job.update', entity_type: 'service_area_job',
-        entity_id: rows[0].id, source: 'admin' }).catch(() => {});
-      res.json(rows[0]);
+        entity_id: job.id, source: 'admin' }).catch(() => {});
+      res.json(job);
     } catch (e) {
       console.error('[sa-jobs:update]', e && e.message);
       res.status(500).json({ error: 'Failed to update job.' });
@@ -364,6 +384,52 @@ module.exports = function installServiceAreaRoutes(app, pool, mw) {
     } catch (e) {
       console.error('[sa-jobs:regress]', e && e.message);
       res.status(500).json({ error: 'Failed to regress job.' });
+    }
+  });
+
+  // ── Hours (time entries against a job) ─────────────────────────────────────
+  // staff_id defaults to the account's linked staff (auto self-attribution);
+  // pass an explicit staff_id to log a collaborator's hours. Hours are tracked
+  // on every job regardless of billing type.
+  app.post('/api/service-area-jobs/:id/time-entries', requireAuth(STAFF_ROLES), async (req, res) => {
+    const b = req.body || {};
+    const hrs = Number(b.hours);
+    if (!hrs || hrs <= 0) return res.status(400).json({ error: 'hours (> 0) required' });
+    try {
+      const job = await pool.query('SELECT id FROM service_area_jobs WHERE id = $1', [req.params.id]);
+      if (!job.rows.length) return res.status(404).json({ error: 'Job not found' });
+      let staffId = b.staff_id || null;
+      if (!staffId && req.user) {
+        staffId = req.user.staff_id ||
+          (await pool.query('SELECT staff_id FROM users WHERE id = $1', [req.user.id])).rows[0]?.staff_id || null;
+      }
+      const ins = await pool.query(
+        `INSERT INTO time_entries (service_area_job_id, staff_id, user_id, entry_date, hours, notes, is_billable)
+         VALUES ($1,$2,$3,COALESCE($4, now()::date),$5,$6,COALESCE($7,true)) RETURNING *`,
+        [req.params.id, staffId, uid(req), b.entry_date || null, hrs, b.notes || null, b.is_billable]
+      );
+      const updated = await recomputeJob(req.params.id);
+      logAudit(pool, { req, action: 'time_entry.create', entity_type: 'time_entry', entity_id: ins.rows[0].id,
+        after: { job: req.params.id, staff_id: staffId, hours: hrs }, source: 'admin' }).catch(() => {});
+      res.status(201).json({ entry: ins.rows[0], job: updated });
+    } catch (e) {
+      console.error('[sa-jobs:time-entry]', e && e.message);
+      res.status(500).json({ error: 'Failed to log hours.' });
+    }
+  });
+
+  app.get('/api/service-area-jobs/:id/time-entries', requireAuth(STAFF_ROLES), async (req, res) => {
+    try {
+      const { rows } = await pool.query(
+        `SELECT te.*, s.name AS staff_name
+         FROM time_entries te LEFT JOIN staff s ON s.id = te.staff_id
+         WHERE te.service_area_job_id = $1 ORDER BY te.entry_date DESC, te.created_at DESC`,
+        [req.params.id]
+      );
+      res.json(rows);
+    } catch (e) {
+      console.error('[sa-jobs:time-list]', e && e.message);
+      res.status(500).json({ error: 'Failed to load hours.' });
     }
   });
 
