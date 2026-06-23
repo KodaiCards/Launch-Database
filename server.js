@@ -706,6 +706,10 @@ require('./routes/staff')(app, pool, { requireAdmin, requireAuth }); // H-1: req
 // Item 2 + 22 fix: requireAuth added so projects.js can gate POST/PUT.
 require('./routes/projects')(app, pool, { requireAdmin, requireAuth, requireManagerOrAdmin });
 
+// Phase 2 keystone: Service-Area-with-jobs model (migration 0064). Coexists with
+// the legacy projects tree above during the rebuild.
+require('./routes/service_areas')(app, pool, { requireAdmin, requireAuth, requireManagerOrAdmin });
+
 // ─────────────────────────────────────────────────────────────────────────────
 // UNDO REPLAY — extracted to routes/undo.js (Track 1.3.6).
 // saveUndoBucket / popUndoBucket helpers live in routes/_helpers.js.
