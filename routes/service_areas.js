@@ -395,6 +395,55 @@ module.exports = function installServiceAreaRoutes(app, pool, mw) {
     }
   });
 
+  // Dashboard overview (new model): headline totals, pipeline tallies per
+  // team/stage, recent service areas, and per-client rollups. Feeds dashboard.html.
+  app.get('/api/dashboard/overview', requireAuth(STAFF_ROLES), async (req, res) => {
+    try {
+      const totals = await pool.query(
+        `SELECT
+           (SELECT count(*)::int FROM service_areas) AS service_areas,
+           (SELECT count(*)::int FROM service_areas WHERE engineering_contract_id IS NOT NULL) AS sa_rus,
+           (SELECT count(*)::int FROM service_area_jobs) AS jobs,
+           (SELECT COALESCE(SUM(estimated_amount),0) FROM service_area_jobs) AS estimated_total,
+           (SELECT COALESCE(SUM(actual_amount),0)    FROM service_area_jobs) AS actual_total,
+           (SELECT COALESCE(SUM(actual_hours),0)     FROM service_area_jobs) AS hours_total`
+      );
+      const byTeamStage = await pool.query(
+        `SELECT COALESCE(team,'(none)') AS team, status, count(*)::int AS count
+         FROM service_area_jobs GROUP BY team, status`
+      );
+      const recent = await pool.query(
+        `SELECT sa.id, sa.name, sa.program, sa.engineering_contract_id, sa.status, sa.created_at,
+                c.name AS client_name,
+                COALESCE(j.cnt,0)::int AS job_count, COALESCE(j.est,0) AS estimated_total
+         FROM service_areas sa
+         LEFT JOIN clients c ON c.id = sa.client_id
+         LEFT JOIN (SELECT service_area_id, count(*) cnt, SUM(estimated_amount) est
+                    FROM service_area_jobs GROUP BY service_area_id) j ON j.service_area_id = sa.id
+         ORDER BY sa.created_at DESC LIMIT 8`
+      );
+      const byClient = await pool.query(
+        `SELECT c.id AS client_id, c.name AS client_name,
+                count(sa.id)::int AS sa_count, COALESCE(SUM(jj.est),0) AS estimated_total
+         FROM clients c
+         JOIN service_areas sa ON sa.client_id = c.id
+         LEFT JOIN (SELECT service_area_id, SUM(estimated_amount) est
+                    FROM service_area_jobs GROUP BY service_area_id) jj ON jj.service_area_id = sa.id
+         GROUP BY c.id, c.name ORDER BY estimated_total DESC`
+      );
+      const t = totals.rows[0];
+      res.json({
+        totals: { ...t, sa_non_rus: t.service_areas - t.sa_rus },
+        by_team_stage: byTeamStage.rows,
+        recent: recent.rows,
+        by_client: byClient.rows,
+      });
+    } catch (e) {
+      console.error('[dashboard:overview]', e && e.message);
+      res.status(500).json({ error: 'Failed to load dashboard.' });
+    }
+  });
+
   // Expose the pipeline map so the frontend can render stage chips consistently.
   app.get('/api/service-area-pipelines', requireAuth(STAFF_ROLES), (req, res) => {
     res.json({ pipelines: PIPELINES, approval_stage: APPROVAL_STAGE });
