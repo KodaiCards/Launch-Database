@@ -391,18 +391,33 @@ module.exports = function installServiceAreaRoutes(app, pool, mw) {
   // staff_id defaults to the account's linked staff (auto self-attribution);
   // pass an explicit staff_id to log a collaborator's hours. Hours are tracked
   // on every job regardless of billing type.
-  app.post('/api/service-area-jobs/:id/time-entries', requireAuth(STAFF_ROLES), async (req, res) => {
+  app.post('/api/service-area-jobs/:id/time-entries', requireAuth([...STAFF_ROLES, 'contractor']), async (req, res) => {
     const b = req.body || {};
     const hrs = Number(b.hours);
     if (!hrs || hrs <= 0) return res.status(400).json({ error: 'hours (> 0) required' });
+    const isContractor = req.user && req.user.role === 'contractor';
     try {
-      const job = await pool.query('SELECT id FROM service_area_jobs WHERE id = $1', [req.params.id]);
-      if (!job.rows.length) return res.status(404).json({ error: 'Job not found' });
-      let staffId = b.staff_id || null;
-      if (!staffId && req.user) {
-        staffId = req.user.staff_id ||
-          (await pool.query('SELECT staff_id FROM users WHERE id = $1', [req.user.id])).rows[0]?.staff_id || null;
+      // Resolve the caller's own staff_id once.
+      let myStaffId = req.user?.staff_id || null;
+      if (!myStaffId && req.user) {
+        myStaffId = (await pool.query('SELECT staff_id FROM users WHERE id = $1', [req.user.id])).rows[0]?.staff_id || null;
       }
+      // Contractors may ONLY log against jobs assigned to them (IDOR guard);
+      // staff can log against any job (incl. a collaborator's hours).
+      if (isContractor) {
+        const owned = await pool.query(
+          `SELECT id FROM service_area_jobs
+            WHERE id = $1 AND (assigned_user_id = $2 OR ($3::uuid IS NOT NULL AND assigned_staff_id = $3))`,
+          [req.params.id, req.user.id, myStaffId]
+        );
+        if (!owned.rows.length) return res.status(403).json({ error: 'That job is not assigned to you.' });
+      } else {
+        const job = await pool.query('SELECT id FROM service_area_jobs WHERE id = $1', [req.params.id]);
+        if (!job.rows.length) return res.status(404).json({ error: 'Job not found' });
+      }
+      // Attribution: a contractor is always themselves (no collaborator entries);
+      // staff may pass an explicit staff_id, else default to their own.
+      const staffId = isContractor ? myStaffId : (b.staff_id || myStaffId);
       const ins = await pool.query(
         `INSERT INTO time_entries (service_area_job_id, staff_id, user_id, entry_date, hours, notes, is_billable)
          VALUES ($1,$2,$3,COALESCE($4, now()::date),$5,$6,COALESCE($7,true)) RETURNING *`,
@@ -411,7 +426,12 @@ module.exports = function installServiceAreaRoutes(app, pool, mw) {
       const updated = await recomputeJob(req.params.id);
       logAudit(pool, { req, action: 'time_entry.create', entity_type: 'time_entry', entity_id: ins.rows[0].id,
         after: { job: req.params.id, staff_id: staffId, hours: hrs }, source: 'admin' }).catch(() => {});
-      res.status(201).json({ entry: ins.rows[0], job: updated });
+      // Contractors get a money-free job summary (hours/status only) — the
+      // recompute result carries actual_amount, which they must not see.
+      const job = updated && isContractor
+        ? { id: updated.id, status: updated.status, actual_hours: updated.actual_hours }
+        : updated;
+      res.status(201).json({ entry: ins.rows[0], job });
     } catch (e) {
       console.error('[sa-jobs:time-entry]', e && e.message);
       res.status(500).json({ error: 'Failed to log hours.' });

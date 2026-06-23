@@ -102,6 +102,7 @@ const VALID_ROLES = [
   'permitting_manager',
   'design_engineer',
   'permitting_engineer',
+  'contractor',
   'customer',
 ];
 
