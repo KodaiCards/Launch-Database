@@ -12,7 +12,35 @@
     applyStoredTheme();
     setTodayDate();
     loadJobs();
+    loadWeek();
   });
+
+  // ── This-week recap ───────────────────────────────────────────────────────
+
+  async function loadWeek() {
+    try {
+      const res = await fetch('/api/my/hours?week=current', { credentials: 'include' });
+      if (!res.ok) return; // strip is best-effort; stay silent on failure
+      const data = await res.json();
+      renderWeek(data);
+    } catch { /* best-effort */ }
+  }
+
+  function renderWeek(data) {
+    const strip = document.getElementById('week-strip');
+    const jobsEl = document.getElementById('week-strip-jobs');
+    document.getElementById('week-total').textContent = (data.total_hours || 0).toFixed(1);
+    const jobs = data.jobs || [];
+    if (!jobs.length) {
+      jobsEl.innerHTML = '<div class="week-strip-empty">No hours logged yet this week.</div>';
+    } else {
+      jobsEl.innerHTML = jobs.map(j => `<div class="week-strip-job">
+        <span>${esc(j.job_name || 'Job')} · ${esc(j.service_area_name || '')}</span>
+        <span class="wsj-hours">${(j.hours || 0).toFixed(1)} hrs</span>
+      </div>`).join('');
+    }
+    strip.style.display = '';
+  }
 
   // ── Jobs ────────────────────────────────────────────────────────────────────
 
@@ -131,6 +159,7 @@
       if (job && data.job) job.actual_hours = data.job.actual_hours;
       closeModal();
       renderJobs(document.getElementById('job-list'));
+      loadWeek(); // refresh the this-week recap
       toast(`Logged ${hoursVal.toFixed(1)} hrs — nice work!`, 'success');
     } catch (e) {
       toast(`Failed to log hours: ${e.message}`, 'error');
