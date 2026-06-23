@@ -112,6 +112,16 @@ input,select{font-family:inherit;font-size:13px;color:var(--text);background:var
       <div class="sidebar-actions">
         <button class="btn btn-primary btn-sm" id="newSaBtn" style="flex:1"><i class="fa-solid fa-plus"></i> Service Area</button>
       </div>
+      <div id="sa-filter-bar" style="margin-bottom:8px;display:flex;flex-direction:column;gap:6px">
+        <input id="sa-search" type="search" placeholder="Search…" style="width:100%;padding:6px 8px;font-size:12px;border:1px solid var(--border-strong);border-radius:6px;background:var(--surface-2);color:var(--text)">
+        <select id="sa-filter-program" style="font-size:12px;padding:5px 7px;border:1px solid var(--border-strong);border-radius:6px;background:var(--surface-2);color:var(--text)">
+          <option value="">All programs</option>
+          <option value="rus">RUS</option>
+          <option value="bau">BAU</option>
+          <option value="gfr">GFR</option>
+          <option value="other">Other</option>
+        </select>
+      </div>
       <div id="clientList"><div class="muted" style="padding:10px;font-size:12px">Loading…</div></div>
     </aside>
     <main class="main" id="main">
@@ -155,6 +165,7 @@ input,select{font-family:inherit;font-size:13px;color:var(--text);background:var
 
   <script src="/js/api.js"></script>
   <script src="/js/service_areas_ui.js"></script>
+  <script src="/js/service_areas_filters.js"></script>
   <script src="/js/app_nav.js" data-active="service-areas"></script>
 </body>
 </html>
