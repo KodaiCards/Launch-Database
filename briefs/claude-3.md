@@ -8,7 +8,7 @@
 A client-facing, read-only view: a `customer`-role user sees **their own clients' service areas** with each one's status / progress (done vs remaining). No internal rates, costs, or $ amounts — clients see *status*, not money. (Map per area comes later in Phase 7; leave a placeholder.)
 
 ## Build
-1. Customer endpoint: `GET /api/customer/service-areas` → service areas for the clients linked to the logged-in user via `customer_clients` (`user_id` → `client_id`s), each with: name, program (RUS vs not), per-team job statuses, and a simple progress figure (e.g. jobs done / total). **Exclude `rate`, `estimated_amount`, `actual_amount`, invoices.** Put it in `routes/customer_portal.js` (exists) — match its existing scope pattern.
+1. Customer endpoint: `GET /api/customer/service-areas` → service areas for the clients linked to the logged-in user via `customer_clients` (`user_id` → `client_id`s), each with: name, program (RUS vs not), per-team job statuses, and a simple progress figure (e.g. jobs done / total). **Filter to `client_visible = true`** (CEO decision 2026-06-23: clients see only areas we choose to expose; the admin toggle to set the flag is CEO scope — head Claude adds it. Test by flagging a couple areas true.) **Exclude `rate`, `estimated_amount`, `actual_amount`, invoices.** Put it in `routes/customer_portal.js` (exists) — match its existing scope pattern.
 2. Client page: extend `public/customer.html` (exists) or add a clean view + JS that lists the client's service areas with status + a small progress indicator. App-shell themed.
 
 ## Boundaries
