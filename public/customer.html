@@ -106,6 +106,7 @@ button{font-family:inherit;cursor:pointer;border:none;background:none;color:inhe
 .sa-map-ph{margin-top:12px;padding:10px 12px;border:1px dashed var(--gray-border);border-radius:8px;color:var(--text-muted);font-size:12px;display:flex;align-items:center;gap:8px}
 .sa-map-link{margin-top:12px;display:inline-flex;align-items:center;gap:8px;padding:8px 12px;border:1px solid var(--gray-border);border-radius:8px;color:var(--primary);font-size:12px;font-weight:600;text-decoration:none;background:var(--surface-1)}
 .sa-map-link:hover{background:var(--primary-light)}
+.sa-map-actions{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
 
 /* Service Areas summary header */
 .sa-summary{padding:14px 16px;margin-bottom:14px}
@@ -217,6 +218,17 @@ button{font-family:inherit;cursor:pointer;border:none;background:none;color:inhe
       <button class="btn btn-icon btn-secondary" aria-label="Close dialog" onclick="document.getElementById('cp-detail-modal').style.display='none'"><i class="fa-solid fa-xmark" aria-hidden="true"></i></button>
     </div>
     <div class="modal-body" id="cp-detail-body"></div>
+  </div>
+</div>
+
+<!-- Map preview modal — inline image/PDF viewer (served via ?inline=1) -->
+<div class="modal-overlay" id="cp-map-modal" role="dialog" aria-modal="true" aria-labelledby="cp-map-title">
+  <div class="modal-content" style="max-width:900px;width:100%">
+    <div class="modal-header">
+      <span class="modal-title" id="cp-map-title">Map</span>
+      <button class="btn btn-icon btn-secondary" aria-label="Close dialog" onclick="cpCloseMap()"><i class="fa-solid fa-xmark" aria-hidden="true"></i></button>
+    </div>
+    <div class="modal-body" id="cp-map-body"></div>
   </div>
 </div>
 
@@ -598,13 +610,21 @@ function renderServiceAreas(){
            </table>
          </div>`
       : '';
-    // Map: when one is on file (area is already client_visible), offer a
-    // scoped download; otherwise keep the Phase-7 placeholder.
-    const mapBlock = a.has_map
-      ? `<a class="sa-map-link" href="/api/customer/service-areas/${esc(a.id)}/map">
-           <i class="fa-solid fa-map-location-dot" aria-hidden="true"></i> Download map${a.map_filename ? ' — ' + esc(a.map_filename) : ''}
-         </a>`
-      : `<div class="sa-map-ph"><i class="fa-solid fa-map" aria-hidden="true"></i> Map view coming soon.</div>`;
+    // Map: when one is on file (area is already client_visible), offer an
+    // inline preview for image/PDF types plus a scoped download; otherwise
+    // keep the Phase-7 placeholder.
+    let mapBlock;
+    if (a.has_map) {
+      const ext = (String(a.map_filename || '').toLowerCase().match(/\.([a-z0-9]+)$/) || [, ''])[1];
+      const kind = ext === 'pdf' ? 'pdf' : (['png','jpg','jpeg','gif','webp'].includes(ext) ? 'image' : '');
+      const dl = `<a class="sa-map-link" href="/api/customer/service-areas/${esc(a.id)}/map"><i class="fa-solid fa-download" aria-hidden="true"></i> Download map${a.map_filename ? ' — ' + esc(a.map_filename) : ''}</a>`;
+      const view = kind
+        ? `<button class="sa-map-link" type="button" onclick="cpOpenMap('${esc(a.id)}','${kind}')"><i class="fa-solid fa-map-location-dot" aria-hidden="true"></i> View map</button>`
+        : '';
+      mapBlock = `<div class="sa-map-actions">${view}${dl}</div>`;
+    } else {
+      mapBlock = `<div class="sa-map-ph"><i class="fa-solid fa-map" aria-hidden="true"></i> Map view coming soon.</div>`;
+    }
     return `<div class="card" style="padding:14px 16px">
       <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:10px">
         <div>
@@ -632,6 +652,25 @@ function cpToggleArea(id, btn){
   btn.setAttribute('aria-expanded', opening ? 'true' : 'false');
   const ic = btn.querySelector('i');
   if (ic) ic.className = opening ? 'fa-solid fa-chevron-down' : 'fa-solid fa-chevron-right';
+}
+
+// Inline map preview. kind ('image'|'pdf') is decided client-side from the
+// filename, but the server independently enforces the safe-inline allowlist
+// (+ nosniff) on ?inline=1, so a mismatch can only break the preview, not
+// execute anything. The src carries only our own UUID.
+function cpOpenMap(id, kind){
+  const area = (_customerServiceAreas || []).find(a => a.id === id);
+  const body = document.getElementById('cp-map-body');
+  document.getElementById('cp-map-title').textContent = (area && area.map_filename) ? area.map_filename : 'Map';
+  const url = '/api/customer/service-areas/' + encodeURIComponent(id) + '/map?inline=1';
+  body.innerHTML = kind === 'pdf'
+    ? `<iframe src="${url}" title="Map preview" style="width:100%;height:72vh;border:none"></iframe>`
+    : `<img src="${url}" alt="Map preview" style="max-width:100%;max-height:72vh;display:block;margin:0 auto">`;
+  document.getElementById('cp-map-modal').style.display = 'flex';
+}
+function cpCloseMap(){
+  document.getElementById('cp-map-body').innerHTML = ''; // stop the iframe/img fetch
+  document.getElementById('cp-map-modal').style.display = 'none';
 }
 
 function cpSelectTab(name){

@@ -264,8 +264,9 @@ module.exports = function installCustomerPortalRoutes(app, pool, mw) {
   // Serves the area's map file ONLY when it belongs to one of the caller's
   // linked clients AND is client_visible AND has a map on file. The path is
   // resolved from the DB (never client input) and contained within UPLOAD_DIR
-  // (same guard as routes/dwg_sync.js). attachment + nosniff so an uploaded
-  // file can't render inline. Read-only — no mutation, no $.
+  // (same guard as routes/dwg_sync.js). Default is attachment + nosniff;
+  // ?inline=1 serves inline ONLY for an allowlist of raster image types and
+  // PDF (see below). Read-only — no mutation, no $.
   app.get('/api/customer/service-areas/:id/map', requireAuth(['customer']), async (req, res) => {
     if (!isValidUUID(req.params.id)) return res.status(400).json({ error: 'Invalid service area id.' });
     try {
@@ -291,7 +292,25 @@ module.exports = function installCustomerPortalRoutes(app, pool, mw) {
       }
       const downloadName = String(rows[0].map_filename || 'service-area-map').replace(/[^\w.\-]+/g, '_');
       res.setHeader('X-Content-Type-Options', 'nosniff');
-      res.setHeader('Content-Disposition', `attachment; filename="${downloadName}"`);
+
+      // Inline preview (?inline=1) is allowed ONLY for raster images + PDF,
+      // with an explicit Content-Type. SVG is intentionally excluded — it is
+      // image/* but can carry <script>, so serving it inline same-origin would
+      // be stored XSS. Anything off this allowlist (SVG, KMZ, …) falls back to
+      // attachment. nosniff stays set either way, so the browser won't sniff a
+      // declared image/pdf into something executable.
+      const INLINE_TYPES = {
+        '.png': 'image/png', '.jpg': 'image/jpeg', '.jpeg': 'image/jpeg',
+        '.gif': 'image/gif', '.webp': 'image/webp', '.pdf': 'application/pdf',
+      };
+      const ext = path.extname(rows[0].map_filename || rows[0].map_file_path || '').toLowerCase();
+      const inlineType = INLINE_TYPES[ext];
+      if (req.query.inline === '1' && inlineType) {
+        res.setHeader('Content-Type', inlineType);
+        res.setHeader('Content-Disposition', `inline; filename="${downloadName}"`);
+      } else {
+        res.setHeader('Content-Disposition', `attachment; filename="${downloadName}"`);
+      }
       res.sendFile(resolved);
     } catch (e) {
       console.error('[customer:service-area-map]', e && e.message);
