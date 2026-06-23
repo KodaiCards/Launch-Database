@@ -16,8 +16,8 @@ CREATE TABLE IF NOT EXISTS dwg_canonical_files (
   created_at timestamptz NOT NULL DEFAULT now(),
   UNIQUE (project_id, filename)
 );
-CREATE INDEX idx_dwg_canonical_project ON dwg_canonical_files (project_id);
-CREATE INDEX idx_dwg_canonical_modified ON dwg_canonical_files (last_modified_at DESC);
+CREATE INDEX IF NOT EXISTS idx_dwg_canonical_project ON dwg_canonical_files (project_id);
+CREATE INDEX IF NOT EXISTS idx_dwg_canonical_modified ON dwg_canonical_files (last_modified_at DESC);
 
 -- Version history (snapshots when canonical is updated)
 CREATE TABLE IF NOT EXISTS dwg_versions (
@@ -29,7 +29,7 @@ CREATE TABLE IF NOT EXISTS dwg_versions (
   uploaded_by uuid REFERENCES users(id) ON DELETE SET NULL,
   uploaded_at timestamptz NOT NULL DEFAULT now()
 );
-CREATE INDEX idx_dwg_versions_canonical_uploaded ON dwg_versions (canonical_file_id, uploaded_at DESC);
+CREATE INDEX IF NOT EXISTS idx_dwg_versions_canonical_uploaded ON dwg_versions (canonical_file_id, uploaded_at DESC);
 
 -- User staging area (per-user, per-project, per-filename)
 CREATE TABLE IF NOT EXISTS dwg_staging (
@@ -47,8 +47,8 @@ CREATE TABLE IF NOT EXISTS dwg_staging (
   review_notes text,
   UNIQUE (user_id, project_id, filename, pushed_at)
 );
-CREATE INDEX idx_dwg_staging_pending ON dwg_staging (status, pushed_at DESC) WHERE status = 'pending';
-CREATE INDEX idx_dwg_staging_user ON dwg_staging (user_id, status, pushed_at DESC);
-CREATE INDEX idx_dwg_staging_project ON dwg_staging (project_id, status);
+CREATE INDEX IF NOT EXISTS idx_dwg_staging_pending ON dwg_staging (status, pushed_at DESC) WHERE status = 'pending';
+CREATE INDEX IF NOT EXISTS idx_dwg_staging_user ON dwg_staging (user_id, status, pushed_at DESC);
+CREATE INDEX IF NOT EXISTS idx_dwg_staging_project ON dwg_staging (project_id, status);
 
 COMMIT;

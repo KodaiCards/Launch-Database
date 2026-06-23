@@ -22,9 +22,9 @@ CREATE TABLE IF NOT EXISTS workspace_folders (
   UNIQUE (parent_id, name)
 );
 
-CREATE INDEX idx_workspace_folders_parent ON workspace_folders (parent_id);
-CREATE INDEX idx_workspace_folders_owner ON workspace_folders (owner_user_id, kind);
-CREATE INDEX idx_workspace_folders_project ON workspace_folders (project_id) WHERE project_id IS NOT NULL;
+CREATE INDEX IF NOT EXISTS idx_workspace_folders_parent ON workspace_folders (parent_id);
+CREATE INDEX IF NOT EXISTS idx_workspace_folders_owner ON workspace_folders (owner_user_id, kind);
+CREATE INDEX IF NOT EXISTS idx_workspace_folders_project ON workspace_folders (project_id) WHERE project_id IS NOT NULL;
 
 -- Files within folders
 CREATE TABLE IF NOT EXISTS workspace_files (
@@ -42,7 +42,7 @@ CREATE TABLE IF NOT EXISTS workspace_files (
   UNIQUE (folder_id, filename)
 );
 
-CREATE INDEX idx_workspace_files_folder ON workspace_files (folder_id);
+CREATE INDEX IF NOT EXISTS idx_workspace_files_folder ON workspace_files (folder_id);
 
 -- Version history (last N versions per file, default keep 10)
 CREATE TABLE IF NOT EXISTS workspace_file_versions (
@@ -55,7 +55,7 @@ CREATE TABLE IF NOT EXISTS workspace_file_versions (
   uploaded_at timestamptz NOT NULL DEFAULT now()
 );
 
-CREATE INDEX idx_workspace_file_versions_file ON workspace_file_versions (file_id, uploaded_at DESC);
+CREATE INDEX IF NOT EXISTS idx_workspace_file_versions_file ON workspace_file_versions (file_id, uploaded_at DESC);
 
 -- Explicit share list for share_mode='specific' folders
 CREATE TABLE IF NOT EXISTS workspace_folder_shares (
@@ -67,4 +67,4 @@ CREATE TABLE IF NOT EXISTS workspace_folder_shares (
   PRIMARY KEY (folder_id, user_id)
 );
 
-CREATE INDEX idx_workspace_folder_shares_user ON workspace_folder_shares (user_id);
+CREATE INDEX IF NOT EXISTS idx_workspace_folder_shares_user ON workspace_folder_shares (user_id);
