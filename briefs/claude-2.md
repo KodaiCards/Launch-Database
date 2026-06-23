@@ -4,11 +4,10 @@
 **Branch:** `claude-2/contractor-timeclock`
 **Read first:** `CLAUDE.md`, `ROADMAP.md` (Phase 5), `briefs/README.md`.
 
-> **CEO follow-ups (gated on Phase 3 — contractor accounts, NOT this brief):** the reused
-> `POST /api/service-area-jobs/:id/time-entries` is `requireAuth(STAFF_ROLES)` and authorizes by
-> *role*, not job-ownership. When contractors get real accounts, two changes land together:
-> (1) admit the `contractor` role to that endpoint, and (2) add a job-assignment/ownership check so
-> a contractor can only log against jobs assigned to them (IDOR guard). Both are CEO/core scope.
+> **CEO follow-ups — DONE 2026-06-23.** `contractor` is now in `VALID_ROLES`; the time-entries POST
+> admits it but restricts contractors to their OWN assigned jobs (IDOR guard) and strips `actual_amount`
+> from their response. Staff collaborator-logging unchanged. Admins can mint contractor accounts via the
+> user admin today; single-use invite codes remain the Phase-3 nicety.
 > Server mount wired by CEO at merge: `require('./routes/my_work')(app, pool, { requireAuth })`.
 
 ## Goal
