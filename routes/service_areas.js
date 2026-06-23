@@ -474,10 +474,11 @@ module.exports = function installServiceAreaRoutes(app, pool, mw) {
         `SELECT saj.id, saj.actual_amount, saj.actual_hours, saj.footage, saj.rate, saj.billing_type, j.name AS job_name
          FROM service_area_jobs saj LEFT JOIN jobs j ON j.id = saj.job_id
          WHERE saj.service_area_id = $1 AND saj.billed_date IS NULL
-           AND saj.status IN ('issued','client_approved','complete')`,
+           AND saj.status IN ('issued','client_approved','complete')
+           AND COALESCE(saj.actual_amount, 0) > 0`,
         [req.params.id]
       );
-      if (!jobs.rows.length) { await client.query('ROLLBACK'); return res.status(400).json({ error: 'No ready-to-bill jobs in this service area.' }); }
+      if (!jobs.rows.length) { await client.query('ROLLBACK'); return res.status(400).json({ error: 'No billable jobs — done jobs must have a value (log hours or set footage first).' }); }
       const total = jobs.rows.reduce((s, j) => s + Number(j.actual_amount || 0), 0);
       const inv = await client.query(
         `INSERT INTO invoices (client_id, invoice_number, invoice_date, total_amount, status, notes)
@@ -545,7 +546,7 @@ module.exports = function installServiceAreaRoutes(app, pool, mw) {
       );
       // Ready-to-bill: done stages with no billed_date, plus aging.
       const ready = await pool.query(
-        `SELECT count(*)::int AS count, COALESCE(SUM(estimated_amount),0) AS total,
+        `SELECT count(*)::int AS count, COALESCE(SUM(actual_amount),0) AS total,
                 COALESCE(MAX((now()::date - completed_date)),0)::int AS oldest_days
          FROM service_area_jobs
          WHERE billed_date IS NULL AND status IN ('issued','client_approved','complete')`
