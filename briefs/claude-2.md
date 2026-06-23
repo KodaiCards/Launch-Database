@@ -1,8 +1,15 @@
 # Claude 2 — Contractor timeclock (Phase 5)
 
-**Status:** NOT STARTED
+**Status:** MERGED to main 2026-06-23 (CEO reviewed). Works today for staff-role field users.
 **Branch:** `claude-2/contractor-timeclock`
 **Read first:** `CLAUDE.md`, `ROADMAP.md` (Phase 5), `briefs/README.md`.
+
+> **CEO follow-ups (gated on Phase 3 — contractor accounts, NOT this brief):** the reused
+> `POST /api/service-area-jobs/:id/time-entries` is `requireAuth(STAFF_ROLES)` and authorizes by
+> *role*, not job-ownership. When contractors get real accounts, two changes land together:
+> (1) admit the `contractor` role to that endpoint, and (2) add a job-assignment/ownership check so
+> a contractor can only log against jobs assigned to them (IDOR guard). Both are CEO/core scope.
+> Server mount wired by CEO at merge: `require('./routes/my_work')(app, pool, { requireAuth })`.
 
 ## Goal
 A dead-simple field-facing timeclock: a logged-in contractor sees **only the service-area jobs assigned to them**, picks one, enters hours + a note, submits. Hours auto-attribute to their account's staff and flow into billing + the Hours tab. (Carter's words: "they input a job or pick the dropdown and it attaches their hours with the description to the service area.")

@@ -710,6 +710,10 @@ require('./routes/projects')(app, pool, { requireAdmin, requireAuth, requireMana
 // the legacy projects tree above during the rebuild.
 require('./routes/service_areas')(app, pool, { requireAdmin, requireAuth, requireManagerOrAdmin });
 
+// Phase 5: contractor/field timeclock — GET /api/my/jobs (caller's own assigned
+// jobs only). Hour-logging reuses POST /api/service-area-jobs/:id/time-entries.
+require('./routes/my_work')(app, pool, { requireAuth });
+
 // ─────────────────────────────────────────────────────────────────────────────
 // UNDO REPLAY — extracted to routes/undo.js (Track 1.3.6).
 // saveUndoBucket / popUndoBucket helpers live in routes/_helpers.js.
