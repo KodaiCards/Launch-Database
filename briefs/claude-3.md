@@ -1,0 +1,21 @@
+# Claude 3 — Client portal: service-area status view (Phase 6)
+
+**Status:** NOT STARTED
+**Branch:** `claude-3/client-portal-status`
+**Read first:** `CLAUDE.md`, `ROADMAP.md` (Phase 6), `briefs/README.md`.
+
+## Goal
+A client-facing, read-only view: a `customer`-role user sees **their own clients' service areas** with each one's status / progress (done vs remaining). No internal rates, costs, or $ amounts — clients see *status*, not money. (Map per area comes later in Phase 7; leave a placeholder.)
+
+## Build
+1. Customer endpoint: `GET /api/customer/service-areas` → service areas for the clients linked to the logged-in user via `customer_clients` (`user_id` → `client_id`s), each with: name, program (RUS vs not), per-team job statuses, and a simple progress figure (e.g. jobs done / total). **Exclude `rate`, `estimated_amount`, `actual_amount`, invoices.** Put it in `routes/customer_portal.js` (exists) — match its existing scope pattern.
+2. Client page: extend `public/customer.html` (exists) or add a clean view + JS that lists the client's service areas with status + a small progress indicator. App-shell themed.
+
+## Boundaries
+- **No financials leaked** — status/progress only. Double-check the SELECT excludes money columns.
+- Respect the role guard: `customer`-role users can only hit `/api/customer/*` (see `server.js` customer scope guard + `routes/customer_portal.js`). Don't loosen it.
+- Don't change the keystone model/schema/migrations. Read-only.
+- Test in-process: mount your endpoint vs the dev DB, seed a `customer_clients` link + a service area, confirm a customer sees only their linked client's areas and no $ fields. CEO wires any `server.js` change at merge.
+
+## Acceptance
+- A `customer`-role user sees only their linked clients' service areas with status/progress; an admin/other client cannot see another client's areas; no rates/amounts/invoices appear anywhere in the response or page.
