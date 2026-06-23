@@ -27,4 +27,4 @@ Keep pushing to your **same branch** after **each** task (tell Carter the branch
 
 - [x] **1. Per-area detail expand.** Click a service-area card → expand to job-by-job status + start/completed dates (data you already fetch — pure frontend, no new $). Keep it inside the under-construction shim.
 - [x] **2. Portal invoices from keystone.** Confirm `/api/customer/invoices` surfaces invoices created by the service-area billing flow; render sent/paid status + line items (never drafts). Customer-scoped, no internal cost columns beyond what the client is billed.
-- [ ] **3. Map link (read-only).** When `service_areas.map_file_path` is set AND the area is `client_visible`, replace the "Map view coming soon" placeholder with a download/preview link. Additive; any file-serving route stays `customer`-scoped + read-only.
+- [x] **3. Map link (read-only).** When `service_areas.map_file_path` is set AND the area is `client_visible`, replace the "Map view coming soon" placeholder with a download/preview link. Additive; any file-serving route stays `customer`-scoped + read-only.
