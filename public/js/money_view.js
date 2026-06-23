@@ -7,6 +7,7 @@
     applyStoredTheme();
     loadMargin();
     loadAging();
+    loadClientList();
   });
 
   const fmt = n => '$' + (Number(n) || 0).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 });
@@ -123,6 +124,90 @@
         <td class="num">${fmt(data.grand_total)}</td>
       </tr></tfoot>
     </table></div>`;
+  }
+
+  // ── Client statement ─────────────────────────────────────────────────────
+
+  async function loadClientList() {
+    try {
+      const res = await fetch('/api/clients', { credentials: 'include' });
+      if (!res.ok) return;
+      const clients = await res.json();
+      const sel = document.getElementById('stmt-client');
+      if (!sel) return;
+      (Array.isArray(clients) ? clients : (clients.clients || [])).forEach(c => {
+        const opt = document.createElement('option');
+        opt.value = c.id; opt.textContent = c.name;
+        sel.appendChild(opt);
+      });
+    } catch { /* ignore */ }
+  }
+
+  window.loadStatement = async function () {
+    const clientId = document.getElementById('stmt-client').value;
+    const card = document.getElementById('stmt-card');
+    if (!clientId) { card.innerHTML = ''; return; }
+    card.innerHTML = '<div class="loading-row"><span class="spinner"></span>Loading statement…</div>';
+    try {
+      const res = await fetch(`/api/money/statement?client_id=${encodeURIComponent(clientId)}`, { credentials: 'include' });
+      if (res.status === 401 || res.status === 403) { card.innerHTML = lockMsg(); return; }
+      if (!res.ok) throw new Error(await res.text());
+      const data = await res.json();
+      renderStatement(data, card);
+    } catch (e) {
+      card.innerHTML = errMsg(e);
+    }
+  };
+
+  function renderStatement(data, card) {
+    const bkts = [['0-30','0–30 days','var(--success)'],['31-60','31–60 days','var(--info)'],['61-90','61–90 days','var(--warning)'],['90+','90+ days','var(--danger)']];
+    const agingHtml = `<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:10px;padding:14px 0 6px">
+      ${bkts.map(([k,l,col]) => {
+        const b = data.buckets[k] || {count:0,total:0};
+        return `<div style="border-left:3px solid ${col};padding:8px 12px;background:var(--surface-1,#f5f7fa);border-radius:6px">
+          <div style="font-size:11px;color:var(--text-muted);font-weight:600;text-transform:uppercase;letter-spacing:.4px">${l}</div>
+          <div style="font-size:18px;font-weight:700;margin:4px 0 2px">${fmt(b.total)}</div>
+          <div style="font-size:11px;color:var(--text-muted)">${b.count} invoice${b.count===1?'':'s'}</div>
+        </div>`;
+      }).join('')}
+    </div>`;
+
+    const areasHtml = data.areas.length
+      ? `<div class="table-wrap"><table>
+          <thead><tr><th>Service Area</th><th class="num">Jobs</th><th class="num">Estimated</th><th class="num">Billed</th></tr></thead>
+          <tbody>${data.areas.map(a => `<tr>
+            <td>${esc(a.service_area_name)}</td>
+            <td class="num">${a.job_count}</td>
+            <td class="num">${fmt(a.estimated_total)}</td>
+            <td class="num">${fmt(a.billed_total)}</td>
+          </tr>`).join('')}</tbody>
+        </table></div>`
+      : '<div class="empty-state" style="padding:16px">No service areas.</div>';
+
+    const invHtml = data.invoices.length
+      ? `<div class="table-wrap"><table>
+          <thead><tr><th>Invoice #</th><th>Date</th><th>Age</th><th>Status</th><th class="num">Total</th></tr></thead>
+          <tbody>${data.invoices.map(inv => `<tr style="cursor:pointer" onclick="openInvModal('${esc(inv.id)}','${esc(inv.invoice_number||'Invoice')}')">
+            <td><a style="color:var(--primary);text-decoration:none">${esc(inv.invoice_number||'—')}</a></td>
+            <td>${esc(inv.invoice_date||'—')}</td>
+            <td>${inv.age_days!=null?inv.age_days+'d':'—'}</td>
+            <td><span class="tag">${esc(inv.status||'—')}</span></td>
+            <td class="num">${fmt(inv.total_amount)}</td>
+          </tr>`).join('')}</tbody>
+          <tfoot><tr><td colspan="4">Outstanding total</td><td class="num">${fmt(data.outstanding)}</td></tr></tfoot>
+        </table></div>`
+      : '<div class="empty-state" style="padding:16px"><i class="fa-regular fa-circle-check"></i>No outstanding invoices.</div>';
+
+    card.innerHTML = `<div class="card">
+      <div style="padding:14px 16px;border-bottom:1px solid var(--gray-border)">
+        <strong>${esc(data.client.name)}</strong> — Outstanding: <strong>${fmt(data.outstanding)}</strong>
+      </div>
+      <div style="padding:14px 16px 0">${agingHtml}</div>
+      <div style="padding:0 16px 14px;font-size:13px;font-weight:600;color:var(--text-muted)">Service Areas</div>
+      ${areasHtml}
+      <div style="padding:14px 16px 6px;font-size:13px;font-weight:600;color:var(--text-muted)">Outstanding Invoices</div>
+      ${invHtml}
+    </div>`;
   }
 
   // ── Invoice drill-in modal ────────────────────────────────────────────────

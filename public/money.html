@@ -142,6 +142,20 @@ tfoot td{font-weight:700;border-top:2px solid var(--gray-border);background:var(
     </div>
   </div>
 
+  <!-- Client Statement -->
+  <div class="section">
+    <div class="section-head">
+      <div class="section-title"><i class="fa-solid fa-user-tie"></i> Client Statement</div>
+    </div>
+    <div style="display:flex;gap:10px;align-items:flex-end;margin-bottom:12px;flex-wrap:wrap">
+      <select id="stmt-client" style="padding:7px 10px;border:1px solid var(--gray-border);border-radius:6px;font-size:13px;background:var(--white);color:var(--text)">
+        <option value="">— Select client —</option>
+      </select>
+      <button class="btn btn-secondary btn-sm" onclick="loadStatement()"><i class="fa-solid fa-magnifying-glass"></i> Load statement</button>
+    </div>
+    <div id="stmt-card"></div>
+  </div>
+
   <!-- Export -->
   <div class="section">
     <div class="section-head">

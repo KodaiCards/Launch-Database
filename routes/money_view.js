@@ -101,6 +101,65 @@ module.exports = function installMoneyViewRoutes(app, pool, mw) {
     }
   });
 
+  // ── Client statement ─────────────────────────────────────────────────────
+  // GET /api/money/statement?client_id= → per-client service areas, billed, outstanding, aging buckets.
+  app.get('/api/money/statement', requireManagerOrAdmin, async (req, res) => {
+    const { client_id } = req.query;
+    if (!client_id) return res.status(400).json({ error: 'client_id required.' });
+    try {
+      // Client info
+      const { rows: clientRows } = await pool.query(
+        'SELECT id, name FROM clients WHERE id = $1', [client_id]
+      );
+      if (!clientRows.length) return res.status(404).json({ error: 'Client not found.' });
+      const client = clientRows[0];
+
+      // Service areas with job totals
+      const { rows: areas } = await pool.query(
+        `SELECT sa.id, sa.name AS service_area_name,
+                COALESCE(SUM(saj.estimated_amount), 0)::float AS estimated_total,
+                COALESCE(SUM(CASE WHEN saj.status='billed' OR saj.billed_date IS NOT NULL
+                  THEN saj.actual_amount ELSE 0 END), 0)::float AS billed_total,
+                COUNT(saj.id)::int AS job_count
+         FROM service_areas sa
+         LEFT JOIN service_area_jobs saj ON saj.service_area_id = sa.id
+         WHERE sa.client_id = $1
+         GROUP BY sa.id, sa.name
+         ORDER BY sa.name`,
+        [client_id]
+      );
+
+      // Outstanding invoices (non-draft, non-void) for this client
+      const { rows: invRows } = await pool.query(
+        `SELECT i.id, i.invoice_number, i.invoice_date::text AS invoice_date,
+                i.status, COALESCE(i.total_amount, 0)::float AS total_amount,
+                GREATEST((CURRENT_DATE - i.invoice_date), 0) AS age_days
+         FROM invoices i
+         WHERE i.client_id = $1 AND i.status NOT IN ('draft','void')
+         ORDER BY i.invoice_date ASC NULLS LAST`,
+        [client_id]
+      );
+
+      // Bucket invoices
+      const buckets = {
+        '0-30':  { label: '0–30 days',  count: 0, total: 0 },
+        '31-60': { label: '31–60 days', count: 0, total: 0 },
+        '61-90': { label: '61–90 days', count: 0, total: 0 },
+        '90+':   { label: '90+ days',   count: 0, total: 0 },
+      };
+      for (const r of invRows) {
+        const d = r.age_days == null ? 0 : Number(r.age_days);
+        const key = d <= 30 ? '0-30' : d <= 60 ? '31-60' : d <= 90 ? '61-90' : '90+';
+        buckets[key].count++; buckets[key].total += r.total_amount;
+      }
+      const outstanding = invRows.reduce((s, r) => s + r.total_amount, 0);
+      res.json({ client, areas, invoices: invRows, buckets, outstanding });
+    } catch (e) {
+      console.error('[money:statement]', e && e.message);
+      res.status(500).json({ error: 'Failed to load client statement.' });
+    }
+  });
+
   // ── Invoice detail (line items) — for drill-in modal ─────────────────────
   app.get('/api/money/invoice/:id', requireManagerOrAdmin, async (req, res) => {
     try {
