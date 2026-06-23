@@ -106,6 +106,23 @@ button{font-family:inherit;cursor:pointer;border:none;background:none;color:inhe
 .sa-map-ph{margin-top:12px;padding:10px 12px;border:1px dashed var(--gray-border);border-radius:8px;color:var(--text-muted);font-size:12px;display:flex;align-items:center;gap:8px}
 .sa-map-link{margin-top:12px;display:inline-flex;align-items:center;gap:8px;padding:8px 12px;border:1px solid var(--gray-border);border-radius:8px;color:var(--primary);font-size:12px;font-weight:600;text-decoration:none;background:var(--surface-1)}
 .sa-map-link:hover{background:var(--primary-light)}
+.sa-map-actions{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+
+/* Per-area timeline + stage progression */
+.sa-timeline{margin-top:12px}
+.sa-dates{font-size:12px;color:var(--text-muted);display:flex;align-items:center;gap:8px;margin-bottom:8px}
+.sa-stages{display:flex;align-items:center;gap:6px;flex-wrap:wrap}
+.sa-stage{font-size:11px;color:var(--text-muted);padding:2px 8px;border-radius:8px;background:var(--surface-1);border:1px solid var(--gray-border)}
+.sa-stage.past{color:var(--text-secondary)}
+.sa-stage.current{color:var(--primary);border-color:var(--primary);background:var(--primary-light);font-weight:700}
+.sa-stage-sep{font-size:9px;color:var(--text-muted)}
+
+/* Service Areas summary header */
+.sa-summary{padding:14px 16px;margin-bottom:14px}
+.sa-summary-row{display:flex;justify-content:space-between;align-items:center;gap:14px;flex-wrap:wrap}
+.sa-summary-total{font-size:18px;font-weight:700;color:var(--text)}
+.sa-summary-sub{font-size:12px;color:var(--text-muted)}
+.sa-summary-prog{flex:1;min-width:180px;max-width:300px}
 
 /* Invoice status pills */
 .inv-status{padding:2px 8px;border-radius:8px;font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.4px;display:inline-block}
@@ -195,6 +212,7 @@ button{font-family:inherit;cursor:pointer;border:none;background:none;color:inhe
       <div id="cp-invoices-body"></div>
     </div>
     <div id="cp-tab-service-areas" class="cp-tab" style="display:none">
+      <div id="cp-sa-header"></div>
       <div class="stats-grid" id="cp-sa-stats"></div>
       <div id="cp-sa-body"></div>
     </div>
@@ -209,6 +227,17 @@ button{font-family:inherit;cursor:pointer;border:none;background:none;color:inhe
       <button class="btn btn-icon btn-secondary" aria-label="Close dialog" onclick="document.getElementById('cp-detail-modal').style.display='none'"><i class="fa-solid fa-xmark" aria-hidden="true"></i></button>
     </div>
     <div class="modal-body" id="cp-detail-body"></div>
+  </div>
+</div>
+
+<!-- Map preview modal — inline image/PDF viewer (served via ?inline=1) -->
+<div class="modal-overlay" id="cp-map-modal" role="dialog" aria-modal="true" aria-labelledby="cp-map-title">
+  <div class="modal-content" style="max-width:900px;width:100%">
+    <div class="modal-header">
+      <span class="modal-title" id="cp-map-title">Map</span>
+      <button class="btn btn-icon btn-secondary" aria-label="Close dialog" onclick="cpCloseMap()"><i class="fa-solid fa-xmark" aria-hidden="true"></i></button>
+    </div>
+    <div class="modal-body" id="cp-map-body"></div>
   </div>
 </div>
 
@@ -477,33 +506,77 @@ async function cpOpenInvoice(id){
 let _customerServiceAreas = [];
 const SA_TEAM_LABELS = { permitting: 'Permitting', design: 'Design', construction: 'Construction', other: 'Other' };
 const SA_DONE = new Set(['complete', 'billed']);
+const SA_STAGES = ['Not started', 'In progress', 'Complete', 'Billed'];
+// Coarse area stage derived from its (non-cancelled) job statuses.
+function saStageIndex(jobs){
+  const live = (jobs || []).filter(j => j.status !== 'cancelled');
+  if (!live.length) return 0;
+  if (live.every(j => j.status === 'billed')) return 3;
+  if (live.every(j => j.status === 'complete' || j.status === 'billed')) return 2;
+  if (live.some(j => j.status !== 'potential')) return 1;
+  return 0;
+}
+
+function cpSaClearChrome(){
+  const header = document.getElementById('cp-sa-header');
+  const stats = document.getElementById('cp-sa-stats');
+  if (header) header.innerHTML = '';
+  if (stats) stats.innerHTML = '';
+}
 
 async function cpLoadServiceAreas(){
   const body = document.getElementById('cp-sa-body');
-  const stats = document.getElementById('cp-sa-stats');
-  body.innerHTML = '<div class="empty-state"><i class="fa-solid fa-spinner fa-spin"></i><p>Loading…</p></div>';
+  cpSaClearChrome();
+  body.innerHTML = '<div class="empty-state"><i class="fa-solid fa-spinner fa-spin"></i><p>Loading service areas…</p></div>';
   try {
     _customerServiceAreas = await api('/api/customer/service-areas');
     renderServiceAreas();
   } catch (e) {
-    if (stats) stats.innerHTML = '';
-    body.innerHTML = `<div class="empty-state" style="color:var(--danger-text)">Failed to load: ${esc(e.message)}</div>`;
+    cpSaClearChrome();
+    body.innerHTML = `<div class="empty-state" style="color:var(--danger-text)">
+      <i class="fa-solid fa-triangle-exclamation"></i>
+      <p>Couldn't load your service areas.</p>
+      <p style="font-size:12px">${esc(e.message)}</p>
+      <button class="btn btn-secondary btn-sm" style="margin-top:10px" onclick="cpLoadServiceAreas()">Try again</button>
+    </div>`;
   }
 }
 
 function renderServiceAreas(){
   const body = document.getElementById('cp-sa-body');
+  const header = document.getElementById('cp-sa-header');
   const stats = document.getElementById('cp-sa-stats');
   const areas = _customerServiceAreas || [];
   if (!areas.length){
-    stats.innerHTML = '';
-    body.innerHTML = '<div class="empty-state"><i class="fa-solid fa-map-location-dot"></i><p>No service areas to show yet.</p></div>';
+    cpSaClearChrome();
+    body.innerHTML = `<div class="empty-state">
+      <i class="fa-solid fa-map-location-dot"></i>
+      <p>No service areas to show yet.</p>
+      <p style="font-size:12px">When we publish one for you, it'll appear here.</p>
+    </div>`;
     return;
   }
   const isDone = s => ['completed','billed','complete'].includes(String(s || '').toLowerCase());
   const activeCount = areas.filter(a => String(a.status || '').toLowerCase() === 'active').length;
   const doneCount = areas.filter(a => isDone(a.status)).length;
   const totalJobs = areas.reduce((s, a) => s + (Number(a.jobs_total) || 0), 0);
+  const totalDone = areas.reduce((s, a) => s + (Number(a.jobs_done) || 0), 0);
+  // Overall completion is aggregate (all jobs done / all jobs), not an average
+  // of per-area %, so big areas weigh proportionally.
+  const overallPct = totalJobs > 0 ? Math.round(totalDone / totalJobs * 100) : null;
+  if (header) header.innerHTML = `
+    <div class="sa-summary card">
+      <div class="sa-summary-row">
+        <div>
+          <div class="sa-summary-total">${areas.length} service area${areas.length === 1 ? '' : 's'}</div>
+          <div class="sa-summary-sub">${activeCount} active · ${doneCount} completed</div>
+        </div>
+        <div class="sa-summary-prog">
+          <div class="sa-summary-sub" style="margin-bottom:4px">${overallPct != null ? overallPct + '% complete overall' : 'No jobs yet'}</div>
+          ${overallPct != null ? `<div class="progress-track" style="width:100%"><div class="progress-fill" style="width:${overallPct}%"></div></div>` : ''}
+        </div>
+      </div>
+    </div>`;
   stats.innerHTML = `
     <div class="stat-card"><div class="stat-label">Active Areas</div><div class="stat-value">${activeCount}</div></div>
     <div class="stat-card"><div class="stat-label">Completed Areas</div><div class="stat-value">${doneCount}</div></div>
@@ -518,6 +591,20 @@ function renderServiceAreas(){
            <span style="font-size:12px;color:var(--text-muted)">${a.jobs_done} of ${a.jobs_total} jobs done · ${pct}%</span>
          </div>`
       : `<div style="font-size:12px;color:var(--text-muted);margin-top:8px">No jobs yet.</div>`;
+    // Timeline: date range + a coarse stage progression from job statuses.
+    const sIdx = saStageIndex(a.jobs);
+    let dateText;
+    if (a.start_date && a.completed_date) dateText = `Started ${fmtDate(a.start_date)} → Completed ${fmtDate(a.completed_date)}`;
+    else if (a.start_date) dateText = `Started ${fmtDate(a.start_date)} → In progress`;
+    else if (a.completed_date) dateText = `Completed ${fmtDate(a.completed_date)}`;
+    else dateText = 'No dates set yet';
+    const stages = SA_STAGES.map((label, i) =>
+      `<span class="sa-stage ${i < sIdx ? 'past' : ''} ${i === sIdx ? 'current' : ''}">${label}</span>`
+    ).join('<i class="fa-solid fa-chevron-right sa-stage-sep" aria-hidden="true"></i>');
+    const timeline = `<div class="sa-timeline">
+      <div class="sa-dates"><i class="fa-regular fa-calendar" aria-hidden="true"></i> ${esc(dateText)}</div>
+      <div class="sa-stages">${stages}</div>
+    </div>`;
     const byTeam = {};
     (a.jobs || []).forEach(j => { const t = j.team || 'other'; (byTeam[t] = byTeam[t] || []).push(j); });
     const teams = ['permitting','design','construction','other'].filter(t => byTeam[t]).map(t => {
@@ -556,13 +643,21 @@ function renderServiceAreas(){
            </table>
          </div>`
       : '';
-    // Map: when one is on file (area is already client_visible), offer a
-    // scoped download; otherwise keep the Phase-7 placeholder.
-    const mapBlock = a.has_map
-      ? `<a class="sa-map-link" href="/api/customer/service-areas/${esc(a.id)}/map">
-           <i class="fa-solid fa-map-location-dot" aria-hidden="true"></i> Download map${a.map_filename ? ' — ' + esc(a.map_filename) : ''}
-         </a>`
-      : `<div class="sa-map-ph"><i class="fa-solid fa-map" aria-hidden="true"></i> Map view coming soon.</div>`;
+    // Map: when one is on file (area is already client_visible), offer an
+    // inline preview for image/PDF types plus a scoped download; otherwise
+    // keep the Phase-7 placeholder.
+    let mapBlock;
+    if (a.has_map) {
+      const ext = (String(a.map_filename || '').toLowerCase().match(/\.([a-z0-9]+)$/) || [, ''])[1];
+      const kind = ext === 'pdf' ? 'pdf' : (['png','jpg','jpeg','gif','webp'].includes(ext) ? 'image' : '');
+      const dl = `<a class="sa-map-link" href="/api/customer/service-areas/${esc(a.id)}/map"><i class="fa-solid fa-download" aria-hidden="true"></i> Download map${a.map_filename ? ' — ' + esc(a.map_filename) : ''}</a>`;
+      const view = kind
+        ? `<button class="sa-map-link" type="button" onclick="cpOpenMap('${esc(a.id)}','${kind}')"><i class="fa-solid fa-map-location-dot" aria-hidden="true"></i> View map</button>`
+        : '';
+      mapBlock = `<div class="sa-map-actions">${view}${dl}</div>`;
+    } else {
+      mapBlock = `<div class="sa-map-ph"><i class="fa-solid fa-map" aria-hidden="true"></i> Map view coming soon.</div>`;
+    }
     return `<div class="card" style="padding:14px 16px">
       <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:10px">
         <div>
@@ -575,6 +670,7 @@ function renderServiceAreas(){
         <span class="status-pill status-${esc(status)}">${esc(status.replace('_',' '))}</span>
       </div>
       ${prog}
+      ${timeline}
       ${teams}
       ${detail}
       ${mapBlock}
@@ -590,6 +686,25 @@ function cpToggleArea(id, btn){
   btn.setAttribute('aria-expanded', opening ? 'true' : 'false');
   const ic = btn.querySelector('i');
   if (ic) ic.className = opening ? 'fa-solid fa-chevron-down' : 'fa-solid fa-chevron-right';
+}
+
+// Inline map preview. kind ('image'|'pdf') is decided client-side from the
+// filename, but the server independently enforces the safe-inline allowlist
+// (+ nosniff) on ?inline=1, so a mismatch can only break the preview, not
+// execute anything. The src carries only our own UUID.
+function cpOpenMap(id, kind){
+  const area = (_customerServiceAreas || []).find(a => a.id === id);
+  const body = document.getElementById('cp-map-body');
+  document.getElementById('cp-map-title').textContent = (area && area.map_filename) ? area.map_filename : 'Map';
+  const url = '/api/customer/service-areas/' + encodeURIComponent(id) + '/map?inline=1';
+  body.innerHTML = kind === 'pdf'
+    ? `<iframe src="${url}" title="Map preview" style="width:100%;height:72vh;border:none"></iframe>`
+    : `<img src="${url}" alt="Map preview" style="max-width:100%;max-height:72vh;display:block;margin:0 auto">`;
+  document.getElementById('cp-map-modal').style.display = 'flex';
+}
+function cpCloseMap(){
+  document.getElementById('cp-map-body').innerHTML = ''; // stop the iframe/img fetch
+  document.getElementById('cp-map-modal').style.display = 'none';
 }
 
 function cpSelectTab(name){
