@@ -154,10 +154,11 @@
     activeJobId = null;
   };
 
-  // Close on backdrop click
+  // Close on backdrop click or ESC
   document.getElementById('log-modal').addEventListener('click', e => {
     if (e.target === document.getElementById('log-modal')) closeModal();
   });
+  document.addEventListener('keydown', e => { if (e.key === 'Escape') closeModal(); });
 
   // ── Submit ──────────────────────────────────────────────────────────────────
 

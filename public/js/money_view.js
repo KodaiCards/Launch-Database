@@ -339,6 +339,10 @@
     document.getElementById('inv-modal').classList.add('hidden');
   };
 
+  document.addEventListener('keydown', function (e) {
+    if (e.key === 'Escape') closeInvModal();
+  });
+
   // ── Export ────────────────────────────────────────────────────────────────
 
   window.exportInvoices = function () {

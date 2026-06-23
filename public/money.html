@@ -209,11 +209,11 @@ tfoot td{font-weight:700;border-top:2px solid var(--gray-border);background:var(
 </main>
 
 <!-- Invoice drill-in modal -->
-<div class="modal-bg hidden" id="inv-modal" onclick="if(event.target===this)closeInvModal()">
+<div class="modal-bg hidden" id="inv-modal" onclick="if(event.target===this)closeInvModal()" role="dialog" aria-modal="true" aria-labelledby="inv-modal-title">
   <div class="modal">
     <div class="modal-head">
       <h2 id="inv-modal-title">Invoice</h2>
-      <button class="modal-close" onclick="closeInvModal()"><i class="fa-solid fa-xmark"></i></button>
+      <button class="modal-close" onclick="closeInvModal()" aria-label="Close invoice"><i class="fa-solid fa-xmark"></i></button>
     </div>
     <div class="modal-body" id="inv-modal-body"><div class="loading-row"><span class="spinner"></span>Loading…</div></div>
   </div>
