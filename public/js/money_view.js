@@ -109,8 +109,8 @@
         <th>Invoice #</th><th>Client</th><th>Date</th><th>Age</th><th>Status</th><th class="num">Total</th>
       </tr></thead>
       <tbody>
-        ${all.map(inv => `<tr>
-          <td>${esc(inv.invoice_number || '—')}</td>
+        ${all.map(inv => `<tr style="cursor:pointer" onclick="openInvModal('${esc(inv.id)}','${esc(inv.invoice_number||'Invoice')}')">
+          <td><a style="color:var(--primary);text-decoration:none">${esc(inv.invoice_number || '—')}</a></td>
           <td>${esc(inv.client_name || '—')}</td>
           <td>${esc(inv.invoice_date || '—')}</td>
           <td>${inv.age_days != null ? inv.age_days + 'd' : '—'}</td>
@@ -124,6 +124,47 @@
       </tr></tfoot>
     </table></div>`;
   }
+
+  // ── Invoice drill-in modal ────────────────────────────────────────────────
+
+  window.openInvModal = async function (id, num) {
+    const modal = document.getElementById('inv-modal');
+    const body  = document.getElementById('inv-modal-body');
+    const title = document.getElementById('inv-modal-title');
+    title.textContent = 'Invoice ' + num;
+    body.innerHTML = '<div class="loading-row"><span class="spinner"></span>Loading…</div>';
+    modal.classList.remove('hidden');
+    try {
+      const res = await fetch(`/api/money/invoice/${encodeURIComponent(id)}`, { credentials: 'include' });
+      if (!res.ok) throw new Error(await res.text());
+      const { invoice: inv, items } = await res.json();
+      body.innerHTML = `
+        <div style="display:flex;gap:16px;flex-wrap:wrap;margin-bottom:12px;font-size:13px">
+          <div><strong>Client:</strong> ${esc(inv.client_name || '—')}</div>
+          <div><strong>Date:</strong> ${esc(inv.invoice_date || '—')}</div>
+          <div><strong>Status:</strong> <span class="tag">${esc(inv.status || '—')}</span></div>
+          <div><strong>Total:</strong> ${fmt(inv.total_amount)}</div>
+        </div>
+        ${items.length ? `<div class="table-wrap"><table>
+          <thead><tr><th>Description</th><th>Project</th><th class="num">Qty</th><th>Unit</th><th class="num">Rate</th><th class="num">Amount</th></tr></thead>
+          <tbody>${items.map(it => `<tr>
+            <td>${esc(it.description || '—')}</td>
+            <td>${esc(it.project_name || '—')}</td>
+            <td class="num">${it.quantity != null ? it.quantity : '—'}</td>
+            <td>${esc(it.unit || '—')}</td>
+            <td class="num">${it.rate != null ? fmt(it.rate) : '—'}</td>
+            <td class="num">${fmt(it.amount)}</td>
+          </tr>`).join('')}</tbody>
+          <tfoot><tr><td colspan="5">Total</td><td class="num">${fmt(inv.total_amount)}</td></tr></tfoot>
+        </table></div>` : '<div class="empty-state"><i class="fa-regular fa-file"></i>No line items.</div>'}`;
+    } catch (e) {
+      body.innerHTML = errMsg(e);
+    }
+  };
+
+  window.closeInvModal = function () {
+    document.getElementById('inv-modal').classList.add('hidden');
+  };
 
   // ── Export ────────────────────────────────────────────────────────────────
 

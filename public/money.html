@@ -91,6 +91,15 @@ tfoot td{font-weight:700;border-top:2px solid var(--gray-border);background:var(
 .spinner{display:inline-block;width:14px;height:14px;border:2px solid currentColor;
   border-radius:50%;border-right-color:transparent;animation:spin .6s linear infinite;vertical-align:-2px;margin-right:6px}
 @keyframes spin{to{transform:rotate(360deg)}}
+
+/* Invoice drill-in modal */
+.modal-bg{position:fixed;inset:0;background:rgba(0,0,0,.45);display:flex;align-items:center;justify-content:center;z-index:1000}
+.modal-bg.hidden{display:none}
+.modal{background:var(--white);border-radius:12px;width:min(680px,95vw);max-height:85vh;display:flex;flex-direction:column;overflow:hidden;box-shadow:0 20px 60px rgba(0,0,0,.25)}
+.modal-head{display:flex;align-items:center;justify-content:space-between;padding:14px 18px;border-bottom:1px solid var(--gray-border)}
+.modal-head h2{font-size:15px;font-weight:700}
+.modal-close{background:none;border:none;font-size:18px;color:var(--text-muted);cursor:pointer;padding:2px 6px}
+.modal-body{overflow-y:auto;padding:16px 18px}
 </style>
 </head>
 <body>
@@ -142,6 +151,17 @@ tfoot td{font-weight:700;border-top:2px solid var(--gray-border);background:var(
     <div class="page-sub" style="margin:0">All invoices: number, date, client, status, total.</div>
   </div>
 </main>
+
+<!-- Invoice drill-in modal -->
+<div class="modal-bg hidden" id="inv-modal" onclick="if(event.target===this)closeInvModal()">
+  <div class="modal">
+    <div class="modal-head">
+      <h2 id="inv-modal-title">Invoice</h2>
+      <button class="modal-close" onclick="closeInvModal()"><i class="fa-solid fa-xmark"></i></button>
+    </div>
+    <div class="modal-body" id="inv-modal-body"><div class="loading-row"><span class="spinner"></span>Loading…</div></div>
+  </div>
+</div>
 
 <script src="/js/money_view.js" defer></script>
 <script src="/js/app_nav.js" data-active="money"></script>

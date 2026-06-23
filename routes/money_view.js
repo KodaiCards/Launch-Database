@@ -101,6 +101,36 @@ module.exports = function installMoneyViewRoutes(app, pool, mw) {
     }
   });
 
+  // ── Invoice detail (line items) — for drill-in modal ─────────────────────
+  app.get('/api/money/invoice/:id', requireManagerOrAdmin, async (req, res) => {
+    try {
+      const { rows: inv } = await pool.query(
+        `SELECT i.id, i.invoice_number, i.invoice_date::text, i.status,
+                COALESCE(i.total_amount, 0)::float AS total_amount,
+                c.name AS client_name
+         FROM invoices i
+         LEFT JOIN clients c ON c.id = i.client_id
+         WHERE i.id = $1`,
+        [req.params.id]
+      );
+      if (!inv.length) return res.status(404).json({ error: 'Invoice not found.' });
+      const { rows: items } = await pool.query(
+        `SELECT ii.description, ii.quantity, ii.unit, ii.rate,
+                COALESCE(ii.amount, 0)::float AS amount,
+                p.name AS project_name
+         FROM invoice_items ii
+         LEFT JOIN projects p ON p.id = ii.project_id
+         WHERE ii.invoice_id = $1
+         ORDER BY ii.id`,
+        [req.params.id]
+      );
+      res.json({ invoice: inv[0], items });
+    } catch (e) {
+      console.error('[money:invoice-detail]', e && e.message);
+      res.status(500).json({ error: 'Failed to load invoice.' });
+    }
+  });
+
   // ── Accounting export — all invoices as CSV ───────────────────────────────
   app.get('/api/money/invoices.csv', requireManagerOrAdmin, async (req, res) => {
     try {
