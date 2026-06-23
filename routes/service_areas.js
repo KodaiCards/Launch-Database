@@ -367,6 +367,34 @@ module.exports = function installServiceAreaRoutes(app, pool, mw) {
     }
   });
 
+  // Flat list of a team's job line items (across all service areas) with
+  // service-area + client context. Powers the per-team pipeline kanban.
+  app.get('/api/service-area-jobs', requireAuth(STAFF_ROLES), async (req, res) => {
+    try {
+      const conds = [], params = [];
+      if (req.query.team) { params.push(req.query.team); conds.push(`saj.team = $${params.length}`); }
+      if (req.query.status) { params.push(req.query.status); conds.push(`saj.status = $${params.length}`); }
+      const where = conds.length ? `WHERE ${conds.join(' AND ')}` : '';
+      const { rows } = await pool.query(
+        `SELECT saj.*, j.name AS job_name, s.name AS assigned_staff_name,
+                sa.name AS service_area_name, sa.program AS program,
+                sa.engineering_contract_id, c.id AS client_id, c.name AS client_name
+         FROM service_area_jobs saj
+         JOIN service_areas sa ON sa.id = saj.service_area_id
+         LEFT JOIN clients c ON c.id = sa.client_id
+         LEFT JOIN jobs   j ON j.id = saj.job_id
+         LEFT JOIN staff  s ON s.id = saj.assigned_staff_id
+         ${where}
+         ORDER BY sa.name, saj.created_at`,
+        params
+      );
+      res.json(rows);
+    } catch (e) {
+      console.error('[sa-jobs:list]', e && e.message);
+      res.status(500).json({ error: 'Failed to load jobs.' });
+    }
+  });
+
   // Expose the pipeline map so the frontend can render stage chips consistently.
   app.get('/api/service-area-pipelines', requireAuth(STAFF_ROLES), (req, res) => {
     res.json({ pipelines: PIPELINES, approval_stage: APPROVAL_STAGE });
