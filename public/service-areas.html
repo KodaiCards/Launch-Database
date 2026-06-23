@@ -1,0 +1,144 @@
+<!doctype html>
+<html lang="en" data-theme="light">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Service Areas — Launch Fiber</title>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="/css/app-shell.css">
+<style>
+:root{
+  --primary:#1B5FA0;--primary-dark:#134880;--primary-light:#E8F0FB;
+  --surface-1:#F5F7FA;--surface-2:#FFFFFF;--surface-3:#F0F0F0;
+  --border-strong:#DEE2E6;--border-weak:#EEF1F5;
+  --text:#212529;--text-secondary:#495057;--text-muted:#5A6470;
+  --success:#28A745;--success-light:#E8F5E9;--success-text:#1B5E20;
+  --warning:#FFC107;--warning-light:#FFF8E1;--warning-text:#7A4F0E;
+  --danger:#DC3545;--danger-light:#FDECEA;--danger-text:#B71C1C;
+  --info:#1B5FA0;--info-light:#E8F0FB;--info-text:#0D47A1;
+  --rus:#6A1B9A;--rus-light:#F3E5F5;
+  --font:'Inter',sans-serif;
+}
+html[data-theme="dark"]{
+  --primary:#4A90D9;--primary-dark:#1B5FA0;--primary-light:#1E3A5C;
+  --surface-1:#1A1F26;--surface-2:#1D2430;--surface-3:#1F2630;
+  --border-strong:#2D3540;--border-weak:#252A33;
+  --text:#E8EAED;--text-secondary:#C2C7CD;--text-muted:#9BA1A8;
+  --success:#5DD27A;--success-light:#1B3D24;--success-text:#A5D6A7;
+  --warning:#FFCA28;--warning-light:#3D2F0F;--warning-text:#FFCC80;
+  --danger:#EF5350;--danger-light:#3D1F23;--danger-text:#F8B4BD;
+  --info:#4A90D9;--info-light:#1E3A5C;--info-text:#90CAF9;
+  --rus:#CE93D8;--rus-light:#2A1B33;
+  color-scheme:dark;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{font-family:var(--font);background:var(--surface-1);color:var(--text);height:100vh;overflow:hidden}
+button{font-family:inherit;cursor:pointer;border:none;background:none;color:inherit}
+input,select{font-family:inherit;font-size:13px;color:var(--text);background:var(--surface-2);border:1px solid var(--border-strong);border-radius:6px;padding:6px 8px}
+.header{background:var(--surface-2);border-bottom:1px solid var(--border-strong);padding:10px 18px;display:flex;align-items:center;justify-content:space-between;height:52px}
+.header-title{font-size:15px;font-weight:700;display:flex;align-items:center;gap:8px}
+.header-title i{color:var(--primary)}
+.header-right{display:flex;align-items:center;gap:8px}
+.btn{padding:8px 14px;border-radius:6px;font-size:13px;font-weight:500;border:1px solid transparent;display:inline-flex;align-items:center;gap:6px;transition:all .12s}
+.btn-primary{background:var(--primary);color:#fff}.btn-primary:hover{background:var(--primary-dark)}
+.btn-secondary{background:var(--surface-2);color:var(--text);border-color:var(--border-strong)}.btn-secondary:hover{background:var(--surface-1)}
+.btn-sm{padding:5px 9px;font-size:12px}
+.btn-ghost{padding:4px 7px;color:var(--text-muted)}.btn-ghost:hover{color:var(--text);background:var(--surface-1)}
+.layout{display:grid;grid-template-columns:300px 1fr;height:calc(100vh - 52px)}
+.sidebar{border-right:1px solid var(--border-strong);background:var(--surface-2);overflow-y:auto;padding:10px}
+.sidebar-actions{display:flex;gap:6px;margin-bottom:10px}
+.client-group{margin-bottom:6px}
+.client-head{font-size:12px;font-weight:700;color:var(--text-secondary);text-transform:uppercase;letter-spacing:.4px;padding:8px 6px 4px}
+.sa-item{display:flex;align-items:center;justify-content:space-between;gap:6px;padding:8px 10px;border-radius:6px;cursor:pointer;font-size:13px}
+.sa-item:hover{background:var(--surface-1)}
+.sa-item.active{background:var(--primary-light);color:var(--primary-dark);font-weight:600}
+.sa-item .meta{font-size:11px;color:var(--text-muted)}
+.badge{font-size:10px;font-weight:700;padding:1px 6px;border-radius:6px;letter-spacing:.3px}
+.badge-rus{background:var(--rus-light);color:var(--rus)}
+.badge-prog{background:var(--surface-3);color:var(--text-muted)}
+.main{overflow-y:auto;padding:22px 26px}
+.empty{display:flex;flex-direction:column;align-items:center;justify-content:center;height:70%;color:var(--text-muted);gap:10px}
+.empty i{font-size:34px;opacity:.4}
+.sa-title-row{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:4px}
+.sa-title{font-size:22px;font-weight:700}
+.sa-sub{color:var(--text-muted);font-size:13px;margin-bottom:18px;display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+.jobs-table{width:100%;border-collapse:collapse;background:var(--surface-2);border:1px solid var(--border-strong);border-radius:10px;overflow:hidden}
+.jobs-table th{text-align:left;font-size:11px;text-transform:uppercase;letter-spacing:.4px;color:var(--text-muted);padding:9px 10px;border-bottom:1px solid var(--border-strong);background:var(--surface-3)}
+.jobs-table td{padding:7px 10px;border-bottom:1px solid var(--border-weak);font-size:13px;vertical-align:middle}
+.jobs-table tr:last-child td{border-bottom:none}
+.jobs-table input,.jobs-table select{width:100%;background:transparent;border:1px solid transparent;padding:5px 6px}
+.jobs-table input:hover,.jobs-table select:hover{border-color:var(--border-weak)}
+.jobs-table input:focus,.jobs-table select:focus{border-color:var(--primary);background:var(--surface-2);outline:none}
+.col-num{text-align:right}
+.col-num input{text-align:right}
+.chips{display:flex;gap:3px;flex-wrap:wrap}
+.chip{font-size:10px;font-weight:600;padding:3px 8px;border-radius:20px;background:var(--surface-3);color:var(--text-muted);cursor:default;text-transform:capitalize}
+.chip.done{background:var(--success-light);color:var(--success-text)}
+.chip.current{background:var(--primary);color:#fff;cursor:default}
+.chip.revision{background:var(--warning-light);color:var(--warning-text)}
+.chip.next{background:transparent;border:1px dashed var(--border-strong);color:var(--text-muted);cursor:pointer}
+.chip.next:hover{border-color:var(--primary);color:var(--primary)}
+.totals{display:flex;justify-content:flex-end;gap:26px;padding:14px 10px;font-size:14px}
+.totals b{font-size:18px}
+.tfoot{background:var(--surface-3)}
+.tfoot td{font-weight:700;border-top:2px solid var(--border-strong)}
+.modal-bg{display:none;position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:50;align-items:center;justify-content:center}
+.modal-bg.open{display:flex}
+.modal{background:var(--surface-2);border-radius:12px;width:440px;max-width:92vw;padding:20px;box-shadow:0 20px 60px rgba(0,0,0,.25)}
+.modal h3{font-size:16px;margin-bottom:14px}
+.field{margin-bottom:12px}
+.field label{display:block;font-size:12px;font-weight:600;color:var(--text-secondary);margin-bottom:4px}
+.field input,.field select{width:100%}
+.modal-actions{display:flex;justify-content:flex-end;gap:8px;margin-top:16px}
+.undo-bar{position:fixed;bottom:20px;left:50%;transform:translateX(-50%) translateY(120%);background:var(--text);color:var(--surface-2);padding:10px 16px;border-radius:8px;display:flex;gap:14px;align-items:center;font-size:13px;box-shadow:0 8px 30px rgba(0,0,0,.3);transition:transform .2s;z-index:60}
+.undo-bar.show{transform:translateX(-50%) translateY(0)}
+.undo-bar button{color:var(--info);font-weight:700}
+.muted{color:var(--text-muted)}
+</style>
+</head>
+<body>
+  <div class="header">
+    <div class="header-title"><i class="fa-solid fa-diagram-project"></i> Service Areas</div>
+    <div class="header-right">
+      <a class="btn btn-secondary btn-sm" href="/admin.html"><i class="fa-solid fa-arrow-left"></i> Admin</a>
+      <button class="btn btn-ghost" id="themeToggle" title="Toggle theme"><i class="fa-solid fa-moon"></i></button>
+    </div>
+  </div>
+
+  <div class="layout">
+    <aside class="sidebar">
+      <div class="sidebar-actions">
+        <button class="btn btn-primary btn-sm" id="newSaBtn" style="flex:1"><i class="fa-solid fa-plus"></i> Service Area</button>
+      </div>
+      <div id="clientList"><div class="muted" style="padding:10px;font-size:12px">Loading…</div></div>
+    </aside>
+    <main class="main" id="main">
+      <div class="empty"><i class="fa-solid fa-diagram-project"></i><div>Select a service area, or create one.</div></div>
+    </main>
+  </div>
+
+  <!-- Create Service Area modal -->
+  <div class="modal-bg" id="saModal">
+    <div class="modal">
+      <h3>New Service Area</h3>
+      <div class="field"><label>Client</label><select id="m_client"></select></div>
+      <div class="field"><label>Name / Concentrator</label><input id="m_name" placeholder="e.g. Concentrator 14"></div>
+      <div class="field"><label>Engineering Contract <span class="muted">(RUS only — leave blank for non-RUS)</span></label><select id="m_ec"><option value="">— None (non-RUS) —</option></select></div>
+      <div class="field" id="m_progWrap"><label>Program</label>
+        <select id="m_program"><option value="">—</option><option value="bau">BAU</option><option value="gfr">GFR</option><option value="other">Other</option></select>
+      </div>
+      <div class="modal-actions">
+        <button class="btn btn-secondary" id="m_cancel">Cancel</button>
+        <button class="btn btn-primary" id="m_save">Create</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="undo-bar" id="undoBar"><span id="undoMsg"></span><button id="undoBtn">Undo</button></div>
+
+  <script src="/js/api.js"></script>
+  <script src="/js/service_areas_ui.js"></script>
+</body>
+</html>
