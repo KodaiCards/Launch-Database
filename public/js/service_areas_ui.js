@@ -131,6 +131,14 @@
         <span>${esc(sa.client_name || '')}</span>
         ${sa.ec_name ? `<span class="badge badge-rus">RUS · ${esc(sa.ec_name)}</span>` : `<span class="badge badge-prog">${esc((sa.program || 'n/a').toUpperCase())}</span>`}
         <span class="muted">·</span><span>${esc(sa.billing_cadence === 'monthly' ? 'Monthly' : 'One-time')}</span>
+        <span class="muted">·</span>
+        <span id="cvToggle" class="badge" role="button" tabindex="0"
+          title="Toggle whether this service area shows in the client portal"
+          style="cursor:pointer;${sa.client_visible
+            ? 'background:var(--success-light);color:var(--success-text)'
+            : 'background:var(--surface-1);color:var(--text-muted)'}">
+          <i class="fa-solid fa-${sa.client_visible ? 'eye' : 'eye-slash'}"></i> ${sa.client_visible ? 'Client-visible' : 'Hidden from client'}
+        </span>
       </div>
 
       <table class="jobs-table">
@@ -158,7 +166,30 @@
     $('delSaBtn').addEventListener('click', deleteArea);
     $('billBtn').addEventListener('click', billArea);
     $('addJobSel').addEventListener('change', addJob);
+    const cv = $('cvToggle');
+    cv.addEventListener('click', toggleClientVisible);
+    cv.addEventListener('keydown', e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); toggleClientVisible(); } });
     bindRowHandlers();
+  }
+
+  // Flip whether this service area is visible in the client portal. Optimistic
+  // + undo bar (no confirm popup), matching the status-chip convention.
+  async function toggleClientVisible() {
+    const sa = state.detail;
+    const prev = !!sa.client_visible;
+    const next = !prev;
+    sa.client_visible = next;
+    renderDetail();
+    try {
+      await api('/api/service-areas/' + state.selectedId, 'PUT', { client_visible: next });
+      showUndo(next ? 'Now visible to client' : 'Hidden from client', async () => {
+        await api('/api/service-areas/' + state.selectedId, 'PUT', { client_visible: prev });
+        await refreshDetail();
+      });
+    } catch (e) {
+      sa.client_visible = prev; renderDetail();
+      flash('Failed to update visibility: ' + e.message);
+    }
   }
 
   function jobOptions() {
