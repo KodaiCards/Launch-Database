@@ -199,6 +199,12 @@ tfoot td{font-weight:700;border-top:2px solid var(--gray-border);background:var(
       <button class="btn btn-secondary btn-sm" onclick="exportInvoices()"><i class="fa-solid fa-file-csv"></i> Export invoices CSV</button>
     </div>
     <div class="page-sub" style="margin:0">All invoices: number, date, client, status, total.</div>
+    <div style="margin-top:12px;padding-top:12px;border-top:1px solid var(--gray-border)">
+      <button class="btn btn-secondary btn-sm" onclick="window.location.href='/api/export/all.zip'">
+        <i class="fa-solid fa-file-zipper"></i> Full data bundle (.zip)
+      </button>
+      <span class="page-sub" style="margin:0 0 0 10px;display:inline">Service areas, jobs, and invoices as CSVs. Admin only.</span>
+    </div>
   </div>
 </main>
 
