@@ -714,6 +714,9 @@ require('./routes/service_areas')(app, pool, { requireAdmin, requireAuth, requir
 // jobs only). Hour-logging reuses POST /api/service-area-jobs/:id/time-entries.
 require('./routes/my_work')(app, pool, { requireAuth });
 
+// Phase 5 follow-up: per-person Hours view + CSV export (manager/admin, no $).
+require('./routes/hours_summary')(app, pool, { requireManagerOrAdmin });
+
 // ─────────────────────────────────────────────────────────────────────────────
 // UNDO REPLAY — extracted to routes/undo.js (Track 1.3.6).
 // saveUndoBucket / popUndoBucket helpers live in routes/_helpers.js.

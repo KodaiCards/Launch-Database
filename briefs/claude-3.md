@@ -28,3 +28,10 @@ Keep pushing to your **same branch** after **each** task (tell Carter the branch
 - [x] **1. Per-area detail expand.** Click a service-area card → expand to job-by-job status + start/completed dates (data you already fetch — pure frontend, no new $). Keep it inside the under-construction shim.
 - [x] **2. Portal invoices from keystone.** Confirm `/api/customer/invoices` surfaces invoices created by the service-area billing flow; render sent/paid status + line items (never drafts). Customer-scoped, no internal cost columns beyond what the client is billed.
 - [x] **3. Map link (read-only).** When `service_areas.map_file_path` is set AND the area is `client_visible`, replace the "Map view coming soon" placeholder with a download/preview link. Additive; any file-serving route stays `customer`-scoped + read-only.
+
+### Round 2 (1–3 merged ✓ — map endpoint security was clean: traversal guard, nosniff, scoped)
+- [ ] **4. Summary header + robust states.** On the Service Areas tab add a header (total areas, overall % complete across all areas) and proper loading / empty / error states. Frontend only.
+- [ ] **5. Inline map preview.** Add `?inline=1` to your `GET /api/customer/service-areas/:id/map` — for `image/*` and `application/pdf` ONLY, serve inline with the correct `Content-Type` (keep `nosniff`); default (no param) stays `attachment`. Add a modal viewer on the card. Keep all the existing scope/traversal guards.
+- [ ] **6. Per-area timeline.** Render each area's `start_date` → `completed_date` and a simple stage progression derived from job statuses. Frontend (data already fetched).
+
+> Note: the portal stays behind the under-construction shim until CEO flips it on (tied to readiness + the `client_visible` admin toggle CEO is adding). Build against flagged test areas.
