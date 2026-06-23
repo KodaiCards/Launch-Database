@@ -461,6 +461,52 @@ module.exports = function installServiceAreaRoutes(app, pool, mw) {
     }
   });
 
+  // Bill a service area: turn its ready-to-bill jobs (done stage, not yet
+  // billed) into one invoice, then mark those jobs billed. Amount per item is
+  // the job's actual_amount (already type-aware: hourly/footage/fixed).
+  app.post('/api/service-areas/:id/bill', requireManagerOrAdmin, async (req, res) => {
+    const client = await pool.connect();
+    try {
+      await client.query('BEGIN');
+      const sa = await client.query('SELECT id, client_id, name FROM service_areas WHERE id = $1', [req.params.id]);
+      if (!sa.rows.length) { await client.query('ROLLBACK'); return res.status(404).json({ error: 'Service area not found' }); }
+      const jobs = await client.query(
+        `SELECT saj.id, saj.actual_amount, saj.actual_hours, saj.footage, saj.rate, saj.billing_type, j.name AS job_name
+         FROM service_area_jobs saj LEFT JOIN jobs j ON j.id = saj.job_id
+         WHERE saj.service_area_id = $1 AND saj.billed_date IS NULL
+           AND saj.status IN ('issued','client_approved','complete')`,
+        [req.params.id]
+      );
+      if (!jobs.rows.length) { await client.query('ROLLBACK'); return res.status(400).json({ error: 'No ready-to-bill jobs in this service area.' }); }
+      const total = jobs.rows.reduce((s, j) => s + Number(j.actual_amount || 0), 0);
+      const inv = await client.query(
+        `INSERT INTO invoices (client_id, invoice_number, invoice_date, total_amount, status, notes)
+         VALUES ($1,$2,now()::date,$3,'draft',$4) RETURNING *`,
+        [sa.rows[0].client_id, 'INV-' + Date.now(), total, 'Service area: ' + sa.rows[0].name]
+      );
+      for (const j of jobs.rows) {
+        const qty = j.billing_type === 'footage' ? j.footage : (j.billing_type === 'hourly' ? j.actual_hours : 1);
+        const unit = j.billing_type === 'footage' ? 'ft' : (j.billing_type === 'hourly' ? 'hr' : 'fixed');
+        await client.query(
+          `INSERT INTO invoice_items (invoice_id, project_id, description, quantity, unit, rate, amount)
+           VALUES ($1, NULL, $2, $3, $4, $5, $6)`,
+          [inv.rows[0].id, sa.rows[0].name + ' · ' + (j.job_name || j.billing_type), qty, unit, j.rate, j.actual_amount]
+        );
+        await client.query(`UPDATE service_area_jobs SET billed_date = now()::date, status = 'billed', updated_at = now() WHERE id = $1`, [j.id]);
+      }
+      await client.query('COMMIT');
+      logAudit(pool, { req, action: 'service_area.bill', entity_type: 'invoice', entity_id: inv.rows[0].id,
+        after: { service_area: req.params.id, items: jobs.rows.length, total }, source: 'admin' }).catch(() => {});
+      res.status(201).json({ invoice: inv.rows[0], item_count: jobs.rows.length });
+    } catch (e) {
+      await client.query('ROLLBACK').catch(() => {});
+      console.error('[sa:bill]', e && e.message);
+      res.status(500).json({ error: 'Failed to bill service area.' });
+    } finally {
+      client.release();
+    }
+  });
+
   // Dashboard overview (new model): headline totals, pipeline tallies per
   // team/stage, recent service areas, and per-client rollups. Feeds dashboard.html.
   app.get('/api/dashboard/overview', requireAuth(STAFF_ROLES), async (req, res) => {
