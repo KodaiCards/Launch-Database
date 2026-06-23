@@ -90,6 +90,18 @@ button{font-family:inherit;cursor:pointer;border:none;background:none;color:inhe
 .progress-track{width:140px;height:8px;background:var(--surface-3);border-radius:4px;overflow:hidden;margin-top:4px}
 .progress-fill{height:100%;background:linear-gradient(90deg,var(--primary),var(--primary-dark))}
 
+/* Service-area cards (Phase 6 — status/progress only, no $) */
+.sa-prog-line{display:flex;align-items:center;gap:10px;margin-top:8px;flex-wrap:wrap}
+.sa-team{margin-top:12px}
+.sa-team-label{font-size:11px;font-weight:600;color:var(--text-muted);text-transform:uppercase;letter-spacing:.4px;margin-bottom:6px}
+.job-chip{display:inline-flex;align-items:center;gap:6px;padding:3px 9px;border-radius:8px;font-size:11px;font-weight:500;margin:0 6px 6px 0;background:var(--surface-1);border:1px solid var(--gray-border);color:var(--text-secondary)}
+.job-chip .dot{width:7px;height:7px;border-radius:50%;background:var(--text-muted);flex:none}
+.job-chip.done .dot{background:var(--success)}
+.job-chip.cancelled{opacity:.5;text-decoration:line-through}
+.badge-rus{background:var(--info-light);color:var(--info-text);padding:2px 7px;border-radius:6px;font-size:10px;font-weight:700;letter-spacing:.5px;margin-left:6px;vertical-align:middle}
+.badge-prog{background:var(--surface-3);color:var(--text-muted);padding:2px 7px;border-radius:6px;font-size:10px;font-weight:600;letter-spacing:.4px;text-transform:uppercase;margin-left:6px;vertical-align:middle}
+.sa-map-ph{margin-top:12px;padding:10px 12px;border:1px dashed var(--gray-border);border-radius:8px;color:var(--text-muted);font-size:12px;display:flex;align-items:center;gap:8px}
+
 /* Modal */
 .modal-overlay{display:none;position:fixed;inset:0;background:var(--modal-backdrop);z-index:100;align-items:center;justify-content:center;padding:14px}
 .modal-content{background:var(--surface-2);border-radius:10px;max-width:680px;width:100%;max-height:90vh;display:flex;flex-direction:column}
@@ -160,6 +172,7 @@ button{font-family:inherit;cursor:pointer;border:none;background:none;color:inhe
     <div class="tabs" id="cp-tabs">
       <button class="active" data-tab="projects" onclick="cpSelectTab('projects')">Projects</button>
       <button data-tab="invoices" onclick="cpSelectTab('invoices')">Invoices</button>
+      <button data-tab="service-areas" onclick="cpSelectTab('service-areas')">Service Areas</button>
     </div>
     <div id="cp-tab-projects" class="cp-tab">
       <div class="stats-grid" id="cp-stats"></div>
@@ -167,6 +180,10 @@ button{font-family:inherit;cursor:pointer;border:none;background:none;color:inhe
     </div>
     <div id="cp-tab-invoices" class="cp-tab" style="display:none">
       <div id="cp-invoices-body"></div>
+    </div>
+    <div id="cp-tab-service-areas" class="cp-tab" style="display:none">
+      <div class="stats-grid" id="cp-sa-stats"></div>
+      <div id="cp-sa-body"></div>
     </div>
   </div> <!-- /display:none wrapper closing the under-construction shim -->
 </main>
@@ -371,10 +388,89 @@ async function cpLoadInvoices(){
   }
 }
 
+// ─── Service Areas (Phase 6 — keystone status view, no $) ─────────────
+// Backed by GET /api/customer/service-areas, which returns ONLY
+// status/progress (no rates, amounts, or invoices). Render mirrors that:
+// per-area status + a jobs-done/total progress bar + per-team job statuses.
+let _customerServiceAreas = [];
+const SA_TEAM_LABELS = { permitting: 'Permitting', design: 'Design', construction: 'Construction', other: 'Other' };
+const SA_DONE = new Set(['complete', 'billed']);
+
+async function cpLoadServiceAreas(){
+  const body = document.getElementById('cp-sa-body');
+  const stats = document.getElementById('cp-sa-stats');
+  body.innerHTML = '<div class="empty-state"><i class="fa-solid fa-spinner fa-spin"></i><p>Loading…</p></div>';
+  try {
+    _customerServiceAreas = await api('/api/customer/service-areas');
+    renderServiceAreas();
+  } catch (e) {
+    if (stats) stats.innerHTML = '';
+    body.innerHTML = `<div class="empty-state" style="color:var(--danger-text)">Failed to load: ${esc(e.message)}</div>`;
+  }
+}
+
+function renderServiceAreas(){
+  const body = document.getElementById('cp-sa-body');
+  const stats = document.getElementById('cp-sa-stats');
+  const areas = _customerServiceAreas || [];
+  if (!areas.length){
+    stats.innerHTML = '';
+    body.innerHTML = '<div class="empty-state"><i class="fa-solid fa-map-location-dot"></i><p>No service areas to show yet.</p></div>';
+    return;
+  }
+  const isDone = s => ['completed','billed','complete'].includes(String(s || '').toLowerCase());
+  const activeCount = areas.filter(a => String(a.status || '').toLowerCase() === 'active').length;
+  const doneCount = areas.filter(a => isDone(a.status)).length;
+  const totalJobs = areas.reduce((s, a) => s + (Number(a.jobs_total) || 0), 0);
+  stats.innerHTML = `
+    <div class="stat-card"><div class="stat-label">Active Areas</div><div class="stat-value">${activeCount}</div></div>
+    <div class="stat-card"><div class="stat-label">Completed Areas</div><div class="stat-value">${doneCount}</div></div>
+    <div class="stat-card"><div class="stat-label">Total Jobs</div><div class="stat-value">${totalJobs}</div></div>
+  `;
+  body.innerHTML = areas.map(a => {
+    const status = String(a.status || 'active').toLowerCase();
+    const pct = a.completion_pct;
+    const prog = pct != null
+      ? `<div class="sa-prog-line">
+           <div class="progress-track"><div class="progress-fill" style="width:${pct}%"></div></div>
+           <span style="font-size:12px;color:var(--text-muted)">${a.jobs_done} of ${a.jobs_total} jobs done · ${pct}%</span>
+         </div>`
+      : `<div style="font-size:12px;color:var(--text-muted);margin-top:8px">No jobs yet.</div>`;
+    const byTeam = {};
+    (a.jobs || []).forEach(j => { const t = j.team || 'other'; (byTeam[t] = byTeam[t] || []).push(j); });
+    const teams = ['permitting','design','construction','other'].filter(t => byTeam[t]).map(t => {
+      const chips = byTeam[t].map(j => {
+        const cls = 'job-chip' + (SA_DONE.has(j.status) ? ' done' : '') + (j.status === 'cancelled' ? ' cancelled' : '');
+        return `<span class="${cls}"><span class="dot"></span>${esc(j.job_name || 'Job')} — ${esc(String(j.status || '').replace(/_/g,' '))}</span>`;
+      }).join('');
+      return `<div class="sa-team"><div class="sa-team-label">${esc(SA_TEAM_LABELS[t] || t)}</div><div>${chips}</div></div>`;
+    }).join('');
+    const badge = a.program === 'rus'
+      ? '<span class="badge-rus">RUS</span>'
+      : (a.program ? `<span class="badge-prog">${esc(a.program)}</span>` : '');
+    return `<div class="card" style="padding:14px 16px">
+      <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:10px">
+        <div>
+          <div class="proj-name">${esc(a.name)}${badge}</div>
+          <div class="proj-sub">
+            ${a.work_order_number ? `<span style="font-family:monospace;margin-right:8px">WO# ${esc(a.work_order_number)}</span>` : ''}
+            ${esc(a.client_name || '')}
+          </div>
+        </div>
+        <span class="status-pill status-${esc(status)}">${esc(status.replace('_',' '))}</span>
+      </div>
+      ${prog}
+      ${teams}
+      <div class="sa-map-ph"><i class="fa-solid fa-map" aria-hidden="true"></i> Map view coming soon.</div>
+    </div>`;
+  }).join('');
+}
+
 function cpSelectTab(name){
   document.querySelectorAll('#cp-tabs button').forEach(b => b.classList.toggle('active', b.dataset.tab === name));
   document.querySelectorAll('.cp-tab').forEach(d => d.style.display = (d.id === 'cp-tab-' + name) ? '' : 'none');
   if (name === 'invoices') cpLoadInvoices();
+  if (name === 'service-areas') cpLoadServiceAreas();
 }
 
 function showAccountMenu(){

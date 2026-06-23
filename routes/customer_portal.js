@@ -189,6 +189,72 @@ module.exports = function installCustomerPortalRoutes(app, pool, mw) {
     }
   });
 
+  // --- Customer service-area status view (Phase 6 keystone) ---
+  // Read-only, client-scoped status/progress for the keystone model
+  // (service_areas + service_area_jobs). Two gates, both required:
+  //   1. sa.client_id ∈ the caller's customer_clients set (cross-client isolation)
+  //   2. sa.client_visible = TRUE  — the Phase-6 portal hook (default false);
+  //      flipping that flag is an admin/CEO action, not customer-facing.
+  // NO MONEY: the SELECT deliberately omits every $ column on the model —
+  // service_area_jobs.rate / estimated_amount / actual_amount / billing_type —
+  // and never touches invoices. service_areas.notes (internal staff field) and
+  // staff assignment are excluded too. Clients see *status*, not money. If you
+  // extend the job object below, do NOT add a money or internal column.
+  const SA_DONE_STATUSES = new Set(['complete', 'billed']);
+  app.get('/api/customer/service-areas', requireAuth(['customer']), async (req, res) => {
+    try {
+      const clientIds = await clientIdsForUser(req.user.id);
+      if (!clientIds.length) return res.json([]);
+      const { rows } = await pool.query(`
+        SELECT
+          sa.id, sa.name, sa.work_order_number, sa.program, sa.status,
+          sa.start_date, sa.completed_date, sa.billed_date,
+          sa.client_id, cl.name AS client_name,
+          COALESCE(
+            json_agg(
+              json_build_object(
+                'id', saj.id,
+                'job_name', j.name,
+                'team', saj.team,
+                'status', saj.status
+              ) ORDER BY saj.team NULLS LAST, saj.created_at
+            ) FILTER (WHERE saj.id IS NOT NULL),
+            '[]'::json
+          ) AS jobs
+        FROM service_areas sa
+        LEFT JOIN clients cl            ON cl.id = sa.client_id
+        LEFT JOIN service_area_jobs saj ON saj.service_area_id = sa.id
+        LEFT JOIN jobs j                ON j.id = saj.job_id
+        WHERE sa.client_id = ANY($1::uuid[])
+          AND sa.client_visible = TRUE
+        GROUP BY sa.id, cl.name
+        ORDER BY
+          CASE sa.status
+            WHEN 'active' THEN 1
+            WHEN 'completed' THEN 2
+            WHEN 'billed' THEN 3
+            WHEN 'on_hold' THEN 4
+            ELSE 5 END,
+          sa.name
+      `, [clientIds]);
+
+      // Progress is count-based (jobs done / total), cancelled jobs excluded
+      // from the denominator — no hours or $ needed to express it.
+      const enriched = rows.map(sa => {
+        const jobs = Array.isArray(sa.jobs) ? sa.jobs : [];
+        const counted = jobs.filter(j => j.status !== 'cancelled');
+        const jobsTotal = counted.length;
+        const jobsDone = counted.filter(j => SA_DONE_STATUSES.has(j.status)).length;
+        const completionPct = jobsTotal > 0 ? Math.round((jobsDone / jobsTotal) * 100) : null;
+        return { ...sa, jobs_total: jobsTotal, jobs_done: jobsDone, completion_pct: completionPct };
+      });
+      res.json(enriched);
+    } catch (e) {
+      console.error('[customer:service-areas]', e && e.message);
+      res.status(500).json({ error: 'Failed to load service areas.' });
+    }
+  });
+
   // --- Customer invoice list ---
   // F5: AND i.status NOT IN ('draft') — customers must not see draft invoices.
   app.get('/api/customer/invoices', requireAuth(['customer']), async (req, res) => {
