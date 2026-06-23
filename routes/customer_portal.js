@@ -263,9 +263,13 @@ module.exports = function installCustomerPortalRoutes(app, pool, mw) {
     try {
       const clientIds = await clientIdsForUser(req.user.id);
       if (!clientIds.length) return res.json([]);
+      // status: drives the sent/paid pill (drafts already excluded below).
+      // notes: fallback label for service-area-billed invoices, which set
+      // notes ("Service area: <name>") rather than invoice_name. Already
+      // surfaced by the detail endpoint, so no new exposure.
       const { rows } = await pool.query(`
-        SELECT i.id, i.invoice_number, i.invoice_date, i.invoice_name,
-               i.total_amount, i.client_id, cl.name AS client_name,
+        SELECT i.id, i.invoice_number, i.invoice_date, i.invoice_name, i.notes,
+               i.total_amount, i.status, i.client_id, cl.name AS client_name,
                i.created_at
           FROM invoices i
           LEFT JOIN clients cl ON cl.id = i.client_id
