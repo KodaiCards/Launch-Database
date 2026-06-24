@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1.0">
-<title>Service Area — Launch Fiber</title>
+<title>Workspace — Launch Fiber</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
@@ -33,69 +33,143 @@ html[data-theme="dark"]{
 *{box-sizing:border-box;margin:0;padding:0}
 html,body{font-family:var(--font);background:var(--gray-light);color:var(--text);min-height:100vh}
 button{font-family:inherit;cursor:pointer;border:none;background:none;color:inherit}
+a{color:var(--primary);text-decoration:none}
+a:hover{text-decoration:underline}
 
-.header{background:var(--white);border-bottom:1px solid var(--gray-border);padding:10px 20px;
+.topbar{background:var(--white);border-bottom:1px solid var(--gray-border);padding:10px 20px;
   display:flex;align-items:center;justify-content:space-between;gap:12px}
-.header-left{display:flex;align-items:center;gap:14px}
-.header-title{font-size:16px;font-weight:600}
-.header-right{display:flex;align-items:center;gap:8px}
+.topbar-left{display:flex;align-items:center;gap:10px}
+.topbar-title{font-size:15px;font-weight:600}
+.topbar-right{display:flex;align-items:center;gap:8px}
 
-.btn{padding:8px 14px;border-radius:6px;font-size:13px;font-weight:500;border:1px solid transparent;
-  display:inline-flex;align-items:center;gap:6px;transition:all .15s}
+.btn{padding:7px 13px;border-radius:6px;font-size:13px;font-weight:500;border:1px solid transparent;
+  display:inline-flex;align-items:center;gap:6px;transition:background .15s,color .15s,border-color .15s;cursor:pointer}
 .btn-sm{padding:5px 10px;font-size:12px}
+.btn-primary{background:var(--primary);color:#fff;border-color:var(--primary)}
+.btn-primary:hover{background:var(--primary-dark);border-color:var(--primary-dark)}
 .btn-secondary{background:var(--white);color:var(--text);border-color:var(--gray-border)}
 .btn-secondary:hover{background:var(--surface-1)}
+.btn-danger{background:var(--danger-light);color:var(--danger-text);border-color:var(--danger)}
+.btn-danger:hover{background:var(--danger);color:#fff}
 .btn-icon{width:34px;height:34px;padding:0;display:inline-flex;align-items:center;justify-content:center;
   border-radius:6px;border:1px solid var(--gray-border);background:transparent;color:var(--text-secondary)}
 .btn-icon:hover{background:var(--surface-1)}
+.btn-ghost{background:none;border:none;color:var(--text-muted);padding:3px 6px;border-radius:4px;font-size:12px;cursor:pointer}
+.btn-ghost:hover{color:var(--text);background:var(--surface-1)}
 
-.page-body{padding:20px 24px;max-width:960px;margin:0 auto}
+.page-body{padding:20px 24px;max-width:1080px;margin:0 auto}
 
+/* Flash bar */
+.flash-bar{position:fixed;bottom:24px;left:50%;transform:translateX(-50%);z-index:9999;
+  background:var(--text);color:var(--white);padding:10px 18px;border-radius:8px;
+  font-size:13px;font-weight:500;white-space:nowrap;display:none;
+  box-shadow:0 4px 12px rgba(0,0,0,.25);gap:8px;align-items:center}
+.flash-bar.err{background:var(--danger)}
+.flash-bar.show{display:flex}
+
+/* Breadcrumb */
 .breadcrumb{font-size:13px;color:var(--text-muted);margin-bottom:14px}
-.breadcrumb a{color:var(--primary);text-decoration:none}
-.breadcrumb a:hover{text-decoration:underline}
+.breadcrumb a{color:var(--primary)}
 
-.area-head{margin-bottom:20px}
-.area-name{font-size:22px;font-weight:700;margin-bottom:4px}
-.area-meta{display:flex;gap:12px;align-items:center;flex-wrap:wrap;font-size:13px;color:var(--text-secondary)}
-.tag{display:inline-block;padding:2px 8px;border-radius:10px;font-size:11px;font-weight:600;
-  background:var(--surface-1);color:var(--text-muted)}
-.tag-rus{background:#F3E5F5;color:#8E24AA}
-.tag-bau{background:var(--primary-light);color:var(--primary-dark)}
+/* Area header */
+.area-head{margin-bottom:18px}
+.area-name{font-size:22px;font-weight:700;margin-bottom:6px}
+.area-meta{display:flex;gap:10px;align-items:center;flex-wrap:wrap;font-size:13px;color:var(--text-secondary)}
+.badge{display:inline-block;padding:2px 8px;border-radius:10px;font-size:11px;font-weight:600}
+.badge-rus{background:#F3E5F5;color:#8E24AA}
+.badge-bau{background:var(--primary-light);color:var(--primary-dark)}
+.badge-gfr{background:#E8F5E9;color:#2E7D32}
+.badge-prog{background:var(--surface-1);color:var(--text-muted)}
+.badge-map{background:#E3F2FD;color:#1565C0}
+.badge-manual{background:var(--surface-1);color:var(--text-muted)}
+.badge-bom{background:#FFF8E1;color:#7A4F0E}
+.badge-final{background:var(--success-light);color:var(--success-text)}
 
-.kpi-strip{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:12px;margin-bottom:22px}
-.kpi{background:var(--white);border:1px solid var(--gray-border);border-radius:10px;padding:14px 16px}
-.kpi .lbl{font-size:11px;text-transform:uppercase;letter-spacing:.5px;color:var(--text-muted);margin-bottom:4px}
-.kpi .val{font-size:22px;font-weight:700;font-variant-numeric:tabular-nums}
-.kpi .sub{font-size:12px;color:var(--text-muted);margin-top:2px}
+/* Map stub */
+.map-stub{background:var(--white);border:1px dashed var(--gray-border);border-radius:10px;
+  padding:20px;margin-bottom:16px;display:flex;align-items:center;gap:16px;justify-content:space-between;flex-wrap:wrap}
+.map-stub-info{color:var(--text-muted);font-size:13px;display:flex;align-items:center;gap:8px}
+.map-stub-toggle{display:flex;gap:0}
+.map-stub-toggle button{padding:5px 12px;font-size:12px;font-weight:500;border:1px solid var(--gray-border);
+  background:var(--white);color:var(--text-secondary);cursor:pointer}
+.map-stub-toggle button:first-child{border-radius:6px 0 0 6px}
+.map-stub-toggle button:last-child{border-radius:0 6px 6px 0;border-left:none}
+.map-stub-toggle button.active{background:var(--primary);color:#fff;border-color:var(--primary)}
 
-.section{margin-bottom:24px}
-.section-title{font-size:14px;font-weight:700;color:var(--text-muted);text-transform:uppercase;
-  letter-spacing:.5px;margin-bottom:10px;display:flex;align-items:center;gap:8px}
+/* Route selector */
+.route-bar{display:flex;align-items:center;gap:10px;margin-bottom:16px;flex-wrap:wrap}
+.seg-ctrl{display:flex;border:1px solid var(--gray-border);border-radius:7px;overflow:hidden}
+.seg-ctrl button{padding:6px 14px;font-size:12px;font-weight:500;border:none;border-right:1px solid var(--gray-border);
+  background:var(--white);color:var(--text-secondary);cursor:pointer;white-space:nowrap;transition:all .12s}
+.seg-ctrl button:last-child{border-right:none}
+.seg-ctrl button.active{background:var(--primary);color:#fff}
+.seg-ctrl button:hover:not(.active){background:var(--surface-1)}
+.route-status-dot{display:inline-block;width:7px;height:7px;border-radius:50%;margin-right:4px}
+.dot-complete{background:var(--success)}
+.dot-active{background:var(--primary)}
+.dot-planned{background:var(--text-muted)}
 
-.card{background:var(--white);border:1px solid var(--gray-border);border-radius:10px;overflow:hidden}
+/* Cost tiles */
+.cost-tiles{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:22px}
+.cost-tile{background:var(--white);border:1px solid var(--gray-border);border-radius:10px;padding:14px 16px;
+  position:relative;transition:opacity .2s}
+.cost-tile.dim{opacity:.5}
+.cost-tile .lbl{font-size:11px;text-transform:uppercase;letter-spacing:.5px;color:var(--text-muted);margin-bottom:4px;
+  display:flex;align-items:center;justify-content:space-between}
+.cost-tile .val{font-size:21px;font-weight:700;font-variant-numeric:tabular-nums;margin-bottom:2px}
+.cost-tile .sub{font-size:12px;color:var(--text-muted)}
+.vis-check{display:flex;align-items:center;gap:5px;font-size:11px;color:var(--text-muted);margin-top:8px;cursor:pointer;
+  user-select:none}
+.vis-check input{cursor:pointer;accent-color:var(--primary)}
+
+/* Card + table */
+.card{background:var(--white);border:1px solid var(--gray-border);border-radius:10px;overflow:hidden;margin-bottom:22px}
+.card-head{padding:12px 16px;border-bottom:1px solid var(--gray-border);display:flex;align-items:center;
+  justify-content:space-between;gap:8px;background:var(--surface-1)}
+.card-title{font-size:13px;font-weight:700;color:var(--text-muted);text-transform:uppercase;letter-spacing:.5px;
+  display:flex;align-items:center;gap:7px}
 .table-wrap{overflow-x:auto}
 table{width:100%;border-collapse:collapse;font-size:13px}
-thead th{background:var(--surface-1);padding:9px 14px;text-align:left;font-weight:600;
-  font-size:12px;color:var(--text-muted);border-bottom:1px solid var(--gray-border);white-space:nowrap}
+thead th{background:var(--surface-1);padding:9px 12px;text-align:left;font-weight:600;font-size:12px;
+  color:var(--text-muted);border-bottom:1px solid var(--gray-border);white-space:nowrap}
 th.num,td.num{text-align:right}
 tbody tr{border-bottom:1px solid var(--gray-border)}
 tbody tr:last-child{border-bottom:none}
-tbody td{padding:10px 14px;color:var(--text-secondary)}
-tfoot td{font-weight:700;border-top:2px solid var(--gray-border);padding:8px 14px;background:var(--surface-1)}
+tbody td{padding:9px 12px;color:var(--text-secondary);vertical-align:middle}
+tfoot td{font-weight:700;border-top:2px solid var(--gray-border);padding:8px 12px;background:var(--surface-1)}
 
-.status-badge{display:inline-block;padding:2px 8px;border-radius:10px;font-size:11px;font-weight:600}
+/* Status pills */
+.st-pill{display:inline-block;padding:2px 8px;border-radius:10px;font-size:11px;font-weight:600}
 .st-not_started{background:var(--surface-1);color:var(--text-muted)}
-.st-in_progress{background:var(--primary-light);color:var(--primary-dark)}
+.st-in_progress,.st-active{background:var(--primary-light);color:var(--primary-dark)}
 .st-revision{background:var(--warning-light);color:var(--warning-text)}
-.st-done{background:var(--success-light);color:var(--success-text)}
+.st-done,.st-complete{background:var(--success-light);color:var(--success-text)}
 .st-billed{background:#E8F5E9;color:#1B5E20}
 .st-on_hold{background:var(--surface-1);color:var(--text-muted)}
+.st-planned{background:var(--surface-1);color:var(--text-muted)}
 
-.amt{font-variant-numeric:tabular-nums}
-.pos{color:var(--success-text)}
-.neg{color:var(--danger-text)}
+/* Progress bar */
+.prog-track{height:5px;background:var(--surface-1);border-radius:3px;overflow:hidden;min-width:60px}
+.prog-fill{height:100%;background:var(--primary);border-radius:3px;transition:width .3s}
+.prog-fill.done{background:var(--success)}
 
+/* Expand rows */
+.expand-row{background:var(--surface-1)}
+.expand-row td{padding:8px 12px 8px 32px;font-size:12px;color:var(--text-muted)}
+.people-list{display:flex;flex-direction:column;gap:4px}
+.person-row{display:flex;align-items:center;gap:10px}
+.person-row .pname{flex:1;font-weight:500;color:var(--text-secondary)}
+.unit-list{display:flex;flex-direction:column;gap:4px}
+.unit-row{display:flex;align-items:center;gap:10px}
+.unit-row .ulabel{flex:1;font-weight:500}
+
+/* Inline form for add-material */
+.add-mat-row td{padding:8px 12px;background:var(--surface-1)}
+.add-mat-row input,.add-mat-row select{font-size:12px;padding:4px 7px;border:1px solid var(--gray-border);
+  border-radius:5px;background:var(--white);color:var(--text);width:100%;font-family:var(--font)}
+.add-mat-row input:focus,.add-mat-row select:focus{outline:2px solid var(--primary);outline-offset:1px}
+
+/* Misc */
 .empty-state{padding:32px;text-align:center;color:var(--text-muted);font-size:13px}
 .empty-state i{font-size:28px;display:block;margin-bottom:8px;opacity:.4}
 .skeleton{background:var(--surface-1);border-radius:4px;animation:pulse 1.5s infinite}
@@ -104,195 +178,605 @@ tfoot td{font-weight:700;border-top:2px solid var(--gray-border);padding:8px 14p
 .spinner{display:inline-block;width:14px;height:14px;border:2px solid currentColor;
   border-radius:50%;border-right-color:transparent;animation:spin .6s linear infinite;vertical-align:-2px;margin-right:6px}
 @keyframes spin{to{transform:rotate(360deg)}}
-
-.actions-bar{display:flex;gap:8px;flex-wrap:wrap;margin-top:4px}
+.amt{font-variant-numeric:tabular-nums}
+.dim-val{color:var(--text-muted)}
+.clickable-row{cursor:pointer}
+.clickable-row:hover td{background:var(--surface-1)}
+.expand-btn{color:var(--text-muted);transition:transform .15s;display:inline-block}
+.expanded .expand-btn{transform:rotate(90deg)}
+.cost-cat{font-size:11px;color:var(--text-muted);margin-top:1px}
+.note-block{margin-top:6px;font-size:12px;color:var(--text-muted);font-style:italic}
+.dates-block{margin-top:4px;font-size:11px;color:var(--text-muted);display:flex;gap:12px;flex-wrap:wrap}
+.finalize-btn-area{margin-left:auto;display:flex;align-items:center;gap:8px}
 
 @media(max-width:700px){
   .page-body{padding:12px}
-  .kpi-strip{grid-template-columns:repeat(2,1fr)}
+  .cost-tiles{grid-template-columns:repeat(2,1fr)}
 }
 </style>
 </head>
 <body>
 
-<div class="header">
-  <div class="header-left">
-    <span class="header-title" id="page-title"><i class="fa-solid fa-diagram-project"></i> Service Area</span>
+<div class="topbar">
+  <div class="topbar-left">
+    <a class="btn btn-sm btn-secondary" href="/service-areas.html"><i class="fa-solid fa-arrow-left"></i></a>
+    <span class="topbar-title" id="page-title"><i class="fa-solid fa-diagram-project"></i> Workspace</span>
   </div>
-  <div class="header-right">
+  <div class="topbar-right">
     <button class="btn-icon" onclick="toggleDark()" title="Toggle dark mode" aria-label="Toggle dark mode">
       <i id="dm-icon" class="fa-solid fa-moon"></i>
     </button>
   </div>
 </div>
 
+<!-- Flash bar -->
+<div class="flash-bar" id="flash-bar" role="status" aria-live="polite"></div>
+
 <div class="page-body" id="page-body" role="main">
-  <div class="loading-row"><span class="spinner"></span>Loading area…</div>
+  <div class="loading-row"><span class="spinner"></span>Loading workspace…</div>
 </div>
 
 <script>
 (function(){
-  'use strict';
+'use strict';
 
-  var _areaId = new URLSearchParams(location.search).get('id');
+var _id   = new URLSearchParams(location.search).get('id');
+var _ws   = null;          // workspace response
+var _rsel = 'all';         // selected route id or 'all'
+var _mapView = 'route';    // 'route' | 'overview' (stub toggle)
+var _expandedMat = {};     // materialId → bool (survive re-render)
+var _expandedJob = {};     // jobId → bool
 
-  document.addEventListener('DOMContentLoaded', function(){
-    applyStoredTheme();
-    if(!_areaId){
-      document.getElementById('page-body').innerHTML = '<div class="empty-state"><i class="fa-solid fa-triangle-exclamation"></i>No area ID in URL. Use ?id=&lt;uuid&gt;.</div>';
-      return;
+document.addEventListener('DOMContentLoaded', function(){
+  applyTheme();
+  if(!_id){
+    document.getElementById('page-body').innerHTML = '<div class="empty-state"><i class="fa-solid fa-triangle-exclamation"></i>No area ID in URL — use ?id=&lt;uuid&gt;.</div>';
+    return;
+  }
+  load();
+});
+
+// ── Load ──────────────────────────────────────────────────────────────────────
+async function load(){
+  try{
+    var r = await api('/api/service-areas/'+encodeURIComponent(_id)+'/workspace');
+    _ws = r;
+    // keep route selection valid
+    if(_rsel !== 'all' && !(_ws.routes||[]).find(function(x){ return x.id===_rsel; })) _rsel='all';
+    render();
+  } catch(e){
+    var m = e.message||'Unknown error';
+    if(m.indexOf('401')>-1||m.indexOf('403')>-1){
+      document.getElementById('page-body').innerHTML = '<div class="empty-state"><i class="fa-solid fa-lock"></i>Login required.</div>';
+    } else if(m.indexOf('404')>-1){
+      document.getElementById('page-body').innerHTML = '<div class="empty-state"><i class="fa-solid fa-triangle-exclamation"></i>Service area not found.</div>';
+    } else {
+      document.getElementById('page-body').innerHTML = '<div class="empty-state"><i class="fa-solid fa-triangle-exclamation"></i>'+esc(m)+'</div>';
     }
-    load();
+  }
+}
+
+// ── Render ─────────────────────────────────────────────────────────────────
+function render(){
+  var ws = _ws;
+  var area = ws.area;
+  var routes = ws.routes||[];
+
+  // Page title
+  document.getElementById('page-title').innerHTML = '<i class="fa-solid fa-diagram-project"></i> '+esc(area.name||'Workspace');
+  document.title = esc(area.name||'Workspace')+' — Launch Fiber';
+
+  // Current view (jobs/materials/rollup for selected route or all)
+  var view = currentView();
+
+  document.getElementById('page-body').innerHTML =
+    renderBreadcrumb(area)
+    + renderAreaHead(area)
+    + renderMapStub(routes)
+    + renderRouteBar(routes, view, ws.finalized)
+    + renderCostTiles(view.rollup, area, view.finalized)
+    + renderMaterialsSection(view.materials, area, view.finalized)
+    + renderJobsSection(view.jobs);
+
+  bindAll();
+}
+
+function currentView(){
+  var ws = _ws;
+  if(_rsel==='all' || !ws.routes.length){
+    return {
+      jobs: flatJobs(),
+      materials: flatMats(),
+      rollup: ws.rollup,
+      finalized: ws.finalized,
+      routeId: null
+    };
+  }
+  var rt = (ws.routes||[]).find(function(r){ return r.id===_rsel; });
+  return rt ? {
+    jobs: rt.jobs||[],
+    materials: rt.materials||[],
+    rollup: rt.rollup||{},
+    finalized: !!rt.build_finalized_at,
+    routeId: rt.id
+  } : { jobs:[], materials:[], rollup:{}, finalized:false, routeId:null };
+}
+
+function flatJobs(){
+  var all = [];
+  (_ws.routes||[]).forEach(function(r){ (r.jobs||[]).forEach(function(j){ all.push(j); }); });
+  (_ws.unrouted.jobs||[]).forEach(function(j){ all.push(j); });
+  return all;
+}
+function flatMats(){
+  var all = [];
+  (_ws.routes||[]).forEach(function(r){ (r.materials||[]).forEach(function(m){ all.push(m); }); });
+  (_ws.unrouted.materials||[]).forEach(function(m){ all.push(m); });
+  return all;
+}
+
+// ── Sections ──────────────────────────────────────────────────────────────
+function renderBreadcrumb(area){
+  return '<div class="breadcrumb">'
+    +'<a href="/service-areas.html"><i class="fa-solid fa-diagram-project"></i> Service Areas</a>'
+    +' / <a href="/clients.html">'+esc(area.client_name||'—')+'</a>'
+    +' / <strong>'+esc(area.name||'—')+'</strong>'
+    +'</div>';
+}
+
+function renderAreaHead(area){
+  var prog = area.program||'';
+  var ecBadge = area.engineering_contract_id
+    ? '<span class="badge badge-rus">RUS · EC '+esc(area.ec_name||'')+'</span>'
+    : '<span class="badge badge-'+esc(prog||'prog')+'">'+esc((prog||'—').toUpperCase())+' · no EC</span>';
+  var wo = area.work_order_number ? '<span>WO# '+esc(area.work_order_number)+'</span>' : '';
+  return '<div class="area-head">'
+    +'<div class="area-name">'+esc(area.name||'—')+'</div>'
+    +'<div class="area-meta">'
+    +'<span><i class="fa-solid fa-building" aria-hidden="true"></i> '+esc(area.client_name||'—')+'</span>'
+    +ecBadge+wo
+    +'</div>'
+    +'</div>';
+}
+
+function renderMapStub(routes){
+  var label = _rsel==='all'
+    ? 'All routes'
+    : (function(){ var r=(routes||[]).find(function(x){return x.id===_rsel;}); return r?r.name:'Route'; })();
+  return '<div class="map-stub">'
+    +'<div class="map-stub-info">'
+    +'<i class="fa-solid fa-map" aria-hidden="true" style="color:var(--primary);font-size:18px"></i>'
+    +'<div>'
+    +'<div style="font-weight:600;font-size:13px">Map — <span id="map-stub-label">'+esc(label)+'</span></div>'
+    +'<div style="font-size:12px;margin-top:2px">GIS/KMZ integration is a future phase — map panel will display here.</div>'
+    +'</div>'
+    +'</div>'
+    +'<div class="map-stub-toggle">'
+    +'<button id="map-btn-route" class="'+(  _mapView==='route'   ?'active':'')+'" aria-pressed="'+(  _mapView==='route'   ?'true':'false')+'">This route</button>'
+    +'<button id="map-btn-overview" class="'+(_mapView==='overview'?'active':'')+'" aria-pressed="'+(_mapView==='overview'?'true':'false')+'">Client overview</button>'
+    +'</div>'
+    +'</div>';
+}
+
+function renderRouteBar(routes, view, areaFinalized){
+  var hasRoutes = routes && routes.length>0;
+  var finBtnLabel = view.finalized
+    ? '<i class="fa-solid fa-lock-open"></i> Reopen build'
+    : '<i class="fa-solid fa-check-double"></i> Finalize build';
+  var finBtnCls = view.finalized ? 'btn btn-sm btn-secondary' : 'btn btn-sm btn-primary';
+
+  var seg = '';
+  if(hasRoutes){
+    seg = '<div class="seg-ctrl" role="tablist" aria-label="Route selector">';
+    seg += '<button role="tab" data-route="all" class="'  +(_rsel==='all'?'active':'')+'" aria-selected="'  +(_rsel==='all'?'true':'false')+'">All routes</button>';
+    routes.forEach(function(r){
+      var dot = r.build_finalized_at?'complete':r.status||'planned';
+      seg += '<button role="tab" data-route="'+esc(r.id)+'" class="'+(_rsel===r.id?'active':'')+'" aria-selected="'+(_rsel===r.id?'true':'false')+'"><span class="route-status-dot dot-'+esc(dot)+'" aria-hidden="true"></span>'+esc(r.name||'Route')+'</button>';
+    });
+    seg += '</div>';
+  }
+
+  return '<div class="route-bar">'
+    +seg
+    +'<div class="finalize-btn-area">'
+    +'<button class="'+finBtnCls+'" id="finalize-btn">'+finBtnLabel+'</button>'
+    +'</div>'
+    +'</div>';
+}
+
+function renderCostTiles(rollup, area, finalized){
+  var cvm = area.client_visible_metrics||{};
+  var pct = rollup.progress_pct;
+  var pctDisplay = finalized ? 'Complete' : (pct!=null ? pct+'%' : '—');
+
+  function tile(key, label, val, sub){
+    var checked = cvm[key]!==false;
+    var dim = !checked;
+    return '<div class="cost-tile'+(dim?' dim':'')+'">'
+      +'<div class="lbl">'+label+'</div>'
+      +'<div class="val amt">'+val+'</div>'
+      +(sub?'<div class="sub">'+sub+'</div>':'')
+      +'<label class="vis-check" title="Show this tile to the client in their portal">'
+      +'<input type="checkbox" data-vis="'+key+'"'+(checked?' checked':'')+' aria-label="Show '+label+' to client">'
+      +'<i class="fa-solid fa-'+(checked?'eye':'eye-slash')+'" aria-hidden="true"></i> Show to client'
+      +'</label>'
+      +'</div>';
+  }
+
+  return '<div class="cost-tiles">'
+    +tile('progress',         'Progress',         pctDisplay,             finalized?'Build finalized':'Overall completion')
+    +tile('engineering_cost', 'Engineering',       fmtMoney(rollup.engineering_cost),  'labor & overhead')
+    +tile('construction_cost','Construction',      fmtMoney(rollup.construction_cost), 'labor + materials')
+    +tile('total_cost',       'Total Cost',        fmtMoney(rollup.total_cost),         'engineering + construction')
+    +'</div>';
+}
+
+function renderMaterialsSection(materials, area, finalized){
+  var mats = materials||[];
+  var addRowHtml = '<tr class="add-mat-row" id="add-mat-row" style="display:none">'
+    +'<td><input id="am-item" placeholder="Item description" aria-label="Item description"></td>'
+    +'<td><input id="am-unit" placeholder="Unit" style="width:70px" aria-label="Unit"></td>'
+    +'<td class="num"><input id="am-unit-cost" type="number" step="0.01" placeholder="0.00" style="width:70px" aria-label="Unit cost"></td>'
+    +'<td class="num"><input id="am-qty" type="number" step="1" placeholder="0" style="width:60px" aria-label="Expected quantity"></td>'
+    +'<td class="num"><input id="am-comp" type="number" step="1" placeholder="0" style="width:60px" aria-label="Completed quantity"></td>'
+    +'<td colspan="2">'
+    +'<button class="btn btn-sm btn-primary" id="am-save" style="margin-right:4px">Save</button>'
+    +'<button class="btn btn-sm btn-secondary" id="am-cancel">Cancel</button>'
+    +'</td>'
+    +'</tr>';
+
+  var rows = '';
+  mats.forEach(function(m){
+    rows += renderMatRow(m, finalized);
+    if(_expandedMat[m.id]) rows += '<tr class="expand-row" id="units-row-'+esc(m.id)+'"><td colspan="7"><span class="spinner"></span> Loading units…</td></tr>';
   });
 
-  async function load(){
-    try{
-      var res = await fetch('/api/service-areas/'+encodeURIComponent(_areaId), { credentials:'include' });
-      if(res.status===401||res.status===403){
-        document.getElementById('page-body').innerHTML = '<div class="empty-state"><i class="fa-solid fa-lock"></i>Login required.</div>';
-        return;
-      }
-      if(res.status===404){
-        document.getElementById('page-body').innerHTML = '<div class="empty-state"><i class="fa-solid fa-triangle-exclamation"></i>Service area not found.</div>';
-        return;
-      }
-      if(!res.ok) throw new Error(await res.text());
-      var area = await res.json();
+  return '<div class="card">'
+    +'<div class="card-head">'
+    +'<div class="card-title"><i class="fa-solid fa-boxes-stacked" aria-hidden="true"></i> Materials</div>'
+    +'<button class="btn btn-sm btn-secondary" id="show-add-mat"><i class="fa-solid fa-plus"></i> Add manually</button>'
+    +'</div>'
+    +'<div class="table-wrap">'
+    +'<table aria-label="Materials">'
+    +'<thead><tr>'
+    +'<th>Item</th><th>Unit</th><th class="num">Unit Cost</th>'
+    +'<th class="num">Expected</th><th class="num">Completed</th>'
+    +'<th class="num">Remaining</th><th>Progress</th>'
+    +'</tr></thead>'
+    +'<tbody id="mat-tbody">'
+    +(rows||('<tr><td colspan="7"><div class="empty-state"><i class="fa-solid fa-inbox"></i>No materials yet.</div></td></tr>'))
+    +addRowHtml
+    +'</tbody>'
+    +'</table>'
+    +'</div>'
+    +'</div>';
+}
 
-      // Parallel: hours summary (filter to this area if param supported, else load all and filter client-side)
-      var marginRes = await fetch('/api/money/margin', { credentials:'include' }).then(function(r){ return r.ok?r.json():null; }).catch(function(){ return null; });
+function renderMatRow(m, finalized){
+  var exp  = parseInt(m.quantity)||0;
+  var comp = parseInt(m.completed_quantity)||0;
+  var rem  = Math.max(0, exp-comp);
+  var pct  = exp>0 ? Math.min(100, Math.round(comp/exp*100)) : 0;
+  var srcBadge = m.source==='map' ? '<span class="badge badge-map">map</span>'
+               : m.source==='bom_csv' ? '<span class="badge badge-bom">BOM</span>'
+               : '<span class="badge badge-manual">manual</span>';
+  var progCell = finalized
+    ? '<span class="badge badge-final">Final build</span>'
+    : '<div class="prog-track" aria-label="'+pct+'% complete" role="progressbar" aria-valuenow="'+pct+'" aria-valuemin="0" aria-valuemax="100"><div class="prog-fill'+(pct>=100?' done':'')+'" style="width:'+pct+'%"></div></div><span style="font-size:11px;color:var(--text-muted);margin-left:4px">'+pct+'%</span>';
+  var hasUnits = parseInt(m.unit_count)||0;
+  var expandCls = _expandedMat[m.id]?'expanded':'';
+  return '<tr class="clickable-row mat-row '+expandCls+'" data-mat-id="'+esc(m.id)+'">'
+    +'<td>'+srcBadge+' '+esc(m.item||'—')+(m.map_feature_ref?'<span style="font-size:10px;color:var(--text-muted);margin-left:4px">ref:'+esc(m.map_feature_ref)+'</span>':'')+'</td>'
+    +'<td>'+esc(m.unit||'—')+'</td>'
+    +'<td class="num amt">'+fmtMoney(m.unit_cost)+'</td>'
+    +'<td class="num">'+exp+'</td>'
+    +'<td class="num">'+comp+'</td>'
+    +'<td class="num">'+rem+'</td>'
+    +'<td style="display:flex;align-items:center;gap:6px;min-width:120px">'
+    +progCell
+    +(hasUnits?'<span class="expand-btn" aria-hidden="true"><i class="fa-solid fa-chevron-right" style="font-size:10px"></i></span>':'')
+    +'</td>'
+    +'</tr>';
+}
 
-      render(area, marginRes);
-    } catch(e){
-      document.getElementById('page-body').innerHTML = '<div class="empty-state"><i class="fa-solid fa-triangle-exclamation"></i>Failed to load. '+esc(e.message||'')+'</div>';
-    }
+function renderJobsSection(jobs){
+  var rows = '';
+  (jobs||[]).forEach(function(j){
+    rows += renderJobRow(j);
+    if(_expandedJob[j.id]) rows += renderJobExpand(j);
+  });
+  return '<div class="card">'
+    +'<div class="card-head">'
+    +'<div class="card-title"><i class="fa-solid fa-briefcase" aria-hidden="true"></i> Jobs & Hours</div>'
+    +'</div>'
+    +'<div class="table-wrap">'
+    +'<table aria-label="Jobs and hours">'
+    +'<thead><tr>'
+    +'<th>Discipline</th><th>Employee</th><th>Billing</th>'
+    +'<th class="num">Hours</th><th class="num">Amount</th><th>Status</th>'
+    +'</tr></thead>'
+    +'<tbody id="job-tbody">'
+    +(rows||'<tr><td colspan="6"><div class="empty-state"><i class="fa-solid fa-briefcase"></i>No jobs on this selection.</div></td></tr>')
+    +'</tbody>'
+    +'</table>'
+    +'</div>'
+    +'</div>';
+}
+
+function renderJobRow(j){
+  var stKey = (j.status||'not_started').replace(/[^a-z_]/g,'');
+  var stLabel = (j.status||'not started').replace(/_/g,' ');
+  var hasExpand = (j.people&&j.people.length)||(j.notes)||(j.start_date||j.completed_date);
+  var expandCls = _expandedJob[j.id]?'expanded':'';
+  var isVarious = j.employee_label&&j.employee_label.indexOf('Various')===0;
+  return '<tr class="'+(hasExpand?'clickable-row ':'')+' job-row '+expandCls+'" data-job-id="'+esc(j.id)+'" '+(hasExpand?'tabindex="0" role="button" aria-expanded="'+(!!_expandedJob[j.id])+'"':'')+'>'
+    +'<td>'
+    +'<div>'+esc(j.job_name||j.team||'—')+'</div>'
+    +(j.cost_category?'<div class="cost-cat">'+esc(j.cost_category)+'</div>':'')
+    +'</td>'
+    +'<td>'+(isVarious?'<span style="color:var(--primary);cursor:pointer">':'')+esc(j.employee_label||'—')+(isVarious?'</span>':'')
+    +(hasExpand?'<span class="expand-btn" aria-hidden="true" style="margin-left:6px"><i class="fa-solid fa-chevron-right" style="font-size:10px"></i></span>':'')
+    +'</td>'
+    +'<td>'+esc(j.billing_type||'—')+'</td>'
+    +'<td class="num">'+fmtHours(j.actual_hours)+'</td>'
+    +'<td class="num amt">'+fmtMoney(j.actual_amount)+'</td>'
+    +'<td><span class="st-pill st-'+esc(stKey)+'">'+esc(stLabel)+'</span></td>'
+    +'</tr>';
+}
+
+function renderJobExpand(j){
+  var parts = [];
+  if(j.people&&j.people.length){
+    var prows = j.people.map(function(p){
+      return '<div class="person-row">'
+        +'<span class="pname">'+esc(p.name||'—')+'</span>'
+        +'<span>'+fmtHours(p.hours)+'h</span>'
+        +(p.amount!=null?'<span class="amt">'+fmtMoney(p.amount)+'</span>':'')
+        +'</div>';
+    }).join('');
+    parts.push('<div class="people-list">'+prows+'</div>');
   }
+  if(j.notes) parts.push('<div class="note-block">'+esc(j.notes)+'</div>');
+  if(j.start_date||j.completed_date){
+    var dparts = [];
+    if(j.start_date) dparts.push('<span>Started: '+esc(j.start_date.slice?j.start_date.slice(0,10):j.start_date)+'</span>');
+    if(j.completed_date) dparts.push('<span>Completed: '+esc(j.completed_date.slice?j.completed_date.slice(0,10):j.completed_date)+'</span>');
+    parts.push('<div class="dates-block">'+dparts.join('')+' <span style="opacity:.6">· from hours import</span></div>');
+  }
+  return '<tr class="expand-row" id="job-expand-'+esc(j.id)+'"><td colspan="6">'+parts.join('')+'</td></tr>';
+}
 
-  function render(area, marginData){
-    var jobs = area.jobs || [];
+// ── Bind events ───────────────────────────────────────────────────────────
+function bindAll(){
+  // Map view toggle
+  var rb = document.getElementById('map-btn-route');
+  var ob = document.getElementById('map-btn-overview');
+  if(rb) rb.addEventListener('click', function(){ _mapView='route'; reRenderMapStub(); });
+  if(ob) ob.addEventListener('click', function(){ _mapView='overview'; reRenderMapStub(); });
 
-    // Summary KPIs from jobs
-    var estTotal  = jobs.reduce(function(s,j){ return s+(parseFloat(j.estimated_amount)||0); }, 0);
-    var actTotal  = jobs.reduce(function(s,j){ return s+(parseFloat(j.actual_amount)||0); }, 0);
-    var actHours  = jobs.reduce(function(s,j){ return s+(parseFloat(j.actual_hours)||0); }, 0);
-    var billedTotal = jobs.filter(function(j){ return j.status==='billed'||j.billed_date; })
-                         .reduce(function(s,j){ return s+(parseFloat(j.actual_amount)||0); }, 0);
+  // Route selector
+  document.querySelectorAll('[data-route]').forEach(function(btn){
+    btn.addEventListener('click', function(){
+      _rsel = btn.dataset.route;
+      render();
+    });
+  });
 
-    // Find this area in margin data for billed figure
-    var marginRow = null;
-    if(marginData && marginData.rows){
-      marginRow = marginData.rows.find(function(r){ return r.service_area_id===area.id; });
+  // Finalize button
+  var fb = document.getElementById('finalize-btn');
+  if(fb) fb.addEventListener('click', function(){
+    var view = currentView();
+    doFinalize(!view.finalized, view.routeId);
+  });
+
+  // Client visible checkboxes
+  document.querySelectorAll('[data-vis]').forEach(function(cb){
+    cb.addEventListener('change', function(){
+      toggleMetric(cb.dataset.vis, cb.checked);
+    });
+  });
+
+  // Add material
+  var showAddBtn = document.getElementById('show-add-mat');
+  if(showAddBtn) showAddBtn.addEventListener('click', function(){
+    var row = document.getElementById('add-mat-row');
+    if(row){ row.style.display=''; document.getElementById('am-item').focus(); }
+  });
+  var saveMatBtn = document.getElementById('am-save');
+  if(saveMatBtn) saveMatBtn.addEventListener('click', saveAddMaterial);
+  var cancelMatBtn = document.getElementById('am-cancel');
+  if(cancelMatBtn) cancelMatBtn.addEventListener('click', function(){
+    var row = document.getElementById('add-mat-row');
+    if(row) row.style.display='none';
+  });
+
+  // Material row expand (units)
+  document.querySelectorAll('.mat-row').forEach(function(tr){
+    tr.addEventListener('click', function(){
+      var mid = tr.dataset.matId;
+      if(!mid) return;
+      var mat = findMat(mid);
+      if(!mat || !(parseInt(mat.unit_count)||0)) return;
+      _expandedMat[mid] = !_expandedMat[mid];
+      render();
+      if(_expandedMat[mid]) loadUnits(mid);
+    });
+    tr.addEventListener('keydown', function(e){
+      if(e.key==='Enter'||e.key===' '){ e.preventDefault(); tr.click(); }
+    });
+  });
+
+  // Job row expand
+  document.querySelectorAll('.job-row[tabindex]').forEach(function(tr){
+    tr.addEventListener('click', function(){
+      var jid = tr.dataset.jobId;
+      if(!jid) return;
+      _expandedJob[jid] = !_expandedJob[jid];
+      render();
+    });
+    tr.addEventListener('keydown', function(e){
+      if(e.key==='Enter'||e.key===' '){ e.preventDefault(); tr.click(); }
+    });
+  });
+
+  // Restore unit rows (re-render wipes them, re-fetch)
+  Object.keys(_expandedMat).forEach(function(mid){
+    if(_expandedMat[mid]) loadUnits(mid);
+  });
+}
+
+function reRenderMapStub(){
+  // just re-render the whole page to flip the toggle (cheap)
+  render();
+}
+
+function findMat(mid){
+  var all = flatMats();
+  for(var i=0;i<all.length;i++) if(all[i].id===mid) return all[i];
+  return null;
+}
+
+// ── Units expand ───────────────────────────────────────────────────────────
+async function loadUnits(matId){
+  var row = document.getElementById('units-row-'+matId);
+  if(!row) return;
+  try{
+    var units = await api('/api/service-area-materials/'+encodeURIComponent(matId)+'/units');
+    if(!units||!units.length){
+      row.querySelector('td').innerHTML = '<span style="color:var(--text-muted);font-size:12px">No units recorded.</span>';
+      return;
     }
-    var billed = marginRow ? marginRow.billed_total : billedTotal;
-
-    var programTag = area.program
-      ? '<span class="tag tag-'+esc(area.program)+'">'+esc(area.program.toUpperCase())+'</span>'
-      : '';
-
-    var breadcrumb = '<div class="breadcrumb">'
-      +'<a href="/service-areas.html"><i class="fa-solid fa-diagram-project"></i> Service Areas</a>'
-      +' / '+esc(area.client_name||'')
-      +' / <strong>'+esc(area.name||'—')+'</strong>'
+    var html = '<div class="unit-list">'
+      +units.map(function(u){
+        var stPill = '<span class="st-pill st-'+(u.status||'planned')+'">'+esc(u.status||'planned')+'</span>';
+        return '<div class="unit-row">'
+          +'<span class="ulabel">'+esc(u.label||('Unit '+u.sequence))+'</span>'
+          +stPill
+          +(u.installed_date?'<span style="font-size:11px;color:var(--text-muted)">'+esc(String(u.installed_date).slice(0,10))+'</span>':'')
+          +'</div>';
+      }).join('')
       +'</div>';
+    row.querySelector('td').innerHTML = html;
+  } catch(e){
+    if(row) row.querySelector('td').innerHTML = '<span style="color:var(--danger-text);font-size:12px">Failed to load units.</span>';
+  }
+}
 
-    var kpis = '<div class="kpi-strip">'
-      +'<div class="kpi"><div class="lbl">Jobs</div><div class="val">'+jobs.length+'</div><div class="sub">in this area</div></div>'
-      +'<div class="kpi"><div class="lbl">Estimated</div><div class="val">'+fmt(estTotal)+'</div><div class="sub">sum of job estimates</div></div>'
-      +'<div class="kpi"><div class="lbl">Billed</div><div class="val">'+fmt(billed)+'</div><div class="sub">from billed jobs</div></div>'
-      +'<div class="kpi"><div class="lbl">Hours logged</div><div class="val">'+actHours.toFixed(1)+'</div><div class="sub">actual hours</div></div>'
-      +'</div>';
+// ── Add material ──────────────────────────────────────────────────────────
+async function saveAddMaterial(){
+  var item = (document.getElementById('am-item')||{}).value;
+  var unit = (document.getElementById('am-unit')||{}).value;
+  var unitCost = parseFloat((document.getElementById('am-unit-cost')||{}).value)||0;
+  var qty = parseInt((document.getElementById('am-qty')||{}).value)||0;
+  var comp = parseInt((document.getElementById('am-comp')||{}).value)||0;
+  if(!item||!item.trim()){ flash('Item description is required','err'); return; }
 
-    var jobsHtml;
-    if(jobs.length){
-      var rows = jobs.map(function(j){
-        var stCls = 'st-'+(j.status||'not_started').replace(/[^a-z_]/g,'');
-        var statusLabel = (j.status||'not started').replace(/_/g,' ');
-        return '<tr>'
-          +'<td>'+esc(j.job_name||'—')+'</td>'
-          +'<td>'+esc(j.team||'—')+'</td>'
-          +'<td><span class="status-badge '+esc(stCls)+'">'+esc(statusLabel)+'</span></td>'
-          +'<td>'+esc(j.assigned_staff_name||'—')+'</td>'
-          +'<td class="num amt">'+fmt(j.estimated_amount)+'</td>'
-          +'<td class="num amt">'+fmt(j.actual_amount)+'</td>'
-          +'<td class="num">'+( parseFloat(j.actual_hours)||0 ).toFixed(1)+'</td>'
-          +'</tr>';
-      }).join('');
-      var totalsRow = '<tr>'
-        +'<td colspan="4">Totals</td>'
-        +'<td class="num amt">'+fmt(estTotal)+'</td>'
-        +'<td class="num amt">'+fmt(actTotal)+'</td>'
-        +'<td class="num">'+actHours.toFixed(1)+'</td>'
-        +'</tr>';
-      jobsHtml = '<div class="card"><div class="table-wrap"><table>'
-        +'<thead><tr><th>Job / Discipline</th><th>Team</th><th>Status</th><th>Assigned</th>'
-        +'<th class="num">Estimated</th><th class="num">Actual</th><th class="num">Hours</th></tr></thead>'
-        +'<tbody>'+rows+'</tbody>'
-        +'<tfoot>'+totalsRow+'</tfoot>'
-        +'</table></div></div>';
+  var view = currentView();
+  var routeId = view.routeId||null;
+  try{
+    await api('/api/service-areas/'+encodeURIComponent(_id)+'/materials','POST',{
+      item: item.trim(), unit: unit||null,
+      unit_cost: unitCost, quantity: qty,
+      completed_quantity: comp,
+      source: 'manual',
+      route_id: routeId
+    });
+    flash('Material added');
+    await load();
+  } catch(e){ flash(e.message||'Failed to add material','err'); }
+}
+
+// ── Finalize ──────────────────────────────────────────────────────────────
+async function doFinalize(finalize, routeId){
+  try{
+    if(routeId){
+      await api('/api/service-area-routes/'+encodeURIComponent(routeId)+'/finalize','POST',{ finalized:finalize });
     } else {
-      jobsHtml = '<div class="card"><div class="empty-state"><i class="fa-solid fa-briefcase"></i>No jobs on this area yet.</div></div>';
+      await api('/api/service-areas/'+encodeURIComponent(_id)+'/finalize','POST',{ finalized:finalize });
     }
+    flash(finalize ? 'Build finalized' : 'Build reopened');
+    await load();
+  } catch(e){ flash(e.message||'Failed to update build status','err'); }
+}
 
-    var actions = '<div class="actions-bar">'
-      +'<a class="btn btn-sm btn-secondary" href="/service-areas.html">'
-      +'<i class="fa-solid fa-arrow-left"></i> All Service Areas</a>'
-      +'<a class="btn btn-sm btn-secondary" href="/service-areas.html" target="_blank">'
-      +'<i class="fa-solid fa-pen"></i> Edit in Service Areas</a>'
-      +'<a class="btn btn-sm btn-secondary" href="/hours.html">'
-      +'<i class="fa-solid fa-clock"></i> Hours View</a>'
-      +'<a class="btn btn-sm btn-secondary" href="/billing.html">'
-      +'<i class="fa-solid fa-file-invoice-dollar"></i> Billing</a>'
-      +'</div>';
+// ── Client visible metrics ────────────────────────────────────────────────
+async function toggleMetric(key, val){
+  var area = _ws.area;
+  var cvm = Object.assign({}, area.client_visible_metrics||{});
+  cvm[key] = val;
+  // optimistic update
+  area.client_visible_metrics = cvm;
+  render();
+  try{
+    await api('/api/service-areas/'+encodeURIComponent(_id),'PUT',{ client_visible_metrics: cvm });
+    flash(val ? key.replace(/_/g,' ')+' now visible to client' : key.replace(/_/g,' ')+' hidden from client');
+  } catch(e){
+    cvm[key] = !val;
+    area.client_visible_metrics = cvm;
+    render();
+    flash(e.message||'Failed to update visibility','err');
+  }
+}
 
-    document.getElementById('page-title').innerHTML = '<i class="fa-solid fa-diagram-project"></i> '+esc(area.name||'Service Area');
-    document.title = esc(area.name||'Service Area')+' — Launch Fiber';
+// ── Helpers ────────────────────────────────────────────────────────────────
+function esc(s){
+  return String(s==null?'':s).replace(/[&<>"]/g,function(c){
+    return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c];
+  });
+}
+function fmtMoney(n){
+  if(n==null||n===''||isNaN(parseFloat(n))) return '<span class="dim-val">—</span>';
+  return '$'+Math.round(Number(n)).toLocaleString('en-US');
+}
+function fmtHours(n){
+  var h = parseFloat(n)||0;
+  return h.toFixed(1);
+}
 
-    document.getElementById('page-body').innerHTML =
-      breadcrumb
-      +'<div class="area-head">'
-      +'<div class="area-name">'+esc(area.name||'—')+'</div>'
-      +'<div class="area-meta">'
-      +'<span><i class="fa-solid fa-building"></i> '+esc(area.client_name||'—')+'</span>'
-      +(area.work_order_number ? '<span>WO# '+esc(area.work_order_number)+'</span>' : '')
-      +programTag
-      +(area.ec_name ? '<span><i class="fa-solid fa-file-contract"></i> '+esc(area.ec_name)+'</span>' : '')
-      +'</div>'
-      +actions
-      +'</div>'
-      +kpis
-      +'<div class="section"><div class="section-title"><i class="fa-solid fa-briefcase"></i> Jobs</div>'
-      +jobsHtml
-      +'</div>';
-  }
+var _flashTimer = null;
+function flash(msg, type){
+  var bar = document.getElementById('flash-bar');
+  if(!bar) return;
+  bar.textContent = msg;
+  bar.className = 'flash-bar show'+(type==='err'?' err':'');
+  clearTimeout(_flashTimer);
+  _flashTimer = setTimeout(function(){ bar.classList.remove('show'); }, 3500);
+}
 
-  // ── Helpers ─────────────────────────────────────────────────────────────────
-  function fmt(n){
-    n = parseFloat(n)||0;
-    return '$'+n.toLocaleString('en-US',{minimumFractionDigits:0,maximumFractionDigits:0});
+async function api(path, method, body){
+  var opts = { credentials:'include', headers:{ 'Content-Type':'application/json' } };
+  if(method) opts.method = method;
+  if(body!=null) opts.body = JSON.stringify(body);
+  var r = await fetch(path, opts);
+  if(!r.ok){
+    var txt = '';
+    try{ var j=await r.json(); txt=j.error||j.message||''; } catch(e2){ txt=await r.text().catch(function(){return '';}); }
+    throw new Error(r.status+(txt?' — '+txt:''));
   }
-  function esc(s){
-    return String(s??'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
-  }
+  if(r.status===204||r.headers.get('content-length')==='0') return null;
+  return r.json();
+}
 
-  // ── Theme ────────────────────────────────────────────────────────────────────
-  window.toggleDark = function(){
-    var html = document.documentElement;
-    var dark = html.getAttribute('data-theme')==='dark';
-    html.setAttribute('data-theme', dark?'light':'dark');
-    localStorage.setItem('lfs_theme', dark?'light':'dark');
-    updateDmIcon();
-  };
-  function applyStoredTheme(){
-    var stored = localStorage.getItem('lfs_theme');
-    if(stored) document.documentElement.setAttribute('data-theme', stored);
-    updateDmIcon();
-  }
-  function updateDmIcon(){
-    var icon = document.getElementById('dm-icon');
-    if(!icon) return;
-    var dark = document.documentElement.getAttribute('data-theme')==='dark';
-    icon.className = dark?'fa-solid fa-sun':'fa-solid fa-moon';
-  }
+// ── Theme ──────────────────────────────────────────────────────────────────
+window.toggleDark = function(){
+  var html = document.documentElement;
+  var dark = html.getAttribute('data-theme')==='dark';
+  html.setAttribute('data-theme', dark?'light':'dark');
+  localStorage.setItem('lfs_theme', dark?'light':'dark');
+  updateDmIcon();
+};
+function applyTheme(){
+  var stored = localStorage.getItem('lfs_theme');
+  if(stored) document.documentElement.setAttribute('data-theme', stored);
+  updateDmIcon();
+}
+function updateDmIcon(){
+  var icon = document.getElementById('dm-icon');
+  if(!icon) return;
+  var dark = document.documentElement.getAttribute('data-theme')==='dark';
+  icon.className = dark?'fa-solid fa-sun':'fa-solid fa-moon';
+}
+
 })();
 </script>
 <script src="/js/app_nav.js" data-active="service-areas"></script>
