@@ -16,7 +16,7 @@
     document.documentElement.setAttribute('data-theme', t); localStorage.setItem('lfs_theme', t);
   });
 
-  let d = null, pipe = {}, aging = null, hoursData = null, revenueMonths = null;
+  let d = null, pipe = {}, aging = null, hoursData = null, revenueMonths = null, marginRows = null;
   let _period = 'month';
 
   function periodRange(period) {
@@ -54,12 +54,13 @@
   async function boot() {
     try {
       const { from, to } = periodRange('month');
-      [d, pipe, aging, hoursData, revenueMonths] = await Promise.all([
+      [d, pipe, aging, hoursData, revenueMonths, marginRows] = await Promise.all([
         api('/api/dashboard/overview'),
         api('/api/service-area-pipelines').then(p => p.pipelines || {}).catch(() => ({})),
         fetch('/api/money/aging', { credentials: 'include' }).then(r => r.ok ? r.json() : null).catch(() => null),
         fetch(`/api/hours/summary?from=${from}&to=${to}`, { credentials: 'include' }).then(r => r.ok ? r.json() : null).catch(() => null),
         fetch('/api/money/revenue?group=month', { credentials: 'include' }).then(r => r.ok ? r.json() : null).catch(() => null),
+        fetch('/api/money/margin', { credentials: 'include' }).then(r => r.ok ? r.json() : null).catch(() => null),
       ]);
       renderTiles(); renderAttention(); renderTab('revenue');
       document.querySelectorAll('.tab').forEach(t => t.addEventListener('click', () => {
@@ -88,14 +89,26 @@
 
   function renderAttention() {
     const a = d.alerts || {}, rtb = d.ready_to_bill || {};
+    // Overdue invoices: 90+ day AR bucket
+    const overdue90 = aging && aging.buckets && aging.buckets['90+'] ? aging.buckets['90+'] : null;
+    // Zero-job areas: service areas with no jobs (job_count === 0) from margin data
+    const zeroJobs = marginRows ? (marginRows.rows || []).filter(r => r.job_count === 0).length : null;
     const items = [
       { dot: 'var(--success)', t: 'Ready to bill', v: `${num(rtb.count)} · ${money(rtb.total)}`, tab: 'bill' },
       { dot: 'var(--warning)', t: 'In revision', v: num(a.in_revision), tab: 'pipeline' },
       { dot: 'var(--warning)', t: 'Stale > 14d', v: num(a.stale), tab: 'pipeline' },
-      { dot: 'var(--danger)', t: 'Permits due', v: `${num(a.permits_due)}`, tab: null },
-    ];
+      overdue90 !== null
+        ? { dot: overdue90.count > 0 ? 'var(--danger)' : 'var(--success)', t: 'Overdue (90+ d)', v: `${overdue90.count} inv · ${money(overdue90.total)}`, href: '/invoices.html' }
+        : null,
+      zeroJobs !== null
+        ? { dot: zeroJobs > 0 ? 'var(--warning)' : 'var(--success)', t: 'Areas with no jobs', v: zeroJobs, href: '/service-areas.html' }
+        : null,
+    ].filter(Boolean);
     $('attention').innerHTML = items.map(x =>
-      `<div class="att" ${x.tab ? `data-go="${x.tab}"` : ''}><span class="dot" style="background:${x.dot}"></span>${x.t} <span class="v">· ${esc(x.v)}</span></div>`).join('');
+      x.href
+        ? `<a class="att" href="${x.href}" style="text-decoration:none;color:inherit"><span class="dot" style="background:${x.dot}"></span>${x.t} <span class="v">· ${esc(x.v)}</span></a>`
+        : `<div class="att" ${x.tab ? `data-go="${x.tab}"` : ''}><span class="dot" style="background:${x.dot}"></span>${x.t} <span class="v">· ${esc(x.v)}</span></div>`
+    ).join('');
     $('attention').querySelectorAll('[data-go]').forEach(el => el.addEventListener('click', () => {
       const tab = el.dataset.go;
       document.querySelectorAll('.tab').forEach(x => x.classList.toggle('active', x.dataset.tab === tab));
