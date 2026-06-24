@@ -1,6 +1,6 @@
 # Claude 2 — Contractor timeclock (Phase 5)
 
-**Status:** DONE — awaiting CEO write-path phase. Portal tasks P1–P4 complete 2026-06-24.
+**Status:** ACTIVE — Round 9: Service-Area Workspace UI. Write-path endpoints + migration 0065 are LIVE; build the detail view against them. (Portal P1–P4 done 2026-06-24.)
 **Branch:** `claude-2/contractor-timeclock`
 **Read first:** `CLAUDE.md`, `ROADMAP.md` (Phase 5), `briefs/README.md`.
 
@@ -171,3 +171,56 @@ Nice work — fast and clean (good catch on the theme key + the export mount not
 - [x] **P3. a11y + cross-browser + perf round 2.** Labels/focus/contrast audit; verify on mobile + a second browser; confirm the R6 debounce/cache hold up.
 - [x] **P4. Print/export polish.** Clean single-area status sheet + an all-areas summary print/PDF for the client. Frontend.
 > When P1–P4 are in: the additive work across BOTH the keystone cluster and the portal is then exhausted. Set Status `DONE — awaiting CEO write-path phase` and stop; the next phase (write endpoints + admin cutover) is CEO-led (see `HANDOFF.md` §6) and isn't yours to start.
+
+---
+
+## Round 9 — Service-Area Workspace UI (the keystone detail view). Sonnet @ medium.
+**The CEO has shipped the write-path** (migration `0065` + create/edit/finalize/materials/units endpoints + a consolidated read), all live on `main`. Your job now: build the **service-area detail/"workspace" view** in the operations cluster (`public/area.html` + `public/js/service_areas_ui.js`) per the spec below. This is the screen Carter mocked up and signed off. **It's the INTERNAL ops view (manager/admin) — internal `$` is fine here; this is NOT the customer portal.**
+
+> ⚠️ CI is currently down (GitHub Actions billing-locked) so the CEO verifies everything locally — push clean, tested-by-eye work and note anything you couldn't check.
+
+### One read powers the whole view
+`GET /api/service-areas/:id/workspace` (gated `requireAuth(staff roles)`) returns:
+```
+{ area:    { id, name, client_name, program, work_order_number, status,
+             engineering_contract_id, ec_name, build_finalized_at, map_file_path,
+             client_visible_metrics:{progress,engineering_cost,construction_cost,total_cost} },
+  routes:  [ { id, name, status, build_finalized_at, sort_order,
+               jobs:[<job>], materials:[<material>], rollup:<rollup> } ],
+  unrouted:{ jobs:[<job>], materials:[<material>] },   // route_id NULL = area-level
+  rollup:  <rollup>,                                   // whole area
+  finalized: bool }
+
+<rollup>  = { engineering_cost, construction_labor, materials_cost,
+              construction_cost, total_cost, progress_pct }   // server-computed $, integers
+<job>     = { id, route_id, team, cost_category:'engineering'|'construction', job_name,
+              billing_type, rate, actual_hours, actual_amount, estimated_amount, status,
+              start_date, completed_date, notes, assigned_staff_name,
+              people:[{name,hours,amount}], employee_label }   // employee_label = name or "Various (n)"
+<material>= { id, route_id, item, quantity /*=expected*/, completed_quantity, unit, unit_cost,
+              source:'map'|'manual'|'bom_csv', map_feature_ref, unit_count, notes }
+```
+
+### Layout (from the approved mockup — match it)
+1. **Header:** client + area name. EC badge — when `program='rus'` show `RUS · EC <ec_name>`, else `<PROGRAM> · no EC`. Show `work_order_number`.
+2. **Map panel (top):** **STUB only** — a clean placeholder card (the real KMZ/GIS map + map↔materials sync is a later phase; do NOT build GIS). Keep a "This route / Client overview" toggle as scaffolding. The map "changes with the selected route" later — for now just label it with the route.
+3. **Route selector:** segmented control of `routes` (+ an "All routes" entry when >1). Each shows its `status` badge. Selecting a route renders that route's `jobs`/`materials`/`rollup`; "All routes" renders area-level `rollup` + all jobs/materials (routed + `unrouted`). **Areas with no routes** just render `unrouted` directly (no selector).
+4. **Finalize build** button by the map/route header → `POST /api/service-area-routes/:id/finalize {finalized:true|false}` for the selected route (or `POST /api/service-areas/:id/finalize` when "All routes" — cascades). Finalized → route status badge `complete`, the Progress tile shows **"Complete"**, and material progress bars show **"Final build"**. Button toggles to "Reopen build".
+5. **Cost tiles (4):** Progress (`rollup.progress_pct`% or "Complete" when finalized), Engineering cost, Construction cost, Total cost (= constr + eng). **Use the server `rollup` values verbatim — DO NOT compute any `$` in JS.** Each tile has a **"Show to client"** checkbox bound to `area.client_visible_metrics.<key>` (`progress`/`engineering_cost`/`construction_cost`/`total_cost`); toggling → `PUT /api/service-areas/:id { client_visible_metrics:{…} }`. Unchecked tile → dimmed + eye-off icon.
+6. **Materials table:** Item (+ `source` badge: map/manual) · Unit cost · Expected (`quantity`) · Completed (`completed_quantity`) · Remaining (computed `expected−completed`) · Progress (bar, or "Final build" when finalized). Row expands (when `unit_count>0`) → per-unit table via `GET /api/service-area-materials/:id/units`: Unit · Status · Installed date. **"Add manually"** → `POST /api/service-areas/:id/materials {item,quantity,completed_quantity,unit,unit_cost,source:'manual',route_id}` with inline-editable fields (PUT `/api/service-area-materials/:id` on edit).
+7. **Jobs & hours table:** Discipline (+ `cost_category` subtitle) · Employee (`employee_label`; when "Various (n)", clickable) · Billing · Hours (`actual_hours`) · Amount (`actual_amount`) · Status pill. Row/employee expands → `people` breakdown (name · hours · amount) + `notes` + dates (`start_date`→`completed_date`, labelled "from hours import").
+
+### Write endpoints (all live, manager/admin-gated — wire each UI action; NONE need new backend)
+- Routes: `POST /api/service-areas/:id/routes` · `PUT /api/service-area-routes/:id` · `DELETE …`.
+- Jobs: `POST /api/service-areas/:id/jobs` (pass `team`+`route_id`; `cost_category` auto-set by discipline) · `PUT /api/service-area-jobs/:id` · `…/advance` · `…/regress` · `DELETE`.
+- Materials: `POST /api/service-areas/:id/materials` · `PUT /api/service-area-materials/:id` · `DELETE`.
+- Units: `POST /api/service-area-materials/:id/units` · `PUT /api/service-area-material-units/:id {status,installed_date}` · `DELETE` (POST/PUT/DELETE return `{unit, material}` with recomputed `completed_quantity` — re-render from that).
+
+### Guardrails
+- **Money is display-only** — render server `rollup` numbers; never compute engineering/construction/total in JS. Missing → "—".
+- **No confirmation pop-ups** — optimistic updates + the existing undo bar (`public/js/undo_bar.js`); after a write, refetch `/workspace` (or update in place) and re-render.
+- **OFF-LIMITS:** `routes/service_areas.js` (CEO core — it already has every endpoint you need), `auth.js`, `server.js`, `migrations/`, `schema.sql`. **No new backend** — if you think you need one, stop and set `BLOCKED — needs CEO`.
+- App-shell themed, dark-mode + a11y, correct `data-active` rail. Map = stub only.
+
+### Acceptance
+Open a service area in the cluster → header with correct EC/program badge; route selector (or direct render when no routes); 4 cost tiles showing **server** values with working "show to client" checkboxes that persist; materials with expected/completed/remaining + expandable per-unit rows + manual add; jobs with "Various → per-person" expand + notes/dates; finalize build flips status/Progress/bars and reopens; zero pop-ups. Push per logical chunk to your branch; CEO merges.
