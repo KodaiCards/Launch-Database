@@ -116,6 +116,11 @@ button{font-family:inherit;cursor:pointer;border:none;background:none;color:inhe
 .sa-stage.past{color:var(--text-secondary)}
 .sa-stage.current{color:var(--primary);border-color:var(--primary);background:var(--primary-light);font-weight:700}
 .sa-stage-sep{font-size:9px;color:var(--text-muted)}
+.sa-feed{margin-top:12px}
+.sa-feed-label{font-size:11px;font-weight:600;color:var(--text-muted);text-transform:uppercase;letter-spacing:.4px;margin-bottom:6px}
+.sa-feed-row{display:flex;align-items:center;gap:8px;font-size:12px;color:var(--text-secondary);padding:3px 0}
+.sa-feed-dot{width:6px;height:6px;border-radius:50%;background:var(--primary);flex:none}
+.sa-feed-date{margin-left:auto;color:var(--text-muted);font-size:11px;white-space:nowrap}
 
 /* Portal landing summary (above the tabs, across all areas) */
 .cp-landing{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:14px;padding:16px;margin-bottom:14px;align-items:start}
@@ -600,6 +605,19 @@ function saProjectedCompletion(a){
   const proj = new Date(start.getTime() + (elapsed / (pct / 100)) * 86400000);
   return isNaN(proj.getTime()) ? null : proj.toISOString().slice(0, 10);
 }
+// Derived "recent updates" feed from job start/completed dates we already
+// fetch (no new endpoint, no history table). Newest first, top few.
+function saRecentUpdates(a){
+  const ev = [];
+  (a.jobs || []).forEach(j => {
+    const name = j.job_name || 'Job';
+    if (j.start_date) ev.push({ d: j.start_date, t: `${name} started` });
+    if (j.completed_date) ev.push({ d: j.completed_date, t: `${name} completed` });
+  });
+  if (a.completed_date) ev.push({ d: a.completed_date, t: 'Service area completed' });
+  ev.sort((x, y) => (x.d < y.d ? 1 : x.d > y.d ? -1 : 0));
+  return ev.slice(0, 4);
+}
 
 function cpSaClearChrome(){
   const header = document.getElementById('cp-sa-header');
@@ -772,6 +790,13 @@ function renderServiceAreas(){
     } else {
       mapBlock = `<div class="sa-map-ph"><i class="fa-solid fa-map" aria-hidden="true"></i> Map view coming soon.</div>`;
     }
+    const updates = saRecentUpdates(a);
+    const feed = updates.length
+      ? `<div class="sa-feed">
+           <div class="sa-feed-label">Recent updates</div>
+           ${updates.map(u => `<div class="sa-feed-row"><span class="sa-feed-dot"></span><span>${esc(u.t)}</span><span class="sa-feed-date">${esc(fmtDate(u.d))}</span></div>`).join('')}
+         </div>`
+      : '';
     return `<div class="card" style="padding:14px 16px">
       <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:10px">
         <div>
@@ -786,6 +811,7 @@ function renderServiceAreas(){
       ${prog}
       ${timeline}
       ${teams}
+      ${feed}
       ${detail}
       ${mapBlock}
     </div>`;
