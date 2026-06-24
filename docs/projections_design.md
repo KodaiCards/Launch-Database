@@ -48,6 +48,36 @@ ALTER TABLE service_areas       ADD COLUMN IF NOT EXISTS closed_at timestamptz;
 ## Modularity (mostly already true)
 The keystone already isolates work: each `service_area` belongs to one client + optional EC + program, so the **same ground worked for an EC vs BAU = two separate service areas** — never merged. Projections + the map group by service area and roll up only by explicit EC/client. Combining is opt-in (you pick what to view together). No schema change needed for this; just don't write any query that merges by geography.
 
+## Unified projection math — simple vs contract-based (Carter 2026-06-24)
+**Two tiers, modular. Most work is the simple tier.** LFS is the *engineering* firm — it reports construction numbers (cost/progress/materials) to the client but does NOT manage the crew (no crew/people on the construction side).
+
+### Simple SA (no EC / no Construction Contract) — just client + map + hours/footage
+- footage/unit job → expected = **map quantity × rate**.
+- hourly job → expected = **projected hours × rate** (the job's own estimate).
+- Already built (projections = expected − billed). No contract machinery.
+
+### Contract-based SA (linked to an EC and/or a Construction Contract "CC")
+- **Unit / footage jobs → map quantity × rate:**
+  - Engineering footage: map ft × footage rate (e.g. 1000 ft × $8.50 = $8,500).
+  - Construction: map units × **unit-cost catalog** (Handhole = $200; map says 13 on a route → $2,600), summed per route → route expected; SA = Σ routes.
+- **Hourly jobs → contract mileage allocation** (NOT a per-job estimate; hourly must not be footage-derived):
+  - `per_mile_rate(discipline) = contract_remaining_$ (for that discipline) ÷ contract_remaining_miles`
+  - `SA hourly expected(discipline) = SA.miles × per_mile_rate(discipline)`
+  - Worked: 10 mi left across 4 SAs, $100k left for inspecting → $10k/mi → a 2.5-mi SA projects $25k inspecting.
+
+### New schema this implies
+- `service_areas.miles` — SA mileage (drives hourly allocation).
+- **Contract "budget area"** on the EC **and** a Construction Contract: per-discipline budget lines + total miles. `remaining_$ = budget − billed`, `remaining_miles = total − completed-SA miles` (derive where possible).
+- **Construction Contract (CC)** entity + SA→CC link (parallel to SA→EC). [reuse `contracts` vs new — confirm]
+- **`cost_catalog`** (item → unit_cost) — the "plug the Excel" unit costs for construction expected. [scope: global / per-client / per-contract — confirm]
+- Map provides per-route quantities + footage (deferred → entered manually now via materials/footage, map-fed later).
+
+### Confirm before schema
+1. **Mileage math** — `per-mile = remaining$ ÷ remaining miles`; `SA expected = SA.miles × per-mile`, per discipline. Right?
+2. **Unit-cost catalog scope** — global, per-client, or per-contract (costs vary by deal)?
+3. **Construction Contract** — reuse the existing `contracts` table or a fresh keystone entity? An SA links to at most one CC + one EC?
+4. **Contract "remaining"** — enter TOTAL budget + total miles and let the system derive remaining (− billed / − completed-SA miles), or enter remaining manually?
+
 ## Information architecture (Carter 2026-06-24) — no new rail items
 - **Projections = a tab inside Money** (`money.html`: Margin · Aging · Revenue · Program · **Projections**). It's a forward-looking financial view next to the actuals it derives from; manager/admin gated like the rest of Money. Backend endpoints unchanged — just where the UI lives.
 - **Overall map = a tab inside Service Areas** (`service-areas.html`: **List | Map**). The aggregate map with client/SA selectors. The per-SA map stays in the workspace (`area.html`).

@@ -45,11 +45,18 @@ When a job is added under a RUS EC, **suggest its budget code** from the EC's co
 - **Utilization view** lives in **Money**, next to Projections (allocated / billed / projected / remaining per code + total; over/under coloring).
 - **Per-job code** picker on the workspace (`area.html`) job rows (auto-suggested).
 
-## Confirm before I build
-1. **"Spent" = show both** actual **billed** (drawn-down) and **projected** (committed) against each code's allocation — yes? (Legacy only showed an estimate; the ledger lets us show both.)
-2. **Auto-suggest code by discipline** when adding a job under a RUS EC (override-able) — match how you'd want it? And is the code↔discipline mapping reliable (e.g. one code per discipline per EC), or is it looser (assign manually with a suggestion)?
-3. **Budget = engineering only** (RUS engineering services LFS bills), construction handled separately — correct? Or do RUS budgets also carry construction codes?
-4. **Placement:** budget setup in the EC panel (clients) + utilization view in Money — good, or do you want it all in one place?
+## Resolved (Carter 2026-06-24)
+1. ✅ Show **both** billed (drawn-down) and projected (committed) per code.
+2. ✅ Auto-**suggest** the code by discipline, **manual override** always.
+3. ✅ **Two separate budgets:** the **engineering** budget (EC-scoped, RUS — this doc) **and** a separate **construction** budget. The whole service-area experience splits into **construction vs engineering sides** with fully separate data (costs, employees, materials, budgets) — neither bleeds into the other. → add `budgets.kind` (`engineering`|`construction`) and a `service_area_id` scope so construction budgets attach to the SA (or route); engineering budgets stay EC-scoped.
+4. ✅ Setup: engineering budget in the **EC panel**, construction budget on the **service area**; utilization in **Money** and surfaced in the SA view.
+
+## Bigger picture this opened — the SA construction/engineering split view
+Carter's vision for the service-area detail (mockup being built, then a dedicated design doc):
+- Click an SA → **popup with the interactable map + three totals: construction cost · engineering cost · combined.**
+- Click **Construction** → detailed view: **materials used so far + construction management (progress bars) + projected vs actual cost**, for the whole SA. Click a **route** → same view scoped to that route (formatted like the SA page; pick your detail).
+- Every detail viewport has a **Switch to Engineering / Switch to Construction** toggle. **Engineering** view mirrors the Construction format with its data: **hours + billing (design, footage billing, hours)**.
+- This builds on the existing keystone `cost_category` (engineering vs construction by discipline), materials, routes, and the billing/projection ledgers. Construction budget = the new piece. Design doc to follow the mockup.
 
 ## Sequence once confirmed
 (a) migration 0069 → (b) rework budget summary onto the keystone + `budget_code_id` on job create/edit + auto-suggest → (c) tested vs dev DB (per-code billed/projected/remaining, over/under) → (d) fan budget-setup + utilization + per-job-code UI to C2 → (e) the projections EC overlay gains the per-code breakdown.
