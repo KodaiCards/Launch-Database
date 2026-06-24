@@ -774,6 +774,11 @@ require('./routes/hours_csv')(app, pool, {
 // need them can grab them without a hard require on hours_csv.
 app.locals.csvHelpers = require('./routes/hours_csv')._helpers;
 
+// Keystone hours importer (admin→cluster port): same parse pipeline, but matches
+// each row to a service_area_job so hours land in time_entries.service_area_job_id
+// (not the retiring projects tree). Coexists with hours_csv during cutover.
+require('./routes/hours_import')(app, pool, { requireAdmin, upload });
+
 // ─────────────────────────────────────────────────────────────────────────────
 // AI CHAT — extracted to routes/ai.js (Track 1.3 final). Tool-using
 // Claude assistant + multipart file upload + per-tool approval gate.
