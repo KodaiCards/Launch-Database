@@ -347,6 +347,8 @@ let _currentClients = [];
 let _selectedClientId = null;
 let _customerInvoices = [];
 let _saFilter = { search: '', status: '' };
+let _invFilter = { status: '' };
+let _invSort = 'date-desc';
 let _lastVisitTs = null; // ISO string from localStorage; set on next load
 
 // ─── "What's new" indicator (task 17) — localStorage, no backend ─────
@@ -566,15 +568,49 @@ async function cpLoadInvoices(){
 
 function cpRenderInvoices(){
   const body = document.getElementById('cp-invoices-body');
-  const rows = (_customerInvoices || []).filter(inv => !_selectedClientId || inv.client_id === _selectedClientId);
-  if (!rows.length){
+  let all = (_customerInvoices || []).filter(inv => !_selectedClientId || inv.client_id === _selectedClientId);
+  if (!all.length){
     body.innerHTML = '<div class="empty-state"><i class="fa-solid fa-receipt"></i><p>No invoices yet.</p></div>';
     return;
   }
+  // Apply status filter
+  const st = _invFilter.status;
+  let rows = st ? all.filter(inv => (inv.status || '') === st) : all;
+  // Sort
+  const sortFn = {
+    'date-desc': (a,b) => (b.invoice_date || '') > (a.invoice_date || '') ? 1 : -1,
+    'date-asc':  (a,b) => (a.invoice_date || '') > (b.invoice_date || '') ? 1 : -1,
+    'amount-desc': (a,b) => (Number(b.total_amount)||0) - (Number(a.total_amount)||0),
+    'amount-asc':  (a,b) => (Number(a.total_amount)||0) - (Number(b.total_amount)||0),
+  }[_invSort] || ((a,b) => 0);
+  rows = [...rows].sort(sortFn);
+  // Totals (on filtered set)
+  const totalBilled = rows.reduce((s,inv) => s + (Number(inv.total_amount)||0), 0);
+  const totalPaid   = rows.filter(inv => String(inv.status||'') === 'paid').reduce((s,inv) => s + (Number(inv.total_amount)||0), 0);
   const thL = 'padding:8px 12px;text-align:left;font-size:11px;color:var(--text-muted);text-transform:uppercase';
   const thR = thL + ';text-align:right';
+  const sortOpts = [
+    ['date-desc','Date (newest)'],['date-asc','Date (oldest)'],
+    ['amount-desc','Amount (high)'],['amount-asc','Amount (low)'],
+  ];
+  const statusOpts = ['','sent','paid','overdue','partial','void'];
   body.innerHTML = `
-    <div style="font-size:12px;color:var(--text-muted);margin-bottom:8px">Click an invoice to see its line items.</div>
+    <div class="sa-filter-bar" style="margin-bottom:10px">
+      <select aria-label="Filter invoices by status" onchange="_invFilter.status=this.value;cpRenderInvoices()">
+        ${statusOpts.map(s => `<option value="${s}"${_invFilter.status===s?' selected':''}>${s ? s.charAt(0).toUpperCase()+s.slice(1) : 'All statuses'}</option>`).join('')}
+      </select>
+      <select aria-label="Sort invoices" onchange="_invSort=this.value;cpRenderInvoices()">
+        ${sortOpts.map(([v,l]) => `<option value="${v}"${_invSort===v?' selected':''}>${l}</option>`).join('')}
+      </select>
+      <span style="flex:1"></span>
+      <span style="font-size:12px;color:var(--text-muted)">${rows.length} invoice${rows.length===1?'':'s'}</span>
+    </div>
+    <div style="display:flex;gap:14px;margin-bottom:10px;flex-wrap:wrap">
+      <div style="font-size:13px"><span style="color:var(--text-muted)">Billed:</span> <strong>${fmtMoney(totalBilled)}</strong></div>
+      <div style="font-size:13px"><span style="color:var(--text-muted)">Paid:</span> <strong style="color:var(--success)">${fmtMoney(totalPaid)}</strong></div>
+      ${totalBilled > totalPaid ? `<div style="font-size:13px"><span style="color:var(--text-muted)">Outstanding:</span> <strong style="color:var(--warning-text)">${fmtMoney(totalBilled - totalPaid)}</strong></div>` : ''}
+    </div>
+    ${!rows.length ? '<div class="empty-state"><i class="fa-solid fa-receipt"></i><p>No invoices match this filter.</p></div>' : `
     <div class="cp-scroll-x"><table style="width:100%;font-size:13px;border-collapse:collapse">
       <thead>
         <tr style="background:var(--surface-1);border-bottom:1px solid var(--gray-border)">
@@ -594,7 +630,7 @@ function cpRenderInvoices(){
           <td style="padding:8px 12px;text-align:right;font-weight:600">${fmtMoney(inv.total_amount)}</td>
         </tr>`).join('')}
       </tbody>
-    </table></div>
+    </table></div>`}
   `;
 }
 
