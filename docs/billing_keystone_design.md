@@ -1,54 +1,71 @@
-# Billing → keystone: design for review (v2)
+# Billing → keystone: design for review (v3)
 
-> Draft for Carter. Moves billing off the retiring `projects` tree onto the **service-area / concentrator** model. **v2 corrects the model** after Carter's clarification: billing is mostly **monthly hours per concentrator**, plus milestone bills at route-final / concentrator-final. Scope = produce invoice records; PDF/sending stays HOLD until Phase 4 (#3). Last updated 2026-06-24.
+> Draft for Carter. v3 captures the **progressive, reconcilable** model he described: monthly hours per concentrator, footage billed incrementally from the map (some in June, more in July, final in Aug), all job types fluid + correctable without code changes. Scope = produce invoice records; PDF/sending HOLD until Phase 4. Last updated 2026-06-24.
 
-## The actual billing model (Carter, 2026-06-24)
-> "Invoices are generated **monthly**, regardless of build status in some circumstances. Sometimes we bill some jobs when the **route is final**, sometimes when the **concentrator is final**, and **most of the time we bill hours per concentrator monthly** — so that invoice can **not** include last month's hours."
+## The model in Carter's words (2026-06-24)
+- Invoices generated **monthly**, per concentrator; mostly **hours** (timecards are **weekly pay periods**, invoiced monthly — a June invoice carries June hours only).
+- **Some roles bill at different rates.**
+- Sometimes bill **when a route is final**, sometimes **when the concentrator is final**.
+- **Footage** pulls from the **map**: how much *could* be billed (expected) and how much is *ready/built* (completed). May bill the completed portion in June, more in July, the **final in Aug**.
+- A month gets a **"closed" tag by the 10th of the next month** — *informational only*: editing, new invoices, and corrections stay possible.
+- If hours/quantities are **removed** after billing, the difference appears on the **next invoice as a reconciliation** (credit) — which can be **deleted** if we choose not to reconcile.
+- "Things need to be fluid enough to feel natural and be possible **without rewriting code**."
 
-Three patterns, one concentrator at a time:
-1. **Monthly hours per concentrator (common).** Every month, per concentrator, invoice **that month's logged hours**. Each monthly invoice carries a billing period and includes **only that period's** hours — prior months are already billed and must never re-bill.
-2. **Milestone — route final.** When a route is finalized, bill selected jobs on that route.
-3. **Milestone — concentrator final.** When the service area is finalized, bill its remaining jobs.
+## Core principle — a billing ledger (one rule for every pattern)
+For each billing run, for each job in a concentrator:
+```
+billable_now = earned_to_date − already_billed_to_date
+```
+- **earned_to_date** by billing type:
+  - *hourly* — Σ logged hours × rate (from `time_entries`)
+  - *footage* — completed_quantity × rate (from the map / completed measure)
+  - *fixed* — full amount once its milestone (route-final / SA-final) is reached, else 0 (or a manual %)
+- **already_billed_to_date** = Σ amount of that job's prior non-void `invoice_items` (the ledger).
+- `billable_now > 0` → a **charge** line. `< 0` → a **reconciliation** (credit) line, flagged and **deletable** before the invoice is finalized.
 
-Hours recur monthly; milestone bills happen once for the thing billed. Billing is an **admin action** (you choose what/when), not auto-derived from status — status is just the gate for *eligibility*.
+This single operation yields: monthly hours (each run picks up the new month's unbilled hours), **progressive footage** (June bills completed-so-far, July bills the new completed delta, Aug bills the final delta), milestone fixed, **catch-up** (late hours bill next run), and **corrections** (negative delta → credit). No per-type branching beyond computing `earned_to_date`. That's the "no rewrite" property.
 
-## The key correctness mechanism — track billed-ness at the right grain
-The v1 mistake was marking a *job* "billed" once. That breaks monthly hours (a job accrues hours across many months and is billed every month). So:
-- **Hours → track on `time_entries`.** New nullable `time_entries.invoice_id`. A monthly run bills the unbilled (`invoice_id IS NULL`) hourly entries whose `entry_date` falls in the period, then stamps `invoice_id` on them. ⟹ "this invoice can't include last month's hours" holds **by construction**, and re-running a month can't double-bill.
-- **Milestone (fixed / footage) → track on the job.** `service_area_jobs.billed_date` (exists) marks the one-time bill of a fixed/footage job at route/SA finalize.
+## Period, cadence, closed tag
+- **Calendar-month** invoices, per concentrator. Weekly timecards roll into the month by `entry_date`.
+- **Closed tag:** a lightweight per-month marker (auto-set after the 10th of the following month; manually toggleable). Purely informational — it does **not** lock edits or block new/correcting invoices. Drives display ("June closed") and a gentle "billing a closed month" hint, nothing more.
 
-## Schema — migration `0066_invoice_service_area_link.sql`
+## Schema — migration `0066_billing_keystone.sql`
 ```sql
 ALTER TABLE invoices      ADD COLUMN service_area_id uuid REFERENCES service_areas(id),
                           ADD COLUMN engineering_contract_id uuid REFERENCES engineering_contracts(id);
-ALTER TABLE invoice_items ADD COLUMN service_area_job_id uuid REFERENCES service_area_jobs(id);
-ALTER TABLE time_entries  ADD COLUMN invoice_id uuid REFERENCES invoices(id);
+ALTER TABLE invoice_items ADD COLUMN service_area_job_id uuid REFERENCES service_area_jobs(id),
+                          ADD COLUMN line_kind varchar(20) DEFAULT 'charge';  -- 'charge' | 'reconciliation'
+-- (invoices.billing_period_start/_end and invoice_items.period_year/_month already exist.)
+CREATE TABLE billing_period_close (   -- the informational closed tag
+  period_month date PRIMARY KEY,      -- first-of-month
+  closed_at timestamptz, closed_by_user_id uuid
+);
 CREATE INDEX ON invoices (service_area_id);
-CREATE INDEX ON invoices (engineering_contract_id);
-CREATE INDEX ON time_entries (invoice_id);
+CREATE INDEX ON invoice_items (service_area_job_id);
 ```
-Already present (no change needed): `invoices.billing_period_start/_end`, `invoice_items.period_year/_month`. All new columns nullable → legacy project invoices keep working through the transition. (Deploy: Railway skips auto-migrate — I apply 0066 to the dev DB now and hold prod for cutover, per your OK on #4.)
+The ledger ("already billed") is derived by summing `invoice_items` per `service_area_job_id` — **no per-entry billed flag needed**, which is what keeps corrections automatic. All new columns nullable / defaulted → legacy invoices untouched. Apply to dev now, hold prod for cutover (your call #4).
+
+**Footage "completed" source:** progressive footage needs a *completed quantity that grows over time*. The map will drive this later (map↔materials sync is deferred). **For now** the completed measure is set manually (a job/route completed field) and the same ledger bills its deltas; when the map lands, it just feeds that number — no billing-code change. (Flag below.)
 
 ## Backend
-1. **Billing worklist:** `GET /api/billing/unbilled?period=YYYY-MM` → per concentrator: (a) unbilled hours in that period grouped by hourly job, and (b) un-billed milestone amounts (fixed/footage jobs on finalized routes / finalized SAs). This is the screen you bill from.
-2. **Monthly hours run:** `POST /api/billing/bill-monthly { period:'YYYY-MM', service_area_ids?:[...] }` → for each concentrator, sum its unbilled hourly `time_entries` in the period per job → **one invoice per concentrator** (period-stamped, `service_area_id`/EC set) with a line per job (hours × rate) → stamp those entries' `invoice_id`. Skips concentrators with no period hours. Transactional.
-3. **Milestone — concentrator:** enhance existing `POST /api/service-areas/:id/bill` → bill the SA's remaining unbilled **fixed/footage** jobs (and stamp `billed_date`); set the new SA/EC links + items' `service_area_job_id`.
-4. **Milestone — route:** `POST /api/service-area-routes/:id/bill` → same, scoped to one finalized route's jobs.
-5. **Report:** `GET /api/billing/report?group=client|ec|program|month` from `invoices` via the new links — also lets `money_view` program-financials finally split invoice revenue by program (retires the task-34 client-level fallback).
+- `GET /api/billing/worklist?period=YYYY-MM` → per concentrator → per job: `earned_to_date`, `billed_to_date`, `billable_now`, suggested `line_kind`. The review/preview screen; shows charges + proposed reconciliations.
+- `POST /api/billing/run { period, service_area_ids[], exclude_item_keys?[] }` → one **draft** invoice per concentrator from `billable_now` lines (period-stamped, SA/EC set); `exclude_item_keys` drops reconciliation (or any) lines you don't want. Transactional.
+- Draft invoices remain fully editable (add/remove lines) until finalized — so deleting a reconciliation line "if we decide not to reconcile" is just editing the draft.
+- Milestone convenience: `POST /api/service-areas/:id/bill` and `POST /api/service-area-routes/:id/bill` are thin wrappers that run the ledger scoped to that SA / route.
+- `GET /api/billing/report?group=client|ec|program|month` from the new links (also fixes the task-34 program-revenue split).
 
 ## UI (fan to C2 after backend lands)
-Rework `billing.html` onto the keystone: a **month picker + concentrator worklist** (`/api/billing/unbilled?period=`) with "Bill month's hours" (batch) and per-route / per-SA milestone "Bill" actions; **invoices list** (reuse `GET /api/billing/invoices`) with period + drill-in; **report** tab. Drop the project-based paths.
+`billing.html` reworked: month picker → concentrator worklist (earned / billed / billable per job, charges vs reconciliations) → "Generate drafts" → editable draft invoices (drop lines, adjust) → invoices list + report. Closed-month badges. Drop the project-based paths.
 
 ## Out of scope (deliberate)
-- **PDF / sending** — HOLD until Phase 4 simple template (#3). This build yields `draft` invoice records with correct amounts/periods/links.
-- **Auto-scheduled** monthly runs — this build is a **manual** monthly trigger (you pick period + concentrators and click). A cron/auto-run can come later.
-- **Real invoice numbers** — still `INV-<timestamp>`; proper numbering is a Phase-4 concern.
+- PDF / sending (HOLD, Phase 4). This build yields correct **draft** invoice records.
+- **Map-driven** footage completion — uses a manual completed measure now; map feeds it later with no billing change.
+- Auto-scheduled monthly runs (manual trigger now). Real invoice numbers (Phase 4).
 
-## Open decisions (most now resolved)
-- ✅ Granularity = **per concentrator**, monthly. ✅ Eligibility gate = job status as in v1.  ✅ Monthly billing **is** in this build. ✅ Apply 0066 to dev, hold prod.
-- ❓ **Billing period definition:** calendar month by `entry_date` (e.g. June = 06-01…06-30)? Or a custom cycle (e.g. 26th→25th)? Default I'll build: **calendar month**.
-- ❓ **Hours rate source:** bill hours at the **job's `rate`** (current behavior). Correct, or is there a per-period/role rate that can differ? Default: job rate.
-- ❓ **Re-billing a partial month:** if you bill June mid-month then more June hours get logged, a second June run will bill just the new entries (a 2nd June invoice). Fine, or should June be "closed" once billed? Default: allow the catch-up invoice (safest — never silently drops hours).
+## Confirm before I build (3 points)
+1. **Rates:** a single rate per discipline-job covers "different roles bill differently" (each discipline = its rate), **or** do multiple roles work one job at different rates (→ I'd model rate per role/line)? My default: **rate per discipline-job** (simplest, matches current schema). ⟵ the one I'm least sure on.
+2. **Footage completed measure (interim):** OK to bill footage against a **manually-set completed quantity** until the map lands (then map feeds the same field)? 
+3. **Ledger model itself:** does "bill `earned − already-billed`, negatives = deletable credits" match how you think about it? If yes, everything above follows.
 
-## Sequence once you confirm the 3 ❓
-(a) migration 0066 → (b) bill-monthly + milestone(SA/route) + unbilled-worklist + report endpoints (CEO, tested vs dev DB incl. the no-double-bill + period-isolation cases) → (c) point program-financials at the new links → (d) fan `billing.html` to C2 → (e) retire legacy project billing at cutover.
+## Sequence once confirmed
+(a) migration 0066 → (b) ledger engine + worklist/run/milestone/report endpoints (CEO, tested vs dev DB: progressive footage across 3 months, monthly hours isolation, catch-up, reconciliation credit, no-double-bill) → (c) program-financials onto the new links → (d) fan `billing.html` to C2 → (e) retire legacy project billing at cutover.
