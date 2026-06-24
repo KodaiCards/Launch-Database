@@ -1,6 +1,6 @@
 # Claude 2 — Contractor timeclock (Phase 5)
 
-**Status:** ACTIVE — Round 10: Client + EC management UI in the cluster (R9 workspace UI merged ✓ `18b4fbd0`). All backend endpoints already exist — this is FRONTEND ONLY.
+**Status:** ACTIVE — Round 10: Client + EC management UI in the cluster (R9 merged ✓ `18b4fbd0`). **R11 (hours import UI) is queued** behind R10 — its backend is shipped+tested. All R10/R11 work is FRONTEND ONLY against existing endpoints.
 **Branch:** `claude-2/contractor-timeclock`
 **Read first:** `CLAUDE.md`, `ROADMAP.md` (Phase 5), `briefs/README.md`.
 
@@ -255,3 +255,27 @@ Open a service area in the cluster → header with correct EC/program badge; rou
 From the cluster alone: create a client; add a RUS EC under it (program shows RUS, locked-with-explanation); edit both; create a service area picking that client/EC inline without leaving the cluster; the new SA gets `program='rus'` (server-enforced). No pop-ups, undo works, dark-mode + a11y clean.
 
 > **Note for CEO:** client/EC writes are `requireAdmin` while SA writes are `requireManagerOrAdmin` — if managers (non-admin) should create clients/ECs from the cluster, that's a backend gate change = CEO decision. Flagged in HANDOFF §8; not a R10 blocker (admin can do everything today).
+
+---
+
+## Round 11 — Hours import UI (QUEUED — do AFTER R10). Sonnet @ medium. FRONTEND ONLY.
+**The CEO has shipped + tested the keystone hours-importer backend.** Build the admin-facing UI that drives it, so people stop using the legacy `admin.html` hours CSV tab. This replaces the legacy importer with one that lands hours on the keystone `service_area_jobs` model. **NO backend** — the two endpoints exist and are mounted; if you think you need a third, STOP → `BLOCKED — needs CEO`.
+
+> ⚠️ CI down (billing-locked) — CEO verifies locally. `requireAdmin` endpoints, so test as admin.
+
+### Endpoints (LIVE)
+- `POST /api/hours/import/validate` — **multipart** upload, field name `file` (.csv/.xlsx/.xls). Returns `{ stageId, fileName, columns, summary:{total,matched,review,totalHours}, rows:[ <row> ] }` where each `<row>` = `{ rowIndex, employee, date, wo, hours, jobTitle, status:'matched'|'review', reason, service_area_id, service_area_job_id, staff_id, team, is_billable, unbilled_category }`.
+- `POST /api/hours/import/commit` `{ stageId, overrides?:{ "<rowIndex>":"<service_area_job_id>" }, skip?:[rowIndex,...] }` → `{ committed, skipped, review_remaining, jobs_recomputed, import_batch }`. (Stages expire after 1h → 410; re-validate.)
+
+### Build (new page preferred: `public/hours-import.html` + JS; or a modal off `hours.html`)
+- [ ] **R11.1 — Upload + preview.** Drag/drop or file picker → POST validate (multipart) → render the preview table: employee · date · WO# · hours · discipline · status badge (matched green / review amber) · reason. Show the summary strip (total / matched / review / total hours). App-shell themed, `data-active="hours"`.
+- [ ] **R11.2 — Inline resolve for review rows.** Each review row gets either a **Skip** toggle or a **job picker** to resolve it. Populate the picker from `GET /api/service-areas/:id/workspace` (or `/api/service-areas/:id` jobs) scoped to `row.service_area_id` when present; otherwise let the user pick the area first. **Note:** rows whose `staff_id` is null (unknown employee) can't be committed by an override alone — surface that (the employee must exist in staff first); don't pretend a job-only override fixes them.
+- [ ] **R11.3 — Commit + result.** "Import N hours" button → POST commit with `{stageId, overrides, skip}` → show the result (committed / left-for-review / jobs updated) and a link back to the affected service areas. Optimistic where it makes sense; no confirmation pop-ups beyond the import action itself.
+- [ ] **R11.4 — Polish.** Loading/empty/error states, dark-mode, a11y (table semantics, labels on pickers), and a clear "expired session → re-upload" path on 410.
+
+### Guardrails
+- **NO backend / NO schema.** Endpoints exist; don't reimplement matching in JS (the server already returns each row's match). OFF-LIMITS: `routes/*`, `auth.js`, `server.js`, `migrations/`, `schema.sql`.
+- This is INTERNAL admin (manager/admin), not the customer portal — but still no need to surface `$`; it's an hours tool.
+
+### Acceptance
+Admin uploads a timecard CSV/XLSX → sees matched vs review rows with reasons → resolves/​skips review rows inline → commits → hours appear in the affected `service_area_jobs` (actual_hours/amount update). Legacy `admin.html` hours tab no longer needed.
