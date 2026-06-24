@@ -1,5 +1,7 @@
 # CLAUDE.md — Launch Database
 
+> **New head-Claude (CEO) instance taking over? Read [`HANDOFF.md`](HANDOFF.md) first** — current build state, team roster, cost rules, deployment gotchas, and the next phase (write-path / admin-cutover).
+
 > The previous CLAUDE.md described a heavy manual multi-agent "orchestrator" process that is retired. It's archived at `docs/archive/2026-06-22/CLAUDE-legacy.md`. This is the lean, accurate replacement. Read this first, then `ROADMAP.md` for what we're building and in what order.
 
 ## What this is
