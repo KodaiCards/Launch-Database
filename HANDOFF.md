@@ -137,8 +137,8 @@ Client
 
 ## 8. Open decisions for Carter (raise as you reach them — don't block on them)
 
-- Which `admin.html` features to drop vs migrate in the cutover.
-- Legacy `projects` rollup data: migrate into the keystone model, or leave read-only during transition?
+- ~~Which `admin.html` features to drop vs migrate in the cutover.~~ **SETTLED 2026-06-24 → `docs/cutover_inventory.md`** (6 decisions). Headlines: hours-CSV importer = MIGRATE (re-point to `service_area_jobs`); budgets + permits/inspection/projection = MIGRATE-with-rework; invoice gen = HOLD til Phase 4; AI assistant + setting-requests = KILL; potential-permits already done in cluster pipeline.
+- ~~Legacy `projects` rollup data~~ **SETTLED: NOT migrated** — archive read-only (CEO rec) or delete at cutover; Carter fine with either.
 - Cluster launcher tile name: "Operations" vs "Service Areas" vs other.
 - Switching Railway to `npm start` (needed before auto-migrating; touches prod boot).
 - Contact email on the customer portal currently `info@launchfiberservices.com` — confirm that's the right address (Carter's own domain is `launchfiber.com`; the company is "Launch Fiber Services" — likely fine, but verify).

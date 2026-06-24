@@ -32,13 +32,18 @@
 | **Setting-requests approval workflow** (`/api/setting-requests`) | — none | **DROP?** — niche; Carter decides |
 | **RUS / project projection** (`/api/automation/*`) | — none in cluster | **DECIDE: MIGRATE or DROP?** — ties to the inspection-revenue-projection feature |
 
-## Decisions for Carter (the short list — the rest are mechanical)
-1. **Legacy `projects` data:** migrate into the keystone `service_areas` model, or leave `admin.html` read-only as an archive during transition? (There's a `migration_tools.js` already — leverage it if migrating.)
-2. **Hours CSV importer:** the #1 must-not-lose. Port to the cluster *before* cutover, or keep admin reachable solely for hours import until ported? (Recommend: port — it's the live data-entry path.)
-3. **Invoice generation:** HOLD legacy until the Phase-4 simple template, then cut over (recommend), or port sooner?
-4. **Budgets/budget-codes:** still used for EC-level budget tracking, or dead?
-5. **Permits / potential-permits / inspection + RUS projection:** which migrate vs drop? (These are the RUS-heavy gov features — likely keep at least inspection/projection.)
-6. **Outright DROP candidates:** AI assistant, setting-requests approval workflow — kill in the cutover, or keep?
+## Decisions — SETTLED 2026-06-24 (Carter)
+1. **Legacy `projects` data:** **NOT migrated.** Archive read-only or delete entirely — Carter's fine with either. *(CEO rec: archive read-only first since it's real RUS/government revenue history; delete later once nothing references it.)* → **no data-migration project; just a read-only archive or removal at cutover.**
+2. **Hours CSV importer:** **MIGRATE (port to cluster).** It's the live hours data-entry path. Must re-point it to attribute hours to the keystone `service_area_jobs` / `time_entries` model, not the legacy projects tree.
+3. **Invoice generation:** **HOLD then replace** — keep legacy reachable until the ROADMAP Phase-4 simple configurable template ships, then cut over.
+4. **Budgets / budget-codes:** **MIGRATE with rework.** Carter still wants budget tracking but the legacy implementation was poor — needs a redesign pass on the keystone model (EC-level + per-service-area budgets), not a straight port.
+5. **Permits / inspection / RUS projection:** **MIGRATE with rework + re-evaluation.** Projections are important and must be kept/improved. **Potential-permits is ALREADY done** in the cluster pipeline section — drop it from the port list. Remaining: permits tracking, inspection, and the RUS/project projection engine — rethink the design as we port.
+6. **AI assistant + setting-requests approval workflow:** **KILL.** Do not carry into the cutover; remove the routes/UI/code once dependencies are clear.
 
-## Sequencing (once decisions land)
-Foundation already done (keystone model + write endpoints). Order: **(a)** finish CLOSE-GAP items (clients write [C2 R10], billing parity, settings/user-mgmt reachability) → **(b)** MIGRATE the hours CSV importer → **(c)** decide projects-data migration → **(d)** redirect `admin.html` → cluster, update the launcher tile. Invoice gen stays on HOLD until Phase 4.
+## Sequencing (decisions landed)
+Foundation done (keystone model + write endpoints). Order:
+- **(a) CLOSE-GAP (in flight / cheap):** clients+EC write [C2 R10] · billing batch-billing/report parity check · confirm settings/user-mgmt reachable from cluster.
+- **(b) Hours CSV importer port** [#2] — CEO scope; re-target import to `service_area_jobs`/`time_entries`. **Highest-priority migrate.**
+- **(c) Budgets redesign+port** [#4] and **Permits/inspection/projection redesign+port** [#5] — each needs a short design pass WITH Carter before building (he wants rework, not a straight port). Projections are the priority within #5.
+- **(d) Kill** AI assistant + setting-requests [#6] — remove from cutover scope; delete code when safe.
+- **(e) Cutover:** redirect `admin.html` → cluster, archive (or delete) legacy projects data, update the launcher tile. Invoice gen stays on HOLD until Phase 4 [#3].
