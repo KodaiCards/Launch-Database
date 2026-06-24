@@ -154,7 +154,20 @@ button{font-family:inherit;cursor:pointer;border:none;background:none;color:inhe
   .modal-overlay { position: static !important; display: block !important; background: none !important; padding: 0 !important; }
   .modal-content { box-shadow: none !important; max-width: 100% !important; max-height: none !important; border: none !important; }
   .modal-body { overflow: visible !important; max-height: none !important; }
+  @page { margin: 1.5cm; }
+  .status-pill,.badge-rus,.badge-prog { border: 1px solid currentColor !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+  .progress-fill,.cp-status-bar-fill { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+  table { page-break-inside: avoid; }
+  tr { page-break-inside: avoid; }
 }
+
+/* Help overlay (task 25) */
+.cp-help-overlay{position:fixed;inset:0;background:rgba(0,0,0,.48);z-index:200;display:none;align-items:center;justify-content:center;padding:14px}
+.cp-help-card{background:var(--surface-2);border-radius:12px;max-width:520px;width:100%;padding:28px 28px 20px;position:relative;max-height:90vh;overflow:auto}
+.cp-help-close{position:absolute;top:14px;right:14px;background:none;border:none;cursor:pointer;color:var(--text-muted);font-size:18px;padding:4px;line-height:1}
+.cp-help-section{margin-top:16px}
+.cp-help-section-title{font-size:11px;text-transform:uppercase;letter-spacing:.5px;color:var(--text-muted);font-weight:600;margin-bottom:8px}
+.cp-help-row{display:flex;gap:10px;margin-bottom:8px;font-size:13px;align-items:flex-start}
 
 /* Modal */
 .modal-overlay{display:none;position:fixed;inset:0;background:var(--modal-backdrop);z-index:100;align-items:center;justify-content:center;padding:14px}
@@ -235,6 +248,7 @@ html[data-theme="dark"] .sk::after{background:linear-gradient(90deg,transparent,
 <body>
 
 <a href="#main-content" class="skip-nav">Skip to main content</a>
+<div id="cp-sr-live" class="sr-only" aria-live="polite" aria-atomic="true"></div>
 
 <header class="header">
   <a href="/client/" class="launcher-back-btn" data-launcher-back style="display:none">
@@ -245,6 +259,9 @@ html[data-theme="dark"] .sk::after{background:linear-gradient(90deg,transparent,
     <span style="font-size:12px;color:var(--text-muted)">Client Portal</span>
   </div>
   <div class="header-right">
+    <button class="btn btn-secondary btn-sm btn-icon" onclick="cpShowHelp()" title="Portal guide" aria-label="Open portal guide">
+      <i class="fa-solid fa-circle-question" aria-hidden="true"></i>
+    </button>
     <button class="btn btn-secondary btn-sm btn-icon" onclick="toggleDarkMode()" title="Toggle dark mode" aria-label="Toggle dark mode">
       <i class="fa-solid fa-moon" id="dm-icon" aria-hidden="true"></i>
     </button>
@@ -423,6 +440,75 @@ function saHasNew(a){
   return (a.jobs || []).some(j => cpIsNew(j.start_date) || cpIsNew(j.completed_date));
 }
 
+// ─── Portal help overlay (task 25) — localStorage dismiss ─────────────
+const CP_HELP_KEY = 'lfs-portal-help-seen';
+function cpShowHelp(){
+  let ov = document.getElementById('cp-help-overlay');
+  if (!ov){
+    ov = document.createElement('div');
+    ov.id = 'cp-help-overlay';
+    ov.className = 'cp-help-overlay';
+    ov.setAttribute('role','dialog'); ov.setAttribute('aria-modal','true');
+    ov.setAttribute('aria-labelledby','cp-help-title');
+    ov.innerHTML = `<div class="cp-help-card">
+      <button class="cp-help-close" onclick="cpDismissHelp(false)" aria-label="Close help"><i class="fa-solid fa-xmark" aria-hidden="true"></i></button>
+      <div style="font-size:18px;font-weight:700" id="cp-help-title"><i class="fa-solid fa-circle-question" style="color:var(--primary);margin-right:8px" aria-hidden="true"></i>Portal guide</div>
+      <div style="font-size:13px;color:var(--text-muted);margin-top:4px">A quick guide to your Launch Fiber client portal.</div>
+      <div class="cp-help-section">
+        <div class="cp-help-section-title">Tabs</div>
+        <div class="cp-help-row"><i class="fa-solid fa-map-location-dot" style="color:var(--primary);width:18px;text-align:center;margin-top:2px" aria-hidden="true"></i><div><strong>Service Areas</strong> — your project locations with live status, job-by-job progress, and maps.</div></div>
+        <div class="cp-help-row"><i class="fa-solid fa-receipt" style="color:var(--primary);width:18px;text-align:center;margin-top:2px" aria-hidden="true"></i><div><strong>Invoices</strong> — invoices your project manager has sent to your account.</div></div>
+        <div class="cp-help-row"><i class="fa-solid fa-folder-open" style="color:var(--primary);width:18px;text-align:center;margin-top:2px" aria-hidden="true"></i><div><strong>Projects</strong> — your legacy project listing.</div></div>
+      </div>
+      <div class="cp-help-section">
+        <div class="cp-help-section-title">Status labels</div>
+        <div class="cp-help-row"><span class="status-pill status-active" style="font-size:10px;flex:none">Active</span><span style="margin-left:6px">Work is currently in progress.</span></div>
+        <div class="cp-help-row"><span class="status-pill status-on_hold" style="font-size:10px;flex:none">On hold</span><span style="margin-left:6px">Work is temporarily paused.</span></div>
+        <div class="cp-help-row"><span class="status-pill status-completed" style="font-size:10px;flex:none">Completed</span><span style="margin-left:6px">All jobs finished; awaiting billing.</span></div>
+        <div class="cp-help-row"><span class="status-pill status-billed" style="font-size:10px;flex:none">Billed</span><span style="margin-left:6px">Invoice has been sent or paid.</span></div>
+      </div>
+      <div class="cp-help-section">
+        <div class="cp-help-section-title">Progress</div>
+        <div style="font-size:13px;color:var(--text-secondary)">Each area shows jobs done vs. total. 100% means all jobs on that service area are complete or billed.</div>
+      </div>
+      <div style="display:flex;justify-content:space-between;align-items:center;gap:8px;margin-top:20px;padding-top:16px;border-top:1px solid var(--gray-border);flex-wrap:wrap">
+        <button class="btn btn-secondary btn-sm" onclick="cpContactPm()" style="gap:6px"><i class="fa-solid fa-envelope" aria-hidden="true"></i> Contact PM</button>
+        <div style="display:flex;gap:8px">
+          <button class="btn btn-secondary" onclick="cpDismissHelp(false)">Close</button>
+          <button class="btn btn-primary" onclick="cpDismissHelp(true)">Got it</button>
+        </div>
+      </div>
+    </div>`;
+    ov.addEventListener('click', e => { if (e.target === ov) cpDismissHelp(false); });
+    document.body.appendChild(ov);
+  }
+  ov.style.display = 'flex';
+  const closeBtn = ov.querySelector('.cp-help-close');
+  if (closeBtn) try { closeBtn.focus(); } catch(e){}
+}
+function cpDismissHelp(permanent){
+  const ov = document.getElementById('cp-help-overlay');
+  if (ov) ov.style.display = 'none';
+  if (permanent) try { localStorage.setItem(CP_HELP_KEY, '1'); } catch(e){}
+}
+function cpMaybeShowHelp(){
+  try { if (!localStorage.getItem(CP_HELP_KEY)) cpShowHelp(); } catch(e){}
+}
+
+// ─── Contact PM (task 26) — mailto: template, no backend ──────────────
+// Opens the user's mail client with a pre-composed message. When a PM email
+// lands in the data model (Phase 7+), wire it in here as the "to" address.
+function cpContactPm(){
+  const clientLine = (_currentClients || []).map(c => c.name).join(', ');
+  const sub = encodeURIComponent('Question about my service areas' + (clientLine ? ' — ' + clientLine : ''));
+  const body = encodeURIComponent(
+    'Hello,\n\nI have a question about my service areas' +
+    (clientLine ? ' (' + clientLine + ')' : '') +
+    '.\n\n[Please type your question here]\n\nThank you'
+  );
+  window.open('mailto:?subject=' + sub + '&body=' + body);
+}
+
 // ─── Multi-client switcher ────────────────────────────────────────────
 function cpRenderClientSwitcher(){
   const el = document.getElementById('cp-client-switcher');
@@ -431,8 +517,8 @@ function cpRenderClientSwitcher(){
   if (clients.length <= 1){ el.innerHTML = ''; return; }
   el.innerHTML = `<div class="cp-client-switcher" role="group" aria-label="Filter by client">
     <span style="font-size:12px;color:var(--text-muted);flex:none">Client:</span>
-    <button class="cp-client-btn${_selectedClientId === null ? ' active' : ''}" onclick="cpSelectClient(null)">All</button>
-    ${clients.map(c => `<button class="cp-client-btn${_selectedClientId === c.id ? ' active' : ''}" onclick="cpSelectClient('${esc(c.id)}')">${esc(c.name)}</button>`).join('')}
+    <button class="cp-client-btn${_selectedClientId === null ? ' active' : ''}" aria-pressed="${_selectedClientId === null ? 'true' : 'false'}" onclick="cpSelectClient(null)">All</button>
+    ${clients.map(c => `<button class="cp-client-btn${_selectedClientId === c.id ? ' active' : ''}" aria-pressed="${_selectedClientId === c.id ? 'true' : 'false'}" onclick="cpSelectClient('${esc(c.id)}')">${esc(c.name)}</button>`).join('')}
   </div>`;
 }
 function cpSelectClient(id){
@@ -537,19 +623,33 @@ function cpUpdateTabCounts(){
 }
 
 // a11y: open a modal with focus moved inside; ESC closes any open modal and
-// restores focus to the trigger.
+// restores focus to the trigger. Tab/Shift+Tab are trapped inside the modal.
 let _lastFocus = null;
+function cpTrapFocus(el, e){
+  const focusable = Array.from(el.querySelectorAll(
+    'a[href],button:not([disabled]),input:not([disabled]),select:not([disabled]),textarea:not([disabled]),[tabindex]:not([tabindex="-1"])'
+  )).filter(n => !n.closest('[hidden]') && getComputedStyle(n).display !== 'none');
+  if (!focusable.length) return;
+  const first = focusable[0]; const last = focusable[focusable.length - 1];
+  if (e.shiftKey){ if (document.activeElement === first){ e.preventDefault(); last.focus(); } }
+  else { if (document.activeElement === last){ e.preventDefault(); first.focus(); } }
+}
 function cpShowModal(el){
   if (!el) return;
   _lastFocus = document.activeElement;
   el.style.display = 'flex';
   const f = el.querySelector('.modal-header button') || el.querySelector('button, a[href], input');
   if (f) { try { f.focus(); } catch (e) {} }
+  if (!el._trapFn){
+    el._trapFn = e => { if (e.key === 'Tab') cpTrapFocus(el, e); };
+    el.addEventListener('keydown', el._trapFn);
+  }
 }
 function cpCloseModals(){
   let closed = false;
   document.querySelectorAll('.modal-overlay').forEach(m => {
     if (getComputedStyle(m).display !== 'none') {
+      if (m._trapFn){ m.removeEventListener('keydown', m._trapFn); m._trapFn = null; }
       if (m.id === 'account-modal') m.remove(); else m.style.display = 'none';
       closed = true;
     }
@@ -558,7 +658,12 @@ function cpCloseModals(){
   if (closed && _lastFocus) { try { _lastFocus.focus(); } catch (e) {} _lastFocus = null; }
   return closed;
 }
-document.addEventListener('keydown', e => { if (e.key === 'Escape') cpCloseModals(); });
+document.addEventListener('keydown', e => {
+  if (e.key !== 'Escape') return;
+  const helpOv = document.getElementById('cp-help-overlay');
+  if (helpOv && helpOv.style.display === 'flex'){ cpDismissHelp(false); return; }
+  cpCloseModals();
+});
 
 async function loadCurrentUser(){
   try {
@@ -960,6 +1065,78 @@ function cpDownloadAreaPdf(name){
   cpPrintWithTitle(name ? (name + ' — status') : 'Service area status');
 }
 
+// All-areas summary print/PDF (task 28) — one page per client listing every
+// service area: name, status, progress, and dates. No $ anywhere.
+function cpPrintAllAreas(){
+  const areas = (_customerServiceAreas || []).filter(a => !_selectedClientId || a.client_id === _selectedClientId);
+  if (!areas.length) return;
+  const m = document.getElementById('cp-detail-modal');
+  const body = document.getElementById('cp-detail-body');
+  const clientName = _selectedClientId
+    ? ((_currentClients || []).find(c => c.id === _selectedClientId) || {}).name
+    : (_currentClients || []).map(c => c.name).join(', ');
+  const title = clientName || 'Client';
+  document.getElementById('cp-detail-title').textContent = 'All areas — ' + title;
+  const isDone = s => ['completed','billed','complete'].includes(String(s || '').toLowerCase());
+  const totalJobs = areas.reduce((s, a) => s + (Number(a.jobs_total) || 0), 0);
+  const totalDone = areas.reduce((s, a) => s + (Number(a.jobs_done) || 0), 0);
+  const overallPct = totalJobs > 0 ? Math.round(totalDone / totalJobs * 100) : null;
+  const active = areas.filter(a => String(a.status || '').toLowerCase() === 'active').length;
+  const done = areas.filter(a => isDone(a.status)).length;
+  const th = 'padding:6px 10px;text-align:left;font-size:11px;color:var(--text-muted);text-transform:uppercase;white-space:nowrap';
+  const thR = th + ';text-align:right';
+  body.innerHTML = `
+    <div class="cp-printable">
+      <div class="cp-inv-head">
+        <div>
+          <div style="font-size:17px;font-weight:700;color:var(--text)">Launch Fiber Services</div>
+          <div style="font-size:12px;color:var(--text-muted)">Service areas summary</div>
+        </div>
+        <div style="text-align:right">
+          <div style="font-size:15px;font-weight:700;color:var(--text)">${esc(title)}</div>
+          <div style="font-size:12px;color:var(--text-muted)">${fmtDate(new Date().toISOString().slice(0,10))}</div>
+        </div>
+      </div>
+      <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(110px,1fr));gap:10px;margin-bottom:18px">
+        <div class="stat-card"><div class="stat-label">Total Areas</div><div class="stat-value" style="font-size:20px">${areas.length}</div></div>
+        <div class="stat-card"><div class="stat-label">Active</div><div class="stat-value" style="font-size:20px">${active}</div></div>
+        <div class="stat-card"><div class="stat-label">Completed</div><div class="stat-value" style="font-size:20px">${done}</div></div>
+        <div class="stat-card"><div class="stat-label">Overall</div><div class="stat-value" style="font-size:20px">${overallPct != null ? overallPct + '%' : '—'}</div></div>
+      </div>
+      <table style="width:100%;font-size:12px;border-collapse:collapse">
+        <thead><tr style="background:var(--surface-1)">
+          <th style="${th}">Service Area</th>
+          <th style="${th}">Status</th>
+          <th style="${th}">Program</th>
+          <th style="${thR}">Progress</th>
+          <th style="${th}">Started</th>
+          <th style="${th}">Completed</th>
+        </tr></thead>
+        <tbody>
+          ${areas.map(a => {
+            const status = String(a.status || 'active').toLowerCase();
+            const pct = a.completion_pct;
+            return `<tr style="border-top:1px solid var(--gray-border)">
+              <td style="padding:6px 10px;font-weight:600">${esc(a.name)}${a.work_order_number ? `<div style="font-size:10px;font-family:monospace;color:var(--text-muted)">WO# ${esc(a.work_order_number)}</div>` : ''}</td>
+              <td style="padding:6px 10px"><span class="status-pill status-${esc(status)}">${esc(status.replace('_',' '))}</span></td>
+              <td style="padding:6px 10px">${a.program === 'rus' ? '<span class="badge-rus">RUS</span>' : esc(a.program || '—')}</td>
+              <td style="padding:6px 10px;text-align:right">${pct != null ? `${a.jobs_done}/${a.jobs_total} · ${pct}%` : '—'}</td>
+              <td style="padding:6px 10px">${fmtDate(a.start_date)}</td>
+              <td style="padding:6px 10px">${fmtDate(a.completed_date)}</td>
+            </tr>`;
+          }).join('')}
+        </tbody>
+      </table>
+      <div style="font-size:10px;color:var(--text-muted);margin-top:16px">Generated ${fmtDate(new Date().toISOString().slice(0,10))} · Launch Fiber Services</div>
+    </div>
+    <div class="cp-no-print" style="display:flex;justify-content:flex-end;gap:8px;margin-top:18px;padding-top:14px;border-top:1px solid var(--gray-border)">
+      <button class="btn btn-secondary" onclick="document.getElementById('cp-detail-modal').style.display='none'">Close</button>
+      <button class="btn btn-secondary" onclick="cpPrintWithTitle()"><i class="fa-solid fa-print" aria-hidden="true"></i> Print</button>
+      <button class="btn btn-primary" onclick="cpDownloadAreaPdf('${esc(title + ' — all areas')}')"><i class="fa-solid fa-file-pdf" aria-hidden="true"></i> Download PDF</button>
+    </div>`;
+  cpShowModal(m);
+}
+
 // ─── Service Areas (Phase 6 — keystone status view, no $) ─────────────
 // Backed by GET /api/customer/service-areas, which returns ONLY
 // status/progress (no rates, amounts, or invoices). Render mirrors that:
@@ -1002,6 +1179,12 @@ function saRecentUpdates(a){
   if (a.completed_date) ev.push({ d: a.completed_date, t: 'Service area completed' });
   ev.sort((x, y) => (x.d < y.d ? 1 : x.d > y.d ? -1 : 0));
   return ev.slice(0, 4);
+}
+
+// Announce search result counts to screen readers via the live region.
+function cpAnnounce(text){
+  const el = document.getElementById('cp-sr-live');
+  if (el) el.textContent = text;
 }
 
 function cpSaClearChrome(){
@@ -1069,6 +1252,8 @@ function cpRenderSaCards(){
     return;
   }
   body.innerHTML = areas.map(cpRenderSaCard).join('');
+  const activeSearch = _saFilter.search || _globalSearch;
+  if (activeSearch) cpAnnounce(areas.length + ' area' + (areas.length === 1 ? '' : 's') + ' found');
 }
 
 async function cpLoadServiceAreas(){
@@ -1192,6 +1377,7 @@ function renderServiceAreas(){
           <div class="sa-summary-sub" style="margin-bottom:4px">${overallPct != null ? overallPct + '% complete overall' : 'No jobs yet'}</div>
           ${overallPct != null ? `<div class="progress-track" style="width:100%"><div class="progress-fill" style="width:${overallPct}%"></div></div>` : ''}
         </div>
+        <button class="btn btn-secondary btn-sm cp-no-print" onclick="cpPrintAllAreas()" title="Print or save all service areas as PDF" aria-label="Print all service areas summary" style="flex:none"><i class="fa-solid fa-print" aria-hidden="true"></i> Print summary</button>
       </div>
     </div>`;
   stats.innerHTML = `
@@ -1386,7 +1572,8 @@ function showAccountMenu(){
         </div>
         <div style="background:var(--surface-1);border:1px solid var(--gray-border);border-radius:8px;padding:12px;margin-bottom:16px">
           <div style="font-size:12px;font-weight:600;margin-bottom:4px"><i class="fa-solid fa-headset" style="margin-right:6px;color:var(--primary)" aria-hidden="true"></i>Need help?</div>
-          <div style="font-size:12px;color:var(--text-muted)">Contact your Launch Fiber project manager with any questions about your service areas or invoices.</div>
+          <div style="font-size:12px;color:var(--text-muted);margin-bottom:10px">Contact your Launch Fiber project manager with any questions about your service areas or invoices.</div>
+          <button class="btn btn-secondary btn-sm" style="gap:6px;width:100%;justify-content:center" onclick="document.getElementById('account-modal').remove();cpContactPm();"><i class="fa-solid fa-envelope" aria-hidden="true"></i> Compose email to PM</button>
         </div>
         <button class="btn btn-secondary" style="width:100%;justify-content:flex-start;padding:12px;margin-bottom:8px" onclick="document.getElementById('account-modal').remove();openChangePasswordModal()">
           <i class="fa-solid fa-key" style="margin-right:10px"></i><span>Change Password</span>
@@ -1411,6 +1598,7 @@ async function signOut(){
   await loadCurrentUser();
   await loadCustomerData();
   cpSelectTab('service-areas');
+  cpMaybeShowHelp();
 })();
 </script>
 <script>
