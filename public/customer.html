@@ -177,6 +177,12 @@ html[data-theme="dark"] .sk::after{background:linear-gradient(90deg,transparent,
 @keyframes sk-shimmer{100%{transform:translateX(100%)}}
 .cp-scroll-x{overflow-x:auto;-webkit-overflow-scrolling:touch}
 
+/* Multi-client switcher (task 15) */
+.cp-client-switcher{display:flex;align-items:center;gap:8px;padding:8px 0 12px;flex-wrap:wrap}
+.cp-client-btn{padding:5px 12px;border-radius:20px;font-size:12px;font-weight:600;border:1px solid var(--gray-border);background:var(--surface-2);color:var(--text-muted);cursor:pointer;transition:all .15s}
+.cp-client-btn.active{background:var(--primary);color:var(--primary-text);border-color:var(--primary)}
+.cp-client-btn:hover:not(.active){background:var(--surface-1)}
+
 /* Responsive / mobile */
 @media (max-width:600px){
   .container{margin:12px auto;padding:0 12px}
@@ -237,6 +243,7 @@ html[data-theme="dark"] .sk::after{background:linear-gradient(90deg,transparent,
     <i class="fa-solid fa-screwdriver-wrench" style="color:var(--warning)"></i>
     <span style="font-size:12px;color:var(--text-muted)">Preview — work in progress. Service areas show only when marked client-visible.</span>
   </div>
+  <div id="cp-client-switcher"></div>
   <div id="cp-landing"></div>
   <div>
     <div class="tabs" id="cp-tabs" role="tablist" aria-label="Portal sections">
@@ -326,6 +333,30 @@ async function api(url, opts){
 let _customerProjects = [];
 let _currentUser = null;
 let _currentClients = [];
+let _selectedClientId = null;
+let _customerInvoices = [];
+
+// ─── Multi-client switcher ────────────────────────────────────────────
+function cpRenderClientSwitcher(){
+  const el = document.getElementById('cp-client-switcher');
+  if (!el) return;
+  const clients = _currentClients || [];
+  if (clients.length <= 1){ el.innerHTML = ''; return; }
+  el.innerHTML = `<div class="cp-client-switcher" role="group" aria-label="Filter by client">
+    <span style="font-size:12px;color:var(--text-muted);flex:none">Client:</span>
+    <button class="cp-client-btn${_selectedClientId === null ? ' active' : ''}" onclick="cpSelectClient(null)">All</button>
+    ${clients.map(c => `<button class="cp-client-btn${_selectedClientId === c.id ? ' active' : ''}" onclick="cpSelectClient('${esc(c.id)}')">${esc(c.name)}</button>`).join('')}
+  </div>`;
+}
+function cpSelectClient(id){
+  _selectedClientId = id || null;
+  _customerInvoices = [];
+  cpRenderClientSwitcher();
+  cpRenderLanding();
+  renderServiceAreas();
+  const invTab = document.getElementById('cp-tab-invoices');
+  if (invTab && invTab.style.display !== 'none') cpLoadInvoices();
+}
 
 // a11y: open a modal with focus moved inside; ESC closes any open modal and
 // restores focus to the trigger.
@@ -356,6 +387,7 @@ async function loadCurrentUser(){
     const r = await api('/api/customer/me');
     _currentUser = r.user;
     _currentClients = r.clients || [];
+    cpRenderClientSwitcher();
     const pill = document.getElementById('user-pill');
     if (pill) {
       pill.style.display = '';
@@ -480,41 +512,55 @@ function cpSkeletonRows(n){
 
 async function cpLoadInvoices(){
   const body = document.getElementById('cp-invoices-body');
-  body.innerHTML = cpSkeletonRows(5);
-  try {
-    const rows = await api('/api/customer/invoices');
-    if (!rows.length){
-      body.innerHTML = '<div class="empty-state"><i class="fa-solid fa-receipt"></i><p>No invoices yet.</p></div>';
+  if (!_customerInvoices.length) {
+    body.innerHTML = cpSkeletonRows(5);
+    try {
+      _customerInvoices = await api('/api/customer/invoices');
+    } catch (e) {
+      body.innerHTML = `<div class="empty-state" style="color:var(--danger-text)">
+        <i class="fa-solid fa-triangle-exclamation"></i>
+        <p>Couldn't load invoices.</p>
+        <p style="font-size:12px">${esc(e.message)}</p>
+        <button class="btn btn-secondary btn-sm" style="margin-top:10px" onclick="_customerInvoices=[];cpLoadInvoices()">Try again</button>
+      </div>`;
       return;
     }
-    const thL = 'padding:8px 12px;text-align:left;font-size:11px;color:var(--text-muted);text-transform:uppercase';
-    const thR = thL + ';text-align:right';
-    body.innerHTML = `
-      <div style="font-size:12px;color:var(--text-muted);margin-bottom:8px">Click an invoice to see its line items.</div>
-      <div class="cp-scroll-x"><table style="width:100%;font-size:13px;border-collapse:collapse">
-        <thead>
-          <tr style="background:var(--surface-1);border-bottom:1px solid var(--gray-border)">
-            <th style="${thL}">Invoice #</th>
-            <th style="${thL}">Date</th>
-            <th style="${thL}">Description</th>
-            <th style="${thL}">Status</th>
-            <th style="${thR}">Amount</th>
-          </tr>
-        </thead>
-        <tbody>
-          ${rows.map(inv => `<tr style="border-top:1px solid var(--gray-border);cursor:pointer" onclick="cpOpenInvoice('${esc(inv.id)}')">
-            <td style="padding:8px 12px;font-family:monospace;font-weight:600">${esc(inv.invoice_number || '—')}</td>
-            <td style="padding:8px 12px">${fmtDate(inv.invoice_date)}</td>
-            <td style="padding:8px 12px;color:var(--text-muted)">${esc(inv.invoice_name || inv.notes || '—')}</td>
-            <td style="padding:8px 12px"><span class="inv-status ${invStatusClass(inv.status)}">${esc(String(inv.status || '').replace('_',' ') || '—')}</span></td>
-            <td style="padding:8px 12px;text-align:right;font-weight:600">${fmtMoney(inv.total_amount)}</td>
-          </tr>`).join('')}
-        </tbody>
-      </table></div>
-    `;
-  } catch (e) {
-    body.innerHTML = `<div class="empty-state" style="color:var(--danger-text)">Failed to load: ${esc(e.message)}</div>`;
   }
+  cpRenderInvoices();
+}
+
+function cpRenderInvoices(){
+  const body = document.getElementById('cp-invoices-body');
+  const rows = (_customerInvoices || []).filter(inv => !_selectedClientId || inv.client_id === _selectedClientId);
+  if (!rows.length){
+    body.innerHTML = '<div class="empty-state"><i class="fa-solid fa-receipt"></i><p>No invoices yet.</p></div>';
+    return;
+  }
+  const thL = 'padding:8px 12px;text-align:left;font-size:11px;color:var(--text-muted);text-transform:uppercase';
+  const thR = thL + ';text-align:right';
+  body.innerHTML = `
+    <div style="font-size:12px;color:var(--text-muted);margin-bottom:8px">Click an invoice to see its line items.</div>
+    <div class="cp-scroll-x"><table style="width:100%;font-size:13px;border-collapse:collapse">
+      <thead>
+        <tr style="background:var(--surface-1);border-bottom:1px solid var(--gray-border)">
+          <th style="${thL}">Invoice #</th>
+          <th style="${thL}">Date</th>
+          <th style="${thL}">Description</th>
+          <th style="${thL}">Status</th>
+          <th style="${thR}">Amount</th>
+        </tr>
+      </thead>
+      <tbody>
+        ${rows.map(inv => `<tr style="border-top:1px solid var(--gray-border);cursor:pointer" onclick="cpOpenInvoice('${esc(inv.id)}')">
+          <td style="padding:8px 12px;font-family:monospace;font-weight:600">${esc(inv.invoice_number || '—')}</td>
+          <td style="padding:8px 12px">${fmtDate(inv.invoice_date)}</td>
+          <td style="padding:8px 12px;color:var(--text-muted)">${esc(inv.invoice_name || inv.notes || '—')}</td>
+          <td style="padding:8px 12px"><span class="inv-status ${invStatusClass(inv.status)}">${esc(String(inv.status || '').replace('_',' ') || '—')}</span></td>
+          <td style="padding:8px 12px;text-align:right;font-weight:600">${fmtMoney(inv.total_amount)}</td>
+        </tr>`).join('')}
+      </tbody>
+    </table></div>
+  `;
 }
 
 function invStatusClass(s){
@@ -677,7 +723,7 @@ async function cpLoadServiceAreas(){
 function cpRenderLanding(){
   const el = document.getElementById('cp-landing');
   if (!el) return;
-  const areas = _customerServiceAreas || [];
+  const areas = (_customerServiceAreas || []).filter(a => !_selectedClientId || a.client_id === _selectedClientId);
   if (!areas.length){ el.innerHTML = ''; return; }
   const isDone = s => ['completed','billed','complete'].includes(String(s || '').toLowerCase());
   const active = areas.filter(a => String(a.status || '').toLowerCase() === 'active').length;
@@ -702,7 +748,7 @@ function renderServiceAreas(){
   const body = document.getElementById('cp-sa-body');
   const header = document.getElementById('cp-sa-header');
   const stats = document.getElementById('cp-sa-stats');
-  const areas = _customerServiceAreas || [];
+  const areas = (_customerServiceAreas || []).filter(a => !_selectedClientId || a.client_id === _selectedClientId);
   cpRenderLanding();
   if (!areas.length){
     cpSaClearChrome();
