@@ -1,0 +1,222 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>Settings — Launch Fiber</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+<link rel="stylesheet" href="/css/app-shell.css">
+<style>
+:root{
+  --primary:#1B5FA0;--primary-dark:#134880;--primary-light:#E8F0FB;
+  --surface-1:#F5F7FA;--surface-2:#FFFFFF;
+  --white:#FFFFFF;--gray-light:#F5F7FA;--gray-border:#DEE2E6;
+  --text:#212529;--text-secondary:#495057;--text-muted:#5A6470;
+  --success:#28A745;--success-light:#E8F5E9;--success-text:#1B5E20;
+  --warning:#FFC107;--warning-light:#FFF8E1;--warning-text:#7A4F0E;
+  --danger:#DC3545;--danger-light:#FDECEA;--danger-text:#842029;
+  --font:'Inter',sans-serif;
+}
+html[data-theme="dark"]{
+  --primary:#4A90D9;--primary-dark:#1B5FA0;--primary-light:#1E3A5C;
+  --surface-1:#1A1F26;--surface-2:#1D2430;
+  --white:#1D2430;--gray-light:#1A1F26;--gray-border:#2D3540;
+  --text:#E8EAED;--text-secondary:#C2C7CD;--text-muted:#9BA1A8;
+  --success:#5DD27A;--success-light:#1B3D24;--success-text:#A5D6A7;
+  --warning:#FFCA28;--warning-light:#3D2F0F;--warning-text:#FFCC80;
+  --danger:#FF6B6B;--danger-light:#3D1A1A;--danger-text:#FFCDD2;
+  color-scheme:dark;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{font-family:var(--font);background:var(--gray-light);color:var(--text);min-height:100vh}
+button{font-family:inherit;cursor:pointer;border:none;background:none;color:inherit}
+
+.header{background:var(--white);border-bottom:1px solid var(--gray-border);padding:10px 20px;
+  display:flex;align-items:center;justify-content:space-between;gap:12px}
+.header-left{display:flex;align-items:center;gap:14px}
+.header-title{font-size:16px;font-weight:600}
+.btn-icon{width:34px;height:34px;padding:0;display:inline-flex;align-items:center;justify-content:center;
+  border-radius:6px;border:1px solid var(--gray-border);background:transparent;color:var(--text-secondary)}
+.btn-icon:hover{background:var(--surface-1)}
+
+.page-body{padding:20px 24px;max-width:760px;margin:0 auto}
+.page-title{font-size:20px;font-weight:700;margin-bottom:20px}
+
+.section{background:var(--white);border:1px solid var(--gray-border);border-radius:10px;
+  overflow:hidden;margin-bottom:18px}
+.section-header{padding:13px 16px;border-bottom:1px solid var(--gray-border);
+  font-size:13px;font-weight:700;color:var(--text-muted);text-transform:uppercase;
+  letter-spacing:.04em;display:flex;align-items:center;gap:8px}
+.section-header i{font-size:12px}
+.kv{display:flex;align-items:center;justify-content:space-between;
+  padding:10px 16px;border-bottom:1px solid var(--gray-border);font-size:13px;gap:12px}
+.kv:last-child{border-bottom:none}
+.kv-key{color:var(--text-muted)}
+.kv-val{color:var(--text);font-weight:500;font-variant-numeric:tabular-nums;text-align:right}
+.kv-val.mono{font-family:monospace;font-size:12px}
+.status-dot{display:inline-flex;align-items:center;gap:5px}
+.dot{width:8px;height:8px;border-radius:50%;display:inline-block;flex-shrink:0}
+.dot-ok{background:var(--success)}
+.dot-err{background:var(--danger)}
+
+.links-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:10px;padding:14px 16px}
+.quick-link{display:flex;align-items:center;gap:9px;padding:10px 12px;
+  border-radius:8px;border:1px solid var(--gray-border);background:var(--surface-1);
+  text-decoration:none;color:var(--text);font-size:13px;font-weight:500;transition:all .15s}
+.quick-link:hover{background:var(--primary-light);border-color:var(--primary);color:var(--primary)}
+.quick-link i{font-size:14px;color:var(--primary);width:16px;text-align:center}
+
+.theme-row{display:flex;align-items:center;justify-content:space-between;padding:10px 16px;font-size:13px}
+.theme-toggle{display:flex;gap:6px}
+.theme-btn{padding:6px 14px;border-radius:6px;border:1px solid var(--gray-border);font-size:12px;
+  font-weight:500;background:transparent;color:var(--text-secondary);cursor:pointer;font-family:inherit}
+.theme-btn.active{background:var(--primary);color:#fff;border-color:var(--primary)}
+
+.skeleton{background:var(--surface-1);border-radius:4px;height:13px;animation:pulse 1.5s infinite;display:inline-block}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.4}}
+</style>
+</head>
+<body>
+
+<div class="header">
+  <div class="header-left">
+    <span class="header-title"><i class="fa-solid fa-sliders"></i> Settings</span>
+  </div>
+  <div class="header-right">
+    <button class="btn-icon" onclick="toggleDark()" title="Toggle dark mode" aria-label="Toggle dark mode">
+      <i id="dm-icon" class="fa-solid fa-moon"></i>
+    </button>
+  </div>
+</div>
+
+<div class="page-body" role="main">
+  <h1 class="page-title">Settings &amp; System Info</h1>
+
+  <!-- Theme -->
+  <div class="section">
+    <div class="section-header"><i class="fa-solid fa-palette"></i> Appearance</div>
+    <div class="theme-row">
+      <span style="color:var(--text-muted)">Color theme</span>
+      <div class="theme-toggle">
+        <button class="theme-btn" id="theme-light" onclick="setTheme('light')">Light</button>
+        <button class="theme-btn" id="theme-dark"  onclick="setTheme('dark')">Dark</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Quick links -->
+  <div class="section">
+    <div class="section-header"><i class="fa-solid fa-link"></i> Quick links</div>
+    <div class="links-grid">
+      <a class="quick-link" href="/dashboard.html"><i class="fa-solid fa-gauge-high"></i> Dashboard</a>
+      <a class="quick-link" href="/service-areas.html"><i class="fa-solid fa-diagram-project"></i> Service areas</a>
+      <a class="quick-link" href="/clients.html"><i class="fa-solid fa-users"></i> Clients</a>
+      <a class="quick-link" href="/invoices.html"><i class="fa-solid fa-file-invoice"></i> Invoices</a>
+      <a class="quick-link" href="/people.html"><i class="fa-solid fa-id-badge"></i> People</a>
+      <a class="quick-link" href="/hours.html"><i class="fa-solid fa-clock"></i> Hours</a>
+      <a class="quick-link" href="/money.html"><i class="fa-solid fa-coins"></i> Money</a>
+      <a class="quick-link" href="/job-board.html"><i class="fa-solid fa-briefcase"></i> Job board</a>
+      <a class="quick-link" href="/pipeline.html"><i class="fa-solid fa-table-columns"></i> Pipelines</a>
+      <a class="quick-link" href="/billing.html"><i class="fa-solid fa-file-invoice-dollar"></i> Billing</a>
+      <a class="quick-link" href="/audit.html"><i class="fa-solid fa-clock-rotate-left"></i> Audit log</a>
+      <a class="quick-link" href="/admin.html"><i class="fa-solid fa-gear"></i> Admin</a>
+    </div>
+  </div>
+
+  <!-- System info -->
+  <div class="section" id="sysinfo-section">
+    <div class="section-header"><i class="fa-solid fa-server"></i> System info</div>
+    <div class="kv"><span class="kv-key">App</span><span class="kv-val" id="si-app"><span class="skeleton" style="width:140px"></span></span></div>
+    <div class="kv"><span class="kv-key">Version</span><span class="kv-val mono" id="si-version"><span class="skeleton" style="width:60px"></span></span></div>
+    <div class="kv"><span class="kv-key">Node.js</span><span class="kv-val mono" id="si-node"><span class="skeleton" style="width:60px"></span></span></div>
+    <div class="kv"><span class="kv-key">Environment</span><span class="kv-val" id="si-env"><span class="skeleton" style="width:90px"></span></span></div>
+    <div class="kv"><span class="kv-key">Portal mode</span><span class="kv-val" id="si-portal"><span class="skeleton" style="width:80px"></span></span></div>
+    <div class="kv"><span class="kv-key">Uptime</span><span class="kv-val" id="si-uptime"><span class="skeleton" style="width:80px"></span></span></div>
+    <div class="kv"><span class="kv-key">Database</span><span class="kv-val" id="si-db"><span class="skeleton" style="width:120px"></span></span></div>
+  </div>
+</div>
+
+<script>
+(function(){
+  'use strict';
+
+  document.addEventListener('DOMContentLoaded', function(){
+    applyStoredTheme();
+    loadSysInfo();
+  });
+
+  async function loadSysInfo(){
+    try{
+      var res = await fetch('/api/system/info', { credentials:'include' });
+      if(!res.ok) throw new Error(await res.text());
+      var d = await res.json();
+      set('si-app',    esc(d.app));
+      set('si-version', esc(d.version));
+      set('si-node',   esc(d.node));
+      set('si-env',    esc(d.env));
+      set('si-portal', esc(d.portal_mode));
+      set('si-uptime', fmtUptime(d.uptime_seconds));
+      set('si-db', d.db_ok
+        ? '<span class="status-dot"><span class="dot dot-ok"></span>'+esc(d.db_version||'Connected')+'</span>'
+        : '<span class="status-dot"><span class="dot dot-err"></span>Unreachable</span>');
+    } catch(e){
+      set('si-db','<span style="color:var(--danger-text)">Failed to load</span>');
+    }
+  }
+
+  function set(id, html){
+    var el = document.getElementById(id);
+    if(el) el.innerHTML = html;
+  }
+
+  function fmtUptime(s){
+    if(!s) return '—';
+    var h = Math.floor(s/3600), m = Math.floor((s%3600)/60);
+    if(h >= 24){ return Math.floor(h/24)+'d '+( h%24)+'h'; }
+    return h+'h '+m+'m';
+  }
+
+  function esc(s){
+    return String(s??'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+  }
+
+  window.setTheme = function(t){
+    document.documentElement.setAttribute('data-theme', t);
+    localStorage.setItem('lfs_theme', t);
+    updateThemeBtns();
+    updateDmIcon();
+  };
+
+  window.toggleDark = function(){
+    var dark = document.documentElement.getAttribute('data-theme')==='dark';
+    setTheme(dark ? 'light' : 'dark');
+  };
+
+  function applyStoredTheme(){
+    var stored = localStorage.getItem('lfs_theme');
+    if(stored) document.documentElement.setAttribute('data-theme', stored);
+    updateThemeBtns();
+    updateDmIcon();
+  }
+
+  function updateThemeBtns(){
+    var dark = document.documentElement.getAttribute('data-theme')==='dark';
+    var lb = document.getElementById('theme-light'), db = document.getElementById('theme-dark');
+    if(lb){ lb.className = 'theme-btn'+(dark?'':' active'); }
+    if(db){ db.className = 'theme-btn'+(dark?' active':''); }
+  }
+
+  function updateDmIcon(){
+    var icon = document.getElementById('dm-icon');
+    if(!icon) return;
+    var dark = document.documentElement.getAttribute('data-theme')==='dark';
+    icon.className = dark ? 'fa-solid fa-sun' : 'fa-solid fa-moon';
+  }
+})();
+</script>
+<script src="/js/app_nav.js" data-active="settings"></script>
+</body>
+</html>
