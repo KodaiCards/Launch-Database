@@ -90,4 +90,13 @@ Carter delivered the foundation: a **Leaflet OSP design tool** ("Fiber Route Man
 3. **Catalog + rollups:** per-CC unit-cost catalog (`ptype`→$) + the map→expected/completed rollup feeding the contract-allocation engine, projections, budgets, billing.
 4. **Embed:** mount as the Service Areas → Map tab; retire the placeholder.
 
+## POC status — 2026-06-24 (the data chain is PROVEN)
+Migration `0069_map_integration_poc.sql` + `routes/map_integration.js` (mounted) deliver the core chain Carter asked to see, **verified end-to-end against the dev DB** (`tests/map_integration.test.js`):
+- **DB-backed `window.storage`** — `GET/PUT /api/map/store/:key`; the map's injectable storage now persists server-side. Adapter ready: `map/frm_storage_adapter.js` (include before the map script on embed).
+- **Construction contracts + cost catalog** — `POST /api/construction-contracts`, `POST /api/construction-contracts/:id/catalog` (uploads the **Excel** unit list — or JSON — item→$, keyed to map `ptype`).
+- **The estimate** — `GET /api/map/estimate?plan=&cc=` counts a stored plan's structures by ptype, prices via the catalog: **13 handholes × $200 + 2 pedestals × $150 = $2,900 expected, $1,000 completed (5 built), 1,500 ft summed.** That's "map reports 13 handholes → reference the contract → price it" working.
+- Schema also added `service_areas.construction_contract_id` + `service_areas.miles` (SA↔CC link + mileage for the later allocation).
+
+**Still POC-level / next:** dual-designation on elements (engineering+construction+permitting can co-apply — Carter wants multi); `jobRef`→service_area_job picker; embed the map in the authed Service Areas → Map tab (live persistence + an inline estimate readout); footage→engineering pricing + the mileage allocation. (Backend verified via DB test, not a browser preview — live persistence needs the authed embed.)
+
 **Bottom line:** the foundation is well-built and well-architected for integration — `jobRef`, `lengthFt`, `status`, `ptype`, and the injectable `window.storage` are exactly the hooks we need. The work is the **linkage + costing + DB sync** layer (above), plus the contract-allocation engine it feeds (still deferred until this lands). `map/_serve.js` + `.claude/launch.json` `map-preview` run it locally.

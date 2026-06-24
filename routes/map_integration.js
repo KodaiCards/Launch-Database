@@ -1,0 +1,171 @@
+// routes/map_integration.js — POC bridge between the fiber-route map and the keystone.
+//
+// Three pieces (see docs/map_requirements.md):
+//   1. DB-backed map storage  — the map's injectable window.storage (key→value),
+//      so plans persist server-side instead of localStorage.
+//   2. Construction contracts + cost catalog — the per-CC unit price list Carter
+//      uploads from Excel ("Handhole = $200"); item_key matches the map's ptype.
+//   3. Estimate — counts a stored plan's structures by ptype, prices them against
+//      a CC catalog → construction expected (13 handholes → $2,600). The chain.
+//
+// Mount (CEO, server.js):
+//   require('./routes/map_integration')(app, pool, { requireManagerOrAdmin, upload });
+
+const XLSX = require('xlsx');
+const fs = require('fs');
+
+const CENT = (n) => Math.round(Number(n || 0) * 100) / 100;
+const norm = (s) => String(s == null ? '' : s).trim().toLowerCase().replace(/[\s_-]+/g, '');
+
+module.exports = function installMapIntegrationRoutes(app, pool, mw) {
+  const gate = (mw && mw.requireManagerOrAdmin) || ((req, res, next) => next());
+  const upload = mw && mw.upload;
+
+  // ── 1. DB-backed window.storage (key → value) ──────────────────────────────
+  // The map calls store.get(k) expecting {value} and store.set(k, v) with a string.
+  app.get('/api/map/store/:key', gate, async (req, res) => {
+    try {
+      const { rows } = await pool.query('SELECT value FROM map_store WHERE store_key = $1', [req.params.key]);
+      res.json(rows.length ? { value: rows[0].value } : null);
+    } catch (e) { console.error('[map:store-get]', e && e.message); res.status(500).json({ error: 'store get failed' }); }
+  });
+  app.put('/api/map/store/:key', gate, async (req, res) => {
+    const value = req.body && typeof req.body.value === 'string' ? req.body.value
+      : (req.body != null ? JSON.stringify(req.body.value ?? req.body) : null);
+    try {
+      await pool.query(
+        `INSERT INTO map_store (store_key, value, updated_at) VALUES ($1,$2,now())
+         ON CONFLICT (store_key) DO UPDATE SET value = EXCLUDED.value, updated_at = now()`,
+        [req.params.key, value]);
+      res.json({ ok: true });
+    } catch (e) { console.error('[map:store-put]', e && e.message); res.status(500).json({ error: 'store set failed' }); }
+  });
+
+  // ── 2. Construction contracts + cost catalog ───────────────────────────────
+  app.get('/api/construction-contracts', gate, async (req, res) => {
+    try {
+      const { rows } = await pool.query(
+        `SELECT cc.*, c.name AS client_name FROM construction_contracts cc
+         LEFT JOIN clients c ON c.id = cc.client_id ORDER BY cc.created_at DESC`);
+      res.json(rows);
+    } catch (e) { console.error('[cc:list]', e && e.message); res.status(500).json({ error: 'Failed to load construction contracts.' }); }
+  });
+
+  app.post('/api/construction-contracts', gate, async (req, res) => {
+    const b = req.body || {};
+    if (!b.name || !String(b.name).trim()) return res.status(400).json({ error: 'name required' });
+    try {
+      const { rows } = await pool.query(
+        `INSERT INTO construction_contracts (client_id, name, notes, total_budget, total_miles)
+         VALUES ($1,$2,$3,$4,$5) RETURNING *`,
+        [b.client_id || null, String(b.name).trim(), b.notes || null, b.total_budget ?? null, b.total_miles ?? null]);
+      res.status(201).json(rows[0]);
+    } catch (e) { console.error('[cc:create]', e && e.message); res.status(500).json({ error: 'Failed to create construction contract.' }); }
+  });
+
+  app.get('/api/construction-contracts/:id/catalog', gate, async (req, res) => {
+    try {
+      const { rows } = await pool.query(
+        'SELECT * FROM cost_catalog WHERE construction_contract_id = $1 ORDER BY item_key', [req.params.id]);
+      res.json(rows);
+    } catch (e) { console.error('[cc:catalog-get]', e && e.message); res.status(500).json({ error: 'Failed to load catalog.' }); }
+  });
+
+  // Upload the unit price list: multipart Excel/CSV (file) OR JSON { items:[{item_key,label,unit,unit_price}] }.
+  // Replaces the CC's catalog. Excel columns matched loosely: item/unit/price.
+  app.post('/api/construction-contracts/:id/catalog', gate, ...(upload ? [upload.single('file')] : []), async (req, res) => {
+    let items = [];
+    try {
+      if (req.file) {
+        const wb = XLSX.readFile(req.file.path);
+        const rows2d = XLSX.utils.sheet_to_json(wb.Sheets[wb.SheetNames[0]], { header: 1, defval: '', raw: false, blankrows: false });
+        await fs.promises.unlink(req.file.path).catch(() => null);
+        const hdr = (rows2d[0] || []).map(norm);
+        const col = (names) => { for (const n of names) { const i = hdr.indexOf(n); if (i >= 0) return i; } return -1; };
+        const ki = col(['itemkey', 'item', 'unit', 'unittype', 'type', 'structure']);
+        const li = col(['label', 'description', 'desc', 'name']);
+        const ui = col(['uom', 'units', 'measure']);
+        const pi = col(['unitprice', 'price', 'cost', 'rate', 'amount']);
+        for (let r = 1; r < rows2d.length; r++) {
+          const row = rows2d[r] || []; const key = ki >= 0 ? row[ki] : row[0];
+          if (!String(key || '').trim()) continue;
+          items.push({ item_key: norm(key), label: li >= 0 ? row[li] : String(key).trim(),
+            unit: ui >= 0 ? row[ui] : null, unit_price: parseFloat(String(pi >= 0 ? row[pi] : 0).replace(/[$,]/g, '')) || 0 });
+        }
+      } else if (req.body && Array.isArray(req.body.items)) {
+        items = req.body.items.map((it) => ({ item_key: norm(it.item_key), label: it.label || it.item_key,
+          unit: it.unit || null, unit_price: parseFloat(it.unit_price) || 0 }));
+      } else {
+        return res.status(400).json({ error: 'Provide an Excel/CSV file or JSON { items: [...] }.' });
+      }
+      if (!items.length) return res.status(400).json({ error: 'No catalog rows parsed.' });
+
+      const client = await pool.connect();
+      try {
+        await client.query('BEGIN');
+        await client.query('DELETE FROM cost_catalog WHERE construction_contract_id = $1', [req.params.id]);
+        for (const it of items) {
+          await client.query(
+            `INSERT INTO cost_catalog (construction_contract_id, item_key, label, unit, unit_price)
+             VALUES ($1,$2,$3,$4,$5)
+             ON CONFLICT (construction_contract_id, item_key)
+             DO UPDATE SET label = EXCLUDED.label, unit = EXCLUDED.unit, unit_price = EXCLUDED.unit_price`,
+            [req.params.id, it.item_key, it.label, it.unit, it.unit_price]);
+        }
+        await client.query('COMMIT');
+      } catch (e) { await client.query('ROLLBACK').catch(() => {}); throw e; } finally { client.release(); }
+      res.json({ ok: true, count: items.length });
+    } catch (e) { console.error('[cc:catalog-upload]', e && e.message); res.status(500).json({ error: 'Failed to load catalog.' }); }
+  });
+
+  // ── 3. Estimate — price a stored plan's structures via a CC catalog ─────────
+  // GET /api/map/estimate?plan=<planId>&cc=<ccId>
+  // Reads the map's stored points (frm_pts_<plan>) + spans (frm_segs_<plan>),
+  // counts structures by ptype, prices via the CC catalog, sums span footage.
+  app.get('/api/map/estimate', gate, async (req, res) => {
+    const plan = req.query.plan, ccId = req.query.cc;
+    if (!plan || !ccId) return res.status(400).json({ error: 'plan and cc required' });
+    try {
+      const [ptsR, segR, catR] = await Promise.all([
+        pool.query('SELECT value FROM map_store WHERE store_key = $1', ['frm_pts_' + plan]),
+        pool.query('SELECT value FROM map_store WHERE store_key = $1', ['frm_segs_' + plan]),
+        pool.query('SELECT item_key, label, unit, unit_price FROM cost_catalog WHERE construction_contract_id = $1', [ccId]),
+      ]);
+      const cat = {}; for (const c of catR.rows) cat[norm(c.item_key)] = c;
+      const pts = ptsR.rows.length ? JSON.parse(ptsR.rows[0].value || '{}') : {};
+      const segs = segR.rows.length ? JSON.parse(segR.rows[0].value || '{}') : {};
+
+      const counts = {}; // ptype → {count, completed}
+      for (const p of Object.values(pts)) {
+        const k = norm(p.ptype);
+        if (!counts[k]) counts[k] = { count: 0, completed: 0 };
+        counts[k].count++;
+        if (p.status === 'asBuilt' || p.status === 'active' || p.status === 'existing') counts[k].completed++;
+      }
+      const items = Object.entries(counts).map(([k, v]) => {
+        const c = cat[k];
+        return {
+          item_key: k, label: c ? c.label : k, unit: c ? c.unit : null,
+          count: v.count, completed: v.completed,
+          unit_price: c ? CENT(c.unit_price) : null,
+          expected: c ? CENT(v.count * c.unit_price) : null,
+          completed_value: c ? CENT(v.completed * c.unit_price) : null,
+          priced: !!c,
+        };
+      }).sort((a, b) => (b.expected || 0) - (a.expected || 0));
+
+      let footage = 0; for (const s of Object.values(segs)) footage += Number(s.lengthFt || 0);
+      const expected_total = CENT(items.reduce((s, i) => s + (i.expected || 0), 0));
+      const completed_total = CENT(items.reduce((s, i) => s + (i.completed_value || 0), 0));
+      res.json({
+        plan, construction_contract_id: ccId,
+        structures: items,
+        unpriced: items.filter((i) => !i.priced).map((i) => i.item_key),
+        footage_total: CENT(footage),
+        construction_expected: expected_total,
+        construction_completed: completed_total,
+        construction_remaining: CENT(expected_total - completed_total),
+      });
+    } catch (e) { console.error('[map:estimate]', e && e.message); res.status(500).json({ error: 'Failed to estimate.' }); }
+  });
+};

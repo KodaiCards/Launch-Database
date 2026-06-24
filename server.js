@@ -742,6 +742,11 @@ require('./routes/billing_keystone')(app, pool, { requireManagerOrAdmin });
 // plus the Service Areas → Map data endpoint. Migration 0067/0068.
 require('./routes/projections')(app, pool, { requireManagerOrAdmin });
 
+// Map integration POC (migration 0069): DB-backed map storage (window.storage),
+// construction contracts + uploaded cost catalog, and the estimate that prices
+// map units (13 handholes → catalog → $). See docs/map_requirements.md.
+require('./routes/map_integration')(app, pool, { requireManagerOrAdmin, upload });
+
 // Admin data-export bundle: GET /api/export/all.zip (service areas, jobs, invoices CSVs).
 require('./routes/export_bundle')(app, pool, { requireAdmin });
 
