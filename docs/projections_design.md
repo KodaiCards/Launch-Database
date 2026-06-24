@@ -72,11 +72,11 @@ The keystone already isolates work: each `service_area` belongs to one client + 
 - **`cost_catalog`** (item → unit_cost) — the "plug the Excel" unit costs for construction expected. [scope: global / per-client / per-contract — confirm]
 - Map provides per-route quantities + footage (deferred → entered manually now via materials/footage, map-fed later).
 
-### Confirm before schema
-1. **Mileage math** — `per-mile = remaining$ ÷ remaining miles`; `SA expected = SA.miles × per-mile`, per discipline. Right?
-2. **Unit-cost catalog scope** — global, per-client, or per-contract (costs vary by deal)?
-3. **Construction Contract** — reuse the existing `contracts` table or a fresh keystone entity? An SA links to at most one CC + one EC?
-4. **Contract "remaining"** — enter TOTAL budget + total miles and let the system derive remaining (− billed / − completed-SA miles), or enter remaining manually?
+### Resolved (Carter 2026-06-24)
+1. ✅ Mileage math as written (`per-mile = remaining$ ÷ remaining miles`; `SA expected = SA.miles × per-mile`).
+2. ✅ Unit-cost catalog is **per construction contract** (units priced per CC).
+3. ✅ **Clean keystone `construction_contracts` entity**; an SA links to ≤1 EC + ≤1 CC.
+4. ✅ **Everything derives from the MAP** — units, mileage, footage all come from map data; contract budget + miles by discipline are **map-derived, not hand-entered**. Footage-based engineering = map footage × rate; construction = map units × CC catalog; **permitting is a special map line (permitting designation) → footage only, hours later**. Hourly jobs use the mileage allocation (not footage). **Map deferred → manual entry interim; see `docs/map_requirements.md` (the living map spec + delivery diagnostic).**
 
 ## Information architecture (Carter 2026-06-24) — no new rail items
 - **Projections = a tab inside Money** (`money.html`: Margin · Aging · Revenue · Program · **Projections**). It's a forward-looking financial view next to the actuals it derives from; manager/admin gated like the rest of Money. Backend endpoints unchanged — just where the UI lives.
