@@ -48,6 +48,11 @@ ALTER TABLE service_areas       ADD COLUMN IF NOT EXISTS closed_at timestamptz;
 ## Modularity (mostly already true)
 The keystone already isolates work: each `service_area` belongs to one client + optional EC + program, so the **same ground worked for an EC vs BAU = two separate service areas** — never merged. Projections + the map group by service area and roll up only by explicit EC/client. Combining is opt-in (you pick what to view together). No schema change needed for this; just don't write any query that merges by geography.
 
+## Information architecture (Carter 2026-06-24) — no new rail items
+- **Projections = a tab inside Money** (`money.html`: Margin · Aging · Revenue · Program · **Projections**). It's a forward-looking financial view next to the actuals it derives from; manager/admin gated like the rest of Money. Backend endpoints unchanged — just where the UI lives.
+- **Overall map = a tab inside Service Areas** (`service-areas.html`: **List | Map**). The aggregate map with client/SA selectors. The per-SA map stays in the workspace (`area.html`).
+- **Lifecycle actions (mark completed / mark final)** live on the **workspace** (`area.html`) where the SA is managed — Money/Projections stays read-only.
+
 ## Overall map tab (deferred — map is on hold)
 The data is ready to drive it (every SA carries client/EC/program + `map_geometry` hook). When the map lands: a tab rendering all SAs, with client/SA selectors that surface that area's jobs. **Build now:** a `GET /api/map/service-areas` data endpoint (id, name, client, EC, program, geometry, status) so the tab is a thin render later. **Defer:** the actual map rendering until Carter's map arrives.
 
