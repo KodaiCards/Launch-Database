@@ -1,6 +1,6 @@
 # Claude 3 — Client portal: service-area status view (Phase 6)
 
-**Status:** Tasks 1–20 DONE — ready for review (Phase 6 + Rounds 1–5) on `claude/inspiring-bell-7jiwdf`. Task 14 (site photos) DEFERRED → Phase 7.
+**Status:** Tasks 1–24 DONE — ready for review (Phase 6 + Rounds 1–6) on `claude/inspiring-bell-7jiwdf`. Task 14 (site photos) DEFERRED → Phase 7.
 **Branch:** `claude/inspiring-bell-7jiwdf` (harness-assigned; supersedes the original `claude-3/client-portal-status`)
 **Read first:** `CLAUDE.md`, `ROADMAP.md` (Phase 6), `briefs/README.md`.
 
@@ -79,8 +79,10 @@ You don't need to keep `main` merged into your branch — just push your branch;
 
 ## Round 6 (R5 merged ✓ — clean, no $-leak). Sonnet @ medium. Start at task 21.
 Same guardrails: additive, `customer`-scoped, read-only, no $ beyond billed, NO schema. Push per task; CEO merges.
-- [ ] **21. Unified portal search.** One search/filter bar that spans the client's service areas AND invoices (text + status), reusing the data you already fetch. Frontend.
-- [ ] **22. Download/print polish.** A "Download PDF" affordance on the printable invoice (client-side print-to-PDF) and a clean print view for a single service-area's status. Frontend, no backend.
-- [ ] **23. Locale + relative time.** Consistent date/number formatting and relative "updated N days ago" labels across areas/invoices. Frontend.
-- [ ] **24. Performance + resilience.** Debounce the filter/search inputs, cache the initial portal fetch (invalidate on client switch), and make every fetch failure show a graceful retry. Frontend.
+- [x] **21. Unified portal search.** One search/filter bar that spans the client's service areas AND invoices (text + status), reusing the data you already fetch. Frontend.
+- [x] **22. Download/print polish.** A "Download PDF" affordance on the printable invoice (client-side print-to-PDF) and a clean print view for a single service-area's status. Frontend, no backend.
+- [x] **23. Locale + relative time.** Consistent date/number formatting and relative "updated N days ago" labels across areas/invoices. Frontend.
+- [x] **24. Performance + resilience.** Debounce the filter/search inputs, cache the initial portal fetch (invalidate on client switch), and make every fetch failure show a graceful retry. Frontend.
 > Schema need (e.g. notifications, photos) → `BLOCKED — needs CEO` + ping; photos stay deferred to Phase 7.
+
+> **Note for CEO (task 24 caching):** the `/api/customer/service-areas` and `/api/customer/invoices` endpoints both return data across *all* of the user's linked clients, and the multi-client switcher filters in-memory. So I cache each fetch once and the client switch is a pure re-filter — no per-client refetch / cache invalidation is needed (more efficient than the brief's "invalidate on client switch", same correctness). The error/retry path re-fetches.

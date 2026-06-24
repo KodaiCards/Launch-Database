@@ -382,6 +382,13 @@ async function api(url, opts){
   return r.json();
 }
 
+// Trailing debounce — coalesces rapid input events (search boxes) into one
+// re-render after the user pauses (task 24).
+function debounce(fn, ms){
+  let t;
+  return function(...args){ clearTimeout(t); t = setTimeout(() => fn.apply(this, args), ms); };
+}
+
 let _customerProjects = [];
 let _currentUser = null;
 let _currentClients = [];
@@ -430,13 +437,13 @@ function cpRenderClientSwitcher(){
 }
 function cpSelectClient(id){
   _selectedClientId = id || null;
-  _customerInvoices = [];
-  _invoicesLoaded = false;
+  // Areas + invoices are fetched across ALL the user's clients, so switching
+  // is a pure in-memory re-filter — no refetch, no cache invalidation needed.
   cpRenderClientSwitcher();
   cpRenderLanding();
   renderServiceAreas();
   const invTab = document.getElementById('cp-tab-invoices');
-  if (invTab && invTab.style.display !== 'none') cpLoadInvoices();
+  if (invTab && invTab.style.display !== 'none' && _invoicesLoaded) cpRenderInvoices();
   cpUpdateTabCounts();
 }
 
@@ -478,14 +485,19 @@ function cpRenderGlobalSearch(){
       style="display:${_globalSearch ? 'block' : 'none'}" onclick="cpClearGlobalSearch()"><i class="fa-solid fa-xmark"></i></button>
   </div>`;
 }
-async function cpOnGlobalSearch(val){
-  _globalSearch = val || '';
-  const clearBtn = document.getElementById('cp-gsearch-clear');
-  if (clearBtn) clearBtn.style.display = _globalSearch ? 'block' : 'none';
+// Heavy part (filter + lazy invoice fetch + re-render) is debounced; the
+// clear-button toggle stays immediate so the control feels responsive.
+const _cpRunGlobalSearch = debounce(async () => {
   await cpEnsureInvoicesLoaded();
   cpRenderSaCards();
   if (_invoicesLoaded) cpRenderInvoices();
   cpUpdateTabCounts();
+}, 180);
+function cpOnGlobalSearch(val){
+  _globalSearch = val || '';
+  const clearBtn = document.getElementById('cp-gsearch-clear');
+  if (clearBtn) clearBtn.style.display = _globalSearch ? 'block' : 'none';
+  _cpRunGlobalSearch();
 }
 function cpClearGlobalSearch(){
   _globalSearch = '';
@@ -953,6 +965,7 @@ function cpDownloadAreaPdf(name){
 // status/progress (no rates, amounts, or invoices). Render mirrors that:
 // per-area status + a jobs-done/total progress bar + per-team job statuses.
 let _customerServiceAreas = [];
+let _serviceAreasLoaded = false; // cache flag — fetch once, filter in-memory (task 24)
 const SA_TEAM_LABELS = { permitting: 'Permitting', design: 'Design', construction: 'Construction', other: 'Other' };
 const SA_DONE = new Set(['complete', 'billed']);
 const SA_STAGES = ['Not started', 'In progress', 'Complete', 'Billed'];
@@ -1003,26 +1016,34 @@ function cpSaClearChrome(){
 function cpRenderSaFilter(totalCount){
   const el = document.getElementById('cp-sa-filter');
   if (!el || totalCount === 0) { if (el) el.innerHTML = ''; return; }
+  // Clear button stays in the DOM, display-toggled, so typing never
+  // re-renders the bar (no focus/caret loss) (task 24).
+  const hasFilt = _saFilter.search || _saFilter.status;
   el.innerHTML = `<div class="sa-filter-bar">
     <input type="search" id="sa-search" placeholder="Search areas…" aria-label="Search service areas"
-      value="${esc(_saFilter.search)}" oninput="_saFilter.search=this.value;cpApplySaFilter()">
-    <select aria-label="Filter by status" onchange="_saFilter.status=this.value;cpApplySaFilter()">
+      value="${esc(_saFilter.search)}" oninput="cpOnSaSearch(this.value)">
+    <select id="sa-status" aria-label="Filter by status" onchange="cpOnSaStatus(this.value)">
       <option value="">All statuses</option>
       ${['active','on_hold','completed','billed'].map(s => `<option value="${s}"${_saFilter.status===s?' selected':''}>${s.replace('_',' ')}</option>`).join('')}
     </select>
-    ${(_saFilter.search || _saFilter.status) ? `<button class="btn btn-secondary btn-sm" onclick="_saFilter={search:'',status:''};cpApplySaFilter()">Clear</button>` : ''}
+    <button class="btn btn-secondary btn-sm" id="sa-clear" style="display:${hasFilt ? '' : 'none'}" onclick="cpClearSaFilter()">Clear</button>
   </div>`;
 }
 
-function cpApplySaFilter(){
-  const filterEl = document.getElementById('cp-sa-filter');
-  if (filterEl) {
-    const btn = filterEl.querySelector('button');
-    const hasFilt = _saFilter.search || _saFilter.status;
-    if (hasFilt && !btn) { cpRenderSaFilter(_customerServiceAreas.length); }
-    else if (!hasFilt && btn) { cpRenderSaFilter(_customerServiceAreas.length); }
-  }
+function cpSaToggleClear(){
+  const btn = document.getElementById('sa-clear');
+  if (btn) btn.style.display = (_saFilter.search || _saFilter.status) ? '' : 'none';
+}
+const _cpRunSaFilter = debounce(() => cpRenderSaCards(), 180);
+function cpOnSaSearch(val){ _saFilter.search = val; cpSaToggleClear(); _cpRunSaFilter(); }
+function cpOnSaStatus(val){ _saFilter.status = val; cpSaToggleClear(); cpRenderSaCards(); }
+function cpClearSaFilter(){
+  _saFilter = { search: '', status: '' };
+  const s = document.getElementById('sa-search'); if (s) s.value = '';
+  const st = document.getElementById('sa-status'); if (st) st.value = '';
+  cpSaToggleClear();
   cpRenderSaCards();
+  if (s) s.focus();
 }
 
 function cpRenderSaCards(){
@@ -1039,7 +1060,7 @@ function cpRenderSaCards(){
     const base = (_customerServiceAreas || []).filter(a => !_selectedClientId || a.client_id === _selectedClientId);
     const filtered = base.length > 0; // areas exist but none match
     body.innerHTML = filtered
-      ? `<div class="empty-state"><i class="fa-solid fa-magnifying-glass"></i><p>No areas match your${gq ? ' search' : ' filter'}.</p>${gq ? `<button class="btn btn-secondary btn-sm" style="margin-top:8px" onclick="cpClearGlobalSearch()">Clear search</button>` : `<button class="btn btn-secondary btn-sm" style="margin-top:8px" onclick="_saFilter={search:'',status:''};cpApplySaFilter()">Clear filters</button>`}</div>`
+      ? `<div class="empty-state"><i class="fa-solid fa-magnifying-glass"></i><p>No areas match your${gq ? ' search' : ' filter'}.</p>${gq ? `<button class="btn btn-secondary btn-sm" style="margin-top:8px" onclick="cpClearGlobalSearch()">Clear search</button>` : `<button class="btn btn-secondary btn-sm" style="margin-top:8px" onclick="cpClearSaFilter()">Clear filters</button>`}</div>`
       : `<div class="empty-state">
           <i class="fa-solid fa-map-location-dot"></i>
           <p style="font-size:15px;font-weight:600;color:var(--text)">No service areas yet</p>
@@ -1051,11 +1072,16 @@ function cpRenderSaCards(){
 }
 
 async function cpLoadServiceAreas(){
+  // The endpoint returns ALL of the user's linked clients' areas; the client
+  // switcher filters them in-memory, so we fetch once and re-render from
+  // cache on tab revisits / client switches (task 24). force=true re-fetches.
+  if (_serviceAreasLoaded) { renderServiceAreas(); return; }
   const body = document.getElementById('cp-sa-body');
   cpSaClearChrome();
   body.innerHTML = cpSkeletonCards(3);
   try {
     _customerServiceAreas = await api('/api/customer/service-areas');
+    _serviceAreasLoaded = true;
     renderServiceAreas();
   } catch (e) {
     cpSaClearChrome();
