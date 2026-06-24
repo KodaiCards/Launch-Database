@@ -33,8 +33,8 @@ html[data-theme="dark"]{
 *{box-sizing:border-box;margin:0;padding:0}
 html,body{font-family:var(--font);background:var(--gray-light);color:var(--text);min-height:100vh}
 button{font-family:inherit;cursor:pointer;border:none;background:none;color:inherit}
-input,select{font-family:inherit;font-size:14px}
-html[data-theme="dark"] input{background:var(--white);color:var(--text);border-color:var(--gray-border)}
+input,select,textarea{font-family:inherit;font-size:14px}
+html[data-theme="dark"] input,html[data-theme="dark"] select,html[data-theme="dark"] textarea{background:var(--white);color:var(--text);border-color:var(--gray-border)}
 
 .header{background:var(--white);border-bottom:1px solid var(--gray-border);padding:10px 20px;
   display:flex;align-items:center;justify-content:space-between;gap:12px}
@@ -49,6 +49,8 @@ html[data-theme="dark"] input{background:var(--white);color:var(--text);border-c
 .btn-primary:hover{background:var(--primary-dark)}
 .btn-ghost{background:transparent;border-color:var(--gray-border);color:var(--text-secondary)}
 .btn-ghost:hover{background:var(--surface-1)}
+.btn-danger{background:var(--danger);color:#fff;border-color:var(--danger)}
+.btn-danger:hover{opacity:.88}
 .btn-icon{width:34px;height:34px;padding:0;display:inline-flex;align-items:center;justify-content:center;
   border-radius:6px;border:1px solid var(--gray-border);background:transparent;color:var(--text-secondary)}
 .btn-icon:hover{background:var(--surface-1)}
@@ -68,9 +70,10 @@ table{width:100%;border-collapse:collapse;font-size:13px}
 thead th{background:var(--surface-1);padding:9px 14px;text-align:left;font-weight:600;
   font-size:12px;color:var(--text-muted);border-bottom:1px solid var(--gray-border);white-space:nowrap}
 th.num,td.num{text-align:right}
-tbody tr{border-bottom:1px solid var(--gray-border);cursor:pointer;transition:background .1s}
+tbody tr{border-bottom:1px solid var(--gray-border);transition:background .1s}
+tbody tr.client-row{cursor:pointer}
 tbody tr:last-child{border-bottom:none}
-tbody tr:hover{background:var(--surface-1)}
+tbody tr.client-row:hover{background:var(--surface-1)}
 tbody td{padding:10px 14px;color:var(--text-secondary)}
 .client-name{color:var(--text);font-weight:500}
 .badge-areas{display:inline-flex;align-items:center;gap:4px;background:var(--primary-light);
@@ -90,16 +93,16 @@ tbody td{padding:10px 14px;color:var(--text-secondary)}
 .detail-inner{background:var(--surface-1);border-radius:8px;padding:14px;margin-top:2px}
 .detail-section{margin-bottom:14px}
 .detail-section:last-child{margin-bottom:0}
-.detail-label{font-size:11px;font-weight:600;color:var(--text-muted);text-transform:uppercase;margin-bottom:8px}
+.detail-label{font-size:11px;font-weight:600;color:var(--text-muted);text-transform:uppercase;margin-bottom:8px;
+  display:flex;align-items:center;justify-content:space-between}
 .area-row{display:flex;align-items:center;justify-content:space-between;padding:6px 0;
   border-bottom:1px solid var(--gray-border);font-size:12px;gap:8px}
 .area-row:last-child{border-bottom:none}
 .area-name{color:var(--text);font-weight:500}
 .area-meta{color:var(--text-muted)}
 .inv-row{display:flex;align-items:center;justify-content:space-between;padding:5px 0;
-  border-bottom:1px solid var(--gray-border);font-size:12px;gap:8px;cursor:pointer}
+  border-bottom:1px solid var(--gray-border);font-size:12px;gap:8px}
 .inv-row:last-child{border-bottom:none}
-.inv-row:hover{opacity:.75}
 .inv-num{color:var(--primary);font-weight:500}
 .aging-chips{display:flex;gap:8px;flex-wrap:wrap}
 .aging-chip{display:flex;flex-direction:column;align-items:center;padding:8px 14px;
@@ -111,6 +114,49 @@ tbody td{padding:10px 14px;color:var(--text-secondary)}
 .chip-60{background:var(--danger-light);color:var(--danger-text)}
 .chip-90{background:var(--danger-light);color:var(--danger-text)}
 .detail-actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:12px}
+
+/* EC rows in detail */
+.ec-row{display:flex;align-items:center;justify-content:space-between;padding:7px 0;
+  border-bottom:1px solid var(--gray-border);font-size:12px;gap:8px}
+.ec-row:last-child{border-bottom:none}
+.ec-row-left{display:flex;align-items:center;gap:7px;min-width:0}
+.ec-name{color:var(--text);font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.ec-meta{color:var(--text-muted);font-size:11px}
+.ec-actions{display:flex;gap:4px;flex-shrink:0}
+
+/* Program badges */
+.prog-badge{display:inline-flex;align-items:center;padding:1px 6px;border-radius:8px;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.02em}
+.prog-rus{background:var(--primary-light);color:var(--primary)}
+.prog-bau{background:var(--success-light);color:var(--success-text)}
+.prog-gfr{background:var(--warning-light);color:var(--warning-text)}
+.prog-other{background:var(--surface-1);color:var(--text-muted)}
+.prog-none{background:var(--surface-1);color:var(--text-muted)}
+
+/* Modals */
+.modal-bg{display:none;position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:100;
+  align-items:center;justify-content:center}
+.modal-bg.open{display:flex}
+.modal-box{background:var(--white);border-radius:10px;width:420px;max-width:94vw;
+  padding:22px 24px;box-shadow:0 20px 60px rgba(0,0,0,.25)}
+.modal-box h3{font-size:16px;font-weight:600;margin-bottom:16px}
+.mfield{margin-bottom:13px}
+.mfield label{display:block;font-size:12px;font-weight:600;color:var(--text-secondary);margin-bottom:4px}
+.mfield input[type=text],.mfield input[type=text]:focus,.mfield textarea,.mfield select{
+  width:100%;padding:8px 10px;border:1px solid var(--gray-border);border-radius:6px;
+  background:var(--white);color:var(--text);font-size:13px;outline:none;transition:border-color .15s}
+.mfield input[type=text]:focus,.mfield textarea:focus,.mfield select:focus{border-color:var(--primary)}
+.mfield textarea{resize:vertical;min-height:60px;font-family:inherit}
+.check-row{display:flex;align-items:center;gap:8px;font-size:13px;color:var(--text-secondary);margin-bottom:8px}
+.check-row input[type=checkbox]{width:15px;height:15px;cursor:pointer;accent-color:var(--primary)}
+.modal-actions{display:flex;justify-content:flex-end;gap:8px;margin-top:18px}
+.mfield-note{font-size:11px;color:var(--text-muted);margin-top:3px}
+.prog-lock-note{font-size:11px;color:var(--primary);margin-top:4px;display:flex;align-items:center;gap:5px}
+
+/* Toast */
+.cl-toast{position:fixed;bottom:28px;left:50%;transform:translateX(-50%);background:var(--text);
+  color:var(--white);padding:9px 18px;border-radius:7px;font-size:13px;z-index:300;
+  opacity:0;transition:opacity .2s;pointer-events:none;white-space:nowrap}
+.cl-toast.show{opacity:1}
 
 .panel-loading{padding:20px;text-align:center;color:var(--text-muted);font-size:13px}
 
@@ -137,6 +183,9 @@ tbody td{padding:10px 14px;color:var(--text-secondary)}
 <div class="page-body" role="main">
   <div class="page-header">
     <h1 class="page-title">All Clients</h1>
+    <button class="btn btn-primary" id="newClientBtn" onclick="openClientModal(null)" aria-label="Create new client">
+      <i class="fa-solid fa-plus"></i> New Client
+    </button>
   </div>
 
   <div class="filter-bar">
@@ -152,7 +201,7 @@ tbody td{padding:10px 14px;color:var(--text-secondary)}
             <th class="num">Service Areas</th>
             <th class="num">Total Billed</th>
             <th class="num">Outstanding</th>
-            <th></th>
+            <th style="width:60px"></th>
           </tr>
         </thead>
         <tbody id="clients-tbody">
@@ -163,16 +212,86 @@ tbody td{padding:10px 14px;color:var(--text-secondary)}
   </div>
 </div>
 
+<!-- Client create/edit modal -->
+<div class="modal-bg" id="clientModal" role="dialog" aria-modal="true" aria-labelledby="clientModalTitle">
+  <div class="modal-box">
+    <h3 id="clientModalTitle">New Client</h3>
+    <div class="mfield">
+      <label for="cm_name">Name <span style="color:var(--danger)">*</span></label>
+      <input type="text" id="cm_name" placeholder="e.g. PSC" autocomplete="off">
+    </div>
+    <div class="mfield">
+      <label for="cm_notes">Notes</label>
+      <textarea id="cm_notes" placeholder="Optional notes…"></textarea>
+    </div>
+    <div class="mfield">
+      <label>Portal visibility</label>
+      <label class="check-row"><input type="checkbox" id="cm_show_contract"> Show contract number on customer portal</label>
+      <label class="check-row"><input type="checkbox" id="cm_show_work_order"> Show work order number on customer portal</label>
+    </div>
+    <div class="modal-actions">
+      <button class="btn btn-ghost" id="cm_cancel" type="button">Cancel</button>
+      <button class="btn btn-primary" id="cm_save" type="button">Save</button>
+    </div>
+  </div>
+</div>
+
+<!-- EC create/edit modal -->
+<div class="modal-bg" id="ecModal" role="dialog" aria-modal="true" aria-labelledby="ecModalTitle">
+  <div class="modal-box">
+    <h3 id="ecModalTitle">New Engineering Contract</h3>
+    <input type="hidden" id="em_client_id">
+    <input type="hidden" id="em_ec_id">
+    <div class="mfield">
+      <label for="em_name">Name <span style="color:var(--danger)">*</span></label>
+      <input type="text" id="em_name" placeholder="e.g. PSC RUS 2024" autocomplete="off">
+    </div>
+    <div class="mfield">
+      <label for="em_contract_number">Contract number</label>
+      <input type="text" id="em_contract_number" placeholder="Optional" autocomplete="off">
+    </div>
+    <div class="mfield">
+      <label for="em_loan_name">Loan name</label>
+      <input type="text" id="em_loan_name" placeholder="Optional" autocomplete="off">
+    </div>
+    <div class="mfield">
+      <label for="em_program">Program</label>
+      <select id="em_program">
+        <option value="rus">RUS</option>
+        <option value="bau">BAU</option>
+        <option value="gfr">GFR</option>
+        <option value="other">Other</option>
+      </select>
+      <div class="prog-lock-note" id="em_prog_note"><i class="fa-solid fa-circle-info"></i>ECs are RUS work by default. Non-RUS work sits directly under the client via the service-area program field.</div>
+    </div>
+    <div class="mfield">
+      <label class="check-row"><input type="checkbox" id="em_active" checked> Active</label>
+    </div>
+    <div class="mfield">
+      <label for="em_notes">Notes</label>
+      <textarea id="em_notes" placeholder="Optional…"></textarea>
+    </div>
+    <div class="modal-actions">
+      <button class="btn btn-ghost" id="em_cancel" type="button">Cancel</button>
+      <button class="btn btn-primary" id="em_save" type="button">Save</button>
+    </div>
+  </div>
+</div>
+
+<div id="cl-toast" class="cl-toast" role="status" aria-live="polite"></div>
+
 <script>
 (function(){
   'use strict';
   var _clients = [];
   var _open    = null; // currently open client id
+  var _ecCache = {};   // clientId → [ecs]
 
   // ── Boot ────────────────────────────────────────────────────────────────────
   document.addEventListener('DOMContentLoaded', function(){
     applyStoredTheme();
     load();
+    wireModals();
   });
 
   async function load(){
@@ -203,7 +322,7 @@ tbody td{padding:10px 14px;color:var(--text-secondary)}
     var q = (document.getElementById('cl-search').value||'').toLowerCase().trim();
     var filtered = q ? _clients.filter(function(c){ return c.name.toLowerCase().includes(q); }) : _clients;
     render(filtered);
-  };
+  }
 
   // ── Render table ────────────────────────────────────────────────────────────
   function render(clients){
@@ -214,12 +333,18 @@ tbody td{padding:10px 14px;color:var(--text-secondary)}
     }
     tbody.innerHTML = clients.map(function(c){
       var outClass = c.outstanding > 10000 ? 'outstanding high' : c.outstanding > 0 ? 'outstanding' : '';
-      return '<tr data-id="'+esc(c.id)+'" tabindex="0" role="button" aria-expanded="false" onclick="toggleDetail(\''+esc(c.id)+'\')" onkeydown="if(event.key===\'Enter\'||event.key===\' \'){event.preventDefault();toggleDetail(\''+esc(c.id)+'\')}">'
+      return '<tr class="client-row" data-id="'+esc(c.id)+'" tabindex="0" role="button" aria-expanded="false"'
+        +' onclick="toggleDetail(\''+esc(c.id)+'\')" onkeydown="if(event.key===\'Enter\'||event.key===\' \'){event.preventDefault();toggleDetail(\''+esc(c.id)+'\')}">'
         +'<td class="client-name">'+esc(c.name)+'</td>'
         +'<td class="num"><span class="badge-areas"><i class="fa-solid fa-diagram-project"></i> '+c.active_area_count+'</span></td>'
         +'<td class="num amt">'+fmt(c.total_billed)+'</td>'
         +'<td class="num amt '+outClass+'">'+fmt(c.outstanding)+'</td>'
-        +'<td style="width:32px;text-align:center"><i class="fa-solid fa-chevron-right" id="chev-'+esc(c.id)+'" style="font-size:11px;color:var(--text-muted);transition:transform .2s"></i></td>'
+        +'<td style="width:60px;text-align:right;white-space:nowrap">'
+        +'<button class="btn-icon btn-sm" style="width:28px;height:28px;border:none;margin-right:4px" title="Edit client" aria-label="Edit client"'
+        +' onclick="event.stopPropagation();openClientModal(\''+esc(c.id)+'\')" tabindex="-1">'
+        +'<i class="fa-solid fa-pen" style="font-size:11px"></i></button>'
+        +'<i class="fa-solid fa-chevron-right" id="chev-'+esc(c.id)+'" style="font-size:11px;color:var(--text-muted);transition:transform .2s"></i>'
+        +'</td>'
         +'</tr>'
         +'<tr class="detail-tr" id="detail-tr-'+esc(c.id)+'"><td colspan="5" style="padding:0">'
         +'<div class="detail-panel" id="detail-'+esc(c.id)+'"></div>'
@@ -257,23 +382,36 @@ tbody td{padding:10px 14px;color:var(--text-secondary)}
     var row = document.querySelector('tr[data-id="'+clientId+'"]');
     if(row) row.setAttribute('aria-expanded','true');
     if(panel.dataset.loaded) return;
-    panel.innerHTML = '<div class="panel-loading"><span class="spinner"></span> Loading…</div>';
-    loadStatement(clientId, panel);
+    panel.innerHTML = '<div class="panel-loading"><i class="fa-solid fa-spinner fa-spin" style="margin-right:6px"></i> Loading…</div>';
+    loadDetail(clientId, panel);
   }
 
-  async function loadStatement(clientId, panel){
+  async function loadDetail(clientId, panel){
     try{
-      var res = await fetch('/api/money/statement?client_id='+encodeURIComponent(clientId), { credentials:'include' });
-      if(!res.ok) throw new Error(await res.text());
-      var data = await res.json();
-      panel.innerHTML = renderStatement(data);
+      var [stmtRes, ecsRes] = await Promise.all([
+        fetch('/api/money/statement?client_id='+encodeURIComponent(clientId), { credentials:'include' }),
+        fetch('/api/engineering-contracts?client_id='+encodeURIComponent(clientId), { credentials:'include' })
+      ]);
+      if(!stmtRes.ok) throw new Error(await stmtRes.text());
+      var data = await stmtRes.json();
+      var ecs  = ecsRes.ok ? (await ecsRes.json()) : [];
+      _ecCache[clientId] = ecs;
+      panel.innerHTML = renderStatement(data, ecs, clientId);
       panel.dataset.loaded = '1';
     } catch(e){
       panel.innerHTML = '<div class="detail-inner"><div class="empty-state" style="padding:16px"><i class="fa-solid fa-triangle-exclamation"></i>Could not load statement. '+esc(e.message||'')+'</div></div>';
     }
   }
 
-  function renderStatement(data){
+  window.reloadDetail = async function(clientId){
+    var panel = document.getElementById('detail-'+clientId);
+    if(!panel || !panel.classList.contains('open')) return;
+    delete panel.dataset.loaded;
+    panel.innerHTML = '<div class="panel-loading"><i class="fa-solid fa-spinner fa-spin" style="margin-right:6px"></i> Loading…</div>';
+    loadDetail(clientId, panel);
+  };
+
+  function renderStatement(data, ecs, clientId){
     var c = data.client || {};
     var areas = data.service_areas || [];
     var invoices = data.outstanding_invoices || [];
@@ -282,11 +420,11 @@ tbody td{padding:10px 14px;color:var(--text-secondary)}
     var areasHtml = '';
     if(areas.length){
       areasHtml = '<div class="detail-section">'
-        +'<div class="detail-label">Service Areas</div>'
+        +'<div class="detail-label"><span>Service Areas</span></div>'
         + areas.map(function(sa){
             return '<div class="area-row">'
               +'<div><span class="area-name">'+esc(sa.name||'—')+'</span>'
-              +(sa.program ? ' <span style="font-size:10px;color:var(--text-muted)">'+esc(sa.program.toUpperCase())+'</span>' : '')
+              +(sa.program ? ' <span class="prog-badge prog-'+esc(sa.program)+'">'+esc(sa.program.toUpperCase())+'</span>' : '')
               +'</div>'
               +'<div style="text-align:right"><div class="amt">Est '+fmt(sa.estimated_total)+'</div>'
               +'<div class="amt" style="font-size:11px;color:var(--text-muted)">Billed '+fmt(sa.billed_total)+'</div>'
@@ -300,7 +438,7 @@ tbody td{padding:10px 14px;color:var(--text-secondary)}
 
     var agingHtml = '';
     if(aging.bucket_0_30 || aging.bucket_31_60 || aging.bucket_61_90 || aging.bucket_over_90){
-      agingHtml = '<div class="detail-section"><div class="detail-label">AR Aging</div>'
+      agingHtml = '<div class="detail-section"><div class="detail-label"><span>AR Aging</span></div>'
         +'<div class="aging-chips">'
         +'<div class="aging-chip chip-0"><span class="chip-amt">'+fmtK(aging.bucket_0_30)+'</span><span class="chip-label">0–30d</span></div>'
         +'<div class="aging-chip chip-30"><span class="chip-amt">'+fmtK(aging.bucket_31_60)+'</span><span class="chip-label">31–60d</span></div>'
@@ -311,9 +449,8 @@ tbody td{padding:10px 14px;color:var(--text-secondary)}
 
     var invHtml = '';
     if(invoices.length){
-      invHtml = '<div class="detail-section"><div class="detail-label">Outstanding Invoices</div>'
+      invHtml = '<div class="detail-section"><div class="detail-label"><span>Outstanding Invoices</span></div>'
         + invoices.map(function(i){
-            var statusClass = i.status==='overdue'?'danger-text':'warning-text';
             return '<div class="inv-row">'
               +'<span class="inv-num">'+esc(i.invoice_number||i.id)+'</span>'
               +'<span style="color:var(--text-muted);font-size:11px">'+esc(i.invoice_date||'')+'</span>'
@@ -323,14 +460,241 @@ tbody td{padding:10px 14px;color:var(--text-secondary)}
         +'</div>';
     }
 
+    // EC section (R10.2)
+    var ecHtml = renderEcSection(ecs, clientId);
+
     var actions = '<div class="detail-actions">'
-      +'<a class="btn btn-sm btn-ghost" href="/admin.html#clients" target="_blank">'
-      +'<i class="fa-solid fa-arrow-up-right-from-square"></i> Edit in Admin</a>'
       +'<a class="btn btn-sm btn-ghost" href="/money.html">'
       +'<i class="fa-solid fa-coins"></i> Money view</a>'
+      +'<a class="btn btn-sm btn-ghost" href="/service-areas.html">'
+      +'<i class="fa-solid fa-diagram-project"></i> Service areas</a>'
       +'</div>';
 
-    return '<div class="detail-inner">'+areasHtml+agingHtml+invHtml+actions+'</div>';
+    return '<div class="detail-inner">'+areasHtml+agingHtml+invHtml+ecHtml+actions+'</div>';
+  }
+
+  // ── EC section (R10.2) ───────────────────────────────────────────────────────
+  function renderEcSection(ecs, clientId){
+    var addBtn = '<button class="btn btn-sm btn-ghost" style="font-size:11px;padding:3px 8px"'
+      +' onclick="openEcModal(\''+esc(clientId)+'\',null)"'
+      +' aria-label="Add engineering contract">'
+      +'<i class="fa-solid fa-plus"></i> New EC</button>';
+
+    var header = '<div class="detail-section">'
+      +'<div class="detail-label"><span>Engineering Contracts</span>'+addBtn+'</div>';
+
+    if(!ecs||!ecs.length){
+      return header+'<div style="font-size:12px;color:var(--text-muted);padding:6px 0">No engineering contracts.</div></div>';
+    }
+
+    var rows = ecs.map(function(ec){
+      var prog = ec.program||'none';
+      var badge = '<span class="prog-badge prog-'+esc(prog)+'">'+esc(prog.toUpperCase())+'</span>';
+      var inactive = ec.active===false ? ' <span style="font-size:10px;color:var(--text-muted)">(inactive)</span>' : '';
+      return '<div class="ec-row">'
+        +'<div class="ec-row-left">'
+        +badge+' <span class="ec-name" title="'+esc(ec.name)+'">'+esc(ec.name)+'</span>'+inactive
+        +(ec.contract_number ? '<span class="ec-meta"> · '+esc(ec.contract_number)+'</span>' : '')
+        +'</div>'
+        +'<div class="ec-actions">'
+        +'<button class="btn-icon" style="width:26px;height:26px;border:none" title="Edit EC" aria-label="Edit EC"'
+        +' onclick="openEcModal(\''+esc(clientId)+'\','+JSON.stringify(ec)+')">'
+        +'<i class="fa-solid fa-pen" style="font-size:10px"></i></button>'
+        +'<button class="btn-icon" style="width:26px;height:26px;border:none;color:var(--danger-text)" title="Delete EC" aria-label="Delete EC"'
+        +' onclick="deleteEc(\''+esc(ec.id)+'\',\''+esc(clientId)+'\')">'
+        +'<i class="fa-solid fa-trash" style="font-size:10px"></i></button>'
+        +'</div>'
+        +'</div>';
+    }).join('');
+
+    return header+rows+'</div>';
+  }
+
+  window.deleteEc = async function(ecId, clientId){
+    try{
+      var res = await fetch('/api/engineering-contracts/'+encodeURIComponent(ecId), {
+        method:'DELETE', credentials:'include'
+      });
+      if(res.status===409){
+        var body = await res.json().catch(function(){ return {}; });
+        showToast('Cannot delete: '+(body.error||'still referenced by other records'));
+        return;
+      }
+      if(!res.ok) throw new Error((await res.json().catch(function(){return {};})).error||'Delete failed');
+      _ecCache[clientId] = (_ecCache[clientId]||[]).filter(function(e){ return e.id!==ecId; });
+      window.reloadDetail(clientId);
+      showToast('Engineering contract deleted');
+    } catch(e){
+      showToast('Delete failed: '+esc(e.message||''));
+    }
+  };
+
+  // ── Client modal (R10.1) ──────────────────────────────────────────────────────
+  var _editingClientId = null;
+  var _fullClients = []; // cache of full GET /api/clients rows
+
+  window.openClientModal = async function(clientId){
+    _editingClientId = clientId||null;
+    var modal = document.getElementById('clientModal');
+    document.getElementById('clientModalTitle').textContent = clientId ? 'Edit Client' : 'New Client';
+    document.getElementById('cm_name').value = '';
+    document.getElementById('cm_notes').value = '';
+    document.getElementById('cm_show_contract').checked = false;
+    document.getElementById('cm_show_work_order').checked = false;
+
+    if(clientId){
+      // Load full client data for edit
+      try{
+        if(!_fullClients.length){
+          var r = await fetch('/api/clients', { credentials:'include' });
+          _fullClients = r.ok ? (await r.json()) : [];
+        }
+        var existing = _fullClients.find(function(c){ return c.id===clientId; });
+        if(existing){
+          document.getElementById('cm_name').value = existing.name||'';
+          document.getElementById('cm_notes').value = existing.notes||'';
+          document.getElementById('cm_show_contract').checked = !!existing.show_contract;
+          document.getElementById('cm_show_work_order').checked = !!existing.show_work_order;
+        }
+      } catch(e){ /* best effort */ }
+    }
+
+    modal.classList.add('open');
+    setTimeout(function(){ document.getElementById('cm_name').focus(); }, 50);
+  };
+
+  function wireModals(){
+    // Client modal
+    document.getElementById('cm_cancel').addEventListener('click', function(){
+      document.getElementById('clientModal').classList.remove('open');
+    });
+    document.getElementById('cm_save').addEventListener('click', saveClient);
+    document.getElementById('clientModal').addEventListener('click', function(e){
+      if(e.target===this) this.classList.remove('open');
+    });
+    document.addEventListener('keydown', function(e){
+      if(e.key==='Escape'){
+        document.getElementById('clientModal').classList.remove('open');
+        document.getElementById('ecModal').classList.remove('open');
+      }
+    });
+
+    // EC modal
+    document.getElementById('em_cancel').addEventListener('click', function(){
+      document.getElementById('ecModal').classList.remove('open');
+    });
+    document.getElementById('em_save').addEventListener('click', saveEc);
+    document.getElementById('ecModal').addEventListener('click', function(e){
+      if(e.target===this) this.classList.remove('open');
+    });
+    document.getElementById('em_program').addEventListener('change', function(){
+      document.getElementById('em_prog_note').style.display = this.value==='rus' ? 'flex' : 'none';
+    });
+  }
+
+  async function saveClient(){
+    var name = document.getElementById('cm_name').value.trim();
+    if(!name){ document.getElementById('cm_name').focus(); return; }
+    var body = {
+      name: name,
+      notes: document.getElementById('cm_notes').value.trim()||null,
+      show_contract: document.getElementById('cm_show_contract').checked,
+      show_work_order: document.getElementById('cm_show_work_order').checked
+    };
+    var btn = document.getElementById('cm_save');
+    btn.disabled = true; btn.textContent = 'Saving…';
+    try{
+      var res;
+      if(_editingClientId){
+        res = await fetch('/api/clients/'+encodeURIComponent(_editingClientId), {
+          method:'PUT', credentials:'include',
+          headers:{'Content-Type':'application/json'},
+          body: JSON.stringify(body)
+        });
+      } else {
+        res = await fetch('/api/clients', {
+          method:'POST', credentials:'include',
+          headers:{'Content-Type':'application/json'},
+          body: JSON.stringify(body)
+        });
+      }
+      if(!res.ok) throw new Error((await res.json().catch(function(){return{};})).error||'Save failed');
+      var saved = await res.json();
+      document.getElementById('clientModal').classList.remove('open');
+      _fullClients = []; // bust cache
+      await load();
+      showToast(_editingClientId ? 'Client updated' : 'Client created');
+    } catch(e){
+      showToast('Error: '+(e.message||'Save failed'));
+    } finally {
+      btn.disabled = false; btn.textContent = 'Save';
+    }
+  }
+
+  // ── EC modal (R10.2) ─────────────────────────────────────────────────────────
+  var _ecModalClientId = null;
+  var _ecModalEcId = null;
+
+  window.openEcModal = function(clientId, ec){
+    _ecModalClientId = clientId;
+    _ecModalEcId = ec ? ec.id : null;
+    document.getElementById('ecModalTitle').textContent = ec ? 'Edit Engineering Contract' : 'New Engineering Contract';
+    document.getElementById('em_client_id').value = clientId;
+    document.getElementById('em_ec_id').value = ec ? ec.id : '';
+    document.getElementById('em_name').value = ec ? (ec.name||'') : '';
+    document.getElementById('em_contract_number').value = ec ? (ec.contract_number||'') : '';
+    document.getElementById('em_loan_name').value = ec ? (ec.loan_name||'') : '';
+    document.getElementById('em_program').value = ec ? (ec.program||'rus') : 'rus';
+    document.getElementById('em_active').checked = ec ? (ec.active!==false) : true;
+    document.getElementById('em_notes').value = ec ? (ec.notes||'') : '';
+    document.getElementById('em_prog_note').style.display =
+      (document.getElementById('em_program').value==='rus') ? 'flex' : 'none';
+    document.getElementById('ecModal').classList.add('open');
+    setTimeout(function(){ document.getElementById('em_name').focus(); }, 50);
+  };
+
+  async function saveEc(){
+    var name = document.getElementById('em_name').value.trim();
+    if(!name){ document.getElementById('em_name').focus(); return; }
+    var body = {
+      client_id: _ecModalClientId,
+      name: name,
+      contract_number: document.getElementById('em_contract_number').value.trim()||null,
+      loan_name: document.getElementById('em_loan_name').value.trim()||null,
+      program: document.getElementById('em_program').value,
+      active: document.getElementById('em_active').checked,
+      notes: document.getElementById('em_notes').value.trim()||null
+    };
+    var btn = document.getElementById('em_save');
+    btn.disabled = true; btn.textContent = 'Saving…';
+    try{
+      var res;
+      if(_ecModalEcId){
+        res = await fetch('/api/engineering-contracts/'+encodeURIComponent(_ecModalEcId), {
+          method:'PUT', credentials:'include',
+          headers:{'Content-Type':'application/json'},
+          body: JSON.stringify(body)
+        });
+      } else {
+        res = await fetch('/api/engineering-contracts', {
+          method:'POST', credentials:'include',
+          headers:{'Content-Type':'application/json'},
+          body: JSON.stringify(body)
+        });
+      }
+      if(!res.ok){
+        var errBody = await res.json().catch(function(){return{};});
+        throw new Error(errBody.error||'Save failed');
+      }
+      delete _ecCache[_ecModalClientId]; // bust EC cache for this client
+      document.getElementById('ecModal').classList.remove('open');
+      window.reloadDetail(_ecModalClientId);
+      showToast(_ecModalEcId ? 'Engineering contract updated' : 'Engineering contract created');
+    } catch(e){
+      showToast('Error: '+(e.message||'Save failed'));
+    } finally {
+      btn.disabled = false; btn.textContent = 'Save';
+    }
   }
 
   // ── Helpers ─────────────────────────────────────────────────────────────────
@@ -346,6 +710,14 @@ tbody td{padding:10px 14px;color:var(--text-secondary)}
   }
   function esc(s){
     return String(s??'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+  }
+
+  var _toastTimer = null;
+  function showToast(msg){
+    var t = document.getElementById('cl-toast');
+    t.textContent = msg; t.classList.add('show');
+    clearTimeout(_toastTimer);
+    _toastTimer = setTimeout(function(){ t.classList.remove('show'); }, 3000);
   }
 
   // ── Theme ────────────────────────────────────────────────────────────────────
