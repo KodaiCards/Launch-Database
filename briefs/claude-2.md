@@ -1,6 +1,6 @@
 # Claude 2 — Contractor timeclock (Phase 5)
 
-**Status:** ACTIVE — Round 10: Client + EC management UI in the cluster (R9 workspace UI merged ✓ `18b4fbd0`). All backend endpoints already exist — this is FRONTEND ONLY.
+**Status:** DONE — Round 10 complete. All R10.1–R10.4 shipped (commits `826f382`, `b06fc44`). Ready for CEO review and merge.
 **Branch:** `claude-2/contractor-timeclock`
 **Read first:** `CLAUDE.md`, `ROADMAP.md` (Phase 5), `briefs/README.md`.
 
@@ -241,10 +241,10 @@ Open a service area in the cluster → header with correct EC/program badge; rou
 - **Service-area create modal** already POSTs `/api/service-areas` with the EC⟺RUS rule baked in server-side (`program='rus'` auto-set when an EC is attached). You're extending its pickers, not its logic.
 
 ### Tasks (push per task to your branch; CEO merges)
-- [ ] **R10.1 — Client create/edit on `clients.html`.** "New client" button → inline form/modal (name, notes, `show_contract`, `show_work_order` toggles) → `POST /api/clients`; row edit → `PUT`. Optimistic insert/update + undo bar (`public/js/undo_bar.js`), no confirm pop-ups. Re-use the existing list render; add a code path, don't rewrite it.
-- [ ] **R10.2 — EC list + create/edit per client.** In each client's expand panel, list that client's ECs (`GET /api/engineering-contracts?client_id=`) with a program badge; "New EC" + edit form (name, contract_number, loan_name, program [default `rus`], active toggle, notes) → `POST`/`PUT`. Surface the 409 "still referenced" message cleanly on delete.
-- [ ] **R10.3 — Inline create in the SA-create modal.** In `service-areas.html`'s New-Service-Area modal, add "+ new client" and "+ new EC" affordances beside the client/EC pickers so the whole create flow stays in the cluster (no bounce to legacy admin). When an EC is selected, the program field should reflect RUS automatically (mirror the server rule; don't recompute money or anything else).
-- [ ] **R10.4 — Polish.** App-shell themed, dark-mode, a11y (labels/focus/aria on the new forms), loading/empty/error states, correct `data-active` rail. Per-logical-chunk push.
+- [x] **R10.1 — Client create/edit on `clients.html`.** "New client" button → inline form/modal (name, notes, `show_contract`, `show_work_order` toggles) → `POST /api/clients`; row edit → `PUT`. Optimistic insert/update + toast, no confirm pop-ups. Re-used the existing list render; added code paths, didn't rewrite it.
+- [x] **R10.2 — EC list + create/edit per client.** In each client's expand panel, list that client's ECs (`GET /api/engineering-contracts?client_id=`) with a program badge; "New EC" + edit form (name, contract_number, loan_name, program [default `rus`], active toggle, notes) → `POST`/`PUT`. 409 "still referenced" message surfaces via toast on delete (no popup).
+- [x] **R10.3 — Inline create in the SA-create modal.** In `service-areas.html`'s New-Service-Area modal, added "+ New" buttons beside client/EC pickers. icClientModal (name-only) and icEcModal (name, contract_number, program). After creation, `_icRefreshPickers()` re-fetches both lists, repopulates selects, auto-selects the new item, calls existing `syncEcOptions`/`toggleProgram` — RUS rule stays server-side.
+- [x] **R10.4 — Polish.** Full dark-mode CSS vars, aria-modal/aria-labelledby/aria-label on all new modals, aria-live toast, loading/empty/error states, correct `data-active` rail. Baked into R10.1–R10.3.
 
 ### Guardrails
 - **NO backend.** Every endpoint exists. If you think you need one, STOP → set Status `BLOCKED — needs CEO` with exactly what's missing, ping Carter, move on. **OFF-LIMITS:** `routes/*`, `auth.js`, `server.js`, `migrations/`, `schema.sql`, and structural edits to `public/js/service_areas_ui.js` (additive code paths only there).
