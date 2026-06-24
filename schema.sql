@@ -55,6 +55,59 @@ CREATE TABLE public.ai_messages (
 );
 
 --
+-- Name: audit_log; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.audit_log (
+    id bigint NOT NULL,
+    at timestamp with time zone DEFAULT now() NOT NULL,
+    actor_user_id uuid,
+    actor_username text,
+    actor_type text DEFAULT 'user'::text NOT NULL,
+    action text NOT NULL,
+    entity_type text NOT NULL,
+    entity_id text,
+    before_data jsonb,
+    after_data jsonb,
+    source text,
+    ip text,
+    user_agent text,
+    meta jsonb,
+    archived_at timestamp with time zone
+);
+
+--
+-- Name: audit_log_id_seq; Type: SEQUENCE; Schema: public; Owner: -
+--
+
+CREATE SEQUENCE public.audit_log_id_seq
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1;
+
+--
+-- Name: audit_log_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: -
+--
+
+ALTER SEQUENCE public.audit_log_id_seq OWNED BY public.audit_log.id;
+
+--
+-- Name: audit_retention_config; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.audit_retention_config (
+    id integer NOT NULL,
+    hot_retention_days integer DEFAULT 730 NOT NULL,
+    total_retention_days integer DEFAULT 2557 NOT NULL,
+    last_archive_run_at timestamp with time zone,
+    last_archive_row_count integer,
+    updated_at timestamp with time zone DEFAULT now() NOT NULL,
+    CONSTRAINT audit_retention_config_id_check CHECK ((id = 1))
+);
+
+--
 -- Name: billing_batch_items; Type: TABLE; Schema: public; Owner: -
 --
 
@@ -111,7 +164,99 @@ CREATE TABLE public.budgets (
     notes text,
     created_at timestamp with time zone DEFAULT now(),
     updated_at timestamp with time zone DEFAULT now(),
-    CONSTRAINT budget_scope_exactly_one CHECK (((((project_id IS NOT NULL))::integer + ((engineering_contract_id IS NOT NULL))::integer) = 1))
+    CONSTRAINT budget_scope_exactly_one CHECK (((((project_id IS NOT NULL))::integer + ((engineering_contract_id IS NOT NULL))::integer) = 1)),
+    CONSTRAINT budgets_total_amount_nonneg CHECK (((total_amount IS NULL) OR (total_amount >= (0)::numeric)))
+);
+
+--
+-- Name: client_approvals; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.client_approvals (
+    id uuid DEFAULT gen_random_uuid() NOT NULL,
+    client_org_id uuid NOT NULL,
+    project_id uuid,
+    title text NOT NULL,
+    description text,
+    document_id uuid,
+    requested_by uuid,
+    responded_by_client_user_id uuid,
+    response text,
+    response_notes text,
+    requested_at timestamp with time zone DEFAULT now() NOT NULL,
+    responded_at timestamp with time zone,
+    status text DEFAULT 'pending'::text NOT NULL,
+    CONSTRAINT client_approvals_response_check CHECK ((response = ANY (ARRAY['approved'::text, 'rejected'::text, 'changes_requested'::text]))),
+    CONSTRAINT client_approvals_status_check CHECK ((status = ANY (ARRAY['pending'::text, 'responded'::text, 'cancelled'::text])))
+);
+
+--
+-- Name: client_documents; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.client_documents (
+    id uuid DEFAULT gen_random_uuid() NOT NULL,
+    client_org_id uuid NOT NULL,
+    project_id uuid,
+    filename text NOT NULL,
+    mime_type text NOT NULL,
+    size_bytes bigint NOT NULL,
+    storage_key text NOT NULL,
+    uploaded_by_user_id uuid,
+    uploaded_by_client_user_id uuid,
+    direction text DEFAULT 'to_client'::text NOT NULL,
+    status text DEFAULT 'active'::text NOT NULL,
+    notes text,
+    created_at timestamp with time zone DEFAULT now() NOT NULL,
+    CONSTRAINT client_documents_direction_check CHECK ((direction = ANY (ARRAY['to_client'::text, 'from_client'::text]))),
+    CONSTRAINT client_documents_status_check CHECK ((status = ANY (ARRAY['active'::text, 'archived'::text]))),
+    CONSTRAINT client_documents_uploader_check CHECK ((((uploaded_by_user_id IS NOT NULL) AND (uploaded_by_client_user_id IS NULL)) OR ((uploaded_by_user_id IS NULL) AND (uploaded_by_client_user_id IS NOT NULL)) OR ((uploaded_by_user_id IS NULL) AND (uploaded_by_client_user_id IS NULL))))
+);
+
+--
+-- Name: client_organizations; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.client_organizations (
+    id uuid DEFAULT gen_random_uuid() NOT NULL,
+    name text NOT NULL,
+    short_name text,
+    logo_url text,
+    theme_color text,
+    status text DEFAULT 'active'::text NOT NULL,
+    created_at timestamp with time zone DEFAULT now() NOT NULL,
+    created_by uuid,
+    CONSTRAINT client_organizations_status_check CHECK ((status = ANY (ARRAY['active'::text, 'suspended'::text, 'archived'::text])))
+);
+
+--
+-- Name: client_tokens; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.client_tokens (
+    id uuid DEFAULT gen_random_uuid() NOT NULL,
+    client_user_id uuid NOT NULL,
+    token_hash text NOT NULL,
+    last_used_at timestamp with time zone,
+    expires_at timestamp with time zone,
+    revoked_at timestamp with time zone,
+    created_at timestamp with time zone DEFAULT now() NOT NULL
+);
+
+--
+-- Name: client_users; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.client_users (
+    id uuid DEFAULT gen_random_uuid() NOT NULL,
+    org_id uuid NOT NULL,
+    email text,
+    name text,
+    is_primary boolean DEFAULT false NOT NULL,
+    status text DEFAULT 'active'::text NOT NULL,
+    invited_by uuid,
+    created_at timestamp with time zone DEFAULT now() NOT NULL,
+    CONSTRAINT client_users_status_check CHECK ((status = ANY (ARRAY['active'::text, 'revoked'::text])))
 );
 
 --
@@ -157,6 +302,26 @@ CREATE TABLE public.contracts (
 );
 
 --
+-- Name: csv_review_queue; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.csv_review_queue (
+    id uuid DEFAULT gen_random_uuid() NOT NULL,
+    imported_at timestamp with time zone DEFAULT now() NOT NULL,
+    imported_by_user_id uuid,
+    csv_filename text,
+    raw_row jsonb NOT NULL,
+    match_attempts jsonb NOT NULL,
+    suggested_project_id uuid,
+    status character varying(20) DEFAULT 'pending'::character varying NOT NULL,
+    matched_project_id uuid,
+    resolved_at timestamp with time zone,
+    resolved_by_user_id uuid,
+    notes text,
+    CONSTRAINT csv_review_queue_status_check CHECK (((status)::text = ANY ((ARRAY['pending'::character varying, 'matched'::character varying, 'discarded'::character varying])::text[])))
+);
+
+--
 -- Name: customer_clients; Type: TABLE; Schema: public; Owner: -
 --
 
@@ -181,6 +346,68 @@ CREATE TABLE public.design_stages (
 );
 
 --
+-- Name: dwg_canonical_files; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.dwg_canonical_files (
+    id uuid DEFAULT gen_random_uuid() NOT NULL,
+    project_id uuid NOT NULL,
+    filename text NOT NULL,
+    size_bytes bigint NOT NULL,
+    sha256 text NOT NULL,
+    storage_key text NOT NULL,
+    last_modified_by uuid,
+    last_modified_at timestamp with time zone DEFAULT now() NOT NULL,
+    created_at timestamp with time zone DEFAULT now() NOT NULL
+);
+
+--
+-- Name: dwg_staging; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.dwg_staging (
+    id uuid DEFAULT gen_random_uuid() NOT NULL,
+    user_id uuid NOT NULL,
+    project_id uuid NOT NULL,
+    filename text NOT NULL,
+    size_bytes bigint NOT NULL,
+    sha256 text NOT NULL,
+    storage_key text NOT NULL,
+    pushed_at timestamp with time zone DEFAULT now() NOT NULL,
+    status text DEFAULT 'pending'::text NOT NULL,
+    reviewed_by uuid,
+    reviewed_at timestamp with time zone,
+    review_notes text,
+    CONSTRAINT dwg_staging_status_check CHECK ((status = ANY (ARRAY['pending'::text, 'promoted'::text, 'rejected'::text, 'superseded'::text])))
+);
+
+--
+-- Name: dwg_versions; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.dwg_versions (
+    id uuid DEFAULT gen_random_uuid() NOT NULL,
+    canonical_file_id uuid NOT NULL,
+    size_bytes bigint NOT NULL,
+    sha256 text NOT NULL,
+    storage_key text NOT NULL,
+    uploaded_by uuid,
+    uploaded_at timestamp with time zone DEFAULT now() NOT NULL
+);
+
+--
+-- Name: ec_job_visibility; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.ec_job_visibility (
+    id uuid DEFAULT gen_random_uuid() NOT NULL,
+    engineering_contract_id uuid NOT NULL,
+    job_id uuid NOT NULL,
+    created_at timestamp with time zone DEFAULT now() NOT NULL,
+    created_by_user_id uuid
+);
+
+--
 -- Name: ec_service_areas; Type: TABLE; Schema: public; Owner: -
 --
 
@@ -189,8 +416,8 @@ CREATE TABLE public.ec_service_areas (
     engineering_contract_id uuid NOT NULL,
     name text NOT NULL,
     notes text,
-    work_order_number text,
-    created_at timestamp with time zone DEFAULT now()
+    created_at timestamp with time zone DEFAULT now(),
+    work_order_number text
 );
 
 --
@@ -204,18 +431,6 @@ CREATE TABLE public.ec_work_orders (
     number text NOT NULL,
     description text,
     created_at timestamp with time zone DEFAULT now()
-);
-
---
--- Name: ec_job_visibility; Type: TABLE; Schema: public; Owner: -
---
-
-CREATE TABLE public.ec_job_visibility (
-    id uuid DEFAULT gen_random_uuid() NOT NULL,
-    engineering_contract_id uuid NOT NULL,
-    job_id uuid NOT NULL,
-    created_at timestamp with time zone DEFAULT now() NOT NULL,
-    created_by_user_id uuid
 );
 
 --
@@ -233,7 +448,64 @@ CREATE TABLE public.engineering_contracts (
     created_at timestamp with time zone DEFAULT now(),
     updated_at timestamp with time zone DEFAULT now(),
     program character varying(20),
+    client_org_id uuid,
     CONSTRAINT engineering_contracts_program_check CHECK (((program IS NULL) OR ((program)::text = ANY ((ARRAY['rus'::character varying, 'bau'::character varying, 'gfr'::character varying, 'other'::character varying])::text[]))))
+);
+
+--
+-- Name: event_log; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.event_log (
+    id bigint NOT NULL,
+    occurred_at timestamp with time zone DEFAULT now() NOT NULL,
+    program text NOT NULL,
+    event_type text NOT NULL,
+    source text DEFAULT 'client'::text NOT NULL,
+    actor_user_id uuid,
+    actor_username text,
+    actor_type text DEFAULT 'user'::text NOT NULL,
+    session_id text,
+    request_id text,
+    target text,
+    url text,
+    http_method text,
+    http_status integer,
+    duration_ms integer,
+    message text,
+    ip text,
+    user_agent text,
+    meta jsonb
+);
+
+--
+-- Name: event_log_id_seq; Type: SEQUENCE; Schema: public; Owner: -
+--
+
+CREATE SEQUENCE public.event_log_id_seq
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1;
+
+--
+-- Name: event_log_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: -
+--
+
+ALTER SEQUENCE public.event_log_id_seq OWNED BY public.event_log.id;
+
+--
+-- Name: event_retention_config; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.event_retention_config (
+    id integer NOT NULL,
+    retention_days integer DEFAULT 30 NOT NULL,
+    last_prune_run_at timestamp with time zone,
+    last_prune_row_count integer,
+    updated_at timestamp with time zone DEFAULT now() NOT NULL,
+    CONSTRAINT event_retention_config_id_check CHECK ((id = 1))
 );
 
 --
@@ -249,7 +521,9 @@ CREATE TABLE public.invoice_items (
     unit character varying(20),
     rate numeric(10,2),
     amount numeric(12,2),
-    created_at timestamp with time zone DEFAULT now()
+    created_at timestamp with time zone DEFAULT now(),
+    period_year integer,
+    period_month integer
 );
 
 --
@@ -375,7 +649,8 @@ CREATE TABLE public.potential_permits (
     reviewed_by character varying(100),
     project_id uuid,
     created_at timestamp with time zone DEFAULT now(),
-    updated_at timestamp with time zone DEFAULT now()
+    updated_at timestamp with time zone DEFAULT now(),
+    CONSTRAINT potential_permits_status_enum CHECK (((status IS NULL) OR ((status)::text = ANY ((ARRAY['pending'::character varying, 'approved'::character varying, 'accepted'::character varying, 'rejected'::character varying, 'withdrawn'::character varying])::text[]))))
 );
 
 --
@@ -404,8 +679,30 @@ CREATE TABLE public.project_dwg_sync_state (
     project_id uuid NOT NULL,
     last_synced_at timestamp with time zone DEFAULT now() NOT NULL,
     manifest_etag text,
-    client_label text,
-    CONSTRAINT project_dwg_sync_state_pkey PRIMARY KEY (user_id, project_id)
+    client_label text
+);
+
+--
+-- Name: project_photos; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.project_photos (
+    id uuid DEFAULT gen_random_uuid() NOT NULL,
+    project_id uuid NOT NULL,
+    uploaded_by uuid,
+    filename text NOT NULL,
+    mime_type text NOT NULL,
+    size_bytes bigint NOT NULL,
+    storage_key text NOT NULL,
+    caption text,
+    taken_at timestamp with time zone,
+    uploaded_at timestamp with time zone DEFAULT now() NOT NULL,
+    gps_lat double precision,
+    gps_lon double precision,
+    gps_accuracy_m real,
+    status text DEFAULT 'active'::text NOT NULL,
+    created_at timestamp with time zone DEFAULT now() NOT NULL,
+    CONSTRAINT project_photos_status_check CHECK ((status = ANY (ARRAY['active'::text, 'archived'::text])))
 );
 
 --
@@ -453,7 +750,9 @@ CREATE TABLE public.projects (
     is_ongoing boolean DEFAULT false,
     program character varying(20),
     service_area_name text,
-    CONSTRAINT projects_program_check CHECK (((program IS NULL) OR ((program)::text = ANY ((ARRAY['rus'::character varying, 'bau'::character varying, 'gfr'::character varying, 'other'::character varying])::text[]))))
+    CONSTRAINT check_ongoing_is_monthly CHECK (((NOT is_ongoing) OR ((billing_cadence)::text = 'monthly'::text))),
+    CONSTRAINT projects_program_check CHECK (((program IS NULL) OR ((program)::text = ANY ((ARRAY['rus'::character varying, 'bau'::character varying, 'gfr'::character varying, 'other'::character varying])::text[])))),
+    CONSTRAINT projects_rollup_level_key_required CHECK (((is_rollup IS NOT TRUE) OR ((rollup_level)::text = 'legacy_orphan'::text) OR ((rollup_level IS NOT NULL) AND (rollup_key IS NOT NULL))))
 );
 
 --
@@ -464,6 +763,148 @@ CREATE TABLE public.schema_migrations (
     filename character varying(255) NOT NULL,
     applied_at timestamp with time zone DEFAULT now(),
     checksum character varying(64)
+);
+
+--
+-- Name: service_area_job_assignments; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.service_area_job_assignments (
+    id uuid DEFAULT gen_random_uuid() NOT NULL,
+    service_area_job_id uuid NOT NULL,
+    staff_id uuid,
+    user_id uuid,
+    role character varying(40),
+    created_at timestamp with time zone DEFAULT now() NOT NULL
+);
+
+--
+-- Name: service_area_jobs; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.service_area_jobs (
+    id uuid DEFAULT gen_random_uuid() NOT NULL,
+    service_area_id uuid NOT NULL,
+    job_id uuid,
+    team character varying(20),
+    assigned_staff_id uuid,
+    assigned_user_id uuid,
+    billing_type character varying(20) DEFAULT 'hourly'::character varying NOT NULL,
+    rate numeric(10,2),
+    status character varying(30) DEFAULT 'potential'::character varying NOT NULL,
+    estimated_amount numeric(14,2),
+    actual_hours numeric(12,4) DEFAULT 0 NOT NULL,
+    actual_amount numeric(14,2) DEFAULT 0 NOT NULL,
+    footage numeric(12,2),
+    miles numeric(10,4),
+    start_date date,
+    completed_date date,
+    billed_date date,
+    notes text,
+    created_by_user_id uuid,
+    updated_by_user_id uuid,
+    created_at timestamp with time zone DEFAULT now() NOT NULL,
+    updated_at timestamp with time zone DEFAULT now() NOT NULL,
+    route_id uuid,
+    cost_category character varying(20),
+    CONSTRAINT service_area_jobs_billing_type_check CHECK (((billing_type)::text = ANY ((ARRAY['hourly'::character varying, 'footage'::character varying, 'fixed'::character varying])::text[]))),
+    CONSTRAINT service_area_jobs_cost_category_check CHECK (((cost_category IS NULL) OR ((cost_category)::text = ANY ((ARRAY['engineering'::character varying, 'construction'::character varying])::text[])))),
+    CONSTRAINT service_area_jobs_status_check CHECK (((status)::text = ANY ((ARRAY['potential'::character varying, 'started'::character varying, 'submitted'::character varying, 'approved'::character varying, 'issued'::character varying, 'client_approved'::character varying, 'revision'::character varying, 'complete'::character varying, 'billed'::character varying, 'cancelled'::character varying])::text[]))),
+    CONSTRAINT service_area_jobs_team_check CHECK (((team IS NULL) OR ((team)::text = ANY ((ARRAY['permitting'::character varying, 'design'::character varying, 'construction'::character varying])::text[]))))
+);
+
+--
+-- Name: service_area_material_units; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.service_area_material_units (
+    id uuid DEFAULT gen_random_uuid() NOT NULL,
+    material_id uuid NOT NULL,
+    label text,
+    sequence integer,
+    status character varying(20) DEFAULT 'pending'::character varying NOT NULL,
+    installed_date date,
+    map_feature_ref text,
+    created_at timestamp with time zone DEFAULT now() NOT NULL,
+    updated_at timestamp with time zone DEFAULT now() NOT NULL,
+    CONSTRAINT sa_material_units_status_check CHECK (((status)::text = ANY ((ARRAY['pending'::character varying, 'installed'::character varying, 'removed'::character varying])::text[])))
+);
+
+--
+-- Name: service_area_materials; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.service_area_materials (
+    id uuid DEFAULT gen_random_uuid() NOT NULL,
+    service_area_id uuid NOT NULL,
+    item text NOT NULL,
+    quantity numeric(14,3),
+    unit character varying(40),
+    unit_cost numeric(14,2),
+    source character varying(20) DEFAULT 'manual'::character varying NOT NULL,
+    notes text,
+    created_at timestamp with time zone DEFAULT now() NOT NULL,
+    route_id uuid,
+    completed_quantity numeric(14,3) DEFAULT 0 NOT NULL,
+    map_feature_ref text,
+    CONSTRAINT service_area_materials_source_check CHECK (((source)::text = ANY ((ARRAY['manual'::character varying, 'bom_csv'::character varying, 'map'::character varying])::text[])))
+);
+
+--
+-- Name: service_area_routes; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.service_area_routes (
+    id uuid DEFAULT gen_random_uuid() NOT NULL,
+    service_area_id uuid NOT NULL,
+    name text NOT NULL,
+    status character varying(30) DEFAULT 'active'::character varying NOT NULL,
+    sort_order integer DEFAULT 0 NOT NULL,
+    map_file_path text,
+    map_filename text,
+    map_geometry jsonb,
+    build_finalized_at timestamp with time zone,
+    notes text,
+    client_visible boolean DEFAULT false NOT NULL,
+    created_by_user_id uuid,
+    updated_by_user_id uuid,
+    created_at timestamp with time zone DEFAULT now() NOT NULL,
+    updated_at timestamp with time zone DEFAULT now() NOT NULL,
+    CONSTRAINT service_area_routes_status_check CHECK (((status)::text = ANY ((ARRAY['active'::character varying, 'on_hold'::character varying, 'complete'::character varying, 'cancelled'::character varying])::text[])))
+);
+
+--
+-- Name: service_areas; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.service_areas (
+    id uuid DEFAULT gen_random_uuid() NOT NULL,
+    client_id uuid NOT NULL,
+    engineering_contract_id uuid,
+    name text NOT NULL,
+    work_order_number text,
+    program character varying(20),
+    status character varying(30) DEFAULT 'active'::character varying NOT NULL,
+    notes text,
+    start_date date,
+    completed_date date,
+    billed_date date,
+    is_ongoing boolean DEFAULT false NOT NULL,
+    billing_cadence character varying(20) DEFAULT 'one_time'::character varying NOT NULL,
+    map_file_path text,
+    map_filename text,
+    client_visible boolean DEFAULT false NOT NULL,
+    created_by_user_id uuid,
+    updated_by_user_id uuid,
+    created_at timestamp with time zone DEFAULT now() NOT NULL,
+    updated_at timestamp with time zone DEFAULT now() NOT NULL,
+    build_finalized_at timestamp with time zone,
+    map_geometry jsonb,
+    client_visible_metrics jsonb DEFAULT '{"progress": true, "total_cost": true, "engineering_cost": true, "construction_cost": false}'::jsonb NOT NULL,
+    CONSTRAINT service_areas_billing_cadence_check CHECK (((billing_cadence)::text = ANY ((ARRAY['one_time'::character varying, 'monthly'::character varying])::text[]))),
+    CONSTRAINT service_areas_ec_implies_rus CHECK (((engineering_contract_id IS NULL) OR ((program)::text = 'rus'::text))),
+    CONSTRAINT service_areas_ongoing_monthly CHECK (((NOT is_ongoing) OR ((billing_cadence)::text = 'monthly'::text))),
+    CONSTRAINT service_areas_program_check CHECK (((program IS NULL) OR ((program)::text = ANY ((ARRAY['rus'::character varying, 'bau'::character varying, 'gfr'::character varying, 'other'::character varying])::text[]))))
 );
 
 --
@@ -932,7 +1373,8 @@ CREATE TABLE public.time_clock_sessions (
     ended_at timestamp with time zone,
     notes text,
     created_time_entry_id uuid,
-    created_at timestamp with time zone DEFAULT now()
+    created_at timestamp with time zone DEFAULT now(),
+    service_area_job_id uuid
 );
 
 --
@@ -952,27 +1394,8 @@ CREATE TABLE public.time_entries (
     unbilled_category text,
     created_at timestamp with time zone DEFAULT now(),
     user_id uuid,
-    pending_project_request_id uuid
-);
-
---
--- Name: csv_review_queue; Type: TABLE; Schema: public; Owner: -
---
-
-CREATE TABLE public.csv_review_queue (
-    id uuid DEFAULT gen_random_uuid() NOT NULL,
-    imported_at timestamp with time zone DEFAULT now() NOT NULL,
-    imported_by_user_id uuid,
-    csv_filename text,
-    raw_row jsonb NOT NULL,
-    match_attempts jsonb NOT NULL,
-    suggested_project_id uuid,
-    status character varying(20) DEFAULT 'pending'::character varying NOT NULL,
-    matched_project_id uuid,
-    resolved_at timestamp with time zone,
-    resolved_by_user_id uuid,
-    notes text,
-    CONSTRAINT csv_review_queue_status_check CHECK (((status)::text = ANY (ARRAY[('pending'::character varying)::text, ('matched'::character varying)::text, ('discarded'::character varying)::text])))
+    pending_project_request_id uuid,
+    service_area_job_id uuid
 );
 
 --
@@ -1117,6 +1540,17 @@ CREATE TABLE public.undo_buckets (
 );
 
 --
+-- Name: user_portal_access; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.user_portal_access (
+    user_id uuid NOT NULL,
+    portal_key character varying(50) NOT NULL,
+    granted_at timestamp with time zone DEFAULT now(),
+    granted_by_user_id uuid
+);
+
+--
 -- Name: users; Type: TABLE; Schema: public; Owner: -
 --
 
@@ -1138,6 +1572,85 @@ CREATE TABLE public.users (
     dashboard_layout jsonb DEFAULT '{}'::jsonb,
     staff_id uuid
 );
+
+--
+-- Name: workspace_file_versions; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.workspace_file_versions (
+    id uuid DEFAULT gen_random_uuid() NOT NULL,
+    file_id uuid NOT NULL,
+    size_bytes bigint NOT NULL,
+    sha256 text NOT NULL,
+    storage_key text NOT NULL,
+    uploaded_by uuid,
+    uploaded_at timestamp with time zone DEFAULT now() NOT NULL
+);
+
+--
+-- Name: workspace_files; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.workspace_files (
+    id uuid DEFAULT gen_random_uuid() NOT NULL,
+    folder_id uuid NOT NULL,
+    filename text NOT NULL,
+    mime_type text NOT NULL,
+    size_bytes bigint NOT NULL,
+    sha256 text NOT NULL,
+    storage_key text NOT NULL,
+    uploaded_by uuid,
+    uploaded_at timestamp with time zone DEFAULT now() NOT NULL,
+    current_version_count integer DEFAULT 1 NOT NULL,
+    deleted_at timestamp with time zone,
+    deleted_by uuid
+);
+
+--
+-- Name: workspace_folder_shares; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.workspace_folder_shares (
+    folder_id uuid NOT NULL,
+    user_id uuid NOT NULL,
+    permission text NOT NULL,
+    granted_by uuid,
+    granted_at timestamp with time zone DEFAULT now() NOT NULL,
+    CONSTRAINT workspace_folder_shares_permission_check CHECK ((permission = ANY (ARRAY['view'::text, 'edit'::text])))
+);
+
+--
+-- Name: workspace_folders; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.workspace_folders (
+    id uuid DEFAULT gen_random_uuid() NOT NULL,
+    parent_id uuid,
+    name text NOT NULL,
+    kind text NOT NULL,
+    owner_user_id uuid,
+    project_id uuid,
+    share_mode text DEFAULT 'inherit'::text NOT NULL,
+    created_by uuid,
+    created_at timestamp with time zone DEFAULT now() NOT NULL,
+    updated_at timestamp with time zone DEFAULT now() NOT NULL,
+    deleted_at timestamp with time zone,
+    deleted_by uuid,
+    CONSTRAINT workspace_folders_kind_check CHECK ((kind = ANY (ARRAY['user_home'::text, 'shared_public'::text, 'shared_managers'::text, 'shared_specific'::text, 'regular'::text]))),
+    CONSTRAINT workspace_folders_share_mode_check CHECK ((share_mode = ANY (ARRAY['inherit'::text, 'private'::text, 'public'::text, 'specific'::text])))
+);
+
+--
+-- Name: audit_log id; Type: DEFAULT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.audit_log ALTER COLUMN id SET DEFAULT nextval('public.audit_log_id_seq'::regclass);
+
+--
+-- Name: event_log id; Type: DEFAULT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.event_log ALTER COLUMN id SET DEFAULT nextval('public.event_log_id_seq'::regclass);
 
 --
 -- Name: time_entry_audit id; Type: DEFAULT; Schema: public; Owner: -
@@ -1163,6 +1676,20 @@ ALTER TABLE ONLY public.training_topic_capstone_attempts ALTER COLUMN id SET DEF
 
 ALTER TABLE ONLY public.ai_messages
     ADD CONSTRAINT ai_messages_pkey PRIMARY KEY (id);
+
+--
+-- Name: audit_log audit_log_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.audit_log
+    ADD CONSTRAINT audit_log_pkey PRIMARY KEY (id);
+
+--
+-- Name: audit_retention_config audit_retention_config_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.audit_retention_config
+    ADD CONSTRAINT audit_retention_config_pkey PRIMARY KEY (id);
 
 --
 -- Name: billing_batch_items billing_batch_items_pkey; Type: CONSTRAINT; Schema: public; Owner: -
@@ -1191,6 +1718,48 @@ ALTER TABLE ONLY public.budget_codes
 
 ALTER TABLE ONLY public.budgets
     ADD CONSTRAINT budgets_pkey PRIMARY KEY (id);
+
+--
+-- Name: client_approvals client_approvals_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.client_approvals
+    ADD CONSTRAINT client_approvals_pkey PRIMARY KEY (id);
+
+--
+-- Name: client_documents client_documents_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.client_documents
+    ADD CONSTRAINT client_documents_pkey PRIMARY KEY (id);
+
+--
+-- Name: client_organizations client_organizations_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.client_organizations
+    ADD CONSTRAINT client_organizations_pkey PRIMARY KEY (id);
+
+--
+-- Name: client_tokens client_tokens_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.client_tokens
+    ADD CONSTRAINT client_tokens_pkey PRIMARY KEY (id);
+
+--
+-- Name: client_tokens client_tokens_token_hash_key; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.client_tokens
+    ADD CONSTRAINT client_tokens_token_hash_key UNIQUE (token_hash);
+
+--
+-- Name: client_users client_users_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.client_users
+    ADD CONSTRAINT client_users_pkey PRIMARY KEY (id);
 
 --
 -- Name: clients clients_name_key; Type: CONSTRAINT; Schema: public; Owner: -
@@ -1228,6 +1797,13 @@ ALTER TABLE ONLY public.contracts
     ADD CONSTRAINT contracts_pkey PRIMARY KEY (id);
 
 --
+-- Name: csv_review_queue csv_review_queue_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.csv_review_queue
+    ADD CONSTRAINT csv_review_queue_pkey PRIMARY KEY (id);
+
+--
 -- Name: customer_clients customer_clients_pkey; Type: CONSTRAINT; Schema: public; Owner: -
 --
 
@@ -1247,6 +1823,41 @@ ALTER TABLE ONLY public.design_stages
 
 ALTER TABLE ONLY public.design_stages
     ADD CONSTRAINT design_stages_project_id_stage_key UNIQUE (project_id, stage);
+
+--
+-- Name: dwg_canonical_files dwg_canonical_files_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.dwg_canonical_files
+    ADD CONSTRAINT dwg_canonical_files_pkey PRIMARY KEY (id);
+
+--
+-- Name: dwg_canonical_files dwg_canonical_files_project_id_filename_key; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.dwg_canonical_files
+    ADD CONSTRAINT dwg_canonical_files_project_id_filename_key UNIQUE (project_id, filename);
+
+--
+-- Name: dwg_staging dwg_staging_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.dwg_staging
+    ADD CONSTRAINT dwg_staging_pkey PRIMARY KEY (id);
+
+--
+-- Name: dwg_staging dwg_staging_user_id_project_id_filename_pushed_at_key; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.dwg_staging
+    ADD CONSTRAINT dwg_staging_user_id_project_id_filename_pushed_at_key UNIQUE (user_id, project_id, filename, pushed_at);
+
+--
+-- Name: dwg_versions dwg_versions_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.dwg_versions
+    ADD CONSTRAINT dwg_versions_pkey PRIMARY KEY (id);
 
 --
 -- Name: ec_job_visibility ec_job_visibility_engineering_contract_id_job_id_key; Type: CONSTRAINT; Schema: public; Owner: -
@@ -1303,6 +1914,20 @@ ALTER TABLE ONLY public.engineering_contracts
 
 ALTER TABLE ONLY public.engineering_contracts
     ADD CONSTRAINT engineering_contracts_pkey PRIMARY KEY (id);
+
+--
+-- Name: event_log event_log_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.event_log
+    ADD CONSTRAINT event_log_pkey PRIMARY KEY (id);
+
+--
+-- Name: event_retention_config event_retention_config_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.event_retention_config
+    ADD CONSTRAINT event_retention_config_pkey PRIMARY KEY (id);
 
 --
 -- Name: invoice_items invoice_items_pkey; Type: CONSTRAINT; Schema: public; Owner: -
@@ -1396,6 +2021,20 @@ ALTER TABLE ONLY public.pricing_entries
     ADD CONSTRAINT pricing_entries_pkey PRIMARY KEY (id);
 
 --
+-- Name: project_dwg_sync_state project_dwg_sync_state_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.project_dwg_sync_state
+    ADD CONSTRAINT project_dwg_sync_state_pkey PRIMARY KEY (user_id, project_id);
+
+--
+-- Name: project_photos project_photos_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.project_photos
+    ADD CONSTRAINT project_photos_pkey PRIMARY KEY (id);
+
+--
 -- Name: projects projects_pkey; Type: CONSTRAINT; Schema: public; Owner: -
 --
 
@@ -1403,11 +2042,11 @@ ALTER TABLE ONLY public.projects
     ADD CONSTRAINT projects_pkey PRIMARY KEY (id);
 
 --
--- Name: projects check_ongoing_is_monthly; Type: CONSTRAINT; Schema: public; Owner: -
+-- Name: service_area_job_assignments sa_job_assign_unique; Type: CONSTRAINT; Schema: public; Owner: -
 --
 
-ALTER TABLE ONLY public.projects
-    ADD CONSTRAINT check_ongoing_is_monthly CHECK ((NOT is_ongoing OR (billing_cadence = 'monthly'::character varying)));
+ALTER TABLE ONLY public.service_area_job_assignments
+    ADD CONSTRAINT sa_job_assign_unique UNIQUE (service_area_job_id, staff_id);
 
 --
 -- Name: schema_migrations schema_migrations_pkey; Type: CONSTRAINT; Schema: public; Owner: -
@@ -1415,6 +2054,48 @@ ALTER TABLE ONLY public.projects
 
 ALTER TABLE ONLY public.schema_migrations
     ADD CONSTRAINT schema_migrations_pkey PRIMARY KEY (filename);
+
+--
+-- Name: service_area_job_assignments service_area_job_assignments_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.service_area_job_assignments
+    ADD CONSTRAINT service_area_job_assignments_pkey PRIMARY KEY (id);
+
+--
+-- Name: service_area_jobs service_area_jobs_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.service_area_jobs
+    ADD CONSTRAINT service_area_jobs_pkey PRIMARY KEY (id);
+
+--
+-- Name: service_area_material_units service_area_material_units_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.service_area_material_units
+    ADD CONSTRAINT service_area_material_units_pkey PRIMARY KEY (id);
+
+--
+-- Name: service_area_materials service_area_materials_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.service_area_materials
+    ADD CONSTRAINT service_area_materials_pkey PRIMARY KEY (id);
+
+--
+-- Name: service_area_routes service_area_routes_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.service_area_routes
+    ADD CONSTRAINT service_area_routes_pkey PRIMARY KEY (id);
+
+--
+-- Name: service_areas service_areas_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.service_areas
+    ADD CONSTRAINT service_areas_pkey PRIMARY KEY (id);
 
 --
 -- Name: setting_change_requests setting_change_requests_pkey; Type: CONSTRAINT; Schema: public; Owner: -
@@ -1697,13 +2378,6 @@ ALTER TABLE ONLY public.time_entries
     ADD CONSTRAINT time_entries_pkey PRIMARY KEY (id);
 
 --
--- Name: csv_review_queue csv_review_queue_pkey; Type: CONSTRAINT; Schema: public; Owner: -
---
-
-ALTER TABLE ONLY public.csv_review_queue
-    ADD CONSTRAINT csv_review_queue_pkey PRIMARY KEY (id);
-
---
 -- Name: time_entry_audit time_entry_audit_pkey; Type: CONSTRAINT; Schema: public; Owner: -
 --
 
@@ -1739,6 +2413,13 @@ ALTER TABLE ONLY public.undo_buckets
     ADD CONSTRAINT undo_buckets_pkey PRIMARY KEY (id);
 
 --
+-- Name: user_portal_access user_portal_access_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.user_portal_access
+    ADD CONSTRAINT user_portal_access_pkey PRIMARY KEY (user_id, portal_key);
+
+--
 -- Name: users users_pkey; Type: CONSTRAINT; Schema: public; Owner: -
 --
 
@@ -1751,6 +2432,54 @@ ALTER TABLE ONLY public.users
 
 ALTER TABLE ONLY public.users
     ADD CONSTRAINT users_username_key UNIQUE (username);
+
+--
+-- Name: workspace_file_versions workspace_file_versions_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.workspace_file_versions
+    ADD CONSTRAINT workspace_file_versions_pkey PRIMARY KEY (id);
+
+--
+-- Name: workspace_files workspace_files_folder_id_filename_key; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.workspace_files
+    ADD CONSTRAINT workspace_files_folder_id_filename_key UNIQUE (folder_id, filename);
+
+--
+-- Name: workspace_files workspace_files_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.workspace_files
+    ADD CONSTRAINT workspace_files_pkey PRIMARY KEY (id);
+
+--
+-- Name: workspace_folder_shares workspace_folder_shares_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.workspace_folder_shares
+    ADD CONSTRAINT workspace_folder_shares_pkey PRIMARY KEY (folder_id, user_id);
+
+--
+-- Name: workspace_folders workspace_folders_parent_id_name_key; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.workspace_folders
+    ADD CONSTRAINT workspace_folders_parent_id_name_key UNIQUE (parent_id, name);
+
+--
+-- Name: workspace_folders workspace_folders_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.workspace_folders
+    ADD CONSTRAINT workspace_folders_pkey PRIMARY KEY (id);
+
+--
+-- Name: csv_review_queue_status_idx; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX csv_review_queue_status_idx ON public.csv_review_queue USING btree (status, imported_at DESC);
 
 --
 -- Name: idx_audit_actor; Type: INDEX; Schema: public; Owner: -
@@ -1769,6 +2498,42 @@ CREATE INDEX idx_audit_at ON public.time_entry_audit USING btree (at DESC);
 --
 
 CREATE INDEX idx_audit_entry ON public.time_entry_audit USING btree (time_entry_id, at DESC);
+
+--
+-- Name: idx_audit_log_action; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX idx_audit_log_action ON public.audit_log USING btree (action, at DESC);
+
+--
+-- Name: idx_audit_log_actor; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX idx_audit_log_actor ON public.audit_log USING btree (actor_user_id, at DESC);
+
+--
+-- Name: idx_audit_log_archived; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX idx_audit_log_archived ON public.audit_log USING btree (archived_at) WHERE (archived_at IS NOT NULL);
+
+--
+-- Name: idx_audit_log_at; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX idx_audit_log_at ON public.audit_log USING btree (at DESC);
+
+--
+-- Name: idx_audit_log_entity; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX idx_audit_log_entity ON public.audit_log USING btree (entity_type, entity_id, at DESC);
+
+--
+-- Name: idx_audit_log_hot; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX idx_audit_log_hot ON public.audit_log USING btree (at DESC) WHERE (archived_at IS NULL);
 
 --
 -- Name: idx_audit_meaningful; Type: INDEX; Schema: public; Owner: -
@@ -1795,6 +2560,60 @@ CREATE INDEX idx_billing_batches_client_id ON public.billing_batches USING btree
 CREATE INDEX idx_budgets_engineering_contract_id ON public.budgets USING btree (engineering_contract_id);
 
 --
+-- Name: idx_client_approvals_org_all; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX idx_client_approvals_org_all ON public.client_approvals USING btree (client_org_id, status);
+
+--
+-- Name: idx_client_approvals_org_pending; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX idx_client_approvals_org_pending ON public.client_approvals USING btree (client_org_id, status) WHERE (status = 'pending'::text);
+
+--
+-- Name: idx_client_approvals_project; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX idx_client_approvals_project ON public.client_approvals USING btree (project_id) WHERE (project_id IS NOT NULL);
+
+--
+-- Name: idx_client_approvals_responded_at; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX idx_client_approvals_responded_at ON public.client_approvals USING btree (responded_at DESC) WHERE (responded_at IS NOT NULL);
+
+--
+-- Name: idx_client_documents_org; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX idx_client_documents_org ON public.client_documents USING btree (client_org_id, created_at DESC);
+
+--
+-- Name: idx_client_documents_project; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX idx_client_documents_project ON public.client_documents USING btree (project_id) WHERE (project_id IS NOT NULL);
+
+--
+-- Name: idx_client_documents_status; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX idx_client_documents_status ON public.client_documents USING btree (client_org_id, status);
+
+--
+-- Name: idx_client_tokens_user; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX idx_client_tokens_user ON public.client_tokens USING btree (client_user_id);
+
+--
+-- Name: idx_client_users_org; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX idx_client_users_org ON public.client_users USING btree (org_id);
+
+--
 -- Name: idx_contracts_ec_id; Type: INDEX; Schema: public; Owner: -
 --
 
@@ -1811,6 +2630,48 @@ CREATE INDEX idx_contracts_engineering_contract_id ON public.contracts USING btr
 --
 
 CREATE INDEX idx_customer_clients_client ON public.customer_clients USING btree (client_id);
+
+--
+-- Name: idx_dwg_canonical_modified; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX idx_dwg_canonical_modified ON public.dwg_canonical_files USING btree (last_modified_at DESC);
+
+--
+-- Name: idx_dwg_canonical_project; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX idx_dwg_canonical_project ON public.dwg_canonical_files USING btree (project_id);
+
+--
+-- Name: idx_dwg_staging_pending; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX idx_dwg_staging_pending ON public.dwg_staging USING btree (status, pushed_at DESC) WHERE (status = 'pending'::text);
+
+--
+-- Name: idx_dwg_staging_project; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX idx_dwg_staging_project ON public.dwg_staging USING btree (project_id, status);
+
+--
+-- Name: idx_dwg_staging_user; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX idx_dwg_staging_user ON public.dwg_staging USING btree (user_id, status, pushed_at DESC);
+
+--
+-- Name: idx_dwg_sync_state_user; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX idx_dwg_sync_state_user ON public.project_dwg_sync_state USING btree (user_id);
+
+--
+-- Name: idx_dwg_versions_canonical_uploaded; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX idx_dwg_versions_canonical_uploaded ON public.dwg_versions USING btree (canonical_file_id, uploaded_at DESC);
 
 --
 -- Name: idx_ec_job_visibility_created_by; Type: INDEX; Schema: public; Owner: -
@@ -1855,10 +2716,52 @@ CREATE INDEX idx_ec_work_orders_sa ON public.ec_work_orders USING btree (service
 CREATE INDEX idx_engineering_contracts_client_id ON public.engineering_contracts USING btree (client_id);
 
 --
+-- Name: idx_engineering_contracts_client_org; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX idx_engineering_contracts_client_org ON public.engineering_contracts USING btree (client_org_id) WHERE (client_org_id IS NOT NULL);
+
+--
 -- Name: idx_engineering_contracts_program; Type: INDEX; Schema: public; Owner: -
 --
 
 CREATE INDEX idx_engineering_contracts_program ON public.engineering_contracts USING btree (program) WHERE (program IS NOT NULL);
+
+--
+-- Name: idx_event_log_actor; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX idx_event_log_actor ON public.event_log USING btree (actor_user_id, occurred_at DESC);
+
+--
+-- Name: idx_event_log_errors; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX idx_event_log_errors ON public.event_log USING btree (occurred_at DESC) WHERE (event_type = ANY (ARRAY['js_error'::text, 'api_error'::text, 'promise_rejection'::text, 'login_failed'::text]));
+
+--
+-- Name: idx_event_log_event_type; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX idx_event_log_event_type ON public.event_log USING btree (event_type, occurred_at DESC);
+
+--
+-- Name: idx_event_log_occurred_at; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX idx_event_log_occurred_at ON public.event_log USING btree (occurred_at DESC);
+
+--
+-- Name: idx_event_log_program; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX idx_event_log_program ON public.event_log USING btree (program, occurred_at DESC);
+
+--
+-- Name: idx_event_log_request_id; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX idx_event_log_request_id ON public.event_log USING btree (request_id) WHERE (request_id IS NOT NULL);
 
 --
 -- Name: idx_invoice_items_invoice_id; Type: INDEX; Schema: public; Owner: -
@@ -1879,6 +2782,12 @@ CREATE INDEX idx_invoice_items_project_id ON public.invoice_items USING btree (p
 CREATE UNIQUE INDEX idx_invoice_items_project_period ON public.invoice_items USING btree (project_id, period_year, period_month) WHERE ((period_year IS NOT NULL) AND (period_month IS NOT NULL));
 
 --
+-- Name: idx_invoice_templates_job_client; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX idx_invoice_templates_job_client ON public.invoice_templates USING btree (job_id, client_id);
+
+--
 -- Name: idx_invoices_client_id; Type: INDEX; Schema: public; Owner: -
 --
 
@@ -1895,12 +2804,6 @@ CREATE INDEX idx_invoices_invoice_date ON public.invoices USING btree (invoice_d
 --
 
 CREATE INDEX idx_invoices_status ON public.invoices USING btree (status);
-
---
--- Name: idx_invoice_templates_job_client; Type: INDEX; Schema: public; Owner: -
---
-
-CREATE INDEX idx_invoice_templates_job_client ON public.invoice_templates USING btree (job_id, client_id);
 
 --
 -- Name: idx_job_assignments_client; Type: INDEX; Schema: public; Owner: -
@@ -1957,6 +2860,24 @@ CREATE INDEX idx_permit_stages_project_id ON public.permit_stages USING btree (p
 CREATE INDEX idx_pricing_entries_program ON public.pricing_entries USING btree (program);
 
 --
+-- Name: idx_project_photos_project; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX idx_project_photos_project ON public.project_photos USING btree (project_id, uploaded_at DESC) WHERE (status = 'active'::text);
+
+--
+-- Name: idx_project_photos_taken; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX idx_project_photos_taken ON public.project_photos USING btree (taken_at) WHERE (taken_at IS NOT NULL);
+
+--
+-- Name: idx_project_photos_user; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX idx_project_photos_user ON public.project_photos USING btree (uploaded_by, uploaded_at DESC);
+
+--
 -- Name: idx_projects_billed_date; Type: INDEX; Schema: public; Owner: -
 --
 
@@ -2005,10 +2926,100 @@ CREATE INDEX idx_projects_rollup ON public.projects USING btree (rollup_level, p
 CREATE INDEX idx_projects_status ON public.projects USING btree (status);
 
 --
+-- Name: idx_sa_job_assign_job; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX idx_sa_job_assign_job ON public.service_area_job_assignments USING btree (service_area_job_id);
+
+--
+-- Name: idx_sa_job_assign_staff; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX idx_sa_job_assign_staff ON public.service_area_job_assignments USING btree (staff_id);
+
+--
+-- Name: idx_sa_jobs_cost_cat; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX idx_sa_jobs_cost_cat ON public.service_area_jobs USING btree (cost_category);
+
+--
+-- Name: idx_sa_jobs_job; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX idx_sa_jobs_job ON public.service_area_jobs USING btree (job_id);
+
+--
+-- Name: idx_sa_jobs_route; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX idx_sa_jobs_route ON public.service_area_jobs USING btree (route_id);
+
+--
+-- Name: idx_sa_jobs_service_area; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX idx_sa_jobs_service_area ON public.service_area_jobs USING btree (service_area_id);
+
+--
+-- Name: idx_sa_jobs_staff; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX idx_sa_jobs_staff ON public.service_area_jobs USING btree (assigned_staff_id);
+
+--
+-- Name: idx_sa_jobs_team_status; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX idx_sa_jobs_team_status ON public.service_area_jobs USING btree (team, status);
+
+--
+-- Name: idx_sa_material_units_material; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX idx_sa_material_units_material ON public.service_area_material_units USING btree (material_id);
+
+--
+-- Name: idx_sa_materials_route; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX idx_sa_materials_route ON public.service_area_materials USING btree (route_id);
+
+--
+-- Name: idx_sa_materials_service_area; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX idx_sa_materials_service_area ON public.service_area_materials USING btree (service_area_id);
+
+--
+-- Name: idx_sa_routes_service_area; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX idx_sa_routes_service_area ON public.service_area_routes USING btree (service_area_id);
+
+--
 -- Name: idx_scr_pending; Type: INDEX; Schema: public; Owner: -
 --
 
 CREATE INDEX idx_scr_pending ON public.setting_change_requests USING btree (created_at DESC) WHERE ((status)::text = 'pending'::text);
+
+--
+-- Name: idx_service_areas_client; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX idx_service_areas_client ON public.service_areas USING btree (client_id);
+
+--
+-- Name: idx_service_areas_ec; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX idx_service_areas_ec ON public.service_areas USING btree (engineering_contract_id);
+
+--
+-- Name: idx_service_areas_status; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX idx_service_areas_status ON public.service_areas USING btree (status);
 
 --
 -- Name: idx_sessions_user_started; Type: INDEX; Schema: public; Owner: -
@@ -2119,16 +3130,16 @@ CREATE INDEX idx_splice_design_import_changes_import ON public.splice_design_imp
 CREATE INDEX idx_splice_design_imports_project ON public.splice_design_imports USING btree (project_id, uploaded_at DESC);
 
 --
--- Name: idx_splice_design_imports_status; Type: INDEX; Schema: public; Owner: -
---
-
-CREATE INDEX idx_splice_design_imports_status ON public.splice_design_imports USING btree (project_id, status);
-
---
 -- Name: idx_splice_design_imports_project_id; Type: INDEX; Schema: public; Owner: -
 --
 
 CREATE INDEX idx_splice_design_imports_project_id ON public.splice_design_imports USING btree (project_id);
+
+--
+-- Name: idx_splice_design_imports_status; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX idx_splice_design_imports_status ON public.splice_design_imports USING btree (project_id, status);
 
 --
 -- Name: idx_splice_design_imports_status_col; Type: INDEX; Schema: public; Owner: -
@@ -2317,10 +3328,10 @@ CREATE INDEX idx_splices_ribbon_group ON public.splices USING btree (ribbon_grou
 CREATE INDEX idx_splices_tray ON public.splices USING btree (tray_id);
 
 --
--- Name: csv_review_queue_status_idx; Type: INDEX; Schema: public; Owner: -
+-- Name: idx_tcs_sa_job; Type: INDEX; Schema: public; Owner: -
 --
 
-CREATE INDEX csv_review_queue_status_idx ON public.csv_review_queue USING btree (status, imported_at DESC);
+CREATE INDEX idx_tcs_sa_job ON public.time_clock_sessions USING btree (service_area_job_id);
 
 --
 -- Name: idx_time_entries_entry_date; Type: INDEX; Schema: public; Owner: -
@@ -2345,6 +3356,12 @@ CREATE INDEX idx_time_entries_project_date ON public.time_entries USING btree (p
 --
 
 CREATE INDEX idx_time_entries_project_id ON public.time_entries USING btree (project_id);
+
+--
+-- Name: idx_time_entries_sa_job; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX idx_time_entries_sa_job ON public.time_entries USING btree (service_area_job_id);
 
 --
 -- Name: idx_time_entries_staff_date; Type: INDEX; Schema: public; Owner: -
@@ -2383,22 +3400,82 @@ CREATE INDEX idx_training_cert_attempts_user_date ON public.training_cert_attemp
 CREATE INDEX idx_training_progress_user_course ON public.training_progress USING btree (user_id, course_id);
 
 --
--- Name: idx_dwg_sync_state_user; Type: INDEX; Schema: public; Owner: -
---
-
-CREATE INDEX idx_dwg_sync_state_user ON public.project_dwg_sync_state USING btree (user_id);
-
---
 -- Name: idx_undo_buckets_expires_at; Type: INDEX; Schema: public; Owner: -
 --
 
 CREATE INDEX idx_undo_buckets_expires_at ON public.undo_buckets USING btree (expires_at);
 
 --
+-- Name: idx_user_portal_access_user; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX idx_user_portal_access_user ON public.user_portal_access USING btree (user_id);
+
+--
 -- Name: idx_users_username; Type: INDEX; Schema: public; Owner: -
 --
 
 CREATE INDEX idx_users_username ON public.users USING btree (lower((username)::text));
+
+--
+-- Name: idx_workspace_file_versions_file; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX idx_workspace_file_versions_file ON public.workspace_file_versions USING btree (file_id, uploaded_at DESC);
+
+--
+-- Name: idx_workspace_files_active; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX idx_workspace_files_active ON public.workspace_files USING btree (folder_id) WHERE (deleted_at IS NULL);
+
+--
+-- Name: idx_workspace_files_folder; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX idx_workspace_files_folder ON public.workspace_files USING btree (folder_id);
+
+--
+-- Name: idx_workspace_files_trash; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX idx_workspace_files_trash ON public.workspace_files USING btree (deleted_at DESC) WHERE (deleted_at IS NOT NULL);
+
+--
+-- Name: idx_workspace_folder_shares_user; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX idx_workspace_folder_shares_user ON public.workspace_folder_shares USING btree (user_id);
+
+--
+-- Name: idx_workspace_folders_active; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX idx_workspace_folders_active ON public.workspace_folders USING btree (parent_id) WHERE (deleted_at IS NULL);
+
+--
+-- Name: idx_workspace_folders_owner; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX idx_workspace_folders_owner ON public.workspace_folders USING btree (owner_user_id, kind);
+
+--
+-- Name: idx_workspace_folders_parent; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX idx_workspace_folders_parent ON public.workspace_folders USING btree (parent_id);
+
+--
+-- Name: idx_workspace_folders_project; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX idx_workspace_folders_project ON public.workspace_folders USING btree (project_id) WHERE (project_id IS NOT NULL);
+
+--
+-- Name: idx_workspace_folders_trash; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX idx_workspace_folders_trash ON public.workspace_folders USING btree (deleted_at DESC) WHERE (deleted_at IS NOT NULL);
 
 --
 -- Name: job_assignments_unique_pin; Type: INDEX; Schema: public; Owner: -
@@ -2413,6 +3490,12 @@ CREATE UNIQUE INDEX job_assignments_unique_pin ON public.job_assignments USING b
 CREATE UNIQUE INDEX uniq_active_session_per_user ON public.time_clock_sessions USING btree (user_id) WHERE (ended_at IS NULL);
 
 --
+-- Name: uniq_contracts_client_number; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE UNIQUE INDEX uniq_contracts_client_number ON public.contracts USING btree (client_id, contract_number) WHERE (client_id IS NOT NULL);
+
+--
 -- Name: uniq_pricing_entries_job_program_code; Type: INDEX; Schema: public; Owner: -
 --
 
@@ -2424,28 +3507,11 @@ CREATE UNIQUE INDEX uniq_pricing_entries_job_program_code ON public.pricing_entr
 
 CREATE UNIQUE INDEX uniq_project_name_per_parent ON public.projects USING btree (COALESCE((parent_id)::text, 'ROOT'::text), lower((name)::text)) WHERE (COALESCE(is_rollup, false) = false);
 
-
 --
 -- Name: uniq_rollup_per_parent; Type: INDEX; Schema: public; Owner: -
 --
 
-CREATE UNIQUE INDEX uniq_rollup_per_parent ON public.projects USING btree (COALESCE((parent_id)::text, 'ROOT'::text), rollup_level, rollup_key) WHERE (is_rollup = true AND rollup_level <> 'legacy_orphan');
-
-
---
--- Name: uniq_contracts_client_number; Type: INDEX; Schema: public; Owner: -
---
-
-CREATE UNIQUE INDEX uniq_contracts_client_number ON public.contracts USING btree (client_id, contract_number) WHERE (client_id IS NOT NULL);
-
-
---
--- Name: projects projects_rollup_level_key_required; Type: CHECK CONSTRAINT; Schema: public; Owner: -
---
-
-ALTER TABLE public.projects
-    ADD CONSTRAINT projects_rollup_level_key_required CHECK (((is_rollup IS NOT TRUE) OR ((rollup_level)::text = 'legacy_orphan'::text) OR ((rollup_level IS NOT NULL) AND (rollup_key IS NOT NULL)))) NOT VALID;
-
+CREATE UNIQUE INDEX uniq_rollup_per_parent ON public.projects USING btree (COALESCE((parent_id)::text, 'ROOT'::text), rollup_level, rollup_key) WHERE ((is_rollup = true) AND ((rollup_level)::text <> 'legacy_orphan'::text));
 
 --
 -- Name: budgets budgets_updated_at; Type: TRIGGER; Schema: public; Owner: -
@@ -2482,6 +3548,13 @@ CREATE TRIGGER projects_updated_at BEFORE UPDATE ON public.projects FOR EACH ROW
 --
 
 CREATE TRIGGER trg_sync_projected_revenue_footage BEFORE UPDATE ON public.projects FOR EACH ROW EXECUTE FUNCTION public.sync_projected_revenue_footage();
+
+--
+-- Name: audit_log audit_log_actor_user_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.audit_log
+    ADD CONSTRAINT audit_log_actor_user_id_fkey FOREIGN KEY (actor_user_id) REFERENCES public.users(id) ON DELETE SET NULL;
 
 --
 -- Name: billing_batch_items billing_batch_items_batch_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
@@ -2554,6 +3627,97 @@ ALTER TABLE ONLY public.budgets
     ADD CONSTRAINT budgets_project_id_fkey FOREIGN KEY (project_id) REFERENCES public.projects(id) ON DELETE CASCADE;
 
 --
+-- Name: client_approvals client_approvals_client_org_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.client_approvals
+    ADD CONSTRAINT client_approvals_client_org_id_fkey FOREIGN KEY (client_org_id) REFERENCES public.client_organizations(id) ON DELETE CASCADE;
+
+--
+-- Name: client_approvals client_approvals_document_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.client_approvals
+    ADD CONSTRAINT client_approvals_document_id_fkey FOREIGN KEY (document_id) REFERENCES public.client_documents(id) ON DELETE SET NULL;
+
+--
+-- Name: client_approvals client_approvals_project_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.client_approvals
+    ADD CONSTRAINT client_approvals_project_id_fkey FOREIGN KEY (project_id) REFERENCES public.projects(id) ON DELETE SET NULL;
+
+--
+-- Name: client_approvals client_approvals_requested_by_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.client_approvals
+    ADD CONSTRAINT client_approvals_requested_by_fkey FOREIGN KEY (requested_by) REFERENCES public.users(id) ON DELETE SET NULL;
+
+--
+-- Name: client_approvals client_approvals_responded_by_client_user_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.client_approvals
+    ADD CONSTRAINT client_approvals_responded_by_client_user_id_fkey FOREIGN KEY (responded_by_client_user_id) REFERENCES public.client_users(id) ON DELETE SET NULL;
+
+--
+-- Name: client_documents client_documents_client_org_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.client_documents
+    ADD CONSTRAINT client_documents_client_org_id_fkey FOREIGN KEY (client_org_id) REFERENCES public.client_organizations(id) ON DELETE CASCADE;
+
+--
+-- Name: client_documents client_documents_project_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.client_documents
+    ADD CONSTRAINT client_documents_project_id_fkey FOREIGN KEY (project_id) REFERENCES public.projects(id) ON DELETE SET NULL;
+
+--
+-- Name: client_documents client_documents_uploaded_by_client_user_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.client_documents
+    ADD CONSTRAINT client_documents_uploaded_by_client_user_id_fkey FOREIGN KEY (uploaded_by_client_user_id) REFERENCES public.client_users(id) ON DELETE SET NULL;
+
+--
+-- Name: client_documents client_documents_uploaded_by_user_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.client_documents
+    ADD CONSTRAINT client_documents_uploaded_by_user_id_fkey FOREIGN KEY (uploaded_by_user_id) REFERENCES public.users(id) ON DELETE SET NULL;
+
+--
+-- Name: client_organizations client_organizations_created_by_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.client_organizations
+    ADD CONSTRAINT client_organizations_created_by_fkey FOREIGN KEY (created_by) REFERENCES public.users(id) ON DELETE SET NULL;
+
+--
+-- Name: client_tokens client_tokens_client_user_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.client_tokens
+    ADD CONSTRAINT client_tokens_client_user_id_fkey FOREIGN KEY (client_user_id) REFERENCES public.client_users(id) ON DELETE CASCADE;
+
+--
+-- Name: client_users client_users_invited_by_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.client_users
+    ADD CONSTRAINT client_users_invited_by_fkey FOREIGN KEY (invited_by) REFERENCES public.users(id) ON DELETE SET NULL;
+
+--
+-- Name: client_users client_users_org_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.client_users
+    ADD CONSTRAINT client_users_org_id_fkey FOREIGN KEY (org_id) REFERENCES public.client_organizations(id) ON DELETE CASCADE;
+
+--
 -- Name: contracts contracts_client_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
 --
 
@@ -2566,6 +3730,34 @@ ALTER TABLE ONLY public.contracts
 
 ALTER TABLE ONLY public.contracts
     ADD CONSTRAINT contracts_engineering_contract_id_fkey FOREIGN KEY (engineering_contract_id) REFERENCES public.engineering_contracts(id) ON DELETE SET NULL;
+
+--
+-- Name: csv_review_queue csv_review_queue_imported_by_user_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.csv_review_queue
+    ADD CONSTRAINT csv_review_queue_imported_by_user_id_fkey FOREIGN KEY (imported_by_user_id) REFERENCES public.users(id) ON DELETE SET NULL;
+
+--
+-- Name: csv_review_queue csv_review_queue_matched_project_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.csv_review_queue
+    ADD CONSTRAINT csv_review_queue_matched_project_id_fkey FOREIGN KEY (matched_project_id) REFERENCES public.projects(id) ON DELETE SET NULL;
+
+--
+-- Name: csv_review_queue csv_review_queue_resolved_by_user_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.csv_review_queue
+    ADD CONSTRAINT csv_review_queue_resolved_by_user_id_fkey FOREIGN KEY (resolved_by_user_id) REFERENCES public.users(id) ON DELETE SET NULL;
+
+--
+-- Name: csv_review_queue csv_review_queue_suggested_project_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.csv_review_queue
+    ADD CONSTRAINT csv_review_queue_suggested_project_id_fkey FOREIGN KEY (suggested_project_id) REFERENCES public.projects(id) ON DELETE SET NULL;
 
 --
 -- Name: customer_clients customer_clients_client_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
@@ -2589,6 +3781,62 @@ ALTER TABLE ONLY public.design_stages
     ADD CONSTRAINT design_stages_project_id_fkey FOREIGN KEY (project_id) REFERENCES public.projects(id) ON DELETE CASCADE;
 
 --
+-- Name: dwg_canonical_files dwg_canonical_files_last_modified_by_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.dwg_canonical_files
+    ADD CONSTRAINT dwg_canonical_files_last_modified_by_fkey FOREIGN KEY (last_modified_by) REFERENCES public.users(id) ON DELETE SET NULL;
+
+--
+-- Name: dwg_canonical_files dwg_canonical_files_project_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.dwg_canonical_files
+    ADD CONSTRAINT dwg_canonical_files_project_id_fkey FOREIGN KEY (project_id) REFERENCES public.projects(id) ON DELETE CASCADE;
+
+--
+-- Name: dwg_staging dwg_staging_project_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.dwg_staging
+    ADD CONSTRAINT dwg_staging_project_id_fkey FOREIGN KEY (project_id) REFERENCES public.projects(id) ON DELETE CASCADE;
+
+--
+-- Name: dwg_staging dwg_staging_reviewed_by_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.dwg_staging
+    ADD CONSTRAINT dwg_staging_reviewed_by_fkey FOREIGN KEY (reviewed_by) REFERENCES public.users(id) ON DELETE SET NULL;
+
+--
+-- Name: dwg_staging dwg_staging_user_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.dwg_staging
+    ADD CONSTRAINT dwg_staging_user_id_fkey FOREIGN KEY (user_id) REFERENCES public.users(id) ON DELETE CASCADE;
+
+--
+-- Name: dwg_versions dwg_versions_canonical_file_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.dwg_versions
+    ADD CONSTRAINT dwg_versions_canonical_file_id_fkey FOREIGN KEY (canonical_file_id) REFERENCES public.dwg_canonical_files(id) ON DELETE CASCADE;
+
+--
+-- Name: dwg_versions dwg_versions_uploaded_by_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.dwg_versions
+    ADD CONSTRAINT dwg_versions_uploaded_by_fkey FOREIGN KEY (uploaded_by) REFERENCES public.users(id) ON DELETE SET NULL;
+
+--
+-- Name: ec_job_visibility ec_job_visibility_created_by_user_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.ec_job_visibility
+    ADD CONSTRAINT ec_job_visibility_created_by_user_id_fkey FOREIGN KEY (created_by_user_id) REFERENCES public.users(id) ON DELETE SET NULL;
+
+--
 -- Name: ec_job_visibility ec_job_visibility_engineering_contract_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
 --
 
@@ -2601,13 +3849,6 @@ ALTER TABLE ONLY public.ec_job_visibility
 
 ALTER TABLE ONLY public.ec_job_visibility
     ADD CONSTRAINT ec_job_visibility_job_id_fkey FOREIGN KEY (job_id) REFERENCES public.jobs(id) ON DELETE CASCADE;
-
---
--- Name: ec_job_visibility ec_job_visibility_created_by_user_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
---
-
-ALTER TABLE ONLY public.ec_job_visibility
-    ADD CONSTRAINT ec_job_visibility_created_by_user_id_fkey FOREIGN KEY (created_by_user_id) REFERENCES public.users(id) ON DELETE SET NULL;
 
 --
 -- Name: ec_service_areas ec_service_areas_engineering_contract_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
@@ -2636,6 +3877,20 @@ ALTER TABLE ONLY public.ec_work_orders
 
 ALTER TABLE ONLY public.engineering_contracts
     ADD CONSTRAINT engineering_contracts_client_id_fkey FOREIGN KEY (client_id) REFERENCES public.clients(id) ON DELETE CASCADE;
+
+--
+-- Name: engineering_contracts engineering_contracts_client_org_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.engineering_contracts
+    ADD CONSTRAINT engineering_contracts_client_org_id_fkey FOREIGN KEY (client_org_id) REFERENCES public.client_organizations(id) ON DELETE SET NULL;
+
+--
+-- Name: event_log event_log_actor_user_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.event_log
+    ADD CONSTRAINT event_log_actor_user_id_fkey FOREIGN KEY (actor_user_id) REFERENCES public.users(id) ON DELETE SET NULL;
 
 --
 -- Name: invoice_items invoice_items_invoice_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
@@ -2736,6 +3991,20 @@ ALTER TABLE ONLY public.pricing_entries
     ADD CONSTRAINT pricing_entries_job_id_fkey FOREIGN KEY (job_id) REFERENCES public.jobs(id) ON DELETE CASCADE;
 
 --
+-- Name: project_photos project_photos_project_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.project_photos
+    ADD CONSTRAINT project_photos_project_id_fkey FOREIGN KEY (project_id) REFERENCES public.projects(id) ON DELETE CASCADE;
+
+--
+-- Name: project_photos project_photos_uploaded_by_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.project_photos
+    ADD CONSTRAINT project_photos_uploaded_by_fkey FOREIGN KEY (uploaded_by) REFERENCES public.users(id) ON DELETE SET NULL;
+
+--
 -- Name: projects projects_budget_code_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
 --
 
@@ -2797,6 +4066,146 @@ ALTER TABLE ONLY public.projects
 
 ALTER TABLE ONLY public.projects
     ADD CONSTRAINT projects_updated_by_user_id_fkey FOREIGN KEY (updated_by_user_id) REFERENCES public.users(id) ON DELETE SET NULL;
+
+--
+-- Name: service_area_job_assignments service_area_job_assignments_service_area_job_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.service_area_job_assignments
+    ADD CONSTRAINT service_area_job_assignments_service_area_job_id_fkey FOREIGN KEY (service_area_job_id) REFERENCES public.service_area_jobs(id) ON DELETE CASCADE;
+
+--
+-- Name: service_area_job_assignments service_area_job_assignments_staff_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.service_area_job_assignments
+    ADD CONSTRAINT service_area_job_assignments_staff_id_fkey FOREIGN KEY (staff_id) REFERENCES public.staff(id) ON DELETE CASCADE;
+
+--
+-- Name: service_area_job_assignments service_area_job_assignments_user_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.service_area_job_assignments
+    ADD CONSTRAINT service_area_job_assignments_user_id_fkey FOREIGN KEY (user_id) REFERENCES public.users(id) ON DELETE SET NULL;
+
+--
+-- Name: service_area_jobs service_area_jobs_assigned_staff_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.service_area_jobs
+    ADD CONSTRAINT service_area_jobs_assigned_staff_id_fkey FOREIGN KEY (assigned_staff_id) REFERENCES public.staff(id) ON DELETE SET NULL;
+
+--
+-- Name: service_area_jobs service_area_jobs_assigned_user_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.service_area_jobs
+    ADD CONSTRAINT service_area_jobs_assigned_user_id_fkey FOREIGN KEY (assigned_user_id) REFERENCES public.users(id) ON DELETE SET NULL;
+
+--
+-- Name: service_area_jobs service_area_jobs_created_by_user_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.service_area_jobs
+    ADD CONSTRAINT service_area_jobs_created_by_user_id_fkey FOREIGN KEY (created_by_user_id) REFERENCES public.users(id) ON DELETE SET NULL;
+
+--
+-- Name: service_area_jobs service_area_jobs_job_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.service_area_jobs
+    ADD CONSTRAINT service_area_jobs_job_id_fkey FOREIGN KEY (job_id) REFERENCES public.jobs(id) ON DELETE SET NULL;
+
+--
+-- Name: service_area_jobs service_area_jobs_route_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.service_area_jobs
+    ADD CONSTRAINT service_area_jobs_route_fkey FOREIGN KEY (route_id) REFERENCES public.service_area_routes(id) ON DELETE SET NULL;
+
+--
+-- Name: service_area_jobs service_area_jobs_service_area_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.service_area_jobs
+    ADD CONSTRAINT service_area_jobs_service_area_id_fkey FOREIGN KEY (service_area_id) REFERENCES public.service_areas(id) ON DELETE CASCADE;
+
+--
+-- Name: service_area_jobs service_area_jobs_updated_by_user_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.service_area_jobs
+    ADD CONSTRAINT service_area_jobs_updated_by_user_id_fkey FOREIGN KEY (updated_by_user_id) REFERENCES public.users(id) ON DELETE SET NULL;
+
+--
+-- Name: service_area_material_units service_area_material_units_material_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.service_area_material_units
+    ADD CONSTRAINT service_area_material_units_material_id_fkey FOREIGN KEY (material_id) REFERENCES public.service_area_materials(id) ON DELETE CASCADE;
+
+--
+-- Name: service_area_materials service_area_materials_route_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.service_area_materials
+    ADD CONSTRAINT service_area_materials_route_fkey FOREIGN KEY (route_id) REFERENCES public.service_area_routes(id) ON DELETE SET NULL;
+
+--
+-- Name: service_area_materials service_area_materials_service_area_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.service_area_materials
+    ADD CONSTRAINT service_area_materials_service_area_id_fkey FOREIGN KEY (service_area_id) REFERENCES public.service_areas(id) ON DELETE CASCADE;
+
+--
+-- Name: service_area_routes service_area_routes_created_by_user_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.service_area_routes
+    ADD CONSTRAINT service_area_routes_created_by_user_id_fkey FOREIGN KEY (created_by_user_id) REFERENCES public.users(id) ON DELETE SET NULL;
+
+--
+-- Name: service_area_routes service_area_routes_service_area_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.service_area_routes
+    ADD CONSTRAINT service_area_routes_service_area_id_fkey FOREIGN KEY (service_area_id) REFERENCES public.service_areas(id) ON DELETE CASCADE;
+
+--
+-- Name: service_area_routes service_area_routes_updated_by_user_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.service_area_routes
+    ADD CONSTRAINT service_area_routes_updated_by_user_id_fkey FOREIGN KEY (updated_by_user_id) REFERENCES public.users(id) ON DELETE SET NULL;
+
+--
+-- Name: service_areas service_areas_client_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.service_areas
+    ADD CONSTRAINT service_areas_client_id_fkey FOREIGN KEY (client_id) REFERENCES public.clients(id) ON DELETE CASCADE;
+
+--
+-- Name: service_areas service_areas_created_by_user_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.service_areas
+    ADD CONSTRAINT service_areas_created_by_user_id_fkey FOREIGN KEY (created_by_user_id) REFERENCES public.users(id) ON DELETE SET NULL;
+
+--
+-- Name: service_areas service_areas_engineering_contract_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.service_areas
+    ADD CONSTRAINT service_areas_engineering_contract_id_fkey FOREIGN KEY (engineering_contract_id) REFERENCES public.engineering_contracts(id) ON DELETE SET NULL;
+
+--
+-- Name: service_areas service_areas_updated_by_user_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.service_areas
+    ADD CONSTRAINT service_areas_updated_by_user_id_fkey FOREIGN KEY (updated_by_user_id) REFERENCES public.users(id) ON DELETE SET NULL;
 
 --
 -- Name: splice_buffer_tubes splice_buffer_tubes_cable_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
@@ -3198,6 +4607,13 @@ ALTER TABLE ONLY public.splices
     ADD CONSTRAINT splices_tray_id_fkey FOREIGN KEY (tray_id) REFERENCES public.splice_trays(id) ON DELETE CASCADE;
 
 --
+-- Name: time_clock_sessions tcs_service_area_job_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.time_clock_sessions
+    ADD CONSTRAINT tcs_service_area_job_fkey FOREIGN KEY (service_area_job_id) REFERENCES public.service_area_jobs(id) ON DELETE SET NULL;
+
+--
 -- Name: time_clock_sessions time_clock_sessions_created_time_entry_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
 --
 
@@ -3247,6 +4663,13 @@ ALTER TABLE ONLY public.time_entries
     ADD CONSTRAINT time_entries_project_id_fkey FOREIGN KEY (project_id) REFERENCES public.projects(id) ON DELETE RESTRICT;
 
 --
+-- Name: time_entries time_entries_service_area_job_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.time_entries
+    ADD CONSTRAINT time_entries_service_area_job_fkey FOREIGN KEY (service_area_job_id) REFERENCES public.service_area_jobs(id) ON DELETE SET NULL;
+
+--
 -- Name: time_entries time_entries_staff_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
 --
 
@@ -3259,34 +4682,6 @@ ALTER TABLE ONLY public.time_entries
 
 ALTER TABLE ONLY public.time_entries
     ADD CONSTRAINT time_entries_user_id_fkey FOREIGN KEY (user_id) REFERENCES public.users(id) ON DELETE SET NULL;
-
---
--- Name: csv_review_queue csv_review_queue_imported_by_user_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
---
-
-ALTER TABLE ONLY public.csv_review_queue
-    ADD CONSTRAINT csv_review_queue_imported_by_user_id_fkey FOREIGN KEY (imported_by_user_id) REFERENCES public.users(id) ON DELETE SET NULL;
-
---
--- Name: csv_review_queue csv_review_queue_matched_project_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
---
-
-ALTER TABLE ONLY public.csv_review_queue
-    ADD CONSTRAINT csv_review_queue_matched_project_id_fkey FOREIGN KEY (matched_project_id) REFERENCES public.projects(id) ON DELETE SET NULL;
-
---
--- Name: csv_review_queue csv_review_queue_resolved_by_user_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
---
-
-ALTER TABLE ONLY public.csv_review_queue
-    ADD CONSTRAINT csv_review_queue_resolved_by_user_id_fkey FOREIGN KEY (resolved_by_user_id) REFERENCES public.users(id) ON DELETE SET NULL;
-
---
--- Name: csv_review_queue csv_review_queue_suggested_project_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
---
-
-ALTER TABLE ONLY public.csv_review_queue
-    ADD CONSTRAINT csv_review_queue_suggested_project_id_fkey FOREIGN KEY (suggested_project_id) REFERENCES public.projects(id) ON DELETE SET NULL;
 
 --
 -- Name: time_entry_audit time_entry_audit_actor_user_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
@@ -3317,6 +4712,20 @@ ALTER TABLE ONLY public.training_topic_capstone_attempts
     ADD CONSTRAINT training_topic_capstone_attempts_user_id_fkey FOREIGN KEY (user_id) REFERENCES public.users(id) ON DELETE CASCADE;
 
 --
+-- Name: user_portal_access user_portal_access_granted_by_user_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.user_portal_access
+    ADD CONSTRAINT user_portal_access_granted_by_user_id_fkey FOREIGN KEY (granted_by_user_id) REFERENCES public.users(id) ON DELETE SET NULL;
+
+--
+-- Name: user_portal_access user_portal_access_user_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.user_portal_access
+    ADD CONSTRAINT user_portal_access_user_id_fkey FOREIGN KEY (user_id) REFERENCES public.users(id) ON DELETE CASCADE;
+
+--
 -- Name: users users_staff_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
 --
 
@@ -3324,430 +4733,95 @@ ALTER TABLE ONLY public.users
     ADD CONSTRAINT users_staff_id_fkey FOREIGN KEY (staff_id) REFERENCES public.staff(id) ON DELETE SET NULL;
 
 --
--- Client portal v1 — migration 0047_client_portal_v1.sql
+-- Name: workspace_file_versions workspace_file_versions_file_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
 --
 
-CREATE TABLE IF NOT EXISTS public.client_organizations (
-    id uuid DEFAULT gen_random_uuid() NOT NULL,
-    name text NOT NULL,
-    short_name text,
-    logo_url text,
-    theme_color text,
-    status text DEFAULT 'active'::text NOT NULL,
-    created_at timestamptz DEFAULT now() NOT NULL,
-    created_by uuid,
-    CONSTRAINT client_organizations_pkey PRIMARY KEY (id),
-    CONSTRAINT client_organizations_status_check CHECK ((status = ANY (ARRAY['active'::text, 'suspended'::text, 'archived'::text])))
-);
+ALTER TABLE ONLY public.workspace_file_versions
+    ADD CONSTRAINT workspace_file_versions_file_id_fkey FOREIGN KEY (file_id) REFERENCES public.workspace_files(id) ON DELETE CASCADE;
 
-CREATE TABLE IF NOT EXISTS public.client_users (
-    id uuid DEFAULT gen_random_uuid() NOT NULL,
-    org_id uuid NOT NULL,
-    email text,
-    name text,
-    is_primary boolean DEFAULT false NOT NULL,
-    status text DEFAULT 'active'::text NOT NULL,
-    invited_by uuid,
-    created_at timestamptz DEFAULT now() NOT NULL,
-    CONSTRAINT client_users_pkey PRIMARY KEY (id),
-    CONSTRAINT client_users_status_check CHECK ((status = ANY (ARRAY['active'::text, 'revoked'::text])))
-);
+--
+-- Name: workspace_file_versions workspace_file_versions_uploaded_by_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
 
-CREATE INDEX IF NOT EXISTS idx_client_users_org ON public.client_users USING btree (org_id);
+ALTER TABLE ONLY public.workspace_file_versions
+    ADD CONSTRAINT workspace_file_versions_uploaded_by_fkey FOREIGN KEY (uploaded_by) REFERENCES public.users(id) ON DELETE SET NULL;
 
-CREATE TABLE IF NOT EXISTS public.client_tokens (
-    id uuid DEFAULT gen_random_uuid() NOT NULL,
-    client_user_id uuid NOT NULL,
-    token_hash text NOT NULL,
-    last_used_at timestamptz,
-    expires_at timestamptz,
-    revoked_at timestamptz,
-    created_at timestamptz DEFAULT now() NOT NULL,
-    CONSTRAINT client_tokens_pkey PRIMARY KEY (id),
-    CONSTRAINT client_tokens_token_hash_key UNIQUE (token_hash)
-);
+--
+-- Name: workspace_files workspace_files_deleted_by_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
 
-CREATE INDEX IF NOT EXISTS idx_client_tokens_user ON public.client_tokens USING btree (client_user_id);
+ALTER TABLE ONLY public.workspace_files
+    ADD CONSTRAINT workspace_files_deleted_by_fkey FOREIGN KEY (deleted_by) REFERENCES public.users(id) ON DELETE SET NULL;
 
-ALTER TABLE ONLY public.client_organizations
-    ADD CONSTRAINT client_organizations_created_by_fkey FOREIGN KEY (created_by) REFERENCES public.users(id) ON DELETE SET NULL;
+--
+-- Name: workspace_files workspace_files_folder_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
 
-ALTER TABLE ONLY public.client_users
-    ADD CONSTRAINT client_users_org_id_fkey FOREIGN KEY (org_id) REFERENCES public.client_organizations(id) ON DELETE CASCADE;
+ALTER TABLE ONLY public.workspace_files
+    ADD CONSTRAINT workspace_files_folder_id_fkey FOREIGN KEY (folder_id) REFERENCES public.workspace_folders(id) ON DELETE CASCADE;
 
-ALTER TABLE ONLY public.client_users
-    ADD CONSTRAINT client_users_invited_by_fkey FOREIGN KEY (invited_by) REFERENCES public.users(id) ON DELETE SET NULL;
+--
+-- Name: workspace_files workspace_files_uploaded_by_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
 
-ALTER TABLE ONLY public.client_tokens
-    ADD CONSTRAINT client_tokens_client_user_id_fkey FOREIGN KEY (client_user_id) REFERENCES public.client_users(id) ON DELETE CASCADE;
+ALTER TABLE ONLY public.workspace_files
+    ADD CONSTRAINT workspace_files_uploaded_by_fkey FOREIGN KEY (uploaded_by) REFERENCES public.users(id) ON DELETE SET NULL;
 
--- Note: client_org_id column on engineering_contracts added by migration 0047.
--- Schema.sql represents the post-migration state; the column + FK + index are
--- created by the migration runner before this snapshot is compared.
--- (schema:sync regenerates this file from pg_dump after migration runs.)
+--
+-- Name: workspace_folder_shares workspace_folder_shares_folder_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
 
--- audit_log: system-wide compliance log (migration 0046)
-CREATE TABLE IF NOT EXISTS public.audit_log (
-    id              bigserial NOT NULL,
-    at              timestamptz NOT NULL DEFAULT now(),
-    actor_user_id   uuid,
-    actor_username  text,
-    actor_type      text NOT NULL DEFAULT 'user',
-    action          text NOT NULL,
-    entity_type     text NOT NULL,
-    entity_id       text,
-    before_data     jsonb,
-    after_data      jsonb,
-    source          text,
-    ip              text,
-    user_agent      text,
-    meta            jsonb,
-    CONSTRAINT audit_log_pkey PRIMARY KEY (id)
-);
+ALTER TABLE ONLY public.workspace_folder_shares
+    ADD CONSTRAINT workspace_folder_shares_folder_id_fkey FOREIGN KEY (folder_id) REFERENCES public.workspace_folders(id) ON DELETE CASCADE;
 
-CREATE INDEX IF NOT EXISTS idx_audit_log_at     ON public.audit_log USING btree (at DESC);
-CREATE INDEX IF NOT EXISTS idx_audit_log_actor  ON public.audit_log USING btree (actor_user_id, at DESC);
-CREATE INDEX IF NOT EXISTS idx_audit_log_entity ON public.audit_log USING btree (entity_type, entity_id, at DESC);
-CREATE INDEX IF NOT EXISTS idx_audit_log_action ON public.audit_log USING btree (action, at DESC);
+--
+-- Name: workspace_folder_shares workspace_folder_shares_granted_by_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
 
-ALTER TABLE ONLY public.audit_log
-    ADD CONSTRAINT IF NOT EXISTS audit_log_actor_user_id_fkey FOREIGN KEY (actor_user_id) REFERENCES public.users(id) ON DELETE SET NULL;
+ALTER TABLE ONLY public.workspace_folder_shares
+    ADD CONSTRAINT workspace_folder_shares_granted_by_fkey FOREIGN KEY (granted_by) REFERENCES public.users(id) ON DELETE SET NULL;
 
--- archived_at column (soft-archive marker, not deletion)
--- Migration 0048: retention policy tracking
-ALTER TABLE IF EXISTS public.audit_log
-    ADD COLUMN IF NOT EXISTS archived_at timestamp with time zone;
+--
+-- Name: workspace_folder_shares workspace_folder_shares_user_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
 
-CREATE INDEX IF NOT EXISTS idx_audit_log_hot ON public.audit_log (at DESC) WHERE archived_at IS NULL;
-CREATE INDEX IF NOT EXISTS idx_audit_log_archived ON public.audit_log (archived_at) WHERE archived_at IS NOT NULL;
+ALTER TABLE ONLY public.workspace_folder_shares
+    ADD CONSTRAINT workspace_folder_shares_user_id_fkey FOREIGN KEY (user_id) REFERENCES public.users(id) ON DELETE CASCADE;
 
--- audit_retention_config: singleton retention policy + archive run state
-CREATE TABLE IF NOT EXISTS public.audit_retention_config (
-    id                    integer NOT NULL PRIMARY KEY,
-    hot_retention_days    integer NOT NULL DEFAULT 1100,
-    total_retention_days  integer NOT NULL DEFAULT 2557,
-    last_archive_run_at   timestamp with time zone,
-    last_archive_row_count integer,
-    updated_at            timestamp with time zone NOT NULL DEFAULT now(),
-    CONSTRAINT audit_retention_config_id_check CHECK ((id = 1))
-);
+--
+-- Name: workspace_folders workspace_folders_created_by_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
 
-INSERT INTO public.audit_retention_config (id) VALUES (1) ON CONFLICT DO NOTHING;
+ALTER TABLE ONLY public.workspace_folders
+    ADD CONSTRAINT workspace_folders_created_by_fkey FOREIGN KEY (created_by) REFERENCES public.users(id) ON DELETE SET NULL;
+
+--
+-- Name: workspace_folders workspace_folders_deleted_by_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.workspace_folders
+    ADD CONSTRAINT workspace_folders_deleted_by_fkey FOREIGN KEY (deleted_by) REFERENCES public.users(id) ON DELETE SET NULL;
+
+--
+-- Name: workspace_folders workspace_folders_owner_user_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.workspace_folders
+    ADD CONSTRAINT workspace_folders_owner_user_id_fkey FOREIGN KEY (owner_user_id) REFERENCES public.users(id) ON DELETE CASCADE;
+
+--
+-- Name: workspace_folders workspace_folders_parent_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.workspace_folders
+    ADD CONSTRAINT workspace_folders_parent_id_fkey FOREIGN KEY (parent_id) REFERENCES public.workspace_folders(id) ON DELETE CASCADE;
+
+--
+-- Name: workspace_folders workspace_folders_project_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.workspace_folders
+    ADD CONSTRAINT workspace_folders_project_id_fkey FOREIGN KEY (project_id) REFERENCES public.projects(id) ON DELETE SET NULL;
 
 --
 --
-
--- Wave 49: client_documents + client_approvals (read-write surfaces)
-CREATE TABLE IF NOT EXISTS public.client_documents (
-    id uuid NOT NULL DEFAULT gen_random_uuid(),
-    client_org_id uuid NOT NULL,
-    project_id uuid,
-    filename text NOT NULL,
-    mime_type text NOT NULL,
-    size_bytes bigint NOT NULL,
-    storage_key text NOT NULL,
-    uploaded_by_user_id uuid,
-    uploaded_by_client_user_id uuid,
-    direction text NOT NULL DEFAULT 'to_client'::text,
-    status text NOT NULL DEFAULT 'active'::text,
-    notes text,
-    created_at timestamp with time zone NOT NULL DEFAULT now(),
-    CONSTRAINT client_documents_pkey PRIMARY KEY (id),
-    CONSTRAINT client_documents_direction_check CHECK ((direction = ANY (ARRAY['to_client'::text, 'from_client'::text]))),
-    CONSTRAINT client_documents_status_check CHECK ((status = ANY (ARRAY['active'::text, 'archived'::text]))),
-    CONSTRAINT client_documents_uploader_check CHECK (((uploaded_by_user_id IS NOT NULL AND uploaded_by_client_user_id IS NULL) OR (uploaded_by_user_id IS NULL AND uploaded_by_client_user_id IS NOT NULL) OR (uploaded_by_user_id IS NULL AND uploaded_by_client_user_id IS NULL)))
-);
-
-CREATE INDEX IF NOT EXISTS idx_client_documents_org ON public.client_documents USING btree (client_org_id, created_at DESC);
-CREATE INDEX IF NOT EXISTS idx_client_documents_project ON public.client_documents USING btree (project_id) WHERE (project_id IS NOT NULL);
-CREATE INDEX IF NOT EXISTS idx_client_documents_status ON public.client_documents USING btree (client_org_id, status);
-
-ALTER TABLE ONLY public.client_documents
-    ADD CONSTRAINT IF NOT EXISTS client_documents_client_org_id_fkey FOREIGN KEY (client_org_id) REFERENCES public.client_organizations(id) ON DELETE CASCADE;
-ALTER TABLE ONLY public.client_documents
-    ADD CONSTRAINT IF NOT EXISTS client_documents_project_id_fkey FOREIGN KEY (project_id) REFERENCES public.projects(id) ON DELETE SET NULL;
-ALTER TABLE ONLY public.client_documents
-    ADD CONSTRAINT IF NOT EXISTS client_documents_uploaded_by_user_id_fkey FOREIGN KEY (uploaded_by_user_id) REFERENCES public.users(id) ON DELETE SET NULL;
-ALTER TABLE ONLY public.client_documents
-    ADD CONSTRAINT IF NOT EXISTS client_documents_uploaded_by_client_user_id_fkey FOREIGN KEY (uploaded_by_client_user_id) REFERENCES public.client_users(id) ON DELETE SET NULL;
-
-CREATE TABLE IF NOT EXISTS public.client_approvals (
-    id uuid NOT NULL DEFAULT gen_random_uuid(),
-    client_org_id uuid NOT NULL,
-    project_id uuid,
-    title text NOT NULL,
-    description text,
-    document_id uuid,
-    requested_by uuid,
-    responded_by_client_user_id uuid,
-    response text,
-    response_notes text,
-    requested_at timestamp with time zone NOT NULL DEFAULT now(),
-    responded_at timestamp with time zone,
-    status text NOT NULL DEFAULT 'pending'::text,
-    CONSTRAINT client_approvals_pkey PRIMARY KEY (id),
-    CONSTRAINT client_approvals_response_check CHECK ((response = ANY (ARRAY['approved'::text, 'rejected'::text, 'changes_requested'::text]))),
-    CONSTRAINT client_approvals_status_check CHECK ((status = ANY (ARRAY['pending'::text, 'responded'::text, 'cancelled'::text])))
-);
-
-CREATE INDEX IF NOT EXISTS idx_client_approvals_org_pending ON public.client_approvals USING btree (client_org_id, status) WHERE (status = 'pending'::text);
-CREATE INDEX IF NOT EXISTS idx_client_approvals_org_all ON public.client_approvals USING btree (client_org_id, status);
-CREATE INDEX IF NOT EXISTS idx_client_approvals_project ON public.client_approvals USING btree (project_id) WHERE (project_id IS NOT NULL);
-CREATE INDEX IF NOT EXISTS idx_client_approvals_responded_at ON public.client_approvals USING btree (responded_at DESC) WHERE (responded_at IS NOT NULL);
-
-ALTER TABLE ONLY public.client_approvals
-    ADD CONSTRAINT IF NOT EXISTS client_approvals_client_org_id_fkey FOREIGN KEY (client_org_id) REFERENCES public.client_organizations(id) ON DELETE CASCADE;
-ALTER TABLE ONLY public.client_approvals
-    ADD CONSTRAINT IF NOT EXISTS client_approvals_project_id_fkey FOREIGN KEY (project_id) REFERENCES public.projects(id) ON DELETE SET NULL;
-ALTER TABLE ONLY public.client_approvals
-    ADD CONSTRAINT IF NOT EXISTS client_approvals_document_id_fkey FOREIGN KEY (document_id) REFERENCES public.client_documents(id) ON DELETE SET NULL;
-ALTER TABLE ONLY public.client_approvals
-    ADD CONSTRAINT IF NOT EXISTS client_approvals_requested_by_fkey FOREIGN KEY (requested_by) REFERENCES public.users(id) ON DELETE SET NULL;
-ALTER TABLE ONLY public.client_approvals
-    ADD CONSTRAINT IF NOT EXISTS client_approvals_responded_by_client_user_id_fkey FOREIGN KEY (responded_by_client_user_id) REFERENCES public.client_users(id) ON DELETE SET NULL;
-
--- Wave 52: DWG two-way sync tables
-CREATE TABLE IF NOT EXISTS public.dwg_canonical_files (
-    id uuid DEFAULT gen_random_uuid() NOT NULL,
-    project_id uuid NOT NULL,
-    filename text NOT NULL,
-    size_bytes bigint NOT NULL,
-    sha256 text NOT NULL,
-    storage_key text NOT NULL,
-    last_modified_by uuid,
-    last_modified_at timestamp with time zone DEFAULT now() NOT NULL,
-    created_at timestamp with time zone DEFAULT now() NOT NULL,
-    CONSTRAINT dwg_canonical_files_pkey PRIMARY KEY (id),
-    CONSTRAINT dwg_canonical_files_project_filename_key UNIQUE (project_id, filename)
-);
-
-CREATE INDEX IF NOT EXISTS idx_dwg_canonical_project ON public.dwg_canonical_files USING btree (project_id);
-CREATE INDEX IF NOT EXISTS idx_dwg_canonical_modified ON public.dwg_canonical_files USING btree (last_modified_at DESC);
-
-CREATE TABLE IF NOT EXISTS public.dwg_versions (
-    id uuid DEFAULT gen_random_uuid() NOT NULL,
-    canonical_file_id uuid NOT NULL,
-    size_bytes bigint NOT NULL,
-    sha256 text NOT NULL,
-    storage_key text NOT NULL,
-    uploaded_by uuid,
-    uploaded_at timestamp with time zone DEFAULT now() NOT NULL,
-    CONSTRAINT dwg_versions_pkey PRIMARY KEY (id)
-);
-
-CREATE INDEX IF NOT EXISTS idx_dwg_versions_canonical_uploaded ON public.dwg_versions USING btree (canonical_file_id, uploaded_at DESC);
-
-CREATE TABLE IF NOT EXISTS public.dwg_staging (
-    id uuid DEFAULT gen_random_uuid() NOT NULL,
-    user_id uuid NOT NULL,
-    project_id uuid NOT NULL,
-    filename text NOT NULL,
-    size_bytes bigint NOT NULL,
-    sha256 text NOT NULL,
-    storage_key text NOT NULL,
-    pushed_at timestamp with time zone DEFAULT now() NOT NULL,
-    status text DEFAULT 'pending'::text NOT NULL,
-    reviewed_by uuid,
-    reviewed_at timestamp with time zone,
-    review_notes text,
-    CONSTRAINT dwg_staging_pkey PRIMARY KEY (id),
-    CONSTRAINT dwg_staging_status_check CHECK ((status = ANY (ARRAY['pending'::text, 'promoted'::text, 'rejected'::text, 'superseded'::text]))),
-    CONSTRAINT dwg_staging_user_project_filename_pushed_key UNIQUE (user_id, project_id, filename, pushed_at)
-);
-
-CREATE INDEX IF NOT EXISTS idx_dwg_staging_pending ON public.dwg_staging USING btree (status, pushed_at DESC) WHERE (status = 'pending'::text);
-CREATE INDEX IF NOT EXISTS idx_dwg_staging_user ON public.dwg_staging USING btree (user_id, status, pushed_at DESC);
-CREATE INDEX IF NOT EXISTS idx_dwg_staging_project ON public.dwg_staging USING btree (project_id, status);
-
--- Foreign keys
-ALTER TABLE ONLY public.dwg_canonical_files
-    ADD CONSTRAINT IF NOT EXISTS dwg_canonical_files_project_id_fkey FOREIGN KEY (project_id) REFERENCES public.projects(id) ON DELETE CASCADE;
-ALTER TABLE ONLY public.dwg_canonical_files
-    ADD CONSTRAINT IF NOT EXISTS dwg_canonical_files_last_modified_by_fkey FOREIGN KEY (last_modified_by) REFERENCES public.users(id) ON DELETE SET NULL;
-ALTER TABLE ONLY public.dwg_versions
-    ADD CONSTRAINT IF NOT EXISTS dwg_versions_canonical_file_id_fkey FOREIGN KEY (canonical_file_id) REFERENCES public.dwg_canonical_files(id) ON DELETE CASCADE;
-ALTER TABLE ONLY public.dwg_versions
-    ADD CONSTRAINT IF NOT EXISTS dwg_versions_uploaded_by_fkey FOREIGN KEY (uploaded_by) REFERENCES public.users(id) ON DELETE SET NULL;
-ALTER TABLE ONLY public.dwg_staging
-    ADD CONSTRAINT IF NOT EXISTS dwg_staging_user_id_fkey FOREIGN KEY (user_id) REFERENCES public.users(id) ON DELETE CASCADE;
-ALTER TABLE ONLY public.dwg_staging
-    ADD CONSTRAINT IF NOT EXISTS dwg_staging_project_id_fkey FOREIGN KEY (project_id) REFERENCES public.projects(id) ON DELETE CASCADE;
-ALTER TABLE ONLY public.dwg_staging
-    ADD CONSTRAINT IF NOT EXISTS dwg_staging_reviewed_by_fkey FOREIGN KEY (reviewed_by) REFERENCES public.users(id) ON DELETE SET NULL;
-
--- project_photos — mobile PWA photo uploads with GPS tracking
-CREATE TABLE IF NOT EXISTS public.project_photos (
-    id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
-    project_id uuid NOT NULL,
-    uploaded_by uuid,
-    filename text NOT NULL,
-    mime_type text NOT NULL,
-    size_bytes bigint NOT NULL,
-    storage_key text NOT NULL,
-    caption text,
-    taken_at timestamp with time zone,
-    uploaded_at timestamp with time zone DEFAULT now() NOT NULL,
-    gps_lat double precision,
-    gps_lon double precision,
-    gps_accuracy_m real,
-    status text DEFAULT 'active'::text NOT NULL,
-    created_at timestamp with time zone DEFAULT now() NOT NULL,
-    CONSTRAINT project_photos_pkey PRIMARY KEY (id),
-    CONSTRAINT project_photos_status_check CHECK ((status = ANY (ARRAY['active'::text, 'archived'::text])))
-);
-
-CREATE INDEX IF NOT EXISTS idx_project_photos_project ON public.project_photos USING btree (project_id, uploaded_at DESC) WHERE (status = 'active'::text);
-CREATE INDEX IF NOT EXISTS idx_project_photos_user ON public.project_photos USING btree (uploaded_by, uploaded_at DESC);
-CREATE INDEX IF NOT EXISTS idx_project_photos_taken ON public.project_photos USING btree (taken_at) WHERE (taken_at IS NOT NULL);
-
--- Foreign keys for project_photos
-ALTER TABLE ONLY public.project_photos
-    ADD CONSTRAINT IF NOT EXISTS project_photos_project_id_fkey FOREIGN KEY (project_id) REFERENCES public.projects(id) ON DELETE CASCADE;
-ALTER TABLE ONLY public.project_photos
-    ADD CONSTRAINT IF NOT EXISTS project_photos_uploaded_by_fkey FOREIGN KEY (uploaded_by) REFERENCES public.users(id) ON DELETE SET NULL;
-
--- Wave 57: Folder Workspace Backend
--- Hierarchical folders with file versioning and ACL-based sharing
-
-CREATE TABLE IF NOT EXISTS public.workspace_folders (
-    id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
-    parent_id uuid REFERENCES public.workspace_folders(id) ON DELETE CASCADE,
-    name text NOT NULL,
-    kind text NOT NULL CHECK (kind IN ('user_home', 'shared_public', 'shared_managers', 'shared_specific', 'regular')),
-    owner_user_id uuid REFERENCES public.users(id) ON DELETE CASCADE,
-    project_id uuid REFERENCES public.projects(id) ON DELETE SET NULL,
-    share_mode text NOT NULL DEFAULT 'inherit' CHECK (share_mode IN ('inherit', 'private', 'public', 'specific')),
-    created_by uuid REFERENCES public.users(id) ON DELETE SET NULL,
-    created_at timestamptz NOT NULL DEFAULT now(),
-    updated_at timestamptz NOT NULL DEFAULT now(),
-    deleted_at timestamptz,
-    deleted_by uuid REFERENCES public.users(id) ON DELETE SET NULL,
-    UNIQUE (parent_id, name)
-);
-
-CREATE INDEX IF NOT EXISTS idx_workspace_folders_parent ON public.workspace_folders (parent_id);
-CREATE INDEX IF NOT EXISTS idx_workspace_folders_owner ON public.workspace_folders (owner_user_id, kind);
-CREATE INDEX IF NOT EXISTS idx_workspace_folders_project ON public.workspace_folders (project_id) WHERE project_id IS NOT NULL;
-CREATE INDEX IF NOT EXISTS idx_workspace_folders_active ON public.workspace_folders (parent_id) WHERE deleted_at IS NULL;
-CREATE INDEX IF NOT EXISTS idx_workspace_folders_trash ON public.workspace_folders (deleted_at DESC) WHERE deleted_at IS NOT NULL;
-
-CREATE TABLE IF NOT EXISTS public.workspace_files (
-    id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
-    folder_id uuid NOT NULL REFERENCES public.workspace_folders(id) ON DELETE CASCADE,
-    filename text NOT NULL,
-    mime_type text NOT NULL,
-    size_bytes bigint NOT NULL,
-    sha256 text NOT NULL,
-    storage_key text NOT NULL,
-    uploaded_by uuid REFERENCES public.users(id) ON DELETE SET NULL,
-    uploaded_at timestamptz NOT NULL DEFAULT now(),
-    current_version_count int NOT NULL DEFAULT 1,
-    deleted_at timestamptz,
-    deleted_by uuid REFERENCES public.users(id) ON DELETE SET NULL,
-    UNIQUE (folder_id, filename)
-);
-
-CREATE INDEX IF NOT EXISTS idx_workspace_files_folder ON public.workspace_files (folder_id);
-CREATE INDEX IF NOT EXISTS idx_workspace_files_active ON public.workspace_files (folder_id) WHERE deleted_at IS NULL;
-CREATE INDEX IF NOT EXISTS idx_workspace_files_trash ON public.workspace_files (deleted_at DESC) WHERE deleted_at IS NOT NULL;
-
-CREATE TABLE IF NOT EXISTS public.workspace_file_versions (
-    id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
-    file_id uuid NOT NULL REFERENCES public.workspace_files(id) ON DELETE CASCADE,
-    size_bytes bigint NOT NULL,
-    sha256 text NOT NULL,
-    storage_key text NOT NULL,
-    uploaded_by uuid REFERENCES public.users(id) ON DELETE SET NULL,
-    uploaded_at timestamptz NOT NULL DEFAULT now()
-);
-
-CREATE INDEX IF NOT EXISTS idx_workspace_file_versions_file ON public.workspace_file_versions (file_id, uploaded_at DESC);
-
-CREATE TABLE IF NOT EXISTS public.workspace_folder_shares (
-    folder_id uuid NOT NULL REFERENCES public.workspace_folders(id) ON DELETE CASCADE,
-    user_id uuid NOT NULL REFERENCES public.users(id) ON DELETE CASCADE,
-    permission text NOT NULL CHECK (permission IN ('view', 'edit')),
-    granted_by uuid REFERENCES public.users(id) ON DELETE SET NULL,
-    granted_at timestamptz NOT NULL DEFAULT now(),
-    PRIMARY KEY (folder_id, user_id)
-);
-
-CREATE INDEX IF NOT EXISTS idx_workspace_folder_shares_user ON public.workspace_folder_shares (user_id);
-
--- Migration 0056: DB-level invariants (budgets.total_amount ≥ 0; potential_permits.status enum)
-
-ALTER TABLE public.budgets
-    DROP CONSTRAINT IF EXISTS budgets_total_amount_nonneg;
-ALTER TABLE public.budgets
-    ADD CONSTRAINT budgets_total_amount_nonneg
-        CHECK (total_amount IS NULL OR total_amount >= 0);
-
-ALTER TABLE public.potential_permits
-    DROP CONSTRAINT IF EXISTS potential_permits_status_enum;
-ALTER TABLE public.potential_permits
-    ADD CONSTRAINT potential_permits_status_enum
-        CHECK (status IS NULL OR status IN ('pending', 'approved', 'accepted', 'rejected', 'withdrawn'));
-
--- event_log: observability telemetry (migration 0063)
--- Distinct from audit_log (compliance + tamper-resistant).
--- Rows are hard-deleted by a scheduled prune job (default retention: 30 days).
--- NOTE: schema:sync must be re-run against a live DB after migration 0063 is
--- applied to regenerate this block from pg_dump. The block below is a
--- manually-maintained approximation to bootstrap a fresh DB to parity.
-CREATE TABLE IF NOT EXISTS public.event_log (
-    id              bigserial NOT NULL,
-    occurred_at     timestamp with time zone NOT NULL DEFAULT now(),
-    program         text NOT NULL,
-    event_type      text NOT NULL,
-    source          text NOT NULL DEFAULT 'client',
-    actor_user_id   uuid,
-    actor_username  text,
-    actor_type      text NOT NULL DEFAULT 'user',
-    session_id      text,
-    request_id      text,
-    target          text,
-    url             text,
-    http_method     text,
-    http_status     integer,
-    duration_ms     integer,
-    message         text,
-    ip              text,
-    user_agent      text,
-    meta            jsonb,
-    CONSTRAINT event_log_pkey PRIMARY KEY (id)
-);
-
-CREATE INDEX IF NOT EXISTS idx_event_log_occurred_at
-  ON public.event_log USING btree (occurred_at DESC);
-
-CREATE INDEX IF NOT EXISTS idx_event_log_program
-  ON public.event_log USING btree (program, occurred_at DESC);
-
-CREATE INDEX IF NOT EXISTS idx_event_log_actor
-  ON public.event_log USING btree (actor_user_id, occurred_at DESC);
-
-CREATE INDEX IF NOT EXISTS idx_event_log_event_type
-  ON public.event_log USING btree (event_type, occurred_at DESC);
-
-CREATE INDEX IF NOT EXISTS idx_event_log_request_id
-  ON public.event_log USING btree (request_id)
-  WHERE request_id IS NOT NULL;
-
-CREATE INDEX IF NOT EXISTS idx_event_log_errors
-  ON public.event_log USING btree (occurred_at DESC)
-  WHERE event_type IN ('js_error', 'api_error', 'promise_rejection', 'login_failed');
-
-ALTER TABLE ONLY public.event_log
-    ADD CONSTRAINT IF NOT EXISTS event_log_actor_user_id_fkey FOREIGN KEY (actor_user_id) REFERENCES public.users(id) ON DELETE SET NULL;
-
--- event_retention_config: singleton retention policy + prune run state
-CREATE TABLE IF NOT EXISTS public.event_retention_config (
-    id                   integer NOT NULL PRIMARY KEY,
-    retention_days       integer NOT NULL DEFAULT 30,
-    last_prune_run_at    timestamp with time zone,
-    last_prune_row_count integer,
-    updated_at           timestamp with time zone NOT NULL DEFAULT now(),
-    CONSTRAINT event_retention_config_id_check CHECK ((id = 1))
-);
-
-INSERT INTO public.event_retention_config (id, retention_days) VALUES (1, 30) ON CONFLICT DO NOTHING;
