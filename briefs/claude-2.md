@@ -1,6 +1,6 @@
 # Claude 2 — Contractor timeclock (Phase 5)
 
-**Status:** R10 MERGED ✓ 2026-06-24 (client/EC management UI). **Next: Round 11 — hours import UI** (backend shipped+tested; brief below). All R10/R11 work is FRONTEND ONLY against existing endpoints.
+**Status:** R10 MERGED ✓ 2026-06-24. **Queue (all FRONTEND ONLY, backends shipped+tested): R11 hours-import UI · R12 billing UI · R13 projections (Money tab) + overall-map (Service Areas tab) + lifecycle (workspace).** Work them in order; push per task; CEO merges.
 **Branch:** `claude-2/contractor-timeclock`
 **Read first:** `CLAUDE.md`, `ROADMAP.md` (Phase 5), `briefs/README.md`.
 
@@ -309,3 +309,30 @@ Each run bills **earned − already-billed** per job: monthly hours, **progressi
 
 ### Acceptance
 Pick a month → see each concentrator's billable lines (hours/footage/fixed + any credits) → optionally exclude lines → generate per-concentrator draft invoices → see them in the list with periods → view the report grouped by program/client. No `$` math in JS; reconciliation lines clearly shown.
+
+---
+
+## Round 13 — Projections (Money tab) + Overall map (Service Areas tab) + lifecycle (QUEUED — after R12). Sonnet @ medium. FRONTEND ONLY.
+**CEO shipped the projections backend** (migrations 0067/0068). Three pieces, all against existing endpoints. Design: `docs/projections_design.md`. **NO backend.** CEO built an approved mockup — match its look (KPIs → budget-burn bar → expandable concentrator cards with per-job expected/billed/remaining).
+
+> Internal manager/admin. Money shown here. CI down → CEO verifies locally; test as admin.
+
+### A) Projections — a NEW TAB inside `money.html` (no new rail item)
+Money becomes tabbed (Margin · Aging · Revenue · Program · **Projections**). The Projections tab:
+- **Filters** (program All/RUS/Non-RUS, client) — modular; recompute on change.
+- **KPI cards**: projected total, billed to date, projected remaining, active concentrators — from `GET /api/projections?group=program` (and `?group=client`).
+- **RUS engineering-budget burn** (when RUS/an EC is in view): `GET /api/projections/ec/:id` → a bar of billed vs projected-remaining vs budget, with `burn_rate_monthly`, `projected_months_to_budget`, over/under flag.
+- **Concentrator list**: each row from the rollup; click → expand per-job breakdown via `GET /api/projections/service-area/:id` (`jobs[]` = {job_name, team, billing_type, bill_trigger, expected, billed, remaining}; `totals` = {projected_total, billed, remaining, completion_pct}). Show a lifecycle badge (active / completed / final·archived) from the area's `build_finalized_at` / `closed_at`.
+- Endpoints: `GET /api/projections?group=client|ec|program`, `/api/projections/service-area/:id`, `/api/projections/ec/:id`. **Render server numbers verbatim — no `$` math in JS.**
+
+### B) Overall map — a NEW TAB inside `service-areas.html` (List | Map toggle)
+- Add a `List | Map` toggle. **Map = stub for now** (real KMZ/GIS render is a later phase) but wire the DATA: `GET /api/map/service-areas` → [{id, name, client_name, program, ec_name, status, build_finalized_at, closed_at, map_geometry}]. Render a clean placeholder with **client + service-area selectors** that filter the list of areas (and, when an area's picked, link to its workspace). Keep co-located areas as separate entries — never merge across client/EC/program.
+
+### C) Lifecycle actions — on the workspace `area.html`
+- The workspace already has "Finalize build" (= **completed**, `build_finalized_at`). Add a **"Mark final" / "Reopen"** control (= archive) → `POST /api/service-areas/:id/close {closed:true|false}` (and per-route `POST /api/service-area-routes/:id/close`). Show the three-stage badge: active → completed → final·archived. When final, visually treat the area as read-only (soft archive; dim edit affordances) — no hard lock needed.
+
+### Guardrails
+- NO backend / NO schema. Don't recompute projections/budget in JS — endpoints return every number. OFF-LIMITS: `routes/*`, `auth.js`, `server.js`, `migrations/`, `schema.sql`. Additive; `service_areas_ui.js`/`area.html` edits additive only.
+
+### Acceptance
+Money has a Projections tab matching the mockup (filters, KPIs, RUS budget burn, expandable concentrators with per-job expected/billed/remaining + lifecycle badges). Service-areas has a List|Map toggle with the map data wired to a placeholder + client/SA selectors. Workspace can mark an area completed → final (and reopen), with the stage badge. No `$` math in JS.

@@ -65,4 +65,11 @@ The data is ready to drive it (every SA carries client/EC/program + `map_geometr
 - Remaining detail: burn-rate window (since first bill vs EC start) — I'll default to **since first bill** and surface it; tweakable.
 
 ## Sequence once confirmed
-(a) migration 0067 → (b) wire `bill_trigger` into the billing ledger (close-out earns at `closed_at`, build-complete at `build_finalized_at`) + the two-stage finalize actions → (c) projection endpoints (CEO, tested vs dev DB: budget burn, close-out remaining, completed-vs-final) → (d) `GET /api/map/service-areas` data endpoint → (e) fan projection + two-stage UI + (later) map tab to C2.
+(a) migration 0067 → (b) wire `bill_trigger` into the billing ledger → (c) projection endpoints → (d) map data endpoint → (e) fan UI to C2.
+
+## Status — 2026-06-24 (BACKEND DONE)
+- **0067** (bill_trigger + closed_at) + **0068** (add `inspection` to team CHECK — was missing) applied to **dev DB**. Prod apply + `schema.sql` regen (pg_dump16) pending for cutover.
+- **`routes/projections.js`** mounted: `/api/projections/service-area/:id`, `/api/projections/ec/:id` (budget burn), `/api/projections?group=client|ec|program`, `/api/map/service-areas`. Projection base = `expected − billed` per job (expected = estimated_amount or footage×rate). Integration-tested vs dev DB.
+- **Billing ledger** now honors `bill_trigger` (`completed` jobs earn only at `build_finalized_at`); no billing regression.
+- **Lifecycle**: finalize endpoints (=completed) already existed; added **close/reopen** (=final/archive) for SA + route in `service_areas.js`.
+- **UI = C2 R13**: projections tab in `money.html`, map tab in `service-areas.html`, mark-completed/mark-final on `area.html`. Mockup built + approved (folds into Money + Service Areas, no new rail items).
