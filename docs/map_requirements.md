@@ -97,6 +97,15 @@ Migration `0069_map_integration_poc.sql` + `routes/map_integration.js` (mounted)
 - **The estimate** — `GET /api/map/estimate?plan=&cc=` counts a stored plan's structures by ptype, prices via the catalog: **13 handholes × $200 + 2 pedestals × $150 = $2,900 expected, $1,000 completed (5 built), 1,500 ft summed.** That's "map reports 13 handholes → reference the contract → price it" working.
 - Schema also added `service_areas.construction_contract_id` + `service_areas.miles` (SA↔CC link + mileage for the later allocation).
 
-**Still POC-level / next:** dual-designation on elements (engineering+construction+permitting can co-apply — Carter wants multi); `jobRef`→service_area_job picker; embed the map in the authed Service Areas → Map tab (live persistence + an inline estimate readout); footage→engineering pricing + the mileage allocation. (Backend verified via DB test, not a browser preview — live persistence needs the authed embed.)
+**Closing the loop — progress (2026-06-24):**
+- ✅ **1/4** SA↔map-plan link (`service_areas.map_plan_id`, migration 0070) + `GET /api/service-areas/:id/map-rollup`.
+- ✅ **3/4** map construction feeds the SA projection (`construction` + `combined` blocks; shared `routes/_map_estimate.js`).
+- ✅ **2/4** dual designation on spans (engineering/construction/permitting checkboxes in the span modal; footage bucketed `footage_by_designation`, dual-counted). Verified live in the preview.
+- ⏳ **4/4** mileage allocation for hourly (per-mile = remaining$ ÷ miles × SA miles).
+- Also next: `jobRef`→service_area_job picker; footage→engineering footage pricing (×rate).
+
+**Canonical map copy = `public/map/fiber_route_manager_v33.html`** (served + actively developed). `map/fiber_route_manager_v33.html` is the pristine delivered-v33 archive; `map/_serve.js` (the `map-preview` launch config) now serves `public/` so the preview shows the live copy.
+
+**Still POC-level / next:** `jobRef`→service_area_job picker; embed live-persistence proof in the authed app; the mileage allocation. (Backend verified via DB tests; map UI verified live in preview.)
 
 **Bottom line:** the foundation is well-built and well-architected for integration — `jobRef`, `lengthFt`, `status`, `ptype`, and the injectable `window.storage` are exactly the hooks we need. The work is the **linkage + costing + DB sync** layer (above), plus the contract-allocation engine it feeds (still deferred until this lands). `map/_serve.js` + `.claude/launch.json` `map-preview` run it locally.

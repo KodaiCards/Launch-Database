@@ -435,6 +435,13 @@ body{font-family:'Segoe UI',system-ui,-apple-system,sans-serif;height:100vh;disp
         <div class="fr seg-field"><label>Cable Type</label><select id="m-ctype" onchange="onCtypeChange()"><option value="aerial">Aerial</option><option value="underground">Underground</option><option value="directBuried">Direct Buried</option><option value="innerduct">Innerduct</option></select></div>
         <div class="fr seg-field"><label>Fiber Count</label><select id="m-fc" onchange="onFcChange()"><option>12</option><option>24</option><option>48</option><option>72</option><option>96</option><option>144</option><option>216</option><option>288</option><option>432</option><option>864</option><option value="custom">Custom…</option></select></div>
         <div class="fr full seg-field" id="fc-custom-wrap" style="display:none"><label>Custom Fiber Count</label><input id="m-fc-custom" type="number" min="1" max="9999"/></div>
+        <div class="fr full seg-field"><label>Designation — counts footage toward (pick any; dual OK)</label>
+          <div id="m-designation" style="display:flex;gap:16px;flex-wrap:wrap;padding-top:4px">
+            <label style="font-weight:400;display:flex;gap:5px;align-items:center;cursor:pointer"><input type="checkbox" class="m-desig" value="engineering"> Engineering</label>
+            <label style="font-weight:400;display:flex;gap:5px;align-items:center;cursor:pointer"><input type="checkbox" class="m-desig" value="construction"> Construction</label>
+            <label style="font-weight:400;display:flex;gap:5px;align-items:center;cursor:pointer"><input type="checkbox" class="m-desig" value="permitting"> Permitting</label>
+          </div>
+        </div>
         <div class="fr cond-field" style="display:none"><label>Conduit Type</label><select id="m-cond-type" onchange="document.getElementById('m-cond-type-disp').textContent=this.options[this.selectedIndex].text"><option value="hdpe">HDPE</option><option value="pvc">PVC</option><option value="steel">Steel</option><option value="concrete">Concrete-Encased</option><option value="flexible">Flexible / CHDPE</option><option value="flowerpot">Flower Pot</option>
           <option value="other">Other</option></select></div>
         <div class="fr cond-field" style="display:none"><label>Conduit Size</label><select id="m-cond-size"><option>3/4"</option><option>1"</option><option>1.25"</option><option>1.5"</option><option selected>2"</option><option>3"</option><option>4"</option><option>6"</option><option>Custom</option></select></div>
@@ -1324,6 +1331,7 @@ function openModal(id,mode){
     document.getElementById('m-date').value=seg?.installDate||'';
     document.getElementById('m-job').value=seg?.jobRef||'';
     document.getElementById('m-notes').value=seg?.notes||'';
+    setDesigChecks(seg?.designation||[]);
     const fc=String(seg?.fiberCount||48),fcEl=document.getElementById('m-fc');
     const has=Array.from(fcEl.options).some(o=>o.value===fc);
     if(has){fcEl.value=fc;document.getElementById('fc-custom-wrap').style.display='none';}
@@ -1372,6 +1380,9 @@ function openModal(id,mode){
   setTimeout(()=>document.getElementById('m-name').select(),60);
 }
 function closeModal(){document.getElementById('overlay').classList.remove('open');pendPath=null;pendLatLng=null;editId=null;}
+// Dual designation (engineering/construction/permitting) — drives footage bucketing in the keystone rollup.
+function getDesigChecks(){return Array.from(document.querySelectorAll('#m-designation .m-desig:checked')).map(c=>c.value);}
+function setDesigChecks(arr){const set=new Set((arr||[]).map(String));document.querySelectorAll('#m-designation .m-desig').forEach(c=>{c.checked=set.has(c.value);});}
 function onOverlayBg(e){if(e.target===document.getElementById('overlay'))closeModal();}
 function onFcChange(){document.getElementById('fc-custom-wrap').style.display=document.getElementById('m-fc').value==='custom'?'flex':'none';}
 function onCtypeChange(){document.getElementById('m-type-disp').textContent=TYPE_LBL[document.getElementById('m-ctype').value]||'';}
@@ -1388,7 +1399,7 @@ function saveSeg(name){
   const fc=fcRaw==='custom'?(parseInt(document.getElementById('m-fc-custom').value)||0):parseInt(fcRaw);
   const id=editId||'seg_'+Date.now()+'_'+Math.random().toString(36).slice(2,5);
   const ex=segs[id];const path=editId?ex.path:pendPath;
-  segs[id]={id,name,cableId:document.getElementById('m-cid').value.trim(),cableType:document.getElementById('m-ctype').value,fiberCount:fc,status:document.getElementById('m-status').value,contractor:document.getElementById('m-contractor').value.trim(),installDate:document.getElementById('m-date').value,jobRef:document.getElementById('m-job').value.trim(),notes:document.getElementById('m-notes').value.trim(),colorOverride:selColor,path,lengthFt:editId?ex.lengthFt:calcLen(path),createdAt:ex?.createdAt||new Date().toISOString(),updatedAt:new Date().toISOString()};
+  segs[id]={id,name,cableId:document.getElementById('m-cid').value.trim(),cableType:document.getElementById('m-ctype').value,fiberCount:fc,status:document.getElementById('m-status').value,contractor:document.getElementById('m-contractor').value.trim(),installDate:document.getElementById('m-date').value,jobRef:document.getElementById('m-job').value.trim(),designation:getDesigChecks(),notes:document.getElementById('m-notes').value.trim(),colorOverride:selColor,path,lengthFt:editId?ex.lengthFt:calcLen(path),createdAt:ex?.createdAt||new Date().toISOString(),updatedAt:new Date().toISOString()};
   renderPolyline(segs[id]);saveSegs();renderSidebar();closeModal();selectSeg(id,!editId);maybeRefreshBOM();
 }
 function savePtEl(name){

@@ -105,14 +105,22 @@ test('map loop: per-SA rollup derives construction $ from the linked plan + CC',
     for (let i = 0; i < 10; i++) pts['hh_' + i] = { ptype: 'handhole', status: i < 3 ? 'asBuilt' : 'proposed' };
     for (let i = 0; i < 4; i++) pts['pd_' + i] = { ptype: 'pedestal', status: 'proposed' };
     await call('PUT', '/api/map/store/frm_pts_' + PLAN, { value: JSON.stringify(pts) });
-    await call('PUT', '/api/map/store/frm_segs_' + PLAN, { value: JSON.stringify({ s1: { lengthFt: 2640 } }) });
+    // s1 is dual-designated (engineering + permitting) → its footage counts toward both.
+    await call('PUT', '/api/map/store/frm_segs_' + PLAN, { value: JSON.stringify({
+      s1: { lengthFt: 2640, designation: ['engineering', 'permitting'] },
+      s2: { lengthFt: 1000, designation: ['construction'] },
+      s3: { lengthFt: 500 } }) });
 
     const r = await call('GET', `/api/service-areas/${saId}/map-rollup`);
     assert.equal(r.status, 200);
     assert.equal(r.json.linked, true, 'SA is linked to its map plan');
     assert.equal(r.json.construction_expected, 2600, '10×200 + 4×150 = 2600');
     assert.equal(r.json.construction_completed, 600, '3 built handholes × 200');
-    assert.equal(r.json.footage_total, 2640);
+    assert.equal(r.json.footage_total, 4140, '2640 + 1000 + 500');
+    assert.equal(r.json.footage_by_designation.engineering, 2640, 'dual: s1 footage to engineering');
+    assert.equal(r.json.footage_by_designation.permitting, 2640, 'dual: s1 footage to permitting too');
+    assert.equal(r.json.footage_by_designation.construction, 1000);
+    assert.equal(r.json.footage_by_designation.unassigned, 500, 's3 untagged');
 
     // an unlinked SA reports linked:false, not an error
     const sa2 = (await pool.query(`INSERT INTO service_areas (client_id,name,program,status) VALUES ($1,'Unlinked','bau','active') RETURNING id`, [clientId])).rows[0].id;
