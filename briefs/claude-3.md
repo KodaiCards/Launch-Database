@@ -93,6 +93,6 @@ Same guardrails: additive, `customer`-scoped, read-only, no $ beyond billed, NO 
 > **Near the additive ceiling too.** The portal is mature. Deeper features (notifications, per-area documents/photos) need schema → **Phase 7 / CEO**. R7 is polish + comms; when done, set Status `DONE — additive work exhausted` and flag for CEO.
 - [x] **25. First-run help / onboarding.** A dismissible overlay or "?" affordance explaining the tabs/status meanings for a first-time client. Frontend, `localStorage` dismiss.
 - [x] **26. Contact / support.** A "Contact your project manager" action (mailto using the PM info already shown). No backend.
-- [ ] **27. a11y + cross-browser + perf round 2.** Audit labels/focus/contrast; verify on mobile + a second browser; confirm debounce/cache from R6 hold up.
+- [x] **27. a11y + cross-browser + perf round 2.** Audit labels/focus/contrast; verify on mobile + a second browser; confirm debounce/cache from R6 hold up.
 - [ ] **28. Print/export polish.** Clean single-area status sheet + an all-areas summary print/PDF for the client. Frontend.
 > Guardrails: read-only, customer-scoped, no $ beyond billed, NO schema. Schema need → BLOCKED + ping.
