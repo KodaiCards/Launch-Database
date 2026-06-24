@@ -15,10 +15,16 @@
   let _allJobs = [];
   let _groupBy = 'status';
 
+  let _searchTimer = null;
+  function debouncedRender() {
+    clearTimeout(_searchTimer);
+    _searchTimer = setTimeout(render, 150);
+  }
+
   document.addEventListener('DOMContentLoaded', () => {
     applyStoredTheme();
     loadJobs();
-    document.getElementById('jb-search').addEventListener('input', render);
+    document.getElementById('jb-search').addEventListener('input', debouncedRender);
     document.getElementById('jb-team').addEventListener('change', render);
     document.getElementById('jb-program').addEventListener('change', render);
   });

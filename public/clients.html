@@ -194,7 +194,12 @@ tbody td{padding:10px 14px;color:var(--text-secondary)}
   }
 
   // ── Filter ──────────────────────────────────────────────────────────────────
+  var _filterTimer = null;
   window.applyFilter = function(){
+    clearTimeout(_filterTimer);
+    _filterTimer = setTimeout(_doFilter, 150);
+  };
+  function _doFilter(){
     var q = (document.getElementById('cl-search').value||'').toLowerCase().trim();
     var filtered = q ? _clients.filter(function(c){ return c.name.toLowerCase().includes(q); }) : _clients;
     render(filtered);
