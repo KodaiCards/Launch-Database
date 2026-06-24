@@ -10,6 +10,43 @@ const { Pool } = require('pg');
 
 const DB = process.env.DATABASE_URL;
 
+test('projections: mileage allocation for hourly (Carter worked example)', { skip: DB ? false : 'no DATABASE_URL' }, async () => {
+  const pool = new Pool({ connectionString: DB, ssl: false });
+  const app = express();
+  app.use(express.json());
+  const setUser = (req, _res, next) => { req.user = { id: null, role: 'admin' }; next(); };
+  require('../routes/projections')(app, pool, { requireManagerOrAdmin: setUser });
+  const server = app.listen(0);
+  await new Promise((r) => server.on('listening', r));
+  const base = `http://127.0.0.1:${server.address().port}`;
+  const get = async (p) => { const r = await fetch(base + p); return { status: r.status, json: await r.json() }; };
+
+  let clientId, ecId, saId;
+  try {
+    clientId = (await pool.query(`INSERT INTO clients (name) VALUES ($1) RETURNING id`, ['ZZ_MILEAGE'])).rows[0].id;
+    // 10 contract miles, $100k for inspecting.
+    ecId = (await pool.query(`INSERT INTO engineering_contracts (client_id,name,program,total_miles) VALUES ($1,'ZZ Mileage EC','rus',10) RETURNING id`, [clientId])).rows[0].id;
+    await pool.query(`INSERT INTO contract_allocations (engineering_contract_id,discipline,budget_amount) VALUES ($1,'inspection',100000)`, [ecId]);
+    // a 2.5-mile service area on that EC.
+    saId = (await pool.query(`INSERT INTO service_areas (client_id,engineering_contract_id,name,program,status,miles) VALUES ($1,$2,'2.5mi Area','rus','active',2.5) RETURNING id`, [clientId, ecId])).rows[0].id;
+
+    const r = await get(`/api/projections/service-area/${saId}/mileage`);
+    assert.equal(r.status, 200);
+    const eng = r.json.engineering;
+    assert.equal(eng.remaining_miles, 10, 'no finalized SAs → all 10 miles remain');
+    const insp = eng.disciplines.find((d) => d.discipline === 'inspection');
+    assert.equal(insp.per_mile_rate, 10000, '$100k ÷ 10 mi = $10k/mile');
+    assert.equal(insp.sa_expected, 25000, '2.5 mi × $10k = $25k');
+    assert.equal(eng.sa_hourly_expected, 25000);
+  } finally {
+    if (saId) await pool.query(`DELETE FROM service_areas WHERE id=$1`, [saId]).catch(() => {});
+    if (ecId) await pool.query(`DELETE FROM engineering_contracts WHERE id=$1`, [ecId]).catch(() => {}); // cascades allocations
+    if (clientId) await pool.query(`DELETE FROM clients WHERE id=$1`, [clientId]).catch(() => {});
+    server.close();
+    await pool.end();
+  }
+});
+
 test('projections: per-SA, EC budget burn, rollup, map data', { skip: DB ? false : 'no DATABASE_URL' }, async () => {
   const pool = new Pool({ connectionString: DB, ssl: false });
   const app = express();

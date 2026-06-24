@@ -98,6 +98,54 @@ module.exports = function installProjectionsRoutes(app, pool, mw) {
     }
   });
 
+  // ── Mileage allocation (loop 4/4) ──────────────────────────────────────────
+  // Hourly jobs draw from the contract by mileage, per discipline:
+  //   per_mile = remaining_$ ÷ remaining_miles ; sa_expected = SA.miles × per_mile
+  // remaining_$ = discipline budget − billed(discipline) across the contract's SAs;
+  // remaining_miles = contract total_miles − miles of its finalized SAs.
+  async function mileageBlock(col, contractId, totalMiles, saMiles) {
+    const [allocR, billedR, doneR] = await Promise.all([
+      pool.query(`SELECT discipline, budget_amount FROM contract_allocations WHERE ${col} = $1`, [contractId]),
+      pool.query(
+        `SELECT saj.team AS discipline, COALESCE(SUM(ii.amount),0) billed
+           FROM service_areas sa
+           JOIN service_area_jobs saj ON saj.service_area_id = sa.id
+           JOIN invoice_items ii ON ii.service_area_job_id = saj.id
+           JOIN invoices i ON i.id = ii.invoice_id AND COALESCE(i.status,'') <> 'void'
+          WHERE sa.${col} = $1 GROUP BY saj.team`, [contractId]),
+      pool.query(`SELECT COALESCE(SUM(miles),0) done FROM service_areas WHERE ${col} = $1 AND build_finalized_at IS NOT NULL`, [contractId]),
+    ]);
+    const billed = {}; for (const r of billedR.rows) billed[r.discipline] = Number(r.billed);
+    const total = Number(totalMiles || 0);
+    const remainingMiles = CENT(Math.max(0, total - Number(doneR.rows[0].done || 0)));
+    const disciplines = allocR.rows.map((a) => {
+      const remaining$ = CENT(Math.max(0, Number(a.budget_amount) - (billed[a.discipline] || 0)));
+      const perMile = remainingMiles > 0 ? CENT(remaining$ / remainingMiles) : 0;
+      return { discipline: a.discipline, budget: CENT(a.budget_amount), billed: CENT(billed[a.discipline] || 0),
+        remaining: remaining$, per_mile_rate: perMile, sa_expected: CENT(Number(saMiles || 0) * perMile) };
+    });
+    return { total_miles: CENT(total), remaining_miles: remainingMiles, sa_miles: CENT(saMiles || 0),
+      disciplines, sa_hourly_expected: CENT(disciplines.reduce((s, d) => s + d.sa_expected, 0)) };
+  }
+
+  app.get('/api/projections/service-area/:id/mileage', gate, async (req, res) => {
+    try {
+      const { rows } = await pool.query(
+        `SELECT sa.id, sa.name, sa.miles, sa.engineering_contract_id, sa.construction_contract_id,
+                ec.total_miles AS ec_miles, cc.total_miles AS cc_miles
+           FROM service_areas sa
+           LEFT JOIN engineering_contracts ec ON ec.id = sa.engineering_contract_id
+           LEFT JOIN construction_contracts cc ON cc.id = sa.construction_contract_id
+          WHERE sa.id = $1`, [req.params.id]);
+      if (!rows.length) return res.status(404).json({ error: 'Service area not found' });
+      const sa = rows[0];
+      const out = { service_area_id: sa.id, name: sa.name, sa_miles: CENT(sa.miles || 0), engineering: null, construction: null };
+      if (sa.engineering_contract_id) out.engineering = await mileageBlock('engineering_contract_id', sa.engineering_contract_id, sa.ec_miles, sa.miles);
+      if (sa.construction_contract_id) out.construction = await mileageBlock('construction_contract_id', sa.construction_contract_id, sa.cc_miles, sa.miles);
+      res.json(out);
+    } catch (e) { console.error('[projections:mileage]', e && e.message); res.status(500).json({ error: 'Failed to compute mileage allocation.' }); }
+  });
+
   // ── EC engineering-budget burn ─────────────────────────────────────────────
   app.get('/api/projections/ec/:id', gate, async (req, res) => {
     try {
