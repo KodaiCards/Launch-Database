@@ -241,8 +241,10 @@ async function load(){
   try{
     var r = await api('/api/service-areas/'+encodeURIComponent(_id)+'/workspace');
     _ws = r;
-    // keep route selection valid
-    if(_rsel !== 'all' && !(_ws.routes||[]).find(function(x){ return x.id===_rsel; })) _rsel='all';
+    var _routes = _ws.routes||[];
+    // single route → auto-select it; invalid selection → reset to 'all'
+    if(_routes.length===1) _rsel = _routes[0].id;
+    else if(_rsel !== 'all' && !_routes.find(function(x){ return x.id===_rsel; })) _rsel='all';
     render();
   } catch(e){
     var m = e.message||'Unknown error';
@@ -360,6 +362,7 @@ function renderMapStub(routes){
 
 function renderRouteBar(routes, view, areaFinalized){
   var hasRoutes = routes && routes.length>0;
+  var multiRoute = routes && routes.length>1;
   var finBtnLabel = view.finalized
     ? '<i class="fa-solid fa-lock-open"></i> Reopen build'
     : '<i class="fa-solid fa-check-double"></i> Finalize build';
@@ -368,7 +371,10 @@ function renderRouteBar(routes, view, areaFinalized){
   var seg = '';
   if(hasRoutes){
     seg = '<div class="seg-ctrl" role="tablist" aria-label="Route selector">';
-    seg += '<button role="tab" data-route="all" class="'  +(_rsel==='all'?'active':'')+'" aria-selected="'  +(_rsel==='all'?'true':'false')+'">All routes</button>';
+    // "All routes" tab only when more than one route exists
+    if(multiRoute){
+      seg += '<button role="tab" data-route="all" class="'+(_rsel==='all'?'active':'')+'" aria-selected="'+(_rsel==='all'?'true':'false')+'">All routes</button>';
+    }
     routes.forEach(function(r){
       var dot = r.build_finalized_at?'complete':r.status||'planned';
       seg += '<button role="tab" data-route="'+esc(r.id)+'" class="'+(_rsel===r.id?'active':'')+'" aria-selected="'+(_rsel===r.id?'true':'false')+'"><span class="route-status-dot dot-'+esc(dot)+'" aria-hidden="true"></span>'+esc(r.name||'Route')+'</button>';
