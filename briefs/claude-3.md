@@ -40,4 +40,4 @@ Keep pushing to your **same branch** after **each** task (tell Carter the branch
 Reuse existing `/api/customer/*` data; no new money columns. Schema need → BLOCKED + ping.
 - [x] **7. Client-facing invoice detail / print.** A clean printable invoice view (line items + totals) from existing `/api/customer/invoices` data + a Print button. No backend.
 - [x] **8. Portal landing summary.** A top section across ALL the client's areas (active count, overall % complete, # ready/done) above the tabs. Frontend.
-- [ ] **9. Polish.** Responsive/mobile pass, a clear "no client-visible areas yet" empty state, and loading skeletons. Frontend.
+- [x] **9. Polish.** Responsive/mobile pass, a clear "no client-visible areas yet" empty state, and loading skeletons. Frontend.

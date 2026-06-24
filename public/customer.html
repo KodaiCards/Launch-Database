@@ -101,7 +101,7 @@ button{font-family:inherit;cursor:pointer;border:none;background:none;color:inhe
 .badge-rus{background:var(--info-light);color:var(--info-text);padding:2px 7px;border-radius:6px;font-size:10px;font-weight:700;letter-spacing:.5px;margin-left:6px;vertical-align:middle}
 .badge-prog{background:var(--surface-3);color:var(--text-muted);padding:2px 7px;border-radius:6px;font-size:10px;font-weight:600;letter-spacing:.4px;text-transform:uppercase;margin-left:6px;vertical-align:middle}
 .sa-toggle{margin-top:12px;font-size:12px;font-weight:600;color:var(--primary);display:inline-flex;align-items:center;gap:6px;padding:4px 0;background:none;border:none;cursor:pointer}
-.sa-detail{margin-top:4px}
+.sa-detail{margin-top:4px;overflow-x:auto}
 .sa-detail th{white-space:nowrap}
 .sa-map-ph{margin-top:12px;padding:10px 12px;border:1px dashed var(--gray-border);border-radius:8px;color:var(--text-muted);font-size:12px;display:flex;align-items:center;gap:8px}
 .sa-map-link{margin-top:12px;display:inline-flex;align-items:center;gap:8px;padding:8px 12px;border:1px solid var(--gray-border);border-radius:8px;color:var(--primary);font-size:12px;font-weight:600;text-decoration:none;background:var(--surface-1)}
@@ -164,6 +164,29 @@ button{font-family:inherit;cursor:pointer;border:none;background:none;color:inhe
 .skip-nav{position:absolute;left:-9999px;top:auto;width:1px;height:1px;overflow:hidden;z-index:9999;text-decoration:none}
 .skip-nav:focus{position:fixed;left:50%;top:8px;transform:translateX(-50%);width:auto;height:auto;padding:10px 20px;background:var(--primary);color:#fff;font-weight:600;border-radius:6px;font-size:14px;z-index:9999}
 .sr-only{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0}
+
+/* Loading skeletons */
+.sk{position:relative;overflow:hidden;background:var(--surface-3);border-radius:6px}
+.sk::after{content:"";position:absolute;inset:0;transform:translateX(-100%);background:linear-gradient(90deg,transparent,rgba(255,255,255,.28),transparent);animation:sk-shimmer 1.4s infinite}
+html[data-theme="dark"] .sk::after{background:linear-gradient(90deg,transparent,rgba(255,255,255,.07),transparent)}
+@keyframes sk-shimmer{100%{transform:translateX(100%)}}
+.cp-scroll-x{overflow-x:auto;-webkit-overflow-scrolling:touch}
+
+/* Responsive / mobile */
+@media (max-width:600px){
+  .container{margin:12px auto;padding:0 12px}
+  .cp-landing{grid-template-columns:repeat(2,1fr);gap:10px;padding:12px}
+  .cp-landing-num{font-size:21px}
+  .tabs{gap:0}
+  .tabs button{padding:9px 10px;font-size:12px}
+  .cp-inv-meta{grid-template-columns:1fr}
+  .cp-inv-head{flex-direction:column;gap:8px}
+  .cp-inv-head>div:last-child{text-align:left}
+  .sa-summary-row{flex-direction:column;align-items:flex-start}
+  .sa-summary-prog{max-width:100%;width:100%}
+  .modal-content{max-height:94vh}
+  .header{padding:10px 14px}
+}
 </style>
 <script src="/toast.js" defer></script>
 <script src="/js/change_password_modal.js" defer></script>
@@ -407,9 +430,25 @@ async function cpOpenDetail(id){
   }
 }
 
+function cpSkeletonCards(n){
+  let s = '';
+  for (let i = 0; i < n; i++) s += `<div class="card" style="padding:14px 16px">
+    <div class="sk" style="height:16px;width:42%;margin-bottom:12px"></div>
+    <div class="sk" style="height:8px;width:100%;margin-bottom:8px"></div>
+    <div class="sk" style="height:8px;width:72%;margin-bottom:14px"></div>
+    <div class="sk" style="height:22px;width:60%"></div>
+  </div>`;
+  return s;
+}
+function cpSkeletonRows(n){
+  let s = '<div style="padding:6px 0">';
+  for (let i = 0; i < n; i++) s += `<div class="sk" style="height:18px;width:100%;margin-bottom:10px"></div>`;
+  return s + '</div>';
+}
+
 async function cpLoadInvoices(){
   const body = document.getElementById('cp-invoices-body');
-  body.innerHTML = '<div class="empty-state"><i class="fa-solid fa-spinner fa-spin"></i><p>Loading…</p></div>';
+  body.innerHTML = cpSkeletonRows(5);
   try {
     const rows = await api('/api/customer/invoices');
     if (!rows.length){
@@ -420,7 +459,7 @@ async function cpLoadInvoices(){
     const thR = thL + ';text-align:right';
     body.innerHTML = `
       <div style="font-size:12px;color:var(--text-muted);margin-bottom:8px">Click an invoice to see its line items.</div>
-      <table style="width:100%;font-size:13px;border-collapse:collapse">
+      <div class="cp-scroll-x"><table style="width:100%;font-size:13px;border-collapse:collapse">
         <thead>
           <tr style="background:var(--surface-1);border-bottom:1px solid var(--gray-border)">
             <th style="${thL}">Invoice #</th>
@@ -439,7 +478,7 @@ async function cpLoadInvoices(){
             <td style="padding:8px 12px;text-align:right;font-weight:600">${fmtMoney(inv.total_amount)}</td>
           </tr>`).join('')}
         </tbody>
-      </table>
+      </table></div>
     `;
   } catch (e) {
     body.innerHTML = `<div class="empty-state" style="color:var(--danger-text)">Failed to load: ${esc(e.message)}</div>`;
@@ -560,7 +599,7 @@ function cpSaClearChrome(){
 async function cpLoadServiceAreas(){
   const body = document.getElementById('cp-sa-body');
   cpSaClearChrome();
-  body.innerHTML = '<div class="empty-state"><i class="fa-solid fa-spinner fa-spin"></i><p>Loading service areas…</p></div>';
+  body.innerHTML = cpSkeletonCards(3);
   try {
     _customerServiceAreas = await api('/api/customer/service-areas');
     renderServiceAreas();
@@ -612,8 +651,8 @@ function renderServiceAreas(){
     cpSaClearChrome();
     body.innerHTML = `<div class="empty-state">
       <i class="fa-solid fa-map-location-dot"></i>
-      <p>No service areas to show yet.</p>
-      <p style="font-size:12px">When we publish one for you, it'll appear here.</p>
+      <p style="font-size:15px;font-weight:600;color:var(--text)">No service areas yet</p>
+      <p style="font-size:13px;max-width:340px;margin:6px auto 0">Your service areas will appear here as soon as they're published to your portal.</p>
     </div>`;
     return;
   }
