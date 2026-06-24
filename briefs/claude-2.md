@@ -160,3 +160,14 @@ Nice work — fast and clean (good catch on the theme key + the export mount not
 - [x] **41. Settings / system info page.** `public/settings.html` + rail link: read-only build/system info + quick links. **No secrets, no env values.**
 - [x] **42. Consistency + a11y/dark-mode sweep** across every cluster page; fix any orphan not in the rail.
 > Guardrails unchanged (additive; OFF-LIMITS routes/service_areas.js, auth.js, server.js, migrations, schema.sql; new backend → new route file w/ mount note; schema need → BLOCKED).
+
+---
+
+## Portal takeover (R8 merged ✓; keystone additive work exhausted). Sonnet @ medium. Start at task P1.
+**You now own the customer portal too** — Claude 3 is out of usage and retired. The portal (`public/customer.html`, `routes/customer_portal.js`) is mature (Phase 6 + Rounds 1–6 merged); these are its unfinished Round-7 polish tasks, reassigned to you.
+**Portal guardrails (different from the keystone cluster!):** the portal is **client-facing** — strictly **read-only, `customer`-scoped, and NO internal $ beyond what the client is billed** (no rate/estimated/actual/cost columns). Don't loosen the `customer` role guard. No schema. Additive frontend; if you need a read endpoint, add it `customer`-scoped in `routes/customer_portal.js`.
+- [ ] **P1. First-run help / onboarding.** A dismissible overlay or "?" affordance explaining the tabs + status meanings for a first-time client. `localStorage` dismiss. Frontend.
+- [ ] **P2. Contact / support.** A "Contact your project manager" action (mailto using the PM info already shown). No backend.
+- [ ] **P3. a11y + cross-browser + perf round 2.** Labels/focus/contrast audit; verify on mobile + a second browser; confirm the R6 debounce/cache hold up.
+- [ ] **P4. Print/export polish.** Clean single-area status sheet + an all-areas summary print/PDF for the client. Frontend.
+> When P1–P4 are in: the additive work across BOTH the keystone cluster and the portal is then exhausted. Set Status `DONE — awaiting CEO write-path phase` and stop; the next phase (write endpoints + admin cutover) is CEO-led (see `HANDOFF.md` §6) and isn't yours to start.

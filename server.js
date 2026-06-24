@@ -740,6 +740,10 @@ require('./routes/export_bundle')(app, pool, { requireAdmin });
 require('./routes/cluster_views')(app, pool, { requireManagerOrAdmin });
 require('./routes/search')(app, pool, { requireManagerOrAdmin });
 
+// Admin observability: GET /api/audit/log (activity viewer) + GET /api/system/info (build/db info, no secrets).
+require('./routes/audit_view')(app, pool, { requireManagerOrAdmin });
+require('./routes/system_info')(app, pool, { requireManagerOrAdmin });
+
 // ─────────────────────────────────────────────────────────────────────────────
 // UNDO REPLAY — extracted to routes/undo.js (Track 1.3.6).
 // saveUndoBucket / popUndoBucket helpers live in routes/_helpers.js.

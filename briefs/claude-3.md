@@ -1,7 +1,7 @@
 # Claude 3 — Client portal: service-area status view (Phase 6)
 
-**Status:** Tasks 1–24 DONE — ready for review (Phase 6 + Rounds 1–6) on `claude/inspiring-bell-7jiwdf`. Task 14 (site photos) DEFERRED → Phase 7.
-**Branch:** `claude/inspiring-bell-7jiwdf` (harness-assigned; supersedes the original `claude-3/client-portal-status`)
+**Status:** ⚠️ **RETIRED 2026-06-23 — Claude 3 out of usage.** Tasks 1–24 (Phase 6 + Rounds 1–6) are MERGED to main. Round 7 (tasks 25–28: help/onboarding, contact, a11y/perf round 2, print/export) was **NOT done** and is **reassigned to Claude 2** (see `briefs/claude-2.md` → "Portal takeover"). **Branch `claude/inspiring-bell-7jiwdf` deleted by CEO** (it was fully merged, nothing lost). The customer portal (`public/customer.html`, `routes/customer_portal.js`) is now owned by Claude 2.
+**Branch:** deleted — work continues under Claude 2.
 **Read first:** `CLAUDE.md`, `ROADMAP.md` (Phase 6), `briefs/README.md`.
 
 ## Goal
