@@ -177,6 +177,13 @@ html[data-theme="dark"] .sk::after{background:linear-gradient(90deg,transparent,
 @keyframes sk-shimmer{100%{transform:translateX(100%)}}
 .cp-scroll-x{overflow-x:auto;-webkit-overflow-scrolling:touch}
 
+/* SA filter + search bar (task 16) */
+.sa-filter-bar{display:flex;align-items:center;gap:8px;margin-bottom:12px;flex-wrap:wrap}
+.sa-filter-bar input{flex:1;min-width:140px;padding:7px 10px;border:1px solid var(--gray-border);border-radius:6px;font-size:13px;background:var(--surface-2);color:var(--text);font-family:inherit}
+.sa-filter-bar input:focus{outline:none;border-color:var(--primary)}
+.sa-filter-bar select{padding:7px 10px;border:1px solid var(--gray-border);border-radius:6px;font-size:13px;background:var(--surface-2);color:var(--text);font-family:inherit;cursor:pointer}
+.sa-filter-bar select:focus{outline:none;border-color:var(--primary)}
+
 /* Multi-client switcher (task 15) */
 .cp-client-switcher{display:flex;align-items:center;gap:8px;padding:8px 0 12px;flex-wrap:wrap}
 .cp-client-btn{padding:5px 12px;border-radius:20px;font-size:12px;font-weight:600;border:1px solid var(--gray-border);background:var(--surface-2);color:var(--text-muted);cursor:pointer;transition:all .15s}
@@ -261,6 +268,7 @@ html[data-theme="dark"] .sk::after{background:linear-gradient(90deg,transparent,
     <div id="cp-tab-service-areas" class="cp-tab" role="tabpanel" aria-labelledby="cp-tabbtn-service-areas" tabindex="0" style="display:none">
       <div id="cp-sa-header"></div>
       <div class="stats-grid" id="cp-sa-stats"></div>
+      <div id="cp-sa-filter"></div>
       <div id="cp-sa-body"></div>
     </div>
   </div> <!-- /display:none wrapper closing the under-construction shim -->
@@ -335,6 +343,7 @@ let _currentUser = null;
 let _currentClients = [];
 let _selectedClientId = null;
 let _customerInvoices = [];
+let _saFilter = { search: '', status: '' };
 
 // ─── Multi-client switcher ────────────────────────────────────────────
 function cpRenderClientSwitcher(){
@@ -695,8 +704,57 @@ function saRecentUpdates(a){
 function cpSaClearChrome(){
   const header = document.getElementById('cp-sa-header');
   const stats = document.getElementById('cp-sa-stats');
+  const filter = document.getElementById('cp-sa-filter');
   if (header) header.innerHTML = '';
   if (stats) stats.innerHTML = '';
+  if (filter) filter.innerHTML = '';
+}
+
+function cpRenderSaFilter(totalCount){
+  const el = document.getElementById('cp-sa-filter');
+  if (!el || totalCount === 0) { if (el) el.innerHTML = ''; return; }
+  el.innerHTML = `<div class="sa-filter-bar">
+    <input type="search" id="sa-search" placeholder="Search areas…" aria-label="Search service areas"
+      value="${esc(_saFilter.search)}" oninput="_saFilter.search=this.value;cpApplySaFilter()">
+    <select aria-label="Filter by status" onchange="_saFilter.status=this.value;cpApplySaFilter()">
+      <option value="">All statuses</option>
+      ${['active','on_hold','completed','billed'].map(s => `<option value="${s}"${_saFilter.status===s?' selected':''}>${s.replace('_',' ')}</option>`).join('')}
+    </select>
+    ${(_saFilter.search || _saFilter.status) ? `<button class="btn btn-secondary btn-sm" onclick="_saFilter={search:'',status:''};cpApplySaFilter()">Clear</button>` : ''}
+  </div>`;
+}
+
+function cpApplySaFilter(){
+  const filterEl = document.getElementById('cp-sa-filter');
+  if (filterEl) {
+    const btn = filterEl.querySelector('button');
+    const hasFilt = _saFilter.search || _saFilter.status;
+    if (hasFilt && !btn) { cpRenderSaFilter(_customerServiceAreas.length); }
+    else if (!hasFilt && btn) { cpRenderSaFilter(_customerServiceAreas.length); }
+  }
+  cpRenderSaCards();
+}
+
+function cpRenderSaCards(){
+  const body = document.getElementById('cp-sa-body');
+  if (!body) return;
+  let areas = (_customerServiceAreas || []).filter(a => !_selectedClientId || a.client_id === _selectedClientId);
+  const q = (_saFilter.search || '').trim().toLowerCase();
+  const st = _saFilter.status;
+  if (q) areas = areas.filter(a => (a.name || '').toLowerCase().includes(q) || (a.work_order_number || '').toLowerCase().includes(q) || (a.client_name || '').toLowerCase().includes(q));
+  if (st) areas = areas.filter(a => (a.status || '') === st);
+  if (!areas.length){
+    const base = (_customerServiceAreas || []).filter(a => !_selectedClientId || a.client_id === _selectedClientId);
+    body.innerHTML = base.length
+      ? `<div class="empty-state"><i class="fa-solid fa-magnifying-glass"></i><p>No areas match your filter.</p><button class="btn btn-secondary btn-sm" style="margin-top:8px" onclick="_saFilter={search:'',status:''};cpApplySaFilter()">Clear filters</button></div>`
+      : `<div class="empty-state">
+          <i class="fa-solid fa-map-location-dot"></i>
+          <p style="font-size:15px;font-weight:600;color:var(--text)">No service areas yet</p>
+          <p style="font-size:13px;max-width:340px;margin:6px auto 0">Your service areas will appear here as soon as they're published to your portal.</p>
+        </div>`;
+    return;
+  }
+  body.innerHTML = areas.map(cpRenderSaCard).join('');
 }
 
 async function cpLoadServiceAreas(){
@@ -752,11 +810,7 @@ function renderServiceAreas(){
   cpRenderLanding();
   if (!areas.length){
     cpSaClearChrome();
-    body.innerHTML = `<div class="empty-state">
-      <i class="fa-solid fa-map-location-dot"></i>
-      <p style="font-size:15px;font-weight:600;color:var(--text)">No service areas yet</p>
-      <p style="font-size:13px;max-width:340px;margin:6px auto 0">Your service areas will appear here as soon as they're published to your portal.</p>
-    </div>`;
+    cpRenderSaCards();
     return;
   }
   const isDone = s => ['completed','billed','complete'].includes(String(s || '').toLowerCase());
@@ -785,7 +839,11 @@ function renderServiceAreas(){
     <div class="stat-card"><div class="stat-label">Completed Areas</div><div class="stat-value">${doneCount}</div></div>
     <div class="stat-card"><div class="stat-label">Total Jobs</div><div class="stat-value">${totalJobs}</div></div>
   `;
-  body.innerHTML = areas.map(a => {
+  cpRenderSaFilter(areas.length);
+  cpRenderSaCards();
+}
+
+function cpRenderSaCard(a){
     const status = String(a.status || 'active').toLowerCase();
     const pct = a.completion_pct;
     const projDate = saProjectedCompletion(a);
@@ -888,7 +946,6 @@ function renderServiceAreas(){
       ${detail}
       ${mapBlock}
     </div>`;
-  }).join('');
 }
 
 function cpToggleArea(id, btn){
