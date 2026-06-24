@@ -74,3 +74,13 @@ Same guardrails as before: read-only, customer-scoped, no $ beyond what the clie
 You don't need to keep `main` merged into your branch — just push your branch; **CEO merges to main.** If you DO want to sync: `git fetch origin && git merge origin/main`. After this merge it'll fast-forward cleanly. If a conflict ever hits **`briefs/claude-3.md`**, it's not your file to win — take main's copy: `git checkout --theirs briefs/claude-3.md && git add briefs/claude-3.md`. Keep your conflict resolution to your own feature files (`public/customer.html`, `routes/customer_portal.js`).
 
 > Blow through 15–20 and CEO's still away? Continue on additive portal polish (print styles, keyboard nav, dark-mode contrast), logging each under a new `### Round 6` block. Bias to shipping; flag schema as BLOCKED, never guess.
+
+---
+
+## Round 6 (R5 merged ✓ — clean, no $-leak). Sonnet @ medium. Start at task 21.
+Same guardrails: additive, `customer`-scoped, read-only, no $ beyond billed, NO schema. Push per task; CEO merges.
+- [ ] **21. Unified portal search.** One search/filter bar that spans the client's service areas AND invoices (text + status), reusing the data you already fetch. Frontend.
+- [ ] **22. Download/print polish.** A "Download PDF" affordance on the printable invoice (client-side print-to-PDF) and a clean print view for a single service-area's status. Frontend, no backend.
+- [ ] **23. Locale + relative time.** Consistent date/number formatting and relative "updated N days ago" labels across areas/invoices. Frontend.
+- [ ] **24. Performance + resilience.** Debounce the filter/search inputs, cache the initial portal fetch (invalidate on client switch), and make every fetch failure show a graceful retry. Frontend.
+> Schema need (e.g. notifications, photos) → `BLOCKED — needs CEO` + ping; photos stay deferred to Phase 7.

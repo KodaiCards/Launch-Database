@@ -139,3 +139,14 @@ Nice work — fast and clean (good catch on the theme key + the export mount not
 - `routes/money_view.js` already mounted — `GET /api/money/program-financials` added in R6, mounts automatically.
 
 **Status:** DONE — ready for CEO review and merge.
+
+---
+
+## Round 7 (R6 merged ✓ — clean; search/cluster mounted). Sonnet @ medium. Start at task 34.
+**Task 34 is a PRIORITY bug fix in your own R6 code — do it first.**
+- [ ] **34. FIX program-financials revenue double-count.** In `routes/money_view.js` `/api/money/program-financials`, the revenue query `invoices i → clients c → service_areas sa ON sa.client_id=c.id` fans out: a client with N areas counts each invoice N×, so per-program/RUS revenue is inflated. Fix accurately: check the `invoices` schema — **if an invoice carries a `service_area_id`** (or links via a job), attribute program through that, not client→area. **If invoices are only client-level**, then there's no clean per-program split for invoice revenue — sum it per client with `COUNT(DISTINCT i.id)` and present invoice revenue at client level (label it), keeping the program split to the JOB-based estimated/billed figures only. Don't invent a linkage. Note which path you took in the PR notes. (A C4 test will check this.)
+- [ ] **35. Invoices view in the cluster.** New `public/invoices.html` + rail link: read-only list of invoices (number, client, date, status, total) with status filter + drill-in to line items (reuse existing invoice endpoints; add a `requireManagerOrAdmin` read in a new/own route file if needed). Links out to the existing admin invoice actions — don't rebuild create/send/pay.
+- [ ] **36. People view.** New `public/people.html` + rail link: staff roster + each person's hours (reuse `/api/hours/summary` + staff). Read-only.
+- [ ] **37. Navigation cohesion.** Ensure EVERY cluster page (dashboard, service-areas, pipeline, billing, money, hours, clients, area, job-board, invoices, people) is reachable from the `app_nav.js` rail with correct active state; fix any orphan. Keep additive.
+- [ ] **38. Polish new pages.** a11y + dark-mode + loading/empty/error states on the R6/R7 pages (clients, area, invoices, people).
+> Guardrails unchanged: additive only; OFF-LIMITS `routes/service_areas.js`, `auth.js`, `server.js`, `migrations/`, `schema.sql`, structural edits to `service_areas_ui.js`. New backend → new route files (note the mount line). Schema need → `BLOCKED — needs CEO`. Push per task; CEO merges.
