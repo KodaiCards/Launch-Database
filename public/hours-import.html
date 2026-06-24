@@ -1,0 +1,725 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>Import Hours — Launch Fiber</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+<link rel="stylesheet" href="/css/app-shell.css">
+<style>
+:root{
+  --primary:#1B5FA0;--primary-dark:#134880;--primary-light:#E8F0FB;
+  --surface-1:#F5F7FA;--surface-2:#FFFFFF;
+  --white:#FFFFFF;--gray-light:#F5F7FA;--gray-border:#DEE2E6;
+  --text:#212529;--text-secondary:#495057;--text-muted:#5A6470;
+  --success:#28A745;--success-light:#E8F5E9;--success-text:#1B5E20;
+  --warning:#FFC107;--warning-light:#FFF8E1;--warning-text:#7A4F0E;
+  --danger:#DC3545;--danger-light:#FDECEA;--danger-text:#842029;
+  --font:'Inter',sans-serif;
+}
+html[data-theme="dark"]{
+  --primary:#4A90D9;--primary-dark:#1B5FA0;--primary-light:#1E3A5C;
+  --surface-1:#1A1F26;--surface-2:#1D2430;
+  --white:#1D2430;--gray-light:#1A1F26;--gray-border:#2D3540;
+  --text:#E8EAED;--text-secondary:#C2C7CD;--text-muted:#9BA1A8;
+  --success:#5DD27A;--success-light:#1B3D24;--success-text:#A5D6A7;
+  --warning:#FFCA28;--warning-light:#3D2F0F;--warning-text:#FFCC80;
+  --danger:#FF6B6B;--danger-light:#3D1A1A;--danger-text:#FFCDD2;
+  color-scheme:dark;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{font-family:var(--font);background:var(--gray-light);color:var(--text);min-height:100vh}
+button{font-family:inherit;cursor:pointer;border:none;background:none;color:inherit}
+input,select{font-family:inherit;font-size:14px}
+html[data-theme="dark"] input,html[data-theme="dark"] select{background:var(--white);color:var(--text);border-color:var(--gray-border)}
+
+.header{background:var(--white);border-bottom:1px solid var(--gray-border);padding:10px 20px;
+  display:flex;align-items:center;justify-content:space-between;gap:12px}
+.header-left{display:flex;align-items:center;gap:14px}
+.header-title{font-size:16px;font-weight:600}
+.btn{padding:8px 14px;border-radius:6px;font-size:13px;font-weight:500;border:1px solid transparent;
+  display:inline-flex;align-items:center;gap:6px;transition:all .15s}
+.btn-sm{padding:5px 10px;font-size:12px}
+.btn-primary{background:var(--primary);color:#fff;border-color:var(--primary)}
+.btn-primary:hover:not(:disabled){background:var(--primary-dark)}
+.btn-primary:disabled{opacity:.55;cursor:not-allowed}
+.btn-ghost{background:transparent;border-color:var(--gray-border);color:var(--text-secondary)}
+.btn-ghost:hover{background:var(--surface-1)}
+.btn-icon{width:34px;height:34px;padding:0;display:inline-flex;align-items:center;justify-content:center;
+  border-radius:6px;border:1px solid var(--gray-border);background:transparent;color:var(--text-secondary)}
+.btn-icon:hover{background:var(--surface-1)}
+
+.page-body{padding:20px 24px;max-width:1100px;margin:0 auto}
+.page-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:20px;gap:12px}
+.page-title{font-size:20px;font-weight:700}
+
+/* Upload step */
+.upload-card{background:var(--white);border:1px solid var(--gray-border);border-radius:10px;
+  padding:32px;text-align:center;max-width:520px;margin:0 auto}
+.drop-zone{border:2px dashed var(--gray-border);border-radius:10px;padding:36px 24px;
+  cursor:pointer;transition:all .2s;position:relative}
+.drop-zone:hover,.drop-zone.over{border-color:var(--primary);background:var(--primary-light)}
+.drop-zone input[type=file]{position:absolute;inset:0;opacity:0;cursor:pointer;width:100%;height:100%}
+.drop-zone-icon{font-size:36px;color:var(--text-muted);margin-bottom:10px}
+.drop-zone-label{font-size:14px;font-weight:500;margin-bottom:4px}
+.drop-zone-hint{font-size:12px;color:var(--text-muted)}
+.selected-file{margin-top:14px;padding:10px 14px;background:var(--surface-1);border-radius:7px;
+  display:flex;align-items:center;gap:10px;font-size:13px;font-weight:500}
+.selected-file i{color:var(--primary)}
+
+/* Summary strip */
+.summary-strip{display:flex;gap:12px;flex-wrap:wrap;margin-bottom:18px}
+.sum-card{background:var(--white);border:1px solid var(--gray-border);border-radius:8px;
+  padding:12px 18px;min-width:110px;flex:1}
+.sum-label{font-size:11px;font-weight:600;color:var(--text-muted);text-transform:uppercase;margin-bottom:4px}
+.sum-val{font-size:22px;font-weight:700;font-variant-numeric:tabular-nums}
+.sum-val.matched{color:var(--success-text)}
+.sum-val.review{color:var(--warning-text)}
+
+/* Preview table */
+.card{background:var(--white);border:1px solid var(--gray-border);border-radius:10px;overflow:hidden}
+.table-wrap{overflow-x:auto}
+table{width:100%;border-collapse:collapse;font-size:12px}
+thead th{background:var(--surface-1);padding:8px 12px;text-align:left;font-weight:600;
+  font-size:11px;color:var(--text-muted);border-bottom:1px solid var(--gray-border);white-space:nowrap}
+tbody tr{border-bottom:1px solid var(--gray-border);transition:background .1s}
+tbody tr:last-child{border-bottom:none}
+tbody tr.row-review{background:var(--warning-light)}
+html[data-theme="dark"] tbody tr.row-review{background:var(--warning-light)}
+tbody tr.row-skip{opacity:.5}
+tbody td{padding:8px 12px;color:var(--text-secondary)}
+.badge{display:inline-flex;align-items:center;gap:4px;padding:2px 7px;border-radius:8px;
+  font-size:10px;font-weight:700;white-space:nowrap}
+.badge-matched{background:var(--success-light);color:var(--success-text)}
+.badge-review{background:var(--warning-light);color:var(--warning-text)}
+.badge-skip{background:var(--surface-1);color:var(--text-muted)}
+.badge-nostaff{background:var(--danger-light);color:var(--danger-text)}
+
+.resolve-cell{display:flex;flex-direction:column;gap:5px;min-width:220px}
+.resolve-row{display:flex;align-items:center;gap:6px}
+.resolve-select{flex:1;padding:4px 7px;border:1px solid var(--gray-border);border-radius:5px;
+  background:var(--white);color:var(--text);font-size:12px;outline:none}
+.resolve-select:focus{border-color:var(--primary)}
+.skip-toggle{display:flex;align-items:center;gap:5px;font-size:11px;color:var(--text-muted);cursor:pointer;
+  padding:3px 0}
+.skip-toggle input{accent-color:var(--text-muted);cursor:pointer}
+.no-staff-warn{font-size:11px;color:var(--danger-text);display:flex;align-items:center;gap:4px}
+
+/* Commit bar */
+.commit-bar{display:flex;align-items:center;justify-content:space-between;
+  background:var(--white);border:1px solid var(--gray-border);border-radius:10px;
+  padding:14px 20px;margin-top:16px;gap:12px;flex-wrap:wrap}
+.commit-summary{font-size:13px;color:var(--text-secondary)}
+.commit-summary strong{color:var(--text)}
+
+/* Result card */
+.result-card{background:var(--white);border:1px solid var(--gray-border);border-radius:10px;
+  padding:28px 24px;max-width:520px;margin:0 auto;text-align:center}
+.result-icon{font-size:44px;margin-bottom:12px}
+.result-title{font-size:18px;font-weight:700;margin-bottom:6px}
+.result-subtitle{font-size:13px;color:var(--text-muted);margin-bottom:20px}
+.result-stats{display:flex;gap:20px;justify-content:center;flex-wrap:wrap;margin-bottom:20px}
+.result-stat{text-align:center}
+.result-stat-val{font-size:26px;font-weight:700}
+.result-stat-label{font-size:11px;color:var(--text-muted);margin-top:2px}
+.result-actions{display:flex;gap:10px;justify-content:center;flex-wrap:wrap}
+.batch-id{font-size:11px;color:var(--text-muted);margin-top:10px;font-family:monospace}
+
+/* Error / info banners */
+.banner{padding:12px 16px;border-radius:8px;font-size:13px;display:flex;align-items:flex-start;gap:10px;margin-bottom:16px}
+.banner i{margin-top:1px;flex-shrink:0}
+.banner-error{background:var(--danger-light);color:var(--danger-text);border:1px solid var(--danger)}
+.banner-warn{background:var(--warning-light);color:var(--warning-text)}
+.banner-info{background:var(--primary-light);color:var(--primary)}
+
+.empty-state{padding:40px 20px;text-align:center;color:var(--text-muted);font-size:14px}
+.empty-state i{font-size:28px;display:block;margin-bottom:8px;opacity:.4}
+.skeleton{background:var(--surface-1);border-radius:4px;animation:pulse 1.4s infinite}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.4}}
+
+@media(max-width:700px){
+  .page-body{padding:12px}
+  .summary-strip{gap:8px}
+  .sum-card{min-width:80px;padding:10px 12px}
+  .sum-val{font-size:18px}
+}
+</style>
+</head>
+<body>
+
+<div class="header">
+  <div class="header-left">
+    <span class="header-title"><i class="fa-solid fa-file-import"></i> Import Hours</span>
+  </div>
+  <div style="display:flex;align-items:center;gap:8px">
+    <button class="btn-icon" onclick="toggleDark()" title="Toggle dark mode" aria-label="Toggle dark mode">
+      <i id="dm-icon" class="fa-solid fa-moon"></i>
+    </button>
+  </div>
+</div>
+
+<div class="page-body" role="main">
+
+  <!-- ── Step 1: Upload ────────────────────────────────────────────────────── -->
+  <div id="upload-step">
+    <div class="page-header">
+      <h1 class="page-title">Import Hours</h1>
+    </div>
+    <div class="upload-card">
+      <div class="drop-zone" id="drop-zone" role="button" tabindex="0" aria-label="File upload area">
+        <input type="file" id="file-input" accept=".csv,.xlsx,.xls" aria-label="Choose a timecard file">
+        <div class="drop-zone-icon"><i class="fa-solid fa-cloud-arrow-up"></i></div>
+        <div class="drop-zone-label">Drag &amp; drop a timecard file here</div>
+        <div class="drop-zone-hint">Accepts .csv, .xlsx, .xls · Expects employee, date, WO#, hours columns</div>
+      </div>
+      <div id="file-display" style="display:none" class="selected-file">
+        <i class="fa-solid fa-file-lines"></i>
+        <span id="file-name"></span>
+        <button class="btn btn-sm btn-ghost" style="margin-left:auto" onclick="clearFile()" aria-label="Clear selected file">
+          <i class="fa-solid fa-xmark"></i>
+        </button>
+      </div>
+      <div id="upload-error" class="banner banner-error" style="display:none;margin-top:14px;text-align:left">
+        <i class="fa-solid fa-circle-exclamation"></i><span id="upload-error-msg"></span>
+      </div>
+      <button class="btn btn-primary" id="validate-btn" style="margin-top:18px;width:100%" onclick="doValidate()" disabled>
+        <i class="fa-solid fa-magnifying-glass"></i> Validate file
+      </button>
+    </div>
+  </div>
+
+  <!-- ── Step 2: Preview ───────────────────────────────────────────────────── -->
+  <div id="preview-step" hidden>
+    <div class="page-header">
+      <div>
+        <h1 class="page-title">Review Import</h1>
+        <div id="preview-file-label" style="font-size:13px;color:var(--text-muted);margin-top:2px"></div>
+      </div>
+      <button class="btn btn-ghost" onclick="resetToUpload()">
+        <i class="fa-solid fa-arrow-left"></i> Re-upload
+      </button>
+    </div>
+
+    <div id="preview-banner" style="display:none"></div>
+
+    <div class="summary-strip" id="summary-strip" role="region" aria-label="Import summary"></div>
+
+    <div class="card">
+      <div class="table-wrap">
+        <table aria-label="Import preview">
+          <thead>
+            <tr>
+              <th>#</th>
+              <th>Employee</th>
+              <th>Date</th>
+              <th>WO#</th>
+              <th style="text-align:right">Hrs</th>
+              <th>Discipline</th>
+              <th>Status</th>
+              <th>Resolve</th>
+            </tr>
+          </thead>
+          <tbody id="preview-tbody">
+            <tr><td colspan="8"><div class="empty-state"><i class="fa-solid fa-spinner fa-spin"></i></div></td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <div class="commit-bar" id="commit-bar">
+      <div class="commit-summary" id="commit-summary"></div>
+      <button class="btn btn-primary" id="commit-btn" onclick="doCommit()">
+        <i class="fa-solid fa-check"></i> <span id="commit-btn-label">Import hours</span>
+      </button>
+    </div>
+  </div>
+
+  <!-- ── Step 3: Result ────────────────────────────────────────────────────── -->
+  <div id="result-step" hidden>
+    <div class="result-card">
+      <div class="result-icon" id="result-icon"></div>
+      <div class="result-title" id="result-title"></div>
+      <div class="result-subtitle" id="result-subtitle"></div>
+      <div class="result-stats" id="result-stats"></div>
+      <div class="result-actions">
+        <button class="btn btn-ghost" onclick="resetToUpload()">
+          <i class="fa-solid fa-file-import"></i> Import another file
+        </button>
+        <a class="btn btn-primary" href="/hours.html">
+          <i class="fa-solid fa-clock"></i> View hours
+        </a>
+      </div>
+      <div class="batch-id" id="batch-id"></div>
+    </div>
+  </div>
+
+</div><!-- /page-body -->
+
+<script>
+(function(){
+'use strict';
+
+var _stageId   = null;
+var _rows      = [];        // validated rows from server
+var _overrides = {};        // {rowIndex: service_area_job_id}
+var _skipped   = new Set(); // rowIndex
+var _areaCache = {};        // areaId → {id, name, jobs:[]}
+var _allAreas  = null;      // [{id, name, client_name}] — loaded once
+
+// ── Theme ────────────────────────────────────────────────────────────────────
+document.addEventListener('DOMContentLoaded', applyStoredTheme);
+window.toggleDark = function(){
+  var html = document.documentElement;
+  var dark = html.getAttribute('data-theme')==='dark';
+  html.setAttribute('data-theme', dark?'light':'dark');
+  localStorage.setItem('lfs_theme', dark?'light':'dark');
+  updateDmIcon();
+};
+function applyStoredTheme(){
+  var s = localStorage.getItem('lfs_theme');
+  if(s) document.documentElement.setAttribute('data-theme', s);
+  updateDmIcon();
+}
+function updateDmIcon(){
+  var i = document.getElementById('dm-icon');
+  if(!i) return;
+  i.className = document.documentElement.getAttribute('data-theme')==='dark'
+    ? 'fa-solid fa-sun' : 'fa-solid fa-moon';
+}
+
+// ── Step 1: Upload ───────────────────────────────────────────────────────────
+var _selectedFile = null;
+var dropZone = document.getElementById('drop-zone');
+
+dropZone.addEventListener('dragover', function(e){
+  e.preventDefault(); dropZone.classList.add('over');
+});
+dropZone.addEventListener('dragleave', function(){ dropZone.classList.remove('over'); });
+dropZone.addEventListener('drop', function(e){
+  e.preventDefault(); dropZone.classList.remove('over');
+  var f = e.dataTransfer.files[0];
+  if(f) selectFile(f);
+});
+dropZone.addEventListener('keydown', function(e){
+  if(e.key==='Enter'||e.key===' '){ e.preventDefault(); document.getElementById('file-input').click(); }
+});
+document.getElementById('file-input').addEventListener('change', function(){
+  if(this.files[0]) selectFile(this.files[0]);
+});
+
+function selectFile(f){
+  _selectedFile = f;
+  document.getElementById('file-name').textContent = f.name;
+  document.getElementById('file-display').style.display = 'flex';
+  document.getElementById('validate-btn').disabled = false;
+  hideUploadError();
+}
+
+window.clearFile = function(){
+  _selectedFile = null;
+  document.getElementById('file-input').value = '';
+  document.getElementById('file-display').style.display = 'none';
+  document.getElementById('validate-btn').disabled = true;
+  hideUploadError();
+};
+
+function showUploadError(msg){
+  document.getElementById('upload-error-msg').textContent = msg;
+  document.getElementById('upload-error').style.display = 'flex';
+}
+function hideUploadError(){
+  document.getElementById('upload-error').style.display = 'none';
+}
+
+window.doValidate = async function(){
+  if(!_selectedFile) return;
+  var btn = document.getElementById('validate-btn');
+  btn.disabled = true;
+  btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Validating…';
+  hideUploadError();
+  try{
+    var fd = new FormData();
+    fd.append('file', _selectedFile);
+    var res = await fetch('/api/hours/import/validate', {
+      method:'POST', credentials:'include', body: fd
+    });
+    if(res.status===401||res.status===403){
+      showUploadError('Admin access required to import hours.');
+      return;
+    }
+    var data = await res.json();
+    if(!res.ok){ showUploadError(data.error||'Validation failed.'); return; }
+    // success → show preview
+    _stageId   = data.stageId;
+    _rows      = data.rows || [];
+    _overrides = {};
+    _skipped   = new Set();
+    renderPreview(data);
+    show('preview-step');
+    hide('upload-step');
+  } catch(e){
+    showUploadError('Network error: '+(e.message||'Unknown'));
+  } finally {
+    btn.disabled = false;
+    btn.innerHTML = '<i class="fa-solid fa-magnifying-glass"></i> Validate file';
+  }
+};
+
+// ── Step 2: Preview ──────────────────────────────────────────────────────────
+function renderPreview(data){
+  // file label
+  document.getElementById('preview-file-label').textContent =
+    (data.fileName||'') + (data.columns ? ' · columns: ' + data.columns.join(', ') : '');
+
+  // summary strip
+  var s = data.summary || {};
+  document.getElementById('summary-strip').innerHTML =
+    sumCard('Total rows', s.total||0, '')
+    + sumCard('Matched', s.matched||0, 'matched')
+    + sumCard('Needs review', s.review||0, 'review')
+    + sumCard('Total hours', (s.totalHours||0)+'h', '');
+
+  // render rows
+  renderTable();
+  updateCommitBar();
+}
+
+function sumCard(label, val, cls){
+  return '<div class="sum-card"><div class="sum-label">'+esc(label)+'</div>'
+    +'<div class="sum-val '+(cls||'')+'">'+esc(String(val))+'</div></div>';
+}
+
+function renderTable(){
+  var tbody = document.getElementById('preview-tbody');
+  if(!_rows.length){
+    tbody.innerHTML = '<tr><td colspan="8"><div class="empty-state"><i class="fa-solid fa-inbox"></i>No rows parsed.</div></td></tr>';
+    return;
+  }
+
+  tbody.innerHTML = _rows.map(function(row){
+    var i = row.rowIndex;
+    var skip = _skipped.has(i);
+    var trClass = skip ? 'row-skip' : (row.status==='review' ? 'row-review' : '');
+    var statusHtml = renderStatusBadge(row, i);
+    var resolveHtml = renderResolveCell(row, i);
+    return '<tr class="'+trClass+'" id="row-tr-'+i+'">'
+      +'<td style="color:var(--text-muted);font-size:11px">'+i+'</td>'
+      +'<td style="font-weight:500;color:var(--text)">'+esc(row.employee||'—')+'</td>'
+      +'<td>'+esc(row.date||'—')+'</td>'
+      +'<td>'+esc(row.wo||'—')+'</td>'
+      +'<td style="text-align:right;font-variant-numeric:tabular-nums">'+esc(String(row.hours||0))+'</td>'
+      +'<td>'+esc(row.jobTitle||row.team||'—')+'</td>'
+      +'<td>'+statusHtml+'</td>'
+      +'<td>'+resolveHtml+'</td>'
+      +'</tr>';
+  }).join('');
+}
+
+function renderStatusBadge(row, i){
+  if(_skipped.has(i)) return '<span class="badge badge-skip">Skipped</span>';
+  if(row.status==='matched') return '<span class="badge badge-matched"><i class="fa-solid fa-check"></i> Matched</span>';
+  if(!row.staff_id) return '<span class="badge badge-nostaff"><i class="fa-solid fa-user-slash"></i> Unknown employee</span>';
+  if(_overrides[i]) return '<span class="badge badge-matched"><i class="fa-solid fa-pen"></i> Resolved</span>';
+  return '<span class="badge badge-review"><i class="fa-solid fa-circle-exclamation"></i> Review</span>';
+}
+
+function renderResolveCell(row, i){
+  if(row.status==='matched'){
+    // show job name as confirmation
+    var hint = (row.team||'') + (row.service_area_id ? '' : '');
+    return '<span style="font-size:11px;color:var(--text-muted)">'+esc(hint||'Auto-matched')+'</span>';
+  }
+  // review row
+  var skipEl = '<label class="skip-toggle">'
+    +'<input type="checkbox" onchange="toggleSkip('+i+',this.checked)"'
+    +(_skipped.has(i)?' checked':'')+' aria-label="Skip row '+i+'">'
+    +'<span>Skip this row</span>'
+    +'</label>';
+
+  if(!row.staff_id){
+    // can't resolve — no staff match; job override alone won't fix it
+    return '<div class="resolve-cell">'
+      +'<div class="no-staff-warn"><i class="fa-solid fa-triangle-exclamation"></i>'
+      +'Employee not in Staff — add them first, then re-upload.</div>'
+      +skipEl+'</div>';
+  }
+  if(_skipped.has(i)){
+    return '<div class="resolve-cell">'+skipEl+'</div>';
+  }
+
+  // job picker
+  var pickerHtml = renderJobPicker(row, i);
+  return '<div class="resolve-cell">'+pickerHtml+skipEl+'</div>';
+}
+
+function renderJobPicker(row, i){
+  var reason = row.reason ? '<div style="font-size:11px;color:var(--text-muted);margin-bottom:4px">'+esc(row.reason)+'</div>' : '';
+
+  if(row.service_area_id){
+    // area known — load jobs and render a job picker for this area
+    var cachedArea = _areaCache[row.service_area_id];
+    if(!cachedArea){
+      // trigger async load; show loading placeholder
+      loadAreaJobs(row.service_area_id, i);
+      return reason+'<div id="jp-'+i+'" class="resolve-row"><span style="font-size:11px;color:var(--text-muted)">'
+        +'<i class="fa-solid fa-spinner fa-spin"></i> Loading jobs…</span></div>';
+    }
+    return reason+jobSelectHtml(row.service_area_id, cachedArea, i);
+  }
+
+  // area unknown — need to pick area first
+  if(!_allAreas){
+    loadAllAreas(i);
+    return reason+'<div id="jp-'+i+'" class="resolve-row"><span style="font-size:11px;color:var(--text-muted)">'
+      +'<i class="fa-solid fa-spinner fa-spin"></i> Loading areas…</span></div>';
+  }
+
+  return reason+areaSelectHtml(i);
+}
+
+function jobSelectHtml(areaId, area, rowIdx){
+  var jobs = (area && area.jobs) ? area.jobs : [];
+  var current = _overrides[rowIdx]||'';
+  var opts = '<option value="">— Pick a job —</option>'
+    + jobs.map(function(j){
+        var label = (j.job_name||j.team||j.id)+' ('+esc(j.team||'')+')';
+        return '<option value="'+esc(j.id)+'"'+(j.id===current?' selected':'')+'>'+esc(label)+'</option>';
+      }).join('');
+  var areaLabel = (area&&area.name) ? esc(area.name) : '';
+  return '<div class="resolve-row" id="jp-'+rowIdx+'">'
+    +'<div style="font-size:11px;color:var(--text-muted);margin-bottom:3px">Area: '+areaLabel+'</div></div>'
+    +'<div class="resolve-row">'
+    +'<select class="resolve-select" id="job-sel-'+rowIdx+'" aria-label="Pick job for row '+rowIdx+'"'
+    +' onchange="setOverride('+rowIdx+',this.value)">'
+    +opts+'</select></div>';
+}
+
+function areaSelectHtml(rowIdx){
+  var areas = _allAreas || [];
+  var current = _overrides[rowIdx+'_area']||'';
+  var opts = '<option value="">— Pick area —</option>'
+    + areas.map(function(a){
+        return '<option value="'+esc(a.id)+'"'+(a.id===current?' selected':'')+'>'+esc(a.name+(a.client_name?' ('+a.client_name+')':''))+'</option>';
+      }).join('');
+  var jobSel = current ? renderAreaJobSel(current, rowIdx) : '';
+  return '<div class="resolve-row" id="jp-'+rowIdx+'">'
+    +'<select class="resolve-select" id="area-sel-'+rowIdx+'" aria-label="Pick service area for row '+rowIdx+'"'
+    +' onchange="pickArea('+rowIdx+',this.value)">'+opts+'</select></div>'
+    +'<div id="job-sel-wrap-'+rowIdx+'">'+jobSel+'</div>';
+}
+
+function renderAreaJobSel(areaId, rowIdx){
+  var area = _areaCache[areaId];
+  if(!area){ loadAreaJobs(areaId, rowIdx); return ''; }
+  var jobs = area.jobs||[];
+  var current = _overrides[rowIdx]||'';
+  var opts = '<option value="">— Pick job —</option>'
+    + jobs.map(function(j){
+        return '<option value="'+esc(j.id)+'"'+(j.id===current?' selected':'')+'>'+esc(j.job_name||j.team||j.id)+'</option>';
+      }).join('');
+  return '<div class="resolve-row" style="margin-top:4px">'
+    +'<select class="resolve-select" id="job-sel-'+rowIdx+'" aria-label="Pick job for row '+rowIdx+'"'
+    +' onchange="setOverride('+rowIdx+',this.value)">'+opts+'</select></div>';
+}
+
+async function loadAreaJobs(areaId, rowIdx){
+  try{
+    var res = await fetch('/api/service-areas/'+encodeURIComponent(areaId), { credentials:'include' });
+    if(!res.ok) throw new Error('Failed');
+    var data = await res.json();
+    _areaCache[areaId] = { id: areaId, name: data.name, jobs: data.jobs||[] };
+    refreshReviewCell(rowIdx);
+  } catch(e){
+    var el = document.getElementById('jp-'+rowIdx);
+    if(el) el.innerHTML = '<span style="font-size:11px;color:var(--danger-text)">Could not load jobs</span>';
+  }
+}
+
+async function loadAllAreas(rowIdx){
+  if(_allAreas){ refreshReviewCell(rowIdx); return; }
+  try{
+    var res = await fetch('/api/service-areas', { credentials:'include' });
+    _allAreas = res.ok ? (await res.json()) : [];
+  } catch(e){ _allAreas = []; }
+  // refresh all area-unknown rows
+  _rows.forEach(function(row){
+    if(row.status==='review' && !row.service_area_id && !_skipped.has(row.rowIndex)){
+      refreshReviewCell(row.rowIndex);
+    }
+  });
+}
+
+function refreshReviewCell(rowIdx){
+  var row = _rows.find(function(r){ return r.rowIndex===rowIdx; });
+  if(!row) return;
+  var tr = document.getElementById('row-tr-'+rowIdx);
+  if(!tr) return;
+  var tds = tr.querySelectorAll('td');
+  if(tds.length<8) return;
+  tds[6].innerHTML = renderStatusBadge(row, rowIdx);
+  tds[7].innerHTML = renderResolveCell(row, rowIdx);
+  updateCommitBar();
+}
+
+// ── Resolve handlers (called from inline onclick) ─────────────────────────────
+window.toggleSkip = function(rowIdx, checked){
+  if(checked){ _skipped.add(rowIdx); delete _overrides[rowIdx]; }
+  else _skipped.delete(rowIdx);
+  refreshReviewCell(rowIdx);
+  updateCommitBar();
+};
+
+window.setOverride = function(rowIdx, jobId){
+  if(jobId) _overrides[rowIdx] = jobId;
+  else delete _overrides[rowIdx];
+  refreshReviewCell(rowIdx);
+  updateCommitBar();
+};
+
+window.pickArea = function(rowIdx, areaId){
+  _overrides[rowIdx+'_area'] = areaId;
+  delete _overrides[rowIdx]; // clear any prior job override for this row
+  var wrap = document.getElementById('job-sel-wrap-'+rowIdx);
+  if(!wrap) return;
+  if(!areaId){ wrap.innerHTML = ''; return; }
+  if(!_areaCache[areaId]){
+    wrap.innerHTML = '<div style="font-size:11px;color:var(--text-muted);margin-top:4px"><i class="fa-solid fa-spinner fa-spin"></i> Loading…</div>';
+    loadAreaJobs(areaId, rowIdx).then(function(){
+      var area = _areaCache[areaId];
+      if(area && wrap) wrap.innerHTML = renderAreaJobSel(areaId, rowIdx);
+      updateCommitBar();
+    });
+  } else {
+    wrap.innerHTML = renderAreaJobSel(areaId, rowIdx);
+  }
+  updateCommitBar();
+};
+
+function updateCommitBar(){
+  var committable = 0, skipCount = 0, reviewLeft = 0;
+  _rows.forEach(function(row){
+    var i = row.rowIndex;
+    if(_skipped.has(i)){ skipCount++; return; }
+    if(row.status==='matched'){ committable++; return; }
+    // review
+    if(!row.staff_id){ reviewLeft++; return; } // can't fix without staff
+    if(_overrides[i]){ committable++; return; }
+    reviewLeft++;
+  });
+  document.getElementById('commit-summary').innerHTML =
+    '<strong>'+committable+'</strong> row'+(committable!==1?'s':'')+' to import'
+    +(skipCount?' · <span style="color:var(--text-muted)">'+skipCount+' skipped</span>':'')
+    +(reviewLeft?' · <span style="color:var(--warning-text)">'+reviewLeft+' still unresolved</span>':'');
+  var btn = document.getElementById('commit-btn');
+  document.getElementById('commit-btn-label').textContent = 'Import '+committable+' row'+(committable!==1?'s':'');
+  btn.disabled = committable===0;
+  if(reviewLeft>0 && !document.getElementById('unresolved-banner')){
+    var pb = document.getElementById('preview-banner');
+    pb.innerHTML = '<div class="banner banner-warn" id="unresolved-banner">'
+      +'<i class="fa-solid fa-circle-exclamation"></i>'
+      +'<span>'+reviewLeft+' row'+(reviewLeft!==1?'s':'')+' can\'t be imported yet — '
+      +'use the job picker or Skip to proceed. Rows with unknown employees must be fixed in Staff first.</span>'
+      +'</div>';
+    pb.style.display = 'block';
+  } else if(reviewLeft===0){
+    document.getElementById('preview-banner').style.display = 'none';
+  }
+}
+
+// ── Step 2 → 3: Commit ───────────────────────────────────────────────────────
+window.doCommit = async function(){
+  var btn = document.getElementById('commit-btn');
+  btn.disabled = true;
+  btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Importing…';
+  try{
+    var body = {
+      stageId: _stageId,
+      overrides: Object.keys(_overrides).filter(function(k){ return !k.endsWith('_area'); })
+        .reduce(function(acc, k){ acc[k] = _overrides[k]; return acc; }, {}),
+      skip: Array.from(_skipped)
+    };
+    var res = await fetch('/api/hours/import/commit', {
+      method:'POST', credentials:'include',
+      headers:{'Content-Type':'application/json'},
+      body: JSON.stringify(body)
+    });
+    if(res.status===410){
+      showReExpiredBanner();
+      return;
+    }
+    var data = await res.json();
+    if(!res.ok){ throw new Error(data.error||'Commit failed'); }
+    renderResult(data);
+    show('result-step');
+    hide('preview-step');
+  } catch(e){
+    btn.disabled = false;
+    btn.innerHTML = '<i class="fa-solid fa-check"></i> <span id="commit-btn-label">Retry import</span>';
+    var pb = document.getElementById('preview-banner');
+    pb.innerHTML = '<div class="banner banner-error"><i class="fa-solid fa-circle-exclamation"></i>'+esc(e.message||'Import failed')+'</div>';
+    pb.style.display = 'block';
+  }
+};
+
+function showReExpiredBanner(){
+  var pb = document.getElementById('preview-banner');
+  pb.innerHTML = '<div class="banner banner-error">'
+    +'<i class="fa-solid fa-clock-rotate-left"></i>'
+    +'<span>Upload session expired (1-hour limit). Please re-upload the file to start a new session.</span>'
+    +'</div>'
+    +'<div style="text-align:right;margin-top:8px">'
+    +'<button class="btn btn-ghost" onclick="resetToUpload()"><i class="fa-solid fa-arrow-left"></i> Re-upload</button>'
+    +'</div>';
+  pb.style.display = 'block';
+  document.getElementById('commit-btn').disabled = true;
+}
+
+// ── Step 3: Result ────────────────────────────────────────────────────────────
+function renderResult(data){
+  var ok = data.committed > 0;
+  document.getElementById('result-icon').innerHTML =
+    ok ? '<i class="fa-solid fa-circle-check" style="color:var(--success)"></i>'
+       : '<i class="fa-solid fa-circle-xmark" style="color:var(--text-muted)"></i>';
+  document.getElementById('result-title').textContent =
+    ok ? 'Import complete' : 'Nothing imported';
+  document.getElementById('result-subtitle').textContent =
+    ok ? 'Hours have been added to the affected service area jobs.'
+       : 'All rows were either skipped or still need review.';
+  document.getElementById('result-stats').innerHTML =
+    resultStat(data.committed||0, 'Rows imported')
+    + resultStat(data.jobs_recomputed||0, 'Jobs updated')
+    + (data.skipped ? resultStat(data.skipped, 'Skipped') : '')
+    + (data.review_remaining ? resultStat(data.review_remaining, 'Still unresolved') : '');
+  document.getElementById('batch-id').textContent =
+    data.import_batch ? 'Batch: '+data.import_batch : '';
+}
+
+function resultStat(val, label){
+  return '<div class="result-stat">'
+    +'<div class="result-stat-val">'+esc(String(val))+'</div>'
+    +'<div class="result-stat-label">'+esc(label)+'</div>'
+    +'</div>';
+}
+
+// ── Navigation helpers ────────────────────────────────────────────────────────
+window.resetToUpload = function(){
+  _stageId = null; _rows = []; _overrides = {}; _skipped = new Set();
+  window.clearFile();
+  hide('preview-step'); hide('result-step');
+  show('upload-step');
+};
+
+function show(id){ document.getElementById(id).hidden = false; }
+function hide(id){ document.getElementById(id).hidden = true; }
+
+function esc(s){
+  return String(s??'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+})();
+</script>
+<script src="/js/app_nav.js" data-active="hours"></script>
+</body>
+</html>
