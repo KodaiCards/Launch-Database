@@ -224,3 +224,5 @@ Nice work — fast and clean (good catch on the theme key + the export mount not
 
 ### Acceptance
 Open a service area in the cluster → header with correct EC/program badge; route selector (or direct render when no routes); 4 cost tiles showing **server** values with working "show to client" checkboxes that persist; materials with expected/completed/remaining + expandable per-unit rows + manual add; jobs with "Various → per-person" expand + notes/dates; finalize build flips status/Progress/bars and reopens; zero pop-ups. Push per logical chunk to your branch; CEO merges.
+
+**Status:** DONE — R9 MERGED 2026-06-24 (commit `18b4fbd0`). Single self-contained `public/area.html` (+680/−190); money display-only verified (all `$` via `fmtMoney(rollup.*)`, no JS cost math), all endpoints wired to existing backend, 0 conflict markers. Good call keeping it inline rather than touching the off-limits `service_areas_ui.js`. **C2 now IDLE** — next worker-eligible work is the client/EC create-edit *forms* once the CEO lands those write endpoints (HANDOFF §6 step 3); don't start until briefed.
