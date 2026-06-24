@@ -72,7 +72,7 @@ function teamFor(jobTitle) {
 // row = { employee, wo, jobTitle, customer }  (date/hours handled by the caller)
 // ctx = {
 //   areasByWO:   Map<normWO, Array<{id,name,client_id,program}>>,
-//   jobsByArea:  Map<area_id, Array<{id, team, assigned_staff_id}>>,
+//   jobsByArea:  Map<area_id, Array<{id, team, job_name, assigned_staff_id}>>,
 //   staffByName: Map<normName, {id,name}>,
 // }
 // Returns { status:'matched'|'review', reason, service_area_id,
@@ -108,20 +108,35 @@ function matchRow(row, ctx) {
   if (areas.length > 1) return review(`WO# ${row.wo} matches ${areas.length} service areas`);
   const area = areas[0];
 
-  if (!team) return review(`Could not determine discipline from "${row.jobTitle}"`, { service_area_id: area.id });
-
   const jobs = ctx.jobsByArea.get(area.id) || [];
+
+  // 1) Specific job by catalog name — distinguishes roles that SHARE a discipline
+  // but bill at different rates (e.g. Inspector $90 vs Resident Engineer $100,
+  // both team='inspection'). Exact normalized name, then a substring fallback.
+  const jobHint = normalizeName(row.jobTitle);
+  if (jobHint) {
+    let named = jobs.filter((j) => normalizeName(j.job_name) === jobHint);
+    if (named.length !== 1) {
+      const sub = jobs.filter((j) => {
+        const n = normalizeName(j.job_name);
+        return n && (n.includes(jobHint) || jobHint.includes(n));
+      });
+      if (sub.length === 1) named = sub;
+    }
+    if (named.length === 1) return matched(area, named[0]);
+  }
+
+  // 2) Fall back to discipline (team) when the role name didn't pin exactly one job.
+  if (!team) return review(`Could not determine discipline from "${row.jobTitle}"`, { service_area_id: area.id });
   let teamJobs = jobs.filter((j) => j.team === team);
   if (teamJobs.length === 0) return review(`No ${team} job in service area "${area.name}"`, { service_area_id: area.id });
-
-  // Staff assignment breaks ties.
   if (teamJobs.length > 1) {
     const assigned = teamJobs.filter((j) => j.assigned_staff_id === staff_id);
     if (assigned.length === 1) return matched(area, assigned[0]);
     if (assigned.length > 1) teamJobs = assigned;
   }
   if (teamJobs.length === 1) return matched(area, teamJobs[0]);
-  return review(`${team} is ambiguous (${teamJobs.length} jobs) in "${area.name}"`, { service_area_id: area.id });
+  return review(`${team} is ambiguous (${teamJobs.length} jobs) in "${area.name}" — set the timecard's job title to the exact role`, { service_area_id: area.id });
 }
 
 module.exports = { matchRow, teamFor, normalizeWO, normalizeName, classifyUnbilled };

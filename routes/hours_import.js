@@ -41,7 +41,8 @@ module.exports = function installHoursImportRoutes(app, pool, mw) {
     const [areaR, jobR, staffR] = await Promise.all([
       pool.query(`SELECT id, name, client_id, program, work_order_number
                     FROM service_areas WHERE work_order_number IS NOT NULL AND work_order_number <> ''`),
-      pool.query(`SELECT id, service_area_id, team, assigned_staff_id FROM service_area_jobs`),
+      pool.query(`SELECT saj.id, saj.service_area_id, saj.team, saj.assigned_staff_id, j.name AS job_name
+                    FROM service_area_jobs saj LEFT JOIN jobs j ON j.id = saj.job_id`),
       pool.query(`SELECT id, name FROM staff`),
     ]);
     const areasByWO = new Map();
@@ -54,7 +55,7 @@ module.exports = function installHoursImportRoutes(app, pool, mw) {
     const jobsByArea = new Map();
     for (const j of jobR.rows) {
       if (!jobsByArea.has(j.service_area_id)) jobsByArea.set(j.service_area_id, []);
-      jobsByArea.get(j.service_area_id).push({ id: j.id, team: j.team, assigned_staff_id: j.assigned_staff_id });
+      jobsByArea.get(j.service_area_id).push({ id: j.id, team: j.team, job_name: j.job_name, assigned_staff_id: j.assigned_staff_id });
     }
     const staffByName = new Map();
     for (const s of staffR.rows) staffByName.set(normalizeName(s.name), { id: s.id, name: s.name });

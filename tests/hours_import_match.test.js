@@ -17,6 +17,7 @@ function ctx() {
     areasByWO: new Map([
       ['16299', [{ id: 'A', name: 'Area A', client_id: 'c1', program: 'rus' }]],
       ['200',   [{ id: 'B', name: 'Area B', client_id: 'c1', program: 'bau' }]],
+      ['300',   [{ id: 'C', name: 'Area C', client_id: 'c1', program: 'rus' }]],
       ['999',   [ // duplicate WO# across two areas → ambiguous
         { id: 'X', name: 'Area X', client_id: 'c1', program: 'rus' },
         { id: 'Y', name: 'Area Y', client_id: 'c2', program: 'bau' },
@@ -24,12 +25,18 @@ function ctx() {
     ]),
     jobsByArea: new Map([
       ['A', [
-        { id: 'A-design', team: 'design',     assigned_staff_id: null },
-        { id: 'A-permit', team: 'permitting', assigned_staff_id: null },
+        { id: 'A-design', team: 'design',     job_name: 'Design',     assigned_staff_id: null },
+        { id: 'A-permit', team: 'permitting', job_name: 'Permitting', assigned_staff_id: null },
       ]],
       ['B', [
-        { id: 'B-design1', team: 'design', assigned_staff_id: 's-bob' },
-        { id: 'B-design2', team: 'design', assigned_staff_id: null },
+        { id: 'B-design1', team: 'design', job_name: 'Design', assigned_staff_id: 's-bob' },
+        { id: 'B-design2', team: 'design', job_name: 'Design', assigned_staff_id: null },
+      ]],
+      // Two inspection-discipline jobs that bill at different rates — must
+      // disambiguate by the specific role name, not the shared discipline.
+      ['C', [
+        { id: 'C-insp', team: 'inspection', job_name: 'Inspector',         assigned_staff_id: null },
+        { id: 'C-re',   team: 'inspection', job_name: 'Resident Engineer', assigned_staff_id: null },
       ]],
     ]),
     staffByName: new Map([
@@ -72,6 +79,15 @@ test('staff assignment breaks a tie between two same-team jobs', () => {
   const r = matchRow({ employee: 'Bob Jones', wo: '200', jobTitle: 'Design', customer: 'PSC' }, ctx());
   assert.equal(r.status, 'matched');
   assert.equal(r.service_area_job_id, 'B-design1'); // the one assigned to Bob
+});
+
+test('same-discipline roles disambiguate by job name (Inspector vs Resident Engineer)', () => {
+  const insp = matchRow({ employee: 'Alice Smith', wo: '300', jobTitle: 'Inspector', customer: 'PSC' }, ctx());
+  assert.equal(insp.status, 'matched');
+  assert.equal(insp.service_area_job_id, 'C-insp', 'Inspector → the Inspector job');
+  const re = matchRow({ employee: 'Alice Smith', wo: '300', jobTitle: 'Resident Engineer', customer: 'PSC' }, ctx());
+  assert.equal(re.status, 'matched');
+  assert.equal(re.service_area_job_id, 'C-re', 'Resident Engineer → the RE job (same inspection discipline, different rate)');
 });
 
 test('ambiguous team with no staff assignment → review', () => {
