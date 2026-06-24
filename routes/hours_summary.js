@@ -74,19 +74,54 @@ module.exports = function installHoursSummaryRoutes(app, pool, mw) {
 
   app.get('/api/hours/summary.csv', requireManagerOrAdmin, async (req, res) => {
     try {
-      const rows = await querySummary(pool, req.query.from || null, req.query.to || null);
-      const header = ['Staff', 'Client', 'Service Area', 'Team', 'Job', 'Entries', 'Hours'];
-      const lines = [header.map(csvCell).join(',')];
-      for (const r of rows) {
-        lines.push([
-          r.staff_name, r.client_name || '', r.service_area_name || '',
-          r.team || '', r.job_name || '', r.entry_count,
-          (r.total_hours || 0).toFixed(2),
-        ].map(csvCell).join(','));
-      }
+      const from  = req.query.from || null;
+      const to    = req.query.to   || null;
+      const group = req.query.group || null; // 'client' | 'area' | null (default: per-person)
+      const rows  = await querySummary(pool, from, to);
       const stamp = new Date().toISOString().slice(0, 10);
       res.setHeader('Content-Type', 'text/csv; charset=utf-8');
-      res.setHeader('Content-Disposition', `attachment; filename="hours-summary-${stamp}.csv"`);
+
+      let lines, filename;
+      if (group === 'client') {
+        // Aggregate by client
+        const map = new Map();
+        for (const r of rows) {
+          const k = r.client_name || '— No client —';
+          const cur = map.get(k) || { client: k, entries: 0, hours: 0 };
+          cur.entries += r.entry_count; cur.hours += r.total_hours || 0;
+          map.set(k, cur);
+        }
+        const agg = [...map.values()].sort((a, b) => b.hours - a.hours);
+        lines = [['Client', 'Entries', 'Hours'].map(csvCell).join(',')];
+        for (const r of agg) lines.push([r.client, r.entries, r.hours.toFixed(2)].map(csvCell).join(','));
+        filename = `hours-by-client-${stamp}.csv`;
+      } else if (group === 'area') {
+        // Aggregate by client + service area
+        const map = new Map();
+        for (const r of rows) {
+          const k = (r.client_name || '') + '|' + (r.service_area_name || '');
+          const cur = map.get(k) || { client: r.client_name || '', area: r.service_area_name || '', entries: 0, hours: 0 };
+          cur.entries += r.entry_count; cur.hours += r.total_hours || 0;
+          map.set(k, cur);
+        }
+        const agg = [...map.values()].sort((a, b) => b.hours - a.hours);
+        lines = [['Client', 'Service Area', 'Entries', 'Hours'].map(csvCell).join(',')];
+        for (const r of agg) lines.push([r.client, r.area, r.entries, r.hours.toFixed(2)].map(csvCell).join(','));
+        filename = `hours-by-area-${stamp}.csv`;
+      } else {
+        // Default: per-person + job (original behavior)
+        lines = [['Staff', 'Client', 'Service Area', 'Team', 'Job', 'Entries', 'Hours'].map(csvCell).join(',')];
+        for (const r of rows) {
+          lines.push([
+            r.staff_name, r.client_name || '', r.service_area_name || '',
+            r.team || '', r.job_name || '', r.entry_count,
+            (r.total_hours || 0).toFixed(2),
+          ].map(csvCell).join(','));
+        }
+        filename = `hours-summary-${stamp}.csv`;
+      }
+
+      res.setHeader('Content-Disposition', `attachment; filename="${filename}"`);
       res.send(lines.join('\r\n') + '\r\n');
     } catch (e) {
       console.error('[hours-summary:csv]', e && e.message);

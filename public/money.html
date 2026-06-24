@@ -1,0 +1,225 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>Money — Launch Fiber</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+<link rel="stylesheet" href="/css/app-shell.css">
+<style>
+:root{
+  --primary:#1B5FA0;--primary-dark:#134880;--primary-light:#E8F0FB;
+  --surface-1:#F5F7FA;--surface-2:#FFFFFF;
+  --white:#FFFFFF;--gray-light:#F5F7FA;--gray-border:#DEE2E6;
+  --text:#212529;--text-secondary:#495057;--text-muted:#5A6470;
+  --success:#28A745;--success-light:#E8F5E9;--success-text:#1B5E20;
+  --warning:#FFC107;--warning-light:#FFF8E1;--warning-text:#7A4F0E;
+  --danger:#DC3545;--danger-light:#FDECEA;--danger-text:#B71C1C;
+  --info:#1B5FA0;--info-light:#E8F0FB;--info-text:#0D47A1;
+  --font:'Inter',sans-serif;
+}
+html[data-theme="dark"]{
+  --primary:#4A90D9;--primary-dark:#1B5FA0;--primary-light:#1E3A5C;
+  --surface-1:#1A1F26;--surface-2:#1D2430;
+  --white:#1D2430;--gray-light:#1A1F26;--gray-border:#2D3540;
+  --text:#E8EAED;--text-secondary:#C2C7CD;--text-muted:#9BA1A8;
+  --success:#5DD27A;--success-light:#1B3D24;--success-text:#A5D6A7;
+  --warning:#FFCA28;--warning-light:#3D2F0F;--warning-text:#FFCC80;
+  --danger:#EF5350;--danger-light:#3D1F23;--danger-text:#F8B4BD;
+  --info:#4A90D9;--info-light:#1E3A5C;--info-text:#90CAF9;
+  color-scheme:dark;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{font-family:var(--font);background:var(--gray-light);color:var(--text);min-height:100vh}
+button{font-family:inherit;cursor:pointer;border:none;background:none;color:inherit}
+
+.header{background:var(--white);border-bottom:1px solid var(--gray-border);padding:10px 20px;
+  display:flex;align-items:center;justify-content:space-between;gap:12px}
+.header-left{display:flex;align-items:center;gap:14px}
+.header-logo{height:38px;object-fit:contain}
+html[data-theme="dark"] .header-logo{filter:brightness(0) invert(1) opacity(.92)}
+.header-title{font-size:16px;font-weight:600}
+.header-right{display:flex;align-items:center;gap:8px}
+
+.btn{padding:8px 14px;border-radius:6px;font-size:13px;font-weight:500;border:1px solid transparent;
+  display:inline-flex;align-items:center;gap:6px;transition:all .15s}
+.btn-secondary{background:var(--white);color:var(--text);border-color:var(--gray-border)}
+.btn-secondary:hover{background:var(--gray-light)}
+.btn-sm{padding:6px 10px;font-size:12px}
+
+.container{max-width:1100px;margin:24px auto;padding:0 16px}
+.page-heading{font-size:18px;font-weight:700;margin-bottom:4px}
+.page-sub{font-size:13px;color:var(--text-muted);margin-bottom:20px}
+
+.section{margin-bottom:28px}
+.section-head{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:12px}
+.section-title{font-size:15px;font-weight:600;display:flex;align-items:center;gap:8px}
+
+.card{background:var(--white);border:1px solid var(--gray-border);border-radius:10px;overflow:hidden}
+.table-wrap{overflow-x:auto}
+table{width:100%;border-collapse:collapse;font-size:13px}
+th{text-align:left;padding:10px 14px;color:var(--text-muted);font-weight:600;font-size:11px;
+  text-transform:uppercase;letter-spacing:.5px;border-bottom:1px solid var(--gray-border)}
+td{padding:10px 14px;border-bottom:1px solid var(--gray-border)}
+tbody tr:last-child td{border-bottom:none}
+tbody tr:hover{background:var(--gray-light)}
+td.num,th.num{text-align:right;font-variant-numeric:tabular-nums}
+tfoot td{font-weight:700;border-top:2px solid var(--gray-border);background:var(--gray-light)}
+.pos{color:var(--success-text)}
+.neg{color:var(--danger-text)}
+
+/* Aging cards */
+.aging-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:12px;margin-bottom:14px}
+.aging-card{background:var(--white);border:1px solid var(--gray-border);border-radius:10px;padding:14px 16px}
+.aging-card.b0{border-top:3px solid var(--success)}
+.aging-card.b1{border-top:3px solid var(--info)}
+.aging-card.b2{border-top:3px solid var(--warning)}
+.aging-card.b3{border-top:3px solid var(--danger)}
+.aging-label{font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.5px;color:var(--text-muted)}
+.aging-total{font-size:22px;font-weight:700;font-variant-numeric:tabular-nums;margin:4px 0 2px}
+.aging-count{font-size:12px;color:var(--text-muted)}
+
+.tag{display:inline-block;padding:2px 8px;border-radius:10px;font-size:11px;font-weight:600;
+  background:var(--gray-light);color:var(--text-muted)}
+
+.empty-state{text-align:center;color:var(--text-muted);padding:32px 20px}
+.empty-state i{font-size:28px;margin-bottom:10px;opacity:.4;display:block}
+.loading-row{text-align:center;color:var(--text-muted);padding:28px;font-size:13px}
+.spinner{display:inline-block;width:14px;height:14px;border:2px solid currentColor;
+  border-radius:50%;border-right-color:transparent;animation:spin .6s linear infinite;vertical-align:-2px;margin-right:6px}
+@keyframes spin{to{transform:rotate(360deg)}}
+
+/* Responsive */
+@media(max-width:680px){
+  .container{padding:0 10px}
+  .aging-grid{grid-template-columns:repeat(2,1fr)}
+}
+@media(max-width:400px){
+  .aging-grid{grid-template-columns:1fr}
+}
+/* Invoice drill-in modal */
+.modal-bg{position:fixed;inset:0;background:rgba(0,0,0,.45);display:flex;align-items:center;justify-content:center;z-index:1000}
+.modal-bg.hidden{display:none}
+.modal{background:var(--white);border-radius:12px;width:min(680px,95vw);max-height:85vh;display:flex;flex-direction:column;overflow:hidden;box-shadow:0 20px 60px rgba(0,0,0,.25)}
+.modal-head{display:flex;align-items:center;justify-content:space-between;padding:14px 18px;border-bottom:1px solid var(--gray-border)}
+.modal-head h2{font-size:15px;font-weight:700}
+.modal-close{background:none;border:none;font-size:18px;color:var(--text-muted);cursor:pointer;padding:2px 6px}
+.modal-body{overflow-y:auto;padding:16px 18px}
+</style>
+</head>
+<body>
+
+<header class="header">
+  <div class="header-left">
+    <img src="/img/launch-fiber-logo-transparent.png" alt="Launch Fiber Services" class="header-logo">
+    <span class="header-title">Money</span>
+  </div>
+  <div class="header-right">
+    <button class="btn btn-secondary btn-sm" onclick="toggleDark()" title="Toggle dark mode">
+      <i class="fa-solid fa-moon" id="dm-icon"></i>
+    </button>
+    <a href="/" class="btn btn-secondary btn-sm"><i class="fa-solid fa-arrow-left"></i> Admin</a>
+  </div>
+</header>
+
+<main class="container" data-active="money">
+  <div class="page-heading">Money</div>
+  <div class="page-sub">Estimate-vs-billed margin, AR aging, and accounting export. Manager view.</div>
+
+  <!-- Margin -->
+  <div class="section">
+    <div class="section-head">
+      <div class="section-title"><i class="fa-solid fa-scale-balanced"></i> Estimate vs Billed — by Service Area</div>
+    </div>
+    <div style="display:flex;gap:10px;align-items:flex-end;flex-wrap:wrap;margin-bottom:10px">
+      <select id="margin-client" style="padding:7px 10px;border:1px solid var(--gray-border);border-radius:6px;font-size:13px;background:var(--white);color:var(--text)" onchange="applyMarginFilters()">
+        <option value="">All clients</option>
+      </select>
+      <select id="margin-program" style="padding:7px 10px;border:1px solid var(--gray-border);border-radius:6px;font-size:13px;background:var(--white);color:var(--text)" onchange="applyMarginFilters()">
+        <option value="">All programs</option>
+        <option value="rus">RUS</option>
+        <option value="bau">BAU</option>
+        <option value="gfr">GFR</option>
+        <option value="other">Other</option>
+      </select>
+      <button class="btn btn-secondary btn-sm" onclick="clearMarginFilters()">Clear</button>
+    </div>
+    <div class="card" id="margin-card">
+      <div class="loading-row"><span class="spinner"></span>Loading margin…</div>
+    </div>
+  </div>
+
+  <!-- AR aging -->
+  <div class="section">
+    <div class="section-head">
+      <div class="section-title"><i class="fa-regular fa-hourglass-half"></i> AR Aging</div>
+    </div>
+    <div id="aging-grid" class="aging-grid"></div>
+    <div class="card" id="aging-card">
+      <div class="loading-row"><span class="spinner"></span>Loading aging…</div>
+    </div>
+  </div>
+
+  <!-- Revenue Rollup -->
+  <div class="section">
+    <div class="section-head">
+      <div class="section-title"><i class="fa-solid fa-chart-bar"></i> Revenue Rollup</div>
+      <div style="display:flex;gap:0;border:1px solid var(--gray-border);border-radius:6px;overflow:hidden">
+        <button class="btn btn-sm" id="rev-grp-month"   onclick="loadRevenue('month')"   style="border-radius:0;border:none;background:var(--primary);color:#fff">Month</button>
+        <button class="btn btn-sm" id="rev-grp-client"  onclick="loadRevenue('client')"  style="border-radius:0;border:none;border-left:1px solid var(--gray-border)">Client</button>
+        <button class="btn btn-sm" id="rev-grp-program" onclick="loadRevenue('program')" style="border-radius:0;border:none;border-left:1px solid var(--gray-border)">Program</button>
+      </div>
+    </div>
+    <div class="card" id="revenue-card">
+      <div class="loading-row"><span class="spinner"></span>Loading…</div>
+    </div>
+  </div>
+
+  <!-- Client Statement -->
+  <div class="section">
+    <div class="section-head">
+      <div class="section-title"><i class="fa-solid fa-user-tie"></i> Client Statement</div>
+    </div>
+    <div style="display:flex;gap:10px;align-items:flex-end;margin-bottom:12px;flex-wrap:wrap">
+      <select id="stmt-client" style="padding:7px 10px;border:1px solid var(--gray-border);border-radius:6px;font-size:13px;background:var(--white);color:var(--text)">
+        <option value="">— Select client —</option>
+      </select>
+      <button class="btn btn-secondary btn-sm" onclick="loadStatement()"><i class="fa-solid fa-magnifying-glass"></i> Load statement</button>
+    </div>
+    <div id="stmt-card"></div>
+  </div>
+
+  <!-- Export -->
+  <div class="section">
+    <div class="section-head">
+      <div class="section-title"><i class="fa-solid fa-file-invoice-dollar"></i> Accounting Export</div>
+      <button class="btn btn-secondary btn-sm" onclick="exportInvoices()"><i class="fa-solid fa-file-csv"></i> Export invoices CSV</button>
+    </div>
+    <div class="page-sub" style="margin:0">All invoices: number, date, client, status, total.</div>
+    <div style="margin-top:12px;padding-top:12px;border-top:1px solid var(--gray-border)">
+      <button class="btn btn-secondary btn-sm" onclick="window.location.href='/api/export/all.zip'">
+        <i class="fa-solid fa-file-zipper"></i> Full data bundle (.zip)
+      </button>
+      <span class="page-sub" style="margin:0 0 0 10px;display:inline">Service areas, jobs, and invoices as CSVs. Admin only.</span>
+    </div>
+  </div>
+</main>
+
+<!-- Invoice drill-in modal -->
+<div class="modal-bg hidden" id="inv-modal" onclick="if(event.target===this)closeInvModal()" role="dialog" aria-modal="true" aria-labelledby="inv-modal-title">
+  <div class="modal">
+    <div class="modal-head">
+      <h2 id="inv-modal-title">Invoice</h2>
+      <button class="modal-close" onclick="closeInvModal()" aria-label="Close invoice"><i class="fa-solid fa-xmark"></i></button>
+    </div>
+    <div class="modal-body" id="inv-modal-body"><div class="loading-row"><span class="spinner"></span>Loading…</div></div>
+  </div>
+</div>
+
+<script src="/js/money_view.js" defer></script>
+<script src="/js/app_nav.js" data-active="money"></script>
+</body>
+</html>

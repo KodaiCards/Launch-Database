@@ -16,13 +16,23 @@
     document.documentElement.setAttribute('data-theme', t); localStorage.setItem('lfs_theme', t);
   });
 
-  let d = null, pipe = {};
+  let d = null, pipe = {}, aging = null, hoursData = null;
+
+  function thisMonthRange() {
+    const now = new Date();
+    const from = new Date(now.getFullYear(), now.getMonth(), 1).toISOString().slice(0, 10);
+    const to   = new Date(now.getFullYear(), now.getMonth() + 1, 0).toISOString().slice(0, 10);
+    return { from, to };
+  }
 
   async function boot() {
     try {
-      [d, pipe] = await Promise.all([
+      const { from, to } = thisMonthRange();
+      [d, pipe, aging, hoursData] = await Promise.all([
         api('/api/dashboard/overview'),
         api('/api/service-area-pipelines').then(p => p.pipelines || {}).catch(() => ({})),
+        fetch('/api/money/aging', { credentials: 'include' }).then(r => r.ok ? r.json() : null).catch(() => null),
+        fetch(`/api/hours/summary?from=${from}&to=${to}`, { credentials: 'include' }).then(r => r.ok ? r.json() : null).catch(() => null),
       ]);
       renderTiles(); renderAttention(); renderTab('revenue');
       document.querySelectorAll('.tab').forEach(t => t.addEventListener('click', () => {
@@ -36,11 +46,14 @@
 
   function renderTiles() {
     const t = d.totals, rtb = d.ready_to_bill || {};
+    const arTotal = aging ? money(aging.grand_total) : '—';
+    const arCount = aging ? aging.invoice_count : '—';
     const tiles = [
       { lbl: 'Active areas', val: t.service_areas, sub: `${t.sa_rus} RUS · ${t.sa_non_rus} non-RUS` },
       { lbl: 'Jobs in flight', val: t.jobs, sub: 'across all areas' },
       { lbl: 'Est. pipeline', val: money(t.estimated_total), sub: 'sum of job estimates' },
       { lbl: 'Unbilled', val: money(rtb.total), sub: `${num(rtb.count)} ready to bill` },
+      { lbl: 'AR outstanding', val: arTotal, sub: `${arCount} invoice${arCount === 1 ? '' : 's'}` },
     ];
     $('tiles').innerHTML = tiles.map(x =>
       `<div class="tile"><div class="lbl">${x.lbl}</div><div class="val">${esc(x.val)}</div><div class="sub">${esc(x.sub)}</div></div>`).join('');
@@ -72,6 +85,17 @@
 
   function renderRevenue() {
     const r = d.revenue || {}, bc = d.by_client || [];
+    const agingHtml = aging ? (() => {
+      const b = aging.buckets || {};
+      const bkts = [['0-30','0–30 days','var(--success)'],['31-60','31–60 days','var(--info)'],['61-90','61–90 days','var(--warning)'],['90+','90+ days','var(--danger)']];
+      return `<div class="card" style="margin-top:14px">
+        <div class="card-h">AR aging <a href="/money.html">Open money →</a></div>
+        <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:10px;padding:14px">
+          ${bkts.map(([key, label, col]) => { const bk = b[key] || {total:0,count:0}; return `<div style="border-left:3px solid ${col};padding:8px 12px;background:var(--surface-1);border-radius:6px"><div style="font-size:11px;color:var(--text-muted);font-weight:600;text-transform:uppercase;letter-spacing:.4px">${label}</div><div style="font-size:18px;font-weight:700;margin:4px 0 2px">${money(bk.total)}</div><div style="font-size:11px;color:var(--text-muted)">${num(bk.count)} invoice${bk.count === 1 ? '' : 's'}</div></div>`; }).join('')}
+        </div>
+        <div class="note">AR total: ${money(aging.grand_total)} across ${aging.invoice_count} outstanding invoice${aging.invoice_count === 1 ? '' : 's'}.</div>
+      </div>`;
+    })() : '';
     $('tabContent').innerHTML = `<div class="card">
       <div class="card-h">Estimated pipeline by program</div>
       <div class="kv"><span class="k">RUS (engineering contracts)</span><strong>${money(r.est_rus)}</strong></div>
@@ -81,7 +105,8 @@
     </div>
     <div class="card" style="margin-top:14px"><div class="card-h">By client</div>${
       bc.length ? bc.map(c => `<div class="kv"><span class="k">${esc(c.client_name)} <span class="muted">· ${c.sa_count} area(s)</span></span><strong>${money(c.estimated_total)}</strong></div>`).join('')
-      : '<div class="muted" style="padding:14px">No clients with service areas yet.</div>'}</div>`;
+      : '<div class="muted" style="padding:14px">No clients with service areas yet.</div>'}</div>
+    ${agingHtml}`;
   }
 
   function renderBill() {
@@ -100,6 +125,21 @@
   function renderHours() {
     const h = d.hours || {};
     const total = num(h.total), bill = num(h.billable), util = total ? Math.round(bill / total * 100) : 0;
+    // Build per-person rows from /api/hours/summary if available
+    let personRows = '';
+    if (hoursData && (hoursData.rows || []).length) {
+      const byPerson = new Map();
+      for (const r of hoursData.rows) {
+        const key = r.staff_name || r.staff_id || 'Unknown';
+        const cur = byPerson.get(key) || 0;
+        byPerson.set(key, cur + (r.total_hours || 0));
+      }
+      const sorted = [...byPerson.entries()].sort((a, b) => b[1] - a[1]);
+      personRows = `<div class="card" style="margin-top:14px">
+        <div class="card-h">This month by person <a href="/hours.html">Full Hours view →</a></div>
+        ${sorted.map(([name, hrs]) => `<div class="kv"><span class="k">${esc(name)}</span><strong>${num(hrs).toFixed(1)} hrs</strong></div>`).join('')}
+      </div>`;
+    }
     $('tabContent').innerHTML = `<div class="card">
       <div class="card-h">Hours & utilization</div>
       <div class="bigrow">
@@ -109,7 +149,7 @@
         <div class="big">${util}%<span class="u">utilization</span></div>
       </div>
       <div class="note">Hours populate as the contractor timeclock logs against jobs — Phase 5. Time not on a billable job counts as overhead.</div>
-    </div>`;
+    </div>${personRows}`;
   }
 
   function renderPipeline() {

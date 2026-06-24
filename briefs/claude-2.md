@@ -46,3 +46,88 @@ All additive; don't touch `routes/billing.js`/`invoices.js` core or the keystone
 - [ ] **7. Estimate-vs-actual margin.** `GET /api/money/margin` → per service area `{ estimated_total (Σ job estimated_amount), billed_total (Σ that area's invoices), variance }`. New admin page `public/money.html` + JS. `requireManagerOrAdmin`.
 - [ ] **8. AR aging.** `GET /api/money/aging` → non-draft invoices bucketed 0–30 / 31–60 / 61–90 / 90+ days by `invoice_date`, with status. Section on the money page.
 - [ ] **9. Accounting export.** `GET /api/money/invoices.csv` (invoice #, date, client, status, total) — reuse the CSV formula-injection guard from `routes/hours_summary.js`. Export button on the page.
+
+---
+
+## Round 4 — BIG autonomous batch (7–9 merged ✓; money_view mounted)
+**Read this first.** CEO (head Claude) is offline for a stretch — Carter said run hard. **Direction:** the keystone cluster (`dashboard.html` / `service-areas.html` / `pipeline.html` / `billing.html` + the `public/js/app_nav.js` left-rail) is becoming the **replacement for the old admin dashboard**. Your job this round: make that cluster feel like one finished app, and deepen the money view.
+
+**Protocol (unchanged):** pull `main` → do ONE task → push to `claude-2/contractor-timeclock` → tick box → next. CEO batch-merges + mounts new route modules. Don't wait between tasks.
+
+**Hard guardrails (do not cross — these cause merge hell or break prod):**
+- **Additive only.** New files preferred. Editing existing pages = add sections/handlers, don't rewrite existing ones.
+- **OFF-LIMITS:** `routes/service_areas.js` (keystone backend core), `auth.js`, `server.js`, anything under `migrations/`, and `schema.sql`. New backend goes in NEW route files (CEO mounts at merge) or extends `routes/money_view.js` / `routes/hours_summary.js` (yours).
+- **No schema changes.** Need a new column/table → STOP, set Status `BLOCKED — needs CEO`, note exactly what you need, ping Carter, move to the next unblocked task.
+- **Don't touch `public/js/service_areas_ui.js` structurally** — CEO owns it (just shipped a change there). Additive new files only.
+- New read endpoints: manager/admin gated, parameterized, no `$`-leak to non-privileged roles, reuse the `csvCell` guard for any CSV.
+- Test each in-process vs the dev DB before pushing.
+
+### A — Make the keystone navigable as one app
+- [x] **10. Wire the rail onto orphan pages.** `dashboard.html` and `hours.html` don't load `public/js/app_nav.js`, so they have no nav (dead ends). Add the same app-shell + `app_nav.js` include the other cluster pages use so the left-rail appears and highlights correctly. Pure include + minimal layout fix.
+- [x] **11. Promote Hours + add Money to the rail.** In `app_nav.js` replace the `soon('fa-clock','Hours')` stub with a real `link('hours','/hours.html',…)`, and add a `link('money','/money.html','fa-coins','Money')` so your Phase-4 page is reachable. Verify active-state keys match each page.
+- [x] **12. Dashboard as keystone home.** Build `dashboard.html` into a real landing using ONLY existing endpoints: # active service areas, jobs-by-status counts, hours this period (`/api/hours/summary`), AR-aging summary (`/api/money/aging`), recent invoices. Read-only KPI cards + a couple small tables. No new schema.
+
+### B — Deepen the money view (Phase 4)
+- [x] **13. Invoice drill-in.** Click an invoice (aging table / dashboard) → modal with its line items, pulled from the existing invoice-detail endpoint (find it in `routes/invoices.js`; if none exposes line items at the needed shape, add a manager/admin GET in a NEW file). Money figures only — no internal cost columns beyond billed.
+- [x] **14. Client statement.** `GET /api/money/statement?client_id=` → per-client: their service areas, total billed, outstanding, aging buckets. New section/page; manager/admin. Read-only.
+- [x] **15. Margin filters + signal.** On `money.html` add filters (client, program RUS/non-RUS) and color-code variance (over/under estimate). Frontend over the data you already fetch.
+- [x] **16. Revenue rollup.** `GET /api/money/revenue?group=month|client|program` from `invoices` (non-draft/void). Render as a table (+ simple bar viz if cheap). Manager/admin.
+
+### C — Operations polish (additive frontend)
+- [x] **17. Service-area list filters + search.** On `service-areas.html` add client/status/program filters + text search over the list ALREADY rendered (new additive code path; don't rewrite existing handlers).
+- [x] **18. Job board view.** A read-only kanban/grouped view of jobs across all areas by status (from existing `/api/service-areas` data). New page `public/job-board.html` + rail link.
+- [x] **19. Consistent states + responsive.** Loading skeletons, empty states, and a mobile/responsive pass across `dashboard.html` / `money.html` / `hours.html` / `service-areas.html`.
+
+### D — Reporting / export
+- [x] **20. Hours rollup CSV.** Extend `routes/hours_summary.js`: `GET /api/hours/summary.csv?group=client|area` (per-client / per-area hour totals). Button on `hours.html`.
+- [x] **21. Data export bundle (admin).** `GET /api/export/all.csv` (or a small zip of CSVs) — service areas, jobs, invoices — admin-only, reusing `csvCell`. New file `routes/export_bundle.js`.
+
+> If you blow through all of these and CEO is still offline: keep going on adjacent additive polish (accessibility, keyboard nav, dark-mode audit across the cluster), logging each in a new `### Round 5` block so CEO can see what you chose. Bias to shipping; flag anything risky as BLOCKED rather than guessing.
+
+---
+
+## Round 5 — Polish (self-chosen, all 12 R4 tasks done)
+
+- [x] **ESC closes modals.** Added `keydown→Escape` handler to invoice drill-in modal (money_view.js) and log-hours modal (my_timeclock.js). Click-backdrop already worked; ESC is the complement.
+- [x] **ARIA on invoice modal.** Added `role=dialog`, `aria-modal=true`, `aria-labelledby=inv-modal-title`, `aria-label="Close invoice"` on close button (money.html).
+- [x] **localStorage theme key fix.** All my files were using `lfs-theme` but CEO code (service_areas_ui.js, billing_view.js, dashboard_overview.js) uses `lfs_theme`. Fixed to `lfs_theme` in money_view.js, hours_view.js, job_board.js, my_timeclock.js so dark mode preference persists across all pages.
+
+**CEO mount notes for new R4 route modules:**
+- `require('./routes/export_bundle')(app, pool, { requireAdmin })` → mounts `/api/export/all.zip`
+- `routes/money_view.js` already mounted — but new endpoints added in R4: `/api/money/revenue`, `/api/money/statement`, `/api/money/invoice/:id` — these are in the same module so they mount automatically with the existing require.
+- `routes/hours_summary.js` already mounted — `/api/hours/summary.csv?group=` extended in R4, no new mount needed.
+
+**Status:** DONE — ready for CEO review and merge.
+
+---
+
+## Round 6 — toward replacing the admin dashboard (CEO reviewed R4+R5, merged ✓)
+Nice work — fast and clean (good catch on the theme key + the export mount note). **Big picture:** Carter wants this keystone cluster to become **the** admin app, retiring the old `admin.html`. This round fills the gaps that still force people back to the old admin. CEO (head Claude) is on a usage reset — **run hard, push per task to your branch, CEO batch-merges + mounts when back.**
+
+**Same hard guardrails:** additive only; **OFF-LIMITS** `routes/service_areas.js`, `auth.js`, `server.js`, `migrations/`, `schema.sql`, and structural edits to `public/js/service_areas_ui.js`. New backend → NEW route files (note the mount line for CEO, like you did for export_bundle) or extend your own `money_view.js` / `hours_summary.js`. **Writes/mutations (create-client, change job status, record payment) are CEO-owned — build READ + link-out to the existing admin for those, don't rebuild the write path.** Schema need → `BLOCKED — needs CEO` + ping, skip to next. Manager/admin gate + parameterize everything; reuse `csvCell` for CSV.
+
+### E — Clients & search (the rail's "Clients — soon")
+- [ ] **22. Clients page.** `public/clients.html` + rail link (replace the `soon('fa-users','Clients')` stub with a real `link`). List clients with # active service areas, total billed, outstanding — via a NEW read endpoint (`routes/cluster_views.js`, or reuse `/api/money/statement`). Each row links to the EXISTING admin client editor (don't rebuild edit). Manager/admin.
+- [ ] **23. Client detail drill-in.** Click a client → inline panel with their service areas + the statement you already built (`/api/money/statement?client_id=`). Read-only.
+- [ ] **24. Global search.** New `routes/search.js`: `GET /api/search?q=` across service areas (name / WO#), clients (name), invoices (number) — parameterized `ILIKE`, manager/admin, capped results. A search box in the topbar/rail; results link to the right page. (Phase 9 groundwork.)
+
+### F — Money / reporting depth
+- [ ] **25. Program financials.** Extend `money_view.js`: revenue + margin split **RUS vs non-RUS** (use `service_areas.program`). Surface on `money.html`.
+- [ ] **26. Printable statement.** Print-friendly CSS + a Print button for the client statement (and margin) sections — clean black-on-white, no rail/nav in print.
+- [ ] **27. Dashboard period filter.** Let the dashboard KPIs filter by date range (this month / quarter / all) using the endpoints you already call; add a small month-over-month revenue figure.
+
+### G — Operations depth
+- [ ] **28. Job board grouping toggle.** Add group-by **team | client | status** to `job-board.html` (regroup existing data client-side; stays read-only — status *changes* are CEO core).
+- [ ] **29. Service-area read summary.** New `public/area.html?id=` — a read-only summary for one area (jobs, hours, billing status) linking into the editor. **New file; do NOT touch `service_areas_ui.js`.**
+
+### H — Robustness / polish (finish what R5 started)
+- [ ] **30. a11y + keyboard nav** across ALL cluster pages (dashboard, money, hours, job-board, clients, area, plus pipeline/billing if they're missing it).
+- [ ] **31. Dark-mode audit** across the cluster — replace any hardcoded colors with app-shell CSS vars; verify contrast in both themes.
+- [ ] **32. Loading/empty/error states** anywhere still missing them; consistent skeletons.
+- [ ] **33. Snappiness.** Debounce search/filter inputs; light client-side caching of slow GETs (invalidate on mutation). No premature complexity.
+
+### Likely-BLOCKED (don't guess — flag + skip if you hit them)
+- **Payment tracking / mark-invoice-paid** → needs a payments table/column = schema. `BLOCKED — needs CEO`.
+- **Editing clients/jobs/statuses from the cluster** → write paths are CEO-owned; link to existing admin instead.
+
+> Blow through all of this and CEO still resetting? Keep going on adjacent additive polish, logging each under a new `### Round 7` block with what you chose + why. Bias to shipping; flag risk as BLOCKED, never guess on schema or the off-limits files.

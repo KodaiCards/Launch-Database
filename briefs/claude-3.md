@@ -41,3 +41,15 @@ Reuse existing `/api/customer/*` data; no new money columns. Schema need → BLO
 - [x] **7. Client-facing invoice detail / print.** A clean printable invoice view (line items + totals) from existing `/api/customer/invoices` data + a Print button. No backend.
 - [x] **8. Portal landing summary.** A top section across ALL the client's areas (active count, overall % complete, # ready/done) above the tabs. Frontend.
 - [x] **9. Polish.** Responsive/mobile pass, a clear "no client-visible areas yet" empty state, and loading skeletons. Frontend.
+
+> **CEO note (you hit usage limits mid-Round-3):** no problem — finish 7–9, push to your branch, and they'll be batch-merged when you're back. Nothing is blocked on you. The portal shim is lifted and live, so you can see your work at `/customer.html` (needs a `customer` login + a `client_visible` area).
+
+---
+
+## Round 4 — queue (portal depth, when 7–9 are in)
+Same guardrails: **read-only, `customer`-scoped, no $ beyond what the client is billed, NO schema/keystone changes.** Push per task; schema need → `BLOCKED — needs CEO` + ping. Pull `main` first each time.
+- [ ] **10. Per-area progress bar.** Jobs done / total as a visual bar on each area card (+ projected completion if start/completed dates allow). Frontend over data you already fetch.
+- [ ] **11. Status activity feed.** A simple "recent updates" list per area (latest job status changes / dates). If it needs a new read endpoint, add a `customer`-scoped one in `routes/customer_portal.js`; no new tables.
+- [ ] **12. Account panel polish.** Read-only profile (name, email, linked client(s), contact-your-PM block). Reuse existing account modal; no new auth.
+- [ ] **13. Portal accessibility + mobile.** Full a11y pass (labels, focus, contrast) + mobile layout across all tabs.
+- [ ] **14. Site photos (CHECK FIRST).** Goal: show client-visible site photos per service area. **Likely needs schema** (a photo↔service-area link + a `client_visible` flag). Inspect the photos/documents tables; if the link + visibility flag already exist, surface them read-only. If NOT → `BLOCKED — needs CEO`, describe the columns you'd need, skip to anything else.

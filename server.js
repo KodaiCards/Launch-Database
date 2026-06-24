@@ -221,6 +221,19 @@ const PORTAL_DEFS = [
     description: 'Full administration: projects, clients, billing, staff, and system settings.',
     canAccess: u => u.role === 'admin',
   },
+  // Keystone operations UI (service areas → jobs → hours → billing). Deployed
+  // since the rebuild but previously only reachable by typing the URL — this
+  // tile surfaces it in the launcher. Lands on service-areas.html (carries the
+  // app_nav rail → Dashboard / Pipelines / Billing).
+  {
+    id: 'operations',
+    audience: 'employee',
+    url: '/service-areas.html',
+    name: 'Operations',
+    icon: 'diagram-project',
+    description: 'Service areas, jobs, pipelines, hours, and billing — the new operations model.',
+    canAccess: u => u.role === 'admin' || canAccessPortal(u, 'design') || canAccessPortal(u, 'permitting'),
+  },
   {
     id: 'splice',
     audience: 'employee',
@@ -716,6 +729,12 @@ require('./routes/my_work')(app, pool, { requireAuth });
 
 // Phase 5 follow-up: per-person Hours view + CSV export (manager/admin, no $).
 require('./routes/hours_summary')(app, pool, { requireManagerOrAdmin });
+
+// Phase 4 money view: estimate-vs-actual margin, AR aging, accounting CSV (manager/admin).
+require('./routes/money_view')(app, pool, { requireManagerOrAdmin });
+
+// Admin data-export bundle: GET /api/export/all.zip (service areas, jobs, invoices CSVs).
+require('./routes/export_bundle')(app, pool, { requireAdmin });
 
 // ─────────────────────────────────────────────────────────────────────────────
 // UNDO REPLAY — extracted to routes/undo.js (Track 1.3.6).

@@ -8,6 +8,7 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+<link rel="stylesheet" href="/css/app-shell.css">
 <style>
 :root{
   --primary:#1B5FA0;--primary-dark:#134880;--primary-light:#E8F0FB;
@@ -98,6 +99,14 @@ td.num,th.num{text-align:right;font-variant-numeric:tabular-nums}
 .spinner{display:inline-block;width:14px;height:14px;border:2px solid currentColor;
   border-radius:50%;border-right-color:transparent;animation:spin .6s linear infinite;vertical-align:-2px;margin-right:6px}
 @keyframes spin{to{transform:rotate(360deg)}}
+.skeleton{background:var(--gray-border);border-radius:4px;animation:sk-pulse 1.2s ease-in-out infinite;height:14px;margin:4px 0}
+@keyframes sk-pulse{0%,100%{opacity:.6}50%{opacity:.25}}
+@media(max-width:700px){
+  .toolbar{flex-direction:column;align-items:stretch;gap:8px}
+  .toolbar-spacer{display:none}
+  .container{padding:0 10px}
+  .toolbar>div[style]{flex-wrap:wrap}
+}
 </style>
 </head>
 <body>
@@ -146,6 +155,8 @@ td.num,th.num{text-align:right;font-variant-numeric:tabular-nums}
     </div>
     <div class="total-pill">Total: <strong id="grand-total">—</strong> hrs</div>
     <button class="btn btn-secondary" onclick="exportCsv()"><i class="fa-solid fa-file-csv"></i> Export CSV</button>
+    <button class="btn btn-secondary" onclick="exportCsv('client')"><i class="fa-solid fa-file-csv"></i> By client</button>
+    <button class="btn btn-secondary" onclick="exportCsv('area')"><i class="fa-solid fa-file-csv"></i> By area</button>
   </div>
 
   <div id="results">
@@ -154,5 +165,6 @@ td.num,th.num{text-align:right;font-variant-numeric:tabular-nums}
 </main>
 
 <script src="/js/hours_view.js" defer></script>
+<script src="/js/app_nav.js" data-active="hours"></script>
 </body>
 </html>

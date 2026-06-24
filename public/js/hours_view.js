@@ -160,11 +160,12 @@
     load();
   };
 
-  window.exportCsv = function () {
+  window.exportCsv = function (group) {
     const { from, to } = currentRange();
     const qs = new URLSearchParams();
-    if (from) qs.set('from', from);
-    if (to)   qs.set('to',   to);
+    if (from)  qs.set('from', from);
+    if (to)    qs.set('to',   to);
+    if (group) qs.set('group', group);
     window.location.href = `/api/hours/summary.csv?${qs}`;
   };
 
@@ -174,12 +175,12 @@
     const html = document.documentElement;
     const dark = html.getAttribute('data-theme') === 'dark';
     html.setAttribute('data-theme', dark ? 'light' : 'dark');
-    localStorage.setItem('lfs-theme', dark ? 'light' : 'dark');
+    localStorage.setItem('lfs_theme', dark ? 'light' : 'dark');
     updateDmIcon();
   };
 
   function applyStoredTheme() {
-    const stored = localStorage.getItem('lfs-theme');
+    const stored = localStorage.getItem('lfs_theme');
     if (stored) document.documentElement.setAttribute('data-theme', stored);
     updateDmIcon();
   }
