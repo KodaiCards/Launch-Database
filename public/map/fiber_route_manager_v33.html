@@ -1,0 +1,2364 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Fiber Route Manager — Launch Fiber Services</title>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
+:root{
+  --navy:#0f1e36;--panel:#1a3055;--orange:#f4600c;--blue:#2196F3;
+  --green:#27ae60;--surface:#fff;--border:#dde3ea;--text:#1a2744;--muted:#8896a8;
+  --mono:'Courier New',Courier,monospace;
+}
+body{font-family:'Segoe UI',system-ui,-apple-system,sans-serif;height:100vh;display:flex;flex-direction:column;overflow:hidden;}
+.snap-ring{animation:snapPulse .55s ease-in-out infinite alternate;}
+.leaflet-interactive:focus{outline:none;}
+@keyframes snapPulse{from{stroke-width:2;stroke-opacity:.6;}to{stroke-width:4.5;stroke-opacity:1;}}
+
+/* HEADER */
+#hdr{background:var(--panel);height:50px;display:flex;align-items:center;gap:10px;padding:0 16px;flex-shrink:0;z-index:1000;box-shadow:0 2px 12px rgba(0,0,0,.4);}
+.hdr-logo{display:flex;align-items:center;gap:10px;padding-right:14px;border-right:1px solid rgba(255,255,255,.12);flex-shrink:0;}
+.hdr-icon{width:30px;height:30px;background:var(--orange);border-radius:6px;display:flex;align-items:center;justify-content:center;font-size:16px;}
+.hdr-title{font-size:13px;font-weight:700;color:white;letter-spacing:.8px;}
+.hdr-sub{font-size:9px;color:rgba(255,255,255,.4);letter-spacing:1px;text-transform:uppercase;}
+.hdr-space{flex:1;}
+.hdr-btn{height:32px;padding:0 13px;border-radius:5px;border:1px solid rgba(255,255,255,.18);background:rgba(255,255,255,.07);color:rgba(255,255,255,.85);font-size:12px;font-weight:600;cursor:pointer;display:flex;align-items:center;gap:7px;white-space:nowrap;transition:all .15s;letter-spacing:.2px;flex-shrink:0;}
+.hdr-btn:hover{background:rgba(255,255,255,.16);color:white;}
+.hdr-btn.finish{background:var(--green);border-color:var(--green);color:white;}
+.hdr-btn svg{width:13px;height:13px;flex-shrink:0;}
+.hdr-sep{width:1px;height:22px;background:rgba(255,255,255,.12);flex-shrink:0;}
+
+/* DROPDOWNS */
+.dropdown-panel{position:fixed;display:none;background:white;border:1px solid var(--border);border-radius:8px;padding:8px;box-shadow:0 8px 32px rgba(0,0,0,.22);z-index:3000;min-width:210px;}
+.dp-head{font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:.8px;color:var(--muted);padding:4px 8px 8px;}
+.dp-sep{height:1px;background:var(--border);margin:5px 0;}
+.dp-item{display:flex;align-items:center;gap:10px;padding:7px 10px;border-radius:5px;cursor:pointer;transition:background .1s;}
+.dp-item:hover{background:#f4f6f8;}
+.dp-ico{width:22px;text-align:center;font-size:15px;flex-shrink:0;}
+.dp-main{font-size:12px;font-weight:600;color:var(--text);}
+.dp-sub{font-size:10px;color:var(--muted);margin-top:1px;}
+
+/* BODY */
+#body{display:flex;flex:1;overflow:hidden;}
+
+/* SIDEBAR */
+#sidebar{width:290px;background:var(--surface);display:flex;flex-direction:column;overflow:hidden;flex-shrink:0;border-right:1px solid var(--border);z-index:500;}
+#plan-indicator{padding:9px 14px;background:var(--navy);border-bottom:1px solid rgba(255,255,255,.08);cursor:pointer;display:flex;align-items:center;gap:10px;transition:opacity .15s;flex-shrink:0;}
+#plan-indicator:hover{opacity:.82;}
+.pi-icon{font-size:16px;}
+.pi-text{flex:1;min-width:0;}
+.pi-plan{font-size:12px;font-weight:700;color:white;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.pi-proj{font-size:10px;color:rgba(255,255,255,.5);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin-top:1px;}
+.pi-caret{color:rgba(255,255,255,.4);font-size:11px;}
+#sb-tabs{display:flex;border-bottom:1px solid var(--border);flex-shrink:0;}
+.sb-tab{flex:1;padding:8px 4px;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;border:none;border-bottom:2px solid transparent;background:transparent;cursor:pointer;color:var(--muted);transition:all .15s;margin-bottom:-1px;}
+.sb-tab:hover{color:var(--text);}
+.sb-tab.on{color:var(--orange);border-bottom-color:var(--orange);}
+.sb-stats{display:none;padding:10px 14px;border-bottom:1px solid var(--border);background:#f0f7ff;}
+.stats-row{display:grid;grid-template-columns:1fr 1fr 1fr;}
+.stat{text-align:center;padding:4px 0;}
+.stat+.stat{border-left:1px solid var(--border);}
+.stat-v{font-size:16px;font-weight:700;color:var(--navy);font-family:var(--mono);}
+.stat-l{font-size:9px;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;margin-top:2px;}
+.sb-filter{display:none;padding:7px 10px;border-bottom:1px solid var(--border);background:#f7f9fb;gap:4px;flex-wrap:wrap;}
+.flt-chip{font-size:10px;padding:3px 9px;border-radius:10px;cursor:pointer;font-weight:600;border:1.5px solid transparent;background:white;color:var(--muted);transition:all .12s;}
+.flt-chip:hover{border-color:var(--blue);color:var(--blue);}
+.flt-chip.on{background:var(--navy);color:white;border-color:var(--navy);}
+.sb-panel{flex:1;overflow-y:auto;padding:8px;display:flex;flex-direction:column;}
+.empty{padding:52px 20px;text-align:center;}
+.empty-icon{font-size:40px;margin-bottom:14px;opacity:.3;}
+.empty p{font-size:12px;color:var(--muted);line-height:1.9;}
+.seg-card,.pt-card,.cond-card{border:1.5px solid #e4eaf0;border-radius:7px;padding:10px 10px 8px 14px;margin-bottom:5px;cursor:pointer;transition:all .12s;position:relative;}
+.seg-card:hover,.pt-card:hover,.cond-card:hover{border-color:var(--blue);background:#f5f9ff;}
+.seg-card.sel,.pt-card.sel,.cond-card.sel{border-color:var(--blue);background:#e8f3fd;box-shadow:0 0 0 2px rgba(33,150,243,.15);}
+.seg-card::before,.pt-card::before,.cond-card::before{content:'';position:absolute;left:0;top:0;bottom:0;width:4px;border-radius:7px 0 0 7px;background:var(--clr,#ccc);}
+.card-name{font-size:13px;font-weight:700;color:var(--text);margin-bottom:5px;display:flex;align-items:center;gap:7px;}
+.card-badges{display:flex;gap:4px;flex-wrap:wrap;margin-bottom:4px;}
+.badge{font-size:9px;padding:2px 7px;border-radius:9px;font-weight:700;text-transform:uppercase;letter-spacing:.4px;}
+.b-proposed{background:#e3f2fd;color:#1565c0;}.b-permitted{background:#f3e5f5;color:#6a1b9a;}
+.b-underConstruction{background:#fff3e0;color:#bf360c;}.b-asBuilt{background:#e8f5e9;color:#2e7d32;}
+.b-active{background:#f1f8e9;color:#33691e;}.b-existing{background:#f5f5f5;color:#616161;}.b-type{background:#ecf0f4;color:#546e7a;}
+.card-sub{font-size:11px;color:var(--muted);font-family:var(--mono);margin-bottom:4px;}
+.card-sub2{font-size:10px;color:#aab4bf;margin-bottom:5px;}
+.card-acts{display:flex;gap:4px;}
+.mini-btn{font-size:10px;padding:3px 10px;border:1px solid var(--border);background:white;border-radius:4px;cursor:pointer;color:var(--muted);font-weight:600;transition:all .1s;}
+.mini-btn:hover{background:#f0f4f8;border-color:#bbc8d4;color:var(--text);}
+.mini-btn.del:hover{background:#fff0f0;border-color:#f5a0a0;color:#c62828;}
+
+/* MAP */
+#map-wrap{flex:1;position:relative;}
+#map{width:100%;height:100%;}
+.leaflet-pane{z-index:400;}
+.leaflet-marker-pane,.leaflet-tooltip-pane,.leaflet-popup-pane{z-index:600!important;}
+.leaflet-top,.leaflet-bottom{z-index:500!important;}
+#draw-hint{position:absolute;bottom:34px;left:50%;transform:translateX(-50%);background:rgba(15,30,54,.85);backdrop-filter:blur(4px);color:white;padding:9px 22px;border-radius:20px;font-size:12px;font-weight:500;pointer-events:none;display:none;white-space:nowrap;border:1px solid rgba(255,255,255,.12);z-index:600;}
+#snap-badge{position:absolute;top:60px;left:50%;transform:translateX(-50%);background:var(--green);color:white;padding:5px 14px;border-radius:12px;font-size:11px;font-weight:700;display:none;z-index:600;box-shadow:0 2px 8px rgba(39,174,96,.4);pointer-events:none;}
+#vertex-count{position:absolute;top:60px;right:16px;background:var(--orange);color:white;padding:5px 14px;border-radius:12px;font-size:11px;font-weight:700;display:none;z-index:600;}
+#legend{position:absolute;bottom:34px;right:10px;z-index:600;background:white;border:1px solid var(--border);border-radius:7px;padding:12px 15px;font-size:11px;box-shadow:0 4px 16px rgba(0,0,0,.1);}
+#legend h4{font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:.8px;color:var(--muted);margin-bottom:8px;}
+.leg-section{margin-top:10px;padding-top:10px;border-top:1px solid var(--border);}
+.leg-row{display:flex;align-items:center;gap:9px;margin-bottom:5px;color:#546e7a;}
+.leg-line{width:22px;height:3px;border-radius:1.5px;flex-shrink:0;}
+
+/* ELEMENT MODAL */
+#overlay{position:fixed;inset:0;background:rgba(10,20,40,.6);backdrop-filter:blur(2px);z-index:2000;display:none;align-items:center;justify-content:center;}
+#overlay.open{display:flex;}
+#modal{background:white;border-radius:10px;width:520px;max-height:92vh;overflow-y:auto;box-shadow:0 24px 64px rgba(0,0,0,.35);}
+#modal-hdr{padding:18px 22px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;background:white;z-index:1;}
+#modal-hdr h3{font-size:15px;font-weight:700;color:var(--navy);}
+.modal-x{background:none;border:none;cursor:pointer;color:var(--muted);width:30px;height:30px;border-radius:5px;font-size:16px;display:flex;align-items:center;justify-content:center;transition:all .12s;}
+.modal-x:hover{background:#f0f4f8;color:var(--text);}
+#modal-body{padding:22px;}
+.info-bar{background:var(--navy);border-radius:7px;padding:14px 18px;display:flex;gap:24px;margin-bottom:20px;}
+.info-cell label{font-size:9px;color:rgba(255,255,255,.45);text-transform:uppercase;letter-spacing:.6px;display:block;margin-bottom:4px;}
+.info-cell span{font-size:17px;font-weight:700;color:white;font-family:var(--mono);}
+.fg{display:grid;grid-template-columns:1fr 1fr;gap:15px;}
+.fr{display:flex;flex-direction:column;gap:5px;}
+.fr.full{grid-column:1/-1;}
+.fr label{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:var(--muted);}
+.fr input,.fr select,.fr textarea{padding:8px 11px;border:1.5px solid var(--border);border-radius:5px;font-size:13px;color:var(--text);font-family:inherit;transition:border-color .15s;}
+.fr input:focus,.fr select:focus,.fr textarea:focus{outline:none;border-color:var(--orange);box-shadow:0 0 0 3px rgba(244,96,12,.1);}
+.fr textarea{resize:vertical;min-height:76px;}
+.swatches{display:flex;gap:8px;flex-wrap:wrap;align-items:center;}
+.swatch{width:26px;height:26px;border-radius:50%;cursor:pointer;border:2.5px solid transparent;transition:transform .12s;flex-shrink:0;}
+.swatch:hover{transform:scale(1.2);}
+.swatch.sel{border-color:var(--text)!important;transform:scale(1.2);}
+.swatch-auto{background:conic-gradient(#2196F3 0deg,#9c27b0 60deg,#ff9800 120deg,#4caf50 180deg,#8bc34a 240deg,#9e9e9e 300deg,#2196F3 360deg);}
+.swatch-hint{font-size:10px;color:var(--muted);margin-top:4px;}
+#modal-ftr{padding:14px 22px;border-top:1px solid var(--border);display:flex;align-items:center;gap:10px;position:sticky;bottom:0;background:white;}
+.ftr-space{flex:1;}
+.btn{padding:8px 22px;border-radius:5px;font-size:13px;font-weight:700;cursor:pointer;border:none;transition:all .15s;}
+.btn-pri{background:var(--orange);color:white;}.btn-pri:hover{background:#d94f08;}
+.btn-sec{background:white;color:var(--muted);border:1.5px solid var(--border);}.btn-sec:hover{background:#f0f4f8;color:var(--text);}
+.btn-dng{background:white;color:#c62828;border:1.5px solid #f5a0a0;}.btn-dng:hover{background:#fff0f0;}
+
+/* PROJECT MODAL */
+#proj-overlay{position:fixed;inset:0;background:rgba(10,20,40,.6);backdrop-filter:blur(2px);z-index:2500;display:none;align-items:center;justify-content:center;}
+#proj-overlay.open{display:flex;}
+#proj-modal{background:white;border-radius:10px;width:700px;height:530px;display:flex;flex-direction:column;box-shadow:0 24px 64px rgba(0,0,0,.35);overflow:hidden;}
+#proj-mhdr{padding:16px 22px;border-bottom:1px solid var(--border);display:flex;align-items:flex-start;justify-content:space-between;flex-shrink:0;}
+#proj-mbody{display:flex;flex:1;overflow:hidden;min-height:0;}
+#pm-left{width:230px;border-right:1px solid var(--border);display:flex;flex-direction:column;flex-shrink:0;}
+#pm-right{flex:1;display:flex;flex-direction:column;min-width:0;}
+.pm-pane-hdr{padding:10px 14px;background:#f7f9fb;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;flex-shrink:0;}
+.pm-pane-hdr span{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.6px;color:var(--muted);}
+.pm-pane-hdr .pm-add-btn{font-size:11px;font-weight:700;color:var(--orange);background:none;border:none;cursor:pointer;padding:3px 8px;border-radius:4px;transition:background .1s;}
+.pm-pane-hdr .pm-add-btn:hover{background:#fff3ee;}
+.pm-add-form{padding:10px 12px;border-bottom:1px solid var(--border);background:#fffbf8;flex-shrink:0;}
+.pm-add-form input{width:100%;padding:7px 10px;border:1.5px solid var(--border);border-radius:5px;font-size:13px;margin-bottom:7px;font-family:inherit;}
+.pm-add-form input:focus{outline:none;border-color:var(--orange);}
+.pm-form-btns{display:flex;gap:6px;}
+.pm-btn-pri{background:var(--orange);color:white;border:none;padding:6px 14px;border-radius:5px;cursor:pointer;font-size:12px;font-weight:700;}
+.pm-btn-pri:hover{background:#d94f08;}
+.pm-btn-sec{background:white;color:var(--muted);border:1.5px solid var(--border);padding:6px 14px;border-radius:5px;cursor:pointer;font-size:12px;font-weight:600;}
+.pm-btn-sec:hover{background:#f0f4f8;color:var(--text);}
+.pm-scroll{flex:1;overflow-y:auto;padding:8px;}
+.pm-empty{padding:40px 20px;text-align:center;font-size:12px;color:var(--muted);line-height:1.8;}
+.proj-item{padding:10px 12px;border-radius:6px;cursor:pointer;margin-bottom:4px;border:1.5px solid transparent;transition:all .12s;display:flex;align-items:center;gap:8px;}
+.proj-item:hover{background:#f5f9ff;border-color:#d0e4f7;}
+.proj-item.sel{background:#e8f3fd;border-color:var(--blue);}
+.proj-item-body{flex:1;min-width:0;}
+.proj-item-name{font-size:13px;font-weight:600;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.proj-item-meta{font-size:10px;color:var(--muted);margin-top:2px;}
+.proj-item-del{background:none;border:none;color:#ccc;cursor:pointer;font-size:14px;padding:3px 5px;border-radius:3px;flex-shrink:0;}
+.proj-item-del:hover{color:#c62828;background:#ffebee;}
+.plan-item{padding:12px 14px;border:1.5px solid #e4eaf0;border-radius:8px;margin-bottom:7px;transition:all .12s;}
+.plan-item.curr{border-color:var(--orange);background:#fff9f6;}
+.plan-item-hdr{display:flex;align-items:center;gap:8px;margin-bottom:4px;}
+.plan-item-name{font-size:13px;font-weight:700;color:var(--text);flex:1;}
+.plan-curr-badge{font-size:9px;font-weight:800;background:var(--orange);color:white;padding:2px 8px;border-radius:9px;text-transform:uppercase;letter-spacing:.5px;}
+.plan-item-meta{font-size:10px;color:var(--muted);margin-bottom:8px;}
+.plan-item-acts{display:flex;gap:6px;flex-wrap:wrap;}
+.pa-open{background:var(--orange);color:white;border:none;padding:5px 14px;border-radius:5px;cursor:pointer;font-size:11px;font-weight:700;}
+.pa-open:hover{background:#d94f08;}
+.pa-ghost{background:white;color:var(--muted);border:1.5px solid var(--border);padding:5px 12px;border-radius:5px;cursor:pointer;font-size:11px;font-weight:600;}
+.pa-ghost:hover{background:#f0f4f8;color:var(--text);}
+.pa-del{background:white;color:#c62828;border:1.5px solid #f5a0a0;padding:5px 12px;border-radius:5px;cursor:pointer;font-size:11px;font-weight:600;}
+.pa-del:hover{background:#fff0f0;}
+
+::-webkit-scrollbar{width:5px;}::-webkit-scrollbar-thumb{background:#c8d4e0;border-radius:3px;}
+
+/* BOM */
+#bom-overlay{position:fixed;inset:0;background:rgba(10,20,40,.6);backdrop-filter:blur(2px);z-index:2500;display:none;align-items:center;justify-content:center;}
+#bom-overlay.open{display:flex;}
+#bom-modal{background:white;border-radius:10px;width:760px;max-height:90vh;display:flex;flex-direction:column;box-shadow:0 24px 64px rgba(0,0,0,.35);overflow:hidden;}
+#bom-hdr{padding:16px 22px;border-bottom:1px solid var(--border);display:flex;align-items:flex-start;justify-content:space-between;flex-shrink:0;gap:12px;}
+#bom-hdr-left h3{font-size:15px;font-weight:700;color:var(--navy);}
+#bom-subtitle{font-size:12px;color:var(--muted);margin-top:3px;}
+#bom-hdr-right{display:flex;gap:8px;align-items:center;flex-shrink:0;}
+.bom-export-btn{background:var(--orange);color:white;border:none;padding:7px 16px;border-radius:5px;font-size:12px;font-weight:700;cursor:pointer;transition:background .15s;}
+.bom-export-btn:hover{background:#d94f08;}
+#bom-filters{padding:10px 22px;border-bottom:1px solid var(--border);background:#f7f9fb;display:flex;align-items:center;gap:7px;flex-shrink:0;flex-wrap:wrap;}
+.bom-f-lbl{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.6px;color:var(--muted);margin-right:4px;}
+.bom-chip{font-size:11px;padding:4px 13px;border-radius:10px;border:1.5px solid var(--border);background:white;color:var(--muted);cursor:pointer;font-weight:600;transition:all .12s;}
+.bom-chip:hover{border-color:var(--blue);color:var(--blue);}
+.bom-chip.on{background:var(--navy);color:white;border-color:var(--navy);}
+#bom-body{flex:1;overflow-y:auto;padding:20px 22px;}
+.bom-sec{margin-bottom:26px;}
+.bom-sec-title{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.8px;color:var(--muted);margin-bottom:10px;display:flex;align-items:center;gap:10px;}
+.bom-sec-title::after{content:'';flex:1;height:1px;background:var(--border);}
+.bom-tbl{width:100%;border-collapse:collapse;font-size:12px;}
+.bom-tbl th{padding:7px 12px;text-align:left;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:var(--muted);border-bottom:2px solid var(--border);white-space:nowrap;}
+.bom-tbl th.r{text-align:right;}
+.bom-tbl td{padding:8px 12px;border-bottom:1px solid #f0f4f8;color:var(--text);vertical-align:middle;}
+.bom-tbl tr:last-child td{border-bottom:none;}
+.bom-tbl tbody tr:hover td{background:#f5f9ff;}
+.bom-tbl .r{text-align:right;font-family:var(--mono);}
+.bom-tbl .tot td{font-weight:700;color:var(--navy);border-top:2px solid var(--border);background:#f7f9fb;}
+.bom-empty{text-align:center;padding:32px;color:var(--muted);font-size:12px;line-height:1.8;}
+.bom-summary{background:var(--navy);border-radius:8px;padding:16px 22px;display:grid;grid-template-columns:repeat(4,1fr);gap:0;margin-top:4px;}
+.bom-sum-item{text-align:center;padding:4px 8px;}
+.bom-sum-item+.bom-sum-item{border-left:1px solid rgba(255,255,255,.1);}
+.bom-sum-val{font-size:22px;font-weight:700;color:white;font-family:var(--mono);line-height:1;}
+.bom-sum-lbl{font-size:9px;color:rgba(255,255,255,.45);text-transform:uppercase;letter-spacing:.6px;margin-top:5px;}
+.bom-status-badge{font-size:9px;padding:1px 7px;border-radius:8px;font-weight:700;text-transform:uppercase;letter-spacing:.3px;display:inline-block;}
+
+.pa-eye{background:none;border:1.5px solid var(--border);padding:4px 10px;border-radius:5px;font-size:12px;cursor:pointer;transition:all .12s;color:var(--muted);}
+.pa-eye:hover{border-color:var(--blue);color:var(--blue);}
+.pa-eye.on{background:#e8f5e9;border-color:#2e7d32;color:#2e7d32;font-weight:700;}
+.ghost-marker{opacity:var(--ghost-opacity,0.45);display:block;}
+
+</style>
+</head>
+<body>
+
+<div id="hdr">
+  <div class="hdr-logo">
+    <div class="hdr-icon">🔌</div>
+    <div><div class="hdr-title">FIBER ROUTE MANAGER</div><div class="hdr-sub">Launch Fiber Services · OSP</div></div>
+  </div>
+  <div class="hdr-space"></div>
+
+  <div id="toolbar-normal" style="display:flex;gap:8px;align-items:center">
+    <button class="hdr-btn" onclick="startDraw()">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M12 20h9M16.5 3.5a2.121 2.121 0 013 3L7 19l-4 1 1-4L16.5 3.5z"/></svg>
+      Draw Route
+    </button>
+    <button class="hdr-btn" id="draw-cond-btn" onclick="startDraw('cond')" title="Draw a conduit run">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" style="width:13px;height:13px"><rect x="2" y="9" width="20" height="6" rx="3"/></svg>
+      Draw Conduit
+    </button>
+    <button class="hdr-btn" id="place-btn" onclick="openDropdown('struct-picker','place-btn')">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><circle cx="12" cy="10" r="3"/><path d="M12 21.7C17.3 17 20 13 20 10a8 8 0 10-16 0c0 3 2.7 6.9 8 11.7z"/></svg>
+      Place Structure ▾
+    </button>
+    <div class="hdr-sep"></div>
+    <button class="hdr-btn" onclick="openProjectModal()">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 19a2 2 0 01-2 2H4a2 2 0 01-2-2V5a2 2 0 012-2h5l2 3h9a2 2 0 012 2z"/></svg>
+      Projects
+    </button>
+    <button class="hdr-btn" onclick="openBOM()">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01"/></svg>
+      BOM
+    </button>
+    <div class="hdr-sep"></div>
+    <button class="hdr-btn" onclick="zoomAll()">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M15 3h6v6M9 21H3v-6M21 3l-7 7M3 21l7-7"/></svg>
+      Fit All
+    </button>
+    <button class="hdr-btn" id="export-btn" onclick="openDropdown('export-menu','export-btn')">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4M7 10l5 5 5-5M12 15V3"/></svg>
+      Export ▾
+    </button>
+  </div>
+
+  <div id="toolbar-draw" style="display:none;gap:10px;align-items:center">
+    <span style="color:rgba(255,255,255,.65);font-size:12px;font-weight:500">🖊 Click to add vertices — double-click or Finish to complete</span>
+    <button class="hdr-btn finish" onclick="finishDraw()">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" style="width:13px;height:13px"><polyline points="20 6 9 17 4 12"/></svg>
+      Finish Line
+    </button>
+    <button class="hdr-btn" id="follow-toggle-span" onclick="toggleFollowPath()" style="opacity:.6" title="Follow existing line path between two clicked points">⚡ Follow Path: OFF</button>
+    <button class="hdr-btn" onclick="cancelDraw()">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" style="width:13px;height:13px"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+      Cancel
+    </button>
+  </div>
+
+  <div id="toolbar-geom" style="display:none;gap:10px;align-items:center">
+    <span id="geom-label" style="color:rgba(255,255,255,.65);font-size:12px;font-weight:500">✏ Reshaping</span>
+    <span style="font-size:10px;color:rgba(255,255,255,.35);white-space:nowrap">Drag handles to move · Click the line to add a vertex · Right-click a handle to delete it</span>
+    <button class="hdr-btn finish" onclick="saveGeomEdit()">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" style="width:13px;height:13px"><polyline points="20 6 9 17 4 12"/></svg>
+      Save Changes
+    </button>
+    <button class="hdr-btn" onclick="cancelGeomEdit()">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" style="width:13px;height:13px"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+      Cancel
+    </button>
+  </div>
+
+  <div id="toolbar-cond-draw" style="display:none;gap:10px;align-items:center">
+    <span style="color:rgba(255,255,255,.65);font-size:12px;font-weight:500">🔩 Drawing Conduit — click to add, double-click or Finish to complete</span>
+    <button class="hdr-btn finish" onclick="finishDraw()">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" style="width:13px;height:13px"><polyline points="20 6 9 17 4 12"/></svg>
+      Finish
+    </button>
+    <button class="hdr-btn" id="follow-toggle-cond" onclick="toggleFollowPath()" style="opacity:.6" title="Follow existing line path between two clicked points">
+      ⚡ Follow Path: OFF
+    </button>
+    <button class="hdr-btn" onclick="cancelDraw()">Cancel</button>
+  </div>
+
+  <div id="toolbar-place" style="display:none;gap:10px;align-items:center">
+    <div style="display:flex;align-items:center;gap:8px;color:rgba(255,255,255,.85);font-size:12px;font-weight:600">
+      <div id="placing-icon" style="width:22px;height:22px;flex-shrink:0"></div>
+      <span id="placing-text">Click map to place</span>
+    </div>
+    <button class="hdr-btn" onclick="openDropdown('struct-picker','place-btn')">Change ▾</button>
+    <button class="hdr-btn" onclick="cancelPlace()">Done</button>
+  </div>
+</div>
+
+<!-- STRUCTURE PICKER DROPDOWN -->
+<div class="dropdown-panel" id="struct-picker">
+  <div class="dp-head">Structure Type</div>
+  <div id="sp-items"></div>
+</div>
+
+<!-- EXPORT MENU -->
+<div class="dropdown-panel" id="export-menu">
+  <div class="dp-head">Export Format</div>
+  <div class="dp-item" onclick="doExportCSV()"><div class="dp-ico">📊</div><div><div class="dp-main">CSV</div><div class="dp-sub">Segments &amp; Structures</div></div></div>
+  <div class="dp-item" onclick="doExportGeoJSON()"><div class="dp-ico">🌐</div><div><div class="dp-main">GeoJSON</div><div class="dp-sub">Web mapping, QGIS</div></div></div>
+  <div class="dp-sep"></div>
+  <div class="dp-item" onclick="doExportKML()"><div class="dp-ico">🗺</div><div><div class="dp-main">KML</div><div class="dp-sub">Google Earth, Google Maps</div></div></div>
+  <div class="dp-item" onclick="doExportKMZ()"><div class="dp-ico">🛰</div><div><div class="dp-main">KMZ</div><div class="dp-sub">Compressed KML</div></div></div>
+  <div class="dp-sep"></div>
+  <div class="dp-item" onclick="doExportShapefile()"><div class="dp-ico">📐</div><div><div class="dp-main">Shapefile (ZIP)</div><div class="dp-sub">ArcGIS, QGIS, AutoCAD Map</div></div></div>
+</div>
+
+<!-- BODY -->
+<div id="body">
+  <div id="sidebar">
+    <div id="plan-indicator" onclick="openProjectModal()">
+      <div class="pi-icon">📁</div>
+      <div class="pi-text">
+        <div id="pi-plan" class="pi-plan">Loading…</div>
+        <div id="pi-proj" class="pi-proj">Click to manage projects</div>
+      </div>
+      <div class="pi-caret">▾</div>
+    </div>
+    <div id="sb-tabs">
+      <button class="sb-tab on" id="tab-segs" onclick="setTab('segs')">Spans</button>
+      <button class="sb-tab"    id="tab-pts"  onclick="setTab('pts')">Structures</button>
+      <button class="sb-tab"    id="tab-cond" onclick="setTab('cond')">Conduit</button>
+    </div>
+    <div id="panel-segs" style="display:flex;flex-direction:column;flex:1;overflow:hidden;min-height:0">
+      <div class="sb-stats" id="seg-stats">
+        <div class="stats-row">
+          <div class="stat"><div class="stat-v" id="st-ft">0</div><div class="stat-l">Feet</div></div>
+          <div class="stat"><div class="stat-v" id="st-mi">0.00</div><div class="stat-l">Miles</div></div>
+          <div class="stat"><div class="stat-v" id="st-n">0</div><div class="stat-l">Spans</div></div>
+        </div>
+      </div>
+      <div class="sb-filter" id="seg-filter"></div>
+      <div class="sb-panel" id="seg-list">
+        <div class="empty"><div class="empty-icon">〰️</div><p>No spans yet.<br>Click <strong>Draw Route</strong> to start.</p></div>
+      </div>
+    </div>
+    <div id="panel-pts" style="display:none;flex-direction:column;flex:1;overflow:hidden;min-height:0">
+      <div class="sb-stats" id="pt-stats">
+        <div class="stats-row">
+          <div class="stat"><div class="stat-v" id="st-ptn">0</div><div class="stat-l">Structures</div></div>
+          <div class="stat"><div class="stat-v" id="st-pttype">—</div><div class="stat-l">Types</div></div>
+          <div class="stat"><div class="stat-v" id="st-ptab">0</div><div class="stat-l">As-Built</div></div>
+        </div>
+      </div>
+      <div class="sb-filter" id="pt-filter"></div>
+      <div class="sb-panel" id="pt-list">
+        <div class="empty"><div class="empty-icon">📍</div><p>No structures yet.<br>Click <strong>Place Structure</strong>.</p></div>
+      </div>
+    </div>
+    <div id="panel-cond" style="display:none;flex-direction:column;flex:1;overflow:hidden;min-height:0">
+      <div class="sb-stats" id="cond-stats"><div class="stats-row"><div class="stat"><div class="stat-v" id="st-cn">0</div><div class="stat-l">Runs</div></div><div class="stat"><div class="stat-v" id="st-cft">0</div><div class="stat-l">Feet</div></div><div class="stat"><div class="stat-v" id="st-cmi">0.00</div><div class="stat-l">Miles</div></div></div></div>
+      <div class="sb-filter" id="cond-filter"></div>
+      <div class="sb-panel" id="cond-list"><div class="empty"><div class="empty-icon">🔩</div><p>No conduit yet.<br>Click <strong>Draw Conduit</strong>.</p></div></div>
+    </div>
+  </div>
+
+  <div id="map-wrap">
+    <div id="map"></div>
+    <div id="draw-hint">Double-click to finish · Esc to cancel</div>
+    <div id="snap-badge">⦿ Snapped</div>
+    <div id="vertex-count"></div>
+    <div id="legend">
+      <h4>Seg. Status</h4>
+      <div class="leg-row"><div class="leg-line" style="background:#2196F3"></div>Proposed</div>
+      <div class="leg-row"><div class="leg-line" style="background:#9c27b0"></div>Permitted</div>
+      <div class="leg-row"><div class="leg-line" style="background:#ff9800"></div>Under Const.</div>
+      <div class="leg-row"><div class="leg-line" style="background:#4caf50"></div>As-Built</div>
+      <div class="leg-row"><div class="leg-line" style="background:#8bc34a"></div>Active</div>
+      <div class="leg-row"><div class="leg-line" style="background:#9e9e9e"></div>Existing</div>
+      <div class="leg-section">
+        <h4>Conduit</h4>
+        <div class="leg-row"><div style="width:22px;height:7px;border:2.5px solid #795548;border-radius:2px"></div>Conduit run</div>
+      </div>
+      <div class="leg-section">
+        <h4>Cable Type</h4>
+        <div class="leg-row"><div style="width:22px;height:3px;background:#546e7a;border-radius:1px"></div>Aerial</div>
+        <div class="leg-row"><div style="width:22px;height:2px;border-top:3px dashed #546e7a"></div>Underground</div>
+        <div class="leg-row"><div style="width:22px;height:2px;border-top:3px dotted #546e7a"></div>Direct Buried</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ELEMENT MODAL -->
+<div id="overlay" onclick="onOverlayBg(event)">
+  <div id="modal">
+    <div id="modal-hdr"><h3 id="modal-title">Properties</h3><button class="modal-x" onclick="closeModal()">✕</button></div>
+    <div id="modal-body">
+      <input type="hidden" id="m-id"/><input type="hidden" id="m-mode" value="seg"/>
+      <div class="info-bar" id="seg-info-bar">
+        <div class="info-cell"><label>Length</label><span id="m-len">—</span></div>
+        <div class="info-cell"><label>Vertices</label><span id="m-pts">—</span></div>
+        <div class="info-cell"><label>Cable Type</label><span id="m-type-disp">—</span></div>
+      </div>
+      <div class="info-bar" id="cond-info-bar" style="display:none">
+        <div class="info-cell"><label>Length</label><span id="m-cond-len">—</span></div>
+        <div class="info-cell"><label>Vertices</label><span id="m-cond-pts">—</span></div>
+        <div class="info-cell"><label>Type</label><span id="m-cond-type-disp">Conduit</span></div>
+      </div>
+      <div class="info-bar" id="pt-info-bar" style="display:none">
+        <div class="info-cell"><label>Latitude</label><span id="m-lat">—</span></div>
+        <div class="info-cell"><label>Longitude</label><span id="m-lng">—</span></div>
+        <div class="info-cell"><label>Structure</label><span id="m-struct-disp">—</span></div>
+      </div>
+      <div class="fg">
+        <div class="fr full"><label>Name *</label><input id="m-name" type="text" placeholder="e.g., HH-001 or Span B(P12)–B(P18)"/></div>
+        <div class="fr seg-field"><label>Cable ID</label><input id="m-cid" type="text" placeholder="e.g., F-001"/></div>
+        <div class="fr seg-field"><label>Cable Type</label><select id="m-ctype" onchange="onCtypeChange()"><option value="aerial">Aerial</option><option value="underground">Underground</option><option value="directBuried">Direct Buried</option><option value="innerduct">Innerduct</option></select></div>
+        <div class="fr seg-field"><label>Fiber Count</label><select id="m-fc" onchange="onFcChange()"><option>12</option><option>24</option><option>48</option><option>72</option><option>96</option><option>144</option><option>216</option><option>288</option><option>432</option><option>864</option><option value="custom">Custom…</option></select></div>
+        <div class="fr full seg-field" id="fc-custom-wrap" style="display:none"><label>Custom Fiber Count</label><input id="m-fc-custom" type="number" min="1" max="9999"/></div>
+        <div class="fr cond-field" style="display:none"><label>Conduit Type</label><select id="m-cond-type" onchange="document.getElementById('m-cond-type-disp').textContent=this.options[this.selectedIndex].text"><option value="hdpe">HDPE</option><option value="pvc">PVC</option><option value="steel">Steel</option><option value="concrete">Concrete-Encased</option><option value="flexible">Flexible / CHDPE</option><option value="flowerpot">Flower Pot</option>
+          <option value="other">Other</option></select></div>
+        <div class="fr cond-field" style="display:none"><label>Conduit Size</label><select id="m-cond-size"><option>3/4"</option><option>1"</option><option>1.25"</option><option>1.5"</option><option selected>2"</option><option>3"</option><option>4"</option><option>6"</option><option>Custom</option></select></div>
+        <div class="fr cond-field" style="display:none"><label>Duct Count</label><input id="m-cond-ducts" type="number" min="1" max="24" placeholder="e.g., 4"/></div>
+        <div class="fr pt-field" style="display:none"><label>Structure Type</label><select id="m-ptype" onchange="onPtypeChange()"><option value="handhole">Handhole</option><option value="vault">Vault</option><option value="pedestal">Pedestal</option><option value="spliceCase">Splice Case</option><option value="pullBox">Pull Box</option><option value="manhole">Manhole</option><option value="riser">Riser Pole</option><option value="terminal">Terminal / FOSB</option><option value="cabinet">Cabinet / DMARC</option><option value="flowerpot">Flower Pot</option><option value="other">Other</option></select></div>
+        <div class="fr pt-field" style="display:none"><label>Structure ID</label><input id="m-pid" type="text" placeholder="e.g., HH-001"/></div>
+        <div class="fr pt-field" style="display:none"><label>Manufacturer / Model</label><input id="m-mfr" type="text" placeholder="e.g., Oldcastle Duralite 3048"/></div>
+        <div class="fr pt-field" style="display:none"><label>Size / Dimensions</label><input id="m-size" type="text" placeholder="e.g., 30×48"/></div>
+        <div class="fr"><label>Status</label><select id="m-status"><option value="proposed">Proposed</option><option value="permitted">Permitted</option><option value="underConstruction">Under Construction</option><option value="asBuilt">As-Built</option><option value="active">Active</option><option value="existing">Existing</option></select></div>
+        <div class="fr"><label>Contractor</label><input id="m-contractor" type="text" placeholder="e.g., Southern Fiber"/></div>
+        <div class="fr"><label>Install Date</label><input id="m-date" type="date"/></div>
+        <div class="fr"><label>Contract / Job Ref</label><input id="m-job" type="text" placeholder="e.g., GA1706-A72"/></div>
+        <div class="fr" id="weight-field-wrap">
+          <label>Line Weight</label>
+          <select id="m-weight">
+            <option value="">Auto (default)</option>
+            <option value="1">1 px — Hairline</option>
+            <option value="2">2 px — Thin</option>
+            <option value="3">3 px — Normal span</option>
+            <option value="4">4 px</option>
+            <option value="5">5 px — Thick</option>
+            <option value="6">6 px</option>
+            <option value="7">7 px — Normal conduit</option>
+            <option value="8">8 px</option>
+            <option value="10">10 px — Heavy</option>
+            <option value="12">12 px — Extra heavy</option>
+          </select>
+        </div>
+        <div class="fr full"><label>Color Override</label>
+          <div class="swatches" id="swatches">
+            <div class="swatch" data-c="#2196F3" style="background:#2196F3"></div>
+            <div class="swatch" data-c="#9c27b0" style="background:#9c27b0"></div>
+            <div class="swatch" data-c="#ff9800" style="background:#ff9800"></div>
+            <div class="swatch" data-c="#4caf50" style="background:#4caf50"></div>
+            <div class="swatch" data-c="#f44336" style="background:#f44336"></div>
+            <div class="swatch" data-c="#00bcd4" style="background:#00bcd4"></div>
+            <div class="swatch" data-c="#ff5722" style="background:#ff5722"></div>
+            <div class="swatch" data-c="#607d8b" style="background:#607d8b"></div>
+            <div class="swatch swatch-auto sel" data-c="auto" title="Auto"></div>
+          </div>
+          <div class="swatch-hint">Last = automatic color by status/type</div>
+        </div>
+        <div class="fr full"><label>Field Notes</label><textarea id="m-notes" placeholder="Splice case ID, sequentials, lid stamp, ring size, depth, as-built deviations…"></textarea></div>
+      </div>
+    </div>
+    <div id="modal-ftr">
+      <button class="btn btn-dng" id="del-btn" onclick="onDelete()" style="display:none">Delete</button>
+      <div class="ftr-space"></div>
+      <button class="btn btn-sec" onclick="closeModal()">Cancel</button>
+      <button class="btn btn-pri" onclick="onSave()">Save</button>
+    </div>
+  </div>
+</div>
+
+<!-- PROJECT MODAL -->
+<div id="proj-overlay" onclick="onProjOverlayBg(event)">
+  <div id="proj-modal">
+    <div id="proj-mhdr">
+      <div>
+        <div style="font-size:15px;font-weight:700;color:var(--navy)">Projects &amp; Plans</div>
+        <div style="font-size:12px;color:var(--muted);margin-top:3px">Organize your fiber routes by project and design iteration</div>
+      </div>
+      <button class="modal-x" onclick="closeProjectModal()">✕</button>
+    </div>
+    <div id="proj-mbody">
+      <div id="pm-left">
+        <div class="pm-pane-hdr">
+          <span>Projects</span>
+          <button class="pm-add-btn" onclick="toggleAddProject()">+ New</button>
+        </div>
+        <div id="pm-add-proj" class="pm-add-form" style="display:none">
+          <input id="pm-new-proj" placeholder="Project name…" onkeydown="if(event.key==='Enter')doCreateProject();if(event.key==='Escape')toggleAddProject();"/>
+          <div class="pm-form-btns">
+            <button class="pm-btn-pri" onclick="doCreateProject()">Create</button>
+            <button class="pm-btn-sec" onclick="toggleAddProject()">Cancel</button>
+          </div>
+        </div>
+        <div class="pm-scroll" id="pm-proj-list"></div>
+      </div>
+      <div id="pm-right">
+        <div class="pm-pane-hdr">
+          <span id="pm-plans-for">Select a project →</span>
+          <button class="pm-add-btn" id="pm-add-plan-btn" onclick="toggleAddPlan()" style="display:none">+ New Plan</button>
+        </div>
+        <div id="pm-add-plan" class="pm-add-form" style="display:none">
+          <input id="pm-new-plan" placeholder="Plan name…" onkeydown="if(event.key==='Enter')doCreatePlan();if(event.key==='Escape')toggleAddPlan();"/>
+          <div class="pm-form-btns">
+            <button class="pm-btn-pri" onclick="doCreatePlan()">Create Plan</button>
+            <button class="pm-btn-sec" onclick="toggleAddPlan()">Cancel</button>
+          </div>
+        </div>
+        <div id="pm-overlay-bar" style="display:none;align-items:center;gap:10px;padding:10px 14px;background:#f7f9fb;border-bottom:1px solid var(--border)"><span style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:var(--muted);white-space:nowrap">Overlay opacity</span><input type="range" id="pm-op-slider" min="10" max="100" value="45" style="flex:1;accent-color:var(--orange);cursor:pointer" oninput="setGhostOpacity(this.value/100)"><span id="pm-op-pct" style="font-size:11px;font-weight:700;color:var(--navy);width:30px;text-align:right">45%</span><button onclick="clearAllOverlays()" style="font-size:10px;padding:3px 9px;border-radius:4px;border:1.5px solid var(--border);cursor:pointer;background:white;color:#c62828;font-weight:600;white-space:nowrap">✕ Clear all</button></div>
+        <div class="pm-scroll" id="pm-plan-list">
+          <div class="pm-empty">Select a project from the left to see its plans.</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+
+<!-- BOM MODAL -->
+<div id="bom-overlay" onclick="onBomBg(event)">
+  <div id="bom-modal">
+    <div id="bom-hdr">
+      <div id="bom-hdr-left">
+        <h3>Bill of Materials</h3>
+        <div id="bom-subtitle"></div>
+      </div>
+      <div id="bom-hdr-right">
+        <button class="bom-export-btn" onclick="exportBOMCSV()">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:12px;height:12px;display:inline;vertical-align:-1px;margin-right:4px"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4M7 10l5 5 5-5M12 15V3"/></svg>
+          Export CSV
+        </button>
+        <button class="modal-x" onclick="closeBOM()">✕</button>
+      </div>
+    </div>
+    <div id="bom-filters">
+      <span class="bom-f-lbl">Show:</span>
+      <button class="bom-chip" data-f="all"             onclick="setBomFilter('all')">All Statuses</button>
+      <button class="bom-chip on" data-f="installed"    onclick="setBomFilter('installed')">Installed</button>
+      <button class="bom-chip" data-f="asBuilt"         onclick="setBomFilter('asBuilt')">As-Built</button>
+      <button class="bom-chip" data-f="proposed"        onclick="setBomFilter('proposed')">Proposed</button>
+      <button class="bom-chip" data-f="underConstruction" onclick="setBomFilter('underConstruction')">Under Const.</button>
+      <button class="bom-chip" data-f="permitted"       onclick="setBomFilter('permitted')">Permitted</button>
+    </div>
+    <div id="bom-body">
+      <!-- Cable section -->
+      <div class="bom-sec">
+        <div class="bom-sec-title">Fiber Cable</div>
+        <table class="bom-tbl">
+          <thead>
+            <tr>
+              <th>Cable Type</th>
+              <th>Fiber Count</th>
+              <th>Status</th>
+              <th class="r">Spans</th>
+              <th class="r">Total Footage</th>
+              <th class="r">Miles</th>
+            </tr>
+          </thead>
+          <tbody id="bom-cable-rows"></tbody>
+          <tfoot id="bom-cable-foot"></tfoot>
+        </table>
+      </div>
+      <!-- Structure section -->
+      <div class="bom-sec">
+        <div class="bom-sec-title">Structures</div>
+        <table class="bom-tbl">
+          <thead>
+            <tr>
+              <th>Structure Type</th>
+              <th>Status</th>
+              <th class="r">Quantity</th>
+              <th>Manufacturer / Model</th>
+            </tr>
+          </thead>
+          <tbody id="bom-struct-rows"></tbody>
+          <tfoot id="bom-struct-foot"></tfoot>
+        </table>
+      </div>
+      <!-- Summary bar -->
+      <div class="bom-summary">
+        <div class="bom-sum-item"><div class="bom-sum-val" id="bom-s-ft">0</div><div class="bom-sum-lbl">Total Feet</div></div>
+        <div class="bom-sum-item"><div class="bom-sum-val" id="bom-s-mi">0.00</div><div class="bom-sum-lbl">Total Miles</div></div>
+        <div class="bom-sum-item"><div class="bom-sum-val" id="bom-s-segs">0</div><div class="bom-sum-lbl">Spans</div></div>
+        <div class="bom-sum-item"><div class="bom-sum-val" id="bom-s-structs">0</div><div class="bom-sum-lbl">Structures</div></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script src="/map/frm_storage_adapter.js"></script>
+<script>
+// ══════════════════════════════════════════════════════════════
+// STORAGE
+// ══════════════════════════════════════════════════════════════
+const store={
+  async get(k){try{if(window.storage?.get)return window.storage.get(k);}catch{}const v=localStorage.getItem(k);return v!=null?{value:v}:null;},
+  async set(k,v){try{if(window.storage?.set)return window.storage.set(k,v);}catch{}try{localStorage.setItem(k,v);}catch{}}
+};
+const K_COND_PREFIX='frm_cond_';
+const K_PROJECTS='frm_projects_v1',K_PLANS='frm_plans_v1',K_ACTIVE='frm_active_plan_v1',K_MAP='frm_map_v1';
+
+// ══════════════════════════════════════════════════════════════
+// CONSTANTS
+// ══════════════════════════════════════════════════════════════
+const STATUS_CLR={proposed:'#2196F3',permitted:'#9c27b0',underConstruction:'#ff9800',asBuilt:'#4caf50',active:'#8bc34a',existing:'#9e9e9e'};
+const STATUS_LBL={proposed:'Proposed',permitted:'Permitted',underConstruction:'Under Const.',asBuilt:'As-Built',active:'Active',existing:'Existing'};
+const TYPE_LBL={aerial:'Aerial',underground:'Underground',directBuried:'Direct Buried',innerduct:'Innerduct'};
+const TYPE_DASH={aerial:null,underground:'10,8',directBuried:'3,7',innerduct:'20,10'};
+const PT_TYPES={
+  handhole:{label:'Handhole',abbr:'HH',color:'#546e7a',shape:'sq'},
+  vault:{label:'Vault',abbr:'VT',color:'#1a3055',shape:'sq'},
+  pedestal:{label:'Pedestal',abbr:'PD',color:'#2e7d32',shape:'ci'},
+  spliceCase:{label:'Splice Case',abbr:'SC',color:'#e65100',shape:'dm'},
+  pullBox:{label:'Pull Box',abbr:'PB',color:'#6d4c41',shape:'sq'},
+  manhole:{label:'Manhole',abbr:'MH',color:'#263238',shape:'ci'},
+  riser:{label:'Riser Pole',abbr:'RS',color:'#6a1b9a',shape:'tr'},
+  terminal:{label:'Terminal/FOSB',abbr:'TM',color:'#00695c',shape:'sq'},
+  cabinet:{label:'Cabinet/DMARC',abbr:'CB',color:'#1565c0',shape:'sq'},
+  flowerpot:{label:'Flower Pot',abbr:'FP',color:'#e65100',shape:'ci'},
+  other:{label:'Other',abbr:'OT',color:'#9e9e9e',shape:'ci'}
+};
+const COND_TYPES={hdpe:'HDPE',pvc:'PVC',steel:'Steel',concrete:'Concrete-Encased',flexible:'Flexible/CHDPE',other:'Other'};
+const COND_SIZES=['3/4"','1"','1.25"','1.5"','2"','3"','4"','6"'];
+const PRJ_WGS84='GEOGCS["GCS_WGS_1984",DATUM["D_WGS_1984",SPHEROID["WGS_1984",6378137.0,298.257223563]],PRIMEM["Greenwich",0.0],UNIT["Degree",0.0174532925199433]]';
+
+// ══════════════════════════════════════════════════════════════
+// STATE
+// ══════════════════════════════════════════════════════════════
+let map;
+let segs={},pls={},points={},markers={};
+let projects={},plans={},activePlanId=null,pmSelProjId=null;
+let drawing=false,placingPoint=false,placingType='handhole';
+let editId=null,editMode='seg',pendPath=null,pendLatLng=null;
+let selSegId=null,selPtId=null,selColor='auto',activeTab='segs';
+let activeSegFilter=null,activePtFilter=null;
+let tempPoints=[],tempLine=null,tempDots=[],tempGuide=null;
+let snapTarget=null,snapIndicator=null;
+let conduits={},conduitPLs={},selCondId=null,activeCondFilter=null,geomCondId=null;
+let drawMode='span',followPathMode=true;
+let overlayPlanIds=new Set(),overlayLayers={};
+let ghostOpacity=0.45;
+// ghostRenderer removed — ghost lines use default pane + bringToBack
+let lastStructProps={},lastCondProps={},lastSpanProps={};
+// geometry editing
+let geomSegId=null,geomPath=[],geomOrigPath=null,geomPolyline=null,geomHandles=[];
+const SNAP_PX=22;
+
+// ══════════════════════════════════════════════════════════════
+// MAP INIT
+// ══════════════════════════════════════════════════════════════
+async function initMap(){
+  let lat=32.8,lng=-83.6,zoom=11;
+  try{const r=await store.get(K_MAP);if(r?.value){const s=JSON.parse(r.value);lat=s.lat;lng=s.lng;zoom=s.zoom;}}catch{}
+  map=L.map('map',{center:[lat,lng],zoom,zoomControl:true,doubleClickZoom:false});
+  map.zoomControl.setPosition('topright');
+  map.createPane('conduitPane');
+  map.getPane('conduitPane').style.zIndex=390;
+  // overlayGhostPane removed — ghost lines use default pane + bringToBack
+  const osm=L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{attribution:'© <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>',maxZoom:19});
+  const sat=L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}',{attribution:'Tiles © Esri',maxZoom:19});
+  const str=L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Street_Map/MapServer/tile/{z}/{y}/{x}',{attribution:'Tiles © Esri',maxZoom:20});
+  const top=L.tileLayer('https://{s}.tile.opentopomap.org/{z}/{x}/{y}.png',{attribution:'© OpenTopoMap',maxZoom:17});
+  osm.addTo(map);
+  L.control.layers({'🗺 Street (OSM)':osm,'🛰 Satellite':sat,'🏙 ESRI Street':str,'🗻 Topo':top},{},{position:'topright',collapsed:true}).addTo(map);
+  map.on('moveend',()=>{const c=map.getCenter();store.set(K_MAP,JSON.stringify({lat:c.lat,lng:c.lng,zoom:map.getZoom()}));});
+  map.on('click',onMapClick);
+  map.on('dblclick',onMapDblClick);
+  map.on('mousemove',onMapMouseMove);
+  buildStructPicker();
+  await initProjects();
+  await loadAll();
+  renderSidebar();
+  setTab('segs');
+  document.documentElement.style.setProperty('--ghost-opacity', ghostOpacity);
+}
+
+// ══════════════════════════════════════════════════════════════
+// PROJECT SYSTEM
+// ══════════════════════════════════════════════════════════════
+async function initProjects(){
+  try{const r=await store.get(K_PROJECTS);if(r?.value)projects=JSON.parse(r.value);}catch{}
+  try{const r=await store.get(K_PLANS);if(r?.value)plans=JSON.parse(r.value);}catch{}
+  try{const r=await store.get(K_ACTIVE);if(r?.value)activePlanId=r.value;}catch{}
+  if(!Object.keys(projects).length){
+    const now=new Date().toISOString();
+    const projId='proj_default_'+Date.now();
+    const planId='plan_default_'+Date.now();
+    projects[projId]={id:projId,name:'My Project',createdAt:now};
+    plans[planId]={id:planId,projectId:projId,name:'Plan 1',createdAt:now};
+    activePlanId=planId;
+    // Migrate existing data from old storage keys
+    try{const r=await store.get('frm_segs_v2');if(r?.value&&r.value!=='{}')await store.set('frm_segs_'+planId,r.value);}catch{}
+    try{const r=await store.get('frm_pts_v1'); if(r?.value&&r.value!=='{}')await store.set('frm_pts_'+planId, r.value);}catch{}
+    await store.set(K_PROJECTS,JSON.stringify(projects));
+    await store.set(K_PLANS,JSON.stringify(plans));
+    await store.set(K_ACTIVE,activePlanId);
+  }
+  if(!activePlanId||!plans[activePlanId]){
+    const first=Object.values(plans)[0];
+    activePlanId=first?.id||null;
+    await store.set(K_ACTIVE,activePlanId||'');
+  }
+  updatePlanIndicator();
+}
+
+function updatePlanIndicator(){
+  const plan=plans[activePlanId],proj=plan?projects[plan.projectId]:null;
+  document.getElementById('pi-plan').textContent=plan?.name||'No Plan Selected';
+  document.getElementById('pi-proj').textContent=proj?.name||'Click to manage projects';
+}
+
+
+// ══════════════════════════════════════════════════════════════
+// MULTI-PLAN OVERLAY
+// ══════════════════════════════════════════════════════════════
+async function renderPlanOverlay(planId){
+  const data={segs:{},pts:{},conds:{}};
+  try{const r=await store.get('frm_segs_'+planId);if(r?.value)data.segs=JSON.parse(r.value);}catch{}
+  try{const r=await store.get('frm_pts_'+planId); if(r?.value)data.pts=JSON.parse(r.value);}catch{}
+  try{const r=await store.get(K_COND_PREFIX+planId);if(r?.value)data.conds=JSON.parse(r.value);}catch{}
+
+  const plan=plans[planId],proj=plan?projects[plan.projectId]:null;
+  const lbl=esc([proj?.name,plan?.name].filter(Boolean).join(' / '));
+  const layers={pls:{},markers:{},condPLs:{}};
+  const op=ghostOpacity;
+
+  // Ghost spans — default pane, bringToBack so active plan renders on top
+  Object.values(data.segs).forEach(s=>{
+    const color=segColor(s); // respects colorOverride like active rendering
+    const bw=parseInt(s.weight)||3;
+    const pl=L.polyline(s.path.map(p=>[p.lat,p.lng]),{
+      color,weight:bw,opacity:op,
+      dashArray:TYPE_DASH[s.cableType]||null,
+      interactive:true
+    }).addTo(map);
+    pl.bringToBack();
+    pl.bindTooltip(`<div style="font-size:11px;line-height:1.7"><span style="color:${color}">━</span> <b>${lbl}</b><br>${esc(s.name)}<br><span style="color:var(--muted)">${fmtLen(s.lengthFt)} · ${STATUS_LBL[s.status]||s.status}</span></div>`,{sticky:true,opacity:.95});
+    layers.pls[s.id]=pl;
+  });
+
+  // Ghost conduit — default pane, bringToBack
+  Object.values(data.conds).forEach(c=>{
+    const color=condColor(c); // respects colorOverride
+    const bwc=parseInt(c.weight)||7;
+    const casing=L.polyline(c.path.map(p=>[p.lat,p.lng]),{
+      color:'white',weight:bwc+4,opacity:op*.65,interactive:false
+    }).addTo(map);
+    const line=L.polyline(c.path.map(p=>[p.lat,p.lng]),{
+      color,weight:bwc,opacity:op,interactive:true
+    }).addTo(map);
+    // Order matters: line to back first, then casing to back
+    // → SVG=[casing, line, active-spans] → colored line renders above casing
+    line.bringToBack();
+    casing.bringToBack();
+    line.bindTooltip(`<div style="font-size:11px;line-height:1.7"><b>${lbl}</b><br>${esc(c.name)}<br><span style="color:var(--muted)">${fmtLen(c.lengthFt)}</span></div>`,{sticky:true,opacity:.95});
+    layers.condPLs[c.id]=[casing,line];
+  });
+
+  // Ghost structures — size/shape matches active non-selected exactly
+  Object.values(data.pts).forEach(p=>{
+    const cfg=PT_TYPES[p.ptype]||PT_TYPES.other;
+    const sz=18,totalSz=(cfg.shape==='dm'||cfg.shape==='tr')?sz+4:sz;
+    const iconHtml=mkIconHtml(p.ptype,p.status,false,sz);
+    const mk=L.marker([p.lat,p.lng],{
+      icon:L.divIcon({html:`<div class="ghost-marker">${iconHtml}</div>`,className:'',iconSize:[totalSz,totalSz],iconAnchor:[totalSz/2,totalSz/2]}),
+      interactive:true,zIndexOffset:-300
+    }).addTo(map);
+    mk.bindTooltip(`<div style="font-size:11px;line-height:1.7"><b>${lbl}</b><br>${esc(p.name)}<br><span style="color:var(--muted)">${PT_TYPES[p.ptype]?.label||p.ptype}</span></div>`,{sticky:true,opacity:.95});
+    layers.markers[p.id]=mk;
+  });
+
+  overlayLayers[planId]=layers;
+}
+
+function removePlanOverlay(planId){
+  const l=overlayLayers[planId];
+  if(!l)return;
+  Object.values(l.pls).forEach(pl=>pl.remove());
+  Object.values(l.condPLs).forEach(pair=>pair.forEach(pl=>pl.remove()));
+  Object.values(l.markers).forEach(mk=>mk.remove());
+  delete overlayLayers[planId];
+}
+
+
+function setGhostOpacity(op){
+  ghostOpacity=op;
+  document.documentElement.style.setProperty('--ghost-opacity',op);
+  const pmSl=document.getElementById('pm-op-slider');if(pmSl)pmSl.value=Math.round(op*100);
+  const pmPct=document.getElementById('pm-op-pct');if(pmPct)pmPct.textContent=Math.round(op*100)+'%';
+  // Update all live ghost polylines
+  Object.values(overlayLayers).forEach(l=>{
+    Object.values(l.pls).forEach(pl=>pl.setStyle({opacity:op}));
+    Object.values(l.condPLs).forEach(pair=>{
+      pair[0].setStyle({opacity:op*.6});
+      pair[1].setStyle({opacity:op});
+    });
+    // markers update via --ghost-opacity CSS variable automatically
+  });
+}
+
+
+
+function clearAllOverlays(){
+  [...overlayPlanIds].forEach(id=>{overlayPlanIds.delete(id);removePlanOverlay(id);});
+  renderProjModal();
+}
+
+async function togglePlanOverlay(planId){
+  if(planId===activePlanId)return; // active plan always shown fully
+  if(overlayPlanIds.has(planId)){
+    overlayPlanIds.delete(planId);
+    removePlanOverlay(planId);
+  } else {
+    overlayPlanIds.add(planId);
+    await renderPlanOverlay(planId);
+  }
+  renderProjModal();
+}
+
+async function switchPlan(planId){
+  if(planId===activePlanId){closeProjectModal();return;}
+  const oldId=activePlanId;
+  // Clear active layers
+  Object.values(pls).forEach(pl=>pl.remove());pls={};
+  Object.values(markers).forEach(mk=>mk.remove());markers={};
+  Object.values(conduitPLs).flat().forEach(pl=>pl.remove());conduitPLs={};
+  segs={};points={};conduits={};
+  selSegId=null;selPtId=null;selCondId=null;
+  // If old plan was overlaid, refresh its ghost (data may have changed)
+  if(oldId&&overlayPlanIds.has(oldId)){removePlanOverlay(oldId);await renderPlanOverlay(oldId);}
+  // If new plan was an overlay ghost, remove ghost (will render as active)
+  if(overlayPlanIds.has(planId)){overlayPlanIds.delete(planId);removePlanOverlay(planId);}
+  activePlanId=planId;
+  await store.set(K_ACTIVE,activePlanId);
+  await loadAll();
+  renderSidebar();
+  updatePlanIndicator();
+  closeProjectModal();
+  if(map&&Object.values(segs).length+Object.values(points).length>0)setTimeout(zoomAll,200);
+}
+
+function openProjectModal(){
+  const plan=plans[activePlanId];
+  pmSelProjId=plan?.projectId||Object.keys(projects)[0]||null;
+  renderProjModal();
+  document.getElementById('proj-overlay').classList.add('open');
+}
+function closeProjectModal(){document.getElementById('proj-overlay').classList.remove('open');}
+function onProjOverlayBg(e){if(e.target===document.getElementById('proj-overlay'))closeProjectModal();}
+
+function renderProjModal(){
+  const bar=document.getElementById('pm-overlay-bar');
+  if(bar){bar.style.display=overlayPlanIds.size>0?'flex':'none';}
+  const ps=document.getElementById('pm-op-slider');
+  if(ps){ps.value=Math.round(ghostOpacity*100);document.getElementById('pm-op-pct').textContent=Math.round(ghostOpacity*100)+'%';}
+  renderProjList();if(pmSelProjId)renderPlanList(pmSelProjId);else{document.getElementById('pm-plan-list').innerHTML='<div class="pm-empty">Select a project from the left.</div>';document.getElementById('pm-plans-for').textContent='Select a project →';document.getElementById('pm-add-plan-btn').style.display='none';}}
+
+function renderProjList(){
+  const all=Object.values(projects).sort((a,b)=>new Date(a.createdAt)-new Date(b.createdAt));
+  const el=document.getElementById('pm-proj-list');
+  if(!all.length){el.innerHTML='<div class="pm-empty">No projects yet.<br>Create your first project!</div>';return;}
+  el.innerHTML=all.map(p=>{
+    const cnt=Object.values(plans).filter(pl=>pl.projectId===p.id).length;
+    const hasActive=plans[activePlanId]?.projectId===p.id;
+    return`<div class="proj-item${p.id===pmSelProjId?' sel':''}" onclick="selectProject('${p.id}')">
+      <div class="proj-item-body">
+        <div class="proj-item-name">${esc(p.name)}${hasActive?` <span style="font-size:9px;background:#e8f5e9;color:#2e7d32;padding:1px 6px;border-radius:8px;font-weight:700">Active</span>`:''}</div>
+        <div class="proj-item-meta">${cnt} plan${cnt!==1?'s':''}</div>
+      </div>
+      <button class="proj-item-del" onclick="event.stopPropagation();deleteProject('${p.id}')" title="Delete project">✕</button>
+    </div>`;
+  }).join('');
+}
+
+function renderPlanList(projId){
+  const proj=projects[projId];
+  document.getElementById('pm-plans-for').textContent=proj?.name||'';
+  document.getElementById('pm-add-plan-btn').style.display='block';
+  const all=Object.values(plans).filter(pl=>pl.projectId===projId).sort((a,b)=>new Date(a.createdAt)-new Date(b.createdAt));
+  const el=document.getElementById('pm-plan-list');
+  if(!all.length){el.innerHTML='<div class="pm-empty">No plans in this project.<br>Click <strong>+ New Plan</strong> to create one.</div>';return;}
+  el.innerHTML=all.map(pl=>{
+    const isCurr=pl.id===activePlanId;
+    const date=new Date(pl.createdAt).toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'});
+    return`<div class="plan-item${isCurr?' curr':''}">
+      <div class="plan-item-hdr">
+        <div class="plan-item-name">${esc(pl.name)}</div>
+        ${isCurr?'<span class="plan-curr-badge">Active</span>':''}
+      </div>
+      <div class="plan-item-meta">Created ${date}</div>
+      <div class="plan-item-acts">
+        ${!isCurr?`<button class="pa-open" onclick="switchPlan('${pl.id}')">Open Plan</button>`:'<span style="font-size:11px;color:var(--orange);font-weight:700">✓ Currently Open</span>'}
+        ${!isCurr?`<button class="pa-eye${overlayPlanIds.has(pl.id)?' on':''}" onclick="togglePlanOverlay('${pl.id}')" title="Show this plan as a semi-transparent overlay on the map">${overlayPlanIds.has(pl.id)?'👁 Shown':'👁 Show'}</button>`:''}
+        <button class="pa-ghost" onclick="renamePlan('${pl.id}')">Rename</button>
+        ${!isCurr?`<button class="pa-del" onclick="deletePlan('${pl.id}')">Delete</button>`:''}
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function selectProject(projId){pmSelProjId=projId;renderProjModal();}
+
+function toggleAddProject(){
+  const f=document.getElementById('pm-add-proj');
+  f.style.display=f.style.display==='none'?'block':'none';
+  if(f.style.display!=='none')document.getElementById('pm-new-proj').focus();
+  else document.getElementById('pm-new-proj').value='';
+}
+async function doCreateProject(){
+  const name=document.getElementById('pm-new-proj').value.trim();
+  if(!name)return;
+  const id='proj_'+Date.now();
+  projects[id]={id,name,createdAt:new Date().toISOString()};
+  await store.set(K_PROJECTS,JSON.stringify(projects));
+  document.getElementById('pm-new-proj').value='';
+  document.getElementById('pm-add-proj').style.display='none';
+  pmSelProjId=id;
+  renderProjModal();
+}
+async function deleteProject(projId){
+  const proj=projects[projId];
+  const projPlans=Object.values(plans).filter(pl=>pl.projectId===projId);
+  if(projPlans.some(pl=>pl.id===activePlanId)){alert("Can't delete the project containing the active plan. Switch to another plan first.");return;}
+  if(!confirm(`Delete project "${proj?.name}" and its ${projPlans.length} plan(s)? This cannot be undone.`))return;
+  projPlans.forEach(pl=>delete plans[pl.id]);
+  delete projects[projId];
+  await store.set(K_PROJECTS,JSON.stringify(projects));
+  await store.set(K_PLANS,JSON.stringify(plans));
+  if(pmSelProjId===projId)pmSelProjId=Object.keys(projects)[0]||null;
+  renderProjModal();
+}
+async function renameProject(projId){
+  const proj=projects[projId];
+  const n=prompt('Rename project:',proj?.name||'');
+  if(!n?.trim())return;
+  projects[projId].name=n.trim();
+  await store.set(K_PROJECTS,JSON.stringify(projects));
+  updatePlanIndicator();renderProjModal();
+}
+
+function toggleAddPlan(){
+  const f=document.getElementById('pm-add-plan');
+  f.style.display=f.style.display==='none'?'block':'none';
+  if(f.style.display!=='none')document.getElementById('pm-new-plan').focus();
+  else document.getElementById('pm-new-plan').value='';
+}
+async function doCreatePlan(){
+  const name=document.getElementById('pm-new-plan').value.trim();
+  if(!name||!pmSelProjId)return;
+  const id='plan_'+Date.now();
+  plans[id]={id,projectId:pmSelProjId,name,createdAt:new Date().toISOString()};
+  await store.set(K_PLANS,JSON.stringify(plans));
+  document.getElementById('pm-new-plan').value='';
+  document.getElementById('pm-add-plan').style.display='none';
+  renderProjModal();
+}
+async function deletePlan(planId){
+  if(overlayPlanIds.has(planId)){overlayPlanIds.delete(planId);removePlanOverlay(planId);}
+  if(planId===activePlanId){alert("Can't delete the active plan.");return;}
+  const plan=plans[planId];
+  if(!confirm(`Delete plan "${plan?.name}"? All its segments and structures will be permanently deleted.`))return;
+  delete plans[planId];
+  await store.set(K_PLANS,JSON.stringify(plans));
+  renderProjModal();
+}
+async function renamePlan(planId){
+  const plan=plans[planId];
+  const n=prompt('Rename plan:',plan?.name||'');
+  if(!n?.trim())return;
+  plans[planId].name=n.trim();
+  await store.set(K_PLANS,JSON.stringify(plans));
+  if(planId===activePlanId)updatePlanIndicator();
+  renderProjModal();
+}
+
+// ══════════════════════════════════════════════════════════════
+// DATA LOAD / SAVE  (per-plan storage keys)
+// ══════════════════════════════════════════════════════════════
+async function loadAll(){
+  segs={};points={};conduits={};
+  if(!activePlanId)return;
+  try{const r=await store.get('frm_segs_'+activePlanId);if(r?.value)segs=JSON.parse(r.value);}catch{}
+  try{const r=await store.get('frm_pts_'+activePlanId); if(r?.value)points=JSON.parse(r.value);}catch{}
+  try{const r=await store.get(K_COND_PREFIX+activePlanId);if(r?.value)conduits=JSON.parse(r.value);}catch{}
+  Object.values(conduits).forEach(c=>renderConduit(c));
+  Object.values(segs).forEach(s=>renderPolyline(s));
+  Object.values(points).forEach(p=>renderMarker(p));
+}
+async function saveConds(){if(!activePlanId)return;try{await store.set(K_COND_PREFIX+activePlanId,JSON.stringify(conduits));}catch(e){console.warn(e);}}
+async function saveSegs(){if(!activePlanId)return;try{await store.set('frm_segs_'+activePlanId,JSON.stringify(segs));}catch(e){console.warn(e);}}
+async function savePts() {if(!activePlanId)return;try{await store.set('frm_pts_'+activePlanId, JSON.stringify(points));}catch(e){console.warn(e);}}
+
+// ══════════════════════════════════════════════════════════════
+// DROPDOWN HELPER
+// ══════════════════════════════════════════════════════════════
+function openDropdown(menuId,btnId){
+  const menu=document.getElementById(menuId);
+  if(menu.style.display!=='none'){menu.style.display='none';return;}
+  closeAllDropdowns();
+  const btn=document.getElementById(btnId);
+  const r=btn.getBoundingClientRect();
+  menu.style.top=(r.bottom+6)+'px';
+  menu.style.right=Math.max(8,window.innerWidth-r.right)+'px';
+  menu.style.left='auto';
+  menu.style.display='block';
+}
+function closeAllDropdowns(){document.querySelectorAll('.dropdown-panel').forEach(d=>d.style.display='none');}
+document.addEventListener('click',e=>{if(!e.target.closest('.dropdown-panel')&&!e.target.closest('.hdr-btn'))closeAllDropdowns();});
+
+// ══════════════════════════════════════════════════════════════
+// STRUCT PICKER
+// ══════════════════════════════════════════════════════════════
+function buildStructPicker(){
+  document.getElementById('sp-items').innerHTML=Object.entries(PT_TYPES).map(([k,v])=>
+    `<div class="dp-item" onclick="selectPointType('${k}')">
+      <div class="dp-ico" style="font-size:10px">${mkIconHtml(k,'auto',false,18)}</div>
+      <div class="dp-main">${v.label}</div>
+    </div>`).join('');
+}
+function selectPointType(type){
+  if(geomSegId)cancelGeomEdit();
+  closeAllDropdowns();
+  placingType=type;placingPoint=true;
+  map.getContainer().style.cursor='crosshair';
+  document.getElementById('toolbar-normal').style.display='none';
+  document.getElementById('toolbar-draw').style.display='none';
+  document.getElementById('toolbar-place').style.display='flex';
+  const cfg=PT_TYPES[type]||PT_TYPES.other;
+  document.getElementById('placing-icon').innerHTML=mkIconHtml(type,'auto',false,22);
+  document.getElementById('placing-text').textContent='Click map to place '+cfg.label;
+}
+function cancelPlace(){
+  placingPoint=false;map.getContainer().style.cursor='';
+  document.getElementById('toolbar-place').style.display='none';
+  document.getElementById('toolbar-normal').style.display='flex';
+}
+
+// ══════════════════════════════════════════════════════════════
+// SNAP + DRAW-POINT  (key fix: addDrawPoint called directly)
+// ══════════════════════════════════════════════════════════════
+function findSnapTarget(latlng){
+  const mp=map.latLngToContainerPoint(latlng);
+  let best=null,bestDist=Infinity;
+  Object.values(points).forEach(pt=>{
+    const pp=map.latLngToContainerPoint(L.latLng(pt.lat,pt.lng));
+    const d=Math.hypot(mp.x-pp.x,mp.y-pp.y);
+    if(d<SNAP_PX&&d<bestDist){bestDist=d;best={lat:pt.lat,lng:pt.lng,label:pt.name};}
+  });
+  // Segment endpoints
+  Object.values(segs).forEach(s=>{
+    if(!s.path?.length)return;
+    [s.path[0],s.path[s.path.length-1]].forEach(ep=>{
+      const pp=map.latLngToContainerPoint(L.latLng(ep.lat,ep.lng));
+      const d=Math.hypot(mp.x-pp.x,mp.y-pp.y);
+      if(d<SNAP_PX&&d<bestDist){bestDist=d;best={lat:ep.lat,lng:ep.lng,label:s.name+' endpoint',kind:'endpoint'};}
+    });
+  });
+  // Conduit endpoints
+  Object.values(conduits).forEach(c=>{
+    if(!c.path?.length)return;
+    [c.path[0],c.path[c.path.length-1]].forEach(ep=>{
+      const pp=map.latLngToContainerPoint(L.latLng(ep.lat,ep.lng));
+      const d=Math.hypot(mp.x-pp.x,mp.y-pp.y);
+      if(d<SNAP_PX&&d<bestDist){bestDist=d;best={lat:ep.lat,lng:ep.lng,label:c.name+' endpoint',kind:'endpoint'};}
+    });
+  });
+  // Nearest point on any line (for mid-segment snapping)
+  if(bestDist>SNAP_PX*0.6){
+    Object.values(segs).forEach(s=>{
+      if(!s.path?.length)return;
+      if(s.id===geomSegId)return; // skip segment being reshaped
+      for(let j=0;j<s.path.length-1;j++){
+        const a=s.path[j],b=s.path[j+1];
+        const dx=b.lng-a.lng,dy=b.lat-a.lat,lenSq=dx*dx+dy*dy;
+        if(lenSq<1e-16)continue;
+        const t=Math.max(0,Math.min(1,((latlng.lng-a.lng)*dx+(latlng.lat-a.lat)*dy)/lenSq));
+        const np={lat:a.lat+t*dy,lng:a.lng+t*dx};
+        const pp=map.latLngToContainerPoint(L.latLng(np.lat,np.lng));
+        const d=Math.hypot(mp.x-pp.x,mp.y-pp.y);
+        if(d<SNAP_PX&&d<bestDist){bestDist=d;best={lat:np.lat,lng:np.lng,label:'On: '+s.name,kind:'line'};}
+      }
+    });
+    // Snap to conduit mid-line too
+    Object.values(conduits).forEach(c=>{
+      if(!c.path?.length)return;
+      if(c.id===geomCondId)return; // skip conduit being reshaped
+      for(let j=0;j<c.path.length-1;j++){
+        const a=c.path[j],b=c.path[j+1];
+        const dx=b.lng-a.lng,dy=b.lat-a.lat,lenSq=dx*dx+dy*dy;
+        if(lenSq<1e-16)continue;
+        const t=Math.max(0,Math.min(1,((latlng.lng-a.lng)*dx+(latlng.lat-a.lat)*dy)/lenSq));
+        const np={lat:a.lat+t*dy,lng:a.lng+t*dx};
+        const pp=map.latLngToContainerPoint(L.latLng(np.lat,np.lng));
+        const d=Math.hypot(mp.x-pp.x,mp.y-pp.y);
+        if(d<SNAP_PX&&d<bestDist){bestDist=d;best={lat:np.lat,lng:np.lng,label:'On: '+c.name,kind:'conduit'};}
+      }
+    });
+  }
+  return best;
+}
+function updateSnapIndicator(target){
+  if(snapIndicator){snapIndicator.remove();snapIndicator=null;}
+  const sb=document.getElementById('snap-badge');
+  if(target){
+    snapIndicator=L.circleMarker([target.lat,target.lng],{radius:13,color:'#00e676',weight:2.5,fillOpacity:0,interactive:false,className:'snap-ring'}).addTo(map);
+    sb.style.display='block';sb.textContent='⦿ '+target.label;
+  }else{sb.style.display='none';}
+}
+function clearSnap(){if(snapIndicator){snapIndicator.remove();snapIndicator=null;}snapTarget=null;document.getElementById('snap-badge').style.display='none';}
+
+// THE FIX: addDrawPoint is called directly from marker/polyline handlers
+// so Leaflet's event propagation issues are bypassed entirely
+function addDrawPoint(lat,lng,snapped){
+  tempPoints.push({lat,lng});
+  const dot=L.circleMarker([lat,lng],{radius:snapped?6:5,color:snapped?'#00e676':'white',weight:2,fillColor:snapped?'#00e676':'#f4600c',fillOpacity:1,interactive:false}).addTo(map);
+  tempDots.push(dot);
+  if(tempLine)tempLine.remove();
+  if(tempPoints.length>1)tempLine=L.polyline(tempPoints.map(p=>[p.lat,p.lng]),{color:'#f4600c',weight:3,opacity:.85,interactive:false}).addTo(map);
+  const vc=document.getElementById('vertex-count');
+  vc.style.display='block';
+  vc.textContent=tempPoints.length+' pt'+(tempPoints.length!==1?'s':'');
+}
+
+// ══════════════════════════════════════════════════════════════
+// MAP EVENTS
+// ══════════════════════════════════════════════════════════════
+function onMapClick(e){
+  if(geomSegId)return; // geometry edit handles own clicks
+  if(placingPoint){L.DomEvent.stopPropagation(e);pendLatLng=snapTarget?{lat:snapTarget.lat,lng:snapTarget.lng}:{lat:e.latlng.lat,lng:e.latlng.lng};clearSnap();openModal(null,'pt');return;}
+  if(!drawing)return;
+  L.DomEvent.stopPropagation(e);
+  const lat=snapTarget?snapTarget.lat:e.latlng.lat;
+  const lng=snapTarget?snapTarget.lng:e.latlng.lng;
+  addDrawPoint(lat,lng,!!snapTarget);
+}
+function onMapDblClick(e){
+  if(!drawing)return;
+  L.DomEvent.stopPropagation(e);
+  if(tempPoints.length>0)tempPoints.pop();
+  if(tempDots.length>0)tempDots.pop().remove();
+  finishDraw();
+}
+function onMapMouseMove(e){
+  if(!drawing&&!placingPoint)return; // run for both draw and place modes
+  snapTarget=findSnapTarget(e.latlng);
+  updateSnapIndicator(snapTarget);
+  if(!drawing||tempPoints.length===0)return; // guide line only while drawing
+  const last=tempPoints[tempPoints.length-1];
+  const tgt=snapTarget?L.latLng(snapTarget.lat,snapTarget.lng):e.latlng;
+  if(tempGuide)tempGuide.remove();
+  tempGuide=L.polyline([[last.lat,last.lng],[tgt.lat,tgt.lng]],{color:snapTarget?'#00e676':'#f4600c',weight:2,dashArray:'6,5',opacity:.6,interactive:false}).addTo(map);
+}
+
+// ══════════════════════════════════════════════════════════════
+// DRAW ROUTE
+// ══════════════════════════════════════════════════════════════
+function startDraw(mode='span'){
+  if(geomSegId)cancelGeomEdit();
+  drawMode=mode;
+  followPathMode=true; // reset to ON each time
+  setTimeout(()=>{const lbl='⚡ Follow Path: ON';['follow-toggle-span','follow-toggle-cond'].forEach(id=>{const el=document.getElementById(id);if(el){el.textContent=lbl;el.style.opacity='1';el.style.fontWeight='700';}});},50);
+  drawing=true;tempPoints=[];clearTempGraphics();clearSnap();
+  map.getContainer().style.cursor='crosshair';
+  document.getElementById('toolbar-normal').style.display='none';
+  document.getElementById('toolbar-draw').style.display=mode==='span'?'flex':'none';
+  document.getElementById('toolbar-cond-draw').style.display=mode==='cond'?'flex':'none';
+  document.getElementById('draw-hint').style.display='block';
+}
+function cancelDraw(){
+  drawing=false;clearTempGraphics();clearSnap();
+  map.getContainer().style.cursor='';
+  document.getElementById('toolbar-draw').style.display='none';
+  document.getElementById('toolbar-cond-draw').style.display='none';
+  document.getElementById('toolbar-normal').style.display='flex';
+  document.getElementById('draw-hint').style.display='none';
+  document.getElementById('vertex-count').style.display='none';
+  drawMode='span';
+}
+function finishDraw(){
+  const path=[...tempPoints],mode=drawMode;
+  cancelDraw();
+  if(path.length<2){alert('Add at least 2 points before finishing.');return;}
+  pendPath=applyPathFollowing(path);openModal(null,mode==='cond'?'cond':'seg');
+}
+function clearTempGraphics(){
+  if(tempLine){tempLine.remove();tempLine=null;}
+  if(tempGuide){tempGuide.remove();tempGuide=null;}
+  tempDots.forEach(d=>d.remove());tempDots=[];tempPoints=[];
+}
+
+// ══════════════════════════════════════════════════════════════
+// POLYLINE RENDERING
+// ══════════════════════════════════════════════════════════════
+function segColor(s){return(s.colorOverride&&s.colorOverride!=='auto')?s.colorOverride:(STATUS_CLR[s.status]||'#2196F3');}
+function renderPolyline(seg){
+  if(pls[seg.id]){pls[seg.id].remove();delete pls[seg.id];}
+  const color=segColor(seg),isSel=seg.id===selSegId;
+  const bw=parseInt(seg.weight)||3,sw=isSel?Math.max(bw+2,5):bw;
+  const pl=L.polyline(seg.path.map(p=>[p.lat,p.lng]),{color,weight:sw,opacity:1,dashArray:TYPE_DASH[seg.cableType]||null,interactive:true}).addTo(map);
+  pls[seg.id]=pl;
+  pl.bindTooltip(`<div style="font-size:12px;min-width:155px;line-height:1.9;font-family:system-ui">
+    <b style="font-size:13px;color:#0f1e36">${esc(seg.name)}</b><br>
+    <span style="color:#546e7a">${TYPE_LBL[seg.cableType]||seg.cableType}</span> &middot; <span style="color:#546e7a">${seg.fiberCount}CT</span><br>
+    <span style="font-family:monospace;font-size:11px;color:#888">${fmtLen(seg.lengthFt)}</span><br>
+    <span style="background:${color}22;color:${color};padding:1px 8px;border-radius:9px;font-weight:700;font-size:9px;text-transform:uppercase">${STATUS_LBL[seg.status]||seg.status}</span>
+  </div>`,{sticky:true,direction:'top',offset:[0,-4]});
+  // KEY FIX: during drawing, call addDrawPoint directly — don't rely on event propagation
+  pl.on('click',function(e){
+    if(drawing){addDrawPoint(snapTarget?snapTarget.lat:e.latlng.lat,snapTarget?snapTarget.lng:e.latlng.lng,!!snapTarget);return;}
+    if(placingPoint)return;
+    if(geomSegId===seg.id)return;
+    L.DomEvent.stopPropagation(e);
+    startGeomEdit(seg.id);selectSeg(seg.id,false);
+  });
+  pl.on('dblclick',function(e){
+    L.DomEvent.stopPropagation(e);
+    openModal(seg.id,'seg');
+  });
+}
+
+// ══════════════════════════════════════════════════════════════
+// MARKER RENDERING
+// ══════════════════════════════════════════════════════════════
+function ptColor(p){return(p.colorOverride&&p.colorOverride!=='auto')?p.colorOverride:(PT_TYPES[p.ptype]?.color||'#9e9e9e');}
+function mkIconHtml(type,colorOverride,isSel,sz){
+  sz=sz||(isSel?22:18);
+  const cfg=PT_TYPES[type]||PT_TYPES.other;
+  const color=(colorOverride&&colorOverride!=='auto')?colorOverride:cfg.color;
+  const fs=sz<=18?8:9,bw=isSel?3:2.5;
+  if(cfg.shape==='ci')return`<div style="width:${sz}px;height:${sz}px;background:${color};border-radius:50%;border:${bw}px solid white;box-shadow:0 2px 7px rgba(0,0,0,.5);display:flex;align-items:center;justify-content:center;font-size:${fs}px;color:white;font-weight:800;font-family:system-ui;letter-spacing:-.3px">${cfg.abbr}</div>`;
+  if(cfg.shape==='dm'){const d=Math.round(sz*.72);return`<div style="width:${sz+4}px;height:${sz+4}px;display:flex;align-items:center;justify-content:center"><div style="width:${d}px;height:${d}px;background:${color};transform:rotate(45deg);border:${bw}px solid white;box-shadow:0 2px 7px rgba(0,0,0,.5)"></div></div>`;}
+  if(cfg.shape==='tr'){const hw=Math.round(sz/2),h=Math.round(sz*.85);return`<div style="width:${sz+4}px;height:${sz+4}px;display:flex;align-items:flex-end;justify-content:center;padding-bottom:2px"><div style="width:0;height:0;border-left:${hw}px solid transparent;border-right:${hw}px solid transparent;border-bottom:${h}px solid ${color};filter:drop-shadow(0 2px 2px rgba(0,0,0,.4))"></div></div>`;}
+  return`<div style="width:${sz}px;height:${sz}px;background:${color};border-radius:2px;border:${bw}px solid white;box-shadow:0 2px 7px rgba(0,0,0,.5);display:flex;align-items:center;justify-content:center;font-size:${fs}px;color:white;font-weight:800;font-family:system-ui;letter-spacing:-.3px">${cfg.abbr}</div>`;
+}
+function renderMarker(pt){
+  if(markers[pt.id]){markers[pt.id].remove();delete markers[pt.id];}
+  const isSel=pt.id===selPtId;
+  const cfg=PT_TYPES[pt.ptype]||PT_TYPES.other;
+  const sz=isSel?22:18,totalSz=(cfg.shape==='dm'||cfg.shape==='tr')?sz+4:sz;
+  const icon=L.divIcon({html:mkIconHtml(pt.ptype,pt.colorOverride,isSel),className:'',iconSize:[totalSz,totalSz],iconAnchor:[totalSz/2,totalSz/2]});
+  const mk=L.marker([pt.lat,pt.lng],{icon,interactive:true,draggable:true}).addTo(map);
+  mk.on('drag',function(e){const pos=e.target.getLatLng();const sn=findSnapTarget(pos);updateSnapIndicator(sn);});
+  mk.on('dragend',function(e){const pos=e.target.getLatLng();const sn=findSnapTarget(pos);if(sn){e.target.setLatLng([sn.lat,sn.lng]);points[pt.id].lat=sn.lat;points[pt.id].lng=sn.lng;}else{points[pt.id].lat=pos.lat;points[pt.id].lng=pos.lng;}points[pt.id].updatedAt=new Date().toISOString();clearSnap();savePts();if(document.getElementById('overlay').classList.contains('open')&&editId===pt.id&&editMode==='pt'){document.getElementById('m-lat').textContent=pos.lat.toFixed(6);document.getElementById('m-lng').textContent=pos.lng.toFixed(6);}});
+  markers[pt.id]=mk;
+  mk.bindTooltip(`<div style="font-size:12px;min-width:155px;line-height:1.9;font-family:system-ui">
+    <b style="font-size:13px;color:#0f1e36">${esc(pt.name)}</b><br>
+    <span style="color:#546e7a">${cfg.label}</span>${pt.structureId?` &middot; <span style="font-family:monospace;color:#546e7a">${esc(pt.structureId)}</span>`:''}<br>
+    ${pt.manufacturer?`<span style="color:#888;font-size:11px">${esc(pt.manufacturer)}</span><br>`:''}
+    <span style="background:${STATUS_CLR[pt.status]||'#ccc'}22;color:${STATUS_CLR[pt.status]||'#999'};padding:1px 8px;border-radius:9px;font-weight:700;font-size:9px;text-transform:uppercase">${STATUS_LBL[pt.status]||pt.status}</span>
+  </div>`,{direction:'top',offset:[0,-totalSz/2]});
+  // KEY FIX: during drawing, add vertex at this structure's exact location directly
+  mk.on('click',function(e){
+    if(drawing){addDrawPoint(pt.lat,pt.lng,true);return;}
+    if(placingPoint)return;
+    L.DomEvent.stopPropagation(e);setTab('pts');selectPt(pt.id,false);
+  });
+  mk.on('dblclick',function(e){L.DomEvent.stopPropagation(e);openModal(pt.id,'pt');});
+}
+
+// ══════════════════════════════════════════════════════════════
+// HELPERS
+// ══════════════════════════════════════════════════════════════
+function calcLen(path){
+  if(!path||path.length<2)return 0;
+  let t=0;const R=20902231;
+  for(let i=1;i<path.length;i++){
+    const φ1=path[i-1].lat*Math.PI/180,φ2=path[i].lat*Math.PI/180;
+    const Δφ=(path[i].lat-path[i-1].lat)*Math.PI/180,Δλ=(path[i].lng-path[i-1].lng)*Math.PI/180;
+    const a=Math.sin(Δφ/2)**2+Math.cos(φ1)*Math.cos(φ2)*Math.sin(Δλ/2)**2;
+    t+=R*2*Math.atan2(Math.sqrt(a),Math.sqrt(1-a));
+  }return t;
+}
+function fmtLen(ft){if(!ft)return'—';const mi=ft/5280;return mi>=0.1?`${Math.round(ft).toLocaleString()} ft (${mi.toFixed(2)} mi)`:`${Math.round(ft).toLocaleString()} ft`;}
+function esc(s){return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');}
+
+// ══════════════════════════════════════════════════════════════
+// ELEMENT MODAL
+// ══════════════════════════════════════════════════════════════
+function openModal(id,mode){
+  editId=id;editMode=mode;
+  const isSeg=mode==='seg',isCond=mode==='cond';
+  const seg=isSeg&&id?segs[id]:null,pt=(!isSeg&&!isCond&&id)?points[id]:null,cond=isCond&&id?conduits[id]:null;
+  document.getElementById('seg-info-bar').style.display=isSeg?'':'none';
+  document.getElementById('pt-info-bar').style.display=(!isSeg&&!isCond)?'':'none';
+  document.getElementById('cond-info-bar').style.display=isCond?'':'none';
+  document.querySelectorAll('.seg-field').forEach(el=>el.style.display=isSeg?'':'none');
+  document.querySelectorAll('.pt-field').forEach(el=>el.style.display=(!isSeg&&!isCond)?'':'none');
+  document.querySelectorAll('.cond-field').forEach(el=>el.style.display=isCond?'':'none');
+  document.getElementById('modal-title').textContent=id?(isSeg?'Edit Span':isCond?'Edit Conduit':'Edit Structure'):(isSeg?'New Span':isCond?'New Conduit':'New Structure');
+  document.getElementById('m-id').value=id||'';
+  document.getElementById('m-mode').value=mode;
+  if(isSeg){
+    const ft=seg?seg.lengthFt:calcLen(pendPath),pts2=seg?seg.path.length:(pendPath||[]).length,typ=seg?.cableType||'aerial';
+    document.getElementById('m-len').textContent=fmtLen(ft);
+    document.getElementById('m-pts').textContent=pts2;
+    document.getElementById('m-type-disp').textContent=TYPE_LBL[typ]||typ;
+    document.getElementById('m-name').value=seg?.name||'Span '+(Object.keys(segs).length+1);
+    document.getElementById('m-cid').value=seg?.cableId||'';
+    document.getElementById('m-ctype').value=typ;
+    if(document.getElementById('m-weight'))document.getElementById('m-weight').value=seg?.weight||'';
+    if(document.getElementById('weight-field-wrap'))document.getElementById('weight-field-wrap').style.display='';
+    document.getElementById('m-status').value=seg?.status||'proposed';
+    document.getElementById('m-contractor').value=seg?.contractor||'';
+    document.getElementById('m-date').value=seg?.installDate||'';
+    document.getElementById('m-job').value=seg?.jobRef||'';
+    document.getElementById('m-notes').value=seg?.notes||'';
+    const fc=String(seg?.fiberCount||48),fcEl=document.getElementById('m-fc');
+    const has=Array.from(fcEl.options).some(o=>o.value===fc);
+    if(has){fcEl.value=fc;document.getElementById('fc-custom-wrap').style.display='none';}
+    else{fcEl.value='custom';document.getElementById('fc-custom-wrap').style.display='flex';document.getElementById('m-fc-custom').value=fc;}
+  }else{
+    const lat2=pt?pt.lat:pendLatLng?.lat,lng2=pt?pt.lng:pendLatLng?.lng,typ=pt?.ptype||placingType;
+    document.getElementById('m-lat').textContent=lat2?lat2.toFixed(6):'—';
+    document.getElementById('m-lng').textContent=lng2?lng2.toFixed(6):'—';
+    document.getElementById('m-struct-disp').textContent=PT_TYPES[typ]?.label||typ;
+    document.getElementById('m-name').value=pt?.name||(PT_TYPES[typ]?.label||'Structure')+' '+(Object.keys(points).length+1);
+    document.getElementById('m-ptype').value=id?typ:(lastStructProps.ptype||placingType);
+    document.getElementById('m-pid').value=pt?.structureId||'';
+    document.getElementById('m-mfr').value=pt?.manufacturer||'';
+    document.getElementById('m-size').value=pt?.size||'';
+    document.getElementById('m-status').value=pt?.status||(id?'proposed':lastStructProps.status||'proposed');
+    document.getElementById('m-contractor').value=pt?.contractor||(id?'':lastStructProps.contractor||'');
+    document.getElementById('m-date').value=pt?.installDate||'';
+    document.getElementById('m-job').value=pt?.jobRef||(id?'':lastStructProps.jobRef||'');
+    document.getElementById('m-mfr').value=pt?.manufacturer||(id?'':lastStructProps.manufacturer||'');
+    if(document.getElementById('weight-field-wrap'))document.getElementById('weight-field-wrap').style.display='none';
+    document.getElementById('m-size').value=pt?.size||(id?'':lastStructProps.size||'');
+    document.getElementById('m-notes').value=pt?.notes||'';
+  }
+  if(isCond){
+    const ft=cond?cond.lengthFt:calcLen(pendPath),pts2=cond?cond.path.length:(pendPath||[]).length;
+    document.getElementById('m-cond-len').textContent=fmtLen(ft);
+    document.getElementById('m-cond-pts').textContent=pts2;
+    document.getElementById('m-name').value=cond?.name||('Conduit Run '+(Object.keys(conduits).length+1));
+    const lcp=lastCondProps;
+    document.getElementById('m-cond-type').value=cond?.conduitType||(id?'hdpe':lcp.conduitType||'hdpe');
+    document.getElementById('m-cond-type-disp').textContent=COND_TYPES[cond?.conduitType||'hdpe']||'HDPE';
+    if(document.getElementById('m-weight'))document.getElementById('m-weight').value=cond?.weight||'';
+    if(document.getElementById('weight-field-wrap'))document.getElementById('weight-field-wrap').style.display='';
+    document.getElementById('m-cond-size').value=cond?.size||(id?'2"':lcp.size||'2"');
+    document.getElementById('m-cond-ducts').value=cond?.ductCount||(id?'':lcp.ductCount||'');
+    document.getElementById('m-status').value=cond?.status||(id?'proposed':lcp.status||'proposed');
+    document.getElementById('m-contractor').value=cond?.contractor||(id?'':lcp.contractor||'');
+    document.getElementById('m-date').value=cond?.installDate||'';
+    document.getElementById('m-job').value=cond?.jobRef||(id?'':lcp.jobRef||'');
+    document.getElementById('m-notes').value=cond?.notes||'';
+  }
+  selColor=(isSeg?seg?.colorOverride:isCond?cond?.colorOverride:pt?.colorOverride)||'auto';
+  refreshSwatches();
+  document.getElementById('del-btn').style.display=id?'block':'none';
+  document.getElementById('overlay').classList.add('open');
+  setTimeout(()=>document.getElementById('m-name').select(),60);
+}
+function closeModal(){document.getElementById('overlay').classList.remove('open');pendPath=null;pendLatLng=null;editId=null;}
+function onOverlayBg(e){if(e.target===document.getElementById('overlay'))closeModal();}
+function onFcChange(){document.getElementById('fc-custom-wrap').style.display=document.getElementById('m-fc').value==='custom'?'flex':'none';}
+function onCtypeChange(){document.getElementById('m-type-disp').textContent=TYPE_LBL[document.getElementById('m-ctype').value]||'';}
+function onPtypeChange(){document.getElementById('m-struct-disp').textContent=PT_TYPES[document.getElementById('m-ptype').value]?.label||'';}
+function refreshSwatches(){document.querySelectorAll('.swatch').forEach(sw=>sw.classList.toggle('sel',sw.dataset.c===selColor));}
+document.querySelectorAll('.swatch').forEach(sw=>sw.addEventListener('click',()=>{selColor=sw.dataset.c;refreshSwatches();}));
+
+// ══════════════════════════════════════════════════════════════
+// SAVE / DELETE
+// ══════════════════════════════════════════════════════════════
+function onSave(){const name=document.getElementById('m-name').value.trim();if(!name){alert('Name is required.');document.getElementById('m-name').focus();return;}if(editMode==='seg')saveSeg(name);else if(editMode==='cond')saveCond(name);else savePtEl(name);}
+function saveSeg(name){
+  const fcRaw=document.getElementById('m-fc').value;
+  const fc=fcRaw==='custom'?(parseInt(document.getElementById('m-fc-custom').value)||0):parseInt(fcRaw);
+  const id=editId||'seg_'+Date.now()+'_'+Math.random().toString(36).slice(2,5);
+  const ex=segs[id];const path=editId?ex.path:pendPath;
+  segs[id]={id,name,cableId:document.getElementById('m-cid').value.trim(),cableType:document.getElementById('m-ctype').value,fiberCount:fc,status:document.getElementById('m-status').value,contractor:document.getElementById('m-contractor').value.trim(),installDate:document.getElementById('m-date').value,jobRef:document.getElementById('m-job').value.trim(),notes:document.getElementById('m-notes').value.trim(),colorOverride:selColor,path,lengthFt:editId?ex.lengthFt:calcLen(path),createdAt:ex?.createdAt||new Date().toISOString(),updatedAt:new Date().toISOString()};
+  renderPolyline(segs[id]);saveSegs();renderSidebar();closeModal();selectSeg(id,!editId);maybeRefreshBOM();
+}
+function savePtEl(name){
+  const id=editId||'pt_'+Date.now()+'_'+Math.random().toString(36).slice(2,5);
+  const ex=points[id];
+  const lat2=editId?ex.lat:pendLatLng.lat,lng2=editId?ex.lng:pendLatLng.lng;
+  points[id]={id,name,ptype:document.getElementById('m-ptype').value,structureId:document.getElementById('m-pid').value.trim(),manufacturer:document.getElementById('m-mfr').value.trim(),size:document.getElementById('m-size').value.trim(),status:document.getElementById('m-status').value,contractor:document.getElementById('m-contractor').value.trim(),installDate:document.getElementById('m-date').value,jobRef:document.getElementById('m-job').value.trim(),notes:document.getElementById('m-notes').value.trim(),colorOverride:selColor,lat:lat2,lng:lng2,createdAt:ex?.createdAt||new Date().toISOString(),updatedAt:new Date().toISOString()};
+  lastStructProps={ptype:points[id].ptype,status:points[id].status,contractor:points[id].contractor||'',jobRef:points[id].jobRef||'',manufacturer:points[id].manufacturer||'',size:points[id].size||''};
+  renderMarker(points[id]);savePts();renderSidebar();closeModal();selectPt(id,!editId);maybeRefreshBOM();
+  if(placingPoint)setTab('pts');
+}
+function saveCond(name){
+  const id=editId||'cond_'+Date.now()+'_'+Math.random().toString(36).slice(2,5);
+  const ex=conduits[id],path=editId?ex.path:pendPath;
+  conduits[id]={
+    id,name,
+    conduitType:document.getElementById('m-cond-type').value,
+    size:document.getElementById('m-cond-size').value,
+    ductCount:parseInt(document.getElementById('m-cond-ducts').value)||null,
+    status:document.getElementById('m-status').value,
+    contractor:document.getElementById('m-contractor').value.trim(),
+    installDate:document.getElementById('m-date').value,
+    jobRef:document.getElementById('m-job').value.trim(),
+    notes:document.getElementById('m-notes').value.trim(),
+    weight:(document.getElementById('m-weight')?.value)||null,
+    colorOverride:selColor,
+    path,lengthFt:editId?ex.lengthFt:calcLen(path),
+    createdAt:ex?.createdAt||new Date().toISOString(),updatedAt:new Date().toISOString()
+  };
+  lastCondProps={conduitType:conduits[id].conduitType,size:conduits[id].size,ductCount:conduits[id].ductCount,status:conduits[id].status,contractor:conduits[id].contractor,jobRef:conduits[id].jobRef};
+  renderConduit(conduits[id]);saveConds();renderSidebar();closeModal();
+  if(!editId)setTab('cond');
+  selectCond(id,!editId);maybeRefreshBOM();
+}
+function onDelete(){
+  if(!editId)return;
+  const label=editMode==='seg'?segs[editId]?.name:points[editId]?.name;
+  if(!confirm(`Delete "${label}"?`))return;
+  if(editMode==='seg'){if(pls[editId]){pls[editId].remove();delete pls[editId];}delete segs[editId];if(selSegId===editId)selSegId=null;saveSegs();}
+  else if(editMode==='cond'){if(conduitPLs[editId]){conduitPLs[editId].forEach(pl=>pl.remove());delete conduitPLs[editId];}delete conduits[editId];if(selCondId===editId)selCondId=null;saveConds();}
+  else{if(markers[editId]){markers[editId].remove();delete markers[editId];}delete points[editId];if(selPtId===editId)selPtId=null;savePts();}
+  renderSidebar();closeModal();maybeRefreshBOM();
+}
+
+// ══════════════════════════════════════════════════════════════
+// SIDEBAR
+// ══════════════════════════════════════════════════════════════
+function setTab(tab){
+  activeTab=tab;
+  document.getElementById('tab-segs').classList.toggle('on',tab==='segs');
+  document.getElementById('tab-pts').classList.toggle('on',tab==='pts');
+  document.getElementById('tab-cond').classList.toggle('on',tab==='cond');
+  document.getElementById('panel-segs').style.display=tab==='segs'?'flex':'none';
+  document.getElementById('panel-pts').style.display=tab==='pts'?'flex':'none';
+  document.getElementById('panel-cond').style.display=tab==='cond'?'flex':'none';
+}
+function renderSidebar(){
+  const sAll=Object.values(segs),pAll=Object.values(points),cAll=Object.values(conduits);
+  renderSegPanel(sAll);renderPtPanel(pAll);renderCondPanel(cAll);
+}
+function renderSegPanel(all){
+  document.getElementById('st-n').textContent=all.length;
+  if(!all.length){document.getElementById('seg-stats').style.display='none';document.getElementById('seg-filter').style.display='none';document.getElementById('seg-list').innerHTML='<div class="empty"><div class="empty-icon">〰️</div><p>No spans in this plan.<br>Click <strong>Draw Route</strong> to start.</p></div>';return;}
+  const totalFt=all.reduce((s,x)=>s+(x.lengthFt||0),0);
+  document.getElementById('st-ft').textContent=Math.round(totalFt).toLocaleString();
+  document.getElementById('st-mi').textContent=(totalFt/5280).toFixed(2);
+  document.getElementById('seg-stats').style.display='block';
+  const statuses=[...new Set(all.map(s=>s.status))];
+  const fEl=document.getElementById('seg-filter');
+  if(statuses.length>1){fEl.style.display='flex';fEl.innerHTML=`<span class="flt-chip${!activeSegFilter?' on':''}" onclick="setSegFilter(null)">All</span>`+statuses.map(st=>`<span class="flt-chip${activeSegFilter===st?' on':''}" onclick="setSegFilter('${st}')">${STATUS_LBL[st]}</span>`).join('');}
+  else{fEl.style.display='none';activeSegFilter=null;}
+  let disp=activeSegFilter?all.filter(s=>s.status===activeSegFilter):all;
+  disp.sort((a,b)=>new Date(b.createdAt)-new Date(a.createdAt));
+  document.getElementById('seg-list').innerHTML=disp.map(s=>{
+    const c=segColor(s),isSel=s.id===selSegId;
+    return`<div class="seg-card${isSel?' sel':''}" id="sc-${s.id}" style="--clr:${c}" onclick="selectSeg('${s.id}',true)">
+      <span class="card-name">${esc(s.name)}</span>
+      <div class="card-badges"><span class="badge b-${s.status}">${STATUS_LBL[s.status]||s.status}</span><span class="badge b-type">${TYPE_LBL[s.cableType]||s.cableType}</span><span class="badge b-type">${s.fiberCount}CT</span></div>
+      <div class="card-sub">${fmtLen(s.lengthFt)}${s.jobRef?` &middot; <span style="font-family:monospace">${esc(s.jobRef)}</span>`:''}</div>
+      ${s.contractor?`<div class="card-sub2">${esc(s.contractor)}</div>`:''}
+      <div class="card-acts">
+        <button class="mini-btn" onclick="event.stopPropagation();zoomSeg('${s.id}')">Zoom</button>
+        <button class="mini-btn" onclick="event.stopPropagation();openModal('${s.id}','seg')">Properties</button>
+        <button class="mini-btn" onclick="event.stopPropagation();splitSegAtStructures('${s.id}')" title="Split this line at all handholes/structures on its path">✂ Split</button>
+        <button class="mini-btn del" onclick="event.stopPropagation();quickDel('${s.id}','seg')">Delete</button>
+      </div></div>`;
+  }).join('');
+}
+function renderPtPanel(all){
+  document.getElementById('st-ptn').textContent=all.length;
+  if(!all.length){document.getElementById('pt-stats').style.display='none';document.getElementById('pt-filter').style.display='none';document.getElementById('pt-list').innerHTML='<div class="empty"><div class="empty-icon">📍</div><p>No structures in this plan.<br>Click <strong>Place Structure</strong>.</p></div>';return;}
+  document.getElementById('st-pttype').textContent=[...new Set(all.map(p=>p.ptype))].length;
+  document.getElementById('st-ptab').textContent=all.filter(p=>p.status==='asBuilt').length;
+  document.getElementById('pt-stats').style.display='block';
+  const types=[...new Set(all.map(p=>p.ptype))];
+  const fEl=document.getElementById('pt-filter');
+  if(types.length>1){fEl.style.display='flex';fEl.innerHTML=`<span class="flt-chip${!activePtFilter?' on':''}" onclick="setPtFilter(null)">All</span>`+types.map(t=>`<span class="flt-chip${activePtFilter===t?' on':''}" onclick="setPtFilter('${t}')">${PT_TYPES[t]?.label||t}</span>`).join('');}
+  else{fEl.style.display='none';activePtFilter=null;}
+  let disp=activePtFilter?all.filter(p=>p.ptype===activePtFilter):all;
+  disp.sort((a,b)=>new Date(b.createdAt)-new Date(a.createdAt));
+  document.getElementById('pt-list').innerHTML=disp.map(p=>{
+    const cfg=PT_TYPES[p.ptype]||PT_TYPES.other,c=ptColor(p),isSel=p.id===selPtId;
+    return`<div class="pt-card${isSel?' sel':''}" id="pc-${p.id}" style="--clr:${c}" onclick="selectPt('${p.id}',true)">
+      <span class="card-name">${mkIconHtml(p.ptype,p.colorOverride,false,14)} ${esc(p.name)}</span>
+      <div class="card-badges"><span class="badge b-${p.status}">${STATUS_LBL[p.status]||p.status}</span><span class="badge b-type">${cfg.label}</span>${p.structureId?`<span class="badge b-type" style="font-family:monospace">${esc(p.structureId)}</span>`:''}</div>
+      ${p.manufacturer?`<div class="card-sub">${esc(p.manufacturer)}${p.size?' &middot; '+esc(p.size):''}</div>`:''}
+      ${p.contractor?`<div class="card-sub2">${esc(p.contractor)}</div>`:''}
+      <div class="card-acts">
+        <button class="mini-btn" onclick="event.stopPropagation();zoomPt('${p.id}')">Zoom</button>
+        <button class="mini-btn" onclick="event.stopPropagation();openModal('${p.id}','pt')">Edit</button>
+        <button class="mini-btn del" onclick="event.stopPropagation();quickDel('${p.id}','pt')">Delete</button>
+      </div></div>`;
+  }).join('');
+}
+function renderCondPanel(all){
+  const pcEl=document.getElementById('panel-cond');
+  if(pcEl&&activeTab!=='cond')pcEl.style.display='none';
+  document.getElementById('st-cn').textContent=all.length;
+  if(!all.length){document.getElementById('cond-stats').style.display='none';document.getElementById('cond-filter').style.display='none';document.getElementById('cond-list').innerHTML='<div class="empty"><div class="empty-icon">🔩</div><p>No conduit runs yet.<br>Click <strong>Draw Conduit</strong>.</p></div>';return;}
+  const totalFt=all.reduce((s,c)=>s+(c.lengthFt||0),0);
+  document.getElementById('st-cft').textContent=Math.round(totalFt).toLocaleString();
+  document.getElementById('st-cmi').textContent=(totalFt/5280).toFixed(2);
+  document.getElementById('cond-stats').style.display='block';
+  const statuses=[...new Set(all.map(c=>c.status))];
+  const fEl=document.getElementById('cond-filter');
+  if(statuses.length>1){fEl.style.display='flex';fEl.innerHTML=`<span class="flt-chip${!activeCondFilter?' on':''}" onclick="setCondFilter(null)">All</span>`+statuses.map(st=>`<span class="flt-chip${activeCondFilter===st?' on':''}" onclick="setCondFilter('${st}')">${STATUS_LBL[st]}</span>`).join('');}
+  else{fEl.style.display='none';activeCondFilter=null;}
+  let disp=activeCondFilter?all.filter(c=>c.status===activeCondFilter):all;
+  disp.sort((a,b)=>new Date(b.createdAt)-new Date(a.createdAt));
+  document.getElementById('cond-list').innerHTML=disp.map(c=>{
+    const col=condColor(c),isSel=c.id===selCondId;
+    const ct=COND_TYPES[c.conduitType]||'Conduit';
+    const detail=[ct,c.size,c.ductCount?(c.ductCount+'-duct'):null].filter(Boolean).join(' · ');
+    return`<div class="cond-card${isSel?' sel':''}" id="cc-${c.id}" style="--clr:${col}" onclick="selectCond('${c.id}',true)">
+      <span class="card-name">${esc(c.name)}</span>
+      <div class="card-badges"><span class="badge b-${c.status}">${STATUS_LBL[c.status]||c.status}</span><span class="badge b-type">${esc(detail)}</span></div>
+      <div class="card-sub">${fmtLen(c.lengthFt)}${c.jobRef?' &middot; '+esc(c.jobRef):''}</div>
+      ${c.contractor?`<div class="card-sub2">${esc(c.contractor)}</div>`:''}
+      <div class="card-acts">
+        <button class="mini-btn" onclick="event.stopPropagation();selectCond('${c.id}',true)">Zoom</button>
+        <button class="mini-btn" onclick="event.stopPropagation();openModal('${c.id}','cond')">Edit</button>
+        <button class="mini-btn" onclick="event.stopPropagation();splitCondAtStructures('${c.id}')" title="Split at structures">✂ Split</button>
+        <button class="mini-btn del" onclick="event.stopPropagation();quickDelCond('${c.id}')">Delete</button>
+      </div></div>`;
+  }).join('');
+}
+
+
+function startCondGeomEdit(condId){
+  if(drawing)cancelDraw();
+  if(placingPoint)cancelPlace();
+  if(geomSegId||geomCondId)cancelGeomEdit();
+  const cond=conduits[condId];if(!cond)return;
+  geomCondId=condId;
+  geomPath=cond.path.map(p=>({lat:p.lat,lng:p.lng}));
+  geomOrigPath=JSON.parse(JSON.stringify(cond.path));
+  // Dim the conduit lines
+  if(conduitPLs[condId])conduitPLs[condId].forEach(pl=>pl.setStyle({opacity:0.15}));
+  // Draw editable polyline (reuse geomPolyline + geomHandles system)
+  const bwc=parseInt(cond.weight)||7;
+  geomPolyline=L.polyline(geomPath.map(p=>[p.lat,p.lng]),{color:condColor(cond),weight:bwc,interactive:true}).addTo(map);
+  geomPolyline.on('click',function(e){
+    L.DomEvent.stopPropagation(e);
+    const cp={lat:e.latlng.lat,lng:e.latlng.lng};
+    let bestIdx=0,bestDist=Infinity;
+    for(let i=0;i<geomPath.length-1;i++){const d=ptSegDist(cp,geomPath[i],geomPath[i+1]);if(d<bestDist){bestDist=d;bestIdx=i;}}
+    geomPath.splice(bestIdx+1,0,cp);
+    buildGeomHandles();updateGeomLine();
+  });
+  buildGeomHandles();
+  document.getElementById('toolbar-normal').style.display='none';
+  document.getElementById('toolbar-geom').style.display='flex';
+  document.getElementById('geom-label').textContent='✏ Reshaping: '+cond.name;
+  const b=L.latLngBounds(geomPath.map(p=>[p.lat,p.lng]));
+  if(!map.getBounds().contains(b))map.fitBounds(b,{padding:[80,80]});
+  setTab('cond');
+}
+
+function splitCondAtStructures(condId){
+  const cond=conduits[condId];
+  if(!cond?.path?.length)return;
+  const structs=Object.values(points);
+  if(!structs.length){alert('No structures placed yet. Place handholes along the conduit run first.');return;}
+  const THRESH_FT=30;
+  const workPath=cond.path.map((p,i)=>{
+    if(i===0||i===cond.path.length-1)return{lat:p.lat,lng:p.lng,isBreak:false};
+    const near=structs.find(s=>calcLen([p,{lat:s.lat,lng:s.lng}])<=THRESH_FT);
+    return{lat:p.lat,lng:p.lng,isBreak:!!near,sName:near?.name||null};
+  });
+  const usedNames=new Set(workPath.filter(p=>p.isBreak).map(p=>p.sName));
+  const inserts=[];
+  for(let i=0;i<workPath.length-1;i++){
+    const a=workPath[i],b=workPath[i+1];
+    structs.forEach(s=>{
+      if(usedNames.has(s.name))return;
+      const dx=b.lng-a.lng,dy=b.lat-a.lat,lenSq=dx*dx+dy*dy;
+      if(lenSq<1e-16)return;
+      const t=Math.max(0,Math.min(1,((s.lng-a.lng)*dx+(s.lat-a.lat)*dy)/lenSq));
+      if(t<0.01||t>0.99)return;
+      const np={lat:a.lat+t*dy,lng:a.lng+t*dx};
+      if(calcLen([np,{lat:s.lat,lng:s.lng}])<=THRESH_FT){inserts.push({afterIdx:i,t,lat:s.lat,lng:s.lng,sName:s.name});usedNames.add(s.name);}
+    });
+  }
+  inserts.sort((a,b)=>a.afterIdx!==b.afterIdx?b.afterIdx-a.afterIdx:b.t-a.t);
+  inserts.forEach(ins=>workPath.splice(ins.afterIdx+1,0,{lat:ins.lat,lng:ins.lng,isBreak:true,sName:ins.sName}));
+  const breakPts=workPath.filter((p,i)=>p.isBreak&&i>0&&i<workPath.length-1);
+  if(!breakPts.length){alert('No structures found within '+THRESH_FT+' ft of this conduit line.');return;}
+  if(!confirm('Found '+breakPts.length+' structure'+(breakPts.length!==1?'s':'')+' on this conduit.\nSplit into '+(breakPts.length+1)+' runs?'))return;
+  const spans=[]; let cur=[],startName=null;
+  const firstNear=structs.find(s=>calcLen([workPath[0],{lat:s.lat,lng:s.lng}])<=THRESH_FT);
+  startName=firstNear?.name||null;
+  workPath.forEach(p=>{
+    cur.push({lat:p.lat,lng:p.lng});
+    if(p.isBreak&&cur.length>=2){spans.push({path:[...cur],startName,endName:p.sName});startName=p.sName;cur=[{lat:p.lat,lng:p.lng}];}
+  });
+  if(cur.length>=2){const lastNear=structs.find(s=>calcLen([cur[cur.length-1],{lat:s.lat,lng:s.lng}])<=THRESH_FT);spans.push({path:cur,startName,endName:lastNear?.name||null});}
+  const valid=spans.filter(s=>s.path.length>=2);
+  if(valid.length<2){alert('Could not create multiple runs.');return;}
+  if(conduitPLs[condId]){conduitPLs[condId].forEach(pl=>pl.remove());delete conduitPLs[condId];}
+  delete conduits[condId];if(selCondId===condId)selCondId=null;
+  const now=new Date().toISOString();
+  valid.forEach((sp,idx)=>{
+    const id='cond_'+Date.now()+'_'+Math.random().toString(36).slice(2,5);
+    let name;
+    if(sp.startName&&sp.endName) name=sp.startName+' \u2192 '+sp.endName;
+    else name='Conduit Run '+(idx+1);
+    conduits[id]={id,name,conduitType:cond.conduitType,size:cond.size,ductCount:cond.ductCount,status:cond.status,contractor:cond.contractor||'',installDate:cond.installDate||'',jobRef:cond.jobRef||'',notes:'',colorOverride:cond.colorOverride,weight:cond.weight||null,path:sp.path,lengthFt:calcLen(sp.path),createdAt:now,updatedAt:now};
+    renderConduit(conduits[id]);
+  });
+  saveConds();renderSidebar();maybeRefreshBOM();
+}
+
+function setCondFilter(s){activeCondFilter=s;renderSidebar();}
+function quickDelCond(id){
+  if(!confirm(`Delete "${conduits[id]?.name}"?`))return;
+  if(conduitPLs[id]){conduitPLs[id].forEach(pl=>pl.remove());delete conduitPLs[id];}
+  delete conduits[id];if(selCondId===id)selCondId=null;
+  saveConds();renderSidebar();maybeRefreshBOM();
+}
+function selectCond(id,zoomTo){
+  selCondId=id;
+  Object.entries(conduitPLs).forEach(([cid,pls])=>{
+    const c=conduits[cid];if(!c)return;
+    const s=cid===id,bwc=parseInt(conduits[cid]?.weight)||7;pls[0].setStyle({weight:s?bwc+6:bwc+4});pls[1].setStyle({weight:s?bwc+2:bwc});
+  });
+  document.querySelectorAll('.cond-card').forEach(el=>el.classList.toggle('sel',el.id==='cc-'+id));
+  const el=document.getElementById('cc-'+id);if(el)el.scrollIntoView({behavior:'smooth',block:'nearest'});
+  if(zoomTo){const c=conduits[id];if(c?.path?.length)map.fitBounds(L.latLngBounds(c.path.map(p=>[p.lat,p.lng])),{padding:[60,60]});}
+}
+function renderConduit(cond){
+  if(conduitPLs[cond.id]){conduitPLs[cond.id].forEach(pl=>pl.remove());delete conduitPLs[cond.id];}
+  const color=condColor(cond),isSel=cond.id===selCondId;
+  const ll=cond.path.map(p=>[p.lat,p.lng]);
+  const bwc=parseInt(cond.weight)||7,swc=isSel?bwc+2:bwc;
+  const casing=L.polyline(ll,{color:'white',weight:swc+4,opacity:.65,interactive:false,pane:'conduitPane',renderer:map.getRenderer(L.polyline([]))}).addTo(map);
+  const line=L.polyline(ll,{color,weight:swc,opacity:1,interactive:true,pane:'conduitPane',renderer:map.getRenderer(L.polyline([]))}).addTo(map);
+  conduitPLs[cond.id]=[casing,line];
+  const ct=COND_TYPES[cond.conduitType]||'Conduit';
+  line.bindTooltip(`<div style="font-size:12px;min-width:150px;line-height:1.9;font-family:system-ui"><b style="font-size:13px;color:#0f1e36">${esc(cond.name)}</b><br><span style="color:#546e7a">${ct}</span>${cond.size?' &middot; <b>'+esc(cond.size)+'</b>':''}${cond.ductCount?' &middot; '+cond.ductCount+'-duct':''}<br><span style="font-family:monospace;font-size:11px;color:#888">${fmtLen(cond.lengthFt)}</span><br><span style="background:${condColor(cond)}22;color:${condColor(cond)};padding:1px 8px;border-radius:9px;font-weight:700;font-size:9px;text-transform:uppercase">${STATUS_LBL[cond.status]||cond.status}</span></div>`,{sticky:true,direction:'top',offset:[0,-8]});
+  line.on('click',function(e){if(drawing||placingPoint)return;L.DomEvent.stopPropagation(e);startCondGeomEdit(cond.id);selectCond(cond.id,false);});
+  line.on('dblclick',function(e){L.DomEvent.stopPropagation(e);openModal(cond.id,'cond');});
+}
+function condColor(c){return(c.colorOverride&&c.colorOverride!=='auto')?c.colorOverride:(STATUS_CLR[c.status]||'#795548');}
+
+function setSegFilter(s){activeSegFilter=s;renderSidebar();}
+function setPtFilter(t){activePtFilter=t;renderSidebar();}
+function quickDel(id,mode){
+  const nm=mode==='seg'?segs[id]?.name:points[id]?.name;
+  if(!confirm(`Delete "${nm}"?`))return;
+  if(mode==='seg'){if(pls[id]){pls[id].remove();delete pls[id];}delete segs[id];if(selSegId===id)selSegId=null;saveSegs();}
+  else{if(markers[id]){markers[id].remove();delete markers[id];}delete points[id];if(selPtId===id)selPtId=null;savePts();}
+  renderSidebar();maybeRefreshBOM();
+}
+
+// ══════════════════════════════════════════════════════════════
+// SELECTION & NAVIGATION
+// ══════════════════════════════════════════════════════════════
+function selectSeg(id,zoomTo){
+  selSegId=id;
+  Object.entries(pls).forEach(([sid,pl])=>{const bw=parseInt(segs[sid]?.weight)||3;pl.setStyle({weight:sid===id?Math.max(bw+2,5):bw});});
+  document.querySelectorAll('.seg-card').forEach(el=>el.classList.toggle('sel',el.id==='sc-'+id));
+  const el=document.getElementById('sc-'+id);if(el)el.scrollIntoView({behavior:'smooth',block:'nearest'});
+  if(zoomTo)zoomSeg(id);
+}
+function zoomSeg(id){const s=segs[id];if(!s?.path?.length)return;map.fitBounds(L.latLngBounds(s.path.map(p=>[p.lat,p.lng])),{padding:[60,60]});}
+function selectPt(id,zoomTo){
+  selPtId=id;
+  Object.entries(markers).forEach(([pid,mk])=>{
+    const p=points[pid];if(!p)return;
+    const isSel=pid===id,cfg=PT_TYPES[p.ptype]||PT_TYPES.other;
+    const sz=isSel?22:18,totalSz=(cfg.shape==='dm'||cfg.shape==='tr')?sz+4:sz;
+    mk.setIcon(L.divIcon({html:mkIconHtml(p.ptype,p.colorOverride,isSel),className:'',iconSize:[totalSz,totalSz],iconAnchor:[totalSz/2,totalSz/2]}));
+  });
+  document.querySelectorAll('.pt-card').forEach(el=>el.classList.toggle('sel',el.id==='pc-'+id));
+  const el=document.getElementById('pc-'+id);if(el)el.scrollIntoView({behavior:'smooth',block:'nearest'});
+  if(zoomTo)zoomPt(id);
+}
+function zoomPt(id){const p=points[id];if(!p)return;map.setView([p.lat,p.lng],Math.max(map.getZoom(),16));}
+function zoomAll(){
+  const ghostPts=Object.values(overlayLayers).flatMap(l=>[...Object.values(l.pls).flatMap(pl=>pl.getLatLngs().map(ll=>[ll.lat,ll.lng])),...Object.values(l.markers).map(mk=>{const ll=mk.getLatLng();return[ll.lat,ll.lng];}),...Object.values(l.condPLs).flatMap(pair=>pair[1].getLatLngs().map(ll=>[ll.lat,ll.lng]))]);
+  const all=[...Object.values(segs).flatMap(s=>s.path.map(p=>[p.lat,p.lng])),...Object.values(conduits).flatMap(c=>c.path.map(p=>[p.lat,p.lng])),...Object.values(points).map(p=>[p.lat,p.lng]),...ghostPts];
+  if(!all.length){alert('No elements in this plan yet.');return;}
+  map.fitBounds(L.latLngBounds(all),{padding:[60,60]});
+}
+
+// ══════════════════════════════════════════════════════════════
+// EXPORT
+// ══════════════════════════════════════════════════════════════
+function doExportCSV(){
+  closeAllDropdowns();
+  const sAll=Object.values(segs),pAll=Object.values(points);
+  const plan=plans[activePlanId],proj=plan?projects[plan.projectId]:null;
+  const pfx=(proj?.name||'fiber')+'_'+(plan?.name||'plan');
+  if(!sAll.length&&!pAll.length){alert('Nothing to export in this plan.');return;}
+  if(sAll.length){
+    const h=['ID','Name','Cable ID','Type','Fiber Count','Status','Contractor','Install Date','Job Ref','Length (ft)','Length (mi)','Vertices','Notes'];
+    const r=sAll.map(s=>[s.id,s.name,s.cableId||'',TYPE_LBL[s.cableType]||s.cableType,s.fiberCount,STATUS_LBL[s.status]||s.status,s.contractor||'',s.installDate||'',s.jobRef||'',Math.round(s.lengthFt||0),((s.lengthFt||0)/5280).toFixed(3),(s.path||[]).length,(s.notes||'').replace(/[\n\r]/g,' ')]);
+    dlFile(pfx+'_segments.csv',[h,...r].map(row=>row.map(c=>`"${String(c).replace(/"/g,'""')}"`).join(',')).join('\n'),'text/csv');
+  }
+  if(pAll.length){
+    const h=['ID','Name','Type','Structure ID','Manufacturer','Size','Status','Contractor','Install Date','Job Ref','Latitude','Longitude','Notes'];
+    const r=pAll.map(p=>[p.id,p.name,PT_TYPES[p.ptype]?.label||p.ptype,p.structureId||'',p.manufacturer||'',p.size||'',STATUS_LBL[p.status]||p.status,p.contractor||'',p.installDate||'',p.jobRef||'',p.lat.toFixed(7),p.lng.toFixed(7),(p.notes||'').replace(/[\n\r]/g,' ')]);
+    dlFile(pfx+'_structures.csv',[h,...r].map(row=>row.map(c=>`"${String(c).replace(/"/g,'""')}"`).join(',')).join('\n'),'text/csv');
+  }
+}
+function doExportGeoJSON(){
+  closeAllDropdowns();
+  const sAll=Object.values(segs),pAll=Object.values(points),cAll=Object.values(conduits);
+  if(!sAll.length&&!pAll.length&&!cAll.length){alert('Nothing to export.');return;}
+  const plan=plans[activePlanId],proj=plan?projects[plan.projectId]:null;
+  const gj={type:'FeatureCollection',name:(proj?.name||'')+' — '+(plan?.name||''),features:[
+    ...sAll.map(s=>({type:'Feature',geometry:{type:'LineString',coordinates:s.path.map(p=>[p.lng,p.lat])},properties:{featureType:'segment',id:s.id,name:s.name,cableType:s.cableType,fiberCount:s.fiberCount,status:s.status,lengthFt:Math.round(s.lengthFt||0),contractor:s.contractor,jobRef:s.jobRef,notes:s.notes}})),
+    ...pAll.map(p=>({type:'Feature',geometry:{type:'Point',coordinates:[p.lng,p.lat]},properties:{featureType:'structure',id:p.id,name:p.name,structureType:PT_TYPES[p.ptype]?.label||p.ptype,structureId:p.structureId,manufacturer:p.manufacturer,size:p.size,status:p.status,contractor:p.contractor,jobRef:p.jobRef,notes:p.notes}}))
+  ]};
+  dlFile('fiber_routes.geojson',JSON.stringify(gj,null,2),'application/geo+json');
+}
+function hexToKml(h){if(!h||h.length<7)return'ff888888';const r=h.slice(1,3),g=h.slice(3,5),b=h.slice(5,7);return`ff${b}${g}${r}`;}
+function generateKML(){
+  const sAll=Object.values(segs),pAll=Object.values(points),cAll=Object.values(conduits);
+  const plan=plans[activePlanId],proj=plan?projects[plan.projectId]:null;
+  const docName=esc((proj?.name||'Fiber Routes')+' — '+(plan?.name||''));
+  const sStyles=Object.entries(STATUS_CLR).map(([k,v])=>`<Style id="seg-${k}"><LineStyle><color>${hexToKml(v)}</color><width>3</width></LineStyle><PolyStyle><fill>0</fill></PolyStyle></Style>`).join('\n');
+  const cStyles=Object.entries(STATUS_CLR).map(([k,v])=>`<Style id="cond-${k}"><LineStyle><color>${hexToKml(v)}</color><width>7</width></LineStyle><PolyStyle><fill>0</fill></PolyStyle></Style>`).join('\n');
+  const pStyles=Object.entries(PT_TYPES).map(([k,v])=>`<Style id="pt-${k}"><IconStyle><color>${hexToKml(v.color)}</color><scale>0.9</scale><Icon><href>http://maps.google.com/mapfiles/kml/shapes/placemark_circle.png</href></Icon></IconStyle></Style>`).join('\n');
+  const segPM=sAll.map(s=>`<Placemark><name>${esc(s.name)}</name><styleUrl>#seg-${s.status}</styleUrl><ExtendedData><Data name="Cable_Type"><value>${esc(TYPE_LBL[s.cableType]||s.cableType)}</value></Data><Data name="Fiber_Count"><value>${s.fiberCount}</value></Data><Data name="Status"><value>${esc(STATUS_LBL[s.status]||s.status)}</value></Data><Data name="Length_ft"><value>${Math.round(s.lengthFt||0)}</value></Data><Data name="Contractor"><value>${esc(s.contractor||'')}</value></Data><Data name="Job_Ref"><value>${esc(s.jobRef||'')}</value></Data><Data name="Notes"><value>${esc(s.notes||'')}</value></Data></ExtendedData><LineString><tessellate>1</tessellate><coordinates>${s.path.map(p=>`${p.lng},${p.lat},0`).join(' ')}</coordinates></LineString></Placemark>`).join('');
+  const condPM=cAll.map(c=>`<Placemark><name>${esc(c.name)}</name><styleUrl>#cond-${c.status}</styleUrl><ExtendedData><Data name="Conduit_Type"><value>${esc(COND_TYPES[c.conduitType]||c.conduitType||'')}</value></Data><Data name="Size"><value>${esc(c.size||'')}</value></Data><Data name="Duct_Count"><value>${c.ductCount||''}</value></Data><Data name="Status"><value>${esc(STATUS_LBL[c.status]||c.status)}</value></Data><Data name="Length_ft"><value>${Math.round(c.lengthFt||0)}</value></Data><Data name="Contractor"><value>${esc(c.contractor||'')}</value></Data><Data name="Job_Ref"><value>${esc(c.jobRef||'')}</value></Data><Data name="Notes"><value>${esc(c.notes||'')}</value></Data></ExtendedData><LineString><tessellate>1</tessellate><coordinates>${c.path.map(p=>`${p.lng},${p.lat},0`).join(' ')}</coordinates></LineString></Placemark>`).join('');
+  const ptPM=pAll.map(p=>`<Placemark><name>${esc(p.name)}</name><styleUrl>#pt-${p.ptype}</styleUrl><ExtendedData><Data name="Type"><value>${esc(PT_TYPES[p.ptype]?.label||p.ptype)}</value></Data><Data name="Structure_ID"><value>${esc(p.structureId||'')}</value></Data><Data name="Manufacturer"><value>${esc(p.manufacturer||'')}</value></Data><Data name="Status"><value>${esc(STATUS_LBL[p.status]||p.status)}</value></Data><Data name="Contractor"><value>${esc(p.contractor||'')}</value></Data><Data name="Notes"><value>${esc(p.notes||'')}</value></Data></ExtendedData><Point><coordinates>${p.lng},${p.lat},0</coordinates></Point></Placemark>`).join('');
+  return`<?xml version="1.0" encoding="UTF-8"?>\n<kml xmlns="http://www.opengis.net/kml/2.2">\n<Document>\n<name>${docName}</name>\n${sStyles}\n${cStyles}\n${pStyles}\n<Folder><name>Route Segments</name>${segPM}</Folder>\n<Folder><name>Conduit</name>${condPM}</Folder>\n<Folder><name>Structures</name>${ptPM}</Folder>\n</Document>\n</kml>`;
+}
+function doExportKML(){closeAllDropdowns();if(!Object.values(segs).length&&!Object.values(points).length&&!Object.values(conduits).length){alert('Nothing to export.');return;}dlFile('fiber_routes.kml',generateKML(),'application/vnd.google-earth.kml+xml');}
+async function doExportKMZ(){
+  closeAllDropdowns();
+  if(!Object.values(segs).length&&!Object.values(points).length&&!Object.values(conduits).length){alert('Nothing to export.');return;}
+  if(typeof JSZip==='undefined'){alert('JSZip not loaded.');return;}
+  try{const zip=new JSZip();zip.file('doc.kml',generateKML());const blob=await zip.generateAsync({type:'blob',compression:'DEFLATE',compressionOptions:{level:6}});dlBlob('fiber_routes.kmz',blob);}catch(e){alert('KMZ export failed: '+e.message);}
+}
+// Shapefile writer
+function w32BE(dv,o,v){dv.setInt32(o,v,false);}function w32LE(dv,o,v){dv.setInt32(o,v,true);}function w64LE(dv,o,v){dv.setFloat64(o,v,true);}
+function wShpHdr(dv,type,lenWords,minX,minY,maxX,maxY){w32BE(dv,0,9994);for(let i=4;i<24;i+=4)w32BE(dv,i,0);w32BE(dv,24,lenWords);w32LE(dv,28,1000);w32LE(dv,32,type);w64LE(dv,36,minX);w64LE(dv,44,minY);w64LE(dv,52,maxX);w64LE(dv,60,maxY);for(let i=68;i<100;i+=8)w64LE(dv,i,0);}
+function bldPtShp(pts){if(!pts.length)return null;const rB=28,fB=100+pts.length*rB;const sb=new ArrayBuffer(fB),sd=new DataView(sb);const xb=new ArrayBuffer(100+pts.length*8),xd=new DataView(xb);const xs=pts.map(p=>p.lng),ys=pts.map(p=>p.lat);wShpHdr(sd,1,fB/2,Math.min(...xs),Math.min(...ys),Math.max(...xs),Math.max(...ys));wShpHdr(xd,1,(100+pts.length*8)/2,Math.min(...xs),Math.min(...ys),Math.max(...xs),Math.max(...ys));pts.forEach((pt,i)=>{const o=100+i*rB;w32BE(sd,o,i+1);w32BE(sd,o+4,10);w32LE(sd,o+8,1);w64LE(sd,o+12,pt.lng);w64LE(sd,o+20,pt.lat);w32BE(xd,100+i*8,o/2);w32BE(xd,100+i*8+4,10);});return{shp:sb,shx:xb};}
+function bldLnShp(lines){if(!lines.length)return null;const rcB=lines.map(l=>4+32+4+4+4+l.length*16),tc=rcB.reduce((a,b)=>a+b,0),fB=100+lines.length*8+tc;const sb=new ArrayBuffer(fB),sd=new DataView(sb);const xb=new ArrayBuffer(100+lines.length*8),xd=new DataView(xb);const aX=lines.flatMap(l=>l.map(p=>p[0])),aY=lines.flatMap(l=>l.map(p=>p[1]));wShpHdr(sd,3,fB/2,Math.min(...aX),Math.min(...aY),Math.max(...aX),Math.max(...aY));wShpHdr(xd,3,(100+lines.length*8)/2,Math.min(...aX),Math.min(...aY),Math.max(...aX),Math.max(...aY));let cur=100;lines.forEach((pts,i)=>{const n=pts.length,cw=rcB[i]/2,lx=pts.map(p=>p[0]),ly=pts.map(p=>p[1]);w32BE(sd,cur,i+1);w32BE(sd,cur+4,cw);w32LE(sd,cur+8,3);w64LE(sd,cur+12,Math.min(...lx));w64LE(sd,cur+20,Math.min(...ly));w64LE(sd,cur+28,Math.max(...lx));w64LE(sd,cur+36,Math.max(...ly));w32LE(sd,cur+44,1);w32LE(sd,cur+48,n);w32LE(sd,cur+52,0);let po=cur+56;pts.forEach(p=>{w64LE(sd,po,p[0]);w64LE(sd,po+8,p[1]);po+=16;});w32BE(xd,100+i*8,cur/2);w32BE(xd,100+i*8+4,cw);cur+=8+cw*2;});return{shp:sb,shx:xb};}
+function bldDBF(fields,records){const hB=32+fields.length*32+1,rSz=1+fields.reduce((s,f)=>s+f.length,0),buf=new ArrayBuffer(hB+records.length*rSz),dv=new DataView(buf),te=new TextEncoder();dv.setUint8(0,3);const now=new Date();dv.setUint8(1,now.getFullYear()-1900);dv.setUint8(2,now.getMonth()+1);dv.setUint8(3,now.getDate());dv.setUint32(4,records.length,true);dv.setUint16(8,hB,true);dv.setUint16(10,rSz,true);fields.forEach((f,i)=>{const off=32+i*32,nb=te.encode(f.name.substring(0,10).padEnd(11,'\0'));nb.forEach((b,j)=>dv.setUint8(off+j,b));dv.setUint8(off+11,f.type.charCodeAt(0));dv.setUint8(off+16,f.length);dv.setUint8(off+17,f.decimal||0);});dv.setUint8(32+fields.length*32,0x0D);records.forEach((rec,ri)=>{let rOff=hB+ri*rSz;dv.setUint8(rOff++,0x20);fields.forEach((f,fi)=>{let val=String(rec[fi]===null||rec[fi]===undefined?'':rec[fi]);val=f.type==='N'?val.substring(0,f.length).padStart(f.length,' '):val.substring(0,f.length).padEnd(f.length,' ');te.encode(val).slice(0,f.length).forEach((b,j)=>dv.setUint8(rOff+j,b));rOff+=f.length;});});}
+async function doExportShapefile(){
+  closeAllDropdowns();
+  const sAll=Object.values(segs),pAll=Object.values(points);
+  if(!sAll.length&&!pAll.length){alert('Nothing to export.');return;}
+  if(typeof JSZip==='undefined'){alert('JSZip not loaded.');return;}
+  try{
+    const zip=new JSZip();
+    if(sAll.length){
+      const lines=sAll.map(s=>s.path.map(p=>[p.lng,p.lat]));
+      const{shp,shx}=bldLnShp(lines);
+      const sF=[{name:'ID',type:'C',length:30},{name:'NAME',type:'C',length:60},{name:'CABLE_ID',type:'C',length:20},{name:'CABLE_TYPE',type:'C',length:20},{name:'FIBER_CNT',type:'N',length:6,decimal:0},{name:'STATUS',type:'C',length:20},{name:'CONTRACTOR',type:'C',length:50},{name:'INST_DATE',type:'C',length:10},{name:'JOB_REF',type:'C',length:30},{name:'LENGTH_FT',type:'N',length:10,decimal:1},{name:'NOTES',type:'C',length:100}];
+      const sR=sAll.map(s=>[s.id,s.name,s.cableId||'',TYPE_LBL[s.cableType]||s.cableType,s.fiberCount,STATUS_LBL[s.status]||s.status,s.contractor||'',s.installDate||'',s.jobRef||'',(s.lengthFt||0).toFixed(1),s.notes||'']);
+      const dbf=bldDBF(sF,sR);
+      zip.file('segments.shp',shp);zip.file('segments.shx',shx);zip.file('segments.dbf',dbf);zip.file('segments.prj',PRJ_WGS84);
+    }
+    if(pAll.length){
+      const{shp,shx}=bldPtShp(pAll.map(p=>({lat:p.lat,lng:p.lng})));
+      const pF=[{name:'ID',type:'C',length:30},{name:'NAME',type:'C',length:60},{name:'STRCT_TYPE',type:'C',length:20},{name:'STRCT_ID',type:'C',length:20},{name:'MFR',type:'C',length:50},{name:'SIZE',type:'C',length:20},{name:'STATUS',type:'C',length:20},{name:'CONTRACTOR',type:'C',length:50},{name:'INST_DATE',type:'C',length:10},{name:'JOB_REF',type:'C',length:30},{name:'LAT',type:'N',length:15,decimal:7},{name:'LON',type:'N',length:15,decimal:7},{name:'NOTES',type:'C',length:100}];
+      const pR=pAll.map(p=>[p.id,p.name,PT_TYPES[p.ptype]?.label||p.ptype,p.structureId||'',p.manufacturer||'',p.size||'',STATUS_LBL[p.status]||p.status,p.contractor||'',p.installDate||'',p.jobRef||'',p.lat.toFixed(7),p.lng.toFixed(7),p.notes||'']);
+      const dbf=bldDBF(pF,pR);
+      zip.file('structures.shp',shp);zip.file('structures.shx',shx);zip.file('structures.dbf',dbf);zip.file('structures.prj',PRJ_WGS84);
+    }
+    if(cAll.length){
+      const cLines=cAll.map(c=>c.path.map(p=>[p.lng,p.lat]));
+      const{shp:cShp,shx:cShx}=bldLnShp(cLines);
+      const cF=[
+        {name:'ID',type:'C',length:30},{name:'NAME',type:'C',length:60},
+        {name:'COND_TYPE',type:'C',length:30},{name:'SIZE',type:'C',length:15},
+        {name:'DUCT_CNT',type:'N',length:4,decimal:0},
+        {name:'STATUS',type:'C',length:20},{name:'CONTRACTOR',type:'C',length:50},
+        {name:'INST_DATE',type:'C',length:10},{name:'JOB_REF',type:'C',length:30},
+        {name:'LENGTH_FT',type:'N',length:10,decimal:1},{name:'NOTES',type:'C',length:100}
+      ];
+      const cR=cAll.map(c=>[
+        c.id,c.name,COND_TYPES[c.conduitType]||c.conduitType||'',c.size||'',
+        c.ductCount||0,STATUS_LBL[c.status]||c.status,c.contractor||'',
+        c.installDate||'',c.jobRef||'',(c.lengthFt||0).toFixed(1),c.notes||''
+      ]);
+      const cDbf=bldDBF(cF,cR);
+      zip.file('conduit.shp',cShp);zip.file('conduit.shx',cShx);
+      zip.file('conduit.dbf',cDbf);zip.file('conduit.prj',PRJ_WGS84);
+    }
+    zip.file('README.txt','Fiber Route Manager Export\nLayers: segments, conduit, structures\nCoordinate System: WGS84 (EPSG:4326)\nGenerated: '+new Date().toLocaleString());
+    const blob=await zip.generateAsync({type:'blob',compression:'DEFLATE',compressionOptions:{level:6}});
+    dlBlob('fiber_shapefile.zip',blob);
+  }catch(e){console.error(e);alert('Shapefile export failed: '+e.message);}
+}
+function dlFile(name,content,type){const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([content],{type}));a.download=name;a.click();URL.revokeObjectURL(a.href);}
+function dlBlob(name,blob){const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=name;a.click();URL.revokeObjectURL(a.href);}
+
+// ══════════════════════════════════════════════════════════════
+// GEOMETRY EDITING
+// ══════════════════════════════════════════════════════════════
+function startGeomEdit(segId){
+  if(drawing)cancelDraw();
+  if(placingPoint)cancelPlace();
+  if(geomSegId)cancelGeomEdit();
+  const seg=segs[segId];if(!seg)return;
+  geomSegId=segId;
+  geomPath=seg.path.map(p=>({lat:p.lat,lng:p.lng}));
+  geomOrigPath=JSON.parse(JSON.stringify(seg.path));
+  // Dim the stored polyline
+  if(pls[segId])pls[segId].setStyle({opacity:0.2,weight:2});
+  // Draw the editable polyline
+  geomPolyline=L.polyline(geomPath.map(p=>[p.lat,p.lng]),{color:segColor(seg),weight:3,interactive:true,zIndex:500}).addTo(map);
+  geomPolyline.on('click',function(e){
+    L.DomEvent.stopPropagation(e);
+    // Insert a new vertex at the click point
+    const cp={lat:e.latlng.lat,lng:e.latlng.lng};
+    let bestIdx=0,bestDist=Infinity;
+    for(let i=0;i<geomPath.length-1;i++){
+      const d=ptSegDist(cp,geomPath[i],geomPath[i+1]);
+      if(d<bestDist){bestDist=d;bestIdx=i;}
+    }
+    geomPath.splice(bestIdx+1,0,cp);
+    buildGeomHandles();updateGeomLine();
+  });
+  buildGeomHandles();
+  // Switch toolbar
+  document.getElementById('toolbar-normal').style.display='none';
+  document.getElementById('toolbar-geom').style.display='flex';
+  document.getElementById('geom-label').textContent='✏ Reshaping: '+seg.name;
+  // Ensure segment is visible
+  const b=L.latLngBounds(geomPath.map(p=>[p.lat,p.lng]));
+  if(!map.getBounds().contains(b))map.fitBounds(b,{padding:[80,80]});
+  // Switch to segment tab so user can see it
+  setTab('segs');
+}
+
+function buildGeomHandles(){
+  geomHandles.forEach(h=>h.remove());geomHandles=[];
+  geomPath.forEach((pt,i)=>{
+    const h=L.marker([pt.lat,pt.lng],{
+      icon:L.divIcon({html:'<div style="width:14px;height:14px;background:white;border:2.5px solid #f4600c;border-radius:50%;cursor:grab;box-shadow:0 2px 7px rgba(0,0,0,.45)"></div>',className:'',iconSize:[14,14],iconAnchor:[7,7]}),
+      draggable:true,zIndexOffset:2000,interactive:true
+    }).addTo(map);
+    h.on('drag',function(e){
+      const pos=e.target.getLatLng();
+      const sn=findSnapTarget(pos);
+      updateSnapIndicator(sn);
+      geomPath[i]=sn?{lat:sn.lat,lng:sn.lng}:{lat:pos.lat,lng:pos.lng};
+      updateGeomLine();
+    });
+    h.on('dragend',function(e){
+      const pos=e.target.getLatLng();
+      const sn=findSnapTarget(pos);
+      if(sn){e.target.setLatLng([sn.lat,sn.lng]);geomPath[i]={lat:sn.lat,lng:sn.lng};updateGeomLine();}
+      clearSnap();
+    });
+    h.on('contextmenu',function(e){
+      L.DomEvent.stopPropagation(e);
+      if(geomPath.length<=2){alert('A route must have at least 2 points.');return;}
+      geomPath.splice(i,1);
+      buildGeomHandles();updateGeomLine();
+    });
+    // Tooltip hint
+    h.bindTooltip(i===0?'<span style="font-size:10px">Start point<br>Drag to move · Right-click to delete</span>':i===geomPath.length-1?'<span style="font-size:10px">End point<br>Drag to move · Right-click to delete</span>':'<span style="font-size:10px">Drag to move · Right-click to delete</span>',{direction:'top',offset:[0,-10]});
+    geomHandles.push(h);
+  });
+}
+
+function updateGeomLine(){
+  if(geomPolyline)geomPolyline.setLatLngs(geomPath.map(p=>[p.lat,p.lng]));
+}
+
+function ptSegDist(p,a,b){
+  const dx=b.lng-a.lng,dy=b.lat-a.lat,lenSq=dx*dx+dy*dy;
+  if(lenSq===0)return Math.hypot(p.lat-a.lat,p.lng-a.lng);
+  const t=Math.max(0,Math.min(1,((p.lng-a.lng)*dx+(p.lat-a.lat)*dy)/lenSq));
+  return Math.hypot(p.lat-(a.lat+t*dy),p.lng-(a.lng+t*dx));
+}
+
+function saveGeomEdit(){
+  if(geomCondId){
+    const id=geomCondId;
+    conduits[id].path=geomPath.map(p=>({lat:p.lat,lng:p.lng}));
+    conduits[id].lengthFt=calcLen(geomPath);
+    conduits[id].updatedAt=new Date().toISOString();
+    clearGeomState();
+    renderConduit(conduits[id]);
+    saveConds();renderSidebar();
+    document.getElementById('toolbar-geom').style.display='none';
+    document.getElementById('toolbar-normal').style.display='flex';
+    return;
+  }
+  if(!geomSegId)return;
+  const id=geomSegId;
+  segs[id].path=geomPath.map(p=>({lat:p.lat,lng:p.lng}));
+  segs[id].lengthFt=calcLen(geomPath);
+  segs[id].updatedAt=new Date().toISOString();
+  clearGeomState();
+  renderPolyline(segs[id]);
+  saveSegs();renderSidebar();
+  document.getElementById('toolbar-geom').style.display='none';
+  document.getElementById('toolbar-normal').style.display='flex';
+}
+
+function cancelGeomEdit(){
+  if(geomCondId){
+    const id=geomCondId;
+    if(conduitPLs[id]){const bwc=parseInt(conduits[id]?.weight)||7;conduitPLs[id][0].setStyle({opacity:.65});conduitPLs[id][1].setStyle({opacity:1,weight:selCondId===id?bwc+2:bwc});}
+    clearGeomState();
+    document.getElementById('toolbar-geom').style.display='none';
+    document.getElementById('toolbar-normal').style.display='flex';
+    return;
+  }
+  if(!geomSegId)return;
+  if(pls[geomSegId]){const seg=segs[geomSegId];pls[geomSegId].setStyle({opacity:1,weight:selSegId===geomSegId?5:3,dashArray:TYPE_DASH[seg?.cableType]||null});}
+  clearGeomState();
+  document.getElementById('toolbar-geom').style.display='none';
+  document.getElementById('toolbar-normal').style.display='flex';
+}
+
+function clearGeomState(){
+  geomHandles.forEach(h=>h.remove());geomHandles=[];
+  if(geomPolyline){geomPolyline.remove();geomPolyline=null;}
+  geomSegId=null;geomCondId=null;geomPath=[];geomOrigPath=null;
+  clearSnap();
+}
+
+
+// ══════════════════════════════════════════════════════════════
+// SPLIT SEGMENT AT STRUCTURES
+// ══════════════════════════════════════════════════════════════
+function splitSegAtStructures(segId){
+  const seg=segs[segId];
+  if(!seg?.path?.length)return;
+  const structs=Object.values(points);
+  if(!structs.length){alert('No structures placed yet. Place handholes along the route first, then split.');return;}
+
+  const THRESH_FT=30; // structures within 30 ft of the line count as split points
+
+  // Build augmented path: original vertices marked isBreak if near a structure,
+  // plus mid-edge injected points where a structure projects onto an edge.
+  const workPath=seg.path.map((p,i)=>{
+    if(i===0||i===seg.path.length-1)return{lat:p.lat,lng:p.lng,isBreak:false};
+    const near=structs.find(s=>calcLen([p,{lat:s.lat,lng:s.lng}])<=THRESH_FT);
+    return{lat:p.lat,lng:p.lng,isBreak:!!near,sName:near?.name||null};
+  });
+
+  // Check mid-edge projections for structures not already at a vertex
+  const usedNames=new Set(workPath.filter(p=>p.isBreak).map(p=>p.sName));
+  const inserts=[];
+  for(let i=0;i<workPath.length-1;i++){
+    const a=workPath[i],b=workPath[i+1];
+    structs.forEach(s=>{
+      if(usedNames.has(s.name))return;
+      const dx=b.lng-a.lng,dy=b.lat-a.lat,lenSq=dx*dx+dy*dy;
+      if(lenSq<1e-16)return;
+      const t=Math.max(0,Math.min(1,((s.lng-a.lng)*dx+(s.lat-a.lat)*dy)/lenSq));
+      if(t<0.01||t>0.99)return;
+      const np={lat:a.lat+t*dy,lng:a.lng+t*dx};
+      if(calcLen([np,{lat:s.lat,lng:s.lng}])<=THRESH_FT){
+        inserts.push({afterIdx:i,t,lat:s.lat,lng:s.lng,sName:s.name});
+        usedNames.add(s.name);
+      }
+    });
+  }
+  // Insert in reverse order so indices stay valid
+  inserts.sort((a,b)=>a.afterIdx!==b.afterIdx?b.afterIdx-a.afterIdx:b.t-a.t);
+  inserts.forEach(ins=>workPath.splice(ins.afterIdx+1,0,{lat:ins.lat,lng:ins.lng,isBreak:true,sName:ins.sName}));
+
+  const breakPts=workPath.filter((p,i)=>p.isBreak&&i>0&&i<workPath.length-1);
+  if(!breakPts.length){
+    alert('No structures found within '+THRESH_FT+' ft of this line.\n\nTip: Draw the line by snapping to each structure so vertices land exactly on them.');
+    return;
+  }
+  if(!confirm('Found '+breakPts.length+' structure'+(breakPts.length!==1?'s':'')+' on this line.\nSplit into '+(breakPts.length+1)+' spans?'))return;
+
+  // Build sub-paths and auto-name using structure names
+  const spans=[];
+  let cur=[],startName=null;
+  // check if first point is near a structure
+  const firstNear=structs.find(s=>calcLen([workPath[0],{lat:s.lat,lng:s.lng}])<=THRESH_FT);
+  startName=firstNear?.name||null;
+
+  workPath.forEach(p=>{
+    cur.push({lat:p.lat,lng:p.lng});
+    if(p.isBreak&&cur.length>=2){
+      spans.push({path:[...cur],startName,endName:p.sName});
+      startName=p.sName;
+      cur=[{lat:p.lat,lng:p.lng}];
+    }
+  });
+  if(cur.length>=2){
+    const lastNear=structs.find(s=>calcLen([cur[cur.length-1],{lat:s.lat,lng:s.lng}])<=THRESH_FT);
+    spans.push({path:cur,startName,endName:lastNear?.name||null});
+  }
+
+  const valid=spans.filter(s=>s.path.length>=2);
+  if(valid.length<2){alert('Could not create multiple spans — structures may be at the endpoints only.');return;}
+
+  // Remove original segment
+  if(pls[segId]){pls[segId].remove();delete pls[segId];}
+  delete segs[segId];
+  if(selSegId===segId)selSegId=null;
+  if(geomSegId===segId)cancelGeomEdit();
+
+  const now=new Date().toISOString();
+  valid.forEach((sp,idx)=>{
+    const id='seg_'+Date.now()+'_'+Math.random().toString(36).slice(2,5);
+    // Auto-name: "HH-001 → HH-002" if structure names available, else "Span N"
+    let name;
+    if(sp.startName&&sp.endName) name=sp.startName+' \u2192 '+sp.endName;
+    else if(sp.startName) name=sp.startName+' \u2192 End';
+    else name='Span '+(idx+1);
+    segs[id]={
+      id,name,
+      cableId:seg.cableId||'',cableType:seg.cableType,fiberCount:seg.fiberCount,
+      status:seg.status,contractor:seg.contractor||'',
+      installDate:seg.installDate||'',jobRef:seg.jobRef||'',
+      notes:'',colorOverride:seg.colorOverride,
+      path:sp.path,lengthFt:calcLen(sp.path),
+      createdAt:now,updatedAt:now
+    };
+    renderPolyline(segs[id]);
+  });
+
+  saveSegs();renderSidebar();maybeRefreshBOM();
+  if(document.getElementById('overlay').classList.contains('open'))closeModal();
+}
+
+// ══════════════════════════════════════════════════════════════
+// KEYBOARD
+// ══════════════════════════════════════════════════════════════
+document.addEventListener('keydown',e=>{
+  if(['INPUT','TEXTAREA','SELECT'].includes(document.activeElement.tagName))return;
+  if(e.key==='Escape'){if(geomSegId)cancelGeomEdit();else if(drawing)cancelDraw();else if(placingPoint)cancelPlace();else{closeModal();closeProjectModal();}closeAllDropdowns();}
+  if(e.key.toLowerCase()==='d'&&!e.ctrlKey&&!e.metaKey&&!drawing&&!placingPoint)startDraw();
+  if((e.key==='Enter')&&drawing)finishDraw();
+});
+
+
+
+// ══════════════════════════════════════════════════════════════
+// PATH FOLLOWING  — follow existing line when drawing
+// ══════════════════════════════════════════════════════════════
+const FOLLOW_THRESH_FT = 75;
+
+function toggleFollowPath(){
+  followPathMode=!followPathMode;
+  const lbl='⚡ Follow Path: '+(followPathMode?'ON':'OFF');
+  const op=followPathMode?'1':'.6';
+  ['follow-toggle-span','follow-toggle-cond'].forEach(id=>{
+    const el=document.getElementById(id);
+    if(el){el.textContent=lbl;el.style.opacity=op;el.style.fontWeight=followPathMode?'700':'400';}
+  });
+}
+
+// Project a point onto a polyline path.
+// Returns {edge, t, cumLen, dist} or null.
+function getLinePosition(pt, linePath){
+  let bestEdge=-1,bestT=0,bestDist=Infinity,bestCumLen=0,cumLen=0;
+  for(let i=0;i<linePath.length-1;i++){
+    const a=linePath[i],b=linePath[i+1];
+    const dx=b.lng-a.lng,dy=b.lat-a.lat,lenSq=dx*dx+dy*dy;
+    if(lenSq<1e-16){cumLen+=0;continue;}
+    const t=Math.max(0,Math.min(1,((pt.lng-a.lng)*dx+(pt.lat-a.lat)*dy)/lenSq));
+    const nearLat=a.lat+t*dy,nearLng=a.lng+t*dx;
+    const d=calcLen([{lat:nearLat,lng:nearLng},{lat:pt.lat,lng:pt.lng}]);
+    const edgeLen=calcLen([a,b]);
+    if(d<bestDist){bestDist=d;bestEdge=i;bestT=t;bestCumLen=cumLen+t*edgeLen;}
+    cumLen+=edgeLen;
+  }
+  return bestEdge>=0?{edge:bestEdge,t:bestT,cumLen:bestCumLen,dist:bestDist}:null;
+}
+
+// Extract the sub-path of linePath between two projected positions.
+function extractLineSubPath(linePath, pos1, pos2){
+  const fwd=pos1.cumLen<=pos2.cumLen;
+  const s=fwd?pos1:pos2, e=fwd?pos2:pos1;
+  const result=[];
+  // Start point (interpolated)
+  const sA=linePath[s.edge],sB=linePath[s.edge+1];
+  result.push({lat:sA.lat+s.t*(sB.lat-sA.lat),lng:sA.lng+s.t*(sB.lng-sA.lng)});
+  // Intermediate vertices (skip first if start-point already equals it)
+  const skipFirst=s.t>0.999;
+  for(let i=s.edge+1;i<=e.edge;i++){
+    if(i===s.edge+1&&skipFirst)continue;
+    result.push({lat:linePath[i].lat,lng:linePath[i].lng});
+  }
+  // End point (interpolated)
+  const eA=linePath[e.edge],eB=linePath[e.edge+1];
+  const ePt={lat:eA.lat+e.t*(eB.lat-eA.lat),lng:eA.lng+e.t*(eB.lng-eA.lng)};
+  const last=result[result.length-1];
+  if(calcLen([last,ePt])>0.5) result.push(ePt);
+  return fwd?result:result.reverse();
+}
+
+// For an edge (p1→p2), check all existing lines and return the sub-path
+// along whichever line both points lie on.  Returns null if no line found.
+function findFollowSubPath(p1, p2){
+  const allLines=[...Object.values(segs),...Object.values(conduits)];
+  // 1. Try a single existing line that contains both points
+  for(const line of allLines){
+    const lp=line.path;
+    if(!lp||lp.length<2) continue;
+    const pos1=getLinePosition(p1,lp);
+    if(!pos1||pos1.dist>FOLLOW_THRESH_FT) continue;
+    const pos2=getLinePosition(p2,lp);
+    if(!pos2||pos2.dist>FOLLOW_THRESH_FT) continue;
+    if(Math.abs(pos1.cumLen-pos2.cumLen)<1) continue;
+    const sub=extractLineSubPath(lp,pos1,pos2);
+    if(sub&&sub.length>=2) return sub;
+  }
+  // 2. Try chaining across multiple connected lines
+  return findFollowChain(p1, p2, allLines);
+}
+
+// Greedy multi-line chain: follow the network of connected lines from p1 toward p2.
+// At each step, pick the end of the current line nearest to p2, then hop to
+// whatever line starts within FOLLOW_THRESH_FT of that endpoint.
+function findFollowChain(p1, p2, allLines){
+  if(!allLines) allLines=[...Object.values(segs),...Object.values(conduits)];
+
+  function pathTotalLen(lp){let l=0;for(let i=0;i<lp.length-1;i++)l+=calcLen([lp[i],lp[i+1]]);return l;}
+
+  function bestFor(pt, exclude){
+    let bLine=null,bPos=null;
+    for(const line of allLines){
+      if(exclude&&exclude.has(line.id)) continue;
+      const lp=line.path;if(!lp||lp.length<2) continue;
+      const pos=getLinePosition(pt,lp);
+      if(pos&&pos.dist<FOLLOW_THRESH_FT&&(!bPos||pos.dist<bPos.dist)){bLine=line;bPos=pos;}
+    }
+    return{line:bLine,pos:bPos};
+  }
+
+  // Find start + end lines
+  const{line:startLine,pos:startPos}=bestFor(p1,null);
+  if(!startLine) return null;
+  const{line:endLine}=bestFor(p2,null);
+  if(!endLine||endLine.id===startLine.id) return null; // same line = already handled above
+
+  const result=[];
+  const visited=new Set();
+  let curLine=startLine, curPos=startPos;
+
+  for(let hop=0;hop<30;hop++){
+    visited.add(curLine.id);
+    const lp=curLine.path;
+    const totalLen=pathTotalLen(lp);
+
+    // Reached the end line — extract to p2 and finish
+    if(curLine.id===endLine.id){
+      const{pos:ep}=bestFor(p2,null);
+      if(!ep) break;
+      const sub=extractLineSubPath(lp,curPos,ep);
+      result.push(...(result.length?sub.slice(1):sub));
+      break;
+    }
+
+    // Which endpoint of this line is closer to p2?
+    const ptA=lp[0], ptB=lp[lp.length-1];
+    const goToB=calcLen([ptB,p2])<calcLen([ptA,p2]);
+    const exitPt=goToB?ptB:ptA;
+    const exitPos=goToB
+      ?{edge:lp.length-2,t:1,cumLen:totalLen,dist:0}
+      :{edge:0,t:0,cumLen:0,dist:0};
+
+    // Extract from curPos to that endpoint
+    const sub=extractLineSubPath(lp,curPos,exitPos);
+    result.push(...(result.length?sub.slice(1):sub));
+
+    // Hop to the next line whose path passes through exitPt
+    const{line:nextLine,pos:nextPos}=bestFor(exitPt,visited);
+    if(!nextLine) break;
+    curLine=nextLine; curPos=nextPos;
+  }
+
+  return result.length>=2?result:null;
+}
+
+// Apply path-following across an entire drawn path.
+// Each edge (pi → pi+1) is checked; if both endpoints lie on the same
+// existing line the straight edge is replaced with that line's sub-path.
+function applyPathFollowing(path){
+  if(!followPathMode||path.length<2) return path;
+  const result=[];
+  result.push(path[0]);
+  for(let i=1;i<path.length;i++){
+    const sub=findFollowSubPath(path[i-1],path[i]);
+    if(sub&&sub.length>=2){
+      result.push(...sub.slice(1));
+    } else {
+      result.push(path[i]);
+    }
+  }
+  return result;
+}
+
+// ══════════════════════════════════════════════════════════════
+// BILL OF MATERIALS
+// ══════════════════════════════════════════════════════════════
+let bomFilter='installed';
+
+const BOM_FILTER_SETS={
+  all:      null, // null = include all
+  installed:['asBuilt','active','existing'],
+  asBuilt:  ['asBuilt'],
+  active:   ['active'],
+  proposed: ['proposed'],
+  underConstruction:['underConstruction'],
+  permitted:['permitted']
+};
+
+function openBOM(){
+  const plan=plans[activePlanId],proj=plan?projects[plan.projectId]:null;
+  document.getElementById('bom-subtitle').textContent=[proj?.name,plan?.name].filter(Boolean).join(' · ')||'';
+  renderBOM();
+  document.getElementById('bom-overlay').classList.add('open');
+}
+function closeBOM(){document.getElementById('bom-overlay').classList.remove('open');}
+function onBomBg(e){if(e.target===document.getElementById('bom-overlay'))closeBOM();}
+
+function setBomFilter(f){
+  bomFilter=f;
+  document.querySelectorAll('.bom-chip').forEach(c=>c.classList.toggle('on',c.dataset.f===f));
+  renderBOM();
+}
+
+function bomFilterItems(){
+  const allowed=BOM_FILTER_SETS[bomFilter];
+  const fs=allowed?Object.values(segs).filter(s=>allowed.includes(s.status)):Object.values(segs);
+  const fp=allowed?Object.values(points).filter(p=>allowed.includes(p.status)):Object.values(points);
+  return{fs,fp};
+}
+
+function renderBOM(){
+  const{fs,fp}=bomFilterItems();
+
+  // ── Cable table ──────────────────────────────────────────────
+  const cGroups={};
+  fs.forEach(s=>{
+    const k=s.cableType+'|'+s.fiberCount+'|'+s.status;
+    if(!cGroups[k])cGroups[k]={type:s.cableType,fc:s.fiberCount,status:s.status,qty:0,ft:0};
+    cGroups[k].qty++;cGroups[k].ft+=(s.lengthFt||0);
+  });
+  const cRows=Object.values(cGroups).sort((a,b)=>{
+    const to={aerial:0,underground:1,directBuried:2,innerduct:3};
+    if(a.type!==b.type)return(to[a.type]??9)-(to[b.type]??9);
+    if(a.fc!==b.fc)return b.fc-a.fc;
+    return a.status.localeCompare(b.status);
+  });
+  let cTotQty=0,cTotFt=0;
+  const cRowHtml=cRows.length?cRows.map(g=>{
+    cTotQty+=g.qty;cTotFt+=g.ft;
+    const sc=STATUS_CLR[g.status]||'#9e9e9e';
+    return`<tr>
+      <td>${TYPE_LBL[g.type]||g.type}</td>
+      <td><strong>${g.fc}CT</strong></td>
+      <td><span class="bom-status-badge" style="background:${sc}1e;color:${sc}">${STATUS_LBL[g.status]||g.status}</span></td>
+      <td class="r">${g.qty}</td>
+      <td class="r">${Math.round(g.ft).toLocaleString()} ft</td>
+      <td class="r">${(g.ft/5280).toFixed(2)} mi</td>
+    </tr>`;
+  }).join(''):`<tr><td colspan="6" class="bom-empty">No cable matches this filter.</td></tr>`;
+  document.getElementById('bom-cable-rows').innerHTML=cRowHtml;
+  document.getElementById('bom-cable-foot').innerHTML=cRows.length?`<tr class="tot">
+    <td colspan="3">TOTAL</td>
+    <td class="r">${cTotQty}</td>
+    <td class="r">${Math.round(cTotFt).toLocaleString()} ft</td>
+    <td class="r">${(cTotFt/5280).toFixed(2)} mi</td>
+  </tr>`:'';
+
+  // ── Structure table ──────────────────────────────────────────
+  const sGroups={};
+  fp.forEach(p=>{
+    const k=p.ptype+'|'+p.status;
+    if(!sGroups[k])sGroups[k]={ptype:p.ptype,status:p.status,qty:0,mfrs:new Set()};
+    sGroups[k].qty++;
+    if(p.manufacturer)sGroups[k].mfrs.add(p.manufacturer);
+  });
+  const sRows=Object.values(sGroups).sort((a,b)=>{
+    if(a.ptype!==b.ptype)return a.ptype.localeCompare(b.ptype);
+    return a.status.localeCompare(b.status);
+  });
+  let sTotQty=0;
+  const sRowHtml=sRows.length?sRows.map(g=>{
+    sTotQty+=g.qty;
+    const sc=STATUS_CLR[g.status]||'#9e9e9e';
+    const mfr=[...g.mfrs].join(', ')||'—';
+    return`<tr>
+      <td><span style="display:inline-flex;align-items:center;gap:8px">${mkIconHtml(g.ptype,'auto',false,14)} ${PT_TYPES[g.ptype]?.label||g.ptype}</span></td>
+      <td><span class="bom-status-badge" style="background:${sc}1e;color:${sc}">${STATUS_LBL[g.status]||g.status}</span></td>
+      <td class="r"><strong>${g.qty}</strong></td>
+      <td style="color:var(--muted);font-size:11px">${esc(mfr)}</td>
+    </tr>`;
+  }).join(''):`<tr><td colspan="4" class="bom-empty">No structures match this filter.</td></tr>`;
+  document.getElementById('bom-struct-rows').innerHTML=sRowHtml;
+  document.getElementById('bom-struct-foot').innerHTML=sRows.length?`<tr class="tot">
+    <td colspan="2">TOTAL</td>
+    <td class="r">${sTotQty}</td>
+    <td></td>
+  </tr>`:'';
+
+  // ── Summary ──────────────────────────────────────────────────
+  document.getElementById('bom-s-ft').textContent=Math.round(cTotFt).toLocaleString();
+  document.getElementById('bom-s-mi').textContent=(cTotFt/5280).toFixed(2);
+  document.getElementById('bom-s-segs').textContent=fs.length;
+  document.getElementById('bom-s-structs').textContent=fp.length;
+}
+
+function exportBOMCSV(){
+  const{fs,fp}=bomFilterItems();
+  const plan=plans[activePlanId],proj=plan?projects[plan.projectId]:null;
+  const filterLabel=bomFilter==='installed'?'Installed (As-Built + Active + Existing)':(STATUS_LBL[bomFilter]||bomFilter);
+  let csv='Bill of Materials\n';
+  csv+=`"Project","${proj?.name||''}"
+"Plan","${plan?.name||''}"
+"Filter","${filterLabel}"
+"Generated","${new Date().toLocaleString()}"
+
+`;
+  // Cable
+  csv+='FIBER CABLE\n"Cable Type","Fiber Count","Status","Segments","Total Footage (ft)","Total Miles"\n';
+  const cg={};
+  fs.forEach(s=>{const k=s.cableType+'|'+s.fiberCount+'|'+s.status;if(!cg[k])cg[k]={type:s.cableType,fc:s.fiberCount,status:s.status,qty:0,ft:0};cg[k].qty++;cg[k].ft+=(s.lengthFt||0);});
+  let tQ=0,tF=0;
+  Object.values(cg).sort((a,b)=>a.type.localeCompare(b.type)||b.fc-a.fc).forEach(g=>{
+    tQ+=g.qty;tF+=g.ft;
+    csv+=`"${TYPE_LBL[g.type]||g.type}","${g.fc}CT","${STATUS_LBL[g.status]||g.status}","${g.qty}","${Math.round(g.ft)}","${(g.ft/5280).toFixed(3)}"
+`;
+  });
+  csv+=`"TOTAL","","","${tQ}","${Math.round(tF)}","${(tF/5280).toFixed(3)}"
+
+`;
+  // Structures
+  csv+='STRUCTURES\n"Structure Type","Status","Quantity","Manufacturer / Model"\n';
+  const sg={};
+  fp.forEach(p=>{const k=p.ptype+'|'+p.status;if(!sg[k])sg[k]={ptype:p.ptype,status:p.status,qty:0,mfrs:new Set()};sg[k].qty++;if(p.manufacturer)sg[k].mfrs.add(p.manufacturer);});
+  let tP=0;
+  Object.values(sg).sort((a,b)=>a.ptype.localeCompare(b.ptype)).forEach(g=>{
+    tP+=g.qty;
+    csv+=`"${PT_TYPES[g.ptype]?.label||g.ptype}","${STATUS_LBL[g.status]||g.status}","${g.qty}","${[...g.mfrs].join('; ')||''}"
+`;
+  });
+  csv+=`"TOTAL","","${tP}",""
+`;
+  dlFile('BOM_'+(plan?.name||'plan').replace(/\s+/g,'_')+'.csv',csv,'text/csv');
+}
+
+// Re-render BOM live if it's open
+function maybeRefreshBOM(){
+  if(document.getElementById('bom-overlay').classList.contains('open'))renderBOM();
+}
+
+initMap();
+</script>
+</body>
+</html>

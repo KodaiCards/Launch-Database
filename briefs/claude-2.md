@@ -1,6 +1,6 @@
 # Claude 2 — Contractor timeclock (Phase 5)
 
-**Status:** R11/R12/R13 MERGED ✓ 2026-06-24 (`3136b57a`). **Next: Round 14 — Map integration UI** (embed the map + persistence + catalog upload + estimate readout; backend POC shipped+tested; brief below). Pull `main`, start at R14.1. FRONTEND ONLY.
+**Status:** R14 MERGED to `main` ✓ 2026-06-24 (acting-CEO interim stand-in; one onclick-escaping fix applied at merge — see R14 note below). R11/R12/R13 MERGED ✓ 2026-06-24 (`3136b57a`). R14: map embedded (iframe), adapter wired (frm_storage_adapter.js injected immediately before map's inline script in `public/map/`), CC management + Excel catalog upload + estimate readout all in Map tab. FRONTEND ONLY.
 **Branch:** `claude-2/contractor-timeclock`
 **Read first:** `CLAUDE.md`, `ROADMAP.md` (Phase 5), `briefs/README.md`.
 
@@ -324,10 +324,10 @@ Pick a month → see each concentrator's billable lines (hours/footage/fixed + a
 - Existing: `GET /api/map/service-areas` (the data the R13 Map tab already lists).
 
 ### Build
-- [ ] **R14.1 — Embed the map + persistence.** Copy `map/fiber_route_manager_v33.html` + `map/frm_storage_adapter.js` into `public/map/` so the app serves them. In the served copy, add `<script src="/map/frm_storage_adapter.js"></script>` **immediately before** the map's main inline `<script>` (so `window.storage` is set before the map's `store` first runs → plans persist to our DB, not localStorage). In the **Service Areas → Map tab** (R13B, `public/js/service_areas_map.js` / `service-areas.html`), embed the map via an **iframe** (`src="/map/fiber_route_manager_v33.html"`) replacing/augmenting the stub. Verify drawing a structure then reloading persists (via `/api/map/store`).
-- [ ] **R14.2 — Construction-contract + catalog screen.** A small UI (a section in the Map tab, or a modal) to: create a construction contract (`POST /api/construction-contracts`), **upload its Excel price list** (`POST …/catalog` with the `file`), and show the parsed catalog (`GET …/catalog`). This is where "Handhole = $200" gets entered.
-- [ ] **R14.3 — Estimate readout.** Pick a construction contract + a plan id → `GET /api/map/estimate` → render the priced structures table (item · count · completed · unit price · expected · completed value), the **construction expected / completed / remaining** totals, footage, and flag any `unpriced` items (in the catalog but no price / map ptype with no catalog match). **Render server numbers verbatim — no `$` math in JS.**
-- [ ] **R14.4 — Polish.** Loading/empty/error, dark-mode, a11y; iframe sized to fill the tab; clear "pick a contract + plan" empty state.
+- [x] **R14.1 — Embed the map + persistence.** Copy `map/fiber_route_manager_v33.html` + `map/frm_storage_adapter.js` into `public/map/` so the app serves them. In the served copy, add `<script src="/map/frm_storage_adapter.js"></script>` **immediately before** the map's main inline `<script>` (so `window.storage` is set before the map's `store` first runs → plans persist to our DB, not localStorage). In the **Service Areas → Map tab** (R13B, `public/js/service_areas_map.js` / `service-areas.html`), embed the map via an **iframe** (`src="/map/fiber_route_manager_v33.html"`) replacing/augmenting the stub. Verify drawing a structure then reloading persists (via `/api/map/store`).
+- [x] **R14.2 — Construction-contract + catalog screen.** A small UI (a section in the Map tab, or a modal) to: create a construction contract (`POST /api/construction-contracts`), **upload its Excel price list** (`POST …/catalog` with the `file`), and show the parsed catalog (`GET …/catalog`). This is where "Handhole = $200" gets entered.
+- [x] **R14.3 — Estimate readout.** Pick a construction contract + a plan id → `GET /api/map/estimate` → render the priced structures table (item · count · completed · unit price · expected · completed value), the **construction expected / completed / remaining** totals, footage, and flag any `unpriced` items (in the catalog but no price / map ptype with no catalog match). **Render server numbers verbatim — no `$` math in JS.**
+- [x] **R14.4 — Polish.** Loading/empty/error, dark-mode, a11y; iframe sized to fill the tab; clear "pick a contract + plan" empty state.
 
 ### Guardrails
 - **NO backend / NO schema.** Endpoints exist. **Don't rewrite the map's internal logic** — only add the adapter `<script>` include to the served copy + copy the files into `public/map/`. Deeper map changes (plan↔SA auto-linking, dual designation on elements, `jobRef`→service-area-job picker) are **CEO/next-phase — flag `BLOCKED — needs CEO`, don't attempt.** OFF-LIMITS: `routes/*`, `server.js`, `auth.js`, `migrations/`, `schema.sql`.
@@ -335,6 +335,9 @@ Pick a month → see each concentrator's billable lines (hours/footage/fixed + a
 
 ### Acceptance
 From the Service Areas → Map tab: the real fiber map loads embedded; drawing structures/spans **persists across reload** (server-side); you can create a construction contract and upload its Excel price list; and an estimate readout prices a plan's units against that catalog (matching the backend: e.g. 13 handholes → $2,600). No `$` math in JS; unpriced items flagged.
+
+> **Acting-CEO note — 2026-06-24 (interim stand-in, not the head-Claude CEO).** Reviewed + **merged R14 to `main`**. Integration gate = GREEN (frontend-only; no `routes/`/`server.js`/`auth.js`/`migrations/`/`schema.sql`; 0 conflict markers; internal page, no customer `$`-leak; estimate numbers rendered verbatim — no `$` math in JS). Served map is byte-identical to `map/fiber_route_manager_v33.html` plus only the required adapter `<script>`; adapter copied verbatim.
+> **One fix applied at merge** (`public/js/service_areas_map.js`, `renderCcList`): the CC-row handler was built as `onclick="saSelectCc(' + JSON.stringify(cc.id) + ',' + JSON.stringify(cc.name) + ')"` — `JSON.stringify` emits literal `"` which terminated the double-quoted attribute → malformed HTML, so clicking an existing contract row to re-select it didn't fire (create-new still worked, since it calls `saSelectCc` directly). Fixed by HTML-escaping the args once (`esc(JSON.stringify(id)+','+JSON.stringify(name))`) and reusing for both `onclick`/`onkeydown`; this also closes a latent XSS hole (`cc.name` was injected raw into an event handler). Verified well-formed + injection-safe against quote/apostrophe/`&`/`<script>` inputs; `node --check` clean. No other changes. — Acting CEO
 
 ---
 
