@@ -9,40 +9,35 @@
 - **Modularity:** same geographic area worked for an EC, then years later as **BAU (no EC)** → those jobs + maps must **not** combine. Multiple **clients** in one area → not combined **unless we choose to**. Keep it modular.
 - An **overall map tab**: select clients / service areas → see their jobs in that area.
 
-## Lifecycle change: `active → completed → final`
-Today routes/SAs have `build_finalized_at` (one finalize). Split into two milestones:
-- **completed** = the *build* is done → keep `build_finalized_at` as this. Triggers build-complete billing (progressive footage final, build-complete fixed jobs).
-- **final** = everything (close-out: plant records, final inventory…) is done → new **`closed_at`** on `service_area_routes` + `service_areas`. Triggers **close-out** job billing.
+## Lifecycle: `active → completed → final` (CONFIRMED 2026-06-24)
+- **completed** (`build_finalized_at`) — build done and **all billing happens here**, including build-complete and **close-out** jobs (plant records, final inventory). The operational + billing end state.
+- **final** (`closed_at`) — **archived/immutable**: nothing will ever change, still accessible read-only. **Not a billing trigger** — it locks the record after everything's billed + settled.
 
-So a route can be **completed** (built, mostly billed) but not **final** (plant records / inventory still to bill). Projection counts the close-out work as remaining until `closed_at`.
+So close-out jobs bill **at completed**; `final` is the archive/lock.
 
 ## Job billing timing — `bill_trigger` (unifies billing + projection)
 New `service_area_jobs.bill_trigger`:
-- `progressive` (default) — billed as work accrues (hourly monthly; footage by completed qty). *Most jobs.*
-- `build_complete` — billed once the route/SA is **completed** (`build_finalized_at`).
-- `closeout` — billed once the route/SA is **final** (`closed_at`). *Plant records, final inventory.*
+- `progressive` (default) — billed as work accrues: hourly monthly, footage by completed qty. *Most jobs; e.g. Resident Engineer bills the entire lifecycle.*
+- `completed` — billed once at **completed** (`build_finalized_at`). Covers build-complete fixed jobs **and** close-out jobs (plant records, final inventory).
 
-This refines the billing ledger already shipped: the "fixed earned when finalized" rule becomes "earned when its `bill_trigger` milestone is reached." Projection reads the same field to know what's still coming.
+Per-job + modular — each job picks its trigger. Refines the shipped billing ledger: "fixed earned when finalized" becomes "earned when its `bill_trigger` milestone fires." Projection reads the same field for what's still coming.
 
-## Projection model
-Projected total = **billed-to-date + projected-remaining**, computed per job then rolled up, **never merging across client/EC/program** (each concentrator is independent; rollups are opt-in by EC or client).
+## Projection model (CONFIRMED 2026-06-24)
+**The projection basis is the job's EXPECTED amount, known at creation** (footage/qty preloaded from the map × rate, or estimated_amount for hourly/fixed) — this holds for **both RUS and non-RUS**. Projected total = Σ expected; projected-remaining = **Σ (expected − billed)** per job. Computed per job, rolled up, **never merging across client/EC/program** (rollups opt-in by EC or client).
 
-Projected-remaining per job by type:
-- **Engineering (hourly, budget-bound, RUS):** the EC **engineering budget** is the cap. `remaining = max(0, engineering_budget − engineering_billed)`. **Burn rate** = engineering_billed ÷ months-elapsed → projected monthly run-rate + projected completion date.
-- **Footage (progressive):** `expected_footage (from map) × rate − billed`.
-- **Close-out / build-complete fixed/footage:** `known_amount − billed` (known_amount from map-preloaded footage × rate, or estimated_amount). Counts as remaining until its trigger fires, then it's billed.
-- Non-RUS / no-budget work: `Σ estimated_amount − billed` per job.
+- **Every job:** `projected_remaining = expected_amount − billed_to_date`. Progressive jobs draw down as they bill; `completed`-trigger jobs sit at full expected until completion.
+- **RUS engineering-budget overlay** (a *view*, not the base number — close-out jobs are **within** the budget so no double-count): show `engineering_budget` vs Σ projected-engineering vs billed, plus **burn rate** (engineering_billed ÷ months-elapsed) → projected monthly run-rate + projected completion date. Flags if projected runs over/under budget.
 
-EC/client rollup = Σ of its concentrators' projected-remaining (+ the budget-burn timing at EC level for RUS).
+EC/client rollup = Σ of its concentrators' projected-remaining (+ the budget-burn pace at EC level for RUS).
 
 ## Schema — migration `0067_projections.sql` (additive, idempotent)
 ```sql
 ALTER TABLE service_area_jobs   ADD COLUMN IF NOT EXISTS bill_trigger varchar(20) NOT NULL DEFAULT 'progressive';
-  -- CHECK in ('progressive','build_complete','closeout')
-ALTER TABLE service_area_routes ADD COLUMN IF NOT EXISTS closed_at timestamptz;
+  -- CHECK in ('progressive','completed')   -- close-out folds into 'completed'
+ALTER TABLE service_area_routes ADD COLUMN IF NOT EXISTS closed_at timestamptz;  -- 'final' = archived/locked
 ALTER TABLE service_areas       ADD COLUMN IF NOT EXISTS closed_at timestamptz;
--- Engineering budget: reuse existing budgets (EC-scoped, total_amount) + budget_codes.
--- (Whether a separate "engineering" budget number is needed = open Q2.)
+-- Engineering budget: reuse existing budgets (EC-scoped, total_amount). Exact amount
+-- doesn't matter yet (budgets get reworked in #4); the per-job expected amount is the base.
 ```
 
 ## Endpoints
@@ -56,12 +51,13 @@ The keystone already isolates work: each `service_area` belongs to one client + 
 ## Overall map tab (deferred — map is on hold)
 The data is ready to drive it (every SA carries client/EC/program + `map_geometry` hook). When the map lands: a tab rendering all SAs, with client/SA selectors that surface that area's jobs. **Build now:** a `GET /api/map/service-areas` data endpoint (id, name, client, EC, program, geometry, status) so the tab is a thin render later. **Defer:** the actual map rendering until Carter's map arrives.
 
-## Confirm before I build (the domain calls)
-1. **Two-stage lifecycle:** `build_finalized_at`="completed" + new `closed_at`="final"; close-out jobs bill at `closed_at`. Right model/naming?
-2. **Engineering budget source:** use the existing EC budget (`budgets.total_amount`, EC-scoped) as the engineering cap? Or is the engineering budget a *subset* (specific budget_codes / a separate number)? (This is also budgets-rework #4 — I can use the EC total now and refine with #4.)
-3. **Close-out vs budget (the double-count question):** are close-out jobs (plant records, final inventory) **inside** the engineering budget (so `budget − billed` already counts them — projection just shifts their *timing* to `closed_at`), or **separate** line items added **on top** of the budget? This determines whether projection = budget-burn alone vs budget-burn **+** close-out amounts.
-4. **Burn-rate window:** monthly burn = engineering_billed ÷ months since first bill (vs since EC start date)? And cap projected revenue at the budget (never project past it)?
-5. **`bill_trigger` model** (`progressive`/`build_complete`/`closeout`) — does that capture how you decide when each job bills?
+## Resolved (Carter 2026-06-24)
+1. ✅ Lifecycle: `completed` (build_finalized_at) where build-complete **and close-out** jobs bill; `final` (closed_at) = archived/immutable/read-only, not a billing trigger.
+2. ✅ Budget amount doesn't matter yet — use existing EC budget; refine in #4.
+3. ✅ Close-out jobs are **within** the budget → projection = per-job `expected − billed` (no double-count); budget is an overlay/pace view.
+4. ✅ **Projection base = the job's expected amount, set at creation** (footage/qty × rate), for RUS *and* non-RUS.
+5. ✅ `bill_trigger` = `progressive` | `completed` (RE is progressive across the lifecycle; plant records/final inventory are `completed`); per-job + modular.
+- Remaining detail: burn-rate window (since first bill vs EC start) — I'll default to **since first bill** and surface it; tweakable.
 
 ## Sequence once confirmed
 (a) migration 0067 → (b) wire `bill_trigger` into the billing ledger (close-out earns at `closed_at`, build-complete at `build_finalized_at`) + the two-stage finalize actions → (c) projection endpoints (CEO, tested vs dev DB: budget burn, close-out remaining, completed-vs-final) → (d) `GET /api/map/service-areas` data endpoint → (e) fan projection + two-stage UI + (later) map tab to C2.
