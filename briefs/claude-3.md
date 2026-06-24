@@ -86,3 +86,13 @@ Same guardrails: additive, `customer`-scoped, read-only, no $ beyond billed, NO 
 > Schema need (e.g. notifications, photos) → `BLOCKED — needs CEO` + ping; photos stay deferred to Phase 7.
 
 > **Note for CEO (task 24 caching):** the `/api/customer/service-areas` and `/api/customer/invoices` endpoints both return data across *all* of the user's linked clients, and the multi-client switcher filters in-memory. So I cache each fetch once and the client switch is a pure re-filter — no per-client refetch / cache invalidation is needed (more efficient than the brief's "invalidate on client switch", same correctness). The error/retry path re-fetches.
+
+---
+
+## Round 7 (R6 merged ✓ — clean). Sonnet @ medium. Start at task 25.
+> **Near the additive ceiling too.** The portal is mature. Deeper features (notifications, per-area documents/photos) need schema → **Phase 7 / CEO**. R7 is polish + comms; when done, set Status `DONE — additive work exhausted` and flag for CEO.
+- [ ] **25. First-run help / onboarding.** A dismissible overlay or "?" affordance explaining the tabs/status meanings for a first-time client. Frontend, `localStorage` dismiss.
+- [ ] **26. Contact / support.** A "Contact your project manager" action (mailto using the PM info already shown). No backend.
+- [ ] **27. a11y + cross-browser + perf round 2.** Audit labels/focus/contrast; verify on mobile + a second browser; confirm debounce/cache from R6 hold up.
+- [ ] **28. Print/export polish.** Clean single-area status sheet + an all-areas summary print/PDF for the client. Frontend.
+> Guardrails: read-only, customer-scoped, no $ beyond billed, NO schema. Schema need → BLOCKED + ping.
