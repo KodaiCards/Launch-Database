@@ -1,6 +1,6 @@
 # Claude 3 — Client portal: service-area status view (Phase 6)
 
-**Status:** DONE — ready for review (Phase 6 + all 6 next-up items; CEO batch-merge)
+**Status:** Tasks 1–13 DONE — ready for review (Phase 6 + Rounds 1–4) on `claude/inspiring-bell-7jiwdf`. Task 14 (site photos) `BLOCKED — needs CEO` (schema: photo↔service-area link + `client_visible` flag — see Round 4).
 **Branch:** `claude/inspiring-bell-7jiwdf` (harness-assigned; supersedes the original `claude-3/client-portal-status`)
 **Read first:** `CLAUDE.md`, `ROADMAP.md` (Phase 6), `briefs/README.md`.
 
@@ -52,4 +52,7 @@ Same guardrails: **read-only, `customer`-scoped, no $ beyond what the client is 
 - [x] **11. Status activity feed.** A simple "recent updates" list per area (latest job status changes / dates). If it needs a new read endpoint, add a `customer`-scoped one in `routes/customer_portal.js`; no new tables.
 - [x] **12. Account panel polish.** Read-only profile (name, email, linked client(s), contact-your-PM block). Reuse existing account modal; no new auth.
 - [x] **13. Portal accessibility + mobile.** Full a11y pass (labels, focus, contrast) + mobile layout across all tabs.
-- [ ] **14. Site photos (CHECK FIRST).** Goal: show client-visible site photos per service area. **Likely needs schema** (a photo↔service-area link + a `client_visible` flag). Inspect the photos/documents tables; if the link + visibility flag already exist, surface them read-only. If NOT → `BLOCKED — needs CEO`, describe the columns you'd need, skip to anything else.
+- [ ] **14. Site photos — `BLOCKED — needs CEO` (schema).** Checked `project_photos` (schema.sql): it links to `project_id` (legacy projects) only — **no `service_area_id` link and no `client_visible` flag**. To surface client-visible site photos per service area I'd need (CEO/schema, keystone is off-limits to me):
+  - **(a)** `project_photos.service_area_id uuid REFERENCES public.service_areas(id) ON DELETE CASCADE` (and/or `service_area_job_id`), and
+  - **(b)** `project_photos.client_visible boolean NOT NULL DEFAULT false` + an admin toggle to flip it (mirroring the `service_areas.client_visible` pattern).
+  With those, I can add a `customer`-scoped, read-only `GET /api/customer/service-areas/:id/photos` (gated on the area being a linked client's + `client_visible`) plus a scoped image route reusing the map endpoint's UPLOAD_DIR/traversal guards. Skipped per instructions (nothing after this in the queue).
