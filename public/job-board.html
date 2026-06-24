@@ -130,6 +130,11 @@ html[data-theme="dark"] .header-logo{filter:brightness(0) invert(1) opacity(.92)
       <option value="other">Other</option>
     </select>
     <button class="btn btn-secondary btn-sm" onclick="clearFilters()">Clear</button>
+    <div style="margin-left:auto;display:flex;gap:0;border:1px solid var(--gray-border);border-radius:6px;overflow:hidden">
+      <button id="grp-status" onclick="setGroupBy('status')" style="padding:6px 11px;font-size:12px;font-weight:500;border:none;background:var(--primary);color:#fff;cursor:pointer;font-family:inherit">Status</button>
+      <button id="grp-team"   onclick="setGroupBy('team')"   style="padding:6px 11px;font-size:12px;font-weight:500;border:none;border-left:1px solid var(--gray-border);background:none;color:var(--text-secondary);cursor:pointer;font-family:inherit">Team</button>
+      <button id="grp-client" onclick="setGroupBy('client')" style="padding:6px 11px;font-size:12px;font-weight:500;border:none;border-left:1px solid var(--gray-border);background:none;color:var(--text-secondary);cursor:pointer;font-family:inherit">Client</button>
+    </div>
   </div>
 
   <div id="board-wrap">
