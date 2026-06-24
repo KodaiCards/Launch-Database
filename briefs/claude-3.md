@@ -1,6 +1,6 @@
 # Claude 3 — Client portal: service-area status view (Phase 6)
 
-**Status:** Tasks 1–13 MERGED to main 2026-06-23 (Sonnet-scout reviewed: clean, no $-leak). Task 14 (site photos) **DEFERRED by CEO → Phase 7** (see decision below). **Round 5 issued — start at task 15.** Model: run as **Sonnet 4.6 @ medium effort** from here (cost protection).
+**Status:** Tasks 1–20 DONE — ready for review (Phase 6 + Rounds 1–5) on `claude/inspiring-bell-7jiwdf`. Task 14 (site photos) DEFERRED → Phase 7.
 **Branch:** `claude/inspiring-bell-7jiwdf` (harness-assigned; supersedes the original `claude-3/client-portal-status`)
 **Read first:** `CLAUDE.md`, `ROADMAP.md` (Phase 6), `briefs/README.md`.
 
@@ -63,12 +63,12 @@ Same guardrails: **read-only, `customer`-scoped, no $ beyond what the client is 
 
 ## Round 5 — portal depth (Sonnet @ medium; additive, `customer`-scoped, NO schema)
 Same guardrails as before: read-only, customer-scoped, no $ beyond what the client is billed, no keystone/schema changes. Push per task to your branch; CEO batch-merges. Schema need → `BLOCKED — needs CEO` + ping, skip ahead. Pull `main` first.
-- [ ] **15. Multi-client switcher.** If a `customer` user is linked to >1 client, add a client selector (dropdown) that filters the areas/invoices view to the chosen client. Uses the client list you already resolve; read-only. (If linked to one client, hide it.)
-- [ ] **16. Service-area filter + search.** On the Service Areas tab, add status filter + text search over the areas already fetched. Frontend only.
-- [ ] **17. "What's new" indicator.** Mark areas/invoices updated since the user's last visit using a `localStorage` timestamp (no schema, no backend). A small "updated" badge + a "last visited" line.
-- [ ] **18. Invoice list polish.** On the Invoices tab: sort + filter (sent / paid), a running total of billed vs paid (client-facing figures only — what they're billed, never internal cost). Frontend.
-- [ ] **19. Portal mini-dashboard.** A compact visual summary across all the client's areas (progress bars / a simple status breakdown). Frontend over data you already fetch.
-- [ ] **20. First-run + resilience polish.** A friendly first-run state for a brand-new client with no `client_visible` areas yet, plus consistent loading/error states and a retry affordance on fetch failures.
+- [x] **15. Multi-client switcher.** If a `customer` user is linked to >1 client, add a client selector (dropdown) that filters the areas/invoices view to the chosen client. Uses the client list you already resolve; read-only. (If linked to one client, hide it.)
+- [x] **16. Service-area filter + search.** On the Service Areas tab, add status filter + text search over the areas already fetched. Frontend only.
+- [x] **17. "What's new" indicator.** Mark areas/invoices updated since the user's last visit using a `localStorage` timestamp (no schema, no backend). A small "updated" badge + a "last visited" line.
+- [x] **18. Invoice list polish.** On the Invoices tab: sort + filter (sent / paid), a running total of billed vs paid (client-facing figures only — what they're billed, never internal cost). Frontend.
+- [x] **19. Portal mini-dashboard.** A compact visual summary across all the client's areas (progress bars / a simple status breakdown). Frontend over data you already fetch.
+- [x] **20. First-run + resilience polish.** A friendly first-run state for a brand-new client with no `client_visible` areas yet, plus consistent loading/error states and a retry affordance on fetch failures.
 
 ### Merge hygiene (you hit trouble syncing main last time)
 You don't need to keep `main` merged into your branch — just push your branch; **CEO merges to main.** If you DO want to sync: `git fetch origin && git merge origin/main`. After this merge it'll fast-forward cleanly. If a conflict ever hits **`briefs/claude-3.md`**, it's not your file to win — take main's copy: `git checkout --theirs briefs/claude-3.md && git add briefs/claude-3.md`. Keep your conflict resolution to your own feature files (`public/customer.html`, `routes/customer_portal.js`).

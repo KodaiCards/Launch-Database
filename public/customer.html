@@ -449,7 +449,12 @@ async function loadCustomerData(){
     renderCustomerProjects();
   } catch (e) {
     document.getElementById('cp-projects-body').innerHTML =
-      `<div class="empty-state" style="color:var(--danger-text)">Failed to load: ${esc(e.message)}</div>`;
+      `<div class="empty-state" style="color:var(--danger-text)">
+        <i class="fa-solid fa-triangle-exclamation"></i>
+        <p>Couldn't load projects.</p>
+        <p style="font-size:12px">${esc(e.message)}</p>
+        <button class="btn btn-secondary btn-sm" style="margin-top:10px" onclick="loadCustomerData()">Try again</button>
+      </div>`;
   }
 }
 
@@ -579,7 +584,11 @@ function cpRenderInvoices(){
   const body = document.getElementById('cp-invoices-body');
   let all = (_customerInvoices || []).filter(inv => !_selectedClientId || inv.client_id === _selectedClientId);
   if (!all.length){
-    body.innerHTML = '<div class="empty-state"><i class="fa-solid fa-receipt"></i><p>No invoices yet.</p></div>';
+    body.innerHTML = `<div class="empty-state">
+      <i class="fa-solid fa-receipt"></i>
+      <p style="font-size:15px;font-weight:600;color:var(--text)">No invoices yet</p>
+      <p style="font-size:13px;max-width:320px;margin:6px auto 0;color:var(--text-muted)">Invoices will appear here once your Launch Fiber project manager sends them to your account.</p>
+    </div>`;
     return;
   }
   // Apply status filter
@@ -853,7 +862,16 @@ function cpRenderLanding(){
   const el = document.getElementById('cp-landing');
   if (!el) return;
   const areas = (_customerServiceAreas || []).filter(a => !_selectedClientId || a.client_id === _selectedClientId);
-  if (!areas.length){ el.innerHTML = ''; return; }
+  if (!areas.length){
+    // First-run welcome: if no areas at all (not a filter issue), show onboarding message
+    const hasAll = (_customerServiceAreas || []).length === 0;
+    el.innerHTML = hasAll ? `<div class="card" style="padding:20px 24px;margin-bottom:14px;text-align:center">
+      <i class="fa-solid fa-satellite-dish" style="font-size:32px;color:var(--primary);opacity:.6;margin-bottom:10px"></i>
+      <div style="font-size:15px;font-weight:600;margin-bottom:6px">Welcome to your Launch Fiber portal</div>
+      <div style="font-size:13px;color:var(--text-muted);max-width:360px;margin:0 auto">Your service areas and invoices will appear here once your Launch Fiber project manager publishes them to your account.</div>
+    </div>` : '';
+    return;
+  }
   const isDone = s => ['completed','billed','complete'].includes(String(s || '').toLowerCase());
   const active = areas.filter(a => String(a.status || '').toLowerCase() === 'active').length;
   const done = areas.filter(a => isDone(a.status)).length;
