@@ -154,7 +154,30 @@ button{font-family:inherit;cursor:pointer;border:none;background:none;color:inhe
   .modal-overlay { position: static !important; display: block !important; background: none !important; padding: 0 !important; }
   .modal-content { box-shadow: none !important; max-width: 100% !important; max-height: none !important; border: none !important; }
   .modal-body { overflow: visible !important; max-height: none !important; }
+  /* P4: off-screen print sheet becomes the sole visible element */
+  #cp-print-sheet { position: absolute !important; left: 0 !important; top: 0 !important; visibility: visible !important; display: block !important; }
+  #cp-print-sheet * { visibility: visible !important; }
 }
+/* P4: print sheet sits off-screen until printing */
+#cp-print-sheet{position:absolute;left:-9999px;top:0;width:100%;background:#fff;color:#212529;font-family:'Inter',sans-serif;font-size:13px;padding:24px;display:none}
+.cps-header{display:flex;justify-content:space-between;align-items:flex-start;border-bottom:2px solid #1B5FA0;padding-bottom:12px;margin-bottom:18px}
+.cps-brand{font-size:17px;font-weight:700;color:#1B5FA0}
+.cps-meta{text-align:right;font-size:11px;color:#6B6B6B}
+.cps-title{font-size:15px;font-weight:700;margin-bottom:14px}
+.cps-row{display:grid;gap:6px 16px;padding:10px 0;border-bottom:1px solid #EEF1F5}
+.cps-row:last-child{border-bottom:none}
+.cps-lbl{font-size:10px;text-transform:uppercase;letter-spacing:.5px;color:#6B6B6B}
+.cps-val{font-weight:500}
+.cps-pill{display:inline-block;padding:1px 7px;border-radius:8px;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.4px}
+.cps-jobs{margin-top:8px;border:1px solid #EEF1F5;border-radius:6px;overflow:hidden}
+.cps-jobs th{background:#F5F7FA;padding:5px 10px;text-align:left;font-size:10px;text-transform:uppercase;letter-spacing:.4px;color:#6B6B6B}
+.cps-jobs td{padding:6px 10px;font-size:12px;border-top:1px solid #EEF1F5}
+.cps-summary-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:18px}
+.cps-tile{background:#F5F7FA;border-radius:8px;padding:10px 14px}
+.cps-tile-num{font-size:22px;font-weight:700}
+.cps-tile-lbl{font-size:10px;color:#6B6B6B;text-transform:uppercase;letter-spacing:.4px;margin-top:2px}
+.cps-prog-track{height:6px;background:#E0E0E0;border-radius:3px;overflow:hidden;margin-top:4px}
+.cps-prog-fill{height:100%;background:#1B5FA0;border-radius:3px}
 
 /* Modal */
 .modal-overlay{display:none;position:fixed;inset:0;background:var(--modal-backdrop);z-index:100;align-items:center;justify-content:center;padding:14px}
@@ -364,6 +387,9 @@ html[data-theme="dark"] .sk::after{background:linear-gradient(90deg,transparent,
     </div>
   </div>
 </div>
+
+<!-- P4: off-screen print sheet — populated by cpPrintSummary() / cpPrintArea() -->
+<div id="cp-print-sheet" aria-hidden="true"></div>
 
 <!-- Project detail modal — opens on row click -->
 <div class="modal-overlay" id="cp-detail-modal" role="dialog" aria-modal="true" aria-labelledby="cp-detail-title">
@@ -1028,6 +1054,77 @@ function cpDownloadAreaPdf(name){
   cpPrintWithTitle(name ? (name + ' — status') : 'Service area status');
 }
 
+// All-areas summary print sheet — uses #cp-print-sheet + @media print so
+// every area is visible (not just the visible modal); no modal required.
+function cpPrintSummary(){
+  const areas = (_customerServiceAreas || []).filter(a => !_selectedClientId || a.client_id === _selectedClientId);
+  const sheet = document.getElementById('cp-print-sheet');
+  if (!sheet || !areas.length) { window.print(); return; }
+  const q = (_saFilter.search || '').trim().toLowerCase();
+  const st = _saFilter.status;
+  const filtered = areas.filter(a => {
+    if (q && !(a.name||'').toLowerCase().includes(q) && !(a.work_order_number||'').toLowerCase().includes(q)) return false;
+    if (st && (a.status||'') !== st) return false;
+    return true;
+  });
+  const isDone = s => ['completed','billed','complete'].includes(String(s||'').toLowerCase());
+  const active = filtered.filter(a => String(a.status||'').toLowerCase() === 'active').length;
+  const done = filtered.filter(a => isDone(a.status)).length;
+  const totalJobs = filtered.reduce((s,a) => s + (Number(a.jobs_total)||0), 0);
+  const totalDone = filtered.reduce((s,a) => s + (Number(a.jobs_done)||0), 0);
+  const overall = totalJobs > 0 ? Math.round(totalDone / totalJobs * 100) : null;
+  const clientName = (_currentClients||[]).length === 1 ? (_currentClients[0].name || '') : ((_currentClients||[]).map(c=>c.name).join(', '));
+  const today = fmtDate(new Date().toISOString().slice(0,10));
+  const areaRows = filtered.map(a => {
+    const s = String(a.status||'active').toLowerCase();
+    const pct = a.completion_pct;
+    const pillBg = s === 'active' ? '#E8F0FB' : s === 'completed' || s === 'billed' ? '#E8F5E9' : s === 'on_hold' ? '#FFF8E1' : '#F5F7FA';
+    const pillColor = s === 'active' ? '#0D47A1' : s === 'completed' || s === 'billed' ? '#1B5E20' : s === 'on_hold' ? '#7A4F0E' : '#5A6470';
+    const jobsHtml = (a.jobs||[]).length
+      ? `<table class="cps-jobs" style="margin-top:6px">
+          <tr><th>Job</th><th>Team</th><th>Status</th><th>Started</th><th>Completed</th></tr>
+          ${(a.jobs||[]).map(j=>`<tr><td>${esc(j.job_name||'—')}</td><td>${esc(SA_TEAM_LABELS[j.team]||j.team||'—')}</td><td>${esc(String(j.status||'').replace(/_/g,' '))}</td><td>${fmtDate(j.start_date)}</td><td>${fmtDate(j.completed_date)}</td></tr>`).join('')}
+        </table>` : '';
+    return `<div class="cps-row" style="display:block">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px">
+        <div>
+          <strong>${esc(a.name)}</strong>
+          ${a.work_order_number ? `<span style="font-family:monospace;font-size:11px;margin-left:8px;color:#6B6B6B">WO# ${esc(a.work_order_number)}</span>` : ''}
+        </div>
+        <span class="cps-pill" style="background:${pillBg};color:${pillColor}">${esc(s.replace('_',' '))}</span>
+      </div>
+      ${pct != null ? `<div style="margin-bottom:6px;font-size:11px;color:#6B6B6B">${a.jobs_done} of ${a.jobs_total} jobs done · ${pct}%
+        <div class="cps-prog-track" style="margin-top:3px"><div class="cps-prog-fill" style="width:${pct}%"></div></div>
+      </div>` : ''}
+      ${jobsHtml}
+    </div>`;
+  }).join('');
+  sheet.style.display = 'block';
+  sheet.innerHTML = `
+    <div class="cps-header">
+      <div><div class="cps-brand">Launch Fiber Services</div><div style="font-size:11px;color:#6B6B6B">Service Areas — Status Summary</div></div>
+      <div class="cps-meta">${clientName ? esc(clientName) + '<br>' : ''}Generated ${esc(today)}</div>
+    </div>
+    <div class="cps-summary-grid">
+      <div class="cps-tile"><div class="cps-tile-num">${filtered.length}</div><div class="cps-tile-lbl">Total areas</div></div>
+      <div class="cps-tile"><div class="cps-tile-num">${active}</div><div class="cps-tile-lbl">Active</div></div>
+      <div class="cps-tile"><div class="cps-tile-num">${done}</div><div class="cps-tile-lbl">Completed</div></div>
+      <div class="cps-tile"><div class="cps-tile-num">${overall != null ? overall + '%' : '—'}</div><div class="cps-tile-lbl">Overall complete</div>
+        ${overall != null ? `<div class="cps-prog-track"><div class="cps-prog-fill" style="width:${overall}%"></div></div>` : ''}
+      </div>
+    </div>
+    <div class="cps-title">Service Areas (${filtered.length})</div>
+    ${areaRows}
+    <div style="font-size:10px;color:#6B6B6B;margin-top:20px;border-top:1px solid #EEF1F5;padding-top:10px">Launch Fiber Services · ${esc(today)}</div>`;
+  // Give the DOM a tick to render, then print and clean up.
+  requestAnimationFrame(() => {
+    cpPrintWithTitle(clientName ? clientName + ' — Service Area Summary' : 'Service Area Summary');
+    const afterClean = () => { sheet.style.display = 'none'; sheet.innerHTML = ''; window.removeEventListener('afterprint', afterClean); };
+    window.addEventListener('afterprint', afterClean);
+    setTimeout(afterClean, 3000); // fallback
+  });
+}
+
 // ─── Service Areas (Phase 6 — keystone status view, no $) ─────────────
 // Backed by GET /api/customer/service-areas, which returns ONLY
 // status/progress (no rates, amounts, or invoices). Render mirrors that:
@@ -1095,6 +1192,7 @@ function cpRenderSaFilter(totalCount){
       ${['active','on_hold','completed','billed'].map(s => `<option value="${s}"${_saFilter.status===s?' selected':''}>${s.replace('_',' ')}</option>`).join('')}
     </select>
     <button class="btn btn-secondary btn-sm" id="sa-clear" style="display:${hasFilt ? '' : 'none'}" onclick="cpClearSaFilter()">Clear</button>
+    <button class="btn btn-secondary btn-sm cp-no-print" style="margin-left:auto" onclick="cpPrintSummary()" aria-label="Print all-areas summary"><i class="fa-solid fa-print" aria-hidden="true"></i> Print</button>
   </div>`;
 }
 
