@@ -1,6 +1,6 @@
 # Claude 2 — Contractor timeclock (Phase 5)
 
-**Status:** ACTIVE — Round 9: Service-Area Workspace UI. Write-path endpoints + migration 0065 are LIVE; build the detail view against them. (Portal P1–P4 done 2026-06-24.)
+**Status:** ACTIVE — Round 10: Client + EC management UI in the cluster (R9 workspace UI merged ✓ `18b4fbd0`). All backend endpoints already exist — this is FRONTEND ONLY.
 **Branch:** `claude-2/contractor-timeclock`
 **Read first:** `CLAUDE.md`, `ROADMAP.md` (Phase 5), `briefs/README.md`.
 
@@ -225,4 +225,33 @@ Nice work — fast and clean (good catch on the theme key + the export mount not
 ### Acceptance
 Open a service area in the cluster → header with correct EC/program badge; route selector (or direct render when no routes); 4 cost tiles showing **server** values with working "show to client" checkboxes that persist; materials with expected/completed/remaining + expandable per-unit rows + manual add; jobs with "Various → per-person" expand + notes/dates; finalize build flips status/Progress/bars and reopens; zero pop-ups. Push per logical chunk to your branch; CEO merges.
 
-**Status:** DONE — R9 MERGED 2026-06-24 (commit `18b4fbd0`). Single self-contained `public/area.html` (+680/−190); money display-only verified (all `$` via `fmtMoney(rollup.*)`, no JS cost math), all endpoints wired to existing backend, 0 conflict markers. Good call keeping it inline rather than touching the off-limits `service_areas_ui.js`. **C2 now IDLE** — next worker-eligible work is the client/EC create-edit *forms* once the CEO lands those write endpoints (HANDOFF §6 step 3); don't start until briefed.
+**Status:** DONE — R9 MERGED 2026-06-24 (commit `18b4fbd0`). Single self-contained `public/area.html` (+680/−190); money display-only verified (all `$` via `fmtMoney(rollup.*)`, no JS cost math), all endpoints wired to existing backend, 0 conflict markers. Good call keeping it inline rather than touching the off-limits `service_areas_ui.js`.
+
+---
+
+## Round 10 — Client + EC management in the cluster (the write-path UI). Sonnet @ medium.
+**This is FRONTEND ONLY — every endpoint you need already exists and is mounted.** Today the cluster `clients.html` is read-only (it only GETs `/api/cluster/clients` + `/api/money/statement`), so to create a client or engineering contract you have to bounce back to the legacy `admin.html`. Your job: make the cluster a complete client/EC management surface so people never leave it. Build against the existing endpoints below — **do NOT add or modify backend.**
+
+> ⚠️ CI is down (GitHub Actions billing-locked) — CEO verifies locally. Push clean, eyeball-tested work; note anything you couldn't check. Client/EC writes are `requireAdmin`, so test logged in as **admin**.
+
+### Endpoints (ALL LIVE — wire the UI to these; none need new backend)
+- **Clients:** `GET /api/clients` · `POST /api/clients {name,notes}` · `PUT /api/clients/:id {name,notes,show_contract,show_work_order}` · `DELETE /api/clients/:id` (cascade; supports `?preview=true` for counts).
+- **Engineering contracts:** `GET /api/engineering-contracts?client_id=` · `GET /api/engineering-contracts/:id` · `POST /api/engineering-contracts {client_id,name,contract_number,loan_name,notes,program}` · `PUT /api/engineering-contracts/:id {name,contract_number,loan_name,notes,active,program}` · `DELETE …` (409s with a friendly message if still referenced).
+- **`program` ∈ `rus|bau|gfr|other`.** An EC always means **RUS** work — so on the EC form, default/lock the program to `rus` and explain it (non-RUS work has no EC; it sits directly under the client via the service-area program field). Show a program badge in the list.
+- **Service-area create modal** already POSTs `/api/service-areas` with the EC⟺RUS rule baked in server-side (`program='rus'` auto-set when an EC is attached). You're extending its pickers, not its logic.
+
+### Tasks (push per task to your branch; CEO merges)
+- [ ] **R10.1 — Client create/edit on `clients.html`.** "New client" button → inline form/modal (name, notes, `show_contract`, `show_work_order` toggles) → `POST /api/clients`; row edit → `PUT`. Optimistic insert/update + undo bar (`public/js/undo_bar.js`), no confirm pop-ups. Re-use the existing list render; add a code path, don't rewrite it.
+- [ ] **R10.2 — EC list + create/edit per client.** In each client's expand panel, list that client's ECs (`GET /api/engineering-contracts?client_id=`) with a program badge; "New EC" + edit form (name, contract_number, loan_name, program [default `rus`], active toggle, notes) → `POST`/`PUT`. Surface the 409 "still referenced" message cleanly on delete.
+- [ ] **R10.3 — Inline create in the SA-create modal.** In `service-areas.html`'s New-Service-Area modal, add "+ new client" and "+ new EC" affordances beside the client/EC pickers so the whole create flow stays in the cluster (no bounce to legacy admin). When an EC is selected, the program field should reflect RUS automatically (mirror the server rule; don't recompute money or anything else).
+- [ ] **R10.4 — Polish.** App-shell themed, dark-mode, a11y (labels/focus/aria on the new forms), loading/empty/error states, correct `data-active` rail. Per-logical-chunk push.
+
+### Guardrails
+- **NO backend.** Every endpoint exists. If you think you need one, STOP → set Status `BLOCKED — needs CEO` with exactly what's missing, ping Carter, move on. **OFF-LIMITS:** `routes/*`, `auth.js`, `server.js`, `migrations/`, `schema.sql`, and structural edits to `public/js/service_areas_ui.js` (additive code paths only there).
+- **No `$` math** anywhere new (not that this surface has money — keep it that way).
+- Additive only; reuse existing list/render code, add paths rather than rewriting. Optimistic + undo bar; zero confirmation pop-ups.
+
+### Acceptance
+From the cluster alone: create a client; add a RUS EC under it (program shows RUS, locked-with-explanation); edit both; create a service area picking that client/EC inline without leaving the cluster; the new SA gets `program='rus'` (server-enforced). No pop-ups, undo works, dark-mode + a11y clean.
+
+> **Note for CEO:** client/EC writes are `requireAdmin` while SA writes are `requireManagerOrAdmin` — if managers (non-admin) should create clients/ECs from the cluster, that's a backend gate change = CEO decision. Flagged in HANDOFF §8; not a R10 blocker (admin can do everything today).

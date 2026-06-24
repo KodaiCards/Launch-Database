@@ -143,6 +143,7 @@ Client
 - Switching Railway to `npm start` (needed before auto-migrating; touches prod boot).
 - Contact email on the customer portal currently `info@launchfiberservices.com` — confirm that's the right address (Carter's own domain is `launchfiber.com`; the company is "Launch Fiber Services" — likely fine, but verify).
 - Invoice template: scrap the AI-vision one for a simple configurable template (ROADMAP Phase 4) — fields + per-client variants TBD.
+- **Client/EC write gating:** `POST/PUT/DELETE /api/clients` + `/api/engineering-contracts` are `requireAdmin`, but SA writes are `requireManagerOrAdmin`. If non-admin managers should create clients/ECs from the cluster, that's a backend gate change (CEO). Moot while Carter is the only admin; revisit when managers use the cluster. (Surfaced building C2 R10.)
 
 **Deferred (not now):** Phase 7 site photos/files per service area (`project_photos` needs `service_area_id` + `client_visible` columns — no clean per-program/area linkage exists yet); KMZ folder-sync; real-time SSE consolidation; materials/BOM; global search polish. All in `ROADMAP.md` with locked decisions.
 
