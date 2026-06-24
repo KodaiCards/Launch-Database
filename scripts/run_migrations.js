@@ -24,7 +24,7 @@ const args = process.argv.slice(2);
 const cmd = args[0] || 'apply';
 const arg1 = args[1];
 
-async function _listMigrations() {
+function _listMigrations() {
   if (!fs.existsSync(MIGRATIONS_DIR)) return [];
   return fs.readdirSync(MIGRATIONS_DIR)
     .filter(f => f.endsWith('.sql') && !f.startsWith('.'))

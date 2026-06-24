@@ -54,6 +54,13 @@ function prevStatus(team, current) {
 
 const PROGRAMS = ['rus', 'bau', 'gfr', 'other'];
 
+// Cost bucket by DISCIPLINE: the construction team is construction cost (labor);
+// everything else (permitting/design/inspection) is engineering cost — what LFS
+// bills. Materials are construction cost too, but stay a separate line item.
+function costCategoryFor(team) {
+  return team === 'construction' ? 'construction' : 'engineering';
+}
+
 module.exports = function installServiceAreaRoutes(app, pool, mw) {
   const { logAudit } = require('./_audit');
   const requireAdmin = (mw && mw.requireAdmin) || ((req, res, next) => next());
@@ -79,6 +86,40 @@ module.exports = function installServiceAreaRoutes(app, pool, mw) {
       [jobId]
     );
     return rows[0];
+  }
+
+  // Recompute a material's completed_quantity from its units when it HAS units
+  // (discrete items like closures track completion per-unit — this is what the
+  // map sync drives). Footage/bulk materials with no units keep their set value.
+  async function recomputeMaterial(materialId) {
+    const { rows } = await pool.query(
+      `UPDATE service_area_materials m SET
+         completed_quantity = CASE
+           WHEN EXISTS (SELECT 1 FROM service_area_material_units WHERE material_id = m.id)
+             THEN (SELECT COUNT(*) FROM service_area_material_units WHERE material_id = m.id AND status = 'installed')
+           ELSE m.completed_quantity
+         END
+       WHERE m.id = $1 RETURNING *`,
+      [materialId]
+    );
+    return rows[0];
+  }
+
+  // Roll a route-level finalize up to the area: the area is finalized iff it has
+  // routes and EVERY route is finalized; otherwise the area flag is cleared.
+  async function syncAreaFinalize(areaId) {
+    if (!areaId) return;
+    await pool.query(
+      `UPDATE service_areas sa SET
+         build_finalized_at = CASE
+           WHEN (SELECT COUNT(*) FROM service_area_routes WHERE service_area_id = sa.id) > 0
+            AND (SELECT COUNT(*) FROM service_area_routes WHERE service_area_id = sa.id AND build_finalized_at IS NULL) = 0
+           THEN COALESCE(sa.build_finalized_at, now())
+           ELSE NULL END,
+         updated_at = now()
+       WHERE sa.id = $1`,
+      [areaId]
+    );
   }
 
   // ─── Service Areas ───────────────────────────────────────────────────────
@@ -212,6 +253,10 @@ module.exports = function installServiceAreaRoutes(app, pool, mw) {
     if (Object.prototype.hasOwnProperty.call(req.body, 'engineering_contract_id') && req.body.engineering_contract_id) {
       sets.push(`program = 'rus'`);
     }
+    // Client-portal tile visibility (jsonb) — which summary tiles the client sees.
+    if (Object.prototype.hasOwnProperty.call(req.body, 'client_visible_metrics') && req.body.client_visible_metrics != null) {
+      sets.push(`client_visible_metrics = $${i}::jsonb`); vals.push(JSON.stringify(req.body.client_visible_metrics)); i++;
+    }
     if (!sets.length) return res.status(400).json({ error: 'No fields to update' });
     sets.push(`updated_at = now()`);
     vals.push(uid(req)); sets.push(`updated_by_user_id = $${i}`);
@@ -239,6 +284,229 @@ module.exports = function installServiceAreaRoutes(app, pool, mw) {
       console.error('[service-areas:delete]', e && e.message);
       res.status(500).json({ error: 'Failed to delete service area.' });
     }
+  });
+
+  // ─── Service-Area Routes (OPTIONAL subdivision: own map · status · finalize) ─
+  // A service area may have routes (physical fiber paths). Jobs + materials carry
+  // a nullable route_id; with no routes they attach to the area directly.
+
+  app.get('/api/service-areas/:id/routes', requireAuth(STAFF_ROLES), async (req, res) => {
+    try {
+      const { rows } = await pool.query(
+        `SELECT * FROM service_area_routes WHERE service_area_id = $1 ORDER BY sort_order, created_at`,
+        [req.params.id]);
+      res.json(rows);
+    } catch (e) { console.error('[sa-routes:list]', e && e.message); res.status(500).json({ error: 'Failed to list routes.' }); }
+  });
+
+  app.post('/api/service-areas/:id/routes', requireManagerOrAdmin, async (req, res) => {
+    const b = req.body || {};
+    if (!b.name || !String(b.name).trim()) return res.status(400).json({ error: 'name is required' });
+    try {
+      const sa = await pool.query('SELECT id FROM service_areas WHERE id = $1', [req.params.id]);
+      if (!sa.rows.length) return res.status(404).json({ error: 'Service area not found' });
+      const { rows } = await pool.query(
+        `INSERT INTO service_area_routes
+           (service_area_id, name, status, sort_order, notes, client_visible, created_by_user_id, updated_by_user_id)
+         VALUES ($1,$2,COALESCE($3,'active'),COALESCE($4,0),$5,COALESCE($6,false),$7,$7)
+         RETURNING *`,
+        [req.params.id, String(b.name).trim(), b.status || null, b.sort_order ?? null, b.notes || null, b.client_visible, uid(req)]);
+      logAudit(pool, { req, action: 'service_area_route.create', entity_type: 'service_area_route',
+        entity_id: rows[0].id, after: { service_area_id: req.params.id, name: rows[0].name }, source: 'admin' }).catch(() => {});
+      res.status(201).json(rows[0]);
+    } catch (e) { console.error('[sa-routes:create]', e && e.message); res.status(500).json({ error: 'Failed to create route.' }); }
+  });
+
+  const SAROUTE_FIELDS = ['name', 'status', 'sort_order', 'map_file_path', 'map_filename', 'notes', 'client_visible'];
+  app.put('/api/service-area-routes/:id', requireManagerOrAdmin, async (req, res) => {
+    const sets = [], vals = [req.params.id]; let i = 2;
+    for (const f of SAROUTE_FIELDS) {
+      if (Object.prototype.hasOwnProperty.call(req.body, f)) {
+        let v = req.body[f]; if (v === '') v = null;
+        sets.push(`${f} = $${i}`); vals.push(v); i++;
+      }
+    }
+    if (!sets.length) return res.status(400).json({ error: 'No fields to update' });
+    sets.push(`updated_at = now()`); vals.push(uid(req)); sets.push(`updated_by_user_id = $${i}`);
+    try {
+      const { rows } = await pool.query(`UPDATE service_area_routes SET ${sets.join(', ')} WHERE id = $1 RETURNING *`, vals);
+      if (!rows[0]) return res.status(404).json({ error: 'Route not found' });
+      logAudit(pool, { req, action: 'service_area_route.update', entity_type: 'service_area_route', entity_id: rows[0].id, source: 'admin' }).catch(() => {});
+      res.json(rows[0]);
+    } catch (e) { console.error('[sa-routes:update]', e && e.message); res.status(500).json({ error: 'Failed to update route.' }); }
+  });
+
+  // Delete a route — its jobs/materials fall back to area-level (route_id → NULL via FK).
+  app.delete('/api/service-area-routes/:id', requireManagerOrAdmin, async (req, res) => {
+    try {
+      const { rows } = await pool.query('DELETE FROM service_area_routes WHERE id = $1 RETURNING service_area_id', [req.params.id]);
+      if (!rows.length) return res.status(404).json({ error: 'Route not found' });
+      await syncAreaFinalize(rows[0].service_area_id);
+      logAudit(pool, { req, action: 'service_area_route.delete', entity_type: 'service_area_route', entity_id: req.params.id, source: 'admin' }).catch(() => {});
+      res.json({ ok: true });
+    } catch (e) { console.error('[sa-routes:delete]', e && e.message); res.status(500).json({ error: 'Failed to delete route.' }); }
+  });
+
+  // ─── Finalize build ─────────────────────────────────────────────────────────
+  // Per route: set build_finalized_at + status 'complete' (reopen clears it, back
+  // to 'active'). Area-level finalize cascades to every route. No confirm prompt.
+
+  app.post('/api/service-area-routes/:id/finalize', requireManagerOrAdmin, async (req, res) => {
+    const finalize = !(req.body && req.body.finalized === false);
+    try {
+      const { rows } = await pool.query(
+        `UPDATE service_area_routes
+           SET build_finalized_at = ${finalize ? 'now()' : 'NULL'}, status = $2,
+               updated_at = now(), updated_by_user_id = $3
+         WHERE id = $1 RETURNING *`,
+        [req.params.id, finalize ? 'complete' : 'active', uid(req)]);
+      if (!rows[0]) return res.status(404).json({ error: 'Route not found' });
+      await syncAreaFinalize(rows[0].service_area_id);
+      logAudit(pool, { req, action: 'service_area_route.finalize', entity_type: 'service_area_route',
+        entity_id: rows[0].id, after: { finalized: finalize }, source: 'admin' }).catch(() => {});
+      res.json(rows[0]);
+    } catch (e) { console.error('[sa-routes:finalize]', e && e.message); res.status(500).json({ error: 'Failed to finalize route.' }); }
+  });
+
+  app.post('/api/service-areas/:id/finalize', requireManagerOrAdmin, async (req, res) => {
+    const finalize = !(req.body && req.body.finalized === false);
+    try {
+      await pool.query(
+        `UPDATE service_area_routes SET build_finalized_at = ${finalize ? 'now()' : 'NULL'},
+           status = $2, updated_at = now() WHERE service_area_id = $1`,
+        [req.params.id, finalize ? 'complete' : 'active']);
+      const { rows } = await pool.query(
+        `UPDATE service_areas SET build_finalized_at = ${finalize ? 'now()' : 'NULL'},
+           status = $2, updated_at = now(), updated_by_user_id = $3 WHERE id = $1 RETURNING *`,
+        [req.params.id, finalize ? 'complete' : 'active', uid(req)]);
+      if (!rows[0]) return res.status(404).json({ error: 'Service area not found' });
+      logAudit(pool, { req, action: 'service_area.finalize', entity_type: 'service_area',
+        entity_id: rows[0].id, after: { finalized: finalize }, source: 'admin' }).catch(() => {});
+      res.json(rows[0]);
+    } catch (e) { console.error('[service-areas:finalize]', e && e.message); res.status(500).json({ error: 'Failed to finalize service area.' }); }
+  });
+
+  // ─── Materials (expected vs completed; map-sourced or manual) ───────────────
+  // quantity = EXPECTED; completed_quantity = installed (auto-rolled from units
+  // when a material has units). Remaining is computed client-side (exp − done).
+
+  app.get('/api/service-areas/:id/materials', requireAuth(STAFF_ROLES), async (req, res) => {
+    try {
+      const conds = ['m.service_area_id = $1']; const vals = [req.params.id];
+      if (req.query.route_id) { vals.push(req.query.route_id); conds.push(`m.route_id = $${vals.length}`); }
+      const { rows } = await pool.query(
+        `SELECT m.*, (SELECT COUNT(*) FROM service_area_material_units u WHERE u.material_id = m.id) AS unit_count
+           FROM service_area_materials m WHERE ${conds.join(' AND ')} ORDER BY m.created_at`, vals);
+      res.json(rows);
+    } catch (e) { console.error('[sa-materials:list]', e && e.message); res.status(500).json({ error: 'Failed to list materials.' }); }
+  });
+
+  app.post('/api/service-areas/:id/materials', requireManagerOrAdmin, async (req, res) => {
+    const b = req.body || {};
+    if (!b.item || !String(b.item).trim()) return res.status(400).json({ error: 'item is required' });
+    const source = ['manual', 'bom_csv', 'map'].includes(b.source) ? b.source : 'manual';
+    try {
+      const sa = await pool.query('SELECT id FROM service_areas WHERE id = $1', [req.params.id]);
+      if (!sa.rows.length) return res.status(404).json({ error: 'Service area not found' });
+      const { rows } = await pool.query(
+        `INSERT INTO service_area_materials
+           (service_area_id, route_id, item, quantity, completed_quantity, unit, unit_cost, source, map_feature_ref, notes)
+         VALUES ($1,$2,$3,$4,COALESCE($5,0),$6,$7,$8,$9,$10) RETURNING *`,
+        [req.params.id, b.route_id || null, String(b.item).trim(), b.quantity ?? null, b.completed_quantity ?? null,
+         b.unit || null, b.unit_cost ?? null, source, b.map_feature_ref || null, b.notes || null]);
+      logAudit(pool, { req, action: 'service_area_material.create', entity_type: 'service_area_material',
+        entity_id: rows[0].id, after: { service_area_id: req.params.id, item: rows[0].item }, source: 'admin' }).catch(() => {});
+      res.status(201).json(rows[0]);
+    } catch (e) { console.error('[sa-materials:create]', e && e.message); res.status(500).json({ error: 'Failed to add material.' }); }
+  });
+
+  const SAMAT_FIELDS = ['route_id', 'item', 'quantity', 'completed_quantity', 'unit', 'unit_cost', 'source', 'map_feature_ref', 'notes'];
+  app.put('/api/service-area-materials/:id', requireManagerOrAdmin, async (req, res) => {
+    const sets = [], vals = [req.params.id]; let i = 2;
+    for (const f of SAMAT_FIELDS) {
+      if (Object.prototype.hasOwnProperty.call(req.body, f)) {
+        let v = req.body[f]; if (v === '') v = null;
+        sets.push(`${f} = $${i}`); vals.push(v); i++;
+      }
+    }
+    if (!sets.length) return res.status(400).json({ error: 'No fields to update' });
+    try {
+      const { rows } = await pool.query(`UPDATE service_area_materials SET ${sets.join(', ')} WHERE id = $1 RETURNING *`, vals);
+      if (!rows[0]) return res.status(404).json({ error: 'Material not found' });
+      logAudit(pool, { req, action: 'service_area_material.update', entity_type: 'service_area_material', entity_id: rows[0].id, source: 'admin' }).catch(() => {});
+      res.json(rows[0]);
+    } catch (e) { console.error('[sa-materials:update]', e && e.message); res.status(500).json({ error: 'Failed to update material.' }); }
+  });
+
+  app.delete('/api/service-area-materials/:id', requireManagerOrAdmin, async (req, res) => {
+    try {
+      const { rowCount } = await pool.query('DELETE FROM service_area_materials WHERE id = $1', [req.params.id]);
+      if (!rowCount) return res.status(404).json({ error: 'Material not found' });
+      logAudit(pool, { req, action: 'service_area_material.delete', entity_type: 'service_area_material', entity_id: req.params.id, source: 'admin' }).catch(() => {});
+      res.json({ ok: true });
+    } catch (e) { console.error('[sa-materials:delete]', e && e.message); res.status(500).json({ error: 'Failed to delete material.' }); }
+  });
+
+  // ─── Material units (per-unit status + installed_date; the map sync target) ─
+  // Discrete items get one row per physical unit. Mutating a unit re-rolls the
+  // parent material's completed_quantity (count of installed units).
+
+  app.get('/api/service-area-materials/:id/units', requireAuth(STAFF_ROLES), async (req, res) => {
+    try {
+      const { rows } = await pool.query(
+        `SELECT * FROM service_area_material_units WHERE material_id = $1 ORDER BY sequence NULLS LAST, created_at`, [req.params.id]);
+      res.json(rows);
+    } catch (e) { console.error('[sa-units:list]', e && e.message); res.status(500).json({ error: 'Failed to list units.' }); }
+  });
+
+  app.post('/api/service-area-materials/:id/units', requireManagerOrAdmin, async (req, res) => {
+    const b = req.body || {};
+    const status = ['pending', 'installed', 'removed'].includes(b.status) ? b.status : 'pending';
+    // Installing with no explicit date stamps today (the map sync passes the real one).
+    const installedDate = b.installed_date || (status === 'installed' ? new Date().toISOString().slice(0, 10) : null);
+    try {
+      const m = await pool.query('SELECT id FROM service_area_materials WHERE id = $1', [req.params.id]);
+      if (!m.rows.length) return res.status(404).json({ error: 'Material not found' });
+      const { rows } = await pool.query(
+        `INSERT INTO service_area_material_units (material_id, label, sequence, status, installed_date, map_feature_ref)
+         VALUES ($1,$2,$3,$4,$5,$6)
+         RETURNING *`,
+        [req.params.id, b.label || null, b.sequence ?? null, status, installedDate, b.map_feature_ref || null]);
+      const material = await recomputeMaterial(req.params.id);
+      res.status(201).json({ unit: rows[0], material });
+    } catch (e) { console.error('[sa-units:create]', e && e.message); res.status(500).json({ error: 'Failed to add unit.' }); }
+  });
+
+  const SAUNIT_FIELDS = ['label', 'sequence', 'status', 'installed_date', 'map_feature_ref'];
+  app.put('/api/service-area-material-units/:id', requireManagerOrAdmin, async (req, res) => {
+    const sets = [], vals = [req.params.id]; let i = 2;
+    for (const f of SAUNIT_FIELDS) {
+      if (Object.prototype.hasOwnProperty.call(req.body, f)) {
+        let v = req.body[f]; if (v === '') v = null;
+        sets.push(`${f} = $${i}`); vals.push(v); i++;
+      }
+    }
+    // Installing a unit with no explicit date stamps today (map sync passes the real one).
+    if (req.body && req.body.status === 'installed' && !req.body.installed_date) {
+      sets.push(`installed_date = COALESCE(installed_date, CURRENT_DATE)`);
+    }
+    if (!sets.length) return res.status(400).json({ error: 'No fields to update' });
+    sets.push(`updated_at = now()`);
+    try {
+      const { rows } = await pool.query(`UPDATE service_area_material_units SET ${sets.join(', ')} WHERE id = $1 RETURNING *`, vals);
+      if (!rows[0]) return res.status(404).json({ error: 'Unit not found' });
+      const material = await recomputeMaterial(rows[0].material_id);
+      res.json({ unit: rows[0], material });
+    } catch (e) { console.error('[sa-units:update]', e && e.message); res.status(500).json({ error: 'Failed to update unit.' }); }
+  });
+
+  app.delete('/api/service-area-material-units/:id', requireManagerOrAdmin, async (req, res) => {
+    try {
+      const { rows } = await pool.query('DELETE FROM service_area_material_units WHERE id = $1 RETURNING material_id', [req.params.id]);
+      if (!rows.length) return res.status(404).json({ error: 'Unit not found' });
+      const material = await recomputeMaterial(rows[0].material_id);
+      res.json({ ok: true, material });
+    } catch (e) { console.error('[sa-units:delete]', e && e.message); res.status(500).json({ error: 'Failed to delete unit.' }); }
   });
 
   // ─── Service-Area Jobs (line items) ────────────────────────────────────────
@@ -275,17 +543,18 @@ module.exports = function installServiceAreaRoutes(app, pool, mw) {
         }
       }
       if (!billingType) billingType = 'hourly';
+      const costCat = b.cost_category || costCategoryFor(team);
 
       const { rows } = await pool.query(
         `INSERT INTO service_area_jobs
            (service_area_id, job_id, team, assigned_staff_id, assigned_user_id,
             billing_type, rate, status, estimated_amount, footage, miles, notes,
-            created_by_user_id, updated_by_user_id)
-         VALUES ($1,$2,$3,$4,$5,$6,$7,COALESCE($8,'potential'),$9,$10,$11,$12,$13,$13)
+            created_by_user_id, updated_by_user_id, route_id, cost_category)
+         VALUES ($1,$2,$3,$4,$5,$6,$7,COALESCE($8,'potential'),$9,$10,$11,$12,$13,$13,$14,$15)
          RETURNING *`,
         [req.params.id, b.job_id || null, team, b.assigned_staff_id || null, b.assigned_user_id || null,
          billingType, rate, b.status || null, b.estimated_amount ?? null,
-         b.footage ?? null, b.miles ?? null, b.notes || null, uid(req)]
+         b.footage ?? null, b.miles ?? null, b.notes || null, uid(req), b.route_id || null, costCat]
       );
       logAudit(pool, { req, action: 'service_area_job.create', entity_type: 'service_area_job',
         entity_id: rows[0].id, after: { service_area_id: req.params.id, team, job_id: b.job_id }, source: 'admin' }).catch(() => {});
@@ -296,8 +565,8 @@ module.exports = function installServiceAreaRoutes(app, pool, mw) {
     }
   });
 
-  const SAJOB_FIELDS = ['job_id', 'team', 'assigned_staff_id', 'assigned_user_id', 'billing_type',
-    'rate', 'status', 'estimated_amount', 'actual_hours', 'actual_amount', 'footage', 'miles',
+  const SAJOB_FIELDS = ['job_id', 'team', 'route_id', 'cost_category', 'assigned_staff_id', 'assigned_user_id',
+    'billing_type', 'rate', 'status', 'estimated_amount', 'actual_hours', 'actual_amount', 'footage', 'miles',
     'start_date', 'completed_date', 'billed_date', 'notes'];
 
   app.put('/api/service-area-jobs/:id', requireManagerOrAdmin, async (req, res) => {
@@ -309,6 +578,10 @@ module.exports = function installServiceAreaRoutes(app, pool, mw) {
         if (v === '') v = null;
         sets.push(`${f} = $${i}`); vals.push(v); i++;
       }
+    }
+    // Re-tag the cost bucket if the discipline changed and the caller didn't set it explicitly.
+    if (Object.prototype.hasOwnProperty.call(req.body, 'team') && !Object.prototype.hasOwnProperty.call(req.body, 'cost_category')) {
+      sets.push(`cost_category = $${i}`); vals.push(costCategoryFor(req.body.team)); i++;
     }
     if (!sets.length) return res.status(400).json({ error: 'No fields to update' });
     sets.push(`updated_at = now()`);
