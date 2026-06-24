@@ -458,9 +458,70 @@ Complete catalog of all API routes, portal endpoints, and file-serving routes. O
 
 ---
 
+---
+
+## Contractor "My Work" Routes (Phase 5 — routes/my_work.js)
+
+Added in Round 5 keystone fan-out. Caller-scoped (no cross-user data).
+
+| Method | Path | Gate | Returns |
+|--------|------|------|---------|
+| GET | `/api/my/jobs` | requireAuth() | Service-area jobs assigned to the caller (by assigned_user_id or linked staff_id); no dollars |
+| GET | `/api/my/hours` | requireAuth() | Caller's total hours + per-job breakdown for the current Mon–Sun week window |
+| GET | `/api/my/entries` | requireAuth() | Caller's most-recent time entries (default 20, max 100, `?limit=N`); with job + service-area context |
+
+---
+
+## Hours Summary Routes (Phase 5 — routes/hours_summary.js)
+
+Manager/admin labor reporting over the keystone model. **No dollars.**
+
+| Method | Path | Gate | Returns |
+|--------|------|------|---------|
+| GET | `/api/hours/summary` | requireManagerOrAdmin | JSON: rows per (staff, job) with total_hours + entry_count; optional `?from=` / `?to=` date bounds |
+| GET | `/api/hours/summary.csv` | requireManagerOrAdmin | CSV download of the same rows; `?group=client` or `?group=area` for aggregated views |
+
+---
+
+## Money View Routes (Phase 4 — routes/money_view.js)
+
+Read-only financial views for managers/admin. Additive; no mutations.
+
+| Method | Path | Gate | Returns |
+|--------|------|------|---------|
+| GET | `/api/money/margin` | requireManagerOrAdmin | Per-service-area estimated vs billed totals + variance |
+| GET | `/api/money/aging` | requireManagerOrAdmin | AR aging buckets (0–30 / 31–60 / 61–90 / 90+) over non-draft, non-void invoices |
+| GET | `/api/money/revenue` | requireManagerOrAdmin | Revenue rollup; `?group=month\|client\|program` |
+| GET | `/api/money/statement` | requireManagerOrAdmin | Per-client statement: service areas, outstanding invoices, aging; requires `?client_id=` |
+| GET | `/api/money/invoice/:id` | requireManagerOrAdmin | Single invoice detail with line items (drill-in modal) |
+| GET | `/api/money/invoices.csv` | requireManagerOrAdmin | CSV of all invoices for accounting export |
+
+---
+
+## Admin Data Export Routes (routes/export_bundle.js)
+
+| Method | Path | Gate | Returns |
+|--------|------|------|---------|
+| GET | `/api/export/all.zip` | requireAdmin | ZIP of three CSVs: service_areas.csv, jobs.csv, invoices.csv |
+
+---
+
+## Customer Portal — Keystone Phase 6 Additions (routes/customer_portal.js)
+
+These endpoints were added to the existing customer portal alongside the legacy `/api/customer/projects*` endpoints. Customers are scoped to their `customer_clients` linked client set; all endpoints enforce client-isolation at the query level. No money columns are exposed via service-area endpoints.
+
+| Method | Path | Gate | Returns |
+|--------|------|------|---------|
+| GET | `/api/customer/service-areas` | requireAuth(['customer']) | Client-visible service areas with job status/progress (count-based completion %, no $); only `client_visible = TRUE` rows |
+| GET | `/api/customer/service-areas/:id/map` | requireAuth(['customer']) | Serves the area's map file (attachment); `?inline=1` allowed for raster images and PDF only (SVG excluded — XSS risk) |
+| GET | `/api/customer/invoices` | requireAuth(['customer']) | Invoice history for the caller's linked clients; draft invoices excluded |
+| GET | `/api/customer/invoices/:id` | requireAuth(['customer']) | Single invoice with line items; draft excluded; UUID guard on :id |
+
+---
+
 ## Summary
 
-**Total Routes:** ~358 endpoints across 30+ route files
+**Total Routes:** ~375 endpoints across 30+ route files
 
 **By Domain:**
 - Splice matrix: ~85 routes (single largest subsystem)
