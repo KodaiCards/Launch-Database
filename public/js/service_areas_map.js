@@ -179,9 +179,12 @@
       return;
     }
     listEl.innerHTML = _ccList.map(function (cc) {
-      var sel = cc.id === _selectedCcId;
-      return '<div role="button" tabindex="0" onclick="saSelectCc(' + JSON.stringify(cc.id) + ',' + JSON.stringify(cc.name) + ')"'
-        + ' onkeydown="if(event.key===\'Enter\'||event.key===\' \')saSelectCc(' + JSON.stringify(cc.id) + ',' + JSON.stringify(cc.name) + ')"'
+      var sel  = cc.id === _selectedCcId;
+      // HTML-escape the JSON args so their string-quotes don't terminate the
+      // double-quoted attribute (and to neutralize any markup in cc.name).
+      var args = esc(JSON.stringify(cc.id) + ',' + JSON.stringify(cc.name));
+      return '<div role="button" tabindex="0" onclick="saSelectCc(' + args + ')"'
+        + ' onkeydown="if(event.key===\'Enter\'||event.key===\' \')saSelectCc(' + args + ')"'
         + ' style="padding:7px 10px;border-radius:6px;cursor:pointer;margin-bottom:3px;font-size:12px;'
         + (sel ? 'background:var(--primary-light);color:var(--primary-dark);font-weight:600' : 'background:var(--surface-1)')
         + '">'

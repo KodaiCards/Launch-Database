@@ -1,6 +1,6 @@
 # Claude 2 — Contractor timeclock (Phase 5)
 
-**Status:** R14 DONE — ready for CEO review and merge. R11/R12/R13 MERGED ✓ 2026-06-24 (`3136b57a`). R14: map embedded (iframe), adapter wired (frm_storage_adapter.js injected immediately before map's inline script in `public/map/`), CC management + Excel catalog upload + estimate readout all in Map tab. FRONTEND ONLY.
+**Status:** R14 MERGED to `main` ✓ 2026-06-24 (acting-CEO interim stand-in; one onclick-escaping fix applied at merge — see R14 note below). R11/R12/R13 MERGED ✓ 2026-06-24 (`3136b57a`). R14: map embedded (iframe), adapter wired (frm_storage_adapter.js injected immediately before map's inline script in `public/map/`), CC management + Excel catalog upload + estimate readout all in Map tab. FRONTEND ONLY.
 **Branch:** `claude-2/contractor-timeclock`
 **Read first:** `CLAUDE.md`, `ROADMAP.md` (Phase 5), `briefs/README.md`.
 
@@ -335,6 +335,9 @@ Pick a month → see each concentrator's billable lines (hours/footage/fixed + a
 
 ### Acceptance
 From the Service Areas → Map tab: the real fiber map loads embedded; drawing structures/spans **persists across reload** (server-side); you can create a construction contract and upload its Excel price list; and an estimate readout prices a plan's units against that catalog (matching the backend: e.g. 13 handholes → $2,600). No `$` math in JS; unpriced items flagged.
+
+> **Acting-CEO note — 2026-06-24 (interim stand-in, not the head-Claude CEO).** Reviewed + **merged R14 to `main`**. Integration gate = GREEN (frontend-only; no `routes/`/`server.js`/`auth.js`/`migrations/`/`schema.sql`; 0 conflict markers; internal page, no customer `$`-leak; estimate numbers rendered verbatim — no `$` math in JS). Served map is byte-identical to `map/fiber_route_manager_v33.html` plus only the required adapter `<script>`; adapter copied verbatim.
+> **One fix applied at merge** (`public/js/service_areas_map.js`, `renderCcList`): the CC-row handler was built as `onclick="saSelectCc(' + JSON.stringify(cc.id) + ',' + JSON.stringify(cc.name) + ')"` — `JSON.stringify` emits literal `"` which terminated the double-quoted attribute → malformed HTML, so clicking an existing contract row to re-select it didn't fire (create-new still worked, since it calls `saSelectCc` directly). Fixed by HTML-escaping the args once (`esc(JSON.stringify(id)+','+JSON.stringify(name))`) and reusing for both `onclick`/`onkeydown`; this also closes a latent XSS hole (`cc.name` was injected raw into an event handler). Verified well-formed + injection-safe against quote/apostrophe/`&`/`<script>` inputs; `node --check` clean. No other changes. — Acting CEO
 
 ---
 
