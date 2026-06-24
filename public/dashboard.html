@@ -87,12 +87,19 @@ a,button{font-family:inherit}
       <a class="nav-item" href="/billing.html"><i class="fa-solid fa-file-invoice-dollar"></i> Billing</a>
       <a class="nav-item" href="/hours.html"><i class="fa-solid fa-clock"></i> Hours</a>
       <a class="nav-item" href="/money.html"><i class="fa-solid fa-coins"></i> Money</a>
-      <span class="nav-item disabled"><i class="fa-solid fa-users"></i> Clients <span class="soon">soon</span></span>
+      <a class="nav-item" href="/clients.html"><i class="fa-solid fa-users"></i> Clients</a>
       <a class="nav-item" style="margin-top:auto" href="/admin.html"><i class="fa-solid fa-gear"></i> Admin (legacy)</a>
       <button class="nav-item" id="themeToggle" style="border:none;background:none;text-align:left"><i class="fa-solid fa-moon"></i> Theme</button>
     </nav>
     <main class="main">
-      <div class="topbar"><h1>Dashboard</h1><span class="period">This month</span></div>
+      <div class="topbar">
+        <h1>Dashboard</h1>
+        <div style="display:flex;gap:0;border:1px solid var(--border-strong);border-radius:8px;overflow:hidden">
+          <button id="pd-month"   class="period-btn active" onclick="setPeriod('month')"   style="padding:5px 12px;font-size:12px;border:none;background:var(--primary);color:#fff;cursor:pointer;font-family:inherit">Month</button>
+          <button id="pd-quarter" class="period-btn"        onclick="setPeriod('quarter')" style="padding:5px 12px;font-size:12px;border:none;border-left:1px solid var(--border-strong);background:none;color:var(--text-secondary);cursor:pointer;font-family:inherit">Quarter</button>
+          <button id="pd-all"     class="period-btn"        onclick="setPeriod('all')"     style="padding:5px 12px;font-size:12px;border:none;border-left:1px solid var(--border-strong);background:none;color:var(--text-secondary);cursor:pointer;font-family:inherit">All time</button>
+        </div>
+      </div>
       <div class="tiles" id="tiles"></div>
       <div class="attention"><h3>Needs attention</h3><div class="att-grid" id="attention"></div></div>
       <div class="tabs">
