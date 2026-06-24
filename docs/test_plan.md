@@ -8,13 +8,28 @@
 
 ## 1. Pure-function tests already passing (no DB, no deps)
 
+### Batch 1 (merged ✓)
+
 | File | Suites | Assertions | Notes |
 |------|--------|------------|-------|
-| `test/csv_guard.test.js` | 4 | 17 | Inline copy of `csvCell` from `routes/hours_summary.js` / `routes/money_view.js` |
-| `test/aging_buckets.test.js` | 3 | 13 | Inline replica of bucket logic from `routes/money_view.js` |
-| `test/week_window.test.js` | 6 | 21 | Inline replica of week-window math from `routes/my_work.js` |
+| `tests/csv_guard.test.js` | 4 | 17 | Inline copy of `csvCell` from `routes/hours_summary.js` / `routes/money_view.js` |
+| `tests/aging_buckets.test.js` | 3 | 13 | Inline replica of bucket logic from `routes/money_view.js` |
+| `tests/week_window.test.js` | 6 | 21 | Inline replica of week-window math from `routes/my_work.js` |
 
-Run command: `node --test test/csv_guard.test.js test/aging_buckets.test.js test/week_window.test.js`
+Run command: `node --test tests/csv_guard.test.js tests/aging_buckets.test.js tests/week_window.test.js`
+
+### Batch 2 (branch `claude-4/quality` — 65 tests, all green)
+
+| File | Suites | Assertions | Notes |
+|------|--------|------------|-------|
+| `tests/progress_math.test.js` | 4 | 17 | Inline replica of `calcProgress` from `routes/customer_portal.js` (SA card + dashboard progress) |
+| `tests/revenue_group.test.js` | 5 | 16 | Inline reducer + label-format assertions for `/api/money/revenue` from `routes/money_view.js` |
+| `tests/margin_variance.test.js` | 2 | 14 | Inline replica of variance calc + totals reducer from `routes/money_view.js` margin endpoint |
+| `tests/contractor_guard.test.js` | 2 | 18 | Inline ownership predicate + money-stripping shaper from `routes/service_areas.js` |
+
+Run command: `node --test tests/progress_math.test.js tests/revenue_group.test.js tests/margin_variance.test.js tests/contractor_guard.test.js`
+
+Run all Batch 1 + 2 together: `node --test tests/csv_guard.test.js tests/aging_buckets.test.js tests/week_window.test.js tests/progress_math.test.js tests/revenue_group.test.js tests/margin_variance.test.js tests/contractor_guard.test.js`
 
 ---
 
@@ -28,6 +43,10 @@ These are suggestions only — do **not** make the edits without CEO sign-off.
 | `routes/money_view.js` | Already exports `module.exports._helpers = { csvCell }`. Same as above. | Eliminates inline copy drift |
 | `routes/money_view.js` | Extract the bucket-assignment loop into a named `ageBuckets(rows)` function and export it via `_helpers`. Currently the logic is inlined inside two separate `app.get` handlers (`/api/money/aging` and `/api/money/statement`). | Tests bind to real code; duplication eliminated |
 | `routes/my_work.js` | Extract the week-window calculation into a named `currentWeekWindow(now)` function and export it via `module.exports._helpers`. | Tests bind to real code |
+| `routes/customer_portal.js` | Extract `calcProgress(jobs)` (the SA card progress math, lines ~249–253) as a named export via `module.exports._helpers`. Currently inlined inside the `GET /api/customer/service-areas` handler. | Tests bind to real code; avoids inline copy drift |
+| `routes/money_view.js` | Export `addVariance(rows)` and `calcTotals(rows)` via `_helpers`. Currently inlined in the `/api/money/margin` handler. | Tests for margin endpoint bind directly; the grand-variance computation path is verified in place |
+| `routes/money_view.js` | Export `grandTotal(rows)` reducer via `_helpers`. Currently a one-liner inside both the margin and revenue handlers. | Shared tests for the reducer; prevents silent divergence if handlers are split |
+| `routes/service_areas.js` | `nextStatus` / `prevStatus` are already exported via `module.exports._internal`. Add `ownsJob(job, caller)` predicate and the contractor `shapeJobResponse` shaper as named exports via `_internal`. Currently inlined in the time-entry POST handler. | Tests bind directly to production predicates |
 
 ---
 
