@@ -1,0 +1,365 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>Clients — Launch Fiber</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+<link rel="stylesheet" href="/css/app-shell.css">
+<style>
+:root{
+  --primary:#1B5FA0;--primary-dark:#134880;--primary-light:#E8F0FB;
+  --surface-1:#F5F7FA;--surface-2:#FFFFFF;
+  --white:#FFFFFF;--gray-light:#F5F7FA;--gray-border:#DEE2E6;
+  --text:#212529;--text-secondary:#495057;--text-muted:#5A6470;
+  --success:#28A745;--success-light:#E8F5E9;--success-text:#1B5E20;
+  --warning:#FFC107;--warning-light:#FFF8E1;--warning-text:#7A4F0E;
+  --danger:#DC3545;--danger-light:#FDECEA;--danger-text:#842029;
+  --font:'Inter',sans-serif;
+}
+html[data-theme="dark"]{
+  --primary:#4A90D9;--primary-dark:#1B5FA0;--primary-light:#1E3A5C;
+  --surface-1:#1A1F26;--surface-2:#1D2430;
+  --white:#1D2430;--gray-light:#1A1F26;--gray-border:#2D3540;
+  --text:#E8EAED;--text-secondary:#C2C7CD;--text-muted:#9BA1A8;
+  --success:#5DD27A;--success-light:#1B3D24;--success-text:#A5D6A7;
+  --warning:#FFCA28;--warning-light:#3D2F0F;--warning-text:#FFCC80;
+  --danger:#FF6B6B;--danger-light:#3D1A1A;--danger-text:#FFCDD2;
+  color-scheme:dark;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{font-family:var(--font);background:var(--gray-light);color:var(--text);min-height:100vh}
+button{font-family:inherit;cursor:pointer;border:none;background:none;color:inherit}
+input,select{font-family:inherit;font-size:14px}
+html[data-theme="dark"] input{background:var(--white);color:var(--text);border-color:var(--gray-border)}
+
+.header{background:var(--white);border-bottom:1px solid var(--gray-border);padding:10px 20px;
+  display:flex;align-items:center;justify-content:space-between;gap:12px}
+.header-left{display:flex;align-items:center;gap:14px}
+.header-title{font-size:16px;font-weight:600}
+.header-right{display:flex;align-items:center;gap:8px}
+
+.btn{padding:8px 14px;border-radius:6px;font-size:13px;font-weight:500;border:1px solid transparent;
+  display:inline-flex;align-items:center;gap:6px;transition:all .15s}
+.btn-sm{padding:5px 10px;font-size:12px}
+.btn-primary{background:var(--primary);color:#fff;border-color:var(--primary)}
+.btn-primary:hover{background:var(--primary-dark)}
+.btn-ghost{background:transparent;border-color:var(--gray-border);color:var(--text-secondary)}
+.btn-ghost:hover{background:var(--surface-1)}
+.btn-icon{width:34px;height:34px;padding:0;display:inline-flex;align-items:center;justify-content:center;
+  border-radius:6px;border:1px solid var(--gray-border);background:transparent;color:var(--text-secondary)}
+.btn-icon:hover{background:var(--surface-1)}
+
+.page-body{padding:20px 24px;max-width:1100px;margin:0 auto}
+.page-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:20px;gap:12px;flex-wrap:wrap}
+.page-title{font-size:20px;font-weight:700}
+
+.filter-bar{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:18px}
+.search-input{padding:7px 12px;border:1px solid var(--gray-border);border-radius:6px;
+  background:var(--white);color:var(--text);outline:none;font-size:13px;width:220px}
+.search-input:focus{border-color:var(--primary)}
+
+.card{background:var(--white);border:1px solid var(--gray-border);border-radius:10px;overflow:hidden}
+.table-wrap{overflow-x:auto}
+table{width:100%;border-collapse:collapse;font-size:13px}
+thead th{background:var(--surface-1);padding:9px 14px;text-align:left;font-weight:600;
+  font-size:12px;color:var(--text-muted);border-bottom:1px solid var(--gray-border);white-space:nowrap}
+th.num,td.num{text-align:right}
+tbody tr{border-bottom:1px solid var(--gray-border);cursor:pointer;transition:background .1s}
+tbody tr:last-child{border-bottom:none}
+tbody tr:hover{background:var(--surface-1)}
+tbody td{padding:10px 14px;color:var(--text-secondary)}
+.client-name{color:var(--text);font-weight:500}
+.badge-areas{display:inline-flex;align-items:center;gap:4px;background:var(--primary-light);
+  color:var(--primary);font-size:11px;font-weight:600;padding:2px 7px;border-radius:10px}
+.amt{font-variant-numeric:tabular-nums}
+.outstanding{color:var(--warning-text);font-weight:500}
+.outstanding.high{color:var(--danger-text)}
+
+.empty-state{padding:48px 20px;text-align:center;color:var(--text-muted);font-size:14px}
+.empty-state i{font-size:32px;display:block;margin-bottom:10px;opacity:.4}
+.skeleton{background:var(--surface-1);border-radius:4px;height:14px;animation:pulse 1.5s infinite}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.4}}
+
+/* Detail panel */
+.detail-panel{display:none;padding:0 14px 14px}
+.detail-panel.open{display:block}
+.detail-inner{background:var(--surface-1);border-radius:8px;padding:14px;margin-top:2px}
+.detail-section{margin-bottom:14px}
+.detail-section:last-child{margin-bottom:0}
+.detail-label{font-size:11px;font-weight:600;color:var(--text-muted);text-transform:uppercase;margin-bottom:8px}
+.area-row{display:flex;align-items:center;justify-content:space-between;padding:6px 0;
+  border-bottom:1px solid var(--gray-border);font-size:12px;gap:8px}
+.area-row:last-child{border-bottom:none}
+.area-name{color:var(--text);font-weight:500}
+.area-meta{color:var(--text-muted)}
+.inv-row{display:flex;align-items:center;justify-content:space-between;padding:5px 0;
+  border-bottom:1px solid var(--gray-border);font-size:12px;gap:8px;cursor:pointer}
+.inv-row:last-child{border-bottom:none}
+.inv-row:hover{opacity:.75}
+.inv-num{color:var(--primary);font-weight:500}
+.aging-chips{display:flex;gap:8px;flex-wrap:wrap}
+.aging-chip{display:flex;flex-direction:column;align-items:center;padding:8px 14px;
+  border-radius:8px;font-size:11px;min-width:70px}
+.aging-chip .chip-amt{font-size:15px;font-weight:700;font-variant-numeric:tabular-nums}
+.aging-chip .chip-label{color:var(--text-muted);margin-top:2px}
+.chip-0{background:var(--success-light);color:var(--success-text)}
+.chip-30{background:var(--warning-light);color:var(--warning-text)}
+.chip-60{background:var(--danger-light);color:var(--danger-text)}
+.chip-90{background:var(--danger-light);color:var(--danger-text)}
+.detail-actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:12px}
+
+.panel-loading{padding:20px;text-align:center;color:var(--text-muted);font-size:13px}
+
+@media(max-width:700px){
+  .page-body{padding:12px}
+  .search-input{width:100%}
+  .filter-bar{flex-direction:column;align-items:stretch}
+}
+</style>
+</head>
+<body>
+
+<div class="header">
+  <div class="header-left">
+    <span class="header-title"><i class="fa-solid fa-users"></i> Clients</span>
+  </div>
+  <div class="header-right">
+    <button class="btn-icon" onclick="toggleDark()" title="Toggle dark mode" aria-label="Toggle dark mode">
+      <i id="dm-icon" class="fa-solid fa-moon"></i>
+    </button>
+  </div>
+</div>
+
+<div class="page-body">
+  <div class="page-header">
+    <h1 class="page-title">All Clients</h1>
+  </div>
+
+  <div class="filter-bar">
+    <input type="search" id="cl-search" class="search-input" placeholder="Search clients…" oninput="applyFilter()" aria-label="Search clients">
+  </div>
+
+  <div class="card">
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th>Client</th>
+            <th class="num">Service Areas</th>
+            <th class="num">Total Billed</th>
+            <th class="num">Outstanding</th>
+            <th></th>
+          </tr>
+        </thead>
+        <tbody id="clients-tbody">
+          <tr><td colspan="5"><div class="panel-loading"><span class="skeleton" style="width:60%;display:inline-block"></span></div></td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<script>
+(function(){
+  'use strict';
+  var _clients = [];
+  var _open    = null; // currently open client id
+
+  // ── Boot ────────────────────────────────────────────────────────────────────
+  document.addEventListener('DOMContentLoaded', function(){
+    applyStoredTheme();
+    load();
+  });
+
+  async function load(){
+    try{
+      var res = await fetch('/api/cluster/clients', { credentials:'include' });
+      if(res.status===401||res.status===403){
+        document.getElementById('clients-tbody').innerHTML =
+          '<tr><td colspan="5"><div class="empty-state"><i class="fa-solid fa-lock"></i>Manager or admin access required.</div></td></tr>';
+        return;
+      }
+      if(!res.ok) throw new Error(await res.text());
+      var data = await res.json();
+      _clients = data.clients || [];
+      render(_clients);
+    } catch(e){
+      document.getElementById('clients-tbody').innerHTML =
+        '<tr><td colspan="5"><div class="empty-state"><i class="fa-solid fa-triangle-exclamation"></i>Failed to load clients. '+esc(e.message||'')+'</div></td></tr>';
+    }
+  }
+
+  // ── Filter ──────────────────────────────────────────────────────────────────
+  window.applyFilter = function(){
+    var q = (document.getElementById('cl-search').value||'').toLowerCase().trim();
+    var filtered = q ? _clients.filter(function(c){ return c.name.toLowerCase().includes(q); }) : _clients;
+    render(filtered);
+  };
+
+  // ── Render table ────────────────────────────────────────────────────────────
+  function render(clients){
+    var tbody = document.getElementById('clients-tbody');
+    if(!clients.length){
+      tbody.innerHTML = '<tr><td colspan="5"><div class="empty-state"><i class="fa-solid fa-users"></i>No clients found.</div></td></tr>';
+      return;
+    }
+    tbody.innerHTML = clients.map(function(c){
+      var outClass = c.outstanding > 10000 ? 'outstanding high' : c.outstanding > 0 ? 'outstanding' : '';
+      return '<tr data-id="'+esc(c.id)+'" onclick="toggleDetail(\''+esc(c.id)+'\')">'
+        +'<td class="client-name">'+esc(c.name)+'</td>'
+        +'<td class="num"><span class="badge-areas"><i class="fa-solid fa-diagram-project"></i> '+c.active_area_count+'</span></td>'
+        +'<td class="num amt">'+fmt(c.total_billed)+'</td>'
+        +'<td class="num amt '+outClass+'">'+fmt(c.outstanding)+'</td>'
+        +'<td style="width:32px;text-align:center"><i class="fa-solid fa-chevron-right" id="chev-'+esc(c.id)+'" style="font-size:11px;color:var(--text-muted);transition:transform .2s"></i></td>'
+        +'</tr>'
+        +'<tr class="detail-tr" id="detail-tr-'+esc(c.id)+'"><td colspan="5" style="padding:0">'
+        +'<div class="detail-panel" id="detail-'+esc(c.id)+'"></div>'
+        +'</td></tr>';
+    }).join('');
+  }
+
+  // ── Detail panel ────────────────────────────────────────────────────────────
+  window.toggleDetail = function(clientId){
+    if(_open === clientId){
+      closeDetail(clientId);
+      _open = null;
+      return;
+    }
+    if(_open) closeDetail(_open);
+    _open = clientId;
+    openDetail(clientId);
+  };
+
+  function closeDetail(clientId){
+    var panel = document.getElementById('detail-'+clientId);
+    if(panel) panel.classList.remove('open');
+    var chev = document.getElementById('chev-'+clientId);
+    if(chev) chev.style.transform = '';
+  }
+
+  function openDetail(clientId){
+    var panel = document.getElementById('detail-'+clientId);
+    if(!panel) return;
+    panel.classList.add('open');
+    var chev = document.getElementById('chev-'+clientId);
+    if(chev) chev.style.transform = 'rotate(90deg)';
+    if(panel.dataset.loaded) return;
+    panel.innerHTML = '<div class="panel-loading"><span class="spinner"></span> Loading…</div>';
+    loadStatement(clientId, panel);
+  }
+
+  async function loadStatement(clientId, panel){
+    try{
+      var res = await fetch('/api/money/statement?client_id='+encodeURIComponent(clientId), { credentials:'include' });
+      if(!res.ok) throw new Error(await res.text());
+      var data = await res.json();
+      panel.innerHTML = renderStatement(data);
+      panel.dataset.loaded = '1';
+    } catch(e){
+      panel.innerHTML = '<div class="detail-inner"><div class="empty-state" style="padding:16px"><i class="fa-solid fa-triangle-exclamation"></i>Could not load statement. '+esc(e.message||'')+'</div></div>';
+    }
+  }
+
+  function renderStatement(data){
+    var c = data.client || {};
+    var areas = data.service_areas || [];
+    var invoices = data.outstanding_invoices || [];
+    var aging = data.aging || {};
+
+    var areasHtml = '';
+    if(areas.length){
+      areasHtml = '<div class="detail-section">'
+        +'<div class="detail-label">Service Areas</div>'
+        + areas.map(function(sa){
+            return '<div class="area-row">'
+              +'<div><span class="area-name">'+esc(sa.name||'—')+'</span>'
+              +(sa.program ? ' <span style="font-size:10px;color:var(--text-muted)">'+esc(sa.program.toUpperCase())+'</span>' : '')
+              +'</div>'
+              +'<div style="text-align:right"><div class="amt">Est '+fmt(sa.estimated_total)+'</div>'
+              +'<div class="amt" style="font-size:11px;color:var(--text-muted)">Billed '+fmt(sa.billed_total)+'</div>'
+              +'</div>'
+              +'</div>';
+          }).join('')
+        +'</div>';
+    } else {
+      areasHtml = '<div class="detail-section"><div class="empty-state" style="padding:10px;font-size:12px"><i class="fa-solid fa-diagram-project"></i>No service areas.</div></div>';
+    }
+
+    var agingHtml = '';
+    if(aging.bucket_0_30 || aging.bucket_31_60 || aging.bucket_61_90 || aging.bucket_over_90){
+      agingHtml = '<div class="detail-section"><div class="detail-label">AR Aging</div>'
+        +'<div class="aging-chips">'
+        +'<div class="aging-chip chip-0"><span class="chip-amt">'+fmtK(aging.bucket_0_30)+'</span><span class="chip-label">0–30d</span></div>'
+        +'<div class="aging-chip chip-30"><span class="chip-amt">'+fmtK(aging.bucket_31_60)+'</span><span class="chip-label">31–60d</span></div>'
+        +'<div class="aging-chip chip-60"><span class="chip-amt">'+fmtK(aging.bucket_61_90)+'</span><span class="chip-label">61–90d</span></div>'
+        +'<div class="aging-chip chip-90"><span class="chip-amt">'+fmtK(aging.bucket_over_90)+'</span><span class="chip-label">90+d</span></div>'
+        +'</div></div>';
+    }
+
+    var invHtml = '';
+    if(invoices.length){
+      invHtml = '<div class="detail-section"><div class="detail-label">Outstanding Invoices</div>'
+        + invoices.map(function(i){
+            var statusClass = i.status==='overdue'?'danger-text':'warning-text';
+            return '<div class="inv-row">'
+              +'<span class="inv-num">'+esc(i.invoice_number||i.id)+'</span>'
+              +'<span style="color:var(--text-muted);font-size:11px">'+esc(i.invoice_date||'')+'</span>'
+              +'<span class="amt">'+fmt(i.total_amount)+'</span>'
+              +'</div>';
+          }).join('')
+        +'</div>';
+    }
+
+    var actions = '<div class="detail-actions">'
+      +'<a class="btn btn-sm btn-ghost" href="/admin.html#clients" target="_blank">'
+      +'<i class="fa-solid fa-arrow-up-right-from-square"></i> Edit in Admin</a>'
+      +'<a class="btn btn-sm btn-ghost" href="/money.html">'
+      +'<i class="fa-solid fa-coins"></i> Money view</a>'
+      +'</div>';
+
+    return '<div class="detail-inner">'+areasHtml+agingHtml+invHtml+actions+'</div>';
+  }
+
+  // ── Helpers ─────────────────────────────────────────────────────────────────
+  function fmt(n){
+    n = parseFloat(n)||0;
+    return '$'+n.toLocaleString('en-US',{minimumFractionDigits:0,maximumFractionDigits:0});
+  }
+  function fmtK(n){
+    n = parseFloat(n)||0;
+    if(n===0) return '$0';
+    if(n>=1000) return '$'+(n/1000).toFixed(1)+'k';
+    return '$'+Math.round(n);
+  }
+  function esc(s){
+    return String(s??'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+  }
+
+  // ── Theme ────────────────────────────────────────────────────────────────────
+  window.toggleDark = function(){
+    var html = document.documentElement;
+    var dark = html.getAttribute('data-theme')==='dark';
+    html.setAttribute('data-theme', dark?'light':'dark');
+    localStorage.setItem('lfs_theme', dark?'light':'dark');
+    updateDmIcon();
+  };
+  function applyStoredTheme(){
+    var stored = localStorage.getItem('lfs_theme');
+    if(stored) document.documentElement.setAttribute('data-theme', stored);
+    updateDmIcon();
+  }
+  function updateDmIcon(){
+    var icon = document.getElementById('dm-icon');
+    if(!icon) return;
+    var dark = document.documentElement.getAttribute('data-theme')==='dark';
+    icon.className = dark?'fa-solid fa-sun':'fa-solid fa-moon';
+  }
+})();
+</script>
+<script src="/js/app_nav.js" data-active="clients"></script>
+</body>
+</html>

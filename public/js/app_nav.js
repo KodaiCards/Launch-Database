@@ -1,6 +1,6 @@
 // app_nav.js — shared left-nav rail injected into keystone screens so the
 // portal reads as one app. Include with: <script src="/js/app_nav.js" data-active="KEY"></script>
-// where KEY is one of: dashboard | service-areas | pipelines | hours | money | job-board.
+// where KEY is one of: dashboard | service-areas | pipelines | hours | money | job-board | clients.
 // Wraps the page's existing content (minus <script>s) into a flex shell beside
 // the rail; element ids are preserved so page scripts keep working.
 
@@ -39,7 +39,7 @@
     + link('job-board', '/job-board.html', 'fa-briefcase', 'Job board')
     + link('hours', '/hours.html', 'fa-clock', 'Hours')
     + link('money', '/money.html', 'fa-coins', 'Money')
-    + soon('fa-users', 'Clients')
+    + link('clients', '/clients.html', 'fa-users', 'Clients')
     + '<a class="app-nav" style="margin-top:auto" href="/admin.html"><i class="fa-solid fa-gear"></i> Admin</a>';
 
   var wrap = document.createElement('div');
