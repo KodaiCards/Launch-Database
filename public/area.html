@@ -326,6 +326,16 @@ function renderBreadcrumb(area){
     +'</div>';
 }
 
+function lifecycleBadge(area){
+  if(area.closed_at){
+    return '<span class="badge" style="background:var(--success-light);color:var(--success-text);font-size:11px"><i class="fa-solid fa-archive" aria-hidden="true"></i> Final · Archived</span>';
+  }
+  if(area.build_finalized_at){
+    return '<span class="badge" style="background:var(--primary-light);color:var(--primary-dark);font-size:11px"><i class="fa-solid fa-check-double" aria-hidden="true"></i> Completed</span>';
+  }
+  return '<span class="badge" style="background:var(--surface-1);color:var(--text-muted);font-size:11px"><i class="fa-solid fa-circle-play" aria-hidden="true"></i> Active</span>';
+}
+
 function renderAreaHead(area){
   var prog = area.program||'';
   var ecBadge = area.engineering_contract_id
@@ -333,7 +343,7 @@ function renderAreaHead(area){
     : '<span class="badge badge-'+esc(prog||'prog')+'">'+esc((prog||'—').toUpperCase())+' · no EC</span>';
   var wo = area.work_order_number ? '<span>WO# '+esc(area.work_order_number)+'</span>' : '';
   return '<div class="area-head">'
-    +'<div class="area-name">'+esc(area.name||'—')+'</div>'
+    +'<div class="area-name" style="display:flex;align-items:center;gap:10px;flex-wrap:wrap">'+esc(area.name||'—')+lifecycleBadge(area)+'</div>'
     +'<div class="area-meta">'
     +'<span><i class="fa-solid fa-building" aria-hidden="true"></i> '+esc(area.client_name||'—')+'</span>'
     +ecBadge+wo
@@ -382,10 +392,20 @@ function renderRouteBar(routes, view, areaFinalized){
     seg += '</div>';
   }
 
+  // Mark final / Reopen (= archive lifecycle stage)
+  var areaFinal = !!_ws.area.closed_at;
+  var closeBtnLabel = areaFinal
+    ? '<i class="fa-solid fa-lock-open"></i> Reopen'
+    : '<i class="fa-solid fa-archive"></i> Mark final';
+  var closeBtnCls = areaFinal ? 'btn btn-sm btn-secondary' : 'btn btn-sm btn-secondary';
+  var closeBtnTitle = areaFinal ? 'Remove final/archive status' : 'Mark area as fully done and archived';
+
   return '<div class="route-bar">'
     +seg
     +'<div class="finalize-btn-area">'
     +'<button class="'+finBtnCls+'" id="finalize-btn">'+finBtnLabel+'</button>'
+    +'<button class="'+closeBtnCls+'" id="close-btn" title="'+esc(closeBtnTitle)+'" style="'+(areaFinal?'border-color:var(--success);color:var(--success-text)':'')+'">'
+    +closeBtnLabel+'</button>'
     +'</div>'
     +'</div>';
 }
@@ -437,10 +457,12 @@ function renderMaterialsSection(materials, area, finalized){
     if(_expandedMat[m.id]) rows += '<tr class="expand-row" id="units-row-'+esc(m.id)+'"><td colspan="7"><span class="spinner"></span> Loading units…</td></tr>';
   });
 
-  return '<div class="card">'
+  var areaFinal = !!(_ws && _ws.area && _ws.area.closed_at);
+  return '<div class="card"'+(areaFinal?' style="opacity:.75"':'')+' aria-label="Materials">'
     +'<div class="card-head">'
     +'<div class="card-title"><i class="fa-solid fa-boxes-stacked" aria-hidden="true"></i> Materials</div>'
-    +'<button class="btn btn-sm btn-secondary" id="show-add-mat"><i class="fa-solid fa-plus"></i> Add manually</button>'
+    +'<button class="btn btn-sm btn-secondary" id="show-add-mat"'+(areaFinal?' disabled title="Area is final — reopen to edit"':'')+'>'+
+    '<i class="fa-solid fa-plus"></i> Add manually</button>'
     +'</div>'
     +'<div class="table-wrap">'
     +'<table aria-label="Materials">'
@@ -575,6 +597,12 @@ function bindAll(){
     doFinalize(!view.finalized, view.routeId);
   });
 
+  // Mark final / Reopen button (lifecycle close = archive)
+  var cb = document.getElementById('close-btn');
+  if(cb) cb.addEventListener('click', function(){
+    doClose(!_ws.area.closed_at, currentView().routeId);
+  });
+
   // Client visible checkboxes
   document.querySelectorAll('[data-vis]').forEach(function(cb){
     cb.addEventListener('change', function(){
@@ -703,6 +731,19 @@ async function doFinalize(finalize, routeId){
     flash(finalize ? 'Build finalized' : 'Build reopened');
     await load();
   } catch(e){ flash(e.message||'Failed to update build status','err'); }
+}
+
+// ── Close / Reopen (lifecycle = final / archived) ─────────────────────────
+async function doClose(close, routeId){
+  try{
+    if(routeId){
+      await api('/api/service-area-routes/'+encodeURIComponent(routeId)+'/close','POST',{ closed:close });
+    } else {
+      await api('/api/service-areas/'+encodeURIComponent(_id)+'/close','POST',{ closed:close });
+    }
+    flash(close ? 'Area marked final — archived' : 'Area reopened');
+    await load();
+  } catch(e){ flash(e.message||'Failed to update lifecycle status','err'); }
 }
 
 // ── Client visible metrics ────────────────────────────────────────────────

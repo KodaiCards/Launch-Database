@@ -1,0 +1,726 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>Billing — Launch Fiber</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+<link rel="stylesheet" href="/css/app-shell.css">
+<style>
+:root{
+  --primary:#1B5FA0;--primary-dark:#134880;--primary-light:#E8F0FB;
+  --surface-1:#F5F7FA;--surface-2:#FFFFFF;
+  --white:#FFFFFF;--gray-light:#F5F7FA;--gray-border:#DEE2E6;
+  --text:#212529;--text-secondary:#495057;--text-muted:#5A6470;
+  --success:#28A745;--success-light:#E8F5E9;--success-text:#1B5E20;
+  --warning:#FFC107;--warning-light:#FFF8E1;--warning-text:#7A4F0E;
+  --danger:#DC3545;--danger-light:#FDECEA;--danger-text:#842029;
+  --font:'Inter',sans-serif;
+}
+html[data-theme="dark"]{
+  --primary:#4A90D9;--primary-dark:#1B5FA0;--primary-light:#1E3A5C;
+  --surface-1:#1A1F26;--surface-2:#1D2430;
+  --white:#1D2430;--gray-light:#1A1F26;--gray-border:#2D3540;
+  --text:#E8EAED;--text-secondary:#C2C7CD;--text-muted:#9BA1A8;
+  --success:#5DD27A;--success-light:#1B3D24;--success-text:#A5D6A7;
+  --warning:#FFCA28;--warning-light:#3D2F0F;--warning-text:#FFCC80;
+  --danger:#FF6B6B;--danger-light:#3D1A1A;--danger-text:#FFCDD2;
+  color-scheme:dark;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{font-family:var(--font);background:var(--gray-light);color:var(--text);min-height:100vh}
+button{font-family:inherit;cursor:pointer;border:none;background:none;color:inherit}
+input,select{font-family:inherit;font-size:14px}
+html[data-theme="dark"] input,html[data-theme="dark"] select{background:var(--white);color:var(--text);border-color:var(--gray-border)}
+
+.header{background:var(--white);border-bottom:1px solid var(--gray-border);padding:10px 20px;
+  display:flex;align-items:center;justify-content:space-between}
+.header-title{font-size:16px;font-weight:600}
+.btn{padding:8px 14px;border-radius:6px;font-size:13px;font-weight:500;border:1px solid transparent;
+  display:inline-flex;align-items:center;gap:6px;transition:all .15s}
+.btn-sm{padding:5px 10px;font-size:12px}
+.btn-primary{background:var(--primary);color:#fff;border-color:var(--primary)}
+.btn-primary:hover:not(:disabled){background:var(--primary-dark)}
+.btn-primary:disabled{opacity:.5;cursor:not-allowed}
+.btn-ghost{background:transparent;border-color:var(--gray-border);color:var(--text-secondary)}
+.btn-ghost:hover{background:var(--surface-1)}
+.btn-danger-ghost{background:transparent;border-color:var(--danger);color:var(--danger-text)}
+.btn-danger-ghost:hover{background:var(--danger-light)}
+.btn-icon{width:32px;height:32px;padding:0;display:inline-flex;align-items:center;justify-content:center;
+  border-radius:6px;border:1px solid var(--gray-border);background:transparent;color:var(--text-secondary)}
+.btn-icon:hover{background:var(--surface-1)}
+
+.page-body{padding:20px 24px;max-width:1200px;margin:0 auto}
+.page-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:20px;gap:12px;flex-wrap:wrap}
+.page-title{font-size:20px;font-weight:700}
+
+/* Tabs */
+.tab-bar{display:flex;gap:0;border-bottom:2px solid var(--gray-border);margin-bottom:20px}
+.tab-btn{padding:10px 18px;font-size:13px;font-weight:500;color:var(--text-muted);cursor:pointer;
+  border:none;background:none;border-bottom:2px solid transparent;margin-bottom:-2px;transition:all .15s}
+.tab-btn:hover{color:var(--text)}
+.tab-btn.active{color:var(--primary);border-bottom-color:var(--primary);font-weight:600}
+.tab-panel{display:none}
+.tab-panel.active{display:block}
+
+/* Toolbar */
+.toolbar{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:16px}
+.period-picker{padding:7px 10px;border:1px solid var(--gray-border);border-radius:6px;
+  background:var(--white);color:var(--text);font-size:13px;outline:none}
+.period-picker:focus{border-color:var(--primary)}
+
+/* Cards */
+.card{background:var(--white);border:1px solid var(--gray-border);border-radius:10px;margin-bottom:14px}
+.card-header{display:flex;align-items:center;justify-content:space-between;padding:12px 16px;
+  border-bottom:1px solid var(--gray-border);gap:10px;cursor:pointer;user-select:none}
+.card-header:hover{background:var(--surface-1)}
+.card-title{font-size:14px;font-weight:600;display:flex;align-items:center;gap:8px}
+.card-meta{font-size:12px;color:var(--text-muted)}
+.card-body{padding:0}
+.card-header-right{display:flex;align-items:center;gap:12px}
+
+/* Area checkbox */
+.area-include{display:flex;align-items:center;gap:5px;font-size:12px}
+.area-include input{accent-color:var(--primary);width:14px;height:14px;cursor:pointer}
+
+/* Job lines table */
+table{width:100%;border-collapse:collapse;font-size:12px}
+thead th{background:var(--surface-1);padding:7px 12px;text-align:left;font-weight:600;
+  font-size:11px;color:var(--text-muted);border-bottom:1px solid var(--gray-border);white-space:nowrap}
+th.num,td.num{text-align:right}
+tbody tr{border-bottom:1px solid var(--gray-border);transition:background .1s}
+tbody tr:last-child{border-bottom:none}
+tbody td{padding:8px 12px;color:var(--text-secondary)}
+tr.recon-row{background:var(--warning-light)}
+html[data-theme="dark"] tr.recon-row{background:var(--warning-light)}
+tr.excluded-row{opacity:.45}
+.badge{display:inline-flex;align-items:center;gap:3px;padding:2px 7px;border-radius:8px;
+  font-size:10px;font-weight:700;white-space:nowrap}
+.badge-charge{background:var(--primary-light);color:var(--primary)}
+.badge-recon{background:var(--warning-light);color:var(--warning-text)}
+.badge-draft{background:var(--surface-1);color:var(--text-muted)}
+.badge-sent{background:var(--primary-light);color:var(--primary)}
+.badge-paid{background:var(--success-light);color:var(--success-text)}
+.badge-void{background:var(--danger-light);color:var(--danger-text)}
+.badge-closed{background:var(--warning-light);color:var(--warning-text)}
+.badge-program{background:var(--surface-1);color:var(--text-muted);font-size:10px}
+
+/* Amounts */
+.amt{font-variant-numeric:tabular-nums;color:var(--text)}
+.amt-neg{color:var(--danger-text)}
+.amt-pos{color:var(--success-text)}
+
+/* Commit bar */
+.commit-bar{background:var(--white);border:1px solid var(--gray-border);border-radius:10px;
+  padding:14px 20px;margin-top:16px;display:flex;align-items:center;justify-content:space-between;
+  gap:12px;flex-wrap:wrap}
+.commit-info{font-size:13px;color:var(--text-secondary)}
+.commit-info strong{color:var(--text)}
+
+/* Banner */
+.banner{padding:12px 16px;border-radius:8px;font-size:13px;display:flex;align-items:flex-start;
+  gap:10px;margin-bottom:16px}
+.banner i{margin-top:1px}
+.banner-success{background:var(--success-light);color:var(--success-text)}
+.banner-error{background:var(--danger-light);color:var(--danger-text)}
+.banner-info{background:var(--primary-light);color:var(--primary)}
+.banner-warn{background:var(--warning-light);color:var(--warning-text)}
+
+/* Report */
+.report-bar-wrap{display:flex;align-items:center;gap:8px}
+.report-bar{height:8px;border-radius:4px;background:var(--primary);min-width:4px}
+.report-row-total{font-weight:600;color:var(--text)}
+
+/* Invoice items detail */
+.items-panel{display:none;border-top:1px solid var(--gray-border)}
+.items-panel.open{display:block}
+
+.empty-state{padding:40px 20px;text-align:center;color:var(--text-muted);font-size:14px}
+.empty-state i{font-size:28px;display:block;margin-bottom:8px;opacity:.4}
+.skeleton{background:var(--surface-1);border-radius:4px;animation:pulse 1.4s infinite}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.4}}
+.loading-row td{padding:18px 12px;color:var(--text-muted);text-align:center}
+
+@media(max-width:700px){
+  .page-body{padding:12px}
+  .toolbar{gap:6px}
+  .commit-bar{flex-direction:column;align-items:stretch}
+}
+</style>
+</head>
+<body>
+
+<div class="header">
+  <span class="header-title"><i class="fa-solid fa-file-invoice-dollar"></i> Billing</span>
+  <button class="btn-icon" onclick="toggleDark()" aria-label="Toggle dark mode">
+    <i id="dm-icon" class="fa-solid fa-moon"></i>
+  </button>
+</div>
+
+<div class="page-body" role="main">
+  <div class="page-header">
+    <h1 class="page-title">Billing</h1>
+  </div>
+
+  <div class="tab-bar" role="tablist">
+    <button class="tab-btn active" role="tab" aria-selected="true" onclick="switchTab('worklist',this)" id="tab-worklist">
+      <i class="fa-solid fa-list-check"></i> Worklist
+    </button>
+    <button class="tab-btn" role="tab" aria-selected="false" onclick="switchTab('invoices',this)" id="tab-invoices">
+      <i class="fa-solid fa-file-invoice"></i> Invoices
+    </button>
+    <button class="tab-btn" role="tab" aria-selected="false" onclick="switchTab('report',this)" id="tab-report">
+      <i class="fa-solid fa-chart-bar"></i> Report
+    </button>
+  </div>
+
+  <!-- ── Worklist tab ──────────────────────────────────────────────────────── -->
+  <div class="tab-panel active" id="panel-worklist">
+    <div class="toolbar">
+      <label for="period-pick" style="font-size:13px;font-weight:500">Period</label>
+      <select id="period-pick" class="period-picker" onchange="loadWorklist()" aria-label="Billing period"></select>
+      <span id="closed-badge" style="display:none"></span>
+      <div style="margin-left:auto;display:flex;gap:8px;flex-wrap:wrap">
+        <button class="btn btn-ghost btn-sm" id="close-month-btn" onclick="toggleCloseMonth()" style="display:none"></button>
+        <button class="btn btn-ghost" onclick="loadWorklist()"><i class="fa-solid fa-rotate"></i> Refresh</button>
+      </div>
+    </div>
+
+    <div id="worklist-banner" style="display:none"></div>
+    <div id="worklist-area"></div>
+
+    <div class="commit-bar" id="generate-bar" style="display:none">
+      <div class="commit-info" id="generate-info"></div>
+      <button class="btn btn-primary" id="generate-btn" onclick="doGenerate()">
+        <i class="fa-solid fa-bolt"></i> <span id="generate-btn-label">Generate invoices</span>
+      </button>
+    </div>
+  </div>
+
+  <!-- ── Invoices tab ──────────────────────────────────────────────────────── -->
+  <div class="tab-panel" id="panel-invoices">
+    <div class="toolbar">
+      <select id="inv-filter-status" class="period-picker" onchange="filterInvoices()" aria-label="Filter by status">
+        <option value="">All statuses</option>
+        <option value="draft">Draft</option>
+        <option value="sent">Sent</option>
+        <option value="paid">Paid</option>
+        <option value="void">Void</option>
+      </select>
+      <input type="search" id="inv-filter-q" class="period-picker" placeholder="Search client / #…"
+        oninput="filterInvoices()" aria-label="Search invoices">
+      <button class="btn btn-ghost" onclick="loadInvoices()"><i class="fa-solid fa-rotate"></i> Refresh</button>
+    </div>
+    <div class="card">
+      <table aria-label="Invoices list">
+        <thead><tr>
+          <th>#</th>
+          <th>Client</th>
+          <th>Period</th>
+          <th>Date</th>
+          <th>Status</th>
+          <th class="num">Total</th>
+          <th></th>
+        </tr></thead>
+        <tbody id="invoices-tbody">
+          <tr class="loading-row"><td colspan="7"><i class="fa-solid fa-spinner fa-spin"></i> Loading…</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- ── Report tab ────────────────────────────────────────────────────────── -->
+  <div class="tab-panel" id="panel-report">
+    <div class="toolbar">
+      <span style="font-size:13px;font-weight:500">Group by</span>
+      <div role="group" aria-label="Group by" style="display:flex;gap:4px">
+        <button class="btn btn-sm btn-primary" id="rg-client" onclick="loadReport('client',this)">Client</button>
+        <button class="btn btn-sm btn-ghost" id="rg-ec" onclick="loadReport('ec',this)">EC</button>
+        <button class="btn btn-sm btn-ghost" id="rg-program" onclick="loadReport('program',this)">Program</button>
+        <button class="btn btn-sm btn-ghost" id="rg-month" onclick="loadReport('month',this)">Month</button>
+      </div>
+    </div>
+    <div class="card">
+      <table aria-label="Billing report">
+        <thead><tr>
+          <th>Label</th>
+          <th class="num">Invoices</th>
+          <th class="num">Total billed</th>
+          <th style="width:200px"></th>
+        </tr></thead>
+        <tbody id="report-tbody">
+          <tr class="loading-row"><td colspan="4"><i class="fa-solid fa-spinner fa-spin"></i> Loading…</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<script>
+(function(){
+'use strict';
+
+// ── Theme ────────────────────────────────────────────────────────────────────
+document.addEventListener('DOMContentLoaded', function(){ applyStoredTheme(); boot(); });
+window.toggleDark = function(){
+  var html = document.documentElement;
+  var dark = html.getAttribute('data-theme')==='dark';
+  html.setAttribute('data-theme', dark?'light':'dark');
+  localStorage.setItem('lfs_theme', dark?'light':'dark');
+  updateDmIcon();
+};
+function applyStoredTheme(){
+  var s = localStorage.getItem('lfs_theme');
+  if(s) document.documentElement.setAttribute('data-theme', s);
+  updateDmIcon();
+}
+function updateDmIcon(){
+  var i = document.getElementById('dm-icon');
+  if(!i) return;
+  i.className = document.documentElement.getAttribute('data-theme')==='dark' ? 'fa-solid fa-sun' : 'fa-solid fa-moon';
+}
+
+// ── State ─────────────────────────────────────────────────────────────────────
+var _periods        = []; // [{period_month, closed_at}]
+var _worklist       = null; // last loaded worklist {period, areas:[]}
+var _excludedJobs   = new Set(); // job_ids excluded from run
+var _excludedAreas  = new Set(); // area ids unchecked for run
+var _allInvoices    = [];
+var _openInvId      = null;
+
+// ── Boot ─────────────────────────────────────────────────────────────────────
+async function boot(){
+  buildPeriodPicker();
+  await Promise.all([loadPeriods(), loadWorklist()]);
+  loadInvoices();
+  loadReport('client', document.getElementById('rg-client'));
+}
+
+function buildPeriodPicker(){
+  var sel = document.getElementById('period-pick');
+  var now = new Date();
+  var opts = [];
+  for(var i=0; i<18; i++){
+    var d = new Date(now.getFullYear(), now.getMonth()-i, 1);
+    var val = d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0');
+    var label = d.toLocaleDateString('en-US',{month:'long',year:'numeric'});
+    opts.push('<option value="'+val+'">'+(i===0?'▶ ':'')+label+'</option>');
+  }
+  sel.innerHTML = opts.join('');
+}
+
+async function loadPeriods(){
+  try{
+    var res = await fetch('/api/billing/periods', { credentials:'include' });
+    if(res.ok) _periods = await res.json();
+  } catch(e){}
+  updateClosedBadge();
+}
+
+function updateClosedBadge(){
+  var period = document.getElementById('period-pick').value;
+  var pc = _periods.find(function(p){ return p.period_month && p.period_month.slice(0,7)===period; });
+  var badge = document.getElementById('closed-badge');
+  var btn   = document.getElementById('close-month-btn');
+  if(pc){
+    badge.innerHTML = '<span class="badge badge-closed"><i class="fa-solid fa-lock"></i> Closed</span>';
+    badge.style.display = 'inline-flex';
+    btn.innerHTML = '<i class="fa-solid fa-lock-open"></i> Reopen month';
+    btn.style.display = 'inline-flex';
+    btn.setAttribute('data-closed', '1');
+  } else {
+    badge.style.display = 'none';
+    btn.innerHTML = '<i class="fa-solid fa-lock"></i> Close month';
+    btn.style.display = 'inline-flex';
+    btn.setAttribute('data-closed', '0');
+  }
+}
+
+// ── Worklist ─────────────────────────────────────────────────────────────────
+window.loadWorklist = async function(){
+  var period = document.getElementById('period-pick').value;
+  if(!period) return;
+  updateClosedBadge();
+  _excludedJobs = new Set();
+  _excludedAreas = new Set();
+  _worklist = null;
+  document.getElementById('worklist-area').innerHTML =
+    '<div style="padding:24px;text-align:center;color:var(--text-muted);font-size:13px">'
+    +'<i class="fa-solid fa-spinner fa-spin"></i> Loading worklist…</div>';
+  document.getElementById('generate-bar').style.display = 'none';
+  document.getElementById('worklist-banner').style.display = 'none';
+
+  try{
+    var res = await fetch('/api/billing/worklist?period='+encodeURIComponent(period), { credentials:'include' });
+    if(res.status===401||res.status===403){
+      document.getElementById('worklist-area').innerHTML =
+        '<div class="empty-state"><i class="fa-solid fa-lock"></i>Manager or admin access required.</div>';
+      return;
+    }
+    if(!res.ok) throw new Error((await res.json()).error||'Failed');
+    _worklist = await res.json();
+    renderWorklist();
+  } catch(e){
+    document.getElementById('worklist-area').innerHTML =
+      '<div class="empty-state"><i class="fa-solid fa-triangle-exclamation"></i>'+esc(e.message)+'</div>';
+  }
+};
+
+function renderWorklist(){
+  var areas = (_worklist && _worklist.areas) || [];
+  var container = document.getElementById('worklist-area');
+  if(!areas.length){
+    container.innerHTML = '<div class="empty-state"><i class="fa-solid fa-check-circle"></i>'
+      +'Nothing billable for this period — all jobs are up to date.</div>';
+    document.getElementById('generate-bar').style.display = 'none';
+    return;
+  }
+
+  container.innerHTML = areas.map(function(area){
+    var prog = area.program||'';
+    var progBadge = prog ? '<span class="badge badge-program">'+esc(prog.toUpperCase())+'</span> ' : '';
+    var charges = area.lines.filter(function(l){ return l.line_kind==='charge'; });
+    var recons  = area.lines.filter(function(l){ return l.line_kind==='reconciliation'; });
+    var reconNote = recons.length ? ' <span style="font-size:11px;color:var(--warning-text)">'+recons.length+' credit'+(recons.length!==1?'s':'')+'</span>' : '';
+
+    var rows = area.lines.map(function(line){
+      var excl = _excludedJobs.has(line.job_id);
+      var isRecon = line.line_kind==='reconciliation';
+      var rowClass = excl ? 'excluded-row' : (isRecon ? 'recon-row' : '');
+      var kindBadge = isRecon
+        ? '<span class="badge badge-recon"><i class="fa-solid fa-rotate-left"></i> Credit</span>'
+        : '<span class="badge badge-charge">Charge</span>';
+      var qty = line.billing_type==='fixed' ? '1' : (Number(line.quantity||0).toFixed(2));
+      var rate = (line.rate!==null&&line.rate!==undefined) ? fmtMoney(line.rate)+'/'+esc(line.unit||'') : 'fixed';
+      return '<tr class="'+rowClass+'" id="line-'+esc(line.job_id)+'">'
+        +'<td><label class="area-include">'
+        +'<input type="checkbox" '+(excl?'':'checked')+' onchange="toggleJob(\''+esc(line.job_id)+'\',\''+esc(area.service_area_id)+'\',this.checked)" aria-label="Include job '+esc(line.job_name||line.team||'')+'"> </label></td>'
+        +'<td>'+esc(line.job_name||line.team||line.billing_type)+'</td>'
+        +'<td>'+esc(line.billing_type)+'</td>'
+        +'<td>'+kindBadge+'</td>'
+        +'<td class="num amt">'+fmtMoney(line.earned)+'</td>'
+        +'<td class="num amt">'+fmtMoney(line.billed_to_date)+'</td>'
+        +'<td class="num '+(Number(line.billable)<0?'amt-neg':'amt-pos')+'">'+fmtMoney(line.billable)+'</td>'
+        +'<td class="num" style="color:var(--text-muted);font-size:11px">'+qty+' × '+rate+'</td>'
+        +'</tr>';
+    }).join('');
+
+    return '<div class="card" id="area-card-'+esc(area.service_area_id)+'">'
+      +'<div class="card-header" onclick="toggleAreaCard(\''+esc(area.service_area_id)+'\')"'
+      +' tabindex="0" role="button" aria-expanded="true" id="area-hdr-'+esc(area.service_area_id)+'"'
+      +' onkeydown="if(event.key===\'Enter\'||event.key===\' \'){event.preventDefault();toggleAreaCard(\''+esc(area.service_area_id)+'\')}">'
+      +'<div class="card-title">'
+      +'<label class="area-include" onclick="event.stopPropagation()">'
+      +'<input type="checkbox" checked id="area-chk-'+esc(area.service_area_id)+'"'
+      +' onchange="toggleArea(\''+esc(area.service_area_id)+'\',this.checked)" aria-label="Include area '+esc(area.name)+'">'
+      +'</label>'
+      +progBadge+esc(area.name)
+      +reconNote
+      +'</div>'
+      +'<div class="card-header-right">'
+      +'<span class="amt '+(Number(area.total)<0?'amt-neg':'')+'">'+fmtMoney(area.total)+'</span>'
+      +'<i class="fa-solid fa-chevron-down" id="area-chev-'+esc(area.service_area_id)+'" style="font-size:11px;color:var(--text-muted);transition:transform .2s"></i>'
+      +'</div>'
+      +'</div>'
+      +'<div class="card-body" id="area-body-'+esc(area.service_area_id)+'">'
+      +'<div style="overflow-x:auto">'
+      +'<table><thead><tr>'
+      +'<th style="width:32px"></th>'
+      +'<th>Job</th><th>Type</th><th>Kind</th>'
+      +'<th class="num">Earned</th>'
+      +'<th class="num">Billed to date</th>'
+      +'<th class="num">Billable now</th>'
+      +'<th class="num">Qty × Rate</th>'
+      +'</tr></thead>'
+      +'<tbody>'+rows+'</tbody>'
+      +'</table></div>'
+      +'</div>'
+      +'</div>';
+  }).join('');
+
+  updateGenerateBar();
+}
+
+window.toggleAreaCard = function(areaId){
+  var body = document.getElementById('area-body-'+areaId);
+  var hdr  = document.getElementById('area-hdr-'+areaId);
+  var chev = document.getElementById('area-chev-'+areaId);
+  if(!body) return;
+  var open = body.style.display !== 'none';
+  body.style.display = open ? 'none' : 'block';
+  if(hdr) hdr.setAttribute('aria-expanded', open ? 'false' : 'true');
+  if(chev) chev.style.transform = open ? 'rotate(-90deg)' : '';
+};
+
+window.toggleJob = function(jobId, areaId, checked){
+  if(checked) _excludedJobs.delete(jobId);
+  else _excludedJobs.add(jobId);
+  var row = document.getElementById('line-'+jobId);
+  if(row) row.className = checked ? (row.classList.contains('recon-row') ? 'recon-row' : '') : 'excluded-row';
+  updateGenerateBar();
+};
+
+window.toggleArea = function(areaId, checked){
+  if(checked){ _excludedAreas.delete(areaId); }
+  else _excludedAreas.add(areaId);
+  // also toggle all jobs in this area
+  if(_worklist){
+    var area = _worklist.areas.find(function(a){ return a.service_area_id===areaId; });
+    if(area){
+      area.lines.forEach(function(l){
+        if(!checked) _excludedJobs.add(l.job_id);
+        else _excludedJobs.delete(l.job_id);
+        var row = document.getElementById('line-'+l.job_id);
+        if(row) row.className = !checked ? 'excluded-row' : (l.line_kind==='reconciliation' ? 'recon-row' : '');
+      });
+    }
+  }
+  updateGenerateBar();
+};
+
+function updateGenerateBar(){
+  if(!_worklist) return;
+  var areas = _worklist.areas || [];
+  var includedAreas = areas.filter(function(a){
+    return !_excludedAreas.has(a.service_area_id) &&
+      a.lines.some(function(l){ return !_excludedJobs.has(l.job_id); });
+  });
+  var totalBillable = 0;
+  areas.forEach(function(a){
+    if(_excludedAreas.has(a.service_area_id)) return;
+    a.lines.forEach(function(l){
+      if(!_excludedJobs.has(l.job_id)) totalBillable += Number(l.billable)||0;
+    });
+  });
+  var bar = document.getElementById('generate-bar');
+  bar.style.display = 'flex';
+  document.getElementById('generate-info').innerHTML =
+    '<strong>'+includedAreas.length+'</strong> concentrator'+(includedAreas.length!==1?'s':'')
+    +' · <strong>'+fmtMoney(totalBillable)+'</strong> billable';
+  var btn = document.getElementById('generate-btn');
+  btn.disabled = includedAreas.length===0;
+  document.getElementById('generate-btn-label').textContent =
+    'Generate '+includedAreas.length+' invoice'+(includedAreas.length!==1?'s':'');
+}
+
+window.doGenerate = async function(){
+  if(!_worklist) return;
+  var btn = document.getElementById('generate-btn');
+  btn.disabled = true;
+  btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Generating…';
+
+  var areas = _worklist.areas || [];
+  var saIds = areas
+    .filter(function(a){ return !_excludedAreas.has(a.service_area_id); })
+    .filter(function(a){ return a.lines.some(function(l){ return !_excludedJobs.has(l.job_id); }); })
+    .map(function(a){ return a.service_area_id; });
+  var excludeJobs = Array.from(_excludedJobs);
+
+  try{
+    var res = await fetch('/api/billing/run', {
+      method:'POST', credentials:'include',
+      headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({ period:_worklist.period, service_area_ids:saIds, exclude_job_ids:excludeJobs })
+    });
+    var data = await res.json();
+    if(!res.ok) throw new Error(data.error||'Failed');
+    var banner = document.getElementById('worklist-banner');
+    var invLinks = (data.invoices||[]).slice(0,5).map(function(i){
+      return esc(i.invoice.notes||i.invoice.invoice_number||'Draft');
+    }).join(', ');
+    banner.innerHTML = '<div class="banner banner-success">'
+      +'<i class="fa-solid fa-circle-check"></i>'
+      +'<span>Created <strong>'+data.invoices_created+'</strong> draft invoice'+(data.invoices_created!==1?'s':'')
+      +(invLinks ? ': '+invLinks : '')
+      +'. <button class="btn btn-sm btn-ghost" style="border:none;text-decoration:underline" onclick="switchTab(\'invoices\',document.getElementById(\'tab-invoices\'));loadInvoices()">View invoices</button>'
+      +'</span></div>';
+    banner.style.display = 'block';
+    // reload worklist to show updated billed_to_date
+    await loadWorklist();
+    loadInvoices();
+  } catch(e){
+    var banner = document.getElementById('worklist-banner');
+    banner.innerHTML = '<div class="banner banner-error"><i class="fa-solid fa-circle-exclamation"></i>'+esc(e.message)+'</div>';
+    banner.style.display = 'block';
+  } finally {
+    btn.disabled = false;
+    btn.innerHTML = '<i class="fa-solid fa-bolt"></i> <span id="generate-btn-label">Generate invoices</span>';
+    updateGenerateBar();
+  }
+};
+
+// ── Close month ───────────────────────────────────────────────────────────────
+window.toggleCloseMonth = async function(){
+  var period = document.getElementById('period-pick').value;
+  var btn = document.getElementById('close-month-btn');
+  var isClosed = btn.getAttribute('data-closed')==='1';
+  btn.disabled = true;
+  try{
+    var body = isClosed ? {open:true} : {};
+    var res = await fetch('/api/billing/periods/'+encodeURIComponent(period)+'/close', {
+      method:'POST', credentials:'include',
+      headers:{'Content-Type':'application/json'},
+      body: JSON.stringify(body)
+    });
+    if(!res.ok) throw new Error((await res.json()).error||'Failed');
+    await loadPeriods();
+  } catch(e){
+    var banner = document.getElementById('worklist-banner');
+    banner.innerHTML = '<div class="banner banner-error"><i class="fa-solid fa-circle-exclamation"></i>'+esc(e.message)+'</div>';
+    banner.style.display = 'block';
+  } finally {
+    btn.disabled = false;
+  }
+};
+
+// ── Invoices ──────────────────────────────────────────────────────────────────
+window.loadInvoices = async function(){
+  try{
+    var res = await fetch('/api/billing/invoices', { credentials:'include' });
+    _allInvoices = res.ok ? (await res.json()) : [];
+  } catch(e){ _allInvoices = []; }
+  renderInvoices(_allInvoices);
+};
+
+window.filterInvoices = function(){
+  var status = document.getElementById('inv-filter-status').value;
+  var q = (document.getElementById('inv-filter-q').value||'').toLowerCase().trim();
+  var filtered = _allInvoices.filter(function(i){
+    if(status && i.status!==status) return false;
+    if(q && !(i.client_name||'').toLowerCase().includes(q) && !(i.invoice_number||'').toLowerCase().includes(q)) return false;
+    return true;
+  });
+  renderInvoices(filtered);
+};
+
+function renderInvoices(list){
+  var tbody = document.getElementById('invoices-tbody');
+  if(!list.length){
+    tbody.innerHTML = '<tr><td colspan="7"><div class="empty-state"><i class="fa-solid fa-file-invoice"></i>No invoices found.</div></td></tr>';
+    return;
+  }
+  tbody.innerHTML = list.map(function(inv){
+    var period = '';
+    if(inv.billing_period_start) period = inv.billing_period_start.slice(0,7);
+    var statusBadge = '<span class="badge badge-'+esc(inv.status||'draft')+'">'+esc((inv.status||'draft').toUpperCase())+'</span>';
+    var isOpen = _openInvId===inv.id;
+    return '<tr class="inv-row" id="inv-row-'+esc(inv.id)+'" style="cursor:pointer" tabindex="0" role="button"'
+      +' aria-expanded="'+(isOpen?'true':'false')+'"'
+      +' onclick="toggleInvoice(\''+esc(inv.id)+'\')"'
+      +' onkeydown="if(event.key===\'Enter\'||event.key===\' \'){event.preventDefault();toggleInvoice(\''+esc(inv.id)+'\')}">'
+      +'<td style="font-weight:500;color:var(--primary)">'+esc(inv.invoice_number||inv.id.slice(0,8))+'</td>'
+      +'<td>'+esc(inv.client_name||'—')+'</td>'
+      +'<td>'+esc(period||'—')+'</td>'
+      +'<td>'+esc(inv.invoice_date||'—')+'</td>'
+      +'<td>'+statusBadge+'</td>'
+      +'<td class="num amt">'+fmtMoney(inv.total_amount)+'</td>'
+      +'<td style="width:28px"><i class="fa-solid fa-chevron-right" id="inv-chev-'+esc(inv.id)+'" style="font-size:11px;color:var(--text-muted);transition:transform .2s'+(isOpen?';transform:rotate(90deg)':'')+'"></i></td>'
+      +'</tr>'
+      +'<tr id="inv-detail-tr-'+esc(inv.id)+'"><td colspan="7" style="padding:0">'
+      +'<div class="items-panel'+(isOpen?' open':'')+'" id="inv-detail-'+esc(inv.id)+'">'+renderItems(inv.items||[])+'</div>'
+      +'</td></tr>';
+  }).join('');
+}
+
+window.toggleInvoice = function(invId){
+  if(_openInvId===invId){
+    closeInvoice(invId); _openInvId=null; return;
+  }
+  if(_openInvId) closeInvoice(_openInvId);
+  _openInvId = invId;
+  openInvoice(invId);
+};
+
+function openInvoice(invId){
+  var panel = document.getElementById('inv-detail-'+invId);
+  var row   = document.getElementById('inv-row-'+invId);
+  var chev  = document.getElementById('inv-chev-'+invId);
+  if(panel) panel.classList.add('open');
+  if(row)   row.setAttribute('aria-expanded','true');
+  if(chev)  chev.style.transform = 'rotate(90deg)';
+}
+function closeInvoice(invId){
+  var panel = document.getElementById('inv-detail-'+invId);
+  var row   = document.getElementById('inv-row-'+invId);
+  var chev  = document.getElementById('inv-chev-'+invId);
+  if(panel) panel.classList.remove('open');
+  if(row)   row.setAttribute('aria-expanded','false');
+  if(chev)  chev.style.transform = '';
+}
+
+function renderItems(items){
+  if(!items.length) return '<div class="empty-state" style="padding:16px;font-size:12px"><i class="fa-solid fa-inbox"></i>No line items.</div>';
+  var rows = items.map(function(it){
+    var isRecon = it.line_kind==='reconciliation';
+    var kindBadge = isRecon
+      ? '<span class="badge badge-recon"><i class="fa-solid fa-rotate-left"></i> Credit</span>'
+      : '<span class="badge badge-charge">Charge</span>';
+    return '<tr class="'+(isRecon?'recon-row':'')+'">'
+      +'<td style="padding-left:28px">'+esc(it.description||'—')+'</td>'
+      +'<td>'+kindBadge+'</td>'
+      +'<td class="num">'+esc(String(it.quantity||''))+'</td>'
+      +'<td class="num" style="color:var(--text-muted)">'+esc(it.unit||'')+(it.rate?' @ '+fmtMoney(it.rate):'')+'</td>'
+      +'<td class="num '+(Number(it.amount)<0?'amt-neg':'amt')+'">'+fmtMoney(it.amount)+'</td>'
+      +'</tr>';
+  }).join('');
+  return '<div style="overflow-x:auto"><table>'
+    +'<thead><tr><th style="padding-left:28px">Description</th><th>Kind</th><th class="num">Qty</th><th class="num">Unit / Rate</th><th class="num">Amount</th></tr></thead>'
+    +'<tbody>'+rows+'</tbody>'
+    +'</table></div>';
+}
+
+// ── Report ────────────────────────────────────────────────────────────────────
+window.loadReport = async function(group, btn){
+  document.querySelectorAll('[id^="rg-"]').forEach(function(b){ b.className = 'btn btn-sm btn-ghost'; });
+  if(btn) btn.className = 'btn btn-sm btn-primary';
+  var tbody = document.getElementById('report-tbody');
+  tbody.innerHTML = '<tr class="loading-row"><td colspan="4"><i class="fa-solid fa-spinner fa-spin"></i> Loading…</td></tr>';
+  try{
+    var res = await fetch('/api/billing/report?group='+encodeURIComponent(group), { credentials:'include' });
+    if(!res.ok) throw new Error((await res.json()).error||'Failed');
+    var data = await res.json();
+    var rows = data.rows || [];
+    if(!rows.length){
+      tbody.innerHTML = '<tr><td colspan="4"><div class="empty-state"><i class="fa-solid fa-chart-bar"></i>No billing data.</div></td></tr>';
+      return;
+    }
+    var maxTotal = Math.max.apply(null, rows.map(function(r){ return Number(r.total)||0; })) || 1;
+    tbody.innerHTML = rows.map(function(r){
+      var pct = Math.max(4, Math.round((Number(r.total)||0) / maxTotal * 180));
+      return '<tr>'
+        +'<td class="report-row-total">'+esc(r.label||'—')+'</td>'
+        +'<td class="num">'+esc(String(r.invoice_count||0))+'</td>'
+        +'<td class="num amt">'+fmtMoney(r.total)+'</td>'
+        +'<td><div class="report-bar-wrap"><div class="report-bar" style="width:'+pct+'px" aria-hidden="true"></div></div></td>'
+        +'</tr>';
+    }).join('');
+  } catch(e){
+    tbody.innerHTML = '<tr><td colspan="4"><div class="empty-state" style="padding:16px"><i class="fa-solid fa-triangle-exclamation"></i>'+esc(e.message)+'</div></td></tr>';
+  }
+};
+
+// ── Tabs ─────────────────────────────────────────────────────────────────────
+window.switchTab = function(name, btn){
+  document.querySelectorAll('.tab-panel').forEach(function(p){ p.classList.remove('active'); });
+  document.querySelectorAll('.tab-btn').forEach(function(b){ b.classList.remove('active'); b.setAttribute('aria-selected','false'); });
+  document.getElementById('panel-'+name).classList.add('active');
+  if(btn){ btn.classList.add('active'); btn.setAttribute('aria-selected','true'); }
+};
+
+// ── Helpers ───────────────────────────────────────────────────────────────────
+function fmtMoney(n){
+  n = Number(n||0);
+  if(n<0) return '-$'+Math.abs(n).toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2});
+  return '$'+n.toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2});
+}
+function esc(s){
+  return String(s??'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+})();
+</script>
+<script src="/js/app_nav.js" data-active="billing-ks"></script>
+</body>
+</html>

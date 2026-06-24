@@ -112,6 +112,20 @@ tfoot td{font-weight:700;border-top:2px solid var(--gray-border);background:var(
 @media(max-width:400px){
   .aging-grid{grid-template-columns:1fr}
 }
+/* Tabs */
+.tab-bar{display:flex;gap:0;border-bottom:2px solid var(--gray-border);margin-bottom:20px;overflow-x:auto}
+.tab-btn{padding:9px 16px;font-size:13px;font-weight:500;color:var(--text-muted);background:none;
+  border:none;cursor:pointer;white-space:nowrap;border-bottom:2px solid transparent;margin-bottom:-2px;
+  transition:color .12s,border-color .12s}
+.tab-btn:hover{color:var(--text)}
+.tab-btn.active{color:var(--primary);border-bottom-color:var(--primary);font-weight:600}
+.tab-panel{display:none}
+.tab-panel.active{display:block}
+/* Lifecycle badge */
+.badge-final{background:var(--success-light);color:var(--success-text)}
+.badge-completed{background:var(--primary-light);color:var(--primary-dark)}
+.badge-active{background:var(--surface-1);color:var(--text-muted)}
+
 /* Invoice drill-in modal */
 .modal-bg{position:fixed;inset:0;background:rgba(0,0,0,.45);display:flex;align-items:center;justify-content:center;z-index:1000}
 .modal-bg.hidden{display:none}
@@ -139,10 +153,19 @@ tfoot td{font-weight:700;border-top:2px solid var(--gray-border);background:var(
 
 <main class="container" role="main" data-active="money">
   <div class="page-heading">Money</div>
-  <div class="page-sub">Estimate-vs-billed margin, AR aging, and accounting export. Manager view.</div>
+  <div class="page-sub">Estimate-vs-billed margin, AR aging, projections, and accounting export. Manager view.</div>
+
+  <div class="tab-bar" role="tablist" aria-label="Money tabs">
+    <button class="tab-btn active" data-t="margin"      role="tab" aria-selected="true">Margin</button>
+    <button class="tab-btn"        data-t="aging"       role="tab" aria-selected="false">AR Aging</button>
+    <button class="tab-btn"        data-t="revenue"     role="tab" aria-selected="false">Revenue</button>
+    <button class="tab-btn"        data-t="program"     role="tab" aria-selected="false">Program</button>
+    <button class="tab-btn"        data-t="projections" role="tab" aria-selected="false">Projections</button>
+    <button class="tab-btn"        data-t="reporting"   role="tab" aria-selected="false">Reporting</button>
+  </div>
 
   <!-- Margin -->
-  <div class="section">
+  <div class="section tab-panel active" id="tab-panel-margin">
     <div class="section-head">
       <div class="section-title"><i class="fa-solid fa-scale-balanced"></i> Estimate vs Billed — by Service Area</div>
       <button class="btn btn-secondary btn-sm" onclick="window.print()" title="Print page"><i class="fa-solid fa-print"></i> Print</button>
@@ -166,7 +189,7 @@ tfoot td{font-weight:700;border-top:2px solid var(--gray-border);background:var(
   </div>
 
   <!-- AR aging -->
-  <div class="section">
+  <div class="section tab-panel" id="tab-panel-aging">
     <div class="section-head">
       <div class="section-title"><i class="fa-regular fa-hourglass-half"></i> AR Aging</div>
     </div>
@@ -177,7 +200,7 @@ tfoot td{font-weight:700;border-top:2px solid var(--gray-border);background:var(
   </div>
 
   <!-- Revenue Rollup -->
-  <div class="section">
+  <div class="section tab-panel" id="tab-panel-revenue">
     <div class="section-head">
       <div class="section-title"><i class="fa-solid fa-chart-bar"></i> Revenue Rollup</div>
       <div style="display:flex;gap:0;border:1px solid var(--gray-border);border-radius:6px;overflow:hidden">
@@ -192,7 +215,7 @@ tfoot td{font-weight:700;border-top:2px solid var(--gray-border);background:var(
   </div>
 
   <!-- Program Financials -->
-  <div class="section">
+  <div class="section tab-panel" id="tab-panel-program">
     <div class="section-head">
       <div class="section-title"><i class="fa-solid fa-chart-pie"></i> Program Financials — RUS vs Non-RUS</div>
     </div>
@@ -200,6 +223,45 @@ tfoot td{font-weight:700;border-top:2px solid var(--gray-border);background:var(
       <div class="loading-row"><span class="spinner"></span>Loading…</div>
     </div>
   </div>
+
+  <!-- Projections -->
+  <div class="section tab-panel" id="tab-panel-projections">
+    <div class="section-head" style="flex-wrap:wrap;gap:10px;align-items:flex-end;margin-bottom:14px">
+      <div class="section-title"><i class="fa-solid fa-chart-line"></i> Revenue Projections</div>
+      <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
+        <div style="display:flex;border:1px solid var(--gray-border);border-radius:6px;overflow:hidden">
+          <button class="btn btn-sm" id="proj-prog-all"   onclick="setProjProgram('all')"     style="border-radius:0;border:none;background:var(--primary);color:#fff">All</button>
+          <button class="btn btn-sm" id="proj-prog-rus"   onclick="setProjProgram('rus')"     style="border-radius:0;border:none;border-left:1px solid var(--gray-border)">RUS</button>
+          <button class="btn btn-sm" id="proj-prog-other" onclick="setProjProgram('non-rus')" style="border-radius:0;border:none;border-left:1px solid var(--gray-border)">Non-RUS</button>
+        </div>
+        <select id="proj-client-sel" aria-label="Filter by client"
+          style="padding:6px 10px;border:1px solid var(--gray-border);border-radius:6px;font-size:13px;background:var(--white);color:var(--text)"
+          onchange="filterProjections()">
+          <option value="">All clients</option>
+        </select>
+      </div>
+    </div>
+    <div id="proj-kpi" class="aging-grid" style="margin-bottom:16px"></div>
+    <div id="proj-ec-section" style="display:none;margin-bottom:16px">
+      <div style="display:flex;align-items:center;gap:10px;margin-bottom:10px;flex-wrap:wrap">
+        <div class="section-title" style="font-size:13px"><i class="fa-solid fa-circle-dollar-to-slot"></i> RUS Engineering Budget Burn</div>
+        <select id="proj-ec-sel" aria-label="Select engineering contract"
+          style="padding:6px 10px;border:1px solid var(--gray-border);border-radius:6px;font-size:13px;background:var(--white);color:var(--text)"
+          onchange="loadEcBurn()">
+          <option value="">— Select EC —</option>
+        </select>
+      </div>
+      <div class="card" id="proj-ec-card">
+        <div class="empty-state"><i class="fa-solid fa-circle-dollar-to-slot"></i>Select an engineering contract above.</div>
+      </div>
+    </div>
+    <div class="card" id="proj-concs-card">
+      <div class="loading-row"><span class="spinner"></span>Loading projections…</div>
+    </div>
+  </div>
+
+  <!-- Reporting (Statement + Export) -->
+  <div class="section tab-panel" id="tab-panel-reporting">
 
   <!-- Client Statement -->
   <div class="section">
@@ -230,6 +292,8 @@ tfoot td{font-weight:700;border-top:2px solid var(--gray-border);background:var(
       <span class="page-sub" style="margin:0 0 0 10px;display:inline">Service areas, jobs, and invoices as CSVs. Admin only.</span>
     </div>
   </div>
+
+  </div><!-- /tab-panel-reporting -->
 </main>
 
 <!-- Invoice drill-in modal -->
