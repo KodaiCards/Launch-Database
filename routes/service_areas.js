@@ -509,6 +509,105 @@ module.exports = function installServiceAreaRoutes(app, pool, mw) {
     } catch (e) { console.error('[sa-units:delete]', e && e.message); res.status(500).json({ error: 'Failed to delete unit.' }); }
   });
 
+  // ─── Workspace read (the consolidated view the cluster UI renders) ──────────
+  // One call per service area: the area, its routes, jobs + materials grouped by
+  // route (route_id NULL = area-level), per-person hours from time_entries, and
+  // the server-computed cost rollups. Money math lives HERE, never in the frontend.
+  //   engineering_cost  = Σ engineering-discipline jobs ($ LFS bills)
+  //   construction_cost = Σ construction-discipline LABOR + installed MATERIALS
+  //                       (kept as separate line items; summed into one tile)
+  //   total_cost        = engineering + construction
+  app.get('/api/service-areas/:id/workspace', requireAuth(STAFF_ROLES), async (req, res) => {
+    const id = req.params.id;
+    try {
+      const areaQ = await pool.query(
+        `SELECT sa.*, c.name AS client_name, ec.name AS ec_name
+           FROM service_areas sa
+           JOIN clients c ON c.id = sa.client_id
+           LEFT JOIN engineering_contracts ec ON ec.id = sa.engineering_contract_id
+          WHERE sa.id = $1`, [id]);
+      if (!areaQ.rows.length) return res.status(404).json({ error: 'Service area not found' });
+      const area = areaQ.rows[0];
+
+      const [routesQ, jobsQ, matsQ, peopleQ] = await Promise.all([
+        pool.query(`SELECT * FROM service_area_routes WHERE service_area_id = $1 ORDER BY sort_order, created_at`, [id]),
+        pool.query(
+          `SELECT saj.*, j.name AS job_name, st.name AS assigned_staff_name
+             FROM service_area_jobs saj
+             LEFT JOIN jobs j ON j.id = saj.job_id
+             LEFT JOIN staff st ON st.id = saj.assigned_staff_id
+            WHERE saj.service_area_id = $1 ORDER BY saj.created_at`, [id]),
+        pool.query(
+          `SELECT m.*, (SELECT COUNT(*) FROM service_area_material_units u WHERE u.material_id = m.id) AS unit_count
+             FROM service_area_materials m WHERE m.service_area_id = $1 ORDER BY m.created_at`, [id]),
+        pool.query(
+          `SELECT te.service_area_job_id, st.id AS staff_id, st.name AS staff_name, COALESCE(SUM(te.hours),0) AS hours
+             FROM time_entries te
+             JOIN service_area_jobs saj ON saj.id = te.service_area_job_id
+             LEFT JOIN staff st ON st.id = te.staff_id
+            WHERE saj.service_area_id = $1
+            GROUP BY te.service_area_job_id, st.id, st.name`, [id]),
+      ]);
+
+      const peopleByJob = {};
+      for (const p of peopleQ.rows) {
+        if (!peopleByJob[p.service_area_job_id]) peopleByJob[p.service_area_job_id] = [];
+        peopleByJob[p.service_area_job_id].push({ staff_id: p.staff_id, name: p.staff_name || '—', hours: Number(p.hours) });
+      }
+      const jobs = jobsQ.rows.map(j => {
+        const people = (peopleByJob[j.id] || []).map(p => ({ ...p, amount: j.billing_type === 'hourly' ? Math.round(p.hours * Number(j.rate || 0)) : null }));
+        return { ...j, people, employee_label: people.length > 1 ? `Various (${people.length})` : (j.assigned_staff_name || (people[0] && people[0].name) || '—') };
+      });
+
+      const byRoute = (arr) => {
+        const m = { _none: [] };
+        for (const x of arr) { const k = x.route_id || '_none'; if (!m[k]) m[k] = []; m[k].push(x); }
+        return m;
+      };
+      const jobsByRoute = byRoute(jobs);
+      const matsByRoute = byRoute(matsQ.rows);
+
+      const rollupFor = (jobList, matList) => {
+        let eng = 0, constrLabor = 0, matCost = 0, pctSum = 0, pctN = 0;
+        for (const j of jobList) {
+          const amt = Number(j.actual_amount || 0) || (j.billing_type === 'fixed' ? Number(j.estimated_amount || 0) : 0);
+          if (j.cost_category === 'construction') constrLabor += amt; else eng += amt;
+        }
+        for (const m of matList) {
+          matCost += Number(m.unit_cost || 0) * Number(m.completed_quantity || 0);
+          const exp = Number(m.quantity || 0);
+          if (exp > 0) { pctSum += Math.min(1, Number(m.completed_quantity || 0) / exp); pctN++; }
+        }
+        return {
+          engineering_cost: Math.round(eng),
+          construction_labor: Math.round(constrLabor),
+          materials_cost: Math.round(matCost),
+          construction_cost: Math.round(constrLabor + matCost),
+          total_cost: Math.round(eng + constrLabor + matCost),
+          progress_pct: pctN ? Math.round((pctSum / pctN) * 100) : null,
+        };
+      };
+
+      const routes = routesQ.rows.map(r => ({
+        ...r,
+        jobs: jobsByRoute[r.id] || [],
+        materials: matsByRoute[r.id] || [],
+        rollup: rollupFor(jobsByRoute[r.id] || [], matsByRoute[r.id] || []),
+      }));
+
+      res.json({
+        area,
+        routes,
+        unrouted: { jobs: jobsByRoute._none || [], materials: matsByRoute._none || [] },
+        rollup: rollupFor(jobs, matsQ.rows),
+        finalized: !!area.build_finalized_at,
+      });
+    } catch (e) {
+      console.error('[service-areas:workspace]', e && e.message);
+      res.status(500).json({ error: 'Failed to load workspace.' });
+    }
+  });
+
   // ─── Service-Area Jobs (line items) ────────────────────────────────────────
 
   // Add a job to a service area. Pass job_id to auto-fill team/billing_type/rate

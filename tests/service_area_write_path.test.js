@@ -92,6 +92,19 @@ test('service-area routes / materials / finalize write-path', { skip: DB ? false
     r = await call('PUT', `/api/service-areas/${saId}`, { client_visible_metrics: { progress: true, engineering_cost: true, construction_cost: true, total_cost: false } });
     assert.equal(r.json.client_visible_metrics.construction_cost, true, 'tile visibility updates');
     assert.equal(r.json.client_visible_metrics.total_cost, false, 'tile visibility updates');
+
+    // workspace read + server-side cost rollup:
+    //   job1 (re-tagged to design/engineering, fixed $1000) → engineering 1000
+    //   material (320 x 2 installed) → materials 640, no construction labor → construction 640
+    r = await call('GET', `/api/service-areas/${saId}/workspace`);
+    assert.equal(r.status, 200, 'workspace loads');
+    assert.equal(r.json.routes.length, 1, 'one route in workspace');
+    assert.equal(r.json.rollup.engineering_cost, 1000, 'engineering cost = job1 fixed amount');
+    assert.equal(r.json.rollup.materials_cost, 640, 'materials cost = unit_cost*completed');
+    assert.equal(r.json.rollup.construction_cost, 640, 'construction = labor(0) + materials(640)');
+    assert.equal(r.json.rollup.total_cost, 1640, 'total = engineering + construction');
+    assert.equal(r.json.rollup.progress_pct, 100, 'progress 100% (2/2 installed)');
+    assert.equal(r.json.unrouted.jobs.length, 1, 'job2 is area-level (no route)');
   } finally {
     if (clientId) { try { await pool.query('DELETE FROM clients WHERE id = $1', [clientId]); } catch {} }
     await new Promise((r) => server.close(r));
