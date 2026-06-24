@@ -1,0 +1,348 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>People — Launch Fiber</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+<link rel="stylesheet" href="/css/app-shell.css">
+<style>
+:root{
+  --primary:#1B5FA0;--primary-dark:#134880;--primary-light:#E8F0FB;
+  --surface-1:#F5F7FA;--surface-2:#FFFFFF;
+  --white:#FFFFFF;--gray-light:#F5F7FA;--gray-border:#DEE2E6;
+  --text:#212529;--text-secondary:#495057;--text-muted:#5A6470;
+  --success:#28A745;--success-light:#E8F5E9;--success-text:#1B5E20;
+  --warning:#FFC107;--warning-light:#FFF8E1;--warning-text:#7A4F0E;
+  --danger:#DC3545;--danger-light:#FDECEA;--danger-text:#842029;
+  --font:'Inter',sans-serif;
+}
+html[data-theme="dark"]{
+  --primary:#4A90D9;--primary-dark:#1B5FA0;--primary-light:#1E3A5C;
+  --surface-1:#1A1F26;--surface-2:#1D2430;
+  --white:#1D2430;--gray-light:#1A1F26;--gray-border:#2D3540;
+  --text:#E8EAED;--text-secondary:#C2C7CD;--text-muted:#9BA1A8;
+  --success:#5DD27A;--success-light:#1B3D24;--success-text:#A5D6A7;
+  --warning:#FFCA28;--warning-light:#3D2F0F;--warning-text:#FFCC80;
+  --danger:#FF6B6B;--danger-light:#3D1A1A;--danger-text:#FFCDD2;
+  color-scheme:dark;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{font-family:var(--font);background:var(--gray-light);color:var(--text);min-height:100vh}
+button{font-family:inherit;cursor:pointer;border:none;background:none;color:inherit}
+input,select{font-family:inherit;font-size:14px}
+html[data-theme="dark"] input,html[data-theme="dark"] select{background:var(--white);color:var(--text);border-color:var(--gray-border)}
+
+.header{background:var(--white);border-bottom:1px solid var(--gray-border);padding:10px 20px;
+  display:flex;align-items:center;justify-content:space-between;gap:12px}
+.header-left{display:flex;align-items:center;gap:14px}
+.header-title{font-size:16px;font-weight:600}
+.btn-icon{width:34px;height:34px;padding:0;display:inline-flex;align-items:center;justify-content:center;
+  border-radius:6px;border:1px solid var(--gray-border);background:transparent;color:var(--text-secondary)}
+.btn-icon:hover{background:var(--surface-1)}
+
+.page-body{padding:20px 24px;max-width:1000px;margin:0 auto}
+.page-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:20px;gap:12px;flex-wrap:wrap}
+.page-title{font-size:20px;font-weight:700}
+
+.filter-bar{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:18px}
+.search-input{padding:7px 12px;border:1px solid var(--gray-border);border-radius:6px;
+  background:var(--white);color:var(--text);outline:none;font-size:13px;width:220px}
+.search-input:focus{border-color:var(--primary)}
+.date-input{padding:7px 10px;border:1px solid var(--gray-border);border-radius:6px;
+  background:var(--white);color:var(--text);outline:none;font-size:13px}
+.date-input:focus{border-color:var(--primary)}
+.filter-label{font-size:12px;color:var(--text-muted);white-space:nowrap}
+
+.card{background:var(--white);border:1px solid var(--gray-border);border-radius:10px;overflow:hidden}
+.table-wrap{overflow-x:auto}
+table{width:100%;border-collapse:collapse;font-size:13px}
+thead th{background:var(--surface-1);padding:9px 14px;text-align:left;font-weight:600;
+  font-size:12px;color:var(--text-muted);border-bottom:1px solid var(--gray-border);white-space:nowrap}
+th.num,td.num{text-align:right}
+tbody tr.person-row{border-bottom:1px solid var(--gray-border);cursor:pointer;transition:background .1s}
+tbody tr.person-row:hover{background:var(--surface-1)}
+tbody td{padding:10px 14px;color:var(--text-secondary)}
+.person-name{color:var(--text);font-weight:500}
+.hours-val{font-variant-numeric:tabular-nums;font-weight:500}
+
+.badge-active{display:inline-flex;align-items:center;gap:3px;background:var(--success-light);
+  color:var(--success-text);font-size:11px;font-weight:600;padding:2px 7px;border-radius:10px}
+.badge-inactive{display:inline-flex;align-items:center;gap:3px;background:var(--surface-1);
+  color:var(--text-muted);font-size:11px;font-weight:600;padding:2px 7px;border-radius:10px}
+
+.empty-state{padding:48px 20px;text-align:center;color:var(--text-muted);font-size:14px}
+.empty-state i{font-size:32px;display:block;margin-bottom:10px;opacity:.4}
+.skeleton{background:var(--surface-1);border-radius:4px;height:14px;animation:pulse 1.5s infinite}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.4}}
+.panel-loading{padding:20px;text-align:center;color:var(--text-muted);font-size:13px}
+
+/* Expandable hours detail */
+.detail-tr td{padding:0}
+.detail-panel{display:none;padding:0 14px 14px}
+.detail-panel.open{display:block}
+.detail-inner{background:var(--surface-1);border-radius:8px;padding:14px;margin-top:2px}
+.detail-label{font-size:11px;font-weight:600;color:var(--text-muted);text-transform:uppercase;margin-bottom:8px}
+.job-row{display:flex;align-items:center;justify-content:space-between;padding:5px 0;
+  border-bottom:1px solid var(--gray-border);font-size:12px;gap:8px}
+.job-row:last-child{border-bottom:none}
+.job-name{color:var(--text);font-weight:500;flex:1;min-width:0}
+.job-area{color:var(--text-muted);font-size:11px;white-space:nowrap}
+.job-hours{font-variant-numeric:tabular-nums;color:var(--text-secondary);white-space:nowrap;margin-left:12px}
+.detail-total{display:flex;justify-content:flex-end;margin-top:10px;font-size:12px;font-weight:600;
+  color:var(--text);border-top:1px solid var(--gray-border);padding-top:8px;gap:8px}
+.no-hours{font-size:12px;color:var(--text-muted);padding:8px 0}
+
+@media(max-width:700px){
+  .page-body{padding:12px}
+  .search-input{width:100%}
+  .filter-bar{flex-direction:column;align-items:stretch}
+}
+</style>
+</head>
+<body>
+
+<div class="header">
+  <div class="header-left">
+    <span class="header-title"><i class="fa-solid fa-users"></i> People</span>
+  </div>
+  <div class="header-right">
+    <button class="btn-icon" onclick="toggleDark()" title="Toggle dark mode" aria-label="Toggle dark mode">
+      <i id="dm-icon" class="fa-solid fa-moon"></i>
+    </button>
+  </div>
+</div>
+
+<div class="page-body" role="main">
+  <div class="page-header">
+    <h1 class="page-title">Staff Roster &amp; Hours</h1>
+  </div>
+
+  <div class="filter-bar">
+    <input type="search" id="ppl-search" class="search-input" placeholder="Search staff…"
+      oninput="applyFilter()" aria-label="Search staff">
+    <span class="filter-label">Hours from</span>
+    <input type="date" id="ppl-from" class="date-input" onchange="loadHours()" aria-label="Hours from date">
+    <span class="filter-label">to</span>
+    <input type="date" id="ppl-to" class="date-input" onchange="loadHours()" aria-label="Hours to date">
+  </div>
+
+  <div class="card">
+    <div class="table-wrap">
+      <table aria-label="Staff roster">
+        <thead>
+          <tr>
+            <th>Name</th>
+            <th>Status</th>
+            <th class="num">Total Hours</th>
+            <th class="num">Jobs</th>
+            <th></th>
+          </tr>
+        </thead>
+        <tbody id="ppl-tbody">
+          <tr><td colspan="5"><div class="panel-loading"><span class="skeleton" style="width:60%;display:inline-block"></span></div></td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<script>
+(function(){
+  'use strict';
+  var _staff   = [];   // [{id, name, active}]
+  var _hourMap = {};   // {staff_id: [{job_name, service_area_name, client_name, team, total_hours}]}
+  var _open    = null;
+  var _filterTimer = null;
+
+  document.addEventListener('DOMContentLoaded', function(){
+    applyStoredTheme();
+    loadStaff();
+  });
+
+  // ── Load staff roster ───────────────────────────────────────────────────────
+  async function loadStaff(){
+    try{
+      var res = await fetch('/api/staff/all', { credentials:'include' });
+      if(res.status===401||res.status===403){
+        // Fall back to active-only list if not admin
+        var res2 = await fetch('/api/staff', { credentials:'include' });
+        if(!res2.ok) throw new Error(await res2.text());
+        _staff = await res2.json();
+      } else {
+        if(!res.ok) throw new Error(await res.text());
+        _staff = await res.json();
+      }
+      await loadHours();
+    } catch(e){
+      setTbody('<tr><td colspan="5"><div class="empty-state"><i class="fa-solid fa-triangle-exclamation"></i>Failed to load staff. '+esc(e.message||'')+'</div></td></tr>');
+    }
+  }
+
+  // ── Load hours summary ──────────────────────────────────────────────────────
+  window.loadHours = async function(){
+    var from = document.getElementById('ppl-from').value;
+    var to   = document.getElementById('ppl-to').value;
+    var url  = '/api/hours/summary';
+    var qs   = [];
+    if(from) qs.push('from='+encodeURIComponent(from));
+    if(to)   qs.push('to='+encodeURIComponent(to));
+    if(qs.length) url += '?'+qs.join('&');
+
+    try{
+      var res = await fetch(url, { credentials:'include' });
+      if(res.status===401||res.status===403){
+        // Hours endpoint requires manager/admin; show roster without hours
+        _hourMap = {};
+        render();
+        return;
+      }
+      if(!res.ok) throw new Error(await res.text());
+      var data = await res.json();
+      // Group rows by staff_id
+      _hourMap = {};
+      (data.rows||[]).forEach(function(r){
+        var sid = r.staff_id || '__unattributed__';
+        if(!_hourMap[sid]) _hourMap[sid] = [];
+        _hourMap[sid].push(r);
+      });
+      // Reset open panels since data changed
+      _open = null;
+      render();
+    } catch(e){
+      _hourMap = {};
+      render();
+    }
+  };
+
+  // ── Filter ──────────────────────────────────────────────────────────────────
+  window.applyFilter = function(){
+    clearTimeout(_filterTimer);
+    _filterTimer = setTimeout(_doFilter, 150);
+  };
+  function _doFilter(){
+    var q = (document.getElementById('ppl-search').value||'').toLowerCase().trim();
+    var filtered = q ? _staff.filter(function(s){ return s.name.toLowerCase().includes(q); }) : _staff;
+    renderList(filtered);
+  }
+
+  // ── Render ──────────────────────────────────────────────────────────────────
+  function render(){
+    var q = (document.getElementById('ppl-search').value||'').toLowerCase().trim();
+    var filtered = q ? _staff.filter(function(s){ return s.name.toLowerCase().includes(q); }) : _staff;
+    renderList(filtered);
+  }
+
+  function renderList(list){
+    if(!list.length){
+      setTbody('<tr><td colspan="5"><div class="empty-state"><i class="fa-solid fa-user-slash"></i>No staff found.</div></td></tr>');
+      return;
+    }
+    setTbody(list.map(function(s){
+      var sid    = String(s.id);
+      var jobs   = _hourMap[sid] || [];
+      var hours  = jobs.reduce(function(t,j){ return t+(j.total_hours||0); }, 0);
+      var jobCnt = jobs.length;
+      var badge  = s.active
+        ? '<span class="badge-active"><i class="fa-solid fa-circle" style="font-size:7px"></i> Active</span>'
+        : '<span class="badge-inactive">Inactive</span>';
+      var hoursDisplay = hours > 0 ? '<span class="hours-val">'+hours.toFixed(1)+'h</span>' : '<span style="color:var(--text-muted)">—</span>';
+      return '<tr class="person-row" data-id="'+esc(sid)+'" tabindex="0" role="button" aria-expanded="false"'
+        +' onclick="toggleDetail(\''+esc(sid)+'\')"'
+        +' onkeydown="if(event.key===\'Enter\'||event.key===\' \'){event.preventDefault();toggleDetail(\''+esc(sid)+'\')}">'
+        +'<td class="person-name">'+esc(s.name)+'</td>'
+        +'<td>'+badge+'</td>'
+        +'<td class="num">'+hoursDisplay+'</td>'
+        +'<td class="num" style="color:var(--text-muted)">'+( jobCnt > 0 ? jobCnt : '—' )+'</td>'
+        +'<td style="width:32px;text-align:center"><i class="fa-solid fa-chevron-right" id="chev-'+esc(sid)+'" style="font-size:11px;color:var(--text-muted);transition:transform .2s"></i></td>'
+        +'</tr>'
+        +'<tr class="detail-tr"><td colspan="5" style="padding:0">'
+        +'<div class="detail-panel" id="detail-'+esc(sid)+'">'
+        +'<div class="detail-inner">'+renderDetailInner(jobs)+'</div>'
+        +'</div></td></tr>';
+    }).join(''));
+    // Re-open previously open panel if it's still in list
+    if(_open && document.getElementById('detail-'+_open)){
+      _doOpen(_open, false);
+    }
+  }
+
+  function renderDetailInner(jobs){
+    if(!jobs.length){
+      return '<div class="no-hours"><i class="fa-solid fa-clock" style="opacity:.4;margin-right:4px"></i>No hours logged in this date range.</div>';
+    }
+    var total = jobs.reduce(function(t,j){ return t+(j.total_hours||0); }, 0);
+    return '<div class="detail-label">Hours breakdown</div>'
+      +jobs.map(function(j){
+        return '<div class="job-row">'
+          +'<div class="job-name">'+esc(j.job_name||'Unnamed job')+'<br>'
+          +'<span class="job-area">'+esc(j.client_name||'')+(j.service_area_name ? ' · '+esc(j.service_area_name) : '')+'</span></div>'
+          +(j.team ? '<span style="font-size:11px;color:var(--text-muted)">'+esc(j.team)+'</span>' : '')
+          +'<span class="job-hours">'+Number(j.total_hours||0).toFixed(1)+'h</span>'
+          +'</div>';
+      }).join('')
+      +'<div class="detail-total"><span>Total</span><span>'+total.toFixed(1)+'h</span></div>';
+  }
+
+  function setTbody(html){ document.getElementById('ppl-tbody').innerHTML = html; }
+
+  // ── Expand/collapse ─────────────────────────────────────────────────────────
+  window.toggleDetail = function(sid){
+    if(_open === sid){
+      _doClose(sid);
+      _open = null;
+      return;
+    }
+    if(_open) _doClose(_open);
+    _open = sid;
+    _doOpen(sid, true);
+  };
+
+  function _doOpen(sid, animate){
+    var panel = document.getElementById('detail-'+sid);
+    if(panel) panel.classList.add('open');
+    var chev = document.getElementById('chev-'+sid);
+    if(chev) chev.style.transform = 'rotate(90deg)';
+    var row = document.querySelector('tr[data-id="'+sid+'"]');
+    if(row) row.setAttribute('aria-expanded','true');
+  }
+
+  function _doClose(sid){
+    var panel = document.getElementById('detail-'+sid);
+    if(panel) panel.classList.remove('open');
+    var chev = document.getElementById('chev-'+sid);
+    if(chev) chev.style.transform = '';
+    var row = document.querySelector('tr[data-id="'+sid+'"]');
+    if(row) row.setAttribute('aria-expanded','false');
+  }
+
+  // ── Utilities ───────────────────────────────────────────────────────────────
+  function esc(s){
+    return String(s??'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+  }
+  window.toggleDark = function(){
+    var html = document.documentElement;
+    var dark = html.getAttribute('data-theme')==='dark';
+    html.setAttribute('data-theme', dark ? 'light' : 'dark');
+    localStorage.setItem('lfs_theme', dark ? 'light' : 'dark');
+    updateDmIcon();
+  };
+  function applyStoredTheme(){
+    var stored = localStorage.getItem('lfs_theme');
+    if(stored) document.documentElement.setAttribute('data-theme', stored);
+    updateDmIcon();
+  }
+  function updateDmIcon(){
+    var icon = document.getElementById('dm-icon');
+    if(!icon) return;
+    var dark = document.documentElement.getAttribute('data-theme')==='dark';
+    icon.className = dark ? 'fa-solid fa-sun' : 'fa-solid fa-moon';
+  }
+})();
+</script>
+<script src="/js/app_nav.js" data-active="people"></script>
+</body>
+</html>

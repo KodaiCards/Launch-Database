@@ -32,10 +32,8 @@ function sumPrograms(rows) {
     estimated_total: t.estimated_total + r.estimated_total,
     actual_total:    t.actual_total    + r.actual_total,
     billed_total:    t.billed_total    + r.billed_total,
-    invoice_total:   t.invoice_total   + r.invoice_total,
-    invoice_count:   t.invoice_count   + r.invoice_count,
-    variance:        0, // filled below
-  }), { area_count:0, job_count:0, estimated_total:0, actual_total:0, billed_total:0, invoice_total:0, invoice_count:0, variance:0 });
+    variance:        0,
+  }), { area_count:0, job_count:0, estimated_total:0, actual_total:0, billed_total:0, variance:0 });
 }
 
 module.exports = function installMoneyViewRoutes(app, pool, mw) {
@@ -257,7 +255,11 @@ module.exports = function installMoneyViewRoutes(app, pool, mw) {
   // Returns per-program: estimated/billed from job totals + invoice revenue.
   app.get('/api/money/program-financials', requireManagerOrAdmin, async (req, res) => {
     try {
-      const [marginRows, revenueRows] = await Promise.all([
+      // invoices are client-level only (no service_area_id column), so there is
+      // no clean per-program attribution. We return job-based estimated/billed only;
+      // invoice revenue is excluded from per-program rows to avoid the N× fanout
+      // that occurs when joining invoices→clients→service_areas.
+      const [marginRows] = await Promise.all([
         pool.query(
           `SELECT
              COALESCE(sa.program, 'unknown')              AS program,
@@ -273,27 +275,13 @@ module.exports = function installMoneyViewRoutes(app, pool, mw) {
            GROUP BY sa.program
            ORDER BY billed_total DESC`
         ),
-        pool.query(
-          `SELECT COALESCE(sa.program, 'unknown') AS program,
-                  COALESCE(SUM(i.total_amount), 0)::float AS invoice_total,
-                  COUNT(DISTINCT i.id)::int AS invoice_count
-           FROM invoices i
-           LEFT JOIN clients c ON c.id = i.client_id
-           LEFT JOIN service_areas sa ON sa.client_id = c.id
-           WHERE i.status NOT IN ('draft','void')
-           GROUP BY sa.program`
-        ),
       ]);
-
-      // Merge revenue into margin rows by program key
-      const revMap = {};
-      for (const r of revenueRows.rows) revMap[r.program] = r;
 
       const programs = marginRows.rows.map(r => ({
         ...r,
-        variance: +(r.billed_total - r.estimated_total).toFixed(2),
-        invoice_total:  revMap[r.program]?.invoice_total  ?? 0,
-        invoice_count:  revMap[r.program]?.invoice_count  ?? 0,
+        variance:      +(r.billed_total - r.estimated_total).toFixed(2),
+        invoice_total: null, // not attributable per-program; invoices are client-level only
+        invoice_count: null,
         is_rus: r.program === 'rus',
       }));
 

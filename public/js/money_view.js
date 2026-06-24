@@ -269,10 +269,14 @@
     card.innerHTML = summaryHtml + `<div class="table-wrap"><table>
       <thead><tr>
         <th>Program</th><th class="num">Areas</th><th class="num">Jobs</th>
-        <th class="num">Estimated</th><th class="num">Billed</th><th class="num">Variance</th>
+        <th class="num">Estimated</th><th class="num">Billed (jobs)</th><th class="num">Variance</th>
       </tr></thead>
       <tbody>${rowsHtml}</tbody>
-    </table></div>`;
+    </table></div>
+    <div style="padding:10px 16px;font-size:12px;color:var(--text-muted);border-top:1px solid var(--gray-border)">
+      <i class="fa-solid fa-circle-info"></i>
+      Billed = sum of <em>job</em> actual amounts where status is "billed". Invoice revenue is client-level only and cannot be cleanly attributed per-program — see Revenue Rollup → Program for invoice totals.
+    </div>`;
   }
 
   // ── Client statement ─────────────────────────────────────────────────────

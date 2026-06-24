@@ -1,0 +1,392 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>Invoices — Launch Fiber</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+<link rel="stylesheet" href="/css/app-shell.css">
+<style>
+:root{
+  --primary:#1B5FA0;--primary-dark:#134880;--primary-light:#E8F0FB;
+  --surface-1:#F5F7FA;--surface-2:#FFFFFF;
+  --white:#FFFFFF;--gray-light:#F5F7FA;--gray-border:#DEE2E6;
+  --text:#212529;--text-secondary:#495057;--text-muted:#5A6470;
+  --success:#28A745;--success-light:#E8F5E9;--success-text:#1B5E20;
+  --warning:#FFC107;--warning-light:#FFF8E1;--warning-text:#7A4F0E;
+  --danger:#DC3545;--danger-light:#FDECEA;--danger-text:#842029;
+  --font:'Inter',sans-serif;
+}
+html[data-theme="dark"]{
+  --primary:#4A90D9;--primary-dark:#1B5FA0;--primary-light:#1E3A5C;
+  --surface-1:#1A1F26;--surface-2:#1D2430;
+  --white:#1D2430;--gray-light:#1A1F26;--gray-border:#2D3540;
+  --text:#E8EAED;--text-secondary:#C2C7CD;--text-muted:#9BA1A8;
+  --success:#5DD27A;--success-light:#1B3D24;--success-text:#A5D6A7;
+  --warning:#FFCA28;--warning-light:#3D2F0F;--warning-text:#FFCC80;
+  --danger:#FF6B6B;--danger-light:#3D1A1A;--danger-text:#FFCDD2;
+  color-scheme:dark;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{font-family:var(--font);background:var(--gray-light);color:var(--text);min-height:100vh}
+button{font-family:inherit;cursor:pointer;border:none;background:none;color:inherit}
+input,select{font-family:inherit;font-size:14px}
+html[data-theme="dark"] input,html[data-theme="dark"] select{background:var(--white);color:var(--text);border-color:var(--gray-border)}
+
+.header{background:var(--white);border-bottom:1px solid var(--gray-border);padding:10px 20px;
+  display:flex;align-items:center;justify-content:space-between;gap:12px}
+.header-left{display:flex;align-items:center;gap:14px}
+.header-title{font-size:16px;font-weight:600}
+.header-right{display:flex;align-items:center;gap:8px}
+
+.btn-icon{width:34px;height:34px;padding:0;display:inline-flex;align-items:center;justify-content:center;
+  border-radius:6px;border:1px solid var(--gray-border);background:transparent;color:var(--text-secondary)}
+.btn-icon:hover{background:var(--surface-1)}
+
+.page-body{padding:20px 24px;max-width:1100px;margin:0 auto}
+.page-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:20px;gap:12px;flex-wrap:wrap}
+.page-title{font-size:20px;font-weight:700}
+.page-subtitle{font-size:13px;color:var(--text-muted);margin-top:2px}
+
+.filter-bar{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:18px}
+.search-input{padding:7px 12px;border:1px solid var(--gray-border);border-radius:6px;
+  background:var(--white);color:var(--text);outline:none;font-size:13px;width:220px}
+.search-input:focus{border-color:var(--primary)}
+.filter-select{padding:7px 10px;border:1px solid var(--gray-border);border-radius:6px;
+  background:var(--white);color:var(--text);outline:none;font-size:13px}
+.filter-select:focus{border-color:var(--primary)}
+
+.card{background:var(--white);border:1px solid var(--gray-border);border-radius:10px;overflow:hidden}
+.table-wrap{overflow-x:auto}
+table{width:100%;border-collapse:collapse;font-size:13px}
+thead th{background:var(--surface-1);padding:9px 14px;text-align:left;font-weight:600;
+  font-size:12px;color:var(--text-muted);border-bottom:1px solid var(--gray-border);white-space:nowrap}
+th.num,td.num{text-align:right}
+tbody tr{border-bottom:1px solid var(--gray-border);cursor:pointer;transition:background .1s}
+tbody tr:last-child{border-bottom:none}
+tbody tr:hover{background:var(--surface-1)}
+tbody td{padding:10px 14px;color:var(--text-secondary)}
+.inv-num{color:var(--primary);font-weight:500}
+.amt{font-variant-numeric:tabular-nums}
+
+.status-badge{display:inline-flex;align-items:center;gap:4px;font-size:11px;font-weight:600;
+  padding:2px 8px;border-radius:10px;white-space:nowrap}
+.status-draft{background:var(--surface-1);color:var(--text-muted)}
+.status-sent{background:var(--primary-light);color:var(--primary)}
+.status-paid{background:var(--success-light);color:var(--success-text)}
+.status-overdue{background:var(--danger-light);color:var(--danger-text)}
+.status-void{background:var(--surface-1);color:var(--text-muted);text-decoration:line-through}
+
+.age-pill{font-size:11px;font-weight:500;padding:1px 6px;border-radius:8px;display:inline-block}
+.age-ok{background:var(--success-light);color:var(--success-text)}
+.age-warn{background:var(--warning-light);color:var(--warning-text)}
+.age-late{background:var(--danger-light);color:var(--danger-text)}
+
+.empty-state{padding:48px 20px;text-align:center;color:var(--text-muted);font-size:14px}
+.empty-state i{font-size:32px;display:block;margin-bottom:10px;opacity:.4}
+.skeleton{background:var(--surface-1);border-radius:4px;height:14px;animation:pulse 1.5s infinite}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.4}}
+
+/* Modal */
+.modal-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:1000;
+  align-items:center;justify-content:center;padding:20px}
+.modal-overlay.open{display:flex}
+.modal{background:var(--white);border-radius:12px;width:100%;max-width:640px;
+  max-height:90vh;display:flex;flex-direction:column;overflow:hidden}
+.modal-header{padding:16px 20px;border-bottom:1px solid var(--gray-border);
+  display:flex;align-items:center;justify-content:space-between}
+.modal-title{font-size:15px;font-weight:600}
+.modal-close{width:30px;height:30px;display:flex;align-items:center;justify-content:center;
+  border-radius:6px;border:1px solid var(--gray-border);cursor:pointer;color:var(--text-secondary)}
+.modal-close:hover{background:var(--surface-1)}
+.modal-body{padding:20px;overflow-y:auto;flex:1}
+.modal-meta{display:flex;gap:20px;flex-wrap:wrap;margin-bottom:16px;font-size:13px}
+.modal-meta-item{display:flex;flex-direction:column;gap:2px}
+.modal-meta-label{font-size:11px;font-weight:600;color:var(--text-muted);text-transform:uppercase}
+.modal-meta-value{color:var(--text)}
+.items-table{width:100%;border-collapse:collapse;font-size:12px;margin-top:12px}
+.items-table th{padding:7px 10px;background:var(--surface-1);text-align:left;font-weight:600;
+  color:var(--text-muted);border-bottom:1px solid var(--gray-border)}
+.items-table th.num,.items-table td.num{text-align:right}
+.items-table td{padding:8px 10px;border-bottom:1px solid var(--gray-border);color:var(--text-secondary)}
+.items-table tr:last-child td{border-bottom:none}
+.items-total{display:flex;justify-content:flex-end;margin-top:12px;font-weight:600;font-size:13px;
+  color:var(--text);gap:12px}
+.modal-actions{padding:12px 20px;border-top:1px solid var(--gray-border);display:flex;gap:8px;justify-content:flex-end}
+.btn{padding:8px 14px;border-radius:6px;font-size:13px;font-weight:500;border:1px solid transparent;
+  display:inline-flex;align-items:center;gap:6px;transition:all .15s;cursor:pointer}
+.btn-ghost{background:transparent;border-color:var(--gray-border);color:var(--text-secondary)}
+.btn-ghost:hover{background:var(--surface-1)}
+.modal-loading{padding:32px;text-align:center;color:var(--text-muted)}
+
+@media(max-width:700px){
+  .page-body{padding:12px}
+  .search-input{width:100%}
+  .filter-bar{flex-direction:column;align-items:stretch}
+  .filter-select{width:100%}
+}
+</style>
+</head>
+<body>
+
+<div class="header">
+  <div class="header-left">
+    <span class="header-title"><i class="fa-solid fa-file-invoice-dollar"></i> Invoices</span>
+  </div>
+  <div class="header-right">
+    <button class="btn-icon" onclick="toggleDark()" title="Toggle dark mode" aria-label="Toggle dark mode">
+      <i id="dm-icon" class="fa-solid fa-moon"></i>
+    </button>
+  </div>
+</div>
+
+<div class="page-body" role="main">
+  <div class="page-header">
+    <div>
+      <h1 class="page-title">All Invoices</h1>
+      <div class="page-subtitle">Read-only view. Go to <a href="/billing.html" style="color:var(--primary)">Billing</a> to create or send invoices.</div>
+    </div>
+  </div>
+
+  <div class="filter-bar">
+    <input type="search" id="inv-search" class="search-input" placeholder="Search invoice # or client…"
+      oninput="applyFilter()" aria-label="Search invoices">
+    <select id="inv-status" class="filter-select" onchange="applyFilter()" aria-label="Filter by status">
+      <option value="">All statuses</option>
+      <option value="draft">Draft</option>
+      <option value="sent">Sent</option>
+      <option value="paid">Paid</option>
+      <option value="overdue">Overdue</option>
+      <option value="void">Void</option>
+    </select>
+    <select id="inv-year" class="filter-select" onchange="applyFilter()" aria-label="Filter by year">
+      <option value="">All years</option>
+    </select>
+  </div>
+
+  <div class="card">
+    <div class="table-wrap">
+      <table aria-label="Invoices list">
+        <thead>
+          <tr>
+            <th>Invoice #</th>
+            <th>Client</th>
+            <th>Date</th>
+            <th>Status</th>
+            <th class="num">Age (days)</th>
+            <th class="num">Total</th>
+          </tr>
+        </thead>
+        <tbody id="inv-tbody">
+          <tr><td colspan="6"><div class="panel-loading"><span class="skeleton" style="width:60%;display:inline-block"></span></div></td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<!-- Invoice detail modal -->
+<div class="modal-overlay" id="inv-modal" role="dialog" aria-modal="true" aria-labelledby="modal-title-txt"
+  onclick="if(event.target===this)closeModal()">
+  <div class="modal">
+    <div class="modal-header">
+      <span class="modal-title" id="modal-title-txt">Invoice</span>
+      <button class="modal-close" id="modal-close-btn" onclick="closeModal()" aria-label="Close modal">
+        <i class="fa-solid fa-xmark"></i>
+      </button>
+    </div>
+    <div class="modal-body" id="modal-body">
+      <div class="modal-loading"><i class="fa-solid fa-spinner fa-spin"></i> Loading…</div>
+    </div>
+    <div class="modal-actions">
+      <a id="modal-admin-link" href="/billing.html" class="btn btn-ghost" target="_blank">
+        <i class="fa-solid fa-arrow-up-right-from-square"></i> Open in Billing
+      </a>
+      <button class="btn btn-ghost" onclick="closeModal()">Close</button>
+    </div>
+  </div>
+</div>
+
+<script>
+(function(){
+  'use strict';
+  var _invoices = [];
+  var _filterTimer = null;
+
+  document.addEventListener('DOMContentLoaded', function(){
+    applyStoredTheme();
+    load();
+    document.addEventListener('keydown', function(e){ if(e.key==='Escape') closeModal(); });
+  });
+
+  async function load(){
+    try{
+      var res = await fetch('/api/cluster/invoices', { credentials:'include' });
+      if(res.status===401||res.status===403){
+        setTbody('<tr><td colspan="6"><div class="empty-state"><i class="fa-solid fa-lock"></i>Manager or admin access required.</div></td></tr>');
+        return;
+      }
+      if(!res.ok) throw new Error(await res.text());
+      var data = await res.json();
+      _invoices = data.invoices || [];
+      populateYears();
+      render(_invoices);
+    } catch(e){
+      setTbody('<tr><td colspan="6"><div class="empty-state"><i class="fa-solid fa-triangle-exclamation"></i>Failed to load invoices. '+esc(e.message||'')+'</div></td></tr>');
+    }
+  }
+
+  function populateYears(){
+    var years = [...new Set(_invoices.map(function(i){ return i.invoice_date ? i.invoice_date.slice(0,4) : null; }).filter(Boolean))].sort().reverse();
+    var sel = document.getElementById('inv-year');
+    years.forEach(function(y){
+      var opt = document.createElement('option'); opt.value = y; opt.textContent = y; sel.appendChild(opt);
+    });
+  }
+
+  // ── Filter ─────────────────────────────────────────────────────────────────
+  window.applyFilter = function(){
+    clearTimeout(_filterTimer);
+    _filterTimer = setTimeout(_doFilter, 150);
+  };
+  function _doFilter(){
+    var q      = (document.getElementById('inv-search').value||'').toLowerCase().trim();
+    var status = document.getElementById('inv-status').value;
+    var year   = document.getElementById('inv-year').value;
+    var list = _invoices.filter(function(i){
+      if(status && i.status !== status) return false;
+      if(year && (!i.invoice_date || i.invoice_date.slice(0,4) !== year)) return false;
+      if(q){
+        var text = ((i.invoice_number||'')+' '+(i.client_name||'')).toLowerCase();
+        if(!text.includes(q)) return false;
+      }
+      return true;
+    });
+    render(list);
+  }
+
+  // ── Render ──────────────────────────────────────────────────────────────────
+  function render(list){
+    if(!list.length){
+      setTbody('<tr><td colspan="6"><div class="empty-state"><i class="fa-solid fa-file-invoice"></i>No invoices match the current filters.</div></td></tr>');
+      return;
+    }
+    setTbody(list.map(function(i){
+      return '<tr onclick="openModal(\''+esc(i.id)+'\')" tabindex="0" role="button" aria-label="View invoice '+esc(i.invoice_number||i.id)+'" onkeydown="if(event.key===\'Enter\'||event.key===\' \'){event.preventDefault();openModal(\''+esc(i.id)+'\')}"> '
+        +'<td class="inv-num">'+esc(i.invoice_number||'—')+'</td>'
+        +'<td>'+esc(i.client_name||'—')+'</td>'
+        +'<td>'+esc(i.invoice_date||'—')+'</td>'
+        +'<td>'+statusBadge(i.status)+'</td>'
+        +'<td class="num">'+agePill(i.age_days, i.status)+'</td>'
+        +'<td class="num amt">'+fmt(i.total_amount)+'</td>'
+        +'</tr>';
+    }).join(''));
+  }
+
+  function statusBadge(s){
+    var cls = {draft:'status-draft',sent:'status-sent',paid:'status-paid',overdue:'status-overdue',void:'status-void'}[s]||'status-draft';
+    return '<span class="status-badge '+cls+'">'+esc(s||'—')+'</span>';
+  }
+
+  function agePill(days, status){
+    if(status==='paid'||status==='void'||status==='draft') return '<span style="color:var(--text-muted)">—</span>';
+    var d = days == null ? 0 : Number(days);
+    var cls = d <= 30 ? 'age-ok' : d <= 60 ? 'age-warn' : 'age-late';
+    return '<span class="age-pill '+cls+'">'+d+'</span>';
+  }
+
+  function setTbody(html){ document.getElementById('inv-tbody').innerHTML = html; }
+
+  // ── Modal ───────────────────────────────────────────────────────────────────
+  window.openModal = function(invoiceId){
+    var overlay = document.getElementById('inv-modal');
+    overlay.classList.add('open');
+    document.getElementById('modal-body').innerHTML = '<div class="modal-loading"><i class="fa-solid fa-spinner fa-spin"></i> Loading…</div>';
+    document.getElementById('modal-title-txt').textContent = 'Invoice';
+    document.getElementById('modal-admin-link').href = '/billing.html';
+    setTimeout(function(){ document.getElementById('modal-close-btn').focus(); }, 50);
+    loadDetail(invoiceId);
+  };
+
+  window.closeModal = function(){
+    document.getElementById('inv-modal').classList.remove('open');
+  };
+
+  async function loadDetail(id){
+    try{
+      var res = await fetch('/api/money/invoice/'+encodeURIComponent(id), { credentials:'include' });
+      if(!res.ok) throw new Error(await res.text());
+      var data = await res.json();
+      renderModal(data.invoice, data.items || []);
+    } catch(e){
+      document.getElementById('modal-body').innerHTML =
+        '<div class="empty-state"><i class="fa-solid fa-triangle-exclamation"></i>Failed to load invoice. '+esc(e.message||'')+'</div>';
+    }
+  }
+
+  function renderModal(inv, items){
+    document.getElementById('modal-title-txt').textContent = 'Invoice '+(inv.invoice_number||inv.id);
+    document.getElementById('modal-admin-link').href = '/billing.html';
+
+    var itemsHtml = items.length
+      ? '<table class="items-table"><thead><tr>'
+          +'<th>Description</th><th>Project</th><th class="num">Qty</th><th class="num">Rate</th><th class="num">Amount</th>'
+          +'</tr></thead><tbody>'
+          +items.map(function(it){
+            return '<tr>'
+              +'<td>'+esc(it.description||'—')+'</td>'
+              +'<td>'+esc(it.project_name||'—')+'</td>'
+              +'<td class="num">'+esc(it.quantity!=null?it.quantity:'—')+'</td>'
+              +'<td class="num">'+fmt(it.rate)+'</td>'
+              +'<td class="num amt">'+fmt(it.amount)+'</td>'
+              +'</tr>';
+          }).join('')
+          +'</tbody></table>'
+          +'<div class="items-total"><span>Total</span><span>'+fmt(inv.total_amount)+'</span></div>'
+      : '<div class="empty-state" style="padding:20px"><i class="fa-solid fa-list"></i>No line items found.</div>';
+
+    document.getElementById('modal-body').innerHTML =
+      '<div class="modal-meta">'
+      +'<div class="modal-meta-item"><span class="modal-meta-label">Client</span><span class="modal-meta-value">'+esc(inv.client_name||'—')+'</span></div>'
+      +'<div class="modal-meta-item"><span class="modal-meta-label">Date</span><span class="modal-meta-value">'+esc(inv.invoice_date||'—')+'</span></div>'
+      +'<div class="modal-meta-item"><span class="modal-meta-label">Status</span><span class="modal-meta-value">'+statusBadge(inv.status)+'</span></div>'
+      +'<div class="modal-meta-item"><span class="modal-meta-label">Total</span><span class="modal-meta-value" style="font-weight:600">'+fmt(inv.total_amount)+'</span></div>'
+      +'</div>'
+      +itemsHtml;
+  }
+
+  // ── Utilities ───────────────────────────────────────────────────────────────
+  function fmt(n){
+    if(n==null||n===''||isNaN(n)) return '—';
+    return '$'+Number(n).toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2});
+  }
+  function esc(s){
+    return String(s??'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+  }
+
+  window.toggleDark = function(){
+    var html = document.documentElement;
+    var dark = html.getAttribute('data-theme')==='dark';
+    html.setAttribute('data-theme', dark ? 'light' : 'dark');
+    localStorage.setItem('lfs_theme', dark ? 'light' : 'dark');
+    updateDmIcon();
+  };
+  function applyStoredTheme(){
+    var stored = localStorage.getItem('lfs_theme');
+    if(stored) document.documentElement.setAttribute('data-theme', stored);
+    updateDmIcon();
+  }
+  function updateDmIcon(){
+    var icon = document.getElementById('dm-icon');
+    if(!icon) return;
+    var dark = document.documentElement.getAttribute('data-theme')==='dark';
+    icon.className = dark ? 'fa-solid fa-sun' : 'fa-solid fa-moon';
+  }
+})();
+</script>
+<script src="/js/app_nav.js" data-active="invoices"></script>
+</body>
+</html>
