@@ -1,6 +1,6 @@
 # Claude 2 — Contractor timeclock (Phase 5)
 
-**Status:** R11 DONE ✓ · R12 DONE ✓ · R13 DONE ✓ 2026-06-24. All queued work shipped — ready for CEO review and merge.
+**Status:** R11/R12/R13 MERGED ✓ 2026-06-24 (`3136b57a`) — hours-import UI, keystone billing UI, projections (Money tab) + map (SA tab) + lifecycle all live. **C2 IDLE.** Next worker-eligible work: the map-integration UI (construction-contract catalog upload screen + embed the map in the Service Areas → Map tab + inline estimate) once the CEO's POC firms up — don't start until briefed.
 **Branch:** `claude-2/contractor-timeclock`
 **Read first:** `CLAUDE.md`, `ROADMAP.md` (Phase 5), `briefs/README.md`.
 
