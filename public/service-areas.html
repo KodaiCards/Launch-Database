@@ -111,6 +111,16 @@ input,select{font-family:inherit;font-size:13px;color:var(--text);background:var
   <div class="header">
     <div class="header-title"><i class="fa-solid fa-diagram-project"></i> Service Areas</div>
     <div class="header-right">
+      <div style="display:flex;border:1px solid var(--border-strong);border-radius:6px;overflow:hidden">
+        <button id="view-btn-list" class="btn btn-sm active" onclick="saSetView('list')"
+          style="border-radius:0;border:none;font-size:12px" aria-pressed="true">
+          <i class="fa-solid fa-list"></i> List
+        </button>
+        <button id="view-btn-map" class="btn btn-sm" onclick="saSetView('map')"
+          style="border-radius:0;border:none;border-left:1px solid var(--border-strong);font-size:12px" aria-pressed="false">
+          <i class="fa-solid fa-map"></i> Map
+        </button>
+      </div>
       <a class="btn btn-secondary btn-sm" href="/admin.html"><i class="fa-solid fa-arrow-left"></i> Admin</a>
       <button class="btn btn-ghost" id="themeToggle" title="Toggle theme"><i class="fa-solid fa-moon"></i></button>
     </div>
@@ -136,6 +146,44 @@ input,select{font-family:inherit;font-size:13px;color:var(--text);background:var
     <main class="main" role="main" id="main">
       <div class="empty"><i class="fa-solid fa-diagram-project"></i><div>Select a service area, or create one.</div></div>
     </main>
+
+    <!-- Map view panel (R13-B) — shown when List|Map toggle is set to Map -->
+    <div id="map-panel" class="main" role="region" aria-label="Map view" style="display:none">
+      <div style="display:flex;align-items:center;gap:12px;margin-bottom:16px;flex-wrap:wrap">
+        <div style="font-size:16px;font-weight:700;display:flex;align-items:center;gap:8px">
+          <i class="fa-solid fa-map" style="color:var(--primary)"></i> Overall Map
+        </div>
+        <select id="map-client-sel" aria-label="Filter by client"
+          style="padding:6px 10px;border:1px solid var(--border-strong);border-radius:6px;font-size:13px;background:var(--surface-2);color:var(--text)"
+          onchange="saMapFilterClient()">
+          <option value="">All clients</option>
+        </select>
+        <select id="map-sa-sel" aria-label="Filter by service area"
+          style="padding:6px 10px;border:1px solid var(--border-strong);border-radius:6px;font-size:13px;background:var(--surface-2);color:var(--text)"
+          onchange="saMapFilterArea()">
+          <option value="">All service areas</option>
+        </select>
+      </div>
+
+      <!-- Map stub placeholder -->
+      <div style="background:var(--surface-2);border:2px dashed var(--border-strong);border-radius:12px;
+        padding:28px 24px;margin-bottom:20px;display:flex;align-items:center;gap:18px;flex-wrap:wrap">
+        <div>
+          <i class="fa-solid fa-map" style="font-size:32px;color:var(--primary);opacity:.5"></i>
+        </div>
+        <div>
+          <div style="font-size:14px;font-weight:600;margin-bottom:4px">GIS / KMZ map</div>
+          <div style="font-size:13px;color:var(--text-muted)">
+            Map rendering is a future phase (KMZ sync). Service-area data is wired — select filters above to narrow the list below.
+          </div>
+        </div>
+      </div>
+
+      <!-- Filtered SA list -->
+      <div id="map-sa-list" style="background:var(--surface-2);border:1px solid var(--border-strong);border-radius:10px;overflow:hidden">
+        <div class="muted" style="padding:20px;font-size:13px;text-align:center">Loading…</div>
+      </div>
+    </div>
   </div>
 
   <!-- Create Service Area modal -->
@@ -230,6 +278,7 @@ input,select{font-family:inherit;font-size:13px;color:var(--text);background:var
   <script src="/js/api.js"></script>
   <script src="/js/service_areas_ui.js"></script>
   <script src="/js/service_areas_filters.js"></script>
+  <script src="/js/service_areas_map.js"></script>
   <script src="/js/app_nav.js" data-active="service-areas"></script>
 </body>
 </html>
