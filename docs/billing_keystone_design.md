@@ -68,4 +68,12 @@ The ledger ("already billed") is derived by summing `invoice_items` per `service
 3. **Ledger model itself:** does "bill `earned − already-billed`, negatives = deletable credits" match how you think about it? If yes, everything above follows.
 
 ## Sequence once confirmed
-(a) migration 0066 → (b) ledger engine + worklist/run/milestone/report endpoints (CEO, tested vs dev DB: progressive footage across 3 months, monthly hours isolation, catch-up, reconciliation credit, no-double-bill) → (c) program-financials onto the new links → (d) fan `billing.html` to C2 → (e) retire legacy project billing at cutover.
+(a) migration 0066 → (b) ledger engine + worklist/run/milestone/report endpoints → (c) program-financials onto the new links → (d) fan `billing.html` to C2 → (e) retire legacy project billing at cutover.
+
+## Status — 2026-06-24
+- **(a) DONE** — `0066_billing_keystone.sql` applied to dev DB. (Prod apply + `schema.sql` regen via pg_dump16 pending for cutover; CI down so no immediate gate.)
+- **(b) DONE** — `routes/billing_keystone.js` (worklist / run / report / period-close), mounted. Integration-tested vs dev DB: monthly-hours isolation, 3-month progressive footage, reconciliation credit, no-double-bill, informational closed-tag. **Rate is per job** (each `service_area_job.rate`) so Inspector $90 vs RE $100 within Inspection bill correctly. Milestone (route/SA-final) handled by the same run (fixed jobs bill once `build_finalized_at` set) — no separate endpoint.
+- **(c) TODO** — repoint `money_view` program-financials at `invoices.service_area_id`/EC (retires task-34 fallback). Small follow-up.
+- **(d) QUEUED** — billing UI → C2 R12 (after R11). **(e)** at cutover.
+
+**Confirmed (Carter):** calendar-month periods; **rate per job, not per discipline**; footage against a manual completed measure until the map lands; ledger model accepted.

@@ -279,3 +279,33 @@ From the cluster alone: create a client; add a RUS EC under it (program shows RU
 
 ### Acceptance
 Admin uploads a timecard CSV/XLSX → sees matched vs review rows with reasons → resolves/​skips review rows inline → commits → hours appear in the affected `service_area_jobs` (actual_hours/amount update). Legacy `admin.html` hours tab no longer needed.
+
+---
+
+## Round 12 — Keystone billing UI (QUEUED — after R11). Sonnet @ medium. FRONTEND ONLY.
+**The CEO shipped + tested the keystone billing ledger backend** (migration 0066). Build the cluster billing UI on it so `billing.html` stops billing the retiring `projects` tree. Design context: `docs/billing_keystone_design.md`. **NO backend** — endpoints exist + mounted; need a new one → STOP → `BLOCKED — needs CEO`.
+
+> Internal admin (manager/admin). Money IS shown here (it's the billing tool) — but never in the customer portal. CI down → CEO verifies locally; test as admin.
+
+### The model (so the UI matches it)
+Each run bills **earned − already-billed** per job: monthly hours, **progressive footage** (some June, more July, final Aug), milestone fixed, and **reconciliation credits** (negative lines when hours/footage are removed). Invoices are **per concentrator, per calendar month**, created as **drafts** you can edit. A "closed month" tag is **informational only**.
+
+### Endpoints (LIVE)
+- `GET /api/billing/worklist?period=YYYY-MM[&service_area_ids=a,b]` → `{ period, areas:[ { service_area_id, name, client_id, engineering_contract_id, program, total, lines:[ { job_id, team, job_name, billing_type, earned, billed_to_date, billable, line_kind:'charge'|'reconciliation', description, quantity, unit, rate, amount } ] } ] }`.
+- `POST /api/billing/run { period, service_area_ids?[], exclude_job_ids?[] }` → creates one **draft** invoice per concentrator from billable lines (drop lines via `exclude_job_ids`). Returns `{ invoices_created, invoices:[{invoice, item_count}] }`.
+- `GET /api/billing/invoices` (exists) → invoices + items for the list/drill-in.
+- `GET /api/billing/report?group=client|ec|program|month` → `{ group, rows:[{label,key,invoice_count,total}] }`.
+- `GET /api/billing/periods` + `POST /api/billing/periods/:month/close` (body `{open:true}` reopens) → the informational closed tag.
+
+### Build (new `public/billing-keystone.html` + JS, or rework `billing.html` additively)
+- [ ] **R12.1 — Month + worklist.** Month picker → `worklist` → per-concentrator cards with per-job rows (earned / billed / billable, charge vs **reconciliation** styled distinctly). Checkbox to exclude a line. Show closed-month badge from `/api/billing/periods`.
+- [ ] **R12.2 — Generate drafts.** "Generate invoices" → `POST /api/billing/run` with selected concentrators + `exclude_job_ids` → show created drafts; link to the invoices list.
+- [ ] **R12.3 — Invoices + report.** Invoices list (reuse `GET /api/billing/invoices`, show period + drill-in to items, mark reconciliation lines) + a Report tab (`/api/billing/report?group=` toggle).
+- [ ] **R12.4 — Close month + polish.** Close/reopen a month (informational), dark-mode, a11y, loading/empty/error, `data-active="billing"`. **No `$` math in JS** — render server amounts verbatim.
+
+### Guardrails
+- NO backend / NO schema. Don't recompute billing in JS — the server returns every line + amount. Render verbatim. OFF-LIMITS: `routes/*`, `auth.js`, `server.js`, `migrations/`, `schema.sql`.
+- This replaces the legacy project-based billing UI — but keep additive; CEO retires the old path at cutover.
+
+### Acceptance
+Pick a month → see each concentrator's billable lines (hours/footage/fixed + any credits) → optionally exclude lines → generate per-concentrator draft invoices → see them in the list with periods → view the report grouped by program/client. No `$` math in JS; reconciliation lines clearly shown.
