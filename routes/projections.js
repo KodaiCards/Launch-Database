@@ -17,6 +17,7 @@
 //   require('./routes/projections')(app, pool, { requireManagerOrAdmin });
 
 const CENT = (n) => Math.round(Number(n || 0) * 100) / 100;
+const { computeEstimate } = require('./_map_estimate');
 
 // Per-job expected + billed, for SAs matching an optional WHERE. expected =
 // estimated_amount if set, else footage×rate.
@@ -58,6 +59,30 @@ module.exports = function installProjectionsRoutes(app, pool, mw) {
         return { job_id: r.job_id, job_name: r.job_name, team: r.team, billing_type: r.billing_type,
           bill_trigger: r.bill_trigger, expected, billed, remaining };
       });
+      // Map-derived construction (the loop): when the SA is linked to a map plan,
+      // construction expected comes from the map's units × the CC catalog — not the
+      // construction-discipline jobs. Additive blocks; jobs/totals unchanged.
+      let construction = { linked: false };
+      let combined = null;
+      const meta = await pool.query(
+        `SELECT sa.map_plan_id, sa.construction_contract_id, cc.total_budget AS cc_budget
+           FROM service_areas sa LEFT JOIN construction_contracts cc ON cc.id = sa.construction_contract_id
+          WHERE sa.id = $1`, [req.params.id]);
+      const m = meta.rows[0] || {};
+      if (m.map_plan_id) {
+        const est = await computeEstimate(pool, m.map_plan_id, m.construction_contract_id);
+        const budget = m.cc_budget != null ? CENT(m.cc_budget) : null;
+        construction = {
+          linked: true, construction_contract_id: m.construction_contract_id || null, budget,
+          expected: est.construction_expected, completed: est.construction_completed, remaining: est.construction_remaining,
+          over_budget: budget != null ? CENT(Math.max(0, est.construction_expected - budget)) : null,
+          footage_by_designation: est.footage_by_designation, structures: est.structures, unpriced: est.unpriced,
+        };
+        // engineering = non-construction-team jobs; construction = map. No double-count.
+        const engExpected = CENT(jobs.filter((j) => j.team !== 'construction').reduce((s, j) => s + j.expected, 0));
+        combined = { engineering_expected: engExpected, construction_expected: est.construction_expected,
+          projected_total: CENT(engExpected + est.construction_expected) };
+      }
       res.json({
         area: { id: a.sa_id, name: a.sa_name, client_id: a.client_id, client_name: a.client_name,
           engineering_contract_id: a.engineering_contract_id, ec_name: a.ec_name, program: a.program,
@@ -65,6 +90,7 @@ module.exports = function installProjectionsRoutes(app, pool, mw) {
         jobs,
         totals: { projected_total: CENT(exp), billed: CENT(bil), remaining: CENT(Math.max(0, exp - bil)),
           completion_pct: exp ? Math.round(bil / exp * 100) : 0 },
+        construction, combined,
       });
     } catch (e) {
       console.error('[projections:sa]', e && e.message);

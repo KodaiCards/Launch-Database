@@ -63,6 +63,31 @@ test('projections: per-SA, EC budget burn, rollup, map data', { skip: DB ? false
     // ── map data ──
     r = await get('/api/map/service-areas');
     assert.ok(r.json.find((x) => x.id === saId), 'map data includes the service area');
+    // ── map-fed construction block + combined (the loop into projections) ──
+    {
+      const PLAN = 'projmap_' + Date.now();
+      const cc2 = (await pool.query(`INSERT INTO construction_contracts (client_id,name,total_budget) VALUES ($1,'ZZ Proj CC',1500) RETURNING id`, [clientId])).rows[0].id;
+      await pool.query(`INSERT INTO cost_catalog (construction_contract_id,item_key,label,unit_price) VALUES ($1,'handhole','Handhole',200)`, [cc2]);
+      const pts = {}; for (let i = 0; i < 10; i++) pts['h' + i] = { ptype: 'handhole', status: i < 3 ? 'asBuilt' : 'proposed' };
+      await pool.query(`INSERT INTO map_store (store_key,value) VALUES ($1,$2)`, ['frm_pts_' + PLAN, JSON.stringify(pts)]);
+      await pool.query(`UPDATE service_areas SET map_plan_id=$1, construction_contract_id=$2 WHERE id=$3`, [PLAN, cc2, saId]);
+      try {
+        const r = await get('/api/projections/service-area/' + saId);
+        assert.equal(r.json.construction.linked, true, 'SA construction is map-linked');
+        assert.equal(r.json.construction.expected, 2000, '10 handholes × 200');
+        assert.equal(r.json.construction.completed, 600, '3 built × 200');
+        assert.equal(r.json.construction.budget, 1500);
+        assert.equal(r.json.construction.over_budget, 500, 'expected 2000 over the 1500 CC budget');
+        // engineering = non-construction-team jobs only (RE est 48000); plant-records (construction team) excluded.
+        assert.equal(r.json.combined.engineering_expected, 48000, 'construction-team job not counted as engineering');
+        assert.equal(r.json.combined.construction_expected, 2000);
+        assert.equal(r.json.combined.projected_total, 50000, 'engineering + map construction');
+      } finally {
+        await pool.query(`UPDATE service_areas SET map_plan_id=NULL, construction_contract_id=NULL WHERE id=$1`, [saId]).catch(() => {});
+        await pool.query(`DELETE FROM map_store WHERE store_key=$1`, ['frm_pts_' + PLAN]).catch(() => {});
+        await pool.query(`DELETE FROM construction_contracts WHERE id=$1`, [cc2]).catch(() => {});
+      }
+    }
   } finally {
     if (invId) await pool.query(`DELETE FROM invoice_items WHERE invoice_id=$1`, [invId]).catch(() => {});
     if (invId) await pool.query(`DELETE FROM invoices WHERE id=$1`, [invId]).catch(() => {});
