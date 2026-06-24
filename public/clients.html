@@ -209,7 +209,7 @@ tbody td{padding:10px 14px;color:var(--text-secondary)}
     }
     tbody.innerHTML = clients.map(function(c){
       var outClass = c.outstanding > 10000 ? 'outstanding high' : c.outstanding > 0 ? 'outstanding' : '';
-      return '<tr data-id="'+esc(c.id)+'" onclick="toggleDetail(\''+esc(c.id)+'\')">'
+      return '<tr data-id="'+esc(c.id)+'" tabindex="0" role="button" aria-expanded="false" onclick="toggleDetail(\''+esc(c.id)+'\')" onkeydown="if(event.key===\'Enter\'||event.key===\' \'){event.preventDefault();toggleDetail(\''+esc(c.id)+'\')}">'
         +'<td class="client-name">'+esc(c.name)+'</td>'
         +'<td class="num"><span class="badge-areas"><i class="fa-solid fa-diagram-project"></i> '+c.active_area_count+'</span></td>'
         +'<td class="num amt">'+fmt(c.total_billed)+'</td>'
@@ -239,6 +239,8 @@ tbody td{padding:10px 14px;color:var(--text-secondary)}
     if(panel) panel.classList.remove('open');
     var chev = document.getElementById('chev-'+clientId);
     if(chev) chev.style.transform = '';
+    var row = document.querySelector('tr[data-id="'+clientId+'"]');
+    if(row) row.setAttribute('aria-expanded','false');
   }
 
   function openDetail(clientId){
@@ -247,6 +249,8 @@ tbody td{padding:10px 14px;color:var(--text-secondary)}
     panel.classList.add('open');
     var chev = document.getElementById('chev-'+clientId);
     if(chev) chev.style.transform = 'rotate(90deg)';
+    var row = document.querySelector('tr[data-id="'+clientId+'"]');
+    if(row) row.setAttribute('aria-expanded','true');
     if(panel.dataset.loaded) return;
     panel.innerHTML = '<div class="panel-loading"><span class="spinner"></span> Loading…</div>';
     loadStatement(clientId, panel);

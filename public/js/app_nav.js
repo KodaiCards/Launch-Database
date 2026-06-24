@@ -49,7 +49,7 @@
     + '<div class="rail-search-wrap" id="rail-search-wrap">'
     + '<input class="rail-search" id="rail-search-input" type="search" placeholder="Search…" autocomplete="off" aria-label="Global search">'
     + '<i class="fa-solid fa-magnifying-glass rail-search-ico"></i>'
-    + '<div class="rail-results" id="rail-results"></div>'
+    + '<div class="rail-results" id="rail-results" role="listbox" aria-live="polite" aria-label="Search results"></div>'
     + '</div>'
     + link('dashboard', '/dashboard.html', 'fa-gauge-high', 'Dashboard')
     + link('service-areas', '/service-areas.html', 'fa-diagram-project', 'Service areas')

@@ -148,10 +148,10 @@ tfoot td{font-weight:700;border-top:2px solid var(--gray-border);background:var(
       <button class="btn btn-secondary btn-sm" onclick="window.print()" title="Print page"><i class="fa-solid fa-print"></i> Print</button>
     </div>
     <div style="display:flex;gap:10px;align-items:flex-end;flex-wrap:wrap;margin-bottom:10px">
-      <select id="margin-client" style="padding:7px 10px;border:1px solid var(--gray-border);border-radius:6px;font-size:13px;background:var(--white);color:var(--text)" onchange="applyMarginFilters()">
+      <select id="margin-client" aria-label="Filter by client" style="padding:7px 10px;border:1px solid var(--gray-border);border-radius:6px;font-size:13px;background:var(--white);color:var(--text)" onchange="applyMarginFilters()">
         <option value="">All clients</option>
       </select>
-      <select id="margin-program" style="padding:7px 10px;border:1px solid var(--gray-border);border-radius:6px;font-size:13px;background:var(--white);color:var(--text)" onchange="applyMarginFilters()">
+      <select id="margin-program" aria-label="Filter by program" style="padding:7px 10px;border:1px solid var(--gray-border);border-radius:6px;font-size:13px;background:var(--white);color:var(--text)" onchange="applyMarginFilters()">
         <option value="">All programs</option>
         <option value="rus">RUS</option>
         <option value="bau">BAU</option>
@@ -208,7 +208,7 @@ tfoot td{font-weight:700;border-top:2px solid var(--gray-border);background:var(
       <button class="btn btn-secondary btn-sm" onclick="window.print()" title="Print statement"><i class="fa-solid fa-print"></i> Print</button>
     </div>
     <div style="display:flex;gap:10px;align-items:flex-end;margin-bottom:12px;flex-wrap:wrap">
-      <select id="stmt-client" style="padding:7px 10px;border:1px solid var(--gray-border);border-radius:6px;font-size:13px;background:var(--white);color:var(--text)">
+      <select id="stmt-client" aria-label="Select client for statement" style="padding:7px 10px;border:1px solid var(--gray-border);border-radius:6px;font-size:13px;background:var(--white);color:var(--text)">
         <option value="">— Select client —</option>
       </select>
       <button class="btn btn-secondary btn-sm" onclick="loadStatement()"><i class="fa-solid fa-magnifying-glass"></i> Load statement</button>

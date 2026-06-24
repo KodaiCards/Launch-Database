@@ -368,6 +368,11 @@
     title.textContent = 'Invoice ' + num;
     body.innerHTML = '<div class="loading-row"><span class="spinner"></span>Loading…</div>';
     modal.classList.remove('hidden');
+    // Focus the close button so keyboard users can ESC/Tab out
+    setTimeout(function () {
+      var closeBtn = modal.querySelector('.modal-close');
+      if (closeBtn) closeBtn.focus();
+    }, 50);
     try {
       const res = await fetch(`/api/money/invoice/${encodeURIComponent(id)}`, { credentials: 'include' });
       if (!res.ok) throw new Error(await res.text());
