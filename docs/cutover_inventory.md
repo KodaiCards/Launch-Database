@@ -20,7 +20,7 @@
 | **Hours view** | `hours.html` (per-person, presets, CSV export) | **RETIRE** |
 | **Revenue / margin / aging** | `money.html` (margin, aging, statements, program-financials, revenue rollup) | **RETIRE** |
 | **Pipeline** (permitting/design status) | `pipeline.html` (`/api/service-area-pipelines`, keystone) | **CLOSE-GAP** — cluster pipelines the *new* model; depends on projects-data decision |
-| **Billing** (`/api/billing/batches`, bill-multiple, report) | `billing.html` + bulk-bill + unbilled-hours + per-SA `bill` endpoint | **CLOSE-GAP** — verify batch-billing/report parity with legacy before retiring |
+| **Billing** (`/api/billing/batches`, bill-multiple, report) | `billing.html` is the **legacy project-based** UI relocated (calls `bill-multiple`, `/api/projects/`, `preview-makeup`); keystone billing is the separate per-SA `POST /api/service-areas/:id/bill` | **CLOSE-GAP → real work:** cluster billing must move onto the keystone SA-bill path since projects are being retired (decision #1). Today only the per-SA "Generate invoice" button drives keystone billing — needs a proper cluster billing surface. Tangled with invoice-gen HOLD (#3). |
 | **Clients** | `clients.html` (read-only; **C2 R10 adding create/edit**) | **CLOSE-GAP** (in flight) |
 | **Hours CSV importer + review queue** (`/api/hours/csv-validate · csv-commit · csv-review-queue`) | — none (cluster exports, doesn't import) | **MIGRATE** — this is the hours *data-entry path*; highest-priority port (decision #2) |
 | **Invoice generation + PDF** (`/api/invoices/generate-pdf`, preview-makeup, AI-vision template) | `invoices.html` is read-only list + drill-in | **HOLD** until ROADMAP Phase 4 simple configurable template, then replace (decision #3) |
