@@ -177,6 +177,16 @@ html[data-theme="dark"] .sk::after{background:linear-gradient(90deg,transparent,
 @keyframes sk-shimmer{100%{transform:translateX(100%)}}
 .cp-scroll-x{overflow-x:auto;-webkit-overflow-scrolling:touch}
 
+/* Unified portal search (task 21) */
+.cp-gsearch{display:flex;align-items:center;gap:8px;margin:4px 0 12px;position:relative}
+.cp-gsearch i.fa-magnifying-glass{position:absolute;left:12px;color:var(--text-muted);font-size:13px;pointer-events:none}
+.cp-gsearch input{flex:1;padding:9px 36px;border:1px solid var(--gray-border);border-radius:8px;font-size:13px;background:var(--surface-2);color:var(--text);font-family:inherit}
+.cp-gsearch input:focus{outline:none;border-color:var(--primary)}
+.cp-gsearch-clear{position:absolute;right:8px;background:none;border:none;color:var(--text-muted);cursor:pointer;padding:4px 8px;font-size:13px}
+.cp-gsearch-clear:hover{color:var(--text)}
+.tab-count{display:inline-block;margin-left:5px;padding:0 6px;border-radius:8px;font-size:10px;font-weight:700;background:var(--surface-3);color:var(--text-muted);vertical-align:middle}
+.tabs button.active .tab-count{background:var(--primary-light);color:var(--primary)}
+
 /* SA filter + search bar (task 16) */
 .sa-filter-bar{display:flex;align-items:center;gap:8px;margin-bottom:12px;flex-wrap:wrap}
 .sa-filter-bar input{flex:1;min-width:140px;padding:7px 10px;border:1px solid var(--gray-border);border-radius:6px;font-size:13px;background:var(--surface-2);color:var(--text);font-family:inherit}
@@ -263,6 +273,7 @@ html[data-theme="dark"] .sk::after{background:linear-gradient(90deg,transparent,
     <span style="font-size:12px;color:var(--text-muted)">Preview — work in progress. Service areas show only when marked client-visible.</span>
   </div>
   <div id="cp-client-switcher"></div>
+  <div id="cp-global-search"></div>
   <div id="cp-landing"></div>
   <div>
     <div class="tabs" id="cp-tabs" role="tablist" aria-label="Portal sections">
@@ -342,12 +353,40 @@ function esc(s){ if (s === null || s === undefined) return ''; return String(s).
 function fmtMoney(n){ return '$' + (Number(n)||0).toLocaleString('en-US', {minimumFractionDigits:2, maximumFractionDigits:2}); }
 function fmtHours(n){ return (Number(n)||0).toLocaleString('en-US', {minimumFractionDigits:2, maximumFractionDigits:2}) + ' hrs'; }
 function fmtDate(d){ if (!d) return '—'; return new Date(d + 'T00:00:00').toLocaleDateString('en-US', { month:'short', day:'numeric', year:'numeric' }); }
+function fmtNumber(n){ return (Number(n)||0).toLocaleString('en-US'); }
+// Relative time from a date-only string (YYYY-MM-DD) or ISO timestamp.
+// Returns "today" / "yesterday" / "N days ago" / "N weeks ago" /
+// "N months ago" / "N years ago"; future dates → "in N days" etc.
+function fmtRelative(d){
+  if (!d) return '';
+  const dt = new Date(String(d).length <= 10 ? d + 'T00:00:00' : d);
+  if (isNaN(dt.getTime())) return '';
+  const today = new Date(); today.setHours(0,0,0,0);
+  const that = new Date(dt); that.setHours(0,0,0,0);
+  const days = Math.round((today - that) / 86400000);
+  const ago = days >= 0;
+  const n = Math.abs(days);
+  const phrase = (val, unit) => `${val} ${unit}${val === 1 ? '' : 's'} ${ago ? 'ago' : 'from now'}`;
+  if (n === 0) return 'today';
+  if (n === 1) return ago ? 'yesterday' : 'tomorrow';
+  if (n < 7) return phrase(n, 'day');
+  if (n < 30) return phrase(Math.round(n / 7), 'week');
+  if (n < 365) return phrase(Math.round(n / 30), 'month');
+  return phrase(Math.round(n / 365), 'year');
+}
 
 async function api(url, opts){
   const r = await fetch(url, Object.assign({ credentials: 'same-origin' }, opts || {}));
   if (r.status === 401){ window.location.href = '/login'; return; }
   if (!r.ok){ const j = await r.json().catch(() => ({})); throw new Error(j.error || `HTTP ${r.status}`); }
   return r.json();
+}
+
+// Trailing debounce — coalesces rapid input events (search boxes) into one
+// re-render after the user pauses (task 24).
+function debounce(fn, ms){
+  let t;
+  return function(...args){ clearTimeout(t); t = setTimeout(() => fn.apply(this, args), ms); };
 }
 
 let _customerProjects = [];
@@ -358,6 +397,8 @@ let _customerInvoices = [];
 let _saFilter = { search: '', status: '' };
 let _invFilter = { status: '' };
 let _invSort = 'date-desc';
+let _globalSearch = ''; // task 21: spans areas + invoices
+let _invoicesLoaded = false; // distinguishes "no invoices" from "not fetched yet"
 let _lastVisitTs = null; // ISO string from localStorage; set on next load
 
 // ─── "What's new" indicator (task 17) — localStorage, no backend ─────
@@ -396,12 +437,103 @@ function cpRenderClientSwitcher(){
 }
 function cpSelectClient(id){
   _selectedClientId = id || null;
-  _customerInvoices = [];
+  // Areas + invoices are fetched across ALL the user's clients, so switching
+  // is a pure in-memory re-filter — no refetch, no cache invalidation needed.
   cpRenderClientSwitcher();
   cpRenderLanding();
   renderServiceAreas();
   const invTab = document.getElementById('cp-tab-invoices');
-  if (invTab && invTab.style.display !== 'none') cpLoadInvoices();
+  if (invTab && invTab.style.display !== 'none' && _invoicesLoaded) cpRenderInvoices();
+  cpUpdateTabCounts();
+}
+
+// ─── Unified portal search (task 21) — spans areas + invoices ─────────
+// One text query, ANDed with each tab's own status filter/sort. Since
+// invoices are lazy-loaded, the first global search pulls them once so the
+// match counts on the Invoices tab are accurate even before it's opened.
+function saMatchesGlobal(a, q){
+  if (!q) return true;
+  return (a.name || '').toLowerCase().includes(q)
+      || (a.work_order_number || '').toLowerCase().includes(q)
+      || (a.client_name || '').toLowerCase().includes(q);
+}
+function invMatchesGlobal(inv, q){
+  if (!q) return true;
+  return (inv.invoice_number || '').toLowerCase().includes(q)
+      || (inv.invoice_name || '').toLowerCase().includes(q)
+      || (inv.notes || '').toLowerCase().includes(q)
+      || (inv.client_name || '').toLowerCase().includes(q);
+}
+async function cpEnsureInvoicesLoaded(){
+  if (_invoicesLoaded) return;
+  try { _customerInvoices = await api('/api/customer/invoices'); _invoicesLoaded = true; }
+  catch(e){ /* leave unloaded; tab shows its own error on open */ }
+}
+function cpRenderGlobalSearch(){
+  const el = document.getElementById('cp-global-search');
+  if (!el) return;
+  const hasData = (_customerServiceAreas || []).length || _invoicesLoaded;
+  if (!hasData){ el.innerHTML = ''; return; }
+  // The clear button stays in the DOM and toggles via display, so typing
+  // never re-renders the bar (no focus/caret loss).
+  el.innerHTML = `<div class="cp-gsearch">
+    <i class="fa-solid fa-magnifying-glass" aria-hidden="true"></i>
+    <input type="search" id="cp-gsearch-input" placeholder="Search areas & invoices…"
+      aria-label="Search service areas and invoices" value="${esc(_globalSearch)}"
+      oninput="cpOnGlobalSearch(this.value)">
+    <button class="cp-gsearch-clear" id="cp-gsearch-clear" aria-label="Clear search"
+      style="display:${_globalSearch ? 'block' : 'none'}" onclick="cpClearGlobalSearch()"><i class="fa-solid fa-xmark"></i></button>
+  </div>`;
+}
+// Heavy part (filter + lazy invoice fetch + re-render) is debounced; the
+// clear-button toggle stays immediate so the control feels responsive.
+const _cpRunGlobalSearch = debounce(async () => {
+  await cpEnsureInvoicesLoaded();
+  cpRenderSaCards();
+  if (_invoicesLoaded) cpRenderInvoices();
+  cpUpdateTabCounts();
+}, 180);
+function cpOnGlobalSearch(val){
+  _globalSearch = val || '';
+  const clearBtn = document.getElementById('cp-gsearch-clear');
+  if (clearBtn) clearBtn.style.display = _globalSearch ? 'block' : 'none';
+  _cpRunGlobalSearch();
+}
+function cpClearGlobalSearch(){
+  _globalSearch = '';
+  const input = document.getElementById('cp-gsearch-input');
+  if (input) input.value = '';
+  const clearBtn = document.getElementById('cp-gsearch-clear');
+  if (clearBtn) clearBtn.style.display = 'none';
+  cpRenderSaCards();
+  if (_invoicesLoaded) cpRenderInvoices();
+  cpUpdateTabCounts();
+  if (input) input.focus();
+}
+// Show live match counts on the Service Areas / Invoices tab buttons while a
+// global search is active; clear them otherwise.
+function cpUpdateTabCounts(){
+  const q = (_globalSearch || '').trim().toLowerCase();
+  const saBtn = document.getElementById('cp-tabbtn-service-areas');
+  const invBtn = document.getElementById('cp-tabbtn-invoices');
+  if (saBtn){
+    let html = 'Service Areas';
+    if (q){
+      const n = (_customerServiceAreas || [])
+        .filter(a => (!_selectedClientId || a.client_id === _selectedClientId) && saMatchesGlobal(a, q)).length;
+      html += `<span class="tab-count">${n}</span>`;
+    }
+    saBtn.innerHTML = html;
+  }
+  if (invBtn){
+    let html = 'Invoices';
+    if (q && _invoicesLoaded){
+      const n = (_customerInvoices || [])
+        .filter(inv => (!_selectedClientId || inv.client_id === _selectedClientId) && invMatchesGlobal(inv, q)).length;
+      html += `<span class="tab-count">${n}</span>`;
+    }
+    invBtn.innerHTML = html;
+  }
 }
 
 // a11y: open a modal with focus moved inside; ESC closes any open modal and
@@ -563,21 +695,24 @@ function cpSkeletonRows(n){
 
 async function cpLoadInvoices(){
   const body = document.getElementById('cp-invoices-body');
-  if (!_customerInvoices.length) {
+  if (!_invoicesLoaded) {
     body.innerHTML = cpSkeletonRows(5);
     try {
       _customerInvoices = await api('/api/customer/invoices');
+      _invoicesLoaded = true;
     } catch (e) {
       body.innerHTML = `<div class="empty-state" style="color:var(--danger-text)">
         <i class="fa-solid fa-triangle-exclamation"></i>
         <p>Couldn't load invoices.</p>
         <p style="font-size:12px">${esc(e.message)}</p>
-        <button class="btn btn-secondary btn-sm" style="margin-top:10px" onclick="_customerInvoices=[];cpLoadInvoices()">Try again</button>
+        <button class="btn btn-secondary btn-sm" style="margin-top:10px" onclick="cpLoadInvoices()">Try again</button>
       </div>`;
       return;
     }
   }
   cpRenderInvoices();
+  cpRenderGlobalSearch();
+  cpUpdateTabCounts();
 }
 
 function cpRenderInvoices(){
@@ -591,9 +726,12 @@ function cpRenderInvoices(){
     </div>`;
     return;
   }
-  // Apply status filter
+  // Apply status filter + unified global text search (task 21)
   const st = _invFilter.status;
-  let rows = st ? all.filter(inv => (inv.status || '') === st) : all;
+  const gq = (_globalSearch || '').trim().toLowerCase();
+  let rows = all;
+  if (st) rows = rows.filter(inv => (inv.status || '') === st);
+  if (gq) rows = rows.filter(inv => invMatchesGlobal(inv, gq));
   // Sort
   const sortFn = {
     'date-desc': (a,b) => (b.invoice_date || '') > (a.invoice_date || '') ? 1 : -1,
@@ -642,7 +780,7 @@ function cpRenderInvoices(){
       <tbody>
         ${rows.map(inv => `<tr style="border-top:1px solid var(--gray-border);cursor:pointer" onclick="cpOpenInvoice('${esc(inv.id)}')">
           <td style="padding:8px 12px;font-family:monospace;font-weight:600">${esc(inv.invoice_number || '—')}${cpIsNew(inv.invoice_date) ? '<span class="cp-new-badge">New</span>' : ''}</td>
-          <td style="padding:8px 12px">${fmtDate(inv.invoice_date)}</td>
+          <td style="padding:8px 12px">${fmtDate(inv.invoice_date)}${inv.invoice_date ? `<div style="font-size:11px;color:var(--text-muted)">${esc(fmtRelative(inv.invoice_date))}</div>` : ''}</td>
           <td style="padding:8px 12px;color:var(--text-muted)">${esc(inv.invoice_name || inv.notes || '—')}</td>
           <td style="padding:8px 12px"><span class="inv-status ${invStatusClass(inv.status)}">${esc(String(inv.status || '').replace('_',' ') || '—')}</span></td>
           <td style="padding:8px 12px;text-align:right;font-weight:600">${fmtMoney(inv.total_amount)}</td>
@@ -730,7 +868,8 @@ async function cpOpenInvoice(id){
       </div>
       <div class="cp-no-print" style="display:flex;justify-content:flex-end;gap:8px;margin-top:18px;padding-top:14px;border-top:1px solid var(--gray-border)">
         <button class="btn btn-secondary" onclick="document.getElementById('cp-detail-modal').style.display='none'">Close</button>
-        <button class="btn btn-primary" onclick="window.print()"><i class="fa-solid fa-print" aria-hidden="true"></i> Print</button>
+        <button class="btn btn-secondary" onclick="cpPrintWithTitle()"><i class="fa-solid fa-print" aria-hidden="true"></i> Print</button>
+        <button class="btn btn-primary" onclick="cpDownloadInvoicePdf('${esc(inv.invoice_number || '')}')"><i class="fa-solid fa-file-pdf" aria-hidden="true"></i> Download PDF</button>
       </div>
     `;
   } catch (e) {
@@ -738,11 +877,95 @@ async function cpOpenInvoice(id){
   }
 }
 
+// Client-side print-to-PDF (no backend, no library): the browser print
+// dialog's "Save as PDF" target produces the file. Setting document.title
+// first makes the suggested filename sensible; we restore it afterward.
+function cpPrintWithTitle(title){
+  const prev = document.title;
+  if (title) document.title = title;
+  let restored = false;
+  const restore = () => { if (restored) return; restored = true; document.title = prev; window.removeEventListener('afterprint', restore); };
+  window.addEventListener('afterprint', restore);
+  setTimeout(restore, 2000); // fallback if afterprint never fires
+  window.print();
+}
+function cpDownloadInvoicePdf(number){
+  try { if (window.LFS && LFS.toast) LFS.toast.info('Choose "Save as PDF" in the print dialog to download.'); } catch(e){}
+  cpPrintWithTitle(number ? ('Invoice ' + number) : 'Invoice');
+}
+
+// Clean, printable single-service-area status sheet (no $). Reuses the
+// shared detail modal + the same .cp-printable / @media print isolation as
+// invoices, so "Download PDF" works the same way (browser Save as PDF).
+function cpPrintArea(id){
+  const a = (_customerServiceAreas || []).find(x => x.id === id);
+  if (!a) return;
+  const m = document.getElementById('cp-detail-modal');
+  const body = document.getElementById('cp-detail-body');
+  document.getElementById('cp-detail-title').textContent = a.name || 'Service area';
+  const status = String(a.status || 'active').toLowerCase();
+  const pct = a.completion_pct;
+  let dateText;
+  if (a.start_date && a.completed_date) dateText = `${fmtDate(a.start_date)} → ${fmtDate(a.completed_date)}`;
+  else if (a.start_date) dateText = `${fmtDate(a.start_date)} → in progress`;
+  else if (a.completed_date) dateText = `Completed ${fmtDate(a.completed_date)}`;
+  else dateText = 'No dates set yet';
+  const jobsRows = (a.jobs || []).map(j => `<tr style="border-top:1px solid var(--gray-border)">
+      <td style="padding:6px 10px">${esc(j.job_name || '—')}</td>
+      <td style="padding:6px 10px">${esc(SA_TEAM_LABELS[j.team] || j.team || '—')}</td>
+      <td style="padding:6px 10px">${esc(String(j.status || '').replace(/_/g,' '))}</td>
+      <td style="padding:6px 10px">${fmtDate(j.start_date)}</td>
+      <td style="padding:6px 10px">${fmtDate(j.completed_date)}</td>
+    </tr>`).join('');
+  const th = 'padding:6px 10px;text-align:left;font-size:11px;color:var(--text-muted);text-transform:uppercase';
+  body.innerHTML = `
+    <div class="cp-printable">
+      <div class="cp-inv-head">
+        <div>
+          <div style="font-size:17px;font-weight:700;color:var(--text)">Launch Fiber Services</div>
+          <div style="font-size:12px;color:var(--text-muted)">Service area status</div>
+        </div>
+        <div style="text-align:right">
+          <div style="font-size:18px;font-weight:700;color:var(--text)">${esc(a.name)}</div>
+          ${a.work_order_number ? `<div style="font-size:12px;font-family:monospace">WO# ${esc(a.work_order_number)}</div>` : ''}
+          <div style="margin-top:4px"><span class="status-pill status-${esc(status)}">${esc(status.replace('_',' '))}</span></div>
+        </div>
+      </div>
+      <div class="cp-inv-meta">
+        <div><div class="cp-inv-lbl">Client</div><div>${esc(a.client_name || '—')}</div></div>
+        <div style="text-align:right"><div class="cp-inv-lbl">Program</div><div>${a.program === 'rus' ? 'RUS' : esc(a.program || '—')}</div></div>
+        <div><div class="cp-inv-lbl">Timeline</div><div>${esc(dateText)}</div></div>
+        <div style="text-align:right"><div class="cp-inv-lbl">Progress</div><div>${pct != null ? `${a.jobs_done} of ${a.jobs_total} jobs · ${pct}%` : 'No jobs yet'}</div></div>
+      </div>
+      ${(a.jobs && a.jobs.length) ? `
+        <table style="width:100%;font-size:12px;border-collapse:collapse">
+          <thead><tr style="background:var(--surface-1)">
+            <th style="${th}">Job</th><th style="${th}">Team</th><th style="${th}">Status</th>
+            <th style="${th}">Started</th><th style="${th}">Completed</th>
+          </tr></thead>
+          <tbody>${jobsRows}</tbody>
+        </table>
+      ` : '<div style="font-size:12px;color:var(--text-muted)">No jobs on this service area yet.</div>'}
+      <div style="font-size:10px;color:var(--text-muted);margin-top:18px">Generated ${fmtDate(new Date().toISOString().slice(0,10))} · Launch Fiber Services</div>
+    </div>
+    <div class="cp-no-print" style="display:flex;justify-content:flex-end;gap:8px;margin-top:18px;padding-top:14px;border-top:1px solid var(--gray-border)">
+      <button class="btn btn-secondary" onclick="document.getElementById('cp-detail-modal').style.display='none'">Close</button>
+      <button class="btn btn-secondary" onclick="cpPrintWithTitle()"><i class="fa-solid fa-print" aria-hidden="true"></i> Print</button>
+      <button class="btn btn-primary" onclick="cpDownloadAreaPdf('${esc(a.name || '')}')"><i class="fa-solid fa-file-pdf" aria-hidden="true"></i> Download PDF</button>
+    </div>`;
+  cpShowModal(m);
+}
+function cpDownloadAreaPdf(name){
+  try { if (window.LFS && LFS.toast) LFS.toast.info('Choose "Save as PDF" in the print dialog to download.'); } catch(e){}
+  cpPrintWithTitle(name ? (name + ' — status') : 'Service area status');
+}
+
 // ─── Service Areas (Phase 6 — keystone status view, no $) ─────────────
 // Backed by GET /api/customer/service-areas, which returns ONLY
 // status/progress (no rates, amounts, or invoices). Render mirrors that:
 // per-area status + a jobs-done/total progress bar + per-team job statuses.
 let _customerServiceAreas = [];
+let _serviceAreasLoaded = false; // cache flag — fetch once, filter in-memory (task 24)
 const SA_TEAM_LABELS = { permitting: 'Permitting', design: 'Design', construction: 'Construction', other: 'Other' };
 const SA_DONE = new Set(['complete', 'billed']);
 const SA_STAGES = ['Not started', 'In progress', 'Complete', 'Billed'];
@@ -793,26 +1016,34 @@ function cpSaClearChrome(){
 function cpRenderSaFilter(totalCount){
   const el = document.getElementById('cp-sa-filter');
   if (!el || totalCount === 0) { if (el) el.innerHTML = ''; return; }
+  // Clear button stays in the DOM, display-toggled, so typing never
+  // re-renders the bar (no focus/caret loss) (task 24).
+  const hasFilt = _saFilter.search || _saFilter.status;
   el.innerHTML = `<div class="sa-filter-bar">
     <input type="search" id="sa-search" placeholder="Search areas…" aria-label="Search service areas"
-      value="${esc(_saFilter.search)}" oninput="_saFilter.search=this.value;cpApplySaFilter()">
-    <select aria-label="Filter by status" onchange="_saFilter.status=this.value;cpApplySaFilter()">
+      value="${esc(_saFilter.search)}" oninput="cpOnSaSearch(this.value)">
+    <select id="sa-status" aria-label="Filter by status" onchange="cpOnSaStatus(this.value)">
       <option value="">All statuses</option>
       ${['active','on_hold','completed','billed'].map(s => `<option value="${s}"${_saFilter.status===s?' selected':''}>${s.replace('_',' ')}</option>`).join('')}
     </select>
-    ${(_saFilter.search || _saFilter.status) ? `<button class="btn btn-secondary btn-sm" onclick="_saFilter={search:'',status:''};cpApplySaFilter()">Clear</button>` : ''}
+    <button class="btn btn-secondary btn-sm" id="sa-clear" style="display:${hasFilt ? '' : 'none'}" onclick="cpClearSaFilter()">Clear</button>
   </div>`;
 }
 
-function cpApplySaFilter(){
-  const filterEl = document.getElementById('cp-sa-filter');
-  if (filterEl) {
-    const btn = filterEl.querySelector('button');
-    const hasFilt = _saFilter.search || _saFilter.status;
-    if (hasFilt && !btn) { cpRenderSaFilter(_customerServiceAreas.length); }
-    else if (!hasFilt && btn) { cpRenderSaFilter(_customerServiceAreas.length); }
-  }
+function cpSaToggleClear(){
+  const btn = document.getElementById('sa-clear');
+  if (btn) btn.style.display = (_saFilter.search || _saFilter.status) ? '' : 'none';
+}
+const _cpRunSaFilter = debounce(() => cpRenderSaCards(), 180);
+function cpOnSaSearch(val){ _saFilter.search = val; cpSaToggleClear(); _cpRunSaFilter(); }
+function cpOnSaStatus(val){ _saFilter.status = val; cpSaToggleClear(); cpRenderSaCards(); }
+function cpClearSaFilter(){
+  _saFilter = { search: '', status: '' };
+  const s = document.getElementById('sa-search'); if (s) s.value = '';
+  const st = document.getElementById('sa-status'); if (st) st.value = '';
+  cpSaToggleClear();
   cpRenderSaCards();
+  if (s) s.focus();
 }
 
 function cpRenderSaCards(){
@@ -820,13 +1051,16 @@ function cpRenderSaCards(){
   if (!body) return;
   let areas = (_customerServiceAreas || []).filter(a => !_selectedClientId || a.client_id === _selectedClientId);
   const q = (_saFilter.search || '').trim().toLowerCase();
+  const gq = (_globalSearch || '').trim().toLowerCase();
   const st = _saFilter.status;
   if (q) areas = areas.filter(a => (a.name || '').toLowerCase().includes(q) || (a.work_order_number || '').toLowerCase().includes(q) || (a.client_name || '').toLowerCase().includes(q));
+  if (gq) areas = areas.filter(a => saMatchesGlobal(a, gq));
   if (st) areas = areas.filter(a => (a.status || '') === st);
   if (!areas.length){
     const base = (_customerServiceAreas || []).filter(a => !_selectedClientId || a.client_id === _selectedClientId);
-    body.innerHTML = base.length
-      ? `<div class="empty-state"><i class="fa-solid fa-magnifying-glass"></i><p>No areas match your filter.</p><button class="btn btn-secondary btn-sm" style="margin-top:8px" onclick="_saFilter={search:'',status:''};cpApplySaFilter()">Clear filters</button></div>`
+    const filtered = base.length > 0; // areas exist but none match
+    body.innerHTML = filtered
+      ? `<div class="empty-state"><i class="fa-solid fa-magnifying-glass"></i><p>No areas match your${gq ? ' search' : ' filter'}.</p>${gq ? `<button class="btn btn-secondary btn-sm" style="margin-top:8px" onclick="cpClearGlobalSearch()">Clear search</button>` : `<button class="btn btn-secondary btn-sm" style="margin-top:8px" onclick="cpClearSaFilter()">Clear filters</button>`}</div>`
       : `<div class="empty-state">
           <i class="fa-solid fa-map-location-dot"></i>
           <p style="font-size:15px;font-weight:600;color:var(--text)">No service areas yet</p>
@@ -838,11 +1072,16 @@ function cpRenderSaCards(){
 }
 
 async function cpLoadServiceAreas(){
+  // The endpoint returns ALL of the user's linked clients' areas; the client
+  // switcher filters them in-memory, so we fetch once and re-render from
+  // cache on tab revisits / client switches (task 24). force=true re-fetches.
+  if (_serviceAreasLoaded) { renderServiceAreas(); return; }
   const body = document.getElementById('cp-sa-body');
   cpSaClearChrome();
   body.innerHTML = cpSkeletonCards(3);
   try {
     _customerServiceAreas = await api('/api/customer/service-areas');
+    _serviceAreasLoaded = true;
     renderServiceAreas();
   } catch (e) {
     cpSaClearChrome();
@@ -924,6 +1163,8 @@ function renderServiceAreas(){
   const stats = document.getElementById('cp-sa-stats');
   const areas = (_customerServiceAreas || []).filter(a => !_selectedClientId || a.client_id === _selectedClientId);
   cpRenderLanding();
+  cpRenderGlobalSearch();
+  cpUpdateTabCounts();
   if (!areas.length){
     cpSaClearChrome();
     cpRenderSaCards();
@@ -938,7 +1179,7 @@ function renderServiceAreas(){
   // of per-area %, so big areas weigh proportionally.
   const overallPct = totalJobs > 0 ? Math.round(totalDone / totalJobs * 100) : null;
   const lastVisitLine = _lastVisitTs
-    ? `<div style="font-size:11px;color:var(--text-muted);margin-top:3px">Last visited: ${fmtDate(_lastVisitTs.slice(0,10))}</div>` : '';
+    ? `<div style="font-size:11px;color:var(--text-muted);margin-top:3px" title="${esc(fmtDate(_lastVisitTs.slice(0,10)))}">Last visited ${esc(fmtRelative(_lastVisitTs))}</div>` : '';
   if (header) header.innerHTML = `
     <div class="sa-summary card">
       <div class="sa-summary-row">
@@ -966,6 +1207,9 @@ function cpRenderSaCard(a){
     const status = String(a.status || 'active').toLowerCase();
     const pct = a.completion_pct;
     const projDate = saProjectedCompletion(a);
+    // Most-recent activity, for an at-a-glance "updated X ago" on the card.
+    const _recent = saRecentUpdates(a);
+    const lastUpd = _recent.length ? _recent[0].d : null;
     const prog = pct != null
       ? `<div class="sa-prog-line">
            <div class="progress-track"><div class="progress-fill" style="width:${pct}%"></div></div>
@@ -1040,11 +1284,11 @@ function cpRenderSaCard(a){
     } else {
       mapBlock = `<div class="sa-map-ph"><i class="fa-solid fa-map" aria-hidden="true"></i> Map view coming soon.</div>`;
     }
-    const updates = saRecentUpdates(a);
+    const updates = _recent;
     const feed = updates.length
       ? `<div class="sa-feed">
            <div class="sa-feed-label">Recent updates</div>
-           ${updates.map(u => `<div class="sa-feed-row"><span class="sa-feed-dot"></span><span>${esc(u.t)}</span><span class="sa-feed-date">${esc(fmtDate(u.d))}</span></div>`).join('')}
+           ${updates.map(u => `<div class="sa-feed-row"><span class="sa-feed-dot"></span><span>${esc(u.t)}</span><span class="sa-feed-date" title="${esc(fmtDate(u.d))}">${esc(fmtRelative(u.d))}</span></div>`).join('')}
          </div>`
       : '';
     return `<div class="card" style="padding:14px 16px">
@@ -1054,9 +1298,13 @@ function cpRenderSaCard(a){
           <div class="proj-sub">
             ${a.work_order_number ? `<span style="font-family:monospace;margin-right:8px">WO# ${esc(a.work_order_number)}</span>` : ''}
             ${esc(a.client_name || '')}
+            ${lastUpd ? `<span style="margin-left:8px" title="${esc(fmtDate(lastUpd))}">· updated ${esc(fmtRelative(lastUpd))}</span>` : ''}
           </div>
         </div>
-        <span class="status-pill status-${esc(status)}">${esc(status.replace('_',' '))}</span>
+        <div style="display:flex;align-items:center;gap:8px;flex:none">
+          <span class="status-pill status-${esc(status)}">${esc(status.replace('_',' '))}</span>
+          <button class="btn btn-icon btn-secondary btn-sm" title="Print / save status as PDF" aria-label="Print status for ${esc(a.name)}" onclick="cpPrintArea('${esc(a.id)}')"><i class="fa-solid fa-print" aria-hidden="true"></i></button>
+        </div>
       </div>
       ${prog}
       ${timeline}
@@ -1105,6 +1353,7 @@ function cpSelectTab(name){
   document.querySelectorAll('.cp-tab').forEach(d => d.style.display = (d.id === 'cp-tab-' + name) ? '' : 'none');
   if (name === 'invoices') cpLoadInvoices();
   if (name === 'service-areas') cpLoadServiceAreas();
+  cpUpdateTabCounts();
 }
 
 function showAccountMenu(){
