@@ -44,5 +44,50 @@ For each: does the delivered map do it? If not, it's on the build/change list.
 
 ## Open / TBD
 - Permitting **hours** derivation (footage now; hours later).
-- Exact map tech (KMZ / GIS / OZMap / Vetro — `research/`); Carter to deliver.
 - Whether the map is the editing surface for quantities or read-only source.
+
+---
+
+# Delivered map — `map/fiber_route_manager_v33.html` (v33, 2026-06-24) — diagnosis
+
+Carter delivered the foundation: a **Leaflet OSP design tool** ("Fiber Route Manager · Launch Fiber Services · OSP"), 2362-line self-contained HTML (Leaflet + JSZip). Reviewed in full + run locally (renders, tiles load, centered on Macon). **Not the final version — this is the base we build on.**
+
+## What it is / strengths (strong foundation)
+- **Org:** Projects → Plans (multiple plan overlays per project; show/hide/ghost overlays).
+- **Three element layers:** **Spans** (cable polylines), **Structures** (points), **Conduit** (polylines). Drawing with **snapping**, **follow-path** (trace existing line), and **split-at-structures**.
+- **Element data (already stored per element):**
+  - Span: `name, cableId, cableType (aerial/underground/directBuried/innerduct), fiberCount, status, contractor, installDate, jobRef, notes, path(geometry), lengthFt`.
+  - Structure: `name, ptype (handhole/vault/pedestal/spliceCase/pullBox/manhole/riser/terminal/cabinet/flowerpot/other), structureId, manufacturer, size, status, contractor, jobRef, lat/lng`.
+  - Conduit: `conduitType, size, ductCount, status, lengthFt, jobRef, …`.
+- **Status lifecycle:** proposed → permitted → underConstruction → asBuilt → active → existing.
+- **BOM:** counts structures by type+status, cable by status; totals feet / miles / spans / structures; CSV export. Status filter chips.
+- **Exports:** CSV, GeoJSON, KML, KMZ, Shapefile (WGS84).
+- **Storage:** a `store` abstraction that **prefers an injected `window.storage.get/set`** and falls back to localStorage — keyed per plan (`frm_segs_<plan>`, `frm_pts_<plan>`, `frm_cond_<plan>`, projects/plans/active).
+
+## Checklist vs our spec
+- ✅ Per-route geometry → footage/mileage (`lengthFt`, total miles).
+- ✅ Plots + counts construction units per type (`ptype`) with status.
+- 🟡 Permitting: has a `permitted` **status** and could carry a permitting line, but **no dedicated permitting-designation that rolls footage to permitting** as its own bucket.
+- 🟡 Designation/line types: has `cableType` + `status` + `fiberCount`, but **no engineering/construction/permitting discipline** on an element.
+- 🟡 Layers/modularity: Plans give layering, but **no client/SA/EC/CC tagging** — org is Project/Plan, not our entities.
+- ✅ Completed vs expected: `status` gives it (asBuilt/active = built; proposed/permitted = planned) — needs our rollup.
+- ❌ Units link to a **cost catalog**: no `$`/price/rate anywhere — counts only.
+- 🟡 Export/sync to our DB: file exports + the `window.storage` hook exist, but **no DB-backed adapter** yet.
+- ✅ Client/SA/route selection: Project/Plan switching exists (not yet our entities).
+- ✅ A real `jobRef` field on every element — the hook to link to our jobs (currently free text).
+
+## Gaps → what's needed to make it work for us
+1. **Cost/catalog layer** — elements carry no $. Add a **per-CC unit-cost catalog** keyed by `ptype`/`cableType` (Handhole→$200); the map provides counts/footage, our system prices → construction/engineering **expected**.
+2. **Business linkage** — map a **Plan → our `service_area`** (and Project → client or EC/CC). Turn `jobRef` from free text into a **picker resolving to `service_area_job` IDs** (fed by our API).
+3. **Discipline / permitting designation** — add a designation on spans (engineering footage vs construction vs **permitting line**) so footage rolls to the right bucket; or derive it from the linked job's discipline.
+4. **DB integration** — inject `window.storage` with a **DB-backed, authenticated adapter** (per-SA), and/or a **parse-on-sync** that turns elements into our normalized tables (footage by discipline, unit counts by type+status, miles) → feeds projections / budgets / billing **expected + completed**.
+5. **Embed + auth** — mount inside the app as the **Service Areas → Map tab** (authed), not a standalone tool.
+6. **Completed/expected rollup** — map element `status` → `service_area_materials.completed_quantity` + job actuals (asBuilt=completed; all=expected).
+
+## Recommended integration sequence (when we build it, with the map)
+1. **Data bridge:** DB-backed `window.storage` adapter (authed API), plans persisted per service area.
+2. **Linkage:** Plan↔SA mapping + `jobRef`→service_area_job picker + a discipline/permitting designation field.
+3. **Catalog + rollups:** per-CC unit-cost catalog (`ptype`→$) + the map→expected/completed rollup feeding the contract-allocation engine, projections, budgets, billing.
+4. **Embed:** mount as the Service Areas → Map tab; retire the placeholder.
+
+**Bottom line:** the foundation is well-built and well-architected for integration — `jobRef`, `lengthFt`, `status`, `ptype`, and the injectable `window.storage` are exactly the hooks we need. The work is the **linkage + costing + DB sync** layer (above), plus the contract-allocation engine it feeds (still deferred until this lands). `map/_serve.js` + `.claude/launch.json` `map-preview` run it locally.
