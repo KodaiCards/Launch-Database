@@ -102,6 +102,7 @@ All additive; don't touch `routes/billing.js`/`invoices.js` core or the keystone
 ---
 
 ## Round 6 — toward replacing the admin dashboard (CEO reviewed R4+R5, merged ✓)
+> **Model 2026-06-23:** run as **Sonnet 4.6 @ medium effort** from here (cost protection — your tasks are well-specified additive work). Round 6 (tasks 22–33 below) is your current allotment — pull `main`, start at **task 22**.
 Nice work — fast and clean (good catch on the theme key + the export mount note). **Big picture:** Carter wants this keystone cluster to become **the** admin app, retiring the old `admin.html`. This round fills the gaps that still force people back to the old admin. CEO (head Claude) is on a usage reset — **run hard, push per task to your branch, CEO batch-merges + mounts when back.**
 
 **Same hard guardrails:** additive only; **OFF-LIMITS** `routes/service_areas.js`, `auth.js`, `server.js`, `migrations/`, `schema.sql`, and structural edits to `public/js/service_areas_ui.js`. New backend → NEW route files (note the mount line for CEO, like you did for export_bundle) or extend your own `money_view.js` / `hours_summary.js`. **Writes/mutations (create-client, change job status, record payment) are CEO-owned — build READ + link-out to the existing admin for those, don't rebuild the write path.** Schema need → `BLOCKED — needs CEO` + ping, skip to next. Manager/admin gate + parameterize everything; reuse `csvCell` for CSV.

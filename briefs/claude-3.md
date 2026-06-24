@@ -1,6 +1,6 @@
 # Claude 3 — Client portal: service-area status view (Phase 6)
 
-**Status:** Tasks 1–13 DONE — ready for review (Phase 6 + Rounds 1–4) on `claude/inspiring-bell-7jiwdf`. Task 14 (site photos) `BLOCKED — needs CEO` (schema: photo↔service-area link + `client_visible` flag — see Round 4).
+**Status:** Tasks 1–13 MERGED to main 2026-06-23 (Sonnet-scout reviewed: clean, no $-leak). Task 14 (site photos) **DEFERRED by CEO → Phase 7** (see decision below). **Round 5 issued — start at task 15.** Model: run as **Sonnet 4.6 @ medium effort** from here (cost protection).
 **Branch:** `claude/inspiring-bell-7jiwdf` (harness-assigned; supersedes the original `claude-3/client-portal-status`)
 **Read first:** `CLAUDE.md`, `ROADMAP.md` (Phase 6), `briefs/README.md`.
 
@@ -56,3 +56,21 @@ Same guardrails: **read-only, `customer`-scoped, no $ beyond what the client is 
   - **(a)** `project_photos.service_area_id uuid REFERENCES public.service_areas(id) ON DELETE CASCADE` (and/or `service_area_job_id`), and
   - **(b)** `project_photos.client_visible boolean NOT NULL DEFAULT false` + an admin toggle to flip it (mirroring the `service_areas.client_visible` pattern).
   With those, I can add a `customer`-scoped, read-only `GET /api/customer/service-areas/:id/photos` (gated on the area being a linked client's + `client_visible`) plus a scoped image route reusing the map endpoint's UPLOAD_DIR/traversal guards. Skipped per instructions (nothing after this in the queue).
+
+> **CEO DECISION 2026-06-23 — DEFER task 14 to Phase 7.** Your spec is correct and good — thank you. Reason for deferring: it's not just a portal task. To produce any data it needs (a) the migration, **plus** (b) an admin-side UI to attach photos to a service area and flip `client_visible`. That spans admin + schema + portal, so it belongs with **Phase 7 (file/KMZ + media attachment per service area)**, built as one coherent piece — not bolted on mid-Phase-6. Maps already attach per area (`map_file_path`); photos will ride the same Phase-7 attachment model. Nothing for you to do here now; the migration you specced is on record for Phase 7.
+
+---
+
+## Round 5 — portal depth (Sonnet @ medium; additive, `customer`-scoped, NO schema)
+Same guardrails as before: read-only, customer-scoped, no $ beyond what the client is billed, no keystone/schema changes. Push per task to your branch; CEO batch-merges. Schema need → `BLOCKED — needs CEO` + ping, skip ahead. Pull `main` first.
+- [ ] **15. Multi-client switcher.** If a `customer` user is linked to >1 client, add a client selector (dropdown) that filters the areas/invoices view to the chosen client. Uses the client list you already resolve; read-only. (If linked to one client, hide it.)
+- [ ] **16. Service-area filter + search.** On the Service Areas tab, add status filter + text search over the areas already fetched. Frontend only.
+- [ ] **17. "What's new" indicator.** Mark areas/invoices updated since the user's last visit using a `localStorage` timestamp (no schema, no backend). A small "updated" badge + a "last visited" line.
+- [ ] **18. Invoice list polish.** On the Invoices tab: sort + filter (sent / paid), a running total of billed vs paid (client-facing figures only — what they're billed, never internal cost). Frontend.
+- [ ] **19. Portal mini-dashboard.** A compact visual summary across all the client's areas (progress bars / a simple status breakdown). Frontend over data you already fetch.
+- [ ] **20. First-run + resilience polish.** A friendly first-run state for a brand-new client with no `client_visible` areas yet, plus consistent loading/error states and a retry affordance on fetch failures.
+
+### Merge hygiene (you hit trouble syncing main last time)
+You don't need to keep `main` merged into your branch — just push your branch; **CEO merges to main.** If you DO want to sync: `git fetch origin && git merge origin/main`. After this merge it'll fast-forward cleanly. If a conflict ever hits **`briefs/claude-3.md`**, it's not your file to win — take main's copy: `git checkout --theirs briefs/claude-3.md && git add briefs/claude-3.md`. Keep your conflict resolution to your own feature files (`public/customer.html`, `routes/customer_portal.js`).
+
+> Blow through 15–20 and CEO's still away? Continue on additive portal polish (print styles, keyboard nav, dark-mode contrast), logging each under a new `### Round 6` block. Bias to shipping; flag schema as BLOCKED, never guess.
