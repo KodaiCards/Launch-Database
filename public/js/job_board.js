@@ -13,14 +13,33 @@
   ];
 
   let _allJobs = [];
+  let _groupBy = 'status';
+
+  let _searchTimer = null;
+  function debouncedRender() {
+    clearTimeout(_searchTimer);
+    _searchTimer = setTimeout(render, 150);
+  }
 
   document.addEventListener('DOMContentLoaded', () => {
     applyStoredTheme();
     loadJobs();
-    document.getElementById('jb-search').addEventListener('input', render);
+    document.getElementById('jb-search').addEventListener('input', debouncedRender);
     document.getElementById('jb-team').addEventListener('change', render);
     document.getElementById('jb-program').addEventListener('change', render);
   });
+
+  window.setGroupBy = function (g) {
+    _groupBy = g;
+    ['status','team','client'].forEach(k => {
+      const btn = document.getElementById(`grp-${k}`);
+      if (!btn) return;
+      const active = k === g;
+      btn.style.background = active ? 'var(--primary)' : '';
+      btn.style.color = active ? '#fff' : 'var(--text-secondary)';
+    });
+    render();
+  };
 
   async function loadJobs() {
     const wrap = document.getElementById('board-wrap');
@@ -60,13 +79,20 @@
       wrap.innerHTML = '<div class="empty-state"><i class="fa-solid fa-briefcase"></i>No jobs match the current filters.</div>';
       return;
     }
+    if (_groupBy === 'status') {
+      renderByStatus(jobs, wrap);
+    } else {
+      renderByKey(jobs, wrap, _groupBy);
+    }
+  }
+
+  function renderByStatus(jobs, wrap) {
     const byStatus = new Map(STATUSES.map(([k]) => [k, []]));
     for (const j of jobs) {
       const key = j.status || 'not_started';
       if (!byStatus.has(key)) byStatus.set(key, []);
       byStatus.get(key).push(j);
     }
-    // Only render columns that have jobs OR are in the canonical list
     const colsHtml = STATUSES.map(([key, label]) => {
       const bucket = byStatus.get(key) || [];
       const cardsHtml = bucket.length
@@ -77,6 +103,23 @@
         ${cardsHtml}
       </div>`;
     }).join('');
+    wrap.innerHTML = `<div class="board">${colsHtml}</div>`;
+  }
+
+  function renderByKey(jobs, wrap, groupKey) {
+    const map = new Map();
+    for (const j of jobs) {
+      const key = (groupKey === 'team' ? j.team : j.client_name) || '— Unassigned —';
+      if (!map.has(key)) map.set(key, []);
+      map.get(key).push(j);
+    }
+    const sorted = [...map.entries()].sort((a, b) => b[1].length - a[1].length);
+    const colsHtml = sorted.map(([label, bucket]) =>
+      `<div class="col-wrap">
+        <div class="col-header"><span>${esc(label)}</span><span class="cnt">${bucket.length}</span></div>
+        ${bucket.map(j => jobCard(j)).join('')}
+      </div>`
+    ).join('');
     wrap.innerHTML = `<div class="board">${colsHtml}</div>`;
   }
 

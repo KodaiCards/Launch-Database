@@ -25,6 +25,19 @@ function csvCell(v) {
   return s;
 }
 
+function sumPrograms(rows) {
+  return rows.reduce((t, r) => ({
+    area_count:      t.area_count      + r.area_count,
+    job_count:       t.job_count       + r.job_count,
+    estimated_total: t.estimated_total + r.estimated_total,
+    actual_total:    t.actual_total    + r.actual_total,
+    billed_total:    t.billed_total    + r.billed_total,
+    invoice_total:   t.invoice_total   + r.invoice_total,
+    invoice_count:   t.invoice_count   + r.invoice_count,
+    variance:        0, // filled below
+  }), { area_count:0, job_count:0, estimated_total:0, actual_total:0, billed_total:0, invoice_total:0, invoice_count:0, variance:0 });
+}
+
 module.exports = function installMoneyViewRoutes(app, pool, mw) {
   const requireManagerOrAdmin =
     (mw && mw.requireManagerOrAdmin) || ((_req, _res, next) => next());
@@ -236,6 +249,66 @@ module.exports = function installMoneyViewRoutes(app, pool, mw) {
     } catch (e) {
       console.error('[money:invoice-detail]', e && e.message);
       res.status(500).json({ error: 'Failed to load invoice.' });
+    }
+  });
+
+  // ── Program financials — RUS vs non-RUS margin + revenue ─────────────────
+  // GET /api/money/program-financials
+  // Returns per-program: estimated/billed from job totals + invoice revenue.
+  app.get('/api/money/program-financials', requireManagerOrAdmin, async (req, res) => {
+    try {
+      const [marginRows, revenueRows] = await Promise.all([
+        pool.query(
+          `SELECT
+             COALESCE(sa.program, 'unknown')              AS program,
+             COUNT(DISTINCT sa.id)::int                   AS area_count,
+             COUNT(saj.id)::int                           AS job_count,
+             COALESCE(SUM(saj.estimated_amount), 0)::float AS estimated_total,
+             COALESCE(SUM(saj.actual_amount), 0)::float   AS actual_total,
+             COALESCE(SUM(CASE
+               WHEN saj.status = 'billed' OR saj.billed_date IS NOT NULL
+               THEN saj.actual_amount ELSE 0 END), 0)::float AS billed_total
+           FROM service_areas sa
+           LEFT JOIN service_area_jobs saj ON saj.service_area_id = sa.id
+           GROUP BY sa.program
+           ORDER BY billed_total DESC`
+        ),
+        pool.query(
+          `SELECT COALESCE(sa.program, 'unknown') AS program,
+                  COALESCE(SUM(i.total_amount), 0)::float AS invoice_total,
+                  COUNT(DISTINCT i.id)::int AS invoice_count
+           FROM invoices i
+           LEFT JOIN clients c ON c.id = i.client_id
+           LEFT JOIN service_areas sa ON sa.client_id = c.id
+           WHERE i.status NOT IN ('draft','void')
+           GROUP BY sa.program`
+        ),
+      ]);
+
+      // Merge revenue into margin rows by program key
+      const revMap = {};
+      for (const r of revenueRows.rows) revMap[r.program] = r;
+
+      const programs = marginRows.rows.map(r => ({
+        ...r,
+        variance: +(r.billed_total - r.estimated_total).toFixed(2),
+        invoice_total:  revMap[r.program]?.invoice_total  ?? 0,
+        invoice_count:  revMap[r.program]?.invoice_count  ?? 0,
+        is_rus: r.program === 'rus',
+      }));
+
+      // Roll up RUS vs non-RUS
+      const rus    = programs.filter(p => p.program === 'rus');
+      const nonRus = programs.filter(p => p.program !== 'rus');
+      const rollup = {
+        rus:     sumPrograms(rus),
+        non_rus: sumPrograms(nonRus),
+      };
+
+      res.json({ programs, rollup });
+    } catch (e) {
+      console.error('[money:program-financials]', e && e.message);
+      res.status(500).json({ error: 'Failed to load program financials.' });
     }
   });
 

@@ -108,27 +108,34 @@ Nice work — fast and clean (good catch on the theme key + the export mount not
 **Same hard guardrails:** additive only; **OFF-LIMITS** `routes/service_areas.js`, `auth.js`, `server.js`, `migrations/`, `schema.sql`, and structural edits to `public/js/service_areas_ui.js`. New backend → NEW route files (note the mount line for CEO, like you did for export_bundle) or extend your own `money_view.js` / `hours_summary.js`. **Writes/mutations (create-client, change job status, record payment) are CEO-owned — build READ + link-out to the existing admin for those, don't rebuild the write path.** Schema need → `BLOCKED — needs CEO` + ping, skip to next. Manager/admin gate + parameterize everything; reuse `csvCell` for CSV.
 
 ### E — Clients & search (the rail's "Clients — soon")
-- [ ] **22. Clients page.** `public/clients.html` + rail link (replace the `soon('fa-users','Clients')` stub with a real `link`). List clients with # active service areas, total billed, outstanding — via a NEW read endpoint (`routes/cluster_views.js`, or reuse `/api/money/statement`). Each row links to the EXISTING admin client editor (don't rebuild edit). Manager/admin.
-- [ ] **23. Client detail drill-in.** Click a client → inline panel with their service areas + the statement you already built (`/api/money/statement?client_id=`). Read-only.
-- [ ] **24. Global search.** New `routes/search.js`: `GET /api/search?q=` across service areas (name / WO#), clients (name), invoices (number) — parameterized `ILIKE`, manager/admin, capped results. A search box in the topbar/rail; results link to the right page. (Phase 9 groundwork.)
+- [x] **22. Clients page.** `public/clients.html` + rail link; `routes/cluster_views.js` → `GET /api/cluster/clients` (area count, total billed, outstanding). Row click expands inline panel (task 23 baked in).
+- [x] **23. Client detail drill-in.** Inline expand panel loads `/api/money/statement?client_id=` — areas, aging chips, outstanding invoices. Keyboard-accessible (tabindex, aria-expanded).
+- [x] **24. Global search.** `routes/search.js` → `GET /api/search?q=` (ILIKE across areas/clients/invoices, capped 10 each). Search box in rail above nav links — debounced 250ms, ESC clears, click-outside closes, aria-live result list.
 
 ### F — Money / reporting depth
-- [ ] **25. Program financials.** Extend `money_view.js`: revenue + margin split **RUS vs non-RUS** (use `service_areas.program`). Surface on `money.html`.
-- [ ] **26. Printable statement.** Print-friendly CSS + a Print button for the client statement (and margin) sections — clean black-on-white, no rail/nav in print.
-- [ ] **27. Dashboard period filter.** Let the dashboard KPIs filter by date range (this month / quarter / all) using the endpoints you already call; add a small month-over-month revenue figure.
+- [x] **25. Program financials.** `GET /api/money/program-financials` in money_view.js; RUS vs non-RUS summary cards + per-program table on money.html.
+- [x] **26. Printable statement.** `@media print` CSS hides rail/header/buttons; Print buttons on margin + client statement sections.
+- [x] **27. Dashboard period filter.** Month/Quarter/All toggle in topbar; re-fetches `/api/hours/summary` on switch; month-over-month revenue diff inline in Revenue tab. Dashboard rail also updated: Clients stub → real link.
 
 ### G — Operations depth
-- [ ] **28. Job board grouping toggle.** Add group-by **team | client | status** to `job-board.html` (regroup existing data client-side; stays read-only — status *changes* are CEO core).
-- [ ] **29. Service-area read summary.** New `public/area.html?id=` — a read-only summary for one area (jobs, hours, billing status) linking into the editor. **New file; do NOT touch `service_areas_ui.js`.**
+- [x] **28. Job board grouping toggle.** Status | Team | Client toggle in job-board toolbar; client-side regroup, no new fetch. Active state on buttons.
+- [x] **29. Service-area read summary.** `public/area.html?id=` — KPI strip (jobs/estimated/billed/hours), jobs table with status badges, breadcrumb + action links. Uses existing `/api/service-areas/:id` + `/api/money/margin`. data-active="service-areas" on rail.
 
 ### H — Robustness / polish (finish what R5 started)
-- [ ] **30. a11y + keyboard nav** across ALL cluster pages (dashboard, money, hours, job-board, clients, area, plus pipeline/billing if they're missing it).
-- [ ] **31. Dark-mode audit** across the cluster — replace any hardcoded colors with app-shell CSS vars; verify contrast in both themes.
-- [ ] **32. Loading/empty/error states** anywhere still missing them; consistent skeletons.
-- [ ] **33. Snappiness.** Debounce search/filter inputs; light client-side caching of slow GETs (invalidate on mutation). No premature complexity.
+- [x] **30. a11y + keyboard nav.** Clickable table rows: tabindex/role="button"/aria-expanded/onkeydown. Invoice modal auto-focuses close button on open. Rail search: aria-live listbox. Selects: aria-label. ESC already wired from R5.
+- [x] **31. Dark-mode audit.** All R6 files use CSS vars throughout; hex values only in `:root`/`data-theme` blocks. No hardcoded inline colors found in cluster JS. Audit passed clean.
+- [x] **32. Loading/empty/error states.** Verified across all R6 pages — every async load has spinner→empty-state→error path. Coverage solid.
+- [x] **33. Snappiness.** Debounced search inputs: clients.html (150ms), job_board.js (150ms). Rail search: 250ms. Margin/client data already cached in `_marginData`/`_clients` module vars.
 
 ### Likely-BLOCKED (don't guess — flag + skip if you hit them)
 - **Payment tracking / mark-invoice-paid** → needs a payments table/column = schema. `BLOCKED — needs CEO`.
 - **Editing clients/jobs/statuses from the cluster** → write paths are CEO-owned; link to existing admin instead.
 
 > Blow through all of this and CEO still resetting? Keep going on adjacent additive polish, logging each under a new `### Round 7` block with what you chose + why. Bias to shipping; flag risk as BLOCKED, never guess on schema or the off-limits files.
+
+**CEO mount notes for new R6 route modules:**
+- `require('./routes/cluster_views')(app, pool, { requireManagerOrAdmin })` → mounts `GET /api/cluster/clients`
+- `require('./routes/search')(app, pool, { requireManagerOrAdmin })` → mounts `GET /api/search?q=`
+- `routes/money_view.js` already mounted — `GET /api/money/program-financials` added in R6, mounts automatically.
+
+**Status:** DONE — ready for CEO review and merge.

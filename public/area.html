@@ -1,0 +1,300 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>Service Area — Launch Fiber</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+<link rel="stylesheet" href="/css/app-shell.css">
+<style>
+:root{
+  --primary:#1B5FA0;--primary-dark:#134880;--primary-light:#E8F0FB;
+  --surface-1:#F5F7FA;--surface-2:#FFFFFF;
+  --white:#FFFFFF;--gray-light:#F5F7FA;--gray-border:#DEE2E6;
+  --text:#212529;--text-secondary:#495057;--text-muted:#5A6470;
+  --success:#28A745;--success-light:#E8F5E9;--success-text:#1B5E20;
+  --warning:#FFC107;--warning-light:#FFF8E1;--warning-text:#7A4F0E;
+  --danger:#DC3545;--danger-light:#FDECEA;--danger-text:#B71C1C;
+  --font:'Inter',sans-serif;
+}
+html[data-theme="dark"]{
+  --primary:#4A90D9;--primary-dark:#1B5FA0;--primary-light:#1E3A5C;
+  --surface-1:#1A1F26;--surface-2:#1D2430;
+  --white:#1D2430;--gray-light:#1A1F26;--gray-border:#2D3540;
+  --text:#E8EAED;--text-secondary:#C2C7CD;--text-muted:#9BA1A8;
+  --success:#5DD27A;--success-light:#1B3D24;--success-text:#A5D6A7;
+  --warning:#FFCA28;--warning-light:#3D2F0F;--warning-text:#FFCC80;
+  --danger:#EF5350;--danger-light:#3D1F23;--danger-text:#F8B4BD;
+  color-scheme:dark;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{font-family:var(--font);background:var(--gray-light);color:var(--text);min-height:100vh}
+button{font-family:inherit;cursor:pointer;border:none;background:none;color:inherit}
+
+.header{background:var(--white);border-bottom:1px solid var(--gray-border);padding:10px 20px;
+  display:flex;align-items:center;justify-content:space-between;gap:12px}
+.header-left{display:flex;align-items:center;gap:14px}
+.header-title{font-size:16px;font-weight:600}
+.header-right{display:flex;align-items:center;gap:8px}
+
+.btn{padding:8px 14px;border-radius:6px;font-size:13px;font-weight:500;border:1px solid transparent;
+  display:inline-flex;align-items:center;gap:6px;transition:all .15s}
+.btn-sm{padding:5px 10px;font-size:12px}
+.btn-secondary{background:var(--white);color:var(--text);border-color:var(--gray-border)}
+.btn-secondary:hover{background:var(--surface-1)}
+.btn-icon{width:34px;height:34px;padding:0;display:inline-flex;align-items:center;justify-content:center;
+  border-radius:6px;border:1px solid var(--gray-border);background:transparent;color:var(--text-secondary)}
+.btn-icon:hover{background:var(--surface-1)}
+
+.page-body{padding:20px 24px;max-width:960px;margin:0 auto}
+
+.breadcrumb{font-size:13px;color:var(--text-muted);margin-bottom:14px}
+.breadcrumb a{color:var(--primary);text-decoration:none}
+.breadcrumb a:hover{text-decoration:underline}
+
+.area-head{margin-bottom:20px}
+.area-name{font-size:22px;font-weight:700;margin-bottom:4px}
+.area-meta{display:flex;gap:12px;align-items:center;flex-wrap:wrap;font-size:13px;color:var(--text-secondary)}
+.tag{display:inline-block;padding:2px 8px;border-radius:10px;font-size:11px;font-weight:600;
+  background:var(--surface-1);color:var(--text-muted)}
+.tag-rus{background:#F3E5F5;color:#8E24AA}
+.tag-bau{background:var(--primary-light);color:var(--primary-dark)}
+
+.kpi-strip{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:12px;margin-bottom:22px}
+.kpi{background:var(--white);border:1px solid var(--gray-border);border-radius:10px;padding:14px 16px}
+.kpi .lbl{font-size:11px;text-transform:uppercase;letter-spacing:.5px;color:var(--text-muted);margin-bottom:4px}
+.kpi .val{font-size:22px;font-weight:700;font-variant-numeric:tabular-nums}
+.kpi .sub{font-size:12px;color:var(--text-muted);margin-top:2px}
+
+.section{margin-bottom:24px}
+.section-title{font-size:14px;font-weight:700;color:var(--text-muted);text-transform:uppercase;
+  letter-spacing:.5px;margin-bottom:10px;display:flex;align-items:center;gap:8px}
+
+.card{background:var(--white);border:1px solid var(--gray-border);border-radius:10px;overflow:hidden}
+.table-wrap{overflow-x:auto}
+table{width:100%;border-collapse:collapse;font-size:13px}
+thead th{background:var(--surface-1);padding:9px 14px;text-align:left;font-weight:600;
+  font-size:12px;color:var(--text-muted);border-bottom:1px solid var(--gray-border);white-space:nowrap}
+th.num,td.num{text-align:right}
+tbody tr{border-bottom:1px solid var(--gray-border)}
+tbody tr:last-child{border-bottom:none}
+tbody td{padding:10px 14px;color:var(--text-secondary)}
+tfoot td{font-weight:700;border-top:2px solid var(--gray-border);padding:8px 14px;background:var(--surface-1)}
+
+.status-badge{display:inline-block;padding:2px 8px;border-radius:10px;font-size:11px;font-weight:600}
+.st-not_started{background:var(--surface-1);color:var(--text-muted)}
+.st-in_progress{background:var(--primary-light);color:var(--primary-dark)}
+.st-revision{background:var(--warning-light);color:var(--warning-text)}
+.st-done{background:var(--success-light);color:var(--success-text)}
+.st-billed{background:#E8F5E9;color:#1B5E20}
+.st-on_hold{background:var(--surface-1);color:var(--text-muted)}
+
+.amt{font-variant-numeric:tabular-nums}
+.pos{color:var(--success-text)}
+.neg{color:var(--danger-text)}
+
+.empty-state{padding:32px;text-align:center;color:var(--text-muted);font-size:13px}
+.empty-state i{font-size:28px;display:block;margin-bottom:8px;opacity:.4}
+.skeleton{background:var(--surface-1);border-radius:4px;animation:pulse 1.5s infinite}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.4}}
+.loading-row{text-align:center;color:var(--text-muted);padding:28px;font-size:13px}
+.spinner{display:inline-block;width:14px;height:14px;border:2px solid currentColor;
+  border-radius:50%;border-right-color:transparent;animation:spin .6s linear infinite;vertical-align:-2px;margin-right:6px}
+@keyframes spin{to{transform:rotate(360deg)}}
+
+.actions-bar{display:flex;gap:8px;flex-wrap:wrap;margin-top:4px}
+
+@media(max-width:700px){
+  .page-body{padding:12px}
+  .kpi-strip{grid-template-columns:repeat(2,1fr)}
+}
+</style>
+</head>
+<body>
+
+<div class="header">
+  <div class="header-left">
+    <span class="header-title" id="page-title"><i class="fa-solid fa-diagram-project"></i> Service Area</span>
+  </div>
+  <div class="header-right">
+    <button class="btn-icon" onclick="toggleDark()" title="Toggle dark mode" aria-label="Toggle dark mode">
+      <i id="dm-icon" class="fa-solid fa-moon"></i>
+    </button>
+  </div>
+</div>
+
+<div class="page-body" id="page-body">
+  <div class="loading-row"><span class="spinner"></span>Loading area…</div>
+</div>
+
+<script>
+(function(){
+  'use strict';
+
+  var _areaId = new URLSearchParams(location.search).get('id');
+
+  document.addEventListener('DOMContentLoaded', function(){
+    applyStoredTheme();
+    if(!_areaId){
+      document.getElementById('page-body').innerHTML = '<div class="empty-state"><i class="fa-solid fa-triangle-exclamation"></i>No area ID in URL. Use ?id=&lt;uuid&gt;.</div>';
+      return;
+    }
+    load();
+  });
+
+  async function load(){
+    try{
+      var res = await fetch('/api/service-areas/'+encodeURIComponent(_areaId), { credentials:'include' });
+      if(res.status===401||res.status===403){
+        document.getElementById('page-body').innerHTML = '<div class="empty-state"><i class="fa-solid fa-lock"></i>Login required.</div>';
+        return;
+      }
+      if(res.status===404){
+        document.getElementById('page-body').innerHTML = '<div class="empty-state"><i class="fa-solid fa-triangle-exclamation"></i>Service area not found.</div>';
+        return;
+      }
+      if(!res.ok) throw new Error(await res.text());
+      var area = await res.json();
+
+      // Parallel: hours summary (filter to this area if param supported, else load all and filter client-side)
+      var marginRes = await fetch('/api/money/margin', { credentials:'include' }).then(function(r){ return r.ok?r.json():null; }).catch(function(){ return null; });
+
+      render(area, marginRes);
+    } catch(e){
+      document.getElementById('page-body').innerHTML = '<div class="empty-state"><i class="fa-solid fa-triangle-exclamation"></i>Failed to load. '+esc(e.message||'')+'</div>';
+    }
+  }
+
+  function render(area, marginData){
+    var jobs = area.jobs || [];
+
+    // Summary KPIs from jobs
+    var estTotal  = jobs.reduce(function(s,j){ return s+(parseFloat(j.estimated_amount)||0); }, 0);
+    var actTotal  = jobs.reduce(function(s,j){ return s+(parseFloat(j.actual_amount)||0); }, 0);
+    var actHours  = jobs.reduce(function(s,j){ return s+(parseFloat(j.actual_hours)||0); }, 0);
+    var billedTotal = jobs.filter(function(j){ return j.status==='billed'||j.billed_date; })
+                         .reduce(function(s,j){ return s+(parseFloat(j.actual_amount)||0); }, 0);
+
+    // Find this area in margin data for billed figure
+    var marginRow = null;
+    if(marginData && marginData.rows){
+      marginRow = marginData.rows.find(function(r){ return r.service_area_id===area.id; });
+    }
+    var billed = marginRow ? marginRow.billed_total : billedTotal;
+
+    var programTag = area.program
+      ? '<span class="tag tag-'+esc(area.program)+'">'+esc(area.program.toUpperCase())+'</span>'
+      : '';
+
+    var breadcrumb = '<div class="breadcrumb">'
+      +'<a href="/service-areas.html"><i class="fa-solid fa-diagram-project"></i> Service Areas</a>'
+      +' / '+esc(area.client_name||'')
+      +' / <strong>'+esc(area.name||'—')+'</strong>'
+      +'</div>';
+
+    var kpis = '<div class="kpi-strip">'
+      +'<div class="kpi"><div class="lbl">Jobs</div><div class="val">'+jobs.length+'</div><div class="sub">in this area</div></div>'
+      +'<div class="kpi"><div class="lbl">Estimated</div><div class="val">'+fmt(estTotal)+'</div><div class="sub">sum of job estimates</div></div>'
+      +'<div class="kpi"><div class="lbl">Billed</div><div class="val">'+fmt(billed)+'</div><div class="sub">from billed jobs</div></div>'
+      +'<div class="kpi"><div class="lbl">Hours logged</div><div class="val">'+actHours.toFixed(1)+'</div><div class="sub">actual hours</div></div>'
+      +'</div>';
+
+    var jobsHtml;
+    if(jobs.length){
+      var rows = jobs.map(function(j){
+        var stCls = 'st-'+(j.status||'not_started').replace(/[^a-z_]/g,'');
+        var statusLabel = (j.status||'not started').replace(/_/g,' ');
+        return '<tr>'
+          +'<td>'+esc(j.job_name||'—')+'</td>'
+          +'<td>'+esc(j.team||'—')+'</td>'
+          +'<td><span class="status-badge '+esc(stCls)+'">'+esc(statusLabel)+'</span></td>'
+          +'<td>'+esc(j.assigned_staff_name||'—')+'</td>'
+          +'<td class="num amt">'+fmt(j.estimated_amount)+'</td>'
+          +'<td class="num amt">'+fmt(j.actual_amount)+'</td>'
+          +'<td class="num">'+( parseFloat(j.actual_hours)||0 ).toFixed(1)+'</td>'
+          +'</tr>';
+      }).join('');
+      var totalsRow = '<tr>'
+        +'<td colspan="4">Totals</td>'
+        +'<td class="num amt">'+fmt(estTotal)+'</td>'
+        +'<td class="num amt">'+fmt(actTotal)+'</td>'
+        +'<td class="num">'+actHours.toFixed(1)+'</td>'
+        +'</tr>';
+      jobsHtml = '<div class="card"><div class="table-wrap"><table>'
+        +'<thead><tr><th>Job / Discipline</th><th>Team</th><th>Status</th><th>Assigned</th>'
+        +'<th class="num">Estimated</th><th class="num">Actual</th><th class="num">Hours</th></tr></thead>'
+        +'<tbody>'+rows+'</tbody>'
+        +'<tfoot>'+totalsRow+'</tfoot>'
+        +'</table></div></div>';
+    } else {
+      jobsHtml = '<div class="card"><div class="empty-state"><i class="fa-solid fa-briefcase"></i>No jobs on this area yet.</div></div>';
+    }
+
+    var actions = '<div class="actions-bar">'
+      +'<a class="btn btn-sm btn-secondary" href="/service-areas.html">'
+      +'<i class="fa-solid fa-arrow-left"></i> All Service Areas</a>'
+      +'<a class="btn btn-sm btn-secondary" href="/service-areas.html" target="_blank">'
+      +'<i class="fa-solid fa-pen"></i> Edit in Service Areas</a>'
+      +'<a class="btn btn-sm btn-secondary" href="/hours.html">'
+      +'<i class="fa-solid fa-clock"></i> Hours View</a>'
+      +'<a class="btn btn-sm btn-secondary" href="/billing.html">'
+      +'<i class="fa-solid fa-file-invoice-dollar"></i> Billing</a>'
+      +'</div>';
+
+    document.getElementById('page-title').innerHTML = '<i class="fa-solid fa-diagram-project"></i> '+esc(area.name||'Service Area');
+    document.title = esc(area.name||'Service Area')+' — Launch Fiber';
+
+    document.getElementById('page-body').innerHTML =
+      breadcrumb
+      +'<div class="area-head">'
+      +'<div class="area-name">'+esc(area.name||'—')+'</div>'
+      +'<div class="area-meta">'
+      +'<span><i class="fa-solid fa-building"></i> '+esc(area.client_name||'—')+'</span>'
+      +(area.work_order_number ? '<span>WO# '+esc(area.work_order_number)+'</span>' : '')
+      +programTag
+      +(area.ec_name ? '<span><i class="fa-solid fa-file-contract"></i> '+esc(area.ec_name)+'</span>' : '')
+      +'</div>'
+      +actions
+      +'</div>'
+      +kpis
+      +'<div class="section"><div class="section-title"><i class="fa-solid fa-briefcase"></i> Jobs</div>'
+      +jobsHtml
+      +'</div>';
+  }
+
+  // ── Helpers ─────────────────────────────────────────────────────────────────
+  function fmt(n){
+    n = parseFloat(n)||0;
+    return '$'+n.toLocaleString('en-US',{minimumFractionDigits:0,maximumFractionDigits:0});
+  }
+  function esc(s){
+    return String(s??'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+  }
+
+  // ── Theme ────────────────────────────────────────────────────────────────────
+  window.toggleDark = function(){
+    var html = document.documentElement;
+    var dark = html.getAttribute('data-theme')==='dark';
+    html.setAttribute('data-theme', dark?'light':'dark');
+    localStorage.setItem('lfs_theme', dark?'light':'dark');
+    updateDmIcon();
+  };
+  function applyStoredTheme(){
+    var stored = localStorage.getItem('lfs_theme');
+    if(stored) document.documentElement.setAttribute('data-theme', stored);
+    updateDmIcon();
+  }
+  function updateDmIcon(){
+    var icon = document.getElementById('dm-icon');
+    if(!icon) return;
+    var dark = document.documentElement.getAttribute('data-theme')==='dark';
+    icon.className = dark?'fa-solid fa-sun':'fa-solid fa-moon';
+  }
+})();
+</script>
+<script src="/js/app_nav.js" data-active="service-areas"></script>
+</body>
+</html>

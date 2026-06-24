@@ -8,6 +8,7 @@
     loadMargin();
     loadAging();
     loadRevenue('month');
+    loadProgramFinancials();
     loadClientList();
   });
 
@@ -214,6 +215,66 @@
     </table></div>`;
   }
 
+  // ── Program financials ───────────────────────────────────────────────────
+
+  async function loadProgramFinancials() {
+    const card = document.getElementById('program-card');
+    if (!card) return;
+    try {
+      const res = await fetch('/api/money/program-financials', { credentials: 'include' });
+      if (res.status === 401 || res.status === 403) { card.innerHTML = lockMsg(); return; }
+      if (!res.ok) throw new Error(await res.text());
+      const data = await res.json();
+      renderProgramFinancials(data, card);
+    } catch (e) {
+      card.innerHTML = errMsg(e);
+    }
+  }
+
+  function renderProgramFinancials(data, card) {
+    const programs = data.programs || [];
+    const rollup   = data.rollup   || {};
+    if (!programs.length) {
+      card.innerHTML = '<div class="empty-state"><i class="fa-solid fa-chart-pie"></i>No program data yet.</div>';
+      return;
+    }
+    const LABELS = { rus: 'RUS (Government)', bau: 'BAU', gfr: 'GFR', other: 'Other', unknown: '—' };
+
+    // Summary cards: RUS vs non-RUS
+    const summaryHtml = `
+      <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:12px;padding:14px 16px;border-bottom:1px solid var(--gray-border)">
+        <div style="background:var(--info-light);border-radius:8px;padding:12px 16px">
+          <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:var(--info-text);margin-bottom:6px">RUS</div>
+          <div style="font-size:20px;font-weight:700">${fmt(rollup.rus.billed_total)}</div>
+          <div style="font-size:12px;color:var(--text-muted);margin-top:2px">billed · est ${fmt(rollup.rus.estimated_total)}</div>
+          <div style="font-size:12px;color:var(--text-muted)">${rollup.rus.area_count} areas · ${rollup.rus.job_count} jobs</div>
+        </div>
+        <div style="background:var(--surface-1);border-radius:8px;padding:12px 16px">
+          <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:var(--text-muted);margin-bottom:6px">Non-RUS</div>
+          <div style="font-size:20px;font-weight:700">${fmt(rollup.non_rus.billed_total)}</div>
+          <div style="font-size:12px;color:var(--text-muted);margin-top:2px">billed · est ${fmt(rollup.non_rus.estimated_total)}</div>
+          <div style="font-size:12px;color:var(--text-muted)">${rollup.non_rus.area_count} areas · ${rollup.non_rus.job_count} jobs</div>
+        </div>
+      </div>`;
+
+    const rowsHtml = programs.map(p => `<tr>
+      <td>${esc(LABELS[p.program] || p.program || '—')}${p.is_rus ? ' <span class="tag" style="background:var(--info-light);color:var(--info-text)">GOV</span>' : ''}</td>
+      <td class="num">${p.area_count}</td>
+      <td class="num">${p.job_count}</td>
+      <td class="num">${fmt(p.estimated_total)}</td>
+      <td class="num">${fmt(p.billed_total)}</td>
+      <td class="num ${varClass(p.variance)}">${varStr(p.variance)}</td>
+    </tr>`).join('');
+
+    card.innerHTML = summaryHtml + `<div class="table-wrap"><table>
+      <thead><tr>
+        <th>Program</th><th class="num">Areas</th><th class="num">Jobs</th>
+        <th class="num">Estimated</th><th class="num">Billed</th><th class="num">Variance</th>
+      </tr></thead>
+      <tbody>${rowsHtml}</tbody>
+    </table></div>`;
+  }
+
   // ── Client statement ─────────────────────────────────────────────────────
 
   async function loadClientList() {
@@ -307,6 +368,11 @@
     title.textContent = 'Invoice ' + num;
     body.innerHTML = '<div class="loading-row"><span class="spinner"></span>Loading…</div>';
     modal.classList.remove('hidden');
+    // Focus the close button so keyboard users can ESC/Tab out
+    setTimeout(function () {
+      var closeBtn = modal.querySelector('.modal-close');
+      if (closeBtn) closeBtn.focus();
+    }, 50);
     try {
       const res = await fetch(`/api/money/invoice/${encodeURIComponent(id)}`, { credentials: 'include' });
       if (!res.ok) throw new Error(await res.text());

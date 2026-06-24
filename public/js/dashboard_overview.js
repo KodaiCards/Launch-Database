@@ -16,23 +16,50 @@
     document.documentElement.setAttribute('data-theme', t); localStorage.setItem('lfs_theme', t);
   });
 
-  let d = null, pipe = {}, aging = null, hoursData = null;
+  let d = null, pipe = {}, aging = null, hoursData = null, revenueMonths = null;
+  let _period = 'month';
 
-  function thisMonthRange() {
+  function periodRange(period) {
     const now = new Date();
+    if (period === 'quarter') {
+      const qStart = new Date(now.getFullYear(), Math.floor(now.getMonth() / 3) * 3, 1);
+      const qEnd   = new Date(qStart.getFullYear(), qStart.getMonth() + 3, 0);
+      return { from: qStart.toISOString().slice(0, 10), to: qEnd.toISOString().slice(0, 10) };
+    }
+    if (period === 'all') return { from: '', to: '' };
+    // default: month
     const from = new Date(now.getFullYear(), now.getMonth(), 1).toISOString().slice(0, 10);
     const to   = new Date(now.getFullYear(), now.getMonth() + 1, 0).toISOString().slice(0, 10);
     return { from, to };
   }
 
+  window.setPeriod = async function (p) {
+    _period = p;
+    ['month','quarter','all'].forEach(k => {
+      const btn = document.getElementById(`pd-${k}`);
+      if (!btn) return;
+      const active = k === p;
+      btn.style.background = active ? 'var(--primary)' : '';
+      btn.style.color = active ? '#fff' : 'var(--text-secondary)';
+    });
+    const { from, to } = periodRange(p);
+    const qs = from ? `?from=${from}&to=${to}` : '';
+    hoursData = await fetch(`/api/hours/summary${qs}`, { credentials: 'include' })
+      .then(r => r.ok ? r.json() : null).catch(() => null);
+    renderTiles();
+    const activeTab = document.querySelector('.tab.active');
+    if (activeTab) renderTab(activeTab.dataset.tab);
+  };
+
   async function boot() {
     try {
-      const { from, to } = thisMonthRange();
-      [d, pipe, aging, hoursData] = await Promise.all([
+      const { from, to } = periodRange('month');
+      [d, pipe, aging, hoursData, revenueMonths] = await Promise.all([
         api('/api/dashboard/overview'),
         api('/api/service-area-pipelines').then(p => p.pipelines || {}).catch(() => ({})),
         fetch('/api/money/aging', { credentials: 'include' }).then(r => r.ok ? r.json() : null).catch(() => null),
         fetch(`/api/hours/summary?from=${from}&to=${to}`, { credentials: 'include' }).then(r => r.ok ? r.json() : null).catch(() => null),
+        fetch('/api/money/revenue?group=month', { credentials: 'include' }).then(r => r.ok ? r.json() : null).catch(() => null),
       ]);
       renderTiles(); renderAttention(); renderTab('revenue');
       document.querySelectorAll('.tab').forEach(t => t.addEventListener('click', () => {
@@ -85,6 +112,24 @@
 
   function renderRevenue() {
     const r = d.revenue || {}, bc = d.by_client || [];
+
+    // Month-over-month from /api/money/revenue?group=month
+    let momHtml = '';
+    if (revenueMonths && (revenueMonths.rows || []).length >= 2) {
+      const rows = revenueMonths.rows; // sorted newest-first
+      const thisM = rows[0], lastM = rows[1];
+      const diff = thisM.total - lastM.total;
+      const pct  = lastM.total ? Math.round(Math.abs(diff) / lastM.total * 100) : null;
+      const sign  = diff >= 0 ? '+' : '−';
+      const col   = diff >= 0 ? 'var(--success-text)' : 'var(--danger-text)';
+      const pctStr = pct !== null ? ` (${pct}%)` : '';
+      momHtml = `<div style="padding:10px 16px;font-size:13px;border-top:1px solid var(--border-weak)">
+        <span style="color:var(--text-muted)">Month-over-month revenue:</span>
+        <strong style="margin-left:6px;color:${col}">${sign}${money(Math.abs(diff))}${pctStr}</strong>
+        <span style="color:var(--text-muted);margin-left:4px">${esc(lastM.label)} → ${esc(thisM.label)}</span>
+      </div>`;
+    }
+
     const agingHtml = aging ? (() => {
       const b = aging.buckets || {};
       const bkts = [['0-30','0–30 days','var(--success)'],['31-60','31–60 days','var(--info)'],['61-90','61–90 days','var(--warning)'],['90+','90+ days','var(--danger)']];
@@ -101,7 +146,8 @@
       <div class="kv"><span class="k">RUS (engineering contracts)</span><strong>${money(r.est_rus)}</strong></div>
       <div class="kv"><span class="k">Non-RUS (BAU / GFR / Other)</span><strong>${money(r.est_non_rus)}</strong></div>
       <div class="kv"><span class="k">Actual billed</span><strong>${money(r.actual_total)}</strong></div>
-      <div class="note">Actual billed = total of invoices created from billed jobs. (Period filter + per-client split coming.)</div>
+      <div class="note">Actual billed = total of invoices created from billed jobs.</div>
+      ${momHtml}
     </div>
     <div class="card" style="margin-top:14px"><div class="card-h">By client</div>${
       bc.length ? bc.map(c => `<div class="kv"><span class="k">${esc(c.client_name)} <span class="muted">· ${c.sa_count} area(s)</span></span><strong>${money(c.estimated_total)}</strong></div>`).join('')
