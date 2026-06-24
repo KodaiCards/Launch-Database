@@ -736,6 +736,10 @@ require('./routes/money_view')(app, pool, { requireManagerOrAdmin });
 // Admin data-export bundle: GET /api/export/all.zip (service areas, jobs, invoices CSVs).
 require('./routes/export_bundle')(app, pool, { requireAdmin });
 
+// Keystone cluster reads: GET /api/cluster/clients (client list + financials), GET /api/search (cross-entity).
+require('./routes/cluster_views')(app, pool, { requireManagerOrAdmin });
+require('./routes/search')(app, pool, { requireManagerOrAdmin });
+
 // ─────────────────────────────────────────────────────────────────────────────
 // UNDO REPLAY — extracted to routes/undo.js (Track 1.3.6).
 // saveUndoBucket / popUndoBucket helpers live in routes/_helpers.js.
