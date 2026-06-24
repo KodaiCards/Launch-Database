@@ -182,8 +182,9 @@ html[data-theme="dark"] .sk::after{background:linear-gradient(90deg,transparent,
   .container{margin:12px auto;padding:0 12px}
   .cp-landing{grid-template-columns:repeat(2,1fr);gap:10px;padding:12px}
   .cp-landing-num{font-size:21px}
-  .tabs{gap:0}
-  .tabs button{padding:9px 10px;font-size:12px}
+  .tabs{gap:0;overflow-x:auto}
+  .tabs button{padding:9px 10px;font-size:12px;white-space:nowrap}
+  .proj-row{grid-template-columns:1fr}
   .cp-inv-meta{grid-template-columns:1fr}
   .cp-inv-head{flex-direction:column;gap:8px}
   .cp-inv-head>div:last-child{text-align:left}
@@ -209,11 +210,11 @@ html[data-theme="dark"] .sk::after{background:linear-gradient(90deg,transparent,
     <span style="font-size:12px;color:var(--text-muted)">Client Portal</span>
   </div>
   <div class="header-right">
-    <button class="btn btn-secondary btn-sm btn-icon" onclick="toggleDarkMode()" title="Toggle dark mode">
-      <i class="fa-solid fa-moon" id="dm-icon"></i>
+    <button class="btn btn-secondary btn-sm btn-icon" onclick="toggleDarkMode()" title="Toggle dark mode" aria-label="Toggle dark mode">
+      <i class="fa-solid fa-moon" id="dm-icon" aria-hidden="true"></i>
     </button>
-    <div class="account-pill" id="user-pill" style="display:none" onclick="showAccountMenu()">
-      <i class="fa-solid fa-user-circle"></i>
+    <div class="account-pill" id="user-pill" style="display:none" role="button" tabindex="0" aria-haspopup="dialog" aria-label="Account menu" onclick="showAccountMenu()" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();showAccountMenu();}">
+      <i class="fa-solid fa-user-circle" aria-hidden="true"></i>
       <span id="user-pill-text"></span>
     </div>
   </div>
@@ -238,19 +239,19 @@ html[data-theme="dark"] .sk::after{background:linear-gradient(90deg,transparent,
   </div>
   <div id="cp-landing"></div>
   <div>
-    <div class="tabs" id="cp-tabs">
-      <button class="active" data-tab="projects" onclick="cpSelectTab('projects')">Projects</button>
-      <button data-tab="invoices" onclick="cpSelectTab('invoices')">Invoices</button>
-      <button data-tab="service-areas" onclick="cpSelectTab('service-areas')">Service Areas</button>
+    <div class="tabs" id="cp-tabs" role="tablist" aria-label="Portal sections">
+      <button class="active" role="tab" id="cp-tabbtn-projects" aria-selected="true" aria-controls="cp-tab-projects" data-tab="projects" onclick="cpSelectTab('projects')">Projects</button>
+      <button role="tab" id="cp-tabbtn-invoices" aria-selected="false" aria-controls="cp-tab-invoices" data-tab="invoices" onclick="cpSelectTab('invoices')">Invoices</button>
+      <button role="tab" id="cp-tabbtn-service-areas" aria-selected="false" aria-controls="cp-tab-service-areas" data-tab="service-areas" onclick="cpSelectTab('service-areas')">Service Areas</button>
     </div>
-    <div id="cp-tab-projects" class="cp-tab">
+    <div id="cp-tab-projects" class="cp-tab" role="tabpanel" aria-labelledby="cp-tabbtn-projects" tabindex="0">
       <div class="stats-grid" id="cp-stats"></div>
       <div id="cp-projects-body"></div>
     </div>
-    <div id="cp-tab-invoices" class="cp-tab" style="display:none">
+    <div id="cp-tab-invoices" class="cp-tab" role="tabpanel" aria-labelledby="cp-tabbtn-invoices" tabindex="0" style="display:none">
       <div id="cp-invoices-body"></div>
     </div>
-    <div id="cp-tab-service-areas" class="cp-tab" style="display:none">
+    <div id="cp-tab-service-areas" class="cp-tab" role="tabpanel" aria-labelledby="cp-tabbtn-service-areas" tabindex="0" style="display:none">
       <div id="cp-sa-header"></div>
       <div class="stats-grid" id="cp-sa-stats"></div>
       <div id="cp-sa-body"></div>
@@ -326,6 +327,30 @@ let _customerProjects = [];
 let _currentUser = null;
 let _currentClients = [];
 
+// a11y: open a modal with focus moved inside; ESC closes any open modal and
+// restores focus to the trigger.
+let _lastFocus = null;
+function cpShowModal(el){
+  if (!el) return;
+  _lastFocus = document.activeElement;
+  el.style.display = 'flex';
+  const f = el.querySelector('.modal-header button') || el.querySelector('button, a[href], input');
+  if (f) { try { f.focus(); } catch (e) {} }
+}
+function cpCloseModals(){
+  let closed = false;
+  document.querySelectorAll('.modal-overlay').forEach(m => {
+    if (getComputedStyle(m).display !== 'none') {
+      if (m.id === 'account-modal') m.remove(); else m.style.display = 'none';
+      closed = true;
+    }
+  });
+  const mapBody = document.getElementById('cp-map-body'); if (mapBody) mapBody.innerHTML = '';
+  if (closed && _lastFocus) { try { _lastFocus.focus(); } catch (e) {} _lastFocus = null; }
+  return closed;
+}
+document.addEventListener('keydown', e => { if (e.key === 'Escape') cpCloseModals(); });
+
 async function loadCurrentUser(){
   try {
     const r = await api('/api/customer/me');
@@ -400,7 +425,7 @@ async function cpOpenDetail(id){
   const body = document.getElementById('cp-detail-body');
   document.getElementById('cp-detail-title').textContent = 'Loading…';
   body.innerHTML = '<div class="empty-state"><i class="fa-solid fa-spinner fa-spin"></i><p>Loading…</p></div>';
-  m.style.display = 'flex';
+  cpShowModal(m);
   try {
     const p = await api('/api/customer/projects/' + encodeURIComponent(id));
     document.getElementById('cp-detail-title').textContent = p.name || 'Project';
@@ -509,7 +534,7 @@ async function cpOpenInvoice(id){
   const body = document.getElementById('cp-detail-body');
   document.getElementById('cp-detail-title').textContent = 'Loading…';
   body.innerHTML = '<div class="empty-state"><i class="fa-solid fa-spinner fa-spin"></i><p>Loading…</p></div>';
-  m.style.display = 'flex';
+  cpShowModal(m);
   try {
     const inv = await api('/api/customer/invoices/' + encodeURIComponent(id));
     document.getElementById('cp-detail-title').textContent = 'Invoice ' + (inv.invoice_number || '');
@@ -842,7 +867,7 @@ function cpOpenMap(id, kind){
   body.innerHTML = kind === 'pdf'
     ? `<iframe src="${url}" title="Map preview" style="width:100%;height:72vh;border:none"></iframe>`
     : `<img src="${url}" alt="Map preview" style="max-width:100%;max-height:72vh;display:block;margin:0 auto">`;
-  document.getElementById('cp-map-modal').style.display = 'flex';
+  cpShowModal(document.getElementById('cp-map-modal'));
 }
 function cpCloseMap(){
   document.getElementById('cp-map-body').innerHTML = ''; // stop the iframe/img fetch
@@ -850,7 +875,11 @@ function cpCloseMap(){
 }
 
 function cpSelectTab(name){
-  document.querySelectorAll('#cp-tabs button').forEach(b => b.classList.toggle('active', b.dataset.tab === name));
+  document.querySelectorAll('#cp-tabs button').forEach(b => {
+    const sel = b.dataset.tab === name;
+    b.classList.toggle('active', sel);
+    b.setAttribute('aria-selected', sel ? 'true' : 'false');
+  });
   document.querySelectorAll('.cp-tab').forEach(d => d.style.display = (d.id === 'cp-tab-' + name) ? '' : 'none');
   if (name === 'invoices') cpLoadInvoices();
   if (name === 'service-areas') cpLoadServiceAreas();
@@ -861,9 +890,13 @@ function showAccountMenu(){
   if (existing){ existing.remove(); return; }
   const u = _currentUser || {};
   const clients = _currentClients || [];
+  _lastFocus = document.activeElement;
   const overlay = document.createElement('div');
   overlay.id = 'account-modal';
   overlay.className = 'modal-overlay';
+  overlay.setAttribute('role', 'dialog');
+  overlay.setAttribute('aria-modal', 'true');
+  overlay.setAttribute('aria-label', 'Account');
   overlay.style.display = 'flex';
   overlay.innerHTML = `
     <div class="modal-content" style="max-width:380px">
@@ -895,6 +928,7 @@ function showAccountMenu(){
   `;
   document.body.appendChild(overlay);
   overlay.addEventListener('click', e => { if (e.target === overlay) overlay.remove(); });
+  const cb = overlay.querySelector('.modal-header button'); if (cb) { try { cb.focus(); } catch (e) {} }
 }
 async function signOut(){
   try { await fetch('/api/auth/logout', {method:'POST', credentials:'same-origin'}); } catch(e){}
