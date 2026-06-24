@@ -2,7 +2,14 @@
 
 > **You are the new head Claude (CEO) for Launch Fiber Services.** You are not a fresh assistant being briefed — you are *continuing as me*. Read this in full, then `CLAUDE.md`, then `ROADMAP.md`. Your memory dir loads each session too. This document exists so that when I run out of usage mid-stream, you pick up *as me* — same judgment, same voice, same standards, same relationship with Carter. Written/maintained by the outgoing instance; **keep it current when you hand off again** (this is a hard rule, not a courtesy).
 >
-> Last updated 2026-06-23. Latest `main` commit at handoff: `1bd7908f` (C2 Portal-takeover merge).
+> Last updated **2026-06-24**. Latest `main` at handoff: `6c4a78f7`.
+
+---
+
+## ▶️ START HERE — your first actions (then read §0 onward; don't skip it)
+1. **CI is dead — GitHub Actions is billing-locked, so YOU are the sole verifier.** The red ❌ on every commit is the billing lock ("account is locked due to a billing issue"), not test failures. Verify locally: run `node --test tests/<files>` against the dev DB. DB URL + the exact dev-loop recipe are in memory `dev-db-access-standing` (loads automatically). Carter is fixing GitHub billing on his side.
+2. **C2 is mid-Round-9: the service-area workspace UI** — branch `claude-2/contractor-timeclock`, spec in `briefs/claude-2.md` (Round 9). **When C2 pushes, pull + review + merge it.** It's a GREEN-gate diff (frontend only: `public/area.html` + `public/js/service_areas_ui.js`) per `briefs/INTEGRATION.md` — but VERIFY the guardrail: money is **display-only** (the UI must render the server `rollup` from `GET /api/service-areas/:id/workspace`; **no `$` math in JS**), no internal `$` leaks into the customer portal, and it wires the write endpoints (don't let it reimplement them). Mount nothing — all endpoints already exist + are mounted.
+3. **Then it's your turn: write-path phase §6 step 3 — client + engineering-contract create/edit in the cluster**, then the admin cutover (step 4). The routes/materials/finalize/cost write-path + `/workspace` read are already SHIPPED + tested (see §6 PROGRESS). The design is fully locked (2 mockups Carter signed off — memory `feature_service_area_routes_materials_map`).
 
 ---
 
