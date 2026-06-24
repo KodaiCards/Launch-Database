@@ -380,5 +380,108 @@
     } catch (e) { alert(e.message); }
   }
 
+  // ── R10.3: Inline-create affordances for the SA modal ─────────────────────
+  // These functions wire the "+ New Client" and "+ New EC" buttons in the
+  // SA-create modal. After a create, we re-fetch and re-populate the pickers.
+
+  function _icRefreshPickers(newClientId, newEcId) {
+    return Promise.all([
+      api('/api/clients').catch(() => state.clients),
+      api('/api/engineering-contracts').catch(() => state.ecs),
+    ]).then(([clients, ecs]) => {
+      state.clients = clients || [];
+      state.ecs = ecs || [];
+      $('m_client').innerHTML = state.clients
+        .map(c => `<option value="${c.id}">${esc(c.name)}</option>`).join('');
+      if (newClientId) $('m_client').value = newClientId;
+      syncEcOptions();
+      if (newEcId) {
+        $('m_ec').value = newEcId;
+        toggleProgram();
+      }
+    });
+  }
+
+  // Inline new-client
+  const icClientModal = document.getElementById('icClientModal');
+  const icEcModal     = document.getElementById('icEcModal');
+
+  if (document.getElementById('m_newClientBtn')) {
+    document.getElementById('m_newClientBtn').addEventListener('click', () => {
+      document.getElementById('ic_name').value = '';
+      icClientModal.classList.add('open');
+      setTimeout(() => document.getElementById('ic_name').focus(), 50);
+    });
+  }
+  if (document.getElementById('ic_cancel')) {
+    document.getElementById('ic_cancel').addEventListener('click', () => icClientModal.classList.remove('open'));
+  }
+  if (icClientModal) {
+    icClientModal.addEventListener('click', e => { if (e.target === icClientModal) icClientModal.classList.remove('open'); });
+  }
+  if (document.getElementById('ic_save')) {
+    document.getElementById('ic_save').addEventListener('click', async () => {
+      const name = (document.getElementById('ic_name').value || '').trim();
+      if (!name) { document.getElementById('ic_name').focus(); return; }
+      const btn = document.getElementById('ic_save');
+      btn.disabled = true; btn.textContent = 'Creating…';
+      try {
+        const c = await api('/api/clients', 'POST', { name });
+        icClientModal.classList.remove('open');
+        await _icRefreshPickers(c.id, null);
+      } catch (e) { alert('Create client failed: ' + e.message); }
+      finally { btn.disabled = false; btn.textContent = 'Create'; }
+    });
+  }
+
+  // Inline new-EC
+  if (document.getElementById('m_newEcBtn')) {
+    document.getElementById('m_newEcBtn').addEventListener('click', () => {
+      const clientId = $('m_client').value;
+      if (!clientId) { flash('Select a client first'); return; }
+      document.getElementById('ie_name').value = '';
+      document.getElementById('ie_contract_number').value = '';
+      document.getElementById('ie_program').value = 'rus';
+      const note = document.getElementById('ie_prog_note');
+      if (note) note.style.display = 'flex';
+      icEcModal.classList.add('open');
+      setTimeout(() => document.getElementById('ie_name').focus(), 50);
+    });
+  }
+  if (document.getElementById('ie_cancel')) {
+    document.getElementById('ie_cancel').addEventListener('click', () => icEcModal.classList.remove('open'));
+  }
+  if (icEcModal) {
+    icEcModal.addEventListener('click', e => { if (e.target === icEcModal) icEcModal.classList.remove('open'); });
+  }
+  if (document.getElementById('ie_program')) {
+    document.getElementById('ie_program').addEventListener('change', function () {
+      const note = document.getElementById('ie_prog_note');
+      if (note) note.style.display = this.value === 'rus' ? 'flex' : 'none';
+    });
+  }
+  if (document.getElementById('ie_save')) {
+    document.getElementById('ie_save').addEventListener('click', async () => {
+      const name = (document.getElementById('ie_name').value || '').trim();
+      if (!name) { document.getElementById('ie_name').focus(); return; }
+      const clientId = $('m_client').value;
+      if (!clientId) { flash('Select a client first'); return; }
+      const btn = document.getElementById('ie_save');
+      btn.disabled = true; btn.textContent = 'Creating…';
+      try {
+        const body = {
+          client_id: clientId,
+          name,
+          contract_number: (document.getElementById('ie_contract_number').value || '').trim() || null,
+          program: document.getElementById('ie_program').value,
+        };
+        const ec = await api('/api/engineering-contracts', 'POST', body);
+        icEcModal.classList.remove('open');
+        await _icRefreshPickers(null, ec.id);
+      } catch (e) { alert('Create EC failed: ' + e.message); }
+      finally { btn.disabled = false; btn.textContent = 'Create'; }
+    });
+  }
+
   boot();
 })();
