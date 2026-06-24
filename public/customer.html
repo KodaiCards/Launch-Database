@@ -169,6 +169,8 @@ button{font-family:inherit;cursor:pointer;border:none;background:none;color:inhe
 .skip-nav{position:absolute;left:-9999px;top:auto;width:1px;height:1px;overflow:hidden;z-index:9999;text-decoration:none}
 .skip-nav:focus{position:fixed;left:50%;top:8px;transform:translateX(-50%);width:auto;height:auto;padding:10px 20px;background:var(--primary);color:#fff;font-weight:600;border-radius:6px;font-size:14px;z-index:9999}
 .sr-only{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0}
+/* help overlay "In progress" badge — explicit dark override so hardcoded light-blue doesn't bleed into dark mode */
+html[data-theme="dark"] .hs-badge-inprog{background:#1E3A5C!important;color:#90CAF9!important}
 
 /* Loading skeletons */
 .sk{position:relative;overflow:hidden;background:var(--surface-3);border-radius:6px}
@@ -281,6 +283,7 @@ html[data-theme="dark"] .sk::after{background:linear-gradient(90deg,transparent,
   </div>
 </header>
 
+<div class="sr-only" id="cp-live" aria-live="polite" aria-atomic="true"></div>
 <main class="app-content container" id="main-content">
   <!-- ═════════════ UNDER CONSTRUCTION ═════════════
        Owner explicitly asked that the client portal stay un-populated
@@ -322,8 +325,8 @@ html[data-theme="dark"] .sk::after{background:linear-gradient(90deg,transparent,
     </div>
   </div> <!-- /display:none wrapper closing the under-construction shim -->
 
-  <!-- P2: Contact / support bar -->
-  <div id="cp-contact-bar" style="display:none;padding:12px 0 0;display:flex;align-items:center;gap:8px;flex-wrap:wrap">
+  <!-- P2: Contact / support bar (hidden until data loaded) -->
+  <div id="cp-contact-bar" style="display:none;padding:12px 0 0;align-items:center;gap:8px;flex-wrap:wrap">
     <button class="cp-help-btn" onclick="cpShowHelp()" aria-label="Open help guide">
       <i class="fa-solid fa-circle-question" aria-hidden="true"></i> Help
     </button>
@@ -349,7 +352,7 @@ html[data-theme="dark"] .sk::after{background:linear-gradient(90deg,transparent,
     <p style="font-size:12px;font-weight:600;color:var(--text-muted);text-transform:uppercase;letter-spacing:.04em;margin-bottom:8px">Status meanings</p>
     <div class="help-status-grid">
       <span class="hs-badge" style="background:var(--surface-3);color:var(--text-muted)">Not started</span><span class="hs-desc">Work is scheduled but hasn't begun yet.</span>
-      <span class="hs-badge" style="background:#E3F2FD;color:#1565C0">In progress</span><span class="hs-desc">Actively being worked on.</span>
+      <span class="hs-badge hs-badge-inprog" style="background:#E3F2FD;color:#1565C0">In progress</span><span class="hs-desc">Actively being worked on.</span>
       <span class="hs-badge" style="background:var(--success-light);color:var(--success-text)">Complete</span><span class="hs-desc">Work finished and ready for review.</span>
       <span class="hs-badge" style="background:var(--warning-light);color:var(--warning-text)">On hold</span><span class="hs-desc">Temporarily paused — we'll be in touch.</span>
     </div>
@@ -691,7 +694,7 @@ function renderCustomerProjects(){
           ${dsa ? `<span style="margin-left:8px">last activity: ${esc(dsa)}</span>` : ''}
           ${p.pipeline_stage ? `<span style="margin-left:8px">pipeline: ${esc(p.pipeline_stage)}</span>` : ''}
         </div>
-        ${p.completion_pct != null ? `<div class="progress-track"><div class="progress-fill" style="width:${p.completion_pct}%"></div></div>` : ''}
+        ${p.completion_pct != null ? `<div class="progress-track" role="progressbar" aria-valuenow="${p.completion_pct}" aria-valuemin="0" aria-valuemax="100" aria-label="${p.completion_pct}% complete"><div class="progress-fill" style="width:${p.completion_pct}%"></div></div>` : ''}
       </div>
       <div style="text-align:right">
         <span class="status-pill ${statusClass}">${esc(status.replace('_',' '))}</span>
@@ -1124,6 +1127,7 @@ function cpRenderSaCards(){
   if (!areas.length){
     const base = (_customerServiceAreas || []).filter(a => !_selectedClientId || a.client_id === _selectedClientId);
     const filtered = base.length > 0; // areas exist but none match
+    cpAnnounce(filtered ? 'No service areas match your filter.' : 'No service areas yet.');
     body.innerHTML = filtered
       ? `<div class="empty-state"><i class="fa-solid fa-magnifying-glass"></i><p>No areas match your${gq ? ' search' : ' filter'}.</p>${gq ? `<button class="btn btn-secondary btn-sm" style="margin-top:8px" onclick="cpClearGlobalSearch()">Clear search</button>` : `<button class="btn btn-secondary btn-sm" style="margin-top:8px" onclick="cpClearSaFilter()">Clear filters</button>`}</div>`
       : `<div class="empty-state">
@@ -1133,6 +1137,7 @@ function cpRenderSaCards(){
         </div>`;
     return;
   }
+  if (q || gq || st) cpAnnounce(`${areas.length} service area${areas.length === 1 ? '' : 's'} shown.`);
   body.innerHTML = areas.map(cpRenderSaCard).join('');
 }
 
@@ -1190,7 +1195,7 @@ function cpRenderLanding(){
       <div class="cp-landing-item cp-landing-prog">
         <div class="cp-landing-num">${overall != null ? overall + '%' : '—'}</div>
         <div class="cp-landing-lbl">Overall complete</div>
-        ${overall != null ? `<div class="progress-track" style="width:100%;margin-top:6px"><div class="progress-fill" style="width:${overall}%"></div></div>` : ''}
+        ${overall != null ? `<div class="progress-track" style="width:100%;margin-top:6px" role="progressbar" aria-valuenow="${overall}" aria-valuemin="0" aria-valuemax="100" aria-label="Overall ${overall}% complete"><div class="progress-fill" style="width:${overall}%"></div></div>` : ''}
       </div>
       ${cpMiniDash(areas)}
     </div>`;
@@ -1255,7 +1260,7 @@ function renderServiceAreas(){
         </div>
         <div class="sa-summary-prog">
           <div class="sa-summary-sub" style="margin-bottom:4px">${overallPct != null ? overallPct + '% complete overall' : 'No jobs yet'}</div>
-          ${overallPct != null ? `<div class="progress-track" style="width:100%"><div class="progress-fill" style="width:${overallPct}%"></div></div>` : ''}
+          ${overallPct != null ? `<div class="progress-track" style="width:100%" role="progressbar" aria-valuenow="${overallPct}" aria-valuemin="0" aria-valuemax="100" aria-label="${overallPct}% complete overall"><div class="progress-fill" style="width:${overallPct}%"></div></div>` : ''}
         </div>
       </div>
     </div>`;
@@ -1277,7 +1282,7 @@ function cpRenderSaCard(a){
     const lastUpd = _recent.length ? _recent[0].d : null;
     const prog = pct != null
       ? `<div class="sa-prog-line">
-           <div class="progress-track"><div class="progress-fill" style="width:${pct}%"></div></div>
+           <div class="progress-track" role="progressbar" aria-valuenow="${pct}" aria-valuemin="0" aria-valuemax="100" aria-label="${pct}% complete — ${a.jobs_done} of ${a.jobs_total} jobs done"><div class="progress-fill" style="width:${pct}%"></div></div>
            <span style="font-size:12px;color:var(--text-muted)">${a.jobs_done} of ${a.jobs_total} jobs done · ${pct}%</span>
          </div>
          ${projDate ? `<div style="font-size:11px;color:var(--text-muted);margin-top:4px"><i class="fa-regular fa-calendar-check" aria-hidden="true"></i> Est. completion ~ ${esc(fmtDate(projDate))}</div>` : ''}`
@@ -1471,8 +1476,18 @@ async function signOut(){
   window.location.href = '/login';
 }
 
+// Announce a message to screen readers via the aria-live region.
+function cpAnnounce(msg){
+  const el = document.getElementById('cp-live');
+  if (!el) return;
+  el.textContent = '';
+  // Tiny delay ensures the DOM mutation is noticed by AT even when msg is unchanged.
+  setTimeout(() => { el.textContent = msg; }, 50);
+}
+
 // ─── P1: First-run help overlay ──────────────────────────────────────────
 const CP_HELP_KEY = 'lfs-portal-help-dismissed';
+let _helpTrigger = null; // element that opened the overlay, for focus restoration
 function cpMaybeShowHelp(){
   try {
     if (localStorage.getItem(CP_HELP_KEY)) return;
@@ -1481,7 +1496,11 @@ function cpMaybeShowHelp(){
 }
 function cpShowHelp(){
   const el = document.getElementById('cp-help-overlay');
-  if (el){ el.classList.add('open'); try { el.querySelector('button').focus(); } catch(e){} }
+  if (!el) return;
+  _helpTrigger = document.activeElement;
+  el.classList.add('open');
+  // Move focus to close button so keyboard users can immediately dismiss.
+  try { el.querySelector('button').focus(); } catch(e){}
 }
 function cpDismissHelp(){
   const el = document.getElementById('cp-help-overlay');
@@ -1490,6 +1509,8 @@ function cpDismissHelp(){
     if (document.getElementById('cp-help-nodisplay').checked)
       localStorage.setItem(CP_HELP_KEY, '1');
   } catch(e){}
+  // Return focus to the element that triggered the overlay.
+  if (_helpTrigger) { try { _helpTrigger.focus(); } catch(e){} _helpTrigger = null; }
 }
 document.addEventListener('keydown', e => {
   if (e.key === 'Escape') {
