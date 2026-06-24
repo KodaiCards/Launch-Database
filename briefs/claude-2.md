@@ -1,6 +1,6 @@
 # Claude 2 — Contractor timeclock (Phase 5)
 
-**Status:** R10 MERGED ✓ 2026-06-24. **Queue (all FRONTEND ONLY, backends shipped+tested): R11 hours-import UI · R12 billing UI · R13 projections (Money tab) + overall-map (Service Areas tab) + lifecycle (workspace).** Work them in order; push per task; CEO merges.
+**Status:** R11 DONE ✓ · R12 DONE ✓ · R13 DONE ✓ 2026-06-24. All queued work shipped — ready for CEO review and merge.
 **Branch:** `claude-2/contractor-timeclock`
 **Read first:** `CLAUDE.md`, `ROADMAP.md` (Phase 5), `briefs/README.md`.
 
