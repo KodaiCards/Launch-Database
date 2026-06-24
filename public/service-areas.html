@@ -142,15 +142,70 @@ input,select{font-family:inherit;font-size:13px;color:var(--text);background:var
   <div class="modal-bg" id="saModal">
     <div class="modal">
       <h3>New Service Area</h3>
-      <div class="field"><label>Client</label><select id="m_client"></select></div>
+      <div class="field">
+        <label>Client</label>
+        <div style="display:flex;gap:6px;align-items:center">
+          <select id="m_client" style="flex:1"></select>
+          <button type="button" class="btn btn-secondary" style="font-size:11px;padding:5px 8px;white-space:nowrap"
+            id="m_newClientBtn" title="Create a new client inline" aria-label="Create new client">
+            <i class="fa-solid fa-plus"></i> New
+          </button>
+        </div>
+      </div>
       <div class="field"><label>Name / Concentrator</label><input id="m_name" placeholder="e.g. Concentrator 14"></div>
-      <div class="field"><label>Engineering Contract <span class="muted">(RUS only — leave blank for non-RUS)</span></label><select id="m_ec"><option value="">— None (non-RUS) —</option></select></div>
+      <div class="field">
+        <label>Engineering Contract <span class="muted">(RUS only — leave blank for non-RUS)</span></label>
+        <div style="display:flex;gap:6px;align-items:center">
+          <select id="m_ec" style="flex:1"><option value="">— None (non-RUS) —</option></select>
+          <button type="button" class="btn btn-secondary" style="font-size:11px;padding:5px 8px;white-space:nowrap"
+            id="m_newEcBtn" title="Create a new EC for the selected client" aria-label="Create new engineering contract">
+            <i class="fa-solid fa-plus"></i> New
+          </button>
+        </div>
+      </div>
       <div class="field" id="m_progWrap"><label>Program</label>
         <select id="m_program"><option value="">—</option><option value="bau">BAU</option><option value="gfr">GFR</option><option value="other">Other</option></select>
       </div>
       <div class="modal-actions">
         <button class="btn btn-secondary" id="m_cancel">Cancel</button>
         <button class="btn btn-primary" id="m_save">Create</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Inline new-client mini-modal (R10.3) -->
+  <div class="modal-bg" id="icClientModal" style="z-index:60">
+    <div class="modal" style="max-width:360px">
+      <h3>New Client</h3>
+      <div class="field"><label for="ic_name">Name</label><input id="ic_name" placeholder="e.g. PSC" autocomplete="off"></div>
+      <div class="modal-actions">
+        <button class="btn btn-secondary" id="ic_cancel">Cancel</button>
+        <button class="btn btn-primary" id="ic_save">Create</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Inline new-EC mini-modal (R10.3) -->
+  <div class="modal-bg" id="icEcModal" style="z-index:60">
+    <div class="modal" style="max-width:380px">
+      <h3>New Engineering Contract</h3>
+      <div class="field"><label for="ie_name">Name</label><input id="ie_name" placeholder="e.g. PSC RUS 2024" autocomplete="off"></div>
+      <div class="field"><label for="ie_contract_number">Contract #</label><input id="ie_contract_number" placeholder="Optional" autocomplete="off"></div>
+      <div class="field">
+        <label for="ie_program">Program</label>
+        <select id="ie_program">
+          <option value="rus" selected>RUS</option>
+          <option value="bau">BAU</option>
+          <option value="gfr">GFR</option>
+          <option value="other">Other</option>
+        </select>
+        <div id="ie_prog_note" style="font-size:11px;color:var(--primary,#1B5FA0);margin-top:4px;display:flex;align-items:center;gap:5px">
+          <i class="fa-solid fa-circle-info"></i>ECs are RUS work by default. Non-RUS work sits directly under the client via the service-area program field.
+        </div>
+      </div>
+      <div class="modal-actions">
+        <button class="btn btn-secondary" id="ie_cancel">Cancel</button>
+        <button class="btn btn-primary" id="ie_save">Create</button>
       </div>
     </div>
   </div>
