@@ -733,6 +733,11 @@ require('./routes/hours_summary')(app, pool, { requireManagerOrAdmin });
 // Phase 4 money view: estimate-vs-actual margin, AR aging, accounting CSV (manager/admin).
 require('./routes/money_view')(app, pool, { requireManagerOrAdmin });
 
+// Keystone billing (progressive ledger): per-concentrator worklist/run/report +
+// closed-period tag. Bills earned−already-billed per job (hours/footage/fixed).
+// Migration 0066. Coexists with legacy routes/billing.js during cutover.
+require('./routes/billing_keystone')(app, pool, { requireManagerOrAdmin });
+
 // Admin data-export bundle: GET /api/export/all.zip (service areas, jobs, invoices CSVs).
 require('./routes/export_bundle')(app, pool, { requireAdmin });
 
