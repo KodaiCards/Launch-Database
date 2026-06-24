@@ -1,0 +1,77 @@
+// Integration test for revenue projections (routes/projections.js). Seeds a RUS
+// EC with a budget, a service area with an hourly + a close-out footage job, and
+// a partial invoice, then checks per-SA projection, EC budget burn, the rollup,
+// and the map data endpoint. Skips with no DATABASE_URL. Requires migration 0067.
+
+const { test } = require('node:test');
+const assert = require('node:assert');
+const express = require('express');
+const { Pool } = require('pg');
+
+const DB = process.env.DATABASE_URL;
+
+test('projections: per-SA, EC budget burn, rollup, map data', { skip: DB ? false : 'no DATABASE_URL' }, async () => {
+  const pool = new Pool({ connectionString: DB, ssl: false });
+  const app = express();
+  app.use(express.json());
+  const setUser = (req, _res, next) => { req.user = { id: null, role: 'admin' }; next(); };
+  require('../routes/projections')(app, pool, { requireManagerOrAdmin: setUser });
+  const server = app.listen(0);
+  await new Promise((r) => server.on('listening', r));
+  const base = `http://127.0.0.1:${server.address().port}`;
+  const get = async (p) => { const r = await fetch(base + p); return { status: r.status, json: await r.json() }; };
+
+  let clientId, ecId, budgetId, saId, jobRE, jobPR, invId;
+  try {
+    clientId = (await pool.query(`INSERT INTO clients (name) VALUES ($1) RETURNING id`, ['ZZ_TEST_PROJ'])).rows[0].id;
+    ecId = (await pool.query(`INSERT INTO engineering_contracts (client_id,name,program) VALUES ($1,'ZZ Proj EC','rus') RETURNING id`, [clientId])).rows[0].id;
+    budgetId = (await pool.query(`INSERT INTO budgets (engineering_contract_id,name,total_amount) VALUES ($1,'Eng budget',100000) RETURNING id`, [ecId])).rows[0].id;
+    saId = (await pool.query(`INSERT INTO service_areas (client_id,engineering_contract_id,name,program,status) VALUES ($1,$2,'Proj Area','rus','active') RETURNING id`, [clientId, ecId])).rows[0].id;
+    jobRE = (await pool.query(`INSERT INTO service_area_jobs (service_area_id,team,billing_type,rate,estimated_amount,bill_trigger,status) VALUES ($1,'inspection','hourly',100,48000,'progressive','started') RETURNING id`, [saId])).rows[0].id;
+    jobPR = (await pool.query(`INSERT INTO service_area_jobs (service_area_id,team,billing_type,rate,footage,bill_trigger,status) VALUES ($1,'construction','footage',85,10,'completed','potential') RETURNING id`, [saId])).rows[0].id;
+
+    const periodStart = (() => { const d = new Date(); d.setMonth(d.getMonth() - 3); return d.toISOString().slice(0, 10); })();
+    invId = (await pool.query(
+      `INSERT INTO invoices (client_id,service_area_id,engineering_contract_id,invoice_number,invoice_date,billing_period_start,total_amount,status)
+       VALUES ($1,$2,$3,'INV-PROJ-T',now()::date,$4,22000,'draft') RETURNING id`, [clientId, saId, ecId, periodStart])).rows[0].id;
+    await pool.query(`INSERT INTO invoice_items (invoice_id,service_area_job_id,description,amount,line_kind) VALUES ($1,$2,'RE hours',22000,'charge')`, [invId, jobRE]);
+
+    // ── per-SA projection ──
+    let r = await get('/api/projections/service-area/' + saId);
+    assert.equal(r.status, 200);
+    assert.equal(r.json.totals.projected_total, 48850, 'expected = 48000 (RE est) + 850 (plant records 10*85)');
+    assert.equal(r.json.totals.billed, 22000, 'billed from invoice item');
+    assert.equal(r.json.totals.remaining, 26850, 'remaining = projected - billed');
+    const pr = r.json.jobs.find((j) => j.job_id === jobPR);
+    assert.equal(pr.expected, 850, 'footage job expected = footage*rate');
+    assert.equal(pr.bill_trigger, 'completed', 'plant records is a completed-trigger job');
+
+    // ── EC budget burn ──
+    r = await get('/api/projections/ec/' + ecId);
+    assert.equal(r.json.budget, 100000, 'EC engineering budget');
+    assert.equal(r.json.projected, 48850, 'EC projected = Σ expected');
+    assert.equal(r.json.billed, 22000);
+    assert.equal(r.json.projected_remaining, 26850);
+    assert.ok(r.json.burn_rate_monthly > 0, 'burn rate computed from elapsed months');
+    assert.ok(r.json.months_elapsed >= 3, 'about 3 months elapsed since first invoice');
+
+    // ── rollup by program ──
+    r = await get('/api/projections?group=program');
+    const rus = r.json.rows.find((x) => x.key === 'rus');
+    assert.ok(rus && rus.projected_total >= 48850, 'rus rollup includes this SA');
+
+    // ── map data ──
+    r = await get('/api/map/service-areas');
+    assert.ok(r.json.find((x) => x.id === saId), 'map data includes the service area');
+  } finally {
+    if (invId) await pool.query(`DELETE FROM invoice_items WHERE invoice_id=$1`, [invId]).catch(() => {});
+    if (invId) await pool.query(`DELETE FROM invoices WHERE id=$1`, [invId]).catch(() => {});
+    if (saId) await pool.query(`DELETE FROM service_area_jobs WHERE service_area_id=$1`, [saId]).catch(() => {});
+    if (saId) await pool.query(`DELETE FROM service_areas WHERE id=$1`, [saId]).catch(() => {});
+    if (budgetId) await pool.query(`DELETE FROM budgets WHERE id=$1`, [budgetId]).catch(() => {});
+    if (ecId) await pool.query(`DELETE FROM engineering_contracts WHERE id=$1`, [ecId]).catch(() => {});
+    if (clientId) await pool.query(`DELETE FROM clients WHERE id=$1`, [clientId]).catch(() => {});
+    server.close();
+    await pool.end();
+  }
+});

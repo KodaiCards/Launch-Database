@@ -386,6 +386,38 @@ module.exports = function installServiceAreaRoutes(app, pool, mw) {
     } catch (e) { console.error('[service-areas:finalize]', e && e.message); res.status(500).json({ error: 'Failed to finalize service area.' }); }
   });
 
+  // ─── Final / archive (the "final" lifecycle stage, after "completed") ──────
+  // closed_at = archived: everything billed + settled, nothing more changes.
+  // Informational/soft (UI treats as read-only); not a billing trigger —
+  // "completed" (build_finalized_at) is what bills close-out jobs.
+  app.post('/api/service-areas/:id/close', requireManagerOrAdmin, async (req, res) => {
+    const close = !(req.body && req.body.closed === false);
+    try {
+      const { rows } = await pool.query(
+        `UPDATE service_areas SET closed_at = ${close ? 'now()' : 'NULL'},
+           updated_at = now(), updated_by_user_id = $2 WHERE id = $1 RETURNING *`,
+        [req.params.id, uid(req)]);
+      if (!rows[0]) return res.status(404).json({ error: 'Service area not found' });
+      logAudit(pool, { req, action: 'service_area.close', entity_type: 'service_area',
+        entity_id: rows[0].id, after: { closed: close }, source: 'admin' }).catch(() => {});
+      res.json(rows[0]);
+    } catch (e) { console.error('[service-areas:close]', e && e.message); res.status(500).json({ error: 'Failed to update final status.' }); }
+  });
+
+  app.post('/api/service-area-routes/:id/close', requireManagerOrAdmin, async (req, res) => {
+    const close = !(req.body && req.body.closed === false);
+    try {
+      const { rows } = await pool.query(
+        `UPDATE service_area_routes SET closed_at = ${close ? 'now()' : 'NULL'},
+           updated_at = now(), updated_by_user_id = $2 WHERE id = $1 RETURNING *`,
+        [req.params.id, uid(req)]);
+      if (!rows[0]) return res.status(404).json({ error: 'Route not found' });
+      logAudit(pool, { req, action: 'service_area_route.close', entity_type: 'service_area_route',
+        entity_id: rows[0].id, after: { closed: close }, source: 'admin' }).catch(() => {});
+      res.json(rows[0]);
+    } catch (e) { console.error('[sa-routes:close]', e && e.message); res.status(500).json({ error: 'Failed to update final status.' }); }
+  });
+
   // ─── Materials (expected vs completed; map-sourced or manual) ───────────────
   // quantity = EXPECTED; completed_quantity = installed (auto-rolled from units
   // when a material has units). Remaining is computed client-side (exp − done).

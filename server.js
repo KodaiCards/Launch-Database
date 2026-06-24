@@ -738,6 +738,10 @@ require('./routes/money_view')(app, pool, { requireManagerOrAdmin });
 // Migration 0066. Coexists with legacy routes/billing.js during cutover.
 require('./routes/billing_keystone')(app, pool, { requireManagerOrAdmin });
 
+// Projections (Money tab): expected−billed per job + RUS engineering-budget burn,
+// plus the Service Areas → Map data endpoint. Migration 0067/0068.
+require('./routes/projections')(app, pool, { requireManagerOrAdmin });
+
 // Admin data-export bundle: GET /api/export/all.zip (service areas, jobs, invoices CSVs).
 require('./routes/export_bundle')(app, pool, { requireAdmin });
 

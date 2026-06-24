@@ -36,7 +36,7 @@ module.exports = function installBillingKeystoneRoutes(app, pool, mw) {
     const { rows } = await pool.query(
       `SELECT sa.id AS sa_id, sa.name AS sa_name, sa.client_id, sa.engineering_contract_id,
               sa.program, sa.build_finalized_at AS sa_finalized,
-              saj.id AS job_id, saj.team, saj.route_id, saj.billing_type,
+              saj.id AS job_id, saj.team, saj.route_id, saj.billing_type, saj.bill_trigger,
               COALESCE(saj.rate,0) AS rate, COALESCE(saj.footage,0) AS footage,
               COALESCE(saj.estimated_amount,0) AS estimated_amount,
               j.name AS job_name, r.build_finalized_at AS route_finalized,
@@ -61,9 +61,14 @@ module.exports = function installBillingKeystoneRoutes(app, pool, mw) {
 
     const areas = new Map();
     for (const r of rows) {
-      const earned = r.billing_type === 'hourly' ? CENT(Number(r.earned_hours) * Number(r.rate))
+      // Expected value of the job at full delivery.
+      const expectedAmt = r.billing_type === 'hourly' ? CENT(Number(r.earned_hours) * Number(r.rate))
         : r.billing_type === 'footage' ? CENT(Number(r.footage) * Number(r.rate))
-        : /* fixed */ ((r.route_id ? r.route_finalized : r.sa_finalized) ? CENT(r.estimated_amount) : 0);
+        : CENT(r.estimated_amount);
+      // bill_trigger='completed' (build-complete + close-out) earns only once the
+      // route (or area, when route-less) is finalized; 'progressive' accrues.
+      const milestone = r.route_id ? r.route_finalized : r.sa_finalized;
+      const earned = r.bill_trigger === 'completed' ? (milestone ? expectedAmt : 0) : expectedAmt;
       const billable = CENT(earned - Number(r.billed_to_date));
       if (Math.abs(billable) < 0.005) continue; // nothing to bill / already settled
 
