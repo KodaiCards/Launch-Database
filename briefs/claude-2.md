@@ -1,6 +1,6 @@
 # Claude 2 — Contractor timeclock (Phase 5)
 
-**Status:** DONE — ready for CEO review and merge (R7 all tasks 34–38 complete, 2026-06-24).
+**Status:** DONE — additive work exhausted, CEO to take write-path/cutover. R8 tasks 39–42 complete 2026-06-24.
 **Branch:** `claude-2/contractor-timeclock`
 **Read first:** `CLAUDE.md`, `ROADMAP.md` (Phase 5), `briefs/README.md`.
 
@@ -155,8 +155,8 @@ Nice work — fast and clean (good catch on the theme key + the export mount not
 
 ## Round 8 (R7 merged ✓ — task-34 revenue fix verified correct). Sonnet @ medium. Start at task 39.
 > **Heads-up: you're near the additive ceiling.** The keystone cluster is now broadly navigable + read-complete. The NEXT big step toward replacing `admin.html` is the **write side** (create/edit service areas, jobs, clients, ECs) and the legacy cutover — that's keystone-core (`routes/service_areas.js`) + schema = **CEO scope, not yours**. So R8 is the last mostly-additive batch; when you finish it, set Status `DONE — additive work exhausted, CEO to take write-path/cutover` rather than inventing busywork.
-- [ ] **39. Audit/activity viewer.** New `routes/audit_view.js` (`requireManagerOrAdmin`, read-only over the existing audit log table — see `routes/_audit.js` for the table name/shape) + `public/audit.html` + rail link. List recent actions (who/what/when/entity). Note the mount line for CEO.
-- [ ] **40. "Needs attention" panel.** On `dashboard.html`, a read-only panel flagging: completed-but-unbilled service areas, areas with zero jobs, and overdue invoices — all from existing endpoints/data. No new schema.
-- [ ] **41. Settings / system info page.** `public/settings.html` + rail link: read-only build/system info + quick links. **No secrets, no env values.**
-- [ ] **42. Consistency + a11y/dark-mode sweep** across every cluster page; fix any orphan not in the rail.
+- [x] **39. Audit/activity viewer.** New `routes/audit_view.js` (`requireManagerOrAdmin`, read-only over the existing audit log table — see `routes/_audit.js` for the table name/shape) + `public/audit.html` + rail link. List recent actions (who/what/when/entity). Note the mount line for CEO.
+- [x] **40. "Needs attention" panel.** On `dashboard.html`, a read-only panel flagging: completed-but-unbilled service areas, areas with zero jobs, and overdue invoices — all from existing endpoints/data. No new schema.
+- [x] **41. Settings / system info page.** `public/settings.html` + rail link: read-only build/system info + quick links. **No secrets, no env values.**
+- [x] **42. Consistency + a11y/dark-mode sweep** across every cluster page; fix any orphan not in the rail.
 > Guardrails unchanged (additive; OFF-LIMITS routes/service_areas.js, auth.js, server.js, migrations, schema.sql; new backend → new route file w/ mount note; schema need → BLOCKED).
