@@ -21,6 +21,52 @@ module.exports = function installMapIntegrationRoutes(app, pool, mw) {
   const gate = (mw && mw.requireManagerOrAdmin) || ((req, res, next) => next());
   const upload = mw && mw.upload;
 
+  // Shared: price a stored map plan's structures against a CC catalog + sum span
+  // footage. Used by /api/map/estimate (ad-hoc) and the per-SA rollup (the loop).
+  async function computeEstimate(plan, ccId) {
+    const [ptsR, segR, catR] = await Promise.all([
+      pool.query('SELECT value FROM map_store WHERE store_key = $1', ['frm_pts_' + plan]),
+      pool.query('SELECT value FROM map_store WHERE store_key = $1', ['frm_segs_' + plan]),
+      ccId ? pool.query('SELECT item_key, label, unit, unit_price FROM cost_catalog WHERE construction_contract_id = $1', [ccId])
+           : Promise.resolve({ rows: [] }),
+    ]);
+    const cat = {}; for (const c of catR.rows) cat[norm(c.item_key)] = c;
+    const pts = ptsR.rows.length ? JSON.parse(ptsR.rows[0].value || '{}') : {};
+    const segs = segR.rows.length ? JSON.parse(segR.rows[0].value || '{}') : {};
+
+    const counts = {}; // ptype → {count, completed}
+    for (const p of Object.values(pts)) {
+      const k = norm(p.ptype);
+      if (!counts[k]) counts[k] = { count: 0, completed: 0 };
+      counts[k].count++;
+      if (p.status === 'asBuilt' || p.status === 'active' || p.status === 'existing') counts[k].completed++;
+    }
+    const items = Object.entries(counts).map(([k, v]) => {
+      const c = cat[k];
+      return {
+        item_key: k, label: c ? c.label : k, unit: c ? c.unit : null,
+        count: v.count, completed: v.completed,
+        unit_price: c ? CENT(c.unit_price) : null,
+        expected: c ? CENT(v.count * c.unit_price) : null,
+        completed_value: c ? CENT(v.completed * c.unit_price) : null,
+        priced: !!c,
+      };
+    }).sort((a, b) => (b.expected || 0) - (a.expected || 0));
+
+    let footage = 0; for (const s of Object.values(segs)) footage += Number(s.lengthFt || 0);
+    const expected_total = CENT(items.reduce((s, i) => s + (i.expected || 0), 0));
+    const completed_total = CENT(items.reduce((s, i) => s + (i.completed_value || 0), 0));
+    return {
+      plan, construction_contract_id: ccId || null,
+      structures: items,
+      unpriced: items.filter((i) => !i.priced).map((i) => i.item_key),
+      footage_total: CENT(footage),
+      construction_expected: expected_total,
+      construction_completed: completed_total,
+      construction_remaining: CENT(expected_total - completed_total),
+    };
+  }
+
   // ── 1. DB-backed window.storage (key → value) ──────────────────────────────
   // The map calls store.get(k) expecting {value} and store.set(k, v) with a string.
   app.get('/api/map/store/:key', gate, async (req, res) => {
@@ -126,46 +172,25 @@ module.exports = function installMapIntegrationRoutes(app, pool, mw) {
     const plan = req.query.plan, ccId = req.query.cc;
     if (!plan || !ccId) return res.status(400).json({ error: 'plan and cc required' });
     try {
-      const [ptsR, segR, catR] = await Promise.all([
-        pool.query('SELECT value FROM map_store WHERE store_key = $1', ['frm_pts_' + plan]),
-        pool.query('SELECT value FROM map_store WHERE store_key = $1', ['frm_segs_' + plan]),
-        pool.query('SELECT item_key, label, unit, unit_price FROM cost_catalog WHERE construction_contract_id = $1', [ccId]),
-      ]);
-      const cat = {}; for (const c of catR.rows) cat[norm(c.item_key)] = c;
-      const pts = ptsR.rows.length ? JSON.parse(ptsR.rows[0].value || '{}') : {};
-      const segs = segR.rows.length ? JSON.parse(segR.rows[0].value || '{}') : {};
-
-      const counts = {}; // ptype → {count, completed}
-      for (const p of Object.values(pts)) {
-        const k = norm(p.ptype);
-        if (!counts[k]) counts[k] = { count: 0, completed: 0 };
-        counts[k].count++;
-        if (p.status === 'asBuilt' || p.status === 'active' || p.status === 'existing') counts[k].completed++;
-      }
-      const items = Object.entries(counts).map(([k, v]) => {
-        const c = cat[k];
-        return {
-          item_key: k, label: c ? c.label : k, unit: c ? c.unit : null,
-          count: v.count, completed: v.completed,
-          unit_price: c ? CENT(c.unit_price) : null,
-          expected: c ? CENT(v.count * c.unit_price) : null,
-          completed_value: c ? CENT(v.completed * c.unit_price) : null,
-          priced: !!c,
-        };
-      }).sort((a, b) => (b.expected || 0) - (a.expected || 0));
-
-      let footage = 0; for (const s of Object.values(segs)) footage += Number(s.lengthFt || 0);
-      const expected_total = CENT(items.reduce((s, i) => s + (i.expected || 0), 0));
-      const completed_total = CENT(items.reduce((s, i) => s + (i.completed_value || 0), 0));
-      res.json({
-        plan, construction_contract_id: ccId,
-        structures: items,
-        unpriced: items.filter((i) => !i.priced).map((i) => i.item_key),
-        footage_total: CENT(footage),
-        construction_expected: expected_total,
-        construction_completed: completed_total,
-        construction_remaining: CENT(expected_total - completed_total),
-      });
+      res.json(await computeEstimate(plan, ccId));
     } catch (e) { console.error('[map:estimate]', e && e.message); res.status(500).json({ error: 'Failed to estimate.' }); }
+  });
+
+  // ── Per-SA rollup — the loop: derive an SA's construction numbers from its
+  // linked map plan + construction contract. Drives projections/budgets.
+  app.get('/api/service-areas/:id/map-rollup', gate, async (req, res) => {
+    try {
+      const { rows } = await pool.query(
+        'SELECT id, name, map_plan_id, construction_contract_id FROM service_areas WHERE id = $1', [req.params.id]);
+      if (!rows.length) return res.status(404).json({ error: 'Service area not found' });
+      const sa = rows[0];
+      if (!sa.map_plan_id) {
+        return res.json({ service_area_id: sa.id, name: sa.name, linked: false,
+          reason: 'No map plan linked to this service area.' });
+      }
+      const est = await computeEstimate(sa.map_plan_id, sa.construction_contract_id);
+      res.json({ service_area_id: sa.id, name: sa.name, linked: true,
+        construction_contract_id: sa.construction_contract_id || null, ...est });
+    } catch (e) { console.error('[map:sa-rollup]', e && e.message); res.status(500).json({ error: 'Failed to roll up map data.' }); }
   });
 };
