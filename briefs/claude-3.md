@@ -50,6 +50,6 @@ Reuse existing `/api/customer/*` data; no new money columns. Schema need → BLO
 Same guardrails: **read-only, `customer`-scoped, no $ beyond what the client is billed, NO schema/keystone changes.** Push per task; schema need → `BLOCKED — needs CEO` + ping. Pull `main` first each time.
 - [x] **10. Per-area progress bar.** Jobs done / total as a visual bar on each area card (+ projected completion if start/completed dates allow). Frontend over data you already fetch.
 - [x] **11. Status activity feed.** A simple "recent updates" list per area (latest job status changes / dates). If it needs a new read endpoint, add a `customer`-scoped one in `routes/customer_portal.js`; no new tables.
-- [ ] **12. Account panel polish.** Read-only profile (name, email, linked client(s), contact-your-PM block). Reuse existing account modal; no new auth.
+- [x] **12. Account panel polish.** Read-only profile (name, email, linked client(s), contact-your-PM block). Reuse existing account modal; no new auth.
 - [ ] **13. Portal accessibility + mobile.** Full a11y pass (labels, focus, contrast) + mobile layout across all tabs.
 - [ ] **14. Site photos (CHECK FIRST).** Goal: show client-visible site photos per service area. **Likely needs schema** (a photo↔service-area link + a `client_visible` flag). Inspect the photos/documents tables; if the link + visibility flag already exist, surface them read-only. If NOT → `BLOCKED — needs CEO`, describe the columns you'd need, skip to anything else.

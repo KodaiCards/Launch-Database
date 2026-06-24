@@ -324,11 +324,13 @@ async function api(url, opts){
 
 let _customerProjects = [];
 let _currentUser = null;
+let _currentClients = [];
 
 async function loadCurrentUser(){
   try {
     const r = await api('/api/customer/me');
     _currentUser = r.user;
+    _currentClients = r.clients || [];
     const pill = document.getElementById('user-pill');
     if (pill) {
       pill.style.display = '';
@@ -858,6 +860,7 @@ function showAccountMenu(){
   const existing = document.getElementById('account-modal');
   if (existing){ existing.remove(); return; }
   const u = _currentUser || {};
+  const clients = _currentClients || [];
   const overlay = document.createElement('div');
   overlay.id = 'account-modal';
   overlay.className = 'modal-overlay';
@@ -872,6 +875,14 @@ function showAccountMenu(){
         <div style="text-align:center;padding:8px 0 16px 0;border-bottom:1px solid var(--gray-border);margin-bottom:16px">
           <div style="font-size:18px;font-weight:600;margin-bottom:4px">${esc(u.full_name || u.username || '')}</div>
           <div style="font-size:12px;color:var(--text-muted)">${esc(u.email || u.username || '')}</div>
+        </div>
+        <div style="margin-bottom:16px">
+          <div style="font-size:11px;text-transform:uppercase;letter-spacing:.4px;color:var(--text-muted);margin-bottom:6px">${clients.length === 1 ? 'Client' : 'Clients'}</div>
+          ${clients.length ? clients.map(c => `<div style="font-size:13px;padding:2px 0">${esc(c.name)}</div>`).join('') : '<div style="font-size:13px;color:var(--text-muted)">—</div>'}
+        </div>
+        <div style="background:var(--surface-1);border:1px solid var(--gray-border);border-radius:8px;padding:12px;margin-bottom:16px">
+          <div style="font-size:12px;font-weight:600;margin-bottom:4px"><i class="fa-solid fa-headset" style="margin-right:6px;color:var(--primary)" aria-hidden="true"></i>Need help?</div>
+          <div style="font-size:12px;color:var(--text-muted)">Contact your Launch Fiber project manager with any questions about your service areas or invoices.</div>
         </div>
         <button class="btn btn-secondary" style="width:100%;justify-content:flex-start;padding:12px;margin-bottom:8px" onclick="document.getElementById('account-modal').remove();openChangePasswordModal()">
           <i class="fa-solid fa-key" style="margin-right:10px"></i><span>Change Password</span>
