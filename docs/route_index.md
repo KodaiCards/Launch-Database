@@ -519,6 +519,32 @@ These endpoints were added to the existing customer portal alongside the legacy 
 
 ---
 
+## Keystone Service Areas & Jobs Routes (routes/service_areas.js)
+
+The primary work unit in the new data model. Service areas contain job line items; billing rolls up from jobs to an invoice via the `/bill` endpoint.
+
+| Method | Path | Gate | Returns |
+|--------|------|------|---------|
+| GET | `/api/service-areas` | requireAuth(STAFF_ROLES) | All service areas with rolled-up job totals; filters: `?client_id=`, `?engineering_contract_id=`, `?status=`, `?program=` |
+| GET | `/api/service-areas/:id` | requireAuth(STAFF_ROLES) | Single service area with job line items embedded |
+| POST | `/api/service-areas` | requireManagerOrAdmin | Create service area; `engineering_contract_id` forces `program='rus'` |
+| PUT | `/api/service-areas/:id` | requireManagerOrAdmin | Update service area fields (name, status, map, billing_cadence, etc.) |
+| DELETE | `/api/service-areas/:id` | requireManagerOrAdmin | Delete service area |
+| POST | `/api/service-areas/:id/jobs` | requireManagerOrAdmin | Add job line item; auto-fills team/billing_type/rate from catalog + pricing_entries |
+| PUT | `/api/service-area-jobs/:id` | requireManagerOrAdmin | Update job (status, rate, hours, dates, etc.); triggers recomputeJob |
+| DELETE | `/api/service-area-jobs/:id` | requireManagerOrAdmin | Delete job line item |
+| POST | `/api/service-area-jobs/:id/advance` | requireManagerOrAdmin | Step job forward in pipeline; body `{ to: 'revision' }` branches to revision |
+| POST | `/api/service-area-jobs/:id/regress` | requireManagerOrAdmin | Step job back one stage (undo-style) |
+| POST | `/api/service-area-jobs/:id/time-entries` | requireAuth(STAFF_ROLES + contractor) | Log hours against a job; contractors gated by IDOR ownership check; contractor response strips $ |
+| GET | `/api/service-area-jobs/:id/time-entries` | requireAuth(STAFF_ROLES) | List time entries for a job (with staff name) |
+| GET | `/api/service-area-jobs` | requireAuth(STAFF_ROLES) | Flat list of all job line items across all areas; filters: `?team=`, `?status=` |
+| POST | `/api/service-areas/:id/bill` | requireManagerOrAdmin | Bill ready-to-bill jobs into one draft invoice; marks those jobs `billed` |
+| GET | `/api/billing/invoices` | requireManagerOrAdmin | Invoice list (new keystone model) with embedded line items |
+| GET | `/api/dashboard/overview` | requireAuth(STAFF_ROLES) | Dashboard headline totals: SA counts, job pipeline, revenue split (RUS/non-RUS), ready-to-bill, alerts |
+| GET | `/api/service-area-pipelines` | requireAuth(STAFF_ROLES) | Static pipeline map (PIPELINES + APPROVAL_STAGE) for front-end chip rendering |
+
+---
+
 ## Summary
 
 **Total Routes:** ~375 endpoints across 30+ route files
