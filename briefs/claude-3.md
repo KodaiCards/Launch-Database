@@ -1,6 +1,6 @@
 # Claude 3 — Client portal: service-area status view (Phase 6)
 
-**Status:** Tasks 1–24 DONE — ready for review (Phase 6 + Rounds 1–6) on `claude/inspiring-bell-7jiwdf`. Task 14 (site photos) DEFERRED → Phase 7.
+**Status:** Tasks 1–28 DONE — additive work exhausted (Phase 6 + Rounds 1–7) on `claude/inspiring-bell-7jiwdf`. Task 14 (site photos) DEFERRED → Phase 7. **Flagged for CEO: portal is at the additive ceiling — deeper features (notifications, per-area documents/photos) need schema/Phase 7.**
 **Branch:** `claude/inspiring-bell-7jiwdf` (harness-assigned; supersedes the original `claude-3/client-portal-status`)
 **Read first:** `CLAUDE.md`, `ROADMAP.md` (Phase 6), `briefs/README.md`.
 
@@ -94,5 +94,5 @@ Same guardrails: additive, `customer`-scoped, read-only, no $ beyond billed, NO 
 - [x] **25. First-run help / onboarding.** A dismissible overlay or "?" affordance explaining the tabs/status meanings for a first-time client. Frontend, `localStorage` dismiss.
 - [x] **26. Contact / support.** A "Contact your project manager" action (mailto using the PM info already shown). No backend.
 - [x] **27. a11y + cross-browser + perf round 2.** Audit labels/focus/contrast; verify on mobile + a second browser; confirm debounce/cache from R6 hold up.
-- [ ] **28. Print/export polish.** Clean single-area status sheet + an all-areas summary print/PDF for the client. Frontend.
+- [x] **28. Print/export polish.** Clean single-area status sheet + an all-areas summary print/PDF for the client. Frontend.
 > Guardrails: read-only, customer-scoped, no $ beyond billed, NO schema. Schema need → BLOCKED + ping.
