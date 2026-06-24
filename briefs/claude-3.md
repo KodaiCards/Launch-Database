@@ -48,7 +48,7 @@ Reuse existing `/api/customer/*` data; no new money columns. Schema need → BLO
 
 ## Round 4 — queue (portal depth, when 7–9 are in)
 Same guardrails: **read-only, `customer`-scoped, no $ beyond what the client is billed, NO schema/keystone changes.** Push per task; schema need → `BLOCKED — needs CEO` + ping. Pull `main` first each time.
-- [ ] **10. Per-area progress bar.** Jobs done / total as a visual bar on each area card (+ projected completion if start/completed dates allow). Frontend over data you already fetch.
+- [x] **10. Per-area progress bar.** Jobs done / total as a visual bar on each area card (+ projected completion if start/completed dates allow). Frontend over data you already fetch.
 - [ ] **11. Status activity feed.** A simple "recent updates" list per area (latest job status changes / dates). If it needs a new read endpoint, add a `customer`-scoped one in `routes/customer_portal.js`; no new tables.
 - [ ] **12. Account panel polish.** Read-only profile (name, email, linked client(s), contact-your-PM block). Reuse existing account modal; no new auth.
 - [ ] **13. Portal accessibility + mobile.** Full a11y pass (labels, focus, contrast) + mobile layout across all tabs.

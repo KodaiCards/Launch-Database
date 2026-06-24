@@ -588,6 +588,18 @@ function saStageIndex(jobs){
   if (live.some(j => j.status !== 'potential')) return 1;
   return 0;
 }
+// Naive projected completion: extrapolate elapsed time by current % done.
+// Only when in progress (no completed_date), started, and 0 < pct < 100.
+function saProjectedCompletion(a){
+  if (a.completed_date || !a.start_date) return null;
+  const pct = a.completion_pct;
+  if (pct == null || pct <= 0 || pct >= 100) return null;
+  const start = new Date(a.start_date + 'T00:00:00');
+  const elapsed = (Date.now() - start.getTime()) / 86400000;
+  if (!(elapsed > 0)) return null;
+  const proj = new Date(start.getTime() + (elapsed / (pct / 100)) * 86400000);
+  return isNaN(proj.getTime()) ? null : proj.toISOString().slice(0, 10);
+}
 
 function cpSaClearChrome(){
   const header = document.getElementById('cp-sa-header');
@@ -685,11 +697,13 @@ function renderServiceAreas(){
   body.innerHTML = areas.map(a => {
     const status = String(a.status || 'active').toLowerCase();
     const pct = a.completion_pct;
+    const projDate = saProjectedCompletion(a);
     const prog = pct != null
       ? `<div class="sa-prog-line">
            <div class="progress-track"><div class="progress-fill" style="width:${pct}%"></div></div>
            <span style="font-size:12px;color:var(--text-muted)">${a.jobs_done} of ${a.jobs_total} jobs done · ${pct}%</span>
-         </div>`
+         </div>
+         ${projDate ? `<div style="font-size:11px;color:var(--text-muted);margin-top:4px"><i class="fa-regular fa-calendar-check" aria-hidden="true"></i> Est. completion ~ ${esc(fmtDate(projDate))}</div>` : ''}`
       : `<div style="font-size:12px;color:var(--text-muted);margin-top:8px">No jobs yet.</div>`;
     // Timeline: date range + a coarse stage progression from job statuses.
     const sIdx = saStageIndex(a.jobs);
