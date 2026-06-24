@@ -184,6 +184,15 @@ html[data-theme="dark"] .sk::after{background:linear-gradient(90deg,transparent,
 .sa-filter-bar select{padding:7px 10px;border:1px solid var(--gray-border);border-radius:6px;font-size:13px;background:var(--surface-2);color:var(--text);font-family:inherit;cursor:pointer}
 .sa-filter-bar select:focus{outline:none;border-color:var(--primary)}
 
+/* Mini-dashboard status breakdown (task 19) */
+.cp-mini-dash{padding:12px 14px;border-top:1px solid var(--gray-border);margin-top:4px}
+.cp-mini-dash-title{font-size:10px;text-transform:uppercase;letter-spacing:.5px;color:var(--text-muted);margin-bottom:8px;font-weight:600}
+.cp-status-row{display:flex;align-items:center;gap:8px;margin-bottom:5px;font-size:12px}
+.cp-status-bar-track{flex:1;height:6px;background:var(--surface-3);border-radius:3px;overflow:hidden}
+.cp-status-bar-fill{height:100%;border-radius:3px}
+.cp-status-count{width:24px;text-align:right;font-weight:600;color:var(--text);font-size:11px}
+.cp-status-label{width:68px;color:var(--text-muted)}
+
 /* "What's new" badge (task 17) */
 .cp-new-badge{display:inline-block;padding:1px 6px;border-radius:8px;font-size:10px;font-weight:700;letter-spacing:.4px;background:var(--warning);color:#000;margin-left:6px;vertical-align:middle;text-transform:uppercase}
 
@@ -861,7 +870,34 @@ function cpRenderLanding(){
         <div class="cp-landing-lbl">Overall complete</div>
         ${overall != null ? `<div class="progress-track" style="width:100%;margin-top:6px"><div class="progress-fill" style="width:${overall}%"></div></div>` : ''}
       </div>
+      ${cpMiniDash(areas)}
     </div>`;
+}
+
+function cpMiniDash(areas){
+  if (!areas.length) return '';
+  const statuses = [
+    {key:'active',    label:'Active',    color:'var(--primary)'},
+    {key:'on_hold',   label:'On hold',   color:'var(--warning)'},
+    {key:'completed', label:'Completed', color:'var(--success)'},
+    {key:'billed',    label:'Billed',    color:'#5a6e8c'},
+  ];
+  const counts = {};
+  for (const s of statuses) counts[s.key] = areas.filter(a => (a.status||'').toLowerCase() === s.key).length;
+  const maxCount = Math.max(1, ...Object.values(counts));
+  const rows = statuses.filter(s => counts[s.key] > 0).map(s => {
+    const pct = Math.round(counts[s.key] / maxCount * 100);
+    return `<div class="cp-status-row">
+      <span class="cp-status-label">${s.label}</span>
+      <div class="cp-status-bar-track"><div class="cp-status-bar-fill" style="width:${pct}%;background:${s.color}"></div></div>
+      <span class="cp-status-count">${counts[s.key]}</span>
+    </div>`;
+  });
+  if (!rows.length) return '';
+  return `<div class="cp-mini-dash">
+    <div class="cp-mini-dash-title">Status breakdown</div>
+    ${rows.join('')}
+  </div>`;
 }
 
 function renderServiceAreas(){
