@@ -5,11 +5,13 @@
 
   document.addEventListener('DOMContentLoaded', () => {
     applyStoredTheme();
+    initTabs();
     loadMargin();
     loadAging();
     loadRevenue('month');
     loadProgramFinancials();
     loadClientList();
+    loadProjections();
   });
 
   const fmt = n => '$' + (Number(n) || 0).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 });
@@ -445,4 +447,289 @@
   function esc(s) {
     return String(s ?? '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
   }
+
+  // ── Tab switching ─────────────────────────────────────────────────────────
+
+  function initTabs() {
+    document.querySelectorAll('.tab-btn').forEach(btn => {
+      btn.addEventListener('click', () => switchTab(btn.dataset.t));
+    });
+  }
+
+  window.switchTab = function (name) {
+    document.querySelectorAll('.tab-btn').forEach(b => {
+      const active = b.dataset.t === name;
+      b.classList.toggle('active', active);
+      b.setAttribute('aria-selected', active ? 'true' : 'false');
+    });
+    document.querySelectorAll('.tab-panel').forEach(p => {
+      p.classList.toggle('active', p.id === 'tab-panel-' + name);
+    });
+  };
+
+  // ── Projections ───────────────────────────────────────────────────────────
+
+  let _projSAs      = null;
+  let _projECs      = null;
+  let _projProgFilter   = 'all';
+  let _projClientFilter = '';
+  let _projSaCache  = {};
+
+  async function loadProjections() {
+    const kpiEl   = document.getElementById('proj-kpi');
+    const concsEl = document.getElementById('proj-concs-card');
+    if (!kpiEl || !concsEl) return;
+    kpiEl.innerHTML   = '<div class="aging-card"><span class="spinner"></span>Loading…</div>';
+    concsEl.innerHTML = '<div class="loading-row"><span class="spinner"></span>Loading projections…</div>';
+    try {
+      const [saRes, ecRes] = await Promise.all([
+        fetch('/api/service-areas', { credentials: 'include' }),
+        fetch('/api/engineering-contracts', { credentials: 'include' }),
+      ]);
+      if (!saRes.ok) throw new Error('Failed to load service areas');
+      _projSAs = await saRes.json();
+      if (ecRes.ok) _projECs = await ecRes.json();
+      populateProjClientFilter(_projSAs);
+      populateProjEcFilter(_projECs);
+      renderProjections();
+    } catch (e) {
+      if (kpiEl) kpiEl.innerHTML = errMsg(e);
+      if (concsEl) concsEl.innerHTML = errMsg(e);
+    }
+  }
+
+  function populateProjClientFilter(sas) {
+    const sel = document.getElementById('proj-client-sel');
+    if (!sel) return;
+    const seen = new Set();
+    (sas || []).forEach(sa => {
+      if (sa.client_id && !seen.has(sa.client_id)) {
+        seen.add(sa.client_id);
+        const opt = document.createElement('option');
+        opt.value = sa.client_id; opt.textContent = sa.client_name || sa.client_id;
+        sel.appendChild(opt);
+      }
+    });
+  }
+
+  function populateProjEcFilter(ecs) {
+    const sel = document.getElementById('proj-ec-sel');
+    if (!sel) return;
+    (ecs || []).forEach(ec => {
+      const opt = document.createElement('option');
+      opt.value = ec.id; opt.textContent = ec.name || ec.id;
+      sel.appendChild(opt);
+    });
+  }
+
+  window.setProjProgram = function (prog) {
+    _projProgFilter = prog;
+    [['all','proj-prog-all'],['rus','proj-prog-rus'],['non-rus','proj-prog-other']].forEach(([p, id]) => {
+      const btn = document.getElementById(id);
+      if (!btn) return;
+      btn.style.background = p === prog ? 'var(--primary)' : '';
+      btn.style.color      = p === prog ? '#fff' : '';
+    });
+    renderProjections();
+  };
+
+  window.filterProjections = function () {
+    _projClientFilter = (document.getElementById('proj-client-sel') || {}).value || '';
+    renderProjections();
+  };
+
+  function filteredSAs() {
+    let sas = _projSAs || [];
+    if (_projProgFilter === 'rus')     sas = sas.filter(sa => (sa.program || '').toLowerCase() === 'rus');
+    else if (_projProgFilter === 'non-rus') sas = sas.filter(sa => (sa.program || '').toLowerCase() !== 'rus');
+    if (_projClientFilter) sas = sas.filter(sa => sa.client_id === _projClientFilter);
+    return sas;
+  }
+
+  function renderProjections() {
+    const kpiEl   = document.getElementById('proj-kpi');
+    const concsEl = document.getElementById('proj-concs-card');
+    const ecSec   = document.getElementById('proj-ec-section');
+    if (!kpiEl || !concsEl) return;
+
+    const sas = filteredSAs();
+    let projTotal = 0, projBilled = 0;
+    sas.forEach(sa => { projTotal += Number(sa.estimated_total) || 0; projBilled += Number(sa.actual_total) || 0; });
+    const projRemaining = Math.max(0, projTotal - projBilled);
+    const activeCount   = sas.filter(sa => !sa.closed_at).length;
+
+    kpiEl.innerHTML = [
+      ['b0', 'fa-chart-line',          'Projected Total',       fmt(projTotal), null],
+      ['b1', 'fa-file-invoice-dollar', 'Billed to Date',        fmt(projBilled), null],
+      ['b2', 'fa-dollar-sign',         'Projected Remaining',   fmt(projRemaining), null],
+      ['b3', 'fa-diagram-project',     'Active Concentrators',  String(activeCount), 'not archived'],
+    ].map(([cls, icon, label, val, sub]) => `
+      <div class="aging-card ${cls}">
+        <div class="aging-label"><i class="fa-solid ${icon}"></i> ${label}</div>
+        <div class="aging-total">${val}</div>
+        ${sub ? `<div class="aging-count">${sub}</div>` : ''}
+      </div>`).join('');
+
+    if (ecSec) ecSec.style.display = _projProgFilter === 'rus' ? '' : 'none';
+
+    if (!sas.length) {
+      concsEl.innerHTML = '<div class="empty-state"><i class="fa-solid fa-diagram-project"></i>No concentrators match the filter.</div>';
+      return;
+    }
+
+    const rowsHtml = sas.map(sa => {
+      const lc = sa.closed_at ? 'final' : sa.build_finalized_at ? 'completed' : 'active';
+      const badgeCls   = lc === 'final' ? 'badge-final' : lc === 'completed' ? 'badge-completed' : 'badge-active';
+      const badgeLabel = lc === 'final' ? 'Final·Archived' : lc === 'completed' ? 'Completed' : 'Active';
+      return `<tr class="clickable-row" data-sa-proj="${esc(sa.id)}" tabindex="0" role="button" aria-expanded="false">
+        <td>
+          <span style="display:inline-block;transition:transform .15s;margin-right:6px;font-size:10px;color:var(--text-muted)" class="proj-chev">
+            <i class="fa-solid fa-chevron-right"></i></span>
+          ${esc(sa.name || '—')}
+        </td>
+        <td>${esc(sa.client_name || '—')}</td>
+        <td>${sa.program ? `<span class="tag">${esc(sa.program.toUpperCase())}</span>` : '—'}</td>
+        <td><span class="badge ${badgeCls}" style="font-size:10px">${badgeLabel}</span></td>
+        <td class="num">${sa.job_count || 0}</td>
+        <td class="num">${fmt(sa.estimated_total)}</td>
+        <td class="num">${fmt(sa.actual_total)}</td>
+      </tr>`;
+    }).join('');
+
+    concsEl.innerHTML = `<div class="table-wrap"><table>
+      <thead><tr>
+        <th>Service Area</th><th>Client</th><th>Program</th><th>Status</th>
+        <th class="num">Jobs</th><th class="num">Projected</th><th class="num">Billed</th>
+      </tr></thead>
+      <tbody id="proj-concs-tbody">${rowsHtml}</tbody>
+    </table></div>`;
+
+    concsEl.querySelectorAll('[data-sa-proj]').forEach(tr => {
+      tr.addEventListener('click', () => toggleSaProjection(tr.dataset.saProj, tr));
+      tr.addEventListener('keydown', e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); tr.click(); } });
+    });
+  }
+
+  async function toggleSaProjection(saId, tr) {
+    const existing = document.getElementById(`sa-proj-${saId}`);
+    if (existing) {
+      existing.remove();
+      tr.setAttribute('aria-expanded', 'false');
+      const chev = tr.querySelector('.proj-chev');
+      if (chev) chev.style.transform = '';
+      return;
+    }
+    tr.setAttribute('aria-expanded', 'true');
+    const chev = tr.querySelector('.proj-chev');
+    if (chev) chev.style.transform = 'rotate(90deg)';
+
+    const expandRow = document.createElement('tr');
+    expandRow.id = `sa-proj-${saId}`;
+    expandRow.className = 'loading-row';
+    expandRow.style.cssText = 'background:var(--gray-light)';
+    expandRow.innerHTML = '<td colspan="7"><span class="spinner"></span> Loading…</td>';
+    tr.insertAdjacentElement('afterend', expandRow);
+
+    if (_projSaCache[saId]) { renderSaProjectionRow(expandRow, _projSaCache[saId]); return; }
+    try {
+      const res = await fetch(`/api/projections/service-area/${encodeURIComponent(saId)}`, { credentials: 'include' });
+      if (!res.ok) throw new Error(await res.text());
+      const data = await res.json();
+      _projSaCache[saId] = data;
+      renderSaProjectionRow(expandRow, data);
+    } catch (e) {
+      expandRow.querySelector('td').innerHTML = `<span style="color:var(--danger-text);font-size:12px">Failed: ${esc(e.message)}</span>`;
+    }
+  }
+
+  function renderSaProjectionRow(row, data) {
+    const jobs   = data.jobs   || [];
+    const totals = data.totals || {};
+    if (!jobs.length) {
+      row.querySelector('td').innerHTML = '<span style="color:var(--text-muted);font-size:12px">No projection data yet.</span>';
+      return;
+    }
+    const TRIGGER_BADGE = t => t === 'completed'
+      ? '<span class="tag" style="font-size:9px;background:var(--warning-light);color:var(--warning-text)">on-complete</span>'
+      : '';
+    const jobRows = jobs.map(j => `<tr>
+      <td style="padding-left:28px">${esc(j.job_name || j.team || '—')} ${TRIGGER_BADGE(j.bill_trigger)}</td>
+      <td>${esc(j.billing_type || '—')}</td>
+      <td class="num">${fmt(j.expected)}</td>
+      <td class="num">${fmt(j.billed)}</td>
+      <td class="num${j.remaining > 0 ? ' pos' : ''}">${fmt(j.remaining)}</td>
+    </tr>`).join('');
+    row.querySelector('td').innerHTML = `
+      <div class="table-wrap" style="margin:-4px -14px">
+        <table style="font-size:12px">
+          <thead><tr>
+            <th>Job</th><th>Type</th>
+            <th class="num">Projected</th><th class="num">Billed</th><th class="num">Remaining</th>
+          </tr></thead>
+          <tbody>${jobRows}</tbody>
+          <tfoot><tr>
+            <td colspan="2" style="font-size:11px">${totals.completion_pct || 0}% complete</td>
+            <td class="num">${fmt(totals.projected_total)}</td>
+            <td class="num">${fmt(totals.billed)}</td>
+            <td class="num pos">${fmt(totals.remaining)}</td>
+          </tr></tfoot>
+        </table>
+      </div>`;
+    row.className = '';
+    row.style.background = 'var(--gray-light)';
+  }
+
+  window.loadEcBurn = async function () {
+    const sel  = document.getElementById('proj-ec-sel');
+    const card = document.getElementById('proj-ec-card');
+    if (!sel || !card) return;
+    const ecId = sel.value;
+    if (!ecId) {
+      card.innerHTML = '<div class="empty-state"><i class="fa-solid fa-circle-dollar-to-slot"></i>Select an engineering contract above.</div>';
+      return;
+    }
+    card.innerHTML = '<div class="loading-row"><span class="spinner"></span>Loading budget burn…</div>';
+    try {
+      const res = await fetch(`/api/projections/ec/${encodeURIComponent(ecId)}`, { credentials: 'include' });
+      if (!res.ok) throw new Error(await res.text());
+      const d = await res.json();
+      renderEcBurn(d, card);
+    } catch (e) {
+      card.innerHTML = errMsg(e);
+    }
+  };
+
+  function renderEcBurn(d, card) {
+    const pctBudget  = d.budget > 0 ? Math.min(100, Math.round(d.billed / d.budget * 100)) : null;
+    const overBudget = Number(d.over_budget) > 0;
+    const budgetBar  = d.budget > 0 ? `
+      <div style="margin:4px 0 10px">
+        <div style="display:flex;justify-content:space-between;font-size:12px;color:var(--text-muted);margin-bottom:4px">
+          <span>Budget utilization — ${pctBudget}%</span><span>${fmt(d.billed)} of ${fmt(d.budget)}</span>
+        </div>
+        <div style="background:var(--gray-light);height:10px;border-radius:5px;overflow:hidden">
+          <div style="background:${overBudget ? 'var(--danger)' : 'var(--primary)'};height:100%;width:${pctBudget}%;border-radius:5px;transition:width .3s"></div>
+        </div>
+        ${overBudget ? `<div style="font-size:12px;color:var(--danger-text);margin-top:4px"><i class="fa-solid fa-triangle-exclamation"></i> Over budget by ${fmt(d.over_budget)}</div>` : ''}
+      </div>` : '';
+
+    card.innerHTML = `<div style="padding:14px 16px">
+      <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px;margin-bottom:10px">
+        ${[
+          ['Budget',          fmt(d.budget || 0), null],
+          ['Projected Total', fmt(d.projected),   null],
+          ['Billed to Date',  fmt(d.billed),       null],
+          ['Remaining',       fmt(d.projected_remaining), null],
+          ['Burn Rate',       fmt(d.burn_rate_monthly) + '/mo', (d.months_elapsed || 0) + ' mo elapsed'],
+          ['Est. Months Left', d.projected_months_to_budget != null ? d.projected_months_to_budget + ' mo' : '—', null],
+        ].map(([l, v, s]) => `<div style="background:var(--gray-light);border-radius:8px;padding:10px 12px">
+          <div style="font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.4px;color:var(--text-muted);margin-bottom:4px">${l}</div>
+          <div style="font-size:17px;font-weight:700">${v}</div>
+          ${s ? `<div style="font-size:11px;color:var(--text-muted)">${s}</div>` : ''}
+        </div>`).join('')}
+      </div>
+      ${budgetBar}
+    </div>`;
+  }
+
 })();
