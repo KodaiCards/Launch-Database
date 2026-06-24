@@ -353,6 +353,27 @@ function esc(s){ if (s === null || s === undefined) return ''; return String(s).
 function fmtMoney(n){ return '$' + (Number(n)||0).toLocaleString('en-US', {minimumFractionDigits:2, maximumFractionDigits:2}); }
 function fmtHours(n){ return (Number(n)||0).toLocaleString('en-US', {minimumFractionDigits:2, maximumFractionDigits:2}) + ' hrs'; }
 function fmtDate(d){ if (!d) return '—'; return new Date(d + 'T00:00:00').toLocaleDateString('en-US', { month:'short', day:'numeric', year:'numeric' }); }
+function fmtNumber(n){ return (Number(n)||0).toLocaleString('en-US'); }
+// Relative time from a date-only string (YYYY-MM-DD) or ISO timestamp.
+// Returns "today" / "yesterday" / "N days ago" / "N weeks ago" /
+// "N months ago" / "N years ago"; future dates → "in N days" etc.
+function fmtRelative(d){
+  if (!d) return '';
+  const dt = new Date(String(d).length <= 10 ? d + 'T00:00:00' : d);
+  if (isNaN(dt.getTime())) return '';
+  const today = new Date(); today.setHours(0,0,0,0);
+  const that = new Date(dt); that.setHours(0,0,0,0);
+  const days = Math.round((today - that) / 86400000);
+  const ago = days >= 0;
+  const n = Math.abs(days);
+  const phrase = (val, unit) => `${val} ${unit}${val === 1 ? '' : 's'} ${ago ? 'ago' : 'from now'}`;
+  if (n === 0) return 'today';
+  if (n === 1) return ago ? 'yesterday' : 'tomorrow';
+  if (n < 7) return phrase(n, 'day');
+  if (n < 30) return phrase(Math.round(n / 7), 'week');
+  if (n < 365) return phrase(Math.round(n / 30), 'month');
+  return phrase(Math.round(n / 365), 'year');
+}
 
 async function api(url, opts){
   const r = await fetch(url, Object.assign({ credentials: 'same-origin' }, opts || {}));
@@ -747,7 +768,7 @@ function cpRenderInvoices(){
       <tbody>
         ${rows.map(inv => `<tr style="border-top:1px solid var(--gray-border);cursor:pointer" onclick="cpOpenInvoice('${esc(inv.id)}')">
           <td style="padding:8px 12px;font-family:monospace;font-weight:600">${esc(inv.invoice_number || '—')}${cpIsNew(inv.invoice_date) ? '<span class="cp-new-badge">New</span>' : ''}</td>
-          <td style="padding:8px 12px">${fmtDate(inv.invoice_date)}</td>
+          <td style="padding:8px 12px">${fmtDate(inv.invoice_date)}${inv.invoice_date ? `<div style="font-size:11px;color:var(--text-muted)">${esc(fmtRelative(inv.invoice_date))}</div>` : ''}</td>
           <td style="padding:8px 12px;color:var(--text-muted)">${esc(inv.invoice_name || inv.notes || '—')}</td>
           <td style="padding:8px 12px"><span class="inv-status ${invStatusClass(inv.status)}">${esc(String(inv.status || '').replace('_',' ') || '—')}</span></td>
           <td style="padding:8px 12px;text-align:right;font-weight:600">${fmtMoney(inv.total_amount)}</td>
@@ -1132,7 +1153,7 @@ function renderServiceAreas(){
   // of per-area %, so big areas weigh proportionally.
   const overallPct = totalJobs > 0 ? Math.round(totalDone / totalJobs * 100) : null;
   const lastVisitLine = _lastVisitTs
-    ? `<div style="font-size:11px;color:var(--text-muted);margin-top:3px">Last visited: ${fmtDate(_lastVisitTs.slice(0,10))}</div>` : '';
+    ? `<div style="font-size:11px;color:var(--text-muted);margin-top:3px" title="${esc(fmtDate(_lastVisitTs.slice(0,10)))}">Last visited ${esc(fmtRelative(_lastVisitTs))}</div>` : '';
   if (header) header.innerHTML = `
     <div class="sa-summary card">
       <div class="sa-summary-row">
@@ -1160,6 +1181,9 @@ function cpRenderSaCard(a){
     const status = String(a.status || 'active').toLowerCase();
     const pct = a.completion_pct;
     const projDate = saProjectedCompletion(a);
+    // Most-recent activity, for an at-a-glance "updated X ago" on the card.
+    const _recent = saRecentUpdates(a);
+    const lastUpd = _recent.length ? _recent[0].d : null;
     const prog = pct != null
       ? `<div class="sa-prog-line">
            <div class="progress-track"><div class="progress-fill" style="width:${pct}%"></div></div>
@@ -1234,11 +1258,11 @@ function cpRenderSaCard(a){
     } else {
       mapBlock = `<div class="sa-map-ph"><i class="fa-solid fa-map" aria-hidden="true"></i> Map view coming soon.</div>`;
     }
-    const updates = saRecentUpdates(a);
+    const updates = _recent;
     const feed = updates.length
       ? `<div class="sa-feed">
            <div class="sa-feed-label">Recent updates</div>
-           ${updates.map(u => `<div class="sa-feed-row"><span class="sa-feed-dot"></span><span>${esc(u.t)}</span><span class="sa-feed-date">${esc(fmtDate(u.d))}</span></div>`).join('')}
+           ${updates.map(u => `<div class="sa-feed-row"><span class="sa-feed-dot"></span><span>${esc(u.t)}</span><span class="sa-feed-date" title="${esc(fmtDate(u.d))}">${esc(fmtRelative(u.d))}</span></div>`).join('')}
          </div>`
       : '';
     return `<div class="card" style="padding:14px 16px">
@@ -1248,6 +1272,7 @@ function cpRenderSaCard(a){
           <div class="proj-sub">
             ${a.work_order_number ? `<span style="font-family:monospace;margin-right:8px">WO# ${esc(a.work_order_number)}</span>` : ''}
             ${esc(a.client_name || '')}
+            ${lastUpd ? `<span style="margin-left:8px" title="${esc(fmtDate(lastUpd))}">· updated ${esc(fmtRelative(lastUpd))}</span>` : ''}
           </div>
         </div>
         <div style="display:flex;align-items:center;gap:8px;flex:none">
