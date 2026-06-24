@@ -228,6 +228,32 @@ html[data-theme="dark"] .sk::after{background:linear-gradient(90deg,transparent,
   .modal-content{max-height:94vh}
   .header{padding:10px 14px}
 }
+
+/* P1: first-run help overlay */
+.help-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.55);z-index:200;align-items:center;justify-content:center;padding:16px}
+.help-overlay.open{display:flex}
+.help-card{background:var(--surface-2);border-radius:12px;max-width:500px;width:100%;padding:24px;position:relative}
+.help-card h2{font-size:17px;font-weight:700;margin-bottom:4px;color:var(--text)}
+.help-card .help-sub{font-size:13px;color:var(--text-muted);margin-bottom:18px}
+.help-tabs-list{list-style:none;display:flex;flex-direction:column;gap:10px;margin-bottom:18px}
+.help-tabs-list li{display:flex;align-items:flex-start;gap:10px;font-size:13px;color:var(--text-secondary)}
+.help-tabs-list li i{color:var(--primary);margin-top:2px;width:16px;text-align:center;flex-shrink:0}
+.help-status-grid{display:grid;grid-template-columns:auto 1fr;gap:6px 12px;font-size:12px;margin-bottom:18px;align-items:center}
+.help-status-grid .hs-badge{padding:2px 8px;border-radius:8px;font-weight:600;white-space:nowrap}
+.help-status-grid .hs-desc{color:var(--text-muted)}
+.help-dismiss{display:flex;align-items:center;gap:12px;justify-content:flex-end}
+.help-close-btn{position:absolute;top:14px;right:14px;background:none;border:none;cursor:pointer;color:var(--text-muted);font-size:16px;padding:4px}
+.help-close-btn:hover{color:var(--text)}
+
+/* P2: contact button */
+.cp-contact-btn{display:inline-flex;align-items:center;gap:6px;padding:7px 13px;border-radius:7px;
+  border:1px solid var(--gray-border);background:var(--surface-2);color:var(--text-secondary);
+  font-size:12px;font-weight:500;text-decoration:none;cursor:pointer;transition:all .15s}
+.cp-contact-btn:hover{background:var(--primary-light);border-color:var(--primary);color:var(--primary)}
+.cp-help-btn{display:inline-flex;align-items:center;gap:6px;padding:7px 11px;border-radius:7px;
+  border:1px solid var(--gray-border);background:var(--surface-2);color:var(--text-muted);
+  font-size:12px;cursor:pointer;transition:all .15s}
+.cp-help-btn:hover{background:var(--surface-1)}
 </style>
 <script src="/toast.js" defer></script>
 <script src="/js/change_password_modal.js" defer></script>
@@ -295,7 +321,46 @@ html[data-theme="dark"] .sk::after{background:linear-gradient(90deg,transparent,
       <div id="cp-sa-body"></div>
     </div>
   </div> <!-- /display:none wrapper closing the under-construction shim -->
+
+  <!-- P2: Contact / support bar -->
+  <div id="cp-contact-bar" style="display:none;padding:12px 0 0;display:flex;align-items:center;gap:8px;flex-wrap:wrap">
+    <button class="cp-help-btn" onclick="cpShowHelp()" aria-label="Open help guide">
+      <i class="fa-solid fa-circle-question" aria-hidden="true"></i> Help
+    </button>
+    <a id="cp-contact-link" class="cp-contact-btn" href="mailto:info@launchfiberservices.com" aria-label="Contact your project manager">
+      <i class="fa-solid fa-envelope" aria-hidden="true"></i> Contact us
+    </a>
+  </div>
 </main>
+
+<!-- P1: First-run help overlay -->
+<div class="help-overlay" id="cp-help-overlay" role="dialog" aria-modal="true" aria-labelledby="cp-help-title">
+  <div class="help-card">
+    <button class="help-close-btn" onclick="cpDismissHelp()" aria-label="Close help">
+      <i class="fa-solid fa-xmark" aria-hidden="true"></i>
+    </button>
+    <h2 id="cp-help-title"><i class="fa-solid fa-circle-info" style="color:var(--primary);margin-right:6px" aria-hidden="true"></i>Welcome to your client portal</h2>
+    <p class="help-sub">Here's a quick guide to the three tabs.</p>
+    <ul class="help-tabs-list">
+      <li><i class="fa-solid fa-folder-open" aria-hidden="true"></i><div><strong>Projects</strong> — your active projects, progress, and timeline at a glance.</div></li>
+      <li><i class="fa-solid fa-file-invoice-dollar" aria-hidden="true"></i><div><strong>Invoices</strong> — view issued invoices and payment status.</div></li>
+      <li><i class="fa-solid fa-diagram-project" aria-hidden="true"></i><div><strong>Service Areas</strong> — each work area with job-by-job status and progress bar.</div></li>
+    </ul>
+    <p style="font-size:12px;font-weight:600;color:var(--text-muted);text-transform:uppercase;letter-spacing:.04em;margin-bottom:8px">Status meanings</p>
+    <div class="help-status-grid">
+      <span class="hs-badge" style="background:var(--surface-3);color:var(--text-muted)">Not started</span><span class="hs-desc">Work is scheduled but hasn't begun yet.</span>
+      <span class="hs-badge" style="background:#E3F2FD;color:#1565C0">In progress</span><span class="hs-desc">Actively being worked on.</span>
+      <span class="hs-badge" style="background:var(--success-light);color:var(--success-text)">Complete</span><span class="hs-desc">Work finished and ready for review.</span>
+      <span class="hs-badge" style="background:var(--warning-light);color:var(--warning-text)">On hold</span><span class="hs-desc">Temporarily paused — we'll be in touch.</span>
+    </div>
+    <div class="help-dismiss">
+      <label style="display:flex;align-items:center;gap:6px;font-size:12px;color:var(--text-muted);cursor:pointer">
+        <input type="checkbox" id="cp-help-nodisplay" style="cursor:pointer"> Don't show again
+      </label>
+      <button class="btn btn-primary btn-sm" onclick="cpDismissHelp()">Got it</button>
+    </div>
+  </div>
+</div>
 
 <!-- Project detail modal — opens on row click -->
 <div class="modal-overlay" id="cp-detail-modal" role="dialog" aria-modal="true" aria-labelledby="cp-detail-title">
@@ -1406,11 +1471,51 @@ async function signOut(){
   window.location.href = '/login';
 }
 
+// ─── P1: First-run help overlay ──────────────────────────────────────────
+const CP_HELP_KEY = 'lfs-portal-help-dismissed';
+function cpMaybeShowHelp(){
+  try {
+    if (localStorage.getItem(CP_HELP_KEY)) return;
+    cpShowHelp();
+  } catch(e){}
+}
+function cpShowHelp(){
+  const el = document.getElementById('cp-help-overlay');
+  if (el){ el.classList.add('open'); try { el.querySelector('button').focus(); } catch(e){} }
+}
+function cpDismissHelp(){
+  const el = document.getElementById('cp-help-overlay');
+  if (el) el.classList.remove('open');
+  try {
+    if (document.getElementById('cp-help-nodisplay').checked)
+      localStorage.setItem(CP_HELP_KEY, '1');
+  } catch(e){}
+}
+document.addEventListener('keydown', e => {
+  if (e.key === 'Escape') {
+    const h = document.getElementById('cp-help-overlay');
+    if (h && h.classList.contains('open')) { cpDismissHelp(); return; }
+  }
+});
+
+// ─── P2: Contact bar — show after user loaded, wire mailto ───────────────
+function cpShowContactBar(){
+  const bar = document.getElementById('cp-contact-bar');
+  if (bar) bar.style.display = 'flex';
+  // Build subject line with client name if available
+  const client = (_currentClients || [])[0];
+  const subject = client ? 'Re: ' + client.name + ' — Client Portal' : 'Client Portal Question';
+  const link = document.getElementById('cp-contact-link');
+  if (link) link.href = 'mailto:info@launchfiberservices.com?subject=' + encodeURIComponent(subject);
+}
+
 (async function init(){
   cpInitWhatsNew();
   await loadCurrentUser();
   await loadCustomerData();
   cpSelectTab('service-areas');
+  cpShowContactBar();
+  cpMaybeShowHelp();
 })();
 </script>
 <script>
