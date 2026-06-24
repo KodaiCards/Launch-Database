@@ -1,47 +1,54 @@
-# Billing → keystone: design for review
+# Billing → keystone: design for review (v2)
 
-> Draft for Carter (HANDOFF §6 / cutover decision #1 fallout). The cluster currently *bills the retiring `projects` tree*; this moves billing onto the **service-area** model so we can drop projects. Scoped to **producing invoice records** — PDF generation / sending stays on HOLD until ROADMAP Phase 4 (decision #3). Last updated 2026-06-24.
+> Draft for Carter. Moves billing off the retiring `projects` tree onto the **service-area / concentrator** model. **v2 corrects the model** after Carter's clarification: billing is mostly **monthly hours per concentrator**, plus milestone bills at route-final / concentrator-final. Scope = produce invoice records; PDF/sending stays HOLD until Phase 4 (#3). Last updated 2026-06-24.
 
-## Current state (verified)
-- **Keystone billing already half-exists:** `POST /api/service-areas/:id/bill` gathers a service area's done-but-unbilled jobs (`status in issued/client_approved/complete`, `actual_amount > 0`), creates **one draft invoice**, writes `invoice_items` per job, and stamps each job `billed_date` + `status='billed'`. Driven today only by the per-SA "Generate invoice" button.
-- **The cluster `billing.html` is still legacy:** it calls `/api/billing/bill-multiple`, `/api/billing/batches`, `/api/revenue/unbilled`, `/api/projects/` — all **project-based**. Once projects retire, this breaks.
-- **Schema gaps (the real blocker):**
-  - `invoices` has **no `service_area_id` / `engineering_contract_id`** — invoices link to `client_id` only. The SA name lives in `notes`/item text. → can't cleanly attribute revenue per service area / EC / program (this is exactly why the R7 program-financials fix had to fall back to client-level).
-  - `invoice_items` carries legacy `project_id`, **no `service_area_job_id`** — line items can't trace back to the keystone job they billed.
-  - `/api/revenue/unbilled` is projects-based (one row per project).
+## The actual billing model (Carter, 2026-06-24)
+> "Invoices are generated **monthly**, regardless of build status in some circumstances. Sometimes we bill some jobs when the **route is final**, sometimes when the **concentrator is final**, and **most of the time we bill hours per concentrator monthly** — so that invoice can **not** include last month's hours."
 
-## Proposed model
-**The service area is the billable unit** (consistent with the whole keystone). Billing a service area = create an invoice from its done-unbilled jobs. Add the missing links so revenue attributes cleanly.
+Three patterns, one concentrator at a time:
+1. **Monthly hours per concentrator (common).** Every month, per concentrator, invoice **that month's logged hours**. Each monthly invoice carries a billing period and includes **only that period's** hours — prior months are already billed and must never re-bill.
+2. **Milestone — route final.** When a route is finalized, bill selected jobs on that route.
+3. **Milestone — concentrator final.** When the service area is finalized, bill its remaining jobs.
 
-### Schema — migration `0066_invoice_service_area_link.sql`
+Hours recur monthly; milestone bills happen once for the thing billed. Billing is an **admin action** (you choose what/when), not auto-derived from status — status is just the gate for *eligibility*.
+
+## The key correctness mechanism — track billed-ness at the right grain
+The v1 mistake was marking a *job* "billed" once. That breaks monthly hours (a job accrues hours across many months and is billed every month). So:
+- **Hours → track on `time_entries`.** New nullable `time_entries.invoice_id`. A monthly run bills the unbilled (`invoice_id IS NULL`) hourly entries whose `entry_date` falls in the period, then stamps `invoice_id` on them. ⟹ "this invoice can't include last month's hours" holds **by construction**, and re-running a month can't double-bill.
+- **Milestone (fixed / footage) → track on the job.** `service_area_jobs.billed_date` (exists) marks the one-time bill of a fixed/footage job at route/SA finalize.
+
+## Schema — migration `0066_invoice_service_area_link.sql`
 ```sql
-ALTER TABLE invoices       ADD COLUMN service_area_id uuid REFERENCES service_areas(id),
-                           ADD COLUMN engineering_contract_id uuid REFERENCES engineering_contracts(id);
-ALTER TABLE invoice_items  ADD COLUMN service_area_job_id uuid REFERENCES service_area_jobs(id);
+ALTER TABLE invoices      ADD COLUMN service_area_id uuid REFERENCES service_areas(id),
+                          ADD COLUMN engineering_contract_id uuid REFERENCES engineering_contracts(id);
+ALTER TABLE invoice_items ADD COLUMN service_area_job_id uuid REFERENCES service_area_jobs(id);
+ALTER TABLE time_entries  ADD COLUMN invoice_id uuid REFERENCES invoices(id);
 CREATE INDEX ON invoices (service_area_id);
 CREATE INDEX ON invoices (engineering_contract_id);
+CREATE INDEX ON time_entries (invoice_id);
 ```
-All nullable → legacy project-based invoices keep working untouched during the transition. (Deploy note: Railway `startCommand=node server.js` skips auto-migrate — apply this to the DB deliberately, same as 0064/0065. Needs your OK or I apply it to the dev DB and hold prod for cutover.)
+Already present (no change needed): `invoices.billing_period_start/_end`, `invoice_items.period_year/_month`. All new columns nullable → legacy project invoices keep working through the transition. (Deploy: Railway skips auto-migrate — I apply 0066 to the dev DB now and hold prod for cutover, per your OK on #4.)
 
-### Backend
-1. **Enhance the existing SA bill** (`POST /api/service-areas/:id/bill`): set `invoices.service_area_id` + `engineering_contract_id` (from the SA), and `invoice_items.service_area_job_id` per line. No behavior change otherwise.
-2. **Batch bill** (replaces legacy `bill-multiple`): `POST /api/billing/bill-areas { service_area_ids:[...], combine?:bool }`. Default = one invoice per SA (clean attribution); `combine:true` = one invoice per client with each SA's jobs as line items (for clients who want a single consolidated bill). Transactional; returns the created invoices.
-3. **Keystone unbilled queue** (replaces `/api/revenue/unbilled`): `GET /api/billing/unbilled` → service areas that have done-but-unbilled billable jobs, with their billable total, client, EC/program. Drives the batch-bill picker.
-4. **Keystone billing report** (replaces `/api/billing/report`): `GET /api/billing/report?group=client|ec|program|month` → billed totals from `invoices` joined via the new `service_area_id`/`engineering_contract_id`. This also lets `money_view` program-financials finally split invoice revenue by program accurately (retires the task-34 client-level fallback).
+## Backend
+1. **Billing worklist:** `GET /api/billing/unbilled?period=YYYY-MM` → per concentrator: (a) unbilled hours in that period grouped by hourly job, and (b) un-billed milestone amounts (fixed/footage jobs on finalized routes / finalized SAs). This is the screen you bill from.
+2. **Monthly hours run:** `POST /api/billing/bill-monthly { period:'YYYY-MM', service_area_ids?:[...] }` → for each concentrator, sum its unbilled hourly `time_entries` in the period per job → **one invoice per concentrator** (period-stamped, `service_area_id`/EC set) with a line per job (hours × rate) → stamp those entries' `invoice_id`. Skips concentrators with no period hours. Transactional.
+3. **Milestone — concentrator:** enhance existing `POST /api/service-areas/:id/bill` → bill the SA's remaining unbilled **fixed/footage** jobs (and stamp `billed_date`); set the new SA/EC links + items' `service_area_job_id`.
+4. **Milestone — route:** `POST /api/service-area-routes/:id/bill` → same, scoped to one finalized route's jobs.
+5. **Report:** `GET /api/billing/report?group=client|ec|program|month` from `invoices` via the new links — also lets `money_view` program-financials finally split invoice revenue by program (retires the task-34 client-level fallback).
 
-### UI (fan to C2 once backend lands)
-Rework `billing.html` onto the keystone: **Unbilled queue** (checkbox list from `/api/billing/unbilled`, "Bill selected" → batch endpoint, combine toggle) · **Invoices list** (reuse `GET /api/billing/invoices` + drill-in) · **Report** (the grouped totals). Drop the project-based code paths. Internal admin; money is fine here.
+## UI (fan to C2 after backend lands)
+Rework `billing.html` onto the keystone: a **month picker + concentrator worklist** (`/api/billing/unbilled?period=`) with "Bill month's hours" (batch) and per-route / per-SA milestone "Bill" actions; **invoices list** (reuse `GET /api/billing/invoices`) with period + drill-in; **report** tab. Drop the project-based paths.
 
-## What this build does NOT include (deliberate)
-- **PDF generation / sending** — HOLD until Phase 4 simple template (#3). Keystone billing produces `draft` invoice records; the send/PDF step is separate and stays legacy for now.
-- **Monthly/recurring billing** — the keystone has `is_ongoing` + `billing_cadence='monthly'`, but a recurring monthly billing *run* is its own feature (period windows, idempotency). Flag for a follow-up; this build is one-time/manual billing of done work.
-- **Real invoice numbers** — still `INV-<timestamp>`; proper numbering is a Phase-4/template concern.
+## Out of scope (deliberate)
+- **PDF / sending** — HOLD until Phase 4 simple template (#3). This build yields `draft` invoice records with correct amounts/periods/links.
+- **Auto-scheduled** monthly runs — this build is a **manual** monthly trigger (you pick period + concentrators and click). A cron/auto-run can come later.
+- **Real invoice numbers** — still `INV-<timestamp>`; proper numbering is a Phase-4 concern.
 
-## Open decisions for you
-1. **Default invoice granularity:** one invoice **per service area** (my recommendation — cleanest attribution, matches SA-as-unit) vs one consolidated invoice **per client** batching SAs. (I'd ship per-SA default + a `combine` option; tell me if clients actually want consolidated.)
-2. **What "done" means for billing:** currently a job is billable when `status in (issued, client_approved, complete)` and `actual_amount > 0`. Is that the right trigger, or should billing be allowed earlier / gated differently?
-3. **Monthly/ongoing SAs:** confirm recurring billing is a later feature (not this build).
-4. **Migration timing:** OK to apply `0066` to the dev DB now and hold prod until cutover, or do you want to switch Railway to `npm start` (auto-migrate) first?
+## Open decisions (most now resolved)
+- ✅ Granularity = **per concentrator**, monthly. ✅ Eligibility gate = job status as in v1.  ✅ Monthly billing **is** in this build. ✅ Apply 0066 to dev, hold prod.
+- ❓ **Billing period definition:** calendar month by `entry_date` (e.g. June = 06-01…06-30)? Or a custom cycle (e.g. 26th→25th)? Default I'll build: **calendar month**.
+- ❓ **Hours rate source:** bill hours at the **job's `rate`** (current behavior). Correct, or is there a per-period/role rate that can differ? Default: job rate.
+- ❓ **Re-billing a partial month:** if you bill June mid-month then more June hours get logged, a second June run will bill just the new entries (a 2nd June invoice). Fine, or should June be "closed" once billed? Default: allow the catch-up invoice (safest — never silently drops hours).
 
-## Sequence once you approve
-(a) migration 0066 → (b) enhance SA bill + batch + unbilled + report endpoints (CEO, tested vs dev DB) → (c) point `money_view` program-financials at the new linkage → (d) fan `billing.html` rework to C2 → (e) retire legacy project billing at cutover.
+## Sequence once you confirm the 3 ❓
+(a) migration 0066 → (b) bill-monthly + milestone(SA/route) + unbilled-worklist + report endpoints (CEO, tested vs dev DB incl. the no-double-bill + period-isolation cases) → (c) point program-financials at the new links → (d) fan `billing.html` to C2 → (e) retire legacy project billing at cutover.
