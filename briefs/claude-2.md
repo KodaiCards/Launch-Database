@@ -1,6 +1,6 @@
 # Claude 2 — Contractor timeclock (Phase 5)
 
-**Status:** R11/R12/R13 MERGED ✓ 2026-06-24 (`3136b57a`) — hours-import UI, keystone billing UI, projections (Money tab) + map (SA tab) + lifecycle all live. **C2 IDLE.** Next worker-eligible work: the map-integration UI (construction-contract catalog upload screen + embed the map in the Service Areas → Map tab + inline estimate) once the CEO's POC firms up — don't start until briefed.
+**Status:** R11/R12/R13 MERGED ✓ 2026-06-24 (`3136b57a`). **Next: Round 14 — Map integration UI** (embed the map + persistence + catalog upload + estimate readout; backend POC shipped+tested; brief below). Pull `main`, start at R14.1. FRONTEND ONLY.
 **Branch:** `claude-2/contractor-timeclock`
 **Read first:** `CLAUDE.md`, `ROADMAP.md` (Phase 5), `briefs/README.md`.
 
@@ -309,6 +309,32 @@ Each run bills **earned − already-billed** per job: monthly hours, **progressi
 
 ### Acceptance
 Pick a month → see each concentrator's billable lines (hours/footage/fixed + any credits) → optionally exclude lines → generate per-concentrator draft invoices → see them in the list with periods → view the report grouped by program/client. No `$` math in JS; reconciliation lines clearly shown.
+
+---
+
+## Round 14 — Map integration UI (the clickable POC). Sonnet @ medium. FRONTEND ONLY.
+**CEO shipped the map-integration POC backend** (migration 0069 + `routes/map_integration.js`, tested): DB-backed storage for the map, construction-contract cost catalog (Excel upload), and an estimate that prices map units (13 handholes → catalog → $2,900). Now make it **clickable**: embed the map, persist to our DB, upload a catalog, and show the estimate. Context: `docs/map_requirements.md` (esp. the "POC status" + "Delivered map" sections). The map file is `map/fiber_route_manager_v33.html`; the storage adapter is `map/frm_storage_adapter.js`. **NO backend** — endpoints exist + mounted; need one → STOP, `BLOCKED — needs CEO`.
+
+> Internal manager/admin. CI down → CEO verifies locally; test as admin. Same-origin embed means the map's API calls carry the session cookie.
+
+### Endpoints (LIVE)
+- Map storage (the map's `window.storage` backend): `GET /api/map/store/:key`, `PUT /api/map/store/:key {value}`.
+- Construction contracts: `GET/POST /api/construction-contracts`; catalog `GET /api/construction-contracts/:id/catalog`, `POST /api/construction-contracts/:id/catalog` (multipart Excel/CSV field `file`, **or** JSON `{items:[{item_key,label,unit,unit_price}]}`).
+- Estimate: `GET /api/map/estimate?plan=<planId>&cc=<ccId>` → `{ structures:[{item_key,label,count,completed,unit_price,expected,completed_value,priced}], unpriced:[…], footage_total, construction_expected, construction_completed, construction_remaining }`.
+- Existing: `GET /api/map/service-areas` (the data the R13 Map tab already lists).
+
+### Build
+- [ ] **R14.1 — Embed the map + persistence.** Copy `map/fiber_route_manager_v33.html` + `map/frm_storage_adapter.js` into `public/map/` so the app serves them. In the served copy, add `<script src="/map/frm_storage_adapter.js"></script>` **immediately before** the map's main inline `<script>` (so `window.storage` is set before the map's `store` first runs → plans persist to our DB, not localStorage). In the **Service Areas → Map tab** (R13B, `public/js/service_areas_map.js` / `service-areas.html`), embed the map via an **iframe** (`src="/map/fiber_route_manager_v33.html"`) replacing/augmenting the stub. Verify drawing a structure then reloading persists (via `/api/map/store`).
+- [ ] **R14.2 — Construction-contract + catalog screen.** A small UI (a section in the Map tab, or a modal) to: create a construction contract (`POST /api/construction-contracts`), **upload its Excel price list** (`POST …/catalog` with the `file`), and show the parsed catalog (`GET …/catalog`). This is where "Handhole = $200" gets entered.
+- [ ] **R14.3 — Estimate readout.** Pick a construction contract + a plan id → `GET /api/map/estimate` → render the priced structures table (item · count · completed · unit price · expected · completed value), the **construction expected / completed / remaining** totals, footage, and flag any `unpriced` items (in the catalog but no price / map ptype with no catalog match). **Render server numbers verbatim — no `$` math in JS.**
+- [ ] **R14.4 — Polish.** Loading/empty/error, dark-mode, a11y; iframe sized to fill the tab; clear "pick a contract + plan" empty state.
+
+### Guardrails
+- **NO backend / NO schema.** Endpoints exist. **Don't rewrite the map's internal logic** — only add the adapter `<script>` include to the served copy + copy the files into `public/map/`. Deeper map changes (plan↔SA auto-linking, dual designation on elements, `jobRef`→service-area-job picker) are **CEO/next-phase — flag `BLOCKED — needs CEO`, don't attempt.** OFF-LIMITS: `routes/*`, `server.js`, `auth.js`, `migrations/`, `schema.sql`.
+- No `$` math in JS — the estimate endpoint returns every number.
+
+### Acceptance
+From the Service Areas → Map tab: the real fiber map loads embedded; drawing structures/spans **persists across reload** (server-side); you can create a construction contract and upload its Excel price list; and an estimate readout prices a plan's units against that catalog (matching the backend: e.g. 13 handholes → $2,600). No `$` math in JS; unpriced items flagged.
 
 ---
 
