@@ -835,12 +835,96 @@ async function cpOpenInvoice(id){
       </div>
       <div class="cp-no-print" style="display:flex;justify-content:flex-end;gap:8px;margin-top:18px;padding-top:14px;border-top:1px solid var(--gray-border)">
         <button class="btn btn-secondary" onclick="document.getElementById('cp-detail-modal').style.display='none'">Close</button>
-        <button class="btn btn-primary" onclick="window.print()"><i class="fa-solid fa-print" aria-hidden="true"></i> Print</button>
+        <button class="btn btn-secondary" onclick="cpPrintWithTitle()"><i class="fa-solid fa-print" aria-hidden="true"></i> Print</button>
+        <button class="btn btn-primary" onclick="cpDownloadInvoicePdf('${esc(inv.invoice_number || '')}')"><i class="fa-solid fa-file-pdf" aria-hidden="true"></i> Download PDF</button>
       </div>
     `;
   } catch (e) {
     body.innerHTML = `<div class="empty-state" style="color:var(--danger-text)">Failed to load: ${esc(e.message)}</div>`;
   }
+}
+
+// Client-side print-to-PDF (no backend, no library): the browser print
+// dialog's "Save as PDF" target produces the file. Setting document.title
+// first makes the suggested filename sensible; we restore it afterward.
+function cpPrintWithTitle(title){
+  const prev = document.title;
+  if (title) document.title = title;
+  let restored = false;
+  const restore = () => { if (restored) return; restored = true; document.title = prev; window.removeEventListener('afterprint', restore); };
+  window.addEventListener('afterprint', restore);
+  setTimeout(restore, 2000); // fallback if afterprint never fires
+  window.print();
+}
+function cpDownloadInvoicePdf(number){
+  try { if (window.LFS && LFS.toast) LFS.toast.info('Choose "Save as PDF" in the print dialog to download.'); } catch(e){}
+  cpPrintWithTitle(number ? ('Invoice ' + number) : 'Invoice');
+}
+
+// Clean, printable single-service-area status sheet (no $). Reuses the
+// shared detail modal + the same .cp-printable / @media print isolation as
+// invoices, so "Download PDF" works the same way (browser Save as PDF).
+function cpPrintArea(id){
+  const a = (_customerServiceAreas || []).find(x => x.id === id);
+  if (!a) return;
+  const m = document.getElementById('cp-detail-modal');
+  const body = document.getElementById('cp-detail-body');
+  document.getElementById('cp-detail-title').textContent = a.name || 'Service area';
+  const status = String(a.status || 'active').toLowerCase();
+  const pct = a.completion_pct;
+  let dateText;
+  if (a.start_date && a.completed_date) dateText = `${fmtDate(a.start_date)} → ${fmtDate(a.completed_date)}`;
+  else if (a.start_date) dateText = `${fmtDate(a.start_date)} → in progress`;
+  else if (a.completed_date) dateText = `Completed ${fmtDate(a.completed_date)}`;
+  else dateText = 'No dates set yet';
+  const jobsRows = (a.jobs || []).map(j => `<tr style="border-top:1px solid var(--gray-border)">
+      <td style="padding:6px 10px">${esc(j.job_name || '—')}</td>
+      <td style="padding:6px 10px">${esc(SA_TEAM_LABELS[j.team] || j.team || '—')}</td>
+      <td style="padding:6px 10px">${esc(String(j.status || '').replace(/_/g,' '))}</td>
+      <td style="padding:6px 10px">${fmtDate(j.start_date)}</td>
+      <td style="padding:6px 10px">${fmtDate(j.completed_date)}</td>
+    </tr>`).join('');
+  const th = 'padding:6px 10px;text-align:left;font-size:11px;color:var(--text-muted);text-transform:uppercase';
+  body.innerHTML = `
+    <div class="cp-printable">
+      <div class="cp-inv-head">
+        <div>
+          <div style="font-size:17px;font-weight:700;color:var(--text)">Launch Fiber Services</div>
+          <div style="font-size:12px;color:var(--text-muted)">Service area status</div>
+        </div>
+        <div style="text-align:right">
+          <div style="font-size:18px;font-weight:700;color:var(--text)">${esc(a.name)}</div>
+          ${a.work_order_number ? `<div style="font-size:12px;font-family:monospace">WO# ${esc(a.work_order_number)}</div>` : ''}
+          <div style="margin-top:4px"><span class="status-pill status-${esc(status)}">${esc(status.replace('_',' '))}</span></div>
+        </div>
+      </div>
+      <div class="cp-inv-meta">
+        <div><div class="cp-inv-lbl">Client</div><div>${esc(a.client_name || '—')}</div></div>
+        <div style="text-align:right"><div class="cp-inv-lbl">Program</div><div>${a.program === 'rus' ? 'RUS' : esc(a.program || '—')}</div></div>
+        <div><div class="cp-inv-lbl">Timeline</div><div>${esc(dateText)}</div></div>
+        <div style="text-align:right"><div class="cp-inv-lbl">Progress</div><div>${pct != null ? `${a.jobs_done} of ${a.jobs_total} jobs · ${pct}%` : 'No jobs yet'}</div></div>
+      </div>
+      ${(a.jobs && a.jobs.length) ? `
+        <table style="width:100%;font-size:12px;border-collapse:collapse">
+          <thead><tr style="background:var(--surface-1)">
+            <th style="${th}">Job</th><th style="${th}">Team</th><th style="${th}">Status</th>
+            <th style="${th}">Started</th><th style="${th}">Completed</th>
+          </tr></thead>
+          <tbody>${jobsRows}</tbody>
+        </table>
+      ` : '<div style="font-size:12px;color:var(--text-muted)">No jobs on this service area yet.</div>'}
+      <div style="font-size:10px;color:var(--text-muted);margin-top:18px">Generated ${fmtDate(new Date().toISOString().slice(0,10))} · Launch Fiber Services</div>
+    </div>
+    <div class="cp-no-print" style="display:flex;justify-content:flex-end;gap:8px;margin-top:18px;padding-top:14px;border-top:1px solid var(--gray-border)">
+      <button class="btn btn-secondary" onclick="document.getElementById('cp-detail-modal').style.display='none'">Close</button>
+      <button class="btn btn-secondary" onclick="cpPrintWithTitle()"><i class="fa-solid fa-print" aria-hidden="true"></i> Print</button>
+      <button class="btn btn-primary" onclick="cpDownloadAreaPdf('${esc(a.name || '')}')"><i class="fa-solid fa-file-pdf" aria-hidden="true"></i> Download PDF</button>
+    </div>`;
+  cpShowModal(m);
+}
+function cpDownloadAreaPdf(name){
+  try { if (window.LFS && LFS.toast) LFS.toast.info('Choose "Save as PDF" in the print dialog to download.'); } catch(e){}
+  cpPrintWithTitle(name ? (name + ' — status') : 'Service area status');
 }
 
 // ─── Service Areas (Phase 6 — keystone status view, no $) ─────────────
@@ -1166,7 +1250,10 @@ function cpRenderSaCard(a){
             ${esc(a.client_name || '')}
           </div>
         </div>
-        <span class="status-pill status-${esc(status)}">${esc(status.replace('_',' '))}</span>
+        <div style="display:flex;align-items:center;gap:8px;flex:none">
+          <span class="status-pill status-${esc(status)}">${esc(status.replace('_',' '))}</span>
+          <button class="btn btn-icon btn-secondary btn-sm" title="Print / save status as PDF" aria-label="Print status for ${esc(a.name)}" onclick="cpPrintArea('${esc(a.id)}')"><i class="fa-solid fa-print" aria-hidden="true"></i></button>
+        </div>
       </div>
       ${prog}
       ${timeline}
