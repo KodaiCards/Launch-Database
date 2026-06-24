@@ -177,6 +177,16 @@ html[data-theme="dark"] .sk::after{background:linear-gradient(90deg,transparent,
 @keyframes sk-shimmer{100%{transform:translateX(100%)}}
 .cp-scroll-x{overflow-x:auto;-webkit-overflow-scrolling:touch}
 
+/* Unified portal search (task 21) */
+.cp-gsearch{display:flex;align-items:center;gap:8px;margin:4px 0 12px;position:relative}
+.cp-gsearch i.fa-magnifying-glass{position:absolute;left:12px;color:var(--text-muted);font-size:13px;pointer-events:none}
+.cp-gsearch input{flex:1;padding:9px 36px;border:1px solid var(--gray-border);border-radius:8px;font-size:13px;background:var(--surface-2);color:var(--text);font-family:inherit}
+.cp-gsearch input:focus{outline:none;border-color:var(--primary)}
+.cp-gsearch-clear{position:absolute;right:8px;background:none;border:none;color:var(--text-muted);cursor:pointer;padding:4px 8px;font-size:13px}
+.cp-gsearch-clear:hover{color:var(--text)}
+.tab-count{display:inline-block;margin-left:5px;padding:0 6px;border-radius:8px;font-size:10px;font-weight:700;background:var(--surface-3);color:var(--text-muted);vertical-align:middle}
+.tabs button.active .tab-count{background:var(--primary-light);color:var(--primary)}
+
 /* SA filter + search bar (task 16) */
 .sa-filter-bar{display:flex;align-items:center;gap:8px;margin-bottom:12px;flex-wrap:wrap}
 .sa-filter-bar input{flex:1;min-width:140px;padding:7px 10px;border:1px solid var(--gray-border);border-radius:6px;font-size:13px;background:var(--surface-2);color:var(--text);font-family:inherit}
@@ -263,6 +273,7 @@ html[data-theme="dark"] .sk::after{background:linear-gradient(90deg,transparent,
     <span style="font-size:12px;color:var(--text-muted)">Preview — work in progress. Service areas show only when marked client-visible.</span>
   </div>
   <div id="cp-client-switcher"></div>
+  <div id="cp-global-search"></div>
   <div id="cp-landing"></div>
   <div>
     <div class="tabs" id="cp-tabs" role="tablist" aria-label="Portal sections">
@@ -358,6 +369,8 @@ let _customerInvoices = [];
 let _saFilter = { search: '', status: '' };
 let _invFilter = { status: '' };
 let _invSort = 'date-desc';
+let _globalSearch = ''; // task 21: spans areas + invoices
+let _invoicesLoaded = false; // distinguishes "no invoices" from "not fetched yet"
 let _lastVisitTs = null; // ISO string from localStorage; set on next load
 
 // ─── "What's new" indicator (task 17) — localStorage, no backend ─────
@@ -397,11 +410,97 @@ function cpRenderClientSwitcher(){
 function cpSelectClient(id){
   _selectedClientId = id || null;
   _customerInvoices = [];
+  _invoicesLoaded = false;
   cpRenderClientSwitcher();
   cpRenderLanding();
   renderServiceAreas();
   const invTab = document.getElementById('cp-tab-invoices');
   if (invTab && invTab.style.display !== 'none') cpLoadInvoices();
+  cpUpdateTabCounts();
+}
+
+// ─── Unified portal search (task 21) — spans areas + invoices ─────────
+// One text query, ANDed with each tab's own status filter/sort. Since
+// invoices are lazy-loaded, the first global search pulls them once so the
+// match counts on the Invoices tab are accurate even before it's opened.
+function saMatchesGlobal(a, q){
+  if (!q) return true;
+  return (a.name || '').toLowerCase().includes(q)
+      || (a.work_order_number || '').toLowerCase().includes(q)
+      || (a.client_name || '').toLowerCase().includes(q);
+}
+function invMatchesGlobal(inv, q){
+  if (!q) return true;
+  return (inv.invoice_number || '').toLowerCase().includes(q)
+      || (inv.invoice_name || '').toLowerCase().includes(q)
+      || (inv.notes || '').toLowerCase().includes(q)
+      || (inv.client_name || '').toLowerCase().includes(q);
+}
+async function cpEnsureInvoicesLoaded(){
+  if (_invoicesLoaded) return;
+  try { _customerInvoices = await api('/api/customer/invoices'); _invoicesLoaded = true; }
+  catch(e){ /* leave unloaded; tab shows its own error on open */ }
+}
+function cpRenderGlobalSearch(){
+  const el = document.getElementById('cp-global-search');
+  if (!el) return;
+  const hasData = (_customerServiceAreas || []).length || _invoicesLoaded;
+  if (!hasData){ el.innerHTML = ''; return; }
+  // The clear button stays in the DOM and toggles via display, so typing
+  // never re-renders the bar (no focus/caret loss).
+  el.innerHTML = `<div class="cp-gsearch">
+    <i class="fa-solid fa-magnifying-glass" aria-hidden="true"></i>
+    <input type="search" id="cp-gsearch-input" placeholder="Search areas & invoices…"
+      aria-label="Search service areas and invoices" value="${esc(_globalSearch)}"
+      oninput="cpOnGlobalSearch(this.value)">
+    <button class="cp-gsearch-clear" id="cp-gsearch-clear" aria-label="Clear search"
+      style="display:${_globalSearch ? 'block' : 'none'}" onclick="cpClearGlobalSearch()"><i class="fa-solid fa-xmark"></i></button>
+  </div>`;
+}
+async function cpOnGlobalSearch(val){
+  _globalSearch = val || '';
+  const clearBtn = document.getElementById('cp-gsearch-clear');
+  if (clearBtn) clearBtn.style.display = _globalSearch ? 'block' : 'none';
+  await cpEnsureInvoicesLoaded();
+  cpRenderSaCards();
+  if (_invoicesLoaded) cpRenderInvoices();
+  cpUpdateTabCounts();
+}
+function cpClearGlobalSearch(){
+  _globalSearch = '';
+  const input = document.getElementById('cp-gsearch-input');
+  if (input) input.value = '';
+  const clearBtn = document.getElementById('cp-gsearch-clear');
+  if (clearBtn) clearBtn.style.display = 'none';
+  cpRenderSaCards();
+  if (_invoicesLoaded) cpRenderInvoices();
+  cpUpdateTabCounts();
+  if (input) input.focus();
+}
+// Show live match counts on the Service Areas / Invoices tab buttons while a
+// global search is active; clear them otherwise.
+function cpUpdateTabCounts(){
+  const q = (_globalSearch || '').trim().toLowerCase();
+  const saBtn = document.getElementById('cp-tabbtn-service-areas');
+  const invBtn = document.getElementById('cp-tabbtn-invoices');
+  if (saBtn){
+    let html = 'Service Areas';
+    if (q){
+      const n = (_customerServiceAreas || [])
+        .filter(a => (!_selectedClientId || a.client_id === _selectedClientId) && saMatchesGlobal(a, q)).length;
+      html += `<span class="tab-count">${n}</span>`;
+    }
+    saBtn.innerHTML = html;
+  }
+  if (invBtn){
+    let html = 'Invoices';
+    if (q && _invoicesLoaded){
+      const n = (_customerInvoices || [])
+        .filter(inv => (!_selectedClientId || inv.client_id === _selectedClientId) && invMatchesGlobal(inv, q)).length;
+      html += `<span class="tab-count">${n}</span>`;
+    }
+    invBtn.innerHTML = html;
+  }
 }
 
 // a11y: open a modal with focus moved inside; ESC closes any open modal and
@@ -563,21 +662,24 @@ function cpSkeletonRows(n){
 
 async function cpLoadInvoices(){
   const body = document.getElementById('cp-invoices-body');
-  if (!_customerInvoices.length) {
+  if (!_invoicesLoaded) {
     body.innerHTML = cpSkeletonRows(5);
     try {
       _customerInvoices = await api('/api/customer/invoices');
+      _invoicesLoaded = true;
     } catch (e) {
       body.innerHTML = `<div class="empty-state" style="color:var(--danger-text)">
         <i class="fa-solid fa-triangle-exclamation"></i>
         <p>Couldn't load invoices.</p>
         <p style="font-size:12px">${esc(e.message)}</p>
-        <button class="btn btn-secondary btn-sm" style="margin-top:10px" onclick="_customerInvoices=[];cpLoadInvoices()">Try again</button>
+        <button class="btn btn-secondary btn-sm" style="margin-top:10px" onclick="cpLoadInvoices()">Try again</button>
       </div>`;
       return;
     }
   }
   cpRenderInvoices();
+  cpRenderGlobalSearch();
+  cpUpdateTabCounts();
 }
 
 function cpRenderInvoices(){
@@ -591,9 +693,12 @@ function cpRenderInvoices(){
     </div>`;
     return;
   }
-  // Apply status filter
+  // Apply status filter + unified global text search (task 21)
   const st = _invFilter.status;
-  let rows = st ? all.filter(inv => (inv.status || '') === st) : all;
+  const gq = (_globalSearch || '').trim().toLowerCase();
+  let rows = all;
+  if (st) rows = rows.filter(inv => (inv.status || '') === st);
+  if (gq) rows = rows.filter(inv => invMatchesGlobal(inv, gq));
   // Sort
   const sortFn = {
     'date-desc': (a,b) => (b.invoice_date || '') > (a.invoice_date || '') ? 1 : -1,
@@ -820,13 +925,16 @@ function cpRenderSaCards(){
   if (!body) return;
   let areas = (_customerServiceAreas || []).filter(a => !_selectedClientId || a.client_id === _selectedClientId);
   const q = (_saFilter.search || '').trim().toLowerCase();
+  const gq = (_globalSearch || '').trim().toLowerCase();
   const st = _saFilter.status;
   if (q) areas = areas.filter(a => (a.name || '').toLowerCase().includes(q) || (a.work_order_number || '').toLowerCase().includes(q) || (a.client_name || '').toLowerCase().includes(q));
+  if (gq) areas = areas.filter(a => saMatchesGlobal(a, gq));
   if (st) areas = areas.filter(a => (a.status || '') === st);
   if (!areas.length){
     const base = (_customerServiceAreas || []).filter(a => !_selectedClientId || a.client_id === _selectedClientId);
-    body.innerHTML = base.length
-      ? `<div class="empty-state"><i class="fa-solid fa-magnifying-glass"></i><p>No areas match your filter.</p><button class="btn btn-secondary btn-sm" style="margin-top:8px" onclick="_saFilter={search:'',status:''};cpApplySaFilter()">Clear filters</button></div>`
+    const filtered = base.length > 0; // areas exist but none match
+    body.innerHTML = filtered
+      ? `<div class="empty-state"><i class="fa-solid fa-magnifying-glass"></i><p>No areas match your${gq ? ' search' : ' filter'}.</p>${gq ? `<button class="btn btn-secondary btn-sm" style="margin-top:8px" onclick="cpClearGlobalSearch()">Clear search</button>` : `<button class="btn btn-secondary btn-sm" style="margin-top:8px" onclick="_saFilter={search:'',status:''};cpApplySaFilter()">Clear filters</button>`}</div>`
       : `<div class="empty-state">
           <i class="fa-solid fa-map-location-dot"></i>
           <p style="font-size:15px;font-weight:600;color:var(--text)">No service areas yet</p>
@@ -924,6 +1032,8 @@ function renderServiceAreas(){
   const stats = document.getElementById('cp-sa-stats');
   const areas = (_customerServiceAreas || []).filter(a => !_selectedClientId || a.client_id === _selectedClientId);
   cpRenderLanding();
+  cpRenderGlobalSearch();
+  cpUpdateTabCounts();
   if (!areas.length){
     cpSaClearChrome();
     cpRenderSaCards();
@@ -1105,6 +1215,7 @@ function cpSelectTab(name){
   document.querySelectorAll('.cp-tab').forEach(d => d.style.display = (d.id === 'cp-tab-' + name) ? '' : 'none');
   if (name === 'invoices') cpLoadInvoices();
   if (name === 'service-areas') cpLoadServiceAreas();
+  cpUpdateTabCounts();
 }
 
 function showAccountMenu(){
