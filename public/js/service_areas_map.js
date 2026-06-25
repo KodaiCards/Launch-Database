@@ -20,6 +20,16 @@
   var _ovCluster     = null;
   var _leafletReady  = false;
 
+  // ── Overview boundary edit state (R15.5) ─────────────────────────────────────
+  var _ovBndSaId    = null;  // SA id currently being boundary-edited
+  var _ovBndMode    = false;
+  var _ovBndItems   = null;  // L.FeatureGroup for draw/edit
+  var _ovBndLayer   = null;  // current drawn polygon layer
+  var _ovBndHandler = null;  // L.Draw.Polygon handler
+  var _ovBndEditH   = null;  // L.EditToolbar.Edit handler
+  var _ovBndOrigGeo = null;  // original GeoJSON for cancel restoration
+  var _ovBndSaData  = null;  // the SA row data object
+
   // ── View toggle ──────────────────────────────────────────────────────────────
   window.saSetView = function (view) {
     var main     = document.getElementById('main');
@@ -262,8 +272,11 @@
       + '<div style="color:#666;font-size:11px;margin-bottom:2px">' + esc(r.client_name || '—') + '</div>'
       + (prog ? '<span style="font-size:10px;font-weight:700;background:#eee;padding:1px 5px;border-radius:8px">' + prog + '</span> ' : '')
       + '<span style="font-size:10px;color:#888">' + lc + '</span>'
-      + '<div style="margin-top:7px">'
+      + '<div style="margin-top:7px;display:flex;gap:5px;flex-wrap:wrap">'
       + '<a href="/area.html?id=' + esc(r.id) + '" style="display:inline-block;padding:4px 12px;background:#1B5FA0;color:#fff;border-radius:5px;font-size:11px;font-weight:600;text-decoration:none">Open →</a>'
+      // R15.5 — boundary edit from the overview map
+      + '<button onclick="window.ovEditBoundary(' + esc(JSON.stringify(r.id)) + ')" style="padding:4px 10px;border:1px solid #ccc;border-radius:5px;font-size:11px;font-weight:600;cursor:pointer;background:#fff;color:#333">'
+      + '<i class=\'fa-solid fa-draw-polygon\'></i> Boundary</button>'
       + '</div></div>';
   }
 
@@ -529,5 +542,202 @@
       + '<div style="font-size:13px;font-weight:700">' + value + '</div>'
       + '</div>';
   }
+
+  // ── R15.5 — Overview map boundary editing ─────────────────────────────────────
+
+  function ovFlash(msg, type) {
+    var el = document.createElement('div');
+    el.textContent = msg;
+    el.style.cssText = 'position:fixed;bottom:22px;left:50%;transform:translateX(-50%);padding:10px 18px;'
+      + 'border-radius:8px;font-size:13px;font-weight:500;z-index:9999;white-space:nowrap;'
+      + 'box-shadow:0 4px 12px rgba(0,0,0,.25);'
+      + (type === 'err' ? 'background:#DC3545;color:#fff' : 'background:#212529;color:#fff');
+    document.body.appendChild(el);
+    setTimeout(function(){ el.remove(); }, 3200);
+  }
+
+  function ensureLeafletDraw(cb) {
+    if (typeof L !== 'undefined' && typeof L.Draw !== 'undefined') { cb(); return; }
+    var link = document.createElement('link');
+    link.rel = 'stylesheet';
+    link.href = 'https://cdnjs.cloudflare.com/ajax/libs/leaflet.draw/1.0.4/leaflet.draw.min.css';
+    document.head.appendChild(link);
+    var s = document.createElement('script');
+    s.src = 'https://cdnjs.cloudflare.com/ajax/libs/leaflet.draw/1.0.4/leaflet.draw.min.js';
+    s.onload = cb;
+    document.head.appendChild(s);
+  }
+
+  function ovBndShowBar(show) {
+    var bar = document.getElementById('ov-bnd-bar');
+    if (!bar) return;
+    bar.style.display = show ? 'flex' : 'none';
+    if (show && _ovBndSaData) {
+      var nameEl = document.getElementById('ov-bnd-sa-name');
+      if (nameEl) nameEl.textContent = _ovBndSaData.name || 'Boundary';
+    }
+    // disable popup interactions while editing
+    var ccBtn = document.getElementById('cc-panel-btn');
+    if (ccBtn) ccBtn.disabled = show;
+  }
+
+  function ovBndSetLayer(layer) {
+    if (_ovBndLayer) _ovBndItems.removeLayer(_ovBndLayer);
+    _ovBndLayer = layer;
+    _ovBndItems.addLayer(_ovBndLayer);
+    if (_ovBndEditH) { try { _ovBndEditH.disable(); } catch(_){} }
+    _ovBndEditH = new L.EditToolbar.Edit(_overviewMap, { featureGroup: _ovBndItems });
+    _ovBndEditH.enable();
+    var drawBtn = document.getElementById('ov-bnd-draw-btn');
+    if (drawBtn) drawBtn.innerHTML = '<i class="fa-solid fa-pen"></i> Redraw';
+  }
+
+  function ovBndExit() {
+    _ovBndMode    = false;
+    _ovBndSaId    = null;
+    _ovBndSaData  = null;
+    _ovBndItems   = null;
+    _ovBndLayer   = null;
+    _ovBndHandler = null;
+    _ovBndEditH   = null;
+    ovBndShowBar(false);
+    var ccBtn = document.getElementById('cc-panel-btn');
+    if (ccBtn) ccBtn.disabled = false;
+  }
+
+  window.ovEditBoundary = function(saId) {
+    if (!_overviewMap) return;
+    // close any open popup first
+    _overviewMap.closePopup();
+
+    var saRow = (_mapData || []).find(function(r){ return r.id === saId; });
+    if (!saRow) { ovFlash('Service area data not found', 'err'); return; }
+
+    ensureLeafletDraw(function() {
+      _ovBndMode   = true;
+      _ovBndSaId   = saId;
+      _ovBndSaData = saRow;
+      _ovBndOrigGeo = saRow.boundary || null;
+
+      _ovBndItems = new L.FeatureGroup();
+      _overviewMap.addLayer(_ovBndItems);
+
+      // If existing boundary: remove display layer and add editable version
+      if (_ovBoundaries[saId]) {
+        _overviewMap.removeLayer(_ovBoundaries[saId]);
+        delete _ovBoundaries[saId];
+      }
+      var bndGeo = saRow.boundary;
+      if (bndGeo) {
+        try {
+          var geo = typeof bndGeo === 'string' ? JSON.parse(bndGeo) : bndGeo;
+          var ring = geo.coordinates ? geo.coordinates[0]
+            : (geo.geometry ? geo.geometry.coordinates[0] : null);
+          if (ring) {
+            var latlngs = ring.map(function(c){ return [c[1], c[0]]; });
+            var poly = L.polygon(latlngs, { color: '#1B5FA0', weight: 2.5, fillOpacity: 0.12 });
+            ovBndSetLayer(poly);
+          }
+        } catch(_) {}
+      }
+
+      ovBndShowBar(true);
+      ovFlash('Boundary edit — adjust vertices or draw a new polygon, then save');
+    });
+  };
+
+  window.ovBndDraw = function() {
+    if (!_overviewMap || !_ovBndMode) return;
+    if (_ovBndEditH)  { try { _ovBndEditH.disable(); }  catch(_){} _ovBndEditH = null; }
+    if (_ovBndHandler){ try { _ovBndHandler.disable(); } catch(_){} }
+    _ovBndHandler = new L.Draw.Polygon(_overviewMap, {
+      shapeOptions: { color: '#1B5FA0', weight: 2.5, fillOpacity: 0.12 }
+    });
+    _ovBndHandler.enable();
+    _overviewMap.once('draw:created', function(e) {
+      _ovBndHandler = null;
+      ovBndSetLayer(e.layer);
+    });
+    ovFlash('Click to add vertices — double-click to close polygon');
+  };
+
+  window.ovBndSave = async function() {
+    if (!_ovBndMode || !_ovBndItems) return;
+    var layers = [];
+    _ovBndItems.eachLayer(function(l){ layers.push(l); });
+    if (!layers.length) { ovFlash('Draw a boundary polygon first', 'err'); return; }
+
+    if (_ovBndEditH) { try { _ovBndEditH.save(); _ovBndEditH.disable(); } catch(_){} }
+
+    var layer = layers[0];
+    var geo = layer.toGeoJSON();
+    var coords = geo.geometry && geo.geometry.coordinates && geo.geometry.coordinates[0];
+    if (!coords || coords.length < 3) { ovFlash('Invalid boundary polygon', 'err'); return; }
+
+    var ring = (coords[coords.length-1][0]===coords[0][0] && coords[coords.length-1][1]===coords[0][1])
+      ? coords.slice(0,-1) : coords;
+    var avgLat = ring.reduce(function(s,c){return s+c[1];},0)/ring.length;
+    var avgLng = ring.reduce(function(s,c){return s+c[0];},0)/ring.length;
+    var saId = _ovBndSaId;
+
+    try {
+      var res = await fetch('/api/service-areas/'+encodeURIComponent(saId)+'/boundary', {
+        method: 'PUT', credentials: 'include',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          boundary: geo.geometry,
+          center_lat: Math.round(avgLat*1e6)/1e6,
+          center_lng: Math.round(avgLng*1e6)/1e6
+        })
+      });
+      if (!res.ok) { var err = await res.json(); throw new Error(err.error || 'HTTP '+res.status); }
+
+      // Update in-memory map data
+      var saRow = (_mapData||[]).find(function(r){return r.id===saId;});
+      if (saRow) {
+        saRow.boundary   = geo.geometry;
+        saRow.center_lat = avgLat;
+        saRow.center_lng = avgLng;
+      }
+      // Remove editable feature group + redraw as static boundary
+      if (_ovBndItems) _overviewMap.removeLayer(_ovBndItems);
+      var color = saRow ? ovStatusColor(saRow) : '#9BA1A8';
+      var newLayer = L.geoJSON(geo.geometry, {
+        style: { color: color, weight: 2, fillOpacity: 0.07, opacity: 0.5 }
+      }).addTo(_overviewMap);
+      _ovBoundaries[saId] = newLayer;
+      // Move pin to new center
+      if (saRow && _ovMarkers[saId]) {
+        _ovMarkers[saId].setLatLng([avgLat, avgLng]);
+      }
+      ovBndExit();
+      ovFlash('Boundary saved');
+    } catch(e) {
+      ovFlash(e.message||'Failed to save boundary', 'err');
+      if (_ovBndItems && _ovBndLayer) {
+        _ovBndEditH = new L.EditToolbar.Edit(_overviewMap, { featureGroup: _ovBndItems });
+        _ovBndEditH.enable();
+      }
+    }
+  };
+
+  window.ovBndCancel = function() {
+    if (_ovBndHandler) { try { _ovBndHandler.disable(); } catch(_){} }
+    if (_ovBndEditH)   { try { _ovBndEditH.disable();   } catch(_){} }
+    var saId = _ovBndSaId;
+    if (_ovBndItems && _overviewMap) _overviewMap.removeLayer(_ovBndItems);
+    // Restore original boundary
+    if (_ovBndOrigGeo && _overviewMap && saId) {
+      try {
+        var geo = typeof _ovBndOrigGeo==='string' ? JSON.parse(_ovBndOrigGeo) : _ovBndOrigGeo;
+        var saRow = (_mapData||[]).find(function(r){return r.id===saId;});
+        var color = saRow ? ovStatusColor(saRow) : '#9BA1A8';
+        _ovBoundaries[saId] = L.geoJSON(geo, {
+          style:{ color:color, weight:2, fillOpacity:0.07, opacity:0.5 }
+        }).addTo(_overviewMap);
+      } catch(_){}
+    }
+    ovBndExit();
+  };
 
 })();

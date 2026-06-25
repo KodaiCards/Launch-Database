@@ -183,8 +183,24 @@ input,select{font-family:inherit;font-size:13px;color:var(--text);background:var
             <span style="display:inline-block;width:12px;height:12px;border:2px solid currentColor;border-radius:50%;border-right-color:transparent;animation:spin .6s linear infinite;vertical-align:-2px;margin-right:5px"></span>Loading…
           </div>
         </div>
-        <!-- Leaflet overview map container -->
-        <div id="overview-map" style="flex:1;min-width:0;background:var(--surface-1)"></div>
+        <!-- Leaflet overview map container (R15.5: position:relative for boundary overlay) -->
+        <div style="flex:1;position:relative;overflow:hidden;min-width:0">
+          <div id="overview-map" style="width:100%;height:100%;background:var(--surface-1)"></div>
+          <!-- R15.5 boundary edit floating toolbar (shown when editing a SA boundary on overview) -->
+          <div id="ov-bnd-bar" role="toolbar" aria-label="Boundary edit tools"
+            style="display:none;position:absolute;top:10px;left:50%;transform:translateX(-50%);
+            background:var(--surface-2);border:1px solid var(--border-strong);border-radius:8px;
+            padding:7px 12px;box-shadow:0 6px 18px rgba(0,0,0,.2);z-index:500;
+            align-items:center;gap:6px;white-space:nowrap;font-size:12px">
+            <i class="fa-solid fa-draw-polygon" style="color:var(--primary)" aria-hidden="true"></i>
+            <span style="font-weight:600;color:var(--text-secondary)" id="ov-bnd-sa-name">Boundary</span>
+            <button class="btn btn-sm btn-secondary" id="ov-bnd-draw-btn" onclick="ovBndDraw()">
+              <i class="fa-solid fa-pen"></i> Draw</button>
+            <button class="btn btn-sm btn-primary" onclick="ovBndSave()">
+              <i class="fa-solid fa-floppy-disk"></i> Save</button>
+            <button class="btn btn-sm btn-secondary" onclick="ovBndCancel()">Cancel</button>
+          </div>
+        </div>
       </div>
 
       <!-- Contracts & Estimate drawer (hidden; toggle via top bar button) -->
