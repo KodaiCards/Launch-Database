@@ -363,6 +363,11 @@ function renderMapHeader(routes, area){
     +'<i class="fa-solid fa-map" style="color:var(--primary);font-size:12px" aria-hidden="true"></i>'
     +'<span style="font-size:12px;font-weight:600;color:var(--text-secondary)" id="sa-map-label">'+planLabel+'</span>'
     +(planLinked ? '' : '<span style="font-size:11px;color:var(--text-muted)">&nbsp;— draw on the map to link a plan</span>')
+    +(planLinked ? '<input id="sa-map-jump" type="text" placeholder="Jump to unit…" title="Type a unit name or ID to fly the map there" aria-label="Jump to map unit" style="font-size:12px;padding:3px 8px;border:1px solid var(--gray-border);border-radius:5px;background:var(--white);color:var(--text);width:140px;margin-left:8px">' : '')
+    +(planLinked ? '<div class="seg-ctrl" style="font-size:11px;margin-left:4px" role="group" aria-label="Map layer toggle">'
+      +'<button id="sa-map-constr-btn" class="active" onclick="saMapSetLayer(\'construction\')" title="Show construction plan elements">Construction</button>'
+      +'<button id="sa-map-eng-btn" onclick="saMapSetLayer(\'engineering\')" title="Show engineering jobs">Engineering</button>'
+      +'</div>' : '')
     +'<div style="margin-left:auto;display:flex;gap:5px">'
     +'<button class="btn btn-secondary btn-sm" id="sa-map-edit-btn" onclick="saMapToggleEdit()" aria-pressed="false">'
     +'<i class="fa-solid fa-pen-to-square"></i> Edit</button>'
@@ -467,7 +472,7 @@ function renderMaterialsSection(materials, area, finalized){
   });
 
   var areaFinal = !!(_ws && _ws.area && _ws.area.closed_at);
-  return '<div class="card"'+(areaFinal?' style="opacity:.75"':'')+' aria-label="Materials">'
+  return '<div class="card" id="mat-card"'+(areaFinal?' style="opacity:.75"':'')+' aria-label="Materials">'
     +'<div class="card-head">'
     +'<div class="card-title"><i class="fa-solid fa-boxes-stacked" aria-hidden="true"></i> Materials</div>'
     +'<button class="btn btn-sm btn-secondary" id="show-add-mat"'+(areaFinal?' disabled title="Area is final — reopen to edit"':'')+'>'+
@@ -502,7 +507,8 @@ function renderMatRow(m, finalized){
     : '<div class="prog-track" aria-label="'+pct+'% complete" role="progressbar" aria-valuenow="'+pct+'" aria-valuemin="0" aria-valuemax="100"><div class="prog-fill'+(pct>=100?' done':'')+'" style="width:'+pct+'%"></div></div><span style="font-size:11px;color:var(--text-muted);margin-left:4px">'+pct+'%</span>';
   var hasUnits = parseInt(m.unit_count)||0;
   var expandCls = _expandedMat[m.id]?'expanded':'';
-  return '<tr class="clickable-row mat-row '+expandCls+'" data-mat-id="'+esc(m.id)+'">'
+  return '<tr class="clickable-row mat-row '+expandCls+'" data-mat-id="'+esc(m.id)+'"'
+    +(m.map_feature_ref?' data-elem-ref="'+esc(m.map_feature_ref)+'"':'')+' tabindex="'+(m.map_feature_ref?'0':'-1')+'">'
     +'<td>'+srcBadge+' '+esc(m.item||'—')+(m.map_feature_ref?'<span style="font-size:10px;color:var(--text-muted);margin-left:4px">ref:'+esc(m.map_feature_ref)+'</span>':'')+'</td>'
     +'<td>'+esc(m.unit||'—')+'</td>'
     +'<td class="num amt">'+fmtMoney(m.unit_cost)+'</td>'
@@ -522,7 +528,7 @@ function renderJobsSection(jobs){
     rows += renderJobRow(j);
     if(_expandedJob[j.id]) rows += renderJobExpand(j);
   });
-  return '<div class="card">'
+  return '<div class="card" id="job-card">'
     +'<div class="card-head">'
     +'<div class="card-title"><i class="fa-solid fa-briefcase" aria-hidden="true"></i> Jobs & Hours</div>'
     +'</div>'
@@ -663,21 +669,69 @@ function bindAll(){
   Object.keys(_expandedMat).forEach(function(mid){
     if(_expandedMat[mid]) loadUnits(mid);
   });
+
+  // R15.3 — Bidirectional row↔pin hover + click-to-fly on material rows with map_feature_ref
+  document.querySelectorAll('.mat-row[data-elem-ref]').forEach(function(tr) {
+    var eid = tr.dataset.elemRef;
+    tr.addEventListener('mouseenter', function() { saMapHighlightElem(eid, true); });
+    tr.addEventListener('mouseleave', function() { saMapHighlightElem(eid, false); });
+    tr.addEventListener('click', function() { saMapFlyToElem(eid); });
+    tr.addEventListener('keydown', function(e) {
+      if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); saMapFlyToElem(eid); }
+    });
+  });
+
+  // R15.3 — Jump-to-unit input
+  var jumpInput = document.getElementById('sa-map-jump');
+  if (jumpInput) {
+    jumpInput.addEventListener('input', function() {
+      var q = this.value.trim().toLowerCase();
+      if (!q || !_saMapLeaflet) return;
+      var found = null;
+      Object.values(_saMapMarkersById).some(function(entry) {
+        var d = entry.data;
+        var name = (d.name || '').toLowerCase();
+        var sid  = (d.structureId || '').toLowerCase();
+        var pid  = (d.id || '').toLowerCase();
+        if (name.indexOf(q) !== -1 || sid.indexOf(q) !== -1 || pid.indexOf(q) !== -1) {
+          found = entry; return true;
+        }
+      });
+      if (found && found.data.lat != null) {
+        _saMapLeaflet.flyTo([found.data.lat, found.data.lng], 18, { duration: 0.5 });
+        setTimeout(function() { found.marker.openPopup(); }, 550);
+        saMapHighlightElem(found.data.id, true);
+        setTimeout(function() { saMapHighlightElem(found.data.id, false); }, 2000);
+      }
+    });
+    jumpInput.addEventListener('keydown', function(e) {
+      if (e.key === 'Escape') { this.value = ''; this.blur(); }
+    });
+  }
+
+  // R15.3 — Re-apply layer toggle state after re-render
+  var cBtn = document.getElementById('sa-map-constr-btn');
+  var eBtn = document.getElementById('sa-map-eng-btn');
+  if (cBtn) cBtn.classList.toggle('active', _saMapLayer === 'construction');
+  if (eBtn) eBtn.classList.toggle('active', _saMapLayer === 'engineering');
 }
 
 function reRenderMapStub(){ render(); }
 
 // ── SA map header — Leaflet view + FRM edit (R15.2) ────────────────────────
-var _saMapLeaflet   = null;  // L.map instance
-var _saMapInEdit    = false; // true when FRM iframe is shown
-var _saMapExpanded  = false;
-var _saMapDragY     = 0;
-var _saMapDragH     = 0;
-var _saMapDragging  = false;
-var _saMapLayerBnd  = null;  // boundary polygon layer
-var _saMapLayerPts  = null;  // structure marker layer group
-var _saMapLayerSegs = null;  // span polyline layer group
-var _saMapArea      = null;  // current area object (set in initSaMap)
+var _saMapLeaflet     = null;  // L.map instance
+var _saMapInEdit      = false; // true when FRM iframe is shown
+var _saMapExpanded    = false;
+var _saMapDragY       = 0;
+var _saMapDragH       = 0;
+var _saMapDragging    = false;
+var _saMapLayerBnd    = null;  // boundary polygon layer
+var _saMapLayerPts    = null;  // structure marker layer group
+var _saMapLayerSegs   = null;  // span polyline layer group
+var _saMapArea        = null;  // current area object (set in initSaMap)
+var _saMapMarkersById = {};    // R15.3: elemId → { marker, data, color }
+var _saMapSegsById    = {};    // R15.3: elemId → { polyline, data }
+var _saMapLayer       = 'construction'; // R15.3 toggle: 'construction'|'engineering'
 
 function ensureLeafletForArea(cb) {
   if (typeof L !== 'undefined') { cb(); return; }
@@ -754,6 +808,8 @@ function plotSaPlanElements(pts, segs) {
 
   _saMapLayerPts  = L.layerGroup();
   _saMapLayerSegs = L.layerGroup();
+  _saMapMarkersById = {};
+  _saMapSegsById    = {};
 
   Object.values(pts || {}).forEach(function(p) {
     if (p.lat == null || p.lng == null) return;
@@ -761,14 +817,18 @@ function plotSaPlanElements(pts, segs) {
     var icon = L.divIcon({
       className: '',
       html: '<div data-elem-id="' + esc(p.id||'') + '" style="width:10px;height:10px;border-radius:50%;background:' + color
-        + ';border:1.5px solid rgba(0,0,0,.2);box-shadow:0 1px 3px rgba(0,0,0,.25)"></div>',
+        + ';border:1.5px solid rgba(0,0,0,.2);box-shadow:0 1px 3px rgba(0,0,0,.25);transition:transform .12s,box-shadow .12s"></div>',
       iconSize: [10, 10], iconAnchor: [5, 5], popupAnchor: [0, -7],
     });
     var m = L.marker([p.lat, p.lng], { icon: icon });
     m.bindPopup(saMapElemPopup(p), { minWidth: 160 });
     m.options._elemId = p.id;
     m.on('click', function() { saMapElemClick(p); });
+    // Wire map→row hover for bidirectional linking
+    m.on('mouseover', function() { saMapHighlightElem(p.id, true); });
+    m.on('mouseout',  function() { saMapHighlightElem(p.id, false); });
     _saMapLayerPts.addLayer(m);
+    if (p.id) _saMapMarkersById[p.id] = { marker: m, data: p, color: color };
   });
 
   Object.values(segs || {}).forEach(function(s) {
@@ -778,10 +838,14 @@ function plotSaPlanElements(pts, segs) {
     pl.bindPopup(saMapSpanPopup(s), { minWidth: 160 });
     pl.options._elemId = s.id;
     _saMapLayerSegs.addLayer(pl);
+    if (s.id) _saMapSegsById[s.id] = { polyline: pl, data: s };
   });
 
-  _saMapLayerPts.addTo(_saMapLeaflet);
-  _saMapLayerSegs.addTo(_saMapLeaflet);
+  // Respect current layer toggle
+  if (_saMapLayer === 'construction') {
+    _saMapLayerPts.addTo(_saMapLeaflet);
+    _saMapLayerSegs.addTo(_saMapLeaflet);
+  }
 
   // Fit to elements if no boundary set
   if (!_saMapLayerBnd) {
@@ -793,10 +857,12 @@ function plotSaPlanElements(pts, segs) {
 }
 
 function saMapElemPopup(p) {
+  var hasRow = !!document.querySelector('[data-elem-ref="' + CSS.escape(p.id||'') + '"]');
   return '<div style="font-size:12px">'
     + '<div style="font-weight:600">' + esc(p.name || p.ptype || 'Structure') + '</div>'
     + '<div style="color:#666;font-size:11px">' + esc(p.ptype || '') + ' · ' + esc(p.status || 'proposed') + '</div>'
     + (p.structureId ? '<div style="font-size:10px;color:#888">ID: ' + esc(p.structureId) + '</div>' : '')
+    + (hasRow ? '<button onclick="window.saMapScrollToRow(' + esc(JSON.stringify(p.id||'')) + ')" style="margin-top:6px;font-size:11px;padding:2px 8px;border:1px solid #ccc;border-radius:4px;cursor:pointer;background:#fff;color:#333">&#8595; Show in table</button>' : '')
     + '</div>';
 }
 
@@ -809,14 +875,79 @@ function saMapSpanPopup(s) {
 }
 
 function saMapElemClick(elem) {
-  // Hook for R15.3 — highlight corresponding row in the jobs/materials table
   var row = document.querySelector('[data-elem-ref="' + CSS.escape(elem.id||'') + '"]');
   if (row) {
-    row.scrollIntoView({ block: 'nearest' });
+    row.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
     row.style.outline = '2px solid var(--primary)';
     setTimeout(function() { row.style.outline = ''; }, 1400);
   }
 }
+
+// R15.3 — highlight a map element + its linked table row (bidirectional)
+function saMapHighlightElem(elemId, on) {
+  if (!elemId) return;
+  // Highlight icon div inside Leaflet pane
+  var mapEl = document.getElementById('sa-map-leaflet');
+  if (mapEl) {
+    var iconDiv = mapEl.querySelector('[data-elem-id="' + CSS.escape(elemId) + '"]');
+    if (iconDiv) {
+      iconDiv.style.boxShadow = on ? '0 0 0 5px rgba(27,95,160,0.45)' : '0 1px 3px rgba(0,0,0,.25)';
+      iconDiv.style.transform = on ? 'scale(1.8)' : '';
+    }
+  }
+  // Highlight table row
+  var row = document.querySelector('[data-elem-ref="' + CSS.escape(elemId) + '"]');
+  if (row) row.style.background = on ? 'var(--primary-light)' : '';
+}
+
+// R15.3 — fly map to a structure by elemId
+function saMapFlyToElem(elemId) {
+  if (!elemId || !_saMapLeaflet) return;
+  var entry = _saMapMarkersById[elemId];
+  if (!entry || entry.data.lat == null) return;
+  _saMapLeaflet.flyTo([entry.data.lat, entry.data.lng], Math.max(17, _saMapLeaflet.getZoom()), { duration: 0.5 });
+  setTimeout(function() { entry.marker.openPopup(); }, 550);
+}
+
+// R15.3 — scroll a table row into view by elemId (called from popup button)
+window.saMapScrollToRow = function(elemId) {
+  if (!elemId) return;
+  var row = document.querySelector('[data-elem-ref="' + CSS.escape(String(elemId)) + '"]');
+  if (row) {
+    row.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    row.style.outline = '2px solid var(--primary)';
+    setTimeout(function() { row.style.outline = ''; }, 1600);
+  }
+  if (_saMapLeaflet) _saMapLeaflet.closePopup();
+};
+
+// R15.3 — Construction / Engineering layer toggle
+window.saMapSetLayer = function(layer) {
+  _saMapLayer = layer;
+  var isConstr = layer === 'construction';
+  // Show/hide plan layers
+  if (_saMapLayerPts && _saMapLeaflet) {
+    if (isConstr) { if (!_saMapLeaflet.hasLayer(_saMapLayerPts)) _saMapLeaflet.addLayer(_saMapLayerPts); }
+    else { if (_saMapLeaflet.hasLayer(_saMapLayerPts)) _saMapLeaflet.removeLayer(_saMapLayerPts); }
+  }
+  if (_saMapLayerSegs && _saMapLeaflet) {
+    if (isConstr) { if (!_saMapLeaflet.hasLayer(_saMapLayerSegs)) _saMapLeaflet.addLayer(_saMapLayerSegs); }
+    else { if (_saMapLeaflet.hasLayer(_saMapLayerSegs)) _saMapLeaflet.removeLayer(_saMapLayerSegs); }
+  }
+  // Toggle button active state
+  var cBtn = document.getElementById('sa-map-constr-btn');
+  var eBtn = document.getElementById('sa-map-eng-btn');
+  if (cBtn) { cBtn.classList.toggle('active', isConstr); }
+  if (eBtn) { eBtn.classList.toggle('active', !isConstr); }
+  // Highlight the relevant data section
+  var matCard = document.getElementById('mat-card');
+  var jobCard = document.getElementById('job-card');
+  if (matCard) matCard.style.outline = isConstr ? '2px solid var(--primary)' : '';
+  if (jobCard) jobCard.style.outline = !isConstr ? '2px solid var(--primary)' : '';
+  // Scroll to relevant section
+  var target = isConstr ? matCard : jobCard;
+  if (target) target.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+};
 
 window.saMapToggleEdit = function() {
   var leaflet = document.getElementById('sa-map-leaflet');
