@@ -680,12 +680,13 @@ module.exports = function installServiceAreaRoutes(app, pool, mw) {
         `INSERT INTO service_area_jobs
            (service_area_id, job_id, team, assigned_staff_id, assigned_user_id,
             billing_type, rate, status, estimated_amount, footage, miles, notes,
-            created_by_user_id, updated_by_user_id, route_id, cost_category)
-         VALUES ($1,$2,$3,$4,$5,$6,$7,COALESCE($8,'potential'),$9,$10,$11,$12,$13,$13,$14,$15)
+            created_by_user_id, updated_by_user_id, route_id, cost_category, budget_code_id)
+         VALUES ($1,$2,$3,$4,$5,$6,$7,COALESCE($8,'potential'),$9,$10,$11,$12,$13,$13,$14,$15,$16)
          RETURNING *`,
         [req.params.id, b.job_id || null, team, b.assigned_staff_id || null, b.assigned_user_id || null,
          billingType, rate, b.status || null, b.estimated_amount ?? null,
-         b.footage ?? null, b.miles ?? null, b.notes || null, uid(req), b.route_id || null, costCat]
+         b.footage ?? null, b.miles ?? null, b.notes || null, uid(req), b.route_id || null, costCat,
+         b.budget_code_id || null]
       );
       logAudit(pool, { req, action: 'service_area_job.create', entity_type: 'service_area_job',
         entity_id: rows[0].id, after: { service_area_id: req.params.id, team, job_id: b.job_id }, source: 'admin' }).catch(() => {});
@@ -698,7 +699,7 @@ module.exports = function installServiceAreaRoutes(app, pool, mw) {
 
   const SAJOB_FIELDS = ['job_id', 'team', 'route_id', 'cost_category', 'assigned_staff_id', 'assigned_user_id',
     'billing_type', 'rate', 'status', 'estimated_amount', 'actual_hours', 'actual_amount', 'footage', 'miles',
-    'start_date', 'completed_date', 'billed_date', 'notes'];
+    'start_date', 'completed_date', 'billed_date', 'notes', 'budget_code_id'];
 
   app.put('/api/service-area-jobs/:id', requireManagerOrAdmin, async (req, res) => {
     const sets = [], vals = [req.params.id];

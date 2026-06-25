@@ -92,51 +92,58 @@ module.exports = function installBudgetsRoutes(app, pool, mw) {
       const budget = await checkBudgetOwnership(req, res, req.params.id);
       if (!budget) return;
 
-      // Get all codes with spent amounts. Spent = sum of earned revenue from
-      // every project linked to this budget_code, optionally filtered by job:
-      // if budget_codes.job_id is set, ONLY projects with the matching job count
-      // toward the code's "spent" total. NULL job_id = applies to any job.
+      // Utilization rebuilt on the KEYSTONE (docs/budgets_design.md): per code,
+      // projected = Σ expected of the code's service_area_jobs (estimated_amount,
+      // else footage×rate); billed = Σ that job's non-void invoice_items. Replaces
+      // the legacy projects.budget_code_id join (the projects tree is retiring).
+      // budget_codes.job_id still narrows a code to one discipline when set.
       const { rows: codes } = await pool.query(`
         SELECT bc.*,
           j.name as job_name,
-          COALESCE(SUM(
-            CASE
-              WHEN proj.billing_type = 'footage' THEN proj.expected_revenue
-              WHEN proj.billing_type = 'hourly' THEN proj.actual_hours * proj.billing_rate
-              ELSE 0
-            END
-          ), 0) as spent,
-          COUNT(proj.id) as project_count,
+          COALESCE(SUM(COALESCE(NULLIF(saj.estimated_amount,0), COALESCE(saj.footage,0)*COALESCE(saj.rate,0), 0)), 0) AS projected,
+          COALESCE(SUM(COALESCE(b.billed,0)), 0) AS billed,
+          COUNT(saj.id) AS job_count,
           json_agg(json_build_object(
-            'id', proj.id, 'name', proj.name, 'status', proj.status,
-            'project_type', proj.project_type,
-            'job_id', proj.job_id,
-            'billable', CASE
-              WHEN proj.billing_type = 'footage' THEN proj.expected_revenue
-              WHEN proj.billing_type = 'hourly' THEN proj.actual_hours * proj.billing_rate
-              ELSE 0
-            END
-          )) FILTER (WHERE proj.id IS NOT NULL) as projects
+            'id', saj.id, 'team', saj.team, 'billing_type', saj.billing_type,
+            'expected', COALESCE(NULLIF(saj.estimated_amount,0), COALESCE(saj.footage,0)*COALESCE(saj.rate,0), 0),
+            'billed', COALESCE(b.billed,0)
+          )) FILTER (WHERE saj.id IS NOT NULL) AS jobs
         FROM budget_codes bc
         LEFT JOIN jobs j ON j.id = bc.job_id
-        LEFT JOIN projects proj
-          ON proj.budget_code_id = bc.id
-         AND (bc.job_id IS NULL OR proj.job_id = bc.job_id)
-         AND COALESCE(proj.is_rollup, FALSE) = FALSE
+        LEFT JOIN service_area_jobs saj
+          ON saj.budget_code_id = bc.id
+         AND (bc.job_id IS NULL OR saj.job_id = bc.job_id)
+        LEFT JOIN (SELECT ii.service_area_job_id, SUM(ii.amount) billed
+                     FROM invoice_items ii JOIN invoices i ON i.id = ii.invoice_id
+                    WHERE COALESCE(i.status,'') <> 'void'
+                    GROUP BY ii.service_area_job_id) b ON b.service_area_job_id = saj.id
         WHERE bc.budget_id = $1
         GROUP BY bc.id, j.name
         ORDER BY bc.code
       `, [req.params.id]);
 
-      const totalAllocated = codes.reduce((s, c) => s + parseFloat(c.allocated_amount || 0), 0);
-      const totalSpent = codes.reduce((s, c) => s + parseFloat(c.spent || 0), 0);
+      const r2 = (n) => Math.round(parseFloat(n || 0) * 100) / 100;
+      for (const c of codes) {
+        c.allocated = r2(c.allocated_amount);
+        c.billed = r2(c.billed);
+        c.projected = r2(c.projected);
+        c.remaining = r2(c.allocated - c.billed);
+        c.projected_remaining = r2(c.allocated - c.projected);
+        c.over_budget = c.projected > c.allocated ? r2(c.projected - c.allocated) : 0;
+        c.spent = c.billed; // back-compat alias for the legacy field name
+      }
+      const sumK = (k) => r2(codes.reduce((s, c) => s + parseFloat(c[k] || 0), 0));
+      const total_allocated = sumK('allocated'), total_billed = sumK('billed'), total_projected = sumK('projected');
 
       res.json({
         ...budget,
         codes,
-        total_allocated: totalAllocated,
-        total_spent: totalSpent,
-        total_remaining: totalAllocated - totalSpent
+        total_allocated,
+        total_billed,
+        total_projected,
+        total_remaining: r2(total_allocated - total_billed),
+        total_projected_remaining: r2(total_allocated - total_projected),
+        total_spent: total_billed, // back-compat alias
       });
     } catch (e) {
       console.error('[budgets:summary]', e && e.message);
