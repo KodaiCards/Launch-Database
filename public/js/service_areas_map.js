@@ -142,7 +142,7 @@
       var hasPin   = r.center_lat != null && r.center_lng != null;
       html += '<div role="listitem" data-sa-id="' + esc(r.id) + '"'
         + ' style="padding:8px 12px;border-bottom:1px solid var(--border-weak);cursor:pointer;transition:background .1s"'
-        + ' onclick="ovClickListItem(this,' + JSON.stringify(r.id) + ')"'
+        + ' onclick="ovClickListItem(this,' + esc(JSON.stringify(r.id)) + ')"'
         + ' onmouseenter="this.style.background=\'var(--surface-1)\'"'
         + ' onmouseleave="this.style.background=this._selected?\'var(--primary-light)\':\'\'">'
         + '<div style="display:flex;align-items:flex-start;gap:6px">'
