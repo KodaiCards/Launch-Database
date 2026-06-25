@@ -1007,4 +1007,37 @@
     return null;
   }
 
+  // ── R16 A6: "Map" button injected into list-view SA detail header ─────────────
+  document.addEventListener('DOMContentLoaded', function () {
+    var mainEl = document.getElementById('main');
+    if (!mainEl) return;
+    new MutationObserver(function () {
+      // Only inject in list mode (main visible)
+      if (mainEl.style.display === 'none') return;
+      if (mainEl.querySelector('#sd-map-btn')) return;
+      var activeItem = document.querySelector('.sa-item.active');
+      if (!activeItem) return;
+      var saId = activeItem.dataset.id;
+      if (!saId) return;
+      var titleEl = mainEl.querySelector('h2') || mainEl.querySelector('h3');
+      if (!titleEl) return;
+      var btn = document.createElement('button');
+      btn.id = 'sd-map-btn';
+      btn.className = 'btn btn-secondary btn-sm';
+      btn.style.cssText = 'margin-left:10px;vertical-align:middle;font-size:11px';
+      btn.innerHTML = '<i class="fa-solid fa-map"></i> Map';
+      btn.onclick = function () {
+        var id = saId;
+        window.saSetView('map');
+        ensureLeaflet(function () {
+          // Allow initOverviewMap + data load to settle before zooming
+          setTimeout(function () { window.ptZoomTo(id); }, 500);
+        });
+      };
+      titleEl.style.display = 'inline-flex';
+      titleEl.style.alignItems = 'center';
+      titleEl.appendChild(btn);
+    }).observe(mainEl, { childList: true });
+  });
+
 })();
