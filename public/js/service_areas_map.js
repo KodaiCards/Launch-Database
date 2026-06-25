@@ -30,6 +30,12 @@
   var _ovBndOrigGeo = null;  // original GeoJSON for cancel restoration
   var _ovBndSaData  = null;  // the SA row data object
 
+  // ── Projects tree state (R16 A2–A4) ─────────────────────────────────────────
+  var _projectsTree = null;
+  var _ptLoaded     = false;
+  var _treeVis      = {};   // nodeId → bool (true=visible; default true)
+  var _treeExp      = {};   // nodeId → bool (true=expanded; clients start expanded)
+
   // ── View toggle ──────────────────────────────────────────────────────────────
   window.saSetView = function (view) {
     var main     = document.getElementById('main');
@@ -55,9 +61,20 @@
       btnMap.style.color      = isMap ? '#fff' : '';
     }
 
+    // Toggle aside: SA list content ↔ projects tree (A5 + A2)
+    var asideActions = document.querySelector('.sidebar-actions');
+    var saFilterBar  = document.getElementById('sa-filter-bar');
+    var clientList   = document.getElementById('clientList');
+    var projTree     = document.getElementById('proj-tree-wrap');
+    [asideActions, saFilterBar, clientList].forEach(function (el) {
+      if (el) el.style.display = isMap ? 'none' : '';
+    });
+    if (projTree) projTree.style.display = isMap ? '' : 'none';
+
     if (isMap && !_mapLoaded) loadMapData();
     if (isMap) loadCcList();
     if (isMap) ensureLeaflet(initOverviewMap);
+    if (isMap && !_ptLoaded) loadProjectsTree();
   };
 
   // ── Load map data ────────────────────────────────────────────────────────────
@@ -739,5 +756,255 @@
     }
     ovBndExit();
   };
+
+  // ── R16 A2–A4: Projects nested tree ─────────────────────────────────────────
+
+  var PT_BADGES = {
+    client:  { label: 'CLIENT',  bg: 'var(--primary-light)',  color: 'var(--primary-dark)' },
+    ec:      { label: 'EC',      bg: '#e8f4e8',               color: '#1a6b1a'             },
+    cc:      { label: 'CC',      bg: '#fff3cd',               color: '#856404'             },
+    sa:      { label: 'SA',      bg: 'var(--surface-3)',      color: 'var(--text-secondary)' },
+    route:   { label: 'ROUTE',   bg: 'var(--surface-3)',      color: 'var(--text-muted)'   },
+    project: { label: '',        bg: '',                      color: ''                    },
+  };
+
+  async function loadProjectsTree() {
+    _ptLoaded = true;
+    var wrap = document.getElementById('proj-tree-wrap');
+    if (!wrap) return;
+    wrap.innerHTML = '<div style="padding:14px;text-align:center;color:var(--text-muted);font-size:12px">'
+      + '<span style="display:inline-block;width:12px;height:12px;border:2px solid currentColor;border-radius:50%;border-right-color:transparent;animation:spin .6s linear infinite;vertical-align:-2px;margin-right:5px"></span>Loading…</div>';
+    try {
+      var res = await fetch('/api/projects-tree', { credentials: 'include' });
+      if (!res.ok) throw new Error('HTTP ' + res.status);
+      _projectsTree = await res.json();
+      _treeVis = {}; _treeExp = {};
+      ptInitState(_projectsTree, 0);
+      renderProjectsTree();
+    } catch (e) {
+      if (wrap) wrap.innerHTML = '<div style="padding:14px;text-align:center;color:var(--danger-text);font-size:12px">'
+        + '<i class="fa-solid fa-triangle-exclamation"></i> ' + esc(e.message) + '</div>';
+    }
+  }
+
+  function ptInitState(nodes, depth) {
+    (nodes || []).forEach(function (n) {
+      _treeVis[n.id] = true;
+      _treeExp[n.id] = depth === 0;  // only clients expanded by default
+      ptInitState(n.children || [], depth + 1);
+    });
+  }
+
+  function renderProjectsTree() {
+    var wrap = document.getElementById('proj-tree-wrap');
+    if (!wrap || !_projectsTree) return;
+    if (!_projectsTree.length) {
+      wrap.innerHTML = '<div style="padding:20px;text-align:center;color:var(--text-muted);font-size:12px">'
+        + '<i class="fa-solid fa-diagram-project"></i><br>No projects yet.</div>';
+      return;
+    }
+    var html = '';
+    _projectsTree.forEach(function (n) { html += ptRenderNode(n, 0); });
+    wrap.innerHTML = html;
+  }
+
+  function ptRenderNode(node, depth) {
+    var vis     = _treeVis[node.id] !== false;
+    var expanded = !!_treeExp[node.id];
+    var hasKids  = node.children && node.children.length > 0;
+    var pad      = 8 + depth * 13;
+
+    // Type badge
+    var bd = PT_BADGES[node.type] || PT_BADGES.sa;
+    var typeBadge = '';
+    if (node.type === 'project') {
+      var isPermit = node.discipline === 'permitting';
+      typeBadge = '<span style="font-size:9px;font-weight:700;padding:1px 5px;border-radius:3px;'
+        + 'background:' + (isPermit ? '#d4edda' : '#cce5ff') + ';color:' + (isPermit ? '#155724' : '#004085') + ';flex-shrink:0">'
+        + (isPermit ? 'PERMIT' : 'DESIGN') + '</span>';
+    } else if (bd.label) {
+      typeBadge = '<span style="font-size:9px;font-weight:700;padding:1px 5px;border-radius:3px;'
+        + 'background:' + bd.bg + ';color:' + bd.color + ';flex-shrink:0">' + bd.label + '</span>';
+    }
+
+    // Status dot for SA nodes
+    var statusDot = '';
+    if (node.type === 'sa') {
+      var lc = node.lifecycle || 'active';
+      var dotC = lc === 'final' ? '#28A745' : lc === 'completed' ? '#1B5FA0' : '#9BA1A8';
+      statusDot = '<span style="display:inline-block;width:7px;height:7px;border-radius:50%;background:' + dotC + ';flex-shrink:0" title="' + lc + '"></span>';
+    }
+
+    // Status badge for project nodes
+    var statusBadge = '';
+    if (node.type === 'project' && node.status) {
+      statusBadge = ' <span style="font-size:9px;color:var(--text-muted)">' + esc(node.status) + '</span>';
+    }
+
+    // Chevron
+    var chevron = hasKids
+      ? '<span id="pte-' + esc(node.id) + '" style="cursor:pointer;font-size:10px;color:var(--text-muted);user-select:none;flex-shrink:0" onclick="ptToggleExp(' + esc(JSON.stringify(node.id)) + ')">' + (expanded ? '▾' : '▸') + '</span>'
+      : '<span style="display:inline-block;width:12px;flex-shrink:0"></span>';
+
+    // Label — clickable to zoom
+    var canZoom = node.type === 'sa'
+      ? (node.center_lat != null)
+      : (node.type === 'client' || node.type === 'ec' || node.type === 'cc');
+    var labelStyle = 'font-size:12px;font-weight:' + (depth < 2 ? '600' : '400') + ';color:' + (vis ? 'var(--text)' : 'var(--text-muted)') + ';white-space:nowrap;overflow:hidden;text-overflow:ellipsis;min-width:0';
+    var labelEl = canZoom
+      ? '<span style="' + labelStyle + ';cursor:pointer" onclick="ptZoomTo(' + esc(JSON.stringify(node.id)) + ')" title="Zoom to ' + esc(node.label) + '">' + esc(node.label) + '</span>'
+      : '<span style="' + labelStyle + '">' + esc(node.label) + '</span>';
+
+    // Open link for SA nodes
+    var openLink = (node.type === 'sa')
+      ? ' <a href="/area.html?id=' + esc(node.id) + '" style="font-size:10px;color:var(--primary);text-decoration:none;font-weight:600;flex-shrink:0" onclick="event.stopPropagation()">↗</a>'
+      : '';
+
+    // Eye toggle (A3)
+    var eyeBtn = '<button id="ptv-' + esc(node.id) + '" '
+      + 'onclick="ptToggleVis(' + esc(JSON.stringify(node.id)) + ')" '
+      + 'style="border:none;background:none;cursor:pointer;padding:0 3px;font-size:11px;color:var(--text-muted);flex-shrink:0;opacity:' + (vis ? '1' : '0.4') + '" '
+      + 'title="' + (vis ? 'Hide on map' : 'Show on map') + '" aria-label="' + (vis ? 'Hide ' : 'Show ') + esc(node.label) + '">'
+      + '<i class="fa-solid fa-' + (vis ? 'eye' : 'eye-slash') + '"></i>'
+      + '</button>';
+
+    var row = '<div style="display:flex;align-items:center;gap:3px;padding:5px ' + 8 + 'px 5px ' + pad + 'px;border-bottom:1px solid var(--border-weak);min-width:0">'
+      + chevron + typeBadge + statusDot + labelEl + statusBadge + openLink
+      + '<div style="margin-left:auto;flex-shrink:0">' + eyeBtn + '</div>'
+      + '</div>';
+
+    var childrenHtml = '';
+    if (hasKids) {
+      childrenHtml = '<div id="ptc-' + esc(node.id) + '" style="display:' + (expanded ? '' : 'none') + '">';
+      (node.children || []).forEach(function (ch) { childrenHtml += ptRenderNode(ch, depth + 1); });
+      childrenHtml += '</div>';
+    }
+
+    return row + childrenHtml;
+  }
+
+  // A3: eye toggle — cascade visibility down, update map
+  window.ptToggleVis = function (nodeId) {
+    var cur = _treeVis[nodeId] !== false;
+    _treeVis[nodeId] = !cur;
+    var node = ptFindNode(_projectsTree || [], nodeId);
+    if (node) ptCascadeVis(node.children || [], !cur);
+    ptUpdateMapVis();
+    ptUpdateEyeIcons();
+  };
+
+  function ptCascadeVis(nodes, val) {
+    nodes.forEach(function (n) {
+      _treeVis[n.id] = val;
+      ptCascadeVis(n.children || [], val);
+    });
+  }
+
+  function ptUpdateEyeIcons() {
+    Object.keys(_treeVis).forEach(function (id) {
+      var vis = _treeVis[id] !== false;
+      var btn = document.getElementById('ptv-' + id);
+      if (btn) {
+        btn.title = vis ? 'Hide on map' : 'Show on map';
+        btn.style.opacity = vis ? '1' : '0.4';
+        btn.innerHTML = '<i class="fa-solid fa-' + (vis ? 'eye' : 'eye-slash') + '"></i>';
+      }
+      var lbl = btn && btn.previousElementSibling;
+      // Also dim labels when hidden (find the label span by querying inside the row)
+    });
+  }
+
+  function ptUpdateMapVis() {
+    if (!_overviewMap) return;
+    Object.keys(_ovMarkers).forEach(function (saId) {
+      var vis = ptIsSaVisible(saId);
+      var marker = _ovMarkers[saId];
+      var bnd    = _ovBoundaries[saId];
+      if (vis) {
+        if (_ovCluster) { if (!_ovCluster.hasLayer(marker)) _ovCluster.addLayer(marker); }
+        else { if (!_overviewMap.hasLayer(marker)) marker.addTo(_overviewMap); }
+        if (bnd && !_overviewMap.hasLayer(bnd)) bnd.addTo(_overviewMap);
+      } else {
+        if (_ovCluster && _ovCluster.hasLayer(marker)) _ovCluster.removeLayer(marker);
+        else if (_overviewMap.hasLayer(marker)) _overviewMap.removeLayer(marker);
+        if (bnd && _overviewMap.hasLayer(bnd)) _overviewMap.removeLayer(bnd);
+      }
+    });
+  }
+
+  function ptIsSaVisible(saId) {
+    var path = ptFindPath(_projectsTree || [], saId, []);
+    if (!path) return true;
+    return path.every(function (id) { return _treeVis[id] !== false; });
+  }
+
+  function ptFindPath(nodes, targetId, path) {
+    for (var i = 0; i < nodes.length; i++) {
+      var n = nodes[i];
+      var p = path.concat(n.id);
+      if (n.id === targetId) return p;
+      var found = ptFindPath(n.children || [], targetId, p);
+      if (found) return found;
+    }
+    return null;
+  }
+
+  function ptFindNode(nodes, id) {
+    for (var i = 0; i < nodes.length; i++) {
+      if (nodes[i].id === id) return nodes[i];
+      var found = ptFindNode(nodes[i].children || [], id);
+      if (found) return found;
+    }
+    return null;
+  }
+
+  // A3: expand/collapse chevron
+  window.ptToggleExp = function (nodeId) {
+    _treeExp[nodeId] = !_treeExp[nodeId];
+    var kids    = document.getElementById('ptc-' + nodeId);
+    var chevron = document.getElementById('pte-' + nodeId);
+    if (kids)    kids.style.display    = _treeExp[nodeId] ? '' : 'none';
+    if (chevron) chevron.textContent   = _treeExp[nodeId] ? '▾' : '▸';
+  };
+
+  // A4: click label → fly/zoom map to node
+  window.ptZoomTo = function (nodeId) {
+    if (!_overviewMap) return;
+    var node = ptFindNode(_projectsTree || [], nodeId);
+    if (!node) return;
+    if (node.type === 'sa' && node.center_lat != null) {
+      _overviewMap.flyTo([node.center_lat, node.center_lng], 15, { duration: 0.6 });
+      var marker = _ovMarkers[node.id];
+      if (marker) marker.openPopup();
+    } else if (node.type === 'project') {
+      // zoom to parent SA
+      var sa = ptFindParentSa(_projectsTree || [], nodeId);
+      if (sa && sa.center_lat != null) _overviewMap.flyTo([sa.center_lat, sa.center_lng], 15, { duration: 0.6 });
+    } else {
+      // client/ec/cc → fit bounds of all SA descendants with coordinates
+      var saDescendants = ptCollectSas(node);
+      var pts = saDescendants.filter(function (s) { return s.center_lat != null; })
+                             .map(function (s) { return [s.center_lat, s.center_lng]; });
+      if (pts.length === 1) _overviewMap.flyTo(pts[0], 13, { duration: 0.6 });
+      else if (pts.length > 1) _overviewMap.fitBounds(pts, { padding: [40, 40], animate: true });
+    }
+  };
+
+  function ptCollectSas(node) {
+    if (node.type === 'sa') return [node];
+    var result = [];
+    (node.children || []).forEach(function (ch) { result = result.concat(ptCollectSas(ch)); });
+    return result;
+  }
+
+  function ptFindParentSa(nodes, childId) {
+    for (var i = 0; i < nodes.length; i++) {
+      var n = nodes[i];
+      if (n.type === 'sa' && ptFindNode(n.children || [], childId)) return n;
+      var found = ptFindParentSa(n.children || [], childId);
+      if (found) return found;
+    }
+    return null;
+  }
 
 })();

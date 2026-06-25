@@ -52,7 +52,7 @@
     + '<div class="rail-results" id="rail-results" role="listbox" aria-live="polite" aria-label="Search results"></div>'
     + '</div>'
     + link('dashboard', '/dashboard.html', 'fa-gauge-high', 'Dashboard')
-    + link('service-areas', '/service-areas.html', 'fa-diagram-project', 'Service areas')
+    + link('service-areas', '/service-areas.html', 'fa-diagram-project', 'Projects')
     + link('pipelines', '/pipeline.html?team=permitting', 'fa-table-columns', 'Pipelines')
     + link('billing', '/billing.html', 'fa-file-invoice-dollar', 'Billing')
     + link('billing-ks', '/billing-keystone.html', 'fa-layer-group', 'Billing (KS)')
