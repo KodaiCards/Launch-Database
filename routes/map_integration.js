@@ -119,6 +119,24 @@ module.exports = function installMapIntegrationRoutes(app, pool, mw) {
     } catch (e) { console.error('[cc:catalog-upload]', e && e.message); res.status(500).json({ error: 'Failed to load catalog.' }); }
   });
 
+  // ── SA boundary + center (hand-drawn on the map; powers the overview) ───────
+  app.put('/api/service-areas/:id/boundary', gate, async (req, res) => {
+    const b = req.body || {};
+    const bj = b.boundary != null ? JSON.stringify(b.boundary) : null;
+    try {
+      const { rows } = await pool.query(
+        `UPDATE service_areas
+            SET boundary = $2::jsonb,
+                center_lat = COALESCE($3, center_lat),
+                center_lng = COALESCE($4, center_lng)
+          WHERE id = $1
+        RETURNING id, boundary, center_lat, center_lng`,
+        [req.params.id, bj, b.center_lat ?? null, b.center_lng ?? null]);
+      if (!rows[0]) return res.status(404).json({ error: 'Service area not found' });
+      res.json(rows[0]);
+    } catch (e) { console.error('[map:boundary]', e && e.message); res.status(500).json({ error: 'Failed to save boundary.' }); }
+  });
+
   // ── 3. Estimate — price a stored plan's structures via a CC catalog ─────────
   // GET /api/map/estimate?plan=<planId>&cc=<ccId>
   // Reads the map's stored points (frm_pts_<plan>) + spans (frm_segs_<plan>),

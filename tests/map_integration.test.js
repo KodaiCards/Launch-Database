@@ -72,6 +72,38 @@ test('map POC: store roundtrip + catalog pricing of map units', { skip: DB ? fal
   }
 });
 
+test('map: hand-drawn SA boundary + center saves and is returned by overview data', { skip: DB ? false : 'no DATABASE_URL' }, async () => {
+  const pool = new Pool({ connectionString: DB, ssl: false });
+  const app = express();
+  app.use(express.json());
+  const setUser = (req, _res, next) => { req.user = { id: null, role: 'admin' }; next(); };
+  require('../routes/map_integration')(app, pool, { requireManagerOrAdmin: setUser });
+  require('../routes/projections')(app, pool, { requireManagerOrAdmin: setUser });
+  const server = app.listen(0);
+  await new Promise((r) => server.on('listening', r));
+  const base = `http://127.0.0.1:${server.address().port}`;
+  const call = async (m, p, b) => { const r = await fetch(base + p, { method: m, headers: { 'content-type': 'application/json' }, body: b !== undefined ? JSON.stringify(b) : undefined }); return { status: r.status, json: await r.json() }; };
+
+  let clientId, saId;
+  try {
+    clientId = (await pool.query(`INSERT INTO clients (name) VALUES ($1) RETURNING id`, ['ZZ_BOUNDARY'])).rows[0].id;
+    saId = (await pool.query(`INSERT INTO service_areas (client_id,name,program,status) VALUES ($1,'Boundary Area','bau','active') RETURNING id`, [clientId])).rows[0].id;
+    const poly = [[32.84, -83.63], [32.85, -83.62], [32.84, -83.61], [32.83, -83.62]];
+    const r = await call('PUT', `/api/service-areas/${saId}/boundary`, { boundary: poly, center_lat: 32.84, center_lng: -83.62 });
+    assert.equal(r.status, 200);
+    assert.equal(Number(r.json.center_lat), 32.84, 'center saved');
+    assert.deepEqual(r.json.boundary, poly, 'boundary polygon saved as jsonb');
+    const ov = await call('GET', '/api/map/service-areas');
+    const row = ov.json.find((x) => x.id === saId);
+    assert.ok(row && row.boundary && Number(row.center_lng) === -83.62, 'overview data returns boundary + center');
+  } finally {
+    if (saId) await pool.query(`DELETE FROM service_areas WHERE id=$1`, [saId]).catch(() => {});
+    if (clientId) await pool.query(`DELETE FROM clients WHERE id=$1`, [clientId]).catch(() => {});
+    server.close();
+    await pool.end();
+  }
+});
+
 test('map loop: per-SA rollup derives construction $ from the linked plan + CC', { skip: DB ? false : 'no DATABASE_URL' }, async () => {
   const pool = new Pool({ connectionString: DB, ssl: false });
   const app = express();
