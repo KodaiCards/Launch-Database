@@ -369,10 +369,25 @@ function renderMapHeader(routes, area){
       +'<button id="sa-map-eng-btn" onclick="saMapSetLayer(\'engineering\')" title="Show engineering jobs">Engineering</button>'
       +'</div>' : '')
     +'<div style="margin-left:auto;display:flex;gap:5px">'
+    +'<button class="btn btn-secondary btn-sm" id="sa-map-bnd-btn" onclick="saMapToggleBnd()" aria-label="Edit boundary polygon" title="Draw or edit this service area\'s boundary polygon">'
+    +'<i class="fa-solid fa-draw-polygon"></i> Boundary</button>'
     +'<button class="btn btn-secondary btn-sm" id="sa-map-edit-btn" onclick="saMapToggleEdit()" aria-pressed="false">'
     +'<i class="fa-solid fa-pen-to-square"></i> Edit</button>'
     +'<button class="btn btn-secondary btn-sm" id="sa-map-expand-btn" onclick="saMapToggleExpand()" aria-label="Expand map">'
     +'<i class="fa-solid fa-expand"></i></button>'
+    +'</div>'
+    +'</div>'
+    // Boundary-edit controls bar (hidden until boundary mode is active)
+    +'<div id="sa-map-bnd-controls" style="display:none;align-items:center;gap:6px;padding:6px 12px;'
+    +'border-top:1px solid var(--gray-border);background:var(--primary-light);font-size:12px;flex-wrap:wrap" role="toolbar" aria-label="Boundary edit tools">'
+    +'<span style="font-weight:600;color:var(--primary-dark);white-space:nowrap"><i class="fa-solid fa-draw-polygon" aria-hidden="true"></i> Boundary edit</span>'
+    +'<button class="btn btn-sm btn-secondary" id="sa-map-bnd-draw-btn" onclick="saMapBndStartDraw()" title="Click vertices on map to draw a polygon; double-click to close">'
+    +'<i class="fa-solid fa-pen"></i> Draw polygon</button>'
+    +'<button class="btn btn-sm btn-secondary" onclick="saMapBndHull()" title="Auto-draw convex hull from plan units as a starting point">'
+    +'<i class="fa-solid fa-wand-magic-sparkles"></i> Auto-suggest</button>'
+    +'<div style="margin-left:auto;display:flex;gap:5px">'
+    +'<button class="btn btn-sm btn-primary" onclick="saMapBndSave()"><i class="fa-solid fa-floppy-disk"></i> Save boundary</button>'
+    +'<button class="btn btn-sm btn-secondary" onclick="saMapBndCancel()">Cancel</button>'
     +'</div>'
     +'</div>'
     +'<div class="sa-map-container" id="sa-map-container">'
@@ -732,6 +747,13 @@ var _saMapArea        = null;  // current area object (set in initSaMap)
 var _saMapMarkersById = {};    // R15.3: elemId → { marker, data, color }
 var _saMapSegsById    = {};    // R15.3: elemId → { polyline, data }
 var _saMapLayer       = 'construction'; // R15.3 toggle: 'construction'|'engineering'
+// R15.4 boundary draw state
+var _saMapBndMode    = false;  // currently in boundary edit mode
+var _saMapBndItems   = null;   // L.FeatureGroup for draw/edit
+var _saMapBndLayer   = null;   // current drawn polygon layer
+var _saMapBndHandler = null;   // active L.Draw.Polygon handler
+var _saMapBndEditH   = null;   // active L.EditToolbar.Edit handler
+var _saMapBndOrig    = null;   // original boundary GeoJSON (for cancel)
 
 function ensureLeafletForArea(cb) {
   if (typeof L !== 'undefined') { cb(); return; }
@@ -947,6 +969,206 @@ window.saMapSetLayer = function(layer) {
   // Scroll to relevant section
   var target = isConstr ? matCard : jobCard;
   if (target) target.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+};
+
+// ── R15.4 — Boundary draw/edit ─────────────────────────────────────────────
+
+function ensureLeafletDraw(cb) {
+  if (typeof L !== 'undefined' && typeof L.Draw !== 'undefined') { cb(); return; }
+  var link = document.createElement('link');
+  link.rel = 'stylesheet';
+  link.href = 'https://cdnjs.cloudflare.com/ajax/libs/leaflet.draw/1.0.4/leaflet.draw.min.css';
+  document.head.appendChild(link);
+  var s = document.createElement('script');
+  s.src = 'https://cdnjs.cloudflare.com/ajax/libs/leaflet.draw/1.0.4/leaflet.draw.min.js';
+  s.onload = cb;
+  document.head.appendChild(s);
+}
+
+function convexHullPts(pts) {
+  if (pts.length < 3) return pts.slice();
+  // Jarvis march (gift wrapping)
+  var n = pts.length;
+  var startIdx = 0;
+  for (var i = 1; i < n; i++) if (pts[i].lng < pts[startIdx].lng) startIdx = i;
+  var hull = [], cur = startIdx;
+  do {
+    hull.push(pts[cur]);
+    var next = (cur + 1) % n;
+    for (var j = 0; j < n; j++) {
+      var ox = pts[next].lng - pts[cur].lng, oy = pts[next].lat - pts[cur].lat;
+      var px = pts[j].lng  - pts[cur].lng, py = pts[j].lat  - pts[cur].lat;
+      if (ox * py - oy * px < 0) next = j;
+    }
+    cur = next;
+  } while (cur !== startIdx && hull.length <= n);
+  return hull;
+}
+
+function saMapBndSetDrawLayer(layer) {
+  if (_saMapBndLayer) _saMapBndItems.removeLayer(_saMapBndLayer);
+  _saMapBndLayer = layer;
+  _saMapBndItems.addLayer(_saMapBndLayer);
+  // Enable vertex editing on the new layer
+  if (_saMapBndEditH) { try { _saMapBndEditH.disable(); } catch(_){} }
+  _saMapBndEditH = new L.EditToolbar.Edit(_saMapLeaflet, { featureGroup: _saMapBndItems });
+  _saMapBndEditH.enable();
+  var drawBtn = document.getElementById('sa-map-bnd-draw-btn');
+  if (drawBtn) drawBtn.innerHTML = '<i class="fa-solid fa-pen"></i> Redraw';
+}
+
+function saMapBndUpdateUI(show) {
+  var bar = document.getElementById('sa-map-bnd-controls');
+  if (bar) bar.style.display = show ? 'flex' : 'none';
+  var bndBtn = document.getElementById('sa-map-bnd-btn');
+  if (bndBtn) {
+    bndBtn.innerHTML = show
+      ? '<i class="fa-solid fa-times"></i> Exit boundary'
+      : '<i class="fa-solid fa-draw-polygon"></i> Boundary';
+    bndBtn.classList.toggle('active', show);
+    // Disable FRM-edit while in boundary mode (confusing to have both)
+    var editBtn = document.getElementById('sa-map-edit-btn');
+    if (editBtn) editBtn.disabled = show;
+  }
+}
+
+function saMapBndExit() {
+  _saMapBndMode = false;
+  _saMapBndHandler = null;
+  _saMapBndEditH   = null;
+  _saMapBndItems   = null;
+  _saMapBndLayer   = null;
+  saMapBndUpdateUI(false);
+}
+
+window.saMapToggleBnd = function() {
+  if (!_saMapLeaflet) return;
+  if (_saMapInEdit) { flash('Switch to View mode first', 'err'); return; }
+  if (_saMapBndMode) { saMapBndCancel(); return; }
+  ensureLeafletDraw(function() {
+    _saMapBndMode = true;
+    _saMapBndOrig = ((_ws || {}).area || {}).boundary || null;
+
+    // Feature group to hold the boundary polygon
+    _saMapBndItems = new L.FeatureGroup();
+    _saMapLeaflet.addLayer(_saMapBndItems);
+
+    // If an existing boundary exists, add it as editable
+    if (_saMapLayerBnd) {
+      _saMapLeaflet.removeLayer(_saMapLayerBnd);
+      var existing = _saMapBndOrig;
+      if (existing) {
+        try {
+          var geo = typeof existing === 'string' ? JSON.parse(existing) : existing;
+          // Leaflet.draw editable works on L.Polygon, not L.geoJSON directly
+          var ring = geo.coordinates ? geo.coordinates[0] : (geo.geometry ? geo.geometry.coordinates[0] : null);
+          if (ring) {
+            var latlngs = ring.map(function(c){ return [c[1], c[0]]; });
+            var poly = L.polygon(latlngs, { color: '#1B5FA0', weight: 2.5, fillOpacity: 0.12 });
+            saMapBndSetDrawLayer(poly);
+          }
+        } catch(_) {}
+      }
+    }
+
+    saMapBndUpdateUI(true);
+    flash('Boundary edit mode — draw or adjust the polygon, then save');
+  });
+};
+
+window.saMapBndStartDraw = function() {
+  if (!_saMapLeaflet || !_saMapBndMode) return;
+  if (_saMapBndEditH) { try { _saMapBndEditH.disable(); } catch(_){} _saMapBndEditH = null; }
+  if (_saMapBndHandler) { try { _saMapBndHandler.disable(); } catch(_){} }
+  _saMapBndHandler = new L.Draw.Polygon(_saMapLeaflet, {
+    shapeOptions: { color: '#1B5FA0', weight: 2.5, fillOpacity: 0.12 },
+    showArea: false,
+  });
+  _saMapBndHandler.enable();
+  _saMapLeaflet.once('draw:created', function(e) {
+    _saMapBndHandler = null;
+    saMapBndSetDrawLayer(e.layer);
+  });
+  flash('Click to add vertices — double-click to close polygon');
+};
+
+window.saMapBndHull = function() {
+  if (!_saMapLeaflet || !_saMapBndMode) return;
+  var pts = Object.values(_saMapMarkersById)
+    .map(function(e){ return e.data; })
+    .filter(function(d){ return d.lat != null && d.lng != null; });
+  if (pts.length < 3) { flash('Need at least 3 plan units to auto-suggest a boundary', 'err'); return; }
+  var hull = convexHullPts(pts);
+  var latlngs = hull.map(function(p){ return [p.lat, p.lng]; });
+  var poly = L.polygon(latlngs, { color: '#1B5FA0', weight: 2.5, fillOpacity: 0.12 });
+  saMapBndSetDrawLayer(poly);
+  _saMapLeaflet.fitBounds(poly.getBounds(), { padding: [32, 32] });
+  flash('Hull drawn from ' + pts.length + ' units — drag vertices to adjust');
+};
+
+window.saMapBndSave = async function() {
+  if (!_saMapBndMode || !_saMapBndItems) return;
+  var layers = [];
+  _saMapBndItems.eachLayer(function(l){ layers.push(l); });
+  if (!layers.length) { flash('Draw a boundary polygon first', 'err'); return; }
+
+  // Commit any in-progress edits before reading geometry
+  if (_saMapBndEditH) { try { _saMapBndEditH.save(); _saMapBndEditH.disable(); } catch(_){} }
+
+  var layer = layers[0];
+  var geo = layer.toGeoJSON();
+  var coords = geo.geometry && geo.geometry.coordinates && geo.geometry.coordinates[0];
+  if (!coords || coords.length < 3) { flash('Invalid boundary polygon', 'err'); return; }
+
+  // Center = average of ring coords (exclude closing duplicate)
+  var ring = coords[coords.length-1][0]===coords[0][0] && coords[coords.length-1][1]===coords[0][1]
+    ? coords.slice(0,-1) : coords;
+  var avgLat = ring.reduce(function(s,c){return s+c[1];},0)/ring.length;
+  var avgLng = ring.reduce(function(s,c){return s+c[0];},0)/ring.length;
+
+  try {
+    await api('/api/service-areas/'+encodeURIComponent(_id)+'/boundary','PUT',{
+      boundary: geo.geometry,
+      center_lat: Math.round(avgLat*1e6)/1e6,
+      center_lng: Math.round(avgLng*1e6)/1e6,
+    });
+    // Update local workspace state so cancel restores the new boundary
+    if (_ws && _ws.area) {
+      _ws.area.boundary   = geo.geometry;
+      _ws.area.center_lat = avgLat;
+      _ws.area.center_lng = avgLng;
+    }
+    // Exit boundary mode + re-draw the saved boundary on the map
+    if (_saMapBndItems) { _saMapLeaflet.removeLayer(_saMapBndItems); }
+    saMapBndExit();
+    _saMapLayerBnd = L.geoJSON(geo.geometry, {
+      style: { color:'#1B5FA0', weight:2.5, fillOpacity:0.08, opacity:0.7 }
+    }).addTo(_saMapLeaflet);
+    flash('Boundary saved');
+  } catch(e) {
+    flash(e.message||'Failed to save boundary','err');
+    // Re-enable edit so user can try again
+    if (_saMapBndItems && _saMapBndLayer) {
+      _saMapBndEditH = new L.EditToolbar.Edit(_saMapLeaflet, { featureGroup: _saMapBndItems });
+      _saMapBndEditH.enable();
+    }
+  }
+};
+
+window.saMapBndCancel = function() {
+  if (_saMapBndHandler) { try { _saMapBndHandler.disable(); } catch(_){} }
+  if (_saMapBndEditH)   { try { _saMapBndEditH.disable();   } catch(_){} }
+  if (_saMapBndItems && _saMapLeaflet) { _saMapLeaflet.removeLayer(_saMapBndItems); }
+  // Restore original boundary
+  if (_saMapBndOrig && _saMapLeaflet) {
+    try {
+      var geo = typeof _saMapBndOrig === 'string' ? JSON.parse(_saMapBndOrig) : _saMapBndOrig;
+      _saMapLayerBnd = L.geoJSON(geo, {
+        style:{ color:'#1B5FA0', weight:2.5, fillOpacity:0.08, opacity:0.7 }
+      }).addTo(_saMapLeaflet);
+    } catch(_){}
+  }
+  saMapBndExit();
 };
 
 window.saMapToggleEdit = function() {
