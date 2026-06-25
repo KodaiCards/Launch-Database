@@ -51,6 +51,12 @@ When a job is added under a RUS EC, **suggest its budget code** from the EC's co
 3. ✅ **Two separate budgets:** the **engineering** budget (EC-scoped, RUS — this doc) **and** a separate **construction** budget. The whole service-area experience splits into **construction vs engineering sides** with fully separate data (costs, employees, materials, budgets) — neither bleeds into the other. → add `budgets.kind` (`engineering`|`construction`) and a `service_area_id` scope so construction budgets attach to the SA (or route); engineering budgets stay EC-scoped.
 4. ✅ Setup: engineering budget in the **EC panel**, construction budget on the **service area**; utilization in **Money** and surfaced in the SA view.
 
+## Status — core rework BUILT (2026-06-25)
+- **Migration 0073**: `service_area_jobs.budget_code_id` (job ↔ RUS code). Job create/update accept it (`routes/service_areas.js`).
+- **`GET /api/budgets/:id/summary` reworked** off the retiring projects tree onto the keystone — per code: `allocated`, `billed` (Σ non-void invoice_items), `projected` (Σ expected), `remaining`, `projected_remaining`, `over_budget`, `jobs[]`, plus budget totals. Tested (`tests/budgets_keystone.test.js`). Live on the single DB.
+- **Construction side** is handled by `construction_contracts` + `cost_catalog` (already built); engineering budget = this `budgets`/`budget_codes` path.
+- **Remaining (UI / nice-to-have):** auto-suggest a code by discipline on job-create (override-able); the utilization VIEW in Money + budget setup in the EC panel (C2 frontend). The legacy projects-join is gone.
+
 ## Bigger picture this opened — the SA construction/engineering split view
 Carter's vision for the service-area detail (mockup being built, then a dedicated design doc):
 - Click an SA → **popup with the interactable map + three totals: construction cost · engineering cost · combined.**
