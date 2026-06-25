@@ -83,6 +83,10 @@ test('projections: per-SA, EC budget burn, rollup, map data', { skip: DB ? false
     assert.equal(pr.expected, 850, 'footage job expected = footage*rate');
     assert.equal(pr.bill_trigger, 'completed', 'plant records is a completed-trigger job');
 
+    // link both jobs to a RUS budget code so the EC overlay breaks down per code (#2)
+    const codeId = (await pool.query(`INSERT INTO budget_codes (budget_id,code,allocated_amount) VALUES ($1,'A40-3',60000) RETURNING id`, [budgetId])).rows[0].id;
+    await pool.query(`UPDATE service_area_jobs SET budget_code_id=$1 WHERE service_area_id=$2`, [codeId, saId]);
+
     // ── EC budget burn ──
     r = await get('/api/projections/ec/' + ecId);
     assert.equal(r.json.budget, 100000, 'EC engineering budget');
@@ -91,6 +95,11 @@ test('projections: per-SA, EC budget burn, rollup, map data', { skip: DB ? false
     assert.equal(r.json.projected_remaining, 26850);
     assert.ok(r.json.burn_rate_monthly > 0, 'burn rate computed from elapsed months');
     assert.ok(r.json.months_elapsed >= 3, 'about 3 months elapsed since first invoice');
+    const bcode = (r.json.budget_codes || []).find((c) => c.code === 'A40-3');
+    assert.ok(bcode, 'EC overlay includes the budget code (#2 budgets→projections)');
+    assert.equal(bcode.allocated, 60000);
+    assert.equal(bcode.billed, 22000, 'code billed from its linked jobs');
+    assert.equal(bcode.projected, 48850, 'code projected from its linked jobs');
 
     // ── rollup by program ──
     r = await get('/api/projections?group=program');
@@ -130,6 +139,7 @@ test('projections: per-SA, EC budget burn, rollup, map data', { skip: DB ? false
     if (invId) await pool.query(`DELETE FROM invoices WHERE id=$1`, [invId]).catch(() => {});
     if (saId) await pool.query(`DELETE FROM service_area_jobs WHERE service_area_id=$1`, [saId]).catch(() => {});
     if (saId) await pool.query(`DELETE FROM service_areas WHERE id=$1`, [saId]).catch(() => {});
+    if (budgetId) await pool.query(`DELETE FROM budget_codes WHERE budget_id=$1`, [budgetId]).catch(() => {});
     if (budgetId) await pool.query(`DELETE FROM budgets WHERE id=$1`, [budgetId]).catch(() => {});
     if (ecId) await pool.query(`DELETE FROM engineering_contracts WHERE id=$1`, [ecId]).catch(() => {});
     if (clientId) await pool.query(`DELETE FROM clients WHERE id=$1`, [clientId]).catch(() => {});

@@ -64,11 +64,19 @@ module.exports = function installProjectionsRoutes(app, pool, mw) {
       // construction-discipline jobs. Additive blocks; jobs/totals unchanged.
       let construction = { linked: false };
       let combined = null;
+      let mileage = null;
       const meta = await pool.query(
-        `SELECT sa.map_plan_id, sa.construction_contract_id, cc.total_budget AS cc_budget
-           FROM service_areas sa LEFT JOIN construction_contracts cc ON cc.id = sa.construction_contract_id
+        `SELECT sa.map_plan_id, sa.construction_contract_id, sa.miles, sa.engineering_contract_id,
+                cc.total_budget AS cc_budget, ec.total_miles AS ec_miles
+           FROM service_areas sa
+           LEFT JOIN construction_contracts cc ON cc.id = sa.construction_contract_id
+           LEFT JOIN engineering_contracts ec ON ec.id = sa.engineering_contract_id
           WHERE sa.id = $1`, [req.params.id]);
       const m = meta.rows[0] || {};
+      // Hourly jobs project from the contract mileage allocation, not footage.
+      if (m.engineering_contract_id && m.ec_miles != null) {
+        mileage = await mileageBlock('engineering_contract_id', m.engineering_contract_id, m.ec_miles, m.miles);
+      }
       if (m.map_plan_id) {
         const est = await computeEstimate(pool, m.map_plan_id, m.construction_contract_id);
         const budget = m.cc_budget != null ? CENT(m.cc_budget) : null;
@@ -90,7 +98,7 @@ module.exports = function installProjectionsRoutes(app, pool, mw) {
         jobs,
         totals: { projected_total: CENT(exp), billed: CENT(bil), remaining: CENT(Math.max(0, exp - bil)),
           completion_pct: exp ? Math.round(bil / exp * 100) : 0 },
-        construction, combined,
+        construction, combined, mileage,
       });
     } catch (e) {
       console.error('[projections:sa]', e && e.message);
@@ -151,11 +159,24 @@ module.exports = function installProjectionsRoutes(app, pool, mw) {
     try {
       const ec = await pool.query('SELECT id, name FROM engineering_contracts WHERE id = $1', [req.params.id]);
       if (!ec.rows.length) return res.status(404).json({ error: 'Engineering contract not found' });
-      const [budgetR, rowsR, firstR] = await Promise.all([
+      const [budgetR, rowsR, firstR, codesR] = await Promise.all([
         pool.query('SELECT COALESCE(SUM(total_amount),0) budget FROM budgets WHERE engineering_contract_id = $1', [req.params.id]),
         pool.query(JOB_SQL('WHERE sa.engineering_contract_id = $1'), [req.params.id]),
         pool.query(`SELECT MIN(COALESCE(billing_period_start, invoice_date)) first_date
                       FROM invoices WHERE engineering_contract_id = $1 AND COALESCE(status,'') <> 'void'`, [req.params.id]),
+        pool.query(`
+          SELECT bc.code, bc.description, COALESCE(bc.allocated_amount,0) AS allocated,
+                 COALESCE(SUM(COALESCE(NULLIF(saj.estimated_amount,0), COALESCE(saj.footage,0)*COALESCE(saj.rate,0), 0)),0) AS projected,
+                 COALESCE(SUM(COALESCE(b.billed,0)),0) AS billed
+            FROM budgets bu
+            JOIN budget_codes bc ON bc.budget_id = bu.id
+            LEFT JOIN service_area_jobs saj ON saj.budget_code_id = bc.id AND (bc.job_id IS NULL OR saj.job_id = bc.job_id)
+            LEFT JOIN (SELECT ii.service_area_job_id, SUM(ii.amount) billed FROM invoice_items ii
+                         JOIN invoices i ON i.id = ii.invoice_id AND COALESCE(i.status,'') <> 'void'
+                        GROUP BY ii.service_area_job_id) b ON b.service_area_job_id = saj.id
+           WHERE bu.engineering_contract_id = $1
+           GROUP BY bc.id, bc.code, bc.description, bc.allocated_amount
+           ORDER BY bc.code`, [req.params.id]),
       ]);
       const budget = CENT(budgetR.rows[0].budget);
       let projected = 0, billed = 0;
@@ -165,12 +186,19 @@ module.exports = function installProjectionsRoutes(app, pool, mw) {
       const months = first ? Math.max(1, Math.round((Date.now() - new Date(first).getTime()) / (30.44 * 864e5))) : 1;
       const burn = CENT(billed / months);
       const remainingToBudget = CENT(Math.max(0, Math.min(projected, budget || projected) - billed));
+      const budget_codes = codesR.rows.map((c) => {
+        const allocated = CENT(c.allocated), bld = CENT(c.billed), proj = CENT(c.projected);
+        return { code: c.code, description: c.description, allocated, billed: bld, projected: proj,
+          remaining: CENT(allocated - bld), projected_remaining: CENT(allocated - proj),
+          over_budget: proj > allocated ? CENT(proj - allocated) : 0 };
+      });
       res.json({
         ec: ec.rows[0], budget, projected, billed,
         projected_remaining: CENT(Math.max(0, projected - billed)),
         months_elapsed: months, burn_rate_monthly: burn,
         projected_months_to_budget: burn ? Math.round(remainingToBudget / burn) : null,
         over_budget: budget > 0 ? CENT(Math.max(0, projected - budget)) : 0,
+        budget_codes,
       });
     } catch (e) {
       console.error('[projections:ec]', e && e.message);

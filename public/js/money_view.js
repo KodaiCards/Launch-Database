@@ -645,7 +645,9 @@
   function renderSaProjectionRow(row, data) {
     const jobs   = data.jobs   || [];
     const totals = data.totals || {};
-    if (!jobs.length) {
+    const cons = data.construction || {}, comb = data.combined, ml = data.mileage;
+    const hasMl = ml && ml.disciplines && ml.disciplines.length;
+    if (!jobs.length && !cons.linked && !hasMl) {
       row.querySelector('td').innerHTML = '<span style="color:var(--text-muted);font-size:12px">No projection data yet.</span>';
       return;
     }
@@ -659,11 +661,11 @@
       <td class="num">${fmt(j.billed)}</td>
       <td class="num${j.remaining > 0 ? ' pos' : ''}">${fmt(j.remaining)}</td>
     </tr>`).join('');
-    row.querySelector('td').innerHTML = `
-      <div class="table-wrap" style="margin:-4px -14px">
+    const jobsTable = jobs.length ? `
+      <div class="table-wrap" style="margin:-4px -14px 0">
         <table style="font-size:12px">
           <thead><tr>
-            <th>Job</th><th>Type</th>
+            <th>Engineering job</th><th>Type</th>
             <th class="num">Projected</th><th class="num">Billed</th><th class="num">Remaining</th>
           </tr></thead>
           <tbody>${jobRows}</tbody>
@@ -674,7 +676,34 @@
             <td class="num pos">${fmt(totals.remaining)}</td>
           </tr></tfoot>
         </table>
-      </div>`;
+      </div>` : '';
+
+    const consHtml = cons.linked ? `
+      <div style="padding:9px 14px 0;font-size:12px">
+        <div style="font-weight:600;margin-bottom:4px"><i class="fa-solid fa-helmet-safety" style="color:var(--warning-text)"></i> Construction (from map units × contract catalog)</div>
+        <div style="display:flex;gap:18px;flex-wrap:wrap">
+          <span>Expected <b>${fmt(cons.expected)}</b></span>
+          <span>Completed <b>${fmt(cons.completed)}</b></span>
+          <span>Remaining <b>${fmt(cons.remaining)}</b></span>
+          ${cons.budget != null ? `<span>Budget <b>${fmt(cons.budget)}</b></span>` : ''}
+          ${cons.over_budget ? `<span style="color:var(--danger-text)"><i class="fa-solid fa-triangle-exclamation"></i> over ${fmt(cons.over_budget)}</span>` : ''}
+        </div>
+      </div>` : '';
+
+    const mlHtml = hasMl ? `
+      <div style="padding:9px 14px 0;font-size:12px">
+        <div style="font-weight:600;margin-bottom:4px"><i class="fa-solid fa-road"></i> Hourly — mileage allocation <span style="color:var(--text-muted);font-weight:400">(${ml.sa_miles} mi · ${ml.remaining_miles} mi left on contract)</span></div>
+        <div style="display:flex;gap:18px;flex-wrap:wrap">
+          ${ml.disciplines.map(d => `<span>${esc(d.discipline)} <b>${fmt(d.sa_expected)}</b> <span style="color:var(--text-muted)">(${fmt(d.per_mile_rate)}/mi)</span></span>`).join('')}
+        </div>
+      </div>` : '';
+
+    const combHtml = comb ? `
+      <div style="padding:9px 14px;font-size:12px;border-top:1px solid var(--border-weak);margin-top:8px">
+        <b>Combined projected:</b> engineering ${fmt(comb.engineering_expected)} + construction ${fmt(comb.construction_expected)} = <b>${fmt(comb.projected_total)}</b>
+      </div>` : '';
+
+    row.querySelector('td').innerHTML = jobsTable + consHtml + mlHtml + combHtml;
     row.className = '';
     row.style.background = 'var(--gray-light)';
   }
@@ -729,6 +758,26 @@
         </div>`).join('')}
       </div>
       ${budgetBar}
+      ${codesHtml(d.budget_codes)}
+    </div>`;
+  }
+
+  function codesHtml(codes) {
+    if (!codes || !codes.length) return '';
+    const rows = codes.map(c => `<tr>
+      <td>${esc(c.code || '—')}</td>
+      <td>${esc(c.description || '—')}</td>
+      <td class="num">${fmt(c.allocated)}</td>
+      <td class="num">${fmt(c.billed)}</td>
+      <td class="num">${fmt(c.projected)}</td>
+      <td class="num${c.over_budget ? '' : ' pos'}">${c.over_budget ? ('over ' + fmt(c.over_budget)) : fmt(c.projected_remaining)}</td>
+    </tr>`).join('');
+    return `<div style="margin-top:6px">
+      <div style="font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.4px;color:var(--text-muted);margin-bottom:6px">Budget codes — allocation vs billed/projected</div>
+      <div class="table-wrap"><table style="font-size:12px">
+        <thead><tr><th>Code</th><th>Description</th><th class="num">Allocated</th><th class="num">Billed</th><th class="num">Projected</th><th class="num">Remaining</th></tr></thead>
+        <tbody>${rows}</tbody>
+      </table></div>
     </div>`;
   }
 
