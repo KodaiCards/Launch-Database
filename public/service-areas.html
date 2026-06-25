@@ -148,96 +148,104 @@ input,select{font-family:inherit;font-size:13px;color:var(--text);background:var
       <div class="empty"><i class="fa-solid fa-diagram-project"></i><div>Select a service area, or create one.</div></div>
     </main>
 
-    <!-- Map view panel (R13-B) — shown when List|Map toggle is set to Map -->
-    <div id="map-panel" class="main" role="region" aria-label="Map view" style="display:none">
-      <div style="display:flex;align-items:center;gap:12px;margin-bottom:16px;flex-wrap:wrap">
-        <div style="font-size:16px;font-weight:700;display:flex;align-items:center;gap:8px">
-          <i class="fa-solid fa-map" style="color:var(--primary)"></i> Overall Map
-        </div>
+    <!-- Map view panel (R15) — map-first Leaflet overview -->
+    <div id="map-panel" class="main" role="region" aria-label="Map view"
+      style="display:none;padding:0;overflow:hidden;flex-direction:column">
+
+      <!-- Top filter bar -->
+      <div style="padding:9px 14px;border-bottom:1px solid var(--border-strong);display:flex;align-items:center;gap:10px;flex-wrap:wrap;background:var(--surface-2);flex-shrink:0">
+        <i class="fa-solid fa-map" style="color:var(--primary);font-size:14px"></i>
+        <span style="font-size:14px;font-weight:700">Service Areas Map</span>
         <select id="map-client-sel" aria-label="Filter by client"
-          style="padding:6px 10px;border:1px solid var(--border-strong);border-radius:6px;font-size:13px;background:var(--surface-2);color:var(--text)"
+          style="padding:5px 8px;border:1px solid var(--border-strong);border-radius:6px;font-size:12px;background:var(--surface-2);color:var(--text)"
           onchange="saMapFilterClient()">
           <option value="">All clients</option>
         </select>
         <select id="map-sa-sel" aria-label="Filter by service area"
-          style="padding:6px 10px;border:1px solid var(--border-strong);border-radius:6px;font-size:13px;background:var(--surface-2);color:var(--text)"
+          style="padding:5px 8px;border:1px solid var(--border-strong);border-radius:6px;font-size:12px;background:var(--surface-2);color:var(--text)"
           onchange="saMapFilterArea()">
           <option value="">All service areas</option>
         </select>
+        <div style="margin-left:auto">
+          <button class="btn btn-secondary btn-sm" onclick="saToggleCcPanel()" id="cc-panel-btn"
+            aria-expanded="false" aria-controls="cc-drawer">
+            <i class="fa-solid fa-file-contract"></i> Contracts &amp; Estimate
+          </button>
+        </div>
       </div>
 
-      <!-- Live fiber route manager iframe (R14) -->
-      <div style="border:1px solid var(--border-strong);border-radius:10px;overflow:hidden;margin-bottom:16px">
-        <iframe id="frm-iframe" src="/map/fiber_route_manager_v33.html"
-          style="width:100%;height:600px;border:0;display:block"
-          title="Fiber Route Manager — Launch Fiber Services"
-          loading="eager" allow="fullscreen"></iframe>
+      <!-- Map body: SA list sidebar + Leaflet overview -->
+      <div style="flex:1;display:flex;overflow:hidden;min-height:0">
+        <!-- SA list sidebar (synced to map) -->
+        <div id="map-sa-list" role="list" aria-label="Service areas"
+          style="width:260px;overflow-y:auto;border-right:1px solid var(--border-strong);background:var(--surface-2);flex-shrink:0">
+          <div style="padding:14px;text-align:center;color:var(--text-muted);font-size:12px">
+            <span style="display:inline-block;width:12px;height:12px;border:2px solid currentColor;border-radius:50%;border-right-color:transparent;animation:spin .6s linear infinite;vertical-align:-2px;margin-right:5px"></span>Loading…
+          </div>
+        </div>
+        <!-- Leaflet overview map container -->
+        <div id="overview-map" style="flex:1;min-width:0;background:var(--surface-1)"></div>
       </div>
 
-      <!-- Construction Contracts + Estimate (R14) -->
-      <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:16px">
+      <!-- Contracts & Estimate drawer (hidden; toggle via top bar button) -->
+      <div id="cc-drawer" style="display:none;border-top:1px solid var(--border-strong);background:var(--surface-2);overflow-y:auto;max-height:320px;flex-shrink:0">
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;padding:16px">
 
-        <!-- Left: CC management -->
-        <div style="background:var(--surface-2);border:1px solid var(--border-strong);border-radius:10px;padding:16px">
-          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px">
-            <div style="font-size:13px;font-weight:700"><i class="fa-solid fa-file-contract" style="color:var(--primary);margin-right:5px"></i>Construction Contracts</div>
-            <button class="btn btn-primary btn-sm" onclick="saShowNewCcForm()" id="cc-new-btn">
-              <i class="fa-solid fa-plus"></i> New
-            </button>
-          </div>
-          <!-- New CC inline form -->
-          <div id="cc-new-form" style="display:none;margin-bottom:12px;padding:10px;background:var(--surface-1);border-radius:8px;border:1px solid var(--border-strong)">
-            <div style="font-size:11px;font-weight:600;color:var(--text-secondary);margin-bottom:6px;text-transform:uppercase;letter-spacing:.3px">New Contract</div>
-            <input id="cc-name-inp" placeholder="Contract name" style="width:100%;margin-bottom:6px" aria-label="Contract name">
-            <input id="cc-notes-inp" placeholder="Notes (optional)" style="width:100%;margin-bottom:8px" aria-label="Notes">
-            <div style="display:flex;gap:6px;justify-content:flex-end">
-              <button class="btn btn-secondary btn-sm" onclick="saHideNewCcForm()">Cancel</button>
-              <button class="btn btn-primary btn-sm" onclick="saCreateCc()">Create</button>
-            </div>
-          </div>
-          <!-- CC list -->
-          <div id="map-cc-list" style="font-size:13px;margin-bottom:4px"></div>
-          <!-- Catalog section — revealed when a CC is selected -->
-          <div id="cc-catalog-wrap" style="display:none;margin-top:12px;border-top:1px solid var(--border-strong);padding-top:12px">
-            <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px">
-              <div style="font-size:12px;font-weight:600;color:var(--text-secondary)">
-                Catalog: <span id="cc-catalog-name" style="color:var(--text)"></span>
+          <!-- Left: CC management -->
+          <div>
+            <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px">
+              <div style="font-size:13px;font-weight:700">
+                <i class="fa-solid fa-file-contract" style="color:var(--primary);margin-right:5px"></i>Construction Contracts
               </div>
-              <label class="btn btn-secondary btn-sm" style="cursor:pointer" aria-label="Upload price list Excel or CSV">
-                <i class="fa-solid fa-upload"></i> Upload
-                <input type="file" id="cc-catalog-file" accept=".xlsx,.xls,.csv" style="display:none" onchange="saUploadCatalog()">
-              </label>
+              <button class="btn btn-primary btn-sm" onclick="saShowNewCcForm()" id="cc-new-btn">
+                <i class="fa-solid fa-plus"></i> New
+              </button>
             </div>
-            <div id="cc-catalog-table" style="max-height:200px;overflow-y:auto"></div>
+            <div id="cc-new-form" style="display:none;margin-bottom:12px;padding:10px;background:var(--surface-1);border-radius:8px;border:1px solid var(--border-strong)">
+              <div style="font-size:11px;font-weight:600;color:var(--text-secondary);margin-bottom:6px;text-transform:uppercase;letter-spacing:.3px">New Contract</div>
+              <input id="cc-name-inp" placeholder="Contract name" style="width:100%;margin-bottom:6px" aria-label="Contract name">
+              <input id="cc-notes-inp" placeholder="Notes (optional)" style="width:100%;margin-bottom:8px" aria-label="Notes">
+              <div style="display:flex;gap:6px;justify-content:flex-end">
+                <button class="btn btn-secondary btn-sm" onclick="saHideNewCcForm()">Cancel</button>
+                <button class="btn btn-primary btn-sm" onclick="saCreateCc()">Create</button>
+              </div>
+            </div>
+            <div id="map-cc-list" style="font-size:13px;margin-bottom:4px"></div>
+            <div id="cc-catalog-wrap" style="display:none;margin-top:10px;border-top:1px solid var(--border-strong);padding-top:10px">
+              <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px">
+                <div style="font-size:12px;font-weight:600;color:var(--text-secondary)">
+                  Catalog: <span id="cc-catalog-name" style="color:var(--text)"></span>
+                </div>
+                <label class="btn btn-secondary btn-sm" style="cursor:pointer" aria-label="Upload price list Excel or CSV">
+                  <i class="fa-solid fa-upload"></i> Upload
+                  <input type="file" id="cc-catalog-file" accept=".xlsx,.xls,.csv" style="display:none" onchange="saUploadCatalog()">
+                </label>
+              </div>
+              <div id="cc-catalog-table" style="max-height:160px;overflow-y:auto"></div>
+            </div>
+          </div>
+
+          <!-- Right: Estimate -->
+          <div>
+            <div style="font-size:13px;font-weight:700;margin-bottom:10px">
+              <i class="fa-solid fa-calculator" style="color:var(--primary);margin-right:5px"></i>Estimate
+            </div>
+            <div style="display:flex;gap:6px;margin-bottom:10px;flex-wrap:wrap">
+              <select id="est-cc-sel" style="flex:1;min-width:0" aria-label="Construction contract">
+                <option value="">Pick a contract…</option>
+              </select>
+              <input id="est-plan-id" placeholder="Plan ID from map" style="flex:1;min-width:0" aria-label="Plan ID from the fiber route manager">
+              <button class="btn btn-primary btn-sm" onclick="saRunEstimate()">
+                <i class="fa-solid fa-play"></i> Run
+              </button>
+            </div>
+            <div id="map-est-result">
+              <div style="color:var(--text-muted);font-size:12px;text-align:center;padding:14px 0;border:1px dashed var(--border-strong);border-radius:8px">
+                Pick a contract + plan ID, then run to price the map.
+              </div>
+            </div>
           </div>
         </div>
-
-        <!-- Right: Estimate -->
-        <div style="background:var(--surface-2);border:1px solid var(--border-strong);border-radius:10px;padding:16px">
-          <div style="font-size:13px;font-weight:700;margin-bottom:12px">
-            <i class="fa-solid fa-calculator" style="color:var(--primary);margin-right:5px"></i>Estimate
-          </div>
-          <div style="display:flex;gap:6px;margin-bottom:10px;flex-wrap:wrap">
-            <select id="est-cc-sel" style="flex:1;min-width:0" aria-label="Construction contract">
-              <option value="">Pick a contract…</option>
-            </select>
-            <input id="est-plan-id" placeholder="Plan ID from map" style="flex:1;min-width:0" aria-label="Plan ID from the fiber route manager">
-            <button class="btn btn-primary btn-sm" onclick="saRunEstimate()">
-              <i class="fa-solid fa-play"></i> Run
-            </button>
-          </div>
-          <div id="map-est-result">
-            <div style="color:var(--text-muted);font-size:12px;text-align:center;padding:18px 0;border:1px dashed var(--border-strong);border-radius:8px">
-              Pick a contract + plan ID, then run to price the map.
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <!-- Filtered SA list -->
-      <div style="font-size:11px;font-weight:600;color:var(--text-muted);text-transform:uppercase;letter-spacing:.4px;margin-bottom:6px">Service Areas</div>
-      <div id="map-sa-list" style="background:var(--surface-2);border:1px solid var(--border-strong);border-radius:10px;overflow:hidden">
-        <div class="muted" style="padding:20px;font-size:13px;text-align:center">Loading…</div>
       </div>
     </div>
   </div>

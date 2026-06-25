@@ -13,6 +13,13 @@
   var _selectedCcId  = null;
   var _selectedCcName = '';
 
+  // ── Overview Leaflet map state (R15.1) ────────────────────────────────────────
+  var _overviewMap   = null;
+  var _ovMarkers     = {};   // sa.id → L.Marker
+  var _ovBoundaries  = {};   // sa.id → L.GeoJSON layer
+  var _ovCluster     = null;
+  var _leafletReady  = false;
+
   // ── View toggle ──────────────────────────────────────────────────────────────
   window.saSetView = function (view) {
     var main     = document.getElementById('main');
@@ -23,7 +30,7 @@
 
     var isMap = view === 'map';
     main.style.display     = isMap ? 'none' : '';
-    mapPanel.style.display = isMap ? '' : 'none';
+    mapPanel.style.display = isMap ? 'flex' : 'none';
 
     if (btnList) {
       btnList.classList.toggle('active', !isMap);
@@ -40,6 +47,7 @@
 
     if (isMap && !_mapLoaded) loadMapData();
     if (isMap) loadCcList();
+    if (isMap) ensureLeaflet(initOverviewMap);
   };
 
   // ── Load map data ────────────────────────────────────────────────────────────
@@ -53,6 +61,7 @@
       _mapData = await res.json();
       populateMapFilters(_mapData);
       renderMapList(_mapData);
+      if (_overviewMap) plotSaMarkers(_mapData);
     } catch (e) {
       if (listEl) listEl.innerHTML = '<div style="padding:20px;text-align:center;color:var(--danger-text);font-size:13px"><i class="fa-solid fa-triangle-exclamation"></i> Failed to load: ' + esc(e.message) + '</div>';
     }
@@ -107,47 +116,50 @@
     renderMapList(_mapData);
   };
 
-  // ── Render ────────────────────────────────────────────────────────────────────
+  // ── Render sidebar list (R15.1 — compact cards synced to the Leaflet map) ────
   function renderMapList(rows) {
     var listEl = document.getElementById('map-sa-list');
     if (!listEl) return;
 
     var filtered = (rows || []).filter(function (r) {
       if (_mapClientFil && r.client_name !== _mapClientFil) return false;
-      if (_mapAreaFil   && r.id          !== _mapAreaFil)   return false;
+      if (_mapAreaFil   && String(r.id)  !== _mapAreaFil)   return false;
       return true;
     });
 
     if (!filtered.length) {
-      listEl.innerHTML = '<div style="padding:24px;text-align:center;color:var(--text-muted);font-size:13px"><i class="fa-solid fa-diagram-project"></i> No service areas match the filter.</div>';
+      listEl.innerHTML = '<div style="padding:20px 12px;text-align:center;color:var(--text-muted);font-size:12px"><i class="fa-solid fa-diagram-project"></i><br>No service areas match.</div>';
       return;
     }
 
-    var rowsHtml = filtered.map(function (r) {
-      var prog  = (r.program || '').toUpperCase();
-      var lc    = r.closed_at ? 'Final·Archived' : r.build_finalized_at ? 'Completed' : (r.status || 'active');
-      var lcColor = r.closed_at ? 'var(--success-text)' : r.build_finalized_at ? 'var(--info-text)' : 'var(--text-muted)';
-      var lcBg    = r.closed_at ? 'var(--success-light)' : r.build_finalized_at ? 'var(--info-light)' : 'var(--surface-3)';
-      var geom    = r.map_geometry ? '<span style="font-size:10px;color:var(--primary);margin-left:6px" title="Has map geometry"><i class="fa-solid fa-location-dot"></i></span>' : '';
-      return '<tr>'
-        + '<td style="padding:9px 14px"><a href="/area.html?id=' + esc(r.id) + '" style="color:var(--primary);font-weight:500">' + esc(r.name) + '</a>' + geom + '</td>'
-        + '<td style="padding:9px 14px">' + esc(r.client_name || '—') + '</td>'
-        + '<td style="padding:9px 14px">' + (prog ? '<span style="display:inline-block;padding:2px 7px;border-radius:9px;font-size:10px;font-weight:700;background:var(--surface-3);color:var(--text-muted)">' + prog + '</span>' : '—') + '</td>'
-        + '<td style="padding:9px 14px">' + (r.ec_name ? esc(r.ec_name) : '<span style="color:var(--text-muted)">—</span>') + '</td>'
-        + '<td style="padding:9px 14px"><span style="display:inline-block;padding:2px 8px;border-radius:9px;font-size:11px;font-weight:600;background:' + lcBg + ';color:' + lcColor + '">' + esc(lc) + '</span></td>'
-        + '</tr>';
-    }).join('');
-
-    listEl.innerHTML = '<table style="width:100%;border-collapse:collapse;font-size:13px">'
-      + '<thead><tr style="background:var(--surface-1)">'
-      + '<th style="text-align:left;padding:9px 14px;font-size:11px;text-transform:uppercase;letter-spacing:.4px;color:var(--text-muted);border-bottom:1px solid var(--border-strong)">Service Area</th>'
-      + '<th style="text-align:left;padding:9px 14px;font-size:11px;text-transform:uppercase;letter-spacing:.4px;color:var(--text-muted);border-bottom:1px solid var(--border-strong)">Client</th>'
-      + '<th style="text-align:left;padding:9px 14px;font-size:11px;text-transform:uppercase;letter-spacing:.4px;color:var(--text-muted);border-bottom:1px solid var(--border-strong)">Program</th>'
-      + '<th style="text-align:left;padding:9px 14px;font-size:11px;text-transform:uppercase;letter-spacing:.4px;color:var(--text-muted);border-bottom:1px solid var(--border-strong)">EC</th>'
-      + '<th style="text-align:left;padding:9px 14px;font-size:11px;text-transform:uppercase;letter-spacing:.4px;color:var(--text-muted);border-bottom:1px solid var(--border-strong)">Status</th>'
-      + '</tr></thead>'
-      + '<tbody>' + rowsHtml + '</tbody>'
-      + '</table>';
+    var html = '<div style="padding:8px 0">';
+    filtered.forEach(function (r) {
+      var prog     = (r.program || '').toUpperCase();
+      var lc       = r.closed_at ? 'Final·Archived' : r.build_finalized_at ? 'Completed' : 'Active';
+      var lcColor  = r.closed_at ? 'var(--success-text)' : r.build_finalized_at ? 'var(--info-text)' : 'var(--text-muted)';
+      var lcBg     = r.closed_at ? 'var(--success-light)' : r.build_finalized_at ? 'var(--info-light)' : 'var(--surface-3)';
+      var pinColor = ovStatusColor(r);
+      var hasPin   = r.center_lat != null && r.center_lng != null;
+      html += '<div role="listitem" data-sa-id="' + esc(r.id) + '"'
+        + ' style="padding:8px 12px;border-bottom:1px solid var(--border-weak);cursor:pointer;transition:background .1s"'
+        + ' onclick="ovClickListItem(this,' + JSON.stringify(r.id) + ')"'
+        + ' onmouseenter="this.style.background=\'var(--surface-1)\'"'
+        + ' onmouseleave="this.style.background=this._selected?\'var(--primary-light)\':\'\'">'
+        + '<div style="display:flex;align-items:flex-start;gap:6px">'
+        + '<span style="display:inline-block;width:9px;height:9px;border-radius:50%;background:' + pinColor + ';flex-shrink:0;margin-top:3px;' + (hasPin ? '' : 'opacity:.3') + '" title="' + (hasPin ? 'Has coordinates' : 'No coordinates set') + '"></span>'
+        + '<div style="min-width:0;flex:1">'
+        + '<div style="font-weight:600;font-size:12px;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">' + esc(r.name) + '</div>'
+        + '<div style="font-size:11px;color:var(--text-muted);margin-top:1px">' + esc(r.client_name || '—')
+          + (prog ? ' · <span style="font-weight:700">' + prog + '</span>' : '') + '</div>'
+        + '<div style="margin-top:4px;display:flex;align-items:center;gap:5px">'
+        + '<span style="font-size:10px;font-weight:600;padding:1px 6px;border-radius:8px;background:' + lcBg + ';color:' + lcColor + '">' + lc + '</span>'
+        + '<a href="/area.html?id=' + esc(r.id) + '" onclick="event.stopPropagation()"'
+          + ' style="font-size:10px;color:var(--primary);text-decoration:none;font-weight:600">Open ↗</a>'
+        + '</div>'
+        + '</div></div></div>';
+    });
+    html += '</div>';
+    listEl.innerHTML = html;
   }
 
   function esc(s) {
@@ -155,6 +167,137 @@
       return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c];
     });
   }
+
+  // ── Overview Leaflet map (R15.1) ─────────────────────────────────────────────
+  function ovStatusColor(r) {
+    if (r.closed_at)          return '#28A745';
+    if (r.build_finalized_at) return '#1B5FA0';
+    return '#9BA1A8';
+  }
+
+  function ovPinIcon(color) {
+    return L.divIcon({
+      className: '',
+      html: '<div style="width:14px;height:14px;border-radius:50%;background:' + color
+        + ';border:2px solid rgba(0,0,0,.22);box-shadow:0 1px 5px rgba(0,0,0,.32)"></div>',
+      iconSize: [14, 14], iconAnchor: [7, 7], popupAnchor: [0, -9],
+    });
+  }
+
+  function ensureLeaflet(cb) {
+    if (typeof L !== 'undefined') { cb(); return; }
+    var hrefs = [
+      'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css',
+      'https://cdnjs.cloudflare.com/ajax/libs/leaflet.markercluster/1.5.3/MarkerCluster.Default.min.css',
+    ];
+    hrefs.forEach(function (href) {
+      var l = document.createElement('link'); l.rel = 'stylesheet'; l.href = href;
+      document.head.appendChild(l);
+    });
+    function loadScript(src, next) {
+      var s = document.createElement('script'); s.src = src; s.onload = next;
+      document.head.appendChild(s);
+    }
+    loadScript('https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js', function () {
+      loadScript('https://cdnjs.cloudflare.com/ajax/libs/leaflet.markercluster/1.5.3/leaflet.markercluster.min.js', cb);
+    });
+  }
+
+  function initOverviewMap() {
+    if (_overviewMap) { setTimeout(function () { _overviewMap.invalidateSize(); }, 100); return; }
+    var el = document.getElementById('overview-map');
+    if (!el) return;
+
+    _overviewMap = L.map('overview-map', { center: [32.8407, -83.6324], zoom: 11 });
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+      attribution: '© <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>',
+      maxZoom: 19,
+    }).addTo(_overviewMap);
+
+    if (typeof L.markerClusterGroup !== 'undefined') {
+      _ovCluster = L.markerClusterGroup({ maxClusterRadius: 50 });
+      _overviewMap.addLayer(_ovCluster);
+    }
+    // If data already loaded, plot it
+    if (_mapData) plotSaMarkers(_mapData);
+  }
+
+  function plotSaMarkers(rows) {
+    if (!_overviewMap) return;
+    // Remove old layers
+    Object.values(_ovBoundaries).forEach(function (l) { _overviewMap.removeLayer(l); });
+    if (_ovCluster) _ovCluster.clearLayers();
+    _ovMarkers = {}; _ovBoundaries = {};
+
+    (rows || []).forEach(function (r) {
+      var color = ovStatusColor(r);
+
+      // Boundary polygon
+      if (r.boundary) {
+        try {
+          var bndry = typeof r.boundary === 'string' ? JSON.parse(r.boundary) : r.boundary;
+          var layer = L.geoJSON(bndry, {
+            style: { color: color, weight: 2, fillOpacity: 0.07, opacity: 0.5 }
+          }).addTo(_overviewMap);
+          _ovBoundaries[r.id] = layer;
+        } catch (_) {}
+      }
+
+      // Pin (only when coordinates exist)
+      if (r.center_lat != null && r.center_lng != null) {
+        var marker = L.marker([r.center_lat, r.center_lng], { icon: ovPinIcon(color) });
+        marker.bindPopup(ovMakeSaPopup(r), { minWidth: 190 });
+        marker.on('click', function () { ovHighlightList(r.id); });
+        _ovMarkers[r.id] = marker;
+        (_ovCluster || _overviewMap).addLayer(marker);
+      }
+    });
+  }
+
+  function ovMakeSaPopup(r) {
+    var prog = (r.program || '').toUpperCase();
+    var lc   = r.closed_at ? 'Final·Archived' : r.build_finalized_at ? 'Completed' : 'Active';
+    return '<div style="font-size:12px">'
+      + '<div style="font-weight:700;font-size:13px;margin-bottom:3px">' + esc(r.name) + '</div>'
+      + '<div style="color:#666;font-size:11px;margin-bottom:2px">' + esc(r.client_name || '—') + '</div>'
+      + (prog ? '<span style="font-size:10px;font-weight:700;background:#eee;padding:1px 5px;border-radius:8px">' + prog + '</span> ' : '')
+      + '<span style="font-size:10px;color:#888">' + lc + '</span>'
+      + '<div style="margin-top:7px">'
+      + '<a href="/area.html?id=' + esc(r.id) + '" style="display:inline-block;padding:4px 12px;background:#1B5FA0;color:#fff;border-radius:5px;font-size:11px;font-weight:600;text-decoration:none">Open →</a>'
+      + '</div></div>';
+  }
+
+  function ovHighlightList(id) {
+    var listEl = document.getElementById('map-sa-list');
+    if (!listEl) return;
+    listEl.querySelectorAll('[data-sa-id]').forEach(function (el) {
+      var sel = el.dataset.saId === id;
+      el._selected = sel;
+      el.style.background = sel ? 'var(--primary-light)' : '';
+      if (sel) el.scrollIntoView({ block: 'nearest' });
+    });
+  }
+
+  // List item click: highlight + fly the map to the SA's pin
+  window.ovClickListItem = function (el, id) {
+    ovHighlightList(id);
+    var marker = _ovMarkers[id];
+    if (marker && _overviewMap) {
+      _overviewMap.flyTo(marker.getLatLng(), Math.max(_overviewMap.getZoom(), 14), { duration: 0.8 });
+      marker.openPopup();
+    }
+  };
+
+  // CC drawer toggle
+  window.saToggleCcPanel = function () {
+    var drawer = document.getElementById('cc-drawer');
+    var btn    = document.getElementById('cc-panel-btn');
+    if (!drawer) return;
+    var open = drawer.style.display === 'none';
+    drawer.style.display = open ? '' : 'none';
+    if (btn) btn.setAttribute('aria-expanded', open ? 'true' : 'false');
+    if (_overviewMap) setTimeout(function () { _overviewMap.invalidateSize(); }, 320);
+  };
 
   // ── Construction Contracts ────────────────────────────────────────────────────
   async function loadCcList() {
