@@ -352,8 +352,13 @@ From the Service Areas → Map tab: the real fiber map loads embedded; drawing s
 - [ ] **A3 — Cascade visibility toggles.** Each node gets an eye toggle; toggling a parent **cascades to all descendants**; the overview map shows only SA pins/boundaries whose whole ancestor chain is visible.
 - [ ] **A4 — Click-to-zoom.** Click a node's label → the overview map flies to it (SA → its center/boundary; client/EC/CC → fit their SAs' bounds). Reuse the R15 marker/boundary plotting.
 
+### Also in Round 16 — Carter live feedback (2026-06-25)
+- [ ] **A5 — De-dupe the Map-view column.** In Map mode the SA list shows **twice** (the left List column AND the map panel's middle list). Remove the **column closest to the map** (the map-panel's redundant SA list) and let the **map fill that space**. Map mode = [the nested tree] + [map]. The tree (A2) is the single left list.
+- [ ] **A6 — "Map" button in List view.** When a node is selected in **List view** and you're seeing its rollup (click PSC → its ECs/SAs/projects; click an SA → its stuff; a project too), put a **"Map" button next to the title** that switches to Map view and **zooms the map to that entity** (client → fit all its SAs; SA → that SA; project → its geometry). Same zoom logic as A4.
+- [ ] **A7 — FIX: Edit + boundary tools don't fire (confirmed bug, NOT intentional).** On the SA detail (`area.html`), clicking **Boundary** / **Edit** / **Draw polygon** does nothing. CEO leads: the controls render, but in my live check `L.Draw` never loaded and no draw toolbar appeared. Investigate (a) whether `ensureLeafletDraw`'s lazy script actually loads + its `cb` runs, (b) whether `_saMapLeaflet` (the inline Leaflet map) is initialized when `saMapToggleBnd` runs (it returns early at `if(!_saMapLeaflet)`), and (c) the FRM-iframe **Edit** wiring. Same for the **overview** boundary edit (R15.5) if affected. Repro with an SA that has plan data (e.g. "Concentrator 7"). Verify the fix live (draw a polygon, save, reload → it persists via `PUT /api/service-areas/:id/boundary`).
+
 ### Guardrails
-- NO backend/schema. OFF-LIMITS: `routes/*`, `server.js`, `auth.js`, `migrations/`, `schema.sql`. Additive to `service_areas.js`(ui)/`service_areas_map.js`/`service-areas.html`. No `$` math. Keep the existing List view working. Escape any value put into an `onclick`/attribute (`esc(JSON.stringify(...))`) — recurring bug.
+- NO backend/schema. OFF-LIMITS: `routes/*`, `server.js`, `auth.js`, `migrations/`, `schema.sql`. Additive to `service_areas.js`(ui)/`service_areas_map.js`/`service-areas.html`; `area.html` edits OK for A7. No `$` math. Keep the existing List view working. Escape any value put into an `onclick`/attribute (`esc(JSON.stringify(...))`) — recurring bug.
 - **Don't build Phase B/C/D** (new-project draw flow, documents, inspection) — those are separate rounds with their own backends. Flag if blocked.
 
 ### Acceptance
