@@ -85,16 +85,18 @@ a:hover{text-decoration:underline}
 .badge-bom{background:#FFF8E1;color:#7A4F0E}
 .badge-final{background:var(--success-light);color:var(--success-text)}
 
-/* Map stub */
+/* Map stub (kept for compat) */
 .map-stub{background:var(--white);border:1px dashed var(--gray-border);border-radius:10px;
   padding:20px;margin-bottom:16px;display:flex;align-items:center;gap:16px;justify-content:space-between;flex-wrap:wrap}
-.map-stub-info{color:var(--text-muted);font-size:13px;display:flex;align-items:center;gap:8px}
-.map-stub-toggle{display:flex;gap:0}
-.map-stub-toggle button{padding:5px 12px;font-size:12px;font-weight:500;border:1px solid var(--gray-border);
-  background:var(--white);color:var(--text-secondary);cursor:pointer}
-.map-stub-toggle button:first-child{border-radius:6px 0 0 6px}
-.map-stub-toggle button:last-child{border-radius:0 6px 6px 0;border-left:none}
-.map-stub-toggle button.active{background:var(--primary);color:#fff;border-color:var(--primary)}
+/* Map header (R15.2) */
+.sa-map-header{margin-bottom:16px;border:1px solid var(--gray-border);border-radius:10px;overflow:visible;background:var(--white)}
+.sa-map-toolbar{display:flex;align-items:center;gap:8px;padding:7px 12px;background:var(--white);border-bottom:1px solid var(--gray-border);border-radius:10px 10px 0 0;flex-wrap:wrap}
+.sa-map-container{position:relative;height:300px;transition:height .1s}
+.sa-map-leaflet,.sa-map-frm{position:absolute;inset:0;width:100%;height:100%;border:0}
+.sa-map-frm{display:none}
+.sa-map-resize{height:7px;cursor:ns-resize;background:transparent;border-top:2px solid var(--gray-border);border-radius:0 0 10px 10px;opacity:.5;transition:opacity .15s}
+.sa-map-resize:hover{opacity:1;background:var(--primary-light)}
+@keyframes sa-spin{to{transform:rotate(360deg)}}
 
 /* Route selector */
 .route-bar{display:flex;align-items:center;gap:10px;margin-bottom:16px;flex-wrap:wrap}
@@ -351,22 +353,29 @@ function renderAreaHead(area){
     +'</div>';
 }
 
-function renderMapStub(routes){
-  var label = _rsel==='all'
-    ? 'All routes'
-    : (function(){ var r=(routes||[]).find(function(x){return x.id===_rsel;}); return r?r.name:'Route'; })();
-  return '<div class="map-stub">'
-    +'<div class="map-stub-info">'
-    +'<i class="fa-solid fa-map" aria-hidden="true" style="color:var(--primary);font-size:18px"></i>'
-    +'<div>'
-    +'<div style="font-weight:600;font-size:13px">Map — <span id="map-stub-label">'+esc(label)+'</span></div>'
-    +'<div style="font-size:12px;margin-top:2px">GIS/KMZ integration is a future phase — map panel will display here.</div>'
+function renderMapStub(routes){ return renderMapHeader(routes, (_ws||{}).area||{}); }
+
+function renderMapHeader(routes, area){
+  var planLinked = area && area.map_plan_id;
+  var planLabel = planLinked ? 'Plan: '+esc(area.map_plan_id) : 'No plan linked';
+  return '<div class="sa-map-header">'
+    +'<div class="sa-map-toolbar">'
+    +'<i class="fa-solid fa-map" style="color:var(--primary);font-size:12px" aria-hidden="true"></i>'
+    +'<span style="font-size:12px;font-weight:600;color:var(--text-secondary)" id="sa-map-label">'+planLabel+'</span>'
+    +(planLinked ? '' : '<span style="font-size:11px;color:var(--text-muted)">&nbsp;— draw on the map to link a plan</span>')
+    +'<div style="margin-left:auto;display:flex;gap:5px">'
+    +'<button class="btn btn-secondary btn-sm" id="sa-map-edit-btn" onclick="saMapToggleEdit()" aria-pressed="false">'
+    +'<i class="fa-solid fa-pen-to-square"></i> Edit</button>'
+    +'<button class="btn btn-secondary btn-sm" id="sa-map-expand-btn" onclick="saMapToggleExpand()" aria-label="Expand map">'
+    +'<i class="fa-solid fa-expand"></i></button>'
     +'</div>'
     +'</div>'
-    +'<div class="map-stub-toggle">'
-    +'<button id="map-btn-route" class="'+(  _mapView==='route'   ?'active':'')+'" aria-pressed="'+(  _mapView==='route'   ?'true':'false')+'">This route</button>'
-    +'<button id="map-btn-overview" class="'+(_mapView==='overview'?'active':'')+'" aria-pressed="'+(_mapView==='overview'?'true':'false')+'">Client overview</button>'
+    +'<div class="sa-map-container" id="sa-map-container">'
+    +'<div id="sa-map-leaflet" class="sa-map-leaflet"></div>'
+    +'<iframe id="sa-map-frm" class="sa-map-frm" src="/map/fiber_route_manager_v33.html"'
+    +' title="Fiber Route Manager" loading="lazy" allow="fullscreen"></iframe>'
     +'</div>'
+    +'<div class="sa-map-resize" id="sa-map-resize" title="Drag to resize" onmousedown="saMapDragStart(event)"></div>'
     +'</div>';
 }
 
@@ -576,11 +585,8 @@ function renderJobExpand(j){
 
 // ── Bind events ───────────────────────────────────────────────────────────
 function bindAll(){
-  // Map view toggle
-  var rb = document.getElementById('map-btn-route');
-  var ob = document.getElementById('map-btn-overview');
-  if(rb) rb.addEventListener('click', function(){ _mapView='route'; reRenderMapStub(); });
-  if(ob) ob.addEventListener('click', function(){ _mapView='overview'; reRenderMapStub(); });
+  // SA map header (R15.2)
+  ensureLeafletForArea(initSaMap);
 
   // Route selector
   document.querySelectorAll('[data-route]').forEach(function(btn){
@@ -659,9 +665,215 @@ function bindAll(){
   });
 }
 
-function reRenderMapStub(){
-  // just re-render the whole page to flip the toggle (cheap)
-  render();
+function reRenderMapStub(){ render(); }
+
+// ── SA map header — Leaflet view + FRM edit (R15.2) ────────────────────────
+var _saMapLeaflet   = null;  // L.map instance
+var _saMapInEdit    = false; // true when FRM iframe is shown
+var _saMapExpanded  = false;
+var _saMapDragY     = 0;
+var _saMapDragH     = 0;
+var _saMapDragging  = false;
+var _saMapLayerBnd  = null;  // boundary polygon layer
+var _saMapLayerPts  = null;  // structure marker layer group
+var _saMapLayerSegs = null;  // span polyline layer group
+var _saMapArea      = null;  // current area object (set in initSaMap)
+
+function ensureLeafletForArea(cb) {
+  if (typeof L !== 'undefined') { cb(); return; }
+  ['https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css']
+  .forEach(function(href){ var l=document.createElement('link');l.rel='stylesheet';l.href=href;document.head.appendChild(l); });
+  function loadSc(src, next){ var s=document.createElement('script');s.src=src;s.onload=next;document.head.appendChild(s); }
+  loadSc('https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js', cb);
+}
+
+function initSaMap() {
+  var area = (_ws || {}).area;
+  if (!area) return;
+  _saMapArea = area;
+
+  var el = document.getElementById('sa-map-leaflet');
+  if (!el) return;
+
+  // Destroy and recreate if container was replaced by a re-render
+  if (_saMapLeaflet) {
+    try { _saMapLeaflet.remove(); } catch (_) {}
+    _saMapLeaflet = null;
+  }
+  _saMapLayerBnd = _saMapLayerPts = _saMapLayerSegs = null;
+
+  var center = (area.center_lat != null && area.center_lng != null)
+    ? [area.center_lat, area.center_lng]
+    : [32.8407, -83.6324];
+
+  _saMapLeaflet = L.map('sa-map-leaflet', { center: center, zoom: 14 });
+  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+    attribution: '© <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>',
+    maxZoom: 20,
+  }).addTo(_saMapLeaflet);
+
+  // Boundary
+  if (area.boundary) {
+    try {
+      var bndry = typeof area.boundary === 'string' ? JSON.parse(area.boundary) : area.boundary;
+      _saMapLayerBnd = L.geoJSON(bndry, {
+        style: { color: '#1B5FA0', weight: 2.5, fillOpacity: 0.08, opacity: 0.7 }
+      }).addTo(_saMapLeaflet);
+      _saMapLeaflet.fitBounds(_saMapLayerBnd.getBounds(), { padding: [24, 24] });
+    } catch (_) {}
+  }
+
+  // Plan data
+  if (area.map_plan_id) loadSaPlanData(area.map_plan_id);
+}
+
+async function loadSaPlanData(planId) {
+  if (!_saMapLeaflet) return;
+  try {
+    var [ptsR, segR] = await Promise.all([
+      fetch('/api/map/store/' + encodeURIComponent('frm_pts_' + planId), { credentials: 'include' }).then(function(r){ return r.ok ? r.json() : null; }),
+      fetch('/api/map/store/' + encodeURIComponent('frm_segs_' + planId), { credentials: 'include' }).then(function(r){ return r.ok ? r.json() : null; }),
+    ]);
+    var pts  = (ptsR  && ptsR.value)  ? JSON.parse(ptsR.value)  : {};
+    var segs = (segR  && segR.value)  ? JSON.parse(segR.value)   : {};
+    plotSaPlanElements(pts, segs);
+  } catch (e) { console.error('[sa-map] plan load failed', e); }
+}
+
+function planElemColor(status) {
+  if (status === 'asBuilt' || status === 'active' || status === 'existing') return '#28A745';
+  if (status === 'underConstruction') return '#FF9800';
+  if (status === 'permitted') return '#1B5FA0';
+  return '#9BA1A8';
+}
+
+function plotSaPlanElements(pts, segs) {
+  if (!_saMapLeaflet) return;
+  if (_saMapLayerPts)  { _saMapLeaflet.removeLayer(_saMapLayerPts);  }
+  if (_saMapLayerSegs) { _saMapLeaflet.removeLayer(_saMapLayerSegs); }
+
+  _saMapLayerPts  = L.layerGroup();
+  _saMapLayerSegs = L.layerGroup();
+
+  Object.values(pts || {}).forEach(function(p) {
+    if (p.lat == null || p.lng == null) return;
+    var color = planElemColor(p.status);
+    var icon = L.divIcon({
+      className: '',
+      html: '<div data-elem-id="' + esc(p.id||'') + '" style="width:10px;height:10px;border-radius:50%;background:' + color
+        + ';border:1.5px solid rgba(0,0,0,.2);box-shadow:0 1px 3px rgba(0,0,0,.25)"></div>',
+      iconSize: [10, 10], iconAnchor: [5, 5], popupAnchor: [0, -7],
+    });
+    var m = L.marker([p.lat, p.lng], { icon: icon });
+    m.bindPopup(saMapElemPopup(p), { minWidth: 160 });
+    m.options._elemId = p.id;
+    m.on('click', function() { saMapElemClick(p); });
+    _saMapLayerPts.addLayer(m);
+  });
+
+  Object.values(segs || {}).forEach(function(s) {
+    if (!s.path || !s.path.length) return;
+    var color = planElemColor(s.status);
+    var pl = L.polyline(s.path, { color: color, weight: 3, opacity: 0.75 });
+    pl.bindPopup(saMapSpanPopup(s), { minWidth: 160 });
+    pl.options._elemId = s.id;
+    _saMapLayerSegs.addLayer(pl);
+  });
+
+  _saMapLayerPts.addTo(_saMapLeaflet);
+  _saMapLayerSegs.addTo(_saMapLeaflet);
+
+  // Fit to elements if no boundary set
+  if (!_saMapLayerBnd) {
+    try {
+      var group = L.featureGroup([_saMapLayerPts, _saMapLayerSegs]);
+      if (group.getLayers().length) _saMapLeaflet.fitBounds(group.getBounds(), { padding: [24, 24] });
+    } catch (_) {}
+  }
+}
+
+function saMapElemPopup(p) {
+  return '<div style="font-size:12px">'
+    + '<div style="font-weight:600">' + esc(p.name || p.ptype || 'Structure') + '</div>'
+    + '<div style="color:#666;font-size:11px">' + esc(p.ptype || '') + ' · ' + esc(p.status || 'proposed') + '</div>'
+    + (p.structureId ? '<div style="font-size:10px;color:#888">ID: ' + esc(p.structureId) + '</div>' : '')
+    + '</div>';
+}
+
+function saMapSpanPopup(s) {
+  return '<div style="font-size:12px">'
+    + '<div style="font-weight:600">' + esc(s.name || 'Span') + '</div>'
+    + '<div style="color:#666;font-size:11px">' + esc(s.cableType || '') + ' · ' + esc(s.status || 'proposed') + '</div>'
+    + (s.lengthFt ? '<div style="font-size:10px;color:#888">' + esc(String(s.lengthFt)) + ' ft</div>' : '')
+    + '</div>';
+}
+
+function saMapElemClick(elem) {
+  // Hook for R15.3 — highlight corresponding row in the jobs/materials table
+  var row = document.querySelector('[data-elem-ref="' + CSS.escape(elem.id||'') + '"]');
+  if (row) {
+    row.scrollIntoView({ block: 'nearest' });
+    row.style.outline = '2px solid var(--primary)';
+    setTimeout(function() { row.style.outline = ''; }, 1400);
+  }
+}
+
+window.saMapToggleEdit = function() {
+  var leaflet = document.getElementById('sa-map-leaflet');
+  var frm     = document.getElementById('sa-map-frm');
+  var btn     = document.getElementById('sa-map-edit-btn');
+  if (!leaflet || !frm) return;
+  _saMapInEdit = !_saMapInEdit;
+  if (_saMapInEdit) {
+    leaflet.style.display = 'none';
+    frm.style.display = 'block';
+    if (btn) { btn.innerHTML = '<i class="fa-solid fa-eye"></i> View'; btn.setAttribute('aria-pressed', 'true'); }
+  } else {
+    frm.style.display = 'none';
+    leaflet.style.display = '';
+    if (btn) { btn.innerHTML = '<i class="fa-solid fa-pen-to-square"></i> Edit'; btn.setAttribute('aria-pressed', 'false'); }
+    if (_saMapLeaflet) {
+      setTimeout(function() { _saMapLeaflet.invalidateSize(); }, 50);
+      var area = _saMapArea || ((_ws||{}).area);
+      if (area && area.map_plan_id) loadSaPlanData(area.map_plan_id);
+    }
+  }
+};
+
+window.saMapToggleExpand = function() {
+  var container = document.getElementById('sa-map-container');
+  var btn       = document.getElementById('sa-map-expand-btn');
+  if (!container) return;
+  _saMapExpanded = !_saMapExpanded;
+  container.style.height = _saMapExpanded ? '560px' : '300px';
+  if (btn) btn.innerHTML = _saMapExpanded ? '<i class="fa-solid fa-compress"></i>' : '<i class="fa-solid fa-expand"></i>';
+  if (_saMapLeaflet) setTimeout(function() { _saMapLeaflet.invalidateSize(); }, 50);
+};
+
+window.saMapDragStart = function(e) {
+  var container = document.getElementById('sa-map-container');
+  if (!container) return;
+  _saMapDragY = e.clientY;
+  _saMapDragH = container.offsetHeight;
+  _saMapDragging = true;
+  document.addEventListener('mousemove', saMapDragMove);
+  document.addEventListener('mouseup', saMapDragEnd);
+  e.preventDefault();
+};
+
+function saMapDragMove(e) {
+  if (!_saMapDragging) return;
+  var container = document.getElementById('sa-map-container');
+  if (!container) return;
+  var newH = Math.max(160, Math.min(720, _saMapDragH + (e.clientY - _saMapDragY)));
+  container.style.height = newH + 'px';
+  if (_saMapLeaflet) _saMapLeaflet.invalidateSize();
+}
+
+function saMapDragEnd() {
+  _saMapDragging = false;
+  document.removeEventListener('mousemove', saMapDragMove);
+  document.removeEventListener('mouseup', saMapDragEnd);
 }
 
 function findMat(mid){
