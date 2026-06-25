@@ -364,6 +364,11 @@ function renderMapHeader(routes, area){
     +'<span style="font-size:12px;font-weight:600;color:var(--text-secondary)" id="sa-map-label">'+planLabel+'</span>'
     +(planLinked ? '' : '<span style="font-size:11px;color:var(--text-muted)">&nbsp;— draw on the map to link a plan</span>')
     +(planLinked ? '<input id="sa-map-jump" type="text" placeholder="Jump to unit…" title="Type a unit name or ID to fly the map there" aria-label="Jump to map unit" style="font-size:12px;padding:3px 8px;border:1px solid var(--gray-border);border-radius:5px;background:var(--white);color:var(--text);width:140px;margin-left:8px">' : '')
+    +'<div class="seg-ctrl" style="font-size:11px;margin-left:4px" id="sa-view-mode-ctrl" role="group" aria-label="View mode">'
+    +'<button id="sa-vm-overall" class="active" onclick="saMapSetViewMode(\'overall\')" title="Show all data">Overall</button>'
+    +'<button id="sa-vm-construction" onclick="saMapSetViewMode(\'construction\')" title="Construction only">Construction</button>'
+    +'<button id="sa-vm-engineering" onclick="saMapSetViewMode(\'engineering\')" title="Engineering only">Engineering</button>'
+    +'</div>'
     +(planLinked ? '<div class="seg-ctrl" style="font-size:11px;margin-left:4px" role="group" aria-label="Map layer toggle">'
       +'<button id="sa-map-constr-btn" class="active" onclick="saMapSetLayer(\'construction\')" title="Show construction plan elements">Construction</button>'
       +'<button id="sa-map-eng-btn" onclick="saMapSetLayer(\'engineering\')" title="Show engineering jobs">Engineering</button>'
@@ -444,10 +449,10 @@ function renderCostTiles(rollup, area, finalized){
   var pct = rollup.progress_pct;
   var pctDisplay = finalized ? 'Complete' : (pct!=null ? pct+'%' : '—');
 
-  function tile(key, label, val, sub){
+  function tile(domId, key, label, val, sub){
     var checked = cvm[key]!==false;
     var dim = !checked;
-    return '<div class="cost-tile'+(dim?' dim':'')+'">'
+    return '<div id="'+domId+'" class="cost-tile'+(dim?' dim':'')+'">'
       +'<div class="lbl">'+label+'</div>'
       +'<div class="val amt">'+val+'</div>'
       +(sub?'<div class="sub">'+sub+'</div>':'')
@@ -459,10 +464,10 @@ function renderCostTiles(rollup, area, finalized){
   }
 
   return '<div class="cost-tiles">'
-    +tile('progress',         'Progress',         pctDisplay,             finalized?'Build finalized':'Overall completion')
-    +tile('engineering_cost', 'Engineering',       fmtMoney(rollup.engineering_cost),  'labor & overhead')
-    +tile('construction_cost','Construction',      fmtMoney(rollup.construction_cost), 'labor + materials')
-    +tile('total_cost',       'Total Cost',        fmtMoney(rollup.total_cost),         'engineering + construction')
+    +tile('tile-progress',     'progress',          'Progress',         pctDisplay,                         finalized?'Build finalized':'Overall completion')
+    +tile('tile-engineering',  'engineering_cost',  'Engineering',      fmtMoney(rollup.engineering_cost),  'labor & overhead')
+    +tile('tile-construction', 'construction_cost', 'Construction',     fmtMoney(rollup.construction_cost), 'labor + materials')
+    +tile('tile-total',        'total_cost',        'Total Cost',       fmtMoney(rollup.total_cost),        'engineering + construction')
     +'</div>';
 }
 
@@ -567,7 +572,7 @@ function renderJobRow(j){
   var hasExpand = (j.people&&j.people.length)||(j.notes)||(j.start_date||j.completed_date);
   var expandCls = _expandedJob[j.id]?'expanded':'';
   var isVarious = j.employee_label&&j.employee_label.indexOf('Various')===0;
-  return '<tr class="'+(hasExpand?'clickable-row ':'')+' job-row '+expandCls+'" data-job-id="'+esc(j.id)+'" '+(hasExpand?'tabindex="0" role="button" aria-expanded="'+(!!_expandedJob[j.id])+'"':'')+'>'
+  return '<tr class="'+(hasExpand?'clickable-row ':'')+' job-row '+expandCls+'" data-job-id="'+esc(j.id)+'" data-category="'+esc(j.cost_category||'')+'" '+(hasExpand?'tabindex="0" role="button" aria-expanded="'+(!!_expandedJob[j.id])+'"':'')+'>'
     +'<td>'
     +'<div>'+esc(j.job_name||j.team||'—')+'</div>'
     +(j.cost_category?'<div class="cost-cat">'+esc(j.cost_category)+'</div>':'')
@@ -747,6 +752,7 @@ var _saMapArea        = null;  // current area object (set in initSaMap)
 var _saMapMarkersById = {};    // R15.3: elemId → { marker, data, color }
 var _saMapSegsById    = {};    // R15.3: elemId → { polyline, data }
 var _saMapLayer       = 'construction'; // R15.3 toggle: 'construction'|'engineering'
+var _viewMode         = 'overall';     // R16 A8: 'overall'|'construction'|'engineering'
 // R15.4 boundary draw state
 var _saMapBndMode    = false;  // currently in boundary edit mode
 var _saMapBndItems   = null;   // L.FeatureGroup for draw/edit
@@ -961,14 +967,45 @@ window.saMapSetLayer = function(layer) {
   var eBtn = document.getElementById('sa-map-eng-btn');
   if (cBtn) { cBtn.classList.toggle('active', isConstr); }
   if (eBtn) { eBtn.classList.toggle('active', !isConstr); }
-  // Highlight the relevant data section
+  // Highlight the relevant data section (kept for plan layer visual cue)
   var matCard = document.getElementById('mat-card');
   var jobCard = document.getElementById('job-card');
   if (matCard) matCard.style.outline = isConstr ? '2px solid var(--primary)' : '';
   if (jobCard) jobCard.style.outline = !isConstr ? '2px solid var(--primary)' : '';
-  // Scroll to relevant section
-  var target = isConstr ? matCard : jobCard;
-  if (target) target.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+};
+
+// R16 A8 — 3-way data view: Overall / Construction / Engineering
+window.saMapSetViewMode = function(mode) {
+  _viewMode = mode;
+  // Update toggle button states
+  ['overall','construction','engineering'].forEach(function(m) {
+    var btn = document.getElementById('sa-vm-' + m);
+    if (btn) btn.classList.toggle('active', m === mode);
+  });
+  // Sync the plan layer toggle when switching to a specific discipline
+  if (mode === 'construction') saMapSetLayer('construction');
+  else if (mode === 'engineering') saMapSetLayer('engineering');
+  // Show/hide tiles
+  var tEng   = document.getElementById('tile-engineering');
+  var tConst = document.getElementById('tile-construction');
+  if (tEng)   tEng.style.display   = (mode === 'construction') ? 'none' : '';
+  if (tConst) tConst.style.display = (mode === 'engineering')  ? 'none' : '';
+  // Show/hide materials card (construction discipline only)
+  var matCard = document.getElementById('mat-card');
+  if (matCard) matCard.style.display = (mode === 'engineering') ? 'none' : '';
+  // Show/hide job rows by data-category
+  document.querySelectorAll('tr.job-row[data-category]').forEach(function(row) {
+    var cat = row.dataset.category;
+    if (!cat || mode === 'overall') { row.style.display = ''; return; }
+    var visible = (mode === cat);
+    row.style.display = visible ? '' : 'none';
+    // Also hide any open expand row for this job
+    if (!visible) {
+      var jobId = row.dataset.jobId;
+      var expRow = jobId ? document.getElementById('job-expand-' + jobId) : null;
+      if (expRow) expRow.style.display = 'none';
+    }
+  });
 };
 
 // ── R15.4 — Boundary draw/edit ─────────────────────────────────────────────
@@ -1042,10 +1079,16 @@ function saMapBndExit() {
 }
 
 window.saMapToggleBnd = function() {
-  if (!_saMapLeaflet) return;
   if (_saMapInEdit) { flash('Switch to View mode first', 'err'); return; }
   if (_saMapBndMode) { saMapBndCancel(); return; }
-  ensureLeafletDraw(function() {
+  // Ensure Leaflet is loaded and the map is initialised before proceeding
+  ensureLeafletForArea(function() {
+    if (!_saMapLeaflet) initSaMap();
+    if (!_saMapLeaflet) { flash('Map not ready — reload the page', 'err'); return; }
+    ensureLeafletDraw(doToggleBnd);
+  });
+};
+function doToggleBnd() {
     _saMapBndMode = true;
     _saMapBndOrig = ((_ws || {}).area || {}).boundary || null;
 
@@ -1073,8 +1116,7 @@ window.saMapToggleBnd = function() {
 
     saMapBndUpdateUI(true);
     flash('Boundary edit mode — draw or adjust the polygon, then save');
-  });
-};
+}
 
 window.saMapBndStartDraw = function() {
   if (!_saMapLeaflet || !_saMapBndMode) return;

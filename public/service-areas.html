@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Service Areas — Launch Fiber</title>
+<title>Projects — Launch Fiber</title>
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
@@ -110,7 +110,7 @@ input,select{font-family:inherit;font-size:13px;color:var(--text);background:var
 </head>
 <body>
   <div class="header">
-    <div class="header-title"><i class="fa-solid fa-diagram-project"></i> Service Areas</div>
+    <div class="header-title"><i class="fa-solid fa-diagram-project"></i> Projects</div>
     <div class="header-right">
       <div style="display:flex;border:1px solid var(--border-strong);border-radius:6px;overflow:hidden">
         <button id="view-btn-list" class="btn btn-sm active" onclick="saSetView('list')"
@@ -143,6 +143,12 @@ input,select{font-family:inherit;font-size:13px;color:var(--text);background:var
         </select>
       </div>
       <div id="clientList"><div class="muted" style="padding:10px;font-size:12px">Loading…</div></div>
+      <!-- R16 A2: projects tree (shown in map mode, replacing the flat SA list) -->
+      <div id="proj-tree-wrap" style="display:none;flex:1;overflow-y:auto;min-height:0">
+        <div style="padding:14px;text-align:center;color:var(--text-muted);font-size:12px">
+          <span style="display:inline-block;width:12px;height:12px;border:2px solid currentColor;border-radius:50%;border-right-color:transparent;animation:spin .6s linear infinite;vertical-align:-2px;margin-right:5px"></span>Loading projects…
+        </div>
+      </div>
     </aside>
     <main class="main" role="main" id="main">
       <div class="empty"><i class="fa-solid fa-diagram-project"></i><div>Select a service area, or create one.</div></div>
@@ -155,7 +161,7 @@ input,select{font-family:inherit;font-size:13px;color:var(--text);background:var
       <!-- Top filter bar -->
       <div style="padding:9px 14px;border-bottom:1px solid var(--border-strong);display:flex;align-items:center;gap:10px;flex-wrap:wrap;background:var(--surface-2);flex-shrink:0">
         <i class="fa-solid fa-map" style="color:var(--primary);font-size:14px"></i>
-        <span style="font-size:14px;font-weight:700">Service Areas Map</span>
+        <span style="font-size:14px;font-weight:700">Projects Map</span>
         <select id="map-client-sel" aria-label="Filter by client"
           style="padding:5px 8px;border:1px solid var(--border-strong);border-radius:6px;font-size:12px;background:var(--surface-2);color:var(--text)"
           onchange="saMapFilterClient()">
@@ -174,15 +180,8 @@ input,select{font-family:inherit;font-size:13px;color:var(--text);background:var
         </div>
       </div>
 
-      <!-- Map body: SA list sidebar + Leaflet overview -->
+      <!-- Map body: Leaflet overview (A5: SA list moved to aside as projects tree) -->
       <div style="flex:1;display:flex;overflow:hidden;min-height:0">
-        <!-- SA list sidebar (synced to map) -->
-        <div id="map-sa-list" role="list" aria-label="Service areas"
-          style="width:260px;overflow-y:auto;border-right:1px solid var(--border-strong);background:var(--surface-2);flex-shrink:0">
-          <div style="padding:14px;text-align:center;color:var(--text-muted);font-size:12px">
-            <span style="display:inline-block;width:12px;height:12px;border:2px solid currentColor;border-radius:50%;border-right-color:transparent;animation:spin .6s linear infinite;vertical-align:-2px;margin-right:5px"></span>Loading…
-          </div>
-        </div>
         <!-- Leaflet overview map container (R15.5: position:relative for boundary overlay) -->
         <div style="flex:1;position:relative;overflow:hidden;min-width:0">
           <div id="overview-map" style="width:100%;height:100%;background:var(--surface-1)"></div>
