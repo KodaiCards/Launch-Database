@@ -1,6 +1,6 @@
 # Claude 2 — Contractor timeclock (Phase 5)
 
-**Status:** R14 MERGED to `main` ✓ 2026-06-24 (acting-CEO interim stand-in; one onclick-escaping fix applied at merge — see R14 note below). R11/R12/R13 MERGED ✓ 2026-06-24 (`3136b57a`). R14: map embedded (iframe), adapter wired (frm_storage_adapter.js injected immediately before map's inline script in `public/map/`), CC management + Excel catalog upload + estimate readout all in Map tab. FRONTEND ONLY.
+**Status:** R15 QUEUED (map-first Service Areas UX — big build; brief at bottom). R14 MERGED to `main` ✓ 2026-06-24 (acting-CEO interim stand-in; one onclick-escaping fix applied at merge — see R14 note below). R11/R12/R13 MERGED ✓ 2026-06-24 (`3136b57a`). R14: map embedded (iframe), adapter wired (frm_storage_adapter.js injected immediately before map's inline script in `public/map/`), CC management + Excel catalog upload + estimate readout all in Map tab. FRONTEND ONLY.
 **Branch:** `claude-2/contractor-timeclock`
 **Read first:** `CLAUDE.md`, `ROADMAP.md` (Phase 5), `briefs/README.md`.
 
@@ -340,6 +340,31 @@ From the Service Areas → Map tab: the real fiber map loads embedded; drawing s
 > **One fix applied at merge** (`public/js/service_areas_map.js`, `renderCcList`): the CC-row handler was built as `onclick="saSelectCc(' + JSON.stringify(cc.id) + ',' + JSON.stringify(cc.name) + ')"` — `JSON.stringify` emits literal `"` which terminated the double-quoted attribute → malformed HTML, so clicking an existing contract row to re-select it didn't fire (create-new still worked, since it calls `saSelectCc` directly). Fixed by HTML-escaping the args once (`esc(JSON.stringify(id)+','+JSON.stringify(name))`) and reusing for both `onclick`/`onkeydown`; this also closes a latent XSS hole (`cc.name` was injected raw into an event handler). Verified well-formed + injection-safe against quote/apostrophe/`&`/`<script>` inputs; `node --check` clean. No other changes. — Acting CEO
 
 ---
+
+## Round 15 — Map-first Service Areas UX (BIG; Carter-designed via 2 interactive models). Sonnet @ medium. FRONTEND ONLY.
+**Read `docs/map_requirements.md` → the "Map-first Service Areas UX — LOCKED" section first** (full spec + the two mockups' behavior). The Service Areas tab becomes **map-first**; all maps are **real-geo Leaflet, editable + movable**. Backend is shipped + tested (migration 0072 + endpoints) — **NO backend**; need one → STOP, `BLOCKED — needs CEO`. Reuse the Leaflet + drawing engine in `public/map/fiber_route_manager_v33.html`; don't rebuild Leaflet. Work top-down, push per task.
+
+> Internal manager/admin. CI billing-locked → CEO verifies locally. Expect multiple pushes; this is several rounds of work.
+
+### Endpoints (LIVE)
+- `GET /api/map/service-areas` → all SAs incl. `boundary`, `center_lat`, `center_lng`, status, client, program (overview).
+- `PUT /api/service-areas/:id/boundary` `{boundary, center_lat, center_lng}` (save the hand-drawn boundary).
+- `GET/PUT /api/map/store/:key` (the map's `window.storage`; adapter `public/map/frm_storage_adapter.js`).
+- `GET /api/service-areas/:id/map-rollup`, `GET /api/projections/service-area/:id` (has `construction`+`combined`), `GET /api/projections/service-area/:id/mileage`, CC catalog + `GET /api/map/estimate`.
+
+### Build (top-down)
+- [ ] **R15.1 — Overview map.** In `service-areas.html` Map view: a real Leaflet map, **Macon-centered**, plotting every SA from `/api/map/service-areas` by `center_lat/lng` with **status-colored pins** + each SA's **boundary polygon**. **Filter client → SA** (side list synced to map). **Cluster** pins when zoomed out (Leaflet.markercluster or simple). Click a build (list or pin) → **fly/zoom to it** → an **Open** action → SA detail.
+- [ ] **R15.2 — SA detail: map-as-header.** The fiber map rides as a **resizable header** (drag handle) over the construction/engineering data. **View-by-default** with an **Edit** button that flips on the draw/place/split tools, and an **Expand** to enlarge it "big enough to work in." **Architecture:** prefer **inlining** the fiber map into the detail page (same JS context) over an iframe so rows/map share state; if you keep the iframe, use `postMessage`. Flag the choice in your push.
+- [ ] **R15.3 — Bidirectional linking.** Hover a unit row ↔ its pin glows (both ways); click a row → map **flies to that unit** + selects; click a pin/line → **quick data card** → **Open properties** opens the element modal. **Jump-to-unit box** (type `HH-7` → fly). Construction rows from the rollup/projection; Construction/Engineering toggle (the split).
+- [ ] **R15.4 — Hand-drawable SA boundary (day one).** Draw/edit a boundary polygon on the map (Leaflet draw/editable), **save via `PUT …/boundary`**; offer an **auto-hull suggestion** (convex hull of the SA's units/routes) as a starting point; render boundaries on the overview. Editable + movable vertices.
+- [ ] **R15.5 — Every map editable + movable.** Pan/zoom everywhere; the fiber draw tools reachable behind Edit on both overview (boundary editing) and detail.
+
+### Guardrails
+- **NO backend / NO schema.** OFF-LIMITS: `routes/*`, `server.js`, `auth.js`, `migrations/`, `schema.sql`. `public/map/*` + `service-areas.html` + `public/js/service_areas_map.js` are yours (additive; the map file may be extended for boundary-draw, but don't gut its internals). No `$` math in JS — projection/estimate endpoints return the numbers.
+- Big round — push each R15.x separately; CEO reviews + merges incrementally.
+
+### Acceptance
+Service Areas opens to a real Macon map of all builds (status pins + boundaries + clustering, client→SA filter); clicking a build flies in and opens it; the SA detail shows the map as a resizable, editable header linked bidirectionally to the unit rows (hover, click-to-fly, jump box, pin→data card→properties); SA boundaries are hand-drawable and saved. No `$` math in JS.
 
 ## Round 13 — Projections (Money tab) + Overall map (Service Areas tab) + lifecycle (QUEUED — after R12). Sonnet @ medium. FRONTEND ONLY.
 **CEO shipped the projections backend** (migrations 0067/0068). Three pieces, all against existing endpoints. Design: `docs/projections_design.md`. **NO backend.** CEO built an approved mockup — match its look (KPIs → budget-burn bar → expandable concentrator cards with per-job expected/billed/remaining).

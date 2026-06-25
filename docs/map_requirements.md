@@ -48,6 +48,25 @@ For each: does the delivered map do it? If not, it's on the build/change list.
 
 ---
 
+# Map-first Service Areas UX — LOCKED (Carter 2026-06-24, walked through 2 interactive models)
+
+The Service Areas tab becomes **map-first**. All maps are **real geo (Leaflet)** and **editable + movable** (pan/zoom + draw/edit).
+
+**Overview (default view of the Service Areas tab):**
+- Big map, **Macon-centered**, **all builds plotted at true coordinates** (`center_lat/lng`), pins **status-colored**.
+- Each build shows its **hand-drawn SA boundary** polygon. **Clustering** when zoomed out (count bubbles that expand on zoom).
+- **Filter client → SA** (side list synced to the map). Click a build (list or pin) → map **flies/zooms to it** → **Open** → SA detail.
+
+**SA detail = map-as-header over the construction/engineering data:**
+- Header map: real geo, **view-by-default**, with an **Edit** button (flips on the fiber-map draw/place/split tools), an **Expand** (big enough to work in), and a **resize handle** (drag map height).
+- **Bidirectional linking:** hover a unit row ↔ its pin glows; click a row → map flies to that unit; click a pin/line → **quick data card** → **Open properties** opens the element modal. **Jump-to-unit box** (type `HH-7` → fly).
+- **Construction / Engineering toggle** (the split); construction rows = units priced via CC catalog, engineering = footage/designation + mileage-allocated hourly.
+- **SA boundary is hand-drawable from day one** (auto-hull suggestion as a starting point, fully editable), saved per SA.
+
+**Backend ready (migration 0072 + endpoints):** `service_areas.boundary`/`center_lat`/`center_lng`; `PUT /api/service-areas/:id/boundary`; `GET /api/map/service-areas` returns boundary+center; plus map_store persistence, `/api/service-areas/:id/map-rollup`, projection construction/combined blocks, CC catalog + estimate.
+
+**Frontend = C2 R15.** Key architecture note: for the detail-view row↔pin↔card linking, prefer **inlining** the fiber map into the SA detail page (same JS context) over the R14 iframe, or use postMessage — the rows and map must talk.
+
 # Delivered map — `map/fiber_route_manager_v33.html` (v33, 2026-06-24) — diagnosis
 
 Carter delivered the foundation: a **Leaflet OSP design tool** ("Fiber Route Manager · Launch Fiber Services · OSP"), 2362-line self-contained HTML (Leaflet + JSZip). Reviewed in full + run locally (renders, tiles load, centered on Macon). **Not the final version — this is the base we build on.**
