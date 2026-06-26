@@ -20,31 +20,40 @@ const { logAudit } = require('./_audit');
 const fs = require('fs');
 const path = require('path');
 
-// Total completable lessons across all *available* courses. The course catalog
-// (osp-training/src/data/course-catalog.js) is the declared source of truth for
-// lesson counts, so we derive the denominator for admin progress bars from it
-// (sum of lesson_count where available:true). Memoized; falls back to null if
-// the file can't be parsed (the UI then shows raw completed counts).
-let _curriculumTotal;
-function curriculumTotalLessons() {
-  if (_curriculumTotal !== undefined) return _curriculumTotal;
+// The course catalog (osp-training/src/data/course-catalog.js) is the declared
+// source of truth for course titles + lesson counts. We parse it once to drive
+// admin progress denominators (per-subject + overall). Memoized; falls back to
+// [] if it can't be parsed (the UI then shows raw completed counts).
+let _curriculumCourses;
+function curriculumCourses() {
+  if (_curriculumCourses !== undefined) return _curriculumCourses;
   try {
     const txt = fs.readFileSync(
       path.join(__dirname, '..', 'osp-training', 'src', 'data', 'course-catalog.js'), 'utf8');
-    let total = 0, available = null;
+    const courses = [];
+    let cur = null;
     for (const line of txt.split('\n')) {
-      if (/^\s*id:\s*['"]/.test(line)) available = null;        // new course object
-      const a = line.match(/available:\s*(true|false)/);
-      if (a) available = (a[1] === 'true');
-      const lc = line.match(/lesson_count:\s*(\d+)/);
-      if (lc && available) total += parseInt(lc[1], 10);
+      const idm = line.match(/^\s*id:\s*['"]([^'"]+)['"]/);
+      if (idm) { cur = { id: idm[1], title: null, available: false, lesson_count: 0 }; courses.push(cur); continue; }
+      if (!cur) continue;
+      const tm = line.match(/title:\s*['"]([^'"]*)['"]/); if (tm && cur.title === null) cur.title = tm[1];
+      const am = line.match(/available:\s*(true|false)/); if (am) cur.available = (am[1] === 'true');
+      const lm = line.match(/lesson_count:\s*(\d+)/); if (lm) cur.lesson_count = parseInt(lm[1], 10);
     }
-    _curriculumTotal = total > 0 ? total : null;
+    _curriculumCourses = courses;
   } catch (e) {
-    console.error('[training] curriculum total parse failed:', e && e.message);
-    _curriculumTotal = null;
+    console.error('[training] curriculum catalog parse failed:', e && e.message);
+    _curriculumCourses = [];
   }
-  return _curriculumTotal;
+  return _curriculumCourses;
+}
+// Available, authored courses (the ones that count toward progress).
+function curriculumSubjects() {
+  return curriculumCourses().filter(c => c.available && c.lesson_count > 0);
+}
+function curriculumTotalLessons() {
+  const t = curriculumSubjects().reduce((a, c) => a + c.lesson_count, 0);
+  return t > 0 ? t : null;
 }
 
 module.exports = function installTrainingRoutes(app, pool, { requireAuth }) {
@@ -421,9 +430,9 @@ module.exports = function installTrainingRoutes(app, pool, { requireAuth }) {
   // lesson progress (grouped by course), cert attempts, and capstone attempts.
   // Gated to: admin, design_manager, permitting_manager.
   app.get('/api/training/admin/user/:userId/detail', requireAuth(['admin', 'design_manager', 'permitting_manager']), async (req, res) => {
-    const userId = Number(req.params.userId);
-    if (!Number.isInteger(userId) || userId < 1) {
-      return res.status(400).json({ error: 'userId must be a positive integer' });
+    const userId = String(req.params.userId || '');
+    if (!/^[0-9a-fA-F-]{36}$/.test(userId)) {
+      return res.status(400).json({ error: 'userId must be a valid id' });
     }
     try {
       // ── User identity ────────────────────────────────────────────────────────
@@ -488,8 +497,39 @@ module.exports = function installTrainingRoutes(app, pool, { requireAuth }) {
         [userId]
       );
 
+      // ── Per-subject progress + "where they left off" ─────────────────────────
+      const titleById = {};
+      for (const c of curriculumCourses()) titleById[c.id] = c.title;
+      const subjects = curriculumSubjects().map(c => {
+        const lessons = (courseMap.get(c.id) || { lessons: [] }).lessons;
+        const completed = lessons.filter(l => l.status === 'completed').length;
+        const inProgress = lessons.filter(l => l.status === 'in_progress').length;
+        let lastSeen = null;
+        for (const l of lessons) if (l.last_seen_at && (!lastSeen || l.last_seen_at > lastSeen)) lastSeen = l.last_seen_at;
+        return {
+          course_id: c.id, title: c.title || c.id, total: c.lesson_count,
+          completed: Math.min(completed, c.lesson_count), in_progress: inProgress, last_seen_at: lastSeen,
+        };
+      });
+      // All touched lessons, newest activity first.
+      const allLessons = progRes.rows
+        .map(r => ({
+          course_id: r.course_id, course_title: titleById[r.course_id] || r.course_id,
+          lesson_id: r.lesson_id, status: r.status, completion_pct: r.completion_pct,
+          best_score: r.best_score, last_seen_at: r.last_seen_at, completed_at: r.completed_at,
+        }))
+        .sort((a, b) => (b.last_seen_at ? new Date(b.last_seen_at).getTime() : 0) - (a.last_seen_at ? new Date(a.last_seen_at).getTime() : 0));
+      // Where they left off: most recent in-progress lesson, else most recent activity.
+      const lastPosition = allLessons.find(l => l.status === 'in_progress') || allLessons[0] || null;
+
       res.json({
         user,
+        total_lessons: curriculumTotalLessons(),
+        completed_total: progRes.rows.filter(r => r.status === 'completed').length,
+        in_progress_total: progRes.rows.filter(r => r.status === 'in_progress').length,
+        subjects,
+        last_position: lastPosition,
+        recent_lessons: allLessons.slice(0, 10),
         courses,
         cert_attempts:     certRes.rows,
         capstone_attempts: capRes.rows,
@@ -507,11 +547,10 @@ module.exports = function installTrainingRoutes(app, pool, { requireAuth }) {
     const userIdRaw = req.query.user_id;
     let userId = null;
     if (userIdRaw !== undefined && userIdRaw !== '') {
-      const n = Number(userIdRaw);
-      if (!Number.isInteger(n) || n < 1) {
-        return res.status(400).json({ error: 'user_id must be a positive integer when provided' });
+      if (!/^[0-9a-fA-F-]{36}$/.test(String(userIdRaw))) {
+        return res.status(400).json({ error: 'user_id must be a valid id when provided' });
       }
-      userId = n;
+      userId = String(userIdRaw);
     }
     try {
       const params = [];

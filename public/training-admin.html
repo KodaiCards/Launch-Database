@@ -70,6 +70,40 @@ tr:last-child td{border-bottom:none}
 .empty{padding:40px;text-align:center;color:var(--text-muted)}
 .spin{display:inline-block;width:14px;height:14px;border:2px solid currentColor;border-radius:50%;border-right-color:transparent;animation:sp .6s linear infinite;vertical-align:-2px;margin-right:6px}
 @keyframes sp{to{transform:rotate(360deg)}}
+tr.prow{cursor:pointer}
+tr.prow:hover{background:var(--surface-1)}
+tr.prow td:first-child{position:relative}
+.chev{color:var(--text-muted);font-size:11px;margin-left:6px}
+/* Detail drawer */
+.drawer-overlay{position:fixed;inset:0;background:rgba(0,0,0,.35);z-index:60;opacity:0;pointer-events:none;transition:opacity .18s}
+.drawer-overlay.open{opacity:1;pointer-events:auto}
+.drawer{position:fixed;top:0;right:0;height:100vh;width:440px;max-width:94vw;background:var(--white);border-left:1px solid var(--gray-border);
+  z-index:61;transform:translateX(100%);transition:transform .22s ease;display:flex;flex-direction:column;box-shadow:-8px 0 28px rgba(0,0,0,.18)}
+.drawer.open{transform:translateX(0)}
+.drawer-head{display:flex;align-items:flex-start;justify-content:space-between;gap:10px;padding:16px 18px;border-bottom:1px solid var(--gray-border)}
+.drawer-name{font-size:17px;font-weight:700}
+.drawer-sub{font-size:12px;color:var(--text-muted);margin-top:2px}
+.drawer-body{padding:16px 18px;overflow-y:auto;flex:1}
+.drawer-sec{font-size:11px;text-transform:uppercase;letter-spacing:.04em;color:var(--text-muted);font-weight:600;margin:18px 0 8px}
+.drawer-sec:first-child{margin-top:0}
+.overall{display:flex;align-items:center;gap:12px;background:var(--surface-1);border:1px solid var(--gray-border);border-radius:10px;padding:12px 14px}
+.overall .big{font-size:26px;font-weight:700;line-height:1}
+.leftoff{background:var(--primary-light);border:1px solid transparent;border-radius:10px;padding:12px 14px;font-size:13px}
+.leftoff .lo-course{font-weight:600;color:var(--primary-dark)}
+.leftoff .lo-lesson{color:var(--text-secondary);font-size:12px;margin-top:3px;word-break:break-word}
+.subj{margin-bottom:10px}
+.subj-top{display:flex;justify-content:space-between;font-size:12px;margin-bottom:4px}
+.subj-name{font-weight:500}
+.subj-frac{color:var(--text-muted)}
+.lesson-row{display:flex;align-items:center;gap:8px;font-size:12px;padding:5px 0;border-bottom:1px solid var(--gray-border)}
+.lesson-row:last-child{border-bottom:none}
+.dot{width:8px;height:8px;border-radius:50%;flex:0 0 auto}
+.dot.completed{background:var(--success)}
+.dot.in_progress{background:var(--warning)}
+.l-id{flex:1;color:var(--text-secondary);word-break:break-word}
+.l-when{color:var(--text-muted);font-size:11px;white-space:nowrap}
+.close-x{border:1px solid var(--gray-border);border-radius:6px;width:30px;height:30px;display:flex;align-items:center;justify-content:center;color:var(--text-secondary)}
+.close-x:hover{background:var(--surface-1)}
 </style>
 </head>
 <body>
@@ -102,6 +136,18 @@ tr:last-child td{border-bottom:none}
     </table>
   </div>
 </div>
+
+<div class="drawer-overlay" id="drawer-overlay" onclick="closeDetail()"></div>
+<aside class="drawer" id="drawer" role="dialog" aria-label="Employee training detail">
+  <div class="drawer-head">
+    <div>
+      <div class="drawer-name" id="d-name">—</div>
+      <div class="drawer-sub" id="d-sub"></div>
+    </div>
+    <button class="close-x" onclick="closeDetail()" aria-label="Close"><i class="fa-solid fa-xmark"></i></button>
+  </div>
+  <div class="drawer-body" id="d-body"></div>
+</aside>
 
 <script>
 (function(){
@@ -150,8 +196,8 @@ tr:last-child td{border-bottom:none}
         ? '<div class="bar-wrap"><span class="muted" style="font-size:12px">'+u.completed+' completed</span></div>'
         : '<div class="bar-wrap"><div class="bar'+(done?' done':'')+'"><span style="width:'+pct+'%"></span></div><span class="pct">'+pct+'%</span></div>';
       var roleCls = u.role==='trainee' ? ' trainee' : '';
-      return '<tr>'
-        + '<td class="person">'+esc(u.name)+'<span class="uname">@'+esc(u.username)+'</span></td>'
+      return '<tr class="prow" onclick="openDetail(\''+esc(u.user_id)+'\')">'
+        + '<td class="person">'+esc(u.name)+'<span class="uname">@'+esc(u.username)+'</span><i class="fa-solid fa-chevron-right chev"></i></td>'
         + '<td><span class="role-chip'+roleCls+'">'+esc(fmtRole(u.role))+'</span></td>'
         + '<td>'+barHtml+'</td>'
         + '<td class="num">'+u.completed+(total?' / '+total:'')+'</td>'
@@ -163,6 +209,95 @@ tr:last-child td{border-bottom:none}
   };
 
   function stat(num,lbl){ return '<div class="stat"><div class="num">'+esc(num)+'</div><div class="lbl">'+esc(lbl)+'</div></div>'; }
+
+  function ago(d){
+    if(!d) return 'never';
+    var s=Math.floor((Date.now()-new Date(d).getTime())/1000);
+    if(s<60) return 'just now';
+    if(s<3600) return Math.floor(s/60)+'m ago';
+    if(s<86400) return Math.floor(s/3600)+'h ago';
+    if(s<2592000) return Math.floor(s/86400)+'d ago';
+    return new Date(d).toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'});
+  }
+
+  window.openDetail = async function(userId){
+    var dr=document.getElementById('drawer'), ov=document.getElementById('drawer-overlay');
+    dr.classList.add('open'); ov.classList.add('open');
+    document.getElementById('d-name').textContent='Loading…';
+    document.getElementById('d-sub').textContent='';
+    document.getElementById('d-body').innerHTML='<div class="empty"><span class="spin"></span> Loading…</div>';
+    try{
+      var d = await (await fetch('/api/training/admin/user/'+encodeURIComponent(userId)+'/detail',{credentials:'include'})).json();
+      renderDetail(d);
+    }catch(e){
+      document.getElementById('d-body').innerHTML='<div class="empty">Failed to load detail.</div>';
+    }
+  };
+
+  window.closeDetail = function(){
+    document.getElementById('drawer').classList.remove('open');
+    document.getElementById('drawer-overlay').classList.remove('open');
+  };
+  document.addEventListener('keydown', function(e){ if(e.key==='Escape') closeDetail(); });
+
+  function renderDetail(d){
+    var total = d.total_lessons;
+    var u = d.user||{};
+    document.getElementById('d-name').textContent = u.name || u.username || '—';
+    document.getElementById('d-sub').innerHTML = '@'+esc(u.username||'')+' · <span class="role-chip'+(u.role==='trainee'?' trainee':'')+'">'+esc(fmtRole(u.role))+'</span>';
+
+    var pct = total ? Math.min(100, Math.round((d.completed_total||0)/total*100)) : null;
+    var html = '';
+
+    // Overall
+    html += '<div class="overall"><div class="big">'+(pct==null?(d.completed_total||0):pct+'%')+'</div>'
+      + '<div style="flex:1"><div class="bar'+(pct===100?' done':'')+'"><span style="width:'+(pct||0)+'%"></span></div>'
+      + '<div class="muted" style="font-size:12px;margin-top:6px">'+(d.completed_total||0)+(total?' of '+total:'')+' lessons complete'
+      + (d.in_progress_total?' · '+d.in_progress_total+' in progress':'')+'</div></div></div>';
+
+    // Where they left off
+    if(d.last_position){
+      var lp=d.last_position;
+      html += '<div class="drawer-sec">Where they left off</div>'
+        + '<div class="leftoff"><div class="lo-course"><i class="fa-solid fa-'+(lp.status==='completed'?'circle-check':'play')+'"></i> '+esc(lp.course_title||lp.course_id)+'</div>'
+        + '<div class="lo-lesson">'+esc(lp.lesson_id)+' · '+esc((lp.status||'').replace('_',' '))+' · '+ago(lp.last_seen_at)+'</div></div>';
+    }
+
+    // Per-subject progress
+    if(d.subjects && d.subjects.length){
+      html += '<div class="drawer-sec">Progress by subject</div>';
+      html += d.subjects.map(function(s){
+        var sp = s.total ? Math.min(100, Math.round(s.completed/s.total*100)) : 0;
+        return '<div class="subj"><div class="subj-top"><span class="subj-name">'+esc(s.title)+'</span>'
+          + '<span class="subj-frac">'+s.completed+' / '+s.total+(s.in_progress?' · '+s.in_progress+' in prog':'')+'</span></div>'
+          + '<div class="bar'+(sp===100?' done':'')+'"><span style="width:'+sp+'%"></span></div></div>';
+      }).join('');
+    }
+
+    // Recent activity
+    if(d.recent_lessons && d.recent_lessons.length){
+      html += '<div class="drawer-sec">Recent lessons</div>';
+      html += d.recent_lessons.map(function(l){
+        return '<div class="lesson-row"><span class="dot '+esc(l.status)+'"></span>'
+          + '<span class="l-id"><strong>'+esc(l.course_title||l.course_id)+'</strong> · '+esc(l.lesson_id)+'</span>'
+          + '<span class="l-when">'+ago(l.last_seen_at)+'</span></div>';
+      }).join('');
+    } else {
+      html += '<div class="drawer-sec">Recent lessons</div><div class="muted" style="font-size:12px">No lessons started yet.</div>';
+    }
+
+    // Cert attempts (compact)
+    if(d.cert_attempts && d.cert_attempts.length){
+      html += '<div class="drawer-sec">Cert attempts</div>';
+      html += d.cert_attempts.slice(0,5).map(function(a){
+        return '<div class="lesson-row"><span class="dot '+(a.passed?'completed':'in_progress')+'"></span>'
+          + '<span class="l-id">'+esc(a.cert_track||'cert')+' · '+(a.score!=null?a.score+'%':'—')+(a.passed?' · passed':'')+'</span>'
+          + '<span class="l-when">'+ago(a.attempt_date)+'</span></div>';
+      }).join('');
+    }
+
+    document.getElementById('d-body').innerHTML = html;
+  }
 
   window.toggleDark = function(){
     var dark = document.documentElement.getAttribute('data-theme')==='dark';
