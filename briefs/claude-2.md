@@ -1,6 +1,6 @@
 # Claude 2 — Contractor timeclock (Phase 5)
 
-**Status:** R17 MERGED ✓ 2026-06-26 — CEO reviewed + merged + verified live. CEO follow-ups landed same pass: (a) `/api/map/service-areas` now returns `client_id` so the New Project client/SA pickers populate; (b) `showNewProjModal` loads map data on demand (was empty from list view); (c) new `service_area_jobs.label` (migration 0076) — a project's human name, auto-generated `<Discipline> — <SA>` when blank, override-able; tree + SA detail prefer it. **Await next round.** B1–B4 were: + New project modal (draw on map or manual), live footage/miles readout, re-draw/clear from SA detail. R16 MERGED ✓ 2026-06-25. R15 MERGED ✓ 2026-06-25. R14 MERGED ✓ 2026-06-24 (CEO fixed one missed escaping spot: `ovClickListItem` onclick in `service_areas_map.js` — wrap JSON.stringify args in `esc()` like the cc/popup handlers; watch this pattern). R15.1: Leaflet overview map (Macon-centered, pins, boundaries, cluster, sidebar list). R15.2: SA detail map-as-header — inline Leaflet view (boundary + plan structures/spans from store), FRM iframe in edit mode, drag-resize handle, expand toggle. R15.3: Bidirectional linking — hover row↔pin glow (both ways), click mat-row→fly map to marker+open popup, click pin→"Show in table" scrolls+flashes row, jump-to-unit box (searches by name/structureId/id), Construction/Engineering layer toggle (shows/hides plan layers + outlines relevant data section). Marker registry (_saMapMarkersById/_saMapSegsById) populated on plotSaPlanElements; data-elem-ref on material rows with map_feature_ref; popup onclick uses esc(JSON.stringify) to avoid attribute quoting bug.
+**Status:** ⭐ **ROUND 18 ACTIVE — pivot to TRAINING CURRICULUM buildout (see "## Round 18" below). This is the priority; timeclock is paused.** ⭐  ·  R17 MERGED ✓ 2026-06-26 — CEO reviewed + merged + verified live. CEO follow-ups landed same pass: (a) `/api/map/service-areas` now returns `client_id` so the New Project client/SA pickers populate; (b) `showNewProjModal` loads map data on demand (was empty from list view); (c) new `service_area_jobs.label` (migration 0076) — a project's human name, auto-generated `<Discipline> — <SA>` when blank, override-able; tree + SA detail prefer it. **Await next round.** B1–B4 were: + New project modal (draw on map or manual), live footage/miles readout, re-draw/clear from SA detail. R16 MERGED ✓ 2026-06-25. R15 MERGED ✓ 2026-06-25. R14 MERGED ✓ 2026-06-24 (CEO fixed one missed escaping spot: `ovClickListItem` onclick in `service_areas_map.js` — wrap JSON.stringify args in `esc()` like the cc/popup handlers; watch this pattern). R15.1: Leaflet overview map (Macon-centered, pins, boundaries, cluster, sidebar list). R15.2: SA detail map-as-header — inline Leaflet view (boundary + plan structures/spans from store), FRM iframe in edit mode, drag-resize handle, expand toggle. R15.3: Bidirectional linking — hover row↔pin glow (both ways), click mat-row→fly map to marker+open popup, click pin→"Show in table" scrolls+flashes row, jump-to-unit box (searches by name/structureId/id), Construction/Engineering layer toggle (shows/hides plan layers + outlines relevant data section). Marker registry (_saMapMarkersById/_saMapSegsById) populated on plotSaPlanElements; data-elem-ref on material rows with map_feature_ref; popup onclick uses esc(JSON.stringify) to avoid attribute quoting bug.
 **Branch:** `claude-2/contractor-timeclock`
 **Read first:** `CLAUDE.md`, `ROADMAP.md` (Phase 5), `briefs/README.md`.
 
@@ -440,3 +440,36 @@ Money becomes tabbed (Margin · Aging · Revenue · Program · **Projections**).
 
 ### Acceptance
 Money has a Projections tab matching the mockup (filters, KPIs, RUS budget burn, expandable concentrators with per-job expected/billed/remaining + lifecycle badges). Service-areas has a List|Map toggle with the map data wired to a placeholder + client/SA selectors. Workspace can mark an area completed → final (and reopen), with the stage badge. No `$` math in JS.
+
+---
+
+## Round 18 — TRAINING CURRICULUM buildout (ACTIVE PRIORITY) — 2026-06-26
+
+**Why:** We launched the platform as a training tool (self-signup + training-only lockdown live). Carter's directive: **finish the incomplete training content and make it extremely extensive, accurate, and easy to learn. The data CANNOT be wrong — OSP/fiber technical facts must be verified, zero hallucinations.** Use the established research → author → red-team process, with **parallel sub-agents** doing research and an independent **red-team (RT) verification** pass.
+
+**Your scope = `osp-training/` CONTENT ONLY.** This is fully separate from the CEO's work (the CEO owns the admin training UI + routes). **OFF-LIMITS (CEO is editing these — do not touch):** `routes/training.js`, `public/training-admin.html`, `server.js`, `auth.js`, `public/js/app_nav.js`. You also stay off `migrations/`, `schema.sql`, other `routes/*`. **Your files:** `osp-training/src/lessons/**`, `osp-training/src/data/course-catalog.js`, `osp-training/docs/**` (research-logs + red-team-reports), and the build output (`npm run build:osp` → `public/training/`).
+
+### Read first (the established process — do not reinvent it)
+1. `osp-training/docs/field-vs-textbook-research.md` — the **editorial rulebook** (accuracy + field-vs-textbook voice). Obey it.
+2. `osp-training/src/lessons/schema.md` — lesson file format/structure.
+3. An existing authored topic as the template, e.g. `osp-training/src/lessons/T01/*.jsx` (and T02–T09 for range/format).
+4. `osp-training/src/data/course-catalog.js` — source of truth for course ids, titles, `available`, `lesson_count`, prereqs. The header lists authored vs "coming soon."
+5. Existing `osp-training/docs/research-logs/module*.md` and `osp-training/docs/red-team-reports/*.md` — match their format for new topics.
+
+### The gaps to finish
+- Topics flagged **`available: false` / "coming soon"** in `course-catalog.js` (T10–T17 range — confirm the exact set + intended `lesson_count` from the catalog/README/research-logs).
+- Any **red-team findings** still open in the existing red-team reports for authored modules (fix → re-verify).
+
+### Process per topic (use parallel sub-agents — Carter wants this heavy)
+1. **Research (parallel agents):** gather facts from authoritative sources only — BICSI (RCDD/OSP), FOA, NESC/NEC, IEEE, TIA, manufacturer specs. Write/extend the topic's `research-logs/moduleNN-*.md` with **citations** for every non-obvious claim.
+2. **Author** the lessons in the established lesson format (match T01's structure: sections, callouts book/field/verify, interactive quiz bank). Formatting must be **easy to learn** per the rulebook.
+3. **Red-team (RT) — independent agent:** re-check EVERY factual claim against the cited source; flag anything unverified or hallucinated; write/extend `red-team-reports/`. **Nothing ships with an open accuracy flag.**
+4. **Wire** into `course-catalog.js` (`available: true`, correct `lesson_count`, prereqs) and run `npm run build:osp` so `public/training/` updates.
+
+### Workflow / cadence
+- Branch off latest `main` (e.g. `claude-2/training-curriculum`). Pull main first.
+- Deliver **per-topic** (don't wait for all of them) so the CEO can review/merge incrementally. Flip your status to `DONE — ready for review` per batch and note which topics + that RT passed clean.
+- If you hit a content/scope decision the rulebook doesn't cover (e.g. NESC edition, scope of a topic), **STOP and route a `BLOCKED — needs CEO` note** — don't guess on technical facts.
+
+### Acceptance (R18)
+Each delivered topic: lessons authored in the standard format; a research-log with citations; a red-team report showing every claim verified (no open hallucination flags); catalog updated (`available:true` + correct `lesson_count`); `npm run build:osp` succeeds. Accuracy first, then breadth, then polish.
