@@ -118,7 +118,7 @@ export default function T12L13_AcceptanceTesting() {
           reference cords) and L_km = total fiber length in km. Note: 0.4 dB/km is the TIA-568.3-D
           cabling standard's design allowance for OS2 fiber; actual fiber attenuation for G.652.D
           is typically ≤ 0.32–0.36 dB/km at 1310 nm and ≤ 0.18–0.22 dB/km at 1550 nm — well below
-          the ITU-T G.652.D spec max of 0.40 dB/km @ 1310 nm and 0.30 dB/km @ 1550 nm. The cabling
+          the ITU-T G.652.D spec max of 0.40 dB/km @ 1310 nm and 0.20 dB/km @ 1550 nm. The cabling
           standard's 0.4 dB/km allowance provides a conservative margin against both spec-max fiber
           and installation aging.
         </p>

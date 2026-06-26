@@ -39,12 +39,12 @@ export const meta = {
     {
       term: 'EDZ',
       definition:
-        'The minimum distance after a reflective event (connector or mechanical splice) within which the OTDR cannot detect a second distinct event. Defined as the distance from the start of a reflection peak to the point where the trace recovers to within 0.5 dB of the backscatter baseline. Typically 1–5 m for singlemode with narrow pulses.',
+        'The minimum distance after a reflective event within which the OTDR cannot detect a second distinct event. The EDZ criterion is event DETECTION — can a second peak be resolved above the ringing tail of the first? Per Telcordia GR-196-CORE, the EDZ ends when the trace recovers sufficiently to allow detection of a 2nd event at or near the backscatter level (the criterion involves the trace settling relative to the reflection peak, not the ±0.5 dB backscatter-return criterion used for the ADZ). EDZ is always shorter than ADZ. Typically 1–5 m for singlemode with narrow pulses.',
     },
     {
       term: 'ADZ',
       definition:
-        'The minimum distance after a reflective event within which the OTDR cannot accurately measure loss — because the trace has not settled flat enough to run a valid backscatter fit. Larger than the EDZ. Defined as the distance from the start of a reflection peak to where the trace returns to within 0.5 dB of undisturbed backscatter. Typically 3–10 m for singlemode at narrow pulse widths; scales roughly linearly with pulse width.',
+        'The minimum distance after a reflective event within which the OTDR cannot accurately MEASURE loss — because the trace has not settled flat enough for a valid backscatter slope fit. Defined per Telcordia GR-196-CORE and IEC 61746-1 as the distance from the start of a reflection to where the trace returns to within ±0.5 dB of the undisturbed backscatter slope. The ±0.5 dB criterion applies to ADZ (not EDZ). Typically 3–10 m for singlemode at narrow pulse widths; scales roughly linearly with pulse width.',
     },
     {
       term: 'launch cable',
@@ -109,14 +109,17 @@ export default function T12L04_DeadZones() {
         <p>
           The <strong>EDZ</strong> is the shorter one. Within the EDZ, the OTDR cannot even
           <em> detect</em> a second event — if there's a splice 2 m after a connector, the OTDR won't
-          show it at all. The Telcordia definition: the EDZ ends where the trace returns to within
-          0.5 dB of the undisturbed backscatter slope going into the event.
+          show it at all. The EDZ ends at the point where the instrument's event-detection algorithm
+          can first distinguish a new event from the ring-down of the prior one; this criterion is
+          instrument-defined (not a fixed dB threshold) and varies by OTDR model and pulse width.
         </p>
         <p>
           The <strong>ADZ</strong> is longer. Within the ADZ, the OTDR can see that something
           happened, but it can't accurately <em>measure</em> the loss because the trace hasn't settled
-          flat enough for a reliable backscatter slope fit. The ADZ uses the same ±0.5 dB criterion,
-          but the trace takes longer to settle because of the exponential ring-down of the reflection.
+          flat enough for a reliable backscatter slope fit. Per GR-196-CORE and IEC 61746-1, the ADZ
+          ends where the trace returns to within ±0.5 dB of the undisturbed backscatter slope — a
+          fixed measurement criterion that the EDZ does not use. The trace takes longer to settle
+          because of the exponential ring-down of the reflection.
           The ADZ is the more practical limit — it defines where you can start trusting loss measurements
           again.
         </p>

@@ -65,7 +65,7 @@ export const meta = {
     {
       term: 'transition taper',
       definition:
-        'The section of channelization devices (cones or drums) that guides traffic from the normal lane into the open lane, away from the work activity area. Length formula: L = WS/60 (feet), where W is lane width in feet and S is posted speed in mph. At 45 mph with a 12-ft lane: L = 12 × 45 / 60 = 9 ft — minimum taper length.',
+        'The section of channelization devices (cones or drums) that guides traffic from the normal lane into the open lane. MUTCD 2009 Table 6C-3 defines two taper formulas by type and speed. MERGE TAPER (lane closure — traffic must move over entirely): L = WS feet when S > 45 mph; L = WS/60 feet when S ≤ 45 mph. SHIFT TAPER (parallel offset — traffic stays moving in the same lane): L = WS/60 feet for all speeds. W = lane width in feet, S = posted or 85th-percentile speed in mph, L = taper length in feet. Example: lane closure on 55-mph road, 12-ft lane — merge formula L = 12 × 55 = 660 ft. The merge taper formula applies to any lane closure. Always use the larger of the formula result and the MUTCD Table 6C-5 minimum for that speed.',
     },
   ],
   vocabulary_assumed: [
@@ -128,8 +128,8 @@ export default function T10L09_TrafficControl() {
               },
               {
                 id: 'T10-L09-fc-transition-taper',
-                front: 'What is the transition taper in a work zone and how is its length calculated?',
-                back: 'The section of channelization devices guiding traffic from the normal lane into the open lane. Length formula: L = WS/60 feet, where W = lane width in feet and S = posted speed in mph. Example: 45 mph, 12-ft lane → L = 12×45/60 = 9 ft minimum.',
+                front: 'What is the transition taper in a work zone — and what are the two MUTCD taper length formulas?',
+                back: 'Channelization devices guiding traffic into the open lane. MUTCD 2009 Table 6C-3 has two formulas: (1) MERGE TAPER (lane closure): L = WS when S > 45 mph; L = WS/60 when S ≤ 45 mph. (2) SHIFT TAPER (parallel offset): L = WS/60 at all speeds. W = lane width (ft), S = speed (mph). Lane closure at 55 mph, 12-ft lane: L = 12 × 55 = 660 ft. Always use the larger of the formula result and the MUTCD Table 6C-5 minimum.',
               },
               {
                 id: 'T10-L09-fc-flagger',
@@ -173,7 +173,8 @@ export default function T10L09_TrafficControl() {
           </li>
           <li>
             <strong>Transition taper</strong> — cones or drums guiding traffic out of the closed lane.
-            Length = WS/60 ft (W = lane width in ft, S = posted speed in mph).
+            Merge taper length (lane closure): L = WS ft when S &gt; 45 mph; L = WS/60 ft when S ≤ 45 mph.
+            Shift taper (parallel offset only): L = WS/60 ft at all speeds (per MUTCD 2009 Table 6C-3).
           </li>
           <li>
             <strong>Activity area</strong> — the actual work zone where your crew operates.
@@ -249,17 +250,17 @@ export default function T10L09_TrafficControl() {
               },
               {
                 id: 'q2',
-                text: 'The transition taper formula is L = WS/60 ft. A 55-mph road with 12-ft lanes. What is the minimum transition taper length?',
+                text: 'You need to close one lane on a 55-mph state highway (12-ft lane width). Per MUTCD 2009 Table 6C-3, what is the minimum merge taper length for this lane closure?',
                 type: 'multiple-choice',
                 options: [
-                  { id: 'a', text: '55 feet' },
-                  { id: 'b', text: '110 feet' },
-                  { id: 'c', text: '11 feet' },
-                  { id: 'd', text: '220 feet' },
+                  { id: 'a', text: '11 feet (L = WS/60 = 12×55/60)' },
+                  { id: 'b', text: '110 feet (shift taper table minimum)' },
+                  { id: 'c', text: '660 feet (L = WS = 12×55, merge taper at S > 45 mph)' },
+                  { id: 'd', text: '55 feet' },
                 ],
-                correctId: 'b',
+                correctId: 'c',
                 explanation:
-                  'L = WS/60 = 12 × 55 / 60 = 660 / 60 = 11 ft. Wait — that\'s 11 ft. However, MUTCD Table 6C-5 specifies MINIMUM taper lengths that often exceed the formula result for higher-speed roads. At 55 mph, the formula gives 11 ft but MUTCD minimums may require 110 ft or more. The formula result is a MINIMUM starting point; the TCP must use the larger of the formula result and the MUTCD table minimum. Answer B (110 ft) reflects the MUTCD table minimum for 55-mph operations — not the raw formula result.',
+                  'At 55 mph, this is a MERGE TAPER (lane closure — traffic must move entirely out of the closed lane). MUTCD 2009 Table 6C-3 specifies two different formulas: (1) MERGE taper when S > 45 mph: L = WS = 12 × 55 = 660 ft. (2) SHIFT taper (parallel offset): L = WS/60 at all speeds. A lane closure is a merge maneuver, not a shift. Using the shift formula (WS/60 = 11 ft) on a 55-mph lane closure is a dangerous error — an 11-ft taper at highway speed gives drivers almost no time to react and merge safely. The correct minimum is 660 ft from the formula; always also check MUTCD Table 6C-5 minimums for the speed and apply whichever is greater.',
               },
             ]}
           />

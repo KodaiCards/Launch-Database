@@ -94,7 +94,7 @@ export default function T12L11_EndFaceInspection() {
           <p>
           <strong>Important edition note:</strong> Earlier editions (pre-2022) included Zone C
           and Zone D in mandatory pass/fail criteria and defined Zone B outer boundary as
-          115 µm (per IEC 61300-3-35 prior editions). The current 2022 Edition 3 defines:
+          120 µm (per IEC 61300-3-35 editions prior to Ed.3 2022). The current 2022 Edition 3 defines:
         </p>
         <ul>
           <li>Zone A: 0–25 µm (core area)</li>
