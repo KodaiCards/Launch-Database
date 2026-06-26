@@ -17,6 +17,10 @@ Living record of the **temporary training-launch pivot** (started 2026-06-26): s
   - **Denominator source of truth:** `osp-training/src/data/course-catalog.js`. `routes/training.js` parses it (`curriculumCourses` / `curriculumSubjects` / `curriculumTotalLessons`) — sum of `lesson_count` for `available:true` courses (currently **254** across 24 subjects).
   - Bug fixed in this pass: `:userId` detail + cert-attempts endpoints were `Number()`-ing a uuid (always 400). Now uuid-validated.
 
+## Completion gating + pedagogy (Carter 2026-06-26)
+- **Completion is competency-gated, enforced server-side** in `POST /api/training/progress` (`routes/training.js`): `status:'completed'` is only credited when the body has **`score` ≥ 70** (`PASS_THRESHOLD`) OR **`competency: true`**. Otherwise it's stored as `in_progress`. Response carries `completion_credited`, `credit_blocked`, `pass_threshold`. So every lesson needs a graded assessment or a competency-proving interaction, and the SPA must send the proof + only show "done" when credited.
+- **Teaching-quality bar** (content/SPA = C2's R18 scope): easier plain-language verbiage (define jargon, scannable); more + varied interactivity beyond multiple-choice (drag-drop, label-the-diagram/hotspot, matching, ordering, scenarios, calculators/simulators); deeper assessment that's **cumulative within a subject and interleaves prior subjects**; polished consistent look; accurate **authored SVG diagrams** for technical visuals (no AI-generated raster for facts). Full spec in `briefs/claude-2.md` → Round 18 → "Pedagogy, interactivity & assessment".
+
 ## Curriculum buildout (content side — C2, Round 18)
 Brief: `briefs/claude-2.md` → "Round 18". Scope = `osp-training/` content only (off-limits to C2: `routes/training.js`, `public/training-admin.html`, `server.js`, `auth.js`, `app_nav.js`).
 - **Established process (do not reinvent):** research → author → red-team (RT) verify.

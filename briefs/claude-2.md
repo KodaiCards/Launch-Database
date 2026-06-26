@@ -473,3 +473,15 @@ Money has a Projections tab matching the mockup (filters, KPIs, RUS budget burn,
 
 ### Acceptance (R18)
 Each delivered topic: lessons authored in the standard format; a research-log with citations; a red-team report showing every claim verified (no open hallucination flags); catalog updated (`available:true` + correct `lesson_count`); `npm run build:osp` succeeds. Accuracy first, then breadth, then polish.
+
+### Pedagogy, interactivity & assessment (Carter 2026-06-26) — applies to ALL topics
+Carter wants the content taught better, not just complete. Raise the teaching bar:
+
+1. **Easier verbiage.** Plain language; define every acronym/jargon term on first use; short sentences; scannable layout (headers, bullets, callouts). Teach like a smart friend, not a textbook. The `field-vs-textbook` rulebook still governs accuracy/voice.
+2. **More + varied interactivity** (don't lean only on multiple-choice). Use the right tool per concept — drag-drop, **label-the-diagram / hotspot**, matching, ordering/sequencing, fill-in, branching scenarios, and calculators/simulators where they teach (link budget, pole loading, OTDR trace reader, splice matrix). Build reusable components in `osp-training/src/components/`. Implement your own best-practice interactions — be creative.
+3. **Assessment depth + integration.** 4 questions/lesson is a floor — add more where it helps, and **mix question types**. Make it **cumulative**: each lesson's assessment builds on earlier lessons in the subject, and **interleaves prior subjects** where relevant (spaced retrieval). Keep/strengthen per-subject capstones; consider periodic cross-subject review checks. Integrate related content across topics rather than siloing.
+4. **Completion gating is ENFORCED server-side (already live).** `POST /api/training/progress` only credits `status:'completed'` when the body carries **`score` ≥ 70** OR **`competency: true`** (interactive mastery). Otherwise it's recorded as `in_progress` (response includes `completion_credited`, `credit_blocked`, `pass_threshold`). **So every lesson MUST have a graded assessment or a competency-proving interaction, and the SPA must send the score / `competency:true` and only present the lesson as done when `completion_credited` is true.** Update the SPA completion logic accordingly (this is in your `osp-training/` scope; the server rule is fixed and owned by CEO — don't change `routes/training.js`).
+5. **Polished, learnable look.** Clean consistent visual system, good typography/spacing, clear progress feedback, encouraging tone. 
+6. **Visuals.** Prefer **authored, accurate diagrams (SVG/components)** for anything technical — they're red-team-verifiable; do NOT use AI-generated raster images for technical facts (hallucination risk). Tasteful illustrative imagery is fine where it aids understanding and can't misstate facts. Diagrams count as content → red-team them too.
+
+These are acceptance criteria for every topic, new or revised.

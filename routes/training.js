@@ -56,6 +56,11 @@ function curriculumTotalLessons() {
   return t > 0 ? t : null;
 }
 
+// Completion gating (Carter 2026-06-26): a lesson is only credited as completed
+// when competency is proven — a passing quiz score or an explicit interactive
+// competency flag. Authored lessons must carry an assessment/interactive check.
+const PASS_THRESHOLD = 70;
+
 module.exports = function installTrainingRoutes(app, pool, { requireAuth }) {
 
   // ─── GET /api/training/progress ─────────────────────────────────────────────
@@ -122,6 +127,19 @@ module.exports = function installTrainingRoutes(app, pool, { requireAuth }) {
       }
     }
 
+    // Completion gating: only credit 'completed' when competency is proven — a
+    // passing quiz score (≥ PASS_THRESHOLD) or an explicit interactive competency
+    // flag. A 'completed' without proof is recorded as in_progress so the
+    // learner's place is kept but the lesson isn't credited.
+    const numScore = (score !== undefined && score !== null) ? Number(score) : null;
+    const competency = req.body && req.body.competency === true;
+    let effectiveStatus = status;
+    let creditBlocked = false;
+    if (status === 'completed' && !((numScore !== null && numScore >= PASS_THRESHOLD) || competency)) {
+      effectiveStatus = 'in_progress';
+      creditBlocked = true;
+    }
+
     try {
       // Upsert with status-advancement and best-score guard:
       //   ON CONFLICT updates only if incoming status ranks higher or
@@ -163,7 +181,7 @@ module.exports = function installTrainingRoutes(app, pool, { requireAuth }) {
            last_seen_at   = NOW(),
            course_id      = EXCLUDED.course_id
          RETURNING *, (xmax = 0) AS is_insert`,
-        [req.user.id, course_id, lesson_id, status, Math.round(pct),
+        [req.user.id, course_id, lesson_id, effectiveStatus, Math.round(pct),
           score !== undefined && score !== null ? Math.round(Number(score)) : null]
       );
       // xmax = 0 means the row was freshly inserted; xmax != 0 means it was
@@ -181,7 +199,14 @@ module.exports = function installTrainingRoutes(app, pool, { requireAuth }) {
         source: 'user',
         meta: { course_id, lesson_id, status, completion_pct: Math.round(pct) },
       }).catch(() => {});
-      res.status(isInsert ? 201 : 200).json({ progress });
+      // Tell the SPA whether completion was credited so it can prompt the learner
+      // to reach the passing score / finish the interactive check.
+      res.status(isInsert ? 201 : 200).json({
+        progress,
+        pass_threshold: PASS_THRESHOLD,
+        completion_credited: progress.status === 'completed',
+        credit_blocked: creditBlocked,
+      });
     } catch (err) {
       console.error('[training] POST /progress error:', err.message);
       res.status(500).json({ error: 'Failed to save training progress' });
