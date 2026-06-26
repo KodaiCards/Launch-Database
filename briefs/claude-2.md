@@ -1,6 +1,6 @@
 # Claude 2 — Contractor timeclock (Phase 5)
 
-**Status:** R16 Phase A DONE — ready for CEO review and merge. All 8 A-tasks complete (A1–A8): rename→Projects, nested tree, cascade eye-toggles, click-to-zoom, map-view dedup, list-view Map button, Boundary/Edit bug fix, 3-way Overall/Construction/Engineering view toggle. R15 MERGED ✓ 2026-06-25. R14 MERGED ✓ 2026-06-24 (CEO fixed one missed escaping spot: `ovClickListItem` onclick in `service_areas_map.js` — wrap JSON.stringify args in `esc()` like the cc/popup handlers; watch this pattern). R15.1: Leaflet overview map (Macon-centered, pins, boundaries, cluster, sidebar list). R15.2: SA detail map-as-header — inline Leaflet view (boundary + plan structures/spans from store), FRM iframe in edit mode, drag-resize handle, expand toggle. R15.3: Bidirectional linking — hover row↔pin glow (both ways), click mat-row→fly map to marker+open popup, click pin→"Show in table" scrolls+flashes row, jump-to-unit box (searches by name/structureId/id), Construction/Engineering layer toggle (shows/hides plan layers + outlines relevant data section). Marker registry (_saMapMarkersById/_saMapSegsById) populated on plotSaPlanElements; data-elem-ref on material rows with map_feature_ref; popup onclick uses esc(JSON.stringify) to avoid attribute quoting bug.
+**Status:** R16 MERGED ✓ 2026-06-25 (Projects tab Phase A + the 4 fixes; CEO additionally fixed the real Boundary bug — leaflet.draw CDN URL was `.min` which 404'd; use `leaflet.draw.js`). **NEXT: Round 17 — Projects Phase B (the "+ New project" flow); backend live + tested; brief below.** Pull `main`. FRONTEND ONLY. R15 MERGED ✓ 2026-06-25. R14 MERGED ✓ 2026-06-24 (CEO fixed one missed escaping spot: `ovClickListItem` onclick in `service_areas_map.js` — wrap JSON.stringify args in `esc()` like the cc/popup handlers; watch this pattern). R15.1: Leaflet overview map (Macon-centered, pins, boundaries, cluster, sidebar list). R15.2: SA detail map-as-header — inline Leaflet view (boundary + plan structures/spans from store), FRM iframe in edit mode, drag-resize handle, expand toggle. R15.3: Bidirectional linking — hover row↔pin glow (both ways), click mat-row→fly map to marker+open popup, click pin→"Show in table" scrolls+flashes row, jump-to-unit box (searches by name/structureId/id), Construction/Engineering layer toggle (shows/hides plan layers + outlines relevant data section). Marker registry (_saMapMarkersById/_saMapSegsById) populated on plotSaPlanElements; data-elem-ref on material rows with map_feature_ref; popup onclick uses esc(JSON.stringify) to avoid attribute quoting bug.
 **Branch:** `claude-2/contractor-timeclock`
 **Read first:** `CLAUDE.md`, `ROADMAP.md` (Phase 5), `briefs/README.md`.
 
@@ -340,6 +340,25 @@ From the Service Areas → Map tab: the real fiber map loads embedded; drawing s
 > **One fix applied at merge** (`public/js/service_areas_map.js`, `renderCcList`): the CC-row handler was built as `onclick="saSelectCc(' + JSON.stringify(cc.id) + ',' + JSON.stringify(cc.name) + ')"` — `JSON.stringify` emits literal `"` which terminated the double-quoted attribute → malformed HTML, so clicking an existing contract row to re-select it didn't fire (create-new still worked, since it calls `saSelectCc` directly). Fixed by HTML-escaping the args once (`esc(JSON.stringify(id)+','+JSON.stringify(name))`) and reusing for both `onclick`/`onkeydown`; this also closes a latent XSS hole (`cc.name` was injected raw into an event handler). Verified well-formed + injection-safe against quote/apostrophe/`&`/`<script>` inputs; `node --check` clean. No other changes. — Acting CEO
 
 ---
+
+## Round 17 — Projects Phase B: the "+ New project" flow. Sonnet @ medium. FRONTEND ONLY.
+**Design `docs/projects_tab_design.md` (Phase B).** Build the **+ New project** flow on the Projects tab — manual create **and** map-draw with footage/miles autofill. Backend is live + tested: `POST /api/service-areas/:id/jobs` accepts `{ team:'permitting'|'design', billing_type:'footage', footage, miles, geometry, route_id? }` (geometry = the drawn line, jsonb); `PUT /api/service-area-jobs/:id` supports re-draw + clear. **NO backend.** Builds on R16 (Projects tab + tree + the Leaflet maps). Reuse R15's Leaflet.draw setup (note: lib is `leaflet.draw.js`, NOT `.min` — CEO just fixed that).
+
+> A "project" = a permitting/design `service_area_job` (the leaf). Internal manager/admin.
+
+### Build
+- [ ] **B1 — "+ New project" button + modal.** On the Projects tab, a `+ New project` button → modal with: **discipline** (Permitting/Design), name, and **manual link fields** (client → EC → CC → SA → route; SA required — it's the town; manual-creatable if new). Match the CEO model (`projects_tab_map_first_ia` mockup).
+- [ ] **B2 — Two create paths.**
+  - **Draw on map:** enter a draw mode on the Leaflet map (Leaflet.draw polyline) → user draws the line → **compute footage** (haversine sum of the vertices, in feet) **+ miles** (footage/5280) → `POST /api/service-areas/<saId>/jobs` with `{team, billing_type:'footage', footage, miles, geometry:[[lat,lng],…], route_id?}`. The new project appears in the tree + on the map.
+  - **Create without map:** same POST minus geometry (omit/null) → project is created with **no location**; its detail map shows "No location."
+- [ ] **B3 — Footage/miles readout.** Show the computed footage + miles live as the line is drawn (before submit), and let the user tweak before saving. Render numbers rounded; no `$` math.
+- [ ] **B4 — Re-draw.** From a project's detail, allow re-drawing its line → `PUT /api/service-area-jobs/:id { geometry, footage, miles }`; clearing → `geometry:null` ("No location").
+
+### Guardrails
+- NO backend/schema. OFF-LIMITS: `routes/*`, `server.js`, `auth.js`, `migrations/`, `schema.sql`. Additive frontend. No `$` math. Escape values in attributes (`esc(JSON.stringify(...))`). Use `leaflet.draw.js` (not `.min`).
+
+### Acceptance
+`+ New project` opens a modal; you can draw a permitting/design line on the map and it creates the project with **footage + miles auto-filled from the geometry** (live readout while drawing), appearing in the tree + map; or create manually with no location ("No location" in detail); and re-draw an existing project's line. No `$` math.
 
 ## Round 16 — Projects tab rebuild (BIG, multi-phase). Sonnet @ medium. FRONTEND ONLY.
 **Read `docs/projects_tab_design.md` first (locked IA).** Renames **Service Areas → Projects**, map-first, with a nested rollup tree. Phase A only for now; B/C/D follow. Backend `GET /api/projects-tree` is live + tested. **NO backend** — need one → STOP, `BLOCKED — needs CEO`. Builds on the R15 overview map (`public/js/service_areas_map.js` + `service-areas.html`).
