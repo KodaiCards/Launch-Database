@@ -240,6 +240,7 @@ module.exports = function installProjectionsRoutes(app, pool, mw) {
       const { rows } = await pool.query(
         `SELECT sa.id, sa.name, sa.program, sa.status, sa.build_finalized_at, sa.closed_at,
                 sa.map_geometry, sa.boundary, sa.center_lat, sa.center_lng,
+                sa.client_id, sa.engineering_contract_id,
                 c.name AS client_name, ec.name AS ec_name
            FROM service_areas sa
            LEFT JOIN clients c ON c.id = sa.client_id
