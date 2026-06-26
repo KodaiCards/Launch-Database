@@ -680,13 +680,13 @@ module.exports = function installServiceAreaRoutes(app, pool, mw) {
         `INSERT INTO service_area_jobs
            (service_area_id, job_id, team, assigned_staff_id, assigned_user_id,
             billing_type, rate, status, estimated_amount, footage, miles, notes,
-            created_by_user_id, updated_by_user_id, route_id, cost_category, budget_code_id)
-         VALUES ($1,$2,$3,$4,$5,$6,$7,COALESCE($8,'potential'),$9,$10,$11,$12,$13,$13,$14,$15,$16)
+            created_by_user_id, updated_by_user_id, route_id, cost_category, budget_code_id, geometry)
+         VALUES ($1,$2,$3,$4,$5,$6,$7,COALESCE($8,'potential'),$9,$10,$11,$12,$13,$13,$14,$15,$16,$17::jsonb)
          RETURNING *`,
         [req.params.id, b.job_id || null, team, b.assigned_staff_id || null, b.assigned_user_id || null,
          billingType, rate, b.status || null, b.estimated_amount ?? null,
          b.footage ?? null, b.miles ?? null, b.notes || null, uid(req), b.route_id || null, costCat,
-         b.budget_code_id || null]
+         b.budget_code_id || null, b.geometry != null ? JSON.stringify(b.geometry) : null]
       );
       logAudit(pool, { req, action: 'service_area_job.create', entity_type: 'service_area_job',
         entity_id: rows[0].id, after: { service_area_id: req.params.id, team, job_id: b.job_id }, source: 'admin' }).catch(() => {});
@@ -714,6 +714,10 @@ module.exports = function installServiceAreaRoutes(app, pool, mw) {
     // Re-tag the cost bucket if the discipline changed and the caller didn't set it explicitly.
     if (Object.prototype.hasOwnProperty.call(req.body, 'team') && !Object.prototype.hasOwnProperty.call(req.body, 'cost_category')) {
       sets.push(`cost_category = $${i}`); vals.push(costCategoryFor(req.body.team)); i++;
+    }
+    // geometry is jsonb (re-drawn project line) — handle separately from the text allowlist.
+    if (Object.prototype.hasOwnProperty.call(req.body, 'geometry')) {
+      sets.push(`geometry = $${i}::jsonb`); vals.push(req.body.geometry != null ? JSON.stringify(req.body.geometry) : null); i++;
     }
     if (!sets.length) return res.status(400).json({ error: 'No fields to update' });
     sets.push(`updated_at = now()`);
