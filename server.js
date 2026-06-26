@@ -367,8 +367,13 @@ app.get('/api/me/portals', requireAuth(), async (req, res) => {
     }
   }
 
+  // Training-launch pivot: lock non-admin employees to the Training tile only.
+  // Admins keep every tile they can access; the client (customer) audience is
+  // untouched. Flip TRAINING_ONLY_LOCKDOWN to false to restore the full launcher.
+  const TRAINING_ONLY_LOCKDOWN = true;
   const portals = PORTAL_DEFS
     .filter(p => p.audience === audience && (p.canAccess(u) || overrideKeys.has(p.id)))
+    .filter(p => !TRAINING_ONLY_LOCKDOWN || u.role === 'admin' || audience !== 'employee' || p.id === 'training')
     .map(p => ({ id: p.id, name: p.name, icon: p.icon, url: p.url, description: p.description }));
   res.json({ portals, user: { role: u.role, name: u.full_name || u.username } });
 });
@@ -412,6 +417,9 @@ const APP_PASSWORD = process.env.APP_PASSWORD;
 function pageRequiresAuth(reqPath) {
   // Allow login page, auth API, and a few static asset paths
   if (reqPath === '/login' || reqPath === '/login.html') return false;
+  // Training-launch pivot: public self-signup page (the register API is already
+  // exempt via the /api/auth/ prefix below).
+  if (reqPath === '/signup' || reqPath === '/signup.html') return false;
   if (reqPath.startsWith('/api/auth/')) return false;
   // Item 6 fix: /uploads/ auth is now enforced by the authenticated static route below.
   // Do NOT add '/uploads/' back to this exemption list.

@@ -104,6 +104,9 @@ const VALID_ROLES = [
   'permitting_engineer',
   'contractor',
   'customer',
+  // Training-launch pivot: self-signup accounts. Training-only — every other
+  // portal/tile is hidden for this role (see PORTAL_DEFS in server.js).
+  'trainee',
 ];
 
 function teamForRole(role) {
@@ -476,6 +479,45 @@ function installAuthRoutes(app, pool) {
       });
     } catch (e) {
       return serverError(res, e, 'login');
+    }
+  });
+
+  // Training-launch pivot: public self-signup. Creates an active 'trainee'
+  // account (training-only — every other portal is hidden for this role) and
+  // logs them straight in. Rate-limited per IP. Anyone with the link can
+  // register; they land in /training/ and can do nothing else.
+  app.post('/api/auth/register', async (req, res) => {
+    const { username, password, full_name, email } = req.body || {};
+    const ip = req.ip || req.socket?.remoteAddress || 'unknown';
+    if (!rateLimitOk('register:ip:' + ip, 8, 60 * 60 * 1000)) {
+      return res.status(429).json({ error: 'Too many sign-up attempts. Please wait an hour.' });
+    }
+    const uname = String(username || '').trim();
+    if (uname.length < 3 || uname.length > 60) return res.status(400).json({ error: 'Username must be 3–60 characters.' });
+    if (!/^[a-zA-Z0-9._-]+$/.test(uname)) return res.status(400).json({ error: 'Username may use letters, numbers, and . _ - only.' });
+    if (!password || String(password).length < 8) return res.status(400).json({ error: 'Password must be at least 8 characters.' });
+    const name = String(full_name || '').trim() || uname;
+    const mail = email ? String(email).trim() : null;
+    try {
+      const exists = await pool.query(`SELECT 1 FROM users WHERE LOWER(username) = LOWER($1) LIMIT 1`, [uname]);
+      if (exists.rows.length) return res.status(409).json({ error: 'That username is taken.' });
+      const hash = await bcrypt.hash(password, BCRYPT_ROUNDS);
+      const { rows } = await pool.query(
+        `INSERT INTO users (username, password_hash, role, team, full_name, email, active)
+         VALUES ($1, $2, 'trainee', NULL, $3, $4, TRUE)
+         RETURNING id, username, role, team, full_name, email`,
+        [uname, hash, name, mail]
+      );
+      const user = rows[0];
+      const token = signToken(user);
+      res.cookie(COOKIE_NAME, token, { ...cookieOpts(), maxAge: 7 * 24 * 60 * 60 * 1000 });
+      res.status(201).json({
+        token,
+        user: { id: user.id, username: user.username, role: user.role, full_name: user.full_name, email: user.email },
+      });
+    } catch (e) {
+      if (e && e.code === '23505') return res.status(409).json({ error: 'That username is taken.' });
+      return serverError(res, e, 'register');
     }
   });
 

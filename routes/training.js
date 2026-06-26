@@ -17,6 +17,35 @@
 // All queries use parameterized placeholders — no string concat.
 
 const { logAudit } = require('./_audit');
+const fs = require('fs');
+const path = require('path');
+
+// Total completable lessons across all *available* courses. The course catalog
+// (osp-training/src/data/course-catalog.js) is the declared source of truth for
+// lesson counts, so we derive the denominator for admin progress bars from it
+// (sum of lesson_count where available:true). Memoized; falls back to null if
+// the file can't be parsed (the UI then shows raw completed counts).
+let _curriculumTotal;
+function curriculumTotalLessons() {
+  if (_curriculumTotal !== undefined) return _curriculumTotal;
+  try {
+    const txt = fs.readFileSync(
+      path.join(__dirname, '..', 'osp-training', 'src', 'data', 'course-catalog.js'), 'utf8');
+    let total = 0, available = null;
+    for (const line of txt.split('\n')) {
+      if (/^\s*id:\s*['"]/.test(line)) available = null;        // new course object
+      const a = line.match(/available:\s*(true|false)/);
+      if (a) available = (a[1] === 'true');
+      const lc = line.match(/lesson_count:\s*(\d+)/);
+      if (lc && available) total += parseInt(lc[1], 10);
+    }
+    _curriculumTotal = total > 0 ? total : null;
+  } catch (e) {
+    console.error('[training] curriculum total parse failed:', e && e.message);
+    _curriculumTotal = null;
+  }
+  return _curriculumTotal;
+}
 
 module.exports = function installTrainingRoutes(app, pool, { requireAuth }) {
 
@@ -346,6 +375,44 @@ module.exports = function installTrainingRoutes(app, pool, { requireAuth }) {
     } catch (err) {
       console.error('[training] GET /admin/progress-overview error:', err.message);
       res.status(500).json({ error: 'Failed to load progress overview' });
+    }
+  });
+
+  // ─── GET /api/training/admin/overview ────────────────────────────────────────
+  // Training-launch pivot: one row per person (every active non-customer user,
+  // including those who haven't started → 0%) with completed/in-progress lesson
+  // counts + last activity. Drives the per-person progress bars in the admin
+  // Training view. Denominator = curriculum total (available lessons).
+  app.get('/api/training/admin/overview', requireAuth(['admin', 'design_manager', 'permitting_manager']), async (req, res) => {
+    try {
+      const { rows } = await pool.query(
+        `SELECT u.id AS user_id, u.username, u.full_name, u.role, u.created_at,
+                COUNT(tp.*) FILTER (WHERE tp.status = 'completed')   AS completed,
+                COUNT(tp.*) FILTER (WHERE tp.status = 'in_progress') AS in_progress,
+                MAX(tp.last_seen_at)                                 AS last_seen_at
+           FROM users u
+           LEFT JOIN training_progress tp ON tp.user_id = u.id
+          WHERE u.active = TRUE AND u.role <> 'customer'
+          GROUP BY u.id, u.username, u.full_name, u.role, u.created_at
+          ORDER BY u.full_name NULLS LAST, u.username
+          LIMIT 2000`
+      );
+      res.json({
+        total_lessons: curriculumTotalLessons(),
+        users: rows.map(r => ({
+          user_id: r.user_id,
+          name: r.full_name || r.username,
+          username: r.username,
+          role: r.role,
+          completed: Number(r.completed),
+          in_progress: Number(r.in_progress),
+          last_seen_at: r.last_seen_at,
+          created_at: r.created_at,
+        })),
+      });
+    } catch (err) {
+      console.error('[training] GET /admin/overview error:', err.message);
+      res.status(500).json({ error: 'Failed to load training overview' });
     }
   });
 
