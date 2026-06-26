@@ -1,4 +1,5 @@
-import React, { useMemo, useState } from 'react';
+import React, { useMemo, useState, useContext } from 'react';
+import { LessonProgressContext } from '../LessonLayout.jsx';
 
 /**
  * Quiz — unified quiz primitive supporting three question modes.
@@ -35,6 +36,7 @@ import React, { useMemo, useState } from 'react';
  *     input field in the rendered question.
  */
 export default function Quiz({ title, mode = 'multiple-choice', questions, onComplete }) {
+  const lessonCtx = useContext(LessonProgressContext);
   const [idx, setIdx]       = useState(0);
   const [answers, setAnswers] = useState({});
   const [revealed, setRevealed] = useState(false);
@@ -73,7 +75,9 @@ export default function Quiz({ title, mode = 'multiple-choice', questions, onCom
       setIdx(idx + 1);
     } else {
       setDone(true);
+      const pct = Math.round((score / questions.length) * 100);
       onComplete?.({ score, total: questions.length, answers });
+      lessonCtx?.reportScore(pct);
     }
   }
 
