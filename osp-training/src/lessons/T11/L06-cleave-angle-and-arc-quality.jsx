@@ -34,7 +34,7 @@ export const meta = {
     {
       term: 'cleave angle',
       definition:
-        'The angular deviation of the cleaved fiber end-face from a perfect 90° cut (perpendicular to the fiber axis). Target: ≤0.5°. Maximum acceptable for most splicers: ≤1.0°. Measured automatically by the splicer\'s camera system. A bad cleave angle creates a wedge-shaped gap between the two fiber ends when they are pressed together, causing a bubble void and elevated insertion loss.',
+        'The angular deviation of the cleaved fiber end-face from a perfect 90° cut (perpendicular to the fiber axis). Target: ≤0.5° (field practice / manufacturer default threshold). Maximum acceptable for most splicers: ≤1.0° (manufacturer rejection limit). Measured automatically by the splicer\'s camera system. A bad cleave angle creates a wedge-shaped gap between the two fiber ends when they are pressed together, causing a bubble void and elevated insertion loss.',
     },
     {
       term: 'cleaver blade replacement interval',

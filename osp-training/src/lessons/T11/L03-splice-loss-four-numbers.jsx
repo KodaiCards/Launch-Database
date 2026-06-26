@@ -40,7 +40,7 @@ export const meta = {
     {
       term: 'ITU-T L.400 design target',
       definition:
-        'ITU-T Recommendation L.400 (Optical fibre joint — mechanical and optical performance specifications) also specifies ≤0.10 dB as the single-mode fusion splice insertion loss target. This aligns with the FOA target and represents international consensus for what quality splicing produces.',
+        'ITU-T Recommendation L.400 (2014) (Optical fibre joint — mechanical and optical performance specifications) also specifies ≤0.10 dB as the single-mode fusion splice insertion loss target. This aligns with the FOA target and represents international consensus for what quality splicing produces.',
     },
     {
       term: 'RUS contract maximum',
@@ -151,12 +151,12 @@ export default function T11L03_SpliceLossFourNumbers() {
               {
                 id: 'T11-L03-fc-foa',
                 front: 'What is the FOA design target for fusion splice insertion loss?',
-                back: '≤0.10 dB per splice. Source: FOA CFOS-S KSAs and ITU-T L.400. This is the craftsmanship target — what a competent splicer on clean fiber should consistently achieve.',
+                back: '≤0.10 dB per splice. Source: FOA CFOS-S KSAs and ITU-T L.400 (2014). This is the craftsmanship target — what a competent splicer on clean fiber should consistently achieve.',
               },
               {
                 id: 'T11-L03-fc-itu',
                 front: 'What is the ITU-T L.400 design target for single-mode fusion splices?',
-                back: '≤0.10 dB insertion loss per splice. ITU-T L.400 covers optical fibre joint mechanical and optical performance. Aligns exactly with the FOA CFOS-S target.',
+                back: '≤0.10 dB insertion loss per splice. ITU-T L.400 (2014) covers optical fibre joint mechanical and optical performance. Aligns exactly with the FOA CFOS-S target.',
               },
               {
                 id: 'T11-L03-fc-rus',
@@ -224,7 +224,7 @@ export default function T11L03_SpliceLossFourNumbers() {
               <tr className="border-t border-white/10 bg-green-900/10">
                 <td className="px-3 py-2 font-semibold text-green-400">Design target</td>
                 <td className="px-3 py-2 font-mono text-green-400">≤0.10 dB</td>
-                <td className="px-3 py-2">FOA CFOS-S; ITU-T L.400</td>
+                <td className="px-3 py-2">FOA CFOS-S; ITU-T L.400 (2014)</td>
                 <td className="px-3 py-2">Craftsmanship goal. A clean splice on well-prepped fiber should land here or below.</td>
                 <td className="px-3 py-2">No action required — but ask: why is it above 0.10 dB? Contamination? Bad cleave?</td>
               </tr>
@@ -253,7 +253,7 @@ export default function T11L03_SpliceLossFourNumbers() {
           </table>
         </div>
         <p className="mt-2 text-slate-400 text-sm">
-          Sources: FOA CFOS-S KSA knowledge standards; ITU-T L.400 (optical fibre joint performance specifications, ITU-T L-series); RUS Bulletin 1753F-401 (§4, fusion splice acceptance criteria).
+          Sources: FOA CFOS-S KSA knowledge standards; ITU-T L.400 (2014) (optical fibre joint performance specifications, ITU-T L-series); RUS Bulletin 1753F-401 (§4, fusion splice acceptance criteria).
         </p>
 
         {/* WorkedExample — Accept/Reject verdict */}
@@ -352,7 +352,7 @@ export default function T11L03_SpliceLossFourNumbers() {
                   { id: 'd', text: 'The ITU-T L.400 standard overrides both and sets the threshold at 0.20 dB' },
                 ],
                 correctId: 'b',
-                explanation: 'The FOA CFOS-S and ITU-T L.400 design target of ≤0.10 dB represents what good technique should consistently produce. The RUS 1753F-401 contract maximum of ≤0.30 dB is the pass/fail rejection threshold — the floor below which you must not go. A splicer can legally pass a RUS contract acceptance test with 0.28 dB average splices, but that build has 3× the splice loss allocation of a well-made build and is a future liability when the system needs to be upgraded or extended.',
+                explanation: 'The FOA CFOS-S and ITU-T L.400 (2014) design target of ≤0.10 dB represents what good technique should consistently produce. The RUS 1753F-401 contract maximum of ≤0.30 dB is the pass/fail rejection threshold — the floor below which you must not go. A splicer can legally pass a RUS contract acceptance test with 0.28 dB average splices, but that build has 3× the splice loss allocation of a well-made build and is a future liability when the system needs to be upgraded or extended.',
               },
             ]}
           />
@@ -365,7 +365,7 @@ export default function T11L03_SpliceLossFourNumbers() {
 
         <h3 className="mt-4 font-semibold">The book standard</h3>
         <p>
-          ITU-T L.400 and the FOA CFOS-S certification program both define ≤0.10 dB as the
+          ITU-T L.400 (2014) and the FOA CFOS-S certification program both define ≤0.10 dB as the
           design target for single-mode fusion splices. RUS Bulletin 1753F-401 §4 sets the
           contract maximum at ≤0.30 dB with bidirectional OTDR verification required before
           the case is closed. The design target and the contract maximum exist at separate

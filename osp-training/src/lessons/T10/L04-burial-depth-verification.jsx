@@ -160,7 +160,7 @@ export default function T10L04_BurialDepthVerification() {
             </tr>
             <tr className="border-t border-white/10">
               <td className="px-3 py-2">3 — State DOT</td>
-              <td className="px-3 py-2">FDOT 18202; VDOT IIM-LD-230; CalTrans TR-0448; etc.</td>
+              <td className="px-3 py-2">FDOT Utility Accommodation Manual; VDOT IIM-LD-230; CalTrans TR-0448; etc.</td>
               <td className="px-3 py-2">42–54 in under paved roadways; varies by state and road class</td>
             </tr>
             <tr className="border-t border-white/10 font-semibold text-white">
@@ -327,7 +327,7 @@ export default function T10L04_BurialDepthVerification() {
         <p>
           On RUS-financed builds crossing state highway ROW, the depth requirement is
           typically <em>the larger of</em> RUS 1751F-635 (36 inches) and the DOT permit
-          depth. For Florida (FDOT Standard Plan 18202): 48 inches under pavement. For
+          depth. For Florida (FDOT Utility Accommodation Manual, current edition): 48 inches under pavement. For
           Virginia (VDOT IIM-LD-230): 42 inches plus additional depth in freeze-thaw zones.
           For California (CalTrans TR-0448): approximately 42 inches from surface.
         </p>

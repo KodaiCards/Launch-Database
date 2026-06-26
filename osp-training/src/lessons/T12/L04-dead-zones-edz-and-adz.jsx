@@ -44,7 +44,7 @@ export const meta = {
     {
       term: 'ADZ',
       definition:
-        'The minimum distance after a reflective event within which the OTDR cannot accurately MEASURE loss — because the trace has not settled flat enough for a valid backscatter slope fit. Defined per Telcordia GR-196-CORE and IEC 61746-1 as the distance from the start of a reflection to where the trace returns to within ±0.5 dB of the undisturbed backscatter slope. The ±0.5 dB criterion applies to ADZ (not EDZ). Typically 3–10 m for singlemode at narrow pulse widths; scales roughly linearly with pulse width.',
+        'The minimum distance after a reflective event within which the OTDR cannot accurately MEASURE loss — because the trace has not settled flat enough for a valid backscatter slope fit. Defined per Telcordia GR-196-CORE and IEC 61746-1:2009 as the distance from the start of a reflection to where the trace returns to within ±0.5 dB of the undisturbed backscatter slope. The ±0.5 dB criterion applies to ADZ (not EDZ). Typically 3–10 m for singlemode at narrow pulse widths; scales roughly linearly with pulse width.',
     },
     {
       term: 'launch cable',
@@ -116,7 +116,7 @@ export default function T12L04_DeadZones() {
         <p>
           The <strong>ADZ</strong> is longer. Within the ADZ, the OTDR can see that something
           happened, but it can't accurately <em>measure</em> the loss because the trace hasn't settled
-          flat enough for a reliable backscatter slope fit. Per GR-196-CORE and IEC 61746-1, the ADZ
+          flat enough for a reliable backscatter slope fit. Per GR-196-CORE and IEC 61746-1:2009, the ADZ
           ends where the trace returns to within ±0.5 dB of the undisturbed backscatter slope — a
           fixed measurement criterion that the EDZ does not use. The trace takes longer to settle
           because of the exponential ring-down of the reflection.
@@ -185,7 +185,7 @@ export default function T12L04_DeadZones() {
 
         <WorkedExample
           title="Minimum launch cable length for a 500 ns pulse"
-          formula="ADZ ≈ pulse_width_ns × 0.10 m/ns (conservative upper bound for singlemode)"
+          formula="ADZ ≈ pulse_width_ns × 0.10 m/ns (conservative upper bound for singlemode; derived from fiber group index ~1.5 and round-trip path; the 10× safety margin is a field rule-of-thumb per IEC 61746-1:2009:2009 §6 guidance)"
           variables={[
             { symbol: 'pulse_width_ns', label: 'Pulse width', value: 500, unit: 'ns' },
             { symbol: 'factor', label: 'ADZ factor (conservative)', value: 0.10, unit: 'm/ns' },
@@ -236,7 +236,7 @@ export default function T12L04_DeadZones() {
             'Step 3: Round UP to the nearest standard reel size you carry (100 m, 150 m, 300 m, 500 m, 1000 m, 2500 m)',
           ]}
           answer="Minimum launch cable (with safety margin)"
-          sanityCheck="The 0.10 m/ns factor is a conservative upper bound for singlemode based on empirical IEC 61746 data. Narrower pulses (5–30 ns) produce ADZ ≈ 0.5–2 m; wider pulses (1–10 µs) produce ADZ ≈ 50–100 m. The 10× multiplier ensures that: (a) connector reflectance jitter doesn't push you back into the ADZ if the OTDR's receiver is slightly more sluggish than specified, (b) you have enough dynamic range for multiple averaging passes on the first connector event, and (c) you can consistently measure the first connector loss to ±0.3 dB, which is the OSP acceptance spec. Using a smaller launch cable means guessing whether the first connector loss is real or buried in the dead zone — unacceptable for RUS or TIA acceptance testing."
+          sanityCheck="The 0.10 m/ns factor is a conservative upper bound for singlemode based on empirical IEC 61746-1:2009:2009 data. Narrower pulses (5–30 ns) produce ADZ ≈ 0.5–2 m; wider pulses (1–10 µs) produce ADZ ≈ 50–100 m. The 10× multiplier ensures that: (a) connector reflectance jitter doesn't push you back into the ADZ if the OTDR's receiver is slightly more sluggish than specified, (b) you have enough dynamic range for multiple averaging passes on the first connector event, and (c) you can consistently measure the first connector loss to ±0.3 dB, which is the OSP acceptance spec. Using a smaller launch cable means guessing whether the first connector loss is real or buried in the dead zone — unacceptable for RUS or TIA acceptance testing."
         />
 
         <div className="mt-4 p-3 border border-amber-400/30 bg-amber-400/5 rounded-lg text-sm">
