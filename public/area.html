@@ -574,7 +574,7 @@ function renderJobRow(j){
   var isVarious = j.employee_label&&j.employee_label.indexOf('Various')===0;
   return '<tr class="'+(hasExpand?'clickable-row ':'')+' job-row '+expandCls+'" data-job-id="'+esc(j.id)+'" data-category="'+esc(j.cost_category||'')+'" '+(hasExpand?'tabindex="0" role="button" aria-expanded="'+(!!_expandedJob[j.id])+'"':'')+'>'
     +'<td>'
-    +'<div>'+esc(j.job_name||j.team||'—')+'</div>'
+    +'<div>'+esc(j.label||j.job_name||j.team||'—')+'</div>'
     +(j.cost_category?'<div class="cost-cat">'+esc(j.cost_category)+'</div>':'')
     +'</td>'
     +'<td>'+(isVarious?'<span style="color:var(--primary);cursor:pointer">':'')+esc(j.employee_label||'—')+(isVarious?'</span>':'')
@@ -1489,7 +1489,7 @@ function plotProjectLines() {
       var geo = typeof j.geometry==='string' ? JSON.parse(j.geometry) : j.geometry;
       var latlngs = Array.isArray(geo) ? geo : (geo.coordinates||[]).map(function(c){return [c[1],c[0]];});
       var polyline = L.polyline(latlngs, { color: color, weight: 3, opacity: 0.8 })
-        .bindTooltip(esc(j.job_name||j.team||'Project'), { sticky: true, direction: 'top' })
+        .bindTooltip(esc(j.label||j.job_name||j.team||'Project'), { sticky: true, direction: 'top' })
         .addTo(_saMapLeaflet);
       _projLineState[j.id] = polyline;
     } catch(_){}

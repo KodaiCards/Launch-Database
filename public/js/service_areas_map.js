@@ -1070,7 +1070,10 @@
   window.showNewProjModal = function () {
     var modal = document.getElementById('newProjModal');
     if (modal) modal.classList.add('open');
-    npPopulateClients();
+    // The client/SA pickers read _mapData, which only loads when the map tab is
+    // opened. From the default list view it's still null, so load it on demand.
+    if (_mapData) { npPopulateClients(); }
+    else { loadMapData().then(npPopulateClients); }
   };
 
   window.npCloseModal = function () {

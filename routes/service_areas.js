@@ -647,7 +647,7 @@ module.exports = function installServiceAreaRoutes(app, pool, mw) {
   app.post('/api/service-areas/:id/jobs', requireManagerOrAdmin, async (req, res) => {
     const b = req.body || {};
     try {
-      const sa = await pool.query('SELECT id, program FROM service_areas WHERE id = $1', [req.params.id]);
+      const sa = await pool.query('SELECT id, program, name FROM service_areas WHERE id = $1', [req.params.id]);
       if (!sa.rows.length) return res.status(404).json({ error: 'Service area not found' });
       const program = sa.rows[0].program;
 
@@ -676,17 +676,25 @@ module.exports = function installServiceAreaRoutes(app, pool, mw) {
       if (!billingType) billingType = 'hourly';
       const costCat = b.cost_category || costCategoryFor(team);
 
+      // Project label: explicit name/label wins; else auto-generate "<Discipline> — <SA>".
+      let label = (b.label ?? b.name);
+      label = (label != null && String(label).trim() !== '') ? String(label).trim() : null;
+      if (!label && team) {
+        const disc = team.charAt(0).toUpperCase() + team.slice(1);
+        label = `${disc} — ${sa.rows[0].name}`;
+      }
+
       const { rows } = await pool.query(
         `INSERT INTO service_area_jobs
            (service_area_id, job_id, team, assigned_staff_id, assigned_user_id,
             billing_type, rate, status, estimated_amount, footage, miles, notes,
-            created_by_user_id, updated_by_user_id, route_id, cost_category, budget_code_id, geometry)
-         VALUES ($1,$2,$3,$4,$5,$6,$7,COALESCE($8,'potential'),$9,$10,$11,$12,$13,$13,$14,$15,$16,$17::jsonb)
+            created_by_user_id, updated_by_user_id, route_id, cost_category, budget_code_id, geometry, label)
+         VALUES ($1,$2,$3,$4,$5,$6,$7,COALESCE($8,'potential'),$9,$10,$11,$12,$13,$13,$14,$15,$16,$17::jsonb,$18)
          RETURNING *`,
         [req.params.id, b.job_id || null, team, b.assigned_staff_id || null, b.assigned_user_id || null,
          billingType, rate, b.status || null, b.estimated_amount ?? null,
          b.footage ?? null, b.miles ?? null, b.notes || null, uid(req), b.route_id || null, costCat,
-         b.budget_code_id || null, b.geometry != null ? JSON.stringify(b.geometry) : null]
+         b.budget_code_id || null, b.geometry != null ? JSON.stringify(b.geometry) : null, label]
       );
       logAudit(pool, { req, action: 'service_area_job.create', entity_type: 'service_area_job',
         entity_id: rows[0].id, after: { service_area_id: req.params.id, team, job_id: b.job_id }, source: 'admin' }).catch(() => {});
@@ -699,7 +707,7 @@ module.exports = function installServiceAreaRoutes(app, pool, mw) {
 
   const SAJOB_FIELDS = ['job_id', 'team', 'route_id', 'cost_category', 'assigned_staff_id', 'assigned_user_id',
     'billing_type', 'rate', 'status', 'estimated_amount', 'actual_hours', 'actual_amount', 'footage', 'miles',
-    'start_date', 'completed_date', 'billed_date', 'notes', 'budget_code_id'];
+    'start_date', 'completed_date', 'billed_date', 'notes', 'budget_code_id', 'label'];
 
   app.put('/api/service-area-jobs/:id', requireManagerOrAdmin, async (req, res) => {
     const sets = [], vals = [req.params.id];

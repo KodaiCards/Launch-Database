@@ -43,6 +43,12 @@ test('sa-job: create with geometry + footage/miles, then re-draw (update geometr
     // clearing geometry → null ("No location")
     const c = await call('PUT', `/api/service-area-jobs/${jobId}`, { geometry: null });
     assert.equal(c.json.geometry, null, 'geometry cleared to null');
+
+    // label: auto-generated "<Discipline> — <SA>" when blank, explicit name wins
+    const auto = await call('POST', `/api/service-areas/${saId}/jobs`, { team: 'permitting', billing_type: 'footage' });
+    assert.equal(auto.json.label, 'Permitting — Geom Area', 'label auto-generated from discipline + SA');
+    const named = await call('POST', `/api/service-areas/${saId}/jobs`, { team: 'design', billing_type: 'footage', name: 'Sunrise St' });
+    assert.equal(named.json.label, 'Sunrise St', 'explicit name overrides auto-generated label');
   } finally {
     if (saId) await pool.query(`DELETE FROM service_area_jobs WHERE service_area_id=$1`, [saId]).catch(() => {});
     if (saId) await pool.query(`DELETE FROM service_areas WHERE id=$1`, [saId]).catch(() => {});

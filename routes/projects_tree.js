@@ -20,13 +20,15 @@ module.exports = function installProjectsTree(app, pool, mw) {
                            build_finalized_at, closed_at, center_lat, center_lng, (boundary IS NOT NULL) AS has_boundary, miles
                       FROM service_areas ORDER BY name`),
         pool.query('SELECT id, service_area_id, name FROM service_area_routes ORDER BY name'),
-        pool.query(`SELECT saj.id, saj.service_area_id, saj.route_id, saj.team, saj.status, j.name AS job_name
+        pool.query(`SELECT saj.id, saj.service_area_id, saj.route_id, saj.team, saj.status,
+                            saj.label, j.name AS job_name
                       FROM service_area_jobs saj LEFT JOIN jobs j ON j.id = saj.job_id
-                     WHERE saj.team IN ('permitting','design') ORDER BY j.name NULLS LAST, saj.created_at`),
+                     WHERE saj.team IN ('permitting','design')
+                     ORDER BY COALESCE(saj.label, j.name) NULLS LAST, saj.created_at`),
       ]);
 
       const lifecycle = (sa) => sa.closed_at ? 'final' : sa.build_finalized_at ? 'completed' : 'active';
-      const projNode = (p) => ({ id: p.id, type: 'project', label: p.job_name || (p.team + ' job'),
+      const projNode = (p) => ({ id: p.id, type: 'project', label: p.label || p.job_name || (p.team + ' job'),
         discipline: p.team, status: p.status });
 
       // projects grouped by SA, then by route (null route = SA-level)
