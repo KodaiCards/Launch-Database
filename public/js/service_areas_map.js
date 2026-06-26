@@ -1040,4 +1040,250 @@
     }).observe(mainEl, { childList: true });
   });
 
+  // ── R17 B1–B3: New Project modal + map-draw create ──────────────────────────
+
+  // State
+  var _npDrawHandler = null;
+  var _npDrawLayer   = null;   // L.Polyline of completed draw
+  var _npGeometry    = null;   // [[lat,lng],...] of drawn line
+  var _npFootage     = 0;
+  var _npMiles       = 0;
+
+  function haversineF(lat1, lng1, lat2, lng2) {
+    var R = 20902231; // earth radius in feet
+    var dLat = (lat2 - lat1) * Math.PI / 180;
+    var dLng = (lng2 - lng1) * Math.PI / 180;
+    var a = Math.sin(dLat / 2) * Math.sin(dLat / 2)
+      + Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180)
+      * Math.sin(dLng / 2) * Math.sin(dLng / 2);
+    return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+  }
+
+  function npCalcFootage(latlngs) {
+    var ft = 0;
+    for (var i = 1; i < latlngs.length; i++) {
+      ft += haversineF(latlngs[i - 1][0], latlngs[i - 1][1], latlngs[i][0], latlngs[i][1]);
+    }
+    return Math.round(ft);
+  }
+
+  window.showNewProjModal = function () {
+    var modal = document.getElementById('newProjModal');
+    if (modal) modal.classList.add('open');
+    npPopulateClients();
+  };
+
+  window.npCloseModal = function () {
+    var modal = document.getElementById('newProjModal');
+    if (modal) modal.classList.remove('open');
+    npCancelDraw();
+    // Reset fields
+    ['np_name', 'np_footage', 'np_miles'].forEach(function (id) {
+      var el = document.getElementById(id); if (el) el.value = '';
+    });
+    var readout = document.getElementById('np-footage-readout');
+    if (readout) readout.style.display = 'none';
+    var saveBtn = document.getElementById('np_save');
+    if (saveBtn) { saveBtn.disabled = false; saveBtn.textContent = 'Create'; }
+  };
+
+  function npPopulateClients() {
+    var sel = document.getElementById('np_client');
+    if (!sel) return;
+    var seen = {};
+    var opts = '<option value="">— Select client —</option>';
+    (_mapData || []).forEach(function (sa) {
+      if (sa.client_id && !seen[sa.client_id]) {
+        seen[sa.client_id] = true;
+        opts += '<option value="' + esc(sa.client_id) + '">' + esc(sa.client_name || sa.client_id) + '</option>';
+      }
+    });
+    sel.innerHTML = opts;
+    npOnClientChange();
+  }
+
+  window.npOnClientChange = function () {
+    var clientId = (document.getElementById('np_client') || {}).value || '';
+    var saSel = document.getElementById('np_sa');
+    if (saSel) {
+      var sas = (_mapData || []).filter(function (sa) { return !clientId || sa.client_id === clientId; });
+      saSel.innerHTML = '<option value="">— Select service area —</option>';
+      sas.forEach(function (sa) {
+        saSel.innerHTML += '<option value="' + esc(sa.id) + '">' + esc(sa.name) + '</option>';
+      });
+    }
+    var routeSel = document.getElementById('np_route');
+    if (routeSel) routeSel.innerHTML = '<option value="">— None —</option>';
+    npFetchEcs(clientId);
+  };
+
+  function npFetchEcs(clientId) {
+    var ecSel = document.getElementById('np_ec');
+    if (!ecSel) return;
+    ecSel.innerHTML = '<option value="">— None (non-RUS) —</option>';
+    if (!clientId) return;
+    fetch('/api/engineering-contracts?client_id=' + encodeURIComponent(clientId), { credentials: 'include' })
+      .then(function (r) { return r.ok ? r.json() : []; })
+      .then(function (ecs) {
+        (ecs || []).forEach(function (ec) {
+          ecSel.innerHTML += '<option value="' + esc(ec.id) + '">' + esc(ec.name) + '</option>';
+        });
+      }).catch(function () {});
+  }
+
+  window.npOnSaChange = function () {
+    var saId = (document.getElementById('np_sa') || {}).value || '';
+    var routeSel = document.getElementById('np_route');
+    if (!routeSel) return;
+    routeSel.innerHTML = '<option value="">— None —</option>';
+    if (!saId) return;
+    fetch('/api/service-areas/' + encodeURIComponent(saId) + '/workspace', { credentials: 'include' })
+      .then(function (r) { return r.ok ? r.json() : null; })
+      .then(function (ws) {
+        if (!ws) return;
+        (ws.routes || []).forEach(function (rt) {
+          routeSel.innerHTML += '<option value="' + esc(rt.id) + '">' + esc(rt.name) + '</option>';
+        });
+      }).catch(function () {});
+  };
+
+  window.npStartDraw = function () {
+    // Switch to map view first if not already there
+    var mapPanel = document.getElementById('map-panel');
+    if (!mapPanel || mapPanel.style.display === 'none') {
+      window.saSetView('map');
+      // Wait for map to initialise then re-trigger
+      ensureLeaflet(function () {
+        setTimeout(window.npStartDraw, 600);
+      });
+      return;
+    }
+    if (!_overviewMap) { ovFlash('Map not ready — try again', 'err'); return; }
+
+    ensureLeafletDraw(function () {
+      // Dim the modal so the user can see the map
+      var modal = document.getElementById('newProjModal');
+      if (modal) modal.style.opacity = '0.08';
+
+      // Show the draw bar
+      var bar = document.getElementById('np-draw-bar');
+      if (bar) { bar.style.display = 'flex'; }
+
+      // Remove any previous drawn line
+      if (_npDrawLayer) { _overviewMap.removeLayer(_npDrawLayer); _npDrawLayer = null; }
+      _npGeometry = null;
+
+      _npDrawHandler = new L.Draw.Polyline(_overviewMap, {
+        shapeOptions: { color: '#1B5FA0', weight: 3, opacity: 0.8 }
+      });
+      _npDrawHandler.enable();
+
+      // Live vertex readout
+      _overviewMap.on('draw:drawvertex', npLiveVertex);
+
+      _overviewMap.once('draw:created', function (e) {
+        _overviewMap.off('draw:drawvertex', npLiveVertex);
+        _npDrawHandler = null;
+        _npDrawLayer = e.layer.addTo(_overviewMap);
+        var latlngs = e.layer.getLatLngs().map(function (ll) { return [ll.lat, ll.lng]; });
+        _npGeometry = latlngs;
+        _npFootage  = npCalcFootage(latlngs);
+        _npMiles    = Math.round(_npFootage / 5280 * 100) / 100;
+        // Restore modal
+        if (modal) modal.style.opacity = '';
+        var bar2 = document.getElementById('np-draw-bar');
+        if (bar2) bar2.style.display = 'none';
+        npUpdateFootageFields();
+        var liveEl = document.getElementById('np-live-info');
+        if (liveEl) liveEl.textContent = '';
+      });
+
+      ovFlash('Click to add vertices — double-click to finish the line');
+    });
+  };
+
+  function npLiveVertex() {
+    try {
+      if (!_npDrawHandler || !_npDrawHandler._markers) return;
+      var markers = _npDrawHandler._markers;
+      if (markers.length < 2) return;
+      var lls = markers.map(function (m) {
+        var ll = m.getLatLng(); return [ll.lat, ll.lng];
+      });
+      var ft = npCalcFootage(lls);
+      var mi = Math.round(ft / 5280 * 100) / 100;
+      var liveEl = document.getElementById('np-live-info');
+      if (liveEl) liveEl.textContent = ft + ' ft / ' + mi + ' mi';
+    } catch (_) {}
+  }
+
+  function npUpdateFootageFields() {
+    var footInp = document.getElementById('np_footage');
+    var milesInp = document.getElementById('np_miles');
+    if (footInp)  footInp.value  = _npFootage || '';
+    if (milesInp) milesInp.value = _npMiles   || '';
+    var readout = document.getElementById('np-footage-readout');
+    var text    = document.getElementById('np-footage-text');
+    if (readout && _npGeometry) {
+      readout.style.display = '';
+      if (text) text.textContent = _npFootage + ' ft / ' + _npMiles + ' mi — edit below if needed';
+    } else if (readout) {
+      readout.style.display = 'none';
+    }
+  }
+
+  window.npCancelDraw = function () {
+    if (_npDrawHandler) { try { _npDrawHandler.disable(); } catch (_) {} _npDrawHandler = null; }
+    if (_npDrawLayer && _overviewMap) { _overviewMap.removeLayer(_npDrawLayer); _npDrawLayer = null; }
+    if (_overviewMap) _overviewMap.off('draw:drawvertex', npLiveVertex);
+    _npGeometry = null; _npFootage = 0; _npMiles = 0;
+    var bar = document.getElementById('np-draw-bar');
+    if (bar) bar.style.display = 'none';
+    var modal = document.getElementById('newProjModal');
+    if (modal) modal.style.opacity = '';
+    var liveEl = document.getElementById('np-live-info');
+    if (liveEl) liveEl.textContent = '';
+    npUpdateFootageFields();
+  };
+
+  window.npSubmit = async function () {
+    var saId       = (document.getElementById('np_sa')        || {}).value || '';
+    var discipline = (document.getElementById('np_discipline') || {}).value || 'permitting';
+    var name       = ((document.getElementById('np_name')     || {}).value || '').trim();
+    var routeId    = (document.getElementById('np_route')      || {}).value || null;
+    var footage    = parseInt((document.getElementById('np_footage')  || {}).value || '0', 10) || null;
+    var miles      = parseFloat((document.getElementById('np_miles') || {}).value || '0')      || null;
+
+    if (!saId) { ovFlash('Service area is required', 'err'); return; }
+
+    var saveBtn = document.getElementById('np_save');
+    if (saveBtn) { saveBtn.disabled = true; saveBtn.textContent = 'Saving…'; }
+
+    try {
+      var body = { team: discipline, billing_type: 'footage' };
+      if (footage)  body.footage  = footage;
+      if (miles)    body.miles    = miles;
+      if (_npGeometry) body.geometry = _npGeometry;
+      if (routeId)  body.route_id = routeId;
+      if (name)     body.name     = name;
+
+      var r = await fetch('/api/service-areas/' + encodeURIComponent(saId) + '/jobs', {
+        method: 'POST', credentials: 'include',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(body)
+      });
+      if (!r.ok) { var err = await r.json(); throw new Error(err.error || 'HTTP ' + r.status); }
+
+      npCloseModal();
+      // Reload tree + map data so the new project appears
+      _ptLoaded = false;
+      loadProjectsTree();
+      if (_mapLoaded) { _mapLoaded = false; loadMapData(); }
+      ovFlash('Project created');
+    } catch (e) {
+      ovFlash(e.message || 'Failed to create project', 'err');
+      if (saveBtn) { saveBtn.disabled = false; saveBtn.textContent = 'Create'; }
+    }
+  };
+
 })();

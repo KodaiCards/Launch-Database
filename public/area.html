@@ -606,6 +606,21 @@ function renderJobExpand(j){
     if(j.completed_date) dparts.push('<span>Completed: '+esc(j.completed_date.slice?j.completed_date.slice(0,10):j.completed_date)+'</span>');
     parts.push('<div class="dates-block">'+dparts.join('')+' <span style="opacity:.6">· from hours import</span></div>');
   }
+  // R17 B4: location/draw controls for permitting + design jobs
+  var isProject = j.team==='permitting'||j.team==='design';
+  if(isProject){
+    var hasGeo = !!(j.geometry);
+    var locInfo = hasGeo
+      ? '<span style="color:var(--text-muted);font-size:11px"><i class="fa-solid fa-location-dot" style="color:var(--primary)"></i> '
+        +(j.footage!=null?j.footage+' ft':'')+' '+(j.miles!=null?'/ '+j.miles+' mi':'')+'</span>'
+      : '<span style="color:var(--text-muted);font-size:11px;font-style:italic">No location</span>';
+    parts.push('<div class="dates-block" style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">'
+      +locInfo
+      +'<button class="btn btn-sm btn-secondary" style="font-size:11px" onclick="reDrawProjectLine('+esc(JSON.stringify(j.id))+')">'
+      +'<i class="fa-solid fa-pencil"></i> '+(hasGeo?'Re-draw line':'Draw line')+'</button>'
+      +(hasGeo?'<button class="btn btn-sm btn-secondary" style="font-size:11px" onclick="clearProjectLine('+esc(JSON.stringify(j.id))+')"><i class="fa-solid fa-xmark"></i> Clear</button>':'')
+      +'</div>');
+  }
   return '<tr class="expand-row" id="job-expand-'+esc(j.id)+'"><td colspan="6">'+parts.join('')+'</td></tr>';
 }
 
@@ -807,6 +822,9 @@ function initSaMap() {
 
   // Plan data
   if (area.map_plan_id) loadSaPlanData(area.map_plan_id);
+
+  // R17 B4: render any project lines (permitting/design jobs with geometry)
+  plotProjectLines();
 }
 
 async function loadSaPlanData(planId) {
@@ -1430,6 +1448,108 @@ function updateDmIcon(){
   var dark = document.documentElement.getAttribute('data-theme')==='dark';
   icon.className = dark?'fa-solid fa-sun':'fa-solid fa-moon';
 }
+
+// ── R17 B4: Project line draw/re-draw on the SA detail map ──────────────────
+
+var _projLineState = {};  // jobId → L.Polyline
+
+function haversineAreaFt(lat1, lng1, lat2, lng2) {
+  var R = 20902231;
+  var dLat = (lat2 - lat1) * Math.PI / 180;
+  var dLng = (lng2 - lng1) * Math.PI / 180;
+  var a = Math.sin(dLat/2)*Math.sin(dLat/2)
+    + Math.cos(lat1*Math.PI/180)*Math.cos(lat2*Math.PI/180)*Math.sin(dLng/2)*Math.sin(dLng/2);
+  return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+}
+
+function calcFootageArea(latlngs) {
+  var ft = 0;
+  for (var i = 1; i < latlngs.length; i++)
+    ft += haversineAreaFt(latlngs[i-1][0], latlngs[i-1][1], latlngs[i][0], latlngs[i][1]);
+  return Math.round(ft);
+}
+
+function plotProjectLines() {
+  if (!_saMapLeaflet || !_ws) return;
+  // Clear old project lines
+  Object.keys(_projLineState).forEach(function(jid) {
+    try { _saMapLeaflet.removeLayer(_projLineState[jid]); } catch(_){}
+  });
+  _projLineState = {};
+  // Gather all jobs from workspace
+  var allJobs = [];
+  (_ws.routes||[]).forEach(function(r){ (r.jobs||[]).forEach(function(j){ allJobs.push(j); }); });
+  ((_ws.unrouted||{}).jobs||[]).forEach(function(j){ allJobs.push(j); });
+  allJobs.forEach(function(j) {
+    if (!j.geometry) return;
+    var isProject = j.team==='permitting'||j.team==='design';
+    if (!isProject) return;
+    var color = j.team==='permitting' ? '#28A745' : '#1565C0';
+    try {
+      var geo = typeof j.geometry==='string' ? JSON.parse(j.geometry) : j.geometry;
+      var latlngs = Array.isArray(geo) ? geo : (geo.coordinates||[]).map(function(c){return [c[1],c[0]];});
+      var polyline = L.polyline(latlngs, { color: color, weight: 3, opacity: 0.8 })
+        .bindTooltip(esc(j.job_name||j.team||'Project'), { sticky: true, direction: 'top' })
+        .addTo(_saMapLeaflet);
+      _projLineState[j.id] = polyline;
+    } catch(_){}
+  });
+}
+
+var _reDrawJobId   = null;
+var _reDrawHandler = null;
+
+window.reDrawProjectLine = function(jobId) {
+  ensureLeafletForArea(function() {
+    if (!_saMapLeaflet) initSaMap();
+    if (!_saMapLeaflet) { flash('Map not ready — reload the page', 'err'); return; }
+    ensureLeafletDraw(function() {
+      _reDrawJobId = jobId;
+      if (_reDrawHandler) { try { _reDrawHandler.disable(); } catch(_){} }
+      _reDrawHandler = new L.Draw.Polyline(_saMapLeaflet, {
+        shapeOptions: { color: '#E65100', weight: 3, opacity: 0.9 }
+      });
+      _reDrawHandler.enable();
+      flash('Click vertices to draw the project line — double-click to finish');
+      _saMapLeaflet.once('draw:created', function(e) {
+        _reDrawHandler = null;
+        var latlngs = e.layer.getLatLngs().map(function(ll){ return [ll.lat, ll.lng]; });
+        var footage  = calcFootageArea(latlngs);
+        var miles    = Math.round(footage / 5280 * 100) / 100;
+        reDrawSave(jobId, latlngs, footage, miles);
+      });
+    });
+  });
+};
+
+async function reDrawSave(jobId, latlngs, footage, miles) {
+  try {
+    var r = await fetch('/api/service-area-jobs/' + encodeURIComponent(jobId), {
+      method: 'PUT', credentials: 'include',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ geometry: latlngs, footage: footage, miles: miles })
+    });
+    if (!r.ok) { var err = await r.json(); throw new Error(err.error || 'HTTP '+r.status); }
+    // Refresh workspace
+    var r2 = await api('/api/service-areas/'+encodeURIComponent(_id)+'/workspace');
+    _ws = r2; render();
+    flash(footage + ' ft / ' + miles + ' mi saved');
+  } catch(e) { flash(e.message||'Failed to save line', 'err'); }
+}
+
+window.clearProjectLine = async function(jobId) {
+  try {
+    var r = await fetch('/api/service-area-jobs/' + encodeURIComponent(jobId), {
+      method: 'PUT', credentials: 'include',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ geometry: null, footage: null, miles: null })
+    });
+    if (!r.ok) { var err = await r.json(); throw new Error(err.error || 'HTTP '+r.status); }
+    var r2 = await api('/api/service-areas/'+encodeURIComponent(_id)+'/workspace');
+    _ws = r2; render();
+    flash('Location cleared');
+  } catch(e) { flash(e.message||'Failed to clear', 'err'); }
+};
 
 })();
 </script>
