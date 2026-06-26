@@ -22,7 +22,6 @@ export const meta = {
     'Describe load testing as a maintenance procedure and explain what it verifies that routine monitoring cannot',
     'Explain what fuel polishing is and why it matters for generator reliability in remote headend locations',
   ],
-  estimated_minutes: 20,
   vocabulary_introduced: [
     'ATS',
     'generator',

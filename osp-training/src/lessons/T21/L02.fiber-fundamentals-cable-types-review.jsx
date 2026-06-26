@@ -233,7 +233,7 @@ export default function T21L02_FiberFundamentalsReview() {
         </p>
         <ul className="list-disc list-inside space-y-2 mt-2 text-slate-300/90">
           <li>Estimate link budget (power budget at the receiver end)</li>
-          <li>Check if SMF is necessary (generally yes if feeder is >1 km or service speed >1 Gbps)</li>
+          <li>Check if SMF is necessary (generally yes if feeder is &gt;1 km or service speed &gt;1 Gbps)</li>
           <li>Select cable type (ASS for short spans, ADSS for high-voltage areas, DB for underground)</li>
           <li>Specify fiber grade (OS2 for SMF, OM4 or OM5 if any multimode needed)</li>
           <li>Identify potential dispersion limitations and design accordingly</li>

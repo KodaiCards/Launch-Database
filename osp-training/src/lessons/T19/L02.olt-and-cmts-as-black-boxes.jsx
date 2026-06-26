@@ -22,7 +22,6 @@ export const meta = {
     'Explain what DOCSIS is at a conceptual level and why an OSP designer may encounter CMTS environments',
     'Identify the optical port count and service-area implications of a single OLT card for OSP feeder design',
   ],
-  estimated_minutes: 20,
   vocabulary_introduced: [
     'OLT',
     'CMTS',

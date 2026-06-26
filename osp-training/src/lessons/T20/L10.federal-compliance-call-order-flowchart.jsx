@@ -67,7 +67,7 @@ const FoundationsSection = () => (
     <h3>Key Terms You'll Learn</h3>
     <ul>
       <li><Flashcard term="RUS state office" definition="The USDA RUS regional office responsible for your state. First point of contact for project issues, compliance questions, and routine approvals." /></li>
-      <li><Flashcard term="RUS national office" definition="USDA RUS headquarters in Washington, D.C. Handles policy questions, large funding modifications (>10% or >$50K), and appeals of state office decisions." /></li>
+      <li><Flashcard term="RUS national office" definition="USDA RUS headquarters in Washington, D.C. Handles policy questions, large funding modifications (&gt;10% or &gt;$50K), and appeals of state office decisions." /></li>
       <li><Flashcard term="loan officer" definition="The RUS state office staff member assigned to your specific loan. They track the project, answer questions, and route issues to the state office / national office as needed." /></li>
       <li><Flashcard term="GAGAS audit" definition="Generally Accepted Government Auditing Standards audit. An independent financial and compliance audit required for RUS projects, typically triggered when the project exceeds certain thresholds ($100K+) or when RUS suspects non-compliance." /></li>
       <li><Flashcard term="audit trigger threshold" definition="The project cost, loan amount, or compliance-risk level that requires a GAGAS audit. RUS Bulletin 1751F-630 specifies thresholds (typically >$100K loan amount or >$250K total project cost)." /></li>
@@ -108,7 +108,7 @@ const WorkingSection = () => (
       <strong>The RUS national office (or your state office escalating to national) handles:</strong>
     </p>
     <ul>
-      <li><strong>Loan modifications >10% or >$50,000</strong> — "The project cost overrun is $75,000. Can we modify the loan?" State office escalates to national.</li>
+      <li><strong>Loan modifications &gt;10% or &gt;$50,000</strong> — "The project cost overrun is $75,000. Can we modify the loan?" State office escalates to national.</li>
       <li><strong>Scope changes</strong> — "The route has to change due to easement issues. Does this require a new environmental review?" National office coordinates with environmental staff.</li>
       <li><strong>Appeals</strong> — If the state office says "no," borrower can appeal to national office for reconsideration (rare, but it happens).</li>
       <li><strong>Policy questions</strong> — "The borrower has two RUS loans and wants to cross-collateralize them. Is that allowed?" National office handles policy.</li>

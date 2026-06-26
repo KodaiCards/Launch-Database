@@ -22,7 +22,6 @@ export const meta = {
     'Explain the purpose of pre-action sprinkler systems and the conditions that activate them',
     'Identify the ASHRAE thermal envelope recommended for telecommunications equipment rooms and why OSP feeder additions affect headend heat load',
   ],
-  estimated_minutes: 18,
   vocabulary_introduced: [
     'CRAC',
     'sensible heat',

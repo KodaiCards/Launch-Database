@@ -48,7 +48,10 @@ export default function Quiz({ title, mode = 'multiple-choice', questions, onCom
     id: rawQ.id ?? `q-${idx}`,
     prompt: rawQ.prompt ?? rawQ.text ?? rawQ.question ?? '',
     choices: rawQ.choices ?? rawQ.options,
-    answerIndex: rawQ.answerIndex ?? rawQ.correct ?? rawQ.correctIndex ?? 0,
+    answerIndex: rawQ.answerIndex ?? rawQ.correct ?? rawQ.correctIndex ??
+      (rawQ.correctId && rawQ.options
+        ? rawQ.options.findIndex(o => o.id === rawQ.correctId)
+        : 0),
     items: rawQ.items ?? rawQ.pairs,
   } : null;
 

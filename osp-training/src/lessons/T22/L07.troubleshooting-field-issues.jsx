@@ -72,7 +72,7 @@ export default function T22L07_Troubleshooting() {
             </tr>
             <tr className="border-t border-white/10">
               <td className="px-3 py-2 font-semibold">High-loss splice</td>
-              <td className="px-3 py-2">Sharp downward step > 0.2 dB at a splice location</td>
+              <td className="px-3 py-2">Sharp downward step &gt; 0.2 dB at a splice location</td>
               <td className="px-3 py-2">OTDR shows event at the known splice location</td>
               <td className="px-3 py-2">Re-splice: clean fiber, cleave fresh, re-fuse</td>
             </tr>
@@ -149,7 +149,7 @@ export default function T22L07_Troubleshooting() {
           { id: 'T22-L07-FC-1', front: 'Fault isolation', back: 'The process of identifying the location and type of failure in a fiber link using OTDR and physical inspection.' },
           { id: 'T22-L07-FC-2', front: 'Hard break', back: 'A complete fiber fracture (open circuit). OTDR shows a flat line (no signal) beyond the break location.' },
           { id: 'T22-L07-FC-3', front: 'Signal degradation', back: 'Loss of signal strength or increase in attenuation without a complete break. May be caused by macrobend, micro-fracture, or high-loss splice.' },
-          { id: 'T22-L07-FC-4', front: 'Splice loss spike', back: 'An unexpected high loss (> 0.2 dB) at a fusion splice location, visible as a downward step on OTDR.' },
+          { id: 'T22-L07-FC-4', front: 'Splice loss spike', back: 'An unexpected high loss (&gt; 0.2 dB) at a fusion splice location, visible as a downward step on OTDR.' },
           { id: 'T22-L07-FC-5', front: 'Intermittent failure', back: 'A failure that appears and disappears unpredictably, often caused by loose connections or temperature-sensitive micro-fractures.' },
           { id: 'T22-L07-FC-6', front: 'OTDR signature', back: 'The characteristic pattern of loss and reflections shown on an OTDR trace, used to diagnose failure type and location.' },
           { id: 'T22-L07-FC-7', front: 'Non-destructive testing', back: 'Measurement techniques (like OTDR) that diagnose faults without cutting or physically damaging the cable.' },

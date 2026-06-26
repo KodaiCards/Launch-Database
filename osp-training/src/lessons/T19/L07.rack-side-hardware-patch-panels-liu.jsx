@@ -22,7 +22,6 @@ export const meta = {
     'Identify the function of a splice organizer tray in a LIU and explain its role when OSP cables enter the headend with ribbon or loose-tube fiber',
     'Explain how fiber count planning for OSP feeder routes is affected by the rack-space and LIU-port capacity at the headend',
   ],
-  estimated_minutes: 22,
   vocabulary_introduced: [
     'patch panel',
     'LIU',

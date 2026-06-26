@@ -22,7 +22,6 @@ export const meta = {
     'Explain why OSP designers must account for power plant capacity when designing feeder route additions to a headend',
     'Identify VRLA vs. lithium battery technologies and the basic maintenance implications of each',
   ],
-  estimated_minutes: 22,
   vocabulary_introduced: [
     '–48VDC',
     'rectifier',

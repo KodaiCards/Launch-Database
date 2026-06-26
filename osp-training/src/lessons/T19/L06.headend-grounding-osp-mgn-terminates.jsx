@@ -22,7 +22,6 @@ export const meta = {
     'Explain the GES tie-in requirement from NEC Art. 250.94 (IBT) and its role in the OSP-to-ISP grounding handoff',
     'Describe the field-awareness checks an OSP engineer should perform at a headend entry when commissioning a new feeder route',
   ],
-  estimated_minutes: 24,
   key_terms: [
     {
       term: 'primary protector',
