@@ -190,6 +190,28 @@ tfoot td{font-weight:700;border-top:2px solid var(--gray-border);padding:8px 12p
 .note-block{margin-top:6px;font-size:12px;color:var(--text-muted);font-style:italic}
 .dates-block{margin-top:4px;font-size:11px;color:var(--text-muted);display:flex;gap:12px;flex-wrap:wrap}
 .finalize-btn-area{margin-left:auto;display:flex;align-items:center;gap:8px}
+/* Phase C: project documents */
+.job-docs-block{margin-top:10px;padding-top:8px;border-top:1px solid var(--border)}
+.docs-head{display:flex;align-items:center;gap:6px;font-size:12px;font-weight:600;color:var(--text-secondary);margin-bottom:6px}
+.doc-upload{display:flex;align-items:center;gap:6px;flex-wrap:wrap;margin-bottom:8px;padding:8px;background:var(--surface-2);border:1px solid var(--border);border-radius:6px}
+.doc-upload select,.doc-upload input[type=file]{padding:3px 6px;border:1px solid var(--border-strong);border-radius:5px;background:var(--surface-1);color:var(--text)}
+.du-progress{display:flex;align-items:center;gap:6px;width:100%;margin-top:4px}
+.du-bar{height:6px;width:0;background:var(--primary);border-radius:3px;transition:width .15s;flex:0 0 auto;min-width:0}
+.du-progress{position:relative}
+.du-progress .du-bar{flex:1 1 auto;max-width:200px}
+.du-pct{font-size:11px;color:var(--text-muted)}
+.docs-list{display:flex;flex-direction:column;gap:4px}
+.doc-row{display:flex;align-items:center;gap:8px;font-size:12px;padding:4px 6px;border-radius:5px}
+.doc-row:hover{background:var(--surface-2)}
+.doc-name{color:var(--primary);text-decoration:none;font-weight:500;max-width:240px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.doc-name:hover{text-decoration:underline}
+.doc-type{font-size:10px;background:var(--surface-3,var(--surface-2));border:1px solid var(--border);border-radius:10px;padding:1px 8px;color:var(--text-muted);white-space:nowrap}
+.doc-status-sel{font-size:10px;padding:1px 4px;border:1px solid var(--border);border-radius:5px;background:var(--surface-1);color:var(--text)}
+.doc-size{color:var(--text-muted);font-size:11px;white-space:nowrap}
+.doc-meta{color:var(--text-muted);font-size:11px;margin-left:auto;white-space:nowrap}
+.doc-act{color:var(--text-muted);background:none;border:none;cursor:pointer;padding:2px 5px;border-radius:4px;text-decoration:none}
+.doc-act:hover{color:var(--primary);background:var(--surface-3,var(--surface-2))}
+.doc-del:hover{color:var(--danger-text)}
 
 @media(max-width:700px){
   .page-body{padding:12px}
@@ -566,10 +588,14 @@ function renderJobsSection(jobs){
     +'</div>';
 }
 
+// A "project" with documents = an engineering job (design/permitting/inspection,
+// or anything explicitly tagged engineering). Documents live on these.
+function isEngJob(j){ return j.cost_category==='engineering' || ['permitting','design','inspection'].indexOf(j.team)>=0; }
+
 function renderJobRow(j){
   var stKey = (j.status||'not_started').replace(/[^a-z_]/g,'');
   var stLabel = (j.status||'not started').replace(/_/g,' ');
-  var hasExpand = (j.people&&j.people.length)||(j.notes)||(j.start_date||j.completed_date);
+  var hasExpand = (j.people&&j.people.length)||(j.notes)||(j.start_date||j.completed_date)||isEngJob(j);
   var expandCls = _expandedJob[j.id]?'expanded':'';
   var isVarious = j.employee_label&&j.employee_label.indexOf('Various')===0;
   return '<tr class="'+(hasExpand?'clickable-row ':'')+' job-row '+expandCls+'" data-job-id="'+esc(j.id)+'" data-category="'+esc(j.cost_category||'')+'" '+(hasExpand?'tabindex="0" role="button" aria-expanded="'+(!!_expandedJob[j.id])+'"':'')+'>'
@@ -620,6 +646,10 @@ function renderJobExpand(j){
       +'<i class="fa-solid fa-pencil"></i> '+(hasGeo?'Re-draw line':'Draw line')+'</button>'
       +(hasGeo?'<button class="btn btn-sm btn-secondary" style="font-size:11px" onclick="clearProjectLine('+esc(JSON.stringify(j.id))+')"><i class="fa-solid fa-xmark"></i> Clear</button>':'')
       +'</div>');
+  }
+  // Phase C: documents on engineering projects (PDF/DWG, status tags, up to 2 GB).
+  if(isEngJob(j)){
+    parts.push(renderJobDocsBlock(j.id));
   }
   return '<tr class="expand-row" id="job-expand-'+esc(j.id)+'"><td colspan="6">'+parts.join('')+'</td></tr>';
 }
@@ -698,6 +728,12 @@ function bindAll(){
     tr.addEventListener('keydown', function(e){
       if(e.key==='Enter'||e.key===' '){ e.preventDefault(); tr.click(); }
     });
+  });
+
+  // Phase C: lazy-load documents for any expanded engineering project.
+  document.querySelectorAll('.job-docs-block[data-docs-job]:not([data-loaded])').forEach(function(el){
+    el.setAttribute('data-loaded','1');
+    loadJobDocs(el.getAttribute('data-docs-job'));
   });
 
   // Restore unit rows (re-render wipes them, re-fetch)
@@ -1549,6 +1585,129 @@ window.clearProjectLine = async function(jobId) {
     _ws = r2; render();
     flash('Location cleared');
   } catch(e) { flash(e.message||'Failed to clear', 'err'); }
+};
+
+// ── Phase C: project documents (PDF/DWG, status tags, up to 2 GB) ───────────
+
+var DOC_TYPES = [
+  ['permit_application','Permit Application'],
+  ['approved_permit','Approved Permit'],
+  ['plan_dwg','Plan (DWG)'],
+  ['plan_pdf','Plan (PDF)'],
+  ['final_dwg','Final DWG'],
+  ['final_pdf','Final PDF'],
+  ['correspondence','Correspondence'],
+  ['document','Other'],
+];
+var DOC_STATUSES = ['Draft','Submitted','In Review','Approved','Final'];
+function docTypeLabel(v){ for(var i=0;i<DOC_TYPES.length;i++){ if(DOC_TYPES[i][0]===v) return DOC_TYPES[i][1]; } return v||'Document'; }
+function fmtBytes(n){ n=Number(n)||0; if(n<1024) return n+' B'; if(n<1048576) return (n/1024).toFixed(0)+' KB'; if(n<1073741824) return (n/1048576).toFixed(1)+' MB'; return (n/1073741824).toFixed(2)+' GB'; }
+
+// The expand-row block. Contents are filled by loadJobDocs once mounted.
+function renderJobDocsBlock(jobId){
+  var typeOpts = DOC_TYPES.map(function(t){ return '<option value="'+esc(t[0])+'">'+esc(t[1])+'</option>'; }).join('');
+  var statusOpts = '<option value="">No status</option>'+DOC_STATUSES.map(function(s){ return '<option value="'+esc(s)+'">'+esc(s)+'</option>'; }).join('');
+  var jid = esc(JSON.stringify(jobId));
+  return '<div class="job-docs-block" data-docs-job="'+esc(jobId)+'">'
+    +'<div class="docs-head"><i class="fa-solid fa-folder-open" style="color:var(--primary)"></i> Documents'
+      +'<button class="btn btn-sm btn-secondary" style="font-size:11px;margin-left:auto" onclick="toggleDocUpload('+jid+')"><i class="fa-solid fa-upload"></i> Upload</button>'
+    +'</div>'
+    +'<div class="doc-upload" data-docs-up="'+esc(jobId)+'" style="display:none">'
+      +'<input type="file" class="du-file" accept=".pdf,.dwg,.dxf" style="font-size:11px">'
+      +'<select class="du-type" style="font-size:11px">'+typeOpts+'</select>'
+      +'<select class="du-status" style="font-size:11px">'+statusOpts+'</select>'
+      +'<button class="btn btn-sm btn-primary" style="font-size:11px" onclick="submitJobDoc('+jid+', this)">Add</button>'
+      +'<div class="du-progress" style="display:none"><div class="du-bar"></div><span class="du-pct"></span></div>'
+    +'</div>'
+    +'<div class="docs-list" data-docs-list="'+esc(jobId)+'"><span style="color:var(--text-muted);font-size:11px">Loading…</span></div>'
+    +'</div>';
+}
+
+window.toggleDocUpload = function(jobId){
+  var el = document.querySelector('.doc-upload[data-docs-up="'+cssEsc(jobId)+'"]');
+  if(el) el.style.display = el.style.display==='none' ? 'flex' : 'none';
+};
+
+function cssEsc(s){ return String(s).replace(/["\\]/g,'\\$&'); }
+
+async function loadJobDocs(jobId){
+  var list = document.querySelector('.docs-list[data-docs-list="'+cssEsc(jobId)+'"]');
+  if(!list) return;
+  try{
+    var docs = await api('/api/service-area-jobs/'+encodeURIComponent(jobId)+'/documents');
+    if(!docs.length){ list.innerHTML = '<span style="color:var(--text-muted);font-size:11px;font-style:italic">No documents yet.</span>'; return; }
+    list.innerHTML = docs.map(function(d){ return renderDocRow(jobId, d); }).join('');
+  }catch(e){ list.innerHTML = '<span style="color:var(--danger-text);font-size:11px">Failed to load documents</span>'; }
+}
+
+function renderDocRow(jobId, d){
+  var statusOpts = '<option value="">—</option>'+DOC_STATUSES.map(function(s){ return '<option value="'+esc(s)+'"'+(d.status===s?' selected':'')+'>'+esc(s)+'</option>'; }).join('');
+  var did = esc(JSON.stringify(d.id));
+  var jid = esc(JSON.stringify(jobId));
+  var ext = (d.file_name||'').split('.').pop().toUpperCase();
+  return '<div class="doc-row">'
+    +'<i class="fa-solid '+(ext==='PDF'?'fa-file-pdf':'fa-file-lines')+'" style="color:var(--primary)" aria-hidden="true"></i>'
+    +'<a href="/uploads/'+escUrl(d.file_path)+'" target="_blank" class="doc-name" title="'+esc(d.file_name||'')+'">'+esc(d.file_name||'file')+'</a>'
+    +'<span class="doc-type">'+esc(docTypeLabel(d.doc_type))+'</span>'
+    +'<select class="doc-status-sel" onchange="retagJobDoc('+did+', this.value, '+jid+')" title="Status tag">'+statusOpts+'</select>'
+    +'<span class="doc-size">'+fmtBytes(d.file_size)+'</span>'
+    +'<span class="doc-meta">'+esc((d.uploaded_by_name||'')+'')+'</span>'
+    +'<a href="/uploads/'+escUrl(d.file_path)+'" download="'+esc(d.file_name||'')+'" class="doc-act" title="Download"><i class="fa-solid fa-download"></i></a>'
+    +'<button class="doc-act doc-del" onclick="deleteJobDoc('+did+', '+jid+')" title="Delete"><i class="fa-solid fa-trash"></i></button>'
+    +'</div>';
+}
+
+// escUrl: URL-safe path for /uploads/<file> (strip #/?). Mirrors admin.html helper.
+function escUrl(p){ return String(p||'').replace(/[#?]/g, function(c){ return encodeURIComponent(c); }); }
+
+window.submitJobDoc = function(jobId, btn){
+  var wrap = document.querySelector('.doc-upload[data-docs-up="'+cssEsc(jobId)+'"]');
+  if(!wrap) return;
+  var fileInp = wrap.querySelector('.du-file');
+  var file = fileInp && fileInp.files && fileInp.files[0];
+  if(!file){ flash('Choose a PDF or DWG file', 'err'); return; }
+  var docType = wrap.querySelector('.du-type').value;
+  var status = wrap.querySelector('.du-status').value;
+  var prog = wrap.querySelector('.du-progress');
+  var bar = wrap.querySelector('.du-bar');
+  var pct = wrap.querySelector('.du-pct');
+  var fd = new FormData();
+  fd.append('file', file);
+  fd.append('doc_type', docType);
+  if(status) fd.append('status', status);
+
+  btn.disabled = true; prog.style.display = 'flex';
+  var xhr = new XMLHttpRequest();
+  xhr.open('POST', '/api/service-area-jobs/'+encodeURIComponent(jobId)+'/documents');
+  xhr.withCredentials = true;
+  var tok = (window.localStorage && localStorage.getItem('lfs_token')); if(tok) xhr.setRequestHeader('Authorization','Bearer '+tok);
+  xhr.upload.onprogress = function(e){ if(e.lengthComputable){ var p=Math.round(e.loaded/e.total*100); bar.style.width=p+'%'; pct.textContent=p+'%'; } };
+  xhr.onload = function(){
+    btn.disabled = false; prog.style.display='none'; bar.style.width='0%'; pct.textContent='';
+    if(xhr.status>=200 && xhr.status<300){
+      fileInp.value=''; wrap.style.display='none';
+      flash('Document uploaded'); loadJobDocs(jobId);
+    } else {
+      var msg='Upload failed'; try{ msg=JSON.parse(xhr.responseText).error||msg; }catch(_){}
+      flash(msg, 'err');
+    }
+  };
+  xhr.onerror = function(){ btn.disabled=false; prog.style.display='none'; flash('Upload failed', 'err'); };
+  xhr.send(fd);
+};
+
+window.retagJobDoc = async function(docId, status, jobId){
+  try{
+    await api('/api/service-area-job-documents/'+encodeURIComponent(docId), 'PATCH', { status: status });
+    flash('Status updated');
+  }catch(e){ flash('Failed to update status', 'err'); loadJobDocs(jobId); }
+};
+
+window.deleteJobDoc = async function(docId, jobId){
+  try{
+    await api('/api/service-area-job-documents/'+encodeURIComponent(docId), 'DELETE');
+    flash('Document deleted'); loadJobDocs(jobId);
+  }catch(e){ flash('Failed to delete', 'err'); }
 };
 
 })();

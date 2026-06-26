@@ -282,6 +282,147 @@ module.exports = function installProjectDocumentsRoutes(app, pool, mw) {
     }
   );
 
+  // ── Keystone project documents (a "project" = a service_area_job) ──────────
+  // Same hardened pipeline as the legacy routes above, but: (a) scoped to
+  // service_area_jobs, not the legacy projects table; (b) 2 GB cap (DWG
+  // deliverables are large); (c) carries a status tag + doc_type (Final DWG /
+  // Final PDF / Permit Application / …). Downloads reuse the path-guarded
+  // /uploads/<file_path> static route. Documents attach to ENGINEERING projects
+  // only (design / permitting / inspection).
+  const STAFF_DOC_ROLES = ['admin', 'design_manager', 'permitting_manager', 'design_engineer', 'permitting_engineer'];
+  const MGR_DOC_ROLES = ['admin', 'design_manager', 'permitting_manager'];
+
+  // 2 GB upload instance — reuses the validated disk storage + fileFilter.
+  const bigDocUpload = multer({
+    storage: docStorage,
+    limits: { fileSize: 2 * 1024 * 1024 * 1024 }, // 2 GB — DWG deliverables
+    fileFilter: (req, file, cb) => {
+      const ext = path.extname(file.originalname).toLowerCase();
+      if (!ALLOWED_EXTS.has(ext)) return cb(new Error(`File extension ${ext || '(none)'} not permitted`));
+      if (!ALLOWED_MIMES.has(file.mimetype)) return cb(new Error(`Content-Type ${file.mimetype} not permitted`));
+      cb(null, true);
+    },
+  });
+
+  function bigServerError(res, e, where) {
+    console.error(`[project_documents:${where}]`, e && e.message);
+    if (e && e.code === 'LIMIT_FILE_SIZE') return res.status(413).json({ error: 'File too large. Maximum size is 2 GB.' });
+    if (e && e.message && (e.message.includes('not permitted') || e.message.includes('content does not match'))) {
+      return res.status(400).json({ error: e.message });
+    }
+    res.status(500).json({ error: 'Internal error.' });
+  }
+
+  async function loadJob(jobId) {
+    const { rows } = await pool.query(
+      `SELECT id, team, cost_category FROM service_area_jobs WHERE id = $1`, [jobId]);
+    return rows[0] || null;
+  }
+  const isEngineering = (job) => !!job && (job.cost_category === 'engineering' || ['permitting', 'design', 'inspection'].includes(job.team));
+  // Discipline scope parity with the legacy routes: discipline-roled users only
+  // see their own team's projects; admin sees all.
+  function jobScopeOk(user, team) {
+    if (user.role === 'admin') return true;
+    if (user.role.startsWith('design_')) return team === 'design';
+    if (user.role.startsWith('permitting_')) return team === 'permitting';
+    return false;
+  }
+
+  // POST /api/service-area-jobs/:jobId/documents — upload a document for a project.
+  app.post('/api/service-area-jobs/:jobId/documents',
+    requireAuth(STAFF_DOC_ROLES),
+    bigDocUpload.single('file'),
+    async (req, res) => {
+      if (!req.file) return res.status(400).json({ error: 'No file uploaded — check file size (2 GB max)' });
+      const cleanup = () => { try { fs.unlinkSync(path.join(uploadDir, req.file.filename)); } catch (_) {} };
+      try {
+        const job = await loadJob(req.params.jobId);
+        if (!job || !jobScopeOk(req.user, job.team)) { cleanup(); return res.status(404).json({ error: 'Project not found' }); }
+        if (!isEngineering(job)) { cleanup(); return res.status(400).json({ error: 'Documents attach to engineering projects only' }); }
+
+        // Magic-byte verification — read first 12 bytes from disk.
+        const fd = await fsp.open(path.join(uploadDir, req.file.filename), 'r');
+        const buf = Buffer.alloc(12);
+        await fd.read(buf, 0, 12, 0); await fd.close();
+        if (!hasValidMagicBytes(buf, req.file.mimetype)) { cleanup(); return res.status(400).json({ error: 'File content does not match declared type' }); }
+
+        const { rows } = await pool.query(`
+          INSERT INTO permit_documents
+            (service_area_job_id, doc_type, status, file_name, file_path, file_size,
+             revision_number, uploaded_by, uploaded_by_user_id, notes, content_type)
+          VALUES ($1,$2,$3,$4,$5,$6,1,$7,$8,$9,$10) RETURNING *
+        `, [req.params.jobId, req.body.doc_type || 'document', req.body.status || null,
+          req.file.originalname, req.file.filename, req.file.size,
+          req.user.id, req.user.id, req.body.notes || null, req.file.mimetype]);
+
+        logAudit(pool, { req, action: 'project_document.upload', entity_type: 'service_area_job_document',
+          entity_id: rows[0].id, after: rows[0], source: 'admin' }).catch(() => {});
+        res.json(rows[0]);
+      } catch (e) { cleanup(); return bigServerError(res, e, 'saj-POST'); }
+    }
+  );
+
+  // GET /api/service-area-jobs/:jobId/documents — list a project's documents.
+  app.get('/api/service-area-jobs/:jobId/documents',
+    requireAuth(STAFF_DOC_ROLES),
+    async (req, res) => {
+      try {
+        const job = await loadJob(req.params.jobId);
+        if (!job || !jobScopeOk(req.user, job.team)) return res.status(404).json({ error: 'Project not found' });
+        const { rows } = await pool.query(
+          `SELECT pd.*, COALESCE(u.full_name, u.username) AS uploaded_by_name
+             FROM permit_documents pd
+             LEFT JOIN users u ON u.id = pd.uploaded_by_user_id
+            WHERE pd.service_area_job_id = $1 ORDER BY pd.created_at DESC`, [req.params.jobId]);
+        res.json(rows);
+      } catch (e) { return bigServerError(res, e, 'saj-GET'); }
+    }
+  );
+
+  // PATCH /api/service-area-job-documents/:docId — retag status / doc_type / notes.
+  app.patch('/api/service-area-job-documents/:docId',
+    requireAuth(STAFF_DOC_ROLES),
+    async (req, res) => {
+      const sets = [], vals = [req.params.docId]; let i = 2;
+      for (const f of ['status', 'doc_type', 'notes']) {
+        if (Object.prototype.hasOwnProperty.call(req.body, f)) {
+          sets.push(`${f} = $${i}`); vals.push(req.body[f] === '' ? null : req.body[f]); i++;
+        }
+      }
+      if (!sets.length) return res.status(400).json({ error: 'No fields to update' });
+      try {
+        // Scope: join to the job's team so discipline-roled users can't retag others'.
+        const chk = await pool.query(
+          `SELECT saj.team FROM permit_documents pd
+             JOIN service_area_jobs saj ON saj.id = pd.service_area_job_id
+            WHERE pd.id = $1`, [req.params.docId]);
+        if (!chk.rows.length || !jobScopeOk(req.user, chk.rows[0].team)) return res.status(404).json({ error: 'Document not found' });
+        const { rows } = await pool.query(
+          `UPDATE permit_documents SET ${sets.join(', ')} WHERE id = $1 RETURNING *`, vals);
+        res.json(rows[0]);
+      } catch (e) { return bigServerError(res, e, 'saj-PATCH'); }
+    }
+  );
+
+  // DELETE /api/service-area-job-documents/:docId — delete a project document.
+  app.delete('/api/service-area-job-documents/:docId',
+    requireAuth(MGR_DOC_ROLES),
+    async (req, res) => {
+      try {
+        const chk = await pool.query(
+          `SELECT pd.id, pd.file_path, saj.team FROM permit_documents pd
+             JOIN service_area_jobs saj ON saj.id = pd.service_area_job_id
+            WHERE pd.id = $1`, [req.params.docId]);
+        if (!chk.rows.length || !jobScopeOk(req.user, chk.rows[0].team)) return res.status(404).json({ error: 'Document not found' });
+        await pool.query(`DELETE FROM permit_documents WHERE id = $1`, [req.params.docId]);
+        try { fs.unlinkSync(path.join(uploadDir, chk.rows[0].file_path)); } catch (_) {}
+        logAudit(pool, { req, action: 'project_document.delete', entity_type: 'service_area_job_document',
+          entity_id: req.params.docId, before: { file_path: chk.rows[0].file_path }, source: 'admin' }).catch(() => {});
+        res.json({ ok: true });
+      } catch (e) { return bigServerError(res, e, 'saj-DELETE'); }
+    }
+  );
+
   // GET /api/_debug/uploads — diagnostic endpoint for upload volume health check.
   // requireAdmin gate prevents UPLOAD_DIR path exposure to non-admins.
   app.get('/api/_debug/uploads', requireAdmin, async (req, res) => {
