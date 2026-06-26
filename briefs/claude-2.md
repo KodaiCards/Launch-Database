@@ -485,3 +485,35 @@ Carter wants the content taught better, not just complete. Raise the teaching ba
 6. **Visuals.** Prefer **authored, accurate diagrams (SVG/components)** for anything technical — they're red-team-verifiable; do NOT use AI-generated raster images for technical facts (hallucination risk). Tasteful illustrative imagery is fine where it aids understanding and can't misstate facts. Diagrams count as content → red-team them too.
 
 These are acceptance criteria for every topic, new or revised.
+
+---
+
+## R18 Progress Log — 2026-06-26
+
+### Mechanical fix (DONE — committed + pushed)
+- `LessonLayout.jsx`: Added `LessonProgressContext`, `PASS_THRESHOLD=70`, `reportScore()` callback, `bestQuizPct` state, `sessionCredited` guard. Wraps content in context provider. Footer shows "Complete" badge when `isCredited`.
+- `Quiz.jsx`: Added `useContext(LessonProgressContext)`, calls `lessonCtx?.reportScore(pct)` after quiz completion. Added `correctId` normalization via `findIndex` (24 T10/T11 lesson files use `{id,text}` options + `correctId:'b'` format — now work correctly without touching lesson files).
+
+### Duplicate meta key fix (DONE)
+- T19/L02–L07: removed duplicate `estimated_minutes` key in each file's meta object.
+
+### JSX bare `>` escaping (DONE)
+- T20/L10, T21/L02, T22/L07: escaped bare `>` characters in JSX text content that were causing React parse warnings.
+
+### Red-team accuracy fixes — Batch 1 (DONE — committed + pushed, build ✓)
+- **T10.L09 Traffic Control:** MUTCD merge taper formula corrected (L=WS at S>45 mph, not WS/60); key_terms, flashcard, inline section, and Quiz Q2 all updated. Quiz answer changed 110 ft → 660 ft.
+- **T12.L04 Dead Zones:** EDZ definition corrected (detection criterion is instrument-defined, not ±0.5 dB). ADZ definition corrected (±0.5 dB criterion per GR-196-CORE / IEC 61746-1:2009 applies to ADZ, not EDZ). key_terms and inline body text both fixed.
+- **T12.L11 End-Face Inspection:** Zone B boundary history corrected: 115 µm → 120 µm (prior IEC 61300-3-35 editions; Ed.3 2022 moved to 110 µm).
+- **T12.L13 Acceptance Testing:** G.652.D spec corrected: 0.30 → 0.20 dB/km @ 1550 nm.
+
+### Red-team accuracy fixes — Batch 2 (DONE — committed + pushed, build ✓)
+- **T10.L04 Burial Depth:** FDOT citation: "Standard Plan 18202" → "FDOT Utility Accommodation Manual (current edition)".
+- **T11.L03 Splice Loss:** Added "(2014)" to 6 ITU-T L.400 citation instances (definition, flashcards, table, sources, advanced body, quiz explanation). Term name strings unchanged.
+- **T11.L06 Cleave Angle:** Added source attribution "(field practice / manufacturer default threshold)" and "(manufacturer rejection limit)" to cleave angle values in key_terms.
+- **T12.L04 Dead Zones:** ADZ WorkedExample formula: added derivation note + sourced 10× margin to IEC 61746-1:2009 §6. Replaced all "IEC 61746-1" → "IEC 61746-1:2009".
+- **T13.L07 Close-Out Documentation:** §1755.407 "Format V" parenthetical clarification added (USDA training materials designation; verify against current edition) in both inline body and quiz explanation.
+
+### Open / next
+- Pedagogy improvements: more varied interactivity (drag-drop, sequencing, scenarios), cumulative assessment, SVG diagrams where applicable.
+- Any remaining open RT flags not yet addressed.
+- Build and push after each topic batch.
