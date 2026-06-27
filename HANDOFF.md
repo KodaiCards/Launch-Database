@@ -2,7 +2,34 @@
 
 > **You are the new head Claude (CEO) for Launch Fiber Services.** You are not a fresh assistant being briefed — you are *continuing as me*. Read this in full, then `CLAUDE.md`, then `ROADMAP.md`. Your memory dir loads each session too. This document exists so that when I run out of usage mid-stream, you pick up *as me* — same judgment, same voice, same standards, same relationship with Carter. Written/maintained by the outgoing instance; **keep it current when you hand off again** (this is a hard rule, not a courtesy).
 >
-> Last updated **2026-06-24**. Latest `main` at handoff: `18b4fbd0`.
+> Last updated **2026-06-27**. (Older "write-path" notes below remain valid for when the roadmap resumes; the **active front is the training pivot + curriculum integrity** — see CURRENT STATE.)
+
+---
+
+## ▶️ CURRENT STATE — 2026-06-27 (read this first; supersedes the dated "write-path" note in START HERE)
+
+**Active front = the TEMPORARY training-launch pivot + curriculum integrity.** The keystone/roadmap work (write-path, cutover) is paused until the pivot settles; it resumes after (and Phase D legacy-delete is pre-authorized). Full why/priorities: `docs/PRODUCT_PLAN.md` + `docs/IMPLEMENTATION_PLAN.md`.
+
+**Shipped this stretch (all on `main`, verified live):**
+- Training pivot: self-signup (`trainee` role), training-only lockdown, admin per-person progress + drill-down, **competency-gated completion** (server: ≥70% or `competency:true`; manual "Mark complete" button removed; SPA reports scores), **"Request additional permissions"** launcher flow → admin Settings inbox (`access_requests`, migration 0078), **operations rail role-gated** (admin-only People/Admin), **`build:osp` fixed** (lockfile tracked).
+- **Per-staff training content visibility** (migration 0079): admin restricts what each person sees at **track→subject→lesson** via reusable **presets** + per-user overrides; default = see all; resolver + endpoints in `routes/training.js`; admin UI in `public/training-admin.html`; SPA enforcement via `useMyContent` hook. Per-user progress denominators use the visible set.
+
+**⛔ THE BIG ONGOING ISSUE — curriculum accuracy + the GATE.** Training is government/team content that **cannot be wrong**.
+- **R18 content incident:** C2 authored ~1,700 lines **from memory** (no research/RT). **QUARANTINED** — never merge `claude-2/training-curriculum`; not on main/live (verified). Record: `docs/training_launch_design.md` → "R18 content incident"; memory `project_training_r18_quarantine`.
+- **STANDING HARD GATE (enforce forever):** no training content merges without a per-topic **research-log (citations) + INDEPENDENT red-team report** (author ≠ red-teamer). No artifacts = not merged. Don't trust any worker's accuracy self-report — verify via git + artifacts.
+- **Live content has real errors:** C2's one RT pass found suspect citations *already live* (pre-R18) in T13–T22 (AIA §3.3.1, "Format V", NESC §01C/Section 26/Map 1, FCC Part 32 hierarchy, IEEE 81 §7/§9.4 swap). Preserved UNVERIFIED at `osp-training/docs/red-team-reports/T13-T22-SUSPECTED-live-errors-UNVERIFIED.md`. **Not hand-fixed** — routed through the gate.
+- **Coverage reality:** the trusted RT/research-logs cover the **legacy `src/modules` architecture**, NOT the live `src/lessons/T*` curriculum the SPA serves. So the live T01–T22 lessons largely **lack per-topic research-logs + independent RT** (~13 topics have no research foundation). Bringing the whole curriculum under the gate is the real R18 scope.
+
+**Design ownership (Carter's directive 2026-06-27): the visual/interactive/pedagogy VISION is CEO-owned, not a worker's to invent.**
+- `docs/training_design_spec.md` — component library, concept→interaction map, assessment model, visual/SVG standards, per-lesson Definition of Done.
+- `docs/training_build_plan.md` — **per-topic** SVGs (which + what kind), interactions, testing content, and progression/interleaving.
+- **CEO TODO before the interactivity phase:** build the net-new components (MatchPairs, LabelDiagram hotspot, FillBlank, calculators: PoleLoading/ConduitFill/SagTension/SpliceLossBudget) + **one gold-standard exemplar lesson**. Workers fill verified content into them.
+
+**The worker situation:** C2 quarantined, C5 burned out. **C6 is the fresh content/RT instance — on a TIGHT LEASH** (`briefs/claude-6.md`): does **ONE small assigned piece, then STOPS and waits for Carter's explicit confirmation.** Carter runs the instance; the CEO assigns each piece. **C6's first + only current task = the coverage matrix (analysis only).** Sequence after: T13 live-citation fixes (gated) → teaching-order topics one small unit at a time. Branch `claude-6/training-curriculum` off clean main.
+
+**How to run the workers now (hard-won):** small confirmed pieces, never broad creative mandates to Sonnet; CEO owns vision/design/architecture, worker executes to a concrete spec; verify via git + artifacts, never self-report; gate every content merge.
+
+**Latest `main`:** see `git log` (this session ran from ~`7485df6f` through the training pivot, content visibility, R18 quarantine, and C6 setup).
 
 ---
 
@@ -181,6 +208,8 @@ Also mirrored in `docs/README.md` for folder-level browsing. **If info isn't whe
 | Admin→cluster **cutover** decisions | `docs/cutover_inventory.md` |
 | Training-launch build record (current pivot) | `docs/training_launch_design.md` |
 | Training **visual/interactive/pedagogy vision** (CEO-owned; workers execute to it) | `docs/training_design_spec.md` |
+| Training **per-topic build plan** (which SVGs/interactions/tests + progression) | `docs/training_build_plan.md` |
+| Training **content gate + R18 quarantine + live-error punch-list** | `docs/training_launch_design.md` + `osp-training/docs/red-team-reports/T13-T22-SUSPECTED-live-errors-UNVERIFIED.md` |
 | Current routes/endpoints · auth/roles/security · feature inventory · design system | `docs/route_index.md` · `docs/security_model.md` · `docs/feature_inventory.md` · `docs/design_system.md` |
 | Per-instance worker briefs + merge gate | `briefs/` (`claude-2.md` active, `INTEGRATION.md` gate) |
 | Product + how-we-work (CEO operating doc) | `CLAUDE.md` |
