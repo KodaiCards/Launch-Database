@@ -104,6 +104,39 @@ tr.prow td:first-child{position:relative}
 .l-when{color:var(--text-muted);font-size:11px;white-space:nowrap}
 .close-x{border:1px solid var(--gray-border);border-radius:6px;width:30px;height:30px;display:flex;align-items:center;justify-content:center;color:var(--text-secondary)}
 .close-x:hover{background:var(--surface-1)}
+/* Content-access modal + scope tree */
+.modal-ov{position:fixed;inset:0;background:rgba(0,0,0,.4);z-index:70;display:none;align-items:center;justify-content:center;padding:20px}
+.modal-ov.open{display:flex}
+.modal{background:var(--white);border:1px solid var(--gray-border);border-radius:12px;width:640px;max-width:96vw;max-height:90vh;display:flex;flex-direction:column;box-shadow:0 12px 40px rgba(0,0,0,.25)}
+.modal-h{display:flex;align-items:center;justify-content:space-between;padding:14px 18px;border-bottom:1px solid var(--gray-border)}
+.modal-h .t{font-size:16px;font-weight:700;display:flex;align-items:center;gap:8px}
+.modal-b{padding:14px 18px;overflow-y:auto;flex:1}
+.modal-f{padding:12px 18px;border-top:1px solid var(--gray-border);display:flex;justify-content:flex-end;gap:8px}
+.btn-primary{background:var(--primary);color:#fff;border-color:var(--primary)}
+.btn-primary:hover{background:var(--primary-dark)}
+.btn-danger{background:var(--danger);color:#fff;border-color:var(--danger)}
+.preset-row{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:9px 11px;border:1px solid var(--gray-border);border-radius:8px;margin-bottom:8px}
+.preset-row .nm{font-weight:600;font-size:13px}
+.preset-row .meta{font-size:11px;color:var(--text-muted);margin-top:2px}
+.tree{font-size:13px}
+.trow{display:flex;align-items:center;gap:8px;padding:3px 0}
+.tcaret{width:16px;text-align:center;color:var(--text-muted);cursor:pointer;font-size:10px;flex:0 0 auto;user-select:none}
+.tlabel{flex:1;word-break:break-word}
+.tsub{margin-left:18px;display:none}
+.tsub.open{display:block}
+.tcount{font-size:11px;color:var(--text-muted);flex:0 0 auto}
+.tri{display:inline-flex;border:1px solid var(--gray-border);border-radius:6px;overflow:hidden;flex:0 0 auto}
+.tri button{padding:2px 8px;font-size:11px;border-right:1px solid var(--gray-border);color:var(--text-secondary)}
+.tri button:last-child{border-right:none}
+.tri button.on-show{background:var(--success);color:#fff}
+.tri button.on-hide{background:var(--danger);color:#fff}
+.tri button.on-def{background:var(--surface-1);color:var(--text)}
+.access-box{background:var(--surface-1);border:1px solid var(--gray-border);border-radius:10px;padding:12px 14px}
+.access-box label{font-size:11px;text-transform:uppercase;letter-spacing:.03em;color:var(--text-muted);font-weight:600;display:block;margin-bottom:5px}
+.access-box select{padding:7px 10px;border:1px solid var(--gray-border);border-radius:6px;background:var(--white);color:var(--text);font-size:13px;width:100%}
+.acc-adv{margin-top:10px}
+.acc-adv > summary{cursor:pointer;font-size:12px;color:var(--primary);font-weight:600;list-style:none}
+.acc-adv[open] > summary{margin-bottom:8px}
 </style>
 </head>
 <body>
@@ -111,6 +144,7 @@ tr.prow td:first-child{position:relative}
 <div class="header">
   <div class="header-title"><i class="fa-solid fa-graduation-cap" style="color:var(--primary)"></i> Training Progress</div>
   <div style="display:flex;gap:8px;align-items:center">
+    <button class="btn" onclick="openPresets()"><i class="fa-solid fa-layer-group"></i> Content access</button>
     <button class="btn" onclick="load()"><i class="fa-solid fa-rotate"></i> Refresh</button>
     <button class="btn-icon" onclick="toggleDark()" title="Toggle theme"><i class="fa-solid fa-moon" id="dm-icon"></i></button>
   </div>
@@ -148,6 +182,35 @@ tr.prow td:first-child{position:relative}
   </div>
   <div class="drawer-body" id="d-body"></div>
 </aside>
+
+<!-- Presets list modal -->
+<div class="modal-ov" id="presets-ov">
+  <div class="modal">
+    <div class="modal-h"><span class="t"><i class="fa-solid fa-layer-group" style="color:var(--primary)"></i> Content Access — Presets</span><button class="close-x" onclick="closePresets()"><i class="fa-solid fa-xmark"></i></button></div>
+    <div class="modal-b">
+      <p class="muted" style="font-size:12px;margin-bottom:12px">Presets are reusable content sets (e.g. "OSP crew", "ISP"). Assign one to a person from their row → Content access. Everyone defaults to <strong>see all</strong>.</p>
+      <div id="presets-list"><div class="empty"><span class="spin"></span> Loading…</div></div>
+    </div>
+    <div class="modal-f"><button class="btn" onclick="closePresets()">Close</button><button class="btn btn-primary" onclick="newPreset()"><i class="fa-solid fa-plus"></i> New preset</button></div>
+  </div>
+</div>
+<!-- Preset editor modal -->
+<div class="modal-ov" id="pedit-ov">
+  <div class="modal">
+    <div class="modal-h"><span class="t" id="pedit-title">New preset</span><button class="close-x" onclick="closePedit()"><i class="fa-solid fa-xmark"></i></button></div>
+    <div class="modal-b">
+      <input class="search-input" id="pedit-name" placeholder="Preset name (e.g. OSP crew)" style="width:100%;margin-bottom:6px">
+      <input class="search-input" id="pedit-desc" placeholder="Description (optional)" style="width:100%;margin-bottom:12px">
+      <p class="muted" style="font-size:12px;margin-bottom:8px">Check what this preset includes. Checking a track or subject includes everything under it; expand to pick individual lessons.</p>
+      <div class="tree" id="pedit-tree"></div>
+    </div>
+    <div class="modal-f">
+      <button class="btn btn-danger" id="pedit-del" onclick="deletePresetCur()" style="margin-right:auto;display:none"><i class="fa-solid fa-trash"></i> Delete</button>
+      <button class="btn" onclick="closePedit()">Cancel</button>
+      <button class="btn btn-primary" onclick="savePreset()"><i class="fa-solid fa-check"></i> Save preset</button>
+    </div>
+  </div>
+</div>
 
 <script>
 (function(){
@@ -296,7 +359,9 @@ tr.prow td:first-child{position:relative}
       }).join('');
     }
 
+    html += '<div class="drawer-sec">Content access</div><div id="acc-section"><div class="muted" style="font-size:12px"><span class="spin"></span> Loading…</div></div>';
     document.getElementById('d-body').innerHTML = html;
+    if (window.renderAccessSection) window.renderAccessSection(u.id, u.role);
   }
 
   window.toggleDark = function(){
@@ -307,6 +372,129 @@ tr.prow td:first-child{position:relative}
   };
   function updateDmIcon(){ var i=document.getElementById('dm-icon'); if(i) i.className = document.documentElement.getAttribute('data-theme')==='dark'?'fa-solid fa-sun':'fa-solid fa-moon'; }
   (function(){ var s=localStorage.getItem('lfs_theme'); if(s) document.documentElement.setAttribute('data-theme',s); updateDmIcon(); })();
+
+  // ─── Content access (presets + per-user) ───────────────────────────────────
+  var _tree=null, _subjTrack={}, _presets=[], _pchecks=new Set(), _editingId=null, _ov=new Map(), _accUser=null;
+
+  async function ensureTree(){
+    if(_tree) return;
+    var r=await fetch('/api/training/catalog-tree',{credentials:'include'});
+    _tree=(await r.json()).tracks||[];
+    _tree.forEach(function(t){ (t.subjects||[]).forEach(function(s){ _subjTrack[s.id]=t.id; }); });
+  }
+
+  function ctrl(type,st,id){
+    var key=st+':'+id;
+    if(type==='check'){ return '<input type="checkbox" data-act="chk" data-key="'+key+'"'+(_pchecks.has(key)?' checked':'')+'>'; }
+    var s=_ov.get(key);
+    return '<span class="tri">'
+      +'<button data-act="tri" data-key="'+key+'" data-v="def" class="'+(!s?'on-def':'')+'">Default</button>'
+      +'<button data-act="tri" data-key="'+key+'" data-v="show" class="'+(s==='show'?'on-show':'')+'">Show</button>'
+      +'<button data-act="tri" data-key="'+key+'" data-v="hide" class="'+(s==='hide'?'on-hide':'')+'">Hide</button>'
+      +'</span>';
+  }
+  function treeHtml(controlType, includeLessons){
+    return _tree.map(function(tr){
+      var subs=(tr.subjects||[]).map(function(s){
+        var lessons = (includeLessons && (s.lessons||[]).length)
+          ? '<div class="tsub" id="sub-'+s.id+'">'+(s.lessons||[]).map(function(l){
+              return '<div class="trow" style="margin-left:4px">'+ctrl(controlType,'lesson',l.id)+'<span class="tlabel" style="font-size:12px">'+esc(l.id)+' · '+esc(l.title)+'</span></div>';
+            }).join('')+'</div>' : '';
+        var caret = (includeLessons && (s.lessons||[]).length) ? '<span class="tcaret" data-act="tog" data-tgt="sub-'+s.id+'">▶</span>' : '<span class="tcaret"></span>';
+        return '<div><div class="trow">'+caret+ctrl(controlType,'subject',s.id)+'<span class="tlabel">'+esc(s.title)+' <span class="muted" style="font-size:11px">('+esc(s.id)+')</span></span><span class="tcount">'+s.lesson_count+'</span></div>'+lessons+'</div>';
+      }).join('');
+      return '<div><div class="trow"><span class="tcaret" data-act="tog" data-tgt="trk-'+tr.id+'">▶</span>'+ctrl(controlType,'track',tr.id)+'<span class="tlabel"><strong>'+esc(tr.title)+'</strong></span><span class="tcount">'+(tr.subjects||[]).length+' subj</span></div><div class="tsub" id="trk-'+tr.id+'">'+subs+'</div></div>';
+    }).join('');
+  }
+  function treeClick(e){
+    var t=e.target.closest('[data-act]'); if(!t) return;
+    var act=t.getAttribute('data-act');
+    if(act==='tog'){ var el=document.getElementById(t.getAttribute('data-tgt')); if(el){var o=el.classList.toggle('open'); t.textContent=o?'▼':'▶';} }
+    else if(act==='chk'){ var k=t.getAttribute('data-key'); if(t.checked)_pchecks.add(k); else _pchecks.delete(k); }
+    else if(act==='tri'){ var k=t.getAttribute('data-key'),v=t.getAttribute('data-v'); if(v==='def')_ov.delete(k); else _ov.set(k,v);
+      document.querySelectorAll('[data-act="tri"][data-key="'+k+'"]').forEach(function(b){var bv=b.getAttribute('data-v'),s=_ov.get(k); b.className=(bv==='def'&&!s)?'on-def':(bv==='show'&&s==='show')?'on-show':(bv==='hide'&&s==='hide')?'on-hide':'';}); }
+  }
+
+  window.openPresets=async function(){ try{ await ensureTree(); await loadPresets(); document.getElementById('presets-ov').classList.add('open'); }catch(e){ alert('Failed to load content catalog.'); } };
+  window.closePresets=function(){ document.getElementById('presets-ov').classList.remove('open'); };
+  async function loadPresets(){ var r=await fetch('/api/training/presets',{credentials:'include'}); _presets=(await r.json()).presets||[]; renderPresets(); }
+  function scopeSummary(p){ if(!p.scopes||!p.scopes.length) return 'No content'; var t=0,su=0,l=0; p.scopes.forEach(function(s){ if(s.scope_type==='track')t++; else if(s.scope_type==='subject')su++; else l++; }); var b=[]; if(t)b.push(t+' track'+(t>1?'s':'')); if(su)b.push(su+' subject'+(su>1?'s':'')); if(l)b.push(l+' lesson'+(l>1?'s':'')); return b.join(' · '); }
+  function renderPresets(){
+    var c=document.getElementById('presets-list');
+    if(!_presets.length){ c.innerHTML='<div class="empty">No presets yet. Create one to scope a person to specific content.</div>'; return; }
+    c.innerHTML=_presets.map(function(p){
+      return '<div class="preset-row"><div><div class="nm">'+esc(p.name)+'</div><div class="meta">'+esc(scopeSummary(p))+(p.description?' — '+esc(p.description):'')+'</div></div>'
+        +'<button class="btn" onclick="editPreset(\''+esc(p.id)+'\')"><i class="fa-solid fa-pen"></i> Edit</button></div>';
+    }).join('');
+  }
+  window.newPreset=function(){ _editingId=null; _pchecks=new Set(); openPedit('New preset','',''); };
+  window.editPreset=function(id){ var p=_presets.find(function(x){return x.id===id;}); if(!p)return; _editingId=id; _pchecks=new Set((p.scopes||[]).map(function(s){return s.scope_type+':'+s.scope_id;})); openPedit('Edit preset',p.name,p.description||''); };
+  function openPedit(title,name,desc){
+    document.getElementById('pedit-title').textContent=title;
+    document.getElementById('pedit-name').value=name;
+    document.getElementById('pedit-desc').value=desc;
+    document.getElementById('pedit-del').style.display=_editingId?'inline-flex':'none';
+    var tEl=document.getElementById('pedit-tree'); tEl.innerHTML=treeHtml('check',true); tEl.onclick=treeClick;
+    document.getElementById('pedit-ov').classList.add('open');
+  }
+  window.closePedit=function(){ document.getElementById('pedit-ov').classList.remove('open'); };
+  function prunedScopes(){
+    var has=function(k){return _pchecks.has(k);};
+    return Array.from(_pchecks).filter(function(k){
+      var i=k.indexOf(':'), type=k.slice(0,i), id=k.slice(i+1);
+      if(type==='subject') return !has('track:'+(_subjTrack[id]||''));
+      if(type==='lesson'){ var sid=id.split('.')[0]; return !has('subject:'+sid) && !has('track:'+(_subjTrack[sid]||'')); }
+      return true;
+    }).map(function(k){ var i=k.indexOf(':'); return {scope_type:k.slice(0,i), scope_id:k.slice(i+1)}; });
+  }
+  window.savePreset=async function(){
+    var name=document.getElementById('pedit-name').value.trim(); if(!name){alert('Name is required');return;}
+    var body={name:name, description:document.getElementById('pedit-desc').value.trim()||null, scopes:prunedScopes()};
+    var url=_editingId?'/api/training/presets/'+_editingId:'/api/training/presets';
+    var r=await fetch(url,{method:_editingId?'PUT':'POST',credentials:'include',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)});
+    if(!r.ok){ alert('Save failed'); return; }
+    closePedit(); await loadPresets();
+  };
+  window.deletePresetCur=async function(){
+    if(!_editingId) return;
+    if(!confirm('Delete this preset? Anyone using it reverts to seeing everything.')) return;
+    var r=await fetch('/api/training/presets/'+_editingId,{method:'DELETE',credentials:'include'});
+    if(!r.ok){ alert('Delete failed'); return; }
+    closePedit(); await loadPresets();
+  };
+
+  // Per-user content access (rendered inside the detail drawer)
+  window.renderAccessSection=async function(userId, role){
+    var c=document.getElementById('acc-section'); if(!c) return;
+    if(role==='admin'){ c.innerHTML='<div class="muted" style="font-size:12px">Admins always see all training content.</div>'; return; }
+    try{
+      await ensureTree();
+      if(!_presets.length){ try{ await loadPresets(); }catch(e){} }
+      var acc=await (await fetch('/api/training/access/'+encodeURIComponent(userId),{credentials:'include'})).json();
+      _accUser=userId; _ov=new Map((acc.overrides||[]).map(function(o){return [o.scope_type+':'+o.scope_id, o.mode];}));
+      var sel = (acc.base==='preset'&&acc.preset_id) ? 'preset:'+acc.preset_id : 'all';
+      var opts='<option value="all"'+(sel==='all'?' selected':'')+'>See all (default)</option>'
+        + _presets.map(function(p){ return '<option value="preset:'+esc(p.id)+'"'+(sel==='preset:'+p.id?' selected':'')+'>Preset: '+esc(p.name)+'</option>'; }).join('');
+      c.innerHTML='<div class="access-box">'
+        +'<label>Content this person sees</label>'
+        +'<select id="acc-base">'+opts+'</select>'
+        +'<div class="muted" style="font-size:11px;margin-top:6px">'+(acc.visible_lesson_count!=null?(acc.visible_lesson_count+' of '+acc.total_lesson_count+' lessons visible'):'')+'</div>'
+        +'<details class="acc-adv"><summary>Advanced — hide / show specific tracks &amp; subjects</summary><div class="tree" id="acc-tree">'+treeHtml('tri',false)+'</div></details>'
+        +'<div style="display:flex;justify-content:flex-end;margin-top:10px"><button class="btn btn-primary" onclick="saveAccess()"><i class="fa-solid fa-check"></i> Save access</button></div>'
+        +'</div>';
+      var at=document.getElementById('acc-tree'); if(at) at.onclick=treeClick;
+    }catch(e){ c.innerHTML='<div class="muted" style="font-size:12px">Could not load content access.</div>'; }
+  };
+  window.saveAccess=async function(){
+    if(!_accUser) return;
+    var sel=document.getElementById('acc-base').value, base, preset_id=null;
+    if(sel==='all'){ base='all'; } else { base='preset'; preset_id=sel.slice(7); }
+    var overrides=[]; _ov.forEach(function(v,k){ var i=k.indexOf(':'); overrides.push({scope_type:k.slice(0,i),scope_id:k.slice(i+1),mode:v}); });
+    var r=await fetch('/api/training/access/'+encodeURIComponent(_accUser),{method:'PUT',credentials:'include',headers:{'Content-Type':'application/json'},body:JSON.stringify({base:base,preset_id:preset_id,overrides:overrides})});
+    if(!r.ok){ alert('Save failed'); return; }
+    load();
+    renderAccessSection(_accUser, 'trainee');
+  };
 
   load();
 })();
