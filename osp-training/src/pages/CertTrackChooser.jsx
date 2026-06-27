@@ -15,6 +15,7 @@ import React from 'react';
 import { Link } from 'react-router-dom';
 import { certTracks, courses } from '../data/course-catalog.js';
 import { useAllProgress } from '../hooks/useProgress.js';
+import { useMyContent } from '../hooks/useMyContent.js';
 
 // ── Progress ring ────────────────────────────────────────────────────────────
 function ProgressRing({ pct }) {
@@ -179,15 +180,18 @@ function RCDDPlaceholder() {
 
 export default function CertTrackChooser() {
   const { getTopicProgress } = useAllProgress();
+  const mc = useMyContent();
 
-  // Exam-only tracks (OSP Designer, CFOT, CFOS/O)
-  const availableTracks = (certTracks || []).filter(t => t.id !== 'C04-RCDD');
+  // Content visibility: exam tracks only when the cert track is visible.
+  const certVisible = mc.trackVisible('cert');
+  const availableTracks = certVisible ? (certTracks || []).filter(t => t.id !== 'C04-RCDD') : [];
 
-  // Course-based cert prep (T21 CFOS/O, T22 CFOT)
-  const certCourses = (courses || []).filter(c => c?.section === 'cert');
+  // Course-based cert prep (T21 CFOS/O, T22 CFOT) — filtered to visible subjects.
+  const certCourses = (courses || []).filter(c => c?.section === 'cert' && c.id !== 'C04' && mc.subjectVisible(c.id));
 
   // C04 BICSI mock exam (lesson-based)
-  const c04 = (courses || []).find(c => c?.id === 'C04');
+  const c04full = (courses || []).find(c => c?.id === 'C04');
+  const c04 = (c04full && mc.subjectVisible('C04')) ? c04full : null;
 
   return (
     <div className="space-y-8">

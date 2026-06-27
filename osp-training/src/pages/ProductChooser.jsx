@@ -6,6 +6,7 @@
 
 import React from 'react';
 import { Link } from 'react-router-dom';
+import { useMyContent } from '../hooks/useMyContent.js';
 
 function ProductTile({ icon, title, description, cta, to, disabled }) {
   const Wrapper = disabled ? 'div' : Link;
@@ -35,6 +36,7 @@ function ProductTile({ icon, title, description, cta, to, disabled }) {
 }
 
 export default function ProductChooser() {
+  const mc = useMyContent();
   return (
     <div className="space-y-8">
       {/* Back to Launcher button */}
@@ -54,29 +56,39 @@ export default function ProductChooser() {
       </div>
 
       <div className="grid gap-4">
-        <ProductTile
-          icon="📚"
-          title="OSP Course"
-          description="Build comprehensive Outside Plant engineering knowledge from fundamentals through construction, testing, and final certification."
-          cta="Start Learning"
-          to="/osp"
-        />
+        {mc.trackVisible('osp') && (
+          <ProductTile
+            icon="📚"
+            title="OSP Course"
+            description="Build comprehensive Outside Plant engineering knowledge from fundamentals through construction, testing, and final certification."
+            cta="Start Learning"
+            to="/osp"
+          />
+        )}
 
-        <ProductTile
-          icon="🏢"
-          title="Inside Plant (ISP) Course"
-          description="Deep Inside Plant training with CO/headend architecture, structured cabling, data center standards, and RCDD certification prep."
-          cta="Learn More"
-          to="/isp"
-        />
+        {mc.trackVisible('isp') && (
+          <ProductTile
+            icon="🏢"
+            title="Inside Plant (ISP) Course"
+            description="Deep Inside Plant training with CO/headend architecture, structured cabling, data center standards, and RCDD certification prep."
+            cta="Learn More"
+            to="/isp"
+          />
+        )}
 
-        <ProductTile
-          icon="🎓"
-          title="Certification Tracks"
-          description="Accelerated specialized courses: BICSI OSP Designer, FOA CFOS-O. For those pursuing formal credentials."
-          cta="Browse Exams"
-          to="/cert"
-        />
+        {mc.trackVisible('cert') && (
+          <ProductTile
+            icon="🎓"
+            title="Certification Tracks"
+            description="Accelerated specialized courses: BICSI OSP Designer, FOA CFOS-O. For those pursuing formal credentials."
+            cta="Browse Exams"
+            to="/cert"
+          />
+        )}
+
+        {mc.ready && !mc.trackVisible('osp') && !mc.trackVisible('isp') && !mc.trackVisible('cert') && (
+          <div className="panel text-slate-400 text-sm">No training has been assigned to your account yet. Contact your administrator.</div>
+        )}
       </div>
     </div>
   );

@@ -15,6 +15,7 @@ import React from 'react';
 import { Link } from 'react-router-dom';
 import { courses } from '../data/course-catalog.js';
 import { useAllProgress } from '../hooks/useProgress.js';
+import { useMyContent } from '../hooks/useMyContent.js';
 
 // ── Progress ring (simple CSS arc) ─────────────────────────────────────────
 function ProgressRing({ pct }) {
@@ -227,12 +228,14 @@ function ISPComingSoon({ ispCourses }) {
 // (cert section handled separately by CertTrackChooser)
 export default function Splash({ section = 'osp' }) {
   const { getTopicProgress } = useAllProgress();
+  const mc = useMyContent();
 
   const coursesArray = courses || [];
 
-  // OSP section: show general topics (section: 'general') + C05 final exam
+  // OSP section: show general topics (section: 'general') + C05 final exam,
+  // filtered to what this person may see (content visibility).
   const ospCourses = coursesArray.filter(
-    c => c?.section === 'general' || c?.id === 'C05'
+    c => (c?.section === 'general' || c?.id === 'C05') && mc.subjectVisible(c.id)
   );
 
   // ISP section: show isp-tagged courses (C01/C02/C03 migrated placeholders)

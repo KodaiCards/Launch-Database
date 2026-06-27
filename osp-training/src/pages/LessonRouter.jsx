@@ -14,6 +14,7 @@ import React, { useState, useEffect } from 'react';
 import { Link, useParams } from 'react-router-dom';
 import { lessonFileIndex } from '../data/course-catalog.js';
 import ErrorBoundary from '../components/ErrorBoundary.jsx';
+import { useMyContent } from '../hooks/useMyContent.js';
 
 // Vite processes this glob at build time, producing code-split chunks for every
 // lesson file. Browser never resolves a runtime-relative path — Vite handles it.
@@ -86,9 +87,14 @@ function LessonPlaceholder({ courseId, lessonOrder }) {
 // ── LessonRouter ─────────────────────────────────────────────────────────────
 export default function LessonRouter() {
   const { courseId, lessonOrder } = useParams();
+  const mc = useMyContent();
   const [LessonComponent, setLessonComponent] = useState(null);
   const [loading, setLoading] = useState(true);
   const [notFound, setNotFound] = useState(false);
+
+  const lessonKey = `${courseId}.L${String(lessonOrder).padStart(2, '0')}`;
+  // Content visibility: if this lesson isn't assigned to the user, don't load it.
+  const blocked = mc.ready && !mc.lessonVisible(lessonKey);
 
   useEffect(() => {
     setLoading(true);
@@ -133,6 +139,18 @@ export default function LessonRouter() {
       });
   }, [courseId, lessonOrder]);
 
+  if (blocked) {
+    return (
+      <div className="panel text-center py-12 text-slate-400">
+        <div className="text-4xl mb-4">🔒</div>
+        <p className="text-lg font-semibold text-slate-300">This lesson isn't part of your assigned training.</p>
+        <div className="mt-6 flex justify-center gap-4">
+          <Link to={`/course/${courseId}`} className="text-sm text-amber-300 hover:text-amber-100 transition">← Back to course</Link>
+          <Link to="/" className="text-sm text-slate-400 hover:text-amber-300 transition">All courses</Link>
+        </div>
+      </div>
+    );
+  }
   if (loading) return <LessonSkeleton />;
   if (notFound) return <LessonPlaceholder courseId={courseId} lessonOrder={lessonOrder} />;
   if (LessonComponent) return <ErrorBoundary><LessonComponent /></ErrorBoundary>;

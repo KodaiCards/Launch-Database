@@ -7,6 +7,7 @@ import React from 'react';
 import { Link, useParams } from 'react-router-dom';
 import { courses, certTracks, lessonTitleIndex } from '../data/course-catalog.js';
 import { useAllProgress } from '../hooks/useProgress.js';
+import { useMyContent } from '../hooks/useMyContent.js';
 
 // Map course section → back-link info
 const SECTION_BACK = {
@@ -33,6 +34,7 @@ function ClockIcon() {
 export default function CourseView() {
   const { courseId } = useParams();
   const { store } = useAllProgress();
+  const mc = useMyContent();
 
   // Look up course in both general courses and cert courses
   const allCourses = [...courses, ...certTracks];
@@ -47,8 +49,7 @@ export default function CourseView() {
     );
   }
 
-  const lessonCount = course.lesson_count || 0;
-  const lessons = Array.from({ length: lessonCount }, (_, i) => {
+  const allLessons = Array.from({ length: course.lesson_count || 0 }, (_, i) => {
     const order = i + 1;
     const paddedOrder = String(order).padStart(2, '0');
     const lessonId = `${courseId}.L${paddedOrder}`;  // Padded: matches lessonFileIndex keys
@@ -62,6 +63,10 @@ export default function CourseView() {
       path: `/course/${courseId}/lesson/${paddedOrder}`,  // Padded to match LessonRouter key lookup
     };
   });
+
+  // Content visibility: only show lessons this person may see (default = all).
+  const lessons = allLessons.filter(l => mc.lessonVisible(l.lessonId));
+  const lessonCount = lessons.length;
 
   const completedCount = lessons.filter(l => l.status === 'completed').length;
   const pct = lessonCount > 0 ? Math.round((completedCount / lessonCount) * 100) : 0;
@@ -167,7 +172,7 @@ export default function CourseView() {
 
           {lessonCount === 0 && (
             <li className="text-sm text-slate-400 px-3 py-2">
-              No lessons in catalog yet. Authoring begins in OSP-RW.4.
+              No lessons available to you in this course.
             </li>
           )}
         </ol>
