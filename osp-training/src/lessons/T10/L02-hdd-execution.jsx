@@ -392,6 +392,56 @@ export default function T10L02_HDDExecution() {
                 explanation:
                   'The rig gauge reads the tension the machine is applying at its end of the drill string. Friction at each curve in the bore path adds additional tension downstream. At a 90-degree bend with a friction coefficient of 0.25, tension approximately doubles from the rig end to the conduit end. A 480 lbf rig reading on a bore with two 90-degree bends could mean 480 × 2.19 ≈ 1,050 lbf at the cable — well above the 600 lbf limit. Always calculate expected cable-end tension before the pull.',
               },
+              {
+                id: 'q2',
+                text: 'During a bore under a creek crossing, the drill crew notices gray-green bentonite slurry surfacing along the creek bank (a frac-out). What are the required immediate actions?',
+                type: 'multiple-choice',
+                options: [
+                  { id: 'a', text: 'Continue drilling — minor frac-outs self-seal when pressure is relieved after the bore is complete' },
+                  { id: 'b', text: 'Stop drilling immediately, contain the slurry discharge at the surface, and notify the USACE permit office within 24 hours' },
+                  { id: 'c', text: 'Reduce pump pressure by 50% and continue monitoring — full stops are only required for large slurry volumes' },
+                  { id: 'd', text: 'Redirect the bore to a shallower exit angle to relieve formation pressure before continuing' },
+                ],
+                correctId: 'b',
+                explanation:
+                  'A frac-out into a waterway is a Clean Water Act Section 404 violation and a typical NWP 57 permit non-compliance event. Required sequence: (1) stop drilling immediately to prevent additional discharge; (2) attempt containment of the slurry at the surface using silt fencing, sorbent boom, or hand removal; (3) notify the USACE district office within 24 hours per NWP 57 permit conditions. Continuing to drill after a confirmed frac-out can trigger permit revocation — stopping ALL future bore crossings on the project.',
+              },
+              {
+                id: 'q3',
+                text: 'A product pull bundle contains three conduits rated at 600 lbf, 500 lbf, and 700 lbf. The bore crew sets the breakaway swivel at 550 lbf. Is this setting correct?',
+                type: 'multiple-choice',
+                options: [
+                  { id: 'a', text: 'Yes — 550 lbf is the average of the three conduit ratings' },
+                  { id: 'b', text: 'No — the breakaway must be set to the weakest component in the bundle: 500 lbf' },
+                  { id: 'c', text: 'Yes — 550 lbf protects the two stronger conduits without prematurely releasing on the weakest one' },
+                  { id: 'd', text: 'No — the breakaway must be set to the strongest component: 700 lbf to prevent nuisance trips' },
+                ],
+                correctId: 'b',
+                explanation:
+                  'The breakaway swivel must be set to the maximum pull tension of the WEAKEST component in the bundle. In this case, the 500 lbf conduit is the limiting component — 550 lbf would allow 50 lbf of over-tension on the weakest conduit before the swivel releases, which can stretch or crack HDPE conduit and compromise the bore path. Always set the swivel to the lowest rated component, regardless of what the other conduits can tolerate.',
+              },
+              {
+                id: 'q4',
+                text: 'Which sequence correctly describes the three phases of a horizontal directional drill?',
+                type: 'multiple-choice',
+                options: [
+                  { id: 'a', text: 'Reaming → pilot bore → product pull' },
+                  { id: 'b', text: 'Product pull → pilot bore → reaming' },
+                  { id: 'c', text: 'Pilot bore → reaming → product pull' },
+                  { id: 'd', text: 'Pilot bore → product pull → reaming' },
+                ],
+                correctId: 'c',
+                explanation:
+                  'HDD always follows the same three-phase sequence: (1) Pilot bore — the guided drill head creates a small-diameter path (typically 3–4 inches) from entry to exit, steered by a locator tracking the sonde signal. (2) Reaming — the drill string is reversed and progressive reamers (each pass enlarging the bore) enlarge the hole to 1.5× the conduit OD. (3) Product pull — the ream is complete, the conduit/cable bundle is attached to a swivel behind the reamer, and the drill string pulls it back through to the entry pit.',
+              },
+              {
+                id: 'q5',
+                type: 'fill-in-blank',
+                text: 'The second phase of HDD — in which the bore diameter is enlarged in successive passes to accommodate the conduit — is called ____.',
+                answer: 'reaming',
+                explanation:
+                  'Reaming is the intermediate phase between the pilot bore and the product pull. The drill crew removes the bit and attaches a reamer (back-reamer or fly cutter) to the drill string at the exit side. Each pass enlarges the bore; multiple passes may be needed for large conduit bundles or hard soil. The bore is typically enlarged to 1.25–1.5× the outside diameter of the conduit being installed before the product pull begins.',
+              },
             ]}
           />
         </div>

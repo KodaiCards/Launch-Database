@@ -257,6 +257,42 @@ export default function T10L07_ManholeHandholeInstallation() {
                 explanation:
                   'H-20 is rated for 16,000 lb per rear-tandem axle — a typical utility truck or loaded delivery vehicle can exceed this. H-25 (20,000 lb per rear-tandem axle) is required for any structure under a paved road surface where utility or commercial vehicles will travel. Once the structure is under paving that sees truck traffic, the H-20 rating is inadequate. The structure must be replaced or reinforced to H-25 before the road opens to truck traffic.',
               },
+              {
+                id: 'q3',
+                text: 'A fiber route plan shows handhole intervals of approximately every 800 feet. When the crew reaches a section of route, ROW conditions, utility conflicts, and shoulder widths force the actual as-built locations to vary from the plan. Is this acceptable?',
+                type: 'multiple-choice',
+                options: [
+                  { id: 'a', text: 'No — handhole placement is fixed by the plan; deviations require a stop-work until the engineer approves a change order' },
+                  { id: 'b', text: 'Yes — 800 ft is a planning interval, not a fixed dimension; as-built locations vary based on field conditions and must be documented as redlines on the plan set' },
+                  { id: 'c', text: 'Yes — but only if the deviation is less than 50 ft from the planned station' },
+                  { id: 'd', text: 'No — the 800-ft interval is a permit condition; the permit must be amended before any deviation' },
+                ],
+                correctId: 'b',
+                explanation:
+                  'Planned handhole intervals (typically 500–1,000 ft) are design targets based on MSA requirements and splice-truck access spacing. Field conditions — ROW width, traffic control constraints, utility crossings, property access — routinely shift the actual location from the planned station. The as-built location goes where it physically fits and allows safe splice-truck access. Every deviation from the plan must be captured as a redline on the plan-and-profile set and documented in the daily field report.',
+              },
+              {
+                id: 'q4',
+                text: 'You are installing a new handhole in the shoulder of a state highway under a DOT permit. The permit specifies H-20 loading. Is an H-20 frame and cover appropriate for this location?',
+                type: 'multiple-choice',
+                options: [
+                  { id: 'a', text: 'Yes — H-20 is the standard for all public road applications' },
+                  { id: 'b', text: 'It depends — H-20 is acceptable in the shoulder if trucks will not drive over the structure; if the shoulder is a travel lane or if trucks routinely park/drive there, H-25 is required' },
+                  { id: 'c', text: 'No — state highway locations always require H-25 regardless of traffic type' },
+                  { id: 'd', text: 'Yes — the permit specifies H-20, so H-20 is correct for this specific location' },
+                ],
+                correctId: 'b',
+                explanation:
+                  'H-20 (16,000 lb/axle) is sufficient for locations where truck traffic will not pass directly over the structure — a true shoulder behind the fog line on a rural road is often H-20 territory. H-25 (20,000 lb/axle) is required for travel lanes, turn lanes, and shoulders that are regularly used as truck pull-off areas. The permit specifying H-20 may reflect the design assumption that the structure is out of the truck path. If field conditions show the structure will be in a truck travel zone, flag it to the engineer before installation — the permit may need to be revised.',
+              },
+              {
+                id: 'q5',
+                type: 'fill-in-blank',
+                text: 'H-20 traffic loading is rated for ___ pounds per rear tandem axle.',
+                answer: '16,000',
+                explanation:
+                  'H-20 = 16,000 lb per rear tandem axle (from AASHTO H-truck designation). H-25 = 20,000 lb per rear tandem axle. These ratings come from the AASHTO H-truck series: H-10 = 10,000 lb, H-15 = 12,000 lb, H-20 = 16,000 lb, H-25 = 20,000 lb. Handhole lids and frames must be tested and rated by the manufacturer; always verify the load rating is stamped on the frame before installation.',
+              },
             ]}
           />
         </div>

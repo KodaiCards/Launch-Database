@@ -234,6 +234,42 @@ export default function T10L10_DailyFieldReporting() {
                 explanation:
                   'The DFR is the contractor\'s record. The foreman fills it out, signs at the bottom confirming the crew and quantities, and submits it. The inspector reviews it and may add notes, but does not complete it on the contractor\'s behalf. The contractor is responsible for its completeness and accuracy — and the consequences of incomplete DFRs fall on the contractor at pay application and as-built reconciliation time.',
               },
+              {
+                id: 'q3',
+                text: 'Which of the following items is NOT required to be documented on a daily DFR for a RUS fiber project?',
+                type: 'multiple-choice',
+                options: [
+                  { id: 'a', text: 'Station range worked (beginning and ending station)' },
+                  { id: 'b', text: 'Crew size and equipment deployed that day' },
+                  { id: 'c', text: 'Personal cell phone numbers for all crew members' },
+                  { id: 'd', text: 'Any route deviations from the approved plan, with dimensioned description and inspector initials' },
+                ],
+                correctId: 'c',
+                explanation:
+                  'A complete DFR for a RUS project must include: station range worked, work type performed (conduit, cable, handholes, restoration), crew size and job roles, equipment on site, materials installed (footage, conduit size, cable type, handhole count), weather conditions, any deviations from the approved plan with dimensioned description and inspector initials, and the foreman\'s signature. Personal contact information for crew members is not a DFR requirement — it belongs in crew rosters kept by the project manager, not in field documentation.',
+              },
+              {
+                id: 'q4',
+                text: 'A route deviation occurred at station 2445+00 when the crew shifted 12 feet north to avoid an unmarked water line. The foreman verbally told the inspector, but it was not written in the DFR. Two years later, a cable fault occurs at that station. What problem does the missing DFR entry create?',
+                type: 'multiple-choice',
+                options: [
+                  { id: 'a', text: 'No problem — verbal notification to the inspector is sufficient documentation' },
+                  { id: 'b', text: 'The GIS shows the cable at the original planned route; without the DFR deviation entry, the maintenance crew will dig in the wrong location, adding excavation cost and time to locate the actual cable' },
+                  { id: 'c', text: 'Only a minor problem — the cable can be located with a tone generator' },
+                  { id: 'd', text: 'The deviation entry only matters if the AHJ requests the DFRs during final closeout' },
+                ],
+                correctId: 'b',
+                explanation:
+                  'The DFR deviation log is the only written record linking a field change to a specific station. If the GIS and plan-and-profile were never updated to reflect the 12-foot shift (common on active builds), the maintenance crew has no documentation pointing them 12 feet north of the GIS-shown route. They dig at the plan location, find nothing, expand the excavation, eventually locate the cable — at additional cost and time. A single missing DFR entry can turn a 30-minute fault response into a multi-hour dig. Inspector verbal notification is not a substitute for written documentation.',
+              },
+              {
+                id: 'q5',
+                type: 'fill-in-blank',
+                text: 'The contractor-completed document that records daily construction progress, crew size, equipment, station range, materials installed, and route deviations on a RUS project is called the ____.',
+                answer: 'Daily Field Report',
+                explanation:
+                  'The Daily Field Report (DFR) is the primary field documentation tool on RUS-financed construction projects. It is completed by the contractor\'s foreman for every working day, submitted to the project inspector for review, and becomes part of the project\'s permanent record — used for pay application support, as-built reconciliation, RUS loan conversion documentation, and long-term maintenance reference. "DFR" is the accepted abbreviation; both "Daily Field Report" and "DFR" are correct answers.',
+              },
             ]}
           />
         </div>

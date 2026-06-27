@@ -307,6 +307,28 @@ export default function T10L03_OpenCutAndPlow() {
                 explanation:
                   'OCC 206-4 specifies warning tape placement at 12 inches above the top of the conduit. Note that some state DOT permits require the tape at a fixed depth from the finished surface — this can differ from 12 inches above conduit if the conduit burial depth varies. Always confirm with the permit before backfilling.',
               },
+              {
+                id: 'q4',
+                text: 'Compared to open-cut trenching, what is the primary operational advantage of vibratory plow installation?',
+                type: 'multiple-choice',
+                options: [
+                  { id: 'a', text: 'Plow can achieve greater burial depth — routinely exceeding 60 inches' },
+                  { id: 'b', text: 'Plow leaves virtually no spoil on the surface — the slot is cut and closed in a single pass, greatly reducing restoration cost and time' },
+                  { id: 'c', text: 'Plow works in all soil types including dense clay, rocky soil, and saturated conditions' },
+                  { id: 'd', text: 'Plow requires no permitting because it doesn\'t create an open trench' },
+                ],
+                correctId: 'b',
+                explanation:
+                  'The defining advantage of vibratory plow is minimal surface disruption — the blade cuts the slot and closes it as the machine passes, leaving little to no excavated spoil on the surface. In suitable soil (sandy loam, soft clay, loamy farmland), this eliminates the hauling, stockpiling, and re-compaction of spoil that open-cut requires. The result is lower restoration cost ($11.88/ft plow vs. $19.00/ft open-cut typical) and faster right-of-way clearance.',
+              },
+              {
+                id: 'q5',
+                type: 'fill-in-blank',
+                text: 'OSHA 29 CFR §1926 Subpart P requires a protective system (either sloping or ____) for any excavation deeper than 5 feet.',
+                answer: 'shoring',
+                explanation:
+                  'Subpart P allows two compliant protective systems: sloping (cutting the trench walls back to a safe angle — 3/4:1 for Type A soil, 1:1 for Type B, 1½:1 for Type C) or shoring (installing a trench box or hydraulic shores to support the trench walls vertically). Most telecom trench work runs 36–42 inches deep and does not trigger the 5-foot rule, but road crossings requiring 48–54 inches of cover regularly do.',
+              },
             ]}
           />
         </div>

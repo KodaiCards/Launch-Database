@@ -306,6 +306,28 @@ export default function T10L01_Call811BeforeYouDig() {
                 explanation:
                   'Validity windows vary by state, but most run from the date the locates were placed (Wednesday in this example), not from when you called. The marks — and your legal right to dig — expire 10 business days from Wednesday. If your job isn\'t done by then, you must call a new ticket. Excavating on an expired ticket is the same as not calling at all, legally.',
               },
+              {
+                id: 'q4',
+                text: 'Under the Georgia Utilities Protection Act (GUPA), how many business days before planned excavation must a contractor notify 811?',
+                type: 'multiple-choice',
+                options: [
+                  { id: 'a', text: '1 business day — same-day emergency notification only' },
+                  { id: 'b', text: '2 business days — the minimum under federal PHMSA guidance' },
+                  { id: 'c', text: '3 business days — the GUPA required notice period' },
+                  { id: 'd', text: '5 business days — required for all DOT-permit work' },
+                ],
+                correctId: 'c',
+                explanation:
+                  'Georgia\'s GUPA (O.C.G.A. § 25-9-1 et seq.) requires notification to the 811 center not less than 3 business days (and not more than 10 business days) before the planned excavation date. This gives locate crews time to mark all member utilities before your equipment breaks ground. Emergency excavations have a separate same-day verbal notification path, but that exception applies only to genuine emergencies — routine work must follow the 3-business-day rule.',
+              },
+              {
+                id: 'q5',
+                type: 'fill-in-blank',
+                text: 'Under the APWA color code, buried gas and petroleum pipelines are marked with the color ____.',
+                answer: 'Yellow',
+                explanation:
+                  'APWA yellow marks gas, oil, steam, petroleum, and gaseous materials. This is one of the most important colors to know: striking a yellow-flagged line means striking a flammable or explosive product. The complete APWA sequence: Red = electric; Yellow = gas/petroleum; Orange = communications; Blue = potable water; Green = sewer/drain; Purple = reclaimed water/irrigation; Pink = temporary survey; White = proposed excavation.',
+              },
             ]}
           />
         </div>

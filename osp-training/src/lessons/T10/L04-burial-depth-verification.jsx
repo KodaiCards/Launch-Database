@@ -314,6 +314,42 @@ export default function T10L04_BurialDepthVerification() {
                 explanation:
                   'Depth probing is the standard, low-cost method. GPR is warranted when probing is impractical: under paved surfaces (rod can\'t penetrate asphalt), on HDD bores under wide crossings (bore may have deviated), and in dense rock fill (probe hits rock, not conduit). GPR provides a continuous depth profile where probing gives only point measurements.',
               },
+              {
+                id: 'q3',
+                text: 'What is a cover card, and when is it required on a RUS project?',
+                type: 'multiple-choice',
+                options: [
+                  { id: 'a', text: 'A card placed on top of the conduit in the trench to show installers which duct to use for which cable' },
+                  { id: 'b', text: 'A document signed by the project inspector certifying depth probe verification was performed at required intervals along the route; required for RUS Form 219 closeout' },
+                  { id: 'c', text: 'A permit-required tag attached to the conduit end at each handhole' },
+                  { id: 'd', text: 'A pay-application summary that records how many feet of conduit were buried per day' },
+                ],
+                correctId: 'b',
+                explanation:
+                  'A cover card is the field inspection record documenting that depth probing was performed at each required station, the measured depth, the permit requirement, and the inspector\'s signature confirming compliance. On RUS-financed projects (RUS 1751F-635 compliance), completed cover cards are part of the Form 219 closeout package. Without them, RUS loan conversion is at risk because there is no field-verified record that the conduit was buried to spec.',
+              },
+              {
+                id: 'q4',
+                text: 'A permit requires 42 inches of cover from finished grade to the top of conduit. Finished grade is 4 inches above current natural grade (new overlay being added). A depth probe from the current surface reads 44 inches to the conduit. Does this installation meet the permit requirement?',
+                type: 'multiple-choice',
+                options: [
+                  { id: 'a', text: 'Yes — 44 inches exceeds the 42-inch requirement' },
+                  { id: 'b', text: 'No — cover from finished grade = 44 − 4 = 40 inches, which is less than 42 inches' },
+                  { id: 'c', text: 'Yes — probes are always measured from natural grade; the overlay is irrelevant' },
+                  { id: 'd', text: 'Cannot be determined without knowing the conduit OD' },
+                ],
+                correctId: 'b',
+                explanation:
+                  'The permit references finished grade (the final surface after overlay). After the 4-inch overlay is placed, finished grade will be 4 inches above today\'s surface. Depth from finished grade = 44 − 4 = 40 inches. The permit requires 42 inches. 40 < 42 → FAILS. The conduit must be re-buried at least 2 inches deeper (to 46 inches from current natural grade) before the overlay is placed.',
+              },
+              {
+                id: 'q5',
+                type: 'fill-in-blank',
+                text: 'The non-destructive depth verification method that uses radar pulses to locate buried conduit under pavement — where a mechanical probe cannot penetrate the surface — is called ____.',
+                answer: 'GPR',
+                explanation:
+                  'Ground-Penetrating Radar (GPR) transmits radio-frequency pulses into the ground and detects reflections from subsurface objects. It produces a continuous cross-section image (radargram) showing the conduit\'s depth without breaking the pavement. GPR is used for post-bore depth verification under road crossings, for locating conduit in areas where the probe rod would hit aggregate or reinforced concrete, and for generating a continuous depth profile on HDD bores that may have deviated from the design path.',
+              },
             ]}
           />
         </div>

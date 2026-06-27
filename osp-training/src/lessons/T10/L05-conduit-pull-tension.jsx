@@ -299,6 +299,42 @@ export default function T10L05_ConduitPullTension() {
                 explanation:
                   'NEC Articles 770 and 800 (optical fiber and communications cables) each contain an explicit provision (770.110(B) and 800.110(B)) exempting those cable types from NEC Chapter 9 Table 1 fill calculations. The 40% fill figure is an industry convention from BICSI and similar organizations — a reasonable guideline for managing pull friction, but not a codified NEC requirement for fiber or telecom cable.',
               },
+              {
+                id: 'q3',
+                text: 'A pulling crew adds wire-pulling lubricant to the conduit before a long pull. In the capstan tension equation T_exit = T_entry × e^(μθ), what effect does the lubricant have and why does it matter?',
+                type: 'multiple-choice',
+                options: [
+                  { id: 'a', text: 'Lubricant increases μ by filling the air gap between cable and conduit — exit tension increases' },
+                  { id: 'b', text: 'Lubricant reduces the friction coefficient μ, which reduces exit tension and lowers the risk of exceeding the cable\'s maximum pulling force rating' },
+                  { id: 'c', text: 'Lubricant reduces the entry tension T_entry — the gauge will read lower' },
+                  { id: 'd', text: 'Lubricant has no effect on the equation — it only prevents jacket surface scuffing' },
+                ],
+                correctId: 'b',
+                explanation:
+                  'Lubricant lowers the coefficient of friction μ between the cable jacket and conduit inner wall. In T_exit = T_entry × e^(μθ), a lower μ produces a smaller exponent, reducing e^(μθ) and therefore reducing exit tension. On a run with three 90-degree bends and an unlubricant μ of 0.35, the multiplier is e^(0.35×3×π/2) ≈ 5.2×. With lubricant dropping μ to 0.15, the multiplier falls to e^(0.15×3×π/2) ≈ 2.0× — cutting the exit tension to less than half.',
+              },
+              {
+                id: 'q4',
+                text: 'Three OSP fiber cables, each with a 1.125-inch outside diameter, are to be pulled through a single 2-inch inside-diameter conduit. Approximately what is the conduit fill percentage, and does it exceed the 40% industry guideline?',
+                type: 'multiple-choice',
+                options: [
+                  { id: 'a', text: '≈ 28% — within the 40% guideline' },
+                  { id: 'b', text: '≈ 57% — exceeds the 40% guideline moderately' },
+                  { id: 'c', text: '≈ 95% — far exceeds the 40% guideline; this conduit is too small for three cables' },
+                  { id: 'd', text: '≈ 40% — exactly at the guideline boundary' },
+                ],
+                correctId: 'c',
+                explanation:
+                  'Fill % = (sum of cable cross-section areas) ÷ (conduit inner area) × 100. Each cable: π × (0.5625 in)² ≈ 0.995 in²; three cables: 2.985 in². Conduit inner area: π × (1 in)² ≈ 3.14 in². Fill = 2.985 ÷ 3.14 ≈ 95%. Far exceeds the 40% convention. Three 1.125-inch cables require at least a 3-inch conduit (fill ≈ 42%) or ideally a 4-inch conduit (fill ≈ 24%). This error is caught by running the fill calculation before procurement — not after the pull machine stalls.',
+              },
+              {
+                id: 'q5',
+                type: 'fill-in-blank',
+                text: 'In the capstan tension equation T_exit = T_entry × e^(μθ), the symbol μ represents the ___ coefficient between the cable jacket and conduit wall.',
+                answer: 'friction',
+                explanation:
+                  'μ (mu) is the coefficient of friction — a dimensionless ratio of the frictional force to the normal force pressing the cable against the conduit wall. Typical values range from 0.35–0.50 for dry conduit to 0.10–0.20 with wire-pulling lubricant. The θ term is the total angle of bends in radians (a 90° bend = π/2 radians). The exponential relationship means that multiple bends compound — two 90° bends with μ = 0.25 give a multiplier of e^(0.25 × π) ≈ 2.19×.',
+              },
             ]}
           />
         </div>

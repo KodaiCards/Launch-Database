@@ -149,6 +149,26 @@ const quizQuestions = [
     correctId: 'b',
     explanation: 'RUS Form 219 is the final acceptance document. It is signed after all punch list items have been corrected and the inspector has verified the work meets plans and specs. Signing 219 before punch list closure would certify deficient work as acceptable — a serious liability.',
   },
+  {
+    id: 'q4',
+    text: 'A plan note reads "conduit shall be installed per applicable standards." The contractor interprets this as allowing HDPE conduit with solvent-welded joints; the inspector believes it requires factory-fused joints. Neither can agree. Who makes the binding interpretation?',
+    type: 'multiple-choice',
+    options: [
+      { id: 'a', text: 'The inspector — their field determination is final during construction' },
+      { id: 'b', text: 'The contractor — they are responsible for means and methods' },
+      { id: 'c', text: 'The engineer of record — ambiguous spec language is interpreted by the design authority, not the inspector or contractor' },
+      { id: 'd', text: 'The RUS area engineer — all technical disputes on RUS projects go to the federal agency' },
+    ],
+    correctId: 'c',
+    explanation: 'Ambiguous specification language is a design question, not a field enforcement question. The engineer of record (EOR) authored the spec and is the authority on its intended meaning. When the inspector and contractor disagree on an interpretation, construction on that item should pause (or proceed under protest, documented in the DFR) until the EOR issues a written clarification. Inspector overreach — issuing binding interpretations that belong to the designer — creates change-order exposure for the owner.',
+  },
+  {
+    id: 'q5',
+    type: 'fill-in-blank',
+    text: 'An inspector\'s authority to immediately stop mid-job construction and require removal and re-installation before any additional work can proceed — used for safety-critical or permit-required deficiencies — is called ___ authority.',
+    answer: 'kick-back',
+    explanation: 'Kick-back authority is the inspector\'s strongest tool: it immediately halts work on a deficient item and requires corrective removal and re-installation before construction can resume at that location. It is reserved for deficiencies that cannot be left in place — permit-required burial depths not met, prohibited materials installed, structural elements out of spec. Punch list authority, by contrast, allows construction to continue and defers correction to a final fix-it list before acceptance. Using kick-back for minor cosmetic issues is inspector overreach; failing to use it for safety-critical deficiencies is inspector negligence.',
+  },
 ];
 
 export default function T10L11_FieldQAInspectorInterface() {

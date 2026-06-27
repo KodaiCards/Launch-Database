@@ -254,6 +254,42 @@ export default function T10L06_SlackLoops() {
                 explanation:
                   'An expansion loop is a structural element sized by the expected temperature range and aerial span length — it absorbs the cable length change during seasonal temperature cycles. It stays in place permanently. A slack loop is a service reserve — cable left coiled in the structure for future splice-truck reach and re-termination. Both are present at an aerial-to-buried transition but serve different functions.',
               },
+              {
+                id: 'q3',
+                text: 'A cable with a 0.90-inch outer diameter is coiled and stored in a handhole for long-term service reserve. What is the minimum acceptable coil diameter for long-term storage?',
+                type: 'multiple-choice',
+                options: [
+                  { id: 'a', text: '9 inches — 10× the cable OD' },
+                  { id: 'b', text: '18 inches — 20× the cable OD, the installation standard' },
+                  { id: 'c', text: '4.5 inches — 5× the cable OD' },
+                  { id: 'd', text: 'No minimum — coil diameter only matters during active pulling' },
+                ],
+                correctId: 'a',
+                explanation:
+                  'Long-term storage minimum bend radius is 10× cable OD. For a 0.90-inch OD cable: 10 × 0.90 = 9-inch minimum coil diameter. The 20× OD rule (18 inches for this cable) is the installation minimum — the tighter coils allowed during active pulling and handling. Once the cable is at rest permanently in the structure, the 10× standard protects against fiber microbend losses and jacket fatigue over years of thermal cycling.',
+              },
+              {
+                id: 'q4',
+                text: 'You are installing a 48F route cable through intermediate handholes. The project PM says to skip the 50-ft slack loops to reduce cable cost. What is the correct response?',
+                type: 'multiple-choice',
+                options: [
+                  { id: 'a', text: 'Skip the loops — the PM has authority over field decisions' },
+                  { id: 'b', text: 'Install the required 50 ft MSA slack at each intermediate handhole per the Minimum Slack Allowance specification; document the PM\'s directive and your decision in the DFR' },
+                  { id: 'c', text: 'Install 25 ft loops as a compromise — half the slack still provides some service reserve' },
+                  { id: 'd', text: 'Only install slack loops at handholes within 500 ft of a splice point' },
+                ],
+                correctId: 'b',
+                explanation:
+                  'MSA (Minimum Slack Allowance) is a specification requirement: 50 ft at intermediate handholes, 100 ft at splice-point handholes. The PM does not have authority to waive a spec requirement — only an approved change order or formal spec deviation through the engineer of record can do that. Install the full 50 ft loops, document the PM\'s directive in the DFR, and flag the request through the proper change-order channel if cost savings are genuinely needed.',
+              },
+              {
+                id: 'q5',
+                type: 'fill-in-blank',
+                text: 'The minimum cable coil diameter for long-term storage in a handhole is ___ times the cable outer diameter.',
+                answer: '10',
+                explanation:
+                  'Long-term storage minimum = 10× OD. Installation (active pulling and handling) minimum = 20× OD. The 20× rule ensures the cable\'s bend radius is never exceeded while under tension during pull operations. Once at rest, the less-severe 10× standard is sufficient to prevent microbend losses and fatigue over the cable\'s service life. Both multipliers apply to the cable OD, not the conduit OD.',
+              },
             ]}
           />
         </div>

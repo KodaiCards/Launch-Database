@@ -292,6 +292,56 @@ export default function T10L08_PavementSodRestoration() {
                 explanation:
                   'Minimum patch width = trench (10 in) + 24 in each side = 58 inches total. "Match existing surface type" means concrete — the visible asphalt overlay is a wearing course, but the structural pavement type is concrete. A concrete patch matched to the existing structural section provides the same long-term performance. An asphalt patch over an asphalt overlay on a concrete base would have different thermal response and load distribution than the adjacent pavement — it will fail at the joint sooner.',
               },
+              {
+                id: 'q2',
+                text: 'Your permit requires trench backfill to be placed and compacted to 95% Proctor density. The inspector observes the crew dumping and compacting all the backfill in a single lift. What is wrong with this approach?',
+                type: 'multiple-choice',
+                options: [
+                  { id: 'a', text: 'Nothing — as long as the final density test passes, lift thickness does not matter' },
+                  { id: 'b', text: 'Compacting backfill in a single deep lift prevents the compactor from reaching the required density throughout the depth — only the top 6–8 inches will achieve spec density' },
+                  { id: 'c', text: 'The issue is only relevant for cohesive soils — granular fill can be placed in any lift thickness' },
+                  { id: 'd', text: 'The lift thickness matters only if the trench is more than 24 inches deep' },
+                ],
+                correctId: 'b',
+                explanation:
+                  'Compaction equipment (plate compactors, jumping jacks, vibratory rollers) delivers their compaction energy to a limited depth — typically 6–8 inches per lift for standard equipment. Dumping all backfill at once and running the compactor on top produces a thin densified crust at the surface while the material below remains loose. That loose zone settles under traffic loads and creates the "ghost trench" — a trench-shaped depression that forms weeks or months after restoration. Proper procedure: place and compact in 6–8 inch lifts from the conduit zone to subgrade.',
+              },
+              {
+                id: 'q3',
+                text: 'After a trench is closed and rough-graded, how quickly should sod or seeding restoration be completed to meet typical DOT permit erosion control requirements?',
+                type: 'multiple-choice',
+                options: [
+                  { id: 'a', text: 'Within 7 calendar days of trench closure' },
+                  { id: 'b', text: 'Within 24–48 hours of trench closure in most permit conditions — bare soil on a right-of-way is an active erosion source' },
+                  { id: 'c', text: 'Within 30 days — the standard construction specification period' },
+                  { id: 'd', text: 'Timing does not matter as long as sod is placed before final acceptance walk' },
+                ],
+                correctId: 'b',
+                explanation:
+                  'Most DOT and environmental permits require vegetation establishment or erosion control cover within 24–48 hours of trench closure on disturbed rights-of-way. A bare soil surface on a slope sheds sediment with the first rain event — violating the project\'s stormwater pollution prevention plan (SWPPP). Sod installation within 24–48 hours, or temporary erosion control blanket if sod is not available, is the field-standard practice. Delaying until the final walk creates SWPPP violation risk and can result in permit notices of violation.',
+              },
+              {
+                id: 'q4',
+                text: 'A DOT inspector files a ghost-trench complaint 90 days after the route\'s final acceptance. The trench location has settled 2 inches below the adjacent pavement. Who bears the cost of repair?',
+                type: 'multiple-choice',
+                options: [
+                  { id: 'a', text: 'The DOT — they accepted the work at final walk and bear the maintenance cost going forward' },
+                  { id: 'b', text: 'The contractor — if the deficiency is caused by inadequate compaction, the contractor is liable for the correction regardless of when the settlement appears, up to the warranty period' },
+                  { id: 'c', text: 'The utility owner — they permitted the work and own the conduit' },
+                  { id: 'd', text: 'The settlement is expected and no one is liable — all trenches settle' },
+                ],
+                correctId: 'b',
+                explanation:
+                  'DOT permits for utility ROW encroachments typically include a 1–2 year warranty period during which the permittee (the contractor or utility owner) is responsible for trench settlement and pavement defects. If compaction records show the crew failed to place and compact material in required lifts, the settlement is a compaction deficiency — not normal settlement — and the contractor is liable for repair. Compaction test reports (proctor density at each lift, every 250 ft) are the contractor\'s primary defense against wrongful ghost-trench claims.',
+              },
+              {
+                id: 'q5',
+                type: 'fill-in-blank',
+                text: 'Trench backfill must be placed and compacted in ___ to ___ inch lifts to achieve specified density throughout the full trench depth.',
+                answer: '6 to 8',
+                explanation:
+                  'The standard lift thickness for trench backfill compaction is 6–8 inches per lift using standard field compaction equipment (plate compactors, jumping jacks, pneumatic tampers). Some specifications allow up to 12-inch lifts for select granular material compacted with heavy vibratory rollers, but 6–8 inches is the correct answer for standard telecom trench compaction on DOT-permitted routes. Each lift must be compacted to the specified Proctor density (typically 95%) before the next lift is placed.',
+              },
             ]}
           />
         </div>
