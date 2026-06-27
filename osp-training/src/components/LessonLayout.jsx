@@ -13,9 +13,13 @@
  *   • Progress save hook (stub for OSP-RW.2 API wiring)
  */
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, createContext, useContext, useCallback } from 'react';
 import { Link, useNavigate, useParams } from 'react-router-dom';
 import { useProgress } from '../hooks/useProgress.js';
+
+// Lets Quiz (and other interactive primitives) report their score to the parent
+// lesson so markComplete() is called with a real score once the learner passes.
+export const LessonProgressContext = createContext(null);
 
 // ── Tier badge config ───────────────────────────────────────────────────────
 const LESSON_TYPE_CONFIG = {
@@ -187,20 +191,32 @@ function TieredBody({ children }) {
   );
 }
 
+const PASS_THRESHOLD = 70; // must match routes/training.js PASS_THRESHOLD
+
 // ── Main LessonLayout ───────────────────────────────────────────────────────
 export function LessonLayout({ meta, children }) {
   const { courseId } = useParams();
-  const navigate = useNavigate();
 
-  // markSeen advances the lesson to in_progress on open. Completion is NOT
-  // manual — it's earned via assessment/interactive (useProgress.markComplete,
-  // called by quiz/activity components with a score, gated server-side).
-  const { markSeen } = useProgress(meta?.id);
+  const { markSeen, markComplete, status } = useProgress(meta?.id);
+
+  // Best quiz percentage achieved this session (null = no quiz attempted yet)
+  const [bestQuizPct, setBestQuizPct] = useState(null);
+  // True once the server has confirmed completion_credited in this session
+  const [sessionCredited, setSessionCredited] = useState(false);
 
   useEffect(() => {
-    // Record that the user opened this lesson
     markSeen?.();
   }, [meta?.id]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  // Called by Quiz (and other primitives) via LessonProgressContext when the
+  // learner finishes an interactive element with a measurable score (0–100).
+  const reportScore = useCallback((pct) => {
+    setBestQuizPct(prev => (prev === null ? pct : Math.max(prev, pct)));
+    if (pct >= PASS_THRESHOLD) {
+      markComplete?.(pct);
+      setSessionCredited(true);
+    }
+  }, [markComplete]);
 
   if (!meta) {
     return (
@@ -212,63 +228,78 @@ export function LessonLayout({ meta, children }) {
 
   const typeConfig = LESSON_TYPE_CONFIG[meta.lesson_type] ?? LESSON_TYPE_CONFIG.foundation;
   const backCourseId = courseId || meta.course_id;
-
-  // "Next lesson" link: same topic, order + 1
   const nextOrder = (meta.order || 1) + 1;
   const nextLessonPath = `/course/${backCourseId}/lesson/${String(nextOrder).padStart(2, '0')}`;
 
+  const isCredited = sessionCredited || status === 'completed';
+
   return (
-    <article className="space-y-0">
-      {/* ── Header ─────────────────────────────────────────────────── */}
-      <header className="panel">
-        <div className="flex items-start justify-between gap-4 flex-wrap">
-          <div>
-            <div className="text-xs uppercase tracking-widest text-slate-300/60 mb-1">
-              {meta.course_id} &middot; L{String(meta.order).padStart(2, '0')}
+    <LessonProgressContext.Provider value={{ reportScore }}>
+      <article className="space-y-0">
+        {/* ── Header ─────────────────────────────────────────────────── */}
+        <header className="panel">
+          <div className="flex items-start justify-between gap-4 flex-wrap">
+            <div>
+              <div className="text-xs uppercase tracking-widest text-slate-300/60 mb-1">
+                {meta.course_id} &middot; L{String(meta.order).padStart(2, '0')}
+              </div>
+              <h1 className="text-2xl font-bold text-slate-50">{meta.title}</h1>
             </div>
-            <h1 className="text-2xl font-bold text-slate-50">{meta.title}</h1>
+            <div className="flex flex-col items-end gap-2 shrink-0">
+              <span className={`text-xs font-semibold px-2 py-1 rounded-full ${typeConfig.badge}`}>
+                {typeConfig.label}
+              </span>
+              <span className="text-xs text-slate-400">
+                <ClockIcon />
+                {meta.estimated_minutes} min
+              </span>
+            </div>
           </div>
-          <div className="flex flex-col items-end gap-2 shrink-0">
-            <span className={`text-xs font-semibold px-2 py-1 rounded-full ${typeConfig.badge}`}>
-              {typeConfig.label}
-            </span>
-            <span className="text-xs text-slate-400">
-              <ClockIcon />
-              {meta.estimated_minutes} min
-            </span>
-          </div>
+
+          {/* Prereq strip */}
+          <PrereqStrip prerequisites={meta.prerequisites} courseId={backCourseId} />
+        </header>
+
+        {/* ── Lesson body ────────────────────────────────────────────── */}
+        <div className="panel mt-0 pt-0">
+          <TieredBody>{children}</TieredBody>
         </div>
 
-        {/* Prereq strip */}
-        <PrereqStrip prerequisites={meta.prerequisites} courseId={backCourseId} />
-      </header>
+        {/* ── Footer nav ─────────────────────────────────────────────── */}
+        <footer className="panel mt-4 flex items-center justify-between gap-4 flex-wrap">
+          <Link
+            to={`/course/${backCourseId}`}
+            className="text-sm text-slate-300 hover:text-amber-200 transition"
+          >
+            ← Back to course
+          </Link>
 
-      {/* ── Lesson body ────────────────────────────────────────────── */}
-      <div className="panel mt-0 pt-0">
-        <TieredBody>{children}</TieredBody>
-      </div>
+          {/* No manual "Mark complete" — completion is earned solely by passing
+              the lesson's assessment/interactive (reportScore → server gate at
+              >=70%). We only surface status here, never a shortcut. */}
+          {isCredited ? (
+            <span className="text-xs px-3 py-1 rounded border border-emerald-400/40 text-emerald-300 bg-emerald-700/30 font-semibold">
+              ✓ Complete
+            </span>
+          ) : bestQuizPct !== null && bestQuizPct < PASS_THRESHOLD ? (
+            <span className="text-[11px] text-rose-300/80 text-center">
+              Score {bestQuizPct}% — need {PASS_THRESHOLD}% to earn credit
+            </span>
+          ) : (
+            <span className="text-[11px] text-slate-400/80 text-center">
+              Pass the lesson quiz ({PASS_THRESHOLD}%+) to earn credit
+            </span>
+          )}
 
-      {/* ── Footer nav ─────────────────────────────────────────────── */}
-      {/* No manual "Mark complete" button: completion is competency-gated —
-          a lesson only completes via a passing assessment (>=70%) or a
-          completed interactive activity (see useProgress.markComplete + the
-          server-side gate in routes/training.js). */}
-      <footer className="panel mt-4 flex items-center justify-between gap-4">
-        <Link
-          to={`/course/${backCourseId}`}
-          className="text-sm text-slate-300 hover:text-amber-200 transition"
-        >
-          ← Back to course
-        </Link>
-
-        <Link
-          to={nextLessonPath}
-          className="text-sm text-amber-300 hover:text-amber-100 transition font-semibold"
-        >
-          Next lesson →
-        </Link>
-      </footer>
-    </article>
+          <Link
+            to={nextLessonPath}
+            className="text-sm text-amber-300 hover:text-amber-100 transition font-semibold"
+          >
+            Next lesson →
+          </Link>
+        </footer>
+      </article>
+    </LessonProgressContext.Provider>
   );
 }
 
