@@ -331,6 +331,36 @@ export default function T12L02_OLTSReferenceMethods() {
               explanation:
                 'True IL = (4.82 + 5.14) / 2 = 9.96 / 2 = 4.98 dB. The 0.32 dB directional variation is caused by connector polish orientation asymmetry or MFD mismatch at splices — normal on a 4-mile span with several connectors. Bidirectional averaging eliminates this artifact.',
             },
+            {
+              id: 'T12-L02-Q4',
+              type: 'mc',
+              question:
+                'A technician measures a 6 km singlemode feeder: A→B = 3.20 dB; B→A = 3.80 dB. The project acceptance limit is 3.50 dB (bidirectional average). Does the span pass?',
+              choices: [
+                'Fails — use the worst-case direction (3.80 dB) for acceptance comparison',
+                'Passes — use the better direction (3.20 dB) for acceptance comparison',
+                'Passes — bidirectional average = (3.20 + 3.80) / 2 = 3.50 dB, which meets the limit exactly',
+                'Cannot determine — need the individual fiber loss and connector loss breakdown first',
+              ],
+              correct: 2,
+              explanation:
+                'Bidirectional average = (3.20 + 3.80) / 2 = 6.00 / 2 = 3.00... wait: (3.20 + 3.80) / 2 = 7.00 / 2 = 3.50 dB. The average exactly meets the 3.50 dB limit. Acceptance comparisons use the bidirectional average per TIA-526-7A, not the worst-case or best-case unidirectional reading. The 0.60 dB directional spread (3.20 vs. 3.80) is normal on a 6 km span.',
+            },
+            {
+              id: 'T12-L02-Q5',
+              type: 'mc',
+              question:
+                'A technician is setting up a TIA-526-7A three-cord reference measurement but forgets to include the interconnect cord during the reference step — effectively using a two-cord reference. Which end of the DUT link will be included in the measured loss that should have been excluded?',
+              choices: [
+                'The source (transmit) end connector — it was not zeroed out by the two-cord setup',
+                'The receive end connector — it was not zeroed out by the two-cord setup',
+                'Both end connectors — a two-cord reference excludes neither end',
+                'Neither — two-cord and three-cord references produce the same measurement result on a lossless connector',
+              ],
+              correct: 0,
+              explanation:
+                'Three-cord reference: launch cord + interconnect cord + receive cord are all mated and zeroed together. This zeros out TWO connector pairs (source-side and receive-side), so the subsequent measurement captures only the DUT fiber and splices. If the interconnect cord is omitted (two-cord setup), only one connector pair is zeroed — the receive-side connector pair is still in the reference, but the DUT\'s source-end connector pair is NOT in the reference, so it gets included in the measured loss. The measurement will read higher than intended by approximately the loss of that unaccounted-for connector pair.',
+            },
           ]}
         />
       </section>

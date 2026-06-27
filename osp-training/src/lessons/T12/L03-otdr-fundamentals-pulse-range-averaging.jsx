@@ -314,6 +314,36 @@ export default function T12L03_OTDRFundamentals() {
               explanation:
                 'ΔD = (ΔN / N) × D = (0.0005 / 1.4682) × 40,000 m = 13.6 m ≈ 14 m. A higher actual EIOR means light travels slower, so the actual physical distance is longer than the OTDR calculates. Events appear closer (shorter distance) than they actually are — so the error is 14 m too short on the OTDR display.',
             },
+            {
+              id: 'T12-L03-Q4',
+              type: 'mc',
+              question:
+                'Two splice points are 60 meters apart on a 3 km span. With a 500 ns pulse width, both splices appear merged as a single event on the OTDR trace. What is the correct adjustment to resolve them as separate events?',
+              choices: [
+                'Switch to a longer pulse width (e.g., 2 µs) to improve dynamic range and separate the events',
+                'Switch to a shorter pulse width (e.g., 30 ns) to reduce the dead zone and resolve events closer together',
+                'Increase averaging time to 5 minutes — more averaging reduces noise and separates close events',
+                'Change from 1310 nm to 1625 nm — longer wavelengths have better spatial resolution',
+              ],
+              correct: 1,
+              explanation:
+                'Spatial resolution on an OTDR is limited by pulse width: two events must be separated by at least the length of one pulse to appear distinct. A 500 ns pulse covers ~50 m of fiber (speed of light in fiber ≈ 0.2 m/ns → 100 m round trip → 50 m one-way resolution). Two splices 60 m apart sit just outside that limit but can be overwhelmed by trace rise/fall. Switching to a shorter pulse (30 ns → ~3 m resolution) easily resolves 60 m spacing. Longer pulse, more averaging, and wavelength change all reduce dynamic range or resolution — the wrong direction.',
+            },
+            {
+              id: 'T12-L03-Q5',
+              type: 'mc',
+              question:
+                'An OTDR test report from a previous contractor shows all splice distances as approximately 22 meters shorter than the actual measured locations on the as-built plan. The OTDR EIOR was set to 1.4677; the cable manufacturer datasheet specifies 1.4700 at 1310 nm on a 35 km span. Is the EIOR discrepancy the likely cause?',
+              choices: [
+                'No — the 0.0023 EIOR difference is too small to produce 22 m of error',
+                'Yes — ΔD = (0.0023 / 1.4700) × 35,000 m ≈ 55 m; 55 m is large enough to explain a 22 m per-splice systematic offset across the span',
+                'Yes — ΔD = (0.0023 / 1.4677) × 35,000 m ≈ 55 m cumulative; events appear shorter than actual, consistent with a EIOR set too low',
+                'No — EIOR error would create a proportional offset growing with distance, not a fixed 22 m per-splice offset',
+              ],
+              correct: 2,
+              explanation:
+                'ΔD = (ΔN / N) × D = (0.0023 / 1.4677) × 35,000 ≈ 54.8 m total span error. This is a proportional offset that grows with distance — splices near the far end show the largest offset, splices near the near end show smaller offset. A uniform 22 m per-splice would suggest the report describes an average mid-span offset, not a fixed value. The low EIOR (1.4677 vs. actual 1.4700) means the OTDR calculates a shorter distance than the light actually traveled — all events appear closer than they are. The contractor should have set the EIOR from the cable datasheet before testing.',
+            },
           ]}
         />
       </section>

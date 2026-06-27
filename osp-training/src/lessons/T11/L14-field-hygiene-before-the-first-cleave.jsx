@@ -139,6 +139,21 @@ export default function L14FieldHygieneBeforeTheFirstCleave() {
       explanation:
         'Arc errors on breezy days in open aerial environments are almost always wind-related. Even a light breeze (5–10 mph) can deflect or quench the arc plasma column, producing inconsistent fusion. The correct fix is a field splice tent. Electrode oxidation is also possible but would not suddenly appear on a breezy day — it develops gradually over arc cycles. Water from low-purity IPA would cause arc instability but typically manifests as "fiber contaminated" warnings, not blank arc errors.',
     },
+    {
+      id: 'q5',
+      question:
+        'Why is 99% isopropyl alcohol (IPA) required for fiber end-face cleaning rather than 70% or 91% IPA?',
+      type: 'multiple-choice',
+      options: [
+        '99% IPA evaporates quickly and leaves no water residue; 70% and 91% grades contain enough water to leave a residue film on the end-face that can cause intermittent loss',
+        '99% IPA is less flammable than lower-purity grades and therefore safer for field use',
+        '70% and 91% IPA contain additives that chemically etch the silica fiber surface',
+        'IEC 61300-3-35 requires 99% IPA specifically for all Zone A cleaning operations',
+      ],
+      correct: 0,
+      explanation:
+        '99% IPA is essentially water-free. It dissolves oils and residues on contact, then evaporates completely, leaving nothing behind. 70% IPA (a common pharmacy grade) is 30% water — when applied to a fiber end-face, the IPA evaporates but the water remains as a microscopic film. That film is invisible at room temperature but can cause intermittent insertion loss as it freezes, contracts, or collects dust. In cold-weather applications, the residue film from 70% IPA is a reliable route to failed acceptance testing. Note: 99% IPA is more flammable than lower-purity grades — use it with ventilation and away from ignition sources.',
+    },
   ];
 
   const endFaceAnnotations = [

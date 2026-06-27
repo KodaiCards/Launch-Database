@@ -233,6 +233,26 @@ export default function T11L08_MechanicalSplicing() {
                 correctId: 'b',
                 explanation: 'Index-matching gel degradation causes progressive insertion loss increase, not sudden failure. As the gel dries out: the refractive index mismatch between crystallized gel and fiber glass increases (away from the ~1.47 match), more light is reflected instead of transmitted, and insertion loss climbs from the original ≤0.50 dB toward 1.0–2.0 dB over 5–10 years. This is a slow, temperature-accelerated process. The symptom: an optical path that passes initial acceptance testing shows increasing loss on annual inspection readings or carrier performance monitoring alerts.',
               },
+              {
+                id: 'q4',
+                type: 'multiple-choice',
+                text: 'What is the optical purpose of index-matching gel in a mechanical splice?',
+                options: [
+                  { id: 'a', text: 'To bond the fiber ends together permanently under compressive force' },
+                  { id: 'b', text: 'To fill the microscopic air gap between the fiber end-faces with a medium whose refractive index (~1.47) matches silica glass, eliminating Fresnel reflection loss at the gap' },
+                  { id: 'c', text: 'To protect the splice from moisture by sealing the ceramic sleeve' },
+                  { id: 'd', text: 'To reduce the cleave angle requirement — gel compensates for gaps caused by marginal cleaves' },
+                ],
+                correctId: 'b',
+                explanation: 'Without gel, the air gap between fiber ends creates a refractive index discontinuity: glass (n ≈ 1.47) → air (n = 1.00) → glass (n ≈ 1.47). Each glass-to-air interface causes a Fresnel reflection of approximately 0.18 dB (4% of optical power), for a total of ~0.36 dB just from the gap. Index-matching gel (n ≈ 1.47) fills the gap so light crosses glass-to-gel-to-glass with a matched refractive index — Fresnel reflection drops to near zero. The gel is what makes a properly made mechanical splice achieve ≤0.50 dB instead of ≥0.36 dB from reflections alone.',
+              },
+              {
+                id: 'q5',
+                type: 'fill-in-blank',
+                text: 'The maximum insertion loss for a properly installed mechanical splice — the threshold above which the splice is considered unacceptable — is ___ dB per industry guidelines.',
+                answer: '0.50',
+                explanation: 'Industry guidelines (TIA-568.3-D, FOA standards) specify ≤0.50 dB maximum for mechanical splices. Compare this to fusion splice acceptance: ≤0.30 dB average per RUS 1753F-401. The higher threshold for mechanical splices reflects the index-matching approach — gel is never as optically efficient as fused glass. On long spans with large fiber counts, even the 0.20 dB difference between fusion (0.05 dB typical) and mechanical (0.40 dB typical) accumulates into significant total link loss.',
+              },
             ]}
           />
         </div>

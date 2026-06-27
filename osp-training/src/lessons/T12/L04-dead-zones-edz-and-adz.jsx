@@ -358,6 +358,13 @@ export default function T12L04_DeadZones() {
               explanation: 'No loss step (trace level unchanged) + distance equals 2× a real reflector distance = classic ghost reflection signature. The high-reflectance connector at 250 m is bouncing energy between itself and the OTDR port, creating a phantom peak at 2 × 250 m = 500 m. No physical event exists there.',
             },
             {
+              id: 'q5',
+              type: 'fill-in-blank',
+              text: 'The dead zone that determines how close two splices must be to appear as separate events on an OTDR trace is the ___ (three-letter abbreviation).',
+              answer: 'EDZ',
+              explanation: 'The EDZ (Event Dead Zone) is the minimum distance between two reflective events for the OTDR to detect them as distinct. It ends when the trace recovers to within 0.5 dB of baseline after a reflection. The ADZ (Attenuation Dead Zone) is larger — it extends until the trace is stable enough for accurate loss measurement. Two splices within the EDZ appear as a single merged event even though both physically exist.',
+            },
+            {
               id: 'q4',
               type: 'drag-match',
               text: 'Match each dead zone type to its correct definition.',

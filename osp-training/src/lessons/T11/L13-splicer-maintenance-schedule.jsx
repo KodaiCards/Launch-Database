@@ -134,6 +134,21 @@ export default function L13SplicerMaintenanceSchedule() {
       explanation:
         'Pink indicator means the silica gel is saturated with moisture and is no longer absorbing. In this state it provides zero protection — it may even release moisture back into the case as temperatures fluctuate. Replace or oven-regenerate the gel before long-term storage. Arc calibration compensates for environmental variables on a given day but does not fix corrosion damage from moisture exposure during storage.',
     },
+    {
+      id: 'q5',
+      question:
+        'A crew runs arc calibration at sea level (500 ft elevation) in the morning, then drives to a splice site at 5,200 ft elevation and begins splicing immediately without recalibrating. What is the likely result?',
+      type: 'multiple-choice',
+      options: [
+        'No effect — arc calibration parameters are fixed once set and are independent of altitude',
+        'Degraded splice quality — lower air density at elevation reduces arc resistance, causing the splicer to fire a hotter-than-calibrated arc; recalibration at the actual elevation is required',
+        'Improved splice quality — thinner air at elevation produces a cleaner arc with less contamination risk',
+        'The splicer will automatically detect the altitude change and adjust its parameters without user input',
+      ],
+      correct: 1,
+      explanation:
+        'At higher elevation, air density is lower, reducing the electrical resistance of the arc gap. The same voltage/current settings calibrated at 500 ft will fire a hotter, wider arc at 5,200 ft — fusing too much glass and potentially producing a bulged splice bead with elevated insertion loss. Modern splicers have altitude compensation, but they still require a fresh calibration test splice AT the actual work site. The correct protocol: run arc calibration at the splice site, not at a lower elevation earlier in the day.',
+    },
   ];
 
   const electrodeLifeSteps = [
