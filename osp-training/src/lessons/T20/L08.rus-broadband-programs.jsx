@@ -94,6 +94,90 @@ export default function T20L08_BroadbandPrograms() {
         ]}
       />
 
+      <section data-tier="working">
+        <h2>Program Comparison: ReConnect vs. Community Connect</h2>
+        <table className="w-full text-xs border border-white/10 rounded mt-3">
+          <thead className="bg-white/5">
+            <tr>
+              <th className="px-2 py-2 text-left">Feature</th>
+              <th className="px-2 py-2 text-left">ReConnect (7 CFR 1740)</th>
+              <th className="px-2 py-2 text-left">Community Connect (7 CFR 1703)</th>
+            </tr>
+          </thead>
+          <tbody className="text-slate-300/90 text-xs">
+            <tr className="border-t border-white/10">
+              <td className="px-2 py-2 font-semibold">Match requirement</td>
+              <td className="px-2 py-2">10–20% of total project cost</td>
+              <td className="px-2 py-2">25% of total project cost</td>
+            </tr>
+            <tr className="border-t border-white/10">
+              <td className="px-2 py-2 font-semibold">Technology</td>
+              <td className="px-2 py-2">FTTH, fixed wireless, or hybrid</td>
+              <td className="px-2 py-2">Any broadband technology</td>
+            </tr>
+            <tr className="border-t border-white/10">
+              <td className="px-2 py-2 font-semibold">Speed threshold</td>
+              <td className="px-2 py-2">≥25 Mbps download / ≥3 Mbps upload</td>
+              <td className="px-2 py-2">≥25 Mbps download</td>
+            </tr>
+            <tr className="border-t border-white/10">
+              <td className="px-2 py-2 font-semibold">Eligible applicants</td>
+              <td className="px-2 py-2">Telecom providers, electric coops, municipalities</td>
+              <td className="px-2 py-2">Rural communities, distance learning, telemedicine</td>
+            </tr>
+            <tr className="border-t border-white/10">
+              <td className="px-2 py-2 font-semibold">Award size</td>
+              <td className="px-2 py-2">Up to $25M per award (varies by round)</td>
+              <td className="px-2 py-2">Smaller; focused on community facilities</td>
+            </tr>
+            <tr className="border-t border-white/10">
+              <td className="px-2 py-2 font-semibold">Annual rounds</td>
+              <td className="px-2 py-2">Yes (USDA announces funding rounds)</td>
+              <td className="px-2 py-2">Yes (separate NOFA)</td>
+            </tr>
+          </tbody>
+        </table>
+
+        <h3 className="mt-5 font-semibold">Worked Example: ReConnect Budget Math</h3>
+        <div className="rounded bg-white/5 p-3 mt-3 text-sm space-y-2">
+          <p><strong>Scenario:</strong> Rural telephone cooperative applies for ReConnect to deploy FTTH to 1,200 unserved households in 3 service areas. Total OSP + headend build-out: $6,000,000.</p>
+          <p><strong>Match required (20%):</strong> $6,000,000 × 20% = $1,200,000 borrower equity or other non-RUS funds.</p>
+          <p><strong>RUS funds (80%):</strong> $4,800,000 (grant or loan-grant blend).</p>
+          <p><strong>Your design constraint:</strong> Keep each service area OSP cost within the cost-per-mile cap. If Bullet 1751F-630 aerial allowance is $25,000/mi and you're designing 40 aerial miles, your aerial OSP budget is $1,000,000 for that service area. Every design decision that pushes cost above that allowance requires a budget amendment — which RUS reviews and may deny.</p>
+          <p><strong>Non-broadband-eligible catch:</strong> If one service area has a legacy remote terminal (RT) delivering 12 Mbps DSL, costs to upgrade that RT are NOT broadband-eligible under ReConnect. Borrower pays those out-of-pocket. Design around this: replace the RT with a fiber-fed GPON distribution node — now all new plant is 100% broadband-eligible.</p>
+        </div>
+
+        <h3 className="mt-5 font-semibold">Book vs. Field: Broadband-Eligible in Practice</h3>
+        <div className="rounded bg-amber-900/30 p-3 mt-3 text-sm">
+          <p className="font-semibold text-amber-300">Book</p>
+          <p className="text-slate-300/90 mt-1">A cost is broadband-eligible if the plant can deliver ≥25 Mbps and is funded under program rules. RUS defines eligible in the loan agreement and program NOFA.</p>
+        </div>
+        <div className="rounded bg-green-900/30 p-3 mt-3 text-sm">
+          <p className="font-semibold text-green-300">Field</p>
+          <p className="text-slate-300/90 mt-1">Borderline cases come up constantly. Example: A fiber splice closure at an intermediate pole that also serves as a RT-bypass point — is this OSP plant (eligible) or equipment (check separately)? Rule of thumb: outside plant passives (fiber, closures, strand, poles, conduit) = eligible. Active electronics (amplifiers, ONTs, routers) = eligible only if they enable ≥25 Mbps at the drop. Anything tied to legacy copper or sub-25 Mbps = non-eligible. When in doubt, document the design rationale in the loan package.</p>
+        </div>
+
+        <h3 className="mt-5 font-semibold">Program Impact on Your Design Scope</h3>
+        <p className="mt-2 text-sm text-slate-300/90">When you're designing for a ReConnect borrower, the program directly shapes your OSP design:</p>
+        <ul className="list-disc list-inside space-y-1 mt-2 text-sm text-slate-300/90">
+          <li><strong>Fiber count:</strong> Design for future capacity (48/96-count) even if current subscriber density is low — ReConnect-eligible plant should be forward-compatible with Gigabit speeds.</li>
+          <li><strong>Conduit routing:</strong> Place conduit for future underground expansion now (lower cost per mile with contractor already on site). All conduit is broadband-eligible.</li>
+          <li><strong>Drop terminals:</strong> Spec GPON-compatible terminals (≥2.5 Gbps PON-capable) so ONTs won't limit the path to ≥25 Mbps at subscriber end.</li>
+          <li><strong>Non-eligible carve-out:</strong> If the project replaces some DSL copper with fiber and keeps some DSL running in parallel during transition, track the copper-serving costs separately — they're non-eligible and must not appear in the RUS cost report.</li>
+        </ul>
+      </section>
+
+      <section className="mt-8 rounded-lg bg-slate-800/40 border border-slate-700 p-4">
+        <h3 className="font-semibold text-slate-200">Tying It Together</h3>
+        <p className="text-sm text-slate-300/90 mt-2">
+          In <strong>T20 L01</strong> you learned the RUS program structure (traditional Telecom Loan vs. broadband programs). In <strong>T20 L04</strong> (USOA plant accounts), you learned how to code costs to §32.2410 Cable & Wire, §32.2411 Poles, etc.
+          Those plant account categories are the same ones used to determine broadband eligibility: all new OSP plant coded to those accounts for a ≥25 Mbps-capable network qualifies.
+          ReConnect is just a higher-bandwidth version of the same cost-tracking discipline.
+          The match math (10–20% ReConnect; 25% Community Connect) directly affects how much the borrower can spend on total OSP — so when Carter builds an RUS project budget, the ReConnect award amount and match dictate your design ceiling.
+          Design to budget: overruns that exceed the cost-per-mile allowance won't be reimbursed unless an amendment is approved — which takes time and delays drawdowns.
+        </p>
+      </section>
+
       <h3 className="mt-6 font-semibold">Lesson Quiz</h3>
       <Quiz
         questions={[

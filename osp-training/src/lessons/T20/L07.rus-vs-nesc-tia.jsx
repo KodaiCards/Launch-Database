@@ -128,6 +128,79 @@ export default function T20L07_Reconciliation() {
         </div>
       </section>
 
+      <section className="mt-6 rounded-lg bg-white/5 p-4 text-sm">
+        <h3 className="font-semibold text-slate-200">Standards Reconciliation Decision Matrix</h3>
+        <table className="w-full text-xs border border-white/10 rounded mt-3">
+          <thead className="bg-white/5">
+            <tr>
+              <th className="px-2 py-2 text-left">Project element</th>
+              <th className="px-2 py-2 text-left">NESC</th>
+              <th className="px-2 py-2 text-left">TIA-607</th>
+              <th className="px-2 py-2 text-left">RUS Bulletin</th>
+              <th className="px-2 py-2 text-left">Apply</th>
+            </tr>
+          </thead>
+          <tbody className="text-slate-300/90 text-xs">
+            <tr className="border-t border-white/10">
+              <td className="px-2 py-2">Pole clearance</td>
+              <td className="px-2 py-2">3 ft horizontal (Rule 232)</td>
+              <td className="px-2 py-2">n/a</td>
+              <td className="px-2 py-2">Same or adds loading class</td>
+              <td className="px-2 py-2 text-green-300">NESC clearance + RUS load table</td>
+            </tr>
+            <tr className="border-t border-white/10">
+              <td className="px-2 py-2">Ground rod resistance</td>
+              <td className="px-2 py-2">Not tested (NESC sets geometry)</td>
+              <td className="px-2 py-2">≤5 Ω at CO/vault</td>
+              <td className="px-2 py-2">≤25 Ω aerial / ≤5 Ω CO (Form 219)</td>
+              <td className="px-2 py-2 text-green-300">TIA target at CO (5 Ω stricter); Form 219 required by RUS</td>
+            </tr>
+            <tr className="border-t border-white/10">
+              <td className="px-2 py-2">Fiber OLTS testing</td>
+              <td className="px-2 py-2">Not required</td>
+              <td className="px-2 py-2">TIA-568 + TIA-526</td>
+              <td className="px-2 py-2">Required before acceptance</td>
+              <td className="px-2 py-2 text-green-300">RUS requires OLTS (stricter than NESC)</td>
+            </tr>
+            <tr className="border-t border-white/10">
+              <td className="px-2 py-2">Messenger bonding</td>
+              <td className="px-2 py-2">NESC Rule 215D every 1,320 ft</td>
+              <td className="px-2 py-2">n/a</td>
+              <td className="px-2 py-2">Same or more frequent</td>
+              <td className="px-2 py-2 text-green-300">Use RUS interval if stricter</td>
+            </tr>
+            <tr className="border-t border-white/10">
+              <td className="px-2 py-2">Design certification</td>
+              <td className="px-2 py-2">PE seal per state law</td>
+              <td className="px-2 py-2">n/a</td>
+              <td className="px-2 py-2">Borrower's engineer certifies to RUS</td>
+              <td className="px-2 py-2 text-green-300">Both: PE seal + RUS certification letter</td>
+            </tr>
+          </tbody>
+        </table>
+
+        <h3 className="mt-5 font-semibold">Book vs. Field: When Standards Conflict</h3>
+        <div className="rounded bg-amber-900/30 p-3 mt-3 text-sm">
+          <p className="font-semibold text-amber-300">Book</p>
+          <p className="text-slate-300/90 mt-1">Clean hierarchy: NESC baseline → TIA where applicable → RUS adds/overrides. Apply stricter standard when they differ. RUS wins when RUS and others conflict on RUS projects.</p>
+        </div>
+        <div className="rounded bg-green-900/30 p-3 mt-3 text-sm">
+          <p className="font-semibold text-green-300">Field</p>
+          <p className="text-slate-300/90 mt-1">Engineer sees a pole with 2.5 ft horizontal clearance from electric — non-compliant with NESC Rule 232 but the rural electric co-op says "we've always done it that way." On an RUS project, you can't accept this: NESC applies, and RUS adopts NESC. Non-compliant existing conditions discovered during staking must be documented, and make-ready costs (moving the attachment to achieve 3 ft clearance) go into the project scope. RUS does not accept a variance because the utility "always did it that way."</p>
+        </div>
+      </section>
+
+      <section className="mt-8 rounded-lg bg-slate-800/40 border border-slate-700 p-4">
+        <h3 className="font-semibold text-slate-200">Tying It Together</h3>
+        <p className="text-sm text-slate-300/90 mt-2">
+          In <strong>T05</strong> you learned NESC (pole loading, clearance, safety). In <strong>T14</strong> you learned TIA-607 (grounding, bonding, electrode resistance). Both of those standards exist independently of RUS.
+          RUS doesn't replace them — it adopts NESC as a floor and adds Form 219 testing, pole-loading tables, and design certification on top.
+          TIA-607's 5 Ω target at the CO is stricter than most RUS aerial thresholds, so TIA-607 wins at the building even on an RUS project.
+          The lesson: you need to know all three standards well enough to spot where they agree, where one is stricter, and what the resolution is — without having to look up the hierarchy every time.
+          In practice, 90% of the time all three standards align. The 10% where they diverge (Form 219 testing, fiber OLTS requirement, CO grounding threshold) are precisely the items that trip up contractors who only know NESC.
+        </p>
+      </section>
+
       <h3 className="mt-6 font-semibold">Lesson Quiz</h3>
       <Quiz
         questions={[

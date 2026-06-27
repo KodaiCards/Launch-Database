@@ -118,6 +118,61 @@ export default function T20L06_FederalPermitting() {
           <p><strong>Environmental Assessment (EA):</strong> Project $300K or higher OR sensitive area. RUS prepares EA, issues Finding of No Significant Impact (FONSI) or refers to Environmental Impact Statement (EIS).</p>
           <p><strong>EIS (rare):</strong> Major impacts. Requires 6+ months, multi-agency coordination.</p>
         </div>
+
+        <h3 className="mt-5 font-semibold">NEPA Decision Path (RUS Projects)</h3>
+        <div className="mt-3 space-y-2 text-sm">
+          <div className="rounded bg-slate-700/50 p-3 border-l-4 border-blue-500">
+            <p className="font-semibold text-blue-300">Step 1 — Complete RUS Environmental Worksheet</p>
+            <p className="text-slate-300/90 mt-1">Answer: project cost? wetlands/floodplains? endangered species? historic properties? Indian lands? Tribal consultation needed?</p>
+          </div>
+          <div className="rounded bg-slate-700/50 p-3 border-l-4 border-green-500">
+            <p className="font-semibold text-green-300">Step 2 — CE or EA?</p>
+            <p className="text-slate-300/90 mt-1">All "no" answers + under $300K → Categorical Exclusion (CE). Any "yes" or over $300K → Environmental Assessment (EA). RUS decides; borrower doesn't self-certify CE.</p>
+          </div>
+          <div className="rounded bg-slate-700/50 p-3 border-l-4 border-amber-500">
+            <p className="font-semibold text-amber-300">Step 3 — Section 106 trigger?</p>
+            <p className="text-slate-300/90 mt-1">Any federal nexus (federal land, federal permit, or RUS funding) → 54 USC 306108 applies. SHPO consultation may take 30–90 days for rural routes with unknown archaeological potential.</p>
+          </div>
+          <div className="rounded bg-slate-700/50 p-3 border-l-4 border-purple-500">
+            <p className="font-semibold text-purple-300">Step 4 — Wetlands / USACE?</p>
+            <p className="text-slate-300/90 mt-1">Route crosses jurisdictional wetlands (within 500 ft of OHWM)? Apply for NWP 57. If conditions met, most telecom crossings qualify. For directional bore under wetland: NWP 12 may apply instead.</p>
+          </div>
+          <div className="rounded bg-slate-700/50 p-3 border-l-4 border-red-500">
+            <p className="font-semibold text-red-300">Step 5 — Federal land (BLM/USFS/NPS)?</p>
+            <p className="text-slate-300/90 mt-1">Route crosses BLM or USFS land? Right-of-way grant required (43 CFR Part 2800 for BLM; 36 CFR 251 for USFS). Add 6–12 months to permit timeline. BLM/USFS coordinate with NEPA and Section 106.</p>
+          </div>
+        </div>
+
+        <h3 className="mt-5 font-semibold">Worked Scenario: Route with Mixed Permitting</h3>
+        <div className="rounded bg-white/5 p-3 mt-3 text-sm space-y-2">
+          <p><strong>Project:</strong> 45-mile FTTH build, $3.2M, in rural Georgia. Route passes through: (1) USDA Rural county ROW; (2) a 200-ft wetland crossing via aerial span; (3) one historic district per county records.</p>
+          <p><strong>NEPA:</strong> $3.2M &gt; $300K → Environmental Assessment required. RUS starts EA. If FONSI issued (likely), NEPA closed. Timeline: 60–90 days.</p>
+          <p><strong>USACE NWP 57:</strong> 200-ft aerial wetland crossing → file NWP 57 pre-construction notification. Aerial span (no ground disturbance in wetland) usually qualifies. Timeline: 30–45 days for PCN response.</p>
+          <p><strong>Section 106:</strong> RUS funding = federal nexus → SHPO consultation for the historic district crossing. Submit route map, Section 106 paperwork. SHPO may require archaeological survey of a small buffer. Timeline: 30–90 days.</p>
+          <p><strong>Result:</strong> All three can be pursued in parallel. If submissions are coordinated, total permitting timeline is 90–120 days before construction can start. Missing any one of these at project start can delay construction by 3–6 months. Your job: identify all overlapping permits during preliminary design, not after staking.</p>
+        </div>
+
+        <h3 className="mt-5 font-semibold">Book vs. Field: Federal Permitting Reality</h3>
+        <div className="rounded bg-amber-900/30 p-3 mt-3 text-sm">
+          <p className="font-semibold text-amber-300">Book</p>
+          <p className="text-slate-300/90 mt-1">NEPA → CE or EA. Section 106 → SHPO. Wetlands → NWP 57. BLM → ROW grant. Clear rules, defined procedures, predictable timelines per the CFR.</p>
+        </div>
+        <div className="rounded bg-green-900/30 p-3 mt-3 text-sm">
+          <p className="font-semibold text-green-300">Field</p>
+          <p className="text-slate-300/90 mt-1">SHPO finds an unrecorded archaeological site along the route → 30-day hold while a cultural resource specialist surveys a 500-ft buffer. USACE PCN reviewer asks for more detail on the aerial attachment → 2-week response window. BLM ROW office is short-staffed → 8-month queue for right-of-way review. None of these are exceptional — they're routine. The fix: start permitting before you finish staking. Experienced borrowers pre-screen the route using GIS layers (National Wetlands Inventory, SHPO GIS, BLM/USFS boundaries) before staking to identify triggers early.</p>
+        </div>
+      </section>
+
+      <section className="mt-8 rounded-lg bg-slate-800/40 border border-slate-700 p-4">
+        <h3 className="font-semibold text-slate-200">Tying It Together</h3>
+        <p className="text-sm text-slate-300/90 mt-2">
+          In <strong>T09</strong> (Permitting) you learned general ROW and permit principles. This lesson adds the RUS-specific overlay: <em>RUS funding makes every permit a federal permit</em>.
+          That means NEPA, Section 106, and USACE all activate automatically — even if the route never touches federal land.
+          The NEPA Environmental Worksheet is the first action item after the loan is approved, not an afterthought.
+          Section 106 is triggered by the federal funding, not the project's location — so even a route entirely on private/state ROW must go through SHPO consultation.
+          NWP 57 only covers the wetland crossing itself; your OSP design must document exactly what enters and exits the wetland footprint.
+          These permitting layers are why RUS projects take 18–36 months from loan application to construction: the environmental compliance pipeline is real, not bureaucratic noise. Plan for it early.
+        </p>
       </section>
 
       <h3 className="mt-6 font-semibold">Lesson Quiz</h3>

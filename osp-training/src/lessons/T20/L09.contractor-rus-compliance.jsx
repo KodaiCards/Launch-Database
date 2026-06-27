@@ -126,6 +126,74 @@ export default function T20L09_ContractorCompliance() {
         </div>
       </section>
 
+      <section className="mt-6 rounded-lg bg-white/5 p-4 text-sm">
+        <h3 className="font-semibold text-slate-200">What Triggers an RUS Audit Finding?</h3>
+        <p className="mt-2 text-slate-300/90">RUS periodic audits look for specific patterns. These are the most common audit findings related to contractor compliance:</p>
+        <table className="w-full text-xs border border-white/10 rounded mt-3">
+          <thead className="bg-white/5">
+            <tr>
+              <th className="px-2 py-2 text-left">Finding type</th>
+              <th className="px-2 py-2 text-left">Root cause</th>
+              <th className="px-2 py-2 text-left">RUS consequence</th>
+            </tr>
+          </thead>
+          <tbody className="text-slate-300/90">
+            <tr className="border-t border-white/10">
+              <td className="px-2 py-2">Prevailing wage underpayment</td>
+              <td className="px-2 py-2">Contractor paid local rates below federal determination</td>
+              <td className="px-2 py-2">Retroactive wage payment required; costs may be disallowed from Form 307</td>
+            </tr>
+            <tr className="border-t border-white/10">
+              <td className="px-2 py-2">Missing Form 740</td>
+              <td className="px-2 py-2">Work started before certification was signed</td>
+              <td className="px-2 py-2">RUS may disallow all costs incurred before Form 740 execution</td>
+            </tr>
+            <tr className="border-t border-white/10">
+              <td className="px-2 py-2">Bond lapse</td>
+              <td className="px-2 py-2">Performance/payment bond expired mid-project; not renewed</td>
+              <td className="px-2 py-2">RUS may halt drawdowns until new bond is provided</td>
+            </tr>
+            <tr className="border-t border-white/10">
+              <td className="px-2 py-2">Subcontractor not certified</td>
+              <td className="px-2 py-2">Prime contractor used uncertified subs; subs didn't get separate Form 740</td>
+              <td className="px-2 py-2">Sub's work disallowed from RUS cost reimbursement</td>
+            </tr>
+            <tr className="border-t border-white/10">
+              <td className="px-2 py-2">Unposted wage rates</td>
+              <td className="px-2 py-2">Prevailing wage schedule not posted at job site</td>
+              <td className="px-2 py-2">Technical violation; RUS sends cure notice before disallowing costs</td>
+            </tr>
+          </tbody>
+        </table>
+
+        <h3 className="mt-5 font-semibold">Worked Scenario: Pre-Construction Checklist</h3>
+        <div className="rounded bg-white/5 p-3 mt-3 space-y-2 text-xs text-slate-300/90">
+          <p className="text-sm font-semibold text-slate-100">Day 0 — Before contractor mobilizes to job site:</p>
+          <p>☐ Form 740 signed by contractor (all principals) and on file with borrower.</p>
+          <p>☐ Bid bond received (typically 5–10% of contract); verified active.</p>
+          <p>☐ Performance bond (100% of contract) received; bonding company confirmed licensed in state.</p>
+          <p>☐ Payment bond (100% of contract) received; subcontractors named.</p>
+          <p>☐ Certificate of insurance on file (general liability, workers comp, auto).</p>
+          <p>☐ Federal wage determination (current year, county) printed and posted at staging area.</p>
+          <p>☐ Subcontractor list submitted; each sub has own Form 740 equivalent or prime Form 740 covers subs.</p>
+          <p>☐ RUS engineer has reviewed and approved the Form 740 package before issuing a Notice to Proceed (NTP).</p>
+          <p className="mt-2 text-sm font-semibold text-slate-100">During construction:</p>
+          <p>☐ Monthly certified payroll review (compare to wage determination).</p>
+          <p>☐ Bond renewal tracked (most bonds expire annually; multi-year projects need renewal).</p>
+          <p>☐ Any sub change → new sub goes through Form 740 process before starting work.</p>
+        </div>
+      </section>
+
+      <section className="mt-8 rounded-lg bg-slate-800/40 border border-slate-700 p-4">
+        <h3 className="font-semibold text-slate-200">Tying It Together</h3>
+        <p className="text-sm text-slate-300/90 mt-2">
+          In <strong>T10</strong> (Construction Management) you learned what happens on a job site: crews, equipment, daily progress tracking, QC checkpoints.
+          This lesson adds the RUS compliance layer that runs in parallel: Form 740 before any crew arrives, prevailing wage monitoring throughout, bond verification before NTP.
+          On a non-RUS project, you negotiate wages freely and there's no federal certification. On an RUS project, Davis-Bacon is a federal statute — the contractor doesn't get to opt out because "local labor is cheaper."
+          Your role as the RUS engineer or inspector is to catch compliance gaps before they become audit findings. An audit finding is worse than a cost overrun: the borrower may have to repay RUS funds from their own pocket. Prevention — Form 740 day one, wage monitoring monthly — is far cheaper than remediation.
+        </p>
+      </section>
+
       <h3 className="mt-6 font-semibold">Lesson Quiz</h3>
       <Quiz
         questions={[
