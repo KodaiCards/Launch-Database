@@ -6,6 +6,7 @@ import React from 'react';
 import LessonLayout from '../../components/LessonLayout.jsx';
 import Quiz from '../../components/primitives/Quiz.jsx';
 import Flashcard from '../../components/Flashcard.jsx';
+import Sortable from '../../components/primitives/Sortable.jsx';
 
 export const meta = {
   id: 'T11.L01',
@@ -297,6 +298,32 @@ export default function T11L01_WhyWeColorCodeFibers() {
           Count to verify — never rely on color alone when the stakes are high.
         </p>
 
+        {/* Sequence ordering practice */}
+        <div className="mt-6">
+          <Sortable
+            title="Sequence Check"
+            prompt="Drag these TIA-598 colors into the correct order (positions 1–12)."
+            items={[
+              { id: 'blue',   label: 'Blue' },
+              { id: 'orange', label: 'Orange' },
+              { id: 'green',  label: 'Green' },
+              { id: 'brown',  label: 'Brown' },
+              { id: 'slate',  label: 'Slate' },
+              { id: 'white',  label: 'White' },
+              { id: 'red',    label: 'Red' },
+              { id: 'black',  label: 'Black' },
+              { id: 'yellow', label: 'Yellow' },
+              { id: 'violet', label: 'Violet' },
+              { id: 'rose',   label: 'Rose' },
+              { id: 'aqua',   label: 'Aqua' },
+            ]}
+            correctOrder={['blue','orange','green','brown','slate','white','red','black','yellow','violet','rose','aqua']}
+            explanation="The TIA-598-D sequence: Blue (1) · Orange (2) · Green (3) · Brown (4) · Slate (5) · White (6) · Red (7) · Black (8) · Yellow (9) · Violet (10) · Rose (11) · Aqua (12). Mnemonic: Big Orange Gorillas Browse Slowly While Reading Books — You're Very Relaxed Always."
+            citation="TIA-598-D Optical Fiber Cable Color Coding"
+            fieldNote="Veterans don't count — they know the sequence the way you know the alphabet. Drill it until it's automatic, then verify with position counting."
+          />
+        </div>
+
         {/* Quiz */}
         <div className="mt-6">
           <Quiz
@@ -339,6 +366,39 @@ export default function T11L01_WhyWeColorCodeFibers() {
                 ],
                 correctId: 'b',
                 explanation: 'Tube 8 covers fibers 85–96 (tubes 1-7 cover positions 1-84: 7 × 12 = 84). Fiber 85 is the FIRST fiber in tube 8 → position 1 within that tube → Blue fiber. So: Black tube (tube 8), Blue fiber (position 1). The arithmetic: 85 − 84 = 1 → position 1 within tube 8.',
+              },
+              {
+                id: 'q4',
+                type: 'fill-in-blank',
+                text: 'What is the TIA-598 color for position 11 (the second-to-last color in the sequence)?',
+                answer: 'Rose',
+                explanation: 'The full sequence: Blue(1), Orange(2), Green(3), Brown(4), Slate(5), White(6), Red(7), Black(8), Yellow(9), Violet(10), Rose(11), Aqua(12). Rose is the 11th, right before Aqua. This is one of the most commonly confused positions — Violet → Rose → Aqua is the tricky tail.',
+              },
+              {
+                id: 'q5',
+                type: 'multiple-choice',
+                text: 'You open a buffer tube in the field and see fibers that look like Slate, Black, and Brown — but the colors are hard to read because the tube has gel contamination from burial. What is the professional verification step before you make any splice?',
+                options: [
+                  { id: 'a', text: 'Proceed by matching the approximate color — gel contamination is expected and acceptable' },
+                  { id: 'b', text: 'Clean each fiber with an IPA wipe, then count position from the reference mark to verify identity independent of color' },
+                  { id: 'c', text: 'Use a label printer to re-label each fiber based on your best estimate of its color' },
+                  { id: 'd', text: 'Call the engineer of record to get an approved deviation' },
+                ],
+                correctId: 'b',
+                explanation: 'Gel contamination is common in buried loose-tube cable. The professional procedure is always: (1) clean the fiber with IPA to expose the actual coating color, then (2) count position from the reference mark as an independent check. If color and count agree, proceed. If they disagree, stop and re-verify. Never rely on an approximate color match — a wrong splice in a multi-fiber cable can require rebuilding the entire closure.',
+              },
+              {
+                id: 'q6',
+                type: 'multiple-choice',
+                text: 'Cumulative check (T11.L01 → T11.L04): During a fusion splice, the splicer estimates 0.03 dB loss. You know from TIA-598 color coding that the fibers are both Blue (position 1) from tube 3 on both cables. Why might you still do a bidirectional OTDR verification even though the splicer estimate is well below the 0.20 dB ITU-T L.400 budget?',
+                options: [
+                  { id: 'a', text: 'The OTDR cannot distinguish a good splice from a bad one at this loss level' },
+                  { id: 'b', text: 'The splicer estimate can be misleading due to mode-field mismatch or camera alignment error; OTDR bidirectional averaging gives the true IL independent of fiber geometry differences' },
+                  { id: 'c', text: 'OTDR testing is only required when loss exceeds 0.20 dB' },
+                  { id: 'd', text: 'A confirmed color match guarantees the splice is correct, so no further verification is needed' },
+                ],
+                correctId: 'b',
+                explanation: 'This ties TIA-598 color coding (knowing which fiber you spliced) to fusion splice quality (knowing HOW WELL you spliced it). Color match confirms identity — it says nothing about splice quality. The splicer\'s on-screen estimate can read low due to camera alignment artifacts or core geometry differences between the two fibers. Bidirectional OTDR averaging (measuring from A→B and B→A, then averaging the two readings for each splice point) gives the true insertion loss independent of those artifacts. ITU-T L.400 (2014) requires bidirectional averaging for this reason.',
               },
             ]}
           />

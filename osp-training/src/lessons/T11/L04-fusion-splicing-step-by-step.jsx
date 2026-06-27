@@ -6,6 +6,8 @@ import React from 'react';
 import LessonLayout from '../../components/LessonLayout.jsx';
 import Quiz from '../../components/primitives/Quiz.jsx';
 import Flashcard from '../../components/Flashcard.jsx';
+import Sortable from '../../components/primitives/Sortable.jsx';
+import BranchingScenario from '../../components/primitives/BranchingScenario.jsx';
 
 export const meta = {
   id: 'T11.L04',
@@ -315,6 +317,39 @@ export default function T11L04_FusionSplicingStepByStep() {
           ))}
         </div>
 
+        {/* ── SORTABLE — sequence practice ─────────────────────────── */}
+        <div className="mt-8">
+          <Sortable
+            title="Put the Splice Workflow in Order"
+            prompt="Drag and drop these steps into the correct sequence — from picking up the fiber to closing the splice case."
+            items={[
+              { id: 'thread-protector', label: 'Thread the heat-shrink splice protector onto one fiber' },
+              { id: 'strip-buffer',     label: 'Strip the buffer tube jacket to expose coated fibers' },
+              { id: 'strip-coating',    label: 'Strip the 250 µm acrylate fiber coating (bare glass)' },
+              { id: 'clean-fiber',      label: 'Clean: dry wipe, then IPA wipe (one direction each)' },
+              { id: 'cleave-fiber',     label: 'Cleave the fiber end (target angle ≤0.5°)' },
+              { id: 'load-splicer',     label: 'Load both fibers into the splicer V-grooves' },
+              { id: 'align-fuse',       label: 'Align and fuse — press SPLICE, splicer runs automatically' },
+              { id: 'proof-test',       label: 'Proof-test: splicer applies 1–2 N axial tension automatically' },
+              { id: 'heat-shrink',      label: 'Slide protector over the joint and heat-shrink in the oven' },
+            ]}
+            correctOrder={[
+              'thread-protector',
+              'strip-buffer',
+              'strip-coating',
+              'clean-fiber',
+              'cleave-fiber',
+              'load-splicer',
+              'align-fuse',
+              'proof-test',
+              'heat-shrink',
+            ]}
+            explanation="The splice protector must be threaded FIRST — once the splice is made you cannot add it. Strip the outer buffer tube before the individual fiber coating. Clean must immediately precede cleaving — contamination redeposits from air within seconds. The splicer handles align and fuse automatically after you load. Proof-test comes automatically before the splicer releases the fiber. Heat-shrink is the final mechanical protection step."
+            citation="FOA CFOS-S KSA workflow; IEC 61754-30 splice protector specification"
+            fieldNote="Field crews who do large splice counts (100+ fibers in a ribbon case) sometimes pre-thread all protectors before stripping any fibers. Fine — the principle holds: protectors go on before any stripping begins."
+          />
+        </div>
+
         <h3 className="mt-6 font-semibold">After the splice: protect the joint</h3>
         <p>
           Slide the heat-shrink splice protector from where it was parked (15–20 cm back on
@@ -399,6 +434,51 @@ export default function T11L04_FusionSplicingStepByStep() {
           </p>
         </div>
 
+        {/* ── BRANCHING SCENARIO — failure diagnosis ───────────────── */}
+        <div className="mt-8">
+          <BranchingScenario
+            scenarioId="T11-L04-scenario-1"
+            title="Field Scenario: Something Went Wrong"
+            description="You're splicing 48-count aerial cable on a RUS job. Work through the situation and make the right calls."
+            startNodeId="start"
+            nodes={{
+              start: {
+                id: 'start',
+                prompt: 'You complete Step 7 (fuse). The splicer display shows 0.12 dB estimated loss — slightly above your 0.10 dB target but below the 0.30 dB rejection threshold. The camera image shows a faint line at the splice point but no obvious bubble or void. What do you do?',
+                choices: [
+                  { label: 'Accept it — 0.12 dB is close enough', consequence: 'You close the splice case and move on. On the OTDR that evening, this splice reads 0.22 dB bidirectional average — it failed the RUS contract threshold. You\'re back up the tower the next day to re-splice.', nextId: 'end-bad', isOptimal: false },
+                  { label: 'Check the OTDR reading before accepting', consequence: 'Good call. The splicer estimate is diagnostic, not the official measurement. You get an OTDR on this splice while the case is still open. The bidirectional average reads 0.19 dB — still under 0.30 dB but above your target. Now what?', nextId: 'otdr-check', isOptimal: true },
+                  { label: 'Re-splice immediately', consequence: 'Re-splicing a 0.12 dB joint without OTDR confirmation is wasteful and risks a worse result. The estimate is slightly high but the camera image looks clean — the right call is to OTDR first before cutting out a potentially acceptable splice.', nextId: 'end-ok', isOptimal: false },
+                ],
+              },
+              'otdr-check': {
+                id: 'otdr-check',
+                prompt: 'The OTDR bidirectional average is 0.19 dB — passes RUS contract (≤0.30 dB) but misses your FOA target (≤0.10 dB). The splice case still open. What now?',
+                choices: [
+                  { label: 'Accept it — 0.19 dB passes the RUS contract requirement', consequence: '0.19 dB passes today. But a link with every splice averaging 0.19 dB instead of 0.10 dB has 90% more splice loss in the budget. If the network ever gets upgraded with additional spans or wavelengths, you\'re the cause of a margin problem. Carter\'s rule: pass the craft target, not just the contract floor.', nextId: 'end-ok', isOptimal: false },
+                  { label: 'Re-splice — the camera showed a faint anomaly and 0.19 dB confirms it', consequence: 'Correct. A splice showing an anomaly on camera AND measuring above the FOA target should be re-made while the case is open. You re-strip, re-clean, re-cleave, and re-fuse. New OTDR reading: 0.06 dB. Case closed.', nextId: 'end-excellent', isOptimal: true },
+                  { label: 'Leave it and note it on the as-built records', consequence: 'Documenting a known marginal splice is better than hiding it, but you still should have re-spliced while the case was open. Now the documentation flags a problem for every future inspection. Re-splice first — document the result.', nextId: 'end-ok', isOptimal: false },
+                ],
+              },
+              'end-bad': {
+                id: 'end-bad',
+                isEnd: true,
+                endMessage: 'Result: Rework call-back. Accepting the splicer estimate without OTDR verification cost a full day of rework and a customer outage window. Always OTDR before closing the case.',
+              },
+              'end-ok': {
+                id: 'end-ok',
+                isEnd: true,
+                endMessage: 'Result: Acceptable but not optimal. You passed the contract floor, but the FOA craftsmanship standard exists for a reason — spare link budget protects future upgrades. Re-splice when the case is still open.',
+              },
+              'end-excellent': {
+                id: 'end-excellent',
+                isEnd: true,
+                endMessage: 'Result: Excellent. You used the OTDR to confirm a concern, re-spliced while the case was still accessible, and delivered a 0.06 dB joint. This is the correct process.',
+              },
+            }}
+          />
+        </div>
+
         {/* Quiz */}
         <div className="mt-6">
           <Quiz
@@ -442,6 +522,53 @@ export default function T11L04_FusionSplicingStepByStep() {
                 ],
                 correctId: 'c',
                 explanation: 'A fiber breaking at proof-test means the fusion was weak — typically from a bad cleave (chipped or angled end-face) or contamination at the fusion interface. The broken end-face from the break is not a clean cleave — it\'s a stress fracture, unusable for splicing. The correct recovery is: strip back 3–5 cm on the broken fiber to expose fresh fiber past the fracture, re-clean the bare glass, re-cleave with the precision cleaver, then proceed from Step 4 (load into splicer). Do not try to re-fuse a fractured end.',
+              },
+              {
+                id: 'q4',
+                type: 'multiple-choice',
+                text: 'Why must the "clean" step use a dry wipe before the IPA wipe — not IPA first?',
+                options: [
+                  { id: 'a', text: 'IPA dissolves the fiber glass and must not contact it first' },
+                  { id: 'b', text: 'The dry wipe removes bulk gel and debris so the IPA wipe can dissolve surface oils without smearing gel across the fiber end-face' },
+                  { id: 'c', text: 'The IPA must be at room temperature before it contacts the glass; the dry wipe pre-warms the fiber surface' },
+                  { id: 'd', text: 'IPA first is equally acceptable — the order does not matter as long as both wipes are performed' },
+                ],
+                correctId: 'b',
+                explanation: 'Buffer gel (filling compound) from the cable does not dissolve in IPA — it smears. If you apply IPA first to a gel-coated fiber, you spread gel along the entire bare fiber length and contaminate the end-face more thoroughly than you started. The dry wipe physically removes the bulk gel first; the IPA wipe then dissolves the residual oil and moisture that the dry wipe cannot remove. Order matters every time.',
+              },
+              {
+                id: 'q5',
+                type: 'fill-in-blank',
+                text: 'The splicer\'s estimated insertion loss display is a useful diagnostic, but the required acceptance measurement for a RUS build is a _____ measurement taken before the splice case is closed.',
+                answer: 'bidirectional OTDR',
+                answerDisplay: 'bidirectional OTDR',
+                explanation: 'RUS Bulletin 1753F-401 requires bidirectional OTDR verification of every splice before the splice case is sealed. The splicer estimate is optical throughput measured inside the machine under controlled conditions — it does not account for field connector reflections, MFD mismatch, or launch conditions. The bidirectional OTDR average is the official splice loss value of record.',
+              },
+              {
+                id: 'q6',
+                type: 'multiple-choice',
+                text: 'You are splicing G.652.D to G.652.D fiber. The splicer is set to cladding-align mode. What problem can this cause versus core-align mode?',
+                options: [
+                  { id: 'a', text: 'No problem — G.652.D to G.652.D is the same fiber type, so cladding-align and core-align produce identical results' },
+                  { id: 'b', text: 'Cladding-align centers the 125 µm outer glass surface, not the 8–9 µm core — if the core is slightly off-center in either fiber, the joint will show elevated loss that core-align would have compensated for' },
+                  { id: 'c', text: 'Cladding-align only works on multimode fiber; using it on singlemode causes the arc to miss the fibers entirely' },
+                  { id: 'd', text: 'Cladding-align produces lower loss than core-align on matched fiber because it aligns a larger surface area' },
+                ],
+                correctId: 'b',
+                explanation: 'Even in the same fiber family (G.652.D to G.652.D), individual fibers from different reels or manufacturers have slight core eccentricity — the core is not perfectly centered in the 125 µm cladding. Core-align mode finds and centers the actual light-carrying core, compensating for this eccentricity. Cladding-align only centers the outer glass boundary. For ≤0.10 dB targets on field cable, core-align mode is the correct setting. Cladding-align is faster and acceptable when fiber types and core geometry are tightly controlled (same reel, same manufacturer).',
+              },
+              {
+                id: 'q7',
+                type: 'multiple-choice',
+                text: 'From T12: An OTDR measured from the west end shows 0.23 dB at a fusion splice. Measured from the east end, the same splice shows 0.05 dB. The bidirectional average is 0.14 dB. Does this splice pass or fail the RUS contract maximum?',
+                options: [
+                  { id: 'a', text: 'Fail — the 0.23 dB one-direction reading exceeds the 0.10 dB FOA target' },
+                  { id: 'b', text: 'Pass — 0.14 dB is below the RUS 0.30 dB contract maximum, and the bidirectional average is the true insertion loss' },
+                  { id: 'c', text: 'Fail — OTDR measurements must be the same from both ends; if they differ, the splice must be redone' },
+                  { id: 'd', text: 'Pass — the 0.05 dB reading from the east end proves the splice is good; the west reading is noise' },
+                ],
+                correctId: 'b',
+                explanation: 'The bidirectional average (0.14 dB) is the true optical insertion loss of the fusion splice. The asymmetry (0.23 vs 0.05 dB) reflects the difference in Rayleigh backscatter coefficient between the two fibers — neither reading alone is the insertion loss. 0.14 dB is below the RUS 1753F-401 contract maximum of 0.30 dB, so the splice passes the contract test. It does not meet the FOA 0.10 dB craftsmanship target, so a quality-focused crew might choose to re-splice — but it is not a contract failure.',
               },
             ]}
           />

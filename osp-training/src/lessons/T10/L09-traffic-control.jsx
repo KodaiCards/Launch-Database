@@ -6,6 +6,7 @@ import React from 'react';
 import LessonLayout from '../../components/LessonLayout.jsx';
 import Quiz from '../../components/primitives/Quiz.jsx';
 import Flashcard from '../../components/Flashcard.jsx';
+import BranchingScenario from '../../components/primitives/BranchingScenario.jsx';
 
 export const meta = {
   id: 'T10.L09',
@@ -229,6 +230,55 @@ export default function T10L09_TrafficControl() {
           a work zone = stop-work.
         </p>
 
+        {/* Decision scenario */}
+        <div className="mt-8">
+          <BranchingScenario
+            scenarioId="T10-L09-scenario-1"
+            title="Work-Zone Decision: Monday Morning"
+            description="It's 6 a.m. Monday. Your crew is at the staging area for conduit installation on a 55-mph state highway. You have a MUTCD Diagram 6H-3 in hand. The encroachment permit says: 'Lane closure requires a site-specific TCP prepared and sealed by a registered PE.' Your supervisor says setup starts in 30 minutes."
+            startNodeId="start"
+            nodes={{
+              start: {
+                id: 'start',
+                prompt: 'You review the permit condition. The MUTCD diagram in your hand is generic — it shows the right layout type but it is NOT a PE-stamped site-specific TCP. What do you do?',
+                choices: [
+                  { label: 'Set up the lane closure using the MUTCD diagram', consequence: 'The diagram is generic. The permit requires a site-specific PE-stamped TCP.', nextId: 'bad-setup', isOptimal: false },
+                  { label: 'Stop setup and call your project manager', consequence: 'Good — you identified the problem before committing cones to the road. The PM needs to know before the crew mobilizes.', nextId: 'call-pm', isOptimal: true },
+                  { label: 'Set up and hope the inspector doesn\'t show', consequence: 'DOT inspectors are on a schedule. If they arrive, work stops and you may lose your permit.', nextId: 'bad-setup', isOptimal: false },
+                ],
+              },
+              'bad-setup': {
+                id: 'bad-setup',
+                prompt: 'You start setting cones. Forty minutes in, a GDOT inspector arrives and asks for your TCP. You show the MUTCD diagram.',
+                choices: [
+                  { label: 'Explain that a MUTCD diagram is the federal standard', consequence: 'The inspector knows the permit condition. The federal standard is the FLOOR; the permit imposed a higher site-specific requirement.', nextId: 'stop-work', isOptimal: false },
+                  { label: 'Offer to get the PE-stamped TCP submitted today', consequence: 'The inspector issues a stop-work order. You can\'t promise a TCP in hours — typical review is 5–10 business days.', nextId: 'stop-work', isOptimal: false },
+                ],
+              },
+              'stop-work': {
+                id: 'stop-work',
+                prompt: 'The inspector issues a stop-work order. Your crew demobilizes. The TCP submittal, review, and approval will take 2–3 weeks.',
+                isEnd: true,
+                endMessage: 'A work stoppage that could have been avoided. The TCP lead time (site visit → preparation → PE seal → DOT review → approval) is 2–3 weeks. It must be in hand BEFORE mobilization day, not the morning of.',
+              },
+              'call-pm': {
+                id: 'call-pm',
+                prompt: 'The PM confirms: no PE-stamped TCP has been submitted yet. The crew cannot begin the lane closure today. What is the right next step?',
+                choices: [
+                  { label: 'Work in the shoulder only (no lane intrusion) while the TCP is pending', consequence: 'Shoulder-only work that doesn\'t intrude into the travel lane may be permitted under a different condition — check the permit language. This may be acceptable if the permit allows it.', nextId: 'shoulder-work', isOptimal: true },
+                  { label: 'Submit the TCP today and begin the lane closure as soon as it\'s sent', consequence: 'Submission without approval is not authorization. DOT review takes 5–10 business days. You cannot begin before approval.', nextId: 'stop-work', isOptimal: false },
+                ],
+              },
+              'shoulder-work': {
+                id: 'shoulder-work',
+                prompt: 'The permit allows shoulder work without a lane closure permit. The crew works in the shoulder while the PE-stamped TCP is prepared and submitted. Three weeks later, the TCP is approved.',
+                isEnd: true,
+                endMessage: 'Optimal outcome: no stop-work, no permit violation, and the lane closure proceeds properly three weeks later. The lesson: TCP lead time is 2–3 weeks minimum. Build it into the construction schedule at bid time, not the morning of mobilization.',
+              },
+            }}
+          />
+        </div>
+
         {/* Quiz */}
         <div className="mt-6">
           <Quiz
@@ -261,6 +311,39 @@ export default function T10L09_TrafficControl() {
                 correctId: 'c',
                 explanation:
                   'At 55 mph, this is a MERGE TAPER (lane closure — traffic must move entirely out of the closed lane). MUTCD 2009 Table 6C-3 specifies two different formulas: (1) MERGE taper when S > 45 mph: L = WS = 12 × 55 = 660 ft. (2) SHIFT taper (parallel offset): L = WS/60 at all speeds. A lane closure is a merge maneuver, not a shift. Using the shift formula (WS/60 = 11 ft) on a 55-mph lane closure is a dangerous error — an 11-ft taper at highway speed gives drivers almost no time to react and merge safely. The correct minimum is 660 ft from the formula; always also check MUTCD Table 6C-5 minimums for the speed and apply whichever is greater.',
+              },
+              {
+                id: 'q3',
+                text: 'A flagger is working a one-lane two-way operation on a county road. The certified flagger calls in sick and the crew supervisor assigns an uncertified laborer to flag in their place. Which of the following is correct?',
+                type: 'multiple-choice',
+                options: [
+                  { id: 'a', text: 'Acceptable if the supervisor verbally coaches the laborer on STOP/SLOW paddle use' },
+                  { id: 'b', text: 'Acceptable only for low-speed roads under 35 mph' },
+                  { id: 'c', text: 'Not acceptable — all flaggers on site must hold valid certification; uncertified flaggers = stop-work' },
+                  { id: 'd', text: 'Acceptable if work is completed within 2 hours' },
+                ],
+                correctId: 'c',
+                explanation: 'MUTCD Part 6E and most state DOT requirements mandate that flaggers must be trained and certified. Inspectors verify certification cards on person. An uncertified flagger in a work zone is a permit violation and safety hazard. The correct action when the certified flagger calls in sick is to stop lane-closure operations until a certified replacement arrives, or to work without a lane closure if the scope permits it.',
+              },
+              {
+                id: 'q4',
+                text: 'What does the buffer space inside the activity area protect against?',
+                type: 'multiple-choice',
+                options: [
+                  { id: 'a', text: 'Workers and their equipment in case an errant vehicle overruns the transition taper' },
+                  { id: 'b', text: 'The transition taper cones from being blown over by truck downdraft' },
+                  { id: 'c', text: 'Sight-line obstruction between flaggers at each end of the closure' },
+                  { id: 'd', text: 'Drainage and stormwater running through the work zone' },
+                ],
+                correctId: 'a',
+                explanation: 'The buffer space is an intentionally empty gap between the end of the transition taper and the start of the actual work area. It exists to give a vehicle that overruns the taper distance to decelerate and stop before reaching workers. It is not a place to store equipment or materials — those go in the work space beyond the buffer. Buffer length is speed-dependent and specified in the TCP.',
+              },
+              {
+                id: 'q5',
+                type: 'fill-in-blank',
+                text: 'On a 35-mph road with 11-ft lane width, which MUTCD 2009 Table 6C-3 merge taper formula applies — L = WS or L = WS/60?',
+                answer: 'WS/60',
+                explanation: 'The merge taper has two formulas: L = WS when S > 45 mph (high-speed), and L = WS/60 when S ≤ 45 mph (low-speed). At 35 mph, S ≤ 45, so L = WS/60 = (11 × 35) / 60 ≈ 6.4 ft — but always compare to the MUTCD Table 6C-5 minimum for 35 mph and use the larger value. The shift taper (parallel offset, not lane closure) uses WS/60 at all speeds.',
               },
             ]}
           />

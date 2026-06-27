@@ -6,6 +6,7 @@ import React from 'react';
 import LessonLayout from '../../components/LessonLayout.jsx';
 import Quiz from '../../components/primitives/Quiz.jsx';
 import Flashcard from '../../components/Flashcard.jsx';
+import OTDRTraceViewer from '../../components/OTDRTraceViewer.jsx';
 
 export const meta = {
   id: 'T12.L08',
@@ -120,6 +121,45 @@ export default function T12L08_ReadingOTDRTrace() {
         <p className="text-slate-400 text-sm mb-3 mt-6 p-3 border-l-4 border-slate-500">
           <strong>Callback:</strong> Recall from <strong>T12.L04 Dead Zones</strong> — the launch cable length is set based on the ADZ (attenuation dead zone), which is why you can see the first connector's true loss. That's the entire reason launch cables exist.
         </p>
+
+        {/* ── INTERACTIVE TRACE VIEWER ─────────────────────────────── */}
+        <div className="mt-6">
+          <h3 className="font-semibold mb-2">Interactive Trace — Click to Measure</h3>
+          <p className="text-sm text-slate-300/90 mb-3">
+            This is a synthetic OTDR trace for a real-looking 10 km span. Click anywhere on the
+            trace to drop a cursor and read the distance and power level at that point.
+            Identify the event types as you explore — launch zone, fusion splices, connectors,
+            macrobend, and end-of-fiber marker.
+          </p>
+          <OTDRTraceViewer
+            totalKm={10}
+            dbPerKm={0.22}
+            startDb={0}
+            events={[
+              { kind: 'launch',    km: 0,    lossDb: 0.5  },
+              { kind: 'connector', km: 0.5,  lossDb: 0.28 },
+              { kind: 'splice',    km: 2.8,  lossDb: 0.08 },
+              { kind: 'splice',    km: 5.3,  lossDb: 0.06 },
+              { kind: 'macrobend', km: 6.8,  lossDb: 0.18 },
+              { kind: 'connector', km: 8.4,  lossDb: 0.31 },
+              { kind: 'end',       km: 9.7              },
+            ]}
+          />
+          <div className="mt-3 grid grid-cols-2 md:grid-cols-4 gap-2 text-xs text-slate-400">
+            <div className="p-2 rounded bg-slate-800/40 border border-slate-700/40">
+              <span className="font-semibold text-slate-300">0.0 km</span> — Launch (OTDR port)
+            </div>
+            <div className="p-2 rounded bg-slate-800/40 border border-slate-700/40">
+              <span className="font-semibold text-slate-300">0.5 km</span> — Span start connector
+            </div>
+            <div className="p-2 rounded bg-slate-800/40 border border-slate-700/40">
+              <span className="font-semibold text-slate-300">2.8, 5.3 km</span> — Fusion splices
+            </div>
+            <div className="p-2 rounded bg-slate-800/40 border border-slate-700/40">
+              <span className="font-semibold text-slate-300">6.8 km</span> — Macrobend loss event
+            </div>
+          </div>
+        </div>
       </section>
 
       {/* ── WORKING ── */}
@@ -292,6 +332,40 @@ export default function T12L08_ReadingOTDRTrace() {
               ],
               correct: 'b',
               explanation: 'A properly executed fusion splice produces no detectable reflection — typically > −65 dB (essentially zero reflectance for field instruments). A −28 dB reading at a splice location indicates a significant Fresnel reflection, which only occurs when there is an air gap between the fiber ends, end-face contamination, or a failed (non-fused) splice that is simply pressing the two ends together. This splice must be re-done.',
+            },
+            {
+              id: 'q4',
+              type: 'multiple-choice',
+              text: 'Looking at the interactive trace above: the event at 6.8 km shows a step-down with no reflection spike. What type of event is this, and what is the most likely cause?',
+              options: [
+                { id: 'a', text: 'Reflection event — a connector with a dirty end-face' },
+                { id: 'b', text: 'Loss event — likely a macrobend (tight coil or pinch) causing radiation loss with no air gap' },
+                { id: 'c', text: 'Ghost reflection — a spurious peak from the far-end connector bouncing back' },
+                { id: 'd', text: 'End-of-fiber marker — the fiber terminates at 6.8 km' },
+              ],
+              correctId: 'b',
+              explanation: 'A step-down with no spike is a loss event — power was consumed but not reflected. Macrobends, fusion splices, and mechanical breaks caused by crushing all produce this signature. At 6.8 km in the middle of the span (not at a known splice or connector location), a macrobend (excessive coil radius or cable pinch) is the most likely culprit. A macrobend loss event with no reflectance spike is distinct from a connector (which shows a spike) and from the end-of-fiber marker (which occurs at the span\'s far end).',
+            },
+            {
+              id: 'q5',
+              type: 'fill-in-blank',
+              text: 'On an OTDR event table, the "cumulative loss" column shows the total loss from the OTDR port to each event. If cumulative loss at a splice is 2.80 dB and the fiber attenuation is 0.22 dB/km over 10 km (plus 0.28 dB for a connector), the cumulative loss discrepancy could indicate _____.',
+              answer: 'a high-loss splice or macrobend',
+              answerDisplay: 'a high-loss splice, macrobend, or additional undetected event',
+              explanation: 'Expected cumulative loss at 10 km with 0.22 dB/km + a 0.28 dB connector = (10 × 0.22) + 0.28 = 2.48 dB. If the OTDR shows 2.80 dB cumulative, there is 0.32 dB of unexplained loss — likely a high-loss splice, macrobend, or second event the auto-detection missed. The cumulative loss column is useful for sanity-checking whether the sum of all events matches the expected link budget.',
+            },
+            {
+              id: 'q6',
+              type: 'multiple-choice',
+              text: 'From T12.L04: You are measuring a splice at 3.1 km that immediately follows a connector at 3.0 km. Your OTDR\'s ADZ at this pulse width is 8 m. The auto-detected cursor for the splice loss measurement lands at 3.006 km (6 m after the connector). What is the problem?',
+              options: [
+                { id: 'a', text: 'No problem — 6 m is past the event, so the cursor is correctly placed' },
+                { id: 'b', text: 'The cursor is inside the 8 m ADZ of the connector reflection — the trace is still settling, so the splice loss reading will be inaccurate' },
+                { id: 'c', text: 'The splice at 3.1 km is too close to the connector to be measured at all — it should be flagged as unresolvable' },
+                { id: 'd', text: 'The cursor is fine because ADZ only applies to the OTDR launch zone, not mid-span events' },
+              ],
+              correctId: 'b',
+              explanation: 'The ADZ applies at every reflective event along the span, not just the launch. A cursor placed 6 m after a connector, when the ADZ is 8 m, is inside the dead zone. The trace is still experiencing ring-down from the connector reflection, so the backscatter slope is not flat — the LSA fit will produce a skewed (usually inflated) loss reading for the splice. Move the cursor to at least 8 m past the connector (3.008 km or further) to get an accurate splice loss measurement.',
             },
           ]}
         />
