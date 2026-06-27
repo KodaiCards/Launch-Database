@@ -287,6 +287,26 @@ export default function T12L10_IORDistanceErrors() {
               correct: 'c',
               explanation: 'A distance-weighted average EIOR minimizes the cumulative positional error across the entire span when individual reels have slightly different IOR values. Using only the launch-end reel (option B) introduces increasing error toward the far end. Running at two wavelengths (option D) would give different results since EIOR varies with wavelength — this doesn\'t help resolve the IOR uncertainty.',
             },
+            {
+              id: 'q4',
+              type: 'multiple-choice',
+              text: 'A cursor is placed on the back slope of a reflective event (connector peak) instead of at the start of the reflection. How does this affect the loss reading?',
+              options: [
+                { id: 'a', text: 'It underestimates loss — the back slope is already recovering toward the baseline, so measured loss appears smaller' },
+                { id: 'b', text: 'It overestimates loss — the back slope is lower than the pre-event baseline, so measured loss appears larger' },
+                { id: 'c', text: 'It has no effect — OTDR software automatically corrects for cursor placement errors' },
+                { id: 'd', text: 'It underestimates reflection but overestimates loss equally, so the total reading is unaffected' },
+              ],
+              correct: 'b',
+              explanation: 'Placing the cursor on the back slope of a reflective event measures from a point that is already below the pre-event backscatter level — the OTDR interprets this as additional loss beyond the actual connector loss. This overestimates the event loss. Correct cursor placement is just before the leading edge of the reflection, on flat baseline signal. Back-slope cursor placement is one of the four most common OTDR measurement errors.',
+            },
+            {
+              id: 'q5',
+              type: 'fill-in-blank',
+              text: 'An OTDR IOR error (ΔN) of 0.0005 on a 10 km singlemode span produces a distance error of approximately ____ meters at the far end. (True EIOR = 1.4680; use formula ΔD = (ΔN / N_true) × D_actual.)',
+              answer: '3.4',
+              explanation: 'ΔD = (0.0005 / 1.4680) × 10,000 m ≈ 0.0003407 × 10,000 = 3.41 m ≈ 3.4 m. This is a meaningful positional error — enough to cause a dig crew to excavate in the wrong location on a buried cable fault. Always verify EIOR from the cable datasheet before fault-locating.',
+            },
           ]}
         />
       </section>

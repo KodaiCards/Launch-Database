@@ -283,6 +283,26 @@ export default function T11L05_CoreAlignVsCladdingAlign() {
                 correctId: 'a',
                 explanation: 'In wet or heavily contaminated field conditions, core detection (LID mode) fails because the scattered light signal is too weak or inconsistent for the splicer\'s image processing. Cladding-align is more tolerant of surface contamination because it relies on the physical outer boundary of the glass, which is visible even under degraded conditions. For an emergency restoration, a cladding-align splice at 0.10–0.20 dB is far better than no splice. After restoring service, the splice can be replaced with a proper core-align splice when conditions improve.',
               },
+              {
+                id: 'q4',
+                type: 'multiple-choice',
+                text: 'A bidirectional OTDR test shows −0.05 dB (apparent gain) in the reverse direction at a splice. A technician argues this proves the OTDR is broken. What is the correct interpretation?',
+                options: [
+                  { id: 'a', text: 'The OTDR is broken — negative loss is physically impossible in a passive optical element' },
+                  { id: 'b', text: 'The OTDR is miscalibrated — re-zero the OTDR and re-test' },
+                  { id: 'c', text: 'The apparent gain is a measurement artifact caused by MFD mismatch: the smaller-MFD side captures more backscatter from the larger fiber, making the splice look like a gain in that direction. The true loss is the bidirectional average.' },
+                  { id: 'd', text: 'The fiber has an active amplifier at the splice point' },
+                ],
+                correctId: 'c',
+                explanation: 'Apparent gain at a splice is the diagnostic signature of MFD mismatch — not an instrument error. The OTDR measures backscatter intensity: on the smaller-to-larger MFD side, the larger downstream fiber scatters more light back toward the OTDR than the smaller upstream fiber would alone. This extra backscatter arrives as if power increased at the splice point, reading as a negative event. The physical law (conservation of energy) is not violated — power is not amplified. The true insertion loss is the bidirectional average: (forward loss + reverse loss) ÷ 2. If forward = 0.20 dB and reverse = −0.05 dB, true IL = (0.20 + (−0.05)) ÷ 2 = 0.075 dB. Understanding this prevents unnecessary re-splices on cross-type splice points.',
+              },
+              {
+                id: 'q5',
+                type: 'fill-in-blank',
+                text: 'The alignment technology used in core-align splicers is called ____. It works by injecting light near the splice point and measuring scattered intensity to locate the fiber\'s actual light-guiding core.',
+                answer: 'LID',
+                explanation: 'LID stands for Local Injection and Detection. The splicer injects a light signal into the fiber very close to the cleaved end-face, then measures the spatial distribution of scattered light exiting the cladding. The location of maximum intensity corresponds to the core — where light is actually guided. This allows the splicer to center the two fiber cores directly rather than using the outer cladding boundary as a proxy. Full term "Local Injection and Detection" is also accepted.',
+              },
             ]}
           />
         </div>

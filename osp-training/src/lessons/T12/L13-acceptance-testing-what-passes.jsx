@@ -297,6 +297,26 @@ export default function T12L13_AcceptanceTesting() {
               correct: 'b',
               explanation: 'A pass at 1310 nm but fail at 1550 nm — with the excess loss appearing only at the longer wavelength — is the classic macrobend signature. Macrobends strip longer-wavelength light preferentially. Connector contamination and reference cord errors would affect both wavelengths roughly equally. An OTDR IOR error affects distance but not loss magnitude. The correct action is to locate the bend using dual-wavelength OTDR, correct it, and retest.',
             },
+            {
+              id: 'q4',
+              type: 'multiple-choice',
+              text: 'Cumulative review (T12.L01 → T12.L13): A 48-fiber singlemode OSP span is tested bidirectional at 1310 nm and 1550 nm. OLTS passes all 48 fibers. OTDR shows one fiber with a splice reading 0.15 dB A→B and 0.25 dB B→A. The bidirectional average is 0.20 dB. Does this splice pass RUS 1753F-401 §5?',
+              options: [
+                { id: 'a', text: 'Yes — the bidirectional average of 0.20 dB equals the RUS contract maximum of 0.20 dB (borderline pass)' },
+                { id: 'b', text: 'No — the 0.25 dB reading in one direction alone exceeds the 0.20 dB threshold' },
+                { id: 'c', text: 'Yes — the bidirectional average of 0.20 dB is below the RUS contract maximum of 0.30 dB (passes with margin)' },
+                { id: 'd', text: 'No — any splice with an asymmetric reading (0.15 vs 0.25) must be re-spliced regardless of the average' },
+              ],
+              correct: 'c',
+              explanation: 'The RUS 1753F-401 §5 contract maximum is 0.30 dB per splice (bidirectional average). The bidirectional average here is (0.15 + 0.25) / 2 = 0.20 dB, which is below 0.30 dB — this splice PASSES. Individual unidirectional readings are not the pass/fail criterion; only the bidirectional average counts. The asymmetry (0.10 dB difference between directions) is within normal OTDR geometry-artifact variation and is not itself a rejection criterion.',
+            },
+            {
+              id: 'q5',
+              type: 'fill-in-blank',
+              text: 'TIA-568.3-D maximum connector insertion loss for OS2 singlemode connectors is ____ dB per mated pair.',
+              answer: '0.75',
+              explanation: 'TIA-568.3-D specifies 0.75 dB maximum insertion loss per mated connector pair for OS2 singlemode. Some high-quality factory-polished connectors routinely achieve 0.10–0.30 dB — the spec max is a contract ceiling. For loss budget calculations, use the TIA spec-max (0.75 dB) to ensure the budget is met in the worst-qualified case.',
+            },
           ]}
         />
       </section>

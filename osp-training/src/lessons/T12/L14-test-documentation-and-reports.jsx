@@ -324,6 +324,26 @@ export default function T12L14_TestDocumentation() {
               correct: 'b',
               explanation: 'JPG screenshots are not equivalent to SOR files — they lack trace data, measurement metadata, and cursor positions. The only fix is to re-mobilize and re-test. A missing reel serial number (A) can often be resolved from manufacturer shipping records or the as-built cable route. Abbreviation confusion (C) and address errors (D) are clerical fixes. Missing SOR files require physical re-testing, which is expensive and time-consuming after demobilization.',
             },
+            {
+              id: 'q4',
+              type: 'multiple-choice',
+              text: 'A test report shows splice loss values in one column but does not indicate whether they are unidirectional or bidirectional averaged. Why does this ambiguity matter?',
+              options: [
+                { id: 'a', text: 'It does not matter — unidirectional and bidirectional splice losses are always within 0.01 dB of each other' },
+                { id: 'b', text: 'Unidirectional readings include a geometry artifact that can make a good splice look bad or a bad splice look good; only bidirectional averages give the true insertion loss' },
+                { id: 'c', text: 'It only matters if the splice exceeds 0.5 dB — below that threshold, both values are acceptable for reporting' },
+                { id: 'd', text: 'Bidirectional average always shows a higher loss than unidirectional, so it is more conservative and can be used in either direction' },
+              ],
+              correct: 'b',
+              explanation: 'A unidirectional OTDR splice reading includes the actual insertion loss PLUS or MINUS a geometry artifact from the refractive-index step between the two fiber ends. Depending on which direction has the larger-MFD fiber, the unidirectional reading can understate or overstate the true loss significantly. Bidirectional averaging cancels the geometry artifact: (L_A→B + L_B→A) / 2 = true insertion loss. All compliant test reports must specify whether each splice value is unidirectional or bidirectional averaged, and acceptance criteria (e.g., ITU-T L.400: 0.20 dB max) apply only to the bidirectional average.',
+            },
+            {
+              id: 'q5',
+              type: 'fill-in-blank',
+              text: 'SOR files contain a tamper-evident ____. Compliant SOR viewers flag the file as modified if this value changes.',
+              answer: 'checksum',
+              explanation: 'SOR files (Bellcore GR-196-CORE format) include a checksum in the file header. If anyone edits the raw SOR data (e.g., to change a loss reading), the checksum no longer matches the file contents, and compliant viewers display a tamper warning. This is why SOR files are the accepted format for contractual test documentation — screenshots have no equivalent tamper protection.',
+            },
           ]}
         />
       </section>

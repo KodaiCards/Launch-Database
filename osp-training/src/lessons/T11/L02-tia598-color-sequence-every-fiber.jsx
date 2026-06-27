@@ -293,6 +293,26 @@ export default function T11L02_TIA598ColorSequenceEveryFiber() {
                 correctId: 'b',
                 explanation: 'APC achieves ≥60 dB return loss vs. ≥55 dB for UPC — a 5 dB improvement in suppressing back-reflections. GPON OLTs are laser-based and the returning optical power from a low-return-loss connector can cause laser instability, noise, and bit errors at the OLT receiver. GPON and CATV systems mandate APC for this reason. The 8° angle deflects back-reflections out of the fiber core entirely rather than sending them back toward the source.',
               },
+              {
+                id: 'q4',
+                type: 'multiple-choice',
+                text: 'A 288F cable has two binder groups of 12 tubes each (12 fibers per tube). Binder group 1 covers absolute fibers 1–144; binder group 2 covers 145–288. Identify absolute fiber 149: which binder group, which tube color, and which fiber-within-tube color?',
+                options: [
+                  { id: 'a', text: 'Group 1, tube 13 (Blue-stripe), fiber 5 (Slate)' },
+                  { id: 'b', text: 'Group 2, tube 1 (Blue), fiber 5 (Slate)' },
+                  { id: 'c', text: 'Group 2, tube 1 (Blue), fiber 6 (White)' },
+                  { id: 'd', text: 'Group 2, tube 2 (Orange), fiber 5 (Slate)' },
+                ],
+                correctId: 'b',
+                explanation: 'Step 1 — which group? 149 > 144, so it falls in binder group 2. Step 2 — position within group 2: 149 − 144 = 5. Step 3 — tube within group 2: ⌈5 ÷ 12⌉ = 1 (the 1st tube, color Blue). Step 4 — fiber within that tube: 5 − (1−1) × 12 = 5 → position 5 = Slate. Answer: Group 2, tube 1 (Blue), fiber 5 (Slate). Common errors: option A uses "tube 13 (Blue-stripe)" — that notation applies within a single binder group only; with two binder groups, tube 13 is replaced by "group 2, tube 1." Option D gets the tube wrong: 5 ÷ 12 < 1, so the tube is 1 (Blue), not 2 (Orange).',
+              },
+              {
+                id: 'q5',
+                type: 'fill-in-blank',
+                text: 'In the TIA-598-D 12-color sequence, position 12 is ____. This is the last color in the repeating cycle.',
+                answer: 'Aqua',
+                explanation: 'The complete TIA-598-D sequence ends with Aqua at position 12: 1-Blue, 2-Orange, 3-Green, 4-Brown, 5-Slate, 6-White, 7-Red, 8-Black, 9-Yellow, 10-Violet, 11-Rose, 12-Aqua. After Aqua, the next tube restarts the cycle at Blue. Aqua is the easiest position to lose — technicians often mix it up with position 1 (Blue) because both can look similar under poor lighting. Check fiber 12 against fibers 1 and 11 (Rose) under a white LED.',
+              },
             ]}
           />
         </div>

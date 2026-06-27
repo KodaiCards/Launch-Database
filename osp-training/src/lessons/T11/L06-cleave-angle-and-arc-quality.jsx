@@ -313,6 +313,26 @@ export default function T11L06_CleaveAngleAndArcQuality() {
                 correctId: 'b',
                 explanation: 'The estimated loss is an optical measurement — light is still coupling through the splice even with a void. But the void is a mechanical failure: an air pocket in the glass structure. Under thermal cycling (daily temperature swings) the void expands and contracts, creating cyclic stress at the glass interface. Stress cracking propagates from the void and the fiber fails months to years after installation. The optical loss may increase gradually over time or the fiber may break suddenly. Any visible void = re-splice, regardless of estimated loss.',
               },
+              {
+                id: 'q4',
+                type: 'multiple-choice',
+                text: 'A crew on a 500-splice job has been using a cleaver blade that reads 2,400 cycles on its counter. The manufacturer\'s replacement interval is 3,000 cycles. The splicer is still accepting most cleaves without showing a "cleave error." Should the blade be replaced mid-job?',
+                options: [
+                  { id: 'a', text: 'No — the blade is at 80% of the interval and the splicer is still accepting cleaves, so it is fine to finish the job' },
+                  { id: 'b', text: 'Yes — at 80% of the interval, the blade edge is producing marginal angle variance below the rejection threshold. Replacing it prevents accumulation of hidden marginal splices across the remaining 100 cleaves.' },
+                  { id: 'c', text: 'No — only replace when the splicer shows cleave errors consistently, which is the manufacturer\'s actual trigger' },
+                  { id: 'd', text: 'Yes, but only if the next 10 consecutive cleaves all read above 0.5°' },
+                ],
+                correctId: 'b',
+                explanation: 'A blade at 2,400 of 3,000 cycles (80%) is past the recommended pre-emptive replacement point. The blade edge is not yet visibly failed — the splicer is still accepting most cleaves — but it is producing marginal cleave angles (0.5°–0.9°) more frequently than a fresh blade would. Cleave angles in the 0.7–0.9° range are below the 1.0° rejection threshold but add 0.03–0.07 dB to every splice that uses them. Across 100 remaining splices, that is an invisible 3–7 dB of extra link loss accumulating without a single "cleave error" on the display. Professional practice: replace at or before the manufacturer interval, not at failure.',
+              },
+              {
+                id: 'q5',
+                type: 'fill-in-blank',
+                text: 'The maximum cleave angle at which most fusion splicers will automatically reject a cleave and display a "cleave error" or "cleave NG" message is ____ degrees.',
+                answer: '1.0',
+                explanation: 'Most precision fusion splicers (Fujikura, Sumitomo, AFL, Ilsintech) set the automatic rejection threshold at 1.0°. Cleaves between 0.5° and 1.0° generate a warning on some models but still proceed; cleaves above 1.0° trigger an automatic halt. The field target is ≤0.5° for maximum splice quality. Some splicer profiles allow adjustment of the rejection threshold — always verify the splicer\'s programmed limit against the manufacturer\'s default before assuming 1.0° applies.',
+              },
             ]}
           />
         </div>

@@ -253,6 +253,26 @@ export default function T11L07_RibbonMassFusionSplicing() {
                 correctId: 'b',
                 explanation: 'Rollable ribbon must be manually flattened before loading into the mass cleaver. The cleaver\'s V-groove is designed for a flat ribbon; a curled ribbon results in different fibers sitting at different heights in the groove. Fibers at the edges cleave at a different angle than the center fibers, producing a set where some fibers have 0.3° cleave angles and others have 1.5°+ — causing immediate rejection or elevated losses. Gently hold the ribbon flat for 5–8 cm while loading. Do not apply heat — that can affect the ribbon matrix bonding.',
               },
+              {
+                id: 'q4',
+                type: 'multiple-choice',
+                text: 'On a mass fusion ribbon splice job, fibers 1–2 and 4–12 all show estimated losses ≤0.08 dB after arc. Fiber 3 shows 0.28 dB. The crew lead wants to cut fiber 3 individually and re-splice just that one fiber using the single-fiber splicer while accepting the other 11. What is wrong with this approach?',
+                options: [
+                  { id: 'a', text: 'Nothing — cutting fiber 3 individually is the correct procedure for a single failing fiber in a ribbon set' },
+                  { id: 'b', text: 'The single-fiber splicer arc profile is not compatible with ribbon fiber geometry, so the re-splice will also fail' },
+                  { id: 'c', text: 'The ribbon protector covers all 12 fibers as a unit; accessing and re-splicing just fiber 3 requires removing the protector and re-doing the entire ribbon set' },
+                  { id: 'd', text: '0.28 dB is within OTDR measurement uncertainty of the 0.30 dB limit, so fiber 3 actually passes' },
+                ],
+                correctId: 'c',
+                explanation: 'The ribbon splice protector is a single sleeve that encloses all 12 fibers at the splice point. To access fiber 3, the protector must be removed — which means the entire 12-fiber splice assembly is disturbed. There is no field-practical way to re-splice one fiber within an already-protected ribbon set without re-doing all 12. Additionally, the ribbon matrix physically bonds the 12 fibers together; you cannot individually extract fiber 3 without breaking the ribbon structure. Correct procedure: strip off the ribbon protector, cut all 12 fibers back to clear glass, re-prep, re-cleave the full ribbon, and re-splice all 12. Then investigate why fiber 3 was high (likely a chip or uneven cleave at position 3).',
+              },
+              {
+                id: 'q5',
+                type: 'fill-in-blank',
+                text: 'A standard 12F mass fusion splicer fires ____ simultaneous fusion joints per arc discharge, one per fiber in the ribbon.',
+                answer: '12',
+                explanation: 'A 12-fiber mass fusion splicer aligns all 12 fiber cores in the ribbon simultaneously and fires a single arc discharge wide enough to span the full ribbon width. All 12 glass interfaces melt and fuse in one 1–3 second arc. The splicer then measures estimated insertion loss for each of the 12 fibers individually from its camera images. All 12 must pass the acceptance threshold; if any one fails, all 12 must be re-spliced. This is what makes mass fusion 54× faster than single-fiber splicing on high-count cables — one arc equals 12 joints.',
+              },
             ]}
           />
         </div>

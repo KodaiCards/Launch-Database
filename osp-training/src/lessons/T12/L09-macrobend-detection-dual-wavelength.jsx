@@ -285,6 +285,26 @@ export default function T12L09_MacrobendDetection() {
               correct: 'b',
               explanation: '1625 nm sits at the upper boundary of the L-band (ITU-T G.664: 1565–1625 nm) and above the C-band (1530–1565 nm). Because it is above populated DWDM traffic channels, OTDR test pulses at 1625 nm do not interfere with live channels on normally provisioned systems. Additionally, 1625 nm light has a larger effective MFD than 1550 nm, making it the most sensitive wavelength for macrobend detection — bends that are barely visible at 1550 nm show clearly at 1625 nm.',
             },
+            {
+              id: 'q4',
+              type: 'multiple-choice',
+              text: 'A G.657.A2 drop fiber is permanently installed with a minimum bend radius of 6 mm. Is this within specification?',
+              options: [
+                { id: 'a', text: 'Yes — G.657.A2 has a minimum permanent bend radius of 5 mm' },
+                { id: 'b', text: 'No — G.657.A2 has a minimum long-term (permanent) bend radius of 7.5 mm; 6 mm violates the spec' },
+                { id: 'c', text: 'Yes — 6 mm exceeds the G.657.A2 minimum of 5 mm for short-term installation' },
+                { id: 'd', text: 'No — all singlemode fiber (G.657 or G.652) requires a minimum 30 mm permanent bend radius' },
+              ],
+              correct: 'b',
+              explanation: 'G.657.A2 has a minimum long-term (permanently installed) bend radius of 7.5 mm per ITU-T G.657 Table 2. A 6 mm permanent installation bend violates this minimum and will cause macrobend loss. The 5 mm minimum applies to G.657.B3, not G.657.A2. The short-term (installation/pull) minimum for G.657.A2 is 10 mm — even larger than the long-term minimum because fiber is under dynamic stress during the pull.',
+            },
+            {
+              id: 'q5',
+              type: 'fill-in-blank',
+              text: 'The dual-wavelength macrobend diagnostic compares loss at 1310 nm vs 1550 nm at the same OTDR cursor position. A macrobend causes ____ loss at 1550 nm compared to 1310 nm, while a fusion splice causes approximately ____ loss at both wavelengths.',
+              answer: 'higher equal',
+              explanation: 'A macrobend strips longer-wavelength light preferentially — MFD at 1550 nm is larger (~10.5 µm) than at 1310 nm (~9.2 µm), so the 1550 nm mode is more susceptible to bending loss. Result: 1550 nm loss >> 1310 nm loss at a macrobend. A fusion splice has the same fundamental mechanism regardless of wavelength — loss depends on geometric alignment and refractive index step, not wavelength. Result: splice loss is approximately equal at 1310 nm and 1550 nm (within measurement noise).',
+            },
           ]}
         />
       </section>

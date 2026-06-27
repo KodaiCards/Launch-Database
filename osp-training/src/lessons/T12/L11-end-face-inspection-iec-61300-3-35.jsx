@@ -272,6 +272,26 @@ export default function T12L11_EndFaceInspection() {
               correct: 'c',
               explanation: 'A pit or chip in the fiber end-face is permanent physical damage to the glass — it cannot be removed by cleaning. Grade A criteria for Zone A specify no pits. The connector must be replaced (or returned to a re-polishing shop if it is a field-installable type). Contamination (dust, oil) is cleaned; physical damage (pits, cracks, deep scratches) requires replacement.',
             },
+            {
+              id: 'q4',
+              type: 'multiple-choice',
+              text: 'Why should you never touch a fiber end-face with your bare finger, even briefly?',
+              options: [
+                { id: 'a', text: 'Skin oils transfer to the end-face and require only a dry wipe to remove — the real risk is electrostatic discharge, not oil' },
+                { id: 'b', text: 'Skin oils and particles transfer to the end-face; oils are difficult to remove and can bake onto the glass under high optical power, creating permanent Zone A contamination' },
+                { id: 'c', text: 'Fingerprints affect only Zone D (ferrule) and are acceptable because Zone D is not a mandatory inspection zone in IEC 61300-3-35:2022' },
+                { id: 'd', text: 'There is no documented risk from brief touch — the concern is mating contaminated connectors, not bare-hand touch' },
+              ],
+              correct: 'b',
+              explanation: 'Skin oils are hydrocarbon-based and transfer readily to the end-face on contact. Under high optical power (DWDM or PON transmitters), oils can thermally bake onto the glass surface, burning the contamination into the fiber and causing permanent damage that cannot be cleaned away. Even one touch can cause Zone A contamination that fails Grade A criteria. Keep caps on connectors; handle only the ferrule body, never the end-face.',
+            },
+            {
+              id: 'q5',
+              type: 'fill-in-blank',
+              text: 'In IEC 61300-3-35:2022 Edition 3, the two mandatory inspection zones for singlemode connectors are Zone ____ (core area, 0–25 µm) and Zone ____ (cladding area, up to 110 µm outer boundary).',
+              answer: 'A B',
+              explanation: 'Zone A (core, 0–25 µm) and Zone B (cladding, 25–110 µm outer boundary per IEC 61300-3-35:2022 Ed.3) are the mandatory pass/fail zones. Zone A has the strictest criteria (no defects of any size). Zones C and D are informational only in the 2022 edition — they are no longer mandatory inspection criteria.',
+            },
           ]}
         />
       </section>

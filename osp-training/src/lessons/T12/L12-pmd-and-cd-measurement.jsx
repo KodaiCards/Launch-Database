@@ -312,6 +312,26 @@ export default function T12L12_PMDandCD() {
               correct: 'c',
               explanation: 'Standard OSP acceptance testing (Tier 1 OLTS + Tier 2 OTDR bidirectional) does not include PMD measurement. PMD testing is required when: (a) the contract explicitly specifies it (some carrier procurements do), (b) the planned transport layer includes 40 Gbps or 100 Gbps, or (c) existing legacy (pre-G.652.D) fiber is being upgraded. For typical 10 Gbps rural broadband builds on new G.652.D fiber, the PMD budget is comfortably met and measurement is not required.',
             },
+            {
+              id: 'q4',
+              type: 'multiple-choice',
+              text: 'Chromatic Dispersion (CD) causes pulse broadening. At what data rate does CD typically become a limiting factor requiring field measurement on standard G.652.D singlemode fiber?',
+              options: [
+                { id: 'a', text: '1 Gbps — CD limits all singlemode links above 1 Gbps' },
+                { id: 'b', text: '10 Gbps for spans longer than ~1,000 km, or 40+ Gbps at typical metro span lengths' },
+                { id: 'c', text: '100 Mbps — CD is the primary reason DWDM systems use fiber' },
+                { id: 'd', text: 'CD is not relevant to singlemode fiber — only multimode fiber has chromatic dispersion' },
+              ],
+              correct: 'b',
+              explanation: 'G.652.D fiber has a maximum CD coefficient of 18 ps/(nm·km) at 1550 nm. At 10 Gbps, CD is typically manageable for metro spans (up to ~80 km) without dispersion compensation. At 40 Gbps, CD becomes a limiting factor at much shorter distances (roughly 4–5 km without compensation). At 100 Gbps and beyond, coherent modulation with DSP-based dispersion compensation is used, which handles CD electronically. CD measurement is required for 40+ Gbps links and long-haul DWDM systems.',
+            },
+            {
+              id: 'q5',
+              type: 'fill-in-blank',
+              text: 'PMD causes two orthogonally polarized modes to travel at slightly different speeds. The unit for PMD coefficient is ps/√km. A G.652.D fiber with PMD coefficient 0.20 ps/√km on a 25 km span has a total PMD of ____ ps.',
+              answer: '1.0',
+              explanation: 'PMD_total = 0.20 ps/√km × √(25 km) = 0.20 × 5 = 1.0 ps. For 10 Gbps NRZ, the typical PMD budget is 10 ps. 1.0 ps is well within budget. For 40 Gbps (budget ~2.5 ps) and 100 Gbps (budget ~0.625 ps), the same fiber would also pass easily.',
+            },
           ]}
         />
       </section>
