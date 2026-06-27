@@ -32,6 +32,15 @@ The quarantined R18 attempt's one red-team pass found **real, suspect citations 
 - Bias to the safe direction: if a specific citation can't be verified, **remove/hedge the over-claim** rather than invent a replacement — an honest "confirm against project/standard" beats a confident wrong citation.
 - This is the highest-urgency work because it's already live to the team.
 
+### ⚠️ ARTIFACT-COVERAGE REALITY — don't assume any T-topic is "verified"
+The existing trusted red-team reports (`modules-01-04`, `05-08`, `09-12`) and research-logs (`module02…module12`) are for the **LEGACY `src/modules/ModuleNN_*.jsx` architecture**, which is **superseded and NOT what the live app serves** (the SPA serves `src/lessons/T*/L*.jsx` via `LessonRouter`). So:
+- **The live T01–T22 lesson curriculum largely has NO per-topic research-log and NO independent topic-level red-team report.** It was authored in the rewrite and got informal "final-audit" passes — which is exactly why residual errors slipped in (the T13–T22 punch-list proves it).
+- **Treat the module-era artifacts as REFERENCE INPUTS (reusable facts/citations), never as topic sign-off.** A module RT passing does NOT mean the corresponding T-lesson is verified.
+- **~13 T-topics appear to have no dedicated research foundation at all** (roughly T01, T03, T04, T07, T08, T13, T14, T15, T18, T19, T20, T21, T22) — these are the highest hallucination risk and must be researched from authoritative sources, not reused.
+
+### STEP 0 — build a coverage matrix (do before scaling)
+One table, per T-topic: has a research-log? has an independent topic-level RT? known live errors (from the punch-list)? Work **biggest-gap / highest-risk first**: (1) the live-error punch-list (Priority 0), (2) topics with no research foundation, (3) the rest. This guarantees nothing is missed and makes the whole-curriculum scope legible. Commit the matrix so the CEO can track coverage.
+
 ### The R18 mandate (work-streams — it's "many things," not just authoring)
 1. **Accuracy pass** — verify existing content against sources; fix errors (with citation + RT). Resolve any open items in existing red-team-reports.
 2. **Depth** — make thin topics extensive + complete (cited).
