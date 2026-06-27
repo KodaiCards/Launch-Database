@@ -513,7 +513,16 @@ These are acceptance criteria for every topic, new or revised.
 - **T12.L04 Dead Zones:** ADZ WorkedExample formula: added derivation note + sourced 10× margin to IEC 61746-1:2009 §6. Replaced all "IEC 61746-1" → "IEC 61746-1:2009".
 - **T13.L07 Close-Out Documentation:** §1755.407 "Format V" parenthetical clarification added (USDA training materials designation; verify against current edition) in both inline body and quiz explanation.
 
+### Red-team accuracy fixes — Batch 3 (DONE — committed f34650d + pushed)
+- Created `osp-training/docs/red-team-reports/topics-T13-T22-redteam.md` (108 files reviewed, 8 CRITICAL + 7 NOTABLE + 7 MINOR findings).
+- **CRITICAL fixes applied:** AIA §3.3.1 → §12.3 (T13/L01, T13/L02, T13/L10); Format V removed from SOR citations (T13/L07, T13/L10); IEC 61300-3-35 → IEC 61280-4-1/TIA-526-7 for splice acceptance (T15/L04); SR-4731/FOTP-61 → SR-4731/GR-196-CORE (T15/L02); 7 CFR Part 1744 → Part 1740 ReConnect (T20/L08, C05/L01); NESC §01C → OSHA 29 CFR 1910.268 (T13/L13); underground OSP cost $22–28/ft → $18–20/ft (T17/L02); FCC Part 32 hierarchy table rewritten (T13/L08); NESC Map 1 → Figure 250-1 (T13/L08); IEEE 81-2012 §7 → §9.4 for clamp-on (T13/L04); OTDR dead zone EDZ/ADZ distinguished (T22/L04); FOTP-61 for Bidirectional OTDR → TIA-526-7/IEC 61280-4-1 (T12/L13).
+
+### Quiz expansion — 3 → 5 questions (DONE — committed fc4f0c5 + pushed, build ✓)
+Added q4 (multiple-choice scenario) + q5 (fill-in-blank) to every lesson at 3 questions:
+- **T12:** L09 (macrobend), L10 (IOR errors), L11 (end-face inspection), L12 (PMD/CD), L13 (acceptance testing), L14 (test docs) — all now 5 questions.
+- **T11:** L02 (TIA-598 color/binder-group arithmetic), L05 (apparent gain / LID fill-in), L06 (blade interval discipline / 1.0° fill-in), L07 (ribbon protector constraint / 12-fiber fill-in) — all now 5 questions.
+
 ### Open / next
-- Pedagogy improvements: more varied interactivity (drag-drop, sequencing, scenarios), cumulative assessment, SVG diagrams where applicable.
-- Any remaining open RT flags not yet addressed.
-- Build and push after each topic batch.
+- Quiz expansion: check which other T10 lessons are still at <4 questions (T10/L01-L08, L10-L12 unaudited).
+- Pedagogy improvements: more varied interactivity (drag-drop, sequencing, BranchingScenario), cumulative assessment, SVG diagrams where applicable.
+- Remaining RT flags: T14/L03 NESC Rule 215D vs 96F ambiguity left as hedging note (paywalled standard); verify if anyone can confirm.
