@@ -2,6 +2,8 @@
 
 > **Read order:** `CLAUDE.md` → `HANDOFF.md` → **this file** → `ROADMAP.md` (phase mechanics) → `docs/map_requirements.md`.
 > This is the **refined, founder-validated plan** from a long working discussion with Carter on **2026-06-26**. It reflects the *actual business* (a ~12-person firm) and supersedes the broad "platform" framing where they conflict. `ROADMAP.md` still holds the phase mechanics; this doc holds the *why*, the priorities, and the design decisions. **Keep it current** — it exists so context survives compaction / a CEO handoff.
+>
+> **⭐ For the concrete HOW — exact tables, endpoints, UI, ordered build steps per system — see [`docs/IMPLEMENTATION_PLAN.md`](IMPLEMENTATION_PLAN.md).** That doc is buildable-detail (Carter's rule: plans must specify the actual system, not vague intent). This doc = why + priorities; that one = how.
 
 ---
 
