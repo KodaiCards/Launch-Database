@@ -180,6 +180,7 @@ Also mirrored in `docs/README.md` for folder-level browsing. **If info isn't whe
 | Projection math · budget model · keystone billing ledger | `docs/projections_design.md` · `docs/budgets_design.md` · `docs/billing_keystone_design.md` |
 | Admin→cluster **cutover** decisions | `docs/cutover_inventory.md` |
 | Training-launch build record (current pivot) | `docs/training_launch_design.md` |
+| Training **visual/interactive/pedagogy vision** (CEO-owned; workers execute to it) | `docs/training_design_spec.md` |
 | Current routes/endpoints · auth/roles/security · feature inventory · design system | `docs/route_index.md` · `docs/security_model.md` · `docs/feature_inventory.md` · `docs/design_system.md` |
 | Per-instance worker briefs + merge gate | `briefs/` (`claude-2.md` active, `INTEGRATION.md` gate) |
 | Product + how-we-work (CEO operating doc) | `CLAUDE.md` |

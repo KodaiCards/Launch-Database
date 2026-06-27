@@ -20,7 +20,9 @@ This is government/team training. **The facts CANNOT be wrong.** The last attemp
 
 **No research-log + RT report = not merged.** Keep batches to ONE topic at a time so nothing can ever bury unverified bulk again.
 
-## Scope = `osp-training/` content + interactivity components
+## Scope = `osp-training/` CONTENT ONLY (design + components are CEO-owned)
+> **The visual / interactive / pedagogy *vision* is NOT yours to invent** — it's defined concretely in **`docs/training_design_spec.md`** (CEO-owned). You **execute verified content into the CEO's component library + lesson template per that spec.** You do **not** design components, invent UX, or make visual-design calls. If a concept needs an interaction the spec doesn't cover, file a `BLOCKED — needs CEO` note — the CEO builds/extends the component. (The CEO is building the net-new components + a gold-standard exemplar lesson; replicate that pattern.)
+
 All catalog topics already have **baseline, previously-audited content on `main`** (there are no "coming soon" gaps except the intentionally-deferred ISP C01–C03). So your job is a **gated quality/accuracy/pedagogy overhaul of existing topics**, not authoring missing ones.
 
 ### Already DONE on `main` — do NOT redo or rewrite
@@ -45,9 +47,9 @@ One table, per T-topic, tracking each quality dimension so nothing is missed: **
 1. **Accuracy pass** — verify existing content against sources; fix errors (with citation + RT). Resolve any open items in existing red-team-reports.
 2. **Depth** — make thin topics extensive + complete (cited).
 3. **Easier verbiage** — plain language; define every acronym on first use; short sentences; scannable layout. Teach like a smart friend. (Rulebook governs voice.)
-4. **Varied interactivity (NET-NEW — the prior attempt built none):** beyond multiple-choice — drag-drop, label-the-diagram/hotspot, matching, ordering, fill-in, branching scenarios, and **calculators/simulators** (link budget, pole loading, OTDR trace reader, splice matrix). Build reusable components in `osp-training/src/components/`.
+4. **Varied interactivity — USE the CEO component library, don't build it.** Pick the right interaction per concept from `docs/training_design_spec.md` (Quiz, Flashcard, WorkedExample, BranchingScenario, Sortable, SideBySide, SliderExploration, MatchPairs, LabelDiagram, FillBlank, calculators). Wire content into them. **Do not author new components or design UX** — `BLOCKED — needs CEO` if you need one that doesn't exist.
 5. **Assessment depth + integration** — ≥4 Q/lesson floor, mixed types; **cumulative within a subject and interleaving prior subjects** (spaced retrieval); subject capstones; periodic cross-subject reviews. Every lesson carries a graded assessment or a competency interaction (the gate requires it).
-6. **Authored SVG diagrams** for technical visuals (red-team-verifiable). **No AI-generated raster images for technical facts** (hallucination risk).
+6. **Authored SVG diagrams** for technical visuals, following the **Visual standards in `docs/training_design_spec.md`** (design tokens for light/dark, labeled parts, caption; labels match lesson vocabulary). Diagrams are *content* → they go through research + red-team like any claim. **No AI-generated raster images for technical facts.**
 7. **Polished, consistent look** — typography/spacing, clear progress feedback, encouraging tone.
 8. **Wire** `course-catalog.js` (`available` / `lesson_count` / prereqs) and run `npm run build:osp` so `public/training/` updates.
 
@@ -56,6 +58,7 @@ One table, per T-topic, tracking each quality dimension so nothing is missed: **
 NOTE: `osp-training/src/data/course-catalog.js` is **also read by the CEO's content-visibility system** (it parses ids/titles/section/available/lesson_count, and the track grouping is `section: general→OSP, isp→ISP, cert→Cert`). You may edit `lesson_count`/`available`/titles, but **do not restructure** the file's shape or rename sections without a `BLOCKED — needs CEO` note.
 
 ### Read first (the established process — do not reinvent it)
+0. **`docs/training_design_spec.md`** — the CEO-owned visual/interactive/pedagogy vision. You execute content INTO this; you do not design it.
 1. `osp-training/docs/field-vs-textbook-research.md` — editorial rulebook (accuracy + voice). Obey it.
 2. `osp-training/src/lessons/schema.md` — lesson file format.
 3. `osp-training/src/lessons/T01/*.jsx` — template; T02–T09 for range.
