@@ -26,6 +26,12 @@ All catalog topics already have **baseline, previously-audited content on `main`
 ### Already DONE on `main` — do NOT redo or rewrite
 - **Completion-gating wiring:** `LessonLayout.jsx` (`LessonProgressContext.reportScore`) + `primitives/Quiz.jsx` (reports the score to the gate; normalizes the `{id,text}`+`correctId` option format). The server credits completion only at **≥70%** or `competency:true`; the SPA already sends scores; there is **no manual "Mark complete" button** (don't re-add one). Build on this.
 
+### ⚠️ PRIORITY 0 — verify-and-fix LIVE accuracy flags (do this first)
+The quarantined R18 attempt's one red-team pass found **real, suspect citations in the CURRENTLY-LIVE content** (confirmed present on main): e.g. an unverifiable **"Format V"** SOR designation (T13.L07), **AIA A201 §3.3.1** mis-cite (T13.L01 + capstone), **NESC §01C / "Section 26" / "NESC Map 1"** (T13.L08/L13), inverted **FCC Part 32** account hierarchy (T13.L08 vs T16.L08), swapped **IEEE 81-2012** sections (T13.L04), and several "[UNVERIFIABLE — paywalled]" quiz values. Full list: **`osp-training/docs/red-team-reports/T13-T22-SUSPECTED-live-errors-UNVERIFIED.md`**.
+- These flags are a **punch-list, NOT trusted answers** — the proposed corrections came from the deviating instance. **Independently verify each against the actual authoritative source**, then fix the live lesson **through the gate** (research-log citation + independent RT). 
+- Bias to the safe direction: if a specific citation can't be verified, **remove/hedge the over-claim** rather than invent a replacement — an honest "confirm against project/standard" beats a confident wrong citation.
+- This is the highest-urgency work because it's already live to the team.
+
 ### The R18 mandate (work-streams — it's "many things," not just authoring)
 1. **Accuracy pass** — verify existing content against sources; fix errors (with citation + RT). Resolve any open items in existing red-team-reports.
 2. **Depth** — make thin topics extensive + complete (cited).
