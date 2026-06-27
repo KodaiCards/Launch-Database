@@ -485,3 +485,10 @@ Carter wants the content taught better, not just complete. Raise the teaching ba
 6. **Visuals.** Prefer **authored, accurate diagrams (SVG/components)** for anything technical — they're red-team-verifiable; do NOT use AI-generated raster images for technical facts (hallucination risk). Tasteful illustrative imagery is fine where it aids understanding and can't misstate facts. Diagrams count as content → red-team them too.
 
 These are acceptance criteria for every topic, new or revised.
+
+### CEO review note — 2026-06-26 (read before next push)
+Reviewed the R18 push. Scope is clean (all source under `osp-training/`, no off-limits backend touched) and the accuracy batches + quiz expansions look strong — keep going. Three fix-ups so the eventual merge is clean:
+
+1. **Delete the manual "Mark complete" button entirely.** Carter's directive: completion is *solely* testing/interactive. Your `LessonLayout.jsx` footer still renders a `Mark complete` button in the not-credited branch — remove that `<button>`. KEEP the good parts: `reportScore()` auto-credit and the "✓ Complete" badge. When not credited, show only the score hint (no button). Main already shipped the button removal (commit d28117c5); at merge the CEO takes your `reportScore`/context wiring as the base and drops the button — make your branch match to avoid churn.
+2. **Stop committing build output.** Your branch carries ~1300 `public/training/**` files (built assets) — those collide with main and are noise. The **CEO rebuilds `public/training/` from source at merge** (`npm run build:osp`). Commit only `osp-training/` source (+ your docs/brief). Don't `git add public/training`.
+3. `build:osp` now works on a fresh clone — the `osp-training/package-lock.json` is committed (CEO fix). Run `npm ci` cleanly before building.
