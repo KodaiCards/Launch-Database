@@ -192,8 +192,10 @@ export function LessonLayout({ meta, children }) {
   const { courseId } = useParams();
   const navigate = useNavigate();
 
-  // Progress stub — OSP-RW.2 wires this to the real API
-  const { markSeen, markComplete } = useProgress(meta?.id);
+  // markSeen advances the lesson to in_progress on open. Completion is NOT
+  // manual — it's earned via assessment/interactive (useProgress.markComplete,
+  // called by quiz/activity components with a score, gated server-side).
+  const { markSeen } = useProgress(meta?.id);
 
   useEffect(() => {
     // Record that the user opened this lesson
@@ -247,6 +249,10 @@ export function LessonLayout({ meta, children }) {
       </div>
 
       {/* ── Footer nav ─────────────────────────────────────────────── */}
+      {/* No manual "Mark complete" button: completion is competency-gated —
+          a lesson only completes via a passing assessment (>=70%) or a
+          completed interactive activity (see useProgress.markComplete + the
+          server-side gate in routes/training.js). */}
       <footer className="panel mt-4 flex items-center justify-between gap-4">
         <Link
           to={`/course/${backCourseId}`}
@@ -254,16 +260,6 @@ export function LessonLayout({ meta, children }) {
         >
           ← Back to course
         </Link>
-
-        <button
-          type="button"
-          onClick={() => {
-            markComplete?.();
-          }}
-          className="text-xs px-3 py-1 rounded border border-white/20 text-slate-300 hover:bg-white/5 transition"
-        >
-          Mark complete
-        </button>
 
         <Link
           to={nextLessonPath}

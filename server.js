@@ -375,7 +375,17 @@ app.get('/api/me/portals', requireAuth(), async (req, res) => {
     .filter(p => p.audience === audience && (p.canAccess(u) || overrideKeys.has(p.id)))
     .filter(p => !TRAINING_ONLY_LOCKDOWN || u.role === 'admin' || audience !== 'employee' || p.id === 'training')
     .map(p => ({ id: p.id, name: p.name, icon: p.icon, url: p.url, description: p.description }));
-  res.json({ portals, user: { role: u.role, name: u.full_name || u.username } });
+
+  // Locked-down (non-admin employee) users can ask the admin for more access.
+  // The launcher uses this to keep them on the launcher (no single-tile
+  // auto-redirect) and to show the "Request additional permissions" button.
+  const canRequestAccess = TRAINING_ONLY_LOCKDOWN && u.role !== 'admin' && audience === 'employee';
+
+  res.json({
+    portals,
+    user: { role: u.role, name: u.full_name || u.username },
+    can_request_access: canRequestAccess,
+  });
 });
 
 // Wire up portal-mode route overrides + setting-approval flow. Now that
@@ -918,6 +928,10 @@ require('./routes/splice')(app, pool, { requireAuth });
 // Endpoints under /api/training/*. Schema: migration 0035_training_tables.sql.
 // ─────────────────────────────────────────────────────────────────────────────
 require('./routes/training')(app, pool, { requireAuth });
+
+// Access requests — locked-down users ask the admin for more portals from their
+// launcher; admin reviews in the Settings modal. (Training-launch pivot.)
+require('./routes/access_requests')(app, pool, { requireAuth, requireAdmin, rateLimitOk });
 
 // ─────────────────────────────────────────────────────────────────────────────
 // PORTAL ACCESS — Wave 12

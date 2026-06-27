@@ -316,6 +316,35 @@ body{
   </div>
 </main>
 
+<!-- Request additional access (shown only for locked-down users) -->
+<div id="request-access-bar" style="display:none;align-items:center;justify-content:center;gap:10px;padding:12px 20px;border-top:1px solid var(--border-strong);background:var(--surface-1);flex-shrink:0">
+  <span style="font-size:13px;color:var(--text-muted)">Need access to more than training?</span>
+  <button id="request-access-btn" type="button"
+    style="display:inline-flex;align-items:center;gap:8px;font:600 13px/1 var(--font-stack);padding:9px 16px;border-radius:var(--radius-md);border:1px solid var(--brand-primary);background:var(--brand-primary);color:#fff;cursor:pointer">
+    <i class="fa-solid fa-unlock-keyhole" aria-hidden="true"></i> Request additional permissions
+  </button>
+</div>
+
+<!-- Request modal -->
+<div id="req-modal-overlay" role="dialog" aria-modal="true" aria-labelledby="req-modal-title"
+  style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:1000;align-items:center;justify-content:center;padding:20px">
+  <div style="background:var(--surface-2);border:1px solid var(--border-strong);border-radius:var(--radius-lg);max-width:480px;width:100%;padding:22px;box-shadow:var(--shadow-lift)">
+    <h2 id="req-modal-title" style="font-size:18px;font-weight:700;color:var(--text-1);margin-bottom:6px">Request additional access</h2>
+    <p style="font-size:13px;color:var(--text-muted);line-height:1.5;margin-bottom:14px">
+      Tell the admin what you need access to and why. They'll review your request and grant it if appropriate.
+    </p>
+    <textarea id="req-details" rows="5" maxlength="2000"
+      placeholder="e.g. I'm starting field work next week and need the Time Clock portal to log my hours."
+      style="width:100%;padding:10px;border:1px solid var(--border-strong);border-radius:var(--radius-md);background:var(--surface-1);color:var(--text-1);font-family:var(--font-stack);font-size:14px;resize:vertical;box-sizing:border-box"></textarea>
+    <div style="display:flex;gap:8px;justify-content:flex-end;margin-top:16px">
+      <button id="req-cancel" type="button"
+        style="font:600 13px/1 var(--font-stack);padding:9px 16px;border-radius:var(--radius-md);border:1px solid var(--border-strong);background:var(--surface-1);color:var(--text-1);cursor:pointer">Cancel</button>
+      <button id="req-send" type="button"
+        style="font:600 13px/1 var(--font-stack);padding:9px 16px;border-radius:var(--radius-md);border:1px solid var(--brand-primary);background:var(--brand-primary);color:#fff;cursor:pointer">Send request</button>
+    </div>
+  </div>
+</div>
+
 <!-- Footer -->
 <div class="footer" id="footer-bar">
   <span id="footer-user"></span>
@@ -356,6 +385,59 @@ function escHtml(v) {
     .replace(/"/g,'&quot;').replace(/'/g,'&#39;');
 }
 
+// ── Request-additional-access (locked-down users only) ──
+function setupRequestAccess() {
+  const bar = document.getElementById('request-access-bar');
+  const overlay = document.getElementById('req-modal-overlay');
+  const openBtn = document.getElementById('request-access-btn');
+  const cancelBtn = document.getElementById('req-cancel');
+  const sendBtn = document.getElementById('req-send');
+  const details = document.getElementById('req-details');
+  if (!bar || !overlay) return;
+
+  bar.style.display = 'flex';
+
+  const close = () => { overlay.style.display = 'none'; };
+  const open = () => { overlay.style.display = 'flex'; setTimeout(() => details && details.focus(), 50); };
+
+  openBtn && openBtn.addEventListener('click', open);
+  cancelBtn && cancelBtn.addEventListener('click', close);
+  overlay.addEventListener('click', (e) => { if (e.target === overlay) close(); });
+  document.addEventListener('keydown', (e) => { if (e.key === 'Escape' && overlay.style.display === 'flex') close(); });
+
+  sendBtn && sendBtn.addEventListener('click', async () => {
+    const text = (details.value || '').trim();
+    if (text.length < 5) {
+      if (window.AppShell && AppShell.toast) AppShell.toast('Please describe what access you need.', 'error');
+      details && details.focus();
+      return;
+    }
+    sendBtn.disabled = true;
+    const original = sendBtn.innerHTML;
+    sendBtn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Sending…';
+    try {
+      const r = await fetch('/api/access-requests', {
+        method: 'POST',
+        credentials: 'include',
+        headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
+        body: JSON.stringify({ details: text }),
+      });
+      if (!r.ok) {
+        const j = await r.json().catch(() => ({}));
+        throw new Error(j.error || ('Request failed (' + r.status + ')'));
+      }
+      details.value = '';
+      close();
+      if (window.AppShell && AppShell.toast) AppShell.toast('Request sent — the admin will review it.', 'success');
+    } catch (e) {
+      if (window.AppShell && AppShell.toast) AppShell.toast(e.message || 'Could not send request.', 'error');
+    } finally {
+      sendBtn.disabled = false;
+      sendBtn.innerHTML = original;
+    }
+  });
+}
+
 // ── Main load ──
 (async function(){
   // Determine audience from URL (client launcher passes ?audience=client)
@@ -382,14 +464,20 @@ function escHtml(v) {
 
   const portals = data.portals || [];
   const user = data.user || {};
+  const canRequestAccess = data.can_request_access === true;
 
   // Update footer (user menu is handled by AppShell topbar)
   const name = user.name || '';
   const footerEl = document.getElementById('footer-user');
   if (footerEl) footerEl.textContent = name ? `Signed in as ${name}` : '';
 
-  // Auto-redirect when exactly 1 portal and ?stay=1 is not set
-  if (portals.length === 1 && !stay) {
+  // Locked-down users (trainees / non-admin employees) stay on the launcher so
+  // they can see their tile AND request more access — no single-tile redirect.
+  if (canRequestAccess) setupRequestAccess();
+
+  // Auto-redirect when exactly 1 portal and ?stay=1 is not set — but never for
+  // users who can request access (they need the launcher to make that request).
+  if (portals.length === 1 && !stay && !canRequestAccess) {
     window.location.replace(portals[0].url);
     return;
   }

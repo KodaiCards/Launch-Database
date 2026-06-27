@@ -2875,6 +2875,24 @@ body { background: var(--surface-1); color: var(--text-1); font-family: 'Inter',
         <div id="users-list-body" style="font-size:13px"></div>
       </div>
 
+      <!-- ── Access Requests ── training-launch pivot: locked-down users ask for more access ── -->
+      <div class="settings-section" id="access-requests-section" style="margin-top:24px">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px">
+          <h4 style="font-size:14px;font-weight:600;margin:0;display:flex;align-items:center;gap:8px">
+            <i class="fa-solid fa-unlock-keyhole" style="color:var(--text-muted)"></i>Access Requests
+            <span id="access-req-count" style="display:none;font-size:11px;font-weight:700;background:var(--danger);color:#fff;border-radius:10px;padding:1px 8px"></span>
+          </h4>
+          <button class="btn btn-secondary btn-sm" onclick="loadAccessRequests()"><i class="fa-solid fa-rotate"></i> Refresh</button>
+        </div>
+        <p style="font-size:12px;color:var(--text-muted);margin:0 0 12px 0">
+          Staff and trainees can request additional portal access from their launcher. Review here, then grant access via
+          <strong>User Management</strong> (role change) or <strong>Portal Access</strong> below. Dismiss requests you won't act on.
+        </p>
+        <div id="access-requests-body" style="font-size:13px">
+          <div style="padding:16px;text-align:center;color:var(--text-muted)"><i class="fa-solid fa-spinner fa-spin"></i> Loading&hellip;</div>
+        </div>
+      </div>
+
       <!-- ── Portal Access (Wave 12) ── per-user portal grants ── -->
       <div class="settings-section" id="portal-access-section" style="margin-top:24px">
         <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px">
@@ -7963,6 +7981,13 @@ async function openSettings() {
       if (typeof loadPortalAccessMatrix === 'function') loadPortalAccessMatrix().catch(() => {});
     }
   } catch (e) { if (window.LFS_DEBUG) console.warn('portal-access load skipped:', e.message); }
+
+  // Access requests (training-launch pivot) — admins only
+  try {
+    if (typeof currentUser !== 'undefined' && currentUser && currentUser.role === 'admin') {
+      if (typeof loadAccessRequests === 'function') loadAccessRequests().catch(() => {});
+    }
+  } catch (e) { if (window.LFS_DEBUG) console.warn('access-requests load skipped:', e.message); }
 }
 
 
@@ -7973,16 +7998,97 @@ async function openSettings() {
 
 
 // Show/hide the red dot on the Settings header button.
-// Only shows if there are jobs explicitly flagged as needs_review.
+// Lights up for jobs flagged needs_review OR pending access requests.
 async function refreshSettingsDot() {
   try {
     const dot = document.getElementById('settings-dot');
     if (!dot) return;
-    // Only show dot for jobs explicitly marked needs_review
-    const jobs = await api('/api/jobs');
-    const needsReview = jobs.filter(j => j.needs_review === true);
-    dot.style.display = needsReview.length > 0 ? 'block' : 'none';
+    let signal = false;
+    try {
+      const jobs = await api('/api/jobs');
+      if (jobs.filter(j => j.needs_review === true).length > 0) signal = true;
+    } catch (e) { /* ignore */ }
+    if (!signal) {
+      try {
+        const c = await api('/api/admin/access-requests/count');
+        if (c && c.pending > 0) signal = true;
+      } catch (e) { /* ignore */ }
+    }
+    dot.style.display = signal ? 'block' : 'none';
   } catch (e) { /* silently ignore */ }
+}
+
+// ═══════════════════════════════════════════════════════════
+// ACCESS REQUESTS (training-launch pivot)
+// Locked-down users (trainees / non-admin employees) request more
+// access from their launcher; admins review them here in Settings.
+// ═══════════════════════════════════════════════════════════
+function _accessReqWhen(iso) {
+  if (!iso) return '';
+  const d = new Date(iso);
+  const diff = (Date.now() - d.getTime()) / 1000;
+  if (diff < 60) return 'just now';
+  if (diff < 3600) return Math.floor(diff / 60) + 'm ago';
+  if (diff < 86400) return Math.floor(diff / 3600) + 'h ago';
+  if (diff < 604800) return Math.floor(diff / 86400) + 'd ago';
+  return d.toLocaleDateString();
+}
+
+async function loadAccessRequests() {
+  const body = document.getElementById('access-requests-body');
+  const badge = document.getElementById('access-req-count');
+  if (!body) return;
+  body.innerHTML = '<div style="padding:16px;text-align:center;color:var(--text-muted)"><i class="fa-solid fa-spinner fa-spin"></i> Loading&hellip;</div>';
+  try {
+    const data = await api('/api/admin/access-requests?status=pending');
+    const rows = data.requests || [];
+    const pending = data.pending_count || 0;
+    if (badge) {
+      if (pending > 0) { badge.textContent = pending; badge.style.display = 'inline-block'; }
+      else { badge.style.display = 'none'; }
+    }
+    const dot = document.getElementById('settings-dot');
+    if (dot && pending > 0) dot.style.display = 'block';
+
+    if (!rows.length) {
+      body.innerHTML = '<div style="padding:16px;text-align:center;color:var(--text-muted)">No pending requests.</div>';
+      return;
+    }
+    body.innerHTML = rows.map(r => {
+      const who = esc(r.full_name || r.username || 'Unknown user');
+      const sub = esc(r.username || '') + (r.user_role ? ' &middot; ' + esc(r.user_role) : '');
+      const idJson = JSON.stringify(r.id);
+      return `
+        <div style="border:1px solid var(--border-strong);border-radius:8px;padding:12px;margin-bottom:8px;background:var(--surface-1)">
+          <div style="display:flex;justify-content:space-between;align-items:start;gap:10px;margin-bottom:6px">
+            <div>
+              <div style="font-weight:600;font-size:13px;color:var(--text-1)">${who}</div>
+              <div style="font-size:11px;color:var(--text-muted)">${sub} &middot; ${_accessReqWhen(r.created_at)}</div>
+            </div>
+            <div style="display:flex;gap:6px;flex-shrink:0">
+              <button class="btn btn-secondary btn-sm" onclick='resolveAccessRequest(${idJson},"approved")' title="Mark handled — grant access via User Management / Portal Access"><i class="fa-solid fa-check"></i> Mark handled</button>
+              <button class="btn btn-secondary btn-sm" onclick='resolveAccessRequest(${idJson},"dismissed")' title="Dismiss this request"><i class="fa-solid fa-xmark"></i> Dismiss</button>
+            </div>
+          </div>
+          <div style="font-size:13px;color:var(--text-1);white-space:pre-wrap;line-height:1.5">${esc(r.details || '')}</div>
+        </div>`;
+    }).join('');
+  } catch (e) {
+    body.innerHTML = '<div style="padding:16px;text-align:center;color:var(--danger)">Could not load access requests.</div>';
+  }
+}
+
+async function resolveAccessRequest(id, status) {
+  try {
+    await api('/api/admin/access-requests/' + id, 'PATCH', { status });
+    if (window.AppShell && AppShell.toast) {
+      AppShell.toast(status === 'approved' ? 'Marked handled.' : 'Request dismissed.', 'success');
+    }
+    loadAccessRequests();
+  } catch (e) {
+    if (window.AppShell && AppShell.toast) AppShell.toast('Could not update request.', 'error');
+    else alert('Could not update request: ' + e.message);
+  }
 }
 
 // ═══════════════════════════════════════════════════════════
