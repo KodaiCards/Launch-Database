@@ -22,6 +22,14 @@
 # SYSTEM A — Billing per job (+ codes, rates, submission)
 *Carter's flagged gap. This is the concrete "add billables per job".*
 
+### A0. Job-type catalog + rate breakdown (the definitions — admin-only) — CONFIRMED 2026-06-26
+**Two layers, kept separate:** **job *type*** (catalog definition + rates) vs **job *instance*** (`service_area_jobs`, a type placed on a service area). Manage rates on the *type*; create *instances* from types on the board.
+- **`job_types`** (extend the existing `jobs` "universal rate source" table — confirm its columns first): `id`, `name`, `team`/`discipline`, `program_scope text` (`rus|non-rus|both`), `billing_method`, `billing_timing`, `bill_unit`, `active`. RUS-scoped types may suggest default codes, but the actual code split is per-instance (A1, varies per project).
+- **`rate_catalog`** = the rate rows shown in a type's **collapsible breakdown** (one row per *circumstance*): keyed by `(job_type_id × client_id|null × engineering_contract_id|null × program)` → `rate`, `unit`, `effective_date`, `active`. A type has **many** rate rows (PSC-RUS, client-X, non-RUS…).
+- **Auto-pick by context:** creating an instance on a service area resolves the rate from `rate_catalog` by the SA's client + program (precedence: EC-specific → client-specific → program default → discipline default). **Manual override stored on the instance** (`service_area_jobs.bill_rate`).
+- **Access:** catalog (types + rate rows) = **admin only** (`requireAdmin` / capability `manage_catalog`); managers/engineers create instances + override a rate.
+- **UI:** Operations → Settings → **Jobs**: each job type is a **bar; expand → its rate breakdown** (rows per client/program circumstance, add/edit). Instance creation (SA board) shows the auto-picked rate with an override field.
+
 ### A1. Data model (migration 0079_job_billing.sql)
 - **Extend `service_area_jobs`:**
   - `billing_method text` — `'fixed' | 'hourly' | 'milestone'`
@@ -30,8 +38,8 @@
   - `bill_rate numeric(10,2)` — hourly/unit rate (auto-filled from rate_catalog; override stored here)
   - `bill_unit text` — `'hour' | 'foot' | 'each' | 'lump'`
   - `bill_status text default 'pending'` — `'pending' | 'ready' | 'submitted'`
-- **`rate_catalog`** (auto-fill source): `id uuid pk`, `client_id uuid null`, `engineering_contract_id uuid null`, `discipline text`, `billing_method text`, `rate numeric(10,2)`, `unit text`, `effective_date date`, `active bool default true`. Lookup precedence: EC-specific → client-specific → discipline default.
-- **`job_billing_codes`** (the multi-code split — one job → many RUS codes, total unchanged): `id uuid pk`, `service_area_job_id uuid fk`, `code text`, `label text`, `allocation_pct numeric(5,2) null`, `allocation_amount numeric(12,2) null`. **Validation:** Σ allocations = job billable (pct sums to 100, or amounts sum to billable_amount). Coding is a *reporting overlay* — never changes the job's economics.
+- **`rate_catalog`** — defined in **A0** (rate rows per circumstance: `job_type_id × client × EC × program → rate`). Auto-picked by SA context on instance create; override → `service_area_jobs.bill_rate`.
+- **`job_billing_codes`** (the multi-code split — one job → many RUS codes, total unchanged): `id uuid pk`, `service_area_job_id uuid fk`, `code text`, `label text`, `allocation_pct numeric(5,2) null`, `allocation_amount numeric(12,2) null`. **Set PER INSTANCE — the split varies per project (confirmed 2026-06-26)**; the type may suggest codes but the allocation is entered on the job. **Validation:** Σ allocations = job billable (pct sums to 100, or amounts sum to billable_amount). Coding is a *reporting overlay* — never changes the job's economics.
 - **`billing_submissions`**: `id uuid pk`, `client_id uuid`, `period text`, `status text default 'draft'` (`draft|submitted`), `format_key text` (per-client template), `file_path text null`, `created_by uuid`, `submitted_at timestamptz null`, `created_at`.
 - **`billing_lines`**: `id uuid pk`, `submission_id uuid fk`, `service_area_job_id uuid fk`, `code text`, `description text`, `qty numeric`, `rate numeric(10,2)`, `amount numeric(12,2)`, `hours numeric null`. One job explodes into one line **per code**.
 

@@ -128,3 +128,64 @@ Migration `0069_map_integration_poc.sql` + `routes/map_integration.js` (mounted)
 **Still POC-level / next:** `jobRef`→service_area_job picker; embed live-persistence proof in the authed app; the mileage allocation. (Backend verified via DB tests; map UI verified live in preview.)
 
 **Bottom line:** the foundation is well-built and well-architected for integration — `jobRef`, `lengthFt`, `status`, `ptype`, and the injectable `window.storage` are exactly the hooks we need. The work is the **linkage + costing + DB sync** layer (above), plus the contract-allocation engine it feeds (still deferred until this lands). `map/_serve.js` + `.claude/launch.json` `map-preview` run it locally.
+
+---
+
+# THE MAP IS SWAPPABLE — standing directive (Carter 2026-06-26)
+> Carter: a **new/different map will replace this one in the future**; it must be wired into the schema again. It'll add capabilities (e.g. UG vs aerial recognition → different RUS codes + different construction materials, **same job**) but **may also be MISSING things the current one has.** The map's blast radius is huge, so this section is the **living ledger** so we "don't miss a beat" on the swap. Keep it current; on delivery of any new map, fill the regression checklist + log new capabilities + write the tweak list BEFORE wiring.
+
+## Principle 1 — depend on OUR contract, not the map tool (anti-corruption layer)
+The app must depend on a **stable internal map-data contract**, and each map plugs in via an **adapter** that translates *its* shape into ours. Swapping maps = write a new adapter, not re-wire the app.
+- **Internal contract (normalized tables the app reads — never the map's raw format):**
+  - geometry per SA/route (`service_areas.map_geometry`, `service_area_routes.map_geometry`)
+  - **units by `(type × designation × status)`** per route → counts (designation = UG/aerial/etc.)
+  - **footage by designation** (engineering / construction / permitting / UG / aerial)
+  - **miles** per route/SA
+  - **completed vs expected** (status asBuilt/active = completed)
+- **Adapter responsibilities:** parse the map's elements → write the contract tables (**parse-on-save**, not read-live, so reporting/projections never need the map open or even present). Stamp synced rows with a **`map_source`/`map_version`** so we know which tool produced them (audit + migration safety).
+- Current seed of this: injectable `window.storage` (`GET/PUT /api/map/store/:key`, `map/frm_storage_adapter.js`) + `routes/_map_estimate.js`. Formalize into the contract above.
+
+## Principle 2 — designation is its own axis (UG vs aerial = same job, different codes + materials)
+- A span/element carries a **designation** (the current map already tags `cableType: aerial/underground/directBuried/innerduct`). Designation must drive **code selection + material selection independently of the job**.
+- **Wire:** key the **cost catalog and code lookups by `(unit type × designation × contract)`** — UG handhole vs aerial run pull different $/codes/materials automatically, with **no duplicate job**. (Ties to System A `job_billing_codes` + System C `cost_catalog`.)
+- The new map will likely sharpen/expand designation recognition — capture the full set on delivery.
+
+## Current-map capability ledger (REGRESSION GUARD — diff a new map against this)
+The current tool (`fiber_route_manager_v33.html`) does all of the below. **A replacement must match or we consciously decide to drop each:**
+- [ ] Draw **spans** (cable polylines) with `cableType`, `fiberCount`, `lengthFt`
+- [ ] Draw **structures** (points) with `ptype` (handhole/vault/pedestal/spliceCase/pullBox/manhole/riser/terminal/cabinet/flowerpot/other), `structureId`
+- [ ] Draw **conduit** (polylines) with `ductCount`, `size`
+- [ ] **Snapping**, **follow-path** (trace existing), **split-at-structure**
+- [ ] **Status lifecycle:** proposed → permitted → underConstruction → asBuilt → active → existing
+- [ ] **BOM tally** (counts by type+status, feet, miles) + **CSV export**
+- [ ] Exports: **CSV, GeoJSON, KML, KMZ, Shapefile** (WGS84)
+- [ ] **Projects → Plans** overlay org (show/hide/ghost)
+- [ ] **`jobRef`** field on every element (link hook)
+- [ ] Injectable **`window.storage`** (DB-backed adapter) + per-plan keys
+- [ ] Macon-centered, tiles load, self-contained (Leaflet + JSZip)
+
+## Dependency surface (blast radius — everything that consumes map data)
+When the map changes, re-verify ALL of these:
+1. **Projections** (`projections.js`) — `continuous` allocation uses miles/remaining scope.
+2. **Billing expected** (System A) — construction expected = Σ units × catalog; engineering = footage × rate.
+3. **Materials / BOM** (`service_area_materials`, `service_area_material_units`) — expected from map units; **BOM Excel export (`Unit=qty`)**.
+4. **Production tracker / completion** (System C) — completed from map `status`; rollups SA→CC→client.
+5. **Client project view** — progress % + billable from map-derived completion.
+6. **Splice layer** (System G) — closures are map structures (`ptype=spliceCase`).
+7. **Permitting footage** — permitting-line designation → footage bucket.
+8. **Contract-allocation engine** (deferred) — per-mile = remaining$ ÷ remaining miles, miles from map.
+
+## Swap playbook (run when a new map is delivered)
+1. **Inventory:** run the capability ledger above against the new map; log every ✅/❌ and every NEW capability (UG/aerial detail, addresses for drops, auto designation, richer conduit, etc.).
+2. **Write the tweak/feature list BEFORE wiring** — what we gain, what we must preserve (regressions), what new schema the new capabilities need (e.g. designation→code/material lookups).
+3. **Adapter:** write the new map's adapter to the **internal contract** (Principle 1). Do not let the new format leak into app code.
+4. **Re-verify the dependency surface** (every item above) against the new data.
+5. **Migrate stamped data** if formats differ; keep `map_source`/`map_version`.
+6. Update this doc's ledger + diagnosis for the new map.
+
+## Additional ideas after seeing the current map (CEO, 2026-06-26)
+- Catalog/code/material lookups keyed by **(unit type × designation × contract)** — handles UG/aerial cleanly, no duplicate jobs.
+- **Parse-on-save** sync (not read-live) so the app never depends on the map being open/present.
+- **`map_version` stamp** on every synced row for audit + safe migration across map swaps.
+- Treat **`status`** as the universal completion signal so any status-bearing map drops into our rollup.
+- On the new map: **capability-diff first, wire second** — never wire before logging gaps + new features.
