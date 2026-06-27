@@ -2,6 +2,8 @@
 
 > Single source of truth for where this product is going. Any Claude (or person) opening this repo should read `CLAUDE.md` first (what the product is + how we work), then this file (what we're building, in order).
 
+> **⭐ Read [`docs/PRODUCT_PLAN.md`](docs/PRODUCT_PLAN.md) too — it's the refined, founder-validated plan** (Carter discussion 2026-06-26) reflecting the *actual* ~12-person business: two pillars (Project/Job Board + the Map), $45/hr cost model, per-job billing timing/codes + projection-as-aggregation, director cockpit + early-warning, assignment-driven roles + capability grants, RUS-only inspection, splice-as-map-layer. This roadmap holds the phase mechanics; PRODUCT_PLAN holds the why + priorities + design decisions. Where they differ, PRODUCT_PLAN is newer.
+
 ## Context
 
 The platform works but *feels* clunky to operate. The root cause is the data model: a "project" is a generic node in a rollup-of-rollups tree (`Client → EC → Service Area → Job-leaf`, all `projects` rows with `is_rollup` flags). That tree is why organization is a struggle, the contract mechanics feel over-complicated, manual fields don't auto-fill, and the pipeline is full of confirmation pop-ups.
