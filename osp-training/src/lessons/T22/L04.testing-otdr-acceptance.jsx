@@ -79,9 +79,13 @@ export default function T22L04_TestingOTDR() {
 
         <h3 className="mt-4 font-semibold">OTDR Dead Zone and Launch Cable</h3>
         <p className="text-sm text-slate-300/90 mt-2">
-          The OTDR has a <strong>dead zone</strong> — a distance near the OTDR where reflections
-          (from the first connector, first splice) are so strong they blind the receiver temporarily.
-          Typical dead zone is 2–5 meters. This is why you use a <strong>launch cable</strong>:
+          The OTDR has two types of <strong>dead zone</strong> — distances near the OTDR where strong reflections
+          temporarily blind the receiver. The <em>Event Dead Zone (EDZ)</em> is the distance after a reflection event
+          before a second event can be detected (typically 1–3 m at short pulse widths). The <em>Attenuation Dead
+          Zone (ADZ)</em> is the longer distance before loss can be accurately measured after a reflective event
+          (typically 5–25+ m depending on pulse width and reflectance). For OSP cable runs where you use longer
+          pulse widths for range, the ADZ can exceed 25 m — this is why you need a launch cable:
+
         </p>
         <ul className="list-disc pl-5 space-y-1 mt-2 text-sm text-slate-300/90">
           <li>Protects the OTDR from the first connector's reflection</li>
@@ -243,7 +247,7 @@ export default function T22L04_TestingOTDR() {
         cards={[
           { id: 'T22-L04-FC-1', front: 'OTDR', back: 'Optical Time-Domain Reflectometer. A tool that measures fiber loss, splice locations, and faults by sending laser pulses down the cable and measuring the echoes that bounce back.' },
           { id: 'T22-L04-FC-2', front: 'Launch cable', back: 'A short (0.5–1 km) sacrificial fiber connected to the OTDR input to protect the OTDR and extend the dead zone away from the cable-under-test.' },
-          { id: 'T22-L04-FC-3', front: 'Dead zone', back: 'A distance near the OTDR (typically 2–5 meters) where reflections are so strong they blind the receiver. The dead zone prevents accurate measurement of the first splice or event.' },
+          { id: 'T22-L04-FC-3', front: 'Dead zone (EDZ / ADZ)', back: 'Event Dead Zone (EDZ): minimum distance after a reflection before a second event can be detected — typically 1–3 m at short pulse widths. Attenuation Dead Zone (ADZ): longer distance before loss can be measured after a reflective event — typically 5–25+ m depending on pulse width. ADZ governs launch cable length for OSP work.' },
           { id: 'T22-L04-FC-4', front: 'Backscatter', back: 'Light scattered backward by fiber and reflections from splices. OTDR measures backscatter to build a loss profile. Different fiber types have different backscatter coefficients.' },
           { id: 'T22-L04-FC-5', front: 'Acceptance test', back: 'Measurement performed after cable installation to verify the link meets contract specifications (loss, distance, no faults).' },
           { id: 'T22-L04-FC-6', front: 'Singlemode window (1310/1550 nm)', back: 'The two transmission windows used in singlemode fiber networks. 1310 nm has lower loss; 1550 nm has higher power available. OTDR measurements use one or both.' },

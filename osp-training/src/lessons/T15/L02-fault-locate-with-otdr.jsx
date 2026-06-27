@@ -1,5 +1,5 @@
 // T15.L02 — Fault Locate with OTDR
-// Standards: FOA Fiber Optic Reference Guide; IEC 61300-3-35; Bellcore SR-4731 (.sor format)
+// Standards: FOA Fiber Optic Reference Guide; Bellcore SR-4731 / GR-196-CORE (.sor format)
 // Net-new lesson
 
 import React from 'react';
@@ -73,7 +73,7 @@ export const meta = {
     {
       term: '.sor file format',
       definition:
-        'The standard binary OTDR data file format (Bellcore SR-4731 / FOTP-61). Virtually all major OTDR vendors (Exfo, JDSU/Viavi, OTDR IDEAL, Fluke) can read and write .sor files. This is the archival format for OTDR traces — not a screenshot or PDF. A .sor file can be re-analyzed by any compatible OTDR viewer, allowing future comparison to detect new events or loss growth over time. T15.L09 requires archiving .sor files, not screenshots, after restoration.',
+        'The standard binary OTDR data file format defined by Bellcore SR-4731 (Telcordia GR-196-CORE). Virtually all major OTDR vendors (Exfo, JDSU/Viavi, OTDR IDEAL, Fluke) can read and write .sor files. This is the archival format for OTDR traces — not a screenshot or PDF. A .sor file can be re-analyzed by any compatible OTDR viewer, allowing future comparison to detect new events or loss growth over time. T15.L09 requires archiving .sor files, not screenshots, after restoration.',
     },
   ],
   vocabulary_assumed: [

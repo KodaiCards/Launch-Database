@@ -492,19 +492,22 @@ export default function L04TemporaryVsPermanentRepair() {
           On carrier-class permanent restorations, some specifications require a <strong>pressure test</strong>
           of the closure after sealing but before burial. The closure is pressurized to approximately
           5–7 PSI (depending on manufacturer spec) through the pressure port, then held for 60 seconds.
-          A pressure drop indicates a leak in the seal. This is standard practice on Telcordia SR-4422
-          compliant emergency restorations and on some RUS-program specifications that explicitly call
-          for it. Check the project specification — this is not universal but is the standard of care on
-          long-haul and major-carrier routes.
+          A pressure drop indicates a leak in the seal. This practice is specified in the closure
+          manufacturer's installation procedures (pressure values vary by manufacturer and closure model)
+          and on some RUS-program specifications that explicitly call for it. Check the project
+          specification and closure manufacturer's spec — this is not universal but is the standard of
+          care on long-haul and major-carrier routes.
         </p>
         <p>
           <strong>OTDR Bidirectional Averaging:</strong> A single-direction OTDR reading of a fusion
           splice includes the splice's actual reflective loss plus or minus an artifact from the
           refractive-index step between the two fibers' geometry. Bidirectional averaging (read from
           both ends, average the two loss values) cancels the geometry artifact and gives the true
-          insertion loss of the splice. IEC 61300-3-35 specifies acceptance criteria for splice
-          connectors under this method. Carrier specifications typically specify bidirectional average
-          as the pass/fail measurement.
+          insertion loss of the splice. IEC 61280-4-1 (single-mode OTDR test procedure) and TIA-526-7
+          (OFSTP-7) specify OTDR-based splice loss measurement and acceptance criteria; for RUS-funded
+          projects, RUS Bulletin 1751F-630 Chapter 11 applies. Carrier specifications typically specify
+          bidirectional average as the pass/fail measurement. (Note: IEC 61300-3-35 covers fiber end-face
+          visual inspection criteria for connectors — a separate inspection step, not OTDR splice loss.)
         </p>
       </section>
 

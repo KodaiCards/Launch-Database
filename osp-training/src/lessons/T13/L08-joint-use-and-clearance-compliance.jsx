@@ -75,7 +75,7 @@ export default function T13L08JointUseCompliance() {
       },
       {
         label: 'Step 2: Apply NESC Table 232-1 for Light loading district',
-        content: 'For Light loading district (Macon, GA falls in Light per NESC Map 1), Rule 232C specifies minimum vertical separation in the joint-use zone. For 0–15 kV phase-to-ground, the minimum clearance is 40 inches (3 feet 4 inches). NOTE: verify the exact Rule 232C value in the current edition of NESC at publication time — specific values may differ by edition. [confirm NESC edition]',
+        content: 'For Light loading district (Macon, GA falls in Light per NESC C2-2023 Figure 250-1), Rule 232C specifies minimum vertical separation in the joint-use zone. For 0–15 kV phase-to-ground, the minimum clearance is 40 inches (3 feet 4 inches). NOTE: verify the exact Rule 232C value in the current edition of NESC at publication time — specific values may differ by edition. [confirm NESC edition]',
       },
       {
         label: 'Step 3: Measure actual clearance',
@@ -116,7 +116,7 @@ export default function T13L08JointUseCompliance() {
       ],
       correct: 2,
       explanation:
-        'Macon, GA falls in the NESC Light loading district per NESC Map 1 (southeastern United States). Light loading district applies to areas with moderate ice and wind loading compared to Heavy (northern states) and Medium (transition zones). The loading district determines NESC mechanical requirements for pole loading and clearances.',
+        'Macon, GA falls in the NESC Light loading district per NESC C2-2023 Figure 250-1 (southeastern United States). Light loading district applies to areas with moderate ice and wind loading compared to Heavy (northern states) and Medium (transition zones). The loading district determines NESC mechanical requirements for pole loading and clearances.',
     },
     {
       id: 'q3',
@@ -213,20 +213,37 @@ export default function T13L08JointUseCompliance() {
             </tr>
             <tr>
               <td style={{ border: '1px solid #dee2e6', padding: '8px' }}>§32.2410</td>
-              <td style={{ border: '1px solid #dee2e6', padding: '8px' }}>Cable and wire facilities</td>
-              <td style={{ border: '1px solid #dee2e6', padding: '8px' }}>Cable plant — use for cable/wire records</td>
+              <td style={{ border: '1px solid #dee2e6', padding: '8px' }}>Cable and wire facilities (PARENT — rarely booked directly)</td>
+              <td style={{ border: '1px solid #dee2e6', padding: '8px' }}>Parent account for the cable/wire group; transactions post to subaccounts below</td>
             </tr>
             <tr>
               <td style={{ border: '1px solid #dee2e6', padding: '8px' }}>§32.2420</td>
-              <td style={{ border: '1px solid #dee2e6', padding: '8px' }}>Cable and wire facilities (parent)</td>
-              <td style={{ border: '1px solid #dee2e6', padding: '8px' }}>PARENT category for cable/wire group — NOT poles</td>
+              <td style={{ border: '1px solid #dee2e6', padding: '8px' }}>Aerial cable (subaccount of §32.2410)</td>
+              <td style={{ border: '1px solid #dee2e6', padding: '8px' }}>Aerial cable and wire plant</td>
+            </tr>
+            <tr>
+              <td style={{ border: '1px solid #dee2e6', padding: '8px' }}>§32.2421</td>
+              <td style={{ border: '1px solid #dee2e6', padding: '8px' }}>Underground cable (subaccount)</td>
+              <td style={{ border: '1px solid #dee2e6', padding: '8px' }}>Underground cable plant</td>
+            </tr>
+            <tr>
+              <td style={{ border: '1px solid #dee2e6', padding: '8px' }}>§32.2423</td>
+              <td style={{ border: '1px solid #dee2e6', padding: '8px' }}>Buried cable (subaccount)</td>
+              <td style={{ border: '1px solid #dee2e6', padding: '8px' }}>Direct-buried cable plant</td>
+            </tr>
+            <tr>
+              <td style={{ border: '1px solid #dee2e6', padding: '8px' }}>§32.2441</td>
+              <td style={{ border: '1px solid #dee2e6', padding: '8px' }}>Conduit systems (subaccount)</td>
+              <td style={{ border: '1px solid #dee2e6', padding: '8px' }}>Conduit, innerduct, manholes</td>
             </tr>
           </tbody>
         </table>
         <p>
-          The cascade error: citing §32.2420 (parent "Cable and wire facilities") for a
-          pole inspection record. §32.2420 is for cable and wire, not poles. The correct
-          account for poles is always §32.2411.
+          The cascade error: citing §32.2410 or §32.2420 incorrectly for a pole inspection
+          record. §32.2410 is the parent account for cable/wire facilities (rarely booked
+          directly); §32.2420 is its Aerial Cable subaccount. Neither applies to poles — the
+          correct account for poles is always §32.2411. (Source: FCC 47 CFR Part 32; T16.L08
+          uses this same hierarchy correctly.)
         </p>
       </section>
 
@@ -264,7 +281,7 @@ export default function T13L08JointUseCompliance() {
       <section className="mt-8 p-5 border-l-4 border-blue-500 bg-slate-800/40 rounded">
         <h3 className="text-blue-300 text-lg font-semibold mb-3">Tying It Together</h3>
         <p className="text-slate-200 mb-3">
-          The NESC clearance numbers in this lesson originate in <strong>T05.L02</strong>, where you learned that Macon, GA sits in the NESC Light loading district per NESC Map 1 and that Rule 232 sets voltage-class-specific vertical separation minima between supply conductors and communication attachments — this lesson is where those abstract numbers become a live field measurement with pass/fail consequences. The make-ready work documented in <strong>T07 and T08</strong> (staking and pole attachment) was supposed to pre-position every attachment at the correct height; the clearance verification measured in L08 is the inspector's confirmation that the make-ready crew actually achieved those heights, not just that they were specified. The non-conductive tool requirement (fiberglass rod, never a metal tape) was introduced in <strong>L03</strong> under 29 CFR 1910.268(b)(20) and applies directly here — any metal tool within the MAD zone of an energized supply conductor creates electrocution risk, a concept whose electrical physics you absorbed from <strong>T18.L07</strong>. The clearance verification log you compile in this lesson is an explicit deliverable of the Form 219 close-out package described in <strong>L07</strong> — Form 219 cannot certify NESC Rule 232 compliance on an aerial joint-use project without a signed, pole-by-pole clearance log showing every measured value against the applicable minimum. The 47 CFR §32.2411 account citation corrects a systemic error that would surface in any carrier accounting audit: pole investment records that reference §32.2420 (cable and wire parent) instead of §32.2411 (Poles) are misclassified and will fail a Part 32 examination.
+          The NESC clearance numbers in this lesson originate in <strong>T05.L02</strong>, where you learned that Macon, GA sits in the NESC Light loading district per NESC C2-2023 Figure 250-1 and that Rule 232 sets voltage-class-specific vertical separation minima between supply conductors and communication attachments — this lesson is where those abstract numbers become a live field measurement with pass/fail consequences. The make-ready work documented in <strong>T07 and T08</strong> (staking and pole attachment) was supposed to pre-position every attachment at the correct height; the clearance verification measured in L08 is the inspector's confirmation that the make-ready crew actually achieved those heights, not just that they were specified. The non-conductive tool requirement (fiberglass rod, never a metal tape) was introduced in <strong>L03</strong> under 29 CFR 1910.268(b)(20) and applies directly here — any metal tool within the MAD zone of an energized supply conductor creates electrocution risk, a concept whose electrical physics you absorbed from <strong>T18.L07</strong>. The clearance verification log you compile in this lesson is an explicit deliverable of the Form 219 close-out package described in <strong>L07</strong> — Form 219 cannot certify NESC Rule 232 compliance on an aerial joint-use project without a signed, pole-by-pole clearance log showing every measured value against the applicable minimum. The 47 CFR §32.2411 account citation corrects a systemic error that would surface in any carrier accounting audit: pole investment records that reference §32.2420 (cable and wire parent) instead of §32.2411 (Poles) are misclassified and will fail a Part 32 examination.
         </p>
       </section>
     </LessonLayout>

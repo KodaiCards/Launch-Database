@@ -175,12 +175,12 @@ export default function T12L13_AcceptanceTesting() {
             <tr>
               <td>Splice loss (fusion, singlemode)</td>
               <td>≤ 0.15 dB bidirectional average (quality target)</td>
-              <td>Bidirectional OTDR per FOTP-61</td>
+              <td>Bidirectional OTDR per TIA-526-7 (OFSTP-7) / IEC 61280-4-1</td>
             </tr>
             <tr>
               <td>End-to-end link loss</td>
               <td>Calculated from components: fiber + connectors + splices</td>
-              <td>OLTS per FOTP-61 / TIA-526-7</td>
+              <td>OLTS per TIA-526-7 / TIA-526-14</td>
             </tr>
             <tr>
               <td>Connector end-face</td>

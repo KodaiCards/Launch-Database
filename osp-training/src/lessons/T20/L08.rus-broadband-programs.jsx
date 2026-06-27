@@ -27,7 +27,7 @@ export const meta = {
 export const key_terms = [
   {
     term: 'ReConnect Program',
-    definition: 'Dedicated RUS broadband grant/loan (7 CFR Part 1744). Post-2018 expansion. Funds FTTH, wireless, and other broadband technologies in underserved rural areas. Match requirement: 10–20%.',
+    definition: 'Dedicated RUS broadband grant/loan (7 CFR Part 1740). Post-2018 expansion. Funds FTTH, wireless, and other broadband technologies in underserved rural areas. Match requirement: 10–20%.',
   },
   {
     term: 'Community Connect',
@@ -53,7 +53,7 @@ export default function T20L08_BroadbandPrograms() {
         <h3 className="mt-4 font-semibold">Two main broadband programs</h3>
         <div className="space-y-3 mt-3 text-sm">
           <div className="rounded bg-white/5 p-3">
-            <p className="font-semibold text-blue-300">ReConnect (7 CFR Part 1744)</p>
+            <p className="font-semibold text-blue-300">ReConnect (7 CFR Part 1740)</p>
             <p className="text-slate-300/90 mt-1">Dedicated RUS broadband grant/loan. Post-2018 expansion. Funds FTTH, wireless, other broadband tech in underserved rural areas. Cost-per-mile cap: varies (higher than traditional Telecom Loan for broadband-capable plant). Match requirement: 10-20%.</p>
           </div>
           <div className="rounded bg-white/5 p-3">
@@ -74,7 +74,7 @@ export default function T20L08_BroadbandPrograms() {
           {
             id: 'T20-L08-fc-reconnect',
             front: 'What is the ReConnect Program?',
-            back: 'Dedicated RUS broadband grant/loan (7 CFR Part 1744). Post-2018 expansion. Funds FTTH, wireless, and other broadband technologies in underserved rural areas. Match requirement: 10–20%.',
+            back: 'Dedicated RUS broadband grant/loan (7 CFR Part 1740). Post-2018 expansion. Funds FTTH, wireless, and other broadband technologies in underserved rural areas. Match requirement: 10–20%.',
           },
           {
             id: 'T20-L08-fc-community',

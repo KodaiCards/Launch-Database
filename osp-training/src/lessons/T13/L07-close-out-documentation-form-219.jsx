@@ -31,7 +31,7 @@ export const meta = {
     {
       term: 'OTDR archive verification checklist',
       definition:
-        'The inspector\'s pre-close-out checklist to verify that OTDR acceptance testing records meet the requirements of 7 CFR §1755.404 and §1755.407 (Format V). Required elements: (1) Bidirectional traces present for every fiber tested — one trace in each direction. (2) Files in SOR (Standard OTDR Record) format — not PDF-only. (3) Launch cable length confirmed subtracted from the trace — the launch-fiber dead zone must not include billable plant. (4) Archive delivered to the borrower/owner (not retained by the contractor or test technician). (5) Chain of custody documented: who delivered the archive, to whom, on what date, in what format (USB, cloud link, etc.).',
+        'The inspector\'s pre-close-out checklist to verify that OTDR acceptance testing records meet the requirements of 7 CFR §1755.404 and §1755.407. Required elements: (1) Bidirectional traces present for every fiber tested — one trace in each direction. (2) Files in SOR (Standard OTDR Record) format — defined by Bellcore SR-4731 / Telcordia GR-196-CORE — not PDF-only. (3) Launch cable length confirmed subtracted from the trace — the launch-fiber dead zone must not include billable plant. (4) Archive delivered to the borrower/owner (not retained by the contractor or test technician). (5) Chain of custody documented: who delivered the archive, to whom, on what date, in what format (USB, cloud link, etc.).',
     },
     {
       term: 'records package handoff',
@@ -80,7 +80,7 @@ export default function T13L07CloseOutDocumentation() {
     },
     {
       id: 'q2',
-      question: 'OTDR archive files must be delivered in which format to satisfy 7 CFR §1755.407 (Format V)?',
+      question: 'OTDR archive files must be delivered in which format to satisfy 7 CFR §1755.407?',
       type: 'multiple-choice',
       options: [
         'PDF report — human-readable format is sufficient',
@@ -90,7 +90,7 @@ export default function T13L07CloseOutDocumentation() {
       ],
       correct: 1,
       explanation:
-        'SOR (Standard OTDR Record) format is the machine-readable standard (Bellcore/Telcordia TR-NWT-001138). 7 CFR §1755.407 (referred to as "Format V" in USDA training materials) requires the traces in SOR format, not PDF-only. SOR files can be re-analyzed years later as technology changes; PDF screenshots cannot. The borrower may also require SOR files for their OSS (Operations Support System) import. Printed traces and Excel summaries may supplement but do not replace SOR.',
+        'SOR (Standard OTDR Record) format is the machine-readable standard defined by Bellcore SR-4731 / Telcordia GR-196-CORE. 7 CFR §1755.407 requires OTDR test records be retained and submitted in machine-readable format; SOR is the industry-standard format for this purpose. SOR files can be re-analyzed years later as technology changes; PDF screenshots cannot. The borrower may also require SOR files for their OSS (Operations Support System) import. Printed traces and Excel summaries may supplement but do not replace SOR.',
     },
     {
       id: 'q3',
@@ -218,7 +218,7 @@ export default function T13L07CloseOutDocumentation() {
             </tr>
             <tr>
               <td style={{ border: '1px solid #dee2e6', padding: '8px' }}>OTDR acceptance test records</td>
-              <td style={{ border: '1px solid #dee2e6', padding: '8px' }}>7 CFR §1755.404 + §1755.407 (Format V); RUS 1753F-401</td>
+              <td style={{ border: '1px solid #dee2e6', padding: '8px' }}>7 CFR §1755.404 + §1755.407 (SOR format per SR-4731/GR-196-CORE); RUS 1753F-401</td>
               <td style={{ border: '1px solid #dee2e6', padding: '8px' }}>OTDR archive checklist (SOR, bidirectional, launch-cable subtracted, delivered to owner)</td>
             </tr>
             <tr>
@@ -261,10 +261,10 @@ export default function T13L07CloseOutDocumentation() {
 
         <h3>OTDR Archive Verification Checklist</h3>
         <p>
-          Per 7 CFR §1755.404 (test acceptance) and §1755.407 (SOR archive
-          requirement — "Format V" is the designation used in USDA training materials for the
-          machine-readable SOR requirement; always verify against the current edition of the
-          regulation), the inspector shall witness OTDR testing AND verify the archive.
+          Per 7 CFR §1755.404 (test acceptance) and §1755.407 (OTDR records retention and
+          submittal requirement — SOR is the machine-readable format defined by Bellcore SR-4731 /
+          Telcordia GR-196-CORE; always verify against the current edition of the regulation),
+          the inspector shall witness OTDR testing AND verify the archive.
           "Shall" in a federal regulation means mandatory. Use this checklist before
           accepting the OTDR records as close-out complete:
         </p>

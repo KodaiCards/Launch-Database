@@ -2,7 +2,7 @@
 // NEW lesson per GAP 2: field-decision checklists for on-site execution
 // Fills gap: "inspection feels procedural-dense; crew needs decision-tree walkthrough"
 // Standards: 7 CFR §1753 competent resident inspection; RUS Form 565 daily requirement;
-//   NESC §01C (authority to halt unsafe work); AIA A201 rejection authority
+//   OSHA 29 CFR 1910.268 (competent person halt-work authority); AIA A201 rejection authority
 // Scenario-based learning: real-world decision nodes the inspector faces during a single construction day
 
 import React from 'react';
@@ -24,7 +24,7 @@ export const meta = {
     'Distinguish HIGH vs MED vs LOW severity deficiencies and apply the correct disposition to each (kick-back vs punch-list vs accept-as-is)',
     'Apply the segment-level defect threshold (≥3 deficiencies = entire segment back to contractor)',
     'Identify the three deficiency-state transitions: NEW → DOCUMENTED → PENDING CORRECTION → VERIFIED CORRECTED',
-    'Determine when to halt work on site (halt authority trigger: NESC §01C unsafe condition)',
+    'Determine when to halt work on site (halt authority trigger: OSHA 29 CFR 1910.268 competent-person authority)',
   ],
   estimated_minutes: 26,
   vocabulary_introduced: [
@@ -47,7 +47,7 @@ export const vocabulary_introduced = {
   'deficiency state machine':
     'The four-state sequence a deficiency follows from discovery to close-out: (1) NEW — discovered during inspection, entered on Form 565, not yet communicated to contractor. (2) DOCUMENTED — punch-list item formally issued to contractor with location, description, spec reference, and required corrective action. (3) PENDING CORRECTION — contractor has acknowledged the deficiency, started correction work, but correction is not yet verified by the inspector. (4) VERIFIED CORRECTED — inspector has re-inspected and confirms the correction meets specification. Only verified-corrected deficiencies are closed from the punch list.',
   'halt-work authority':
-    'Per NESC §01C (authority to halt unsafe work), the field inspector has absolute authority to stop construction immediately if an unsafe condition is observed — even if the unsafe condition is not explicitly addressed in the contract spec. Unsafe conditions: unqualified worker operating energized equipment, missing fall protection where required, trench being worked without shoring on unstable soil, unqualified crew attempting a high-voltage attachment near energized lines. NESC §01C does not require the inspector to ask permission — the inspector states "Work stops. Fix the hazard." If the contractor refuses, the inspector documents the refusal on Form 565 and notifies the engineer and project manager.',
+    'Under OSHA 29 CFR 1910.268, the designated "competent person" has authority to stop construction immediately when an imminent-hazard unsafe condition is observed — even if that condition is not explicitly addressed in the contract spec. Unsafe conditions: unqualified worker operating energized equipment, missing fall protection where required, trench being worked without shoring on unstable soil, unqualified crew attempting a high-voltage attachment near energized lines. The competent person does not require contractor permission — the directive is "Work stops. Fix the hazard." If the contractor refuses, the inspector documents the refusal on Form 565 and notifies the engineer and project manager.',
   'punch-list disposition':
     'The list of material deficiencies (typically MED + LOW severity) issued to the contractor during construction. Each punch-list item includes: location reference (mile marker, pole number, splice point), deficiency description (what is wrong), spec reference (which contract clause or standard it violates), required corrective action (what fix is needed), and deadline (typically 5–10 days for non-critical items). Punch-list items are tracked to resolution — the inspector verifies each correction and documents the re-inspection on Form 565 or the close-out Form 219.',
 };
@@ -58,7 +58,7 @@ export const vocabulary_assumed = [
   { term: 'RUS Form 565', source_lesson_id: 'T13.L11' },
   { term: 'inspection segment', source_lesson_id: 'T13.L01' },
   { term: 'punch list', source_lesson_id: 'T10.L11' },
-  { term: 'NESC §01C', source_lesson_id: 'T05.L01' },
+  { term: 'halt-work authority', source_lesson_id: 'T05.L01' },
   { term: 'deficiency', source_lesson_id: 'T13.L01' },
 ];
 
@@ -116,13 +116,13 @@ export default function T13L13FieldDecisionWorkflow() {
         label: 'Weather marginal / unsafe',
         decision: [
           {
-            option: 'Halt work. Document on Form 565: "High wind (28 mph) exceeds NESC max (25 mph). Work suspended until wind drops below 20 mph."',
-            result: 'CORRECT — Safety takes precedence. NESC Section 26 requires wind-safe conditions.',
+            option: 'Halt work. Document on Form 565: "High wind (28 mph) exceeds employer safety program limit (25 mph) for aerial work. Work suspended until wind drops below 20 mph."',
+            result: 'CORRECT — Safety takes precedence. OSHA 29 CFR 1910.268 and the employer safety program require wind-safe conditions for aerial work; specific limits are set by the project safety plan.',
             consequences: 'Contractor is notified, crew stands down. Resume when conditions improve. Document the downtime and cause on Form 565.',
           },
           {
             option: 'Allow the contractor to continue. They claim this is "just training, no energized work."',
-            result: 'WRONG — No exception. NESC applies regardless of what is being done. High wind increases fall risk, cable-handling risk.',
+            result: 'WRONG — No exception. OSHA 29 CFR 1910.268 and the project safety plan apply regardless of what is being done. High wind increases fall risk, cable-handling risk.',
             consequences: 'If an accident occurs, your signature on Form 219 closes-out work that was performed in unsafe conditions. Liability risk.',
           },
         ],
@@ -234,17 +234,17 @@ export default function T13L13FieldDecisionWorkflow() {
     branches: [
       {
         id: 'halt-yes',
-        condition: 'This is an NESC §01C unsafe condition. The crew member is in direct contact with ground and is in physical proximity to an energized cable. Even though the cable is telecom (lower voltage than power), the condition is unsafe.',
+        condition: 'This is an OSHA 29 CFR 1910.268 unsafe condition. The crew member is in direct contact with ground and is in physical proximity to an energized cable. Even though the cable is telecom (lower voltage than power), the condition is unsafe.',
         label: 'Halt work immediately',
         decision: [
           {
-            option: 'State clearly: "Work stops. Crew member: put shoes on, step away from the grounded area. The energized cable must be de-energized and tagged out before any grounding tests." Document on Form 565: "Work halted at 10:15 AM due to NESC §01C unsafe condition: energized cable in proximity to crew member in contact with ground. Crew member barefoot on wet soil. Halted work pending de-energization and LOTO (Lock-Out, Tag-Out) compliance."',
-            result: 'CORRECT — NESC §01C gives you absolute halt-work authority. You are the on-site representative of the owner. You have the legal and ethical authority to stop unsafe work, regardless of cost or schedule impact.',
+            option: 'State clearly: "Work stops. Crew member: put shoes on, step away from the grounded area. The energized cable must be de-energized and tagged out before any grounding tests." Document on Form 565: "Work halted at 10:15 AM due to OSHA 29 CFR 1910.268 unsafe condition: energized cable in proximity to crew member in contact with ground. Crew member barefoot on wet soil. Halted work pending de-energization and LOTO (Lock-Out, Tag-Out) compliance."',
+            result: 'CORRECT — OSHA 29 CFR 1910.268 gives the competent person absolute halt-work authority. You are the on-site representative of the owner. You have the legal and ethical authority to stop unsafe work, regardless of cost or schedule impact.',
             consequences: 'The contractor may argue about cost / schedule impact, but you do not negotiate on safety. If the contractor refuses to comply with your halt order, document the refusal on Form 565 and call the project manager immediately.',
           },
           {
             option: 'Observe the test, but do not stop the crew. You reason: "The telecom cable is low voltage. The crew is experienced. The test will only take 2 minutes."',
-            result: 'WRONG — This violates NESC §01C and your duty as the competent inspector. You have the authority and the responsibility to halt unsafe work. Experience and voltage level are NOT excuses.',
+            result: 'WRONG — This violates your duty as the competent person under OSHA 29 CFR 1910.268. You have the authority and the responsibility to halt unsafe work. Experience and voltage level are NOT excuses.',
             consequences: 'If the crew member is electrocuted or injured, you may be held personally liable for witnessing the unsafe condition and failing to exercise your halt-work authority.',
           },
         ],
@@ -285,7 +285,7 @@ export default function T13L13FieldDecisionWorkflow() {
             <strong>Segment judgment:</strong> Do I have ≥3 defects in this segment? (Kick-back trigger)
           </li>
           <li>
-            <strong>Halt decision:</strong> Is this an unsafe condition? (NESC §01C halt-work authority)
+            <strong>Halt decision:</strong> Is this an unsafe condition? (OSHA 29 CFR 1910.268 competent-person halt-work authority)
           </li>
         </ol>
         <p>
@@ -349,7 +349,7 @@ export default function T13L13FieldDecisionWorkflow() {
 
         <h3>Scenario 4: Unsafe Condition — Halt-Work Authority</h3>
         <p>
-          Per NESC Section 01C, you have absolute authority to halt work immediately if an unsafe condition is observed.
+          Under OSHA 29 CFR 1910.268, the competent person has authority to halt work immediately if an imminent-hazard unsafe condition is observed.
           This is NOT a request or a suggestion. This is a directive. Do not negotiate.
         </p>
         <ul>
@@ -471,7 +471,7 @@ export default function T13L13FieldDecisionWorkflow() {
                   text: 'Allow the test to proceed. The cable is telecom, not power. Low voltage is low risk.',
                   correct: false,
                   rationale:
-                    'Wrong. NESC §01C unsafe condition. Halt work immediately. Voltage level is not an excuse.',
+                    'Wrong. OSHA 29 CFR 1910.268 unsafe condition. Halt work immediately. Voltage level is not an excuse.',
                 },
                 {
                   text: 'Require the crew to put on electrical PPE and then allow the test.',
@@ -480,10 +480,10 @@ export default function T13L13FieldDecisionWorkflow() {
                     'Wrong. Even with PPE, the crew member should not be conducting grounding tests on energized infrastructure while standing on wet ground. Halt work and require de-energization / LOTO first.',
                 },
                 {
-                  text: 'Halt work immediately. State: "Work stops. De-energize and lock-out the cable before any grounding tests. Crew: put on dry shoes and electrical PPE. No further action until LOTO is complete." Document on Form 565: "NESC §01C halt: unsafe condition (energized cable, inadequate PPE, crew on wet ground)."',
+                  text: 'Halt work immediately. State: "Work stops. De-energize and lock-out the cable before any grounding tests. Crew: put on dry shoes and electrical PPE. No further action until LOTO is complete." Document on Form 565: "OSHA 1910.268 competent-person halt: unsafe condition (energized cable, inadequate PPE, crew on wet ground)."',
                   correct: true,
                   rationale:
-                    'Correct. NESC §01C gives you halt-work authority. Do not negotiate on safety. Do not let the contractor argue about schedule or cost.',
+                    'Correct. OSHA 29 CFR 1910.268 gives the competent person halt-work authority. Do not negotiate on safety. Do not let the contractor argue about schedule or cost.',
                 },
               ],
             },
@@ -536,7 +536,7 @@ export default function T13L13FieldDecisionWorkflow() {
           <li>Arrival check: Safety and crew readiness come first.</li>
           <li>Defect discovery: Categorize by severity. Read the spec to know which deviations are material.</li>
           <li>Segment judgment: Count defects. If ≥3, apply kick-back. Do not negotiate the rule.</li>
-          <li>Halt decision: NESC §01C unsafe condition = work stops. Do not negotiate.</li>
+          <li>Halt decision: OSHA 29 CFR 1910.268 unsafe condition = work stops. Do not negotiate.</li>
         </ul>
         <p>
           Document everything on Form 565. Form 565 is your insurance policy: it proves you executed competent resident
@@ -555,8 +555,8 @@ export default function T13L13FieldDecisionWorkflow() {
         definition="If an inspection segment contains ≥3 material deficiencies (any mix of HIGH/MED/LOW), the entire segment is returned to the contractor for correction. No partial acceptance."
       />
       <Flashcard
-        term="NESC §01C halt-work authority"
-        definition="The inspector has absolute authority to immediately halt construction if an unsafe condition is observed (per NESC Section 01C). No negotiation, no schedule/cost exemptions. Safety first."
+        term="Competent-person halt-work authority"
+        definition="Under OSHA 29 CFR 1910.268, the designated competent person has authority to immediately halt construction if an imminent-hazard unsafe condition is observed. No negotiation, no schedule/cost exemptions. Safety first."
       />
       <Flashcard
         term="punch-list disposition"

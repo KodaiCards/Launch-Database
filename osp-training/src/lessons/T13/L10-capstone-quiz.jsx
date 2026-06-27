@@ -39,14 +39,14 @@ export default function T13L10Capstone() {
         'A contractor installs a cable run and the inspector approves it verbally at the time. Two weeks later, the inspector notices the sag is out of spec. The contractor argues "you already accepted it." Which legal doctrine is the contractor invoking, and what should the inspector have done at the time to prevent it?',
       type: 'multiple-choice',
       options: [
-        'Waiver by conduct (AIA A201-2017 §3.3.1) — the inspector should have issued a written Nonconformance Notice (NCN) immediately and never given verbal approval',
+        'Waiver by conduct (AIA A201-2017 §12.3) — the inspector should have issued a written Nonconformance Notice (NCN) immediately and never given verbal approval',
         'Estoppel — the inspector should have made the contractor sign a waiver of defect',
         'Substantial completion (AIA A201-2017 §9.8) — once verbally accepted, the work is final',
         'Sovereign immunity — RUS-funded projects cannot be disputed by contractors',
       ],
       correct: 0,
       explanation:
-        'Waiver by conduct under AIA A201-2017 §3.3.1: if the inspector allows nonconforming work to proceed without documented objection, that acceptance may waive the right to require correction. Prevention: written NCN immediately at discovery — never verbal acceptance of work you have not confirmed as conforming. "I\'ll check later" is not acceptance; silence at the point of installation can be.',
+        'Waiver by conduct under AIA A201-2017 §12.3: if the inspector allows nonconforming work to proceed without documented objection, that acceptance may waive the right to require correction. Prevention: written NCN immediately at discovery — never verbal acceptance of work you have not confirmed as conforming. "I\'ll check later" is not acceptance; silence at the point of installation can be.',
     },
     // ── L01: Inspector Role & QA/QC Framework ──────────────────────────
     {
@@ -206,7 +206,7 @@ export default function T13L10Capstone() {
       ],
       correct: 1,
       explanation:
-        '7 CFR §1755.407 Format V requires OTDR test records in SOR (Standard OTDR Record) format — machine-readable format compatible with OTDR analysis software. PDF screenshots of trace screens are human-readable only and cannot be re-analyzed as technology changes. "We can give them to you anytime" is not delivery to the borrower — delivery requires actual handoff with documented receipt. The Form 219 close-out checklist is not complete until the SOR archive is physically delivered to and receipted by the borrower. Do not sign Form 219 until the checklist is satisfied.',
+        '7 CFR §1755.407 requires OTDR test records in SOR (Standard OTDR Record) format — defined by Bellcore SR-4731 / GR-196-CORE — machine-readable format compatible with OTDR analysis software. PDF screenshots of trace screens are human-readable only and cannot be re-analyzed as technology changes. "We can give them to you anytime" is not delivery to the borrower — delivery requires actual handoff with documented receipt. The Form 219 close-out checklist is not complete until the SOR archive is physically delivered to and receipted by the borrower. Do not sign Form 219 until the checklist is satisfied.',
     },
     // ── L07: Close-Out Documentation & Form 219 ─────────────────────────
     {

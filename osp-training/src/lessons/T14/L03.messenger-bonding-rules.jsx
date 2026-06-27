@@ -39,9 +39,9 @@ export const meta = {
         'The conductor that runs from the bond clamp (or from the messenger through the clamp) down the pole to the ground rod. Minimum #6 AWG bare soft-drawn copper for most OSP applications per NESC Rule 96. Protected from mechanical damage from grade to 8 feet above grade.',
     },
     {
-      term: 'NESC Rule 215D',
+      term: 'NESC Rule 215D / Rule 96F',
       definition:
-        'The NESC rule (C2-2023, Part 2 §21 — Grounding and Bonding) that requires bonding of messengers, supply neutrals, and metallic poles on joint-use aerial plant. Rule 215D requires the communication messenger to be bonded to the supply system MGN at every splice closure (or at equivalent intervals). This is the primary authority for messenger bonding intervals. (Source: NESC C2-2023 Rule 215D.)',
+        'NESC rules governing messenger bonding on joint-use aerial plant. Rule 96 (Part 1, Section 09 — Grounding and Bonding of Communication Facilities) specifies grounding conductor sizing and bonding requirements for communications-side equipment. Rule 215 (Part 2, Section 21 — Grounding and Bonding of Overhead Lines) covers bonding for joint-use supply and communications plant. Both may apply depending on context. [Note: T14.L02 cites Rule 96F while this lesson has historically cited Rule 215D for messenger bonding intervals — verify the authoritative rule for your specific joint-use scenario against current NESC C2-2023 before exam use, as both are paywalled.]',
     },
     {
       term: 'bonded-messenger separation',

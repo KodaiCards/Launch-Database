@@ -1260,7 +1260,7 @@ const QUESTIONS = [
     ],
     answerIndex: 1,
     explanation:
-      'RUS direct loans (7 CFR Part 1735) must be fully repaid with interest (typically 35–40 years at 3–4%). ReConnect grants (7 CFR Part 1744) do not require repayment for the grant portion, but require a 10–20% non-federal match depending on award tier. Both are USDA-administered programs. The loan vs. grant distinction is the defining structural difference: grants reduce total project cost burden permanently; loans shift cost to future periods. (T20.L01; 7 CFR Part 1735; 7 CFR Part 1744)',
+      'RUS direct loans (7 CFR Part 1735) must be fully repaid with interest (typically 35–40 years at 3–4%). ReConnect grants (7 CFR Part 1740) do not require repayment for the grant portion, but require a 10–20% non-federal match depending on award tier. Both are USDA-administered programs. The loan vs. grant distinction is the defining structural difference: grants reduce total project cost burden permanently; loans shift cost to future periods. (T20.L01; 7 CFR Part 1735; 7 CFR Part 1740)',
   },
 
   // Source: T20.L02 — RUS Engineering Standards
@@ -1381,12 +1381,12 @@ const QUESTIONS = [
     choices: [
       'Both are ReConnect programs — Tier 1 (10%) and Tier 2 (20%) match requirements',
       'Both are Community Connect programs at different award tiers',
-      'ReConnect (10–20% match, 7 CFR Part 1744) targets unserved areas; Community Connect (25% match, 7 CFR Part 1703) targets community institutions',
+      'ReConnect (10–20% match, 7 CFR Part 1740) targets unserved areas; Community Connect (25% match, 7 CFR Part 1703) targets community institutions',
       'Community Connect (10–20% match) targets unserved areas; ReConnect (25% match) targets community institutions',
     ],
     answerIndex: 2,
     explanation:
-      'ReConnect (7 CFR Part 1744) provides loans, grants, or loan/grant combinations for broadband infrastructure in unserved areas, requiring a 10–20% non-federal match depending on the funding tier. Community Connect (7 CFR Part 1703) specifically funds broadband to community institutions — libraries, schools, healthcare facilities — and requires a 25% matching contribution. These are distinct USDA Rural Development programs with different eligibility requirements and target populations. (T20.L08; 7 CFR Part 1744; 7 CFR Part 1703)',
+      'ReConnect (7 CFR Part 1740) provides loans, grants, or loan/grant combinations for broadband infrastructure in unserved areas, requiring a 10–20% non-federal match depending on the funding tier. Community Connect (7 CFR Part 1703) specifically funds broadband to community institutions — libraries, schools, healthcare facilities — and requires a 25% matching contribution. These are distinct USDA Rural Development programs with different eligibility requirements and target populations. (T20.L08; 7 CFR Part 1740; 7 CFR Part 1703)',
   },
 
   // Source: T20.L09 — Contractor RUS Compliance

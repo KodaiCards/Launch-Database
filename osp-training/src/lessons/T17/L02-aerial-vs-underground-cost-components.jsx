@@ -399,7 +399,7 @@ export default function L02AerialVsUndergroundCostComponents() {
         <h3>Why Underground Typically Costs 3–8× More Than Aerial</h3>
 
         <p>
-          FBA/Cartesian 2024 benchmark data shows aerial median around $6.55/ft and underground median around $22–$28/ft
+          FBA/Cartesian 2024 benchmark data shows aerial median around $6.55/ft and underground median around $18–$20/ft
           for mixed urban/rural work. The spread is real and has a structural explanation:
         </p>
 

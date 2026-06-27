@@ -129,7 +129,7 @@ export default function T13L01InspectorRole() {
         ],
       },
       waived: {
-        text: '⚠️ This is exactly "waiver by course of conduct." By silently accepting the over-pitch for two days, you have given the contractor a legitimate argument that the owner waived strict compliance. AIA A201-2017 §3.3.1 recognizes this doctrine — an inspector\'s silence can imply acceptance. You have weakened the owner\'s position. Going forward, your only option is to issue the punch item NOW (late is still better than never) and document that you are reclassifying previously unaddressed work. But the contractor may claim compensable change-order entitlement for any rework on the prior two miles.',
+        text: '⚠️ This is exactly "waiver by course of conduct." By silently accepting the over-pitch for two days, you have given the contractor a legitimate argument that the owner waived strict compliance. AIA A201-2017 §12.3 recognizes this doctrine — an inspector\'s silence can imply acceptance. You have weakened the owner\'s position. Going forward, your only option is to issue the punch item NOW (late is still better than never) and document that you are reclassifying previously unaddressed work. But the contractor may claim compensable change-order entitlement for any rework on the prior two miles.',
         choices: [{ label: 'Continue', nextNode: 'lesson' }],
       },
       correct: {
@@ -141,7 +141,7 @@ export default function T13L01InspectorRole() {
         choices: [{ label: 'Try again', nextNode: 'start' }],
       },
       lesson: {
-        text: 'Key rule: your written objection preserves the owner\'s rights. Your silence may waive them. Write it down every time, every deficiency, every day. The AIA A201-2017 §3.3.1 waiver-by-conduct doctrine is a real legal risk on every project.',
+        text: 'Key rule: your written objection preserves the owner\'s rights. Your silence may waive them. Write it down every time, every deficiency, every day. The AIA A201-2017 §12.3 waiver-by-conduct doctrine is a real legal risk on every project.',
         choices: [],
       },
     },
@@ -178,7 +178,7 @@ export default function T13L01InspectorRole() {
     },
     {
       id: 'q3',
-      question: 'An inspector has silently passed lashing pitch violations for two weeks. On week three, they issue a written punch list for the same violation. Under AIA A201-2017 §3.3.1, the owner\'s position is:',
+      question: 'An inspector has silently passed lashing pitch violations for two weeks. On week three, they issue a written punch list for the same violation. Under AIA A201-2017 §12.3, the owner\'s position is:',
       type: 'multiple-choice',
       options: [
         'Fully preserved — the written notice restores all rights retroactively',
@@ -188,7 +188,7 @@ export default function T13L01InspectorRole() {
       ],
       correct: 1,
       explanation:
-        'Waiver by course of conduct: silence implies acceptance under AIA A201-2017 §3.3.1. The written punch-list preserves rights going FORWARD from week three, but the prior two weeks of silently accepted work is legally weakened. The contractor can argue the owner accepted those spans. Rights are NOT fully retroactively restored, and they are NOT entirely forfeited — the situation is nuanced. The lesson: write it down every time.',
+        'Waiver by course of conduct: silence implies acceptance under AIA A201-2017 §12.3. The written punch-list preserves rights going FORWARD from week three, but the prior two weeks of silently accepted work is legally weakened. The contractor can argue the owner accepted those spans. Rights are NOT fully retroactively restored, and they are NOT entirely forfeited — the situation is nuanced. The lesson: write it down every time.',
     },
     {
       id: 'q4',
@@ -406,7 +406,7 @@ export default function T13L01InspectorRole() {
         <h2>Scenario: Waiver by Course of Conduct</h2>
         <p>
           One of the most dangerous legal traps for an OSP inspector is "waiver by course of
-          conduct." The doctrine, recognized in AIA A201-2017 §3.3.1, works like this: if the
+          conduct." The doctrine, recognized in AIA A201-2017 §12.3, works like this: if the
           owner's representative (you) repeatedly accepts non-conforming work without objection,
           the contractor can argue that the owner has waived the right to enforce that
           specification requirement.
@@ -498,7 +498,7 @@ export default function T13L01InspectorRole() {
       <section className="mt-8 p-5 border-l-4 border-blue-500 bg-slate-800/40 rounded">
         <h3 className="text-blue-300 text-lg font-semibold mb-3">Tying It Together</h3>
         <p className="text-slate-200 mb-3">
-          The authority framework and documentation habits built in this lesson are the load-bearing structure for everything that follows in T13. From <strong>T01.L06</strong> you inherited the definition of the OSP inspector's role in the federal borrower hierarchy — this lesson operationalizes that role into a repeatable daily system. From <strong>T10.L11</strong> you learned the acceptance walk and punch-list mechanics; the kick-back threshold and material-deficiency classification taught here give those mechanics their legal teeth. The QA/QC distinction matters because T18 (Safety) defines a QA failure differently than a QC failure — a missing atmospheric testing procedure is a QA gap, while failing to measure gas levels on a particular vault day is a QC miss. Mastering the six-step arrival workflow and the waiver-by-conduct doctrine directly enables L03 and L04, where you will apply these documentation reflexes to live aerial and underground inspection scenarios; any silence on a lashing or burial deficiency in L03 becomes a waiver risk under the AIA A201-2017 §3.3.1 doctrine you learned here. At close-out, every Form 565 produced using this lesson's daily workflow becomes a link in the federal advance chain that L11 and L07 explain — Form 219 cannot be signed without a complete, credible chain of those daily records.
+          The authority framework and documentation habits built in this lesson are the load-bearing structure for everything that follows in T13. From <strong>T01.L06</strong> you inherited the definition of the OSP inspector's role in the federal borrower hierarchy — this lesson operationalizes that role into a repeatable daily system. From <strong>T10.L11</strong> you learned the acceptance walk and punch-list mechanics; the kick-back threshold and material-deficiency classification taught here give those mechanics their legal teeth. The QA/QC distinction matters because T18 (Safety) defines a QA failure differently than a QC failure — a missing atmospheric testing procedure is a QA gap, while failing to measure gas levels on a particular vault day is a QC miss. Mastering the six-step arrival workflow and the waiver-by-conduct doctrine directly enables L03 and L04, where you will apply these documentation reflexes to live aerial and underground inspection scenarios; any silence on a lashing or burial deficiency in L03 becomes a waiver risk under the AIA A201-2017 §12.3 doctrine you learned here. At close-out, every Form 565 produced using this lesson's daily workflow becomes a link in the federal advance chain that L11 and L07 explain — Form 219 cannot be signed without a complete, credible chain of those daily records.
         </p>
       </section>
     </LessonLayout>
