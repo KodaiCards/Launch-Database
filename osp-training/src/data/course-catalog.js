@@ -990,7 +990,7 @@ export const lessonTitleIndex = {
   // ── T20 Federal Programs ───────────────────────────────────────────
   'T20.L01': 'RUS Program Overview: Telecom Loan Program Structure',
   'T20.L02': 'RUS Engineering Standards: Bulletins 1751F-630/635/810',
-  'T20.L03': 'RUS Forms & Loan Reporting: 307, 740, 219',
+  'T20.L03': 'RUS Forms & Loan Reporting: 481, 231, 219',
   'T20.L04': 'Uniform System of Accounts (USOA) & Plant Account Mapping',
   'T20.L05': 'RUS Compliance & Audit Trail',
   'T20.L06': 'Federal Permitting Integration: NEPA, §106, USACE, BLM',

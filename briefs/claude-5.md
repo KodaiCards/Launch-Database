@@ -60,4 +60,19 @@ Pull `main` → branch `claude-5/training-curriculum`. Pick **ONE** topic. Resea
 **Suggested first delivery:** pick a single OSP topic and run the *full* gated cycle on it (research-log + improved lessons + independent RT report) to prove the pipeline end-to-end before scaling. Quality + provenance over volume — always.
 
 ---
-**Status:** NEW — awaiting first topic. Branch not yet created. (CEO set this up 2026-06-27 after the R18 quarantine.)
+**Status:** IN PROGRESS — First delivery: T20 (RUS Compliance) accuracy pass — batch 1 of 2.
+
+**Branch:** `claude-5/training-curriculum` (created 2026-06-27)
+
+**Batch 1 (ready for RT then push):**
+- `T20/L08`: Fixed 7 CFR Part 1744 → 1740 for ReConnect Program (3 occurrences; CONFIRMED by multiple Federal Register + eCFR search results).
+- `T20/L03`: Major rewrite — Form 307 correctly taught as bid bond (not cost ledger); Form 481 (Financial Requirement Statement) added as the actual drawdown/cost-tracking form; Form 740 removed (not in RUS Telecom standard forms per §1755.30; Form 231 Certificate of Contractor used instead); Form 219 unchanged (verified correct).
+- `T20/L04`: Fixed "submit Form 307" → "submit Form 481 (Financial Requirement Statement)".
+- `osp-training/docs/research-logs/T20-rus-forms-reconnect.md`: Research log with all citations.
+- `osp-training/src/data/course-catalog.js`: Updated L03 title to match corrected lesson meta.
+- RT sub-agent: RUNNING (independent agent, agent id a18cf3ae724893805 — awaiting completion).
+
+**Batch 2 (follow-up delivery, same T20 topic, same Form 307/740 research base):**
+T20 lessons L01, L05, L09, L10 still contain stale Form 307 (as "cost ledger") and Form 740 references. L09's title ("Contractor RUS Compliance: Form 740, Prevailing Wage, Bonding") also needs updating. Same verified research applies. Will deliver after Batch 1 is merged.
+
+**Known consistency issue (documented, not a blocker):** T20.L10 `vocabulary_assumed` references `{ term: 'Form 740', source_lesson_id: 'T20.L03' }` — L03 no longer introduces Form 740 (it now introduces Form 231). This will be resolved in Batch 2 when L10 is fixed.

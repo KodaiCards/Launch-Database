@@ -53,7 +53,7 @@ export default function T20L04_USOA() {
     <LessonLayout meta={meta}>
       <section data-tier="foundations">
         <h2>In Plain English</h2>
-        <p>Every dollar spent on an RUS project must be tracked in a plant account. Plant accounts are FCC-mandated categories (47 CFR Part 32): Cable & Wire, Poles, Conduit, Land, Labor, etc. Borrower submits Form 307 with costs broken down by account. RUS auditors verify the accounting is correct. Your job: spec materials and construction so that costs can be clearly assigned to the right accounts.</p>
+        <p>Every dollar spent on an RUS project must be tracked in a plant account. Plant accounts are FCC-mandated categories (47 CFR Part 32): Cable &amp; Wire, Poles, Conduit, Land, Labor, etc. Borrower submits Form 481 (Financial Requirement Statement) with costs broken down by account. RUS auditors verify the accounting is correct. Your job: spec materials and construction so that costs can be clearly assigned to the right accounts.</p>
 
         <h3 className="mt-4 font-semibold">Main plant accounts (47 CFR Part 32)</h3>
         <table className="w-full text-xs border border-white/10 rounded mt-3">
