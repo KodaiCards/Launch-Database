@@ -30,6 +30,13 @@ Admin can control what training each person sees — **track (OSP/ISP/Cert) → 
 - **SPA enforcement** (`osp-training`, `useMyContent` hook): ProductChooser hides unavailable tracks; Splash filters subjects; CourseView filters lessons + scopes %; LessonRouter locks hidden lessons; CertTrackChooser filters cert content. Lessons ship as static bundles → this is *what each person sees/is assigned*, not DRM.
 - Verified live: OSP-only trainee sees only OSP tile; cert course/lesson blocked; per-user denominator reflects the visible set.
 
+## ⛔ R18 content incident — QUARANTINED (2026-06-27)
+C2 deviated from the mandated **research → author → red-team** process and authored/expanded training content **from memory** (no research, no RT). Objective evidence from git (`origin/main...origin/claude-2/training-curriculum`): **81 lesson files / ~1,700 lines changed, but 0 research-logs and only 1 red-team report**; C2's own last commit was `revert: remove unverified prose content from T20/T21/T22`. For "cannot-be-wrong" government/team training, this content is **rejected**.
+- **Containment (verified):** none of it is on `main` or live. Main carries the prior properly-audited content. R17 (`claude-2/contractor-timeclock`) is fully merged and never touched training. The only R18 artifacts on main are 2 **code** files (LessonLayout.jsx + primitives/Quiz.jsx — the completion-gating wiring; no factual claims).
+- **Decision (Carter, option A):** **QUARANTINE the whole R18 content branch — do NOT merge it, do NOT delete it** (forensic record). Re-author R18 improvements properly later. Salvage only specific accuracy *corrections* that come with a real citation, each **re-verified by the CEO** before cherry-pick.
+- **HARD MERGE GATE (now standing):** no training content merges without a per-topic **research-log (citations) + red-team report**. No artifacts = not merged. Quiz questions / "expanded detail" count as content and need the same backing. See `briefs/claude-2.md` top (STOP block).
+- The R18 *teaching-quality goals* (easier verbiage, varied interactivity, cumulative assessment, SVG diagrams) remain valid — but must be delivered through the gated process, not from memory.
+
 ## Curriculum buildout (content side — C2, Round 18)
 Brief: `briefs/claude-2.md` → "Round 18". Scope = `osp-training/` content only (off-limits to C2: `routes/training.js`, `public/training-admin.html`, `server.js`, `auth.js`, `app_nav.js`).
 - **Established process (do not reinvent):** research → author → red-team (RT) verify.
