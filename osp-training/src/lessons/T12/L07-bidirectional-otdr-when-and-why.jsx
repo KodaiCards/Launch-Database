@@ -285,6 +285,26 @@ export default function T12L07_BidirectionalOTDR() {
               correct: 'b',
               explanation: 'MFD mismatch creates a gainer (negative value) in one direction and may inflate the reading in the other direction by the same amount. When averaged, these biases are equal in magnitude and opposite in sign — they cancel algebraically, leaving only the true physical splice loss. This is why (L_A→B + L_B→A) / 2 gives the correct answer.',
             },
+            {
+              id: 'q4',
+              type: 'multiple-choice',
+              text: 'Cumulative check (T12.L07 → T11.L03): A splice reads 0.14 dB A→B and 0.16 dB B→A. The bidirectional average is 0.15 dB. The ITU-T L.400 (2014) individual splice budget is 0.20 dB. Does this splice pass?',
+              options: [
+                { id: 'a', text: 'Yes — 0.15 dB is below the 0.20 dB budget per ITU-T L.400 (2014)' },
+                { id: 'b', text: 'No — bidirectional average must be ≤ 0.10 dB' },
+                { id: 'c', text: 'Cannot determine — need OLTS data to accept or reject a splice' },
+                { id: 'd', text: 'Yes if RUS job, No if non-RUS job — different standards apply' },
+              ],
+              correctId: 'a',
+              explanation: 'The bidirectional average of 0.15 dB is below the ITU-T L.400 (2014) individual splice maximum of 0.20 dB (G.652 field-qualified target, Table 2). This splice passes. Note: RUS 1753F-401 §5 uses the same 0.20 dB per-splice threshold on RUS-financed projects. The 0.10 dB threshold applies to the link\'s statistical splice loss budget (average across all splices), not to any single splice. In practice, well-adjusted arc splicers routinely achieve 0.03–0.08 dB bidirectional average on G.652.D-to-D splices — a 0.15 dB result warrants investigation but is within spec.',
+            },
+            {
+              id: 'q5',
+              type: 'fill-in-blank',
+              text: 'To calculate the true bidirectional average splice loss, you add the A→B reading and the B→A reading, then divide by ____.',
+              answer: '2',
+              explanation: 'True loss = (L_A→B + L_B→A) / 2. The division by 2 averages out the directional bias from MFD mismatch, backscatter coefficient differences, and splicer estimation artifacts. Never report only the minimum or maximum of the two readings — the average is the physically meaningful quantity. This is specified in ITU-T L.400 (2014) and IEC 61280-4-2.',
+            },
           ]}
         />
       </section>

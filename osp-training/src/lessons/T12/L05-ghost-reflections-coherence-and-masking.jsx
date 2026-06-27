@@ -287,6 +287,26 @@ export default function T12L05_GhostReflections() {
               correct: 'c',
               explanation: 'APC connectors have an 8° angled end-face that deflects the reflected beam away from the fiber core at an angle, dramatically reducing back-reflection to −60 to −65 dB. A clean UPC connector typically reflects −45 to −55 dB; contamination can degrade that to −14 to −30 dB. APC is the standard choice for OTDR launch cables on singlemode measurement because even a clean UPC reflects ~10–15 dB more than APC.',
             },
+            {
+              id: 'q4',
+              type: 'fill-in-blank',
+              text: 'A ghost reflection typically appears at ____ the distance of the real reflector (e.g., reflector at 300 m → ghost at ____ m).',
+              answer: 'twice / 600',
+              explanation: 'Ghost reflections (multiple reflections) are caused by a strong reflector (connector, break, Fresnel event) bouncing light back to the OTDR, which then bounces it forward again off the OTDR launch. The ghost appears at 2× the distance of the original event because the light has traveled the source-to-reflector distance twice. Example: strong connector at 300 m → ghost at 600 m. The key diagnostic: no loss step at the ghost distance, and the ghost peak is smaller than the original (each round trip loses some energy).',
+            },
+            {
+              id: 'q5',
+              type: 'multiple-choice',
+              text: 'You are testing a 3.2 km link with a long pulse setting and notice the OTDR cannot see a splice you know is at 50 m from the launch. What two changes would help reveal that splice?',
+              options: [
+                { id: 'a', text: 'Use a shorter pulse width to reduce the dead zone; or test from the far end so the splice is at 3.15 km (well beyond the launch dead zone)' },
+                { id: 'b', text: 'Use a longer pulse and wider averaging window to increase SNR near the launch' },
+                { id: 'c', text: 'Switch to multimode OTDR — singlemode instruments have longer dead zones' },
+                { id: 'd', text: 'Add a 1 km launch cable before the splice so the splice shifts to 1.05 km' },
+              ],
+              correctId: 'a',
+              explanation: 'Both approaches work: (1) shorter pulse = shorter event dead zone (EDZ) = can see closer events, though at the cost of longer-range sensitivity; (2) testing from the other end places that 50 m splice at 3.15 km, far outside any dead zone. Option (d) is also valid field practice — a launch cable shifts the DUT start beyond the EDZ — but option (a) covers both the core fixes. Option (b) is counterproductive: a longer pulse increases dead zones, making the problem worse.',
+            },
           ]}
         />
       </section>

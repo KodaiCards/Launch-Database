@@ -258,6 +258,26 @@ export default function T12L06_LaunchReceiveMFD() {
               correct: 'b',
               explanation: 'True splice loss = (L_A→B + L_B→A) / 2 = (0.18 + (−0.08)) / 2 = 0.10 / 2 = 0.05 dB. The directional bias (MFD mismatch) inflated the A→B reading and produced an apparent gainer on B→A. Averaging cancels the bias. Note: the −0.08 dB reading is a gainer artifact, not real gain.',
             },
+            {
+              id: 'q4',
+              type: 'multiple-choice',
+              text: 'What is the minimum recommended length of a singlemode launch cable when using a 1 µs OTDR pulse width?',
+              options: [
+                { id: 'a', text: '50 m — the launch cable only needs to clear the connector dead zone' },
+                { id: 'b', text: '150 m — standard for all pulse widths' },
+                { id: 'c', text: '1,000 m (1 km) — the ADZ for a 1 µs pulse can extend ~100 m; a 1 km launch puts the DUT start well beyond all dead zones' },
+                { id: 'd', text: '5,000 m — the only safe length for high-accuracy measurements' },
+              ],
+              correctId: 'c',
+              explanation: 'A 1 µs pulse has an event dead zone (EDZ) of roughly 10–30 m depending on the OTDR, and an attenuation dead zone (ADZ) of roughly 50–100 m for a high-reflectance event. A 1 km (1,000 m) launch cable ensures the device under test starts at least 1,000 m from the OTDR, safely past all dead zones. A 150 m launch is insufficient for a 1 µs pulse. Shorter pulses (e.g. 10 ns) have dead zones of only 2–4 m and can use shorter launch cables.',
+            },
+            {
+              id: 'q5',
+              type: 'fill-in-blank',
+              text: 'When splicing G.652.D to G.657.A2 fiber (different mode field diameters), an OTDR reading from one direction shows +0.22 dB and from the other shows −0.06 dB. The true bidirectional average loss is ____ dB.',
+              answer: '0.08',
+              explanation: 'Bidirectional average: (0.22 + (−0.06)) / 2 = 0.16 / 2 = 0.08 dB. The MFD difference between G.652.D (~10.4 µm MFD) and G.657.A2 (~9.2 µm MFD) creates a directional backscatter asymmetry: testing toward the larger MFD side reads high; testing toward the smaller MFD side shows a gainer artifact. Averaging the two readings cancels the MFD bias and gives the true splice insertion loss.',
+            },
           ]}
         />
       </section>
