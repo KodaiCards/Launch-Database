@@ -211,6 +211,31 @@ export default function T22L02_FiberFundamentals() {
           (wider core) to a G.652.D single-mode connector, you'll have coupling loss and mode
           conversion. Always match fiber types and connector polish grades.
         </p>
+
+        <h3 className="mt-5 font-semibold">Worked Example: Full Link Loss Budget</h3>
+        <div className="rounded bg-white/5 p-3 mt-3 text-sm space-y-2 text-slate-300/90">
+          <p><strong>Link:</strong> 15 km G.652.D single-mode fiber, 8 fusion splices, 2 connector pairs. System operates at 1550 nm.</p>
+          <p><strong>Component loss calculation:</strong></p>
+          <ul className="list-disc pl-5 space-y-1 mt-1">
+            <li>Fiber: 0.20 dB/km × 15 km = <strong>3.00 dB</strong></li>
+            <li>Splices: 0.10 dB × 8 splices = <strong>0.80 dB</strong></li>
+            <li>Connectors: 0.50 dB × 2 pairs = <strong>1.00 dB</strong></li>
+            <li><strong>Total: 4.80 dB</strong></li>
+          </ul>
+          <p><strong>Verification:</strong> OLTS measurement reads 5.1 dB — slightly above the calculated 4.80 dB. Difference within ±0.5 dB tolerance. Accept.</p>
+          <p><strong>If OLTS reads 7.2 dB</strong> (2.4 dB above budget): investigate. Likely a contaminated connector or a high-loss splice. OTDR from both ends to locate the excess loss event.</p>
+          <p><strong>Exam trap:</strong> The question may give you attenuation AND splice count AND connector count and ask for total loss. Calculate all three components and add — do not forget connectors.</p>
+        </div>
+      </section>
+
+      {/* ── TYING IT TOGETHER ───────────────────────────────────────────── */}
+      <section className="mt-8 rounded-lg bg-slate-800/40 border border-slate-700 p-4">
+        <h3 className="font-semibold text-slate-200">Tying It Together</h3>
+        <p className="text-sm text-slate-300/90 mt-2">
+          Fiber fundamentals from <strong>T01</strong> gave you the physics. This lesson translates that physics into exam-ready knowledge: core sizes (8–9 µm SMF, 50/62.5 µm MMF), ITU-T designations (G.652.D for standard OSP single-mode, G.657.A1 for bend-insensitive), attenuation values (0.2 dB/km @ 1550 nm for G.652.D), and the loss budget formula you'll see on every acceptance test.
+          For CFOT, know how to calculate total link loss: (attenuation × distance) + (splice loss × splice count) + (connector loss × connector count). Compare that to the receiver's sensitivity margin. If total exceeds margin, the link fails — the design needs shorter runs, better splices, or fewer connectors.
+          These calculations appear on the exam in two forms: direct math ("calculate total loss for this link") and scenario elimination ("which change would reduce total link loss the most?").
+        </p>
       </section>
 
       {/* ── QUIZ ────────────────────────────────────────────────────────── */}

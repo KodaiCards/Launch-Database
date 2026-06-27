@@ -155,6 +155,106 @@ export default function T22L05_Installation() {
           <li><strong>Crushed buffer tubes:</strong> Velcro tied too tight or cable run over by a vehicle. The buffer protects the fiber; if crushed, the fiber is unprotected.</li>
           <li><strong>Environmental damage:</strong> UV exposure (daylight), temperature extremes, or chemical exposure (fuel, solvents). Use conduit or protective sleeving in harsh environments.</li>
         </ul>
+
+        <h3 className="mt-5 font-semibold">Connector Types: Field Reference</h3>
+        <table className="w-full text-sm border border-white/10 rounded-lg mt-3">
+          <thead className="bg-white/5 text-slate-200">
+            <tr>
+              <th className="px-3 py-2 text-left">Connector</th>
+              <th className="px-3 py-2 text-left">End face</th>
+              <th className="px-3 py-2 text-left">Typical IL</th>
+              <th className="px-3 py-2 text-left">Typical RL</th>
+              <th className="px-3 py-2 text-left">Common use</th>
+            </tr>
+          </thead>
+          <tbody className="text-slate-300/90 text-xs">
+            <tr className="border-t border-white/10">
+              <td className="px-3 py-2 font-semibold">SC/UPC</td>
+              <td className="px-3 py-2">Flat-polished (blue)</td>
+              <td className="px-3 py-2">≤0.3 dB</td>
+              <td className="px-3 py-2">≥−45 dB</td>
+              <td className="px-3 py-2">OLT ports, patch panels</td>
+            </tr>
+            <tr className="border-t border-white/10">
+              <td className="px-3 py-2 font-semibold">SC/APC</td>
+              <td className="px-3 py-2">8° angled polish (green)</td>
+              <td className="px-3 py-2">≤0.3 dB</td>
+              <td className="px-3 py-2">≥−65 dB</td>
+              <td className="px-3 py-2">PON drops, CATV, high-RL systems</td>
+            </tr>
+            <tr className="border-t border-white/10">
+              <td className="px-3 py-2 font-semibold">LC/UPC</td>
+              <td className="px-3 py-2">Flat-polished, small form</td>
+              <td className="px-3 py-2">≤0.2 dB</td>
+              <td className="px-3 py-2">≥−45 dB</td>
+              <td className="px-3 py-2">SFP transceivers, dense equipment</td>
+            </tr>
+            <tr className="border-t border-white/10">
+              <td className="px-3 py-2 font-semibold">FC/UPC</td>
+              <td className="px-3 py-2">Screw-on, flat-polished</td>
+              <td className="px-3 py-2">≤0.3 dB</td>
+              <td className="px-3 py-2">≥−45 dB</td>
+              <td className="px-3 py-2">OTDR ports, lab equipment, legacy OSP</td>
+            </tr>
+          </tbody>
+        </table>
+        <p className="text-sm text-slate-300/90 mt-2">
+          <strong>Critical: Never mate APC to UPC.</strong> Mismatching APC (green, 8° angle) and UPC (blue, flat) connectors physically damages the angled face and generates ~3–4 dB insertion loss. Always visually confirm color before mating.
+        </p>
+
+        <h3 className="mt-5 font-semibold">Aerial vs. Underground: Key Installation Differences</h3>
+        <table className="w-full text-sm border border-white/10 rounded-lg mt-3">
+          <thead className="bg-white/5 text-slate-200">
+            <tr>
+              <th className="px-3 py-2 text-left">Parameter</th>
+              <th className="px-3 py-2 text-left">Aerial (lashed or ADSS)</th>
+              <th className="px-3 py-2 text-left">Underground (conduit or direct-buried)</th>
+            </tr>
+          </thead>
+          <tbody className="text-slate-300/90 text-xs">
+            <tr className="border-t border-white/10">
+              <td className="px-3 py-2">Pulling method</td>
+              <td className="px-3 py-2">Lashing machine (cable lashed to messenger wire) or self-supporting ADSS</td>
+              <td className="px-3 py-2">Winch or jet (air-blown) through conduit</td>
+            </tr>
+            <tr className="border-t border-white/10">
+              <td className="px-3 py-2">Max pulling tension</td>
+              <td className="px-3 py-2">ADSS rated by span; lashed cable rated by central member</td>
+              <td className="px-3 py-2">600–1000 lbs for armored; lower for non-armored</td>
+            </tr>
+            <tr className="border-t border-white/10">
+              <td className="px-3 py-2">Key hazard</td>
+              <td className="px-3 py-2">Proximity to power lines (NESC clearances), fall hazard on poles</td>
+              <td className="px-3 py-2">Over-tension in long runs, abrasion on conduit sweeps</td>
+            </tr>
+            <tr className="border-t border-white/10">
+              <td className="px-3 py-2">Slack storage</td>
+              <td className="px-3 py-2">Figure-8 loops at terminals; mid-span slack loops at poles</td>
+              <td className="px-3 py-2">Coiled in handholes and splice vaults</td>
+            </tr>
+          </tbody>
+        </table>
+
+        <h3 className="mt-5 font-semibold">Worked Scenario: Conduit Pull</h3>
+        <div className="rounded bg-white/5 p-3 mt-3 text-sm space-y-2 text-slate-300/90">
+          <p><strong>Route:</strong> 800 ft of 1.25" HDPE conduit with three 90° sweeps. Pulling 288-ct SMF cable (max pulling tension: 600 lbs).</p>
+          <p><strong>Setup:</strong> Attach Kellems grip to cable pulling eye. Attach dynamometer between winch and grip. Pre-lubricate conduit with cable pulling gel (not soap — soap dries and increases friction). Mark cable every 50 ft.</p>
+          <p><strong>During pull:</strong> Winch at 30 ft/min. Dynamometer reads 180 lbs at start (friction in bends). At 400 ft, tension spikes to 520 lbs — 87% of the 600 lb limit. Stop. Add more lubricant at the nearest handhole. Tension drops to 320 lbs. Complete the pull.</p>
+          <p><strong>After pull:</strong> Leave 25 ft slack at each end, coiled and secured with velcro. Verify no kinks or sharp bends. OTDR the cable: 0.20 dB/km @ 1550 nm across all fibers. No events. Accept.</p>
+          <p><strong>Lesson:</strong> A tension reading above 80% of max (480 lbs) is a warning — add lube rather than continuing. Exceeding the limit at the next sweep could break fibers with no visible external damage.</p>
+        </div>
+      </section>
+
+      {/* ── TYING IT TOGETHER ───────────────────────────────────────────── */}
+      <section className="mt-8 rounded-lg bg-slate-800/40 border border-slate-700 p-4">
+        <h3 className="font-semibold text-slate-200">Tying It Together</h3>
+        <p className="text-sm text-slate-300/90 mt-2">
+          Installation techniques connect design intent (T06, T07) to working fiber (T22.L03 splicing, T22.L04 testing).
+          A poorly pulled cable — one that exceeded tension limits, has a tight coil, or was kinked — will test poorly or fail early.
+          The rules (600 lb limit, 20× OD bend radius, 15–25 ft slack) are derived from real failure modes in production deployments.
+          For the CFOT exam, know the numbers: 10× OD during pull, 20× OD at rest, ≤0.2 dB splice loss acceptance, APC/UPC never mated together.
+          These appear both as direct-recall questions and as scenario questions where you must identify what went wrong on a job.
+        </p>
       </section>
 
       {/* ── FLASHCARDS ──────────────────────────────────────────────────── */}
