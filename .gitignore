@@ -35,6 +35,9 @@ package-lock.json
 # desktop/package-lock.json is REQUIRED — GH Actions caches against it
 # and npm ci needs it for reproducible installs. Un-ignore explicitly.
 !desktop/package-lock.json
+# osp-training/package-lock.json is REQUIRED — `npm run build:osp` runs
+# `npm ci`, which needs a committed lockfile to install from. Un-ignore.
+!osp-training/package-lock.json
 
 # Playwright artifacts — regenerated each `npm run test:browser` run.
 playwright-report/

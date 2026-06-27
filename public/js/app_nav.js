@@ -35,8 +35,14 @@
     + '.rr-empty{padding:10px;font-size:12px;color:var(--text-muted,#5A6470);text-align:center}';
   var st = document.createElement('style'); st.textContent = css; document.head.appendChild(st);
 
-  function link(key, href, icon, label) {
-    return '<a class="app-nav' + (key === active ? ' active' : '') + '" href="' + href + '"><i class="fa-solid ' + icon + '"></i> ' + label + '</a>';
+  // adminOnly links start hidden (display:none) and are revealed only after we
+  // confirm the signed-in user is an admin (see the /api/auth/me fetch below).
+  // Secure-by-default: a non-admin never sees them, even briefly. This is the
+  // foundation for finer-grained per-permission rail gating later.
+  function link(key, href, icon, label, adminOnly) {
+    return '<a class="app-nav' + (key === active ? ' active' : '') + '" href="' + href + '"'
+      + (adminOnly ? ' data-admin-only="1" style="display:none"' : '')
+      + '><i class="fa-solid ' + icon + '"></i> ' + label + '</a>';
   }
   function soon(icon, label) {
     return '<span class="app-nav dis"><i class="fa-solid ' + icon + '"></i> ' + label + ' <span class="soon">soon</span></span>';
@@ -62,11 +68,11 @@
     + link('money', '/money.html', 'fa-coins', 'Money')
     + link('clients', '/clients.html', 'fa-users', 'Clients')
     + link('invoices', '/invoices.html', 'fa-file-invoice', 'Invoices')
-    + link('people', '/people.html', 'fa-id-badge', 'People')
+    + link('people', '/people.html', 'fa-id-badge', 'People', true)
     + link('training', '/training-admin.html', 'fa-graduation-cap', 'Training')
     + link('audit', '/audit.html', 'fa-clock-rotate-left', 'Audit log')
     + link('settings', '/settings.html', 'fa-sliders', 'Settings')
-    + '<a class="app-nav" style="margin-top:auto" href="/admin.html"><i class="fa-solid fa-gear"></i> Admin</a>';
+    + '<a class="app-nav" data-admin-only="1" style="margin-top:auto;display:none" href="/admin.html"><i class="fa-solid fa-gear"></i> Admin</a>';
 
   var wrap = document.createElement('div');
   wrap.className = 'app-mainwrap';
@@ -79,6 +85,22 @@
   shell.appendChild(rail);
   shell.appendChild(wrap);
   document.body.appendChild(shell);
+
+  // ── Role-gated rail items ──────────────────────────────────────────────────
+  // Admin-only links (data-admin-only) render hidden and are revealed only once
+  // we confirm the signed-in user is an admin. Non-admins never see them. This
+  // is the seam for the broader permissions pass to come.
+  fetch('/api/auth/me', { credentials: 'include' })
+    .then(function (r) { return r.ok ? r.json() : null; })
+    .then(function (u) {
+      if (u && u.role === 'admin') {
+        Array.prototype.forEach.call(
+          rail.querySelectorAll('[data-admin-only]'),
+          function (el) { el.style.removeProperty('display'); }  // preserves other inline styles (e.g. margin-top:auto)
+        );
+      }
+    })
+    .catch(function () { /* leave hidden on error — fail closed */ });
 
   // ── Global search ────────────────────────────────────────────────────────────
   var _searchTimer = null;
