@@ -351,6 +351,22 @@ export default function T02L11_FiberPhysicsFieldVsBook() {
               'G.657.B3 is optimized for bend insensitivity and has a different MFD from G.652.D (smaller MFD). When splicing G.657.B3 to G.652.D, there is an inherent mode-field mismatch loss in addition to any geometric splice imperfection. Depending on the specific fibers, this mismatch can contribute 0.05–0.20 dB of loss that cannot be reduced by re-splicing. Check the fiber manufacturer\'s splice loss table for the specific G.657.B3 product before declaring a 0.12 dB splice as a rework candidate.',
             citation: 'ITU-T G.657 (2016 — [confirm edition]); fiber manufacturer splice loss tables for G.657/G.652 mixing.',
           },
+          {
+            id: 'T02-L11-Q4',
+            type: 'mc',
+            prompt:
+              "A fusion splicer's CCD display estimates 0.02 dB for a fresh splice. The subsequent OTDR measurement shows 0.18 dB. Which value is more reliable for acceptance purposes and why?",
+            choices: [
+              "The splicer's CCD estimate — it directly images the fused fiber core at the splice point and is more accurate than a backscatter-based instrument",
+              "The OTDR measurement — it measures actual transmitted light loss in the fiber, whereas the splicer estimates loss from fiber geometry using an indirect image-based model",
+              'Average both values (0.10 dB) — the true splice loss lies between the two readings',
+              "Neither — both require calibration against a bi-directional OLTS measurement before either value can be trusted for acceptance",
+            ],
+            answerIndex: 1,
+            explanation:
+              "The splicer's CCD estimate infers loss from the visible light image of the splice — it uses geometric parameters (core offset, cleave angles, mode field overlap) to compute an estimated loss. It does not transmit test light through the completed splice. In field conditions with dirty fibers, mismatched fiber types (e.g., G.657.B3 to G.652.D), or index-profile differences, the CCD model can be substantially wrong. The OTDR measures actual optical signal transmission and gives the true insertion loss in one direction. For acceptance documentation, always use the OTDR (and ideally a bi-directional average). The splicer estimate is a real-time guide for the splicer to decide whether to attempt a re-splice — not an acceptance-grade measurement.",
+            citation: 'TIA-568-C.3; FOA Reference Guide — Splicing; Fujikura/Sumitomo splicer operation manuals.',
+          },
         ]}
       />
 

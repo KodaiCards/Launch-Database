@@ -400,6 +400,21 @@ Total loss:                               9.60 dB`}
             explanation:
               'Budget = Tx − Rx = +3 − (−25) = 3 + 25 = 28 dB. Subtracting a negative sensitivity flips to addition of the absolute value.',
           },
+          {
+            id: 'T02-L06-Q4',
+            type: 'mc',
+            prompt:
+              'A designed link has Tx = −3 dBm, Rx sensitivity = −28 dBm, and calculated total losses = 18 dB (including a 3 dB safety margin). What is the optical headroom?',
+            choices: [
+              'The link fails — total losses exceed the available budget',
+              '7 dB — the link passes with comfortable headroom',
+              '3 dB — the link barely meets the safety margin',
+              '21 dB — the safety margin should be added back before calculating headroom',
+            ],
+            answerIndex: 1,
+            explanation:
+              'Budget = Tx − Rx = −3 − (−28) = 25 dB. Headroom = Budget − Total losses = 25 − 18 = 7 dB. The link passes. Positive headroom is required; 7 dB is comfortable. The 3 dB safety margin is already folded into the 18 dB total losses — subtracting it twice would overstate headroom. A common planning target is 3–6 dB headroom after including the safety margin.',
+          },
         ]}
       />
 

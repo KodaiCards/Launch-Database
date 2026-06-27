@@ -364,6 +364,22 @@ Step 4:          = 1.41 ps`}
             explanation:
               'PMD is caused by geometric imperfections and stress-induced birefringence. Factory PMD specs reflect fiber under no external stress. Chronic stress from over-tensioned lashing, conduit overfill, or tight bends adds birefringence that raises the installed PMD coefficient above the fiber\'s datasheet value. Good installation practice protects both attenuation and PMD performance.',
           },
+          {
+            id: 'T02-L09-Q4',
+            type: 'mc',
+            prompt:
+              'PMD is specified in units of ps/√km (picoseconds per square root of kilometer) rather than ps/km. Why the square-root relationship?',
+            choices: [
+              'Because PMD grows with fiber length squared, making ps/km² the more fundamental unit',
+              'Because PMD accumulates statistically along the fiber — random birefringence perturbations are uncorrelated, so total PMD grows as the square root of fiber length rather than linearly',
+              'Because optical testers measure PMD at a 1 km² reference cable length by definition',
+              'Because the refractive index variation cancels out the linear length term',
+            ],
+            answerIndex: 1,
+            explanation:
+              'In a real fiber, the birefringence axes rotate randomly along the fiber length (mode coupling). Because these rotations are statistically independent, the delay differences from each segment add in quadrature (root-sum-of-squares), not linearly. The result is that total PMD ∝ √L. A fiber with PMD = 0.1 ps/√km at 100 km has PMD = 0.1 × √100 = 1 ps — far less than the 10 ps that a linear model would predict. This is why ultra-long-haul systems can tolerate higher PMD coefficients than a linear extrapolation would suggest.',
+            citation: 'ITU-T G.652 (2024) §6.3; IEC 61282-3 (PMD link design).',
+          },
         ]}
       />
 

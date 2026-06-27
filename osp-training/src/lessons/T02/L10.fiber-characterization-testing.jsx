@@ -358,6 +358,22 @@ export default function T02L10_FiberCharacterizationTesting() {
             explanation:
               'The phase shift method measures chromatic dispersion by injecting a sinusoidally modulated broadband optical signal and measuring the relative phase of the detected signal at different wavelengths. The phase difference is proportional to the group delay difference, from which the dispersion coefficient D (ps/nm·km) is calculated.',
           },
+          {
+            id: 'T02-L10-Q4',
+            type: 'mc',
+            prompt:
+              'OTDR testing and OLTS (insertion loss) testing are both used for OSP fiber acceptance. What can an OTDR reveal that an OLTS measurement alone cannot?',
+            choices: [
+              'Absolute end-to-end insertion loss measured between two calibrated reference connectors',
+              'The spatial location of each event (splice, connector, break, macrobend) along the fiber and its individual contribution to loss',
+              'The optical power level delivered to the receiver in dBm',
+              'The chromatic dispersion coefficient D in ps/nm·km',
+            ],
+            answerIndex: 1,
+            explanation:
+              "OLTS (insertion loss test per TIA-526-7 or OFSTP-14) measures total end-to-end loss accurately — it's the gold standard for pass/fail against link budget. But it gives one number for the whole link with no spatial information. OTDR adds the 'where': it locates each discrete event, measures event loss individually, and calculates the fiber's dB/km attenuation between events. This localization is what makes OTDR indispensable for troubleshooting and post-construction documentation — you know not just that the link has 14.2 dB of loss, but that 0.8 dB of it is at the splice at 4,230 m and 0.3 dB is at the connector at 8,900 m.",
+            citation: 'TIA-526-7 (OLTS); IEC 61300-3-3 (OTDR); TIA-568-C.3.',
+          },
         ]}
       />
 

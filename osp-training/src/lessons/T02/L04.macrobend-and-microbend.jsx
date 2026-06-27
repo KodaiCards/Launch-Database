@@ -421,6 +421,22 @@ export default function T02L04_MacrobendAndMicrobend() {
             fieldNote:
               'This is a common conduit-fill problem. If you pull six cables through a 4-inch conduit designed for four, the inner cables get compressed. Fix: check conduit fill percentages before pull planning. NEC 358/352 and cable manufacturer guides specify maximum fill.',
           },
+          {
+            id: 'T02-L04-Q4',
+            type: 'mc',
+            prompt:
+              'A G.657 bend-insensitive fiber tolerates tighter bend radii with lower optical loss than G.652.D. Why does this NOT mean the fiber is immune to mechanical damage at very tight bends?',
+            choices: [
+              'Because G.657 fibers have a larger mode field diameter and break more easily under lateral pressure',
+              'Because optical bend-insensitivity and mechanical break strength are separate properties — the fiber can still fracture at tight bends even if optical loss remains low',
+              'Because G.657 bend insensitivity only applies above 1550 nm, not at 1310 nm',
+              'Because G.657 fibers are softer and deform permanently at bends tighter than 15 mm',
+            ],
+            answerIndex: 1,
+            explanation:
+              "Optical bend-insensitivity (achieved by trench or ring cladding index profiles per ITU-T G.657) reduces the light that leaks at tight bends. It does nothing to the fiber's glass matrix mechanical strength. Glass fractures at a strain level determined by flaw size and tensile load, not optical design. A G.657.B3 drop cable that is stapled over a nail or bent into a 5 mm loop may show acceptable optical loss while accumulating mechanical fatigue that leads to a delayed break. The installation minimum bend radius is still a hard limit.",
+            citation: 'ITU-T G.657 (2016); IEC 60794-1-21 E1 (crush test); FOA Reference Guide.',
+          },
         ]}
       />
 
