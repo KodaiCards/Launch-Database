@@ -168,8 +168,41 @@ When in doubt about tone: short, blunt, lead with the outcome, recommend don't s
 
 ---
 
-## 10. Pointers
+## 10. Doc map — where to find what (read this when unsure which doc has it)
+Also mirrored in `docs/README.md` for folder-level browsing. **If info isn't where you expect, check this table before guessing.**
 
-**⭐ `docs/PRODUCT_PLAN.md`** (the refined, founder-validated plan from the 2026-06-26 Carter discussion — two pillars [Job Board + Map], $45/hr cost, per-job billing timing/codes + projection-as-aggregation, director cockpit + early-warning, assignment-driven roles + capability grants, RUS-only inspection, splice-as-map-layer; read this for the *why* + priorities) · **⭐ `docs/IMPLEMENTATION_PLAN.md`** (the concrete HOW — exact tables/columns, endpoints, UI, ordered build steps per system A–G; built so nothing's missed on handoff/compaction) · `CLAUDE.md` (product + how-we-work) · `ROADMAP.md` (the 10-phase plan with locked decisions) · **`docs/cutover_inventory.md`** (the keystone-cutover plan + settled decisions) · **`docs/billing_keystone_design.md`** · **`docs/projections_design.md`** · **`docs/budgets_design.md`** · **`docs/map_requirements.md`** (living map spec) · `briefs/` (`claude-2.md` active, `claude-3.md` retired tombstone, `claude-4.md` parked, `README.md`, `INTEGRATION.md` merge gate) · `docs/route_index.md` · `docs/security_model.md` · `docs/feature_inventory.md` · memory dir (`MEMORY.md` is the index; the feedback/project/reference files carry Carter's standing rules — read them, they're me-in-distilled-form).
+| You need… | Look in |
+|---|---|
+| Product **why** + priorities + the real business (12-ppl, PSC/RUS, offsite money) | **`docs/PRODUCT_PLAN.md`** |
+| Concrete **how** — exact tables/columns, endpoints, UI, ordered steps, done-when (systems A–G) | **`docs/IMPLEMENTATION_PLAN.md`** |
+| Phase mechanics + locked decisions (the 10-phase rebuild) | `ROADMAP.md` |
+| Map spec, **capability ledger, swap playbook, adapter contract**, UG/aerial designation | **`docs/map_requirements.md`** |
+| Projection math · budget model · keystone billing ledger | `docs/projections_design.md` · `docs/budgets_design.md` · `docs/billing_keystone_design.md` |
+| Admin→cluster **cutover** decisions | `docs/cutover_inventory.md` |
+| Training-launch build record (current pivot) | `docs/training_launch_design.md` |
+| Current routes/endpoints · auth/roles/security · feature inventory · design system | `docs/route_index.md` · `docs/security_model.md` · `docs/feature_inventory.md` · `docs/design_system.md` |
+| Per-instance worker briefs + merge gate | `briefs/` (`claude-2.md` active, `INTEGRATION.md` gate) |
+| Product + how-we-work (CEO operating doc) | `CLAUDE.md` |
+| Standing user rules / cross-session context | memory dir (`MEMORY.md` = index; feedback/project/reference files) |
+| Current state + role + **the build SOP** (§11) | **this file (`HANDOFF.md`)** |
+
+## 11. SOP — how to build (data handling · per-step approach · the ask-first norm)
+
+**A. How to handle data.**
+- Migrations: `migrations/00NN_*.sql`, **idempotent**, next free # noted in `IMPLEMENTATION_PLAN.md`. **Confirm exact existing columns against `schema.sql`/live DB before writing DDL.** Railway `startCommand` skips auto-migrate → **apply migrations deliberately** (`node -r dotenv/config scripts/run_migrations.js --target <f>`); regen `schema.sql` when CI returns / a fresh DB is bootstrapped.
+- **Money math is server-side only** — never compute `$` in JS. **Customer-facing surfaces never leak internal $** (verify each merge).
+- **No orphan data** — e.g. every hour lands on a job or an explicit overhead bucket; keep an audit trail on government (RUS) data.
+- Standing **dev-DB access** (memory `feedback_db_access`): use for migrate/test/break-test; **delete DEMO/`qa_claude` seed data before launch.**
+- Tests live in **`tests/`** (plural); add a unit test per pure calc (billing, projection, rollup).
+
+**B. How to approach each step of the plan.**
+1. Read `PRODUCT_PLAN.md` (why) → the system's section in `IMPLEMENTATION_PLAN.md` (the concrete spec) → that system's **"Inputs needed from Carter"** list (the discovery gate).
+2. **Foundation first:** schema + write endpoints (CEO-owned, `routes/service_areas.js` is core) and tested, **before** any UI fan-out. Respect the dependency order (Hours **D** → Billing **A** → Map/Production **C** → Projections **B** → Cockpit **E** …).
+3. Then UI; **verify live** (`claude_ceo` + `scripts/_preview_boot.js`); commit + push; report. No confirmation pop-ups in the product (optimistic + undo bar); auto-populate derivable fields.
+
+**C. The ask-first norm (when to discuss before building).**
+- Bucket every unknown: **derivable** (decide, note it) · **defaultable** (pick a sensible default, state it, move on) · **founder-only business fact** (RUS codes, rates, submission formats, Workforce export… — **ASK at the discovery gate before baking it in**; guessing = wrong build). The tell: *"am I about to invent a business fact?"* → ask.
+- **Before starting NEW content/features:** a small discussion or a couple of questions about **what the UI should look like / how the feature is accessed** is *great* — surface them first.
+- **But not required for the simple stuff** — trivial/obvious changes: just build and report. Judgment rule: discuss when the answer changes the **schema, the UX shape, or is hard to reverse**; otherwise proceed. (Carter hates ceremony for simple things; he wants the quick UI/access check only where it matters.)
 
 **The one-line version:** Own the schema and the architecture, review like a skeptic but verify cheaply, act without asking on routine things, never leak client $, keep cost low without going shallow, talk to Carter like a sharp blunt cofounder, and remember the mission is the keystone rebuild — Service Area as the unit of work — not cranking tiles. Now go read `ROADMAP.md` and pick up the write-path phase.
