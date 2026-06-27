@@ -109,49 +109,6 @@ export default function T20L03_RUSForms() {
         <h2>Form 307 Drawdown Cycle</h2>
         <p className="mt-2">Quarterly construction cycle: (1) Contractor completes phase (e.g., 50 miles aerial installed). (2) Engineer inspects, measures actual costs. (3) Form 307 filled out by borrower, attaching invoices + test reports. (4) RUS approves (or requests rework). (5) Loan funds disbursed. Late Form 307 = late payment = contractor cash flow breaks. Your inspection speed directly affects borrower's ability to pay.</p>
 
-        <h3 className="mt-4 font-semibold">Form 307: What's in Each Column</h3>
-        <div className="rounded bg-white/5 p-3 mt-3 text-sm space-y-1 text-slate-300/90">
-          <p>Form 307 is structured as a construction ledger with columns:</p>
-          <ul className="list-disc list-inside space-y-1 mt-2">
-            <li><strong>Plant account code</strong> — 47 CFR Part 32 account (§32.2410, §32.2411, §32.2441, §32.2220)</li>
-            <li><strong>Description</strong> — What was installed (e.g., "Aerial ADSS 144-ct SMF, 20 miles")</li>
-            <li><strong>Cost this period</strong> — Invoice amount for this construction phase</li>
-            <li><strong>Cumulative cost</strong> — Running total against the approved cost-per-mile allowance</li>
-            <li><strong>% complete</strong> — RUS tracks proportional drawdown vs. proportional completion</li>
-            <li><strong>Engineer certification</strong> — Licensed PE must sign Form 307 confirming costs are for work actually completed and in place</li>
-          </ul>
-          <p className="mt-2">The borrower submits Form 307 with supporting documentation: contractor invoices, material purchase orders, payroll summaries (if labor is included), and test results (OLTS printouts, Form 219 copies).</p>
-        </div>
-
-        <h3 className="mt-4 font-semibold">Form 740: Contractor Certification Line-by-Line</h3>
-        <div className="rounded bg-white/5 p-3 mt-3 text-sm space-y-1 text-slate-300/90">
-          <p>Form 740 is a multi-page document. Critical certifications the contractor signs:</p>
-          <ul className="list-disc list-inside space-y-1 mt-2">
-            <li><strong>Non-discrimination:</strong> No discrimination in hiring by race, sex, national origin (Executive Order 11246).</li>
-            <li><strong>Conflicts of interest:</strong> No improper financial interest in the borrower or RUS project award.</li>
-            <li><strong>Insurance:</strong> Minimum liability and workers comp coverage verified active.</li>
-            <li><strong>Bonding:</strong> Performance bond and payment bond in place at correct percentage of contract.</li>
-            <li><strong>Prevailing wage:</strong> Acknowledgment that Davis-Bacon applies (if applicable) and commitment to post wage rates.</li>
-            <li><strong>Debarment:</strong> Contractor not on federal debarment list (verified by borrower via SAM.gov).</li>
-          </ul>
-          <p className="mt-2">The borrower must verify SAM.gov status themselves — a contractor that passed debarment check at contract signing but is suspended mid-project must be removed immediately.</p>
-        </div>
-
-        <h3 className="mt-4 font-semibold">Form 219: Ground Test Log Fields</h3>
-        <div className="rounded bg-white/5 p-3 mt-3 text-sm space-y-1 text-slate-300/90">
-          <ul className="list-disc list-inside space-y-1">
-            <li><strong>Pole/structure ID</strong> — matches staking sheet pole number</li>
-            <li><strong>GPS coordinates</strong> — latitude/longitude for each test point</li>
-            <li><strong>Date of test</strong> — must be within construction window (not pre-dated)</li>
-            <li><strong>Measured resistance (Ω)</strong> — per IEEE 81-2012 method</li>
-            <li><strong>Test method used</strong> — fall-of-potential or clamp-on (clamp-on acceptable for in-service verification)</li>
-            <li><strong>Pass/fail vs. RUS threshold</strong> — ≤25 Ω aerial, ≤5 Ω building/vault</li>
-            <li><strong>Corrective action taken</strong> — if failed, what was done (second rod, chemical, relocation)</li>
-            <li><strong>Re-test result</strong> — if corrective action taken, show final measurement</li>
-            <li><strong>Engineer signature</strong> — licensed PE signs each page</li>
-          </ul>
-        </div>
-
         <h3 className="mt-4 font-semibold">Book vs. Field: Form 307 Detail</h3>
         <div className="rounded bg-amber-900/30 p-3 mt-3 text-sm">
           <p className="font-semibold text-amber-300">Book</p>
@@ -159,22 +116,7 @@ export default function T20L03_RUSForms() {
         </div>
         <div className="rounded bg-green-900/30 p-3 mt-3 text-sm">
           <p className="font-semibold text-green-300">Field</p>
-          <p className="text-slate-300/90 mt-1">Borrower often aggregates quarterly costs into summary line items, then RUS spreadsheet back-allocates to accounts. Detail exists in contractor invoices; Form 307 is the summary. RUS accepts if the summary reconciles to invoices. The most common Form 307 rejection: a line-item cost that doesn't tie to any attached invoice. Fix: maintain a construction cost log throughout the project so Form 307 is assembled from real-time tracking, not reconstructed after the quarter ends.</p>
-        </div>
-
-        <h3 className="mt-5 font-semibold">Worked Example: Quarterly Drawdown</h3>
-        <div className="rounded bg-white/5 p-3 mt-3 text-sm space-y-2 text-slate-300/90">
-          <p><strong>Q2 construction progress:</strong> Contractor installed 35 aerial miles of 96-ct ADSS fiber, set 120 poles, and completed OLTS testing on Segment A.</p>
-          <p><strong>Costs this quarter:</strong></p>
-          <ul className="list-disc list-inside space-y-1 ml-2">
-            <li>35 mi × $8,400/mi cable installed = $294,000 → §32.2410 Cable & Wire</li>
-            <li>120 poles × $850/pole = $102,000 → §32.2411 Poles</li>
-            <li>Engineering inspection this quarter = $12,500 → §32.2681 Engineering (non-plant, tracked separately)</li>
-          </ul>
-          <p><strong>Form 307 line items:</strong> $294,000 (Cable & Wire) + $102,000 (Poles) = $396,000 eligible plant cost this quarter.</p>
-          <p><strong>Engineer certification:</strong> PE reviews contractor invoices, confirms 35 miles installed per as-built staking sheets, signs Form 307.</p>
-          <p><strong>Loan drawdown:</strong> RUS reviews, approves within 30 days (typical), releases $396,000 (or loan-to-grant ratio equivalent) to borrower. Borrower pays contractor invoice.</p>
-          <p><strong>Timeline risk:</strong> If engineer delay means Form 307 is submitted 45 days late, the contractor waits 45 extra days for payment. On a $400K monthly burn, that's the contractor floating nearly $400K — and they'll price future bids to cover that float cost.</p>
+          <p className="text-slate-300/90 mt-1">Borrower often aggregates quarterly costs into summary line items, then RUS spreadsheet back-allocates to accounts. Detail exists in contractor invoices; Form 307 is the summary. RUS accepts if the summary reconciles to invoices.</p>
         </div>
       </section>
 

@@ -124,90 +124,14 @@ export default function T20L04_USOA() {
       />
 
       <section data-tier="working">
-        <h2>Extended Plant Account Reference</h2>
-        <table className="w-full text-xs border border-white/10 rounded mt-3">
-          <thead className="bg-white/5">
-            <tr>
-              <th className="px-2 py-2 text-left">Account</th>
-              <th className="px-2 py-2 text-left">Section</th>
-              <th className="px-2 py-2 text-left">What goes here</th>
-              <th className="px-2 py-2 text-left">Common items that get miscoded</th>
-            </tr>
-          </thead>
-          <tbody className="text-slate-300/90 text-xs">
-            <tr className="border-t border-white/10">
-              <td className="px-2 py-2 font-mono">Cable & Wire</td>
-              <td className="px-2 py-2">§32.2410</td>
-              <td className="px-2 py-2">Fiber optic cable, copper, GPON splitters, splice closures, ONTs (embedded in cable plant)</td>
-              <td className="px-2 py-2">Splice enclosures sometimes miscoded to Conduit (§32.2441) — they belong here</td>
-            </tr>
-            <tr className="border-t border-white/10">
-              <td className="px-2 py-2 font-mono">Poles</td>
-              <td className="px-2 py-2">§32.2411</td>
-              <td className="px-2 py-2">Wood/concrete poles, anchors, guys, down-guys, pole hardware, framing</td>
-              <td className="px-2 py-2">Down-guy wire sometimes miscoded to Cable & Wire — it's pole infrastructure, goes here</td>
-            </tr>
-            <tr className="border-t border-white/10">
-              <td className="px-2 py-2 font-mono">Conduit / Duct</td>
-              <td className="px-2 py-2">§32.2441</td>
-              <td className="px-2 py-2">PVC/HDPE duct, concrete duct, handholes, vaults, innerduct, conduit fittings</td>
-              <td className="px-2 py-2">Vault lids sometimes miscoded to Land (§32.2220) — vault structures are conduit account</td>
-            </tr>
-            <tr className="border-t border-white/10">
-              <td className="px-2 py-2 font-mono">Land</td>
-              <td className="px-2 py-2">§32.2220</td>
-              <td className="px-2 py-2">ROW acquisition, easements, land purchase, survey fees for title work</td>
-              <td className="px-2 py-2">Engineering/staking survey miscoded here — engineering labor goes to §32.2681</td>
-            </tr>
-            <tr className="border-t border-white/10">
-              <td className="px-2 py-2 font-mono">Engineering</td>
-              <td className="px-2 py-2">§32.2681</td>
-              <td className="px-2 py-2">Engineering design, staking, permitting, construction inspection fees</td>
-              <td className="px-2 py-2">Engineers sometimes lump design + construction inspection into one invoice — must be allocated separately (design = pre-construction, inspection = construction period)</td>
-            </tr>
-          </tbody>
-        </table>
-
-        <h3 className="mt-5 font-semibold">Worked Example: Cost Allocation for a Mixed Phase</h3>
-        <div className="rounded bg-white/5 p-3 mt-3 text-sm space-y-2 text-slate-300/90">
-          <p><strong>Contractor invoice (single line):</strong> "Phase 2 aerial construction, 28 miles, $392,000 total."</p>
-          <p><strong>Design spec for Phase 2:</strong></p>
-          <ul className="list-disc list-inside space-y-1 ml-2">
-            <li>28 mi of 144-ct ADSS @ $6,200/mi = $173,600 (cable + lashing hardware)</li>
-            <li>85 new poles @ $1,100/pole = $93,500 (poles, framing, setting)</li>
-            <li>85 down-guys @ $180/guy = $15,300 (pole hardware — also §32.2411)</li>
-            <li>Labor (lashing, splicing) = $109,600 (apportioned by task per labor records)</li>
-          </ul>
-          <p><strong>Allocation:</strong></p>
-          <ul className="list-disc list-inside space-y-1 ml-2">
-            <li>§32.2410 Cable & Wire: $173,600 cable + $54,800 lashing labor = $228,400</li>
-            <li>§32.2411 Poles: $93,500 poles + $15,300 guys + $54,800 pole-setting labor = $163,600</li>
-          </ul>
-          <p><strong>Total:</strong> $228,400 + $163,600 = $392,000 ✓ (ties to invoice)</p>
-          <p><strong>Documentation required:</strong> Spreadsheet showing allocation logic, labor hours by task per contractor timecards, material price from purchase orders. Attach all three to Form 307. RUS auditor will reconcile the math — if $173,600 cable doesn't tie to a cable purchase order, it will be questioned.</p>
-        </div>
-
-        <h3 className="mt-5 font-semibold">Book vs. Field: USOA Tracking</h3>
+        <h2>Book vs. Field: USOA Tracking</h2>
         <div className="rounded bg-amber-900/30 p-3 mt-3 text-sm">
           <p className="font-semibold text-amber-300">Book</p>
           <p className="text-slate-300/90 mt-1">Every invoice coded to plant account per 47 CFR §32. Detailed ledger showing cable cost separate from pole cost separate from labor.</p>
         </div>
         <div className="rounded bg-green-900/30 p-3 mt-3 text-sm">
           <p className="font-semibold text-green-300">Field</p>
-          <p className="text-slate-300/90 mt-1">Contractor invoices often lump "Materials + Labor" per phase. Borrower uses spreadsheet to back-allocate based on spec (e.g., "this phase = 50 mi cable → 50 × $price/mi → account §32.2410"). RUS accepts if allocation methodology is documented and auditable. The most common audit finding: a contractor submitted one lump invoice and the borrower didn't back-allocate — RUS disallows all costs until the accounts are separated and documented. Don't wait for the quarterly Form 307 to do the allocation: track costs in real-time as invoices arrive.</p>
-        </div>
-
-        <h3 className="mt-5 font-semibold">Cost-per-Mile Allowance: What Happens When You Exceed It</h3>
-        <div className="rounded bg-white/5 p-3 mt-3 text-sm space-y-2 text-slate-300/90">
-          <p>Each construction phase has an RUS-approved cost-per-mile allowance based on the original loan application budget. Example: $25,000/mi for aerial in the project area.</p>
-          <p><strong>If actual cost = $23,000/mi:</strong> Under allowance. Surplus rolls to contingency or is returned to RUS (reduces loan principal). No action needed.</p>
-          <p><strong>If actual cost = $28,000/mi:</strong> Over allowance by $3,000/mi. On 50 miles → $150,000 overage. Three options:</p>
-          <ul className="list-disc list-inside space-y-1 ml-2">
-            <li>Borrower absorbs the $150,000 from equity (not RUS funds)</li>
-            <li>Request loan amendment to increase allowance (RUS reviews; may require new scope justification; takes 60–120 days)</li>
-            <li>Reduce scope elsewhere (defer a service area) to keep overall project within total loan ceiling</li>
-          </ul>
-          <p>Your design spec is the reference for the allowance. If you spec a 48-ct fiber and the borrower upgrades to 144-ct to future-proof the network, the cost delta may exceed the original allowance. Document the change and get RUS approval before construction — not after the invoice arrives.</p>
+          <p className="text-slate-300/90 mt-1">Contractor invoices often lump "Materials + Labor" per phase. Borrower uses spreadsheet to back-allocate based on spec (e.g., "this phase = 50 mi cable → 50 × $price/mi → account §32.2410"). RUS accepts if allocation methodology is documented and auditable.</p>
         </div>
       </section>
 

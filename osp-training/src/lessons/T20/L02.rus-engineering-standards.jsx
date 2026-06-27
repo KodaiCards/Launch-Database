@@ -113,51 +113,6 @@ export default function T20L02_RUSEngineeringStandards() {
       <section data-tier="working">
         <h2>When RUS Standards Apply</h2>
         <p className="mt-2">On RUS-funded projects: RUS takes precedence. If NESC, BICSI, and RUS diverge, follow RUS. Example: NESC doesn't require optical fiber testing. RUS requires OLTS test before acceptance. On RUS project: do the test.</p>
-
-        <h3 className="mt-4 font-semibold">Bulletin Detail: 1751F-630 Aerial Plant</h3>
-        <div className="rounded bg-white/5 p-3 mt-3 text-sm space-y-2">
-          <p>1751F-630 is the primary aerial OSP engineering document. Key requirements:</p>
-          <ul className="list-disc list-inside space-y-1 text-slate-300/90">
-            <li><strong>Pole loading:</strong> Uses NESC Grade B loading (medium-loading district default for rural areas) with RUS-specific pole-class tables based on span length, cable type, and ice/wind zone.</li>
-            <li><strong>Make-ready:</strong> Defines minimum clearances for new telecom attachments on joint-use poles (typically 40 in. minimum between electric and telecom, plus per NESC Rule 232 horizontal clearances).</li>
-            <li><strong>Span length limits:</strong> Maximum span by pole class and loading zone. Exceeding span limits requires a larger pole class or intermediate pole — both require cost justification in Form 307.</li>
-            <li><strong>Staking sheets:</strong> 1751F-630 specifies what must appear on staking sheets: pole number, class, height, span length, loading calc, attachment height, ground clearance, and PE certification.</li>
-            <li><strong>Form 219 requirement:</strong> Aerial ground rod measured within 6 months of construction. If result ≥25 Ω at an aerial location, supplemental electrode required before acceptance.</li>
-          </ul>
-        </div>
-
-        <h3 className="mt-4 font-semibold">Bulletin Detail: 1751F-810 Electrical Protection</h3>
-        <div className="rounded bg-white/5 p-3 mt-3 text-sm space-y-2">
-          <p>1751F-810 covers grounding and electrical protection. Critical items:</p>
-          <ul className="list-disc list-inside space-y-1 text-slate-300/90">
-            <li><strong>Ground rod spacing:</strong> Minimum one ground rod per mile (1,320 ft) on aerial plant, with rod at every terminal and every splice closure.</li>
-            <li><strong>Resistance threshold:</strong> Aerial rod ≤25 Ω; CO/vault ≤5 Ω (per IEEE 81-2012 fall-of-potential method).</li>
-            <li><strong>Primary protectors:</strong> Required at every subscriber drop; protector must be bonded to GES. Spec in 1751F-810 references TIA-968-A-compatible protectors.</li>
-            <li><strong>Form 219 logging:</strong> Each measured rod gets a Form 219 entry: GPS coordinates, measured resistance, test method, date, and engineer signature.</li>
-            <li><strong>Corrective action:</strong> If rod exceeds threshold, two options: (1) drive a second rod ≥8 ft away, parallel-bond both (re-test combined); (2) chemical ground enhancement (not preferred by RUS in most soils).</li>
-          </ul>
-        </div>
-
-        <h3 className="mt-4 font-semibold">Bulletin Detail: 1751F-635 Underground Plant</h3>
-        <div className="rounded bg-white/5 p-3 mt-3 text-sm space-y-2">
-          <p>1751F-635 covers underground conduit and direct-buried cable. Key items:</p>
-          <ul className="list-disc list-inside space-y-1 text-slate-300/90">
-            <li><strong>Burial depth:</strong> RUS specifies minimum 36 in. under paved roads, 24 in. under non-paved areas, 18 in. under driveways. Note: some state DOTs require deeper (e.g., 48 in. under state highways) — use the stricter.</li>
-            <li><strong>Conduit type:</strong> HDPE (Schedule 40) preferred for direct buried runs. PVC Schedule 40 acceptable for shorter runs. SDR-rated HDPE for HDD (directional bore) pulls.</li>
-            <li><strong>Bore tolerances:</strong> HDD bore depth vs. planned depth, bore radius vs. minimum bend, exit angle — all must be documented. RUS requires as-built bore profile for any bore &gt;200 ft.</li>
-            <li><strong>Handhole/vault placement:</strong> Maximum pull-length between handholes determined by conduit inner diameter and cable pulling tension calculation. 1751F-635 specifies max pulling tension by cable type.</li>
-          </ul>
-        </div>
-
-        <h3 className="mt-4 font-semibold">Book vs. Field: Form 219 Testing</h3>
-        <div className="rounded bg-amber-900/30 p-3 mt-3 text-sm">
-          <p className="font-semibold text-amber-300">Book</p>
-          <p className="text-slate-300/90 mt-1">IEEE 81-2012 fall-of-potential method: drive current probe 100 ft from ground rod, potential probe at 62% (62 ft) between rod and current probe. Measure V/I = resistance. Simple.</p>
-        </div>
-        <div className="rounded bg-green-900/30 p-3 mt-3 text-sm">
-          <p className="font-semibold text-green-300">Field</p>
-          <p className="text-slate-300/90 mt-1">Real rural OSP: pole in rocky soil, 2 ft of topsoil then granite — ground rod may only penetrate 4 ft. Resistance reads 180 Ω. RUS Form 219 requires ≤25 Ω. Options: drive second rod (rocky soil — nearly impossible), chemical enhancement, or relocate ground point to a nearby area with deeper soil. All three options must be documented on Form 219 with a corrective action note. Never just fill in a passing number — RUS auditors compare Form 219 dates to contractor daily logs.</p>
-        </div>
       </section>
 
       {/* ── TYING IT TOGETHER ──────────────────────────────────────────────────── */}

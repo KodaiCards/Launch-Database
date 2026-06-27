@@ -193,98 +193,30 @@ export default function T22L01_CFOTOverview() {
             (eliminate obviously wrong answers first).</li>
         </ul>
 
-        <h3 className="mt-5 font-semibold">Domain-Weighted Study Plan</h3>
-        <p className="mt-2">
-          Splicing (27%) and Testing (27%) together account for 54% of the exam — about 40 of 75 questions. Study time should match:
-        </p>
-        <table className="w-full text-sm border border-white/10 rounded-lg mt-3">
-          <thead className="bg-white/5 text-slate-200">
-            <tr>
-              <th className="px-3 py-2 text-left">Domain</th>
-              <th className="px-3 py-2 text-left">Exam weight</th>
-              <th className="px-3 py-2 text-left">~Questions</th>
-              <th className="px-3 py-2 text-left">Study priority</th>
-            </tr>
-          </thead>
-          <tbody className="text-slate-300/90 text-xs">
-            <tr className="border-t border-white/10">
-              <td className="px-3 py-2 font-semibold">Splicing</td>
-              <td className="px-3 py-2">27%</td>
-              <td className="px-3 py-2">~20</td>
-              <td className="px-3 py-2">Priority 1 — highest ROI per study hour</td>
-            </tr>
-            <tr className="border-t border-white/10">
-              <td className="px-3 py-2 font-semibold">Testing & OTDR</td>
-              <td className="px-3 py-2">27%</td>
-              <td className="px-3 py-2">~20</td>
-              <td className="px-3 py-2">Priority 1 — equally weighted with Splicing</td>
-            </tr>
-            <tr className="border-t border-white/10">
-              <td className="px-3 py-2 font-semibold">Installation</td>
-              <td className="px-3 py-2">20%</td>
-              <td className="px-3 py-2">~15</td>
-              <td className="px-3 py-2">Priority 2 — practical; many questions are scenario-based</td>
-            </tr>
-            <tr className="border-t border-white/10">
-              <td className="px-3 py-2 font-semibold">Fiber Basics</td>
-              <td className="px-3 py-2">13%</td>
-              <td className="px-3 py-2">~10</td>
-              <td className="px-3 py-2">Priority 3 — foundational; don't skip the attenuation math</td>
-            </tr>
-            <tr className="border-t border-white/10">
-              <td className="px-3 py-2 font-semibold">Safety</td>
-              <td className="px-3 py-2">13%</td>
-              <td className="px-3 py-2">~10</td>
-              <td className="px-3 py-2">Priority 3 — scenario-based; know OSHA 1910.268 and confined-space rules</td>
-            </tr>
-          </tbody>
-        </table>
-
-        <h3 className="mt-5 font-semibold">Common Wrong-Answer Traps on CFOT</h3>
-        <div className="mt-3 space-y-3 text-sm">
-          <div className="rounded bg-white/5 p-3">
-            <p className="font-semibold text-red-300">Trap 1: Splicer EL vs. actual splice loss</p>
-            <p className="text-slate-300/90 mt-1">The splicer estimates loss (EL) optically — it is an estimate, not a measurement. OTDR measures actual splice loss. They often differ by 0.05–0.15 dB. <strong>OTDR measurement is authoritative.</strong> Exam questions that ask "what is the most accurate measurement of splice loss" → always OTDR.</p>
-          </div>
-          <div className="rounded bg-white/5 p-3">
-            <p className="font-semibold text-red-300">Trap 2: Mixing APC and UPC connectors</p>
-            <p className="text-slate-300/90 mt-1">APC (green, 8° angle) mated to UPC (blue, flat) causes ~3–4 dB insertion loss and physically damages the APC face. The exam tests this. Correct answer is always "never mate APC to UPC."</p>
-          </div>
-          <div className="rounded bg-white/5 p-3">
-            <p className="font-semibold text-red-300">Trap 3: Installation bend radius vs. long-term bend radius</p>
-            <p className="text-slate-300/90 mt-1">10× OD applies only during pulling (under tension). At rest, use 20× OD. The exam may describe a cable coiled at 10× OD in storage and ask what is wrong — answer: macrobend loss from too-tight coil.</p>
-          </div>
-          <div className="rounded bg-white/5 p-3">
-            <p className="font-semibold text-red-300">Trap 4: OTDR "gain" event</p>
-            <p className="text-slate-300/90 mt-1">An upward step on OTDR is not real gain — it is a backscatter artifact from a change in fiber type, a splice between different fibers, or a directional measurement artifact. Never report "gain" to a customer as meaning better signal.</p>
-          </div>
-        </div>
-
         <h3 className="mt-5 font-semibold">Domain score analysis</h3>
         <p className="mt-2">
-          Your detailed score report breaks down performance by domain. If you pass overall but score below 70% in Splicing, you know to deepen that area before pursuing CFOS-O or CFOS-T, which both build on splicing knowledge.
+          Your detailed score report breaks down performance by domain. If you pass the exam overall
+          but score below 70% in (say) Splicing, you now know to deepen that study area before
+          pursuing a specialist cert that builds on splicing knowledge.
         </p>
 
-        <h3 className="mt-5 font-semibold">Book vs. Field: Exam Standard vs. Field Reality</h3>
+        <h3 className="mt-5 font-semibold">Book vs. field divergences (CFOT perspective)</h3>
         <p className="mt-2">
-          The exam tests FOA/NESC/TIA standard practice. Field reality often diverges — study to the exam standard:
+          The exam tests FOA/NESC/TIA standard practice. Field reality often diverges:
         </p>
         <ul className="mt-3 space-y-2 text-slate-300/90">
-          <li><strong>Splice loss acceptance:</strong> Exam = standard 0.1–0.2 dB per splice. Field = negotiated per contract; some jobs accept 0.3 dB. Answer "0.2 dB" on the exam.</li>
-          <li><strong>OTDR dead zone:</strong> Exam = assume ~2 m event dead zone for typical instrument. Field = varies by brand and mode.</li>
-          <li><strong>Safety (confined space):</strong> Exam = strict OSHA 1910.146 entry procedures. Field = sometimes shortcuts taken. The exam rewards knowing the RIGHT way.</li>
+          <li><strong>Splice loss acceptance:</strong> Exam = standard 0.1–0.2 dB per splice.
+            Field = negotiated per contract; some jobs accept 0.3 dB.</li>
+          <li><strong>OTDR dead zone:</strong> Exam = assume ~2 m. Field = 1–5 m depending on
+            instrument brand and mode (single-mode shorter dead zone than multimode).</li>
+          <li><strong>Cable handling:</strong> Exam emphasizes tension limits (50 lbf for aerial SMF).
+            Field crews sometimes exceed limits under time pressure (bad practice, but it happens).</li>
+          <li><strong>Safety (confined space):</strong> Exam = strict OSHA 1910.146 entry procedures.
+            Field = sometimes shortcuts taken if space is small. (Don't do it; exam tests the RIGHT way.)</li>
         </ul>
-      </section>
-
-      {/* ── TYING IT TOGETHER ───────────────────────────────────────────── */}
-      <section className="mt-8 rounded-lg bg-slate-800/40 border border-slate-700 p-4">
-        <h3 className="font-semibold text-slate-200">Tying It Together</h3>
-        <p className="text-sm text-slate-300/90 mt-2">
-          Every other T22 lesson is content study — this one is strategy. 75 questions, 60 minutes, ~70% to pass.
-          The domain weights (27% Splicing, 27% Testing) tell you where to invest study time.
-          The three-pass test strategy prevents time-traps from killing your score.
-          The wrong-answer traps (EL vs. OTDR, APC/UPC mismatch, bend radius confusion, OTDR gain artifacts) are the four most common reasons confident technicians fail — knowing the content is not enough if you fall for a well-constructed wrong answer.
-          Know your technical content from T22.L02–L07. Know the exam logistics from this lesson. Show up rested. Pass.
+        <p className="mt-2">
+          <strong>Author's note:</strong> Study to the exam standard. Field reality is messier,
+          but the exam rewards knowledge of the RIGHT way to do things.
         </p>
       </section>
 
