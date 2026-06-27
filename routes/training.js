@@ -24,19 +24,21 @@ const path = require('path');
 // source of truth for course titles + lesson counts. We parse it once to drive
 // admin progress denominators (per-subject + overall). Memoized; falls back to
 // [] if it can't be parsed (the UI then shows raw completed counts).
+const CATALOG_PATH = path.join(__dirname, '..', 'osp-training', 'src', 'data', 'course-catalog.js');
+
 let _curriculumCourses;
 function curriculumCourses() {
   if (_curriculumCourses !== undefined) return _curriculumCourses;
   try {
-    const txt = fs.readFileSync(
-      path.join(__dirname, '..', 'osp-training', 'src', 'data', 'course-catalog.js'), 'utf8');
+    const txt = fs.readFileSync(CATALOG_PATH, 'utf8');
     const courses = [];
     let cur = null;
     for (const line of txt.split('\n')) {
       const idm = line.match(/^\s*id:\s*['"]([^'"]+)['"]/);
-      if (idm) { cur = { id: idm[1], title: null, available: false, lesson_count: 0 }; courses.push(cur); continue; }
+      if (idm) { cur = { id: idm[1], title: null, section: null, available: false, lesson_count: 0 }; courses.push(cur); continue; }
       if (!cur) continue;
       const tm = line.match(/title:\s*['"]([^'"]*)['"]/); if (tm && cur.title === null) cur.title = tm[1];
+      const sm = line.match(/section:\s*['"]([^'"]+)['"]/); if (sm && cur.section === null) cur.section = sm[1];
       const am = line.match(/available:\s*(true|false)/); if (am) cur.available = (am[1] === 'true');
       const lm = line.match(/lesson_count:\s*(\d+)/); if (lm) cur.lesson_count = parseInt(lm[1], 10);
     }
@@ -54,6 +56,95 @@ function curriculumSubjects() {
 function curriculumTotalLessons() {
   const t = curriculumSubjects().reduce((a, c) => a + c.lesson_count, 0);
   return t > 0 ? t : null;
+}
+
+// ── Content-visibility model (per-staff training access) ─────────────────────
+// Tracks: section 'general' → 'osp', 'isp' → 'isp', 'cert' → 'cert'.
+// Subject = course id (T01…). Lesson = `${courseId}.L0N`.
+const SECTION_TRACK = { general: 'osp', isp: 'isp', cert: 'cert' };
+const TRACK_TITLE = { osp: 'OSP', isp: 'ISP', cert: 'Certification' };
+
+let _lessonTitles;
+function lessonTitles() {
+  if (_lessonTitles !== undefined) return _lessonTitles;
+  const out = {};
+  try {
+    const txt = fs.readFileSync(CATALOG_PATH, 'utf8');
+    // Matches both lessonFileIndex (path values) and lessonTitleIndex (title values);
+    // keep only the title entries (values that aren't a '../…' import path).
+    const re = /'([A-Z]\d{2}\.L\d{2}[a-z]?)'\s*:\s*'((?:\\.|[^'])*)'/g;
+    let m;
+    while ((m = re.exec(txt))) {
+      if (m[2].startsWith('../')) continue;
+      out[m[1]] = m[2].replace(/\\'/g, "'");
+    }
+  } catch (e) { /* fallback: generic lesson titles */ }
+  _lessonTitles = out;
+  return _lessonTitles;
+}
+
+let _curriculumTree;
+function curriculumTree() {
+  if (_curriculumTree !== undefined) return _curriculumTree;
+  const titles = lessonTitles();
+  const trackMap = new Map();
+  const lessonToSubject = new Map();
+  const subjectToTrack = new Map();
+  const allLessons = new Set();
+  for (const c of curriculumCourses()) {
+    const track = SECTION_TRACK[c.section] || 'osp';
+    if (!trackMap.has(track)) trackMap.set(track, { id: track, title: TRACK_TITLE[track] || track, subjects: [] });
+    const lessons = [];
+    for (let i = 1; i <= (c.lesson_count || 0); i++) {
+      const lid = `${c.id}.L${String(i).padStart(2, '0')}`;
+      lessons.push({ id: lid, title: titles[lid] || `Lesson ${i}` });
+      lessonToSubject.set(lid, c.id);
+      allLessons.add(lid);
+    }
+    subjectToTrack.set(c.id, track);
+    trackMap.get(track).subjects.push({
+      id: c.id, title: c.title || c.id, available: c.available,
+      lesson_count: c.lesson_count, lessons,
+    });
+  }
+  _curriculumTree = { tracks: Array.from(trackMap.values()), lessonToSubject, subjectToTrack, allLessons };
+  return _curriculumTree;
+}
+
+// Expand a scope (track|subject|lesson) to the set of lesson ids it covers.
+function expandScopeToLessons(scopeType, scopeId, tree) {
+  const out = [];
+  if (scopeType === 'lesson') {
+    if (tree.allLessons.has(scopeId)) out.push(scopeId);
+  } else if (scopeType === 'subject') {
+    for (const [lid, sid] of tree.lessonToSubject) if (sid === scopeId) out.push(lid);
+  } else if (scopeType === 'track') {
+    for (const [lid, sid] of tree.lessonToSubject) if (tree.subjectToTrack.get(sid) === scopeId) out.push(lid);
+  }
+  return out;
+}
+
+// base: 'all' | 'preset' | 'none'. Returns a Set of visible lesson ids.
+function computeVisibleLessons(base, presetScopes, overrides, tree) {
+  let set;
+  if (base === 'all') set = new Set(tree.allLessons);
+  else if (base === 'preset') {
+    set = new Set();
+    for (const s of (presetScopes || [])) for (const l of expandScopeToLessons(s.scope_type, s.scope_id, tree)) set.add(l);
+  } else set = new Set();
+  for (const o of (overrides || [])) if (o.mode === 'show') for (const l of expandScopeToLessons(o.scope_type, o.scope_id, tree)) set.add(l);
+  for (const o of (overrides || [])) if (o.mode === 'hide') for (const l of expandScopeToLessons(o.scope_type, o.scope_id, tree)) set.delete(l);
+  return set;
+}
+
+// Derive visible subject + track id sets from a visible-lessons set.
+function deriveVisible(lessonSet, tree) {
+  const subjects = new Set(), tracks = new Set();
+  for (const lid of lessonSet) {
+    const sid = tree.lessonToSubject.get(lid);
+    if (sid) { subjects.add(sid); tracks.add(tree.subjectToTrack.get(sid)); }
+  }
+  return { subjects, tracks };
 }
 
 // Completion gating (Carter 2026-06-26): a lesson is only credited as completed
@@ -431,8 +522,31 @@ module.exports = function installTrainingRoutes(app, pool, { requireAuth }) {
           ORDER BY u.full_name NULLS LAST, u.username
           LIMIT 2000`
       );
+
+      // Per-user visible denominator (content visibility). Batch-load access +
+      // overrides + preset scopes once, resolve each user in memory.
+      const tree = curriculumTree();
+      const fullTotal = curriculumTotalLessons();
+      const accRows = (await pool.query('SELECT user_id, base, preset_id FROM user_training_access')).rows;
+      const accById = new Map(accRows.map(a => [a.user_id, a]));
+      const ovRows = (await pool.query('SELECT user_id, scope_type, scope_id, mode FROM user_training_overrides')).rows;
+      const ovById = new Map();
+      for (const o of ovRows) { if (!ovById.has(o.user_id)) ovById.set(o.user_id, []); ovById.get(o.user_id).push(o); }
+      const psRows = (await pool.query('SELECT preset_id, scope_type, scope_id FROM training_preset_scopes')).rows;
+      const psById = new Map();
+      for (const s of psRows) { if (!psById.has(s.preset_id)) psById.set(s.preset_id, []); psById.get(s.preset_id).push(s); }
+      const visibleTotalFor = (userId, role) => {
+        if (role === 'admin') return fullTotal;
+        const acc = accById.get(userId);
+        if (!acc) return fullTotal; // default = see all
+        const overrides = ovById.get(userId) || [];
+        if (acc.base === 'all' && overrides.length === 0) return fullTotal;
+        const presetScopes = acc.base === 'preset' && acc.preset_id ? (psById.get(acc.preset_id) || []) : [];
+        return computeVisibleLessons(acc.base, presetScopes, overrides, tree).size;
+      };
+
       res.json({
-        total_lessons: curriculumTotalLessons(),
+        total_lessons: fullTotal,
         users: rows.map(r => ({
           user_id: r.user_id,
           name: r.full_name || r.username,
@@ -440,6 +554,7 @@ module.exports = function installTrainingRoutes(app, pool, { requireAuth }) {
           role: r.role,
           completed: Number(r.completed),
           in_progress: Number(r.in_progress),
+          total: visibleTotalFor(r.user_id, r.role),
           last_seen_at: r.last_seen_at,
           created_at: r.created_at,
         })),
@@ -525,17 +640,31 @@ module.exports = function installTrainingRoutes(app, pool, { requireAuth }) {
       // ── Per-subject progress + "where they left off" ─────────────────────────
       const titleById = {};
       for (const c of curriculumCourses()) titleById[c.id] = c.title;
-      const subjects = curriculumSubjects().map(c => {
-        const lessons = (courseMap.get(c.id) || { lessons: [] }).lessons;
-        const completed = lessons.filter(l => l.status === 'completed').length;
-        const inProgress = lessons.filter(l => l.status === 'in_progress').length;
-        let lastSeen = null;
-        for (const l of lessons) if (l.last_seen_at && (!lastSeen || l.last_seen_at > lastSeen)) lastSeen = l.last_seen_at;
-        return {
-          course_id: c.id, title: c.title || c.id, total: c.lesson_count,
-          completed: Math.min(completed, c.lesson_count), in_progress: inProgress, last_seen_at: lastSeen,
-        };
-      });
+
+      // Content visibility for this user — filter subjects + scope the denominator
+      // to what they're allowed to see (so % is of their assigned content).
+      const vis = await loadUserVisibility(userId, user.role);
+      const visAll = vis.all;
+      const visibleBySubject = new Map();
+      if (!visAll) for (const lid of vis.lessons) {
+        const sid = vis.tree.lessonToSubject.get(lid);
+        if (sid) visibleBySubject.set(sid, (visibleBySubject.get(sid) || 0) + 1);
+      }
+
+      const subjects = curriculumSubjects()
+        .filter(c => visAll || visibleBySubject.has(c.id))
+        .map(c => {
+          const visCount = visAll ? c.lesson_count : (visibleBySubject.get(c.id) || 0);
+          const lessons = (courseMap.get(c.id) || { lessons: [] }).lessons;
+          const completed = lessons.filter(l => l.status === 'completed').length;
+          const inProgress = lessons.filter(l => l.status === 'in_progress').length;
+          let lastSeen = null;
+          for (const l of lessons) if (l.last_seen_at && (!lastSeen || l.last_seen_at > lastSeen)) lastSeen = l.last_seen_at;
+          return {
+            course_id: c.id, title: c.title || c.id, total: visCount,
+            completed: Math.min(completed, visCount), in_progress: inProgress, last_seen_at: lastSeen,
+          };
+        });
       // All touched lessons, newest activity first.
       const allLessons = progRes.rows
         .map(r => ({
@@ -549,7 +678,7 @@ module.exports = function installTrainingRoutes(app, pool, { requireAuth }) {
 
       res.json({
         user,
-        total_lessons: curriculumTotalLessons(),
+        total_lessons: visAll ? curriculumTotalLessons() : vis.lessons.size,
         completed_total: progRes.rows.filter(r => r.status === 'completed').length,
         in_progress_total: progRes.rows.filter(r => r.status === 'in_progress').length,
         subjects,
@@ -601,5 +730,216 @@ module.exports = function installTrainingRoutes(app, pool, { requireAuth }) {
       console.error('[training] GET /admin/cert-attempts error:', err.message);
       res.status(500).json({ error: 'Failed to load cert attempts' });
     }
+  });
+
+  // ═══════════════════════════════════════════════════════════════════════════
+  // CONTENT VISIBILITY — per-staff control of what training they see.
+  // Default = see all (no row). Admin restricts via reusable presets + per-user
+  // show/hide overrides. Admins always see everything.
+  // ═══════════════════════════════════════════════════════════════════════════
+  const VALID_SCOPE = ['track', 'subject', 'lesson'];
+  const VALID_BASE = ['all', 'preset', 'none'];
+  const UUID_RE = /^[0-9a-fA-F-]{36}$/;
+
+  async function loadUserVisibility(userId, role) {
+    const tree = curriculumTree();
+    if (role === 'admin') return { base: 'all', all: true, lessons: tree.allLessons, tree };
+    const acc = (await pool.query(
+      'SELECT base, preset_id FROM user_training_access WHERE user_id = $1', [userId]
+    )).rows[0] || { base: 'all', preset_id: null };
+    let presetScopes = [];
+    if (acc.base === 'preset' && acc.preset_id) {
+      presetScopes = (await pool.query(
+        'SELECT scope_type, scope_id FROM training_preset_scopes WHERE preset_id = $1', [acc.preset_id]
+      )).rows;
+    }
+    const overrides = (await pool.query(
+      'SELECT scope_type, scope_id, mode FROM user_training_overrides WHERE user_id = $1', [userId]
+    )).rows;
+    const lessons = computeVisibleLessons(acc.base, presetScopes, overrides, tree);
+    const all = acc.base === 'all' && overrides.length === 0;
+    return { base: acc.base, preset_id: acc.preset_id, all, lessons, overrides, tree };
+  }
+
+  // What the signed-in user may see (the SPA filters its catalog/nav on this).
+  app.get('/api/training/my-content', requireAuth(), async (req, res) => {
+    try {
+      const v = await loadUserVisibility(req.user.id, req.user.role);
+      if (v.all) return res.json({ all: true, base: v.base });
+      const { subjects, tracks } = deriveVisible(v.lessons, v.tree);
+      res.json({
+        all: false, base: v.base,
+        tracks: Array.from(tracks), subjects: Array.from(subjects), lessons: Array.from(v.lessons),
+      });
+    } catch (err) {
+      console.error('[training] GET /my-content error:', err.message);
+      // Fail OPEN for the learner's own view (don't lock people out on an error);
+      // visibility is a curation tool, not a security boundary.
+      res.json({ all: true, base: 'all', error: true });
+    }
+  });
+
+  // Full content tree (tracks → subjects → lessons) for the admin toggles.
+  app.get('/api/training/catalog-tree', requireAuth(['admin']), (req, res) => {
+    res.json({ tracks: curriculumTree().tracks });
+  });
+
+  // ── Presets ────────────────────────────────────────────────────────────────
+  app.get('/api/training/presets', requireAuth(['admin']), async (req, res) => {
+    try {
+      const presets = (await pool.query(
+        'SELECT id, name, description, created_at FROM training_presets ORDER BY name'
+      )).rows;
+      const scopes = (await pool.query(
+        'SELECT preset_id, scope_type, scope_id FROM training_preset_scopes'
+      )).rows;
+      const byId = new Map(presets.map(p => [p.id, { ...p, scopes: [] }]));
+      for (const s of scopes) if (byId.has(s.preset_id)) byId.get(s.preset_id).scopes.push({ scope_type: s.scope_type, scope_id: s.scope_id });
+      res.json({ presets: Array.from(byId.values()) });
+    } catch (err) {
+      console.error('[training] GET /presets error:', err.message);
+      res.status(500).json({ error: 'Failed to load presets' });
+    }
+  });
+
+  function validScopes(scopes) {
+    if (!Array.isArray(scopes)) return null;
+    const out = [];
+    for (const s of scopes) {
+      if (!s || !VALID_SCOPE.includes(s.scope_type) || typeof s.scope_id !== 'string' || !s.scope_id || s.scope_id.length > 100) return null;
+      out.push({ scope_type: s.scope_type, scope_id: s.scope_id });
+    }
+    return out;
+  }
+
+  app.post('/api/training/presets', requireAuth(['admin']), async (req, res) => {
+    const name = String((req.body && req.body.name) || '').trim();
+    if (!name || name.length > 120) return res.status(400).json({ error: 'name required (≤120 chars)' });
+    const scopes = validScopes((req.body && req.body.scopes) || []);
+    if (scopes === null) return res.status(400).json({ error: 'invalid scopes' });
+    const client = await pool.connect();
+    try {
+      await client.query('BEGIN');
+      const p = (await client.query(
+        'INSERT INTO training_presets (name, description, created_by) VALUES ($1,$2,$3) RETURNING id',
+        [name, (req.body.description || null), req.user.id]
+      )).rows[0];
+      for (const s of scopes) await client.query(
+        'INSERT INTO training_preset_scopes (preset_id, scope_type, scope_id) VALUES ($1,$2,$3)',
+        [p.id, s.scope_type, s.scope_id]
+      );
+      await client.query('COMMIT');
+      res.status(201).json({ id: p.id });
+    } catch (err) {
+      await client.query('ROLLBACK').catch(() => {});
+      console.error('[training] POST /presets error:', err.message);
+      res.status(500).json({ error: 'Failed to create preset' });
+    } finally { client.release(); }
+  });
+
+  app.put('/api/training/presets/:id', requireAuth(['admin']), async (req, res) => {
+    const id = String(req.params.id || '');
+    if (!UUID_RE.test(id)) return res.status(400).json({ error: 'bad id' });
+    const name = String((req.body && req.body.name) || '').trim();
+    if (!name || name.length > 120) return res.status(400).json({ error: 'name required (≤120 chars)' });
+    const scopes = validScopes((req.body && req.body.scopes) || []);
+    if (scopes === null) return res.status(400).json({ error: 'invalid scopes' });
+    const client = await pool.connect();
+    try {
+      await client.query('BEGIN');
+      const upd = await client.query(
+        'UPDATE training_presets SET name=$1, description=$2 WHERE id=$3 RETURNING id',
+        [name, (req.body.description || null), id]
+      );
+      if (!upd.rows.length) { await client.query('ROLLBACK'); return res.status(404).json({ error: 'not found' }); }
+      await client.query('DELETE FROM training_preset_scopes WHERE preset_id=$1', [id]);
+      for (const s of scopes) await client.query(
+        'INSERT INTO training_preset_scopes (preset_id, scope_type, scope_id) VALUES ($1,$2,$3)',
+        [id, s.scope_type, s.scope_id]
+      );
+      await client.query('COMMIT');
+      res.json({ ok: true });
+    } catch (err) {
+      await client.query('ROLLBACK').catch(() => {});
+      console.error('[training] PUT /presets error:', err.message);
+      res.status(500).json({ error: 'Failed to update preset' });
+    } finally { client.release(); }
+  });
+
+  app.delete('/api/training/presets/:id', requireAuth(['admin']), async (req, res) => {
+    const id = String(req.params.id || '');
+    if (!UUID_RE.test(id)) return res.status(400).json({ error: 'bad id' });
+    try {
+      // Any users pinned to this preset fall back to base='all' (FK ON DELETE SET NULL);
+      // flip their base so they don't get stuck on 'preset' with no preset.
+      await pool.query("UPDATE user_training_access SET base='all' WHERE preset_id=$1", [id]);
+      await pool.query('DELETE FROM training_presets WHERE id=$1', [id]);
+      res.json({ ok: true });
+    } catch (err) {
+      console.error('[training] DELETE /presets error:', err.message);
+      res.status(500).json({ error: 'Failed to delete preset' });
+    }
+  });
+
+  // ── Per-user access ──────────────────────────────────────────────────────────
+  app.get('/api/training/access/:userId', requireAuth(['admin']), async (req, res) => {
+    const userId = String(req.params.userId || '');
+    if (!UUID_RE.test(userId)) return res.status(400).json({ error: 'bad userId' });
+    try {
+      const acc = (await pool.query(
+        'SELECT base, preset_id FROM user_training_access WHERE user_id=$1', [userId]
+      )).rows[0] || { base: 'all', preset_id: null };
+      const overrides = (await pool.query(
+        'SELECT scope_type, scope_id, mode FROM user_training_overrides WHERE user_id=$1', [userId]
+      )).rows;
+      const v = await loadUserVisibility(userId, 'trainee'); // resolve as a non-admin to preview the set
+      res.json({
+        base: acc.base, preset_id: acc.preset_id, overrides,
+        visible_lesson_count: v.all ? curriculumTotalLessons() : v.lessons.size,
+        total_lesson_count: curriculumTotalLessons(),
+      });
+    } catch (err) {
+      console.error('[training] GET /access error:', err.message);
+      res.status(500).json({ error: 'Failed to load access' });
+    }
+  });
+
+  app.put('/api/training/access/:userId', requireAuth(['admin']), async (req, res) => {
+    const userId = String(req.params.userId || '');
+    if (!UUID_RE.test(userId)) return res.status(400).json({ error: 'bad userId' });
+    const base = String((req.body && req.body.base) || 'all');
+    if (!VALID_BASE.includes(base)) return res.status(400).json({ error: 'bad base' });
+    let presetId = (req.body && req.body.preset_id) || null;
+    if (base === 'preset') {
+      if (!presetId || !UUID_RE.test(String(presetId))) return res.status(400).json({ error: 'preset_id required for base=preset' });
+    } else presetId = null;
+    const overrides = (req.body && req.body.overrides) || [];
+    if (!Array.isArray(overrides)) return res.status(400).json({ error: 'overrides must be an array' });
+    for (const o of overrides) {
+      if (!o || !VALID_SCOPE.includes(o.scope_type) || !['show', 'hide'].includes(o.mode) || typeof o.scope_id !== 'string' || !o.scope_id) {
+        return res.status(400).json({ error: 'invalid override' });
+      }
+    }
+    const client = await pool.connect();
+    try {
+      await client.query('BEGIN');
+      await client.query(
+        `INSERT INTO user_training_access (user_id, base, preset_id, updated_by, updated_at)
+         VALUES ($1,$2,$3,$4,now())
+         ON CONFLICT (user_id) DO UPDATE SET base=$2, preset_id=$3, updated_by=$4, updated_at=now()`,
+        [userId, base, presetId, req.user.id]
+      );
+      await client.query('DELETE FROM user_training_overrides WHERE user_id=$1', [userId]);
+      for (const o of overrides) await client.query(
+        'INSERT INTO user_training_overrides (user_id, scope_type, scope_id, mode) VALUES ($1,$2,$3,$4)',
+        [userId, o.scope_type, o.scope_id, o.mode]
+      );
+      await client.query('COMMIT');
+      res.json({ ok: true });
+    } catch (err) {
+      await client.query('ROLLBACK').catch(() => {});
+      console.error('[training] PUT /access error:', err.message);
+      res.status(500).json({ error: 'Failed to save access' });
+    } finally { client.release(); }
   });
 };
