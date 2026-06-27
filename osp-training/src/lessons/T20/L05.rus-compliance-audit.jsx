@@ -340,6 +340,30 @@ export default function T20L05_RUSCompliance() {
             ],
             correct: 'c',
           },
+          {
+            id: 'T20-L05-Q3',
+            type: 'mc',
+            prompt: 'Which regulation contains the RUS loan covenants that borrowers must satisfy throughout the life of the loan?',
+            options: [
+              { key: 'a', text: '47 CFR Part 32 (FCC Uniform System of Accounts)' },
+              { key: 'b', text: '7 CFR Part 1735 (RUS general provisions and loan policies)' },
+              { key: 'c', text: 'NESC C2-2023 (safety code)' },
+              { key: 'd', text: '7 CFR Part 1740 (ReConnect program rules)' },
+            ],
+            correct: 'b',
+          },
+          {
+            id: 'T20-L05-Q4',
+            type: 'mc',
+            prompt: "An RUS audit finds that invoices cannot be matched to specific plant accounts in Form 307. What is the primary consequence?",
+            options: [
+              { key: 'a', text: 'RUS automatically grants a 90-day cure period with no other action' },
+              { key: 'b', text: 'The engineer of record loses their professional license' },
+              { key: 'c', text: 'RUS may withhold or reclaim loan funds for the unverifiable costs' },
+              { key: 'd', text: 'The contractor who submitted the invoice is fined by the FCC' },
+            ],
+            correct: 'c',
+          },
         ]}
       />
     </LessonLayout>

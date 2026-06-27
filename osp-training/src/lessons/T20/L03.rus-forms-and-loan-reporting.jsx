@@ -158,6 +158,30 @@ export default function T20L03_RUSForms() {
             ],
             correct: 'c',
           },
+          {
+            id: 'T20-L03-Q3',
+            type: 'mc',
+            prompt: 'What is the direct consequence of submitting RUS Form 307 late?',
+            options: [
+              { key: 'a', text: 'RUS imposes a 10% penalty on the drawdown amount' },
+              { key: 'b', text: 'The next loan drawdown is delayed, potentially breaking contractor cash flow' },
+              { key: 'c', text: 'The contractor must re-certify on Form 740' },
+              { key: 'd', text: 'RUS cancels the loan and requires a new application' },
+            ],
+            correct: 'b',
+          },
+          {
+            id: 'T20-L03-Q4',
+            type: 'mc',
+            prompt: 'RUS Form 219 must be completed and approved before:',
+            options: [
+              { key: 'a', text: 'The contractor submits Form 740' },
+              { key: 'b', text: 'Underground conduit is installed' },
+              { key: 'c', text: 'OSP plant can be accepted — no valid Form 219 means OSP cannot be accepted' },
+              { key: 'd', text: 'The NEPA environmental worksheet is submitted' },
+            ],
+            correct: 'c',
+          },
         ]}
       />
     </LessonLayout>

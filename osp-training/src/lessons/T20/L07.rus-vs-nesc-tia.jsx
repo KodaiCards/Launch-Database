@@ -155,6 +155,30 @@ export default function T20L07_Reconciliation() {
             ],
             correct: 'b',
           },
+          {
+            id: 'T20-L07-Q3',
+            type: 'mc',
+            prompt: 'TIA-607-D requires a 5 Ω ground electrode at a CO building. RUS Form 219 lists a ≤25 Ω threshold for aerial poles. A CO building on an RUS-funded project — which threshold controls?',
+            options: [
+              { key: 'a', text: '25 Ω — that is the NEC §250.56 requirement that RUS defers to for buildings' },
+              { key: 'b', text: '5 Ω — TIA-607-D is stricter than the RUS general threshold, and the stricter standard applies' },
+              { key: 'c', text: 'Either; the engineer chooses the threshold based on site conditions' },
+              { key: 'd', text: 'No threshold applies to CO buildings; only pole grounding is Form 219 tested' },
+            ],
+            correct: 'b',
+          },
+          {
+            id: 'T20-L07-Q4',
+            type: 'mc',
+            prompt: 'On a joint-use pole, NESC and RUS both apply. Which best describes their respective scope?',
+            options: [
+              { key: 'a', text: 'NESC governs pole geometry (loading, clearance); RUS governs the telecom design and testing (materials, grounding, Form 219)' },
+              { key: 'b', text: 'NESC governs underground conduit; RUS governs aerial plant exclusively' },
+              { key: 'c', text: 'RUS supersedes NESC on joint-use poles, so NESC can be disregarded' },
+              { key: 'd', text: 'NESC sets the construction budget; RUS sets the engineering specification' },
+            ],
+            correct: 'a',
+          },
         ]}
       />
     </LessonLayout>

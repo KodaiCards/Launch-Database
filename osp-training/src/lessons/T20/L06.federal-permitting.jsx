@@ -147,6 +147,30 @@ export default function T20L06_FederalPermitting() {
             ],
             correct: 'b',
           },
+          {
+            id: 'T20-L06-Q3',
+            type: 'mc',
+            prompt: 'An RUS project is under $300K, crosses no wetlands, and affects no historic properties. What NEPA review level likely applies?',
+            options: [
+              { key: 'a', text: 'Environmental Impact Statement (EIS) — highest tier, required for all federal funds' },
+              { key: 'b', text: 'Environmental Assessment (EA) — mid-tier review for moderate impacts' },
+              { key: 'c', text: 'Categorical Exclusion (CE) — no significant impact; minimal documentation required' },
+              { key: 'd', text: 'No NEPA review needed because the project is under $1M' },
+            ],
+            correct: 'c',
+          },
+          {
+            id: 'T20-L06-Q4',
+            type: 'mc',
+            prompt: 'Section 106 of the National Historic Preservation Act (54 USC 306108) requires consultation with which agency when a federally funded project may affect historic properties?',
+            options: [
+              { key: 'a', text: 'The Army Corps of Engineers (USACE)' },
+              { key: 'b', text: 'The State Historic Preservation Office (SHPO)' },
+              { key: 'c', text: 'The Bureau of Land Management (BLM)' },
+              { key: 'd', text: 'The Environmental Protection Agency (EPA)' },
+            ],
+            correct: 'b',
+          },
         ]}
       />
     </LessonLayout>

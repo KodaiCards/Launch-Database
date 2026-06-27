@@ -121,6 +121,30 @@ export default function T20L08_BroadbandPrograms() {
             ],
             correct: 'b',
           },
+          {
+            id: 'T20-L08-Q3',
+            type: 'mc',
+            prompt: 'What match requirement distinguishes Community Connect from ReConnect?',
+            options: [
+              { key: 'a', text: 'Community Connect requires 10% match; ReConnect requires 25%' },
+              { key: 'b', text: 'ReConnect requires 10–20% match; Community Connect requires 25%' },
+              { key: 'c', text: 'Both programs require 10% match regardless of project size' },
+              { key: 'd', text: 'Neither program requires a borrower match — USDA funds 100%' },
+            ],
+            correct: 'b',
+          },
+          {
+            id: 'T20-L08-Q4',
+            type: 'mc',
+            prompt: 'Legacy DSL equipment delivering 12 Mbps download at the customer drop would be classified as:',
+            options: [
+              { key: 'a', text: 'Broadband-eligible because the FCC defines broadband as ≥10 Mbps' },
+              { key: 'b', text: 'Broadband-eligible because the upgrade path to 25 Mbps is possible with new modems' },
+              { key: 'c', text: 'Non-broadband-eligible under ReConnect, because it cannot deliver the required ≥25 Mbps download' },
+              { key: 'd', text: 'Broadband-eligible if the service area is USDA-designated rural' },
+            ],
+            correct: 'c',
+          },
         ]}
       />
     </LessonLayout>

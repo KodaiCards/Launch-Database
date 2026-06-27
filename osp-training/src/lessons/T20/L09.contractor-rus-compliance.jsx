@@ -165,6 +165,18 @@ export default function T20L09_ContractorCompliance() {
             ],
             correct: 'c',
           },
+          {
+            id: 'T20-L09-Q4',
+            type: 'mc',
+            prompt: 'A cable splicing crew on an RUS project is paid below the federal prevailing wage rate published for cable splicers in that county. What is the contractor obligated to do?',
+            options: [
+              { key: 'a', text: 'Nothing — prevailing wage only applies to contractors with more than 10 employees' },
+              { key: 'b', text: 'Pay the wage shortfall retroactively to all affected workers before the next Form 307 drawdown is submitted' },
+              { key: 'c', text: 'Notify RUS via Form 740 amendment and request a wage waiver' },
+              { key: 'd', text: 'Post the correct wage rate on the job site; retroactive back-pay is not required' },
+            ],
+            correct: 'b',
+          },
         ]}
       />
     </LessonLayout>

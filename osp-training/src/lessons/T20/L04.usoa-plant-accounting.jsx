@@ -173,6 +173,30 @@ export default function T20L04_USOA() {
             ],
             correct: 'b',
           },
+          {
+            id: 'T20-L04-Q3',
+            type: 'mc',
+            prompt: 'Wood pole costs on an RUS aerial project are coded to which 47 CFR Part 32 plant account?',
+            options: [
+              { key: 'a', text: '§32.2410 Cable & Wire' },
+              { key: 'b', text: '§32.2411 Poles' },
+              { key: 'c', text: '§32.2441 Conduit' },
+              { key: 'd', text: '§32.2220 Land' },
+            ],
+            correct: 'b',
+          },
+          {
+            id: 'T20-L04-Q4',
+            type: 'mc',
+            prompt: 'A contractor invoice lumps aerial cable and pole hardware as one "$150,000 aerial phase" line item. What must the borrower do for Form 307?',
+            options: [
+              { key: 'a', text: 'Submit the lump invoice as-is; RUS accepts phase-based billing' },
+              { key: 'b', text: 'Back-allocate the $150,000 into Cable & Wire vs. Poles using the design spec, with documented methodology' },
+              { key: 'c', text: 'Reject the invoice and require the contractor to re-invoice by plant account' },
+              { key: 'd', text: 'Split 50/50 between Cable & Wire and Poles as a recognized RUS standard ratio' },
+            ],
+            correct: 'b',
+          },
         ]}
       />
     </LessonLayout>

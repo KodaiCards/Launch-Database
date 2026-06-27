@@ -153,6 +153,30 @@ export default function T20L02_RUSEngineeringStandards() {
             ],
             correct: 'a',
           },
+          {
+            id: 'T20-L02-Q3',
+            type: 'mc',
+            prompt: 'Which RUS Bulletin covers underground conduit and cable burial depth?',
+            options: [
+              { key: 'a', text: '1751F-630 (Aerial Plant)' },
+              { key: 'b', text: '1751F-635 (Underground Plant)' },
+              { key: 'c', text: '1751F-810 (Electrical Protection)' },
+              { key: 'd', text: 'Form 219' },
+            ],
+            correct: 'b',
+          },
+          {
+            id: 'T20-L02-Q4',
+            type: 'mc',
+            prompt: 'On an RUS-funded project, "design certification" means:',
+            options: [
+              { key: 'a', text: 'The contractor stamps the staking sheets with a PE seal' },
+              { key: 'b', text: "The borrower's engineer signs off that the design meets RUS Bulletins, which is required before RUS releases loan funds for construction" },
+              { key: 'c', text: 'USDA-RUS field inspectors walk the route before approving construction' },
+              { key: 'd', text: 'The contractor certifies that subcontractors carry the required insurance' },
+            ],
+            correct: 'b',
+          },
         ]}
       />
     </LessonLayout>
