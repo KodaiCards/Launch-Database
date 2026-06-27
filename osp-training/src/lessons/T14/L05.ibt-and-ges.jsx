@@ -283,6 +283,19 @@ export default function T14L05_IBTandGES() {
               explanation:
                 'TIA-607-D defines the telecom bonding backbone: each room has an SBB (secondary bonding busbar) for local equipment, connected to the PBB (primary bonding busbar) via a TBB (telecom bonding backbone) conductor. The PBB bonds to the GES. This maintains the single-reference ground architecture across all rooms without each piece of equipment running a long conductor to the GES. (Source: TIA-607-D §4 [confirm edition].)',
             },
+            {
+              id: 'T14L05Q4',
+              text: 'Why must ALL telecommunications services entering a building bond to the same grounding electrode system (GES) rather than to separate independent ground rods?',
+              options: [
+                'To reduce the total number of ground rods required and lower installation cost',
+                'To ensure the GES meets the 5 Ω threshold required by Telcordia GR-1275',
+                'To prevent voltage differences between services during a ground potential rise event, which would drive damaging current through equipment connected across services',
+                'Because NEC §250.56 prohibits more than one ground rod per building',
+              ],
+              correct: 2,
+              explanation:
+                'If different services bond to separate GES electrodes with different earth resistances, a GPR event raises each electrode by a different voltage. Equipment connected across services (e.g., a modem or router bridging copper phone and coax) would see this voltage difference directly across its input/output ports, driving current through internal circuitry. Bonding all services to a single GES keeps all service ground references at the same elevated potential during a fault, eliminating the cross-service voltage differential. (Source: TIA-607-D; NEC §800.100.)',
+            },
           ]}
         />
       </section>

@@ -336,6 +336,19 @@ export default function T14L07_SurgeArrestersLightning() {
               explanation:
                 'The ground ring serves a dual purpose: its large surface area in contact with the earth gives very low ground resistance (helping meet the 5 Ω GR-1275 threshold); and during a GPR event, the entire ring rises to the same voltage, creating an equipotential surface under the building footprint that prevents dangerous voltage gradients between equipment inside the ring. (Sources: NEC §250.52(A)(4); IEEE Std 1100-2005 §8.3 [confirm edition].)',
             },
+            {
+              id: 'T14L07Q4',
+              text: 'Compared to a gas-tube arrester, a metal oxide varistor (MOV) arrester offers which key operational advantage?',
+              options: [
+                'Higher peak surge current capacity for direct lightning strikes',
+                'Lower purchase cost per unit at equivalent voltage ratings',
+                'No power-frequency follow current after the surge clears — the MOV self-resets without conducting at 60 Hz',
+                'Higher clamping voltage, providing a wider protection margin',
+              ],
+              correct: 2,
+              explanation:
+                'Gas-tube arresters fire (ionize) at a high threshold voltage and, once conducting, continue to pass power-frequency current until the arc is interrupted — this "follow current" can blow fuses or trip breakers. MOV arresters clamp voltage by changing resistance; when the surge passes, the MOV returns to high-impedance without conducting at 60 Hz. This eliminates follow-current problems, making MOVs better suited for protecting sensitive electronics in-line. Trade-off: MOVs degrade with each surge event and have a finite life. (Source: IEEE Std C62.11-2012.)',
+            },
           ]}
         />
       </section>

@@ -275,6 +275,19 @@ export default function T14L11_NESCGroundsPerMile() {
               explanation:
                 '5 miles × 5,280 ft/mile = 26,400 ft. 26,400 ft ÷ 1,320 ft interval = exactly 20. This is the minimum interval-driven count; actual electrode count will be higher due to splice closure and dead-end requirements at locations that may not fall at exactly 1,320-ft spacing.',
             },
+            {
+              id: 'T14L11Q4',
+              text: 'A RUS-funded aerial route requires a grounding interval of 1,320 ft. A joint-use pole already has a utility company ground rod installed. The span from the previous comms ground to this pole is 1,400 ft. Which statement is correct?',
+              options: [
+                'The existing utility rod satisfies the communications grounding requirement; no separate comms rod is needed',
+                'A communications ground electrode must still be installed at this pole because the span exceeds the 1,320-ft maximum interval',
+                'The 80-ft excess is within the ±10% construction tolerance allowed by RUS 1751F-630',
+                'The messenger bond at this pole substitutes for the ground electrode when the span is under 1,500 ft',
+              ],
+              correct: 1,
+              explanation:
+                'The utility ground rod belongs to the power company\'s grounding system. While the messenger bond connects the comms cable to the MGN (and through it to utility grounds), the communications provider is separately required to install its own ground electrodes at the required interval. The 1,400-ft span exceeds the 1,320-ft maximum — a communications electrode is required at this pole regardless of the utility rod\'s presence. The messenger bond and the comms ground rod serve complementary but distinct roles. There is no ±10% span tolerance in RUS 1751F-630 §7. (Sources: NESC C2-2023 Section 09; RUS 1751F-630 §7.)',
+            },
           ]}
         />
       </section>

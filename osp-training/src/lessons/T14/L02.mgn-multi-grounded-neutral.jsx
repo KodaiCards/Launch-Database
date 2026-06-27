@@ -346,6 +346,19 @@ export default function T14L02_MGNMultiGroundedNeutral() {
               explanation:
                 'NESC Rule 96 requires the grounding conductor (downlead) to be protected from mechanical damage from grade to 8 feet above grade — the zone where it could be struck by vehicles, tools, or vandalism. Above 8 feet, the bare conductor runs openly down the pole. Below grade, it connects to the ground rod. (Source: NESC C2-2023 Rule 96.)',
             },
+            {
+              id: 'T14L02Q4',
+              text: 'In a multi-grounded neutral system, what is the effect of increasing the number of pole grounds per mile on ground potential rise (GPR) during a fault?',
+              options: [
+                'GPR increases because each additional ground provides a new fault current injection point',
+                'GPR decreases because parallel ground paths reduce the effective earth resistance at the fault location',
+                'GPR is unchanged; only the electrode depth determines GPR magnitude',
+                'GPR is unchanged; only the fault current magnitude determines GPR',
+              ],
+              correct: 1,
+              explanation:
+                'Ground potential rise = fault current × effective ground resistance. When grounds are placed at multiple poles, their earth resistances appear in parallel from the utility neutral perspective. More grounds in parallel lower the effective resistance, which directly lowers GPR during a fault. This is the fundamental reason NESC and RUS both mandate minimum grounds-per-mile intervals — dense grounding is the practical limit on GPR magnitude. (Source: IEEE Std 367-2012 §4.)',
+            },
           ]}
         />
       </section>

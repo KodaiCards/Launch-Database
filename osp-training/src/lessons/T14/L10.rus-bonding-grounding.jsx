@@ -337,6 +337,19 @@ export default function T14L10_RUSBondingGrounding() {
               explanation:
                 'The ground test log must be a complete audit trail: initial measurement (28 Ω), FAIL determination, remediation (supplemental rod installed at ≥8 ft spacing), re-test measurement (must be ≤25 Ω), and re-test date. Omitting the initial failure or replacing it with only the passing re-test would misrepresent the construction record — a Form 219 certification error. (Sources: NEC §250.56; RUS 1751F-630 §7.)',
             },
+            {
+              id: 'T14L10Q4',
+              text: 'A ground rod at an aerial pole reads 28 Ω on the initial fall-of-potential test. Per NEC §250.56, what is the correct remediation and re-test sequence?',
+              options: [
+                'Replace the existing 8-ft rod with a 10-ft rod and re-test without bonding to the first rod',
+                'Install a second rod at least 8 ft away from the first, bond it in parallel with the first, then re-test the combined system',
+                'Pour a salt-water solution around the existing rod to lower soil resistivity, then re-test',
+                'Document the 28 Ω result as acceptable because it is within the ±20% measurement tolerance of IEEE 81-2012',
+              ],
+              correct: 1,
+              explanation:
+                'NEC §250.56 requires that when a single rod electrode exceeds 25 Ω, one additional rod must be installed. The supplemental rod must be spaced at least 8 ft from the first (rods closer than twice their length share the same resistance zone and the parallel benefit is reduced). The two rods are then bonded together and the combined system re-tested. The result of the combined system — not each rod individually — is the acceptance measurement. Salt treatment is a temporary measure not recognized in NEC and is prohibited on RUS projects. (Sources: NEC §250.56; IEEE Std 81-2012 §9.)',
+            },
           ]}
         />
       </section>

@@ -363,6 +363,19 @@ export default function T14L08_StrayVoltageDetection() {
               explanation:
                 'PPG is a backup protection applied to an ALREADY de-energized conductor. It protects against inadvertent re-energization — if someone at the utility accidentally closes the isolation device while crew is working, the PPG provides a ground path that triggers the overcurrent protection before the full fault voltage reaches the crew. PPG does NOT protect against an actively energized circuit. That\'s why LOTO comes first. (Source: OSHA §1910.147.)',
             },
+            {
+              id: 'T14L08Q4',
+              text: 'When performing a contact-voltage test on a communications messenger before splice work, which meter mode gives the most accurate reading and why?',
+              options: [
+                'High-impedance AC voltmeter, because it draws minimal current and is most sensitive to low voltages',
+                'Low-impedance (low-Z) AC voltmeter, because it loads down capacitively-coupled ghost voltages without loading a real fault source',
+                'DC voltmeter, because inductively coupled utility voltages appear as DC on the communications cable',
+                'Clamp-on ammeter, because current measurement is safer than direct contact with the messenger',
+              ],
+              correct: 1,
+              explanation:
+                'High-impedance meters are susceptible to "ghost voltages" — apparent readings caused by capacitive coupling from nearby conductors, not from a real current-carrying path. A low-impedance (low-Z) meter presents a ~200 Ω input to the circuit. A capacitively-coupled ghost voltage has no current-driving ability and collapses when loaded by the low-Z meter. A real fault source (inductive coupling from an energized distribution circuit) can drive current into the low-Z load and maintains a stable reading. This distinction is critical: a high-Z reading of 85 V might be a ghost; the same reading on a low-Z meter confirms a real hazard. (Source: ASTM F711; OSHA §1910.333.)',
+            },
           ]}
         />
       </section>

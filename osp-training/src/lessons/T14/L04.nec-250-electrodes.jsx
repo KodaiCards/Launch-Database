@@ -326,6 +326,19 @@ export default function T14L04_NEC250Electrodes() {
               explanation:
                 'NEC §250.52(A)(5) requires rod electrodes to be at least 8 feet long and at least 5/8 inch in diameter for copper-clad rods (the most common type). This is the standard OSP ground rod: a steel core for driving strength, copper cladding for corrosion resistance. (Source: NEC NFPA 70-2023 §250.52(A)(5).)',
             },
+            {
+              id: 'T14L04Q4',
+              text: 'Per NEC §250.52(A)(3), a concrete-encased electrode (Ufer ground) must consist of at minimum:',
+              options: [
+                'A 5/8-in. × 8-ft ground rod embedded vertically in a concrete footing',
+                '#6 AWG copper wire run horizontally across the top surface of the concrete slab',
+                'At least 20 ft of bare #4 AWG copper wire or ½-in. steel reinforcing rod, encased in at least 2 in. of concrete at the bottom of the foundation',
+                'A ring electrode of bare copper encircling the building perimeter at 18-in. depth',
+              ],
+              correct: 2,
+              explanation:
+                'NEC §250.52(A)(3) defines the concrete-encased electrode: a minimum of 20 ft of bare #4 AWG (or larger) copper conductor, or ½-in. (or larger) iron/steel reinforcing rods, encased in at least 2 inches of concrete within the foundation. The concrete provides both physical protection and an electrolytic path to earth that is extremely effective. A standard ground rod embedded in concrete does NOT satisfy §250.52(A)(3) — it satisfies §250.52(A)(5) (rod electrode). (Source: NEC NFPA 70-2023 §250.52(A)(3).)',
+            },
           ]}
         />
       </section>

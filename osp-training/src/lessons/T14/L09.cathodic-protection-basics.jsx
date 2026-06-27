@@ -285,6 +285,19 @@ export default function T14L09_CathodicProtectionBasics() {
               explanation:
                 'PVC (polyvinyl chloride) conduit is a non-metallic, non-conductive material. It cannot participate in a galvanic corrosion cell. Cathodic protection is not applicable to PVC. CP is only relevant for metallic conduit (steel, galvanized steel, aluminum) buried in soil. Most modern RUS OSP designs specify HDPE or PVC to avoid corrosion concerns entirely.',
             },
+            {
+              id: 'T14L09Q4',
+              text: 'In a sacrificial-anode cathodic protection system protecting a buried steel conduit, the zinc or magnesium anode corrodes preferentially because:',
+              options: [
+                'A rectifier forces current from the anode into the soil, making the anode the positive terminal of the DC circuit',
+                'Zinc and magnesium have higher galvanic activity (more negative electrode potential) than steel, so they preferentially oxidize when electrically connected in the same electrolyte',
+                'The anode is coated with a dielectric that concentrates corrosion current onto the anode surface',
+                'The anode mass is smaller, so it has higher current density and corrodes faster regardless of material',
+              ],
+              correct: 1,
+              explanation:
+                'In a galvanic cell, the metal with the more negative standard electrode potential is the anode and oxidizes (corrodes). Zinc (−0.76 V) and magnesium (−2.37 V) are much more active than steel (approximately −0.44 V). When bonded and buried in the same electrolyte (soil), the more active metal becomes the anode and supplies electrons to the steel (cathode), preventing steel oxidation. No external power source is needed — the galvanic potential difference drives the protective current. (Source: NACE SP0169-2013.)',
+            },
           ]}
         />
       </section>

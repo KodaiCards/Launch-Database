@@ -433,6 +433,19 @@ export default function T14L03_MessengerBondingRules() {
               explanation:
                 'NESC Rule 96 specifies the minimum conductor size for the communications grounding conductor (downlead). For most OSP applications, the minimum is #6 AWG bare soft-drawn copper. In high-fault-current environments, NESC Rule 96C may require #4 AWG. Using a smaller conductor risks the downlead melting or failing during a fault event. (Source: NESC C2-2023 Rule 96; RUS 1751F-630 §7.)',
             },
+            {
+              id: 'T14L03Q4',
+              text: 'An OPGW (optical ground wire) cable has a metallic outer conductor. Does it require messenger bonding per NESC Rule 215D?',
+              options: [
+                'No — OPGW contains fiber, so it is exempt from bonding like ADSS',
+                'No — OPGW is only bonded at the terminal structures, not at intermediate poles',
+                'Yes — OPGW has a metallic outer conductor subject to induced voltages, requiring bonding at every splice closure and dead-end per NESC Rule 215D',
+                'Yes, but only at spans exceeding 300 ft',
+              ],
+              correct: 2,
+              explanation:
+                'The bonding exemption under NESC Rule 215D applies to ADSS (all-dielectric self-supporting) cable, which has no metallic components. OPGW is fundamentally different: its outer strands are metallic conductors (often aluminum-clad steel) that can carry induced voltages from the adjacent phase conductors. OPGW therefore must be bonded at every required location just like any other metallic strand or shield wire. (Source: NESC C2-2023 Rule 215D; IEEE Std 1138-2009.)',
+            },
           ]}
         />
       </section>
