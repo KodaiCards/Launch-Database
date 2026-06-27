@@ -243,6 +243,39 @@ export default function T11L11_SpliceTrayLoadingAndFiberManagement() {
                 correctId: 'b',
                 explanation: 'Mixed buffer tube routing through the organizer is an operational risk, not an immediate optical problem. Optically, the splices are still correct. The risk is in future maintenance: a technician tracing "Cable A, Tube 3" through a case where tubes are randomly interleaved has to pull and flex tubes to follow them, risking mechanical stress on nearby splice points. In a well-managed case, every tube has a defined channel through the organizer — you can follow any tube from entry to tray without touching any other tube. Proper organizer routing is what makes re-entry safe.',
               },
+              {
+                id: 'q3',
+                type: 'multiple-choice',
+                text: 'What is the minimum permanent installation bend radius for standard G.652.D single-mode fiber, and what happens if fiber express loops inside a splice case are routed below this limit?',
+                options: [
+                  { id: 'a', text: '10 mm; immediate fiber break from glass fracture stress' },
+                  { id: 'b', text: '30 mm; thermal cycling fatigues the glass at the under-spec bend point, creating a latent fracture site over years' },
+                  { id: 'c', text: '60 mm; the fiber will still transmit light normally but connector return loss degrades' },
+                  { id: 'd', text: '5 mm; any bend tighter than 5 mm causes immediate high IL but the fiber survives if not bent further' },
+                ],
+                correctId: 'b',
+                explanation: 'ITU-T G.652.D specifies 30 mm minimum permanent installation bend radius for standard SMF. Immediately below 30 mm, macrobend loss may be only 0.01–0.05 dB at 1310 nm and not immediately visible. The insidious failure mode is fatigue: each thermal cycle causes the fiber to contract and expand. A consistently under-spec bend point accumulates micro-cracks in the glass over 5–10 years. Eventually the fiber fails at that point — often far from any documented splice, making the failure hard to locate. G.657.A1 and G.657.A2 bend-insensitive fibers have lower limits (15 mm and 7.5 mm respectively); always verify fiber type before assuming the routing is acceptable.',
+              },
+              {
+                id: 'q4',
+                type: 'multiple-choice',
+                text: 'A splice closure has 3 trays. Tray 1 is labeled "Cable A, Tube 1." When the tray is opened, you find fibers from both Cable A Tube 1 AND Cable B Tube 3. What is the correct action before proceeding?',
+                options: [
+                  { id: 'a', text: 'Proceed — the label reflects the primary cable and the additional fibers are a routing note error, not a safety issue' },
+                  { id: 'b', text: 'Stop, trace each fiber from entry port to tray, confirm actual origins, update the tray label and the closure\'s internal routing map before disturbing any splices' },
+                  { id: 'c', text: 'Remove the Cable B fibers from the tray before testing the Cable A splices' },
+                  { id: 'd', text: 'Reject the closure and require the installing contractor to replace it' },
+                ],
+                correctId: 'b',
+                explanation: 'A mislabeled or multi-origin tray is a documentation failure that compounds with every future re-entry. The risk: you work on a fiber you think is Cable A Tube 1 and accidentally disturb a splice from Cable B Tube 3, causing an unrelated outage. Before touching any splice, trace each fiber from its entry port through the organizer to the tray, confirming actual cable and tube identity. Update the label and the internal routing map. Then proceed. This is the verification step that prevents maintenance-induced outages.',
+              },
+              {
+                id: 'q5',
+                type: 'fill-in-blank',
+                text: 'Standard splice trays hold a maximum of ____ splice protectors (one per spliced fiber).',
+                answer: '12',
+                explanation: 'Standard splice trays are designed to hold 12 splice protectors. Exceeding 12 forces protectors to overlap, which bends the fibers at the protector edges and creates potential macrobend loss. For cables with more than 12 fibers per tube (uncommon in loose-tube, but relevant in ribbon), use multi-fiber ribbon splice trays sized for the ribbon count. Never overfill a standard 12-splice tray.',
+              },
             ]}
           />
         </div>

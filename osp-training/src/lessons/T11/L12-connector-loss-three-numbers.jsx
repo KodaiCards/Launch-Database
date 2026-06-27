@@ -286,6 +286,39 @@ export default function T11L12_ConnectorLossThreeNumbers() {
                 correctId: 'a',
                 explanation: '0.65 dB → cleaning → 0.62 dB with no meaningful improvement indicates the problem is not contamination. Contamination-caused IL drops sharply with cleaning (from 0.65 to ≤0.3 dB). A reading that stays elevated after proper IPA cleaning suggests physical damage to the end-face: a scratch in Zone A (visible under ≥200× inspection), a chipped ferrule edge, or excessive end-face convexity from worn polishing. The correct action: inspect the end-face under a fiber scope and replace the connector if damage is visible. Never use acetone on a fiber connector — it attacks the ferrule adhesive and may damage the connector body.',
               },
+              {
+                id: 'q3',
+                type: 'multiple-choice',
+                text: 'What is the difference between an APC (Angled Physical Contact) and a UPC (Ultra Physical Contact) connector, and why does it matter for return loss?',
+                options: [
+                  { id: 'a', text: 'APC has an 8° angled end-face that directs back-reflections away from the fiber core, achieving ≥60 dB RL. UPC has a flat/slightly curved end-face, achieving ≥50 dB RL. APC is required for CATV, analog, and coherent transmission systems.' },
+                  { id: 'b', text: 'APC uses a larger ferrule diameter to reduce insertion loss; UPC uses the standard diameter' },
+                  { id: 'c', text: 'APC is for aerial cable, UPC is for underground — the letters indicate the installation environment' },
+                  { id: 'd', text: 'APC and UPC achieve the same return loss; the difference is only the connector color (green vs. blue)' },
+                ],
+                correctId: 'a',
+                explanation: 'The 8° angle on an APC connector deflects back-reflections off the fiber core axis — those reflections exit at an angle that doesn\'t re-enter the fiber. This gives APC ≥60 dB return loss. UPC\'s domed (non-angled) end-face reflects some light straight back into the core, achieving only ≥50 dB RL. The difference matters enormously in CATV, analog video, and coherent DWDM systems where back-reflections cause signal degradation. Note: APC (green) and UPC (blue) connectors are NOT compatible with each other — connecting them damages the angled end-face and causes high IL.',
+              },
+              {
+                id: 'q4',
+                type: 'multiple-choice',
+                text: 'The IEC 61300-3-35 inspection standard (see T12.L11) divides the connector end-face into zones. Which zone contains the fiber core and has the most stringent cleanliness criteria?',
+                options: [
+                  { id: 'a', text: 'Zone A (core zone, 0–25 µm from center) — zero scratches or point defects allowed in Zone A for single-mode fiber' },
+                  { id: 'b', text: 'Zone D (outermost ferrule zone) — defects here cause the most insertion loss' },
+                  { id: 'c', text: 'Zone C (adhesive zone) — this zone controls epoxy bubbles that cause IL variation' },
+                  { id: 'd', text: 'All zones are equally stringent — any defect anywhere causes rejection' },
+                ],
+                correctId: 'a',
+                explanation: 'IEC 61300-3-35 divides the end-face into Zones A (core, 0–25 µm), B (cladding inner, 25–120 µm), C (cladding outer, 120–250 µm), and D (ferrule, 250–fiber OD µm). Zone A (the core area) must be completely free of scratches and point defects for single-mode connectors — the core is only 9 µm in diameter, so any contamination or scratch in Zone A directly blocks or scatters the optical power being transmitted. Zone B allows some minor defects; Zones C and D are progressively more lenient. This connects directly to connector insertion loss: the 0.3 dB field spec for IL (TIA-568) is predicated on a clean, undamaged Zone A.',
+              },
+              {
+                id: 'q5',
+                type: 'fill-in-blank',
+                text: 'The field-acceptable maximum insertion loss for a factory-terminated SC/UPC connector at the time of acceptance testing is ____ dB (TIA-568).',
+                answer: '0.3',
+                explanation: 'TIA-568 specifies ≤0.3 dB insertion loss for each mated connector pair as the field acceptance threshold. Factory-terminated connectors with properly maintained end-faces typically measure 0.05–0.15 dB. Values above 0.3 dB indicate contamination, physical damage, or a poor-quality factory polish. The IEC 61753-1 pass/fail criterion for Grade A connectors is also ≤0.3 dB (typical range). Always clean before measuring — a dirty connector that reads 0.4 dB may clean to 0.1 dB.',
+              },
             ]}
           />
         </div>

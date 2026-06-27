@@ -293,6 +293,39 @@ export default function T11L10_GelSealHeatShrinkReenterable() {
                 correctId: 'b',
                 explanation: 'The project manager made the correct specification. If the case will be re-entered annually for subscriber adds, heat-shrink port seals would be destroyed and replaced each year — adding material cost and labor, and increasing the risk of improper re-sealing by crews that aren\'t trained in the full heat-shrink re-entry procedure. Re-enterable cold-seal compression grommets (properly specified for buried/submersible rating) can handle annual re-entry with correct torque re-application. Verify the specific cold-seal fitting is rated for the installation depth and temperature range.',
               },
+              {
+                id: 'q3',
+                type: 'multiple-choice',
+                text: 'A technician opens a legacy buried splice case and finds FP-1 (petroleum-based) flooding compound. The installed cable has a modern polyethylene (PE) jacket. What is the concern?',
+                options: [
+                  { id: 'a', text: 'No concern — FP-1 is a universal flooding compound compatible with all jacket materials' },
+                  { id: 'b', text: 'FP-1 petroleum compound can attack certain modern PE jacket formulations, degrading the jacket over time. Verify cable manufacturer compatibility; replace with FP-2 synthetic polymer gel if incompatible.' },
+                  { id: 'c', text: 'FP-1 is toxic — all personnel must wear respirators before opening a case with FP-1' },
+                  { id: 'd', text: 'FP-1 is no longer manufactured — obtain special equipment to handle legacy compound' },
+                ],
+                correctId: 'b',
+                explanation: 'BICSI OSP Design Reference Manual (confirm current edition) classifies FP-1 (petroleum jelly-based) and FP-2 (synthetic polymer gel) flooding compounds. FP-1 compounds can be chemically incompatible with certain polyethylene jacket formulations used in modern OSP cable — the petroleum base can attack and swell the jacket material. FP-2 synthetic gel is formulated to be compatible with modern jackets. Before adding compound to an existing installation, verify the cable manufacturer\'s compatibility data.',
+              },
+              {
+                id: 'q4',
+                type: 'multiple-choice',
+                text: 'When heat-shrinking a port seal on a splice case, the technician applies heat unevenly, overheating one side. The shrink tubing shows a wrinkle and a small void along the cable. What should the technician do?',
+                options: [
+                  { id: 'a', text: 'Leave it — heat-shrink forms a hermetic seal even with small voids; the closure\'s other port seals will compensate' },
+                  { id: 'b', text: 'Apply more heat to the void side to try to work the wrinkle flat after initial shrink is complete' },
+                  { id: 'c', text: 'Cut off the compromised heat-shrink and apply a new one, or use a mastic compound to fill the void before re-shrinking' },
+                  { id: 'd', text: 'Install a second heat-shrink tube over the first to cover the defect' },
+                ],
+                correctId: 'c',
+                explanation: 'A void in a heat-shrink port seal is a water infiltration path. Once heat-shrink has been unevenly applied and has cooled with a wrinkle or void, re-heating typically makes it worse — the tubing is already partially set and reheating causes uneven contraction. The correct fix is to cut off the compromised section and apply a fresh heat-shrink, OR to fill the void with mastic self-amalgamating tape before re-shrinking. Never leave a void in a submersible-rated closure port seal.',
+              },
+              {
+                id: 'q5',
+                type: 'fill-in-blank',
+                text: 'The three sealing methods used in OSP splice closures, ordered from hardest to re-enter to easiest, are: heat-shrink → gel-seal → ________.',
+                answer: 're-enterable',
+                explanation: 'Heat-shrink port seals are the most difficult to re-enter (the tubing must be cut; re-sealing requires a new heat-shrink). Gel (flooding compound) provides a waterproof fill but requires removing and re-applying gel on re-entry. Re-enterable cold-seal mechanical compression fittings (grommet/clamp) are designed for repeated re-entry with just torque removal and re-application — no consumable material required per re-entry. Choose the sealing method based on expected re-entry frequency: infrequent → heat-shrink; frequent → re-enterable.',
+              },
             ]}
           />
         </div>

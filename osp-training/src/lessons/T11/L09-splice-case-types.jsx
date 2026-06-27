@@ -263,6 +263,39 @@ export default function T11L09_SpliceCaseTypes() {
                 correctId: 'b',
                 explanation: '288 fibers ÷ 12 fibers/tray = 24 trays minimum. Each tray holds exactly 12 splice protectors (12 spliced fibers). You need exactly 24 trays to house all 288 splices. If any future adds are anticipated, size up (28 or 32 trays). Overfilling a tray (more than 12 splices per tray) violates the tray geometry and causes the splice protectors to overlap, creating bend stress on the fibers and potential macrobend loss.',
               },
+              {
+                id: 'q3',
+                type: 'multiple-choice',
+                text: 'An aerial splice closure installed mid-span between poles begins developing progressive loss on multiple fibers within two years. No visible mechanical damage. The likely root cause is:',
+                options: [
+                  { id: 'a', text: 'The closure manufacturer\'s product defect — splices don\'t fail on their own' },
+                  { id: 'b', text: 'Thermal cycling and wind-induced micro-movement at the mid-span location, causing cumulative mechanical stress on splice protectors that were not designed for dynamic loading' },
+                  { id: 'c', text: 'The aerial environment has lower humidity than underground, which dries out the splice gel' },
+                  { id: 'd', text: 'The closure\'s IP rating is insufficient for aerial exposure to UV light' },
+                ],
+                correctId: 'b',
+                explanation: 'Aerial splice closures should be located at or near a pole to minimize dynamic load from wind and thermal sway. A mid-span location subjects the closure — and the splices inside it — to constant micro-movement. Splice protectors (heat-shrink sleeves) are designed to protect stationary splices, not to flex repeatedly. Over time, micro-movement fatigues the glass at the splice point. This also affects the span sag calculation: the unplanned weight of the mid-span closure shifts the low point of the catenary and may exceed the span loading design from T05. Aerial closures must be at support points.',
+              },
+              {
+                id: 'q4',
+                type: 'fill-in-blank',
+                text: 'A dome splice closure is typically rated for ____ environments (e.g., buried direct or in a handhole) per Telcordia GR-763-CORE because of its O-ring seal and flooding compound fill.',
+                answer: 'submersible',
+                explanation: 'GR-763-CORE specifies submersion testing as part of the environmental qualification for buried/vault splice closures. Dome closures with O-ring gasket seals and FP-2 flooding compound fill are specifically designed for environments where the case may be periodically submerged (flooded manholes, direct-buried locations in high water table areas). Butt-splice inline closures are NOT rated for submersible environments.',
+              },
+              {
+                id: 'q5',
+                type: 'multiple-choice',
+                text: 'Cumulative check (T11.L09 → T11.L11): Your splice crew installs a 288-fiber dome closure with 24 splice trays. After loading and closing, OTDR testing shows elevated loss on 3 fibers in tray 18. What is the most likely cause before you assume a bad splice?',
+                options: [
+                  { id: 'a', text: 'Tray 18 was manufactured with a defective hinge' },
+                  { id: 'b', text: 'The fiber express loops from buffer tube routing were routed under tray 18 instead of through the designated organizer channel, creating a constraint that closes tight when the tray is latched' },
+                  { id: 'c', text: 'Dome closures cannot safely hold more than 16 trays — excess trays create pressure on lower trays' },
+                  { id: 'd', text: 'Heat-shrink protectors on those 3 fibers were incompatible with the dome closure environment' },
+                ],
+                correctId: 'b',
+                explanation: 'This integrates splice tray loading (T11.L11) with splice case selection (T11.L09). The most common cause of fibers testing fine before closure and showing loss after closure is a routing problem: buffer tubes or fiber express loops that were laid across tray hinges or under the tray stack instead of through the dedicated organizer channels. When the dome is closed and tightened, those unsupported cables get pinched or bent below their minimum bend radius. Fix: open the dome, re-route the offending tubes through the correct organizer path, then re-test before final closure.',
+              },
             ]}
           />
         </div>
