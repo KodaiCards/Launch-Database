@@ -35,7 +35,23 @@ The triage reported "91 TODO/FIXME/placeholder/BROKEN markers." **That was a reg
 ### Completion-gate wiring — present + sound
 `LessonLayout.jsx` exposes `LessonProgressContext` with `reportScore(pct)` → `markComplete(pct)` (server gate, ≥70%). `primitives/Quiz` reports into it. This is the path admin progress bars depend on — verify it end-to-end in Pass 2.
 
-## Pass 2 — Runtime (PENDING — node_modules missing; needs `npm install` + build)
+## Pass 2 — Build/compile check (DONE — clean ✅)
+`npm install` + `npm run build:osp` → **`✓ built in 11.79s`, all ~270 lesson chunks + every component compiled with zero import/JSX/syntax errors.** Vite code-splits one chunk per lesson, so a clean build proves every lesson file *and* every component it imports parses and resolves. **Verdict: no build/definition-level breakage anywhere in the live curriculum.** Output lands in `public/training/` (base `/training/`, HashRouter).
+
+## Pass 3 — Runtime interaction sweep (NOT run — deliberately deferred, cost call)
+The only breakage class left after a clean build is a **runtime interaction bug** (a component that throws on specific props/data or misbehaves mid-interaction). Detecting it needs a browser exercising each tool. Status: **Chromium is pre-installed (`/opt/pw-browsers`) but the Playwright npm driver is not**, so a sweep would require another install + automation scripting.
+**Decision (cost discipline):** do **not** install Playwright for a speculative all-component sweep. The build is green and the original "broken tools" signal was partly a false marker count (see above). Instead: when a specific tool is reported broken, reproduce it directly (serve `public/training/`, open `/#/course/<T>/lesson/<order>`, watch console) and fix — targeted, cheap. Probe URLs if/when needed:
+- OTDRTraceViewer → `/#/course/T12/lesson/15`
+- TopologyCanvas → `/#/course/T16/lesson/9`
+- LinkBudgetCalculator → `/#/course/T02/lesson/6`
+- Quiz + completion gate → any capstone, e.g. `/#/course/T01/lesson/10`
+
+## Verdict
+- **No broken tools found at the build/definition level** (the cheap, high-coverage signal — green).
+- 2 legacy-only components (`InteractiveQuiz`, `CertificationSim`) → cleanup, not repair.
+- Runtime interaction sweep deferred to targeted repro. **If Carter can name which tool looked broken, that's a 10-minute fix; a blind full sweep isn't worth the spend.**
+
+### Original probe list (kept for targeted repro)
 Targeted, not exhaustive. Load one representative lesson per component type and watch the console:
 | Component | Probe lesson |
 |---|---|
