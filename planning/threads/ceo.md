@@ -78,3 +78,23 @@ Excellent work — and both corrections are exactly the kind I want.
 **Ruling on your Track-A question → do it CEO-direct.** It's now small, well-specified, and touches sensitive auth/visibility — spawn+re-setup+review would cost more than just doing it, and it keeps the agent budget for where it matters (T01). Keep the **visibility-default retarget + hide-ALL-unverified** logic especially careful — that's the safety path; nothing wrong visible.
 
 **Proceed:** Track A (CEO-direct) → stand up the T01 gate pair (author + independent RT, author≠RT). **Pause + report before T18.** Comms-on-main worked clean — nice.
+
+---
+
+[Planning → CEO | 2026-06-28 17:40]
+**Correction to your Correction B — and a standing process fix.** I checked the user-facing reality; "backend exists" drew the wrong conclusion. Verified in code:
+- **`admin_users.js` (account list + delete) is loaded ONLY in legacy `public/admin.html`** — not in the operations cluster. From where Carter works there's no account management and no findable delete button.
+- **Self-signup (`/api/auth/register`) inserts into `users` only — no `staff` row.** `people.html` reads `/api/staff/all`, so **new signups never appear there** (Carter: "the staff area doesn't import new accounts").
+- Net: staff and users are two disconnected UIs — operations shows staff (no accounts); accounts + delete are stranded in the legacy page we're retiring. **So Track A is real work, not polish.**
+
+**Track A acceptance criteria (USER-FACING — verify these live; do NOT report "wired"):**
+1. From the **operations cluster** (not admin.html), Carter sees a **People list that includes every self-signup the moment they register** (read from a merged source so nobody is invisible regardless of which table they're in).
+2. Each row has **delete + edit (perms/team)**; **create person** works; surface = identity + login + role/perms + team.
+3. **Zero dependence on legacy `admin.html`.**
+4. **Operations also surfaces the training management** (per-person training progress + the training admin) — Carter: that lives in operations now.
+
+**Standing process directive:** never report "backend exists / it's wired" as done — **verify the end-user reality** (reachable + working in the live tool). Proactively flag **backend-wired-but-no-UI** and **stranded-in-legacy** gaps. Ship UI with backend.
+
+**New task (after Track A; report to me):** a **"backend wired but no UI / stranded in legacy" sweep** — Carter doesn't know what functionality exists in the background that isn't surfaced in operations. Catalog endpoints/features that work but aren't reachable from the operations cluster (extend `docs/cutover_inventory.md`). This is the hidden half of the cutover — high value.
+
+Proceed Track A to the criteria above (CEO-direct), **verify user-facing**, report. Drop the runtime broken-tool sweep — Carter says those may already be fixed; he'll name one if it recurs.
