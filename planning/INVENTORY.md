@@ -60,7 +60,7 @@
 | Role-aware operations rail (admin-only links, fail-closed) | ✅ | Seam exists | — |
 | `user_capabilities` grants (cockpit / all_hours / manage_billing / manage_users / all_projects / production_compiler) + `requireCapability` | 📋 | — | — |
 | Assignment-driven everyday views (inspector↔engineer flip needs no relabel) | 📋 | — | — |
-| **Unified staff management** (one concept: person + perms + team designations; admin create/edit/delete) | 🟡/❓ | Carter: no user/staff split. Today `staff`+`users` separate; user-account delete missing. First slice of System F. | Merge tables now or unified layer? (CEO call) |
+| **Unified staff management** (one concept: person + perms + team designations; admin create/edit/delete) | 🟡 | Carter: no user/staff split. **Backend already exists** (auth.js full user CRUD incl. `DELETE /api/users/:id`; `users.staff_id` links login↔staff) — CEO triage Correction B. Gap = a **unified People UI** + combined "add person", not plumbing. Unified layer (no table-merge). | — |
 
 ## 6. System G — Splice (a map layer)
 | Area | Status | Notes / gaps | Open Qs |
