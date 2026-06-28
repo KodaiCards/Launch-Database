@@ -74,7 +74,7 @@
 | OSP/ISP training SPA (`osp-training/` → `public/training/`), competency-gated completion (≥70%/competency, no manual button) | ✅ (infra) | — | — |
 | Self-signup (`trainee`), training-only lockdown, admin per-person progress + drill-down | ✅ | — | — |
 | Per-staff content visibility (track→subject→lesson, presets + overrides, migration 0079) | ✅ | **Better model:** status-driven default role (see only completed/verified), expand from there — vs current manual per-user | Retarget to content-status defaults? |
-| **Curriculum content accuracy** (T01–T22 + C04/C05) | 🔴 | R18 incident (authored from memory) QUARANTINED; standing gate = research-log + independent red-team per topic; ~13 topics lack any research foundation; live citation errors flagged | Audit in progress (mostly NOT done) |
+| **Curriculum content accuracy** (T01–T22 + C04/C05) | 🔴 | R18 incident (authored from memory) QUARANTINED; standing gate = research-log + independent red-team per topic; ~13 topics lack any research foundation; live citation errors flagged | CEO triage 2026-06-28: the 6-agent audit never produced output; ~0 topics gated to bar → overhaul all per-topic via the gate in teaching order (lean, no upfront audit pass) |
 | Interactive components + broken-tool repair | 🟡 | Some tools reported broken; component health check needed | — |
 | Add-staff path (so completion tracking is usable) | 🟡/❓ | See System F | — |
 
