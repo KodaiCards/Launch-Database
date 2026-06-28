@@ -53,3 +53,15 @@ Carter proposes → Planning analyzes / challenges / reshapes / documents → CE
 
 ## Disagreements
 Any agent wanting a scope/architecture change posts a proposal on its thread → Planning rules. Conflicts with Carter's intent, or large changes, → Planning escalates to Carter with both sides fairly. **All rulings logged in `decisions.md` (append-only — never overwrite history).**
+
+## Agent runtime config (LOCKED 2026-06-28)
+Configure every fresh instance to these. Reasoning + all lenses: `decisions.md` D011.
+
+| Role | Model | Effort | Ultracode |
+|---|---|---|---|
+| Planning | Opus | Max | Off |
+| CEO | Opus | High | **Off** + hard ≤2–3 agent cap (verify before next wave) |
+| Auditor | Opus | High | Off (safe to enable later if desired) |
+| Builders | Sonnet (Haiku for mechanical) | Low–Med | Off |
+
+Ultracode is a behavioral bias, not a price tier; *effort* sets the thinking-token budget; the real cost/burn driver is **spawned agents** — hence the CEO cap.

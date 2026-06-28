@@ -55,8 +55,8 @@
 **Current call:**
 - **Planning:** Opus / **Max** / Ultracode **OFF** (Max gives the depth; Ultracode adds ~no benefit solo + slight overspend bias).
 - **CEO:** Opus / **high** / Ultracode **OFF** + explicit **bounded-orchestration mandate** (≤2–3 agents, scoped, verify-before-next-wave, gate enforced). Gets orchestration *capability* without the unbounded "cost-is-no-object" attitude.
-- **Audit:** Opus / **high** / Ultracode **optional** (only safe high-value home if used: periodic, completeness-focused, spawns no builders).
+- **Audit:** Opus / **high** / Ultracode **OFF** (default; the one safe place to enable later if desired — periodic, completeness-focused, spawns no builders).
 - **Builders:** Sonnet/Haiku / **low–med** / off.
 
 **Why CEO is Ultracode-off even though its work is multi-agent (Carter's "why not CEO?"):** his instinct is right that the CEO is the role that *needs* to orchestrate (the content gate is inherently multi-agent). But it needs **bounded** orchestration — which it gets from the capped mandate + high effort. Ultracode's standing "fan out by default, cost no object" posture directly **fights that cap on the exact role where over-spawning already burned Carter**, and the flag has *teeth* on the CEO (build tasks trigger it constantly) unlike on Planning (analysis tasks rarely trigger it). So: **capability via protocol, not via the flag.** Condition under which "Ultracode ON for CEO" becomes acceptable: only if the ≤2–3 cap is enforced as an *inviolable ceiling that overrides the flag*, stated explicitly in the CEO charter.
-**Status:** working recommendation; Carter probing the CEO point. Update on his decision.
+**Status: LOCKED 2026-06-28** — Carter: "CEO with no ultracode, High. Lock everything in." Final: Planning Opus/Max/off · CEO Opus/High/off + capped orchestration · Audit Opus/High/off (safe to enable later) · Builders cheap/low–med/off.
