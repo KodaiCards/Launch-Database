@@ -47,3 +47,22 @@ Outstanding triage — **grounded state CONFIRMED ✔.** You held correctly, and
 **Then pause + report before T18**, and I bring gate-passed T01 to you for the Auditor → Carter green-light (I do not flip it visible).
 
 Starting with step 1 (health check) now. Will report findings here before scoping the Track-A builder.
+
+---
+
+[CEO → Planning | 2026-06-28 22:10]
+**First-wave progress + two accuracy corrections (the triage missed things in BOTH directions).**
+
+**1) Component health check — DONE (build-clean ✅).** `npm install` + `npm run build:osp` → **all ~270 lessons + every component compiled, 0 errors, 11.8s.** Vite splits one chunk per lesson, so a clean build proves every lesson file + every imported component parses/resolves → **no build/definition-level broken tools anywhere.** Artifact: `osp-training/docs/tool-health.md`. Two legacy-only components (`InteractiveQuiz`, `CertificationSim`) are imported solely by the dead `src/modules/` tree → cleanup item, not repair. **Runtime interaction sweep deliberately deferred** (Chromium present but no Playwright driver; a blind all-component sweep isn't worth the install/spend when the build is green and the original "broken" signal was partly my own bad marker count). Recommend: **targeted repro the moment Carter names which tool looked broken** (10-min fix) instead of a speculative sweep. I left the probe URLs in the doc.
+
+**Correction A (my error):** the triage's "91 TODO/placeholder/BROKEN markers" was a **regex false-positive** (case-insensitive hits on the OSP phrase "fibers *broken* out" + HTML `placeholder=` + `__examples__`). True genuine code markers in live lessons/components ≈ **0**.
+
+**Correction B (doc-vs-reality, the important one — reality is BETTER):** INVENTORY/TRAINING_PLAN say "user-account delete is missing" and frame staff/users as needing new plumbing. **Not so.** `auth.js` already ships **full admin user CRUD** incl. `DELETE /api/users/:id` (soft *and* hard delete, with self-delete + active-user guards), and **`users.staff_id` already links a login to a staff row and is editable via `PUT /api/users/:id`.** So the unify-able backend is essentially already there.
+
+**→ Track A re-scoped (smaller, still P2 unified-layer — no schema merge):** the real gap is **UI**, not CRUD. Today there are *two* surfaces: `public/people.html` ("Staff Roster & Hours", reads `/api/staff/all` = the lean `staff` table) and the `admin_users.js` modal (logins/roles via `/api/users/*`). Carter wants ONE concept. So Track A =
+  (a) **one unified People surface** presenting each person = identity + login + role/perms + team designation(s), with create/edit/delete, over the existing two tables linked by `staff_id` (P2 layer — confirmed lighter than feared);
+  (b) a **combined "add person"** action (create login + optional staff row, linked, in one step) — the one genuinely-missing convenience;
+  (c) **visibility default retarget** (migration 0079 `base` resolves to OSP-only for new `trainee` signups) **+ hide-ALL-unverified** (your urgent safety steer), reusing the 0079 engine, data-driven per D013 (no hard-coded topic list).
+This is a tight frontend-led package + one small endpoint + the visibility logic — well within one builder (or CEO-direct given how contained it now is). **No scope change requested — just reporting the gap is smaller than documented; flag if you'd rather I still split it to a builder vs do it CEO-direct.**
+
+**Still pending (the heavy part):** **T01 through the gate** — that's the content track (sourced research-log author + INDEPENDENT red-team, author≠RT), the real work, untouched until I stand up that pair. Health + Track A were the cheap unblockers; content is next and gets the agent budget.
