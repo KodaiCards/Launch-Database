@@ -24,6 +24,8 @@
 ## RUS construction-side disciplines (stage-based, different rates)
 **Inspection · Resident Engineer · Dailies & As-builts · Final Records.** Each happens at a different project stage with its own rate. (These are the concrete RUS job types behind the per-job billing model.)
 
+**⚠️ Clarification (2026-06-28) — very little is actually RUS-*exclusive*; only the daily paperwork is.** The **map** (where ALL jobs are drawn), the **BOM** (required on **every design build**), **projections** (every job shows a revenue projection + a SUM/rollup), and **billing** are **universal** features — **RUS is just *organized differently*** (a configuration/profile per **D013**), with budget-constraint wiring layered on. Only the **daily unit paperwork / production-tracking flow** is RUS-specific (and even that is a config of a general field-records capability). → Map + Projections are **core/durable** features, NOT RUS-gated; do not tier them behind RUS's sunset.
+
 ## The RUS daily field workflow (production tracking)
 - Each **inspector watches 1 crew**.
 - Inspector submits paperwork that **they + the foreman sign** → agrees on **units complete that day** (the signed doc = the agreement record).
