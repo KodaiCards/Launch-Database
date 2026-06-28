@@ -67,17 +67,18 @@ Carter: start with **Foundations**, then the order an OSP expert would teach. **
 
 Prerequisites are real (e.g. T13 Inspection needs T01/T05/T10/T12/T18) → releasing in this order keeps the path unlocked. Inspectors start at Foundations and build toward Inspection naturally. *(Can sanity-check vs external OSP curricula on request — but it's a sound DAG; skip the spend unless Carter wants it.)*
 
-## Content-visibility flip — who & when
-A subject goes visible **only** after it clears the gate (research-log + independent RT) **and** the Auditor confirms it vs intent. **Recommended:** **Planning authorizes the flip** (owns the COMPLETE gate; Auditor reports to Planning); the **CEO executes the toggle** — keeps it off Carter's plate, nothing wrong ever reaches the team. **Option:** Carter does the final flip if he wants eyes on each release. *(Pending Carter's pick.)*
+## Content-visibility flip — Carter green-lights (LOCKED)
+A subject goes visible **only** after it (1) clears the gate (research-log + independent RT), (2) the Auditor confirms it vs intent, and (3) **Carter green-lights it.** Carter owns the final flip. **Planning maintains a "pending flips" queue** — every subject sitting gate-passed + audited and waiting on Carter — and **proactively reminds him** what's waiting (he asked to be reminded any time). Flow: CEO builds+gates → Planning dispatches Auditor → on pass, Planning queues it + tells Carter → Carter green-lights → flip executed.
 
-## Visibility reset (pending Carter confirm)
-Current `available:true` flags are optimistic — they predate the accuracy crisis and don't mean "verified." **Recommended:** hide everything not yet re-verified to the new bar, then re-release in teaching order as each clears. Safest given the live-citation errors; matches the piece-by-piece model. Tradeoff: team sees only Foundations on day one and grows from there. Alternative: leave current content up and fix in place.
+## Visibility reset (LOCKED — piece by piece)
+Current `available:true` flags are optimistic (they predate the accuracy crisis; they don't mean "verified"). **Decision:** hide what isn't re-verified to the new bar, then **re-release in teaching order, one subject at a time, as each clears.** There's a little runway → the goal is **several subjects verified + live for launch, not just Foundations** (as many as clear the gate in time). WIP stays hidden.
 
 ## Locked this round (2026-06-28)
 - Concurrency cap **≤2–3** (confirmed).
 - **Staff = one concept** (A1) — no user/staff split.
-- Teaching/rollout order = above (Foundations first).
+- Teaching/rollout order = above (Foundations first). **Positions are fixed by the DAG; the CONTENT of every topic — Fundamentals included — still goes through the full overhaul + accuracy gate. Nothing is exempt.** (T01's *position* is first because it's the DAG root every topic depends on; its *content* is overhauled like the rest, and first in line because everyone hits it first.)
+- **Flip authority: Carter green-lights every flip;** Planning keeps the pending-flips queue + reminds him.
+- **Visibility reset: piece-by-piece, hide-then-release in teaching order; target several subjects live for launch.**
 
-## Remaining for Carter
-- Confirm the **visibility-reset** approach (hide-then-re-release vs fix-in-place).
-- Confirm **flip authority** (Planning-authorizes / CEO-executes, or Carter does the final flip).
+## Remaining
+- Carter's final sign-off on this plan → fires the business/vision deep-dive commitment + boots the fresh CEO on training.
