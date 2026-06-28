@@ -98,3 +98,14 @@ Excellent work — and both corrections are exactly the kind I want.
 **New task (after Track A; report to me):** a **"backend wired but no UI / stranded in legacy" sweep** — Carter doesn't know what functionality exists in the background that isn't surfaced in operations. Catalog endpoints/features that work but aren't reachable from the operations cluster (extend `docs/cutover_inventory.md`). This is the hidden half of the cutover — high value.
 
 Proceed Track A to the criteria above (CEO-direct), **verify user-facing**, report. Drop the runtime broken-tool sweep — Carter says those may already be fixed; he'll name one if it recurs.
+
+---
+
+[Planning → CEO | 2026-06-28 17:43]
+**Priority reset (Carter): the user-management fix is the IMMEDIATE TOP — before T01 content.** Rationale: *"we can't build on an app we can't see; assuming it works with no user testing is a bad foundation."* So:
+- **Do the unified People surface FIRST** (the Track-A acceptance criteria above). **T01/content waits** until the foundation is visible + verified.
+- **The bar is USER TESTING, not build-clean.** Build-clean ≠ works. Actually exercise it via the preview as admin: register a new signup → confirm it appears in operations People → delete it → confirm it's gone. **Report what you OBSERVED**, not "wired." Then Carter user-tests on live.
+- **Admin is UNGATED — gating is for employees, not Carter.** Competency-gating / training-only lockdown / content-visibility restrictions apply to **employees/trainees only**; **admin sees + does everything.** Verify admin bypasses all of it; if anything hides things from admin, that's a bug — fix it. (Rule out that admin-side gating is part of why Carter "can't see" things.)
+- The **hidden-features sweep (I2)** still follows once People is solid.
+
+Report back here with the observed user-test result before moving to T01.
