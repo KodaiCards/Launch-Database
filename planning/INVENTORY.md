@@ -60,7 +60,7 @@
 | Role-aware operations rail (admin-only links, fail-closed) | ✅ | Seam exists | — |
 | `user_capabilities` grants (cockpit / all_hours / manage_billing / manage_users / all_projects / production_compiler) + `requireCapability` | 📋 | — | — |
 | Assignment-driven everyday views (inspector↔engineer flip needs no relabel) | 📋 | — | — |
-| **Add/invite staff flow** | 🟡/❓ | The gap behind your training example — provisioning ≠ visibility | Self-signup only, or admin add too? |
+| **Unified staff management** (one concept: person + perms + team designations; admin create/edit/delete) | 🟡/❓ | Carter: no user/staff split. Today `staff`+`users` separate; user-account delete missing. First slice of System F. | Merge tables now or unified layer? (CEO call) |
 
 ## 6. System G — Splice (a map layer)
 | Area | Status | Notes / gaps | Open Qs |

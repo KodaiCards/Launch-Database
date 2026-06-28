@@ -20,7 +20,7 @@ Keep **content status** (is this lesson finished/verified?) separate from **user
 ---
 
 ## Track A — Usability / product (fast, isolated from content)
-- **A1. User/account management.** Admin can **add AND delete** staff *and* user accounts. *Triage note:* `DELETE /api/staff/:id` exists (`routes/staff.js`); **user-account delete + the admin UI appear to be the real gap** — confirm and build.
+- **A1. Staff = ONE concept (no user/staff split).** Per Carter: *"users and staff shouldn't be separate to me — it's all staff, they just need perms and team designations which I should be able to create, edit and delete."* Deliver a single **Staff** management surface: a person with **login + permissions/role + team designation(s)**, admin can **create / edit / delete**. *Triage note:* today `staff` (table) and `users` (login accounts) are separate — `DELETE /api/staff/:id` exists but **user-account delete is missing**. **CEO decides** whether to merge the tables now or present a unified layer over both (weigh cost/risk — don't force a risky table-merge mid-patch if a clean unified layer ships faster). This is the **first slice of System F** (roles/capabilities) — build to extend, not throwaway.
 - **A2. Default new-user experience.** Signup → training-only launcher → OSP-only inside (per the model above). Admin grants ISP/CERTS per person.
 - **A3. Status-driven visibility / rollout switch.** Unverified or in-progress content never shows to trainees; verified subjects get flipped visible.
 - **A4. Fix broken interactive tools.** Component health check → repair list → fix.
@@ -60,6 +60,24 @@ Visual polish pass (typography, spacing, consistency, light/dark) + place the **
 ## Done-when (this patch round)
 Admin can add/delete staff + users; a new signup lands in a training-only launcher seeing only OSP; WIP hidden; broken tools fixed; UI polished with the logo; **≥ a couple of OSP subjects fully verified + polished + live**; a repeatable per-subject rollout pipeline is running.
 
-## Open inputs from Carter
-- The **agent-concurrency cap** comfort number (Planning proposes ≤2–3).
-- Which **OSP subjects inspectors most need first** (to prioritize Track C).
+## Teaching / rollout order (LOCKED — Foundations first, then DAG order)
+Carter: start with **Foundations**, then the order an OSP expert would teach. **Cost win — that order is already research-grounded:** the catalog encodes a prerequisite DAG + topological sort (`ARCH.md §3`), so it isn't being invented from memory. Adopted rollout order (release each subject as it clears the gate):
+
+**T01 Fundamentals & Vocabulary** (Foundations) → T18 Safety & OSHA → T02 Fiber Physics → T03 Cable Selection → T04 Route Survey → T09 Permitting → T05 Design–Aerial → T06 Design–Underground → T19 Headend/CO → T14 Bonding & Grounding → T07 Staking → T08 Make-Ready → T10 Construction → T11 Splicing → T12 Testing → T13 Inspection & QA → T15 Restoration → T16 As-Built/GIS → T17 Estimation → T20 RUS/Federal → cert prep (T21 CFOS/O · T22 CFOT · C04 BICSI mock · C05 final).
+
+Prerequisites are real (e.g. T13 Inspection needs T01/T05/T10/T12/T18) → releasing in this order keeps the path unlocked. Inspectors start at Foundations and build toward Inspection naturally. *(Can sanity-check vs external OSP curricula on request — but it's a sound DAG; skip the spend unless Carter wants it.)*
+
+## Content-visibility flip — who & when
+A subject goes visible **only** after it clears the gate (research-log + independent RT) **and** the Auditor confirms it vs intent. **Recommended:** **Planning authorizes the flip** (owns the COMPLETE gate; Auditor reports to Planning); the **CEO executes the toggle** — keeps it off Carter's plate, nothing wrong ever reaches the team. **Option:** Carter does the final flip if he wants eyes on each release. *(Pending Carter's pick.)*
+
+## Visibility reset (pending Carter confirm)
+Current `available:true` flags are optimistic — they predate the accuracy crisis and don't mean "verified." **Recommended:** hide everything not yet re-verified to the new bar, then re-release in teaching order as each clears. Safest given the live-citation errors; matches the piece-by-piece model. Tradeoff: team sees only Foundations on day one and grows from there. Alternative: leave current content up and fix in place.
+
+## Locked this round (2026-06-28)
+- Concurrency cap **≤2–3** (confirmed).
+- **Staff = one concept** (A1) — no user/staff split.
+- Teaching/rollout order = above (Foundations first).
+
+## Remaining for Carter
+- Confirm the **visibility-reset** approach (hide-then-re-release vs fix-in-place).
+- Confirm **flip authority** (Planning-authorizes / CEO-executes, or Carter does the final flip).
