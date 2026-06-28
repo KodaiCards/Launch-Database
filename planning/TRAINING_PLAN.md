@@ -80,5 +80,6 @@ Current `available:true` flags are optimistic (they predate the accuracy crisis;
 - **Flip authority: Carter green-lights every flip;** Planning keeps the pending-flips queue + reminds him.
 - **Visibility reset: piece-by-piece, hide-then-release in teaching order; target several subjects live for launch.**
 
-## Remaining
-- Carter's final sign-off on this plan → fires the business/vision deep-dive commitment + boots the fresh CEO on training.
+## Status / remaining
+- **2026-06-28 (night): Carter APPROVES this plan; ship held overnight at his request — "in the morning we send it off." DO NOT ship / boot the CEO before his morning go.**
+- On Carter's go: sign off → fires the business/vision deep-dive commitment + boots the fresh CEO on training.
