@@ -42,3 +42,21 @@
 ## D010 — First task = full software plan, in normal mode (2026-06-28)
 **Decision:** First task is a full in-depth plan for the ENTIRE software, meshed with current verified state, collaborative with Carter. Held in normal mode, not plan mode.
 **Reasoning:** Plan mode blocks the doc/memory writes that are Planning's core function; the plan is a living doc, not a one-shot approval artifact.
+
+## D011 — Ultracode / effort / model per agent (LIVING — exemplar decision record) (2026-06-28)
+*All lenses banked here so new input updates the synthesis instead of replacing it.*
+**Considerations (lenses):**
+- **Cost:** Carter watches to the dollar; cost drivers = tokens + spawned agents; *effort* sets the thinking-token budget; **Ultracode is NOT a price multiplier** — with no agents it ≈ Max cost, adding only a slight overspend bias.
+- **Burn risk:** a past CEO spawned dozens of agents and burned all usage — the cardinal incident ([[feedback_no_mass_agent_spawn]]).
+- **Accuracy:** government training content cannot be wrong → needs rigorous, often multi-agent verification (the gate: author ≠ independent RT).
+- **Role-fit:** Planning/Audit = analysis/verify → Ultracode's orchestrate-bias rarely/safely fires (proven: Planning ran Ultracode all session, zero fleets). CEO/builders = build/verify → the bias fires constantly and becomes real fleets.
+- **Ultracode mechanics:** a behavioral bias, not a billing tier; "solo on conversational turns" is sanctioned; safe where the work isn't build work.
+
+**Current call:**
+- **Planning:** Opus / **Max** / Ultracode **OFF** (Max gives the depth; Ultracode adds ~no benefit solo + slight overspend bias).
+- **CEO:** Opus / **high** / Ultracode **OFF** + explicit **bounded-orchestration mandate** (≤2–3 agents, scoped, verify-before-next-wave, gate enforced). Gets orchestration *capability* without the unbounded "cost-is-no-object" attitude.
+- **Audit:** Opus / **high** / Ultracode **optional** (only safe high-value home if used: periodic, completeness-focused, spawns no builders).
+- **Builders:** Sonnet/Haiku / **low–med** / off.
+
+**Why CEO is Ultracode-off even though its work is multi-agent (Carter's "why not CEO?"):** his instinct is right that the CEO is the role that *needs* to orchestrate (the content gate is inherently multi-agent). But it needs **bounded** orchestration — which it gets from the capped mandate + high effort. Ultracode's standing "fan out by default, cost no object" posture directly **fights that cap on the exact role where over-spawning already burned Carter**, and the flag has *teeth* on the CEO (build tasks trigger it constantly) unlike on Planning (analysis tasks rarely trigger it). So: **capability via protocol, not via the flag.** Condition under which "Ultracode ON for CEO" becomes acceptable: only if the ≤2–3 cap is enforced as an *inviolable ceiling that overrides the flag*, stated explicitly in the CEO charter.
+**Status:** working recommendation; Carter probing the CEO point. Update on his decision.
