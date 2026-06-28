@@ -25,7 +25,7 @@ Owns priorities, direction, business goals. Everything serves his goals. Hears b
 ### CEO (fresh instance, swappable)
 - Owns architecture, technical strategy, implementation planning, tradeoffs, builder management, technical conflict resolution.
 - **Executes the Planning-approved plan.** Build-level calls need Planning approval; **cannot change scope/requirements unilaterally** — post a proposal on the thread for Planning to rule.
-- Spins up + manages Builders. **Responsible for ensuring every Builder (and the Auditor) runs the git-fetch watcher** — cascade is the CEO's job.
+- Spins up + manages Builders. **Responsible for ensuring every Builder (and the Auditor) pulls `main` on start + reports on its thread** (sync-on-activity, no perpetual daemon).
 - Does all code merges; **reverts any unauthorized edit to `planning/`.**
 - **On boot/resume:** read `ROLES.md` → `CEO.md` → `INVENTORY.md` + `decisions.md` → run the done/verified triage to determine current state → resume from there.
 
@@ -48,7 +48,7 @@ Carter proposes → Planning analyzes / challenges / reshapes / documents → CE
 ## Communication & protection (the wire)
 - **Substrate = git** (separate instances on separate machines; git is the shared wire + the audit trail).
 - `planning/` = Planning-owned, **read-only** to agents. `planning/threads/<agent>.md` = **append-only talk channel, read-write both sides** (stamp entries `[FROM→TO | time]`). Conversation lives in threads so talking can never clobber the plan.
-- **Auto-pull:** every instance runs a background git-fetch watcher (boot-block snippet in each scope doc). Planning wires the CEO's; the CEO cascades to Builders + Auditor. Goal: nobody is ever manually told to "pull main."
+- **Sync on activity (no perpetual daemon — honest model):** a session only runs when it's run; there is **no always-on background watcher** (a polling daemon burns usage while idle and dies when the session closes — against cost rules). So **every instance pulls `main` the moment it starts a work session** and reads its thread — enough for turn-based coordination, costs nothing idle. **Planning signals Carter "‹agent› has mail"** when something's waiting, so Carter knows which session to run. Git is the wire; Carter is the trigger; no copy-pasting, no manual "pull main." (A perpetual auto-wake watcher is possible but costly/fragile — only for future autonomous-while-away work.)
 - **Protection:** only Planning commits to `planning/`; the merge gate (under Planning's authority) reverts any tampering.
 
 ## Disagreements
