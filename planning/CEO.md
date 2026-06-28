@@ -11,8 +11,8 @@ Architecture, technical strategy, implementation planning, tradeoffs, builder ma
 - **Builders:** Sonnet (Haiku for mechanical) / low–med / off. **Auditor:** Opus / High / off.
 
 ## Comms (the wire) — set up on boot
-- Substrate = **git.** `planning/` is Planning-owned, **read-only to you** (except threads). Talk to Planning only in **`planning/threads/ceo.md`** (append-only; stamp each entry `[FROM→TO | time]`).
-- **Start a background git-fetch watcher on boot** so you never wait to be told to pull. Sample (adapt to your env):
+- Substrate = **git.** `planning/` is Planning-owned, **read-only to you** (except threads). Talk to Planning only in **`planning/threads/ceo.md`, which lives on `main`** — commit your thread entries to main (you have merge rights) and **pull main on activity**; Planning does the same. Builders post threads on their own branches; you surface/merge them. Append-only; stamp `[FROM→TO | time]`.
+- **Watcher:** while you're the only active instance, **fetch-on-demand** (pull `main` when you start a work session) is the cost-right choice — don't run a perpetual loop watching a wire nobody's on. Wire the background watcher (sample below) + the builder/auditor cascade only when real parallel instances are live:
   `( while true; do git fetch origin main -q 2>/dev/null; git diff --quiet HEAD origin/main -- planning/ 2>/dev/null || echo "[planning/ changed — pull + re-read your thread]"; sleep 120; done ) &`
 - **Cascade:** wire the same watcher into **every builder and the auditor** you spin up — that's your job, not Planning's.
 - You do all code merges; **revert any unauthorized edit to `planning/`.**
