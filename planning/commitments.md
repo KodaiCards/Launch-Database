@@ -4,8 +4,8 @@
 
 | # | Commitment | Trigger | Status |
 |---|---|---|---|
-| 1 | **Business/identity/vision deep-dive** — real conversation on what the company does, who Carter is, what he wants to build, and what the app must solve. Planning's deep business download. | **Carter signs off on `planning/TRAINING_PLAN.md`** (confirmed 2026-06-28: the plan, NOT the shipped module) | OPEN — Planning raises it automatically at trigger |
+| 1 | **Business/identity/vision deep-dive** — real conversation on what the company does, who Carter is, what he wants to build, and what the app must solve. Planning's deep business download. | Carter signed off on `planning/TRAINING_PLAN.md` (2026-06-28) | ✅ **FIRED 2026-06-28 ~15:57 — IN PROGRESS** (capturing to `planning/BUSINESS.md`) |
 
-**▶ Resume (2026-06-28 night):** Training plan approved by Carter; **ship held overnight** ("in the morning we send it off"). On his morning go → sign off → fire commitment #1 + boot fresh CEO. Do not ship before then.
+**▶ Done (2026-06-28 ~15:57):** Training plan SIGNED OFF; CEO charter written + kickoff posted; commitment #1 (deep-dive) FIRED + in progress. CEO to be booted by Carter.
 
 **Sequencing:** Training/learning module is the **first task** (time-sensitive, isolated from main build). Business deep-dive follows. Main-build deep planning resumes after that.
