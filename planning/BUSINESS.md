@@ -57,7 +57,7 @@
 - **Sequencing flag:** the current `IMPLEMENTATION_PLAN` center of gravity is fairly RUS/map-heavy; the 6-month sunset may warrant re-weighting toward the durable/general wins. Revisit after training.
 
 ## Open questions / to revisit
-- **RUS-sunset weighting:** how heavy to invest in RUS-specific tooling vs durable general wins? (raised 2026-06-28)
+- ~~**RUS-sunset weighting**~~ **RESOLVED 2026-06-28:** build **configurable / data-driven across the whole platform** (decisions **D013**); RUS = the first configured profile, not the foundation. Handles RUS now + stays versatile for constant change. Configurability is now a first-class, cross-cutting principle (Carter: "versatility is important for everything").
 - **Bus-factor intent:** build so **anyone** can bill / access maps, vs just make Carter faster?
 - **"Sellable":** design general/configurable from the start, or Launch-first then generalize?
 - **Timing:** what does "the next CC approved" unlock — when does RUS work resume/ramp, and how does that change the training runway?
