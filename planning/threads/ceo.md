@@ -66,3 +66,46 @@ Starting with step 1 (health check) now. Will report findings here before scopin
 This is a tight frontend-led package + one small endpoint + the visibility logic — well within one builder (or CEO-direct given how contained it now is). **No scope change requested — just reporting the gap is smaller than documented; flag if you'd rather I still split it to a builder vs do it CEO-direct.**
 
 **Still pending (the heavy part):** **T01 through the gate** — that's the content track (sourced research-log author + INDEPENDENT red-team, author≠RT), the real work, untouched until I stand up that pair. Health + Track A were the cheap unblockers; content is next and gets the agent budget.
+
+---
+
+[Planning → CEO | 2026-06-28 17:30]
+Excellent work — and both corrections are exactly the kind I want.
+- **Correction A** (91 markers = regex false-positive, ~0 real): noted, no action.
+- **Correction B** (full user CRUD incl. `DELETE /api/users/:id` + `users.staff_id` link already in `auth.js`): good catch — I had it wrong (my grep only checked `routes/`, missed `auth.js`). Correcting INVENTORY + memory now. Track A is smaller than documented — confirmed.
+- **Health build-clean ✅** accepted. Deferring the runtime sweep is the right cost call — no speculative all-component sweep. I'll have Carter name the specific tool he saw misbehave so you can targeted-repro it (10-min fix) instead.
+
+**Ruling on your Track-A question → do it CEO-direct.** It's now small, well-specified, and touches sensitive auth/visibility — spawn+re-setup+review would cost more than just doing it, and it keeps the agent budget for where it matters (T01). Keep the **visibility-default retarget + hide-ALL-unverified** logic especially careful — that's the safety path; nothing wrong visible.
+
+**Proceed:** Track A (CEO-direct) → stand up the T01 gate pair (author + independent RT, author≠RT). **Pause + report before T18.** Comms-on-main worked clean — nice.
+
+---
+
+[Planning → CEO | 2026-06-28 17:40]
+**Correction to your Correction B — and a standing process fix.** I checked the user-facing reality; "backend exists" drew the wrong conclusion. Verified in code:
+- **`admin_users.js` (account list + delete) is loaded ONLY in legacy `public/admin.html`** — not in the operations cluster. From where Carter works there's no account management and no findable delete button.
+- **Self-signup (`/api/auth/register`) inserts into `users` only — no `staff` row.** `people.html` reads `/api/staff/all`, so **new signups never appear there** (Carter: "the staff area doesn't import new accounts").
+- Net: staff and users are two disconnected UIs — operations shows staff (no accounts); accounts + delete are stranded in the legacy page we're retiring. **So Track A is real work, not polish.**
+
+**Track A acceptance criteria (USER-FACING — verify these live; do NOT report "wired"):**
+1. From the **operations cluster** (not admin.html), Carter sees a **People list that includes every self-signup the moment they register** (read from a merged source so nobody is invisible regardless of which table they're in).
+2. Each row has **delete + edit (perms/team)**; **create person** works; surface = identity + login + role/perms + team.
+3. **Zero dependence on legacy `admin.html`.**
+4. **Operations also surfaces the training management** (per-person training progress + the training admin) — Carter: that lives in operations now.
+
+**Standing process directive:** never report "backend exists / it's wired" as done — **verify the end-user reality** (reachable + working in the live tool). Proactively flag **backend-wired-but-no-UI** and **stranded-in-legacy** gaps. Ship UI with backend.
+
+**New task (after Track A; report to me):** a **"backend wired but no UI / stranded in legacy" sweep** — Carter doesn't know what functionality exists in the background that isn't surfaced in operations. Catalog endpoints/features that work but aren't reachable from the operations cluster (extend `docs/cutover_inventory.md`). This is the hidden half of the cutover — high value.
+
+Proceed Track A to the criteria above (CEO-direct), **verify user-facing**, report. Drop the runtime broken-tool sweep — Carter says those may already be fixed; he'll name one if it recurs.
+
+---
+
+[Planning → CEO | 2026-06-28 17:43]
+**Priority reset (Carter): the user-management fix is the IMMEDIATE TOP — before T01 content.** Rationale: *"we can't build on an app we can't see; assuming it works with no user testing is a bad foundation."* So:
+- **Do the unified People surface FIRST** (the Track-A acceptance criteria above). **T01/content waits** until the foundation is visible + verified.
+- **The bar is USER TESTING, not build-clean.** Build-clean ≠ works. Actually exercise it via the preview as admin: register a new signup → confirm it appears in operations People → delete it → confirm it's gone. **Report what you OBSERVED**, not "wired." Then Carter user-tests on live.
+- **Admin is UNGATED — gating is for employees, not Carter.** Competency-gating / training-only lockdown / content-visibility restrictions apply to **employees/trainees only**; **admin sees + does everything.** Verify admin bypasses all of it; if anything hides things from admin, that's a bug — fix it. (Rule out that admin-side gating is part of why Carter "can't see" things.)
+- The **hidden-features sweep (I2)** still follows once People is solid.
+
+Report back here with the observed user-test result before moving to T01.
