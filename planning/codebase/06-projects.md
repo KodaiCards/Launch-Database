@@ -1,6 +1,6 @@
-# 06 — Projects layer (legacy tree + catalog/entities) — PARTIAL
+# 06 — Projects layer (legacy tree + catalog/entities) — ✅ COMPLETE
 
-> Mapped 2026-06-29. The legacy `projects` rollup tree + the catalog/contract/client entities both the legacy AND keystone lean on. **Done this pass: jobs.js, clients.js, project_types.js.** Pending → 06b: contracts.js, engineering_contracts.js (687), projects.js (1544, the big legacy CRUD), project_detail.js (326), projects_tree.js (82).
+> Mapped 2026-06-29. The legacy `projects` rollup tree + the catalog/contract/client entities both the legacy AND keystone lean on. **All read:** jobs.js, clients.js, project_types.js (06a) · contracts.js, engineering_contracts.js, projects_tree.js (06b) · projects.js (1545, the big legacy CRUD), project_detail.js (326) (06c). **Headline: the hard-coded rate fallback is everywhere (10+ copies) — the concrete D013 cleanup target.**
 
 ## `jobs.js` (519) — the work-category catalog (IMPORTANT for D013)
 Jobs = the work-category entity (replaced the legacy `project_type` enum for billing). Each: `default_billing_type` (hourly/footage), `default_rate`, `is_permitting` (triggers the miles→hours calc), `team`, `billing_code` (RUS code), **`program_scope`** (`rus|non_rus|shared` — the new enum that replaced the `for_psc_client`/`for_generic_client` bools, mirrored for back-compat).
@@ -21,7 +21,50 @@ The `project_types` table was **dropped** (Phase 3b); replaced by the `engineeri
 - `project_types.js` is a dead 410-shim — cleanup.
 - `ec_service_areas` table (used by the cascade picker) is the LEGACY service-area table (distinct from keystone `service_areas` AND from `concentrators` — there are now 3 "service area"-ish tables: `service_areas` [keystone], `concentrators` [old], `ec_service_areas` [EC cascade]). ⚠ Naming/▼model overlap → flag for the EC chunk (06b) + cutover.
 
+---
+## 06b — contracts.js, engineering_contracts.js, projects_tree.js (mapped 2026-06-29)
+
+### `contracts.js` (233) — billing-contract CRUD + **guarded cascade delete w/ undo**
+`contracts` = the **billing contract** entity (PSC's 515-3/4/5 live here). Fields: `contract_number`, `name`, `engineering_contract_id` (umbrella FK), `friendly_label`, `active`. GET (any auth) joins EC name/number so the admin list can header billing contracts under their umbrella. POST/PUT/DELETE admin-only; all audit-logged + SSE.
+- **DELETE is the GOOD pattern:** refuses if any `projects` reference it (409 w/ count) unless `?cascade=1`; cascade walks each child project's tree via `collectProjectTree`, snapshots time_entries/invoice_items/permit_stages/permit_documents, deletes leaf-first, **saves an undo bucket INSIDE the txn**, returns `undo_token`. → **Reinforces O14 hard:** legacy contract delete has cascade-snapshot + undo; the keystone SA delete (chunk 03) has neither. The fix pattern already exists here.
+
+### `engineering_contracts.js` (687) — the EC = RUS umbrella (budget-bearing)
+EC = umbrella above billing contracts where one agreement spans several (budget lives at EC level, not per-project). `program` enum (`rus|bau|gfr|other`) validated by `normalizeProgram()` against the migration CHECK; **RUS triggers the PDF template + projection + inspection-tab scoping + job/billing-code defaults** (the one switch that turns "RUS mode" on). EC list surfaces contract_count + non-rollup project_count.
+- **GUARDED delete** (like contracts.js): pre-checks contracts (FK SET NULL) / budgets (FK CASCADE) / billing_batches (FK SET NULL); refuses w/ friendly counts if any reference it. Again ≠ keystone SA delete (O14).
+- **`ec_service_areas` + `ec_work_orders`** (the WO#/Service-Areas feature, memory `feature_ec_wo_service_areas`): EC-scoped SA picker + nested WOs (WO validates SA belongs to same EC). **This is the LEGACY "service area" used by the cascade picker** (clients.js, projects.js MODE 1) — confirms O17: `ec_service_areas` ≠ keystone `service_areas`.
+- **⭐ 3-TIER job visibility** (richer than jobs.js's 2-tier — strong D013): `GET /:ecId/jobs` resolves **(1) `job_assignments`** pins → **(2) `ec_job_visibility`** (per-EC explicit opt-in list; checkbox UI w/ GET/POST/DELETE/PUT-bulk-replace) → **(3) legacy `program_scope` heuristic**. Tier 2 (`ec_job_visibility`) is a genuine data-driven per-EC config layer I hadn't seen in 06a — **update the 06a D013 note: job visibility is even more configurable than first mapped.**
+- **EC-scoped "construction contracts":** `GET/POST/DELETE /:ecId/construction-contracts` operate on the **`contracts`** table via `contracts.engineering_contract_id` (migration 0031), scope flag `explicit` vs `legacy_fallback`. ⚠ **Naming collision** (see findings): this calls `contracts` rows "construction contracts," but `projects_tree.js` uses a *separate* `construction_contracts` table.
+
+### `projects_tree.js` (82) — the **keystone**-based Projects-tab tree
+`GET /api/projects-tree` (manager/admin) = `docs/projects_tab_design.md`. Builds **Client → EC → CC → SA → Route → project(leaf)** from the **keystone tables** (`service_areas`, `service_area_jobs` [permitting/design only], `service_area_routes`, `construction_contracts`, `engineering_contracts`) — NOT the legacy `projects` rollup. SA nodes carry map fields (`center_lat/lng`, `has_boundary`, `miles`) so the tab plots + zooms in one call; `lifecycle` = final/completed/active from `closed_at`/`build_finalized_at`. **This is the modern tree** (likely what `service-areas.html` renders) and proves the keystone has its own contract layer: **`construction_contracts`** (CC), distinct from legacy `contracts`.
+
+---
+## 06c — projects.js (1545, legacy CRUD) + project_detail.js (326) (mapped 2026-06-29)
+
+### `projects.js` (1545) — the LEGACY rollup-of-rollups CRUD (what the keystone replaces)
+The full legacy model: `projects` self-referencing tree (`parent_id`, `is_rollup`, `rollup_level`, `rollup_key`). The thing ROADMAP calls the "main source of UX friction." Mapped for history + cutover.
+- **List** `GET /api/projects`: heavy query — joins clients/contracts/parent + concentrators(`con.area_name`) + `ec_work_orders`→`ec_service_areas` for SA names, computes **YTD revenue via WITH RECURSIVE** over the subtree. Opt-in filters: `leaves_only`, `parent_id`, `rollup_key`, `include_completed`, pagination (default LIMIT 1000, `?limit=all`). Touches BOTH `concentrators` AND `ec_service_areas` → confirms O17.
+- **Create/Update**: `requireProjectCreate` = **capability gate** (`canCreateProjects` — admin/manager OR a capability grant; the "assignment-driven roles + capability grants" from the product plan, in legacy form). Auto-nesting via `app.locals.ensureRollupChain` (set by `portal_module.js` — Client→EC→CC→SA→Category→leaf). **Trait-blanking invariant:** `is_rollup=true` rows force ALL trait cols (job/rate/footage/projections) to NULL (folders carry no billing). PUT uses a dynamic "only-emit-columns-the-caller-sent" SET builder (`'key' in req.body`) to avoid undef→NULL clobbering on partial PUTs. Program auto-derives from the EC.
+- **`resolve-or-create`** = the cascade-picker backend the portals (design/permitting/timeclock) call: **MODE 1 EC-scoped** (resolves EC by client+program, verifies SA in `ec_service_areas`) vs **MODE 2 no-EC** (free-text `service_area_label`). Race-safe (23505 → re-SELECT winner, `created:false`). Auto-creates `design_stages`/`permit_stages` 'potential' rows.
+- **Three deletes:** `/:id` (single; dry_run; clears `billing_batch_items`; **no undo**), `/:id/with-hours` (leaf + time + invoice_items; **no undo**), **`/:id/with-tree`** (recursive; **undo bucket + dry_run + body `confirm:true` required**). So the *tree* delete is safe; the single/leaf ones rely on being single-row.
+- **`recalc-hours` / `recalc-all`** (bottom-up propagation, `is_billable` filter, ≤20 iterations). **`monthly-hours-breakdown` + `generate-monthly-invoice`** = the legacy ongoing/recurring billing: creates `invoices` + `invoice_items` **with `project_id` set**, idempotent via unique partial index `idx_invoice_items_project_period`. → **This is the source of O16:** the legacy invoice path links items to `projects`; the keystone SA-bill leaves `project_id=NULL`.
+
+### `project_detail.js` (326) — the "click a project row" drill-down (one round trip)
+`GET /api/projects/:id/detail`: project + **recursive subtree** (time entries w/ staff, invoices, permit docs/stages, children w/ computed `subtree_revenue`, monthly breakdown [hours/earned/billed], projected-revenue rollup from LEAVES only, lifetime totals, active-billable count). **`assertProjectAccess` IDOR guard:** admin=all; customer=404; design/permitting roles only their team's projects (by `jobs.team`); else 403.
+- **⚠ HARD-CODED RATE FALLBACK ×~5 in THIS FILE** (lines 146-151, 176-182, 197-198, 289-295 + documented in the header comment) — `inspection 90 / re|resident engineer 100 / permitting 90 / else 0`, re-pasted into every revenue SQL block.
+
+## Chunk-06 consolidated findings
+- **⭐⭐ D013 HEADLINE — the rate fallback is config-as-code, 10+ copies.** `COALESCE(billing_rate, CASE project_type WHEN 'inspection' 90 / 're'|'resident engineer' 100 / 'permitting' 90 ELSE 0)` is hand-pasted across: server.js jobs seed, dashboard.js, projects.js (ytd_revenue), **project_detail.js (×5)**, and (per 05) revenue/money calcs. One typo'd copy = silent money drift. **Concrete fix:** a single source — a `effective_billing_rate(project_type)` SQL function OR a `rate_defaults` config table (keyed by program/discipline). This is the single highest-leverage D013 cleanup + a "nothing can break" money-correctness risk. → ideas.md (I4) + this is what D013 should point at concretely.
+- **construction-contract NAMING COLLISION / dual model:** legacy `contracts` (billing contracts; also surfaced as "construction-contracts" under an EC) vs keystone **`construction_contracts`** (used by projects_tree). Two tables, overlapping concept. → extends the cutover table-reconciliation list (O17 → generalize to **O18: parallel legacy/keystone tables**).
+- **META-PATTERN (worth stating once):** the keystone migration created **parallel tables** rather than migrating in place — SA (`service_areas` vs `concentrators` vs `ec_service_areas`), contracts (`contracts` vs `construction_contracts`), dashboards (legacy vs `/overview`), billing (3 paths), tree (legacy `projects` vs `projects-tree`). Coexistence-not-cutover is the program's biggest structural debt; the cutover is broad and needs a single reconciliation map. → O18.
+- **O14 reinforced twice:** contracts.js AND engineering_contracts.js both have guarded/undo deletes; only the keystone SA delete is unguarded. The safety pattern already exists in-repo to copy.
+- **O16 root cause confirmed:** legacy `generate-monthly-invoice` is the path that sets `invoice_items.project_id`; keystone SA-bill doesn't → split-brain invoice attribution.
+- **`ec_job_visibility` (Tier 2)** = a real per-EC data-driven job-visibility layer (D013-positive) — richer than the 06a 2-tier read.
+- **Capability grants exist in legacy** (`canCreateProjects`) — the product-plan "capability grants" idea has a legacy beachhead to learn from.
+
 ## Reapproach-if
-- 06b: contracts.js, engineering_contracts.js (the EC = RUS entity + `ec_service_areas`), projects.js (the 1544-ln legacy rollup CRUD — the thing the keystone replaces; map for history + cutover), project_detail.js, projects_tree.js.
-- Cutover planning: reconcile the THREE service-area-ish tables (service_areas / concentrators / ec_service_areas).
-- D013 work: centralize the rate fallbacks (one configurable rate source).
+- Chunk 07 (billing): `generate-monthly-invoice` here is one of the billing paths feeding O15; reconcile with billing.js / billing_keystone.js. O16 root cause is here.
+- Chunk 18 (migrations): confirm FK ON DELETE rules for keystone SA (O14) + map the parallel-table set (O18) against actual schema.
+- Cutover planning (O17→O18): one reconciliation map for ALL parallel legacy/keystone tables, not just the SA trio.
+- D013 (I4): centralize the rate fallback into one configurable source — highest-leverage cleanup.
+- Still open: find the **`service-area-job-documents`** route module (area.html calls it; not in service_areas.js) — grep at chunk 13.

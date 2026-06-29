@@ -24,7 +24,7 @@ Status: ⬜ not started · 🔄 in progress · ✅ mapped · ♻️ reapproach n
 | 03 | **Keystone core** — service areas + jobs model | `routes/service_areas.js`, `concentrators.js`, migr 0064+ | P1 | ✅ → `03-keystone.md` |
 | 04 | **People/roster** (just shipped) | `routes/people.js`, `staff.js`, `people.html`, `admin_users.js` | P1 | ✅ → `04-people.md` (people.js+staff.js+people.html; admin_users.js→ch16 legacy) |
 | 05 | **Operations cluster** — the tool | cluster_views/money_view/hours_summary/my_work/search/export_bundle/dashboard + `public/service-areas.html, area.html …` + `app_nav.js` | P2 | ✅ first-pass → `05-operations-cluster.md` (backend full; HTML pages at wiring-level — deep UI pass deferred) |
-| 06 | **Projects/jobs/contracts** | projects, jobs, contracts, engineering_contracts, clients, project_detail, project_types | P2 | 🔄 `06-projects.md` (jobs/clients/project_types ✅; contracts/ECs/projects.js/project_detail/projects_tree → 06b) |
+| 06 | **Projects/jobs/contracts** | projects, jobs, contracts, engineering_contracts, clients, project_detail, project_types | P2 | ✅ → `06-projects.md` (06a catalog/clients/types · 06b contracts/ECs/projects-tree · 06c legacy projects.js+detail). Headline: rate-fallback ×10+ (D013/I4); O18 parallel tables |
 | 07 | **Billing/invoices/money** | billing, billing_keystone, invoices, invoice_templates, revenue, projections, project_billing, pricing, budgets + invoice_generator/template_engine | P2 | ⬜ |
 | 08 | **Pipelines** — permitting/design/inspection | permits, design_pipeline, inspection, potential_permits | P2 | ⬜ |
 | 09 | **Hours/time** | time_entries, hours_csv, hours_import, _hours_match + timeclock_module.js | P2 | ⬜ |
