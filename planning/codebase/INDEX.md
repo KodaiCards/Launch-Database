@@ -7,8 +7,9 @@
 - Each note captures: **what it does · how it WIRES to other pieces** (who calls it, what it calls, data in/out) **· data/tables touched · my THOUGHT PROCESS** (what I expected, what I found, *why* I read it this way) **· flags/risks/gaps · open questions · "reapproach-if" triggers.** Not dry facts — the reasoning, so a later me can tell if something was missed *because I didn't think of it then*.
 - **Build on existing docs, then verify vs code** (don't re-derive): `docs/route_index.md`, `docs/feature_inventory.md`, `docs/security_model.md`, `docs/MONDAY_DEMO_SCRIPT.md` are starting maps — confirm each against the actual code (plan-vs-built).
 - **Reapproach:** when a later chunk changes a prior conclusion, **go back and update that chunk** + mark it ♻️. Iterative, not one-pass.
-- **Cost-smart depth:** exhaustive on **active + foundational** code; **light-touch on confirmed-dead/being-deleted legacy** (enough to know what it is + that it's slated for removal). Flag anything ambiguous to Carter.
-- **Pair user-test with code:** for user-facing areas, also drive the live app and note behavior-vs-code (the third leg).
+- **Depth: EXHAUSTIVE, including dead code** (Carter 2026-06-29 — overrides my earlier "skip legacy"). Dead/legacy code is mapped too because it reveals the program's **history**: started-but-unfinished ideas, abandoned directions, and cleanup candidates (Carter wants dead code *gone* anyway). For each dead area note: what it was · why it likely died/abandoned · salvage-or-delete. **Nothing is skipped.**
+- **CEO is PAUSED during the map** (Carter) → I map a *frozen state*; no moving-target churn. (Reapproach still applies when a *later chunk* changes how I'd read a *prior* one.)
+- **Pair user-test with code:** for user-facing areas, also drive the live app and note behavior-vs-code (the third leg). Bar = **"nothing can break"** — flag every fragility/risk, not just gaps.
 
 ## Resume protocol (after compaction / new session)
 `PLANNING.md` → this INDEX → the checklist below → continue the next ⬜, or any ♻️. Each chunk file is self-contained.

@@ -11,4 +11,8 @@
 | O5 | **Does Workforce export CSV?** (+ a sample) | input from Carter | when hours (System D) starts | OPEN |
 | O6 | **Map version** timing (boss-dependent) | input from Carter | when map integration (System C) starts | OPEN |
 | O7 | **Cockpit alert thresholds** (fixed-fee %, RUS cap %, utilization) | input from Carter | when cockpit (System E) starts | OPEN |
+| O9 | **Regression / QA safety net** (live E2E over the operations cluster) — "nothing can break" needs more than manual per-change user-tests | recommendation (Planning) | after the codebase map (it informs what to cover) | OPEN |
+| O10 | **Staging-before-live** — `main` auto-deploys straight to prod; add a pre-prod check so nothing broken reaches the team | recommendation (Planning) | when we discuss deploy safety | OPEN |
+| O11 | **Automated data backups** — verify they exist / establish them (real revenue + government data) | recommendation (Planning) | soon — it's a standing risk | OPEN |
+| O12 | **Auditor role not yet stood up** — defined but no instance/doc ready for when content gating produces audit targets | recommendation (Planning) | before the first content audit (T01) | OPEN |
 | O8 | **16 non-`agent` stale branches** — keep/delete each (`claude-2/*`, `claude-4/*`, `claude-5/*`, `claude/*` randoms, `feature/*`, `orchestrator-*`, `worktree-*`); **KEEP `claude/ceo-onboarding-planner-rfg0rc`** (active CEO) | hygiene | at a cleanup stopping point | OPEN |
