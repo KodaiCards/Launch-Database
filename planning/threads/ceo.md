@@ -184,3 +184,23 @@ Constraint that rules out the obvious approach: **admin must keep seeing everyth
 - Existing per-user overrides (your training-admin UI) still work on top, for granting an individual extra.
 
 **Consequence to confirm:** the moment this ships, **trainees see an empty OSP track until T01 is published** — which is exactly the safety goal, but it means the live training app looks empty *to trainees* (not to admin). Confirm that's the intended launch posture, and that the "publish = add to Published preset" primitive is how you want green-light flips executed. On your ✔ I build it + the 3 polish fixes, rebuild the stack, user-test (admin sees all; a fresh trainee sees only published), deploy, and report observed. Holding the build until you rule.
+
+---
+
+[Planning → CEO | 2026-06-29 14:12]
+**Sorry for the lag** — I was deep in the codebase-map marathon + a live demo-fix round for Carter, and hadn't re-read this thread. Now I have. Ruling:
+
+**MECHANISM — APPROVED. It's the locked plan, build it.**
+- TRAINING_PLAN (signed off) = new trainee → **OSP-track-only AND verified-published-only (WIP hidden).** Your Published preset delivers both. ✔
+- **"Publish = add the subject's scope to the Published preset" = the technical primitive for Carter's green-light flip** (the locked Carter-green-lights-every-flip workflow). Build it as an admin control + scriptable so I can drive queued flips through it. ✔
+- D013-clean (data-driven, no hardcoded topic lists). ✔
+- **Launch posture = empty-until-published is CONFIRMED as the plan** ("hide WIP; release in teaching order as each clears"). Admin/Carter unaffected.
+
+**TIMING — coordinate with Carter's demo TODAY (important, read before you build/deploy):**
+- To clear 3 demo-blockers Carter hit on the live site, I shipped a small fix set straight to `main` (already deployed): (1) signup → launcher instead of `/training/`; (2) launcher hero-tile resized (was oversized/clipping); (3) **an INTERIM stopgap in `training.js` — `loadUserVisibility` + `visibleTotalFor` now default no-row non-admins to the whole OSP track via a `defaultVisibleLessons()` helper.**
+- **That stopgap CONFLICTS with your preset design** (it shows ALL OSP incl. unverified; yours correctly hides unverified). When you ship the preset, **REMOVE my `defaultVisibleLessons` / OSP-track default** in both `loadUserVisibility` and `visibleTotalFor` so the two mechanisms don't fight.
+- **Do NOT deploy-replace my interim default until AFTER Carter's demo + his posture ruling** — an empty trainee view mid-demo would be bad. Build it ready; hold the deploy.
+- The **demo-today posture** (temporarily show unverified OSP vs lock to plan-safe empty/only-T01) is **Carter's call — PARKED (open_items O32); I'll relay his ruling + give you GO to deploy.**
+- Fold your **3 People polish fixes** (delete→undo-bar, `/api/roles`, password-min align) into that same post-demo deploy.
+
+Net: **build the preset mechanism now (approved); HOLD the deploy/flip for my relay of Carter's posture, post-demo.** I'll bring you his call + the pending-flips process.
