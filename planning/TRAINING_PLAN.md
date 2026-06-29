@@ -36,6 +36,7 @@ Visual polish pass (typography, spacing, consistency, light/dark) + place the **
 - **Builds logically** — the lessons read as a coherent lesson plan; prereqs valid.
 - **Easy to learn** — plain verbiage, every acronym defined, scannable.
 - **Good + varied interactivity** — the right interactive tool per concept (not just multiple-choice).
+- **⛔ NO typed / free-text-answer questions (Carter 2026-06-29).** The field crew shouldn't have to *type* an answer — use multiple-choice, click/select, drag-order, hotspot, or other non-typing interactions. **Remove every existing typed-answer question** as each piece goes through the overhaul (and never author new ones). Tracked: `ideas.md` I10.
 - **Accurate SVG diagrams** for technical visuals.
 - Assessment floor met (graded or competency interaction per lesson — required by the completion gate).
 
@@ -79,6 +80,26 @@ Current `available:true` flags are optimistic (they predate the accuracy crisis;
 - Teaching/rollout order = above (Foundations first). **Positions are fixed by the DAG; the CONTENT of every topic — Fundamentals included — still goes through the full overhaul + accuracy gate. Nothing is exempt.** (T01's *position* is first because it's the DAG root every topic depends on; its *content* is overhauled like the rest, and first in line because everyone hits it first.)
 - **Flip authority: Carter green-lights every flip;** Planning keeps the pending-flips queue + reminds him.
 - **Visibility reset: piece-by-piece, hide-then-release in teaching order; target several subjects live for launch.**
+
+## ▶ Carter requirements added 2026-06-29 (capture — NOT yet built; do lesson-by-lesson, tell Carter when each is ready)
+> Carter is worried compaction lost things from the original plan discussions → **everything he names goes here verbatim, and he'd rather re-walk the whole plan with Planning than risk missing items.** Planning to OFFER a full plan re-walk.
+
+**Content fixes (per-lesson, through the gate):**
+- **Remove ALL free-text "type the answer" questions** everywhere. ⚠ CROSS-IMPACT: the completion gate needs an assessment/competency interaction per lesson (PASS_THRESHOLD=70) — if a type-answer question was a lesson's ONLY assessment, **replace** it with an MC/interactive check, don't just delete, or the lesson can't gate completion. Catch this per lesson.
+- **Randomize drag-and-drop answer order.** Today the DnD answers render in definition order (Q1's answer = leftmost, Q2's = next, …) → trivially gameable. **Shuffle on render.** ONE-SHOT component fix (the DnD/Sortable component) that fixes ALL drag-drop at once — NOT per-lesson — but verify no lesson relies on positional order.
+- **Cadence (reinforced):** go **lesson by lesson**, make each **absolutely polished**, **tell Carter when each is ready to turn on.** Now executable via the per-lesson "Lesson visibility" toggle Planning built (publish = check the lesson).
+
+**Training UI text:**
+- **Remove the "suggested time to complete"** EVERYWHERE — it's on lessons, subjects, ~every page. Remove it (rendering + likely the catalog field).
+- **Gold header:** "Launch Fiber Services · OSP Training" → **drop "OSP", just "Training".**
+
+**Training progress dashboard — REDESIGN (current one "sucks"):**
+- **Test/quiz SCORES in a highlighted, prominent place.**
+- **Clear completed-lessons list**, each showing **how long it took.**
+- **Time each lesson: lesson-open → test-complete. Pause if they leave the page** (Page Visibility API). **Red flag** next to anything **> 45 min.**
+- ⚠ CROSS-IMPACT / BUILD: `training_progress` has NO per-lesson duration today (only status/score/started/completed) → needs new timing capture (SPA instruments open + test-complete + visibility-pause → stores duration) + a schema field/table + dashboard rework + scores surfaced. Real build → ideas **I11**.
+
+**New training UI:** part of the whole-app UI redesign (**I10**) — Carter dislikes current colors; wants a new UI + the **transparent (no-background) logo**; plan together. ⚠ the training SPA (osp-training, Tailwind) is a SEPARATE style system from app-shell.css — redesign spans both.
 
 ## Status
 - **SIGNED OFF 2026-06-28 ~15:57 (Carter: "I'm ready").** Plan is live. CEO charter written (`planning/CEO.md`) + kickoff posted (`planning/threads/ceo.md`); Carter boots a CEO instance pointed at it. Business/vision deep-dive commitment **FIRED** (in progress — capturing to `planning/BUSINESS.md`).
