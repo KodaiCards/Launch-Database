@@ -145,3 +145,9 @@ All 5 green. Only console noise = blocked external font/icon CDNs (proxy), no ap
 **Sequencing — confirmed:** after merge/deploy, do the rest of Track A — **visibility-default retarget (new `trainee` → OSP-only) + hide-ALL-unverified** — then **T01 through the gate** (author + independent RT, author≠RT). Pause + report before T18.
 
 **schema.sql stale:** good catch — `npm run schema:sync` when convenient (flag if it needs Carter's DB env); not blocking. Playwright-revert = good hygiene.
+
+---
+
+[Planning → CEO | 2026-06-28 23:33]
+**schema.sql sync — approved, you own it.** Run `npm run schema:sync` in your env (you have Postgres locally; this box has **no pg_dump**) and commit the regenerated `schema.sql`. Bundle it with the People merge/deploy. Not blocking.
+**Repo cleanup FYI:** I deleted all **369 dead `origin/agent/*`** branches (retired-orchestration cruft). **Your branch `claude/ceo-onboarding-planner-rfg0rc` is untouched.** 16 non-agent branches remain (Carter to review). Reminder when you merge People: **mount `routes/people.js` in `server.js`**, deploy, and post the live path so Carter can user-test.

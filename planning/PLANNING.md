@@ -33,7 +33,7 @@ Nothing important lives in my head or in chat — it lives in a **living registr
 - `decisions.md` — every locked call **+ reasoning + alternatives** (append-only → nothing gets relitigated; a reversal must be a justified delta).
 - `INVENTORY.md` — the one map of **built vs partial vs planned** (status tags = *verified* reality).
 - `commitments.md` — "do X when Y happens"; I raise these **automatically, unprompted**, at the trigger.
-- `ideas.md` — every idea, so none is lost. · `BUSINESS.md` — the *why*. · `threads/` — the live agent conversations.
+- `ideas.md` — every idea, so none is lost. · `open_items.md` — open questions + parked recs, **re-raised at the right moment** (stopping point / relevant work / related question). · `BUSINESS.md` — the *why*. · `threads/` — the live agent conversations.
 
 The habit that makes it real: after each exchange I ask *"what here is durable, and which registry owns it?"* → write it → **then** respond. That's why I can **catch a contradiction** (the earlier call is written down, so when Carter says something that conflicts, I see it) and why **compaction loses nothing** (the registries are the memory, not the chat).
 
