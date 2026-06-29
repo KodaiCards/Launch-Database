@@ -32,7 +32,7 @@ Status: ⬜ not started · 🔄 in progress · ✅ mapped · ♻️ reapproach n
 | 11 | **Training** — SPA + admin | `osp-training/` (router/components/lessons/catalog), `routes/training.js`, `training-admin.html` | P2 | ⬜ |
 | 12 | **Map + splice** | `public/map/fiber_route_manager_v33.html`, splice, map_integration, _map_estimate, frm_storage_adapter.js | P2 | ⬜ |
 | 13 | **Files/photos/workspace/DWG** | folder_workspace, dwg_sync(_two_way), project_photos/documents, downloads, file_activity + photos/workspace/offline-sync | P3 | ⬜ |
-| 14 | **Shared/infra** | `_helpers, _sse, _audit`, `db.js`, `db_migrations.js`, `lib/`, `scripts/` | P1 | ⬜ |
+| 14 | **Shared/infra** | `_helpers, _sse, _audit`, `db.js`, `db_migrations.js`, `lib/`, `scripts/` | P1 | 🔄 `14-shared-infra.md` (db/migrations/audit ✅ + O13 resolved; _sse/_helpers/lib/scripts pending) |
 | 15 | **Frontend shared** | `app-shell.css/js`, `app_nav.js`, api client, undo_bar | P2 | ⬜ |
 | 16 | **Legacy admin** (cutover source — what's stranded) | `public/admin.html` + JS | P3 | ⬜ |
 | 17 | **Big legacy modules** (light — confirm dead/role) | `automation.js`, `portal_module.js` | PL | ⬜ |
