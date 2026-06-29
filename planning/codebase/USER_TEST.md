@@ -22,9 +22,9 @@
 | U4 | Service-area detail / workspace | `/area.html` | ✅ rich (Leaflet map/plan-link, cost tiles+client-vis, materials, jobs&hours) |
 | U5 | Pipelines | `/pipeline.html` | ✅ keystone kanban; stages≠legacy (O18) |
 | U6 | Job board | `/job-board.html` | ✅ all-jobs status board, read-only |
-| U7 | Billing (legacy) | `/billing.html` | ⬜ |
-| U8 | Billing keystone | `/billing-keystone.html` | ⬜ |
-| U9 | Money | `/money.html` | ⬜ |
+| U7 | Billing (legacy) | `/billing.html` | ✅ = invoice LIST (`/api/billing/invoices`); O19 dead/unused |
+| U8 | Billing keystone | `/billing-keystone.html` | ✅ canonical ledger (Worklist/Invoices/Report+close) |
+| U9 | Money | `/money.html` | ✅ margin/aging/revenue/program/projections/reporting |
 | U10 | Hours | `/hours.html` | ⬜ |
 | U11 | Import hours | `/hours-import.html` | ⬜ |
 | U12 | Clients | `/clients.html` | ⬜ |
@@ -55,6 +55,12 @@
 **U5 — Pipelines (`/pipeline.html`, admin) ✅.** KEYSTONE per-team kanban. Title "Permitting pipeline" + Permitting/Design tabs. Columns = keystone stages **Potential/Started/Submitted/Approved/Issued/Revision** (1/1/0/1/0/0) with real jobs (Concentrator 14 RUS potential, Concentrator 7 started, Macon BAU approved). ⚠ keystone stages **differ from legacy `permit_stages`** (potential→started→submitted→approved→checklist, chunk 08) — confirms the O18 dual pipeline (this is the keystone one; permits.html is legacy). Recurring inline-header pattern (Service Areas/Admin links + a theme button) duplicating the rail → I10. Data gated (403 trainee).
 
 **U6 — Job board (`/job-board.html`, admin) ✅.** Keystone all-jobs board, "All service-area jobs grouped by status. Read-only." Filters: search + team (Permitting/Design/Construction/Inspection) + program + Status/Team/Client grouping. Status columns **Not started/In progress/Revision/Done/Billed/On hold** (0/0/1/0/4/0) — real (1 Staking in revision, 4 billed). The "Job Board" product pillar. Same inline-header pattern (logo+theme+Admin). NB: job STATUS model here (not_started/in_progress/revision/done/billed/on_hold) vs the pipeline's STAGE model (U5) — two views of job state. Clean. Data gated.
+
+**U7 — Billing (`/billing.html`, admin) ✅.** Surprise: it's an **invoice LIST** (calls `GET /api/billing/invoices` — confirmed via network), NOT the legacy bill-multiple/batches bulk UI. Lists draft invoices (Live Loop $3,650 ×2 [keystone `/run` `INV-<ts>-0` format], PSC $0 ×2). So the rail "Billing" = invoice list; "Billing (KS)" = the ledger. ⚠ **O19 refined:** nothing calls `/api/billing/report` (billing.html uses `/invoices`; billing-keystone uses the keystone report) → the shadowed legacy `/report` is **dead/unused code, not a user-facing break** (downgrade O19 to low). The legacy `billing.js` bill-multiple/batches engine may have NO live UI at all (verify) — possibly already orphaned.
+
+**U8 — Billing keystone (`/billing-keystone.html`, admin) ✅.** The canonical **earned−billed ledger** UI. Tabs **Worklist / Invoices / Report** + period selector (Jun 2026 back to Jan 2025) + **Close month** (informational period-close, chunk 07a) + Refresh. Worklist = "Nothing billable for this period — all jobs up to date" (correct: billable = earned−billed = 0 since demo jobs billed). Matches chunk 05/07a exactly — this is THE billing engine. ⚠ **Two billing rail entries** ("Billing" list + "Billing (KS)" ledger, which has its own Invoices tab) are redundant → cutover/I10 should merge to one. Theme toggle inline (O33).
+
+**U9 — Money (`/money.html`, admin) ✅.** Keystone money view (manager). Tabs **Margin / AR Aging / Revenue / Program / Projections / Reporting**. Margin = "Estimate vs Billed by Service Area" table (Live Loop 2 jobs $0 est/$3,650 billed/+3,650; PSC Conc14 RUS $7,500/$0/−7,500; Conc7 RUS −7,500; Macon BAU −7,500; **TOTAL $22,500 est / $3,650 billed / −18,850 var**) + client/program filters + Print. Has a **Projections tab** (ties I1/I11). NB: per-SA billed IS surfaced here (relevant to O16 — the program-level invoice attribution is the deeper gap, check Program tab later). Manager-gated (`/api/money/*` 403 for trainee). Clean. matches chunk 05 money_view.
 
 **RECURRING UI PATTERN (for I10):** every cluster page = the shared `app_nav` rail PLUS a page-specific inline header that repeats logo / a theme toggle / an "Admin" link (sometimes "Service Areas"). The theme toggle appears in BOTH the topbar (sun/moon) AND inline headers (sometimes a "Theme" text button) → O33 inconsistency. `dashboard.html` is the worst (a FULL duplicate nav). The redesign should collapse to ONE nav + ONE theme control.
 
