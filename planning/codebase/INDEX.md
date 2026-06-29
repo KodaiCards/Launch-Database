@@ -23,7 +23,7 @@ Status: ⬜ not started · 🔄 in progress · ✅ mapped · ♻️ reapproach n
 | 02 | **Auth** — JWT, roles, requireAuth/Admin/Manager, signup/register | `auth.js` | P1 | ✅ → `02-auth.md` |
 | 03 | **Keystone core** — service areas + jobs model | `routes/service_areas.js`, `concentrators.js`, migr 0064+ | P1 | ✅ → `03-keystone.md` |
 | 04 | **People/roster** (just shipped) | `routes/people.js`, `staff.js`, `people.html`, `admin_users.js` | P1 | ✅ → `04-people.md` (people.js+staff.js+people.html; admin_users.js→ch16 legacy) |
-| 05 | **Operations cluster** — the tool | cluster_views/money_view/hours_summary/my_work/search/export_bundle/dashboard + `public/service-areas.html, area.html …` + `app_nav.js` | P2 | ⬜ |
+| 05 | **Operations cluster** — the tool | cluster_views/money_view/hours_summary/my_work/search/export_bundle/dashboard + `public/service-areas.html, area.html …` + `app_nav.js` | P2 | 🔄 `05-operations-cluster.md` (backend read-APIs + nav ✅; dashboard.js/export_bundle.js + HTML pages → 05b) |
 | 06 | **Projects/jobs/contracts** | projects, jobs, contracts, engineering_contracts, clients, project_detail, project_types | P2 | ⬜ |
 | 07 | **Billing/invoices/money** | billing, billing_keystone, invoices, invoice_templates, revenue, projections, project_billing, pricing, budgets + invoice_generator/template_engine | P2 | ⬜ |
 | 08 | **Pipelines** — permitting/design/inspection | permits, design_pipeline, inspection, potential_permits | P2 | ⬜ |
