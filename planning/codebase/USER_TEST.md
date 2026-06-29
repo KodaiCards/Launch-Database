@@ -25,9 +25,9 @@
 | U7 | Billing (legacy) | `/billing.html` | ✅ = invoice LIST (`/api/billing/invoices`); O19 dead/unused |
 | U8 | Billing keystone | `/billing-keystone.html` | ✅ canonical ledger (Worklist/Invoices/Report+close) |
 | U9 | Money | `/money.html` | ✅ margin/aging/revenue/program/projections/reporting |
-| U10 | Hours | `/hours.html` | ⬜ |
-| U11 | Import hours | `/hours-import.html` | ⬜ |
-| U12 | Clients | `/clients.html` | ⬜ |
+| U10 | Hours | `/hours.html` | ✅ keystone-only (O23 live: timeclock hrs invisible); unattributed bucket |
+| U11 | Import hours | `/hours-import.html` | ✅ keystone importer (O24 no-dedup applies) |
+| U12 | Clients | `/clients.html` | ✅ mgmt; O16 facet (billed $0 vs money $3,650) |
 | U13 | Invoices | `/invoices.html` | ⬜ |
 | U14 | People | `/people.html` | ⬜ |
 | U15 | Settings | `/settings.html` (O30 stub) | ⬜ |
@@ -61,6 +61,12 @@
 **U8 — Billing keystone (`/billing-keystone.html`, admin) ✅.** The canonical **earned−billed ledger** UI. Tabs **Worklist / Invoices / Report** + period selector (Jun 2026 back to Jan 2025) + **Close month** (informational period-close, chunk 07a) + Refresh. Worklist = "Nothing billable for this period — all jobs up to date" (correct: billable = earned−billed = 0 since demo jobs billed). Matches chunk 05/07a exactly — this is THE billing engine. ⚠ **Two billing rail entries** ("Billing" list + "Billing (KS)" ledger, which has its own Invoices tab) are redundant → cutover/I10 should merge to one. Theme toggle inline (O33).
 
 **U9 — Money (`/money.html`, admin) ✅.** Keystone money view (manager). Tabs **Margin / AR Aging / Revenue / Program / Projections / Reporting**. Margin = "Estimate vs Billed by Service Area" table (Live Loop 2 jobs $0 est/$3,650 billed/+3,650; PSC Conc14 RUS $7,500/$0/−7,500; Conc7 RUS −7,500; Macon BAU −7,500; **TOTAL $22,500 est / $3,650 billed / −18,850 var**) + client/program filters + Print. Has a **Projections tab** (ties I1/I11). NB: per-SA billed IS surfaced here (relevant to O16 — the program-level invoice attribution is the deeper gap, check Program tab later). Manager-gated (`/api/money/*` 403 for trainee). Clean. matches chunk 05 money_view.
+
+**U10 — Hours (`/hours.html`, admin) ✅.** Keystone "Hours by Person" — `/api/hours/summary`, "Labor hours per staff member and job. No billing figures." Period (week/month/all) + FROM/TO + group-by Person/Client/Service-area + Total + Export CSV + By client/By area. ⭐ **LIVE O23 confirmation:** the 10.0 demo hrs show under **"— Unattributed —"** (null staff) on a Design job (job name "—") — this view reads ONLY keystone `service_area_job_id` hours, so **timeclock-logged hours (legacy `project_id`, chunk 09) would NOT appear here** = the split-brain Carter distrusts. Also: unattributed hours are a real signal (the new dashboard I11 should flag attribution). Manager/admin gated.
+
+**U11 — Import hours (`/hours-import.html`, admin) ✅.** Keystone CSV importer UI: drag-drop/choose (.csv/.xlsx/.xls; "Expects employee, date, WO#, hours") → **Validate file** → (staged matched/review preview → commit). Lands on `service_area_job_id` via `_hours_match` (chunk 09b). ⚠ **O24 applies here:** this importer has NO dedup / NO billed-period guard (code finding) → re-uploading the same timecard DOUBLES hours. Live dup-upload test deferred (needs a crafted CSV; flag for a targeted hours-integrity test). The LEGACY importer (hours_csv, → project_id, has dedup) has no obvious cluster UI — the cluster only exposes the keystone one. Manager/admin gated.
+
+**U12 — Clients (`/clients.html`, admin) ✅.** Client management: All Clients table (Client / Service Areas / Total Billed / Outstanding / Edit) + New Client + search; rows expand for EC management (chunk 06). DEMO—Live Loop (1 SA), DEMO—PSC (3 SAs). Clean, matches map. ⚠ **O16 facet (different numbers on different screens):** "Total Billed" = **$0** here for Live Loop, but Money/Margin (U9) showed **$3,650 billed** for it — "billed" is defined differently (this likely counts sent/non-draft; money counted the DRAFT invoice). A real inconsistency Carter would distrust. → note under O16. O34: client names leak via `/api/clients` (logged).
 
 **RECURRING UI PATTERN (for I10):** every cluster page = the shared `app_nav` rail PLUS a page-specific inline header that repeats logo / a theme toggle / an "Admin" link (sometimes "Service Areas"). The theme toggle appears in BOTH the topbar (sun/moon) AND inline headers (sometimes a "Theme" text button) → O33 inconsistency. `dashboard.html` is the worst (a FULL duplicate nav). The redesign should collapse to ONE nav + ONE theme control.
 
