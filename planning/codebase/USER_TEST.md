@@ -28,9 +28,9 @@
 | U10 | Hours | `/hours.html` | ✅ keystone-only (O23 live: timeclock hrs invisible); unattributed bucket |
 | U11 | Import hours | `/hours-import.html` | ✅ keystone importer (O24 no-dedup applies) |
 | U12 | Clients | `/clients.html` | ✅ mgmt; O16 facet (billed $0 vs money $3,650) |
-| U13 | Invoices | `/invoices.html` | ⬜ |
-| U14 | People | `/people.html` | ⬜ |
-| U15 | Settings | `/settings.html` (O30 stub) | ⬜ |
+| U13 | Invoices | `/invoices.html` | ✅ read-only list (3rd invoice surface → consolidate) |
+| U14 | People | `/people.html` | ✅ unified roster works; server-gated (no leak) |
+| U15 | Settings | `/settings.html` (O30 stub) | ✅ **O30 confirmed: appearance+links+sysinfo, NO config** |
 | U16 | Audit log | `/audit.html` | ⬜ |
 | U17 | Training admin + Lesson visibility | `/training-admin.html` | ⬜ |
 | U18 | Training SPA (trainee view) | `/training/` | ⬜ |
@@ -67,6 +67,12 @@
 **U11 — Import hours (`/hours-import.html`, admin) ✅.** Keystone CSV importer UI: drag-drop/choose (.csv/.xlsx/.xls; "Expects employee, date, WO#, hours") → **Validate file** → (staged matched/review preview → commit). Lands on `service_area_job_id` via `_hours_match` (chunk 09b). ⚠ **O24 applies here:** this importer has NO dedup / NO billed-period guard (code finding) → re-uploading the same timecard DOUBLES hours. Live dup-upload test deferred (needs a crafted CSV; flag for a targeted hours-integrity test). The LEGACY importer (hours_csv, → project_id, has dedup) has no obvious cluster UI — the cluster only exposes the keystone one. Manager/admin gated.
 
 **U12 — Clients (`/clients.html`, admin) ✅.** Client management: All Clients table (Client / Service Areas / Total Billed / Outstanding / Edit) + New Client + search; rows expand for EC management (chunk 06). DEMO—Live Loop (1 SA), DEMO—PSC (3 SAs). Clean, matches map. ⚠ **O16 facet (different numbers on different screens):** "Total Billed" = **$0** here for Live Loop, but Money/Margin (U9) showed **$3,650 billed** for it — "billed" is defined differently (this likely counts sent/non-draft; money counted the DRAFT invoice). A real inconsistency Carter would distrust. → note under O16. O34: client names leak via `/api/clients` (logged).
+
+**U13 — Invoices (`/invoices.html`, admin) ✅.** Read-only invoice list ("Read-only view. Go to Billing to create or send"). Search + status (Draft/Sent/Paid/Overdue/Void) + year filters; View-invoice drill. 4 invoices, all DRAFT (Live Loop $3,650 ×2, PSC $0 ×2). ⚠ This is the **THIRD invoice-list surface** (billing.html + invoices.html + billing-keystone's Invoices tab) → consolidation (I10/cutover). All-draft state explains the U12 billed-$0-vs-money-$3,650 (O16). Gated.
+
+**U14 — People (`/people.html`, admin) ✅.** The unified roster (chunk 04 foundation), working. "Everyone with a login or a staff record — one place to add, edit perms & team, and remove." Add person + search + Show inactive + per-person Hours date filter. Table Name/Role/Team(s)/Status/Hours/Edit. Shows Carter (admin, all teams), Claude CEO, Default Admin, AND my test accounts dd_admin (admin)/dd_trainee (trainee) — **confirms the merged roster includes new signups** (chunk 04 criterion ✓). ✅ **Server-gated data** (`/api/people` 403 for trainee) — NO leak here (contrast O34). Clean. *(reminder: dd_* test accounts to clean up at end.)*
+
+**U15 — Settings (`/settings.html`, admin) ✅ — ⭐ O30 CONFIRMED LIVE.** "Settings & System Info" = **APPEARANCE** (Color theme Light/Dark buttons), **QUICK LINKS** (just links to other pages), **SYSTEM INFO** (app launch-fiber-services, v1.1.0, Node v24, env, portal-mode admin, uptime, PostgreSQL 18.4). **ZERO configuration controls** — no pricing/jobs/portal-access/invoice-templates/construction-contracts/client-links. All config is stranded in admin.html (O30 confirmed). NB for O33: settings already uses **text "Light"/"Dark" buttons** (what Carter wants) while the topbar uses sun/moon → unify in redesign; this theme picker writes the server pref (`/api/auth/me/theme`).
 
 **RECURRING UI PATTERN (for I10):** every cluster page = the shared `app_nav` rail PLUS a page-specific inline header that repeats logo / a theme toggle / an "Admin" link (sometimes "Service Areas"). The theme toggle appears in BOTH the topbar (sun/moon) AND inline headers (sometimes a "Theme" text button) → O33 inconsistency. `dashboard.html` is the worst (a FULL duplicate nav). The redesign should collapse to ONE nav + ONE theme control.
 
