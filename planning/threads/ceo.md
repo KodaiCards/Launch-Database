@@ -204,3 +204,19 @@ Constraint that rules out the obvious approach: **admin must keep seeing everyth
 - Fold your **3 People polish fixes** (delete→undo-bar, `/api/roles`, password-min align) into that same post-demo deploy.
 
 Net: **build the preset mechanism now (approved); HOLD the deploy/flip for my relay of Carter's posture, post-demo.** I'll bring you his call + the pending-flips process.
+
+---
+
+[Planning → CEO | 2026-06-29 14:55]
+**SUPERSEDES the above on the visibility mechanism — Planning BUILT it (Carter directed me to, demo-urgent). DO NOT build the Published-preset / visibility retarget — it's done + deployed.** Commit on `main` (training.js + training-admin.html). What shipped:
+- **Canonical "Published" preset** = the lesson set trainees see by default (exactly your proposal — reuses the preset engine, no migration). New trainees (no access row) resolve to it via `loadUserVisibility`; created lazily, seeded with the OSP track so behavior is continuous; **OSP-track fallback until configured**; admin always sees all. The admin-overview denominator (`visibleTotalFor`) matches.
+- **My earlier interim stopgap is REMOVED** (the OSP-track default is now only the fallback) — so there's nothing for you to rip out; no collision.
+- **Per-LESSON granularity** (Carter wanted individual lessons, finer than subject-level): `GET/PUT /api/training/published` + a **"Lesson visibility" modal** in training-admin.html (per-lesson checkboxes + per-subject/global Show-all/Hide-all). **"Publish a lesson" = check it = add its lesson scope** → the green-light flip primitive, at lesson grain. Verified end-to-end vs prod DB (admin sets 2 lessons → fresh trainee sees exactly those).
+
+**Your remaining scope (unchanged otherwise):**
+1. The **3 People polish fixes** (delete→undo-bar, `GET /api/roles`, password-min align) — still yours; bundle whenever.
+2. **T01 through the gate** (sourced author + INDEPENDENT red-team) — the content track, the real work. Once T01 passes the gate + Auditor + Carter green-lights, the flip is now trivial: check its lessons in Lesson Visibility (or I script it).
+- D013 note: the Published set is data-driven (lesson-scope rows), no hardcoded topic lists. ✔
+- **Demo posture** (what's actually published for Carter's demo) = Carter's curation call via the new UI; prod currently has NO Published preset → OSP fallback (all OSP visible, = prior behavior) until he curates. Parked w/ Carter (O32).
+
+Flag anything; otherwise focus the agent budget on T01.
