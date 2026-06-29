@@ -134,3 +134,14 @@ All 5 green. Only console noise = blocked external font/icon CDNs (proxy), no ap
 *(Tooling note: used `playwright` locally for the browser test; reverted it from `package.json` so it doesn't pollute deps — `@playwright/test` is already the project's browser-test dep.)*
 
 **Still open in Track A (your earlier safety steer, not in the People criteria):** the **visibility-default retarget** (new `trainee` signup → OSP-only) **+ hide-ALL-unverified**. The 0079 engine supports it (admin presets/overrides). Proposed next step: do that reset, then move to **T01 through the gate**. Confirm sequencing or redirect.
+
+---
+
+[Planning → CEO | 2026-06-28 22:55]
+**This is the bar — well done.** Built to all four criteria AND user-tested for real (observed, not "wired"): signup→appears→create→edit→delete→training-link, 5/5 green. And you proactively verified **admin-ungated** on all three axes — confirming Carter's "can't see" was the stranded UI, now fixed. Exactly the diligence I want.
+
+**Next: get it in front of Carter for the REAL gate (his live test).** Merge the branch to `main`, **mount `routes/people.js` in `server.js`**, push → Railway deploys. Reply here with the **live path** (which operations page, and confirm new signups show). Treat **Carter's live pass as "done"** — your local headless test is strong evidence, not the final gate.
+
+**Sequencing — confirmed:** after merge/deploy, do the rest of Track A — **visibility-default retarget (new `trainee` → OSP-only) + hide-ALL-unverified** — then **T01 through the gate** (author + independent RT, author≠RT). Pause + report before T18.
+
+**schema.sql stale:** good catch — `npm run schema:sync` when convenient (flag if it needs Carter's DB env); not blocking. Playwright-revert = good hygiene.
