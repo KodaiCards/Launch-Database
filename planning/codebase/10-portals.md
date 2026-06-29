@@ -1,0 +1,37 @@
+# 10 — Portals (customer / client / access / impersonation) — ✅ COMPLETE
+
+> Mapped 2026-06-29. The external-facing surfaces + employee access control + impersonation. **Headline: external access is SPRAWLED across 3 portal modules + 2 separate identity models (O25).** Also: the v2 token system is a ready-made **demo/dev-access** mechanism (Carter's ask — I7), and the "future" customer features are partly already built. Backends mapped fully; public SPA pages (customer.html, client-portal.html, public/client/) at wiring level.
+
+## ⭐ O25 — external-access SPRAWL: 3 portal modules, 2 identity models
+| Module | Identity / auth | Data model | What it does |
+|---|---|---|---|
+| **customer_portal.js** (565) | MAIN auth, `requireAuth(['customer'])` (customer role in `users`) + `customer_clients` junction (user→client) | **BOTH** legacy `projects` (`/projects`) AND keystone `service_areas`+`service_area_jobs` (`/service-areas`, `/service-areas/:id/map`) + `invoices` | The customer self-service portal: me/projects/service-areas/map/invoices, all client-scoped + **$-redacted** (hides rate/estimated/actual/billing_type). Admin side: `/api/admin/client-progress` (per-client completion), `/api/customer-clients` CRUD (link customer↔client). |
+| **client_portal.js** (142, v1 "beta") | MAIN auth (customer role) + `customer_clients` | LEGACY `projects` only | Older 3-column Design/Permitting/Construction status board; `derived_status` (not_started/in_progress/completed/billed). Superseded feel. |
+| **client_portal_v2.js** (902) | **SEPARATE token identity** (`_client_auth` → `client_organizations`/`client_users`/`client_tokens`, `lfs_client_session` cookie) | LEGACY `projects` | The most COMPLETE: org branding (logo/theme), per-user **tokens** (shown once, expiring, revocable), `/client/login/:rawToken`, projects, **workspace-files + documents (bidirectional — clients can UPLOAD)**, **approvals workflow** (`/api/client/approvals` + respond). Admin: client-orgs/users/tokens CRUD + create approvals. |
+
+**So there are TWO identity systems for external users:** (A) `customer` role in `users` + `customer_clients` (customer_portal + client_portal v1); (B) `client_organizations`/`client_users`/`client_tokens` (client_portal_v2). And THREE route modules with overlapping purpose. **Each has a different strength:** v2 = best identity (revocable branded tokens, no main-`users` pollution) + approvals + doc-exchange; customer_portal = only one on KEYSTONE (`/service-areas`) + invoices + map + admin client-progress; v1 = oldest. **Consolidation target: ONE external model = v2's token-org identity + customer_portal's keystone data + invoices/map/approvals.** Extends O18 to the portal/identity layer. → open_items O25.
+
+## `_client_auth.js` (85) — v2 token auth (solid security)
+`client_tokens` = SHA-256 hash of a random 32-byte base64url token (raw shown ONCE at creation). `requireClientAuth(pool)` middleware: reads `lfs_client_session` cookie → hash → join `client_tokens⋈client_users⋈client_organizations`, checks revoked/expired/active. **Uniform 401 on every failure** (anti-enumeration — can't distinguish wrong/revoked/expired). Lazy `last_used_at`. Populates `req.client_user`+`req.client_org`. Clean, hardened, fully separate from the staff JWT.
+
+## `portal_access.js` (165) — EMPLOYEE access control + capability grants
+`user_portal_access(user_id, portal_key)` = per-user overrides BEYOND role defaults (Wave 12) for EMPLOYEE portal tiles. Admin matrix (`GET /api/portal-access`), grant/revoke (idempotent; refuses revoking a role-default). **⭐ The capability-grant system lives here too:** `CAP_CREATE_PROJECTS` (the `canCreateProjects` gate from chunk 06) is stored as a **sentinel `portal_key`** in the same table (`/api/portal-access/capabilities`). So the product-plan "assignment-driven roles + capability grants" = `user_portal_access` rows. Not customer-facing — staff only.
+
+## `impersonation.js` (141) — admin "View as Staff" (well-hardened)
+`POST /api/admin/impersonate/:userId` → short-lived (1h) JWT in a SEPARATE cookie (`lfs_impersonation`); admin's own `lfs_session` untouched. Wave 166 hardening: revocation-bypass closed, **rate-limit 20/admin/hr**, blocks impersonation-of-impersonation chains, blocks self + inactive, **blocks customer accounts (403** — client-confidential portal data), audit-logged start + stop. `end-impersonation` requires auth + audits. Good security model.
+
+## ⭐ I7 (Carter's demo/dev-access ask) — the v2 token system IS the mechanism
+Carter wants "a way for demo and dev to access the app before final features go live." **client_portal_v2 already provides exactly this for the client-facing side:** admin creates a `client_organization` + `client_user` + **token** (shown once, expiring, revocable, org-branded) → hand them `/client/login/:rawToken`. Scoped to that org, no real account, instantly revocable. For STAFF/admin demo views, **impersonation** (view-as-staff, 1h, audited) or a dedicated scoped demo `users` account covers it. So the demo/dev-access design is mostly an assembly of existing pieces, not a build: (1) a "demo org" + token for external/client demo, (2) a read-only or scoped demo staff account (or impersonation) for internal demo, (3) optionally a `PORTAL_MODE`/feature-flag to hide unfinished tabs (chunk 01 had `TRAINING_ONLY_LOCKDOWN`). → ideas I7; this is the concrete answer when Carter resumes that thread.
+
+## Findings
+- **O25 (new): external-access sprawl** — 3 portal modules + 2 identity models, overlapping. Consolidate to v2-identity + keystone-data. Highest portal finding.
+- **⭐ "Future" customer features are PARTLY BUILT** (ties I2): `feature_customer_portal` (customer self-service) = customer_portal.js (live, keystone `/service-areas` + invoices + map). `feature_client_progress_view` = `/api/admin/client-progress` (live). `feature_client_portal_completion_view` (per-project done/remaining/projected) = partially derivable from the existing `/service-areas` + projections (chunk 07c). So these memory "future/deferred" items are further along than recorded — surface to Carter; update those memories after confirming live reachability.
+- **I7: demo/dev-access** = assemble existing token (v2) + impersonation + portal-mode flag; mostly not a build.
+- **Security positives:** customer $-redaction, v2 token hashing + uniform-401, impersonation hardening, capability grants via user_portal_access. External access is the more security-careful part of the codebase.
+- **Legacy data dependence:** client_portal v1 + v2 + customer_portal's `/projects` all read LEGACY `projects`; only customer_portal's `/service-areas` is keystone. So the portals largely still show the legacy tree → the cutover must repoint them (O18/O25).
+
+## Reapproach-if
+- Chunk 13 (files/workspace): client_portal_v2 documents + workspace-files + the approvals doc-exchange tie to folder_workspace/project_documents — cross-check the file model + the `service-area-job-documents` module hunt.
+- Chunk 15 (frontend): public/client/ (the v2 SPA) + customer.html + client-portal.html — deep UI pass; confirm which portal page is actually linked/live.
+- Cutover (O25): decide the canonical external model; repoint portals at keystone `service_areas`; migrate identity to client_organizations/tokens.
+- When Carter resumes demo/dev-access (I7) + the customer-portal roadmap: this chunk is the input; verify live reachability of customer_portal + v2 first (feature_verify_user_facing discipline).
