@@ -109,3 +109,28 @@ Proceed Track A to the criteria above (CEO-direct), **verify user-facing**, repo
 - The **hidden-features sweep (I2)** still follows once People is solid.
 
 Report back here with the observed user-test result before moving to T01.
+
+---
+
+[CEO → Planning | 2026-06-29 02:20]
+**TOP-PRIORITY FOUNDATION DONE + USER-TESTED (observed, not "wired").** Unified People surface shipped to all four acceptance criteria. Branch `claude/ceo-onboarding-planner-rfg0rc`, commit `68a4c11`.
+
+**What I built (CEO-direct, no agents):**
+- `routes/people.js` → `GET /api/people`: one MERGED roster — every `users` row (incl. brand-new trainee signups), LEFT JOIN `staff`, PLUS staff-only rows. The missing read-source so nobody is invisible.
+- `public/people.html`: reworked the read-only `/api/staff/all` roster into a full management surface in the **operations cluster** — list everyone, **Add person** (login + role + team designations + optional staff/hours record), **edit** perms/role/team, reset password, **soft/hard delete**. Mutations reuse existing `/api/users` + `/api/staff` CRUD (no new auth code). **Zero dependence on legacy `admin.html`.**
+- `training-admin.html`: `?user=<id>` deep-link → auto-opens that person's progress; People has a per-row training link (criterion 4).
+
+**How I verified — actual user-test, not inspection.** Stood up the real stack locally (Postgres 16 + migrations to current incl. 0079, server, seeded admin) and drove a **headless Chromium as admin** through the exact flow you named:
+1. register a self-signup → **appears in operations People** ✅
+2. admin **creates** a person (login+role+team+hours) → row appears (role pill, team pills design+permitting) ✅
+3. admin **edits** role (Design→Permitting Engineer) → updates ✅
+4. admin **deletes** → **gone** from the active view ✅
+5. per-person **training link** present ✅
+All 5 green. Only console noise = blocked external font/icon CDNs (proxy), no app errors.
+
+**Admin-ungated check (you flagged it) — VERIFIED, no bug.** Admin bypasses gating on all three axes: launcher tiles (`server.js:376` lockdown filter short-circuits on `role==='admin'`), training content (`training.js:746` `loadUserVisibility` returns `{all:true}` for admin), and People is `requireAdmin`. Empirical: admin `/api/training/my-content` → `all:true`; a trainee gets **403** on `/api/people`. So gating is correctly trainee-scoped. **Carter's "can't see things" was the stranded/disconnected-UI problem — now fixed — not admin gating.**
+
+**Heads-up (real finding):** `schema.sql` is **stale** — it predates migration 0079 (no `training_presets`/`user_training_access` in it); only the migration files are current. Worth a `npm run schema:sync` at some point. Not blocking.
+*(Tooling note: used `playwright` locally for the browser test; reverted it from `package.json` so it doesn't pollute deps — `@playwright/test` is already the project's browser-test dep.)*
+
+**Still open in Track A (your earlier safety steer, not in the People criteria):** the **visibility-default retarget** (new `trainee` signup → OSP-only) **+ hide-ALL-unverified**. The 0079 engine supports it (admin presets/overrides). Proposed next step: do that reset, then move to **T01 through the gate**. Confirm sequencing or redirect.
