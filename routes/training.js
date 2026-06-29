@@ -547,11 +547,15 @@ module.exports = function installTrainingRoutes(app, pool, { requireAuth }) {
       const psRows = (await pool.query('SELECT preset_id, scope_type, scope_id FROM training_preset_scopes')).rows;
       const psById = new Map();
       for (const s of psRows) { if (!psById.has(s.preset_id)) psById.set(s.preset_id, []); psById.get(s.preset_id).push(s); }
+      const publishedId = await findPublishedPreset(); // no-row users default to the Published set
       const visibleTotalFor = (userId, role) => {
         if (role === 'admin') return fullTotal;
         const acc = accById.get(userId);
-        // No access row → default OSP-track-only denominator (matches loadUserVisibility).
-        if (!acc) { const n = defaultVisibleLessons(tree).size; return n || fullTotal; }
+        // No access row → Published set if configured, else OSP-track (matches loadUserVisibility).
+        if (!acc) {
+          if (publishedId) return computeVisibleLessons('preset', psById.get(publishedId) || [], [], tree).size;
+          const n = defaultVisibleLessons(tree).size; return n || fullTotal;
+        }
         const overrides = ovById.get(userId) || [];
         if (acc.base === 'all' && overrides.length === 0) return fullTotal;
         const presetScopes = acc.base === 'preset' && acc.preset_id ? (psById.get(acc.preset_id) || []) : [];
@@ -754,19 +758,74 @@ module.exports = function installTrainingRoutes(app, pool, { requireAuth }) {
   const VALID_BASE = ['all', 'preset', 'none'];
   const UUID_RE = /^[0-9a-fA-F-]{36}$/;
 
+  // ── Canonical "Published" preset — the single lesson set trainees see by default.
+  // This is the per-lesson show/hide target (Carter's green-light flip surface),
+  // built on the existing preset engine (no new table). A trainee with no access
+  // row resolves to this set. Identified by a reserved name; created lazily by the
+  // admin lesson-visibility endpoints (seeded with the OSP track so behavior is
+  // continuous), so the hot read path (my-content) never writes.
+  const PUBLISHED_PRESET_NAME = 'Published';
+  let _publishedPresetId = null;
+  async function findPublishedPreset() {
+    if (_publishedPresetId) return _publishedPresetId;
+    const r = (await pool.query(
+      'SELECT id FROM training_presets WHERE name = $1 ORDER BY created_at LIMIT 1', [PUBLISHED_PRESET_NAME]
+    )).rows[0];
+    _publishedPresetId = r ? r.id : null;
+    return _publishedPresetId;
+  }
+  async function getOrCreatePublishedPreset(userId) {
+    const existing = await findPublishedPreset();
+    if (existing) return existing;
+    const tree = curriculumTree();
+    const seed = expandScopeToLessons('track', DEFAULT_TRACK, tree); // OSP lessons (continuous w/ launch default)
+    const client = await pool.connect();
+    try {
+      await client.query('BEGIN');
+      const p = (await client.query(
+        'INSERT INTO training_presets (name, description, created_by) VALUES ($1,$2,$3) RETURNING id',
+        [PUBLISHED_PRESET_NAME, 'Lessons visible to trainees — per-lesson show/hide.', userId || null]
+      )).rows[0];
+      for (const lid of seed) await client.query(
+        "INSERT INTO training_preset_scopes (preset_id, scope_type, scope_id) VALUES ($1,'lesson',$2)", [p.id, lid]
+      );
+      await client.query('COMMIT');
+      _publishedPresetId = p.id;
+      return p.id;
+    } catch (e) { await client.query('ROLLBACK').catch(() => {}); throw e; }
+    finally { client.release(); }
+  }
+  // The lesson-id Set currently published to trainees. null = not configured yet
+  // (no Published preset row) → callers fall back to the OSP track so new trainees
+  // are never blank. A configured-but-empty set means "nothing visible yet" (honored).
+  async function publishedLessonSet() {
+    const id = await findPublishedPreset();
+    if (!id) return null;
+    const scopes = (await pool.query(
+      'SELECT scope_type, scope_id FROM training_preset_scopes WHERE preset_id = $1', [id]
+    )).rows;
+    return computeVisibleLessons('preset', scopes, [], curriculumTree());
+  }
+
   async function loadUserVisibility(userId, role) {
     const tree = curriculumTree();
     if (role === 'admin') return { base: 'all', all: true, lessons: tree.allLessons, tree };
     const accRow = (await pool.query(
       'SELECT base, preset_id FROM user_training_access WHERE user_id = $1', [userId]
     )).rows[0];
-    // No explicit access row → default to the OSP track only (training-launch pivot).
-    // Admin already returned above; this covers new trainees + any unconfigured user.
+    // No explicit access row → default to the canonical "Published" lesson set (the
+    // per-lesson show/hide Carter controls). Admin already returned above.
     if (!accRow) {
-      const lessons = defaultVisibleLessons(tree);
-      // Fail-open if the catalog couldn't be parsed (never lock a learner out).
-      if (lessons.size === 0) return { base: 'all', preset_id: null, all: true, lessons: tree.allLessons, overrides: [], tree };
-      return { base: 'default', preset_id: null, all: false, lessons, overrides: [], tree };
+      const pub = await publishedLessonSet();
+      if (pub === null) {
+        // Published set not configured yet → OSP-track fallback so a new trainee
+        // is never blank. Fail-open to all if the catalog can't be parsed.
+        const lessons = defaultVisibleLessons(tree);
+        if (lessons.size === 0) return { base: 'all', preset_id: null, all: true, lessons: tree.allLessons, overrides: [], tree };
+        return { base: 'default', preset_id: null, all: false, lessons, overrides: [], tree };
+      }
+      // Configured (may be intentionally empty = nothing published yet).
+      return { base: 'published', preset_id: null, all: false, lessons: pub, overrides: [], tree };
     }
     const acc = accRow;
     let presetScopes = [];
@@ -804,6 +863,46 @@ module.exports = function installTrainingRoutes(app, pool, { requireAuth }) {
   // Full content tree (tracks → subjects → lessons) for the admin toggles.
   app.get('/api/training/catalog-tree', requireAuth(['admin']), (req, res) => {
     res.json({ tracks: curriculumTree().tracks });
+  });
+
+  // ── Lesson visibility — the "Published" set every trainee sees (per-lesson show/hide).
+  // GET: the full tree + which lessons are currently visible to trainees.
+  app.get('/api/training/published', requireAuth(['admin']), async (req, res) => {
+    try {
+      await getOrCreatePublishedPreset(req.user.id); // ensure it exists (seeded w/ OSP on first open)
+      const pub = await publishedLessonSet();
+      res.json({ tracks: curriculumTree().tracks, published_lessons: Array.from(pub || []) });
+    } catch (err) {
+      console.error('[training] GET /published error:', err && err.message);
+      res.status(500).json({ error: 'Failed to load lesson visibility' });
+    }
+  });
+
+  // PUT { lesson_ids:[...] } → REPLACE the visible-to-trainees set with exactly these
+  // lessons (normalizes the Published preset to lesson scopes). Empty array = nothing
+  // visible yet (honored). Invalid ids are dropped. This is the green-light flip surface.
+  app.put('/api/training/published', requireAuth(['admin']), async (req, res) => {
+    const ids = (req.body && req.body.lesson_ids) || [];
+    if (!Array.isArray(ids)) return res.status(400).json({ error: 'lesson_ids must be an array' });
+    const tree = curriculumTree();
+    const valid = [...new Set(ids.filter(id => typeof id === 'string' && tree.allLessons.has(id)))];
+    const client = await pool.connect();
+    try {
+      const presetId = await getOrCreatePublishedPreset(req.user.id);
+      await client.query('BEGIN');
+      await client.query('DELETE FROM training_preset_scopes WHERE preset_id = $1', [presetId]);
+      for (const lid of valid) await client.query(
+        "INSERT INTO training_preset_scopes (preset_id, scope_type, scope_id) VALUES ($1,'lesson',$2)", [presetId, lid]
+      );
+      await client.query('COMMIT');
+      logAudit(pool, { req, action: 'training.published.set', entity_type: 'training_preset', entity_id: presetId,
+        after: { visible_lessons: valid.length }, source: 'admin' }).catch(() => {});
+      res.json({ ok: true, published_lessons: valid });
+    } catch (err) {
+      await client.query('ROLLBACK').catch(() => {});
+      console.error('[training] PUT /published error:', err && err.message);
+      res.status(500).json({ error: 'Failed to save lesson visibility' });
+    } finally { client.release(); }
   });
 
   // ── Presets ────────────────────────────────────────────────────────────────

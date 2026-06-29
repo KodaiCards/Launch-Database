@@ -144,6 +144,7 @@ tr.prow td:first-child{position:relative}
 <div class="header">
   <div class="header-title"><i class="fa-solid fa-graduation-cap" style="color:var(--primary)"></i> Training Progress</div>
   <div style="display:flex;gap:8px;align-items:center">
+    <button class="btn btn-primary" onclick="openLessonVis()"><i class="fa-solid fa-eye"></i> Lesson visibility</button>
     <button class="btn" onclick="openPresets()"><i class="fa-solid fa-layer-group"></i> Content access</button>
     <button class="btn" onclick="load()"><i class="fa-solid fa-rotate"></i> Refresh</button>
     <button class="btn-icon" onclick="toggleDark()" title="Toggle theme"><i class="fa-solid fa-moon" id="dm-icon"></i></button>
@@ -208,6 +209,29 @@ tr.prow td:first-child{position:relative}
       <button class="btn btn-danger" id="pedit-del" onclick="deletePresetCur()" style="margin-right:auto;display:none"><i class="fa-solid fa-trash"></i> Delete</button>
       <button class="btn" onclick="closePedit()">Cancel</button>
       <button class="btn btn-primary" onclick="savePreset()"><i class="fa-solid fa-check"></i> Save preset</button>
+    </div>
+  </div>
+</div>
+
+<!-- Lesson visibility modal — the per-lesson show/hide set every trainee sees -->
+<div class="modal-ov" id="lessonvis-ov">
+  <div class="modal">
+    <div class="modal-h">
+      <span class="t"><i class="fa-solid fa-eye" style="color:var(--primary)"></i> Lesson visibility — what trainees see</span>
+      <button class="close-x" onclick="closeLessonVis()"><i class="fa-solid fa-xmark"></i></button>
+    </div>
+    <div class="modal-b">
+      <p class="muted" style="font-size:12px;margin-bottom:10px">Check a lesson to make it <strong>visible to trainees</strong>; uncheck to hide it. New sign-ups see exactly this set. (Admins always see everything.) Use a subject's <em>Show/Hide all</em> to flip it in bulk.</p>
+      <div style="display:flex;align-items:center;gap:10px;margin-bottom:10px">
+        <button class="btn" onclick="lvBulk(null,true)" style="font-size:12px"><i class="fa-solid fa-eye"></i> Show all</button>
+        <button class="btn" onclick="lvBulk(null,false)" style="font-size:12px"><i class="fa-solid fa-eye-slash"></i> Hide all</button>
+        <span class="muted" style="font-size:12px;margin-left:auto" id="lv-count">—</span>
+      </div>
+      <div class="tree" id="lessonvis-tree"><div class="empty"><span class="spin"></span> Loading…</div></div>
+    </div>
+    <div class="modal-f">
+      <button class="btn" onclick="closeLessonVis()">Cancel</button>
+      <button class="btn btn-primary" id="lv-save" onclick="saveLessonVis()"><i class="fa-solid fa-check"></i> Save visibility</button>
     </div>
   </div>
 </div>
@@ -494,6 +518,59 @@ tr.prow td:first-child{position:relative}
     if(!r.ok){ alert('Save failed'); return; }
     load();
     renderAccessSection(_accUser, 'trainee');
+  };
+
+  // ─── Lesson visibility (the "Published" set every trainee sees) ──────────────
+  var _pubChecks = new Set();
+  function lvAllLessons(){ var out=[]; _tree.forEach(function(tr){(tr.subjects||[]).forEach(function(s){(s.lessons||[]).forEach(function(l){out.push(l.id);});});}); return out; }
+  function lvSubjectLessons(sid){ var out=[]; _tree.forEach(function(tr){(tr.subjects||[]).forEach(function(s){ if(s.id===sid)(s.lessons||[]).forEach(function(l){out.push(l.id);}); });}); return out; }
+  function lvCount(){ var el=document.getElementById('lv-count'); if(el) el.textContent=_pubChecks.size+' of '+lvAllLessons().length+' lessons visible'; }
+  function lvTree(){
+    return _tree.map(function(tr){
+      var subs=(tr.subjects||[]).map(function(s){
+        var lessons=(s.lessons||[]).map(function(l){
+          return '<div class="trow" style="margin-left:22px"><input type="checkbox" data-lv="lesson" data-id="'+esc(l.id)+'"'+(_pubChecks.has(l.id)?' checked':'')+'><span class="tlabel" style="font-size:12px">'+esc(l.id)+' · '+esc(l.title)+'</span></div>';
+        }).join('');
+        return '<div><div class="trow"><span class="tcaret" data-act="tog" data-tgt="lv-'+esc(s.id)+'">▶</span>'
+          +'<span class="tlabel">'+esc(s.title)+' <span class="muted" style="font-size:11px">('+esc(s.id)+')</span></span>'
+          +'<span class="tri"><button onclick="lvBulk(\''+esc(s.id)+'\',true)">Show all</button><button onclick="lvBulk(\''+esc(s.id)+'\',false)">Hide all</button></span></div>'
+          +'<div class="tsub" id="lv-'+esc(s.id)+'">'+lessons+'</div></div>';
+      }).join('');
+      return '<div><div class="trow"><span class="tcaret" data-act="tog" data-tgt="lvt-'+esc(tr.id)+'">▶</span><span class="tlabel"><strong>'+esc(tr.title)+'</strong></span></div><div class="tsub" id="lvt-'+esc(tr.id)+'">'+subs+'</div></div>';
+    }).join('');
+  }
+  window.lvBulk=function(subjectId,on){
+    var ids = subjectId ? lvSubjectLessons(subjectId) : lvAllLessons();
+    ids.forEach(function(id){ if(on)_pubChecks.add(id); else _pubChecks.delete(id); });
+    var idset={}; ids.forEach(function(i){idset[i]=1;});
+    document.querySelectorAll('#lessonvis-tree input[data-lv="lesson"]').forEach(function(cb){ if(idset[cb.getAttribute('data-id')]) cb.checked=on; });
+    lvCount();
+  };
+  function lvTreeClick(e){
+    var t=e.target.closest('[data-act="tog"]');
+    if(t){ var el=document.getElementById(t.getAttribute('data-tgt')); if(el){var o=el.classList.toggle('open'); t.textContent=o?'▼':'▶';} return; }
+    var cb=e.target.closest('input[data-lv="lesson"]'); if(!cb) return;
+    var id=cb.getAttribute('data-id'); if(cb.checked)_pubChecks.add(id); else _pubChecks.delete(id); lvCount();
+  }
+  window.openLessonVis=async function(){
+    try{
+      await ensureTree();
+      var d=await (await fetch('/api/training/published',{credentials:'include'})).json();
+      _pubChecks=new Set(d.published_lessons||[]);
+      var tEl=document.getElementById('lessonvis-tree'); tEl.innerHTML=lvTree(); tEl.onclick=lvTreeClick;
+      lvCount();
+      document.getElementById('lessonvis-ov').classList.add('open');
+    }catch(e){ alert('Failed to load lesson visibility.'); }
+  };
+  window.closeLessonVis=function(){ document.getElementById('lessonvis-ov').classList.remove('open'); };
+  window.saveLessonVis=async function(){
+    var btn=document.getElementById('lv-save'); btn.disabled=true; var orig=btn.innerHTML; btn.innerHTML='<span class="spin"></span> Saving…';
+    try{
+      var r=await fetch('/api/training/published',{method:'PUT',credentials:'include',headers:{'Content-Type':'application/json'},body:JSON.stringify({lesson_ids:Array.from(_pubChecks)})});
+      if(!r.ok) throw new Error('HTTP '+r.status);
+      closeLessonVis();
+    }catch(e){ alert('Save failed.'); }
+    finally{ btn.disabled=false; btn.innerHTML=orig; }
   };
 
   // Deep link from the People surface: /training-admin.html?user=<id> auto-opens
