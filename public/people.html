@@ -12,8 +12,8 @@
 <style>
 :root{
   --primary:#1B5FA0;--primary-dark:#134880;--primary-light:#E8F0FB;
-  --surface-1:#F5F7FA;--surface-2:#FFFFFF;
-  --white:#FFFFFF;--gray-light:#F5F7FA;--gray-border:#DEE2E6;
+  --surface-1:#F5F7FA;--surface-2:#FFFFFF;--surface-3:#ECEFF3;
+  --white:#FFFFFF;--gray-light:#F5F7FA;--gray-border:#DEE2E6;--border-strong:#DEE2E6;
   --text:#212529;--text-secondary:#495057;--text-muted:#5A6470;
   --success:#28A745;--success-light:#E8F5E9;--success-text:#1B5E20;
   --warning:#FFC107;--warning-light:#FFF8E1;--warning-text:#7A4F0E;
@@ -22,8 +22,8 @@
 }
 html[data-theme="dark"]{
   --primary:#4A90D9;--primary-dark:#1B5FA0;--primary-light:#1E3A5C;
-  --surface-1:#1A1F26;--surface-2:#1D2430;
-  --white:#1D2430;--gray-light:#1A1F26;--gray-border:#2D3540;
+  --surface-1:#1A1F26;--surface-2:#1D2430;--surface-3:#242C38;
+  --white:#1D2430;--gray-light:#1A1F26;--gray-border:#2D3540;--border-strong:#2D3540;
   --text:#E8EAED;--text-secondary:#C2C7CD;--text-muted:#9BA1A8;
   --success:#5DD27A;--success-light:#1B3D24;--success-text:#A5D6A7;
   --warning:#FFCA28;--warning-light:#3D2F0F;--warning-text:#FFCC80;
@@ -44,9 +44,19 @@ html[data-theme="dark"] input,html[data-theme="dark"] select{background:var(--wh
   border-radius:6px;border:1px solid var(--gray-border);background:transparent;color:var(--text-secondary)}
 .btn-icon:hover{background:var(--surface-1)}
 
-.page-body{padding:20px 24px;max-width:1000px;margin:0 auto}
+.btn{display:inline-flex;align-items:center;gap:7px;padding:8px 14px;border-radius:7px;font-size:13px;
+  font-weight:600;border:1px solid var(--gray-border);background:var(--white);color:var(--text-secondary)}
+.btn:hover{background:var(--surface-1)}
+.btn-primary{background:var(--primary);border-color:var(--primary);color:#fff}
+.btn-primary:hover{background:var(--primary-dark)}
+.btn-danger{background:var(--danger);border-color:var(--danger);color:#fff}
+.btn-danger:hover{filter:brightness(.93)}
+.btn-sm{padding:5px 9px;font-size:12px;font-weight:500}
+
+.page-body{padding:20px 24px;max-width:1100px;margin:0 auto}
 .page-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:20px;gap:12px;flex-wrap:wrap}
 .page-title{font-size:20px;font-weight:700}
+.page-sub{font-size:13px;color:var(--text-muted);margin-top:3px}
 
 .filter-bar{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:18px}
 .search-input{padding:7px 12px;border:1px solid var(--gray-border);border-radius:6px;
@@ -56,6 +66,7 @@ html[data-theme="dark"] input,html[data-theme="dark"] select{background:var(--wh
   background:var(--white);color:var(--text);outline:none;font-size:13px}
 .date-input:focus{border-color:var(--primary)}
 .filter-label{font-size:12px;color:var(--text-muted);white-space:nowrap}
+.chk-label{display:inline-flex;align-items:center;gap:6px;font-size:12px;color:var(--text-secondary);cursor:pointer}
 
 .card{background:var(--white);border:1px solid var(--gray-border);border-radius:10px;overflow:hidden}
 .table-wrap{overflow-x:auto}
@@ -63,12 +74,20 @@ table{width:100%;border-collapse:collapse;font-size:13px}
 thead th{background:var(--surface-1);padding:9px 14px;text-align:left;font-weight:600;
   font-size:12px;color:var(--text-muted);border-bottom:1px solid var(--gray-border);white-space:nowrap}
 th.num,td.num{text-align:right}
-tbody tr.person-row{border-bottom:1px solid var(--gray-border);cursor:pointer;transition:background .1s}
+tbody tr.person-row{border-bottom:1px solid var(--gray-border);transition:background .1s}
 tbody tr.person-row:hover{background:var(--surface-1)}
-tbody td{padding:10px 14px;color:var(--text-secondary)}
-.person-name{color:var(--text);font-weight:500}
+tbody tr.inactive{opacity:.55}
+tbody td{padding:10px 14px;color:var(--text-secondary);vertical-align:middle}
+.person-name{color:var(--text);font-weight:600}
+.person-user{font-size:11px;color:var(--text-muted)}
 .hours-val{font-variant-numeric:tabular-nums;font-weight:500}
+.row-actions{display:flex;gap:6px;justify-content:flex-end;white-space:nowrap}
 
+.pill{display:inline-flex;align-items:center;gap:4px;font-size:11px;font-weight:600;padding:2px 8px;border-radius:10px;
+  background:var(--surface-3);color:var(--text-secondary)}
+.pill.role{background:var(--primary-light);color:var(--primary-dark)}
+.pill.nologin{background:var(--warning-light);color:var(--warning-text)}
+.team-tags{display:flex;gap:4px;flex-wrap:wrap}
 .badge-active{display:inline-flex;align-items:center;gap:3px;background:var(--success-light);
   color:var(--success-text);font-size:11px;font-weight:600;padding:2px 7px;border-radius:10px}
 .badge-inactive{display:inline-flex;align-items:center;gap:3px;background:var(--surface-1);
@@ -80,21 +99,28 @@ tbody td{padding:10px 14px;color:var(--text-secondary)}
 @keyframes pulse{0%,100%{opacity:1}50%{opacity:.4}}
 .panel-loading{padding:20px;text-align:center;color:var(--text-muted);font-size:13px}
 
-/* Expandable hours detail */
-.detail-tr td{padding:0}
-.detail-panel{display:none;padding:0 14px 14px}
-.detail-panel.open{display:block}
-.detail-inner{background:var(--surface-1);border-radius:8px;padding:14px;margin-top:2px}
-.detail-label{font-size:11px;font-weight:600;color:var(--text-muted);text-transform:uppercase;margin-bottom:8px}
-.job-row{display:flex;align-items:center;justify-content:space-between;padding:5px 0;
-  border-bottom:1px solid var(--gray-border);font-size:12px;gap:8px}
-.job-row:last-child{border-bottom:none}
-.job-name{color:var(--text);font-weight:500;flex:1;min-width:0}
-.job-area{color:var(--text-muted);font-size:11px;white-space:nowrap}
-.job-hours{font-variant-numeric:tabular-nums;color:var(--text-secondary);white-space:nowrap;margin-left:12px}
-.detail-total{display:flex;justify-content:flex-end;margin-top:10px;font-size:12px;font-weight:600;
-  color:var(--text);border-top:1px solid var(--gray-border);padding-top:8px;gap:8px}
-.no-hours{font-size:12px;color:var(--text-muted);padding:8px 0}
+/* Modal */
+.modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,.45);display:none;align-items:flex-start;
+  justify-content:center;padding:40px 16px;z-index:1000;overflow-y:auto}
+.modal-overlay.open{display:flex}
+.modal{background:var(--white);border:1px solid var(--gray-border);border-radius:12px;width:100%;max-width:480px;
+  box-shadow:0 12px 40px rgba(0,0,0,.25)}
+.modal-head{padding:16px 20px;border-bottom:1px solid var(--gray-border);display:flex;align-items:center;justify-content:space-between}
+.modal-title{font-size:16px;font-weight:700}
+.modal-body{padding:18px 20px;display:flex;flex-direction:column;gap:14px}
+.modal-foot{padding:14px 20px;border-top:1px solid var(--gray-border);display:flex;align-items:center;justify-content:space-between;gap:10px}
+.field{display:flex;flex-direction:column;gap:5px}
+.field label{font-size:12px;font-weight:600;color:var(--text-secondary)}
+.field input,.field select{padding:8px 11px;border:1px solid var(--gray-border);border-radius:7px;
+  background:var(--white);color:var(--text);outline:none;width:100%}
+.field input:focus,.field select:focus{border-color:var(--primary)}
+.field .hint{font-size:11px;color:var(--text-muted)}
+.field-row{display:flex;gap:12px}
+.field-row .field{flex:1}
+.teams-box{display:flex;gap:14px;flex-wrap:wrap}
+.toggle-line{display:flex;align-items:center;gap:8px;font-size:13px;color:var(--text-secondary)}
+.modal-err{color:var(--danger-text);background:var(--danger-light);border-radius:7px;padding:8px 11px;font-size:12px;display:none}
+.modal-err.show{display:block}
 
 @media(max-width:700px){
   .page-body{padding:12px}
@@ -107,7 +133,7 @@ tbody td{padding:10px 14px;color:var(--text-secondary)}
 
 <div class="header">
   <div class="header-left">
-    <span class="header-title"><i class="fa-solid fa-users"></i> People</span>
+    <span class="header-title"><i class="fa-solid fa-id-badge"></i> People</span>
   </div>
   <div class="header-right">
     <button class="btn-icon" onclick="toggleDark()" title="Toggle dark mode" aria-label="Toggle dark mode">
@@ -118,12 +144,18 @@ tbody td{padding:10px 14px;color:var(--text-secondary)}
 
 <div class="page-body" role="main">
   <div class="page-header">
-    <h1 class="page-title">Staff Roster &amp; Hours</h1>
+    <div>
+      <h1 class="page-title">People</h1>
+      <div class="page-sub">Everyone with a login or a staff record — one place to add, edit perms &amp; team, and remove.</div>
+    </div>
+    <button class="btn btn-primary" onclick="openAdd()"><i class="fa-solid fa-user-plus"></i> Add person</button>
   </div>
 
   <div class="filter-bar">
-    <input type="search" id="ppl-search" class="search-input" placeholder="Search staff…"
-      oninput="applyFilter()" aria-label="Search staff">
+    <input type="search" id="ppl-search" class="search-input" placeholder="Search name, login, role…"
+      oninput="render()" aria-label="Search people">
+    <label class="chk-label"><input type="checkbox" id="ppl-show-inactive" onchange="render()"> Show inactive</label>
+    <span style="flex:1"></span>
     <span class="filter-label">Hours from</span>
     <input type="date" id="ppl-from" class="date-input" onchange="loadHours()" aria-label="Hours from date">
     <span class="filter-label">to</span>
@@ -132,20 +164,74 @@ tbody td{padding:10px 14px;color:var(--text-secondary)}
 
   <div class="card">
     <div class="table-wrap">
-      <table aria-label="Staff roster">
+      <table aria-label="People roster">
         <thead>
           <tr>
             <th>Name</th>
+            <th>Role</th>
+            <th>Team(s)</th>
             <th>Status</th>
-            <th class="num">Total Hours</th>
-            <th class="num">Jobs</th>
+            <th class="num">Hours</th>
             <th></th>
           </tr>
         </thead>
         <tbody id="ppl-tbody">
-          <tr><td colspan="5"><div class="panel-loading"><span class="skeleton" style="width:60%;display:inline-block"></span></div></td></tr>
+          <tr><td colspan="6"><div class="panel-loading"><span class="skeleton" style="width:60%;display:inline-block"></span></div></td></tr>
         </tbody>
       </table>
+    </div>
+  </div>
+</div>
+
+<!-- Add / Edit modal -->
+<div class="modal-overlay" id="ppl-modal" onclick="if(event.target===this)closeModal()">
+  <div class="modal" role="dialog" aria-modal="true" aria-labelledby="ppl-modal-title">
+    <div class="modal-head">
+      <span class="modal-title" id="ppl-modal-title">Add person</span>
+      <button class="btn-icon" onclick="closeModal()" aria-label="Close"><i class="fa-solid fa-xmark"></i></button>
+    </div>
+    <div class="modal-body">
+      <div class="modal-err" id="ppl-modal-err"></div>
+      <div class="field">
+        <label for="f-fullname">Full name</label>
+        <input id="f-fullname" type="text" placeholder="Jane Tester" autocomplete="off">
+      </div>
+      <div class="field-row">
+        <div class="field">
+          <label for="f-username">Login username</label>
+          <input id="f-username" type="text" placeholder="jane.tester" autocomplete="off">
+        </div>
+        <div class="field">
+          <label for="f-role">Role</label>
+          <select id="f-role"></select>
+        </div>
+      </div>
+      <div class="field">
+        <label for="f-email">Email <span class="hint">(optional)</span></label>
+        <input id="f-email" type="email" placeholder="jane@example.com" autocomplete="off">
+      </div>
+      <div class="field">
+        <label for="f-password" id="f-password-label">Password</label>
+        <input id="f-password" type="text" placeholder="at least 10 characters" autocomplete="new-password">
+        <span class="hint" id="f-password-hint">Min 10 characters.</span>
+      </div>
+      <div class="field">
+        <label>Team designation(s)</label>
+        <div class="teams-box">
+          <label class="chk-label"><input type="checkbox" class="f-team" value="design"> Design</label>
+          <label class="chk-label"><input type="checkbox" class="f-team" value="permitting"> Permitting</label>
+          <label class="chk-label"><input type="checkbox" class="f-team" value="construction"> Construction / Inspection</label>
+        </div>
+        <span class="hint">Extra teams this person can see, on top of their role's own team.</span>
+      </div>
+      <label class="toggle-line"><input type="checkbox" id="f-track-hours"> Track hours for this person (creates a staff record)</label>
+      <label class="toggle-line" id="f-active-line" style="display:none"><input type="checkbox" id="f-active" checked> Active</label>
+    </div>
+    <div class="modal-foot">
+      <button class="btn btn-danger btn-sm" id="f-delete" style="visibility:hidden" onclick="delPerson()"><i class="fa-solid fa-trash"></i> Delete</button>
+      <span style="flex:1"></span>
+      <button class="btn" onclick="closeModal()">Cancel</button>
+      <button class="btn btn-primary" id="f-save" onclick="savePerson()">Save</button>
     </div>
   </div>
 </div>
@@ -153,36 +239,41 @@ tbody td{padding:10px 14px;color:var(--text-secondary)}
 <script>
 (function(){
   'use strict';
-  var _staff   = [];   // [{id, name, active}]
-  var _hourMap = {};   // {staff_id: [{job_name, service_area_name, client_name, team, total_hours}]}
-  var _open    = null;
-  var _filterTimer = null;
+
+  var ROLES = [
+    ['admin','Admin (full access)'],
+    ['design_manager','Design Manager'],
+    ['permitting_manager','Permitting Manager'],
+    ['design_engineer','Design Engineer'],
+    ['permitting_engineer','Permitting Engineer'],
+    ['contractor','Contractor / Inspector (1099)'],
+    ['customer','Customer (client portal)'],
+    ['trainee','Trainee (training only)']
+  ];
+
+  var _people  = [];   // merged roster from /api/people
+  var _hourMap = {};   // {staff_id: total_hours}
+  var _editing = null; // person being edited, or null for add
 
   document.addEventListener('DOMContentLoaded', function(){
     applyStoredTheme();
-    loadStaff();
+    var sel = document.getElementById('f-role');
+    sel.innerHTML = ROLES.map(function(r){ return '<option value="'+r[0]+'">'+esc(r[1])+'</option>'; }).join('');
+    loadPeople();
   });
 
-  // ── Load staff roster ───────────────────────────────────────────────────────
-  async function loadStaff(){
+  // ── Load merged roster ──────────────────────────────────────────────────────
+  async function loadPeople(){
     try{
-      var res = await fetch('/api/staff/all', { credentials:'include' });
-      if(res.status===401||res.status===403){
-        // Fall back to active-only list if not admin
-        var res2 = await fetch('/api/staff', { credentials:'include' });
-        if(!res2.ok) throw new Error(await res2.text());
-        _staff = await res2.json();
-      } else {
-        if(!res.ok) throw new Error(await res.text());
-        _staff = await res.json();
-      }
+      var res = await fetch('/api/people', { credentials:'include' });
+      if(!res.ok) throw new Error(await res.text());
+      _people = await res.json();
       await loadHours();
-    } catch(e){
-      setTbody('<tr><td colspan="5"><div class="empty-state"><i class="fa-solid fa-triangle-exclamation"></i>Failed to load staff. '+esc(e.message||'')+'</div></td></tr>');
+    }catch(e){
+      setTbody('<tr><td colspan="6"><div class="empty-state"><i class="fa-solid fa-triangle-exclamation"></i>Failed to load people. '+esc(e.message||'')+'</div></td></tr>');
     }
   }
 
-  // ── Load hours summary ──────────────────────────────────────────────────────
   window.loadHours = async function(){
     var from = document.getElementById('ppl-from').value;
     var to   = document.getElementById('ppl-to').value;
@@ -191,137 +282,224 @@ tbody td{padding:10px 14px;color:var(--text-secondary)}
     if(from) qs.push('from='+encodeURIComponent(from));
     if(to)   qs.push('to='+encodeURIComponent(to));
     if(qs.length) url += '?'+qs.join('&');
-
     try{
       var res = await fetch(url, { credentials:'include' });
-      if(res.status===401||res.status===403){
-        // Hours endpoint requires manager/admin; show roster without hours
-        _hourMap = {};
-        render();
-        return;
+      _hourMap = {};
+      if(res.ok){
+        var data = await res.json();
+        (data.rows||[]).forEach(function(r){
+          if(!r.staff_id) return;
+          _hourMap[r.staff_id] = (_hourMap[r.staff_id]||0) + (r.total_hours||0);
+        });
       }
-      if(!res.ok) throw new Error(await res.text());
-      var data = await res.json();
-      // Group rows by staff_id
-      _hourMap = {};
-      (data.rows||[]).forEach(function(r){
-        var sid = r.staff_id || '__unattributed__';
-        if(!_hourMap[sid]) _hourMap[sid] = [];
-        _hourMap[sid].push(r);
-      });
-      // Reset open panels since data changed
-      _open = null;
-      render();
-    } catch(e){
-      _hourMap = {};
-      render();
-    }
+    }catch(e){ _hourMap = {}; }
+    render();
   };
-
-  // ── Filter ──────────────────────────────────────────────────────────────────
-  window.applyFilter = function(){
-    clearTimeout(_filterTimer);
-    _filterTimer = setTimeout(_doFilter, 150);
-  };
-  function _doFilter(){
-    var q = (document.getElementById('ppl-search').value||'').toLowerCase().trim();
-    var filtered = q ? _staff.filter(function(s){ return s.name.toLowerCase().includes(q); }) : _staff;
-    renderList(filtered);
-  }
 
   // ── Render ──────────────────────────────────────────────────────────────────
-  function render(){
+  window.render = function(){
     var q = (document.getElementById('ppl-search').value||'').toLowerCase().trim();
-    var filtered = q ? _staff.filter(function(s){ return s.name.toLowerCase().includes(q); }) : _staff;
-    renderList(filtered);
-  }
-
-  function renderList(list){
+    var showInactive = document.getElementById('ppl-show-inactive').checked;
+    var list = _people.filter(function(p){
+      if(!showInactive && !p.active) return false;
+      if(!q) return true;
+      var hay = [p.display_name,p.username,p.role,p.email].filter(Boolean).join(' ').toLowerCase();
+      return hay.includes(q);
+    });
     if(!list.length){
-      setTbody('<tr><td colspan="5"><div class="empty-state"><i class="fa-solid fa-user-slash"></i>No staff found.</div></td></tr>');
+      setTbody('<tr><td colspan="6"><div class="empty-state"><i class="fa-solid fa-user-slash"></i>No people found.</div></td></tr>');
       return;
     }
-    setTbody(list.map(function(s){
-      var sid    = String(s.id);
-      var jobs   = _hourMap[sid] || [];
-      var hours  = jobs.reduce(function(t,j){ return t+(j.total_hours||0); }, 0);
-      var jobCnt = jobs.length;
-      var badge  = s.active
-        ? '<span class="badge-active"><i class="fa-solid fa-circle" style="font-size:7px"></i> Active</span>'
-        : '<span class="badge-inactive">Inactive</span>';
-      var hoursDisplay = hours > 0 ? '<span class="hours-val">'+hours.toFixed(1)+'h</span>' : '<span style="color:var(--text-muted)">—</span>';
-      return '<tr class="person-row" data-id="'+esc(sid)+'" tabindex="0" role="button" aria-expanded="false"'
-        +' onclick="toggleDetail(\''+esc(sid)+'\')"'
-        +' onkeydown="if(event.key===\'Enter\'||event.key===\' \'){event.preventDefault();toggleDetail(\''+esc(sid)+'\')}">'
-        +'<td class="person-name">'+esc(s.name)+'</td>'
-        +'<td>'+badge+'</td>'
-        +'<td class="num">'+hoursDisplay+'</td>'
-        +'<td class="num" style="color:var(--text-muted)">'+( jobCnt > 0 ? jobCnt : '—' )+'</td>'
-        +'<td style="width:32px;text-align:center"><i class="fa-solid fa-chevron-right" id="chev-'+esc(sid)+'" style="font-size:11px;color:var(--text-muted);transition:transform .2s"></i></td>'
-        +'</tr>'
-        +'<tr class="detail-tr"><td colspan="5" style="padding:0">'
-        +'<div class="detail-panel" id="detail-'+esc(sid)+'">'
-        +'<div class="detail-inner">'+renderDetailInner(jobs)+'</div>'
-        +'</div></td></tr>';
-    }).join(''));
-    // Re-open previously open panel if it's still in list
-    if(_open && document.getElementById('detail-'+_open)){
-      _doOpen(_open, false);
-    }
+    setTbody(list.map(rowHtml).join(''));
+  };
+
+  function roleLabel(role){
+    for(var i=0;i<ROLES.length;i++){ if(ROLES[i][0]===role) return ROLES[i][1].replace(/ \(.*/,''); }
+    return role || '—';
+  }
+  function teamTags(p){
+    var teams = [];
+    if(p.team) teams.push(p.team);
+    (p.extra_teams||[]).forEach(function(t){ if(teams.indexOf(t)<0) teams.push(t); });
+    if(p.role==='admin') teams = ['design','permitting','construction'];
+    if(!teams.length) return '<span style="color:var(--text-muted)">—</span>';
+    return '<div class="team-tags">'+teams.map(function(t){ return '<span class="pill">'+esc(t)+'</span>'; }).join('')+'</div>';
   }
 
-  function renderDetailInner(jobs){
-    if(!jobs.length){
-      return '<div class="no-hours"><i class="fa-solid fa-clock" style="opacity:.4;margin-right:4px"></i>No hours logged in this date range.</div>';
-    }
-    var total = jobs.reduce(function(t,j){ return t+(j.total_hours||0); }, 0);
-    return '<div class="detail-label">Hours breakdown</div>'
-      +jobs.map(function(j){
-        return '<div class="job-row">'
-          +'<div class="job-name">'+esc(j.job_name||'Unnamed job')+'<br>'
-          +'<span class="job-area">'+esc(j.client_name||'')+(j.service_area_name ? ' · '+esc(j.service_area_name) : '')+'</span></div>'
-          +(j.team ? '<span style="font-size:11px;color:var(--text-muted)">'+esc(j.team)+'</span>' : '')
-          +'<span class="job-hours">'+Number(j.total_hours||0).toFixed(1)+'h</span>'
-          +'</div>';
-      }).join('')
-      +'<div class="detail-total"><span>Total</span><span>'+total.toFixed(1)+'h</span></div>';
+  function rowHtml(p){
+    var hours = p.staff_id ? (_hourMap[p.staff_id]||0) : 0;
+    var hoursDisplay = hours>0 ? '<span class="hours-val">'+hours.toFixed(1)+'h</span>' : '<span style="color:var(--text-muted)">—</span>';
+    var badge = p.active
+      ? '<span class="badge-active"><i class="fa-solid fa-circle" style="font-size:7px"></i> Active</span>'
+      : '<span class="badge-inactive">Inactive</span>';
+    var nameCell = '<div class="person-name">'+esc(p.display_name||'(unnamed)')+'</div>'
+      + (p.username ? '<div class="person-user">@'+esc(p.username)+'</div>'
+                    : '<div class="person-user"><span class="pill nologin">no login</span></div>');
+    var roleCell = p.role ? '<span class="pill role">'+esc(roleLabel(p.role))+'</span>'
+                          : '<span style="color:var(--text-muted)">staff-only</span>';
+    var key = p.user_id ? ('u:'+p.user_id) : ('s:'+p.staff_id);
+    var trainBtn = p.user_id
+      ? '<a class="btn btn-sm" href="/training-admin.html?user='+esc(p.user_id)+'" title="View training progress"><i class="fa-solid fa-graduation-cap"></i></a>'
+      : '';
+    return '<tr class="person-row'+(p.active?'':' inactive')+'">'
+      + '<td>'+nameCell+'</td>'
+      + '<td>'+roleCell+'</td>'
+      + '<td>'+teamTags(p)+'</td>'
+      + '<td>'+badge+'</td>'
+      + '<td class="num">'+hoursDisplay+'</td>'
+      + '<td><div class="row-actions">'
+        + trainBtn
+        + '<button class="btn btn-sm" onclick="openEdit(\''+esc(key)+'\')"><i class="fa-solid fa-pen"></i> Edit</button>'
+      + '</div></td>'
+      + '</tr>';
   }
 
   function setTbody(html){ document.getElementById('ppl-tbody').innerHTML = html; }
 
-  // ── Expand/collapse ─────────────────────────────────────────────────────────
-  window.toggleDetail = function(sid){
-    if(_open === sid){
-      _doClose(sid);
-      _open = null;
-      return;
-    }
-    if(_open) _doClose(_open);
-    _open = sid;
-    _doOpen(sid, true);
+  // ── Modal: add / edit ───────────────────────────────────────────────────────
+  window.openAdd = function(){
+    _editing = null;
+    document.getElementById('ppl-modal-title').textContent = 'Add person';
+    document.getElementById('f-fullname').value = '';
+    document.getElementById('f-username').value = '';
+    document.getElementById('f-email').value = '';
+    document.getElementById('f-role').value = 'trainee';
+    document.getElementById('f-password').value = '';
+    document.getElementById('f-password-label').textContent = 'Password';
+    document.getElementById('f-password-hint').textContent = 'Min 10 characters.';
+    document.getElementById('f-username').disabled = false;
+    setTeams([]);
+    document.getElementById('f-track-hours').checked = false;
+    document.getElementById('f-active-line').style.display = 'none';
+    document.getElementById('f-delete').style.visibility = 'hidden';
+    showErr('');
+    openModal();
   };
 
-  function _doOpen(sid, animate){
-    var panel = document.getElementById('detail-'+sid);
-    if(panel) panel.classList.add('open');
-    var chev = document.getElementById('chev-'+sid);
-    if(chev) chev.style.transform = 'rotate(90deg)';
-    var row = document.querySelector('tr[data-id="'+sid+'"]');
-    if(row) row.setAttribute('aria-expanded','true');
+  window.openEdit = function(key){
+    var p = findByKey(key);
+    if(!p) return;
+    _editing = p;
+    document.getElementById('ppl-modal-title').textContent = p.user_id ? 'Edit person' : 'Add login for ' + (p.display_name||'staff');
+    document.getElementById('f-fullname').value = p.display_name || '';
+    document.getElementById('f-username').value = p.username || '';
+    document.getElementById('f-username').disabled = !!p.user_id; // username is immutable once set
+    document.getElementById('f-email').value = p.email || '';
+    document.getElementById('f-role').value = p.role || 'trainee';
+    document.getElementById('f-password').value = '';
+    document.getElementById('f-password-label').textContent = p.user_id ? 'Reset password' : 'Password';
+    document.getElementById('f-password-hint').textContent = p.user_id ? 'Leave blank to keep current password.' : 'Min 10 characters.';
+    setTeams(p.extra_teams || []);
+    document.getElementById('f-track-hours').checked = !!p.staff_id;
+    document.getElementById('f-active-line').style.display = p.user_id ? 'flex' : 'none';
+    document.getElementById('f-active').checked = !!p.active;
+    document.getElementById('f-delete').style.visibility = p.user_id ? 'visible' : 'hidden';
+    showErr('');
+    openModal();
+  };
+
+  window.savePerson = async function(){
+    var full   = document.getElementById('f-fullname').value.trim();
+    var uname  = document.getElementById('f-username').value.trim();
+    var email  = document.getElementById('f-email').value.trim();
+    var role   = document.getElementById('f-role').value;
+    var pass   = document.getElementById('f-password').value;
+    var teams  = getTeams();
+    var track  = document.getElementById('f-track-hours').checked;
+    var saveBtn= document.getElementById('f-save');
+    showErr('');
+
+    try{
+      saveBtn.disabled = true; saveBtn.textContent = 'Saving…';
+
+      if(_editing && _editing.user_id){
+        // ── EDIT existing user ──
+        var body = { full_name: full, email: email, role: role, extra_teams: teams,
+                     active: document.getElementById('f-active').checked };
+        if(pass) body.password = pass;
+        // staff link toggle
+        if(track && !_editing.staff_id){
+          var sid = await createStaff(full || uname);
+          body.staff_id = sid;
+        } else if(!track && _editing.staff_id){
+          body.staff_id = null;
+        }
+        await api('PUT','/api/users/'+_editing.user_id, body);
+      } else {
+        // ── ADD: create login (optionally link to an existing staff-only row) ──
+        if(!uname) throw new Error('Username is required.');
+        if(!pass || pass.length<10) throw new Error('Password must be at least 10 characters.');
+        var created = await api('POST','/api/users',
+          { username: uname, password: pass, role: role, full_name: full, email: email, extra_teams: teams });
+        var staffId = (_editing && _editing.staff_id) ? _editing.staff_id : null; // link existing staff-only row
+        if(track && !staffId) staffId = await createStaff(full || uname);
+        if(staffId) await api('PUT','/api/users/'+created.id, { staff_id: staffId });
+      }
+
+      closeModal();
+      await loadPeople();
+    }catch(e){
+      showErr(e.message||'Save failed.');
+    }finally{
+      saveBtn.disabled = false; saveBtn.textContent = 'Save';
+    }
+  };
+
+  window.delPerson = async function(){
+    if(!_editing || !_editing.user_id) return;
+    var p = _editing;
+    var hard = !p.active; // already inactive → offer permanent delete
+    var msg = hard
+      ? 'Permanently delete '+(p.display_name||p.username)+'? This cannot be undone.'
+      : 'Remove '+(p.display_name||p.username)+'? They will be deactivated (login disabled). Delete again to remove permanently.';
+    if(!confirm(msg)) return;
+    try{
+      await api('DELETE','/api/users/'+p.user_id+(hard?'?hard=1':''));
+      closeModal();
+      await loadPeople();
+    }catch(e){ showErr(e.message||'Delete failed.'); }
+  };
+
+  async function createStaff(name){
+    var s = await api('POST','/api/staff', { name: name });
+    return s.id;
   }
 
-  function _doClose(sid){
-    var panel = document.getElementById('detail-'+sid);
-    if(panel) panel.classList.remove('open');
-    var chev = document.getElementById('chev-'+sid);
-    if(chev) chev.style.transform = '';
-    var row = document.querySelector('tr[data-id="'+sid+'"]');
-    if(row) row.setAttribute('aria-expanded','false');
+  // ── Helpers ─────────────────────────────────────────────────────────────────
+  function findByKey(key){
+    return _people.find(function(p){
+      var k = p.user_id ? ('u:'+p.user_id) : ('s:'+p.staff_id);
+      return k===key;
+    });
   }
-
-  // ── Utilities ───────────────────────────────────────────────────────────────
+  function setTeams(list){
+    Array.prototype.forEach.call(document.querySelectorAll('.f-team'), function(cb){
+      cb.checked = (list||[]).indexOf(cb.value)>=0;
+    });
+  }
+  function getTeams(){
+    return Array.prototype.filter.call(document.querySelectorAll('.f-team'), function(cb){ return cb.checked; })
+      .map(function(cb){ return cb.value; });
+  }
+  async function api(method, url, body){
+    var res = await fetch(url, {
+      method: method, credentials:'include',
+      headers: body ? {'Content-Type':'application/json'} : undefined,
+      body: body ? JSON.stringify(body) : undefined
+    });
+    var data = null;
+    try{ data = await res.json(); }catch(e){}
+    if(!res.ok) throw new Error((data && data.error) || ('HTTP '+res.status));
+    return data;
+  }
+  function openModal(){ document.getElementById('ppl-modal').classList.add('open'); }
+  window.closeModal = function(){ document.getElementById('ppl-modal').classList.remove('open'); };
+  function showErr(m){
+    var el = document.getElementById('ppl-modal-err');
+    el.textContent = m || ''; el.classList.toggle('show', !!m);
+  }
   function esc(s){
-    return String(s??'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+    return String(s==null?'':s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
   }
   window.toggleDark = function(){
     var html = document.documentElement;

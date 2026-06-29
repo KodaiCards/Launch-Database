@@ -496,7 +496,14 @@ tr.prow td:first-child{position:relative}
     renderAccessSection(_accUser, 'trainee');
   };
 
-  load();
+  // Deep link from the People surface: /training-admin.html?user=<id> auto-opens
+  // that person's training-progress drawer.
+  load().then(function(){
+    try{
+      var uid = new URLSearchParams(location.search).get('user');
+      if(uid) openDetail(uid);
+    }catch(e){}
+  });
 })();
 </script>
 <script src="/js/app_nav.js" data-active="training"></script>

@@ -728,6 +728,10 @@ function calcPermittingHours(miles) {
 // are admin-only. GET + POST stay open to any authed user as before.
 require('./routes/staff')(app, pool, { requireAdmin, requireAuth }); // H-1: requireAuth added — GET /api/staff was unauthenticated
 
+// People — unified roster (merged users + staff) for the operations cluster, so
+// self-signups are never invisible. Read-only; mutations reuse /api/users + /api/staff.
+require('./routes/people')(app, pool, { requireAdmin, requireAuth });
+
 // ─────────────────────────────────────────────────────────────────────────────
 // PROJECTS — core CRUD + recalc + tree/with-hours delete extracted to
 // routes/projects.js (CLEANUP_PLAN.md Track 1.3.3). Other project
