@@ -16,9 +16,9 @@
 | # | Screen / page | Route | Status |
 |---|---|---|---|
 | U0 | **O34 authz sweep** (which APIs/pages leak to a trainee) | API probes | ✅ → O34 (clients/projects/contracts/EC/pricing leak to trainee; pages serve 200) |
-| U1 | Operations home / launcher | `/` `/launcher.html` | ⬜ |
-| U2 | Dashboard | `/dashboard.html` | ⬜ |
-| U3 | Projects (keystone SA list) | `/service-areas.html` | ⬜ |
+| U1 | Operations home / launcher | `/` `/launcher.html` | ✅ admin=all tiles; O33 (light default, sun/moon) |
+| U2 | Dashboard | `/dashboard.html` | ✅ keystone overview; **dup inline nav (jank→I10)**; O33 |
+| U3 | Projects (keystone SA list) | `/service-areas.html` | ✅ clean hub; header Admin→legacy (O30) |
 | U4 | Service-area detail / workspace | `/area.html` | ⬜ |
 | U5 | Pipelines | `/pipeline.html` | ⬜ |
 | U6 | Job board | `/job-board.html` | ⬜ |
@@ -45,3 +45,9 @@
 
 ## Per-screen notes
 *(appended as each screen is driven — facts + UI-vs-map + jank + leaks)*
+
+**U1 — Launcher (`/launcher.html`, admin) ✅.** All 12 tiles shown (Admin Portal, Operations, Splice Matrix, Design, Permitting, Time Clock, Launch Training, Client Portal, Offline DWG Sync, Workspace, Downloads, File Activity) — admin ungated, correct. Topbar = app-shell (logo, theme toggle, user menu). **I10/O33 redesign input:** default theme = LIGHT (O33 wants dark default); toggle = sun/moon icon (O33 wants "Light/Dark Mode" text). Trainee gets the training-only single tile (TRAINING_ONLY_LOCKDOWN, verified earlier) — launcher itself isn't an O34 leak (server-filters tiles by role). Matches map (PORTAL_DEFS, chunk 01).
+
+**U2 — Dashboard (`/dashboard.html`, admin) ✅.** The KEYSTONE dashboard (`/api/dashboard/overview`, service_areas-based): tiles ACTIVE AREAS (4: 2 RUS/2 non-RUS), JOBS IN FLIGHT (9), EST. PIPELINE ($22,500 sum of job estimates), UNBILLED ($0), AR OUTSTANDING ($0); "Needs attention" (ready-to-bill/in-revision/stale/overdue/areas-with-no-jobs); Revenue/Ready-to-bill/Hours/Pipeline tabs; program pipeline (RUS $15k / non-RUS $7.5k / actual billed $7.3k); by-client; AR aging buckets. Real demo data, clean. ⚠ **JANK (real): dashboard.html ships a DUPLICATE inline nav** alongside the shared `app_nav` rail — two different navs (top rail = Projects/Billing(KS)/Job board/Import hours/People/Training/Audit/Settings/Admin; inline = "Service areas"/"Admin (legacy)"/a "Theme" text button). Inconsistent + confusing → **I10 redesign should kill the inline nav (use only app_nav).** Theme toggles also inconsistent (topbar sun/moon vs the inline "Theme" text button) → O33. Data server-gated (`/api/dashboard` 403 for trainee); page shell still 200 (O34a flash). NOTE: this is the keystone dashboard — the LEGACY `/api/dashboard` (chunk 05) is the other one; confirm which the legacy admin.html uses (U23).
+
+**U3 — Service areas / "Projects" (`/service-areas.html`, admin) ✅.** Keystone hub: left rail = "+ Service Area", search, program filter (All/RUS/BAU/GFR/Other); SA list grouped by client (DEMO—Live Loop: Demo Concentrator 2 jobs $0 BAU · DEMO—PSC: Macon BAU Area 3 jobs $7.5k, Concentrator 7 2 jobs $7.5k RUS, Concentrator 14 2 jobs $7.5k RUS). Header: New project + List/Map toggle + Admin link + (?). Main = "Select a service area, or create one" (empty until selected). Undo bar present. Clean, matches map (chunk 05). Single shared nav (no dup here — the dup is dashboard.html-specific). ⚠ Header **"Admin" link → legacy `admin.html`** → confirms O30 (cluster still depends on legacy admin for config). List/Map toggle ties the map pillar (I6/chunk 12). Data gated (403 trainee); page 200 (O34a).
