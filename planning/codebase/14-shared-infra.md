@@ -23,7 +23,21 @@
 - `archiveOldAuditRows(pool)` — RUS retention: sets `archived_at` for rows older than `hot_retention_days` (min 7, default ~1100 ≈ 3yr); **rows are never deleted** (a DELETE-prevention trigger enforces append-only). Env-gated daily scheduler (chunk 01).
 - **⚠ Plan-vs-built:** ROADMAP Phase 0 said "remove the audit-log + retention feature (unnecessary)." It is **NOT removed** — it's active and wired into nearly every mutation, append-only, with archival. For real revenue + government (RUS) data this trail is arguably valuable; the "remove it" decision looks abandoned/should be formally reversed. (→ flag for Carter; don't remove without confirming.)
 
+## `_sse.js` (254 ln) — shared live-updates
+`GET /api/events/stream` (requireAuth). Channels: `admin`, `team:design|permitting|construction`, `user:<id>` (reserved). Role→channel: admin → all; **managers → ONLY their team** (Item 15 fix removed managers from `admin` to stop cross-team data leak); customer → none. `broadcast(channel, event, payload)` is called by write handlers (e.g. staff.js). **Heartbeat every 25s RE-VALIDATES the session vs live DB** (role/active/tokens_invalid_after via the JWT `iat`) → closes deactivated/demoted/revoked sessions with a `session_invalid` event (security: revocation takes effect within 25s, not at tab close). Dead-conn purge on failed write.
+- ⚠ minor: `construction_manager`/`construction_engineer` roles are referenced here but **don't exist in `VALID_ROLES`** (auth has design/permitting + contractor only). So `team:construction` is broadcast-to (staff.js) but only `admin` subscribes — a latent/no-op path until construction roles exist.
+
+## `_helpers.js` (308 ln) — LEGACY projects-tree math + undo infra
+Operates on the legacy `projects` table (NOT the keystone). `updateProjectHours`/`batchUpdateProjectHours` (recompute `projects.actual_hours` from time_entries + children, propagate up; cycle-safe; batch = level-by-level bottom-up perf) · `collectProjectTree` (WITH RECURSIVE descendant walk for tree/cascade delete + undo) · **`saveUndoBucket`/`popUndoBucket`** (the undo infra — `undo_buckets`, 60s TTL, used by destructive legacy endpoints) · `calcProjectFinancials` + `computeTaperedPermittingHours` · `snapHoursToQuarter`.
+- **Two embedded BUSINESS RULES worth remembering:** (1) **permitting hours = randomized 25–30 hrs/mile (0.25 steps), then taper −2 hrs/mile after 2 miles, floor 5, min 25 total** (owner spec; the random factor is saved per-project so re-renders are stable). (2) **hours always snap to the 0.25 grid, NEVER lossy-round** (owner "NO ROUNDING EVER" rule). These are real domain rules → relevant to any hours/billing work + D013 (the random factor is a quirk).
+- → **Reinforces O14:** the legacy projects delete has undo (saveUndoBucket) + tree-collect; the new keystone SA delete (chunk 03) is a plain DELETE with neither. The undo infra already exists to fix O14.
+
+## `lib/browser_pool.js` (11KB) — puppeteer browser pool for PDF rendering (invoices, splice diagrams). Deep-read deferred (support infra) → revisit at billing/splice PDF chunks.
+
+## `scripts/` (dev/ops tooling — functional summary; deep-read deferred unless relevant)
+`auto_migrate.js` (51, the skipped `prestart` hook → wraps runMigrations) · `run_migrations.js` (261, `npm run migrate` CLI) · `sync_schema.js` (566, `npm run schema:sync` — regen schema.sql via pg_dump16) · `validate_schema.js` (310, CI schema-drift check) · `deploy_preflight.js` (295) · `onboard_client.js` (395, client setup script) · `_preview_boot.js` (10, the live-UI preview boot — `claude_ceo` admin login). These are the schema-tooling triad behind O13/schema layers + the preview harness I'll use for user-testing.
+
 ## Reapproach-if
-- Finish chunk 14: `_sse.js` (live updates — used by staff.js broadcast + the realtime story) + `_helpers.js` (collectProjectTree/calcProjectFinancials — legacy projects math, ties to chunk 06).
-- Chunk 18 (migrations/schema): cross-check the 3 schema layers; confirm migration count + that 0079 etc. are recorded.
-- Chunk 01 reapproach: O13 now resolved → the spine note's "VERIFY" can be marked confirmed.
+- Chunk 18 (migrations/schema): cross-check the 3 schema layers; confirm migration count + that 0079 etc. are recorded; deep-read sync_schema/validate_schema if drift questions arise.
+- Chunk 06 (projects): `_helpers` math is consumed there; confirm legacy projects still in use vs keystone.
+- Chunk 01 reapproach: ✅ O13 resolved (migrations auto-run) — spine "VERIFY" now confirmed.
