@@ -2,6 +2,13 @@
 
 > Owned by Planning. **Goal (Carter 2026-06-28):** map the entire build first-hand, **down to how every piece interacts**, so Planning can monitor/instruct the CEO, **instantly know how a feature he suggests fits + the best way to build it**, and proactively recommend features (built or not). **Multi-session marathon** — notes live here so they survive compaction. Last updated 2026-06-29.
 
+## ✅ MARATHON COMPLETE — all 20 areas mapped (2026-06-29)
+**Read [`00-SYNTHESIS.md`](00-SYNTHESIS.md) first** — the executive summary: O-series ranked by severity, the cutover map, already-built ideas, healthy-vs-debt. Every structural finding schema-verified (chunk 18). 31 open items (O1–O31), 9 ideas (I1–I9) in `../open_items.md` + `../ideas.md`.
+
+**The build in one line:** mid-migration from legacy `projects` tree → keystone `service_areas`; the migration built PARALLEL structures (not in-place), so legacy+keystone coexist across tables/billing/hours/projections/UI. Daily-work views migrated; config + RUS-PDF + several views did not. Training + Splice are clean isolated subsystems; the projects/hours/billing/portals core carries the cutover debt. Foundations solid (auth/audit/migrations/uploads/design-system/keystone money-trio).
+
+**Top 5 actions:** O28 (verify upload volume — data loss) · hours unification O23/O22/O24 (the trust fix) · config-UI O30 (unblocks retiring admin.html) · billing port O20/O16 (RUS PDF onto keystone) · decide I9 (RUS daily paperwork) priority.
+
 ## Method (how each chunk is mapped)
 - **Small chunks**, one subsystem/file-cluster at a time → its own notes file `planning/codebase/NN-area.md`.
 - Each note captures: **what it does · how it WIRES to other pieces** (who calls it, what it calls, data in/out) **· data/tables touched · my THOUGHT PROCESS** (what I expected, what I found, *why* I read it this way) **· flags/risks/gaps · open questions · "reapproach-if" triggers.** Not dry facts — the reasoning, so a later me can tell if something was missed *because I didn't think of it then*.
@@ -37,7 +44,7 @@ Status: ⬜ not started · 🔄 in progress · ✅ mapped · ♻️ reapproach n
 | 16 | **Legacy admin** (cutover source — what's stranded) | `public/admin.html` + JS | P3 | ✅ → `16-legacy-admin.md` — **STRANDED-FEATURES INVENTORY (I2 concrete)**: ALL config (pricing/jobs/portal-access/templates/CCs/client-links/staff/user-CRUD) + legacy inspection/revenue/billing(I3) live in admin.html ONLY; **O30** cluster settings.html is a stub → **admin.html CANNOT be deleted yet** (guardrail for Phase D). Backends exist → work = rebuild UI |
 | 17 | **automation + portal_module** | `automation.js`, `portal_module.js` | P2 | ✅ → `17-automation.md` — scheduler (5 hourly tasks: digest/stale/burn=log, audit-prune+file-prune=guarded DELETE; no email yet; detectors exist→cockpit). **O18+=legacy projections** (automation buildPscRus/Inspection: sparklines/forecast = parity gap). **O31** hours-audit hard-deleted 18mo (low). ensureRollupChain=legacy tree (5 rollup_levels). dateInBusinessTz dup |
 | 18 | **Migrations + schema** (VERIFICATION) | `migrations/`, `schema.sql` | P3 | ✅ → `18-migrations.md` — **79 migrations**; all structural findings schema-VERIFIED. **O14 refined** (SA-delete CASCADEs config, SET NULL hours [survive], RESTRICT billed → severity↓medium). **O23 confirmed** (both cols, NO XOR). splice=26 tables. 3 schema layers (migrations canonical; retire bootstraps post-cutover) |
-| 19 | **Desktop (Electron)** | `desktop/` | P3 | ⬜ |
-| 20 | **Tests** | `tests/` | P3 | ⬜ |
+| 19 | **Desktop (Electron)** | `desktop/` | P3 | ✅ → `19-desktop.md` — v0.1.0 shell (loadURL prod web app) + folder/DWG sync engine (tray, still v0.2 scaffold); context-isolated, unsigned. **O21 RESOLVED = confirmed gap: RUS daily paperwork NOT built anywhere → I9** (field/mobile greenfield) |
+| 20 | **Tests** | `tests/` | P3 | ✅ → `20-tests.md` — **64 test files** + integration/ + browser/ E2E; money/hours(incl quarter-snap=O22-locked + attribution)/keystone/security/schema-drift covered → **O9 revised DOWN** (net exists). Gaps: keystone SA-delete (O14), legacy↔keystone reconciliation (O23), verify CI runs it |
 
 *Adjust as I discover more. Each ✅ gets a `NN-area.md` file. Findings that change plans → `INVENTORY.md`; new feature ideas → `ideas.md`; gaps/questions → `open_items.md`.*
