@@ -43,6 +43,22 @@ END;
 $$;
 
 --
+-- Name: access_requests; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.access_requests (
+    id uuid DEFAULT gen_random_uuid() NOT NULL,
+    user_id uuid,
+    username text,
+    full_name text,
+    details text NOT NULL,
+    status text DEFAULT 'pending'::text NOT NULL,
+    created_at timestamp with time zone DEFAULT now() NOT NULL,
+    resolved_at timestamp with time zone,
+    resolved_by text
+);
+
+--
 -- Name: ai_messages; Type: TABLE; Schema: public; Owner: -
 --
 
@@ -135,6 +151,16 @@ CREATE TABLE public.billing_batches (
     notes text,
     created_by_user_id uuid,
     created_at timestamp with time zone DEFAULT now()
+);
+
+--
+-- Name: billing_period_close; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.billing_period_close (
+    period_month date NOT NULL,
+    closed_at timestamp with time zone DEFAULT now() NOT NULL,
+    closed_by_user_id uuid
 );
 
 --
@@ -287,6 +313,35 @@ CREATE TABLE public.concentrators (
 );
 
 --
+-- Name: construction_contracts; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.construction_contracts (
+    id uuid DEFAULT gen_random_uuid() NOT NULL,
+    client_id uuid,
+    name text NOT NULL,
+    notes text,
+    total_budget numeric(14,2),
+    total_miles numeric(10,4),
+    active boolean DEFAULT true NOT NULL,
+    created_at timestamp with time zone DEFAULT now() NOT NULL,
+    engineering_contract_id uuid
+);
+
+--
+-- Name: contract_allocations; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.contract_allocations (
+    id uuid DEFAULT gen_random_uuid() NOT NULL,
+    engineering_contract_id uuid,
+    construction_contract_id uuid,
+    discipline text NOT NULL,
+    budget_amount numeric(14,2) DEFAULT 0 NOT NULL,
+    CONSTRAINT contract_allocations_one_contract CHECK ((((engineering_contract_id IS NOT NULL) AND (construction_contract_id IS NULL)) OR ((engineering_contract_id IS NULL) AND (construction_contract_id IS NOT NULL))))
+);
+
+--
 -- Name: contracts; Type: TABLE; Schema: public; Owner: -
 --
 
@@ -299,6 +354,19 @@ CREATE TABLE public.contracts (
     friendly_label character varying(40),
     active boolean DEFAULT true,
     created_at timestamp with time zone DEFAULT now()
+);
+
+--
+-- Name: cost_catalog; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.cost_catalog (
+    id uuid DEFAULT gen_random_uuid() NOT NULL,
+    construction_contract_id uuid NOT NULL,
+    item_key text NOT NULL,
+    label text,
+    unit text,
+    unit_price numeric(14,2) DEFAULT 0 NOT NULL
 );
 
 --
@@ -449,6 +517,7 @@ CREATE TABLE public.engineering_contracts (
     updated_at timestamp with time zone DEFAULT now(),
     program character varying(20),
     client_org_id uuid,
+    total_miles numeric(10,4),
     CONSTRAINT engineering_contracts_program_check CHECK (((program IS NULL) OR ((program)::text = ANY ((ARRAY['rus'::character varying, 'bau'::character varying, 'gfr'::character varying, 'other'::character varying])::text[]))))
 );
 
@@ -523,7 +592,10 @@ CREATE TABLE public.invoice_items (
     amount numeric(12,2),
     created_at timestamp with time zone DEFAULT now(),
     period_year integer,
-    period_month integer
+    period_month integer,
+    service_area_job_id uuid,
+    line_kind character varying(20) DEFAULT 'charge'::character varying NOT NULL,
+    CONSTRAINT invoice_items_line_kind_check CHECK (((line_kind)::text = ANY ((ARRAY['charge'::character varying, 'reconciliation'::character varying])::text[])))
 );
 
 --
@@ -561,7 +633,9 @@ CREATE TABLE public.invoices (
     total_amount numeric(12,2) DEFAULT 0,
     status character varying(50) DEFAULT 'draft'::character varying,
     notes text,
-    created_at timestamp with time zone DEFAULT now()
+    created_at timestamp with time zone DEFAULT now(),
+    service_area_id uuid,
+    engineering_contract_id uuid
 );
 
 --
@@ -601,6 +675,16 @@ CREATE TABLE public.jobs (
 );
 
 --
+-- Name: map_store; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.map_store (
+    store_key text NOT NULL,
+    value text,
+    updated_at timestamp with time zone DEFAULT now() NOT NULL
+);
+
+--
 -- Name: permit_documents; Type: TABLE; Schema: public; Owner: -
 --
 
@@ -610,14 +694,16 @@ CREATE TABLE public.permit_documents (
     doc_type character varying(50) NOT NULL,
     file_name character varying(255),
     file_path text,
-    file_size integer,
+    file_size bigint,
     revision_number integer DEFAULT 1,
     uploaded_by character varying(100),
     notes text,
     created_at timestamp with time zone DEFAULT now(),
     uploaded_by_user_id uuid,
     sha256 character(64),
-    content_type character varying(80)
+    content_type character varying(80),
+    service_area_job_id uuid,
+    status character varying(30)
 );
 
 --
@@ -807,10 +893,15 @@ CREATE TABLE public.service_area_jobs (
     updated_at timestamp with time zone DEFAULT now() NOT NULL,
     route_id uuid,
     cost_category character varying(20),
+    bill_trigger character varying(20) DEFAULT 'progressive'::character varying NOT NULL,
+    budget_code_id uuid,
+    geometry jsonb,
+    label text,
+    CONSTRAINT service_area_jobs_bill_trigger_check CHECK (((bill_trigger)::text = ANY ((ARRAY['progressive'::character varying, 'completed'::character varying])::text[]))),
     CONSTRAINT service_area_jobs_billing_type_check CHECK (((billing_type)::text = ANY ((ARRAY['hourly'::character varying, 'footage'::character varying, 'fixed'::character varying])::text[]))),
     CONSTRAINT service_area_jobs_cost_category_check CHECK (((cost_category IS NULL) OR ((cost_category)::text = ANY ((ARRAY['engineering'::character varying, 'construction'::character varying])::text[])))),
     CONSTRAINT service_area_jobs_status_check CHECK (((status)::text = ANY ((ARRAY['potential'::character varying, 'started'::character varying, 'submitted'::character varying, 'approved'::character varying, 'issued'::character varying, 'client_approved'::character varying, 'revision'::character varying, 'complete'::character varying, 'billed'::character varying, 'cancelled'::character varying])::text[]))),
-    CONSTRAINT service_area_jobs_team_check CHECK (((team IS NULL) OR ((team)::text = ANY ((ARRAY['permitting'::character varying, 'design'::character varying, 'construction'::character varying])::text[]))))
+    CONSTRAINT service_area_jobs_team_check CHECK (((team IS NULL) OR ((team)::text = ANY (ARRAY['permitting'::text, 'design'::text, 'inspection'::text, 'construction'::text]))))
 );
 
 --
@@ -870,6 +961,7 @@ CREATE TABLE public.service_area_routes (
     updated_by_user_id uuid,
     created_at timestamp with time zone DEFAULT now() NOT NULL,
     updated_at timestamp with time zone DEFAULT now() NOT NULL,
+    closed_at timestamp with time zone,
     CONSTRAINT service_area_routes_status_check CHECK (((status)::text = ANY ((ARRAY['active'::character varying, 'on_hold'::character varying, 'complete'::character varying, 'cancelled'::character varying])::text[])))
 );
 
@@ -901,6 +993,13 @@ CREATE TABLE public.service_areas (
     build_finalized_at timestamp with time zone,
     map_geometry jsonb,
     client_visible_metrics jsonb DEFAULT '{"progress": true, "total_cost": true, "engineering_cost": true, "construction_cost": false}'::jsonb NOT NULL,
+    closed_at timestamp with time zone,
+    construction_contract_id uuid,
+    miles numeric(10,4),
+    map_plan_id text,
+    boundary jsonb,
+    center_lat numeric(10,7),
+    center_lng numeric(10,7),
     CONSTRAINT service_areas_billing_cadence_check CHECK (((billing_cadence)::text = ANY ((ARRAY['one_time'::character varying, 'monthly'::character varying])::text[]))),
     CONSTRAINT service_areas_ec_implies_rus CHECK (((engineering_contract_id IS NULL) OR ((program)::text = 'rus'::text))),
     CONSTRAINT service_areas_ongoing_monthly CHECK (((NOT is_ongoing) OR ((billing_cadence)::text = 'monthly'::text))),
@@ -1473,6 +1572,29 @@ CREATE SEQUENCE public.training_cert_attempts_id_seq
 ALTER SEQUENCE public.training_cert_attempts_id_seq OWNED BY public.training_cert_attempts.id;
 
 --
+-- Name: training_preset_scopes; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.training_preset_scopes (
+    id uuid DEFAULT gen_random_uuid() NOT NULL,
+    preset_id uuid NOT NULL,
+    scope_type text NOT NULL,
+    scope_id text NOT NULL
+);
+
+--
+-- Name: training_presets; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.training_presets (
+    id uuid DEFAULT gen_random_uuid() NOT NULL,
+    name text NOT NULL,
+    description text,
+    created_by uuid,
+    created_at timestamp with time zone DEFAULT now() NOT NULL
+);
+
+--
 -- Name: training_progress; Type: TABLE; Schema: public; Owner: -
 --
 
@@ -1548,6 +1670,30 @@ CREATE TABLE public.user_portal_access (
     portal_key character varying(50) NOT NULL,
     granted_at timestamp with time zone DEFAULT now(),
     granted_by_user_id uuid
+);
+
+--
+-- Name: user_training_access; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.user_training_access (
+    user_id uuid NOT NULL,
+    base text DEFAULT 'all'::text NOT NULL,
+    preset_id uuid,
+    updated_by uuid,
+    updated_at timestamp with time zone DEFAULT now() NOT NULL
+);
+
+--
+-- Name: user_training_overrides; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.user_training_overrides (
+    id uuid DEFAULT gen_random_uuid() NOT NULL,
+    user_id uuid NOT NULL,
+    scope_type text NOT NULL,
+    scope_id text NOT NULL,
+    mode text NOT NULL
 );
 
 --
@@ -1671,6 +1817,13 @@ ALTER TABLE ONLY public.training_cert_attempts ALTER COLUMN id SET DEFAULT nextv
 ALTER TABLE ONLY public.training_topic_capstone_attempts ALTER COLUMN id SET DEFAULT nextval('public.training_topic_capstone_attempts_id_seq'::regclass);
 
 --
+-- Name: access_requests access_requests_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.access_requests
+    ADD CONSTRAINT access_requests_pkey PRIMARY KEY (id);
+
+--
 -- Name: ai_messages ai_messages_pkey; Type: CONSTRAINT; Schema: public; Owner: -
 --
 
@@ -1704,6 +1857,13 @@ ALTER TABLE ONLY public.billing_batch_items
 
 ALTER TABLE ONLY public.billing_batches
     ADD CONSTRAINT billing_batches_pkey PRIMARY KEY (id);
+
+--
+-- Name: billing_period_close billing_period_close_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.billing_period_close
+    ADD CONSTRAINT billing_period_close_pkey PRIMARY KEY (period_month);
 
 --
 -- Name: budget_codes budget_codes_pkey; Type: CONSTRAINT; Schema: public; Owner: -
@@ -1790,11 +1950,39 @@ ALTER TABLE ONLY public.concentrators
     ADD CONSTRAINT concentrators_pkey PRIMARY KEY (id);
 
 --
+-- Name: construction_contracts construction_contracts_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.construction_contracts
+    ADD CONSTRAINT construction_contracts_pkey PRIMARY KEY (id);
+
+--
+-- Name: contract_allocations contract_allocations_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.contract_allocations
+    ADD CONSTRAINT contract_allocations_pkey PRIMARY KEY (id);
+
+--
 -- Name: contracts contracts_pkey; Type: CONSTRAINT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY public.contracts
     ADD CONSTRAINT contracts_pkey PRIMARY KEY (id);
+
+--
+-- Name: cost_catalog cost_catalog_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.cost_catalog
+    ADD CONSTRAINT cost_catalog_pkey PRIMARY KEY (id);
+
+--
+-- Name: cost_catalog cost_catalog_uniq; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.cost_catalog
+    ADD CONSTRAINT cost_catalog_uniq UNIQUE (construction_contract_id, item_key);
 
 --
 -- Name: csv_review_queue csv_review_queue_pkey; Type: CONSTRAINT; Schema: public; Owner: -
@@ -1984,6 +2172,13 @@ ALTER TABLE ONLY public.jobs
 
 ALTER TABLE ONLY public.jobs
     ADD CONSTRAINT jobs_pkey PRIMARY KEY (id);
+
+--
+-- Name: map_store map_store_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.map_store
+    ADD CONSTRAINT map_store_pkey PRIMARY KEY (store_key);
 
 --
 -- Name: permit_documents permit_documents_pkey; Type: CONSTRAINT; Schema: public; Owner: -
@@ -2392,6 +2587,20 @@ ALTER TABLE ONLY public.training_cert_attempts
     ADD CONSTRAINT training_cert_attempts_pkey PRIMARY KEY (id);
 
 --
+-- Name: training_preset_scopes training_preset_scopes_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.training_preset_scopes
+    ADD CONSTRAINT training_preset_scopes_pkey PRIMARY KEY (id);
+
+--
+-- Name: training_presets training_presets_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.training_presets
+    ADD CONSTRAINT training_presets_pkey PRIMARY KEY (id);
+
+--
 -- Name: training_progress training_progress_pkey; Type: CONSTRAINT; Schema: public; Owner: -
 --
 
@@ -2418,6 +2627,27 @@ ALTER TABLE ONLY public.undo_buckets
 
 ALTER TABLE ONLY public.user_portal_access
     ADD CONSTRAINT user_portal_access_pkey PRIMARY KEY (user_id, portal_key);
+
+--
+-- Name: user_training_access user_training_access_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.user_training_access
+    ADD CONSTRAINT user_training_access_pkey PRIMARY KEY (user_id);
+
+--
+-- Name: user_training_overrides user_training_overrides_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.user_training_overrides
+    ADD CONSTRAINT user_training_overrides_pkey PRIMARY KEY (id);
+
+--
+-- Name: user_training_overrides user_training_overrides_user_id_scope_type_scope_id_key; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.user_training_overrides
+    ADD CONSTRAINT user_training_overrides_user_id_scope_type_scope_id_key UNIQUE (user_id, scope_type, scope_id);
 
 --
 -- Name: users users_pkey; Type: CONSTRAINT; Schema: public; Owner: -
@@ -2476,10 +2706,28 @@ ALTER TABLE ONLY public.workspace_folders
     ADD CONSTRAINT workspace_folders_pkey PRIMARY KEY (id);
 
 --
+-- Name: contract_alloc_cc_disc; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE UNIQUE INDEX contract_alloc_cc_disc ON public.contract_allocations USING btree (construction_contract_id, discipline) WHERE (construction_contract_id IS NOT NULL);
+
+--
+-- Name: contract_alloc_ec_disc; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE UNIQUE INDEX contract_alloc_ec_disc ON public.contract_allocations USING btree (engineering_contract_id, discipline) WHERE (engineering_contract_id IS NOT NULL);
+
+--
 -- Name: csv_review_queue_status_idx; Type: INDEX; Schema: public; Owner: -
 --
 
 CREATE INDEX csv_review_queue_status_idx ON public.csv_review_queue USING btree (status, imported_at DESC);
+
+--
+-- Name: idx_access_requests_status; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX idx_access_requests_status ON public.access_requests USING btree (status, created_at DESC);
 
 --
 -- Name: idx_audit_actor; Type: INDEX; Schema: public; Owner: -
@@ -2558,6 +2806,12 @@ CREATE INDEX idx_billing_batches_client_id ON public.billing_batches USING btree
 --
 
 CREATE INDEX idx_budgets_engineering_contract_id ON public.budgets USING btree (engineering_contract_id);
+
+--
+-- Name: idx_cc_ec; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX idx_cc_ec ON public.construction_contracts USING btree (engineering_contract_id);
 
 --
 -- Name: idx_client_approvals_org_all; Type: INDEX; Schema: public; Owner: -
@@ -2782,6 +3036,12 @@ CREATE INDEX idx_invoice_items_project_id ON public.invoice_items USING btree (p
 CREATE UNIQUE INDEX idx_invoice_items_project_period ON public.invoice_items USING btree (project_id, period_year, period_month) WHERE ((period_year IS NOT NULL) AND (period_month IS NOT NULL));
 
 --
+-- Name: idx_invoice_items_sa_job; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX idx_invoice_items_sa_job ON public.invoice_items USING btree (service_area_job_id);
+
+--
 -- Name: idx_invoice_templates_job_client; Type: INDEX; Schema: public; Owner: -
 --
 
@@ -2794,10 +3054,22 @@ CREATE INDEX idx_invoice_templates_job_client ON public.invoice_templates USING 
 CREATE INDEX idx_invoices_client_id ON public.invoices USING btree (client_id);
 
 --
+-- Name: idx_invoices_engineering_contract; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX idx_invoices_engineering_contract ON public.invoices USING btree (engineering_contract_id);
+
+--
 -- Name: idx_invoices_invoice_date; Type: INDEX; Schema: public; Owner: -
 --
 
 CREATE INDEX idx_invoices_invoice_date ON public.invoices USING btree (invoice_date);
+
+--
+-- Name: idx_invoices_service_area; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX idx_invoices_service_area ON public.invoices USING btree (service_area_id);
 
 --
 -- Name: idx_invoices_status; Type: INDEX; Schema: public; Owner: -
@@ -2840,6 +3112,12 @@ CREATE INDEX idx_jobs_program_scope ON public.jobs USING btree (program_scope) W
 --
 
 CREATE INDEX idx_permit_documents_project_id ON public.permit_documents USING btree (project_id);
+
+--
+-- Name: idx_permit_documents_saj; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX idx_permit_documents_saj ON public.permit_documents USING btree (service_area_job_id);
 
 --
 -- Name: idx_permit_stages_active; Type: INDEX; Schema: public; Owner: -
@@ -2996,6 +3274,12 @@ CREATE INDEX idx_sa_materials_service_area ON public.service_area_materials USIN
 --
 
 CREATE INDEX idx_sa_routes_service_area ON public.service_area_routes USING btree (service_area_id);
+
+--
+-- Name: idx_saj_budget_code; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX idx_saj_budget_code ON public.service_area_jobs USING btree (budget_code_id);
 
 --
 -- Name: idx_scr_pending; Type: INDEX; Schema: public; Owner: -
@@ -3394,6 +3678,12 @@ CREATE INDEX idx_training_capstone_user_course_date ON public.training_topic_cap
 CREATE INDEX idx_training_cert_attempts_user_date ON public.training_cert_attempts USING btree (user_id, attempt_date DESC);
 
 --
+-- Name: idx_training_preset_scopes_preset; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX idx_training_preset_scopes_preset ON public.training_preset_scopes USING btree (preset_id);
+
+--
 -- Name: idx_training_progress_user_course; Type: INDEX; Schema: public; Owner: -
 --
 
@@ -3410,6 +3700,12 @@ CREATE INDEX idx_undo_buckets_expires_at ON public.undo_buckets USING btree (exp
 --
 
 CREATE INDEX idx_user_portal_access_user ON public.user_portal_access USING btree (user_id);
+
+--
+-- Name: idx_user_training_overrides_user; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX idx_user_training_overrides_user ON public.user_training_overrides USING btree (user_id);
 
 --
 -- Name: idx_users_username; Type: INDEX; Schema: public; Owner: -
@@ -3548,6 +3844,13 @@ CREATE TRIGGER projects_updated_at BEFORE UPDATE ON public.projects FOR EACH ROW
 --
 
 CREATE TRIGGER trg_sync_projected_revenue_footage BEFORE UPDATE ON public.projects FOR EACH ROW EXECUTE FUNCTION public.sync_projected_revenue_footage();
+
+--
+-- Name: access_requests access_requests_user_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.access_requests
+    ADD CONSTRAINT access_requests_user_id_fkey FOREIGN KEY (user_id) REFERENCES public.users(id) ON DELETE CASCADE;
 
 --
 -- Name: audit_log audit_log_actor_user_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
@@ -3718,6 +4021,34 @@ ALTER TABLE ONLY public.client_users
     ADD CONSTRAINT client_users_org_id_fkey FOREIGN KEY (org_id) REFERENCES public.client_organizations(id) ON DELETE CASCADE;
 
 --
+-- Name: construction_contracts construction_contracts_client_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.construction_contracts
+    ADD CONSTRAINT construction_contracts_client_id_fkey FOREIGN KEY (client_id) REFERENCES public.clients(id);
+
+--
+-- Name: construction_contracts construction_contracts_engineering_contract_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.construction_contracts
+    ADD CONSTRAINT construction_contracts_engineering_contract_id_fkey FOREIGN KEY (engineering_contract_id) REFERENCES public.engineering_contracts(id);
+
+--
+-- Name: contract_allocations contract_allocations_construction_contract_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.contract_allocations
+    ADD CONSTRAINT contract_allocations_construction_contract_id_fkey FOREIGN KEY (construction_contract_id) REFERENCES public.construction_contracts(id) ON DELETE CASCADE;
+
+--
+-- Name: contract_allocations contract_allocations_engineering_contract_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.contract_allocations
+    ADD CONSTRAINT contract_allocations_engineering_contract_id_fkey FOREIGN KEY (engineering_contract_id) REFERENCES public.engineering_contracts(id) ON DELETE CASCADE;
+
+--
 -- Name: contracts contracts_client_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
 --
 
@@ -3730,6 +4061,13 @@ ALTER TABLE ONLY public.contracts
 
 ALTER TABLE ONLY public.contracts
     ADD CONSTRAINT contracts_engineering_contract_id_fkey FOREIGN KEY (engineering_contract_id) REFERENCES public.engineering_contracts(id) ON DELETE SET NULL;
+
+--
+-- Name: cost_catalog cost_catalog_construction_contract_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.cost_catalog
+    ADD CONSTRAINT cost_catalog_construction_contract_id_fkey FOREIGN KEY (construction_contract_id) REFERENCES public.construction_contracts(id) ON DELETE CASCADE;
 
 --
 -- Name: csv_review_queue csv_review_queue_imported_by_user_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
@@ -3907,6 +4245,13 @@ ALTER TABLE ONLY public.invoice_items
     ADD CONSTRAINT invoice_items_project_id_fkey FOREIGN KEY (project_id) REFERENCES public.projects(id) ON DELETE RESTRICT;
 
 --
+-- Name: invoice_items invoice_items_service_area_job_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.invoice_items
+    ADD CONSTRAINT invoice_items_service_area_job_id_fkey FOREIGN KEY (service_area_job_id) REFERENCES public.service_area_jobs(id);
+
+--
 -- Name: invoice_templates invoice_templates_client_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
 --
 
@@ -3933,6 +4278,20 @@ ALTER TABLE ONLY public.invoice_templates
 
 ALTER TABLE ONLY public.invoices
     ADD CONSTRAINT invoices_client_id_fkey FOREIGN KEY (client_id) REFERENCES public.clients(id) ON DELETE RESTRICT;
+
+--
+-- Name: invoices invoices_engineering_contract_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.invoices
+    ADD CONSTRAINT invoices_engineering_contract_id_fkey FOREIGN KEY (engineering_contract_id) REFERENCES public.engineering_contracts(id);
+
+--
+-- Name: invoices invoices_service_area_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.invoices
+    ADD CONSTRAINT invoices_service_area_id_fkey FOREIGN KEY (service_area_id) REFERENCES public.service_areas(id);
 
 --
 -- Name: job_assignments job_assignments_client_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
@@ -4103,6 +4462,13 @@ ALTER TABLE ONLY public.service_area_jobs
     ADD CONSTRAINT service_area_jobs_assigned_user_id_fkey FOREIGN KEY (assigned_user_id) REFERENCES public.users(id) ON DELETE SET NULL;
 
 --
+-- Name: service_area_jobs service_area_jobs_budget_code_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.service_area_jobs
+    ADD CONSTRAINT service_area_jobs_budget_code_id_fkey FOREIGN KEY (budget_code_id) REFERENCES public.budget_codes(id);
+
+--
 -- Name: service_area_jobs service_area_jobs_created_by_user_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
 --
 
@@ -4185,6 +4551,13 @@ ALTER TABLE ONLY public.service_area_routes
 
 ALTER TABLE ONLY public.service_areas
     ADD CONSTRAINT service_areas_client_id_fkey FOREIGN KEY (client_id) REFERENCES public.clients(id) ON DELETE CASCADE;
+
+--
+-- Name: service_areas service_areas_construction_contract_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.service_areas
+    ADD CONSTRAINT service_areas_construction_contract_id_fkey FOREIGN KEY (construction_contract_id) REFERENCES public.construction_contracts(id);
 
 --
 -- Name: service_areas service_areas_created_by_user_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
@@ -4698,6 +5071,13 @@ ALTER TABLE ONLY public.training_cert_attempts
     ADD CONSTRAINT training_cert_attempts_user_id_fkey FOREIGN KEY (user_id) REFERENCES public.users(id) ON DELETE CASCADE;
 
 --
+-- Name: training_preset_scopes training_preset_scopes_preset_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.training_preset_scopes
+    ADD CONSTRAINT training_preset_scopes_preset_id_fkey FOREIGN KEY (preset_id) REFERENCES public.training_presets(id) ON DELETE CASCADE;
+
+--
 -- Name: training_progress training_progress_user_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
 --
 
@@ -4724,6 +5104,27 @@ ALTER TABLE ONLY public.user_portal_access
 
 ALTER TABLE ONLY public.user_portal_access
     ADD CONSTRAINT user_portal_access_user_id_fkey FOREIGN KEY (user_id) REFERENCES public.users(id) ON DELETE CASCADE;
+
+--
+-- Name: user_training_access user_training_access_preset_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.user_training_access
+    ADD CONSTRAINT user_training_access_preset_id_fkey FOREIGN KEY (preset_id) REFERENCES public.training_presets(id) ON DELETE SET NULL;
+
+--
+-- Name: user_training_access user_training_access_user_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.user_training_access
+    ADD CONSTRAINT user_training_access_user_id_fkey FOREIGN KEY (user_id) REFERENCES public.users(id) ON DELETE CASCADE;
+
+--
+-- Name: user_training_overrides user_training_overrides_user_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.user_training_overrides
+    ADD CONSTRAINT user_training_overrides_user_id_fkey FOREIGN KEY (user_id) REFERENCES public.users(id) ON DELETE CASCADE;
 
 --
 -- Name: users users_staff_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
