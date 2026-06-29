@@ -147,6 +147,18 @@ function deriveVisible(lessonSet, tree) {
   return { subjects, tracks };
 }
 
+// Default content visibility for a user with NO explicit access row (training-launch
+// pivot, Carter 2026-06-29): new accounts start scoped to the OSP track ONLY; admin
+// opens up ISP / Certification later via presets or per-user overrides. Centralized
+// so the learner view (loadUserVisibility → /my-content → SPA ProductChooser) and the
+// admin progress denominator (visibleTotalFor) always agree. Fail-open: if the catalog
+// can't be parsed (empty OSP set) the callers fall back to "all" so a parse error
+// never locks a learner out.
+const DEFAULT_TRACK = 'osp';
+function defaultVisibleLessons(tree) {
+  return new Set(expandScopeToLessons('track', DEFAULT_TRACK, tree));
+}
+
 // Completion gating (Carter 2026-06-26): a lesson is only credited as completed
 // when competency is proven — a passing quiz score or an explicit interactive
 // competency flag. Authored lessons must carry an assessment/interactive check.
@@ -538,7 +550,8 @@ module.exports = function installTrainingRoutes(app, pool, { requireAuth }) {
       const visibleTotalFor = (userId, role) => {
         if (role === 'admin') return fullTotal;
         const acc = accById.get(userId);
-        if (!acc) return fullTotal; // default = see all
+        // No access row → default OSP-track-only denominator (matches loadUserVisibility).
+        if (!acc) { const n = defaultVisibleLessons(tree).size; return n || fullTotal; }
         const overrides = ovById.get(userId) || [];
         if (acc.base === 'all' && overrides.length === 0) return fullTotal;
         const presetScopes = acc.base === 'preset' && acc.preset_id ? (psById.get(acc.preset_id) || []) : [];
@@ -744,9 +757,18 @@ module.exports = function installTrainingRoutes(app, pool, { requireAuth }) {
   async function loadUserVisibility(userId, role) {
     const tree = curriculumTree();
     if (role === 'admin') return { base: 'all', all: true, lessons: tree.allLessons, tree };
-    const acc = (await pool.query(
+    const accRow = (await pool.query(
       'SELECT base, preset_id FROM user_training_access WHERE user_id = $1', [userId]
-    )).rows[0] || { base: 'all', preset_id: null };
+    )).rows[0];
+    // No explicit access row → default to the OSP track only (training-launch pivot).
+    // Admin already returned above; this covers new trainees + any unconfigured user.
+    if (!accRow) {
+      const lessons = defaultVisibleLessons(tree);
+      // Fail-open if the catalog couldn't be parsed (never lock a learner out).
+      if (lessons.size === 0) return { base: 'all', preset_id: null, all: true, lessons: tree.allLessons, overrides: [], tree };
+      return { base: 'default', preset_id: null, all: false, lessons, overrides: [], tree };
+    }
+    const acc = accRow;
     let presetScopes = [];
     if (acc.base === 'preset' && acc.preset_id) {
       presetScopes = (await pool.query(

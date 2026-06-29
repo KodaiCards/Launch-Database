@@ -137,8 +137,10 @@ async function doSignup(ev){
     });
     const data = await r.json();
     if (!r.ok) throw new Error(data.error || 'Sign-up failed');
-    // Account created + logged in (cookie set server-side). Head into training.
-    window.location.href = '/training/';
+    // Account created + logged in (cookie set server-side). Land on the launcher
+    // (not straight into training) so the user sees their portal(s) + can request
+    // more access. The launcher shows the Training tile for locked-down accounts.
+    window.location.href = '/';
   } catch (e) {
     errEl.textContent = e.message;
     errEl.classList.add('show');

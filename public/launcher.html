@@ -155,25 +155,29 @@ body{
   max-width:36ch;
 }
 
-/* Hero (count=1) — single tile; box is capped so it doesn't sprawl on large screens */
-.launcher-grid[data-count="1"]{max-width:320px;max-height:320px;margin:auto}
+/* Hero (count=1) — single tile; box is capped so it doesn't sprawl on large
+   screens. Sized so the icon + title + full description fit without clipping. */
+.launcher-grid[data-count="1"]{max-width:360px;max-height:400px;margin:auto}
 .launcher-grid[data-count="1"] .tile{
-  gap:20px;
-  padding:40px;
+  gap:16px;
+  padding:32px;
+  justify-content:center;
 }
 .launcher-grid[data-count="1"] .tile-icon{
-  width:clamp(80px, 12vw, 140px);
-  height:clamp(80px, 12vw, 140px);
+  width:clamp(72px, 10vw, 104px);
+  height:clamp(72px, 10vw, 104px);
 }
 .launcher-grid[data-count="1"] .tile-icon i{
-  font-size:clamp(36px, 6vw, 64px);
+  font-size:clamp(32px, 5vw, 48px);
 }
 .launcher-grid[data-count="1"] .tile-name{
-  font-size:clamp(20px, 2.8vw, 36px);
+  font-size:clamp(20px, 2.2vw, 26px);
+  line-height:1.2;
 }
 .launcher-grid[data-count="1"] .tile-desc{
-  font-size:clamp(13px, 1.2vw, 16px);
-  max-width:54ch;
+  font-size:14px;
+  line-height:1.45;
+  max-width:34ch;
 }
 
 /* Large (count=2|3) — generous but not hero */
