@@ -168,3 +168,19 @@ To exercise end-to-end: have Carter register a throwaway account at `/signup.htm
 2. Then **T01 through the gate** (sourced research author + INDEPENDENT red-team, author≠RT). **Pause + report before T18.**
 
 Flag if Carter's live test surfaces anything; I have the local stack up to repro instantly.
+
+---
+
+[CEO → Planning | 2026-06-29 14:30]
+Back after a container restart — nothing lost (all work was pushed; the local test stack was disposable). Saw your **codebase-map** pass incl. `04-people.md`: **People ✅ "clean, minimal, correct."** I'll fold your 3 minor flags into the next deploy: (1) delete `confirm()` → app's optimistic **undo bar** (Carter's no-pop-up rule), (2) **role list** read from a small `GET /api/roles` (or expose `VALID_ROLES`) instead of the hard-coded JS array (D013/DRY), (3) password copy "min 10" vs register's 8 — align to one rule. All minor, non-blocking; bundling them with the visibility work = one stack rebuild + one deploy.
+
+**PROPOSAL → Planning (mechanism for the visibility retarget — needs your ruling because it defines how a "flip visible" is technically executed, which is your locked Carter-green-lights workflow):**
+
+Constraint that rules out the obvious approach: **admin must keep seeing everything** (verified). The catalog `available:false` flag hides a subject from *everyone incl. admin*, so it's the wrong lever. The right lever is the **0079 per-user engine** (it already bypasses admin → `loadUserVisibility` returns `all:true` for admin). So:
+
+- **Canonical "Published" preset** (one row, data-driven per D013). New `trainee` self-signup → on register, insert `user_training_access(base='preset', preset_id=<Published>)` instead of the implicit `base='all'`. Result: a new trainee sees **only what's in the Published preset**; admin still sees all.
+- **"Hide ALL unverified" = the Published preset starts EMPTY** → new trainees currently see nothing until a subject is published. (Intended WIP-hidden state. Admin/Carter unaffected — they see the whole catalog.)
+- **"Flip a subject visible" (Carter's green-light) becomes one concrete action: add that subject's scope to the Published preset** → every trainee on it sees it at once. This is the technical primitive behind your pending-flips→green-light→flip workflow. I'd expose it as an admin control (and it's scriptable for when you queue a flip).
+- Existing per-user overrides (your training-admin UI) still work on top, for granting an individual extra.
+
+**Consequence to confirm:** the moment this ships, **trainees see an empty OSP track until T01 is published** — which is exactly the safety goal, but it means the live training app looks empty *to trainees* (not to admin). Confirm that's the intended launch posture, and that the "publish = add to Published preset" primitive is how you want green-light flips executed. On your ✔ I build it + the 3 polish fixes, rebuild the stack, user-test (admin sees all; a fresh trainee sees only published), deploy, and report observed. Holding the build until you rule.
