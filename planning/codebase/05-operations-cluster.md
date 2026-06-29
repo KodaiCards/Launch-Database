@@ -22,5 +22,32 @@ Rail links: **Dashboard · Projects (`service-areas.html`) · Pipelines · Billi
 
 ## Reapproach-if
 - Chunk 07 (billing): O16 + O15 — reconcile invoices↔SA + the 3 billing paths; this is the big one.
-- 05b: read routes/dashboard.js (legacy dashboard vs keystone /api/dashboard/overview), export_bundle.js, + the cluster HTML pages (verify which endpoints each calls; user-test the live pages).
 - Chunk 09 (hours): my_work is the field surface → System D (1099 app) builds on it.
+
+---
+## 05b — dashboard.js, export_bundle.js, + the cluster HTML pages (mapped 2026-06-29)
+
+### ⚠ Mapping approach for HTML pages (a deliberate first-pass call)
+The ~11 cluster HTML pages are ~300–700 lines each, **mostly duplicated inline CSS boilerplate** + structure + inline JS. I mapped them at the **wiring + logic level** (which `/api/*` each calls + its purpose), NOT full line-by-line, to keep breadth moving across all 20 areas tonight. **Strategy = breadth-first (every backend file read fully; pages mapped by wiring), then a deepening pass** for full-line HTML/heavy SPAs. Flag me to deep-read any specific page's UI logic. (Honors "map everything" intent — interactions captured — while spending context where insight is.)
+
+### `routes/dashboard.js` (238) — the LEGACY dashboard (≠ keystone)
+Operates on the **legacy `projects` tree**. `/api/dashboard` (period-aware tiles: active leaf-project count, unbilled total, period + YTD revenue, recent + unbilled lists; gated admin/design_mgr/permitting_mgr) + `/api/dashboard/active-list` (debug; Item 17 fix added gating — was leaking active projects/WO#s to any authed user). YTD revenue 1-hr in-memory cached. **⚠ HARD-CODED rate fallbacks AGAIN** (inspection 90 / re|resident engineer 100 / permitting 90) — a 3rd copy of the rates (server.js jobs seed + here; D013). **Two dashboards coexist:** this legacy `/api/dashboard` (projects) vs keystone `/api/dashboard/overview` (service_areas, chunk 03). Which does `dashboard.html` use? → verify on the deepening pass.
+
+### `routes/export_bundle.js` (104) — admin `/api/export/all.zip`
+ZIP of service_areas.csv + jobs.csv + invoices.csv (all keystone data). CSV formula-injection guard. Clean, admin-only, the "download everything" lite.
+
+### Cluster HTML pages → API wiring (the live operations screens)
+- **service-areas.html** ("Projects" — the hub): keystone SA list + dashboard/overview + pipelines (deepen later).
+- **area.html** (SA detail/workspace): `/api/service-areas/:id/{workspace,routes,materials,jobs}`, `service-area-routes/*`, `service-area-materials/*`, `service-area-job-documents/*` (← a job-documents feature not seen in chunk 03 — note), `/api/map/store/*` (map integration). The richest page.
+- **billing.html** → legacy `/api/billing/*`. **billing-keystone.html** → `/api/billing/{periods,worklist,run,report,invoices}` (the progressive ledger). → **two billing UIs in the rail** ("Billing" + "Billing (KS)") — reflects O15.
+- **money.html** → `/api/money/*` + `/api/export/all`. **invoices.html** → `/api/cluster/invoices` + `/api/money/invoice/:id`.
+- **hours.html** → `/api/hours/summary`. **hours-import.html** → `/api/hours/import/{validate,commit}` + `/api/service-areas` (the keystone CSV importer).
+- **clients.html** → `/api/cluster/clients`, `/api/money/statement`, `/api/clients` + `/api/engineering-contracts` CRUD (client + EC management UI).
+- **pipeline.html** / **job-board.html** → `/api/service-area-jobs` (+advance/regress) — the per-team kanban + job board.
+- **audit.html** → `/api/audit/log`. **settings.html** → `/api/system/info` (+ more; deepen later).
+
+### Chunk-05 findings
+- **Two dashboards + two billing UIs coexist** (legacy + keystone) — cutover debt; rail exposes both "Billing" + "Billing (KS)". Ties O15.
+- **3rd hard-coded rate table** in dashboard.js (D013).
+- **`service-area-job-documents`** endpoints exist (area.html calls them) but weren't in chunk 03's service_areas.js read — likely a separate route module → find + map (reapproach).
+- **05 marked ✅ (first-pass)**; HTML pages at wiring-level; deep UI-logic pass deferred.
