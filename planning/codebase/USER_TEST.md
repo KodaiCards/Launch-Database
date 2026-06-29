@@ -31,9 +31,9 @@
 | U13 | Invoices | `/invoices.html` | ✅ read-only list (3rd invoice surface → consolidate) |
 | U14 | People | `/people.html` | ✅ unified roster works; server-gated (no leak) |
 | U15 | Settings | `/settings.html` (O30 stub) | ✅ **O30 confirmed: appearance+links+sysinfo, NO config** |
-| U16 | Audit log | `/audit.html` | ⬜ |
-| U17 | Training admin + Lesson visibility | `/training-admin.html` | ⬜ |
-| U18 | Training SPA (trainee view) | `/training/` | ⬜ |
+| U16 | Audit log | `/audit.html` | ⚠ **BROKEN — /api/audit/log 500 (col created_at) → O35** |
+| U17 | Training admin + Lesson visibility | `/training-admin.html` | ✅ I11 target (no scores/time; 254-denom bug); Lesson-vis live |
+| U18 | Training SPA (trainee view) | `/training/` | ✅ OSP-only works; header "OSP"→Training; "X.X hr" on subject cards; only T01 visible |
 | U19 | Customer portal | `/customer.html` | ⬜ |
 | U20 | Client portal (v1 + v2) | `/client-portal.html` `/client/` | ⬜ |
 | U21 | Splice tool | `/splice.html` | ⬜ |
@@ -73,6 +73,17 @@
 **U14 — People (`/people.html`, admin) ✅.** The unified roster (chunk 04 foundation), working. "Everyone with a login or a staff record — one place to add, edit perms & team, and remove." Add person + search + Show inactive + per-person Hours date filter. Table Name/Role/Team(s)/Status/Hours/Edit. Shows Carter (admin, all teams), Claude CEO, Default Admin, AND my test accounts dd_admin (admin)/dd_trainee (trainee) — **confirms the merged roster includes new signups** (chunk 04 criterion ✓). ✅ **Server-gated data** (`/api/people` 403 for trainee) — NO leak here (contrast O34). Clean. *(reminder: dd_* test accounts to clean up at end.)*
 
 **U15 — Settings (`/settings.html`, admin) ✅ — ⭐ O30 CONFIRMED LIVE.** "Settings & System Info" = **APPEARANCE** (Color theme Light/Dark buttons), **QUICK LINKS** (just links to other pages), **SYSTEM INFO** (app launch-fiber-services, v1.1.0, Node v24, env, portal-mode admin, uptime, PostgreSQL 18.4). **ZERO configuration controls** — no pricing/jobs/portal-access/invoice-templates/construction-contracts/client-links. All config is stranded in admin.html (O30 confirmed). NB for O33: settings already uses **text "Light"/"Dark" buttons** (what Carter wants) while the topbar uses sun/moon → unify in redesign; this theme picker writes the server pref (`/api/auth/me/theme`).
+
+**U16 — Audit log (`/audit.html`, admin) ⚠ BROKEN → O35.** Page renders (filters: actor / action [create/update/delete/staff.create/invoice.*] / entity [project/service_area/service_area_job/invoice/client/staff/time_entry]; table When/User/Action/Entity/ID/Source) but the data load **FAILS**: "Failed to load audit log." `GET /api/audit/log` → **500**. Server log: **`[audit-view] column "created_at" does not exist`** → the audit-view query references `created_at` but `audit_log`'s timestamp column is `at` (chunk 14). **Trivial fix** (rename the column in the audit-view query). `/api/_admin/timeclock-audit` works (200). → open_items O35.
+
+**U17 — Training admin / progress (`/training-admin.html`, admin) ✅ = the I11 redesign target.** Header: **Lesson visibility** (my feature ✓ live), Content access, Refresh. Stats: 13 people / 7 started / 0 finished / 0% avg / **254 lessons**. Per-person table: Person/Role/PROGRESS(%)/COMPLETED/IN-PROGRESS/LAST-ACTIVE/JOINED. ⚠ **NO test scores, NO per-lesson time** → confirms exactly the I11 gap (Carter wants scores highlighted + per-lesson timing + 45-min flag). ⚠ **denominator bug:** every row shows "0 / 254" (the GLOBAL total) incl. the trainee — the UI uses `_data.total_lessons` (global), ignoring per-user visibility → a trainee published only N lessons still reads "0/254" (misleading). Fix in the I11 rebuild. (shows my dd_* test accounts.)
+
+**U18 — Training SPA AS TRAINEE (`/training/`, dd_trainee) ✅ — Carter's training fixes LOCATED.**
+- ✅ **Trainee sees ONLY the OSP Course** (no ISP/Cert cards) — my visibility fix WORKS live (vs Carter's earlier screenshot showing all 3). Landing = "Launch Training / Choose your learning path" → one OSP card.
+- 🎯 **Gold header text = "LAUNCH FIBER SERVICES · OSP TRAINING"** (+ subtitle "OSP · ISP · Certification Prep") → Carter: drop "OSP" → just "Training". Location = the SPA `banner` top (every SPA page).
+- 🎯 **"Suggested time" = "X.X hr"** — renders on each **topic/subject card** in the course view (`#/osp`): e.g. "Fundamentals & Vocabulary … **10 lessons · 3.3 hr** · Start". Carter wants it removed everywhere (also likely on lesson headers/subjects — confirm during the content pass). Location pinned: the `lessons · hr` line on subject cards.
+- ⚠ **Discrepancy:** in the OSP course the trainee sees only **T01** ("1 courses"), NOT all 20 OSP topics — more restricted than the "OSP fallback (234 lessons)" I expected. Either `my-content` is narrower than thought OR `course-catalog.js` availability filters to T01. **Investigate** (affects the visibility feature + launch posture — note: T01-only is actually a SAFE state, but understand WHY). 
+- **I10:** the SPA is a SEPARATE design system (dark, card-based, gold accent, 📚 emoji) — distinct from app-shell; the redesign spans it (redesign_ui.md). *(re-login admin before next chunk.)*
 
 **RECURRING UI PATTERN (for I10):** every cluster page = the shared `app_nav` rail PLUS a page-specific inline header that repeats logo / a theme toggle / an "Admin" link (sometimes "Service Areas"). The theme toggle appears in BOTH the topbar (sun/moon) AND inline headers (sometimes a "Theme" text button) → O33 inconsistency. `dashboard.html` is the worst (a FULL duplicate nav). The redesign should collapse to ONE nav + ONE theme control.
 
