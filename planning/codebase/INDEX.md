@@ -19,7 +19,7 @@ Status: ⬜ not started · 🔄 in progress · ✅ mapped · ♻️ reapproach n
 
 | # | Area | Key files | Pri | Status |
 |---|---|---|---|---|
-| 01 | **Spine** — boot, middleware order, route mounts, PORTAL_DEFS/launcher | `server.js` | P1 | ⬜ |
+| 01 | **Spine** — boot, middleware order, route mounts, PORTAL_DEFS/launcher | `server.js` | P1 | ✅ → `01-spine.md` |
 | 02 | **Auth** — JWT, roles, requireAuth/Admin/Manager, signup/register | `auth.js` | P1 | ⬜ |
 | 03 | **Keystone core** — service areas + jobs model | `routes/service_areas.js`, `concentrators.js`, migr 0064+ | P1 | ⬜ |
 | 04 | **People/roster** (just shipped) | `routes/people.js`, `staff.js`, `people.html`, `admin_users.js` | P1 | ⬜ |

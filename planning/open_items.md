@@ -11,6 +11,7 @@
 | O5 | **Does Workforce export CSV?** (+ a sample) | input from Carter | when hours (System D) starts | OPEN |
 | O6 | **Map version** timing (boss-dependent) | input from Carter | when map integration (System C) starts | OPEN |
 | O7 | **Cockpit alert thresholds** (fixed-fee %, RUS cap %, utilization) | input from Carter | when cockpit (System E) starts | OPEN |
+| O13 | **VERIFY: do migrations auto-run on Railway boot?** `server.js start()` calls `runMigrations(pool)` every boot (line ~2191) — contradicts the handoff/memory "startCommand skips auto-migrate, apply manually." If confirmed auto-running, correct that guidance. | VERIFY (Planning found, chunk 01) | when convenient / before next migration | OPEN |
 | O9 | **Regression / QA safety net** (live E2E over the operations cluster) — "nothing can break" needs more than manual per-change user-tests | recommendation (Planning) | after the codebase map (it informs what to cover) | OPEN |
 | O10 | **Staging-before-live** — `main` auto-deploys straight to prod; add a pre-prod check so nothing broken reaches the team | recommendation (Planning) | when we discuss deploy safety | OPEN |
 | O11 | **Automated data backups** — verify they exist / establish them (real revenue + government data) | recommendation (Planning) | soon — it's a standing risk | OPEN |
