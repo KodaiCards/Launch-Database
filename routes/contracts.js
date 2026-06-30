@@ -13,8 +13,9 @@ module.exports = function installContractsRoutes(app, pool, mw) {
   const { requireAdmin } = mw;
   // Wave 1.5 [UNGATED]: GET /api/contracts was missing auth.
   const requireAuth = (mw && mw.requireAuth) || (() => (req, res, next) => next());
+  const requireStaff = (mw && mw.requireStaff) || requireAuth(); // O34: staff-only reads (excludes trainee/customer)
 
-  app.get('/api/contracts', requireAuth(), async (req, res) => {
+  app.get('/api/contracts', requireStaff, async (req, res) => {
     const { client_id, engineering_contract_id } = req.query;
     try {
       const where = [];

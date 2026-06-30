@@ -33,8 +33,9 @@ module.exports = function installEngineeringContractsRoutes(app, pool, mw) {
   const { requireAdmin } = mw;
   // Wave 1.5 [UNGATED]: GET /api/engineering-contracts was missing auth.
   const requireAuth = (mw && mw.requireAuth) || (() => (req, res, next) => next());
+  const requireStaff = (mw && mw.requireStaff) || requireAuth(); // O34: staff-only reads (excludes trainee/customer)
 
-  app.get('/api/engineering-contracts', requireAuth(), async (req, res) => {
+  app.get('/api/engineering-contracts', requireStaff, async (req, res) => {
     const { client_id } = req.query;
     try {
       // For each engineering contract, also surface a count of child contracts
@@ -61,7 +62,7 @@ module.exports = function installEngineeringContractsRoutes(app, pool, mw) {
     }
   });
 
-  app.get('/api/engineering-contracts/:id', requireAuth(), async (req, res) => {
+  app.get('/api/engineering-contracts/:id', requireStaff, async (req, res) => {
     try {
       const { rows: ec } = await pool.query(
         `SELECT ec.*, cl.name AS client_name
@@ -206,7 +207,7 @@ module.exports = function installEngineeringContractsRoutes(app, pool, mw) {
 
   // ─── EC-SCOPED SERVICE AREAS ────────────────────────────────────────────────
 
-  app.get('/api/engineering-contracts/:id/service-areas', requireAuth(), async (req, res) => {
+  app.get('/api/engineering-contracts/:id/service-areas', requireStaff, async (req, res) => {
     try {
       const { rows } = await pool.query(
         `SELECT id, name, notes, work_order_number, contract_id, created_at FROM ec_service_areas
@@ -385,7 +386,7 @@ module.exports = function installEngineeringContractsRoutes(app, pool, mw) {
 
   // GET /api/engineering-contracts/:ecId/jobs
   // Returns all jobs visible to this EC via 3-tier precedence.
-  app.get('/api/engineering-contracts/:ecId/jobs', requireAuth(), async (req, res) => {
+  app.get('/api/engineering-contracts/:ecId/jobs', requireStaff, async (req, res) => {
     const { ecId } = req.params;
     try {
       // Look up the EC's client_id and program for use in legacy fallback.
@@ -453,7 +454,7 @@ module.exports = function installEngineeringContractsRoutes(app, pool, mw) {
 
   // GET /api/engineering-contracts/:ecId/job-visibility
   // Lists explicit ec_job_visibility rows (admin use — shows what's opted-in).
-  app.get('/api/engineering-contracts/:ecId/job-visibility', requireAuth(), async (req, res) => {
+  app.get('/api/engineering-contracts/:ecId/job-visibility', requireStaff, async (req, res) => {
     try {
       const { rows: ecCheck } = await pool.query(
         `SELECT id FROM engineering_contracts WHERE id = $1`,
@@ -592,7 +593,7 @@ module.exports = function installEngineeringContractsRoutes(app, pool, mw) {
   // GET /api/engineering-contracts/:ecId/construction-contracts
   // Lists contracts explicitly attached to this EC plus unscoped contracts at
   // the same client (legacy fallback).
-  app.get('/api/engineering-contracts/:ecId/construction-contracts', requireAuth(), async (req, res) => {
+  app.get('/api/engineering-contracts/:ecId/construction-contracts', requireStaff, async (req, res) => {
     const { ecId } = req.params;
     try {
       const { rows: ecRows } = await pool.query(

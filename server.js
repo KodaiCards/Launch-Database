@@ -179,7 +179,7 @@ if (PORTAL_MODE) {
 // portal routes can read req.user / req.cookies. Express middleware runs in
 // registration order, so a route registered before authMiddleware never
 // sees req.user.
-const { bootstrapAuthSchema, installAuthRoutes, requireAuth, requireAdmin, requireManagerOrAdmin, canAccessPortal, canCreateProjects, signToken, signImpersonationToken, verifyToken, rateLimitOk, cookieOpts } = require('./auth');
+const { bootstrapAuthSchema, installAuthRoutes, requireAuth, requireAdmin, requireManagerOrAdmin, requireStaff, canAccessPortal, canCreateProjects, signToken, signImpersonationToken, verifyToken, rateLimitOk, cookieOpts } = require('./auth');
 installAuthRoutes(app, pool);
 
 // Customer scope guard. Per auth.js's role doc: "Customers are external —
@@ -675,13 +675,13 @@ const invoiceGenerator = require('./invoice_generator');
 
 // Clients CRUD lives in routes/clients.js (extracted as part of
 // CLEANUP_PLAN.md Track 1.3).
-require('./routes/clients')(app, pool, { requireAdmin, requireAuth }); // H-1: requireAuth added — GET /api/clients was unauthenticated
+require('./routes/clients')(app, pool, { requireAdmin, requireAuth, requireStaff }); // H-1: requireAuth added — GET /api/clients was unauthenticated; O34: GETs gated to requireStaff (no trainee/customer leak)
 
 // ─────────────────────────────────────────────────────────────────────────────
 // CONTRACTS + ENGINEERING CONTRACTS — extracted as part of Track 1.3.
 // ─────────────────────────────────────────────────────────────────────────────
-require('./routes/contracts')(app, pool, { requireAdmin, requireAuth }); // H-1: requireAuth added — GET /api/contracts was unauthenticated
-require('./routes/engineering_contracts')(app, pool, { requireAdmin, requireAuth }); // H-1: requireAuth added — GET /api/engineering-contracts was unauthenticated
+require('./routes/contracts')(app, pool, { requireAdmin, requireAuth, requireStaff }); // H-1: requireAuth added — GET /api/contracts was unauthenticated; O34: GET gated to requireStaff
+require('./routes/engineering_contracts')(app, pool, { requireAdmin, requireAuth, requireStaff }); // H-1: requireAuth added — GET /api/engineering-contracts was unauthenticated; O34: GETs gated to requireStaff
 
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -698,10 +698,10 @@ require('./routes/jobs')(app, pool, { requireAdmin, requireManagerOrAdmin, requi
 // ─────────────────────────────────────────────────────────────────────────────
 
 // Project types extracted to routes/project_types.js (Track 1.3).
-require('./routes/project_types')(app, pool, {});
+require('./routes/project_types')(app, pool, { requireStaff }); // O34: was {} (no-op stub = unauthenticated) — gate the project-types GET to staff
 
 // Pricing list extracted to routes/pricing.js (Track 1.3).
-require('./routes/pricing')(app, pool, { requireManagerOrAdmin, requireAuth }); // H-1: requireAuth added — GET /api/pricing* was unauthenticated (competitive-intel leak)
+require('./routes/pricing')(app, pool, { requireManagerOrAdmin, requireAuth, requireStaff }); // H-1: requireAuth added — GET /api/pricing* was unauthenticated (competitive-intel leak); O34: gated to requireStaff (rates must not reach trainee/customer)
 
 // ─────────────────────────────────────────────────────────────────────────────
 // PERMITTING CALCULATION (universal, not just RUS)
@@ -739,7 +739,7 @@ require('./routes/people')(app, pool, { requireAdmin, requireAuth });
 // stay below for now and will move in a follow-up.
 // ─────────────────────────────────────────────────────────────────────────────
 // Item 2 + 22 fix: requireAuth added so projects.js can gate POST/PUT.
-require('./routes/projects')(app, pool, { requireAdmin, requireAuth, requireManagerOrAdmin });
+require('./routes/projects')(app, pool, { requireAdmin, requireAuth, requireManagerOrAdmin, requireStaff }); // O34: read GETs gated to requireStaff
 
 // Phase 2 keystone: Service-Area-with-jobs model (migration 0064). Coexists with
 // the legacy projects tree above during the rebuild.
@@ -831,7 +831,7 @@ require('./routes/ai')(app, pool, { requireAdmin, upload });
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Project detail drill-down extracted to routes/project_detail.js (Track 1.3).
-require('./routes/project_detail')(app, pool, { requireAuth }); // H-1: requireAuth added — GET /api/projects/:id/detail was unauthenticated
+require('./routes/project_detail')(app, pool, { requireAuth, requireStaff }); // H-1: requireAuth added — GET /api/projects/:id/detail was unauthenticated; O34: gated to requireStaff
 
 
 // Permits pipeline + per-project documents + /api/_debug/uploads diagnostic
@@ -853,10 +853,10 @@ require('./routes/budgets')(app, pool, { requireManagerOrAdmin, requireAuth }); 
 
 // Potential permits (design-submitted candidates) extracted to
 // routes/potential_permits.js (Track 1.3).
-require('./routes/potential_permits')(app, pool, { requireAuth }); // C-2: was {} — no-op stub fired instead of real requireAuth
+require('./routes/potential_permits')(app, pool, { requireAuth, requireStaff }); // C-2: was {} — no-op stub fired instead of real requireAuth; O34: gated to requireStaff
 
 // Concentrators / service areas extracted to routes/concentrators.js (Track 1.3).
-require('./routes/concentrators')(app, pool, { requireAdmin, requireAuth }); // H-1: requireAuth added — GET /api/concentrators was unauthenticated
+require('./routes/concentrators')(app, pool, { requireAdmin, requireAuth, requireStaff }); // H-1: requireAuth added — GET /api/concentrators was unauthenticated; O34: gated to requireStaff
 
 // Dashboard, design pipeline, and inspection (PSC RUS) views extracted to
 // dedicated route modules (Track 1.3).

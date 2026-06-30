@@ -38,8 +38,9 @@ module.exports = function installPricingRoutes(app, pool, mw) {
   const requireManagerOrAdmin = (mw && mw.requireManagerOrAdmin) || ((req, res, next) => next());
   // Wave 1.5 [UNGATED]: all three GET pricing endpoints were missing auth.
   const requireAuth = (mw && mw.requireAuth) || (() => (req, res, next) => next());
+  const requireStaff = (mw && mw.requireStaff) || requireAuth(); // O34: rates are staff-only (excludes trainee/customer)
 
-  app.get('/api/pricing', requireAuth(), async (req, res) => {
+  app.get('/api/pricing', requireStaff, async (req, res) => {
     try {
       const { rows } = await pool.query(`
         SELECT pe.*,
@@ -57,7 +58,7 @@ module.exports = function installPricingRoutes(app, pool, mw) {
 
   // Look up the default rate/billing for a job+program (and optionally a
   // billing code). Used by the project create form to auto-fill the rate.
-  app.get('/api/pricing/lookup', requireAuth(), async (req, res) => {
+  app.get('/api/pricing/lookup', requireStaff, async (req, res) => {
     const { job_id, program, billing_code } = req.query;
     if (!job_id) return res.status(400).json({ error: 'job_id required' });
     let normalizedProgram;

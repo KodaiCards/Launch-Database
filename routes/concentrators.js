@@ -13,8 +13,9 @@ module.exports = function installConcentratorsRoutes(app, pool, mw) {
   const requireAdmin = (mw && mw.requireAdmin) || ((req, res, next) => next());
   // Wave 1.5 [UNGATED]: GET /api/concentrators was missing auth.
   const requireAuth = (mw && mw.requireAuth) || (() => (req, res, next) => next());
+  const requireStaff = (mw && mw.requireStaff) || requireAuth(); // O34: staff-only reads (excludes trainee/customer)
 
-  app.get('/api/concentrators', requireAuth(), async (req, res) => {
+  app.get('/api/concentrators', requireStaff, async (req, res) => {
     const { contract_label } = req.query;
     try {
       const q = contract_label

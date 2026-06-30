@@ -27,8 +27,9 @@ const PROGRAM_ROWS = [
 module.exports = function installProjectTypesRoutes(app, pool, mw) {
   // Wave 1.5 [UNGATED]: GET /api/project-types was missing auth.
   const requireAuth = (mw && mw.requireAuth) || (() => (req, res, next) => next());
+  const requireStaff = (mw && mw.requireStaff) || requireAuth(); // O34: staff-only read (was unauthenticated via {} stub)
 
-  app.get('/api/project-types', requireAuth(), async (req, res) => {
+  app.get('/api/project-types', requireStaff, async (req, res) => {
     res.json(PROGRAM_ROWS);
   });
 

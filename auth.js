@@ -109,6 +109,16 @@ const VALID_ROLES = [
   'trainee',
 ];
 
+// O34 fix: "staff" = every internal role EXCEPT the externally-facing ones
+// (self-signup trainees and client-facing customers). Derived from VALID_ROLES
+// (D013 — data-driven, not a hand-pasted list) so a new staff role is covered
+// automatically. Used by requireStaff to gate business-data reference GETs
+// (clients/pricing/projects/EC/contracts/etc.) that the design/permitting/
+// timeclock portal cascade pickers legitimately need — so we exclude only
+// trainee + customer rather than locking to admin (which would break portals).
+const NON_STAFF_ROLES = ['trainee', 'customer'];
+const STAFF_ROLES = VALID_ROLES.filter(r => !NON_STAFF_ROLES.includes(r));
+
 function teamForRole(role) {
   if (!role) return null;
   if (role.startsWith('design_')) return 'design';
@@ -425,6 +435,11 @@ function requireAuth(roles) {
 const requireAdmin = requireAuth('admin');
 
 const requireManagerOrAdmin = requireAuth(['admin', 'design_manager', 'permitting_manager']);
+
+// O34 fix: gate to internal staff only (excludes trainee + customer). For
+// business-data reference GETs that portals' cascade pickers need but that
+// must not leak to self-signup trainees or client-facing customers.
+const requireStaff = requireAuth(STAFF_ROLES);
 
 // ─── ROUTES ──────────────────────────────────────────────────────────────────
 function installAuthRoutes(app, pool) {
@@ -808,6 +823,8 @@ module.exports = {
   requireAuth,
   requireAdmin,
   requireManagerOrAdmin,
+  requireStaff,
+  STAFF_ROLES,
   signToken,
   signImpersonationToken,
   verifyToken,

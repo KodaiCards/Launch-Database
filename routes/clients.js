@@ -19,8 +19,9 @@ module.exports = function installClientsRoutes(app, pool, mw) {
   // Wave 1.5 [UNGATED]: GET /api/clients was missing auth. All roles need
   // client list access (portal create forms), so requireAuth() (any role).
   const requireAuth = (mw && mw.requireAuth) || (() => (req, res, next) => next());
+  const requireStaff = (mw && mw.requireStaff) || requireAuth(); // O34: staff-only reads (excludes trainee/customer)
 
-  app.get('/api/clients', requireAuth(), async (req, res) => {
+  app.get('/api/clients', requireStaff, async (req, res) => {
     try {
       const { rows } = await pool.query('SELECT * FROM clients ORDER BY name');
       res.json(rows);
@@ -115,7 +116,7 @@ module.exports = function installClientsRoutes(app, pool, mw) {
   //
   // Auth: any authenticated non-customer role. Cascade pickers are internal
   // tooling; customers access their own portal surfaces, not picker endpoints.
-  app.get('/api/clients/:client_id/service-areas', requireAuth(), async (req, res) => {
+  app.get('/api/clients/:client_id/service-areas', requireStaff, async (req, res) => {
     if (req.user && req.user.role === 'customer') {
       return res.status(403).json({ error: 'Insufficient permissions for this action' });
     }

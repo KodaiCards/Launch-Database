@@ -17,8 +17,9 @@ const { logAudit } = require('./_audit');
 
 module.exports = function installPotentialPermitsRoutes(app, pool, mw) {
   const requireAuth = (mw && mw.requireAuth) || (() => (req, res, next) => next());
+  const requireStaff = (mw && mw.requireStaff) || requireAuth(); // O34: staff-only reads (excludes trainee/customer)
 
-  app.get('/api/potential-permits', requireAuth(), async (req, res) => {
+  app.get('/api/potential-permits', requireStaff, async (req, res) => {
     const { status } = req.query;
     try {
       const q = status

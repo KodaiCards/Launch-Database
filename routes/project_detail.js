@@ -63,8 +63,9 @@ module.exports = function installProjectDetailRoutes(app, pool, mw) {
     throw new Error('project_detail: requireAuth middleware not provided — check server.js destructure');
   }
   const requireAuth = mw.requireAuth;
+  const requireStaff = (mw && mw.requireStaff) || requireAuth(); // O34: staff-only reads (excludes trainee/customer)
 
-  app.get('/api/projects/:id/detail', requireAuth(), async (req, res) => {
+  app.get('/api/projects/:id/detail', requireStaff, async (req, res) => {
     try {
       // M-5 IDOR fix: gate every project read on role + team membership.
       // UUID validation is embedded in assertProjectAccess.

@@ -25,7 +25,7 @@ module.exports = function installProjectsRoutes(app, pool, mw) {
   // POST and PUT were entirely unguarded — any unauthenticated request
   // could create or mutate projects. requireAuth() gates both handlers.
   const { requireAdmin, requireAuth, requireManagerOrAdmin } = mw;
-  const { canCreateProjects } = require('../auth');
+  const { canCreateProjects, requireStaff } = require('../auth'); // O34: requireStaff = staff-only (excludes trainee/customer)
 
   // Wave 15: async middleware — 401 if not logged in, 403 if not permitted.
   // On DB error falls back to role-only check so transient failures don't
@@ -46,7 +46,7 @@ module.exports = function installProjectsRoutes(app, pool, mw) {
   }
 
   // Wave 1.5 [UNGATED]: GET /api/projects and GET /api/projects/:id were missing auth.
-  app.get('/api/projects', requireAuth(), async (req, res) => {
+  app.get('/api/projects', requireStaff, async (req, res) => {
     const { status, client_id, project_type } = req.query;
     let where = [];
     let params = [];
@@ -189,7 +189,7 @@ module.exports = function installProjectsRoutes(app, pool, mw) {
     return true;
   }
 
-  app.get('/api/projects/:id', requireAuth(), async (req, res) => {
+  app.get('/api/projects/:id', requireStaff, async (req, res) => {
     if (!validateUUID(req.params.id, res)) return;
     try {
       const { rows } = await pool.query(`
@@ -1381,7 +1381,7 @@ module.exports = function installProjectsRoutes(app, pool, mw) {
   // time entries, not just is_ongoing=true — the UI gates visibility, but the
   // endpoint is unrestricted so the same data feeds the monthly breakdown table.
   // M-3 fix: validateUUID on id parameter.
-  app.get('/api/projects/:id/monthly-hours-breakdown', requireAuth(), async (req, res) => {
+  app.get('/api/projects/:id/monthly-hours-breakdown', requireStaff, async (req, res) => {
     if (!validateUUID(req.params.id, res)) return;
     try {
       const { rows } = await pool.query(`

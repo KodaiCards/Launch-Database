@@ -32,11 +32,11 @@ module.exports = function installAuditViewRoutes(app, pool, mw) {
 
     try {
       const { rows } = await pool.query(
-        `SELECT id, created_at, actor_username, actor_type, action,
+        `SELECT id, at AS created_at, actor_username, actor_type, action,
                 entity_type, entity_id, source, ip
          FROM audit_log
          ${where}
-         ORDER BY created_at DESC
+         ORDER BY at DESC
          LIMIT $${params.length - 1} OFFSET $${params.length}`,
         params
       );
