@@ -234,3 +234,29 @@ Flag anything; otherwise focus the agent budget on T01.
 **🟠 O35 — Audit Log page 500 (trivial).** `GET /api/audit/log` → 500; server log `[audit-view] column "created_at" does not exist`. The audit-view query references `created_at` but `audit_log`'s timestamp column is `at` (`routes/_audit.js`). Rename the ref (+ check ORDER BY/pagination use the same). `/api/_admin/timeclock-audit` is fine.
 
 **Bundle these with your existing People polish trio** (delete→undo-bar, `GET /api/roles`, password-min align) into one stack rebuild + deploy whenever you surface — none are blocking, but O34 is a live data leak so don't sit on it long. **T01-through-the-gate stays your main track.** I'll bring the bigger cutover/redesign work (I10 billing+portal+nav consolidation, O30 config UI, O16/O23 hours+billing reconciliation) as scoped briefs after I re-walk the plan with Carter — don't start those yet.
+
+---
+
+[Planning → CEO | 2026-06-30 13:45] — **NEW MISSION KICKOFF (Carter-driven; supersedes the "don't start" hold above for these specific packages). O34/O35 are FIXED+DEPLOYED by Planning (`46bb2a6d`).** Note: O34 fixed the DATA leak; O34(b) the page-shell "flash" is folded into WP-C below. Boot fresh, read `ROLES.md → CEO.md → INVENTORY.md → decisions.md → TRAINING_PLAN.md → redesign_ui.md → open_items O36–O39`, run the done/verified triage, then execute in this order. **≤2–3 agents, scoped, verify real artifacts before next wave, gate every content merge, never self-report, verify USER-FACING (Carter's bar is user-testing, not build-clean). Post progress here.**
+
+**Standing quality bar (Carter, hard): build every feature to its FULLEST extent + usable EVERYWHERE it makes sense — never a single-point literal minimum. Update the codebase map (`planning/codebase/*`) as you change things.**
+
+**▶ WP-A — Training-visibility REBUILD + phase-1 real-time (FIRST; his active pain + unblocks the content cadence). Detail: O36/O37.**
+Root cause (code-verified): `routes/training.js loadUserVisibility` has 5 conflicting "base" concepts (`all/preset/published/default/none`) + hard-coded `defaultVisibleLessons` (OSP) + the "Published-preset-seeded-with-all-OSP" — they fight; and `osp-training/src/hooks/useMyContent.js` **fails OPEN** + filters client-side over static bundles (O26) → the flash, "shows all 3 tracks", and "revoke didn't stick / cert track persisted".
+Build ONE simple, **server-authoritative** model (D013, data-driven — propose the exact schema to Planning before building; reuse `training_presets`/`_preset_scopes`/`user_training_overrides` if clean):
+  1. **Published set** = content that's live at all. Admin **"Publish"** toggles a **lesson OR a whole track/subject** in. WIP/unpublished = nobody sees it.
+  2. **New-user default** = a **settable preset** (admin-editable; NOT hard-coded — kill `defaultVisibleLessons`). A fresh signup sees exactly this (⊆ published).
+  3. **Per-user grant/revoke** = add/remove tracks/lessons for a person; **revoke truly HIDES even if already seen** (hide wins). One resolver: admin→all; else `default ± per-user overrides`, intersected with `published`.
+  4. **Server-enforced + no flash**: `/api/training/my-content` returns ONLY visible ids; SPA renders strictly that (remove fail-open) and shows a **skeleton until it resolves** (never render-all-then-hide). 
+  5. **Phase-1 real-time**: on any publish/default/per-user change → `broadcast('user:<id>', 'training_visibility_changed')` (+ `admin`). SPA subscribes `/api/events/stream` → refetch my-content + re-render. **No refresh.** (The `user:<id>` channel in `_sse.js` is reserved for exactly this.)
+Admin UI (`training-admin.html`): Publish (lessons+tracks), edit New-user default, per-user grant/revoke — simple + non-conflicting.
+
+**▶ WP-D — Free usernames on inactive/delete (quick; bundle). Detail: O39.** On deactivate/soft-delete, release `users.username` (tombstone rename) so it's reusable; migration to free already-inactive/legacy usernames; verify register + People "Add person" no longer say "taken".
+
+**▶ WP-C — FULL UI redesign (parallel track; do ALL of `redesign_ui.md`, not piecemeal). Detail: O38.** Mount the **prod-proven `AppShell.mountTopbar({showBack,userMenu})`** on the operations cluster via `app_nav.js` → centered logo + **theme picker top-right** + user menu; offset `.app-shell` below the 56px fixed topbar. **PURGE the sun/moon `#themeToggle` EVERYWHERE** (cluster + portals) + the per-page legacy theme JS (`billing_view/pipeline_board/service_areas_ui` set data-theme from `lfs_theme`) — unify on the one engine. Remove "Launch"/"Projects" wordmark text at top. Add **left hamburger → push-sidebar reflow** (content scoots, not covered) + **nav bubble icons** (hover scale ~1.2× + name tooltip). Apply consistently across cluster + training SPA + portals. *(Planning shipped a partial — rail-bottom picker + topo/fiber removal `a7c3bead`; supersede the rail-bottom picker with the topbar.)*
+
+**▶ WP-B phases 2–3 — broader real-time (AFTER WP-A proves the pattern).** Phase 2: list/project/map live-REFRESH (broadcast on writes → subscribers refetch). **Phase 3 (PLANNING PUSH-BACK — do NOT start now): true concurrent map CO-EDITING** (multi-cursor, conflict-free merge) is a large separate project; phases 1–2 deliver the felt "real-time" without it.
+
+**Then: the CONTENT cadence resumes in earnest** (Carter: "more into training — barely started") — OSP subjects through the gate (research-log + INDEPENDENT red-team, author≠RT), one at a time, Carter green-lights flips; now trivially publishable via WP-A's Publish control.
+
+**Questions/scope changes → post here; I rule (escalate to Carter if big).**

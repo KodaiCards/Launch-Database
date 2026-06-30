@@ -36,4 +36,4 @@ Training is the first task: time-sensitive, isolated (`osp-training/` build). Ge
 - Enforce the gate on **every** content merge; verify via git + artifacts, **never self-report.**
 
 ## Status
-**NEW — booted 2026-06-28 on the training mission.** Start with the done/verified triage; report to Planning on `planning/threads/ceo.md` before building.
+**2026-06-30 — NEW MISSION KICKOFF posted in `threads/ceo.md` (read it).** Training-pivot infra is shipped; O34/O35 fixed+deployed by Planning. Current packages, in order: **WP-A** training-visibility REBUILD + phase-1 real-time (server-authoritative, settable default, Publish lessons+tracks, give/take-per-person-that-hides, no flash, live via SSE `user:<id>`) → **WP-D** free usernames on inactive → **WP-C** full UI redesign (mount `AppShell.mountTopbar` on the cluster, purge sun/moon everywhere, hamburger+push-sidebar+bubble icons) → then the **content cadence** (gated). Boot fresh → triage → for WP-A **propose the exact schema to Planning before building**. ≤2–3 agents, gate enforced, verify user-facing, post progress on the thread.
