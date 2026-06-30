@@ -78,20 +78,7 @@ a,button{font-family:inherit}
 </style>
 </head>
 <body>
-  <div class="shell">
-    <nav class="rail">
-      <div class="brand"><i class="fa-solid fa-tower-broadcast"></i> Launch</div>
-      <a class="nav-item active" href="/dashboard.html"><i class="fa-solid fa-gauge-high"></i> Dashboard</a>
-      <a class="nav-item" href="/service-areas.html"><i class="fa-solid fa-diagram-project"></i> Service areas</a>
-      <a class="nav-item" href="/pipeline.html?team=permitting"><i class="fa-solid fa-table-columns"></i> Pipelines</a>
-      <a class="nav-item" href="/billing.html"><i class="fa-solid fa-file-invoice-dollar"></i> Billing</a>
-      <a class="nav-item" href="/hours.html"><i class="fa-solid fa-clock"></i> Hours</a>
-      <a class="nav-item" href="/money.html"><i class="fa-solid fa-coins"></i> Money</a>
-      <a class="nav-item" href="/clients.html"><i class="fa-solid fa-users"></i> Clients</a>
-      <a class="nav-item" style="margin-top:auto" href="/admin.html"><i class="fa-solid fa-gear"></i> Admin (legacy)</a>
-      <button class="nav-item" id="themeToggle" style="border:none;background:none;text-align:left"><i class="fa-solid fa-moon"></i> Theme</button>
-    </nav>
-    <main class="main" role="main">
+  <main class="main" role="main">
       <div class="topbar">
         <h1>Dashboard</h1>
         <div style="display:flex;gap:0;border:1px solid var(--border-strong);border-radius:8px;overflow:hidden">
@@ -110,7 +97,6 @@ a,button{font-family:inherit}
       </div>
       <div id="tabContent"><div class="muted" style="padding:20px">Loading…</div></div>
     </main>
-  </div>
   <script src="/js/api.js"></script>
   <script src="/js/dashboard_overview.js"></script>
   <script src="/js/app_nav.js" data-active="dashboard"></script>

@@ -10,11 +10,7 @@
   const money = (n) => '$' + Number(n || 0).toLocaleString(undefined, { maximumFractionDigits: 0 });
   const num = (n) => Number(n || 0);
 
-  document.documentElement.setAttribute('data-theme', localStorage.getItem('lfs_theme') || 'light');
-  $('themeToggle').addEventListener('click', () => {
-    const t = document.documentElement.getAttribute('data-theme') === 'dark' ? 'light' : 'dark';
-    document.documentElement.setAttribute('data-theme', t); localStorage.setItem('lfs_theme', t);
-  });
+  // Theme is applied + switched by app_nav.js + app-shell.js (one shared engine).
 
   let d = null, pipe = {}, aging = null, hoursData = null, revenueMonths = null, marginRows = null;
   let _period = 'month';

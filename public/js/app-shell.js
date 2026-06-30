@@ -51,11 +51,9 @@
     graphite:  { base: 'dark', label: 'Graphite steel', dot: '#3B82C4', pattern: null    },
     obsidian:  { base: 'dark', label: 'Obsidian',       dot: '#4FD1E0', pattern: null    },
     nightsky:  { base: 'dark', label: 'Night sky',      dot: '#FDE9A8', pattern: 'stars' },
-    fiber:     { base: 'dark', label: 'Fiber strand',   dot: '#4FD1E0', pattern: 'fiber' },
-    blueprint: { base: 'dark', label: 'Blueprint',      dot: '#4FD1E0', pattern: 'grid'  },
-    topo:      { base: 'dark', label: 'Topographic',    dot: '#2DD4A7', pattern: 'topo'  }
+    blueprint: { base: 'dark', label: 'Blueprint',      dot: '#4FD1E0', pattern: 'grid'  }
   };
-  var THEME_ORDER = ['graphite', 'obsidian', 'nightsky', 'fiber', 'blueprint', 'topo'];
+  var THEME_ORDER = ['graphite', 'obsidian', 'nightsky', 'blueprint'];
   var DEFAULT_THEME = 'graphite';
   var _theme = DEFAULT_THEME;
 

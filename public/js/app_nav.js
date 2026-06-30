@@ -8,6 +8,20 @@
   'use strict';
   var active = (document.currentScript && document.currentScript.getAttribute('data-active')) || '';
 
+  // Apply the saved theme synchronously so operations pages honor the user's
+  // pick immediately (the full engine + picker = app-shell.js, loaded below).
+  // Keys match app-shell.js: 'lfs-theme' holds a skin id (or 'light'); default = dark/graphite.
+  (function preApplyTheme() {
+    try {
+      var saved = localStorage.getItem('lfs-theme');
+      var SKINS = { graphite: 1, obsidian: 1, nightsky: 1, blueprint: 1 };
+      var root = document.documentElement;
+      if (saved && SKINS[saved]) { root.setAttribute('data-theme', 'dark'); root.setAttribute('data-skin', saved); }
+      else if (saved === 'light') { root.setAttribute('data-theme', 'light'); root.removeAttribute('data-skin'); }
+      else { root.setAttribute('data-theme', 'dark'); root.setAttribute('data-skin', 'graphite'); }
+    } catch (e) {}
+  })();
+
   var css = ''
     + '.app-shell{display:flex;height:100vh}'
     + '.app-rail{width:176px;background:var(--surface-2);border-right:1px solid var(--border-strong);padding:12px 9px;display:flex;flex-direction:column;gap:2px;flex-shrink:0}'
@@ -33,6 +47,17 @@
     + '.rr-sub{font-size:11px;color:var(--text-muted,#5A6470)}'
     + '.rr-type{font-size:10px;text-transform:uppercase;letter-spacing:.04em;color:var(--primary,#1B5FA0);font-weight:600}'
     + '.rr-empty{padding:10px;font-size:12px;color:var(--text-muted,#5A6470);text-align:center}';
+  // Theme picker (rail) + hide the legacy per-page #themeToggle (superseded).
+  css += '#themeToggle{display:none!important}'
+    + '.rail-theme{position:relative;margin-top:auto;padding-top:8px}'
+    + '.rail-theme-btn{display:flex;align-items:center;gap:9px;width:100%;padding:9px 11px;border:none;background:none;border-radius:8px;font-size:13px;color:var(--text-secondary);cursor:pointer;text-align:left;font-family:inherit}'
+    + '.rail-theme-btn:hover{background:var(--surface-1)}'
+    + '.rail-theme-menu{position:absolute;bottom:calc(100% + 4px);left:2px;right:2px;background:var(--surface-2);border:1px solid var(--border-strong);border-radius:10px;box-shadow:0 8px 24px rgba(0,0,0,.35);padding:6px;z-index:1000;display:none}'
+    + '.rail-theme-menu.open{display:block}'
+    + '.rail-theme-menu .app-theme-menu-item{display:flex;align-items:center;gap:9px;padding:7px 9px;border-radius:7px;font-size:12px;color:var(--text-secondary);cursor:pointer;border:none;background:none;width:100%;text-align:left;font-family:inherit}'
+    + '.rail-theme-menu .app-theme-menu-item:hover{background:var(--surface-1)}'
+    + '.rail-theme-menu .app-theme-menu-item.active{background:var(--primary-light);color:var(--primary-dark);font-weight:600}'
+    + '.rail-theme-swatch{width:14px;height:14px;border-radius:50%;flex-shrink:0;border:1px solid rgba(255,255,255,.25)}';
   var st = document.createElement('style'); st.textContent = css; document.head.appendChild(st);
 
   // adminOnly links start hidden (display:none) and are revealed only after we
@@ -72,7 +97,11 @@
     + link('training', '/training-admin.html', 'fa-graduation-cap', 'Training')
     + link('audit', '/audit.html', 'fa-clock-rotate-left', 'Audit log')
     + link('settings', '/settings.html', 'fa-sliders', 'Settings')
-    + '<a class="app-nav" data-admin-only="1" style="margin-top:auto;display:none" href="/admin.html"><i class="fa-solid fa-gear"></i> Admin</a>';
+    + '<a class="app-nav" data-admin-only="1" style="margin-top:auto;display:none" href="/admin.html"><i class="fa-solid fa-gear"></i> Admin</a>'
+    + '<div class="rail-theme" id="rail-theme">'
+    +   '<button class="rail-theme-btn" id="rail-theme-btn" aria-haspopup="true" aria-expanded="false"><i class="fa-solid fa-palette"></i> Theme</button>'
+    +   '<div class="rail-theme-menu" id="rail-theme-menu" role="menu"></div>'
+    + '</div>';
 
   var wrap = document.createElement('div');
   wrap.className = 'app-mainwrap';
@@ -85,6 +114,48 @@
   shell.appendChild(rail);
   shell.appendChild(wrap);
   document.body.appendChild(shell);
+
+  // ── Theme picker ───────────────────────────────────────────────────────────
+  // Reuse the single deployed theme engine (app-shell.js) so the operations
+  // cluster gets the same picker + skins as the launcher/portals — no second
+  // engine, no drift. app-shell.js has no auto-mount, so loading it is safe.
+  function _initThemePicker() {
+    if (!window.AppShell) return;
+    try { AppShell.initTheme(); } catch (e) {}
+    var menu = document.getElementById('rail-theme-menu');
+    var btn  = document.getElementById('rail-theme-btn');
+    var box  = document.getElementById('rail-theme');
+    if (!menu || !btn || !box) return;
+    var themes = AppShell.themes || {};
+    var cur = document.documentElement.getAttribute('data-skin') || '';
+    menu.innerHTML = Object.keys(themes).map(function (id) {
+      var t = themes[id] || {};
+      return '<button class="app-theme-menu-item' + (id === cur ? ' active' : '') + '" role="menuitem" data-theme-id="' + id + '">'
+        + '<span class="rail-theme-swatch" style="background:' + (t.dot || '#888') + '"></span>'
+        + (t.label || id) + '</button>';
+    }).join('');
+    Array.prototype.forEach.call(menu.querySelectorAll('.app-theme-menu-item'), function (it) {
+      it.addEventListener('click', function () {
+        try { AppShell.setTheme(it.getAttribute('data-theme-id')); } catch (e) {}
+        menu.classList.remove('open'); btn.setAttribute('aria-expanded', 'false');
+      });
+    });
+    btn.addEventListener('click', function (e) {
+      e.stopPropagation();
+      var open = menu.classList.toggle('open');
+      btn.setAttribute('aria-expanded', open ? 'true' : 'false');
+    });
+    document.addEventListener('click', function (e) {
+      if (!box.contains(e.target)) { menu.classList.remove('open'); btn.setAttribute('aria-expanded', 'false'); }
+    });
+  }
+  if (window.AppShell) { _initThemePicker(); }
+  else {
+    var _shellScript = document.createElement('script');
+    _shellScript.src = '/js/app-shell.js';
+    _shellScript.onload = _initThemePicker;
+    document.head.appendChild(_shellScript);
+  }
 
   // ── Role-gated rail items ──────────────────────────────────────────────────
   // Admin-only links (data-admin-only) render hidden and are revealed only once
