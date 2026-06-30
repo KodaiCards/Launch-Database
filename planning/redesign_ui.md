@@ -22,5 +22,16 @@
 - Every cluster page = shared `app_nav` rail + a redundant page-specific inline header (logo/theme/Admin/sometimes Service-Areas). Theme toggle appears in BOTH topbar (sun/moon) AND inline (sometimes "Theme" text) → O33 inconsistency. `dashboard.html` = full duplicate nav (worst).
 - (more appended as the user-test continues)
 
+## Co-design progress (2026-06-30) — palette directions presented, awaiting Carter's pick
+Presented **6 dark-default directions** (all anchored to the logo: silver LAUNCH wordmark / azure primary / cyan-spark accent; the logo doubles as the nav-collapse toggle; theme control = text "Dark mode"). Shown as mini app-chrome mockups via the visualize widget (NOT persisted as files — re-render if needed):
+- **A · Midnight azure** — deep navy `#0E1726` + azure `#3B82C4` + cyan spark `#4FD1E0`. **⭐ Planning's recommendation** (most directly the logo; confident fiber-tech; cyan gives a distinct highlight without a 2nd brand color).
+- **B · Graphite steel** — neutral charcoal `#131517`, silver-grey structural, blue only on actions (understated/industrial).
+- **C · Deep cyan** — teal-navy `#0C1A22` + brighter cyan-azure `#2BA3C7` (bolder/energetic).
+- **D · Soft slate** — lighter desaturated slate-blue `#1C2533` (easiest all-day; gentler A).
+- **E · Obsidian** — near-black `#0A0C0F`, high-contrast, blue/cyan pop (sleek/modern; good on OLED/field tablets).
+- **F · Blueprint indigo** — indigo-navy `#121733` + electric blue `#4C8DFF` (engineering/blueprint feel).
+
+**STATUS: awaiting Carter's pick (a letter or a mix).** **NEXT once picked:** build the full layout in that palette — consolidate the 3 money/billing tabs → **1 Billing + Money**, the logo-click nav collapse, group People/Training/Settings — then wire the winner into the shared `app-shell` tokens so it rolls across every cluster page + the training SPA at once. All structural asks (#3/#4/#5/#6 above) execute in this same build.
+
 ## Process
 Planning proposes palette/typography/component direction on the `app-shell` tokens → Carter picks → roll across cluster + SPA. Co-design while CEO works the training content + the small fixes. This doc is the living spec; I10 (ideas.md) is the tracker.
