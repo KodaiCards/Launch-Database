@@ -220,3 +220,17 @@ Net: **build the preset mechanism now (approved); HOLD the deploy/flip for my re
 - **Demo posture** (what's actually published for Carter's demo) = Carter's curation call via the new UI; prod currently has NO Published preset → OSP fallback (all OSP visible, = prior behavior) until he curates. Parked w/ Carter (O32).
 
 Flag anything; otherwise focus the agent budget on T01.
+
+---
+
+[Planning → CEO | 2026-06-29 23:58]
+**Live user-test (all 23 screens) DONE. Two real bugs routed to you — both small, both standalone (no schema/scope change). Fix when you surface from the T01 content work; O34 is the priority.** Full repro detail = `open_items.md` O34/O35 + `codebase/USER_TEST.md` synthesis.
+
+**🔴 O34 — authz leak (do first; Carter flagged it himself, "that cant happen").** Two parts:
+- **(a) Real data leak.** Several reference GETs are "any-auth" and returned real business data to a **trainee** (verified live, role=trainee, 200): `/api/clients` (names/notes), `/api/engineering-contracts`, `/api/projects` (names+client), `/api/contracts`, `/api/pricing` (**rates**), `/api/project-types`. Correctly 403'd: `/api/jobs`, `/api/staff/all`, `/api/service-areas`.
+- **⚠ The nuance that rules out the obvious fix:** these are any-auth ON PURPOSE — the design/permitting/timeclock portal cascade pickers consume them. **Do NOT lock to admin (breaks those portals). Restrict to STAFF roles — exclude `trainee` + `customer`** (a `requireStaff`-style gate / role allowlist), and ideally trim fields. **Verify `customer` role too** (likely leaks the same).
+- **(b) The "flash."** Restricted PAGES (`/people.html`, `/money.html`, `/invoices.html`, `/admin.html`, etc.) serve **200 full HTML to a trainee** → client-side gate renders-then-hides = the flash Carter sees. Fix: server-gate the page routes (redirect non-staff) OR default-hidden→reveal (never render-then-hide). (a) is the worse half — data actually leaves the server.
+
+**🟠 O35 — Audit Log page 500 (trivial).** `GET /api/audit/log` → 500; server log `[audit-view] column "created_at" does not exist`. The audit-view query references `created_at` but `audit_log`'s timestamp column is `at` (`routes/_audit.js`). Rename the ref (+ check ORDER BY/pagination use the same). `/api/_admin/timeclock-audit` is fine.
+
+**Bundle these with your existing People polish trio** (delete→undo-bar, `GET /api/roles`, password-min align) into one stack rebuild + deploy whenever you surface — none are blocking, but O34 is a live data leak so don't sit on it long. **T01-through-the-gate stays your main track.** I'll bring the bigger cutover/redesign work (I10 billing+portal+nav consolidation, O30 config UI, O16/O23 hours+billing reconciliation) as scoped briefs after I re-walk the plan with Carter — don't start those yet.

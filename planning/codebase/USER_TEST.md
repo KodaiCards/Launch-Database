@@ -37,9 +37,29 @@
 | U19 | Customer portal | `/customer.html` | ✅ customer self-service (Projects/Invoices/SAs); I8; admin 403 (scoped) |
 | U20 | Client portal (v1 + v2) | `/client-portal.html` `/client/` | ✅ v1 admin-view-as; **O25 sprawl confirmed (3 surfaces)** |
 | U21 | Splice tool | `/splice.html` | ✅ Splice Matrix CAD tool loads; isolated (chunk 12) |
-| U22 | Map (FRM) | `/map/fiber_route_manager_v33.html` | ⬜ |
-| U23 | Legacy admin (cutover source) | `/admin.html` | ⬜ |
+| U22 | Map (FRM) | `/map/fiber_route_manager_v33.html` | ✅ FRM loads (Leaflet+canvas, DB storage, draw/BOM/export) |
+| U23 | Legacy admin (cutover source) | `/admin.html` | ✅ 10 legacy tabs; config stranded (O30) |
 
+## ✅ SYNTHESIS — USER-TEST COMPLETE (all 23 screens, 2026-06-29)
+The keystone operations cluster is **real and largely healthy** — every daily-work screen renders with live data on the keystone model. The issues cluster into: one security leak, a few broken/inconsistent spots, and a lot of **redundancy** the redesign+cutover should collapse.
+
+**TOP issues (ranked):**
+1. **🔴 O34 — security leak (fix first).** A trainee reads `/api/clients`, `/api/projects`, `/api/engineering-contracts`, `/api/contracts`, `/api/pricing` (rates) — real data, 200 (any-auth GETs). Restricted *pages* also serve 200 HTML (the "flash"). Fix = exclude `trainee`+`customer` (NOT admin-lock — portals need these).
+2. **🟠 O35 — Audit Log page broken** (`/api/audit/log` 500: query uses `created_at`, column is `at`). Trivial fix; real broken feature.
+3. **🟠 O23 hours split-brain (LIVE):** the keystone Hours view shows ONLY `service_area_job_id` hours → **timeclock-logged hours are invisible there**; the 10 demo hrs sit in "— Unattributed —". The trust gap, confirmed on screen.
+4. **🟠 O16 billed inconsistency (LIVE):** Clients shows "Total Billed $0" for Live Loop, Money shows "$3,650 billed" — "billed" = draft-vs-sent, different per screen. Distrust signal.
+5. **🟡 O30 confirmed:** cluster Settings = appearance+links+sysinfo, ZERO config; ALL config stranded in admin.html (still the only config home; "Under Construction" landing).
+6. **🟡 Redundancy → consolidate (I10 + cutover):** **3 invoice surfaces** (billing.html + invoices.html + billing-keystone Invoices tab); **2 billing nav + Money** (Carter's "3 tabs" = the billing cutover: retire legacy → 1 Billing + Money); **3 client/customer portals** (O25: customer.html + client-portal.html + /client/ v2); **dup nav + scattered theme toggles** (O33).
+7. **🟡 I11 dashboard:** training-admin has no scores / no per-lesson time, and a wrong denominator (global 254 for restricted users).
+8. **Training fixes located:** OSP-only WORKS ✓; gold header "OSP TRAINING"→"Training"; "suggested time" = "X.X hr" on subject cards; only T01 visible to a trainee (investigate why — safe but understand).
+
+**HEALTHY (build on, don't touch):** People (server-gated, no leak); the keystone money-trio (dashboard overview / Money margin-aging-revenue-program-projections / billing-keystone ledger) — all live with real data; area.html workspace (Leaflet boundary + cost tiles w/ per-tile client visibility + materials + jobs&hours); keystone pipelines + job-board; customer portal (I8, partly built); FRM map (Leaflet + DB storage + draw/BOM); Splice Matrix; undo bar.
+
+**I10 redesign input (→ `redesign_ui.md`):** every cluster page = the shared `app_nav` rail PLUS a redundant inline header (logo/theme/Admin); `dashboard.html` has a FULL duplicate nav; theme toggle is inconsistent (topbar sun/moon vs settings.html's text Light/Dark buttons — O33); the SPA, splice, and FRM are SEPARATE design systems. Collapse to ONE nav (logo-toggle per Carter) + ONE theme control + consolidated billing/invoice/portal surfaces; default dark.
+
+**Consolidated O-list touched:** O34(leak,fix-first) · O35(audit 500) · O23/O22/O24(hours) · O16(billed-attribution) · O30(config UI) · O25(portal sprawl) · O33(theme) · O19(dead-code, low) · I10/I11(redesign). Bugs to fix soon: **O34, O35**. Everything else = cutover/redesign work, planned with Carter.
+
+---
 ## Findings so far
 - **U0 / O34 (verified live):** trainee reads `/api/clients`, `/api/engineering-contracts`, `/api/projects`, `/api/contracts`, `/api/pricing` (rates) — 200 with real data (any-auth leak). Restricted pages serve 200 HTML to anyone (client-gated flash). `/api/jobs`, `/api/staff/all`, `/api/service-areas` correctly 403. Fix = exclude trainee/customer (not lock-to-admin — portals need these). → open_items O34.
 
@@ -90,6 +110,10 @@
 **U20 — Client portal v1 (`/client-portal.html`, admin) ✅.** "All Clients — Project Overview · Per-client design and permitting activity." Has an **"Admin view as: <client>"** selector (admin previews as any client). "No projects assigned yet" (demo projects not client-assigned). Legacy-projects-based (client_portal.js). ⭐ **CONFIRMS O25 portal sprawl LIVE: THREE client/customer surfaces** — `customer.html` (U19, keystone, customer role), `client-portal.html` (U20, legacy, admin-view-as), and `/client/` (v2 SPA, separate token identity, not driven — admin has no client token). Consolidation target.
 
 **U21 — Splice Matrix (`/splice.html`, admin) ✅.** The big isolated fiber-splice CAD tool (chunk 12, ~26 splice_* tables). Loads clean, "— No project selected —". Rich toolbar: project picker + Layers/New-Layer, Add Location/Cable/Closure, Import KMZ/DXF + Paste-from-spreadsheet, Versions/Save-rev/Share/Export-PDF/KMZ, Attenuation Calc, Manage templates, Delete project. Canvas-based. Healthy standalone tool (own auth/designer_id). Separate design system (I10 scope). Not keystone-entangled.
+
+**U22 — Map / FRM (`/map/fiber_route_manager_v33.html`, admin) ✅.** The Fiber Route Manager loads clean: **Leaflet** (`window.L`) + 14 canvas/svg layers; **`window.storage` injected** (typeof object → frm_storage_adapter active → DB-backed `/api/map/store`, confirms chunk 12 / O27). Toolbar: **Draw Route, Draw Conduit, Place Structure ▾, Projects, BOM, Fit All, Export ▾, Finish Line, ⚡ Follow Path, Save Changes.** The map pillar's draw tool — functional. Ties I6 (map/projection engine) + O27 (KV storage) + U4 (the area.html Leaflet boundary map links a plan into this). Separate design (I10 scope).
+
+**U23 — Legacy admin (`/admin.html`, admin) ✅ — O30 confirmed.** The 9904-line legacy monolith. 10 `data-view` tabs: **Dashboard / Projects / Permitting / Design / RUS / Potential Permits / Hours / Clients / Billing / Revenue** (all legacy-projects-oriented). Landing heading = **"Under Construction"** (the legacy dashboard is deprecated → points to the new cluster; a cutover artifact). The config modules (pricing/jobs/portal-access/invoice-templates/construction-contracts) load here (chunk 16) behind a Settings area, not the main tabs — so **admin.html is still the only config home** (O30 holds; settings.html stub per U15). This is the cutover SOURCE — retire last, after the config UI is rebuilt in the cluster.
 
 **RECURRING UI PATTERN (for I10):** every cluster page = the shared `app_nav` rail PLUS a page-specific inline header that repeats logo / a theme toggle / an "Admin" link (sometimes "Service Areas"). The theme toggle appears in BOTH the topbar (sun/moon) AND inline headers (sometimes a "Theme" text button) → O33 inconsistency. `dashboard.html` is the worst (a FULL duplicate nav). The redesign should collapse to ONE nav + ONE theme control.
 
