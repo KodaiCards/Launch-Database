@@ -34,9 +34,9 @@
 | U16 | Audit log | `/audit.html` | ⚠ **BROKEN — /api/audit/log 500 (col created_at) → O35** |
 | U17 | Training admin + Lesson visibility | `/training-admin.html` | ✅ I11 target (no scores/time; 254-denom bug); Lesson-vis live |
 | U18 | Training SPA (trainee view) | `/training/` | ✅ OSP-only works; header "OSP"→Training; "X.X hr" on subject cards; only T01 visible |
-| U19 | Customer portal | `/customer.html` | ⬜ |
-| U20 | Client portal (v1 + v2) | `/client-portal.html` `/client/` | ⬜ |
-| U21 | Splice tool | `/splice.html` | ⬜ |
+| U19 | Customer portal | `/customer.html` | ✅ customer self-service (Projects/Invoices/SAs); I8; admin 403 (scoped) |
+| U20 | Client portal (v1 + v2) | `/client-portal.html` `/client/` | ✅ v1 admin-view-as; **O25 sprawl confirmed (3 surfaces)** |
+| U21 | Splice tool | `/splice.html` | ✅ Splice Matrix CAD tool loads; isolated (chunk 12) |
 | U22 | Map (FRM) | `/map/fiber_route_manager_v33.html` | ⬜ |
 | U23 | Legacy admin (cutover source) | `/admin.html` | ⬜ |
 
@@ -84,6 +84,12 @@
 - 🎯 **"Suggested time" = "X.X hr"** — renders on each **topic/subject card** in the course view (`#/osp`): e.g. "Fundamentals & Vocabulary … **10 lessons · 3.3 hr** · Start". Carter wants it removed everywhere (also likely on lesson headers/subjects — confirm during the content pass). Location pinned: the `lessons · hr` line on subject cards.
 - ⚠ **Discrepancy:** in the OSP course the trainee sees only **T01** ("1 courses"), NOT all 20 OSP topics — more restricted than the "OSP fallback (234 lessons)" I expected. Either `my-content` is narrower than thought OR `course-catalog.js` availability filters to T01. **Investigate** (affects the visibility feature + launch posture — note: T01-only is actually a SAFE state, but understand WHY). 
 - **I10:** the SPA is a SEPARATE design system (dark, card-based, gold accent, 📚 emoji) — distinct from app-shell; the redesign spans it (redesign_ui.md). *(re-login admin before next chunk.)*
+
+**U19 — Customer portal (`/customer.html`, admin) ✅.** The customer self-service portal (titled "Client Portal"; customer_portal.js, customer role + customer_clients). Tabs **Projects / Invoices / Service Areas**; "Preview — work in progress. Service areas show only when marked client-visible" (← confirms the area.html "Show to client" tiles from U4 feed this). Polished welcome dialog (3-tab guide + status legend Not-started/In-progress/Complete/On-hold). Admin correctly **403s** on `/api/customer/*` ("Insufficient permissions" — customer-role-scoped, admin isn't a customer). Confirms **I8** (customer portal partly built). Reads keystone `/service-areas` (chunk 10).
+
+**U20 — Client portal v1 (`/client-portal.html`, admin) ✅.** "All Clients — Project Overview · Per-client design and permitting activity." Has an **"Admin view as: <client>"** selector (admin previews as any client). "No projects assigned yet" (demo projects not client-assigned). Legacy-projects-based (client_portal.js). ⭐ **CONFIRMS O25 portal sprawl LIVE: THREE client/customer surfaces** — `customer.html` (U19, keystone, customer role), `client-portal.html` (U20, legacy, admin-view-as), and `/client/` (v2 SPA, separate token identity, not driven — admin has no client token). Consolidation target.
+
+**U21 — Splice Matrix (`/splice.html`, admin) ✅.** The big isolated fiber-splice CAD tool (chunk 12, ~26 splice_* tables). Loads clean, "— No project selected —". Rich toolbar: project picker + Layers/New-Layer, Add Location/Cable/Closure, Import KMZ/DXF + Paste-from-spreadsheet, Versions/Save-rev/Share/Export-PDF/KMZ, Attenuation Calc, Manage templates, Delete project. Canvas-based. Healthy standalone tool (own auth/designer_id). Separate design system (I10 scope). Not keystone-entangled.
 
 **RECURRING UI PATTERN (for I10):** every cluster page = the shared `app_nav` rail PLUS a page-specific inline header that repeats logo / a theme toggle / an "Admin" link (sometimes "Service Areas"). The theme toggle appears in BOTH the topbar (sun/moon) AND inline headers (sometimes a "Theme" text button) → O33 inconsistency. `dashboard.html` is the worst (a FULL duplicate nav). The redesign should collapse to ONE nav + ONE theme control.
 
