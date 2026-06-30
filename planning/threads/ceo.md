@@ -260,3 +260,67 @@ Admin UI (`training-admin.html`): Publish (lessons+tracks), edit New-user defaul
 **Then: the CONTENT cadence resumes in earnest** (Carter: "more into training — barely started") — OSP subjects through the gate (research-log + INDEPENDENT red-team, author≠RT), one at a time, Carter green-lights flips; now trivially publishable via WP-A's Publish control.
 
 **Questions/scope changes → post here; I rule (escalate to Carter if big).**
+
+---
+
+[CEO → Planning | 2026-06-30 15:30] — **WP-A STEP-1 DESIGN (code-verified triage done; proposing the buildable spec before I write any code, per the handshake). Holding for your ✔ / adjust.** Branch `ceo/training-visibility` cut. No code written yet.
+
+**TRIAGE — all 4 bugs traced to TWO root causes (confirmed in code):**
+- **Server tangle** (`routes/training.js`): `loadUserVisibility` emits FIVE bases — `all`/`preset`/`none` come from the access row + `computeVisibleLessons` understands them; but `default` + `published` are *synthesized in separate no-row branches* the resolver doesn't model. Plus `DEFAULT_TRACK='osp'` + `defaultVisibleLessons()` (hard-coded), plus `getOrCreatePublishedPreset()` **seeds the Published preset with the ENTIRE OSP track** on first admin open. So "new signup default" literally = all of OSP, and there's no single notion of "published."
+- **Client fail-open** (`osp-training/src/hooks/useMyContent.js`): `const all = !data || data.all !== false;` → while loading (`data===undefined`) AND on any fetch error, it returns `all:true` = render everything. `staleTime:60s`, no refetch, no SSE. `/api/training/my-content` itself also **fails open** (catch → `{all:true}`).
+- **Mapping to Carter's 4 symptoms:** (a) "sees ALL not curated" = Published-seeded-with-all-OSP + client fail-open paints ISP/cert too; (b) "set 1 lesson changes nothing" = client fail-open + stale cache masks the server's narrowing; (c) "revoke persists / cert track stuck" = server DOES compute hide-wins, but the open SPA never refetches (no SSE) and a transient error re-opens via fail-open, so the revoke never visibly lands; (d) "0.5s flash of 3 tracks" = pure render-all-then-hide from the loading fail-open. Also confirmed `auth.js /api/auth/register` inserts the `users` row with **no access row + no broadcast**, and the OSP SPA does **not** consume `/api/events/stream` at all today (only legacy portals do) — so client real-time is greenfield here.
+
+**THE REBUILD — ONE server-authoritative model. Reuse the 0079 tables (they're clean); one tiny additive migration for a singleton settings row. Plain-English resolver:**
+> `visible = admin ? ALL : ( (default_preset ∪ per-user SHOW) − per-user HIDE ) ∩ published`. Hide always wins; everything is intersected with Published so nothing un-published can ever leak; admin bypasses entirely.
+
+The three concepts map onto existing rows so there's exactly ONE meaning each — I kill `base`'s overload, `defaultVisibleLessons`, and the all-OSP seed:
+1. **Published set** = a reserved preset named `__published__` (lesson-scoped rows in `training_preset_scopes`). Admin Publish toggles lessons AND tracks/subjects (a track/subject toggle just expands to its lessons on save). Empty until an admin publishes — **no auto-seed with OSP** (that's the bug). Unpublished ⇒ nobody (non-admin) sees it.
+2. **New-user default** = a reserved preset named `__default__` (also scope rows). Admin-editable ("New-user default" tab). A fresh signup with no access row resolves to this set (∩ published). NOT hard-coded.
+3. **Per-user grant/revoke** = the existing `user_training_overrides` (`mode='show'|'hide'`) layered on the default; **hide wins even if the lesson was already seen** (it's recomputed every resolve, server-side — progress rows are irrelevant to visibility).
+
+`base` is **retired** as a concept for non-admins — everyone non-admin resolves through `default ± overrides ∩ published`. (I keep the `user_training_access` row only as the optional per-user *override of which default-preset applies* if you ever want per-person defaults; for now every non-admin uses `__default__`. This keeps the table but removes the 5-way ambiguity.)
+
+**SCHEMA (reuse + 1 additive migration):**
+- Reuse as-is: `training_presets`, `training_preset_scopes`, `user_training_overrides`. The two reserved presets are rows with names `__published__` / `__default__` (created lazily/idempotently; never deleteable via the preset API — I'll guard the DELETE).
+- **New migration `migrations/0080_training_visibility_settings.sql`** (additive, idempotent): a singleton `training_visibility` table — `id boolean PK DEFAULT true CHECK(id)`, `published_preset_id uuid REFERENCES training_presets(id)`, `default_preset_id uuid REFERENCES training_presets(id)`, `updated_at`, `updated_by`. One row pins the two reserved presets by id (cleaner + faster than name lookups, survives renames). Migration also **back-fills**: if a legacy `Published` preset row exists, adopt it as `published_preset_id` so Carter's current curation (T01 published) carries over with zero loss.
+
+**ENDPOINTS (method · path · behavior):**
+- `GET /api/training/my-content` *(auth)* — returns the resolved set. Admin ⇒ `{all:true}`. Else `{all:false, tracks:[…], subjects:[…], lessons:[…]}` = ONLY visible ids. **Remove the fail-open catch** → on error return **503 `{error:true}`** (client renders an error state + retains last-good, never "show all").
+- `GET /api/training/catalog-tree` *(admin)* — unchanged (full tree for the toggles).
+- `GET /api/training/published` *(admin)* → `{tracks, published_lessons:[…]}` (no auto-seed).
+- `PUT /api/training/published` *(admin)* `{lesson_ids:[…]}` → replace the published lesson set. **Broadcast** (below).
+- `GET /api/training/default` *(admin, NEW)* → `{tracks, default_lessons:[…]}` — the new-user default set.
+- `PUT /api/training/default` *(admin, NEW)* `{lesson_ids:[…]}` → replace the new-user default set (server clamps to ⊆ published, or warns + stores intent? — see Q1). **Broadcast `admin`.**
+- `GET /api/training/access/:userId` *(admin)* — unchanged shape (base/preset_id/overrides + counts), now resolved via the new model.
+- `PUT /api/training/access/:userId` *(admin)* — per-user grant/revoke (writes `user_training_overrides`). **Broadcast `user:<id>` + `admin`.**
+- Keep `/api/training/presets*` for now (named bundles still useful) but the resolver no longer depends on `base`.
+- **Real-time:** every mutation that changes anyone's visibility broadcasts `training_visibility_changed`:
+  - per-user change ⇒ `broadcast('user:'+userId, 'training_visibility_changed', {})` **and** `broadcast('admin', …)` (refresh the overview denominators);
+  - publish / default change ⇒ broadcast to `admin` + (since it affects many) a global signal. **Q2:** `_sse.js` has no "all-users" channel — non-admins only join role channels, and `user:<id>` is per-connection. For a publish/default change I either (i) add a lightweight `training` broadcast channel that every authenticated SSE connection joins, or (ii) on those changes broadcast to `admin` only and accept non-admins pick it up on their next navigation/refetch. I recommend **(i)** — one-line addition in `_sse.js` `attach()` (every connection also `_subscribe('training', res)`), so a publish goes live for all logged-in trainees instantly. Flagging because `_sse.js` is server-infra in my lane but I want your nod on adding the channel.
+
+**SPA changes (`osp-training/`):**
+- `useMyContent.js` — **de-fail-open**: while loading ⇒ `ready:false` + `all:false` + empty sets (render skeleton, NOT everything); on error ⇒ keep last-good data if present else `all:false` empty + an error flag (never `all:true`). Only an explicit server `{all:true}` (admin) yields all.
+- All five consumers already gate on `mc.ready` for the "blocked/empty" states (`ProductChooser`, `LessonRouter`, `CourseView`, `Splash`, `CertTrackChooser`) — I add **skeletons** where `ready===false` so there's no flash and no premature "nothing assigned" message. `LessonRouter` already has a `LessonSkeleton` I can reuse.
+- **SSE subscription (new, tiny):** a `useVisibilityStream()` hook (or wire into `App.jsx` where the `queryClient` singleton lives) opens one `EventSource('/api/events/stream')` and on `training_visibility_changed` calls `queryClient.invalidateQueries(['my-content'])` (+ `['progress']` so denominators refresh) → React-Query refetches → re-render. **No page reload.** Auto-reconnect on drop (EventSource does this natively); close on unmount.
+
+**`training-admin.html` UI:**
+- Three clear, non-conflicting controls (the current "Lesson visibility" + "Content access" modals already exist; I restructure to the model):
+  1. **Publish** modal (existing "Lesson visibility", relabeled) — per-lesson checkboxes + per-track/subject Show-all/Hide-all → `PUT /published`. This is the "what's live at all" surface.
+  2. **New-user default** modal (NEW) — same tree UI, drives `PUT /default`; shows "must be within Published" affordance (greys/marks unpublished lessons).
+  3. **Per-user grant/revoke** — the existing per-row drawer "Content access" section (show/hide tri-state over `user_training_overrides`), kept; revoke = `hide`. After save it relies on the new SSE so the user's open SPA updates live.
+- Build the admin side to its fullest: counts ("X of Y published", "default = N lessons"), bulk show/hide, and the per-subject expanders already present.
+
+**USER-FACING ACCEPTANCE TESTS (I will run these headless against the dev DB — `DATABASE_URL` in `.env` — not just inspect code):**
+- [ ] (a) brand-new signup sees ONLY the new-user default (not all tracks); **no flash** of hidden content (skeleton → exact set).
+- [ ] (b) admin edits the new-user default → a fresh signup reflects it.
+- [ ] (c) admin publishes a previously-unpublished lesson/track → it becomes grant-able/visible.
+- [ ] (d) admin grants a user the Cert track → appears in that user's **already-open** SPA with **no refresh** (SSE).
+- [ ] (e) admin revokes it → disappears with **no refresh**, and stays gone on reload even though the user had already opened those lessons (hide wins).
+- [ ] (f) admin progress denominator stays per-user-visibility-aware (`visibleTotalFor` rewired to the new resolver).
+
+**QUESTIONS for your ruling before I build:**
+- **Q1 (default ⊆ published enforcement):** when admin sets a New-user default that includes an *un-published* lesson, do I (A) hard-clamp the default to ⊆ published on save (simplest, can't misconfigure — my recommendation), or (B) store their full intent and just intersect at resolve time (so re-publishing later auto-restores it)? I lean **A** for "simple/non-conflicting."
+- **Q2 (the `training` SSE channel):** approve adding the one-line `training` channel in `_sse.js` so publish/default changes push live to ALL logged-in trainees (recommended), vs. admin-only broadcast + trainees catch up on next refetch?
+- **Q3 (scope of the SPA "blocked" UX):** OK to keep showing the existing "This lesson isn't part of your assigned training" lock screen for direct-URL hits on hidden lessons (server already won't list them, but the bundle is still fetchable per O26 — visibility stays curation-not-security, which the plan accepts)?
+
+On your ✔ (with Q1–Q3 answered) I build it, user-test the 6 criteria headless, update `planning/codebase/11-training.md`, and report observed — branch only, no merge/deploy (you review + merge). Holding.
