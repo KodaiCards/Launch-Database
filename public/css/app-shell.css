@@ -286,22 +286,27 @@ body {
   position: fixed;
   top: 0; left: 0; right: 0;
   height: var(--topbar-h);
-  background: var(--brand-primary-dark, #134880);
-  color: #fff;
+  background: var(--surface-2);
+  color: var(--text-1);
   display: flex;
   align-items: center;
   gap: var(--space-3);
   padding: 0 var(--space-6);
   z-index: 100;
-  box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+  border-bottom: 1px solid var(--border-strong);
+  box-shadow: 0 1px 4px rgba(0,0,0,0.18);
   flex-shrink: 0;
 }
 
+/* Logo is centered in the topbar globally (Carter 2026-06-30). */
 .app-topbar-logo {
-  height: 38px;
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  height: 34px;
   width: auto;
   object-fit: contain;
-  flex-shrink: 0;
 }
 
 .app-topbar-brand {
@@ -1631,3 +1636,66 @@ html[data-theme="dark"] .alert-success { background: var(--success-light); color
 html[data-theme="dark"] .alert-warning { background: var(--warning-light); color: var(--warning-text); }
 html[data-theme="dark"] .alert-danger  { background: var(--danger-light);  color: var(--danger-text); }
 html[data-theme="dark"] .alert-info    { background: var(--info-light);     color: var(--info-text); }
+
+/* ─────────────────────────────────────────────────────────────
+   THEME CATALOG (skins) — data-skin layers over the data-theme base.
+   Each dark skin keeps data-theme="dark" (so dark component rules +
+   status colors still apply) and overrides only the palette tokens.
+   Registry lives in app-shell.js (THEMES). Default = graphite.
+   ───────────────────────────────────────────────────────────── */
+html[data-skin="graphite"] {
+  --brand-primary:#3B82C4; --primary:#3B82C4; --brand-primary-dark:#2C6CA8; --primary-dark:#2C6CA8; --brand-primary-light:#1B2A3D; --primary-light:#1B2A3D;
+  --surface-0:#0E1013; --surface-1:#131517; --surface-2:#1C2024; --surface-3:#232830; --white:#1C2024; --gray-light:#131517; --row-alt:#1A1E24;
+  --text-1:#ECEEF1; --text:#ECEEF1; --text-2:#C3C9D1; --text-secondary:#C3C9D1; --text-muted:#98A0AB;
+  --border-weak:#23282E; --border-strong:#2E343B; --gray-border:#2E343B; --bg-deep:#0B0D0F; --surface-deep:#1C2024; --surface-hover:#2A2F37;
+}
+html[data-skin="obsidian"] {
+  --brand-primary:#3B82C4; --primary:#3B82C4; --brand-primary-dark:#2C6CA8; --primary-dark:#2C6CA8; --brand-primary-light:#16202E; --primary-light:#16202E;
+  --surface-0:#060709; --surface-1:#0A0C0F; --surface-2:#15191E; --surface-3:#1B2026; --white:#15191E; --gray-light:#0A0C0F; --row-alt:#131820;
+  --text-1:#F0F3F6; --text:#F0F3F6; --text-2:#C7CDD4; --text-secondary:#C7CDD4; --text-muted:#8B95A1;
+  --border-weak:#1C2128; --border-strong:#2A3038; --gray-border:#2A3038; --bg-deep:#040506; --surface-deep:#15191E; --surface-hover:#232A33;
+}
+html[data-skin="nightsky"] {
+  --brand-primary:#3B82C4; --primary:#3B82C4; --brand-primary-dark:#2A5E92; --primary-dark:#2A5E92; --brand-primary-light:#14233B; --primary-light:#14233B;
+  --surface-0:#05080F; --surface-1:#070B14; --surface-2:#111726; --surface-3:#182032; --white:#111726; --gray-light:#070B14; --row-alt:#0E1422;
+  --text-1:#E9EDF6; --text:#E9EDF6; --text-2:#C2CAD8; --text-secondary:#C2CAD8; --text-muted:#9AA6BE;
+  --border-weak:#182238; --border-strong:#243456; --gray-border:#243456; --bg-deep:#03050A; --surface-deep:#111726; --surface-hover:#1C2740;
+}
+html[data-skin="fiber"] {
+  --brand-primary:#3B82C4; --primary:#3B82C4; --brand-primary-dark:#2A5E92; --primary-dark:#2A5E92; --brand-primary-light:#14233B; --primary-light:#14233B;
+  --surface-0:#070B12; --surface-1:#0A0F1A; --surface-2:#101826; --surface-3:#17202F; --white:#101826; --gray-light:#0A0F1A; --row-alt:#0E1622;
+  --text-1:#E6EEF7; --text:#E6EEF7; --text-2:#BFCAD9; --text-secondary:#BFCAD9; --text-muted:#93A6C0;
+  --border-weak:#172238; --border-strong:#223152; --gray-border:#223152; --bg-deep:#04070D; --surface-deep:#101826; --surface-hover:#1B2740;
+}
+html[data-skin="blueprint"] {
+  --brand-primary:#3D8FD4; --primary:#3D8FD4; --brand-primary-dark:#2C6CA8; --primary-dark:#2C6CA8; --brand-primary-light:#15273F; --primary-light:#15273F;
+  --surface-0:#081120; --surface-1:#0B1424; --surface-2:#0F1B30; --surface-3:#16243C; --white:#0F1B30; --gray-light:#0B1424; --row-alt:#0E1A2E;
+  --text-1:#E4ECF7; --text:#E4ECF7; --text-2:#BBC9DE; --text-secondary:#BBC9DE; --text-muted:#8FA6C6;
+  --border-weak:#1A2B48; --border-strong:#243A5C; --gray-border:#243A5C; --bg-deep:#060E1A; --surface-deep:#0F1B30; --surface-hover:#1A2E4E;
+}
+html[data-skin="topo"] {
+  --brand-primary:#1A9E82; --primary:#1A9E82; --brand-primary-dark:#137A64; --primary-dark:#137A64; --brand-primary-light:#14302A; --primary-light:#14302A;
+  --surface-0:#0A0F0C; --surface-1:#0E1410; --surface-2:#13201A; --surface-3:#1A2A22; --white:#13201A; --gray-light:#0E1410; --row-alt:#121E18;
+  --text-1:#E6F0EA; --text:#E6F0EA; --text-2:#BFD0C6; --text-secondary:#BFD0C6; --text-muted:#9DB4A6;
+  --border-weak:#1E2C24; --border-strong:#2A3E33; --gray-border:#2A3E33; --bg-deep:#070B09; --surface-deep:#13201A; --surface-hover:#213328;
+}
+
+/* Pattern layer — fixed canvas behind content; real data sits on opaque surfaces so it stays readable */
+.app-pattern { position: fixed; inset: 0; pointer-events: none; overflow: hidden; }
+html[data-skin="nightsky"], html[data-skin="fiber"], html[data-skin="blueprint"], html[data-skin="topo"] { background: var(--surface-1); }
+html[data-skin="nightsky"] body, html[data-skin="fiber"] body, html[data-skin="blueprint"] body, html[data-skin="topo"] body { background: transparent; }
+.app-pattern-grid { background-image: linear-gradient(rgba(79,209,224,.07) 1px, transparent 1px), linear-gradient(90deg, rgba(79,209,224,.07) 1px, transparent 1px); background-size: 24px 24px; }
+.app-pattern-fiber { background-image: repeating-linear-gradient(116deg, transparent 0 46px, rgba(79,209,224,.055) 46px 48px, transparent 48px 96px), repeating-linear-gradient(116deg, transparent 0 70px, rgba(59,130,196,.05) 70px 72px, transparent 72px 150px); }
+.app-pattern-topo { background-image: repeating-radial-gradient(circle at 28% 38%, rgba(45,212,167,.06) 0 1px, transparent 1px 26px), repeating-radial-gradient(circle at 78% 64%, rgba(45,212,167,.05) 0 1px, transparent 1px 30px); }
+.app-pattern-star { position: absolute; border-radius: 50%; }
+
+/* Theme picker menu (replaces the light/dark toggle) */
+.app-theme-picker { position: relative; display: inline-flex; }
+.app-theme-menu { position: absolute; right: 0; top: calc(100% + 6px); background: var(--surface-2); border: 1px solid var(--border-strong); border-radius: 10px; padding: 6px; min-width: 196px; box-shadow: 0 8px 24px rgba(0,0,0,.32); display: none; z-index: 1200; }
+.app-theme-menu.open { display: block; }
+.app-theme-menu-item { display: flex; align-items: center; gap: 10px; width: 100%; padding: 8px 10px; background: none; border: 0; border-radius: 7px; cursor: pointer; color: var(--text-1); font-size: var(--text-sm); text-align: left; }
+.app-theme-menu-item:hover { background: var(--surface-3); }
+.app-theme-dot { width: 14px; height: 14px; border-radius: 4px; flex-shrink: 0; border: 1px solid rgba(255,255,255,.15); }
+.app-theme-name { flex: 1; }
+.app-theme-check { opacity: 0; font-size: 11px; color: var(--brand-primary); }
+.app-theme-menu-item.active .app-theme-check { opacity: 1; }

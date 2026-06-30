@@ -45,40 +45,106 @@
   /* ----------------------------------------------------------
      THEME
   ---------------------------------------------------------- */
+  // Theme catalog. data-theme = light|dark base; data-skin = the chosen theme id.
+  // Each skin's palette + pattern live in app-shell.css. Default = graphite (dark).
+  var THEMES = {
+    graphite:  { base: 'dark', label: 'Graphite steel', dot: '#3B82C4', pattern: null    },
+    obsidian:  { base: 'dark', label: 'Obsidian',       dot: '#4FD1E0', pattern: null    },
+    nightsky:  { base: 'dark', label: 'Night sky',      dot: '#FDE9A8', pattern: 'stars' },
+    fiber:     { base: 'dark', label: 'Fiber strand',   dot: '#4FD1E0', pattern: 'fiber' },
+    blueprint: { base: 'dark', label: 'Blueprint',      dot: '#4FD1E0', pattern: 'grid'  },
+    topo:      { base: 'dark', label: 'Topographic',    dot: '#2DD4A7', pattern: 'topo'  }
+  };
+  var THEME_ORDER = ['graphite', 'obsidian', 'nightsky', 'fiber', 'blueprint', 'topo'];
+  var DEFAULT_THEME = 'graphite';
+  var _theme = DEFAULT_THEME;
+
+  // Map any stored value (null / legacy 'dark'|'light' / id) to a usable theme id.
+  function _normalizeTheme(v) {
+    if (v && THEMES[v]) return v;
+    if (v === 'light') return 'light';     // legacy light stays light (base palette)
+    if (v === 'dark')  return 'graphite';  // legacy dark → new default dark skin
+    return DEFAULT_THEME;
+  }
+
   function initTheme() {
     var saved = null;
     try { saved = localStorage.getItem('lfs-theme'); } catch (e) {}
-    if (saved === 'dark' || saved === 'light') {
-      _applyTheme(saved === 'dark');
-    } else if (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) {
-      _applyTheme(true);
+    _applyTheme(_normalizeTheme(saved));
+  }
+
+  function _applyTheme(id) {
+    var root = document.documentElement;
+    var t = THEMES[id];
+    if (t) {
+      root.setAttribute('data-theme', t.base);
+      root.setAttribute('data-skin', id);
+      _renderPattern(t.pattern);
     } else {
-      _applyTheme(false);
+      // 'light' or any base value — no skin, no pattern.
+      root.setAttribute('data-theme', id === 'light' ? 'light' : 'dark');
+      root.removeAttribute('data-skin');
+      _renderPattern(null);
     }
+    _theme = id;
+    _markPickerActive(id);
   }
 
-  function _applyTheme(dark) {
-    document.documentElement.setAttribute('data-theme', dark ? 'dark' : 'light');
-    // Sync icon if one is present (topbar or existing dm-icon)
-    var icon = qs('#dm-icon') || qs('.app-theme-icon');
-    if (icon) icon.className = dark ? 'fa-solid fa-sun' : 'fa-solid fa-moon';
-  }
-
-  function toggleTheme() {
-    var isDark = document.documentElement.getAttribute('data-theme') === 'dark';
-    var next = !isDark;
-    var str = next ? 'dark' : 'light';
-    try { localStorage.setItem('lfs-theme', str); } catch (e) {}
-    _applyTheme(next);
-    // Persist to server (best-effort; mirrors admin.html pattern)
+  function setTheme(id) {
+    id = _normalizeTheme(id);
+    try { localStorage.setItem('lfs-theme', id); } catch (e) {}
+    _applyTheme(id);
+    // Persist to server (best-effort).
     try {
       fetch('/api/auth/me/theme', {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         credentials: 'same-origin',
-        body: JSON.stringify({ theme: str })
+        body: JSON.stringify({ theme: id })
       }).catch(function () {});
     } catch (e) {}
+  }
+
+  // Back-compat: any old toggleTheme() caller flips default-dark ↔ light.
+  function toggleTheme() {
+    setTheme(_theme === 'light' ? DEFAULT_THEME : 'light');
+  }
+
+  function _renderPattern(kind) {
+    var el = document.getElementById('app-pattern');
+    if (!kind) { if (el && el.parentNode) el.parentNode.removeChild(el); return; }
+    if (!el) {
+      if (!document.body) return;
+      el = document.createElement('div');
+      el.id = 'app-pattern';
+      el.setAttribute('aria-hidden', 'true');
+      document.body.insertBefore(el, document.body.firstChild);
+    }
+    el.className = 'app-pattern app-pattern-' + kind;
+    el.innerHTML = '';
+    if (kind === 'stars') _genStars(el);
+  }
+
+  function _genStars(el) {
+    var cols = ['#ffffff', '#ffffff', '#FDEFB0', '#7FB2FF'];
+    var html = '';
+    for (var i = 0; i < 90; i++) {
+      var sz = (Math.random() * 1.3 + 0.7).toFixed(1);
+      var c = cols[Math.floor(Math.random() * cols.length)];
+      var op = (Math.random() * 0.55 + 0.35).toFixed(2);
+      html += '<span class="app-pattern-star" style="width:' + sz + 'px;height:' + sz +
+              'px;background:' + c + ';opacity:' + op + ';top:' + (Math.random() * 100).toFixed(2) +
+              '%;left:' + (Math.random() * 100).toFixed(2) + '%"></span>';
+    }
+    el.innerHTML = html;
+  }
+
+  function _markPickerActive(id) {
+    var items = document.querySelectorAll('.app-theme-menu-item');
+    for (var i = 0; i < items.length; i++) {
+      if (items[i].getAttribute('data-theme-id') === id) items[i].classList.add('active');
+      else items[i].classList.remove('active');
+    }
   }
 
   /* ----------------------------------------------------------
@@ -184,15 +250,48 @@
     // Actions container
     var actions = ce('div', { 'class': 'app-topbar-actions' });
 
-    // Theme toggle
+    // Theme picker (replaces the light/dark toggle)
+    var themeWrap = ce('div', { 'class': 'app-theme-picker' });
     var themeBtn = ce('button', {
-      'class':      'app-topbar-icon-btn',
-      type:         'button',
-      title:        'Toggle dark mode',
-      'aria-label': 'Toggle dark mode'
-    }, '<i id="dm-icon" class="fa-solid fa-moon app-theme-icon" aria-hidden="true"></i>');
-    on(themeBtn, 'click', toggleTheme);
-    actions.appendChild(themeBtn);
+      'class':         'app-topbar-icon-btn',
+      type:            'button',
+      title:           'Theme',
+      'aria-label':    'Theme',
+      'aria-haspopup': 'true',
+      'aria-expanded': 'false'
+    }, '<i class="fa-solid fa-palette" aria-hidden="true"></i>');
+    var themeMenu = ce('div', { 'class': 'app-theme-menu', role: 'menu' });
+    THEME_ORDER.forEach(function (id) {
+      var t = THEMES[id];
+      var item = ce('button', {
+        'class':         'app-theme-menu-item',
+        type:            'button',
+        role:            'menuitemradio',
+        'data-theme-id': id
+      }, '<span class="app-theme-dot" style="background:' + t.dot + '"></span>' +
+         '<span class="app-theme-name">' + t.label + '</span>' +
+         '<i class="fa-solid fa-check app-theme-check" aria-hidden="true"></i>');
+      on(item, 'click', function (e) {
+        e.stopPropagation();
+        setTheme(id);
+        themeMenu.classList.remove('open');
+        themeBtn.setAttribute('aria-expanded', 'false');
+      });
+      themeMenu.appendChild(item);
+    });
+    on(themeBtn, 'click', function (e) {
+      e.stopPropagation();
+      var open = themeMenu.classList.toggle('open');
+      themeBtn.setAttribute('aria-expanded', open ? 'true' : 'false');
+    });
+    on(document, 'click', function () {
+      themeMenu.classList.remove('open');
+      themeBtn.setAttribute('aria-expanded', 'false');
+    });
+    themeWrap.appendChild(themeBtn);
+    themeWrap.appendChild(themeMenu);
+    actions.appendChild(themeWrap);
+    _markPickerActive(_theme);
 
     // User menu (populated after getUser() resolves)
     if (userMenu) {
@@ -260,8 +359,9 @@
         roleLabel.textContent = _roleLabel(u.role);
         // Sync theme from server preference
         if (u.theme) {
-          try { localStorage.setItem('lfs-theme', u.theme); } catch (e) {}
-          _applyTheme(u.theme === 'dark');
+          var sid = _normalizeTheme(u.theme);
+          try { localStorage.setItem('lfs-theme', sid); } catch (e) {}
+          _applyTheme(sid);
         }
       });
     }
@@ -272,11 +372,8 @@
     document.body.insertBefore(bar, document.body.firstChild);
     _topbarEl = bar;
 
-    // Apply current icon state
-    var curIcon = qs('#dm-icon', bar);
-    if (curIcon && document.documentElement.getAttribute('data-theme') === 'dark') {
-      curIcon.className = 'fa-solid fa-sun app-theme-icon';
-    }
+    // Reflect the active theme in the picker
+    _markPickerActive(_theme);
 
     return bar;
   }
@@ -648,6 +745,8 @@
     init:         init,
     initTheme:    initTheme,
     toggleTheme:  toggleTheme,
+    setTheme:     setTheme,
+    themes:       THEMES,
     mountTopbar:  mountTopbar,
     mountSidebar: mountSidebar,
     toast:        toast,

@@ -573,10 +573,15 @@ function installAuthRoutes(app, pool) {
     res.json(urls);
   });
 
+  // Valid theme ids: legacy light/dark + the named theme catalog (app-shell THEMES).
+  const VALID_THEMES = new Set([
+    'light', 'dark',
+    'graphite', 'obsidian', 'nightsky', 'fiber', 'blueprint', 'topo'
+  ]);
   app.put('/api/auth/me/theme', requireAuth(), async (req, res) => {
     const { theme } = req.body || {};
-    if (theme !== null && theme !== 'light' && theme !== 'dark') {
-      return res.status(400).json({ error: 'theme must be "light", "dark", or null' });
+    if (theme !== null && !VALID_THEMES.has(theme)) {
+      return res.status(400).json({ error: 'invalid theme id' });
     }
     try {
       await pool.query(`UPDATE users SET theme = $1, updated_at = NOW() WHERE id = $2`,
