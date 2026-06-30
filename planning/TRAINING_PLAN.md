@@ -101,6 +101,22 @@ Current `available:true` flags are optimistic (they predate the accuracy crisis;
 
 **New training UI:** part of the whole-app UI redesign (**I10**) — Carter dislikes current colors; wants a new UI + the **transparent (no-background) logo**; plan together. ⚠ the training SPA (osp-training, Tailwind) is a SEPARATE style system from app-shell.css — redesign spans both.
 
+## ▶ Carter answers + new requirement (2026-06-30 walkthrough)
+**Resolved during the plan walkthrough:**
+- **T01-only is INTENTIONAL, not a bug.** Carter set **T01 (Fundamentals) as the demo AND the starting point** so anyone who needs something tomorrow has it. (Resolves U18 "investigate why only T01" + O32 curation — Carter curated it himself; T01 is the one published lesson set.)
+- **Launch posture confirmed:** OK to start trainees on **Foundations-only for now**, BUT **"we need more out soon"** → ⭐ **near-term priority: push more OSP subjects through the gate + live, fast.** Logged as a standing priority (the gate is the throughput limiter; bias agent budget here once UI co-design is underway). Re-raise at every training-work checkpoint.
+- **Typed-answer removal = replace-not-delete CONFIRMED** (when a typed Q was the lesson's only graded check, swap in an interactive one; handle per-lesson).
+
+**⭐ NEW REQUIREMENT — randomized question POOLS per test (anti-cheat, Carter 2026-06-30):**
+> "For all the tests add a couple different questions and answers in a pool to randomize from. I want different questions for different accounts if possible. Just to prevent cheating."
+- **Mechanism:** author each assessment as a **question BANK (pool of N)**; each attempt **draws a random subset (M of N)** → different accounts (and different retries) get different question sets. **Generalizes/supersedes the 2026-06-29 "randomize drag-and-drop order" ask** — same anti-cheat goal, stronger (randomizes *which* questions, not just their order; order-shuffle still applies within).
+- **Recommended design = per-ATTEMPT random draw** (not a fixed per-account set): strongest anti-cheat (even the same person's retries differ; two accounts almost never collide), and no per-account assignment table to maintain — "different per account" falls out for free. Store the drawn question-set + answers in the attempt record so grading + the I11 dashboard stay reproducible.
+- **Scope:** per-lesson assessments **AND** the cert/capstone exams (higher-stakes → larger pools).
+- **D013 (configurable):** pool + draw-count are **data per lesson**, not hard-coded; engine random-samples M per attempt.
+- ⚠ **CROSS-IMPACT — authoring cost vs "more out soon" (the real tension):** every pooled question is **GATED content** (sourced + independently red-teamed like everything else) → a pool **~doubles+ authoring per lesson.** That directly competes with "more subjects out soon." **Rec: modest pools at launch** (e.g. show 3, pool of ~6) to break answer-sharing without doubling time-to-live; **deepen pools later.** Flag to Carter as a speed↔anti-cheat dial.
+- ⚠ **CROSS-IMPACT — I11 dashboard:** %-scores stay comparable across accounts (score is score); only per-*question* analytics vary by account — note in the dashboard build.
+- **Build owner:** assessment-engine change (random-draw + attempt-record) = CEO scope; the per-lesson pools = content-authoring spec through the gate. Plan with I11 (both touch the assessment/score layer).
+
 ## Status
 - **SIGNED OFF 2026-06-28 ~15:57 (Carter: "I'm ready").** Plan is live. CEO charter written (`planning/CEO.md`) + kickoff posted (`planning/threads/ceo.md`); Carter boots a CEO instance pointed at it. Business/vision deep-dive commitment **FIRED** (in progress — capturing to `planning/BUSINESS.md`).
 - **CEO's first step = done/verified triage** (no content authoring until the grounded state + gate are confirmed by Planning).
