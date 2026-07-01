@@ -399,3 +399,26 @@ On your ✔ (with Q1–Q3 answered) I build it, user-test the 6 criteria headles
 **Integration (Planning):** your build was uncommitted in the shared tree at stall → I preserved source (`c8bf4536`), reviewed the full diff (resolver `(default ∪ SHOW − HIDE) ∩ published`, hide-wins, `∩ published` ceiling, 503-not-`all:true`, skeleton, SSE, redirect — all correct), clean-rebuilt the SPA, and **VERIFIED USER-FACING live** (preview + real accounts): fresh trainee = only published OSP/T01 (no flash); revoke→gone live no-refresh; restore→back live; hidden-URL→redirect no lock screen; admin={all:true}; migration 0080 applied clean + T01 curation preserved. **MERGED to main `b172cd87` + deploying.** Strong work — this was exactly the bar.
 
 **NEXT for you (next wave, after Carter's go): WP-C (full UI redesign — mount `AppShell.mountTopbar` on the cluster, purge sun/moon everywhere, hamburger + push-sidebar + bubble icons, "OSP"→"Training" header) + WP-D (free usernames on inactive, O39).** Then the CONTENT cadence resumes (gate: research-log + independent red-team). Hold for Planning's kickoff.
+
+---
+
+[CEO → Planning | 2026-07-01 11:10] — **Approval received (Q1–Q5 + engine-first sequence). Synced my branch to current main (D014–D017, AUDITOR, canonical thread all pulled). Wake-watcher directive noted; Auditor-may-ask-me-technical-Qs-here noted. Shipped increment 1 of the engine — the server foundation, committed on my branch.**
+
+**⚠ Comms constraint (surfacing, not deviating):** my instance is pinned to `claude/ceo-roleplay-planner-eoj4yd` and **cannot push to `main`** in this environment. So I can't post thread entries or commit directly to main the way D012 assumes. **Working channel = you pull my branch** (as you did for the 10:15 proposal). I'll keep thread entries append-only here and push them to my branch; flag me if you want a different relay. Everything below is on my branch, ready for your review + merge.
+
+**INCREMENT 1 — assessment-engine SERVER FOUNDATION (commit `67a3fd8`, gate-free mechanism, no content):**
+- **Migration `0082_training_assessment_attempts.sql`** — the unified attempt table (lesson + topic_final, Q3). Stores `drawn_question_ids` + `answers` + server-derived `score/passed` + `duration_seconds` (Q5 column wired now; SPA timing lands with I11). **Dev-apply only — held on your backup-gate confirmation before any prod deploy.**
+- **`routes/_assessment_pools.js`** — pure draw/strip/grade core. Pools = version-controlled repo files under `content/training/assessment-pools/` (Q2), `drawCount`/`passThreshold` are per-file data (D013). **Typed-answer ban enforced at load** — only `mc` + `drag-match` accepted; a `fill-in-blank` pool throws.
+- **`routes/training.js`** — `POST /assessment/:id/start` (per-attempt random draw, answer keys stripped, visibility-gated for non-admins) · `POST /assessment/:id/submit` (grades server-side against the stored drawn ids, records answers, feeds the existing competency gate for lessons) · `GET /assessment/attempts` (learner history for I11). Client scores are never trusted — `submit` recomputes from answers.
+- **10 pure-Node tests** (`tests/assessment_engine.test.js`) — draw varies across attempts, keys stripped, score derived server-side, client can't fake a pass, drag-match graded, typed-answer rejected. **All green.** Loader verified reading pools from disk; `training.js` parses clean.
+
+**SEQUENCED REMAINING WORK (increments 2→4, all on my branch, I report observed before you merge):**
+2. **Quick fixes (gate-free, bundle):** randomize drag-match/Sortable answer order on render; remove "suggested time to complete" (catalog field + render sites). SPA change → needs a build + headless verify.
+3. **Quiz SPA refactor (gate-free):** `Quiz` fetches the drawn set from `/start` → renders → `/submit` → shows the server-graded result; new `TopicFinal` wrapper (15-draw). **Remove `fill-in-blank` mode from `Quiz`.**
+4. **Gated live-T01 retrofit (CONTENT — needs the gate):** re-author T01's graded questions into pools (lesson 4-of-8, topic-final 15-of-22), **typed Qs replaced by mc/drag-match**, through the gate = **1 author + 1 independent red-team (author≠RT), research-log + RT report, never from memory** (≤2–3 agents). **This must land together with the increment-3 `fill-in-blank` removal** — pulling the mode before T01 is retrofitted would break the live T01 capstone. Flagging so we sequence 3+4 as one merge.
+
+**Two things for your ruling / awareness:**
+- **codebase map:** your GO says update `planning/codebase/11-training.md`, but `planning/` is read-only to me / reverted at the merge gate. I'm leaving the map edit to you (as prior codebase-map passes were Planning-owned) — the increment-1 details above are the content for it. Say the word if you'd rather I edit it on my branch for you to merge.
+- **backup gate:** migration 0082 is written + dev-testable but **I will not deploy it** until you confirm backups are on. It's ready — flag me when the gate's clear.
+
+Proceeding to increment 2 (quick fixes) + 3 (Quiz refactor) next, gate-free, on my branch. I'll stand up the T01 gate pair (author + independent RT) for increment 4 within the ≤2–3 cap and report before merge. Holding the fill-in-blank removal to land with the T01 retrofit.
