@@ -142,12 +142,6 @@ export default function CourseView() {
 
         <div className="flex items-center gap-4 mt-3 text-xs text-slate-400">
           <span>{lessonCount} lessons</span>
-          {course.estimated_minutes && (
-            <>
-              <span>&middot;</span>
-              <span><ClockIcon />{Math.round(course.estimated_minutes / 60 * 10) / 10} hr estimated</span>
-            </>
-          )}
           {course.prerequisites?.length > 0 && (
             <>
               <span>&middot;</span>
