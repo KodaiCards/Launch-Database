@@ -1,5 +1,15 @@
 import React, { useRef, useState } from 'react';
 
+// Fisher–Yates shuffle on a copy — true randomness for anti-cheat answer order.
+function fisherYates(arr) {
+  const a = [...arr];
+  for (let i = a.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [a[i], a[j]] = [a[j], a[i]];
+  }
+  return a;
+}
+
 /**
  * Sortable — drag-to-reorder list with correct-order validation.
  *
@@ -38,19 +48,18 @@ export default function Sortable({
   // (no validation, no Check button crash).
   const hasAnswerKey = Array.isArray(correctOrder) && correctOrder.length > 0;
 
-  // Scramble initial order (Fisher-Yates, seeded by id sort so it's deterministic)
-  const initial = hasAnswerKey
-    ? [...items].sort((a, b) => {
-        const ai = correctOrder.indexOf(a.id);
-        const bi = correctOrder.indexOf(b.id);
-        // Simple scramble: interleave by putting even-indexed correct items first half, odd second half
-        const aScrambled = ai % 2 === 0 ? ai + items.length : ai;
-        const bScrambled = bi % 2 === 0 ? bi + items.length : bi;
-        return aScrambled - bScrambled;
-      })
-    : [...items]; // no answer key → leave in original order
-
-  const [order, setOrder]       = useState(initial);
+  // Scramble initial order with a TRUE random shuffle (Fisher–Yates), computed
+  // ONCE per mount via a lazy initializer so it's stable across re-renders but
+  // differs every attempt. The old deterministic even/odd interleave was
+  // predictable and gameable (Carter 2026-06-29 anti-cheat). With an answer key,
+  // re-roll if the shuffle happens to land already-correct.
+  const [order, setOrder]       = useState(() => {
+    if (!hasAnswerKey || items.length < 2) return [...items];
+    const isSorted = arr => arr.every((it, i) => it.id === correctOrder[i]);
+    let shuffled = fisherYates(items);
+    for (let t = 0; t < 8 && isSorted(shuffled); t++) shuffled = fisherYates(items);
+    return shuffled;
+  });
   const [submitted, setSubmit]  = useState(false);
   const [dragIdx, setDragIdx]   = useState(null);
   const [overIdx, setOverIdx]   = useState(null);
