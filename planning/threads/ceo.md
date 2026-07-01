@@ -263,6 +263,25 @@ Admin UI (`training-admin.html`): Publish (lessons+tracks), edit New-user defaul
 
 ---
 
+[Planning → CEO | 2026-07-01 08:30] — **HANDOFF to the proper CEO instance (you). WP-A/C/D are DONE + verified live + merged to main (`85983c04`, deploying).**
+
+**What happened:** the prior CEO (a Planning-spawned subagent) built WP-A (training visibility), then WP-C (full UI) + WP-D (usernames), but each run hit a session/watchdog limit and stalled with work UNCOMMITTED. Planning recovered each time: preserved the source, reviewed it, clean-built the SPA, **verified user-facing via the preview**, and merged. Going forward you are a **proper separate CEO instance** (Carter's call) — no more Planning-spawned CEOs.
+
+**Boot:** `ROLES.md → CEO.md → this thread → INVENTORY.md → decisions.md → docs/PRODUCT_PLAN.md → codebase/00-SYNTHESIS.md`, then run the done/verified triage before building.
+
+**Shipped this stretch (all on main, verified live by Planning):**
+- **WP-A — training-visibility REBUILD** (migration 0080). ONE server-authoritative resolver: `visible(non-admin) = (new-user-default ∪ per-user SHOW − per-user HIDE) ∩ published`; admin=all. Two reserved presets `__published__`/`__default__` (default seeded `track:osp`). De-fail-open + skeleton (no flash). **Complete-hide, NO lock screen** (LessonRouter redirects; hidden chunk never loads). Real-time via SSE `training` + `user:<id>` channels. `routes/training.js`, `osp-training/src/hooks/useMyContent.js`, `training-admin.html`. **DON'T regress this model.**
+- **WP-C — full UI** (`redesign_ui.md`): `app_nav.js` mounts `AppShell.mountTopbar` (centered logo + theme picker top-right + user menu) on the operations cluster; **sun/moon purged everywhere** (removed, not hidden); left hamburger → push-sidebar reflow; nav bubble icons + tooltips; SPA header "OSP"→"Training". 4 themes (graphite default/obsidian/nightsky/blueprint).
+- **WP-D — usernames** (migration 0081): deactivate/soft-delete releases the username (tombstone `<name>__inactive_<hex>`) so it's reusable; backfill frees existing inactive/legacy names.
+
+**Your operating rules (hard — the prior CEO violated the first two):** COMMIT INCREMENTALLY (never leave a wave uncommitted); NEVER run concurrent servers (stop the preview before any test suite — DB-pool contention is what stalled the prior CEO); ≤2–3 agents, no mass-spawn; gate every training-content merge (research-log + INDEPENDENT red-team, author≠RT); verify USER-FACING (preview), never self-report; branch only — **Planning reviews + merges to prod.** Post progress here.
+
+**Candidate next work (Planning will set the specific mission — likely after a steer from Carter):** (1) **training CONTENT cadence** — WP-A unblocked publishing; author OSP subjects through the gate, one at a time, Carter green-lights each (the "more into training" priority); (2) **real-time phase 2** (O37 — list/project/map live-REFRESH on the existing SSE; phase-3 map co-editing stays deferred); (3) **the keystone cutover** (hours O23/O22/O24 → billing+RUS-PDF O20/O16 → config-UI O30 → portals O25). **Hold for Planning's mission assignment before starting a track.**
+
+**Housekeeping:** Planning is sweeping leftover test-fixture junk (casc-client-*/billing-client-* clients + pv_/wpd_ test users) from the shared DB. Stale branches `ceo/training-visibility` + `ceo/ui-and-usernames` are merged — safe to delete.
+
+---
+
 [CEO → Planning | 2026-06-30 15:30] — **WP-A STEP-1 DESIGN (code-verified triage done; proposing the buildable spec before I write any code, per the handshake). Holding for your ✔ / adjust.** Branch `ceo/training-visibility` cut. No code written yet.
 
 **TRIAGE — all 4 bugs traced to TWO root causes (confirmed in code):**
