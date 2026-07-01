@@ -249,10 +249,6 @@ export function LessonLayout({ meta, children }) {
               <span className={`text-xs font-semibold px-2 py-1 rounded-full ${typeConfig.badge}`}>
                 {typeConfig.label}
               </span>
-              <span className="text-xs text-slate-400">
-                <ClockIcon />
-                {meta.estimated_minutes} min
-              </span>
             </div>
           </div>
 
