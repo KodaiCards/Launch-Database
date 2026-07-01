@@ -1,0 +1,123 @@
+{
+  "assessmentId": "T01-L05",
+  "kind": "lesson",
+  "courseId": "T01",
+  "lessonId": "T01.L05",
+  "drawCount": 4,
+  "passThreshold": 70,
+  "pool": [
+    {
+      "id": "T01-L05-Q1",
+      "type": "mc",
+      "prompt": "What is the primary purpose of the as-built documentation package delivered at project close-out?",
+      "choices": [
+        "To satisfy the project manager that the crew followed the design exactly",
+        "To serve as the permanent record of what was actually built — used for O&M, fault troubleshooting, and future network expansion for the life of the infrastructure",
+        "To justify the project cost to the funding agency",
+        "To document test results proving the fiber meets manufacturer specifications"
+      ],
+      "answerIndex": 1,
+      "explanation": "The as-built is a 25+ year document, used by O&M technicians to locate faults and by expansion designers to understand the existing plant. Test records are part of the package but are not its primary purpose.",
+      "citation": "7 CFR 1753.49 (Closeout documents — RUS Telecommunications System Construction Policies and Procedures); ANSI/TIA-606-C (documentation/administration standard)."
+    },
+    {
+      "id": "T01-L05-Q2",
+      "type": "mc",
+      "prompt": "A construction crew begins installing aerial cable on a route while make-ready approval is still pending on two segments. What risk does this create?",
+      "choices": [
+        "No risk — construction and make-ready can always proceed in parallel on the same segment",
+        "The crew may install cable that later conflicts with make-ready requirements, forcing rework at the fiber company's expense",
+        "Testing cannot occur until all permits are finalized",
+        "OTDR calibration will be inaccurate if the cable is tested before make-ready is complete"
+      ],
+      "answerIndex": 1,
+      "explanation": "Make-ready clears the pole so the new attachment fits within NESC clearances without conflicting with existing attachments. Installing before make-ready is approved risks installing at the wrong height or needing to move newly installed cable when make-ready later moves an existing attachment — rework typically borne by the fiber company under standard pole attachment agreements."
+    },
+    {
+      "id": "T01-L05-Q3",
+      "type": "mc",
+      "prompt": "What is the name of the OSP project phase where existing attachments on shared poles are moved or modified to make room for a new fiber attachment?",
+      "choices": [
+        "Permitting",
+        "Make-ready",
+        "As-built documentation",
+        "Route survey"
+      ],
+      "answerIndex": 1,
+      "explanation": "Make-ready work prepares a pole to accept the new attachment within NESC clearances — raising existing cables, relocating hardware, or replacing the pole if it can't accommodate the added load. The pole owner's crew (or an authorized contractor) performs it, but the fiber company bears the cost under standard attachment agreements."
+    },
+    {
+      "id": "T01-L05-Q4",
+      "type": "mc",
+      "prompt": "In a large OSP project, which two stages most commonly run in parallel to shorten the overall schedule?",
+      "choices": [
+        "Survey and design — they cannot start at the same time",
+        "Testing and close-out — close-out forms are prepared while final testing is in progress",
+        "Permitting and make-ready — both are submitted to external parties (regulators, pole owner) once design is substantially complete",
+        "Construction and testing — OTDR testing is performed while cable is still being installed"
+      ],
+      "answerIndex": 2,
+      "explanation": "Permitting and make-ready both go to external parties with review/approval timelines outside the project's control. Submitting both once the design supports them is standard practice, though actual construction on a given segment still waits until both that segment's permits AND make-ready are complete."
+    },
+    {
+      "id": "T01-L05-Q5",
+      "type": "mc",
+      "prompt": "Under the FCC's One-Touch Make-Ready (OTMR) process, what is the maximum time allowed to complete simple make-ready work once approved?",
+      "choices": [
+        "15 business days",
+        "90 calendar days",
+        "There is no deadline — completion time is negotiated case by case",
+        "45 business days, the same as the initial pole survey deadline"
+      ],
+      "answerIndex": 0,
+      "explanation": "OTMR sets a 15-business-day completion deadline for simple make-ready work once approved, letting the new attacher's qualified contractor do the work in a single visit rather than waiting on each existing attachment owner. Complex make-ready (service-outage risk, existing-attacher splicing, pole replacement, etc.) follows a different, longer multi-party timeline.",
+      "citation": "47 CFR 1.1411 (pole access/make-ready timeline rule) — exact subsection lettering not independently re-verified this session; see T01.md research log."
+    },
+    {
+      "id": "T01-L05-Q6",
+      "type": "mc",
+      "prompt": "What is the difference between an 'as-designed' drawing and an 'as-built' record?",
+      "choices": [
+        "There is no difference — the terms are interchangeable",
+        "As-designed shows the original planned construction; as-built shows what was actually constructed, including any field deviations (a moved pole, a rerouted conduit, a repositioned splice case)",
+        "As-built only applies to underground construction; as-designed only applies to aerial",
+        "As-designed is produced by the construction crew; as-built is produced by the designer before construction starts"
+      ],
+      "answerIndex": 1,
+      "explanation": "No construction project is built exactly as designed. The as-built package documents deviations from the as-designed drawings and becomes the permanent O&M record — a technician tracing a fault years later needs the as-built, not the original design, to know what is actually in the ground or on the pole."
+    },
+    {
+      "id": "T01-L05-Q7",
+      "type": "mc",
+      "prompt": "For RUS-funded telecommunications construction contracts, which RUS-published standard contract form governs the construction contract itself (as distinct from the general close-out documentation requirements)?",
+      "choices": [
+        "RUS Form 219 (an Electric Program work-order inventory form — not a telecommunications construction document)",
+        "RUS Form 515, Telecommunications System Construction Contract",
+        "RUS Form 344-2",
+        "There is no standard RUS telecommunications construction contract form"
+      ],
+      "answerIndex": 1,
+      "explanation": "RUS Form 515 is RUS's standard Telecommunications System Construction Contract. RUS Form 219 (\"Inventory of Work Orders\") is governed by 7 CFR 1726.405 under the Electric Program, not the telecommunications program — it should not be cited as the telecom project close-out form.",
+      "citation": "rd.usda.gov Form 515 (Telecommunications System Construction Contract); 7 CFR 1726.405 (RUS Form 219 — Electric Program, for contrast). See T01.md research log for the correction."
+    },
+    {
+      "id": "T01-L05-Q8",
+      "type": "drag-match",
+      "prompt": "Match each OSP project stage to its primary output.",
+      "items": [
+        { "id": "i_survey", "label": "Field data package: pole measurements, existing attachments, GPS waypoints" },
+        { "id": "i_design", "label": "Construction drawings, cable schedule, splice matrix, load calculations" },
+        { "id": "i_permit", "label": "Executed permit documents from every authority with jurisdiction" },
+        { "id": "i_test", "label": "Tier 1 (OLTS) and Tier 2 (OTDR) test records for every fiber" }
+      ],
+      "targets": [
+        { "id": "t_survey", "label": "Route Survey" },
+        { "id": "t_design", "label": "Design" },
+        { "id": "t_permit", "label": "Permitting" },
+        { "id": "t_test", "label": "Testing" }
+      ],
+      "correctMap": { "t_survey": "i_survey", "t_design": "i_design", "t_permit": "i_permit", "t_test": "i_test" },
+      "explanation": "Survey feeds design; design produces the construction and testing basis; permitting clears legal authorization to build; testing validates the completed plant against the design's loss budget before acceptance."
+    }
+  ]
+}

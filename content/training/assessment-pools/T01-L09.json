@@ -1,0 +1,122 @@
+{
+  "assessmentId": "T01-L09",
+  "kind": "lesson",
+  "courseId": "T01",
+  "lessonId": "T01.L09",
+  "drawCount": 4,
+  "passThreshold": 70,
+  "pool": [
+    {
+      "id": "T01-L09-Q1",
+      "type": "mc",
+      "prompt": "A fiber project requires crossing a navigable river with an HDD bore. Which federal permit authorizes this work?",
+      "choices": [
+        "FCC 47 CFR 1.1411 — pole attachment authorization",
+        "USACE Nationwide Permit 57 (NWP 57, \"Electric Utility Line and Telecommunications Activities\") — pre-authorizes telecommunications line crossings of waters of the US, including fiber conduit HDD bores",
+        "NESC — underground crossing clearances",
+        "7 CFR 1753.49 — closeout documentation authorization"
+      ],
+      "answerIndex": 1,
+      "explanation": "The US Army Corps of Engineers (USACE) regulates navigable waters and wetlands under the Clean Water Act / Rivers and Harbors Act. NWP 57 specifically covers electric utility line and telecommunications activities, pre-authorizing fiber HDD crossings subject to conditions (utility-line activities were split out of the former NWP 12, which now covers only oil/gas pipelines).",
+      "citation": "USACE Nationwide Permit 57, Electric Utility Line and Telecommunications Activities (2021 reissuance)."
+    },
+    {
+      "id": "T01-L09-Q2",
+      "type": "mc",
+      "prompt": "A splicer on an RUS-funded project is told the cable must be \"RUS-listed.\" What does this mean in practice?",
+      "choices": [
+        "The cable must be manufactured in the United States",
+        "The cable must appear on RUS's accepted materials list, governed under 7 CFR Part 1755 (Telecommunications Policies on Specifications, Acceptable Materials, and Standard Contract Forms)",
+        "The cable must be labeled with the RUS logo on the outer jacket",
+        "The cable must be the lowest-cost option that meets TIA specifications"
+      ],
+      "answerIndex": 1,
+      "explanation": "RUS maintains accepted-materials requirements for funded projects under 7 CFR Part 1755. Cable not on the accepted list generally cannot be used on a funded project without specific RUS approval. (RUS Bulletin 1753F-201 is a distinct bulletin covering acceptance TESTING of completed telecommunications plant — not the materials-acceptance list itself; do not conflate the two.)",
+      "citation": "7 CFR Part 1755 (Telecommunications Policies on Specifications, Acceptable Materials, and Standard Contract Forms); RUS Bulletin 1753F-201 correctly identified as \"Acceptance Tests and Measurements of Telecommunications Plant\" — see T01.md research log for this correction."
+    },
+    {
+      "id": "T01-L09-Q3",
+      "type": "mc",
+      "prompt": "Which international standards body publishes the G.652 (standard single-mode fiber) and G.657 (bend-insensitive single-mode fiber) optical performance specifications?",
+      "choices": [
+        "ANSI",
+        "ITU-T (International Telecommunication Union — Telecommunication Standardization Sector)",
+        "BICSI",
+        "ICEA"
+      ],
+      "answerIndex": 1,
+      "explanation": "The ITU-T (a UN specialized agency) publishes the G-series recommendations governing optical fiber performance. G.652.D is the dominant standard for OSP single-mode fiber; G.657.A1/A2 are bend-insensitive variants used for tight-bend drop applications."
+    },
+    {
+      "id": "T01-L09-Q4",
+      "type": "mc",
+      "prompt": "When NESC and an applicable RUS engineering bulletin specify different requirements for the same design element on an RUS-funded project, which generally governs?",
+      "choices": [
+        "NESC always supersedes RUS bulletins",
+        "The RUS bulletin always supersedes NESC",
+        "The more stringent requirement governs — both function as floors, not ceilings; apply whichever standard is stricter for that element and document the rationale",
+        "The designer chooses whichever standard is cheaper to implement"
+      ],
+      "answerIndex": 2,
+      "explanation": "NESC compliance is required by state utility regulations; RUS bulletin compliance is a loan condition for funded projects. Neither displaces the other — where they differ, the more stringent requirement applies, and a design meeting both is the only acceptable outcome."
+    },
+    {
+      "id": "T01-L09-Q5",
+      "type": "mc",
+      "prompt": "How does a privately-published standard (e.g., an IEEE or NFPA document) become legally enforceable?",
+      "choices": [
+        "It is automatically federal law the moment it is published",
+        "A government body (state legislature, public utility commission, or local jurisdiction) must adopt it by reference in law or regulation — until adopted, it is voluntary",
+        "It becomes enforceable only after the FCC issues a rulemaking specifically for that standard",
+        "Standards from professional organizations can never become legally enforceable"
+      ],
+      "answerIndex": 1,
+      "explanation": "Standards from bodies like IEEE, NFPA, and TIA are written by industry committees but are voluntary until a government body adopts them by reference into law or regulation — for example, a state public utility commission adopting NESC. Different jurisdictions may adopt different editions, which is why designers must confirm the specific adopted edition for a given project location."
+    },
+    {
+      "id": "T01-L09-Q6",
+      "type": "mc",
+      "prompt": "What is the primary role of ICEA (Insulated Cable Engineers Association) in the OSP standards landscape?",
+      "choices": [
+        "It is a federal regulatory agency enforcing cable safety law",
+        "It publishes cable construction standards (e.g., ICEA S-87-640 for OSP fiber cable) that define how cable is built and what environmental performance it must meet — widely cited in cable specifications though not itself a regulatory body",
+        "It licenses individual splicers and OSP designers",
+        "It replaces TIA for all fiber-related standards"
+      ],
+      "answerIndex": 1,
+      "explanation": "ICEA is a non-regulatory industry standards organization. Its cable-construction standards, like S-87-640 for OSP fiber cable, are widely referenced in procurement specs and by RUS materials-acceptance requirements, but ICEA itself has no enforcement authority."
+    },
+    {
+      "id": "T01-L09-Q7",
+      "type": "mc",
+      "prompt": "What does \"47 CFR\" refer to, and which federal telecom rules live there?",
+      "choices": [
+        "Title 47 of the Code of Federal Regulations — where FCC rules live, including pole attachment timelines/rates (Part 1) and other telecommunications regulation",
+        "A specific RUS engineering bulletin series",
+        "The 47th edition of the National Electrical Safety Code",
+        "A USACE permit designation for underwater crossings"
+      ],
+      "answerIndex": 0,
+      "explanation": "CFR = Code of Federal Regulations, organized by title. Title 47 covers Telecommunications and is where FCC rules live (e.g., Part 1 pole-attachment rules). Different agencies' rules live in different CFR titles: 7 CFR for USDA/RUS, 29 CFR for OSHA, 33 CFR for the Army Corps of Engineers."
+    },
+    {
+      "id": "T01-L09-Q8",
+      "type": "drag-match",
+      "prompt": "Match each standards body to what it governs in OSP work.",
+      "items": [
+        { "id": "i_ieee", "label": "Aerial line clearances, loading, attachment heights (NESC/C2)" },
+        { "id": "i_nfpa", "label": "Building electrical installation, grounding, indoor cable ratings (NEC/NFPA 70)" },
+        { "id": "i_itut", "label": "Optical fiber performance specs (G.652, G.657, G.984)" },
+        { "id": "i_icea", "label": "Cable construction standards (e.g., S-87-640 for OSP fiber cable)" }
+      ],
+      "targets": [
+        { "id": "t_ieee", "label": "IEEE" },
+        { "id": "t_nfpa", "label": "NFPA" },
+        { "id": "t_itut", "label": "ITU-T" },
+        { "id": "t_icea", "label": "ICEA" }
+      ],
+      "correctMap": { "t_ieee": "i_ieee", "t_nfpa": "i_nfpa", "t_itut": "i_itut", "t_icea": "i_icea" },
+      "explanation": "IEEE publishes NESC (aerial line code); NFPA publishes NEC (building electrical code); ITU-T publishes the G-series optical fiber performance recommendations; ICEA publishes cable construction/qualification standards. All four apply to different aspects of the same OSP project simultaneously."
+    }
+  ]
+}
