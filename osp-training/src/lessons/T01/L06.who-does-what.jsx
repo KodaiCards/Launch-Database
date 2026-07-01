@@ -6,6 +6,7 @@ import React from 'react';
 import LessonLayout from '../../components/LessonLayout.jsx';
 import Flashcard from '../../components/Flashcard.jsx';
 import Quiz from '../../components/primitives/Quiz.jsx';
+import GatedAssessment from '../../components/primitives/GatedAssessment.jsx';
 import TimelineSequence from '../../components/primitives/TimelineSequence.jsx';
 
 export const meta = {
@@ -330,67 +331,74 @@ export default function T01L06_WhoDoesWhat() {
       />
 
       {/* ── PRACTICE QUIZ ───────────────────────────────────────────────── */}
-      <Quiz
+      <GatedAssessment
+        courseId="T01"
+        assessmentId="T01-L06"
         title="T01.L06 Check — Who Does What"
-        mode="multiple-choice"
-        questions={[
-          {
-            id: 'T01-L06-Q1',
-            type: 'mc',
-            prompt:
-              'A construction crew finishes installing cable on a route segment. The splicer shows up to begin splicing but discovers there are no splice records identifying which cable entries should be connected to which. Who is primarily responsible for this gap?',
-            choices: [
-              'The splicer — they should have requested the records before arriving',
-              'The designer — they should have provided complete splice design documentation that would be handed to the splicer with the cable installation package',
-              'The test technician — they own all documentation',
-              'No one — splice records are created by the splicer during splicing, not before',
-            ],
-            answerIndex: 1,
-            explanation:
-              'The designer produces the splice design as part of the design package: which fibers connect to which, which buffer tubes are through-spliced vs. broken out. This information is handed to the splicer as the "splice map." The splicer creates individual fiber splice records (actual splice loss, fiber-by-fiber detail) during work, but the splice map comes from design. Arriving without a splice map is a design-to-field handoff failure.',
-          },
-          {
-            id: 'T01-L06-Q2',
-            type: 'mc',
-            prompt:
-              'An inspector walking a completed aerial installation finds a span where the fiber cable appears to be hanging below the minimum ground clearance required by permit. What is the inspector\'s correct next action?',
-            choices: [
-              'Add it to the punch list and notify the PM — construction crew must correct it before acceptance',
-              'Immediately call the electric utility to report a hazard',
-              'Adjust the cable sag themselves using the lashing tool in their truck',
-              'Accept the span since small clearance violations are typically waived',
-            ],
-            answerIndex: 0,
-            explanation:
-              'The inspector\'s job is to identify and document non-conformances, not to fix them. Adding the clearance violation to the punch list and notifying the PM triggers the correct correction workflow: the construction crew adjusts the installation, and the inspector re-inspects. Inspectors do not perform construction corrections — that would compromise their independence as a QA function.',
-          },
-          {
-            id: 'T01-L06-Q3',
-            type: 'fill-in-blank',
-            prompt:
-              'The licensed engineer who stamps and signs OSP construction drawings, certifying they meet applicable codes and are structurally sound, is designated as a ____.',
-            answer: 'PE',
-            answerDisplay: 'PE (Professional Engineer)',
-            explanation:
-              'A PE (Professional Engineer) is state-licensed to certify engineering work. Their stamp on a drawing is a legal certification that they have reviewed and stand behind the technical content. For RUS-program work, PE-stamped drawings are required. The PE is personally liable for stamped documents.',
-            citation: 'RUS Bulletin 1751F-630 §2; state engineering licensing requirements.',
-          },
-          {
-            id: 'T01-L06-Q4',
-            type: 'mc',
-            prompt:
-              'Who performs the final acceptance testing of the fiber plant, generating the Tier 1 and Tier 2 test records?',
-            choices: [
-              'The splicer — they tested each splice with the OTDR so no separate test is needed',
-              'The make-ready crew — they are responsible for final verification before the permit is closed',
-              'The test technician — performing bidirectional OTDR traces and end-to-end insertion loss tests on every fiber against the design acceptance criteria',
-              'The designer — they set the acceptance criteria and must verify the plant meets them',
-            ],
-            answerIndex: 2,
-            explanation:
-              'The test technician performs the final acceptance test. The splicer\'s OTDR traces are real-time quality checks during splicing, but they are not the formal acceptance test — they test one splice at a time rather than the end-to-end link. The final acceptance test is an independent, end-to-end measurement of every fiber in the as-built plant, compared to the design\'s accepted loss budget.',
-          },
-        ]}
+        fallback={
+        <Quiz
+          title="T01.L06 Check — Who Does What"
+          mode="multiple-choice"
+          questions={[
+            {
+              id: 'T01-L06-Q1',
+              type: 'mc',
+              prompt:
+                'A construction crew finishes installing cable on a route segment. The splicer shows up to begin splicing but discovers there are no splice records identifying which cable entries should be connected to which. Who is primarily responsible for this gap?',
+              choices: [
+                'The splicer — they should have requested the records before arriving',
+                'The designer — they should have provided complete splice design documentation that would be handed to the splicer with the cable installation package',
+                'The test technician — they own all documentation',
+                'No one — splice records are created by the splicer during splicing, not before',
+              ],
+              answerIndex: 1,
+              explanation:
+                'The designer produces the splice design as part of the design package: which fibers connect to which, which buffer tubes are through-spliced vs. broken out. This information is handed to the splicer as the "splice map." The splicer creates individual fiber splice records (actual splice loss, fiber-by-fiber detail) during work, but the splice map comes from design. Arriving without a splice map is a design-to-field handoff failure.',
+            },
+            {
+              id: 'T01-L06-Q2',
+              type: 'mc',
+              prompt:
+                'An inspector walking a completed aerial installation finds a span where the fiber cable appears to be hanging below the minimum ground clearance required by permit. What is the inspector\'s correct next action?',
+              choices: [
+                'Add it to the punch list and notify the PM — construction crew must correct it before acceptance',
+                'Immediately call the electric utility to report a hazard',
+                'Adjust the cable sag themselves using the lashing tool in their truck',
+                'Accept the span since small clearance violations are typically waived',
+              ],
+              answerIndex: 0,
+              explanation:
+                'The inspector\'s job is to identify and document non-conformances, not to fix them. Adding the clearance violation to the punch list and notifying the PM triggers the correct correction workflow: the construction crew adjusts the installation, and the inspector re-inspects. Inspectors do not perform construction corrections — that would compromise their independence as a QA function.',
+            },
+            {
+              id: 'T01-L06-Q3',
+              type: 'fill-in-blank',
+              prompt:
+                'The licensed engineer who stamps and signs OSP construction drawings, certifying they meet applicable codes and are structurally sound, is designated as a ____.',
+              answer: 'PE',
+              answerDisplay: 'PE (Professional Engineer)',
+              explanation:
+                'A PE (Professional Engineer) is state-licensed to certify engineering work. Their stamp on a drawing is a legal certification that they have reviewed and stand behind the technical content. For RUS-program work, PE-stamped drawings are required. The PE is personally liable for stamped documents.',
+              citation: 'RUS Bulletin 1751F-630 §2; state engineering licensing requirements.',
+            },
+            {
+              id: 'T01-L06-Q4',
+              type: 'mc',
+              prompt:
+                'Who performs the final acceptance testing of the fiber plant, generating the Tier 1 and Tier 2 test records?',
+              choices: [
+                'The splicer — they tested each splice with the OTDR so no separate test is needed',
+                'The make-ready crew — they are responsible for final verification before the permit is closed',
+                'The test technician — performing bidirectional OTDR traces and end-to-end insertion loss tests on every fiber against the design acceptance criteria',
+                'The designer — they set the acceptance criteria and must verify the plant meets them',
+              ],
+              answerIndex: 2,
+              explanation:
+                'The test technician performs the final acceptance test. The splicer\'s OTDR traces are real-time quality checks during splicing, but they are not the formal acceptance test — they test one splice at a time rather than the end-to-end link. The final acceptance test is an independent, end-to-end measurement of every fiber in the as-built plant, compared to the design\'s accepted loss budget.',
+            },
+          ]}
+        />
+        }
       />
 
     </LessonLayout>

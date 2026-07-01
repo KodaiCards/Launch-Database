@@ -4,14 +4,21 @@ import { LessonProgressContext } from '../LessonLayout.jsx';
 /**
  * Quiz — unified quiz primitive supporting three question modes.
  *
- * This is an EXTENSION of the InteractiveQuiz component pattern. It adds
- * fill-in-blank support and unifies mode selection via a prop rather than
- * per-question type. Existing InteractiveQuiz usage in modules continues
- * to work unchanged — Quiz is a NEW component, not a replacement.
+ * This is an EXTENSION of the InteractiveQuiz component pattern. It unifies
+ * mode selection via a prop rather than per-question type. Existing
+ * InteractiveQuiz usage in modules continues to work unchanged — Quiz is a
+ * NEW component, not a replacement.
+ *
+ * `fill-in-blank` is RETIRED (Carter's typed-answer ban, 2026-07-01) — the
+ * server pool-loader rejects it and no live lesson should author it. Some
+ * still-hidden WIP lessons (T03/*, T13/*) have leftover inline
+ * `fill-in-blank` questions; rather than crash on them, this component
+ * degrades gracefully and renders a neutral "retired question type" skip
+ * card instead.
  *
  * @param {string}   title      - Quiz section title displayed in the header.
  * @param {string}   [mode]     - Default mode when question has no explicit type.
- *                                'multiple-choice' | 'drag-match' | 'fill-in-blank'
+ *                                'multiple-choice' | 'drag-match'
  *                                Falls back to question.type for backwards compat.
  * @param {Array}    questions  - Array of question objects (see shapes below).
  * @param {Function} [onComplete] - Called with { score, total, answers } on finish.
@@ -25,15 +32,6 @@ import { LessonProgressContext } from '../LessonLayout.jsx';
  *   drag-match (type: 'dragdrop' or 'drag-match'):
  *     { id, prompt, items: [{id, label}], targets: [{id, label}],
  *       correctMap: { targetId: itemId }, explanation?, citation?, fieldNote? }
- *
- *   fill-in-blank (type: 'fill-in-blank'):
- *     { id, prompt, blank: string (the ____ placeholder in the prompt),
- *       answer: string (exact or regex-pattern),
- *       answerDisplay: string (shown after reveal),
- *       caseSensitive?: boolean (default false),
- *       explanation?, citation?, fieldNote? }
- *     The prompt string may contain "____" which will be replaced by the
- *     input field in the rendered question.
  */
 export default function Quiz({ title, mode = 'multiple-choice', questions, onComplete }) {
   const lessonCtx = useContext(LessonProgressContext);
@@ -63,7 +61,7 @@ export default function Quiz({ title, mode = 'multiple-choice', questions, onCom
   function resolveMode(question) {
     if (question.type === 'mc' || question.type === 'multiple-choice') return 'multiple-choice';
     if (question.type === 'dragdrop' || question.type === 'drag-match') return 'drag-match';
-    if (question.type === 'fill-in-blank') return 'fill-in-blank';
+    if (question.type === 'fill-in-blank') return 'retired'; // banned type — degrade, don't crash
     return mode;
   }
 
@@ -122,7 +120,7 @@ export default function Quiz({ title, mode = 'multiple-choice', questions, onCom
       </div>
 
       <p className="text-slate-100 mb-4 leading-relaxed">
-        {currentMode === 'fill-in-blank' ? null : q.prompt}
+        {currentMode === 'retired' ? null : q.prompt}
       </p>
 
       {currentMode === 'multiple-choice' && (
@@ -131,8 +129,8 @@ export default function Quiz({ title, mode = 'multiple-choice', questions, onCom
       {currentMode === 'drag-match' && (
         <DragMatch q={q} revealed={revealed} onAnswer={recordAnswer} />
       )}
-      {currentMode === 'fill-in-blank' && (
-        <FillInBlank q={q} revealed={revealed} onAnswer={recordAnswer} />
+      {currentMode === 'retired' && (
+        <RetiredQuestion onSkip={next} />
       )}
 
       {revealed && (
@@ -351,89 +349,16 @@ function DragMatch({ q, revealed, onAnswer }) {
   );
 }
 
-/* ─────────────────────── Fill in the Blank ─────────────────────── */
+/* ─────────────────────── Retired (fill-in-blank ban) ─────────────────────── */
 
-function FillInBlank({ q, revealed, onAnswer }) {
-  const [value, setValue] = useState('');
-  const [checked, setChecked] = useState(false);
-
-  // Split the prompt on the blank placeholder so we can insert an input inline
-  const parts = q.prompt.split('____');
-
-  function checkAnswer() {
-    if (!value.trim()) return;
-    let correct;
-    if (q.answer instanceof RegExp) {
-      correct = q.answer.test(value.trim());
-    } else {
-      const expected = q.caseSensitive ? q.answer : q.answer.toLowerCase();
-      const given    = q.caseSensitive ? value.trim() : value.trim().toLowerCase();
-      correct = given === expected;
-    }
-    setChecked(true);
-    onAnswer(value.trim(), correct);
-  }
-
-  const isCorrect = checked && answers_correct(q, value);
-
+// fill-in-blank is banned platform-wide (Carter, 2026-07-01). Some hidden WIP
+// lessons still carry inline fill-in-blank questions; render a neutral
+// placeholder + skip instead of crashing when one is encountered.
+function RetiredQuestion({ onSkip }) {
   return (
-    <div>
-      {/* Inline blank rendering */}
-      <p className="text-slate-100 mb-4 leading-relaxed flex flex-wrap items-center gap-1">
-        {parts.map((part, i) => (
-          <React.Fragment key={i}>
-            <span>{part}</span>
-            {i < parts.length - 1 && (
-              <input
-                type="text"
-                value={value}
-                disabled={revealed}
-                onChange={e => setValue(e.target.value)}
-                onKeyDown={e => e.key === 'Enter' && !revealed && checkAnswer()}
-                className={[
-                  'inline-block px-2 py-0.5 rounded border font-mono text-sm min-w-[8rem] bg-black/40',
-                  revealed
-                    ? isCorrect
-                      ? 'border-ospgreen text-ospgreen'
-                      : 'border-rose-400 text-rose-300'
-                    : 'border-white/30 focus:border-ospamber focus:outline-none',
-                ].join(' ')}
-                placeholder="type answer"
-              />
-            )}
-          </React.Fragment>
-        ))}
-      </p>
-
-      {revealed && q.answerDisplay && (
-        <p className="text-sm mb-3">
-          <span className={isCorrect ? 'text-ospgreen' : 'text-rose-300'}>
-            {isCorrect ? '✓ Correct' : '✗ Incorrect'}
-          </span>
-          {!isCorrect && (
-            <span className="text-slate-300/80 ml-2">
-              — correct answer: <span className="font-mono text-amber-200">{q.answerDisplay}</span>
-            </span>
-          )}
-        </p>
-      )}
-
-      {!revealed && (
-        <button
-          className="btn-primary disabled:opacity-50"
-          disabled={!value.trim()}
-          onClick={checkAnswer}
-        >
-          Check answer
-        </button>
-      )}
+    <div className="rounded-lg border border-white/15 bg-white/5 p-4 text-sm">
+      <p className="text-slate-300/80">This question type is no longer available.</p>
+      <button className="btn-primary mt-3" onClick={onSkip}>Skip</button>
     </div>
   );
-}
-
-function answers_correct(q, value) {
-  if (q.answer instanceof RegExp) return q.answer.test(value.trim());
-  const expected = q.caseSensitive ? q.answer : q.answer.toLowerCase();
-  const given    = q.caseSensitive ? value.trim() : value.trim().toLowerCase();
-  return given === expected;
 }
