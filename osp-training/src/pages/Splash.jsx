@@ -77,8 +77,6 @@ function LockedCourseTile({ course }) {
           <p className="text-sm text-slate-500 mt-0.5 line-clamp-2">{course.description}</p>
           <div className="flex items-center gap-3 mt-2 text-xs text-slate-500">
             <span>{course.lesson_count} lessons</span>
-            <span>&middot;</span>
-            <span>{Math.round(course.estimated_minutes / 60 * 10) / 10} hr</span>
           </div>
         </div>
 
@@ -120,8 +118,6 @@ function CourseTile({ course, progressPct }) {
           <p className="text-sm text-slate-400 mt-0.5 line-clamp-2">{course.description}</p>
           <div className="flex items-center gap-3 mt-2 text-xs text-slate-400">
             <span>{course.lesson_count} lessons</span>
-            <span>&middot;</span>
-            <span>{Math.round(course.estimated_minutes / 60 * 10) / 10} hr</span>
             {course.prerequisites?.length > 0 && (
               <>
                 <span>&middot;</span>

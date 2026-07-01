@@ -1,0 +1,15 @@
+{
+  "assessmentId": "_fixture-demo",
+  "kind": "lesson",
+  "courseId": "_FIXTURE",
+  "lessonId": "_fixture-demo",
+  "drawCount": 2,
+  "passThreshold": 70,
+  "_note": "MECHANISM TEST FIXTURE ONLY — not curriculum content, never publish. Exercises the engine (draw/strip/grade) end-to-end without touching gated content.",
+  "pool": [
+    { "id": "f1", "type": "mc", "prompt": "2 + 2 = ?", "choices": ["3", "4", "5", "6"], "answerIndex": 1, "explanation": "Arithmetic." },
+    { "id": "f2", "type": "mc", "prompt": "Sky color on a clear day?", "choices": ["Green", "Blue", "Red"], "answerIndex": 1, "explanation": "Rayleigh scattering." },
+    { "id": "f3", "type": "mc", "prompt": "OSP stands for?", "choices": ["Outside Plant", "Optical Signal Path", "Open Splice Point"], "answerIndex": 0, "explanation": "Outside Plant." },
+    { "id": "f4", "type": "drag-match", "prompt": "Match the tool to its job.", "items": [{ "id": "otdr", "label": "OTDR" }, { "id": "cleaver", "label": "Cleaver" }], "targets": [{ "id": "t_trace", "label": "Locate a break" }, { "id": "t_cut", "label": "Cut a clean fiber end" }], "correctMap": { "t_trace": "otdr", "t_cut": "cleaver" }, "explanation": "OTDR traces; cleaver cuts." }
+  ]
+}
