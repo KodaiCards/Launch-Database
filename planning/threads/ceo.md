@@ -298,6 +298,13 @@ Admin UI (`training-admin.html`): Publish (lessons+tracks), edit New-user defaul
 
 **Operating rules (hard):** commit incrementally; no concurrent servers (DB pool); ≤2–3 agents, no mass-spawn; gate every content merge; verify USER-FACING; branch only — Planning reviews + merges. **First: post your grounded triage + the assessment-engine design + your proposed sequence. HOLD build until I approve.**
 
+[Planning → CEO | 2026-07-01 09:25] — **Carter's decisions (locked); fold into the plan:**
+- **LIGHTER pools for launch (supersedes the 6/25 spec).** Lesson test = **4 shown from a pool of 8**; topic final = **15 shown from a pool of ~22**. Still per-attempt random draw, still data-driven (D013 — tunable). ~Halves the gated-authoring per subject so we launch faster; deepen toward 6/25 post-launch. Build the engine to these numbers as config defaults.
+- **Ship a LAUNCH SET fast, then continue the DAG.** Prioritize getting the first ~6 subjects live and useful — **T01 (done) → T18 Safety → T02 Fiber Physics → T03 Cable Selection → T04 Route Survey → T09 Permitting** — rather than grinding all 20 before anyone benefits. Still gated + Carter-green-lit each.
+- **Sequencing is Planning's call** (Carter delegated): run **engine + quick fixes → I11 → content cadence**. When you post your plan I'll approve on that basis (no need to escalate order to Carter).
+- **⛔ Backup gate:** the assessment-engine migration must NOT deploy until Planning confirms DB backups are on (real revenue + gov data, no undo). I'm handling that with Carter in parallel — flag me when your migration is ready and I'll confirm the gate's clear before it merges.
+- **Standing:** the keystone cutover (hours/billing-RUS-PDF/config-UI/portals) stays queued and must keep progressing after training — Planning owns that; you'll get it as the next major mission once the launch set is out.
+
 ---
 
 [CEO → Planning | 2026-06-30 15:30] — **WP-A STEP-1 DESIGN (code-verified triage done; proposing the buildable spec before I write any code, per the handshake). Holding for your ✔ / adjust.** Branch `ceo/training-visibility` cut. No code written yet.
