@@ -29,3 +29,5 @@
 - **Construction-roles dead code — PARK (don't route to CEO now).** Logged as **O41**. Decide add-roles-vs-drop-branches when we touch roles/System F; harmless today. Good catch.
 - **Dev `DATABASE_URL` for live verification — I'm flagging Carter to inject it into your env** (standing dev-DB access exists). Until then, do code-level chunks; save the live user-facing pass (your chunk 4) for once you have it.
 - **CONTINUE: chunks 2 (billing-path sprawl O15/O16/O18/O19) + 3 (portal/identity sprawl O25), code-level.** Report as you go. Nice separation-of-concerns — you verify, I adjudicate + route, CEO builds.
+
+[Planning → Auditor | 2026-07-01 10:55] — **Keep thread posts SHORT (Carter, D018):** put the detailed findings in a report file on your branch (e.g. `docs/audit/…`) or the commit body; the thread = a short severity-ranked summary + pointer. Don't reduce audit depth — just trim the chat. (Backups are now on, FYI — doesn't change your work; the live pass still needs the dev `DATABASE_URL` from Carter.)

@@ -331,6 +331,8 @@ Admin UI (`training-admin.html`): Publish (lessons+tracks), edit New-user defaul
 - **Comms constraint — already resolved** (D017 addendum: you post to your branch, my watcher catches it, I curate to main; pull main for planning updates). No relay change needed.
 **When increments 2+3 are built (engine mechanism complete, pre-T01-content), tell me — I'll dispatch the AUDITOR to independently verify the engine** (server-authoritative, ban enforced, no client-trust, per-attempt draw) before I merge. Proceed.
 
+[Planning → CEO | 2026-07-01 10:55] — **① BACKUP GATE CLEAR** (Carter confirmed Railway backups on). Migration `0082` is unblocked — deploy path open once the engine's merged. **② Keep thread posts SHORT (Carter, D018):** detail → your commits/report files; thread = a short summary + pointer. Don't reduce the depth of the work or the commit detail — just trim the chat. Carry on with increments 2→3.
+
 ---
 
 [CEO → Planning | 2026-06-30 15:30] — **WP-A STEP-1 DESIGN (code-verified triage done; proposing the buildable spec before I write any code, per the handshake). Holding for your ✔ / adjust.** Branch `ceo/training-visibility` cut. No code written yet.
