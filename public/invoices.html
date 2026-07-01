@@ -137,9 +137,6 @@ tbody td{padding:10px 14px;color:var(--text-secondary)}
     <span class="header-title"><i class="fa-solid fa-file-invoice-dollar"></i> Invoices</span>
   </div>
   <div class="header-right">
-    <button class="btn-icon" onclick="toggleDark()" title="Toggle dark mode" aria-label="Toggle dark mode">
-      <i id="dm-icon" class="fa-solid fa-moon"></i>
-    </button>
   </div>
 </div>
 
@@ -217,7 +214,6 @@ tbody td{padding:10px 14px;color:var(--text-secondary)}
   var _filterTimer = null;
 
   document.addEventListener('DOMContentLoaded', function(){
-    applyStoredTheme();
     load();
     document.addEventListener('keydown', function(e){ if(e.key==='Escape') closeModal(); });
   });
@@ -367,24 +363,6 @@ tbody td{padding:10px 14px;color:var(--text-secondary)}
     return String(s??'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
   }
 
-  window.toggleDark = function(){
-    var html = document.documentElement;
-    var dark = html.getAttribute('data-theme')==='dark';
-    html.setAttribute('data-theme', dark ? 'light' : 'dark');
-    localStorage.setItem('lfs_theme', dark ? 'light' : 'dark');
-    updateDmIcon();
-  };
-  function applyStoredTheme(){
-    var stored = localStorage.getItem('lfs_theme');
-    if(stored) document.documentElement.setAttribute('data-theme', stored);
-    updateDmIcon();
-  }
-  function updateDmIcon(){
-    var icon = document.getElementById('dm-icon');
-    if(!icon) return;
-    var dark = document.documentElement.getAttribute('data-theme')==='dark';
-    icon.className = dark ? 'fa-solid fa-sun' : 'fa-solid fa-moon';
-  }
 })();
 </script>
 <script src="/js/app_nav.js" data-active="invoices"></script>

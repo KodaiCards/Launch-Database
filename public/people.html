@@ -136,9 +136,6 @@ tbody td{padding:10px 14px;color:var(--text-secondary);vertical-align:middle}
     <span class="header-title"><i class="fa-solid fa-id-badge"></i> People</span>
   </div>
   <div class="header-right">
-    <button class="btn-icon" onclick="toggleDark()" title="Toggle dark mode" aria-label="Toggle dark mode">
-      <i id="dm-icon" class="fa-solid fa-moon"></i>
-    </button>
   </div>
 </div>
 
@@ -256,7 +253,6 @@ tbody td{padding:10px 14px;color:var(--text-secondary);vertical-align:middle}
   var _editing = null; // person being edited, or null for add
 
   document.addEventListener('DOMContentLoaded', function(){
-    applyStoredTheme();
     var sel = document.getElementById('f-role');
     sel.innerHTML = ROLES.map(function(r){ return '<option value="'+r[0]+'">'+esc(r[1])+'</option>'; }).join('');
     loadPeople();
@@ -500,24 +496,6 @@ tbody td{padding:10px 14px;color:var(--text-secondary);vertical-align:middle}
   }
   function esc(s){
     return String(s==null?'':s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
-  }
-  window.toggleDark = function(){
-    var html = document.documentElement;
-    var dark = html.getAttribute('data-theme')==='dark';
-    html.setAttribute('data-theme', dark ? 'light' : 'dark');
-    localStorage.setItem('lfs_theme', dark ? 'light' : 'dark');
-    updateDmIcon();
-  };
-  function applyStoredTheme(){
-    var stored = localStorage.getItem('lfs_theme');
-    if(stored) document.documentElement.setAttribute('data-theme', stored);
-    updateDmIcon();
-  }
-  function updateDmIcon(){
-    var icon = document.getElementById('dm-icon');
-    if(!icon) return;
-    var dark = document.documentElement.getAttribute('data-theme')==='dark';
-    icon.className = dark ? 'fa-solid fa-sun' : 'fa-solid fa-moon';
   }
 })();
 </script>

@@ -174,9 +174,6 @@ tbody td{padding:10px 14px;color:var(--text-secondary)}
     <span class="header-title"><i class="fa-solid fa-users"></i> Clients</span>
   </div>
   <div class="header-right">
-    <button class="btn-icon" onclick="toggleDark()" title="Toggle dark mode" aria-label="Toggle dark mode">
-      <i id="dm-icon" class="fa-solid fa-moon"></i>
-    </button>
   </div>
 </div>
 
@@ -289,7 +286,6 @@ tbody td{padding:10px 14px;color:var(--text-secondary)}
 
   // ── Boot ────────────────────────────────────────────────────────────────────
   document.addEventListener('DOMContentLoaded', function(){
-    applyStoredTheme();
     load();
     wireModals();
   });
@@ -720,25 +716,6 @@ tbody td{padding:10px 14px;color:var(--text-secondary)}
     _toastTimer = setTimeout(function(){ t.classList.remove('show'); }, 3000);
   }
 
-  // ── Theme ────────────────────────────────────────────────────────────────────
-  window.toggleDark = function(){
-    var html = document.documentElement;
-    var dark = html.getAttribute('data-theme')==='dark';
-    html.setAttribute('data-theme', dark?'light':'dark');
-    localStorage.setItem('lfs_theme', dark?'light':'dark');
-    updateDmIcon();
-  };
-  function applyStoredTheme(){
-    var stored = localStorage.getItem('lfs_theme');
-    if(stored) document.documentElement.setAttribute('data-theme', stored);
-    updateDmIcon();
-  }
-  function updateDmIcon(){
-    var icon = document.getElementById('dm-icon');
-    if(!icon) return;
-    var dark = document.documentElement.getAttribute('data-theme')==='dark';
-    icon.className = dark?'fa-solid fa-sun':'fa-solid fa-moon';
-  }
 })();
 </script>
 <script src="/js/app_nav.js" data-active="clients"></script>

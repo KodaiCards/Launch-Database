@@ -155,9 +155,6 @@ tbody td{padding:8px 12px;color:var(--text-secondary)}
     <span class="header-title"><i class="fa-solid fa-file-import"></i> Import Hours</span>
   </div>
   <div style="display:flex;align-items:center;gap:8px">
-    <button class="btn-icon" onclick="toggleDark()" title="Toggle dark mode" aria-label="Toggle dark mode">
-      <i id="dm-icon" class="fa-solid fa-moon"></i>
-    </button>
   </div>
 </div>
 
@@ -268,27 +265,6 @@ var _overrides = {};        // {rowIndex: service_area_job_id}
 var _skipped   = new Set(); // rowIndex
 var _areaCache = {};        // areaId → {id, name, jobs:[]}
 var _allAreas  = null;      // [{id, name, client_name}] — loaded once
-
-// ── Theme ────────────────────────────────────────────────────────────────────
-document.addEventListener('DOMContentLoaded', applyStoredTheme);
-window.toggleDark = function(){
-  var html = document.documentElement;
-  var dark = html.getAttribute('data-theme')==='dark';
-  html.setAttribute('data-theme', dark?'light':'dark');
-  localStorage.setItem('lfs_theme', dark?'light':'dark');
-  updateDmIcon();
-};
-function applyStoredTheme(){
-  var s = localStorage.getItem('lfs_theme');
-  if(s) document.documentElement.setAttribute('data-theme', s);
-  updateDmIcon();
-}
-function updateDmIcon(){
-  var i = document.getElementById('dm-icon');
-  if(!i) return;
-  i.className = document.documentElement.getAttribute('data-theme')==='dark'
-    ? 'fa-solid fa-sun' : 'fa-solid fa-moon';
-}
 
 // ── Step 1: Upload ───────────────────────────────────────────────────────────
 var _selectedFile = null;

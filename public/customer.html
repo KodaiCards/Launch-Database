@@ -296,9 +296,8 @@ html[data-theme="dark"] .sk::after{background:linear-gradient(90deg,transparent,
     <span style="font-size:12px;color:var(--text-muted)">Client Portal</span>
   </div>
   <div class="header-right">
-    <button class="btn btn-secondary btn-sm btn-icon" onclick="toggleDarkMode()" title="Toggle dark mode" aria-label="Toggle dark mode">
-      <i class="fa-solid fa-moon" id="dm-icon" aria-hidden="true"></i>
-    </button>
+    <!-- Theme is owned by the shared engine + AppShell topbar picker (WP-C). -->
+
     <div class="account-pill" id="user-pill" style="display:none" role="button" tabindex="0" aria-haspopup="dialog" aria-label="Account menu" onclick="showAccountMenu()" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();showAccountMenu();}">
       <i class="fa-solid fa-user-circle" aria-hidden="true"></i>
       <span id="user-pill-text"></span>
@@ -414,34 +413,8 @@ html[data-theme="dark"] .sk::after{background:linear-gradient(90deg,transparent,
 </div>
 
 <script>
-// ─── Dark mode (mirrors other portals) ────────────────────────────────
-function applyDarkMode(on){
-  document.documentElement.setAttribute('data-theme', on ? 'dark' : 'light');
-  const icon = document.getElementById('dm-icon');
-  if (icon) icon.className = on ? 'fa-solid fa-sun' : 'fa-solid fa-moon';
-}
-function toggleDarkMode(){
-  const isDark = document.documentElement.getAttribute('data-theme') === 'dark';
-  const next = !isDark;
-  try { localStorage.setItem('lfs-theme', next ? 'dark' : 'light'); } catch(e){}
-  applyDarkMode(next);
-  fetch('/api/auth/me/theme', {
-    method: 'PUT',
-    headers: { 'Content-Type': 'application/json' },
-    credentials: 'same-origin',
-    body: JSON.stringify({ theme: next ? 'dark' : 'light' })
-  }).catch(()=>{});
-}
-(function(){
-  try {
-    const saved = localStorage.getItem('lfs-theme');
-    if (saved === 'dark') applyDarkMode(true);
-    else if (saved === 'light') applyDarkMode(false);
-    else if (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) {
-      applyDarkMode(true);
-    }
-  } catch(e){}
-})();
+// Theme is owned entirely by the shared engine (app-shell.js) + the topbar
+// picker mounted by AppShell.init(). No per-portal dark-mode toggle here (WP-C).
 
 function esc(s){ if (s === null || s === undefined) return ''; return String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
 function fmtMoney(n){ return '$' + (Number(n)||0).toLocaleString('en-US', {minimumFractionDigits:2, maximumFractionDigits:2}); }

@@ -56,10 +56,10 @@ function AppLayout() {
         <div className="max-w-7xl mx-auto flex items-center justify-between px-6 py-3">
           <div>
             <div className="text-xs uppercase tracking-widest text-amber-300/80">
-              Launch Fiber Services · OSP Training
+              Launch Fiber Services · Training
             </div>
             <Link to="/" className="text-lg font-semibold hover:text-amber-200 transition">
-              OSP · ISP · Certification Prep
+              Training
             </Link>
           </div>
 

@@ -16,13 +16,7 @@
   };
 
   // ── Theme ────────────────────────────────────────────────────────────────
-  const savedTheme = localStorage.getItem('lfs_theme') || 'light';
-  document.documentElement.setAttribute('data-theme', savedTheme);
-  $('themeToggle').addEventListener('click', () => {
-    const t = document.documentElement.getAttribute('data-theme') === 'dark' ? 'light' : 'dark';
-    document.documentElement.setAttribute('data-theme', t);
-    localStorage.setItem('lfs_theme', t);
-  });
+  // Owned by the shared engine (app-shell.js) + topbar picker (app_nav.js). (WP-C)
 
   // ── Undo bar ───────────────────────────────────────────────────────────────
   let undoAction = null, undoTimer = null;

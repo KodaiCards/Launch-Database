@@ -5,11 +5,8 @@
   const esc = (s) => String(s == null ? '' : s).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
   const money = (n) => '$' + Number(n || 0).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 
-  document.documentElement.setAttribute('data-theme', localStorage.getItem('lfs_theme') || 'light');
-  $('themeToggle').addEventListener('click', () => {
-    const t = document.documentElement.getAttribute('data-theme') === 'dark' ? 'light' : 'dark';
-    document.documentElement.setAttribute('data-theme', t); localStorage.setItem('lfs_theme', t);
-  });
+  // Theme is owned entirely by the shared engine (app-shell.js) + the topbar
+  // picker mounted via app_nav.js. No per-page theme toggle here (WP-C).
 
   (async () => {
     let invoices;

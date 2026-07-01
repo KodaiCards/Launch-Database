@@ -155,9 +155,6 @@ tr.excluded-row{opacity:.45}
 
 <div class="header">
   <span class="header-title"><i class="fa-solid fa-file-invoice-dollar"></i> Billing</span>
-  <button class="btn-icon" onclick="toggleDark()" aria-label="Toggle dark mode">
-    <i id="dm-icon" class="fa-solid fa-moon"></i>
-  </button>
 </div>
 
 <div class="page-body" role="main">
@@ -263,25 +260,7 @@ tr.excluded-row{opacity:.45}
 (function(){
 'use strict';
 
-// ── Theme ────────────────────────────────────────────────────────────────────
-document.addEventListener('DOMContentLoaded', function(){ applyStoredTheme(); boot(); });
-window.toggleDark = function(){
-  var html = document.documentElement;
-  var dark = html.getAttribute('data-theme')==='dark';
-  html.setAttribute('data-theme', dark?'light':'dark');
-  localStorage.setItem('lfs_theme', dark?'light':'dark');
-  updateDmIcon();
-};
-function applyStoredTheme(){
-  var s = localStorage.getItem('lfs_theme');
-  if(s) document.documentElement.setAttribute('data-theme', s);
-  updateDmIcon();
-}
-function updateDmIcon(){
-  var i = document.getElementById('dm-icon');
-  if(!i) return;
-  i.className = document.documentElement.getAttribute('data-theme')==='dark' ? 'fa-solid fa-sun' : 'fa-solid fa-moon';
-}
+document.addEventListener('DOMContentLoaded', function(){ boot(); });
 
 // ── State ─────────────────────────────────────────────────────────────────────
 var _periods        = []; // [{period_month, closed_at}]

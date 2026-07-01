@@ -9,13 +9,7 @@
   const params = new URLSearchParams(location.search);
   const TEAM = (params.get('team') || 'permitting').toLowerCase();
 
-  // theme
-  document.documentElement.setAttribute('data-theme', localStorage.getItem('lfs_theme') || 'light');
-  $('themeToggle').addEventListener('click', () => {
-    const t = document.documentElement.getAttribute('data-theme') === 'dark' ? 'light' : 'dark';
-    document.documentElement.setAttribute('data-theme', t);
-    localStorage.setItem('lfs_theme', t);
-  });
+  // Theme is owned by the shared engine (app-shell.js) + topbar picker (app_nav.js). (WP-C)
 
   // undo bar
   let undoAction = null, undoTimer = null;

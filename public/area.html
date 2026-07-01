@@ -227,9 +227,6 @@ tfoot td{font-weight:700;border-top:2px solid var(--gray-border);padding:8px 12p
     <span class="topbar-title" id="page-title"><i class="fa-solid fa-diagram-project"></i> Workspace</span>
   </div>
   <div class="topbar-right">
-    <button class="btn-icon" onclick="toggleDark()" title="Toggle dark mode" aria-label="Toggle dark mode">
-      <i id="dm-icon" class="fa-solid fa-moon"></i>
-    </button>
   </div>
 </div>
 
@@ -252,7 +249,6 @@ var _expandedMat = {};     // materialId → bool (survive re-render)
 var _expandedJob = {};     // jobId → bool
 
 document.addEventListener('DOMContentLoaded', function(){
-  applyTheme();
   if(!_id){
     document.getElementById('page-body').innerHTML = '<div class="empty-state"><i class="fa-solid fa-triangle-exclamation"></i>No area ID in URL — use ?id=&lt;uuid&gt;.</div>';
     return;
@@ -1463,26 +1459,6 @@ async function api(path, method, body){
   }
   if(r.status===204||r.headers.get('content-length')==='0') return null;
   return r.json();
-}
-
-// ── Theme ──────────────────────────────────────────────────────────────────
-window.toggleDark = function(){
-  var html = document.documentElement;
-  var dark = html.getAttribute('data-theme')==='dark';
-  html.setAttribute('data-theme', dark?'light':'dark');
-  localStorage.setItem('lfs_theme', dark?'light':'dark');
-  updateDmIcon();
-};
-function applyTheme(){
-  var stored = localStorage.getItem('lfs_theme');
-  if(stored) document.documentElement.setAttribute('data-theme', stored);
-  updateDmIcon();
-}
-function updateDmIcon(){
-  var icon = document.getElementById('dm-icon');
-  if(!icon) return;
-  var dark = document.documentElement.getAttribute('data-theme')==='dark';
-  icon.className = dark?'fa-solid fa-sun':'fa-solid fa-moon';
 }
 
 // ── R17 B4: Project line draw/re-draw on the SA detail map ──────────────────
