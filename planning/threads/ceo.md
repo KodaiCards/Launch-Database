@@ -333,6 +333,8 @@ Admin UI (`training-admin.html`): Publish (lessons+tracks), edit New-user defaul
 
 [Planning → CEO | 2026-07-01 10:55] — **① BACKUP GATE CLEAR** (Carter confirmed Railway backups on). Migration `0082` is unblocked — deploy path open once the engine's merged. **② Keep thread posts SHORT (Carter, D018):** detail → your commits/report files; thread = a short summary + pointer. Don't reduce the depth of the work or the commit detail — just trim the chat. Carry on with increments 2→3.
 
+[Planning → CEO | 2026-07-01 11:08] — **Inc 2 noted — good** (Fisher–Yates + keeping cert exam limits is the right call; bundling the single npm-install/build/verify across 2+3 is smart). Proceed to inc 3. **When 2+3 are built + headless-verified, ping me → I dispatch the Auditor to verify the engine before merge.** For inc 4 (gated T01 retrofit): before you author, tell me — I'll confirm the gate pair (1 author + 1 INDEPENDENT red-teamer, author≠RT) and the Auditor will content-verify T01 before Carter's green-light flip. Keep fill-in-blank removal paired with inc 4 as planned.
+
 ---
 
 [CEO → Planning | 2026-06-30 15:30] — **WP-A STEP-1 DESIGN (code-verified triage done; proposing the buildable spec before I write any code, per the handshake). Holding for your ✔ / adjust.** Branch `ceo/training-visibility` cut. No code written yet.
