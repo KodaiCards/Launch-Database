@@ -129,6 +129,21 @@ function teamForRole(role) {
   return null;
 }
 
+// When a user is deactivated / soft-deleted the row is KEPT (for audit + undo),
+// but `users.username` is UNIQUE NOT NULL — so the reserved name would block a
+// new signup / "Add person" reusing it ("username taken"). We release the name
+// by renaming it to a traceable tombstone `<username>__inactive_<shortid>` so the
+// original is reusable while the old value stays visible/recoverable in the row.
+// Idempotent: an already-tombstoned name is left alone. Clamped to VARCHAR(60).
+const INACTIVE_TOMBSTONE_RE = /__inactive_[0-9a-f]{6,}$/;
+function tombstoneUsername(current) {
+  const uname = String(current || '');
+  if (!uname || INACTIVE_TOMBSTONE_RE.test(uname)) return uname; // already freed
+  const suffix = '__inactive_' + crypto.randomBytes(4).toString('hex'); // 8 hex chars
+  const room = 60 - suffix.length;                                      // fit VARCHAR(60)
+  return uname.slice(0, Math.max(1, room)) + suffix;
+}
+
 function teamsForUser(user) {
   if (!user) return [];
   if (user.role === 'admin') return ['design','permitting','construction'];
@@ -761,6 +776,12 @@ function installAuthRoutes(app, pool) {
       }
       if (active === false) {
         sets.push(`tokens_invalid_after = NOW()`);
+        // Release the username so it's reusable (unless the caller is explicitly
+        // renaming it here). Tombstone the current value → original stays visible.
+        if (username === undefined) {
+          const cur = await pool.query('SELECT username FROM users WHERE id = $1', [req.params.id]);
+          if (cur.rows[0]) { sets.push(`username = $${i++}`); vals.push(tombstoneUsername(cur.rows[0].username)); }
+        }
       }
       if (!sets.length) return res.status(400).json({ error: 'Nothing to update' });
       sets.push(`updated_at = NOW()`);
@@ -807,14 +828,20 @@ function installAuthRoutes(app, pool) {
         return res.json({ ok: true, mode: 'hard', deleted_username: cur.rows[0].username });
       }
 
+      // Soft-delete: keep the row but release the username (tombstone rename) so
+      // it can be reused by a new signup / "Add person". The original value stays
+      // in the row (as `<username>__inactive_<id>`), recoverable + traceable.
+      const curSoft = await pool.query('SELECT username FROM users WHERE id = $1', [req.params.id]);
+      if (!curSoft.rows[0]) return res.status(404).json({ error: 'User not found' });
+      const freedName = tombstoneUsername(curSoft.rows[0].username);
       const { rows } = await pool.query(
-        `UPDATE users SET active = FALSE, tokens_invalid_after = NOW(), updated_at = NOW()
+        `UPDATE users SET active = FALSE, username = $2, tokens_invalid_after = NOW(), updated_at = NOW()
          WHERE id = $1 RETURNING id`,
-        [req.params.id]
+        [req.params.id, freedName]
       );
       if (!rows[0]) return res.status(404).json({ error: 'User not found' });
       logAudit(pool, { req, action: 'deactivate', entity_type: 'user', entity_id: req.params.id,
-        meta: { mode: 'soft' }, source: 'admin_ui' });
+        meta: { mode: 'soft', freed_username: curSoft.rows[0].username }, source: 'admin_ui' });
       res.json({ ok: true, mode: 'soft', deactivated: true });
     } catch (e) { return serverError(res, e, 'delete-user'); }
   });
