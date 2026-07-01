@@ -18,6 +18,7 @@
 
 const { logAudit } = require('./_audit');
 const { broadcast } = require('./_sse');
+const pools = require('./_assessment_pools');
 const fs = require('fs');
 const path = require('path');
 
@@ -480,6 +481,192 @@ module.exports = function installTrainingRoutes(app, pool, { requireAuth }) {
     } catch (err) {
       console.error('[training] POST /capstone-attempt error:', err.message);
       res.status(500).json({ error: 'Failed to save capstone attempt' });
+    }
+  });
+
+  // ═══════════════════════════════════════════════════════════════════════════
+  // ASSESSMENT ENGINE (server-authoritative pools — Planning approval 2026-07-01)
+  //
+  // Flow: START draws a random subset from the repo pool (answer keys stripped)
+  // and opens an attempt row → learner answers → SUBMIT grades server-side against
+  // the pool, stores answers + derived score on the attempt, and (for a lesson)
+  // drives the competency gate. Client-supplied scores are never trusted.
+  // ═══════════════════════════════════════════════════════════════════════════
+
+  // ─── POST /api/training/assessment/:assessmentId/start ───────────────────────
+  // Draws a per-attempt question set, opens an attempt row, returns the drawn
+  // questions WITHOUT answer keys + the attempt id. Non-admins may only start an
+  // assessment whose lesson is visible to them (WP-A visibility gate); admins bypass.
+  app.post('/api/training/assessment/:assessmentId/start', requireAuth(), async (req, res) => {
+    const pool = pools.getPool(req.params.assessmentId);
+    if (!pool) return res.status(404).json({ error: 'Assessment not found' });
+
+    // Visibility gate: a lesson assessment tracks its lesson's visibility. If the
+    // lesson exists in the catalog and is hidden for this non-admin, it's 404 (as
+    // if it doesn't exist), matching the WP-A hide-completely model.
+    try {
+      if (req.user.role !== 'admin' && pool.lessonId) {
+        const tree = curriculumTree();
+        if (tree.allLessons.has(pool.lessonId)) {
+          const v = await loadUserVisibility(req.user.id, req.user.role);
+          if (!v.all && !v.lessons.has(pool.lessonId)) {
+            return res.status(404).json({ error: 'Assessment not found' });
+          }
+        }
+      }
+    } catch (_) { /* visibility check failed — fall through (fail toward normal handling) */ }
+
+    const drawnIds = pools.drawQuestionIds(pool);
+    try {
+      const { rows } = await pool_insert_attempt(pool, req.user.id, drawnIds);
+      res.status(201).json({
+        attempt_id: rows[0].id,
+        assessment_id: pool.assessmentId,
+        kind: pool.kind,
+        course_id: pool.courseId,
+        lesson_id: pool.lessonId,
+        pass_threshold: pool.passThreshold,
+        questions: pools.drawnQuestionsForClient(pool, drawnIds), // answer keys stripped
+      });
+    } catch (err) {
+      console.error('[training] POST /assessment/start error:', err.message);
+      res.status(500).json({ error: 'Failed to start assessment' });
+    }
+  });
+
+  function pool_insert_attempt(poolDef, userId, drawnIds) {
+    return pool.query(
+      `INSERT INTO training_assessment_attempts
+         (user_id, assessment_id, kind, course_id, lesson_id, drawn_question_ids, status)
+       VALUES ($1, $2, $3, $4, $5, $6::jsonb, 'open')
+       RETURNING id`,
+      [userId, poolDef.assessmentId, poolDef.kind, poolDef.courseId, poolDef.lessonId,
+       JSON.stringify(drawnIds)]
+    );
+  }
+
+  // ─── POST /api/training/assessment/:assessmentId/submit ──────────────────────
+  // Body: { attempt_id, answers:{questionId:value}, duration_seconds? }
+  // Grades server-side against the drawn ids stored on the attempt (reproducible),
+  // records answers + derived score/passed, and — for a lesson — feeds the
+  // competency gate (>= passThreshold credits completion). Idempotent-ish: a
+  // second submit on an already-submitted attempt is rejected.
+  app.post('/api/training/assessment/:assessmentId/submit', requireAuth(), async (req, res) => {
+    const { attempt_id, answers, duration_seconds } = req.body || {};
+    const poolDef = pools.getPool(req.params.assessmentId);
+    if (!poolDef) return res.status(404).json({ error: 'Assessment not found' });
+    if (!Number.isInteger(Number(attempt_id))) return res.status(400).json({ error: 'attempt_id required' });
+    const ans = (answers && typeof answers === 'object') ? answers : {};
+    const dur = (duration_seconds != null && Number.isFinite(Number(duration_seconds)) && Number(duration_seconds) >= 0)
+      ? Math.round(Number(duration_seconds)) : null;
+
+    try {
+      // Load the OPEN attempt, owned by this user, for this assessment.
+      const { rows: aRows } = await pool.query(
+        `SELECT * FROM training_assessment_attempts
+          WHERE id = $1 AND user_id = $2 AND assessment_id = $3`,
+        [Number(attempt_id), req.user.id, poolDef.assessmentId]
+      );
+      if (aRows.length === 0) return res.status(404).json({ error: 'Attempt not found' });
+      const attempt = aRows[0];
+      if (attempt.status === 'submitted') return res.status(409).json({ error: 'Attempt already submitted' });
+
+      const drawnIds = Array.isArray(attempt.drawn_question_ids)
+        ? attempt.drawn_question_ids
+        : JSON.parse(attempt.drawn_question_ids);
+      const result = pools.grade(poolDef, drawnIds, ans);
+
+      const { rows: uRows } = await pool.query(
+        `UPDATE training_assessment_attempts
+            SET answers = $2::jsonb, score = $3, total_items = $4, correct_items = $5,
+                passed = $6, status = 'submitted', duration_seconds = $7, submitted_at = NOW()
+          WHERE id = $1
+        RETURNING *`,
+        [attempt.id, JSON.stringify(ans), result.score, result.total, result.correct,
+         result.passed, dur]
+      );
+
+      // For a lesson assessment, feed the existing competency gate: a passing score
+      // credits completion (reusing the monotonic upsert semantics of /progress).
+      let progress = null;
+      if (poolDef.kind === 'lesson' && poolDef.lessonId) {
+        const { rows: pRows } = await pool.query(
+          `INSERT INTO training_progress
+             (user_id, course_id, lesson_id, status, completion_pct,
+              best_score, attempts, started_at, completed_at, last_seen_at)
+           VALUES ($1, $2, $3, $4, 100, $5, 1,
+             NOW(), CASE WHEN $4 = 'completed' THEN NOW() END, NOW())
+           ON CONFLICT (user_id, lesson_id) DO UPDATE SET
+             status = CASE
+                        WHEN training_progress.status = 'completed' THEN 'completed'
+                        WHEN EXCLUDED.status = 'completed' THEN 'completed'
+                        WHEN EXCLUDED.status = 'in_progress' THEN 'in_progress'
+                        ELSE training_progress.status END,
+             completion_pct = GREATEST(training_progress.completion_pct, EXCLUDED.completion_pct),
+             best_score = CASE
+                        WHEN EXCLUDED.best_score IS NULL THEN training_progress.best_score
+                        WHEN training_progress.best_score IS NULL THEN EXCLUDED.best_score
+                        ELSE GREATEST(training_progress.best_score, EXCLUDED.best_score) END,
+             attempts = training_progress.attempts + 1,
+             started_at = COALESCE(training_progress.started_at, EXCLUDED.started_at),
+             completed_at = CASE
+                        WHEN training_progress.completed_at IS NOT NULL THEN training_progress.completed_at
+                        WHEN EXCLUDED.status = 'completed' THEN NOW() ELSE NULL END,
+             last_seen_at = NOW(), course_id = EXCLUDED.course_id
+           RETURNING *`,
+          [req.user.id, poolDef.courseId, poolDef.lessonId,
+           result.passed ? 'completed' : 'in_progress', result.score]
+        );
+        progress = pRows[0];
+      }
+
+      logAudit(pool, {
+        req,
+        action: 'training.assessment_submit',
+        entity_type: 'training_assessment_attempt',
+        entity_id: attempt.id,
+        after: uRows[0],
+        source: 'user',
+        meta: { assessment_id: poolDef.assessmentId, kind: poolDef.kind, score: result.score, passed: result.passed },
+      }).catch(() => {});
+
+      res.status(200).json({
+        score: result.score,
+        correct: result.correct,
+        total: result.total,
+        passed: result.passed,
+        pass_threshold: poolDef.passThreshold,
+        per_question: result.perQuestion,
+        completion_credited: progress ? progress.status === 'completed' : null,
+      });
+    } catch (err) {
+      console.error('[training] POST /assessment/submit error:', err.message);
+      res.status(500).json({ error: 'Failed to submit assessment' });
+    }
+  });
+
+  // ─── GET /api/training/assessment/attempts ───────────────────────────────────
+  // The learner's own submitted attempts (for the I11 dashboard). Optional
+  // ?assessment_id= / ?course_id= filters. Answer keys never appear here.
+  app.get('/api/training/assessment/attempts', requireAuth(), async (req, res) => {
+    const clauses = ['user_id = $1', "status = 'submitted'"];
+    const params = [req.user.id];
+    if (req.query.assessment_id) { params.push(String(req.query.assessment_id)); clauses.push(`assessment_id = $${params.length}`); }
+    if (req.query.course_id)     { params.push(String(req.query.course_id));     clauses.push(`course_id = $${params.length}`); }
+    try {
+      const { rows } = await pool.query(
+        `SELECT id, assessment_id, kind, course_id, lesson_id, score, total_items,
+                correct_items, passed, duration_seconds, started_at, submitted_at
+           FROM training_assessment_attempts
+          WHERE ${clauses.join(' AND ')}
+          ORDER BY submitted_at DESC
+          LIMIT 200`,
+        params
+      );
+      res.json({ attempts: rows });
+    } catch (err) {
+      console.error('[training] GET /assessment/attempts error:', err.message);
+      res.status(500).json({ error: 'Failed to load attempts' });
     }
   });
 
