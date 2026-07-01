@@ -1,0 +1,123 @@
+{
+  "assessmentId": "T01-L01",
+  "kind": "lesson",
+  "courseId": "T01",
+  "lessonId": "T01.L01",
+  "drawCount": 4,
+  "passThreshold": 70,
+  "pool": [
+    {
+      "id": "T01-L01-Q1",
+      "type": "mc",
+      "prompt": "A drop cable runs from a utility pole down to a house and connects to an ONT on the exterior wall. Which category does this drop cable fall under?",
+      "choices": [
+        "Inside plant (ISP) — it serves a single customer",
+        "Outside plant (OSP) — it runs outdoors between OSP infrastructure and the customer demarc",
+        "Neither — drop cables are a special third category",
+        "Inside plant (ISP) — because it terminates at the ONT"
+      ],
+      "answerIndex": 1,
+      "explanation": "Drop cables run outdoors from OSP infrastructure (a NAP on a pole or a curb pedestal) to the customer demarc. They are classified as OSP plant, must be rated for outdoor use, and are built and tested by the OSP contractor.",
+      "citation": "47 CFR Part 32 §§32.2421/32.2422/32.2423 — FCC Uniform System of Accounts classifies aerial, underground, and buried cable plant, all of which sit on the OSP side of the demarc."
+    },
+    {
+      "id": "T01-L01-Q2",
+      "type": "mc",
+      "prompt": "An OSP contractor runs fiber through a building's exterior wall and terminates it on a patch panel in the telecom room. Why might this raise a code compliance concern?",
+      "choices": [
+        "OSP contractors are not allowed to touch patch panels — only ISP contractors can do that",
+        "OSP-rated cable may not be rated for indoor use — NEC Article 770 requires riser (OFNR) or plenum (OFNP) rated fiber inside buildings, and OSP-only rated cable may not carry either rating",
+        "Patch panels are not permitted in telecom rooms under any circumstances",
+        "There is no compliance concern — OSP cable is acceptable everywhere"
+      ],
+      "answerIndex": 1,
+      "explanation": "OSP-rated cable is built for outdoor conditions (UV, moisture, temperature swings) but is not automatically fire-code rated for indoor runs. NEC Article 770 requires optical fiber inside buildings to carry an OFNR (riser) or OFNP (plenum) listing — OFNP cable is tested to NFPA 262, OFNR to UL 1666. Running OSP-only cable inside a building without a dual rating violates fire code in most jurisdictions.",
+      "citation": "NEC Article 770 (Optical Fiber Cables and Raceways) — scope covers indoor optical fiber cable/raceway installation, including OFNR/OFNP listing requirements."
+    },
+    {
+      "id": "T01-L01-Q3",
+      "type": "mc",
+      "prompt": "What is the term for the exact boundary between OSP and ISP — the point where one contractor's responsibility ends and another's begins?",
+      "choices": [
+        "Demarcation point",
+        "Network Access Point (NAP)",
+        "Fiber Distribution Hub (FDH)",
+        "Splice point"
+      ],
+      "answerIndex": 0,
+      "explanation": "The demarcation point (demarc) is the formal handoff between OSP and ISP. In a residential FTTH deployment it is typically the ONT (or a small fiber termination box) at the customer premises entry. As-built documentation must clearly identify the demarc location — arguments about which side of the demarc a bad splice sits on are common on job sites.",
+      "citation": "Standard industry/BICSI OSP-vs-ISP demarcation convention referenced consistently across the sources checked for this pool (see T01.md research log)."
+    },
+    {
+      "id": "T01-L01-Q4",
+      "type": "mc",
+      "prompt": "The OLT (Optical Line Terminal) sits at the provider's headend; the ONT (Optical Network Terminal) sits at the customer premises, connected by a continuous OSP fiber path. Which statement about the OLT is correct?",
+      "choices": [
+        "The OLT is the customer's equipment, installed by the OSP contractor",
+        "The OLT is the provider's active equipment at the headend that originates and receives the optical signal for every customer connection on that fiber segment",
+        "The OLT is the same device as the ONT, just named differently depending on location",
+        "The OLT terminates only the feeder cable; distribution cables are served by a separate device"
+      ],
+      "answerIndex": 1,
+      "explanation": "The OLT is the provider's active equipment at the headend/central office. It originates the downstream optical signal and receives the upstream signal from every ONT on that PON (Passive Optical Network). The OSP contractor builds and tests the fiber path between the OLT and ONT but does not install or configure either device — that is the provider's network team."
+    },
+    {
+      "id": "T01-L01-Q5",
+      "type": "drag-match",
+      "prompt": "Match each FCC Uniform System of Accounts plant account to the cable installation method it covers.",
+      "items": [
+        { "id": "i_aerial", "label": "Aerial cable (on poles)" },
+        { "id": "i_underground", "label": "Underground cable (in conduit/duct)" },
+        { "id": "i_buried", "label": "Buried cable (direct-bury, no conduit)" }
+      ],
+      "targets": [
+        { "id": "t_2421", "label": "Account 2421" },
+        { "id": "t_2422", "label": "Account 2422" },
+        { "id": "t_2423", "label": "Account 2423" }
+      ],
+      "correctMap": { "t_2421": "i_aerial", "t_2422": "i_underground", "t_2423": "i_buried" },
+      "explanation": "The FCC's Uniform System of Accounts for Telecommunications Companies (47 CFR Part 32) splits cable plant into distinct accounts by installation method: 2421 Aerial cable, 2422 Underground cable, 2423 Buried cable. This is the accounting basis for depreciation and rate-base treatment of OSP plant.",
+      "citation": "47 CFR §§32.2421, 32.2422, 32.2423."
+    },
+    {
+      "id": "T01-L01-Q6",
+      "type": "mc",
+      "prompt": "For an RUS-funded (rural, USDA-backed) fiber project, why does correctly distinguishing OSP plant from ISP equipment matter beyond just following the right construction code?",
+      "choices": [
+        "It doesn't matter — RUS loans cover all telecom equipment identically",
+        "RUS loan agreements specify which plant account categories are loan-eligible; misclassifying ISP equipment as OSP can be a loan compliance violation, not just a technical error",
+        "ISP equipment is always loan-ineligible, so the distinction is purely academic",
+        "OSP and ISP are accounting synonyms for RUS borrowers"
+      ],
+      "answerIndex": 1,
+      "explanation": "RUS Loan Agreements specify which plant account categories fall under the loan's scope. Since OSP and ISP plant are tracked in different FCC/RUS accounts, misclassifying ISP equipment as loan-eligible OSP plant is a compliance issue for the borrower, not just a technical labeling mistake."
+    },
+    {
+      "id": "T01-L01-Q7",
+      "type": "mc",
+      "prompt": "What does RUS Bulletin 1751F-630 actually cover?",
+      "choices": [
+        "General accounting rules for all telecommunications plant",
+        "Design of aerial plant — pole attachment, sag, and clearance requirements for RUS-funded aerial construction",
+        "Indoor fiber cable fire-rating requirements",
+        "FCC pole attachment rate-setting formulas"
+      ],
+      "answerIndex": 1,
+      "explanation": "RUS Bulletin 1751F-630 is titled \"Design of Aerial Plant\" and is issued to RUS telecommunications borrowers and RUS staff through the Outside Plant Branch. It governs aerial construction design (poles, sag, clearance) — not general accounting, indoor fire ratings, or FCC attachment-fee rules, which live in other citations.",
+      "citation": "RUS Bulletin 1751F-630, \"Design of Aerial Plant\" (rd.usda.gov)."
+    },
+    {
+      "id": "T01-L01-Q8",
+      "type": "mc",
+      "prompt": "Which pair correctly identifies the primary standards/credentialing bodies relevant to OSP fiber work introduced in this lesson?",
+      "choices": [
+        "RUS (funds and sets engineering bulletins for rural OSP) and BICSI (publishes OSP/ISP design standards and credentials like RCDD)",
+        "NEC and TIA-568 only — RUS and BICSI apply solely to electric utilities",
+        "FCC and OSHA — RUS and BICSI have no role in OSP standards",
+        "ANSI alone — RUS and BICSI are regional organizations with no national standing"
+      ],
+      "answerIndex": 0,
+      "explanation": "RUS (a USDA agency) funds rural telecom infrastructure and publishes the 1751F-series engineering bulletins that govern RUS-funded OSP construction. BICSI is the professional association publishing OSP and ISP design standards and administering credentials such as RCDD and OSP Designer. (CFOS/CFOT are FOA credentials, not BICSI.)"
+    }
+  ]
+}
