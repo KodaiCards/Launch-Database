@@ -13,7 +13,7 @@
 | Auth (JWT + `lfs_session` cookie, roles, middleware) | ✅ | Roles: admin, design/permitting managers + engineers, contractor, customer, trainee | Capability-grant layer is System F (📋) |
 | Keystone data model — `service_areas` + `service_area_jobs` + `time_entries` (migration 0064) | ✅ | Service Area = unit of work, jobs = line items | — |
 | Migrations / schema | ✅ | **Migrations DO auto-run on deploy** (`node server.js` → `start()` → `runMigrations()`; corrected 2026-06-29, O13). 82 migrations; `schema.sql` synced at 0079+ | — |
-| CI (GitHub Actions) | ❓ | Was billing-locked (2026-06-24) — **current status unknown → O43 (Carter to check)**; if restored, every push gets free verification | O43 |
+| CI (GitHub Actions) | ⛔ DEAD (permanent) | **Carter 2026-07-01: GitHub Actions billing will NEVER be fixed.** CI never runs (smoke/schema-sync/Playwright all skipped). **Verification is permanently local/manual: `npm test` + a live-preview pass locally before every merge — there is no CI safety net.** | O43 (closed) |
 
 ## 1. PILLAR 1 — Job Board / Operations cluster (management side)
 | Area | Status | Notes / gaps | Open Qs |
