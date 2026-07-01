@@ -8,6 +8,7 @@ import { Link, useParams } from 'react-router-dom';
 import { courses, certTracks, lessonTitleIndex } from '../data/course-catalog.js';
 import { useAllProgress } from '../hooks/useProgress.js';
 import { useMyContent } from '../hooks/useMyContent.js';
+import TopicFinal from '../components/primitives/TopicFinal.jsx';
 
 // Map course section → back-link info
 const SECTION_BACK = {
@@ -187,6 +188,9 @@ export default function CourseView() {
           )}
         </ol>
       </div>
+
+      {/* ── Topic Final (self-gates: renders only when a final pool exists) ── */}
+      <TopicFinal courseId={courseId} courseTitle={course.title} />
 
       {/* ── Back link ─────────────────────────────────────────────── */}
       <div className="text-sm">

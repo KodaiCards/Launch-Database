@@ -493,6 +493,31 @@ module.exports = function installTrainingRoutes(app, pool, { requireAuth }) {
   // drives the competency gate. Client-supplied scores are never trusted.
   // ═══════════════════════════════════════════════════════════════════════════
 
+  // ─── GET /api/training/assessment/available ──────────────────────────────────
+  // Which assessments exist (lesson tests + topic finals) — metadata only, NO
+  // questions/keys. Lets the SPA gate UI (e.g. only show a Topic Final button when
+  // a final pool is actually authored). Optional ?course_id= filter. For a
+  // non-admin, lesson assessments whose lesson is hidden are omitted (WP-A).
+  app.get('/api/training/assessment/available', requireAuth(), async (req, res) => {
+    try {
+      let list = pools.listPools();
+      if (req.query.course_id) list = list.filter(p => p.courseId === String(req.query.course_id));
+      if (req.user.role !== 'admin') {
+        const tree = curriculumTree();
+        const v = await loadUserVisibility(req.user.id, req.user.role);
+        list = list.filter(p => {
+          if (!p.lessonId) return true;                       // topic finals: course-level
+          if (!tree.allLessons.has(p.lessonId)) return true;  // not a real catalog lesson
+          return v.all || v.lessons.has(p.lessonId);          // hidden lesson → omit
+        });
+      }
+      res.json({ assessments: list });
+    } catch (err) {
+      console.error('[training] GET /assessment/available error:', err.message);
+      res.status(500).json({ error: 'Failed to list assessments' });
+    }
+  });
+
   // ─── POST /api/training/assessment/:assessmentId/start ───────────────────────
   // Draws a per-attempt question set, opens an attempt row, returns the drawn
   // questions WITHOUT answer keys + the attempt id. Non-admins may only start an

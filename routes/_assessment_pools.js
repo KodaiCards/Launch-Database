@@ -107,6 +107,20 @@ function getPool(assessmentId) {
   return _pools().get(assessmentId) || null;
 }
 
+// Metadata for every loaded pool — NO questions/keys. Lets the SPA discover which
+// lesson tests + topic finals exist (to gate UI) without shipping any answer data.
+function listPools() {
+  return [..._pools().values()].map(p => ({
+    assessmentId: p.assessmentId,
+    kind:         p.kind,
+    courseId:     p.courseId,
+    lessonId:     p.lessonId,
+    drawCount:    p.drawCount,
+    passThreshold: p.passThreshold,
+    poolSize:     p.pool.length,
+  }));
+}
+
 function reload() { _cache = null; return _pools(); }
 
 // Fisher–Yates on a copy; optional injectable rng for deterministic tests.
@@ -179,6 +193,7 @@ function grade(pool, drawnIds, answers = {}) {
 module.exports = {
   POOL_DIR,
   getPool,
+  listPools,
   reload,
   validatePool,
   drawQuestionIds,
