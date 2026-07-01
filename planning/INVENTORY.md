@@ -1,6 +1,6 @@
 # Software Inventory — the whole platform, meshed with current state
 
-> Owned by Planning. The live map of everything Launch Fiber's software **is and will be**, tagged by status, with dependencies + open questions. Doubles as the feature-state tracker. **Status reflects what the docs/HANDOFF claim — a ✅ means "documented as built," NOT independently verified.** Confirming real done/verified state is the fresh CEO's first triage job (Carter: "not much of the training overhaul is actually complete"). Last updated 2026-06-28 (v0 — Carter to react + correct).
+> Owned by Planning. The live map of everything Launch Fiber's software **is and will be**, tagged by status, with dependencies + open questions. Doubles as the feature-state tracker. **The Auditor's 2026-07-01 baseline (`docs/audit/assignment-1.md`) independently verified the documented picture matches the code.** ⚠ **STALENESS NOTE (2026-07-01): rows below predate the WP-A/C/D wave + the assessment engine — the two actively-wrong rows are corrected, the rest gets a full status refresh AT the assessment-engine merge (D019: docs update in the merge commit is now a hard exit criterion; INVENTORY is updated at EVERY merge from here on).** Last updated 2026-07-01 (spot-fix).
 
 **Legend:** ✅ built+live (per docs) · 🟡 partial (some built, real gaps) · 📋 planned (specced, not built) · ❓ fuzzy (needs decisions/discovery)
 
@@ -12,8 +12,8 @@
 | Express + vanilla JS + Postgres on Railway, auto-deploy on push to `main` | ✅ | Healthy pipeline | — |
 | Auth (JWT + `lfs_session` cookie, roles, middleware) | ✅ | Roles: admin, design/permitting managers + engineers, contractor, customer, trainee | Capability-grant layer is System F (📋) |
 | Keystone data model — `service_areas` + `service_area_jobs` + `time_entries` (migration 0064) | ✅ | Service Area = unit of work, jobs = line items | — |
-| Migrations / schema | 🟡 | Railway `startCommand` skips auto-migrate → apply deliberately; `schema.sql` regen deferred | — |
-| CI (GitHub Actions) | ❌ | Billing-locked; CEO is sole verifier until restored | Carter fixing billing |
+| Migrations / schema | ✅ | **Migrations DO auto-run on deploy** (`node server.js` → `start()` → `runMigrations()`; corrected 2026-06-29, O13). 82 migrations; `schema.sql` synced at 0079+ | — |
+| CI (GitHub Actions) | ❓ | Was billing-locked (2026-06-24) — **current status unknown → O43 (Carter to check)**; if restored, every push gets free verification | O43 |
 
 ## 1. PILLAR 1 — Job Board / Operations cluster (management side)
 | Area | Status | Notes / gaps | Open Qs |
