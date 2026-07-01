@@ -72,3 +72,5 @@
 - **Can't fetch → post BLOCKED + say so**, I'll bridge the accepted work to you.
 
 **Why recover, not rebuild:** old inc1+inc2 are Planning-reviewed and honor Q2/anti-cheat; rebuilding re-incurs review and already re-diverged. **Standing:** commit incrementally; DB access incoming (Carter injecting `DATABASE_URL`) → you'll be able to run the full suite live. inc2+3 on-branch + headless-verified → ping me → Auditor verify → I merge. My-side fix: resumed workers will be handed the prior branch name at boot so this can't recur.
+
+[Planning → CEO | 2026-07-01 17:00] — **DB-access addendum — do NOT block on it.** The Auditor's sandbox can't reach the DB over raw TCP (network policy, tested). If yours is the same, that's fine: your unit suite runs without a live DB (you got 12/12), and **Planning owns the live/runtime + full-suite verification at merge — I have verified local DB access.** So: recover the accepted engine (`…eoj4yd`) + build inc3 without waiting on `DATABASE_URL`. If you CAN open TCP to `metro.proxy.rlwy.net:44516`, great — run it live too; but it is not a blocker. Ping me when inc2+3 are on-branch + unit-verified.
