@@ -22,6 +22,7 @@ const jwt = require('jsonwebtoken');
 const cookieParser = require('cookie-parser');
 const crypto = require('crypto');
 const { logAudit } = require('./routes/_audit');
+const { broadcast } = require('./routes/_sse');
 
 let JWT_SECRET = process.env.JWT_SECRET;
 if (!JWT_SECRET) {
@@ -526,6 +527,9 @@ function installAuthRoutes(app, pool) {
       const user = rows[0];
       const token = signToken(user);
       res.cookie(COOKIE_NAME, token, { ...cookieOpts(), maxAge: 7 * 24 * 60 * 60 * 1000 });
+      // WP-A steer #2: a fresh signup has NO access row → resolves to the new-user
+      // default (server-side). Ping the admin overview so the new person shows live.
+      try { broadcast('admin', 'training_visibility_changed', { user_id: user.id }); } catch (_) {}
       res.status(201).json({
         token,
         user: { id: user.id, username: user.username, role: user.role, full_name: user.full_name, email: user.email },

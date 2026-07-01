@@ -277,17 +277,27 @@ export default function Splash({ section = 'osp' }) {
       <section aria-label="OSP course topics">
         <SectionHeader
           label="Course Topics"
-          count={ospCourses.length}
+          count={mc.ready ? ospCourses.length : undefined}
           description="No prior engineering background required. Every term is defined before it's used."
         />
         <div className="space-y-3">
-          {ospCourses.map(course => (
+          {/* Skeleton until visibility resolves — never render-all-then-hide (WP-A). */}
+          {!mc.ready && [0, 1, 2].map(i => (
+            <div key={i} className="panel animate-pulse">
+              <div className="h-5 w-48 bg-white/15 rounded" />
+              <div className="mt-2 h-3 w-full bg-white/5 rounded" />
+            </div>
+          ))}
+          {mc.ready && ospCourses.map(course => (
             <CourseTile
               key={course?.id}
               course={course}
               progressPct={getTopicProgress(course?.id, course?.lesson_count || 0)}
             />
           ))}
+          {mc.ready && ospCourses.length === 0 && (
+            <div className="panel text-slate-400 text-sm">No OSP topics are available to your account yet.</div>
+          )}
         </div>
       </section>
     </div>

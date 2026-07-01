@@ -49,6 +49,22 @@ export default function CourseView() {
     );
   }
 
+  // Skeleton until visibility resolves — don't render a 0-lesson course then pop in
+  // the lessons (WP-A: no render-all-then-hide / no flash of the wrong count).
+  if (!mc.ready) {
+    return (
+      <div className="space-y-4 animate-pulse">
+        <div className="panel">
+          <div className="h-6 w-56 bg-white/15 rounded" />
+          <div className="mt-3 h-2 w-full bg-white/10 rounded" />
+        </div>
+        <div className="panel space-y-2">
+          {[...Array(4)].map((_, i) => <div key={i} className="h-4 bg-white/5 rounded" style={{ width: `${88 - i * 9}%` }} />)}
+        </div>
+      </div>
+    );
+  }
+
   const allLessons = Array.from({ length: course.lesson_count || 0 }, (_, i) => {
     const order = i + 1;
     const paddedOrder = String(order).padStart(2, '0');

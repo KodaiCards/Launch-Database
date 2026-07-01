@@ -19,6 +19,7 @@ import {
   useLocation,
 } from 'react-router-dom';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import { useVisibilityStream } from './hooks/useMyContent.js';
 
 import ErrorBoundary    from './components/ErrorBoundary.jsx';
 import ProductChooser   from './pages/ProductChooser.jsx';
@@ -41,6 +42,8 @@ const queryClient = new QueryClient({
 
 function AppLayout() {
   const location = useLocation();
+  // Live training-visibility: refetch my-content on an SSE push (no page refresh).
+  useVisibilityStream();
 
   const navLinks = [
     { to: '/', exact: true, label: 'Courses' },

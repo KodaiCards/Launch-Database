@@ -56,7 +56,21 @@ export default function ProductChooser() {
       </div>
 
       <div className="grid gap-4">
-        {mc.trackVisible('osp') && (
+        {/* Skeleton until visibility resolves — never render-all-then-hide (WP-A). */}
+        {!mc.ready && [0, 1].map(i => (
+          <div key={i} className="panel animate-pulse">
+            <div className="flex items-start gap-4">
+              <div className="h-9 w-9 rounded bg-white/10 shrink-0" />
+              <div className="flex-1">
+                <div className="h-5 w-40 bg-white/15 rounded" />
+                <div className="mt-2 h-3 w-full bg-white/5 rounded" />
+                <div className="mt-1.5 h-3 w-3/4 bg-white/5 rounded" />
+              </div>
+            </div>
+          </div>
+        ))}
+
+        {mc.ready && mc.trackVisible('osp') && (
           <ProductTile
             icon="📚"
             title="OSP Course"
@@ -66,7 +80,7 @@ export default function ProductChooser() {
           />
         )}
 
-        {mc.trackVisible('isp') && (
+        {mc.ready && mc.trackVisible('isp') && (
           <ProductTile
             icon="🏢"
             title="Inside Plant (ISP) Course"
@@ -76,7 +90,7 @@ export default function ProductChooser() {
           />
         )}
 
-        {mc.trackVisible('cert') && (
+        {mc.ready && mc.trackVisible('cert') && (
           <ProductTile
             icon="🎓"
             title="Certification Tracks"
