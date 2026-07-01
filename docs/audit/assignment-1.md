@@ -52,5 +52,24 @@ Three portal API modules: `customer_portal.js`, `client_portal.js`, `client_port
 
 ---
 
-## CHUNK 4 — live user-facing pass — BLOCKED in this env
+## CHUNK 4-code — un-audited subsystems (keystone / hours / projections / auth-roles / files)
+
+- **Keystone / service-areas model:** ✅ matches intent. `routes/service_areas.js:72-80` recomputes each job's `actual_hours = SUM(time_entries WHERE service_area_job_id)` and `actual_amount` by `billing_type` (hourly → hours×rate, fixed → estimated_amount) → jobs-as-line-items, hours roll to $. Backed by migration 0064.
+  - **D014 county level — confirmed NOT built, with a reuse note:** the only `county` field is a plain text column on the **legacy `potential_permits`** table (`schema.sql:730`), not a first-class keystone county nesting SAs. Consistent with D014 ("not yet built"); **the future D014 build should reconcile/reuse `potential_permits.county` rather than add a parallel column.**
+- **Hours O22 (rounding) — CONFIRMED.** `snapHoursToQuarter = Math.round(n*4)/4` (`_helpers.js:214`) snaps manual entry AND **both** importers (`hours_csv.js`, `hours_import.js:127`). The **timeclock does NOT snap** — `timeclock_module.js:550,643` `INSERT INTO time_entries (… hours …)` stores computed raw hours → same person's granularity differs by capture method. Policy call for Carter (as O22 states).
+- **Hours O23 (split-brain) — RE-CONFIRMED at the writer.** The timeclock INSERTs into `project_id` (legacy column), not `service_area_job_id` → it's a legacy-side writer, invisible to keystone views. Reinforces O23.
+- **Projections — O18 parity gap CONFIRMED.** `sparkline`/`forecast`/`monthly-draft`/`buildPscRus` exist only in legacy `automation.js`; keystone `routes/projections.js` has none → cutover must PORT these, not just reroute.
+- **Auth / roles:**
+  - **System F capability layer — CONFIRMED NOT BUILT** (not merely unreachable). Zero references to `user_capabilities` / `requireCapability` in `auth.js`, `routes/`, `schema.sql`. Matches INVENTORY §5 (📋). The three coarse gates (`requireAuth`/`requireManagerOrAdmin`/`requireAdmin`) + `requireStaff` are the whole model today.
+  - **O29 (CSRF) — RECOMMEND CLOSE.** `lfs_session` cookie is `sameSite: 'lax'` + secure-in-prod (`auth.js:89`) → state-changing requests are not CSRF-exposed. The O29 "verify SameSite" condition is satisfied.
+- **Files — healthy as documented, no divergence.** Upload hardening present: post-upload magic-byte gate (`invoice_templates.js:69-73`), `X-Content-Type-Options: nosniff` (`server.js:62`), IDOR/owner checks in `folder_workspace.js`. Matches SYNTHESIS "healthy."
+
+### Chunk 4-code recommendations to Planning
+1. **Close O29** — SameSite=lax verified.
+2. **D014 build note** — reuse `potential_permits.county` at the county-level build (avoid a parallel column).
+3. No new claimed-done-but-isn't; no built-but-unreachable found in these subsystems.
+
+---
+
+## CHUNK 4 (live) — live user-facing pass — Planning/CEO owns it (ruled 2026-07-01 11:00)
 Carter injected a live Railway `DATABASE_URL`, but this environment's network policy allows only HTTPS via the agent proxy — raw Postgres TCP to the Railway host:44516 **times out** (verified with `psql`; app boot would hit the same wall). `node_modules` also absent (no `pg`). It's the shared/prod DB (O40) → any access must be strictly read-only. Unblock via: (a) allow outbound DB TCP in this env's policy, or (b) run the live pass in Planning's proven preview env (recommended), or (c) accept code+schema auditing as the ceiling here. Prod credential is now in the session transcript → rotate after use.
