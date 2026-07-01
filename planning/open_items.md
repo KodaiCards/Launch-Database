@@ -6,7 +6,7 @@
 |---|---|---|---|---|
 | O1 | **Planning does a first-hand live user-test** of the app, cross-referenced vs `INVENTORY` (verify built-vs-documented firsthand; trust own eyes over agent reports) | recommendation | right after the People fix deploys (verify it + everything in one pass) | PROPOSED 2026-06-28 |
 | O2 | **Feature deep-dive** (post-training roadmap; Job Board first) | parked thread | once Carter user-tests the People foundation on live | PARKED |
-| O3 | **Job Board unit:** does "Service Area" fit small non-RUS permits, or a lighter Project/Permit unit? (+ at-a-glance fields, + billing-status states) | open question | when the Job Board deep-dive resumes | OPEN |
+| O3 | **Job Board unit:** does "Service Area" fit small non-RUS permits, or a lighter Project/Permit unit? (+ at-a-glance fields, + billing-status states) | open question | when the Job Board deep-dive resumes | ✅ **RESOLVED (Carter 2026-07-01 → D014):** the unit is the **COUNTY**; Service Areas nest WITHIN a county (finer boundary/tab when present); **SAs can be non-RUS.** A permit shows under its County always (+ its SA if it has one). County autofill/boundaries = a map feature (I13, lands with the external map D016). Keystone model + PRODUCT_PLAN need a county-level update (follow-up). | CLOSED |
 | O4 | **Billing submission samples** (RUS inspection / RUS design / non-RUS permitting) + the RUS code list | input from Carter | when billing (System A) starts | OPEN |
 | O5 | **Does Workforce export CSV?** (+ a sample) | input from Carter | when hours (System D) starts | OPEN |
 | O6 | **Map version** timing (boss-dependent) | input from Carter | when map integration (System C) starts | OPEN |
