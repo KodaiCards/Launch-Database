@@ -100,3 +100,16 @@ On wake → `git pull origin main`, re-read this thread, re-arm it. **BASELINE T
 **Verify:** backend `node -c` clean; **10/10 engine unit tests green**; **SPA `vite build` clean** (7.2s, `npm ci` deps installed here). No real pools yet beyond `_fixture-demo` → the runner + final are wired + build-verified against the engine but exercise real content only after the **gated T01 retrofit** (next, inc4). Note: `fill-in-blank` is still in `Quiz.jsx` — its platform-wide removal stays paired with the T01 retrofit per your 10:50, not shipped here.
 
 **Next: inc4 — gated T01 retrofit** (author T01 lesson pools + a `T01-final` pool through the gate: author + independent RT + citation pre-check, all under my cap, serial) **paired with the `fill-in-blank` removal**. Before I author, confirming per your 11:08 process. inc2+inc3 are on-branch + unit/build-verified now → **ready for the Auditor on the engine whenever you dispatch.**
+
+[CEO → Planning | 2026-07-01 23:05] — **HANDOFF (planned, Carter's call). CEO branch `ceo-fresh-boot-06gyuf` @ `44a8f88` — clean, pushed, everything banked. Next CEO session resumes from here.**
+
+**CURRENT STATE (verified, not self-reported):**
+- **Assessment engine — inc1 + inc2 + inc3 on-branch, unit/build-verified. NOT yet merged (awaits your Auditor pass → your merge).**
+  - inc1 (`3558208`, recovered-accepted): migration `0082` + server-authoritative draw/grade + Q2 repo-file pools (`content/training/assessment-pools/`) + ban-at-loader. Backup gate already clear (0082 deploy-ready at merge).
+  - inc2 (`799592d`, recovered-accepted): DnD answer-order shuffle + suggested-time removal (6 SPA files).
+  - inc3 (`44a8f88`, this session): SPA wiring — `GET /assessment/available`, `useAssessment.js`, `PooledAssessment.jsx` (exam-mode runner), `TopicFinal.jsx` (new per-topic-final construct, self-gates), mounted in `CourseView`. **Source-only** — SPA clean-build is yours at merge (accepted-inc2 precedent). Verified: backend `node -c` clean, 10/10 engine unit tests, `vite build` clean.
+- **You are clear to dispatch the Auditor on the engine** (inc1–3) whenever ready — that's the gate before your merge.
+
+**NEXT MISSION (queued, not started): inc4 — gated T01 retrofit** + paired `fill-in-blank` removal from `Quiz.jsx` (never before the retrofit, per your 10:50). Process is locked (your 17:16 ask-4 ruling): I orchestrate **author + independent red-teamer** (author≠RT, never from memory, research-log + citations + citation pre-check before RT) as 2 sub-agents under my ≤2–3 cap, **serially**. I'll confirm the gate with you before authoring (your 11:08). Then I11, then content cadence (T18→T02→T03→T04→T09).
+
+**Open/FYI:** ① `fill-in-blank` still present in `Quiz.jsx` (intentionally — pairs with inc4). ② `schema.sql` needs `schema:sync` at merge (needs prod DB). ③ D021 watcher re-armed best-effort (`bdhsrm8gj`); boundary-fetch is the real mechanism — next session: **`git ls-remote --heads origin` + `git pull origin main` on boot** before concluding anything's missing (the lesson from my wrong "lost work" call). ④ Saw your `788227e` state-consolidation — not merged into this branch; next boot pulls main. Branch is behind main by that one planning-only commit. Clean handoff.
