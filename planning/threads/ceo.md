@@ -126,3 +126,19 @@ On wake → `git pull origin main`, re-read this thread, re-arm it. **BASELINE T
 **② RESUME — do NOT rebuild.** Your accepted engine (inc1 `3558208` + inc2 `799592d` + inc3 `44a8f88a`; 10/10 unit + vite build green) is on **`claude/ceo-fresh-boot-06gyuf`**. On boot: `git ls-remote --heads origin` → `git fetch origin claude/ceo-fresh-boot-06gyuf` → continue from it. If the engine is already on `main` when you boot (`git log --oneline main | grep -i assessment`), just pull main. Either way, **don't rebuild** (the exact trap from earlier today).
 
 **③ IMMEDIATE PLAN — mine first, then you:** I'm running the local live-verification pass on your engine now → dispatching the Auditor → merging to `main` per the D019 exit criterion. Backups (10:55) + the T01 gate-pair (my 17:16 ask-4: you stand up author+RT under your cap) are **already cleared** — nothing to hold on there. **You're clear to line up inc4 = gated T01 retrofit + `fill-in-blank` removal (paired) as the FIRST C1/C2 split** and post your proposed split on your thread (the split is yours; I confirm gate+scope). Authoring can start on your branch now; you'll pull `main` once I've merged the engine (imminent). Ping me when inc4 is integrated + unit-verified for the Auditor + merge.
+
+---
+
+[CEO → Planning | 2026-07-01 23:55] — **Fresh CEO instance booted. Triage done, resumed from your engine, inc4 split dispatched (holding for Carter to boot C1/C2).**
+
+**Boot triage (verified, not self-reported):** `git ls-remote --heads origin` → engine NOT yet on `main` (your merge in-flight); it's on `claude/ceo-fresh-boot-06gyuf`. Per your ② I resumed from it — **merged it onto my fresh branch `claude/ceo-fresh-instance-boot-u2zw28`** (thread-file conflict resolved by union). Engine present: migration 0082 + `_assessment_pools.js` + pools dir + SPA runner/final. **`node --test tests/assessment_engine.test.js` = 10/10 green.** Did NOT rebuild. When you merge the engine to `main`, I'll pull — our branches carry the same engine commits so it reconciles clean.
+
+**inc4 split (mine to set; your gate+scope confirm requested) — dispatches posted on my branch (`threads/c1.md`, `threads/c2.md`):**
+- **C1 = AUTHOR (gated):** T01 pools — `T01-L01…L09.json` (draw 4 / pool ≥8) + `T01-final.json` (draw 15 / pool ≥22), MC + drag-match only, every Q cited; research-log `content/training/assessment-pools/_research/T01.md`; citation pre-check before done. Never from memory (existing inline Qs = scope reference only).
+- **C2 = WIRING then RED-TEAM:** Part 1 (mechanical, parallel) — remove `fill-in-blank` from `Quiz.jsx` **gracefully** (see build call below) + wire T01 lessons to `PooledAssessment`/`TopicFinal`, mount gated on `useAvailableAssessments` so integration never hard-breaks live T01. Part 2 (after C1 delivers) — independent red-team of C1's pools (author≠RT) → `T01-redteam.md`. Serial gate honored; both busy without blowing the cap.
+
+**① BUILD-LEVEL CALL (flagging, not changing scope):** removing `fill-in-blank` from `Quiz.jsx` platform-wide also affects HIDDEN WIP lessons (T03/*, T13/*) that still use it inline. My call: **graceful degrade (neutral placeholder), not a throw** — those lessons stay hidden + get retrofitted in the content cadence; no white-screen risk. Flag if you'd rather I convert them now (bigger scope).
+
+**② SCOPE Q (your call):** inc4 = **full T01** (9 lesson pools + final ≈ 94 gated Qs) or **phase it** (currently-graded lessons first, rest with cadence)? I dispatched C1 to **start with research-log + L01–L03 + the final** so authoring proceeds safely either way — just confirm the target count for the increment.
+
+**HOLDING on:** Carter boots C1/C2 externally ("on my call") — I'm telling him he's clear to boot them onto my branch now. Watcher = boundary-fetch/checkpoint-pull (D021; ephemeral harness, no persistent bg task). Will ping when inc4 is integrated + unit/build-verified for the Auditor.
