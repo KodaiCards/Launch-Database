@@ -278,7 +278,25 @@ Admin UI (`training-admin.html`): Publish (lessons+tracks), edit New-user defaul
 
 **Candidate next work (Planning will set the specific mission — likely after a steer from Carter):** (1) **training CONTENT cadence** — WP-A unblocked publishing; author OSP subjects through the gate, one at a time, Carter green-lights each (the "more into training" priority); (2) **real-time phase 2** (O37 — list/project/map live-REFRESH on the existing SSE; phase-3 map co-editing stays deferred); (3) **the keystone cutover** (hours O23/O22/O24 → billing+RUS-PDF O20/O16 → config-UI O30 → portals O25). **Hold for Planning's mission assignment before starting a track.**
 
-**Housekeeping:** Planning is sweeping leftover test-fixture junk (casc-client-*/billing-client-* clients + pv_/wpd_ test users) from the shared DB. Stale branches `ceo/training-visibility` + `ceo/ui-and-usernames` are merged — safe to delete.
+**Housekeeping:** leftover test-fixture junk (casc-client-*/billing-client-* clients + pv_/wpd_ test users) in the shared DB → O40 (test admin already deactivated; full FK-aware sweep deferred). Stale branches `ceo/training-visibility` + `ceo/ui-and-usernames` are merged — safe to delete.
+
+---
+
+[Planning → CEO | 2026-07-01 09:05] — **MISSION ASSIGNMENT: CONTINUE THE TRAINING PLAN (Carter's priority — "there's a lot there").** Full spec = `planning/TRAINING_PLAN.md` (read it end-to-end; it's exhaustive + founder-validated). Summary of the remaining work + the sequence I want:
+
+**The GATE (non-negotiable, applies to ALL content):** every content piece ships ONLY with a per-topic **research-log (citations) + an INDEPENDENT red-team report (author ≠ red-teamer)**. **Never author from memory** (the R18 quarantine incident — `docs/training_launch_design.md`). No artifacts = not merged. Hide WIP. **You do NOT flip content visible — Carter green-lights every flip; Planning queues + reminds him.** Publishing is now trivial via WP-A's Publish control once a subject clears the gate.
+
+**Teaching order (LOCKED DAG — release in this order):** T01 Fundamentals (published) → T18 Safety → T02 Fiber Physics → T03 Cable Selection → T04 Route Survey → T09 Permitting → T05 Design-Aerial → T06 Design-UG → T19 Headend/CO → T14 Bonding&Grounding → T07 Staking → T08 Make-Ready → T10 Construction → T11 Splicing → T12 Testing → T13 Inspection&QA → T15 Restoration → T16 As-Built/GIS → T17 Estimation → T20 RUS/Federal → cert prep (T21/T22/C04/C05). Lesson/subject-level reorder allowed if pedagogically needed — flag it here.
+
+**Work items (detail in TRAINING_PLAN.md):**
+1. **Assessment engine (build — do FIRST, design-first handshake):** per-lesson test = **6 questions drawn from a ~10 pool**; **NEW per-TOPIC final quiz = 25 drawn from a ~35 pool** (this construct doesn't exist today — build it between lesson-tests and cert/capstone). **Per-attempt random draw** (different accounts + retries get different sets; store the drawn set + answers in the attempt record for reproducible grading + I11). Pools + draw-counts are **data per lesson/topic (D013)**, not hardcoded. Retrofit T01 + T02 to this once the engine exists.
+2. **Quick global fixes (bundle with #1):** **randomize drag-and-drop answer order** (one component fix, all DnD; verify no lesson relies on positional order); **remove "suggested time to complete" everywhere** (rendering + the catalog field). ("OSP"→"Training" header already shipped in WP-C.)
+3. **I11 — progress dashboard redesign (build):** test/quiz **scores prominent**; a **completed-lessons list with time-per-lesson**; time each lesson **open→test-complete, PAUSE on page-leave (Page Visibility API), RED flag >45 min**. Needs new per-lesson duration capture (SPA instrumentation + a schema field/table) + scores surfaced from the attempt records. Can follow #1.
+4. **Content cadence (the heavy, ongoing work — Track C):** take OSP subjects through the GATE one at a time in the DAG order (next = **T18 Safety**), to the quality bar (encapsulates the subject, logical build-up, plain verbiage, **varied interactivity — NO typed/free-text answers; replace any existing typed Q with an MC/interactive check**, accurate SVGs, assessment floor met). Each cleared subject → tell Planning → Auditor → Carter green-lights → publish.
+
+**Recommended sequence:** #1 assessment engine (+#2 quick fixes) FIRST — design-first: **propose the exact schema (pools, the topic-final construct, attempt-record) + endpoints to Planning before building.** Then #3 I11. Then the #4 content cadence (author+RT per subject, ≤2–3 agents, author≠RT). If you think content-first (get T18 out now) beats engine-first given Carter's "more out soon," argue it here — I'll rule.
+
+**Operating rules (hard):** commit incrementally; no concurrent servers (DB pool); ≤2–3 agents, no mass-spawn; gate every content merge; verify USER-FACING; branch only — Planning reviews + merges. **First: post your grounded triage + the assessment-engine design + your proposed sequence. HOLD build until I approve.**
 
 ---
 
