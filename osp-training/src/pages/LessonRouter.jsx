@@ -11,7 +11,7 @@
  */
 
 import React, { useState, useEffect } from 'react';
-import { Link, useParams } from 'react-router-dom';
+import { Link, useParams, Navigate } from 'react-router-dom';
 import { lessonFileIndex } from '../data/course-catalog.js';
 import ErrorBoundary from '../components/ErrorBoundary.jsx';
 import { useMyContent } from '../hooks/useMyContent.js';
@@ -93,10 +93,17 @@ export default function LessonRouter() {
   const [notFound, setNotFound] = useState(false);
 
   const lessonKey = `${courseId}.L${String(lessonOrder).padStart(2, '0')}`;
-  // Content visibility: if this lesson isn't assigned to the user, don't load it.
+  // Content visibility: a hidden/revoked lesson must be COMPLETELY GONE for this user
+  // (Carter, supersedes the old lock screen). Once visibility resolves, if the lesson
+  // isn't visible we redirect with NO hint it exists — to the course home if that
+  // course is still visible to them, else to the product chooser.
   const blocked = mc.ready && !mc.lessonVisible(lessonKey);
 
   useEffect(() => {
+    // Don't even load (or deliver) the chunk for a hidden lesson, and don't load
+    // before visibility resolves. Normal-app delivery is gated on the visible set.
+    if (!mc.ready || blocked) { setLoading(true); setLessonComponent(null); setNotFound(false); return; }
+
     setLoading(true);
     setNotFound(false);
     setLessonComponent(null);
@@ -137,19 +144,14 @@ export default function LessonRouter() {
       .finally(() => {
         setLoading(false);
       });
-  }, [courseId, lessonOrder]);
+  }, [courseId, lessonOrder, mc.ready, blocked]);
 
+  // Until visibility resolves, show the skeleton (never the lesson, never a redirect).
+  if (!mc.ready) return <LessonSkeleton />;
+  // Hidden/revoked → completely gone: silent redirect, no lock screen, no hint.
   if (blocked) {
-    return (
-      <div className="panel text-center py-12 text-slate-400">
-        <div className="text-4xl mb-4">🔒</div>
-        <p className="text-lg font-semibold text-slate-300">This lesson isn't part of your assigned training.</p>
-        <div className="mt-6 flex justify-center gap-4">
-          <Link to={`/course/${courseId}`} className="text-sm text-amber-300 hover:text-amber-100 transition">← Back to course</Link>
-          <Link to="/" className="text-sm text-slate-400 hover:text-amber-300 transition">All courses</Link>
-        </div>
-      </div>
-    );
+    const dest = mc.subjectVisible(courseId) ? `/course/${courseId}` : '/';
+    return <Navigate to={dest} replace />;
   }
   if (loading) return <LessonSkeleton />;
   if (notFound) return <LessonPlaceholder courseId={courseId} lessonOrder={lessonOrder} />;

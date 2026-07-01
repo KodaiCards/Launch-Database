@@ -10,7 +10,8 @@
 //   'team:design'       — design_manager + design_engineer
 //   'team:permitting'   — permitting_manager + permitting_engineer
 //   'team:construction' — construction_manager + construction_engineer
-//   'user:<userId>'     — reserved for future per-user scoping
+//   'training'          — ALL authed connections; global training-visibility pings
+//   'user:<userId>'     — per-user pushes (training grant/revoke, etc.)
 //
 // Subscriber model: one persistent connection per browser tab.
 // The endpoint subscribes each connection to the appropriate channels
@@ -122,6 +123,15 @@ function attach(app, mw) {
     const role = req.user && req.user.role;
     const myChannels = [];
 
+    // Every authenticated connection joins:
+    //   • 'training' — global training-visibility changes (publish / new-user-default).
+    //     A content-free invalidation ping; the visible set is still resolved
+    //     server-side per user on refetch, so this leaks nothing (WP-A, approved).
+    //   • 'user:<id>' — per-user pushes (e.g. an admin grant/revoke of THIS user's
+    //     training). Previously reserved/unused; WP-A is its first consumer.
+    myChannels.push('training');
+    if (req.user && req.user.id) myChannels.push('user:' + req.user.id);
+
     if (role === 'admin') {
       myChannels.push('admin');
       // Admin sees everything — also add team channels so admin can have
@@ -141,8 +151,10 @@ function attach(app, mw) {
     } else if (role === 'construction_manager' || role === 'construction_engineer') {
       myChannels.push('team:construction');
     }
-    // 'customer' role gets no channels — the customer portal doesn't need
-    // real-time push (it's read-only and low-frequency).
+    // 'customer' role gets no team/admin channels — the customer portal doesn't
+    // need real-time push (it's read-only and low-frequency). It still joins
+    // 'training' + 'user:<id>' above (harmless: a customer resolves to no training,
+    // so a ping just triggers a refetch that returns an empty set).
 
     myChannels.forEach(c => _subscribe(c, res));
 

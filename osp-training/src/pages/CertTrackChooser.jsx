@@ -202,6 +202,15 @@ export default function CertTrackChooser() {
         </Link>
       </div>
 
+      {/* Skeleton until visibility resolves — no flash of wrong cert content (WP-A). */}
+      {!mc.ready && (
+        <div className="space-y-3 animate-pulse">
+          {[0, 1].map(i => (
+            <div key={i} className="panel"><div className="h-5 w-44 bg-white/15 rounded" /><div className="mt-2 h-3 w-2/3 bg-white/5 rounded" /></div>
+          ))}
+        </div>
+      )}
+
       <div>
         <h1 className="text-3xl font-bold mb-1">Certification Tracks</h1>
         <p className="text-slate-400 text-sm">

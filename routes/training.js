@@ -17,6 +17,7 @@
 // All queries use parameterized placeholders — no string concat.
 
 const { logAudit } = require('./_audit');
+const { broadcast } = require('./_sse');
 const fs = require('fs');
 const path = require('path');
 
@@ -124,16 +125,32 @@ function expandScopeToLessons(scopeType, scopeId, tree) {
   return out;
 }
 
-// base: 'all' | 'preset' | 'none'. Returns a Set of visible lesson ids.
-function computeVisibleLessons(base, presetScopes, overrides, tree) {
-  let set;
-  if (base === 'all') set = new Set(tree.allLessons);
-  else if (base === 'preset') {
-    set = new Set();
-    for (const s of (presetScopes || [])) for (const l of expandScopeToLessons(s.scope_type, s.scope_id, tree)) set.add(l);
-  } else set = new Set();
+// Expand a list of preset scopes (track|subject|lesson rows) → a Set of lesson ids.
+function scopesToLessonSet(scopes, tree) {
+  const set = new Set();
+  for (const s of (scopes || [])) for (const l of expandScopeToLessons(s.scope_type, s.scope_id, tree)) set.add(l);
+  return set;
+}
+
+// ── THE ONE RESOLVER (WP-A, server-authoritative) ───────────────────────────
+// visible(non-admin) = ( default ∪ per-user SHOW − per-user HIDE ) ∩ published
+// Hide ALWAYS wins (computed every call → revoking content the learner already
+// opened truly hides it; progress rows are irrelevant to visibility). Everything
+// is intersected with `published` so nothing un-published can ever leak. Admin is
+// resolved separately (sees all) and never reaches this function.
+//
+//   defaultLessons  : Set — the new-user-default lesson set (intent ∩ published happens here)
+//   publishedLessons: Set — the published lesson set (the hard ceiling)
+//   overrides       : [{scope_type, scope_id, mode:'show'|'hide'}] — per-user grant/revoke
+function resolveVisibleLessons(defaultLessons, publishedLessons, overrides, tree) {
+  // Start from the new-user default, then apply per-user SHOW (grant), then HIDE (revoke).
+  const set = new Set(defaultLessons);
   for (const o of (overrides || [])) if (o.mode === 'show') for (const l of expandScopeToLessons(o.scope_type, o.scope_id, tree)) set.add(l);
   for (const o of (overrides || [])) if (o.mode === 'hide') for (const l of expandScopeToLessons(o.scope_type, o.scope_id, tree)) set.delete(l);
+  // Intersect with published — the ceiling. Un-published lessons are never visible
+  // to a non-admin, regardless of default/grant. (A per-user SHOW of an unpublished
+  // lesson is intentionally inert until it's published.)
+  for (const l of [...set]) if (!publishedLessons.has(l)) set.delete(l);
   return set;
 }
 
@@ -145,18 +162,6 @@ function deriveVisible(lessonSet, tree) {
     if (sid) { subjects.add(sid); tracks.add(tree.subjectToTrack.get(sid)); }
   }
   return { subjects, tracks };
-}
-
-// Default content visibility for a user with NO explicit access row (training-launch
-// pivot, Carter 2026-06-29): new accounts start scoped to the OSP track ONLY; admin
-// opens up ISP / Certification later via presets or per-user overrides. Centralized
-// so the learner view (loadUserVisibility → /my-content → SPA ProductChooser) and the
-// admin progress denominator (visibleTotalFor) always agree. Fail-open: if the catalog
-// can't be parsed (empty OSP set) the callers fall back to "all" so a parse error
-// never locks a learner out.
-const DEFAULT_TRACK = 'osp';
-function defaultVisibleLessons(tree) {
-  return new Set(expandScopeToLessons('track', DEFAULT_TRACK, tree));
 }
 
 // Completion gating (Carter 2026-06-26): a lesson is only credited as completed
@@ -242,6 +247,23 @@ module.exports = function installTrainingRoutes(app, pool, { requireAuth }) {
       effectiveStatus = 'in_progress';
       creditBlocked = true;
     }
+
+    // Visibility gate (WP-A, Carter scope-change): a non-admin may not record
+    // progress against a REAL lesson that is hidden/revoked for them — it's treated
+    // as if it doesn't exist (server-enforced; complements the SPA hide). We only
+    // gate lessons that EXIST in the catalog; unknown/synthetic ids fall through to
+    // normal handling (they reference no real content). Admins bypass entirely.
+    try {
+      if (req.user.role !== 'admin') {
+        const tree = curriculumTree();
+        if (tree.allLessons.has(lesson_id)) {
+          const v = await loadUserVisibility(req.user.id, req.user.role);
+          if (!v.all && !v.lessons.has(lesson_id)) {
+            return res.status(404).json({ error: 'Lesson not found' });
+          }
+        }
+      }
+    } catch (_) { /* visibility check failed — fall through to normal handling */ }
 
     try {
       // Upsert with status-advancement and best-score guard:
@@ -535,31 +557,19 @@ module.exports = function installTrainingRoutes(app, pool, { requireAuth }) {
           LIMIT 2000`
       );
 
-      // Per-user visible denominator (content visibility). Batch-load access +
-      // overrides + preset scopes once, resolve each user in memory.
+      // Per-user visible denominator — uses the SAME resolver as the learner view
+      // (loadUserVisibility) so the admin % always matches what the learner sees.
+      // Batch-load the two reserved global sets + every user's overrides once.
       const tree = curriculumTree();
       const fullTotal = curriculumTotalLessons();
-      const accRows = (await pool.query('SELECT user_id, base, preset_id FROM user_training_access')).rows;
-      const accById = new Map(accRows.map(a => [a.user_id, a]));
+      const published = await publishedLessonSet();   // Set
+      const def = await defaultLessonSet();            // Set (intent ∩ published already applied)
       const ovRows = (await pool.query('SELECT user_id, scope_type, scope_id, mode FROM user_training_overrides')).rows;
       const ovById = new Map();
       for (const o of ovRows) { if (!ovById.has(o.user_id)) ovById.set(o.user_id, []); ovById.get(o.user_id).push(o); }
-      const psRows = (await pool.query('SELECT preset_id, scope_type, scope_id FROM training_preset_scopes')).rows;
-      const psById = new Map();
-      for (const s of psRows) { if (!psById.has(s.preset_id)) psById.set(s.preset_id, []); psById.get(s.preset_id).push(s); }
-      const publishedId = await findPublishedPreset(); // no-row users default to the Published set
       const visibleTotalFor = (userId, role) => {
         if (role === 'admin') return fullTotal;
-        const acc = accById.get(userId);
-        // No access row → Published set if configured, else OSP-track (matches loadUserVisibility).
-        if (!acc) {
-          if (publishedId) return computeVisibleLessons('preset', psById.get(publishedId) || [], [], tree).size;
-          const n = defaultVisibleLessons(tree).size; return n || fullTotal;
-        }
-        const overrides = ovById.get(userId) || [];
-        if (acc.base === 'all' && overrides.length === 0) return fullTotal;
-        const presetScopes = acc.base === 'preset' && acc.preset_id ? (psById.get(acc.preset_id) || []) : [];
-        return computeVisibleLessons(acc.base, presetScopes, overrides, tree).size;
+        return resolveVisibleLessons(def, published, ovById.get(userId) || [], tree).size;
       };
 
       res.json({
@@ -750,113 +760,97 @@ module.exports = function installTrainingRoutes(app, pool, { requireAuth }) {
   });
 
   // ═══════════════════════════════════════════════════════════════════════════
-  // CONTENT VISIBILITY — per-staff control of what training they see.
-  // Default = see all (no row). Admin restricts via reusable presets + per-user
-  // show/hide overrides. Admins always see everything.
+  // CONTENT VISIBILITY — ONE server-authoritative model (WP-A rebuild).
+  //
+  //   visible(non-admin) = ( default ∪ per-user SHOW − per-user HIDE ) ∩ published
+  //   visible(admin)     = everything
+  //
+  // Two RESERVED presets carry the global sets (pinned by id in training_visibility):
+  //   __published__ — what is live at all (admin "Publish": lessons AND tracks/subjects)
+  //   __default__   — what a fresh signup sees (admin "New-user default"); INTENT is
+  //                   stored as scopes and intersected with published at resolve time,
+  //                   so newly-published content flows into the default automatically.
+  // Per-user grant/revoke = user_training_overrides (mode 'show'|'hide'); HIDE wins.
+  //
+  // Real-time: any change broadcasts a content-free 'training_visibility_changed' ping
+  // (per-user change → user:<id>; publish/default change → the global 'training'
+  // channel). Clients refetch /my-content; the set is always resolved server-side.
   // ═══════════════════════════════════════════════════════════════════════════
   const VALID_SCOPE = ['track', 'subject', 'lesson'];
-  const VALID_BASE = ['all', 'preset', 'none'];
   const UUID_RE = /^[0-9a-fA-F-]{36}$/;
+  const RESERVED_PRESET_NAMES = new Set(['__published__', '__default__']);
 
-  // ── Canonical "Published" preset — the single lesson set trainees see by default.
-  // This is the per-lesson show/hide target (Carter's green-light flip surface),
-  // built on the existing preset engine (no new table). A trainee with no access
-  // row resolves to this set. Identified by a reserved name; created lazily by the
-  // admin lesson-visibility endpoints (seeded with the OSP track so behavior is
-  // continuous), so the hot read path (my-content) never writes.
-  const PUBLISHED_PRESET_NAME = 'Published';
-  let _publishedPresetId = null;
-  async function findPublishedPreset() {
-    if (_publishedPresetId) return _publishedPresetId;
+  // The singleton settings row pins both reserved presets by id (migration 0080
+  // seeds it). Cached after first read; the cache only holds ids, never scopes,
+  // so the hot read path never re-reads settings after warmup.
+  let _visIds = null; // { published_preset_id, default_preset_id }
+  async function visibilityIds() {
+    if (_visIds) return _visIds;
     const r = (await pool.query(
-      'SELECT id FROM training_presets WHERE name = $1 ORDER BY created_at LIMIT 1', [PUBLISHED_PRESET_NAME]
+      'SELECT published_preset_id, default_preset_id FROM training_visibility WHERE id = true'
     )).rows[0];
-    _publishedPresetId = r ? r.id : null;
-    return _publishedPresetId;
+    _visIds = r || { published_preset_id: null, default_preset_id: null };
+    return _visIds;
   }
-  async function getOrCreatePublishedPreset(userId) {
-    const existing = await findPublishedPreset();
-    if (existing) return existing;
-    const tree = curriculumTree();
-    const seed = expandScopeToLessons('track', DEFAULT_TRACK, tree); // OSP lessons (continuous w/ launch default)
-    const client = await pool.connect();
-    try {
-      await client.query('BEGIN');
-      const p = (await client.query(
-        'INSERT INTO training_presets (name, description, created_by) VALUES ($1,$2,$3) RETURNING id',
-        [PUBLISHED_PRESET_NAME, 'Lessons visible to trainees — per-lesson show/hide.', userId || null]
-      )).rows[0];
-      for (const lid of seed) await client.query(
-        "INSERT INTO training_preset_scopes (preset_id, scope_type, scope_id) VALUES ($1,'lesson',$2)", [p.id, lid]
-      );
-      await client.query('COMMIT');
-      _publishedPresetId = p.id;
-      return p.id;
-    } catch (e) { await client.query('ROLLBACK').catch(() => {}); throw e; }
-    finally { client.release(); }
-  }
-  // The lesson-id Set currently published to trainees. null = not configured yet
-  // (no Published preset row) → callers fall back to the OSP track so new trainees
-  // are never blank. A configured-but-empty set means "nothing visible yet" (honored).
-  async function publishedLessonSet() {
-    const id = await findPublishedPreset();
-    if (!id) return null;
-    const scopes = (await pool.query(
-      'SELECT scope_type, scope_id FROM training_preset_scopes WHERE preset_id = $1', [id]
+  async function presetScopeRows(presetId) {
+    if (!presetId) return [];
+    return (await pool.query(
+      'SELECT scope_type, scope_id FROM training_preset_scopes WHERE preset_id = $1', [presetId]
     )).rows;
-    return computeVisibleLessons('preset', scopes, [], curriculumTree());
+  }
+  // The published lesson Set (the ceiling). Empty until an admin publishes — there is
+  // NO auto-seed (the old all-OSP seed was the "new signup sees everything" bug).
+  async function publishedLessonSet() {
+    const { published_preset_id } = await visibilityIds();
+    return scopesToLessonSet(await presetScopeRows(published_preset_id), curriculumTree());
+  }
+  // The new-user-default lesson Set, already intersected with published (intent ∩ published).
+  async function defaultLessonSet() {
+    const { default_preset_id } = await visibilityIds();
+    const intent = scopesToLessonSet(await presetScopeRows(default_preset_id), curriculumTree());
+    const published = await publishedLessonSet();
+    const out = new Set();
+    for (const l of intent) if (published.has(l)) out.add(l);
+    return out;
+  }
+  // Raw default INTENT scopes (NOT intersected) — for the admin editor so it can show
+  // each selected scope with a published / not-yet-published indicator.
+  async function defaultIntentScopes() {
+    const { default_preset_id } = await visibilityIds();
+    return presetScopeRows(default_preset_id);
   }
 
+  // THE resolver. Admin → all. Everyone else → resolveVisibleLessons(default, published,
+  // overrides). No 'base', no hard-coded track, no fail-open. A user with no access row
+  // resolves exactly the same as the default path (steer #2). Returns {all, lessons, tree}.
   async function loadUserVisibility(userId, role) {
     const tree = curriculumTree();
-    if (role === 'admin') return { base: 'all', all: true, lessons: tree.allLessons, tree };
-    const accRow = (await pool.query(
-      'SELECT base, preset_id FROM user_training_access WHERE user_id = $1', [userId]
-    )).rows[0];
-    // No explicit access row → default to the canonical "Published" lesson set (the
-    // per-lesson show/hide Carter controls). Admin already returned above.
-    if (!accRow) {
-      const pub = await publishedLessonSet();
-      if (pub === null) {
-        // Published set not configured yet → OSP-track fallback so a new trainee
-        // is never blank. Fail-open to all if the catalog can't be parsed.
-        const lessons = defaultVisibleLessons(tree);
-        if (lessons.size === 0) return { base: 'all', preset_id: null, all: true, lessons: tree.allLessons, overrides: [], tree };
-        return { base: 'default', preset_id: null, all: false, lessons, overrides: [], tree };
-      }
-      // Configured (may be intentionally empty = nothing published yet).
-      return { base: 'published', preset_id: null, all: false, lessons: pub, overrides: [], tree };
-    }
-    const acc = accRow;
-    let presetScopes = [];
-    if (acc.base === 'preset' && acc.preset_id) {
-      presetScopes = (await pool.query(
-        'SELECT scope_type, scope_id FROM training_preset_scopes WHERE preset_id = $1', [acc.preset_id]
-      )).rows;
-    }
+    if (role === 'admin') return { all: true, lessons: tree.allLessons, tree };
+    const published = await publishedLessonSet();
+    const def = await defaultLessonSet();
     const overrides = (await pool.query(
       'SELECT scope_type, scope_id, mode FROM user_training_overrides WHERE user_id = $1', [userId]
     )).rows;
-    const lessons = computeVisibleLessons(acc.base, presetScopes, overrides, tree);
-    const all = acc.base === 'all' && overrides.length === 0;
-    return { base: acc.base, preset_id: acc.preset_id, all, lessons, overrides, tree };
+    const lessons = resolveVisibleLessons(def, published, overrides, tree);
+    return { all: false, lessons, overrides, tree };
   }
 
-  // What the signed-in user may see (the SPA filters its catalog/nav on this).
+  // What the signed-in user may see (the SPA renders strictly this set).
   app.get('/api/training/my-content', requireAuth(), async (req, res) => {
     try {
       const v = await loadUserVisibility(req.user.id, req.user.role);
-      if (v.all) return res.json({ all: true, base: v.base });
+      if (v.all) return res.json({ all: true });
       const { subjects, tracks } = deriveVisible(v.lessons, v.tree);
       res.json({
-        all: false, base: v.base,
+        all: false,
         tracks: Array.from(tracks), subjects: Array.from(subjects), lessons: Array.from(v.lessons),
       });
     } catch (err) {
       console.error('[training] GET /my-content error:', err.message);
-      // Fail OPEN for the learner's own view (don't lock people out on an error);
-      // visibility is a curation tool, not a security boundary.
-      res.json({ all: true, base: 'all', error: true });
+      // De-fail-open (WP-A): visibility is server-authoritative. On error we return
+      // 503 and the SPA keeps its last-good set (or a skeleton) — we NEVER fall back
+      // to "show everything", which was the leak/flash. (O26: curation, not security.)
+      res.status(503).json({ error: true });
     }
   });
 
@@ -865,55 +859,120 @@ module.exports = function installTrainingRoutes(app, pool, { requireAuth }) {
     res.json({ tracks: curriculumTree().tracks });
   });
 
-  // ── Lesson visibility — the "Published" set every trainee sees (per-lesson show/hide).
-  // GET: the full tree + which lessons are currently visible to trainees.
+  // ── Shared writer: REPLACE a reserved preset's scope rows.
+  //   • published → lesson-scoped (Publish marks individual lessons/topics live; bulk
+  //     track/subject toggles are expanded to lessons client-side → exact + granular).
+  //   • default   → SUBJECT/track-scoped (Carter's model: pick which SUBJECTS a new
+  //     signup gets, e.g. the OSP track — stored as a track scope so newly-published
+  //     OSP topics flow in automatically; per-lesson allowed as a finer override).
+  // `scopes` = [{scope_type, scope_id}] validated against the tree.
+  async function replaceReservedPresetScopes(which, scopes, req) {
+    const tree = curriculumTree();
+    const clean = [];
+    const seen = new Set();
+    for (const s of (Array.isArray(scopes) ? scopes : [])) {
+      if (!s || !VALID_SCOPE.includes(s.scope_type) || typeof s.scope_id !== 'string') continue;
+      // Validate the scope id resolves to ≥1 real lesson (drops typos / dead ids).
+      if (expandScopeToLessons(s.scope_type, s.scope_id, tree).length === 0) continue;
+      const k = s.scope_type + ':' + s.scope_id;
+      if (seen.has(k)) continue; seen.add(k);
+      clean.push({ scope_type: s.scope_type, scope_id: s.scope_id });
+    }
+    const { published_preset_id, default_preset_id } = await visibilityIds();
+    const presetId = which === 'published' ? published_preset_id : default_preset_id;
+    if (!presetId) throw new Error('reserved preset not initialized (migration 0080)');
+    const client = await pool.connect();
+    try {
+      await client.query('BEGIN');
+      await client.query('DELETE FROM training_preset_scopes WHERE preset_id = $1', [presetId]);
+      for (const s of clean) await client.query(
+        'INSERT INTO training_preset_scopes (preset_id, scope_type, scope_id) VALUES ($1,$2,$3)',
+        [presetId, s.scope_type, s.scope_id]
+      );
+      await client.query('UPDATE training_visibility SET updated_at = now(), updated_by = $1 WHERE id = true', [req.user.id]);
+      await client.query('COMMIT');
+    } catch (e) { await client.query('ROLLBACK').catch(() => {}); throw e; }
+    finally { client.release(); }
+    logAudit(pool, { req, action: 'training.' + which + '.set', entity_type: 'training_preset', entity_id: presetId,
+      after: { scopes: clean.length }, source: 'admin' }).catch(() => {});
+    return clean;
+  }
+
+  // ── Publish — the lessons that are live to trainees at all (per-lesson + bulk track/subject).
   app.get('/api/training/published', requireAuth(['admin']), async (req, res) => {
     try {
-      await getOrCreatePublishedPreset(req.user.id); // ensure it exists (seeded w/ OSP on first open)
-      const pub = await publishedLessonSet();
-      res.json({ tracks: curriculumTree().tracks, published_lessons: Array.from(pub || []) });
+      res.json({ tracks: curriculumTree().tracks, published_lessons: Array.from(await publishedLessonSet()) });
     } catch (err) {
       console.error('[training] GET /published error:', err && err.message);
-      res.status(500).json({ error: 'Failed to load lesson visibility' });
+      res.status(500).json({ error: 'Failed to load published set' });
+    }
+  });
+  // PUT { lesson_ids:[...] } → REPLACE the published set (lesson-granular). Track/subject
+  // bulk toggles are expanded to lesson ids client-side, so Publish stays exact + global.
+  app.put('/api/training/published', requireAuth(['admin']), async (req, res) => {
+    if (!Array.isArray(req.body && req.body.lesson_ids)) return res.status(400).json({ error: 'lesson_ids must be an array' });
+    try {
+      const tree = curriculumTree();
+      const scopes = [...new Set(req.body.lesson_ids.filter(id => typeof id === 'string' && tree.allLessons.has(id)))]
+        .map(id => ({ scope_type: 'lesson', scope_id: id }));
+      await replaceReservedPresetScopes('published', scopes, req);
+      // Global change → ping every authed trainee + the admin overview.
+      broadcast('training', 'training_visibility_changed', {});
+      broadcast('admin', 'training_visibility_changed', {});
+      res.json({ ok: true, published_lessons: scopes.map(s => s.scope_id) });
+    } catch (err) {
+      console.error('[training] PUT /published error:', err && err.message);
+      res.status(500).json({ error: 'Failed to save published set' });
     }
   });
 
-  // PUT { lesson_ids:[...] } → REPLACE the visible-to-trainees set with exactly these
-  // lessons (normalizes the Published preset to lesson scopes). Empty array = nothing
-  // visible yet (honored). Invalid ids are dropped. This is the green-light flip surface.
-  app.put('/api/training/published', requireAuth(['admin']), async (req, res) => {
-    const ids = (req.body && req.body.lesson_ids) || [];
-    if (!Array.isArray(ids)) return res.status(400).json({ error: 'lesson_ids must be an array' });
-    const tree = curriculumTree();
-    const valid = [...new Set(ids.filter(id => typeof id === 'string' && tree.allLessons.has(id)))];
-    const client = await pool.connect();
+  // ── New-user default — which SUBJECTS a fresh signup can access (Carter's model:
+  // default = the OSP subject, stored as a track/subject scope; NOT a hard-coded lesson
+  // list). GET returns the saved scopes + the resolved lessons + published set so the
+  // editor can show per-subject selection and flag "defaulted but not yet published".
+  app.get('/api/training/default', requireAuth(['admin']), async (req, res) => {
     try {
-      const presetId = await getOrCreatePublishedPreset(req.user.id);
-      await client.query('BEGIN');
-      await client.query('DELETE FROM training_preset_scopes WHERE preset_id = $1', [presetId]);
-      for (const lid of valid) await client.query(
-        "INSERT INTO training_preset_scopes (preset_id, scope_type, scope_id) VALUES ($1,'lesson',$2)", [presetId, lid]
-      );
-      await client.query('COMMIT');
-      logAudit(pool, { req, action: 'training.published.set', entity_type: 'training_preset', entity_id: presetId,
-        after: { visible_lessons: valid.length }, source: 'admin' }).catch(() => {});
-      res.json({ ok: true, published_lessons: valid });
+      const scopes = await defaultIntentScopes();
+      const intent = scopesToLessonSet(scopes, curriculumTree());
+      const published = await publishedLessonSet();
+      res.json({
+        tracks: curriculumTree().tracks,
+        default_scopes: scopes,                               // e.g. [{scope_type:'track', scope_id:'osp'}]
+        default_lessons: Array.from(intent),                 // expanded intent (may include unpublished)
+        published_lessons: Array.from(published),            // so the UI can mark not-yet-published
+      });
     } catch (err) {
-      await client.query('ROLLBACK').catch(() => {});
-      console.error('[training] PUT /published error:', err && err.message);
-      res.status(500).json({ error: 'Failed to save lesson visibility' });
-    } finally { client.release(); }
+      console.error('[training] GET /default error:', err && err.message);
+      res.status(500).json({ error: 'Failed to load new-user default' });
+    }
+  });
+  // PUT { scopes:[{scope_type,scope_id}] } → REPLACE the new-user-default subjects (stored
+  // as-is; the resolver intersects with published). NOT clamped to published (Q1). Accepts
+  // lesson scopes too (finer control), but the primary UX is subject/track selection.
+  app.put('/api/training/default', requireAuth(['admin']), async (req, res) => {
+    const scopes = (req.body && req.body.scopes);
+    if (!Array.isArray(scopes)) return res.status(400).json({ error: 'scopes must be an array' });
+    try {
+      const saved = await replaceReservedPresetScopes('default', scopes, req);
+      // Affects every NOT-yet-customized trainee (no overrides) → global ping + admin.
+      broadcast('training', 'training_visibility_changed', {});
+      broadcast('admin', 'training_visibility_changed', {});
+      res.json({ ok: true, default_scopes: saved });
+    } catch (err) {
+      console.error('[training] PUT /default error:', err && err.message);
+      res.status(500).json({ error: 'Failed to save new-user default' });
+    }
   });
 
-  // ── Presets ────────────────────────────────────────────────────────────────
+  // ── Presets (named reusable bundles) — kept for convenience; the resolver no longer
+  // depends on them. The two reserved presets are hidden + non-editable here.
   app.get('/api/training/presets', requireAuth(['admin']), async (req, res) => {
     try {
       const presets = (await pool.query(
-        'SELECT id, name, description, created_at FROM training_presets ORDER BY name'
+        "SELECT id, name, description, created_at FROM training_presets WHERE name <> ALL($1) ORDER BY name",
+        [Array.from(RESERVED_PRESET_NAMES)]
       )).rows;
-      const scopes = (await pool.query(
-        'SELECT preset_id, scope_type, scope_id FROM training_preset_scopes'
-      )).rows;
+      const scopes = (await pool.query('SELECT preset_id, scope_type, scope_id FROM training_preset_scopes')).rows;
       const byId = new Map(presets.map(p => [p.id, { ...p, scopes: [] }]));
       for (const s of scopes) if (byId.has(s.preset_id)) byId.get(s.preset_id).scopes.push({ scope_type: s.scope_type, scope_id: s.scope_id });
       res.json({ presets: Array.from(byId.values()) });
@@ -932,10 +991,12 @@ module.exports = function installTrainingRoutes(app, pool, { requireAuth }) {
     }
     return out;
   }
+  function reservedName(name) { return RESERVED_PRESET_NAMES.has(String(name || '').trim()); }
 
   app.post('/api/training/presets', requireAuth(['admin']), async (req, res) => {
     const name = String((req.body && req.body.name) || '').trim();
     if (!name || name.length > 120) return res.status(400).json({ error: 'name required (≤120 chars)' });
+    if (reservedName(name)) return res.status(400).json({ error: 'that name is reserved' });
     const scopes = validScopes((req.body && req.body.scopes) || []);
     if (scopes === null) return res.status(400).json({ error: 'invalid scopes' });
     const client = await pool.connect();
@@ -963,11 +1024,15 @@ module.exports = function installTrainingRoutes(app, pool, { requireAuth }) {
     if (!UUID_RE.test(id)) return res.status(400).json({ error: 'bad id' });
     const name = String((req.body && req.body.name) || '').trim();
     if (!name || name.length > 120) return res.status(400).json({ error: 'name required (≤120 chars)' });
+    if (reservedName(name)) return res.status(400).json({ error: 'that name is reserved' });
     const scopes = validScopes((req.body && req.body.scopes) || []);
     if (scopes === null) return res.status(400).json({ error: 'invalid scopes' });
     const client = await pool.connect();
     try {
       await client.query('BEGIN');
+      // Guard: never let a reserved preset be edited through this generic path.
+      const cur = (await client.query('SELECT name FROM training_presets WHERE id=$1', [id])).rows[0];
+      if (cur && reservedName(cur.name)) { await client.query('ROLLBACK'); return res.status(403).json({ error: 'reserved preset' }); }
       const upd = await client.query(
         'UPDATE training_presets SET name=$1, description=$2 WHERE id=$3 RETURNING id',
         [name, (req.body.description || null), id]
@@ -991,9 +1056,8 @@ module.exports = function installTrainingRoutes(app, pool, { requireAuth }) {
     const id = String(req.params.id || '');
     if (!UUID_RE.test(id)) return res.status(400).json({ error: 'bad id' });
     try {
-      // Any users pinned to this preset fall back to base='all' (FK ON DELETE SET NULL);
-      // flip their base so they don't get stuck on 'preset' with no preset.
-      await pool.query("UPDATE user_training_access SET base='all' WHERE preset_id=$1", [id]);
+      const cur = (await pool.query('SELECT name FROM training_presets WHERE id=$1', [id])).rows[0];
+      if (cur && reservedName(cur.name)) return res.status(403).json({ error: 'reserved preset' });
       await pool.query('DELETE FROM training_presets WHERE id=$1', [id]);
       res.json({ ok: true });
     } catch (err) {
@@ -1002,20 +1066,19 @@ module.exports = function installTrainingRoutes(app, pool, { requireAuth }) {
     }
   });
 
-  // ── Per-user access ──────────────────────────────────────────────────────────
+  // ── Per-user grant/revoke — add/remove tracks & lessons for ONE person.
+  // overrides: [{scope_type:'track'|'subject'|'lesson', scope_id, mode:'show'|'hide'}].
+  // SHOW grants on top of the default; HIDE revokes and ALWAYS wins (even if already seen).
   app.get('/api/training/access/:userId', requireAuth(['admin']), async (req, res) => {
     const userId = String(req.params.userId || '');
     if (!UUID_RE.test(userId)) return res.status(400).json({ error: 'bad userId' });
     try {
-      const acc = (await pool.query(
-        'SELECT base, preset_id FROM user_training_access WHERE user_id=$1', [userId]
-      )).rows[0] || { base: 'all', preset_id: null };
       const overrides = (await pool.query(
         'SELECT scope_type, scope_id, mode FROM user_training_overrides WHERE user_id=$1', [userId]
       )).rows;
-      const v = await loadUserVisibility(userId, 'trainee'); // resolve as a non-admin to preview the set
+      const v = await loadUserVisibility(userId, 'trainee'); // preview as a non-admin
       res.json({
-        base: acc.base, preset_id: acc.preset_id, overrides,
+        overrides,
         visible_lesson_count: v.all ? curriculumTotalLessons() : v.lessons.size,
         total_lesson_count: curriculumTotalLessons(),
       });
@@ -1028,12 +1091,6 @@ module.exports = function installTrainingRoutes(app, pool, { requireAuth }) {
   app.put('/api/training/access/:userId', requireAuth(['admin']), async (req, res) => {
     const userId = String(req.params.userId || '');
     if (!UUID_RE.test(userId)) return res.status(400).json({ error: 'bad userId' });
-    const base = String((req.body && req.body.base) || 'all');
-    if (!VALID_BASE.includes(base)) return res.status(400).json({ error: 'bad base' });
-    let presetId = (req.body && req.body.preset_id) || null;
-    if (base === 'preset') {
-      if (!presetId || !UUID_RE.test(String(presetId))) return res.status(400).json({ error: 'preset_id required for base=preset' });
-    } else presetId = null;
     const overrides = (req.body && req.body.overrides) || [];
     if (!Array.isArray(overrides)) return res.status(400).json({ error: 'overrides must be an array' });
     for (const o of overrides) {
@@ -1044,18 +1101,17 @@ module.exports = function installTrainingRoutes(app, pool, { requireAuth }) {
     const client = await pool.connect();
     try {
       await client.query('BEGIN');
-      await client.query(
-        `INSERT INTO user_training_access (user_id, base, preset_id, updated_by, updated_at)
-         VALUES ($1,$2,$3,$4,now())
-         ON CONFLICT (user_id) DO UPDATE SET base=$2, preset_id=$3, updated_by=$4, updated_at=now()`,
-        [userId, base, presetId, req.user.id]
-      );
       await client.query('DELETE FROM user_training_overrides WHERE user_id=$1', [userId]);
       for (const o of overrides) await client.query(
         'INSERT INTO user_training_overrides (user_id, scope_type, scope_id, mode) VALUES ($1,$2,$3,$4)',
         [userId, o.scope_type, o.scope_id, o.mode]
       );
       await client.query('COMMIT');
+      logAudit(pool, { req, action: 'training.access.set', entity_type: 'user_training_overrides', entity_id: userId,
+        after: { overrides: overrides.length }, source: 'admin' }).catch(() => {});
+      // Live update for THAT user's open SPA (no refresh) + the admin overview.
+      broadcast('user:' + userId, 'training_visibility_changed', {});
+      broadcast('admin', 'training_visibility_changed', {});
       res.json({ ok: true });
     } catch (err) {
       await client.query('ROLLBACK').catch(() => {});

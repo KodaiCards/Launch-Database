@@ -144,8 +144,9 @@ tr.prow td:first-child{position:relative}
 <div class="header">
   <div class="header-title"><i class="fa-solid fa-graduation-cap" style="color:var(--primary)"></i> Training Progress</div>
   <div style="display:flex;gap:8px;align-items:center">
-    <button class="btn btn-primary" onclick="openLessonVis()"><i class="fa-solid fa-eye"></i> Lesson visibility</button>
-    <button class="btn" onclick="openPresets()"><i class="fa-solid fa-layer-group"></i> Content access</button>
+    <button class="btn btn-primary" onclick="openLessonVis()" title="What is live to trainees at all"><i class="fa-solid fa-eye"></i> Publish</button>
+    <button class="btn" onclick="openDefaultVis()" title="What a brand-new signup sees"><i class="fa-solid fa-user-plus"></i> New-user default</button>
+    <button class="btn" onclick="openPresets()" title="Reusable named content bundles"><i class="fa-solid fa-layer-group"></i> Presets</button>
     <button class="btn" onclick="load()"><i class="fa-solid fa-rotate"></i> Refresh</button>
     <button class="btn-icon" onclick="toggleDark()" title="Toggle theme"><i class="fa-solid fa-moon" id="dm-icon"></i></button>
   </div>
@@ -189,7 +190,7 @@ tr.prow td:first-child{position:relative}
   <div class="modal">
     <div class="modal-h"><span class="t"><i class="fa-solid fa-layer-group" style="color:var(--primary)"></i> Content Access — Presets</span><button class="close-x" onclick="closePresets()"><i class="fa-solid fa-xmark"></i></button></div>
     <div class="modal-b">
-      <p class="muted" style="font-size:12px;margin-bottom:12px">Presets are reusable content sets (e.g. "OSP crew", "ISP"). Assign one to a person from their row → Content access. Everyone defaults to <strong>see all</strong>.</p>
+      <p class="muted" style="font-size:12px;margin-bottom:12px">Presets are reusable, named content sets you can keep handy (e.g. "OSP crew", "ISP"). Day-to-day visibility is driven by <strong>Publish</strong> (what's live), the <strong>New-user default</strong> (what new signups see), and per-person <strong>grant / revoke</strong> in each person's row.</p>
       <div id="presets-list"><div class="empty"><span class="spin"></span> Loading…</div></div>
     </div>
     <div class="modal-f"><button class="btn" onclick="closePresets()">Close</button><button class="btn btn-primary" onclick="newPreset()"><i class="fa-solid fa-plus"></i> New preset</button></div>
@@ -213,25 +214,44 @@ tr.prow td:first-child{position:relative}
   </div>
 </div>
 
-<!-- Lesson visibility modal — the per-lesson show/hide set every trainee sees -->
+<!-- Publish modal — the lessons/tracks that are LIVE to trainees at all -->
 <div class="modal-ov" id="lessonvis-ov">
   <div class="modal">
     <div class="modal-h">
-      <span class="t"><i class="fa-solid fa-eye" style="color:var(--primary)"></i> Lesson visibility — what trainees see</span>
+      <span class="t"><i class="fa-solid fa-eye" style="color:var(--primary)"></i> Publish — what's live to trainees</span>
       <button class="close-x" onclick="closeLessonVis()"><i class="fa-solid fa-xmark"></i></button>
     </div>
     <div class="modal-b">
-      <p class="muted" style="font-size:12px;margin-bottom:10px">Check a lesson to make it <strong>visible to trainees</strong>; uncheck to hide it. New sign-ups see exactly this set. (Admins always see everything.) Use a subject's <em>Show/Hide all</em> to flip it in bulk.</p>
+      <p class="muted" style="font-size:12px;margin-bottom:10px">Check a lesson to <strong>publish</strong> it (make it available at all); uncheck to take it down. Use a subject/track <em>Show/Hide all</em> to publish in bulk. Nothing un-published is ever visible to a trainee. (Admins always see everything.)</p>
       <div style="display:flex;align-items:center;gap:10px;margin-bottom:10px">
-        <button class="btn" onclick="lvBulk(null,true)" style="font-size:12px"><i class="fa-solid fa-eye"></i> Show all</button>
-        <button class="btn" onclick="lvBulk(null,false)" style="font-size:12px"><i class="fa-solid fa-eye-slash"></i> Hide all</button>
+        <button class="btn" onclick="lvBulk(null,true)" style="font-size:12px"><i class="fa-solid fa-eye"></i> Publish all</button>
+        <button class="btn" onclick="lvBulk(null,false)" style="font-size:12px"><i class="fa-solid fa-eye-slash"></i> Unpublish all</button>
         <span class="muted" style="font-size:12px;margin-left:auto" id="lv-count">—</span>
       </div>
       <div class="tree" id="lessonvis-tree"><div class="empty"><span class="spin"></span> Loading…</div></div>
     </div>
     <div class="modal-f">
       <button class="btn" onclick="closeLessonVis()">Cancel</button>
-      <button class="btn btn-primary" id="lv-save" onclick="saveLessonVis()"><i class="fa-solid fa-check"></i> Save visibility</button>
+      <button class="btn btn-primary" id="lv-save" onclick="saveLessonVis()"><i class="fa-solid fa-check"></i> Save published set</button>
+    </div>
+  </div>
+</div>
+
+<!-- New-user default modal — exactly what a brand-new signup sees -->
+<div class="modal-ov" id="defaultvis-ov">
+  <div class="modal">
+    <div class="modal-h">
+      <span class="t"><i class="fa-solid fa-user-plus" style="color:var(--primary)"></i> New-user default — what a new signup sees</span>
+      <button class="close-x" onclick="closeDefaultVis()"><i class="fa-solid fa-xmark"></i></button>
+    </div>
+    <div class="modal-b">
+      <p class="muted" style="font-size:12px;margin-bottom:12px">Pick the <strong>subjects</strong> a brand-new signup can access. They'll see all <em>published</em> content in those subjects (newly-published topics appear automatically). The typical default is <strong>OSP</strong>.</p>
+      <div id="defaultvis-tree"><div class="empty"><span class="spin"></span> Loading…</div></div>
+      <span class="muted" style="font-size:12px;display:block;margin-top:8px" id="dv-count">—</span>
+    </div>
+    <div class="modal-f">
+      <button class="btn" onclick="closeDefaultVis()">Cancel</button>
+      <button class="btn btn-primary" id="dv-save" onclick="saveDefaultVis()"><i class="fa-solid fa-check"></i> Save new-user default</button>
     </div>
   </div>
 </div>
@@ -487,37 +507,35 @@ tr.prow td:first-child{position:relative}
     closePedit(); await loadPresets();
   };
 
-  // Per-user content access (rendered inside the detail drawer)
+  // Per-user GRANT / REVOKE (rendered inside the detail drawer). This person sees the
+  // new-user default ± these overrides (Show grants, Hide revokes — Hide always wins,
+  // even on content they've already opened). Track / subject / lesson granularity.
   window.renderAccessSection=async function(userId, role){
     var c=document.getElementById('acc-section'); if(!c) return;
     if(role==='admin'){ c.innerHTML='<div class="muted" style="font-size:12px">Admins always see all training content.</div>'; return; }
     try{
       await ensureTree();
-      if(!_presets.length){ try{ await loadPresets(); }catch(e){} }
       var acc=await (await fetch('/api/training/access/'+encodeURIComponent(userId),{credentials:'include'})).json();
       _accUser=userId; _ov=new Map((acc.overrides||[]).map(function(o){return [o.scope_type+':'+o.scope_id, o.mode];}));
-      var sel = (acc.base==='preset'&&acc.preset_id) ? 'preset:'+acc.preset_id : 'all';
-      var opts='<option value="all"'+(sel==='all'?' selected':'')+'>See all (default)</option>'
-        + _presets.map(function(p){ return '<option value="preset:'+esc(p.id)+'"'+(sel==='preset:'+p.id?' selected':'')+'>Preset: '+esc(p.name)+'</option>'; }).join('');
       c.innerHTML='<div class="access-box">'
-        +'<label>Content this person sees</label>'
-        +'<select id="acc-base">'+opts+'</select>'
-        +'<div class="muted" style="font-size:11px;margin-top:6px">'+(acc.visible_lesson_count!=null?(acc.visible_lesson_count+' of '+acc.total_lesson_count+' lessons visible'):'')+'</div>'
-        +'<details class="acc-adv"><summary>Advanced — hide / show specific tracks &amp; subjects</summary><div class="tree" id="acc-tree">'+treeHtml('tri',false)+'</div></details>'
-        +'<div style="display:flex;justify-content:flex-end;margin-top:10px"><button class="btn btn-primary" onclick="saveAccess()"><i class="fa-solid fa-check"></i> Save access</button></div>'
+        +'<div class="muted" style="font-size:11px">Starts from the <strong>new-user default</strong>. <span style="color:var(--success)">Show</span> grants extra; <span style="color:var(--danger)">Hide</span> revokes (wins even if already seen). Leave <em>Default</em> to inherit.</div>'
+        +'<div class="muted" style="font-size:11px;margin:6px 0 8px">'+(acc.visible_lesson_count!=null?('<strong>'+acc.visible_lesson_count+'</strong> of '+acc.total_lesson_count+' lessons currently visible to this person'):'')+'</div>'
+        +'<div class="tree" id="acc-tree">'+treeHtml('tri',true)+'</div>'
+        +'<div style="display:flex;justify-content:flex-end;margin-top:10px"><button class="btn btn-primary" id="acc-save" onclick="saveAccess()"><i class="fa-solid fa-check"></i> Save grant / revoke</button></div>'
         +'</div>';
       var at=document.getElementById('acc-tree'); if(at) at.onclick=treeClick;
     }catch(e){ c.innerHTML='<div class="muted" style="font-size:12px">Could not load content access.</div>'; }
   };
   window.saveAccess=async function(){
     if(!_accUser) return;
-    var sel=document.getElementById('acc-base').value, base, preset_id=null;
-    if(sel==='all'){ base='all'; } else { base='preset'; preset_id=sel.slice(7); }
+    var btn=document.getElementById('acc-save'); if(btn){ btn.disabled=true; var orig=btn.innerHTML; btn.innerHTML='<span class="spin"></span> Saving…'; }
     var overrides=[]; _ov.forEach(function(v,k){ var i=k.indexOf(':'); overrides.push({scope_type:k.slice(0,i),scope_id:k.slice(i+1),mode:v}); });
-    var r=await fetch('/api/training/access/'+encodeURIComponent(_accUser),{method:'PUT',credentials:'include',headers:{'Content-Type':'application/json'},body:JSON.stringify({base:base,preset_id:preset_id,overrides:overrides})});
-    if(!r.ok){ alert('Save failed'); return; }
-    load();
-    renderAccessSection(_accUser, 'trainee');
+    try{
+      var r=await fetch('/api/training/access/'+encodeURIComponent(_accUser),{method:'PUT',credentials:'include',headers:{'Content-Type':'application/json'},body:JSON.stringify({overrides:overrides})});
+      if(!r.ok) throw new Error('HTTP '+r.status);
+      load();
+      renderAccessSection(_accUser, 'trainee');
+    }catch(e){ alert('Save failed.'); if(btn){ btn.disabled=false; btn.innerHTML=orig; } }
   };
 
   // ─── Lesson visibility (the "Published" set every trainee sees) ──────────────
@@ -569,6 +587,63 @@ tr.prow td:first-child{position:relative}
       var r=await fetch('/api/training/published',{method:'PUT',credentials:'include',headers:{'Content-Type':'application/json'},body:JSON.stringify({lesson_ids:Array.from(_pubChecks)})});
       if(!r.ok) throw new Error('HTTP '+r.status);
       closeLessonVis();
+    }catch(e){ alert('Save failed.'); }
+    finally{ btn.disabled=false; btn.innerHTML=orig; }
+  };
+
+  // ─── New-user default (which SUBJECTS a brand-new signup can access) ─────────
+  // Carter's model: pick SUBJECTS (= the OSP / ISP / Certs tracks). Stored as track
+  // scopes so newly-published topics in those subjects flow in automatically; the
+  // resolver intersects with published. (Finer per-lesson defaulting isn't exposed
+  // here — that's the per-person override surface.)
+  var _defTracks = new Set();   // track ids selected as the new-user default
+  function dvTrackPublishedCount(trackId){
+    var n=0; _tree.forEach(function(tr){ if(tr.id!==trackId) return; (tr.subjects||[]).forEach(function(s){(s.lessons||[]).forEach(function(l){ if(_defPub.has(l.id)) n++; });}); }); return n;
+  }
+  function dvTrackLessonCount(trackId){
+    var n=0; _tree.forEach(function(tr){ if(tr.id!==trackId) return; (tr.subjects||[]).forEach(function(s){ n+=(s.lessons||[]).length; });}); return n;
+  }
+  var _defPub = new Set();      // currently-published lesson ids (for the count hint)
+  function dvCount(){ var el=document.getElementById('dv-count'); if(el) el.textContent=_defTracks.size+' subject'+(_defTracks.size===1?'':'s')+' selected'; }
+  function dvTree(){
+    return _tree.map(function(tr){
+      var pub=dvTrackPublishedCount(tr.id), tot=dvTrackLessonCount(tr.id);
+      return '<label class="trow" style="cursor:pointer;padding:10px 8px;border:1px solid var(--gray-border);border-radius:8px;margin-bottom:8px;display:flex;align-items:center;gap:10px">'
+        +'<input type="checkbox" data-dv="track" data-id="'+esc(tr.id)+'"'+(_defTracks.has(tr.id)?' checked':'')+'>'
+        +'<span class="tlabel"><strong>'+esc(tr.title)+'</strong> <span class="muted" style="font-size:11px">('+(tr.subjects||[]).length+' topics)</span></span>'
+        +'<span class="tcount" style="color:var(--text-muted)">'+pub+' of '+tot+' lessons published</span></label>';
+    }).join('');
+  }
+  function dvTreeClick(e){
+    var cb=e.target.closest('input[data-dv="track"]'); if(!cb) return;
+    var id=cb.getAttribute('data-id'); if(cb.checked)_defTracks.add(id); else _defTracks.delete(id); dvCount();
+  }
+  window.openDefaultVis=async function(){
+    try{
+      await ensureTree();
+      var d=await (await fetch('/api/training/default',{credentials:'include'})).json();
+      _defPub=new Set(d.published_lessons||[]);
+      // Seed selected tracks from the saved scopes (track scopes; also accept a subject/
+      // lesson scope by mapping it up to its track so the picker reflects access).
+      _defTracks=new Set();
+      (d.default_scopes||[]).forEach(function(s){
+        if(s.scope_type==='track') _defTracks.add(s.scope_id);
+        else if(s.scope_type==='subject') { var t=_subjTrack[s.scope_id]; if(t)_defTracks.add(t); }
+        else if(s.scope_type==='lesson'){ var sid=s.scope_id.split('.')[0]; var t=_subjTrack[sid]; if(t)_defTracks.add(t); }
+      });
+      var tEl=document.getElementById('defaultvis-tree'); tEl.innerHTML=dvTree(); tEl.onclick=dvTreeClick;
+      dvCount();
+      document.getElementById('defaultvis-ov').classList.add('open');
+    }catch(e){ alert('Failed to load the new-user default.'); }
+  };
+  window.closeDefaultVis=function(){ document.getElementById('defaultvis-ov').classList.remove('open'); };
+  window.saveDefaultVis=async function(){
+    var btn=document.getElementById('dv-save'); btn.disabled=true; var orig=btn.innerHTML; btn.innerHTML='<span class="spin"></span> Saving…';
+    try{
+      var scopes=Array.from(_defTracks).map(function(t){ return {scope_type:'track', scope_id:t}; });
+      var r=await fetch('/api/training/default',{method:'PUT',credentials:'include',headers:{'Content-Type':'application/json'},body:JSON.stringify({scopes:scopes})});
+      if(!r.ok) throw new Error('HTTP '+r.status);
+      closeDefaultVis();
     }catch(e){ alert('Save failed.'); }
     finally{ btn.disabled=false; btn.innerHTML=orig; }
   };
