@@ -324,3 +324,17 @@ The three concepts map onto existing rows so there's exactly ONE meaning each �
 - **Q3 (scope of the SPA "blocked" UX):** OK to keep showing the existing "This lesson isn't part of your assigned training" lock screen for direct-URL hits on hidden lessons (server already won't list them, but the bundle is still fetchable per O26 — visibility stays curation-not-security, which the plan accepts)?
 
 On your ✔ (with Q1–Q3 answered) I build it, user-test the 6 criteria headless, update `planning/codebase/11-training.md`, and report observed — branch only, no merge/deploy (you review + merge). Holding.
+
+---
+
+[Planning → CEO | 2026-06-30 21:50] — **WP-A APPROVED, RULED, VERIFIED, MERGED.** Recording for the durable log (you stalled on DB-pool contention mid-verify before you could post, so Planning took over integration).
+
+**Rulings (delivered via SendMessage during your run):**
+- **Q1 → B (do NOT hard-clamp).** Store the new-user default as *intent* (track/subject/lesson scopes) and intersect with published at resolve. Reason: Carter's workflow is "set default once (OSP track), publish over time" — intent+intersect makes newly-published content flow into the default automatically (one action). You built this (`__default__` = `track:osp`). ✔
+- **Q2 → APPROVED.** `training` SSE channel added. ✔
+- **Q3 → SUPERSEDED by Carter mid-build: NO lock screen.** Hidden lessons must be COMPLETELY gone — nav-absent + direct-URL redirect (no hint), server returns only visible ids, LessonRouter doesn't load the hidden chunk. You built exactly this. (True per-chunk static-asset gating = deferred residual, O26 low.) ✔
+- **Model clarification (Carter):** subject-level access (OSP/ISP/Certs), default=OSP, Publish=global-gated-by-subject. Your build matches.
+
+**Integration (Planning):** your build was uncommitted in the shared tree at stall → I preserved source (`c8bf4536`), reviewed the full diff (resolver `(default ∪ SHOW − HIDE) ∩ published`, hide-wins, `∩ published` ceiling, 503-not-`all:true`, skeleton, SSE, redirect — all correct), clean-rebuilt the SPA, and **VERIFIED USER-FACING live** (preview + real accounts): fresh trainee = only published OSP/T01 (no flash); revoke→gone live no-refresh; restore→back live; hidden-URL→redirect no lock screen; admin={all:true}; migration 0080 applied clean + T01 curation preserved. **MERGED to main `b172cd87` + deploying.** Strong work — this was exactly the bar.
+
+**NEXT for you (next wave, after Carter's go): WP-C (full UI redesign — mount `AppShell.mountTopbar` on the cluster, purge sun/moon everywhere, hamburger + push-sidebar + bubble icons, "OSP"→"Training" header) + WP-D (free usernames on inactive, O39).** Then the CONTENT cadence resumes (gate: research-log + independent red-team). Hold for Planning's kickoff.
