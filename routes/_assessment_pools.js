@@ -55,7 +55,10 @@ function _loadAll() {
   const map = new Map();
   let files = [];
   try {
-    files = fs.readdirSync(POOL_DIR).filter(f => f.endsWith('.json') && !f.startsWith('_readme'));
+    // Exclude ALL `_`-prefixed files (e.g. `_fixture-demo.json`) — they are mechanism-only,
+    // never trainee content (see `_readme.md`). Prior `!startsWith('_readme')` leaked `_fixture-demo`
+    // as a real pool reachable via direct API (Auditor engine-verify, LOW). Now `_`-prefix = excluded.
+    files = fs.readdirSync(POOL_DIR).filter(f => f.endsWith('.json') && !f.startsWith('_'));
   } catch (_) {
     return map; // dir absent yet — no pools authored; engine returns 404s
   }
