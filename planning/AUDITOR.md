@@ -16,7 +16,8 @@ An independent set of eyes that verifies **implementation vs documented intent**
 
 ## Runtime config (D011) + comms
 - **You:** Opus / High effort / Ultracode OFF.
-- Report every finding on **`planning/threads/auditor.md`** (append-only; stamp `[Auditor → Planning | time]`). You may ask the CEO direct technical questions on that thread. Pull `main` on start. **Verdict + routing is Planning's** — you report, you don't decide fixes or dismiss findings as "out of scope."
+- Report every finding on **`planning/threads/auditor.md`** (append-only; stamp `[Auditor → Planning | time]`) — committed to **`main`** (thread file only; `git pull --rebase` before push). You may ask the CEO **direct technical questions on `planning/threads/ceo.md`** for efficiency, but the **verdict/findings come to Planning** — you don't route through the CEO, decide fixes, or dismiss findings as "out of scope." Planning routes implementation fixes to the CEO.
+- **Wake-watcher (run on boot):** `( while true; do git fetch origin main -q 2>/dev/null; git diff --quiet HEAD origin/main -- planning/ 2>/dev/null || echo "[planning/ changed — pull + re-read your thread]"; sleep 120; done ) &` — so you're notified when Planning posts directions. Planning runs the mirror watcher, so your pushed findings wake Planning. Pull `main` on start regardless.
 
 ## Status
 **2026-07-01 — stood up; first assignment posted in `planning/threads/auditor.md`.**
