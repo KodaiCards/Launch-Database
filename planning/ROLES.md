@@ -47,21 +47,23 @@ Carter proposes → Planning analyzes / challenges / reshapes / documents → CE
 
 ## Communication & protection (the wire)
 - **Substrate = git** (separate instances on separate machines; git is the shared wire + the audit trail).
-- `planning/` = Planning-owned, **read-only** to agents. `planning/threads/<agent>.md` = **append-only talk channel, read-write both sides** (stamp entries `[FROM→TO | time]`). Conversation lives in threads so talking can never clobber the plan.
-- **Sync on activity (no perpetual daemon — honest model):** a session only runs when it's run; there is **no always-on background watcher** (a polling daemon burns usage while idle and dies when the session closes — against cost rules). So **every instance pulls `main` the moment it starts a work session** and reads its thread — enough for turn-based coordination, costs nothing idle. **Planning signals Carter "‹agent› has mail"** when something's waiting, so Carter knows which session to run. Git is the wire; Carter is the trigger; no copy-pasting, no manual "pull main." (A perpetual auto-wake watcher is possible but costly/fragile — only for future autonomous-while-away work.)
+- `planning/` = Planning-owned, **read-only** to agents. `planning/threads/<agent>.md` = **append-only talk channel** (stamp entries `[FROM→TO | time]`). Conversation lives in threads so talking can never clobber the plan.
+- **Live watcher cascade (D017/D019 — supersedes the old sync-on-activity model):** every instance pulls `main` on boot AND runs a background git-fetch watcher at **600s cadence**. **Workers (CEO/Auditor/builders) are harness-scoped to their OWN branch and CANNOT push `main`** — they post thread entries + work to their branch; **Planning's branch-aware watcher** (fires on ANY non-main branch change) catches it, adjudicates, and **curates their entries into `main`** (the durable record). Planning posts rulings/directives to `main`, which the workers' `origin/main:planning` watchers see. Loop closed both ways; no manual relaying. **Detail lives in files, threads stay short (D018)** — workers commit detailed work/reports to files + post a short thread summary + pointer.
 - **Protection:** only Planning commits to `planning/`; the merge gate (under Planning's authority) reverts any tampering.
+- **Merge exit criterion (D019, hard):** a merge to `main` is NOT done until `INVENTORY.md` + the touched `codebase/NN` chunk + `open_items.md` are updated in the same commit.
+- **Worker lifecycle (D019):** commit incrementally; post a thread entry before long verifies; fresh session per mission. A stalled worker is NOT recovered by Planning re-doing its verification — restart a fresh worker on the branch (branch + thread carry the state).
 
 ## Disagreements
 Any agent wanting a scope/architecture change posts a proposal on its thread → Planning rules. Conflicts with Carter's intent, or large changes, → Planning escalates to Carter with both sides fairly. **All rulings logged in `decisions.md` (append-only — never overwrite history).**
 
-## Agent runtime config (LOCKED 2026-06-28)
-Configure every fresh instance to these. Reasoning + all lenses: `decisions.md` D011.
+## Agent runtime config (D020, 2026-07-01 — supersedes the D011 table; lenses unchanged)
+Configure every fresh instance to these. Reasoning: `decisions.md` D011 (lenses) + D020 (Claude-5 refresh). Boot text per role: `planning/BOOT_PROMPTS.md`.
 
 | Role | Model | Effort | Ultracode |
 |---|---|---|---|
-| Planning | Opus | Max | Off |
+| Planning | Opus (Fable only for phase-boundary system reviews) | Max | Off |
 | CEO | Opus | High | **Off** + hard ≤2–3 agent cap (verify before next wave) |
-| Auditor | Opus | High | Off (safe to enable later if desired) |
-| Builders | Sonnet (Haiku for mechanical) | Low–Med | Off |
+| Auditor | **Sonnet 5** (trial — first audit graded vs the Opus baseline) | High | Off |
+| Builders | **Sonnet 5** (Haiku 4.5 for mechanical) | Low–Med | Off |
 
 Ultracode is a behavioral bias, not a price tier; *effort* sets the thinking-token budget; the real cost/burn driver is **spawned agents** — hence the CEO cap.

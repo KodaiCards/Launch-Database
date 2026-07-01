@@ -43,6 +43,7 @@ Visual polish pass (typography, spacing, consistency, light/dark) + place the **
 **Reordering is allowed:** move subjects/lessons into logical/chronological teaching order. **Constraint:** `course-catalog.js` is parsed by the content-visibility system — reorder/retitle is fine, but keep it parseable (CEO owns that integration; don't break section grouping general→OSP / isp→ISP / cert→Cert).
 
 **⛔ THE GATE (non-negotiable — government content):** every content piece ships **only** with a **research-log (citations)** + an **INDEPENDENT red-team report** (author ≠ red-teamer). No artifacts = not merged. **Never author from memory** (the R18 quarantine is why). Hide WIP; flip visible only when verified + polished.
+- **Citation pre-check (TRIAL on T18, D019):** before the human red-team pass, run a cheap automated pass that fetches each cited source and verifies the claimed fact actually appears there — filters lazy/broken citations so the independent RT spends its effort on substance. Keep if it raises gate throughput; drop if it doesn't pay.
 
 ---
 

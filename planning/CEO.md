@@ -12,8 +12,10 @@ Architecture, technical strategy, implementation planning, tradeoffs, builder ma
 
 ## Comms (the wire) — set up on boot
 - Substrate = **git.** `planning/` is Planning-owned, **read-only to you** (except threads). Talk to Planning only in **`planning/threads/ceo.md`, which lives on `main`** — commit your thread entries to main (you have merge rights) and **pull main on activity**; Planning does the same. Builders post threads on their own branches; you surface/merge them. Append-only; stamp `[FROM→TO | time]`.
-- **Watcher:** while you're the only active instance, **fetch-on-demand** (pull `main` when you start a work session) is the cost-right choice — don't run a perpetual loop watching a wire nobody's on. Wire the background watcher (sample below) + the builder/auditor cascade only when real parallel instances are live:
-  `( while true; do git fetch origin main -q 2>/dev/null; git diff --quiet HEAD origin/main -- planning/ 2>/dev/null || echo "[planning/ changed — pull + re-read your thread]"; sleep 120; done ) &`
+- **Watcher (ACTIVE — 3 live instances, D017/D019):** run on boot, **600s cadence**:
+  `( while true; do git fetch origin main -q 2>/dev/null; git diff --quiet HEAD origin/main -- planning/ 2>/dev/null || echo "[planning/ changed — pull + re-read your thread]"; sleep 600; done ) &`
+  **You are branch-scoped — you CANNOT push `main` (D017 addendum):** post thread entries + work to YOUR branch; Planning's watcher catches it and curates to `main`. Pull `main` to stay current on planning docs.
+- **Lifecycle (D019, hard):** COMMIT INCREMENTALLY — never leave a wave uncommitted; post a thread entry BEFORE starting any long verify (so intent is on the wire if the session dies); prefer a FRESH session per mission over one long compacting session. If you stall/die, the next CEO session resumes from your branch + thread — Planning does NOT re-do your verification.
 - **Cascade:** wire the same watcher into **every builder and the auditor** you spin up — that's your job, not Planning's.
 - You do all code merges; **revert any unauthorized edit to `planning/`.**
 
