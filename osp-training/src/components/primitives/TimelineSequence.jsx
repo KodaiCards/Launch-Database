@@ -26,12 +26,21 @@ import React, { useRef, useState } from 'react';
 export default function TimelineSequence({
   title,
   prompt,
-  events,
-  correctOrder,
+  events = [],
+  correctOrder = [],
   explanation,
   citation,
   fieldNote,
 }) {
+  // Defensive: a lesson that omits events/correctOrder must degrade, never white-screen
+  // the whole page (an unguarded correctOrder.indexOf was the T01-L06 crash, 2026-07-02).
+  if (!Array.isArray(events) || events.length === 0 || !Array.isArray(correctOrder) || correctOrder.length === 0) {
+    return (
+      <section className="my-4 rounded-lg border border-amber-500/40 bg-amber-500/10 p-3 text-sm text-amber-200">
+        {title ? <strong>{title}: </strong> : null}timeline activity unavailable (missing events or correctOrder).
+      </section>
+    );
+  }
   // Scramble initial order (same deterministic approach as Sortable)
   const initial = [...events].sort((a, b) => {
     const ai = correctOrder.indexOf(a.id);
