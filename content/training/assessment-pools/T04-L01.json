@@ -1,0 +1,116 @@
+{
+  "assessmentId": "T04-L01",
+  "kind": "lesson",
+  "courseId": "T04",
+  "lessonId": "T04.L01",
+  "drawCount": 4,
+  "passThreshold": 70,
+  "pool": [
+    {
+      "id": "T04-L01-Q1",
+      "type": "mc",
+      "prompt": "During a site walk, you spot a manhole cover in an active traffic lane that needs to be opened for a visual inspection. What is the correct procedure?",
+      "choices": [
+        "Open it quickly between traffic gaps and take a photo; replace the cover before traffic returns",
+        "Schedule a flagging team and proper temporary traffic control (TTC) before opening; check if a confined-space entry permit is required",
+        "Mark it on the map and tell the construction crew to deal with it",
+        "Pry it open with your survey stake to see if there's existing conduit"
+      ],
+      "answerIndex": 1,
+      "explanation": "Opening a manhole in an active traffic lane without TTC violates MUTCD Part 6. Any confined-space entry (even a visual inspection from above) may require atmospheric testing under 29 CFR 1910.146 if the space has potential for hazardous atmosphere.",
+      "citation": "29 CFR 1910.146(b); MUTCD 11th Edition (2023) Part 6."
+    },
+    {
+      "id": "T04-L01-Q2",
+      "type": "mc",
+      "prompt": "What is the primary purpose of a photo log during a site walk?",
+      "choices": [
+        "To generate content for the project team",
+        "To create a GPS-stamped, systematically organized photographic record that lets the design engineer review field conditions without returning to the site",
+        "To document worker safety compliance for OSHA audits",
+        "To satisfy the camera-equipment line item in the project budget"
+      ],
+      "answerIndex": 1,
+      "explanation": "The photo log is a field-to-office communication tool. The design engineer uses it to understand existing conditions — pole arrangement, terrain, hazards, utilities — without making a separate field trip. GPS tagging anchors each photo to a map coordinate."
+    },
+    {
+      "id": "T04-L01-Q3",
+      "type": "mc",
+      "prompt": "What is the trained skill of spotting physical, electrical, chemical, and environmental dangers along a proposed route before work begins called?",
+      "choices": [
+        "Route optimization",
+        "Hazard identification",
+        "Constructability analysis",
+        "Gap analysis"
+      ],
+      "answerIndex": 1,
+      "explanation": "Hazard identification during the site walk protects both the survey crew and future construction crews. Hazards documented in field notes inform the design engineer, the construction foreman, and the safety pre-job briefing for the crew that eventually builds the route."
+    },
+    {
+      "id": "T04-L01-Q4",
+      "type": "mc",
+      "prompt": "You see a pole leaning noticeably off-plumb during your site walk. What is the correct site-walk action?",
+      "choices": [
+        "Climb the pole to assess the top attachment condition",
+        "Flag it in your notes as 'leaning — structural evaluation needed before make-ready or climbing' and photograph it; do not climb or work near it",
+        "Push on the pole base to estimate how loose it is, then photograph it",
+        "Note it as low priority and continue without documentation since you're not doing make-ready today"
+      ],
+      "answerIndex": 1,
+      "explanation": "A visibly leaning pole may be compromised at the base (rot, vehicle strike, soil erosion). Climbing or working near a structurally suspect pole without a formal evaluation is a fall hazard. Document and flag — the pole owner's structural evaluation happens before any make-ready or climbing work.",
+      "citation": "29 CFR 1910.268(g)(1) — fall protection at poles; RUS Bulletin 1751F-630."
+    },
+    {
+      "id": "T04-L01-Q5",
+      "type": "mc",
+      "prompt": "You observe a power conductor sagging noticeably close to the road surface during a route walk. What is the correct immediate action?",
+      "choices": [
+        "Use your measuring tape to confirm the clearance height for the design engineer",
+        "Flag the GPS location, photograph from a safe distance, note 'low-clearance conductor — verify with utility before construction,' and do not approach with any conductive object",
+        "Skip this pole and come back later — it may not be on the final route anyway",
+        "Report it to OSHA immediately as an emergency shutdown condition"
+      ],
+      "answerIndex": 1,
+      "explanation": "A low-clearance power conductor is a lethal strike hazard. Never approach with a conductive object or measuring tape. Flag the GPS, photograph from a safe distance, and route the note to the power company for verification and remediation before construction."
+    },
+    {
+      "id": "T04-L01-Q6",
+      "type": "mc",
+      "prompt": "A road shoulder along the proposed buried-conduit route shows active erosion: deep ruts, exposed gravel base, and undercut pavement edge. What should the route walk note include?",
+      "choices": [
+        "No special note needed — buried conduit handles most soil conditions",
+        "Flag the segment for a geotechnical note in the handoff package — unexpected subsurface voids or unstable ground could affect bore/trench design; photograph from a safe distance",
+        "Immediately switch the route to aerial to avoid the unstable ground",
+        "Wait to see if the erosion gets worse before deciding whether to note it"
+      ],
+      "answerIndex": 1,
+      "explanation": "Active shoulder erosion signals potential subsurface voids or unstable ground that could affect boring or trenching operations. Photograph and flag the segment so the design engineer can specify appropriate installation methods."
+    },
+    {
+      "id": "T04-L01-Q7",
+      "type": "mc",
+      "prompt": "Why does a surveyor NEVER make the final call on whether a flagged hazard eliminates a route or attachment option, even when the hazard seems obvious?",
+      "choices": [
+        "Surveyors are not authorized to write field notes at all",
+        "The surveyor's role is to document and flag conditions for the design engineer's formal analysis — jurisdictional, structural, and engineering determinations require the appropriate authority (design engineer, pole owner, regulatory body), not a field judgment call",
+        "Only the project manager can write field notes",
+        "Route elimination decisions are made exclusively by the client, never by engineering staff"
+      ],
+      "answerIndex": 1,
+      "explanation": "The consistent pattern across site-walk hazard scenarios is: document, photograph, flag GPS coordinates — then route the determination to the appropriate authority. A surveyor eliminating a route or making a structural call in the field, without the formal analysis, risks an incorrect or unauthorized decision."
+    },
+    {
+      "id": "T04-L01-Q8",
+      "type": "mc",
+      "prompt": "A crew member skips documenting a low-hanging jumper wire of unclear ownership because they can't safely measure it and don't want to note an incomplete observation. What is the likely downstream consequence?",
+      "choices": [
+        "No consequence — the design engineer will independently discover the same condition",
+        "The design engineer, lacking any note, assumes no clearance issue exists; the problem surfaces during construction as a make-ready delay and cost overrun that traces directly back to the missing field documentation",
+        "The missing documentation only affects the as-built record, not construction",
+        "RUS automatically flags missing jumper observations during loan review"
+      ],
+      "answerIndex": 1,
+      "explanation": "Skipping a field observation — even one that can't be fully measured — denies the design engineer information they need. An incomplete-but-flagged note (photo + GPS + 'requires verification') is far more valuable than silence, which the engineer will read as 'no issue found.'"
+    }
+  ]
+}

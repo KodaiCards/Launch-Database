@@ -1,0 +1,313 @@
+{
+  "assessmentId": "T04-final",
+  "kind": "topic_final",
+  "courseId": "T04",
+  "lessonId": null,
+  "drawCount": 15,
+  "passThreshold": 80,
+  "pool": [
+    {
+      "id": "T04-final-Q1",
+      "type": "mc",
+      "prompt": "During a route walk, you spot a low-hanging jumper wire of unclear ownership that appears close to the road surface. What is the single consistent pattern across all site-walk hazard scenarios for how a surveyor should respond?",
+      "choices": [
+        "Use a measuring tape to get an exact clearance number for the engineer",
+        "Photograph from a safe distance, flag the GPS coordinate, document the observation, and route the determination to the appropriate authority (utility company, design engineer, or pole owner) — never approach, measure, or make the final call in the field",
+        "Skip the observation and address it later if it becomes relevant",
+        "Make an immediate engineering determination in the field since you're already there"
+      ],
+      "answerIndex": 1,
+      "explanation": "The consistent site-walk pattern is: document, photograph safely, flag GPS coordinates, and route to the appropriate authority — never approach a potential hazard with a conductive instrument, and never make the final engineering/jurisdictional call in the field.",
+      "citation": "29 CFR 1910.268(b) (approach-distance prohibition near energized conductors)."
+    },
+    {
+      "id": "T04-final-Q2",
+      "type": "mc",
+      "prompt": "A LiDAR pulse produces three returns at different elevations over a route corridor. What does this multi-return signature indicate, and why does it matter for OSP route planning?",
+      "choices": [
+        "It indicates sensor malfunction and the data should be discarded",
+        "It indicates vegetation (canopy top, mid-canopy, ground) rather than a solid structure — useful for both bare-earth elevation (trenching/boring design) and canopy-height data (vegetation-clearing/aerial-clearance planning) in a single survey pass",
+        "It always indicates multiple power lines at different heights",
+        "Multi-return signatures only matter for underground route planning, never aerial"
+      ],
+      "answerIndex": 1,
+      "explanation": "Multiple returns from a single pulse indicate the laser partially penetrated canopy gaps — a vegetation signature. This single LiDAR pass provides both ground elevation and canopy height data useful for different aspects of OSP route design."
+    },
+    {
+      "id": "T04-final-Q3",
+      "type": "mc",
+      "prompt": "A drone survey corridor passes within Class D airspace near a regional airport. What must happen before the drone launches, and does staying below 100 ft AGL exempt the flight from this requirement?",
+      "choices": [
+        "No authorization is needed below 100 ft AGL",
+        "Prior authorization via LAANC or FAA DroneZone is required per 14 CFR 107.41 — this requirement is based on LATERAL airspace boundaries, not altitude alone, so flying low inside the Class D surface area still requires authorization",
+        "Authorization is only needed above 400 ft AGL",
+        "A verbal radio call to the tower satisfies the requirement"
+      ],
+      "answerIndex": 1,
+      "explanation": "14 CFR 107.41 requires prior ATC authorization for UAS operations in Class B/C/D/E-surface airspace, triggered by being within the airspace's lateral (and vertical) boundaries — altitude alone does not exempt a flight from this requirement.",
+      "citation": "14 CFR 107.41."
+    },
+    {
+      "id": "T04-final-Q4",
+      "type": "mc",
+      "prompt": "GPS pole points land approximately 200 ft off from their true position on the aerial imagery basemap. What is the most likely cause, and what corrects it?",
+      "choices": [
+        "Bad weather during imagery capture; nothing can be corrected",
+        "A datum mismatch (e.g., GPS recorded in NAD27, basemap in NAD83) — the fix is to determine which datum the GPS unit used and reproject the data to match the basemap",
+        "GPS antenna placement on the survey vehicle; re-drive the route",
+        "An error in the pole numbering sequence in the field notebook"
+      ],
+      "answerIndex": 1,
+      "explanation": "A 100-300 ft systematic offset is the classic signature of a datum mismatch. Since NAD27 and NAD83 define the Earth's reference model differently, a consistent spatial offset results — corrected by identifying the source datum and reprojecting to match the target basemap."
+    },
+    {
+      "id": "T04-final-Q5",
+      "type": "mc",
+      "prompt": "A shapefile's .prj file is missing from a delivered zip archive. What is lost, and why does this matter more than losing the .shx file would?",
+      "choices": [
+        "Nothing is lost; .prj is purely optional metadata with no functional role",
+        "The coordinate reference system definition is lost — without it, the shapefile may import with no known datum/projection and could be placed in the wrong location entirely, a more severe practical problem than losing the .shx spatial index (which only affects display speed)",
+        "The attribute table (pole numbers, heights) is lost",
+        "The geometry itself becomes permanently unreadable"
+      ],
+      "answerIndex": 1,
+      "explanation": "The .prj file tells GIS software how to correctly place the shapefile's coordinates in real-world space. Without it, the shapefile can import at the wrong location entirely — a more consequential failure than a missing .shx (which slows, but doesn't misplace, the data).",
+      "citation": "Esri Shapefile Technical Description."
+    },
+    {
+      "id": "T04-final-Q6",
+      "type": "mc",
+      "prompt": "For a Mississippi project centered at longitude -88.5 degrees, using UTM Zone = floor((longitude + 180) / 6) + 1, what is the correct UTM zone?",
+      "choices": [
+        "Zone 14",
+        "Zone 15",
+        "Zone 16",
+        "Zone 17"
+      ],
+      "answerIndex": 2,
+      "explanation": "floor((-88.5+180)/6)+1 = floor(91.5/6)+1 = floor(15.25)+1 = 15+1 = 16. Zone 16 covers longitude -84 to -90 degrees, matching central/southern Mississippi."
+    },
+    {
+      "id": "T04-final-Q7",
+      "type": "mc",
+      "prompt": "During a pole audit, a design stencil reads '40 ft' but the field measurement is 45 ft. What is the correct field action, and why does it matter beyond just picking the 'right' number?",
+      "choices": [
+        "Discard the stencil and use only the 45 ft field measurement",
+        "Record BOTH values, note the discrepancy, and flag for design engineer review — the 5 ft gap itself is meaningful information (possibly indicating the pole was reset at a different depth) that the engineer needs, not just a single resolved number",
+        "Discard the field measurement and use only the stencil",
+        "Average the two values and report 42.5 ft as the resolved height"
+      ],
+      "answerIndex": 1,
+      "explanation": "The discrepancy is itself diagnostic information — it can indicate a pole reset at a different burial depth than original installation, which is relevant to structural assessment. Recording both values (rather than resolving to one) preserves that signal for the design engineer.",
+      "citation": "RUS Bulletin 1751F-630."
+    },
+    {
+      "id": "T04-final-Q8",
+      "type": "mc",
+      "prompt": "A field crew sees an obviously insufficient pole clearance and decides to skip formal audit documentation since 'everyone knows this pole needs work.' What consistently goes wrong when field crews skip documentation because an outcome seems obvious?",
+      "choices": [
+        "Nothing goes wrong; obvious findings never need formal documentation",
+        "The design engineer, OTMR contractor, and any future dispute resolution all depend on the documented audit record — even an outcome that seems obvious in the field has no traceable basis for downstream decisions without the formal record",
+        "Skipping documentation only matters for RUS-funded projects",
+        "The construction crew always independently re-verifies every pole regardless of prior documentation"
+      ],
+      "answerIndex": 1,
+      "explanation": "The pole audit record is the traceable basis for the design engineer's formal analysis, the OTMR contractor's scope, and any dispute resolution — 'obvious in the field' does not substitute for a documented record that downstream parties can rely on."
+    },
+    {
+      "id": "T04-final-Q9",
+      "type": "mc",
+      "prompt": "Wetland-delineation flagging is observed along part of a proposed underground route. What is the correct field-survey action, and who makes the actual jurisdictional determination?",
+      "choices": [
+        "The surveyor eliminates the route in the field without further documentation",
+        "The surveyor documents and flags the observation (GPS coordinates, 'possible jurisdictional wetland — USACE Section 404 review may be required') for the project team; the jurisdictional determination itself is made by the appropriate regulatory review, not the field surveyor",
+        "The surveyor removes the wetland flagging stakes to simplify the design",
+        "The surveyor marks the route 'not constructable' without documentation"
+      ],
+      "answerIndex": 1,
+      "explanation": "Consistent with the general site-walk pattern, the surveyor documents and flags — the actual jurisdictional wetland determination is made through the appropriate regulatory process (USACE Section 404 review), not by the field surveyor in the moment.",
+      "citation": "33 CFR Part 320-332 — USACE Section 404 wetland permit framework."
+    },
+    {
+      "id": "T04-final-Q10",
+      "type": "mc",
+      "prompt": "A proposed route crosses a federally designated navigable waterway. What permit mechanism, if the crossing qualifies, bundles multiple federal authorizations into a single permit — and why does this matter for project schedule risk?",
+      "choices": [
+        "USACE Nationwide Permit 57, which bundles Section 10 (Rivers and Harbors Act) and Section 404 (Clean Water Act) authorization for qualifying telecom crossings — avoiding it (if the crossing doesn't qualify) can mean an individual permit process taking 90 days to 18 months instead",
+        "A single FCC pole-attachment permit covers all waterway crossings automatically",
+        "State DOT encroachment permits automatically cover federal waterway jurisdiction",
+        "No permit mechanism exists for telecom waterway crossings; all are prohibited"
+      ],
+      "answerIndex": 0,
+      "explanation": "NWP 57 bundles Section 10 and Section 404 authorization into a single streamlined permit for qualifying crossings — a major schedule advantage over the individual-permit path (90 days to 18 months), which is why identifying whether a crossing qualifies for NWP 57 is a key early risk assessment.",
+      "citation": "USACE NWP 57; 33 CFR Part 330.1(b)."
+    },
+    {
+      "id": "T04-final-Q11",
+      "type": "mc",
+      "prompt": "A state DOT permit agency requires a route plan submittal, and a field tablet needs the same route data for crew reference. Why are PDF/A and KMZ both correct choices for their respective purposes, rather than one format serving both needs?",
+      "choices": [
+        "They aren't both correct; only one universal format should ever be used",
+        "PDF/A is self-contained and guarantees identical long-term rendering for archival permit submissions; KMZ opens on any smartphone via Google Earth with no GIS software needed for field reference — each format is optimized for a different audience and use case",
+        "PDF/A and KMZ are functionally identical formats with different file extensions",
+        "KMZ is required for all permit submissions; PDF/A is only for field crews"
+      ],
+      "answerIndex": 1,
+      "explanation": "Permit agencies need long-term, self-contained archival documents (PDF/A); field crews need lightweight, app-friendly mobile access (KMZ). Neither format serves the other's use case well, which is why OSP deliverable packages typically include multiple formats.",
+      "citation": "ISO/IEC 19005-1 (PDF/A-1)."
+    },
+    {
+      "id": "T04-final-Q12",
+      "type": "mc",
+      "prompt": "Under 47 CFR Part 32, where do pre-construction route-survey costs (labor, drone rental, GIS subcontractor) accumulate, and what happens to them once the plant is placed in service?",
+      "choices": [
+        "They accumulate in Cable and Wire Facilities (account 2410) permanently and never move",
+        "They accumulate in Telecommunications Plant Under Construction (account 2003), a temporary staging account, and transfer to the appropriate permanent plant accounts once the plant is placed in service",
+        "They are never tracked in any USOA account since survey work isn't considered 'plant'",
+        "They accumulate in the Poles account (2411) regardless of the type of survey work performed"
+      ],
+      "answerIndex": 1,
+      "explanation": "Account 2003 (Telecommunications Plant Under Construction) is the correct temporary account; costs transfer to permanent accounts matching actual installed infrastructure once the plant enters service.",
+      "citation": "47 CFR 32.2003 — corrects a citation error in the source lesson material (which cited 32.2230, actually \"transmission\"/radio-circuit equipment); see T04.md."
+    },
+    {
+      "id": "T04-final-Q13",
+      "type": "mc",
+      "prompt": "An RUS auditor challenges a project's cost allocation because a field supervisor's timesheets only recorded 'Survey work, 5 days, Project XYZ' with no per-route detail. What single documentation practice change would have prevented this finding?",
+      "choices": [
+        "Nothing could have prevented it",
+        "Recording per-day, per-route (or per-phase) detail on timesheets from the start, rather than a single lump-sum entry — the accounting team cannot reconstruct cost allocation between routes without that original source-level detail",
+        "Switching to digital timesheets regardless of detail level recorded",
+        "Having a supervisor co-sign the timesheet weekly instead of daily"
+      ],
+      "answerIndex": 1,
+      "explanation": "The audit exposure comes from insufficient granularity in the original source document, not from format or approval workflow — per-route/per-phase detail at the time of the work is what supports defensible cost allocation."
+    },
+    {
+      "id": "T04-final-Q14",
+      "type": "mc",
+      "prompt": "A gap analysis classifies a missing bridge-crossing pole height as a 'must-resolve gap' rather than a 'documented limitation.' What distinguishes these two categories, and why does this specific gap fall into the more serious category?",
+      "choices": [
+        "There is no real distinction between the two categories",
+        "A documented limitation is releasable because substitute data or design margin lets the engineer proceed safely; a must-resolve gap blocks release because no safe substitute exists — bridge-crossing pole heights are critical, safety-relevant design inputs with no reasonable substitute (adjacent-pole heights are an unverified guess, not a safe stand-in)",
+        "Both categories are functionally identical and always block release",
+        "The classification depends solely on which lesson topic the gap originated from"
+      ],
+      "answerIndex": 1,
+      "explanation": "The gap-analysis classification hinges on whether a safe substitute or sufficient design margin exists. Bridge-crossing pole heights are safety-critical with no reliable substitute, unlike a vegetated photo-log gap that may have partial ortho-photo coverage as substitute data."
+    },
+    {
+      "id": "T04-final-Q15",
+      "type": "mc",
+      "prompt": "A crew misidentifies a pole's class during the RUS pre-engineering audit. Trace the full downstream impact chain this single field error can produce.",
+      "choices": [
+        "The error stays fully contained to the audit record with no further consequences",
+        "The wrong unit code propagates into the materials list and cost estimate (via the FEDS); if caught during RUS review it triggers a deficiency finding requiring a corrected FEDS and revised unit breakdown, adding time to the review timeline; if caught during construction, the contractor must reorder correct materials, potentially at a chargeable change-order cost",
+        "The error only affects the final as-built drawing, with no cost or schedule impact",
+        "RUS review never checks individual pole class, so the error would go permanently undetected"
+      ],
+      "answerIndex": 1,
+      "explanation": "This traces the complete chain established across T04's lessons: field audit -> FEDS -> unit breakdown/cost estimate -> RUS review (deficiency finding + delay) or construction (contractor reorder + potential change-order cost) — illustrating why field-audit accuracy has consequences well beyond the audit record itself.",
+      "citation": "RUS Bulletin 1751F-630; ANSI O5.1; 7 CFR Part 1755."
+    },
+    {
+      "id": "T04-final-Q16",
+      "type": "drag-match",
+      "prompt": "Match each T04 deliverable/document to its primary purpose.",
+      "items": [
+        { "id": "i_photolog", "label": "GPS-stamped photographic record for design review" },
+        { "id": "i_shapefile", "label": "Full-attribute GIS data for engineering analysis software" },
+        { "id": "i_kmz", "label": "Lightweight field-crew mobile reference" },
+        { "id": "i_feds", "label": "Structured field data feeding the design engineer's plan set" }
+      ],
+      "targets": [
+        { "id": "t_photolog", "label": "Photo log" },
+        { "id": "t_shapefile", "label": "Shapefile" },
+        { "id": "t_kmz", "label": "KMZ" },
+        { "id": "t_feds", "label": "FEDS (Field Engineering Data Sheet)" }
+      ],
+      "correctMap": { "t_photolog": "i_photolog", "t_shapefile": "i_shapefile", "t_kmz": "i_kmz", "t_feds": "i_feds" },
+      "explanation": "Each survey deliverable serves a distinct downstream purpose: photo logs let the engineer review conditions remotely, shapefiles carry full GIS attribute data for engineering analysis, KMZ gives field crews app-friendly mobile access, and the FEDS is the structured source data behind the design engineer's plan set."
+    },
+    {
+      "id": "T04-final-Q17",
+      "type": "mc",
+      "prompt": "Why does the site-walk 'document, flag, route to authority' pattern apply equally to a low-clearance power conductor, a leaning pole, an erosion-damaged shoulder, and a wetland flag — four very different hazard types?",
+      "choices": [
+        "It's a coincidence that the same pattern happens to work for all four",
+        "In each case, the field surveyor lacks the authority, tools, or safety margin to make the final determination themselves — the underlying principle (document what you observe, don't act beyond your role, route to the party with the right expertise/authority) generalizes across hazard types precisely because it doesn't depend on the specific hazard's technical details",
+        "The pattern only actually applies to electrical hazards; the other three require different handling",
+        "Different hazard types require entirely unrelated response protocols with no common principle"
+      ],
+      "answerIndex": 1,
+      "explanation": "The site-walk pattern's power is that it's a role-boundary principle, not a hazard-specific protocol: document what you observe, don't exceed your authority or safety margin, and route the determination to whoever has the right expertise (utility company, design engineer, geotechnical review, USACE) — which is why it applies consistently across structural, electrical, geotechnical, and regulatory hazard types alike."
+    },
+    {
+      "id": "T04-final-Q18",
+      "type": "mc",
+      "prompt": "A drone survey is flown at 300 ft AGL with a sensor producing a ground sample distance (GSD) that scales linearly with altitude. If flying at 100 ft AGL produces a 1 in/px GSD, approximately what GSD results from flying at 300 ft AGL, and what does this tradeoff mean for mission planning?",
+      "choices": [
+        "Approximately 1 in/px at any altitude — GSD does not change with altitude",
+        "Approximately 3 in/px — GSD scales roughly linearly with altitude, so flying three times higher covers more ground per flight but at roughly one-third the spatial resolution, a resolution-vs-coverage tradeoff the survey planner must weigh against the project's accuracy requirement",
+        "Approximately 9 in/px, because GSD scales with the square of altitude",
+        "Approximately 0.33 in/px — GSD improves (gets finer) as altitude increases"
+      ],
+      "answerIndex": 1,
+      "explanation": "Ground sample distance scales approximately linearly with flight altitude for a fixed sensor — tripling altitude (100 ft to 300 ft) roughly triples the GSD (coarser resolution, e.g. 1 in/px to 3 in/px), trading finer resolution for greater ground coverage per flight. This is a core mission-planning tradeoff: higher altitude means fewer flights/less battery consumption but coarser data, which matters if fine-grained clearance measurements are needed from the imagery."
+    },
+    {
+      "id": "T04-final-Q19",
+      "type": "mc",
+      "prompt": "What is the relationship between a construction unit code and the field-measured pole class/height that feeds it, and why can't a design engineer safely substitute an assumed value if field data is missing?",
+      "choices": [
+        "Construction unit codes are assigned randomly and have no relationship to field measurements",
+        "Each construction unit code corresponds to a specific pole class/height combination with its own material cost; substituting an assumed value risks selecting the wrong code, which produces an incorrect materials list and cost estimate that may not be caught until RUS review or construction, at greater cost and delay than resolving the missing field data upfront",
+        "Construction unit codes only apply to underground plant, never to pole-based aerial plant",
+        "The design engineer always re-measures poles independently, so field survey data doesn't actually feed the unit code selection"
+      ],
+      "answerIndex": 1,
+      "explanation": "Construction unit codes are keyed to specific pole class/height combinations, each with distinct material costs (per RUS Bulletin 1751F-630 references). An assumed substitute for missing field data risks the wrong code and a cascading cost-estimate error — consistent with the broader T04 principle that field-audit accuracy propagates through every downstream document.",
+      "citation": "RUS Bulletin 1751F-630; ANSI O5.1."
+    },
+    {
+      "id": "T04-final-Q20",
+      "type": "mc",
+      "prompt": "An RUS construction package is returned with two separate deficiency notes: (1) 'cover sheet uses non-numeric revision label' and (2) 'pole class data does not match field-measured heights.' How should a project team prioritize and route these two findings differently?",
+      "choices": [
+        "Both findings are identical in severity and require the same field-visit-based correction",
+        "The revision-label issue is a formatting/administrative deficiency correctable by relabeling and resubmitting; the pole-class mismatch is a substantive engineering deficiency tracing back to the FEDS, requiring correction of the source field data and a revised unit breakdown before resubmission — the two require fundamentally different corrective paths",
+        "Neither finding requires any action since RUS deficiency findings are advisory only",
+        "Both findings should be ignored until the final as-built stage"
+      ],
+      "answerIndex": 1,
+      "explanation": "Distinguishing formatting/administrative deficiencies (quick relabel-and-resubmit) from substantive engineering deficiencies (trace back to the FEDS, correct the source data, regenerate dependent documents) is a key T04 synthesis point — treating both the same either wastes time on the formatting issue or under-corrects the substantive one."
+    },
+    {
+      "id": "T04-final-Q21",
+      "type": "mc",
+      "prompt": "Why should a project team confirm a specific RUS project's field-notes retention period against the current FCC schedule and the loan agreement, rather than relying on a commonly cited figure such as '15 years'?",
+      "choices": [
+        "Because retention periods are always exactly 3 years and any other figure is automatically wrong",
+        "Because the applicable retention period depends on two independent, potentially-changing sources — the current FCC retention schedule and the specific RUS loan agreement's terms (which can extend beyond the FCC minimum) — so an informally remembered figure can be outdated or simply inapplicable to that specific project",
+        "Because field notes are never subject to any retention requirement, only accounting ledgers are",
+        "Because RUS retention periods are set solely by the field crew's discretion"
+      ],
+      "answerIndex": 1,
+      "explanation": "This mirrors the T04-L07 lesson point: retention requirements are a moving target across two independent sources (current regulatory schedule and project-specific loan agreement terms), so verifying against current sources for the specific project — rather than trusting a remembered number — is the defensible practice.",
+      "citation": "47 CFR 32.27; 7 CFR Part 1755 — exact FCC Part 42 retention schedule figure not independently pinned down this session; confirm with regulatory counsel or RUS district office."
+    },
+    {
+      "id": "T04-final-Q22",
+      "type": "mc",
+      "prompt": "A survey handoff package's gap analysis finds two issues: a 400 ft photo-log gap in dense canopy (with partial drone ortho-photo coverage available) and missing bridge-crossing pole heights (no substitute data available). Why does the gap analysis correctly treat these differently rather than applying a single uniform rule ('release' or 'block')?",
+      "choices": [
+        "It shouldn't treat them differently; a uniform release-or-block rule is always correct regardless of what substitute data exists",
+        "The gap analysis evaluates whether a safe substitute or sufficient design margin exists for each specific gap — the photo-log gap has partial substitute coverage and is non-safety-critical, so it can be documented and released, while the pole-height gap is safety-critical with no substitute, so it must block release until resolved",
+        "Both gaps should always block release since any missing data is unacceptable",
+        "Both gaps should always be released without documentation since minor gaps are common"
+      ],
+      "answerIndex": 1,
+      "explanation": "This is the T04-L08 gap-analysis classification principle applied at the synthesis level: the determining factor is not the mere existence of a gap but whether adequate substitute data or design margin exists for that specific missing item — which is why otherwise-similar-looking gaps can receive different release determinations."
+    }
+  ]
+}
