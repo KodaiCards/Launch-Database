@@ -131,3 +131,35 @@ isn't logged in `T18.md` — more than T01's four, a pattern worth tightening go
 **Recommendation:** fix `T18-L04-Q6` (source the date against the correct standard, or hedge) and
 backfill the 9 missing log rows before T18 is flipped visible. Everything else — including the
 RUS 1751F-810 citation-pre-check trial, which passed correctly softened — clears the gate as-is.
+
+## Re-check of C1's fix pass (2026-07-02, CEO signal 09:00) — PASS
+
+C1 landed a fix for the 1 must-fix item plus all 9 log-row backfills on the CEO branch. Re-verified
+each individually (targeted re-check, not a full 96-question re-read):
+
+1. **`T18-L04-Q6`** — better than a bare citation-add: C1 **rewrote the question itself** to
+   directly test the cross-standard distinction I flagged, rather than just tacking a citation onto
+   the original stem. The new question asks what governs body-belt-vs-harness for telecom given
+   that the Jan 1, 1998 prohibition date is a 1926.500/.502 (construction) provision, not a
+   1910.268 (telecom/general-industry) one — and the correct answer explicitly states "does not
+   directly bind 1910.268... but ANSI Z359.11's full-body-harness requirement applies regardless
+   of which CFR part governs." This is the correct resolution: it neither asserts the construction
+   date binds telecom (which would be wrong) nor drops the fact entirely — it teaches the
+   distinction. `citation` field now correctly scopes both standards. **PASS** — matches my own
+   domain knowledge (the 1/1/1998 date and construction-specific scope are accurate) and resolves
+   the exact risk I flagged.
+2. **9 backfilled log rows** — cross-checked each row in `T18.md`'s new "Fix-pass backfill" section
+   against the pool citation it's meant to resolve: `T18-L01-Q6` (1926.32(f) competent person),
+   `T18-L03-Q2/Q8`+`T18-final-Q7` (ANSI/ASSE Z117.1 — 10% LEL, correctly notes the
+   ASSE→ASSP society rename doesn't change which standard is meant), `T18-L03-Q4` (1910.146(i)
+   attendant duties), `T18-L04-Q2` (ANSI Z359.1/Z359.11), `T18-L06-Q3/Q4/Q5` (MUTCD Ch
+   6C/6A.01/6B), `T18-L08-Q3` (mfr SDS + NIOSH mineral-oil dermatitis — honestly hedged as
+   "substance PASS; specific ICSC card number not pinned down," which is the correct level of
+   precision rather than over-claiming a card number), `T18-L08-Q5` (1910.151(c) eyewash/shower).
+   All 9 resolve correctly. **PASS.**
+3. **Engine load check:** ran the real `routes/_assessment_pools.js` loader — `listPools()`
+   returns all 20 pools (10 T01 + 10 T18), no validation errors. No structural regression.
+
+**Final verdict: PASS.** Both the must-fix item and all 9 backfills are resolved. Combined with
+the 95 items that already passed, the full T18 set (96 questions, 10 pools) clears the gate. **T18
+is AUDIT-READY** — no outstanding red-team items.
