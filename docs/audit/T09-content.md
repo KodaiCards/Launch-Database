@@ -26,3 +26,7 @@ C2's red-team proactively checked how the recent 7 CFR Part 1970 → Part 1b reg
 ## 4. Verdict
 
 **T09 pools: clean, mergeable, no blockers.** The one live issue (L12 capstone citation-currency gap) is already known to the CEO, correctly scoped as low-severity (no wrong-answer defect), and self-resolving once T09 gets the same D031 capstone-retirement treatment as the other 5 launch-set topics (already dispatched to C2 per the CEO's report). Recommend the standard pattern: **T09 pools are flip-eligible on content; full T09 flip waits on its capstone strip landing** — I'll re-verify that the same way I did for T01/T18/T02/T03/T04 once it's pushed.
+
+## ADDENDUM (2026-07-02) — Capstone strip re-verify: T09 is now fully flip-ready
+
+Checked the CEO branch @ `2ea71b1c` (AUDIT-READY `9d097a0c`) directly. `L12-t09-capstone-quiz.jsx`: `<Quiz` fully removed, `completesOnView: true` set — same clean pattern as the other 5 capstones. **The citation-currency gap flagged above is also fixed in the same pass:** the glossary term is now `'7 CFR Part 1b (formerly 7 CFR Part 1970)'` with the definition explicitly noting "effective April 3, 2026, replacing the former 7 CFR Part 1970, now reserved" — the graded `T09-CAP-Q14` prompt that used to assert bare "7 CFR 1970.14" as current is gone along with the rest of the `<Quiz>` block. `vite build` succeeds; engine suite still 10/10. **No remaining findings on T09 — fully flip-ready**, same status as T01/T18/T02/T03/T04.
