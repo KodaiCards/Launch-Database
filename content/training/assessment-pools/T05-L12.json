@@ -31,7 +31,7 @@
       ],
       "answerIndex": 1,
       "explanation": "PLC splitter loss follows an approximately logarithmic (dB) relationship with split ratio, not a linear one — doubling the number of output ports adds roughly 3 dB of insertion loss, not double the dB figure. A 1:32 splitter at ~17 dB and a 1:64 splitter at ~20.5 dB reflects this ~3.5 dB step, consistent with published industry splitter-loss tables.",
-      "citation": "Industry-standard PLC splitter insertion-loss tables (multiple independent vendor/technical sources: 1:32 ≈ 17.0 dB, 1:64 ≈ 20.5 dB), WebSearch-verified this session."
+      "citation": "Industry-standard PLC splitter insertion-loss tables (multiple independent vendor/technical sources: 1:32 ≈ 17.0 dB, 1:64 ≈ 20.5 dB)."
     },
     {
       "id": "T05-L12-Q3",
@@ -58,7 +58,7 @@
       ],
       "answerIndex": 1,
       "explanation": "ITU-T G.984 (GPON) specifies an asymmetric rate of 2.488 Gbps downstream and 1.244 Gbps upstream — the higher downstream rate reflects typical residential traffic patterns (more download than upload), and the two directions use different wavelengths (1490 nm downstream, 1310 nm upstream) to share the same fiber.",
-      "citation": "ITU-T G.984 / G.984.2 Amendment 1 — 'Industry best practice for 2.488 Gbit/s downstream, 1.244 Gbit/s upstream G-PON,' confirmed via WebSearch (itu.int recommendation page + multiple independent GPON technical references)."
+      "citation": "ITU-T G.984 / G.984.2 Amendment 1 — industry best practice for 2.488 Gbit/s downstream, 1.244 Gbit/s upstream G-PON."
     },
     {
       "id": "T05-L12-Q5",
@@ -104,16 +104,38 @@
       "type": "drag-match",
       "prompt": "Match each PON/FTTH cable segment to its role in the topology.",
       "items": [
-        { "id": "i_feeder", "label": "Trunk segment from the OLT/CO out to the splitter location (e.g., an FDH)" },
-        { "id": "i_dist", "label": "Segment from the splitter toward a smaller serving area (e.g., a neighborhood cluster)" },
-        { "id": "i_drop", "label": "Final segment connecting an individual home to the network" }
+        {
+          "id": "i_feeder",
+          "label": "Trunk segment from the OLT/CO out to the splitter location (e.g., an FDH)"
+        },
+        {
+          "id": "i_dist",
+          "label": "Segment from the splitter toward a smaller serving area (e.g., a neighborhood cluster)"
+        },
+        {
+          "id": "i_drop",
+          "label": "Final segment connecting an individual home to the network"
+        }
       ],
       "targets": [
-        { "id": "t_feeder", "label": "Feeder fiber" },
-        { "id": "t_dist", "label": "Distribution fiber" },
-        { "id": "t_drop", "label": "Drop cable" }
+        {
+          "id": "t_feeder",
+          "label": "Feeder fiber"
+        },
+        {
+          "id": "t_dist",
+          "label": "Distribution fiber"
+        },
+        {
+          "id": "t_drop",
+          "label": "Drop cable"
+        }
       ],
-      "correctMap": { "t_feeder": "i_feeder", "t_dist": "i_dist", "t_drop": "i_drop" },
+      "correctMap": {
+        "t_feeder": "i_feeder",
+        "t_dist": "i_dist",
+        "t_drop": "i_drop"
+      },
       "explanation": "The PON/FTTH topology hierarchy runs feeder (OLT to splitter) -> distribution (splitter toward the serving area) -> drop (final home connection) — each segment serves a distinct architectural role, and understanding this hierarchy is fundamental to correctly designing an FTTH network's physical layout and loss budget allocation."
     }
   ]

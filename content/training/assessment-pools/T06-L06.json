@@ -18,7 +18,7 @@
       ],
       "answerIndex": 1,
       "explanation": "Locate marks are approximate, not exact — typical locate tolerance can be off by a foot or more, meaning an 18-inch clearance from the flag could actually be a much smaller real-world separation. Standard practice (consistent with CGA Best Practices excavation-safety guidance) is to pothole-expose the utility at the closest-approach point and build the bore path from the CONFIRMED position, not the approximate locate mark.",
-      "citation": "CGA (Common Ground Alliance) Best Practices excavation-safety guidance — WebSearch-verified as an established industry excavation-safety reference (corroborated via bluestakes.org's CGA Best Practices Appendix B document)."
+      "citation": "CGA (Common Ground Alliance) Best Practices excavation-safety guidance."
     },
     {
       "id": "T06-L06-Q2",
@@ -32,7 +32,7 @@
       ],
       "answerIndex": 2,
       "explanation": "Per the APWA Uniform Color Code: Red = electric power, Yellow = gas/oil/steam/petroleum, Orange = communication/alarm/signal lines (telecom/CATV), Blue = water/irrigation. The orange flags mark existing telecommunications infrastructure — likely a copper or fiber run belonging to an incumbent carrier, cable provider, or competitive fiber carrier.",
-      "citation": "APWA Uniform Color Code — WebSearch-verified (apwa.org official color code PDF, multiple independent corroborating 811/locate-industry sources)."
+      "citation": "APWA Uniform Color Code (apwa.org official color code)."
     },
     {
       "id": "T06-L06-Q3",
@@ -65,18 +65,47 @@
       "type": "drag-match",
       "prompt": "Match each APWA flag color to the utility it marks.",
       "items": [
-        { "id": "i_red", "label": "Electric power lines and conduit" },
-        { "id": "i_yellow", "label": "Gas, oil, steam, petroleum mains" },
-        { "id": "i_orange", "label": "Telecommunications and CATV" },
-        { "id": "i_blue", "label": "Potable water mains" }
+        {
+          "id": "i_red",
+          "label": "Electric power lines and conduit"
+        },
+        {
+          "id": "i_yellow",
+          "label": "Gas, oil, steam, petroleum mains"
+        },
+        {
+          "id": "i_orange",
+          "label": "Telecommunications and CATV"
+        },
+        {
+          "id": "i_blue",
+          "label": "Potable water mains"
+        }
       ],
       "targets": [
-        { "id": "t_red", "label": "Red flags" },
-        { "id": "t_yellow", "label": "Yellow flags" },
-        { "id": "t_orange", "label": "Orange flags" },
-        { "id": "t_blue", "label": "Blue flags" }
+        {
+          "id": "t_red",
+          "label": "Red flags"
+        },
+        {
+          "id": "t_yellow",
+          "label": "Yellow flags"
+        },
+        {
+          "id": "t_orange",
+          "label": "Orange flags"
+        },
+        {
+          "id": "t_blue",
+          "label": "Blue flags"
+        }
       ],
-      "correctMap": { "t_red": "i_red", "t_yellow": "i_yellow", "t_orange": "i_orange", "t_blue": "i_blue" },
+      "correctMap": {
+        "t_red": "i_red",
+        "t_yellow": "i_yellow",
+        "t_orange": "i_orange",
+        "t_blue": "i_blue"
+      },
       "explanation": "The APWA Uniform Color Code standardizes utility-marking colors nationwide: Red for electric, Yellow for gas/oil/petroleum, Orange for telecom/CATV, and Blue for potable water — a fiber crew needs to recognize all four (plus Green/sewer and Purple/reclaimed water) to correctly interpret any 811 locate.",
       "citation": "APWA Uniform Color Code — reused from T06-L06-Q2 verification."
     },

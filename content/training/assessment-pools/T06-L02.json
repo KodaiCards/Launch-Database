@@ -110,7 +110,7 @@
       ],
       "answerIndex": 1,
       "explanation": "RUS Bulletin 1751F-643 (\"Underground Plant Design,\" effective 2002) is the bulletin actually scoped to underground plant design and construction, including conduit/duct/innerduct arrangements and cable vaults. RUS Bulletin 1751F-635 is titled \"Aerial Plant Construction\" — a separate, overhead-scoped bulletin — and is not the correct citation for underground burial-depth or plant-design facts.",
-      "citation": "RUS Bulletin 1751F-643 (\"Underground Plant Design,\" eff. 2002-08-28) — WebSearch-verified (rd.usda.gov bulletin PDF listing). NOTE: this corrects a citation error found throughout the T06 lesson JSX, which cites RUS 1751F-635 (\"Aerial Plant Construction\" — WebSearch-verified via the same source) for underground plant design facts; see T06.md research log."
+      "citation": "RUS Bulletin 1751F-643 (\"Underground Plant Design,\" eff. 2002-08-28). Note: RUS Bulletin 1751F-635 is titled \"Aerial Plant Construction\" and does not apply to underground plant design facts."
     }
   ]
 }

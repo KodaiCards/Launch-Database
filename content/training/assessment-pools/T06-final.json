@@ -43,8 +43,8 @@
         "RUS Bulletin 1753F-601, which governs filled fiber optic cable material specifications only"
       ],
       "answerIndex": 1,
-      "explanation": "This is the T06 topic's major finding applied at the synthesis level: RUS 1751F-643 (\"Underground Plant Design\") is the correctly-scoped bulletin for burial depth, pedestal spacing, innerduct traceability, and design QA facts, while 1751F-635 (\"Aerial Plant Construction\") is a different, overhead-scoped bulletin that the pre-existing lesson JSX repeatedly misapplies to underground content.",
-      "citation": "RUS Bulletin 1751F-643 (\"Underground Plant Design\") — WebSearch-verified corrected citation; see T06.md research log for the full finding."
+      "explanation": "RUS 1751F-643 (\"Underground Plant Design\") is the correctly-scoped bulletin for burial depth, pedestal spacing, innerduct traceability, and design QA facts. RUS Bulletin 1751F-635 (\"Aerial Plant Construction\") is a different, overhead-scoped bulletin and does not apply to underground content.",
+      "citation": "RUS Bulletin 1751F-643 (\"Underground Plant Design\")."
     },
     {
       "id": "T06-final-Q4",
@@ -194,18 +194,47 @@
       "type": "drag-match",
       "prompt": "Match each T06 access structure/document concept to its defining characteristic.",
       "items": [
-        { "id": "i_pullpoint", "label": "Sized only for cable coiling and a pulling grip; no splice provisions" },
-        { "id": "i_h20", "label": "Required cover rating for any vault reachable by vehicle traffic" },
-        { "id": "i_1751f643", "label": "The correctly-scoped RUS bulletin for underground plant design" },
-        { "id": "i_jamratio", "label": "Conduit ID / cable OD; danger zone approximately 2.8-3.2" }
+        {
+          "id": "i_pullpoint",
+          "label": "Sized only for cable coiling and a pulling grip; no splice provisions"
+        },
+        {
+          "id": "i_h20",
+          "label": "Required cover rating for any vault reachable by vehicle traffic"
+        },
+        {
+          "id": "i_1751f643",
+          "label": "The correctly-scoped RUS bulletin for underground plant design"
+        },
+        {
+          "id": "i_jamratio",
+          "label": "Conduit ID / cable OD; danger zone approximately 2.8-3.2"
+        }
       ],
       "targets": [
-        { "id": "t_pullpoint", "label": "Pull-point handhole" },
-        { "id": "t_h20", "label": "H-20 load rating" },
-        { "id": "t_1751f643", "label": "RUS Bulletin 1751F-643" },
-        { "id": "t_jamratio", "label": "Jam ratio" }
+        {
+          "id": "t_pullpoint",
+          "label": "Pull-point handhole"
+        },
+        {
+          "id": "t_h20",
+          "label": "H-20 load rating"
+        },
+        {
+          "id": "t_1751f643",
+          "label": "RUS Bulletin 1751F-643"
+        },
+        {
+          "id": "t_jamratio",
+          "label": "Jam ratio"
+        }
       ],
-      "correctMap": { "t_pullpoint": "i_pullpoint", "t_h20": "i_h20", "t_1751f643": "i_1751f643", "t_jamratio": "i_jamratio" },
+      "correctMap": {
+        "t_pullpoint": "i_pullpoint",
+        "t_h20": "i_h20",
+        "t_1751f643": "i_1751f643",
+        "t_jamratio": "i_jamratio"
+      },
       "explanation": "Each concept anchors a distinct T06 design dimension: pull-point handholes are the minimally-sized structure for extending a pull, H-20 is the traffic-load threshold for any vehicle-reachable cover, RUS 1751F-643 is the corrected underground-plant-design bulletin (replacing the pre-existing lesson JSX's erroneous 1751F-635 citation), and jam ratio is the independent same-size-cable jamming check distinct from fill percentage."
     },
     {
@@ -297,8 +326,8 @@
         "1751F-635 and 1751F-643 are functionally identical bulletins under different numbers, so either citation is acceptable"
       ],
       "answerIndex": 1,
-      "explanation": "This closes the loop on the T06 topic's major finding: submitting a design package that cites the wrong bulletin (1751F-635, aerial-scoped) for underground-specific claims creates a real audit/review risk, since a careful RUS reviewer checking the citation against the bulletin's actual scope would find a mismatch — the correct citation for burial depth, pedestal spacing, and innerduct listing is uniformly RUS 1751F-643.",
-      "citation": "RUS Bulletin 1751F-643 (\"Underground Plant Design\") — corrected citation per the T06 major finding; see T06.md research log."
+      "explanation": "Submitting a design package that cites the wrong bulletin (1751F-635, aerial-scoped) for underground-specific claims creates a real audit/review risk, since a careful RUS reviewer checking the citation against the bulletin's actual scope would find a mismatch. The correct citation for burial depth, pedestal spacing, and innerduct listing is underground-scoped: RUS 1751F-643.",
+      "citation": "RUS Bulletin 1751F-643 (\"Underground Plant Design\")."
     }
   ]
 }

@@ -18,7 +18,7 @@
       ],
       "answerIndex": 1,
       "explanation": "H-20 is the standard load class for any location subject to vehicle traffic — driveways, parking areas — since NTC covers are only appropriate for yards, unpaved easements, and locations clearly off any vehicle path. A cracked NTC lid in a driveway is both a trip hazard and a permit violation.",
-      "citation": "AASHTO H-20 load class (32,000 lb rear axle load, 40,000 lb proof load per AASHTO M306) — WebSearch-verified across multiple independent manhole/vault manufacturer technical sources."
+      "citation": "AASHTO H-20 load class (32,000 lb rear axle load, 40,000 lb proof load per AASHTO M306), consistent across multiple independent manhole/vault manufacturer technical sources."
     },
     {
       "id": "T06-L05-Q2",
@@ -51,18 +51,47 @@
       "type": "drag-match",
       "prompt": "Match each access structure to its primary use case.",
       "items": [
-        { "id": "i_ntc", "label": "Pull point in a residential utility easement, no vehicle traffic" },
-        { "id": "i_h20", "label": "Slack storage location in a commercial parking lot" },
-        { "id": "i_manhole", "label": "Major splice point on a campus backbone route, man-entry required for splice tray work" },
-        { "id": "i_h25", "label": "Network hub node under a primary state highway with heavy truck traffic" }
+        {
+          "id": "i_ntc",
+          "label": "Pull point in a residential utility easement, no vehicle traffic"
+        },
+        {
+          "id": "i_h20",
+          "label": "Slack storage location in a commercial parking lot"
+        },
+        {
+          "id": "i_manhole",
+          "label": "Major splice point on a campus backbone route, man-entry required for splice tray work"
+        },
+        {
+          "id": "i_h25",
+          "label": "Network hub node under a primary state highway with heavy truck traffic"
+        }
       ],
       "targets": [
-        { "id": "t_ntc", "label": "Handhole (NTC rated)" },
-        { "id": "t_h20", "label": "Handhole (H-20 rated)" },
-        { "id": "t_manhole", "label": "Manhole" },
-        { "id": "t_h25", "label": "Vault (H-25 rated)" }
+        {
+          "id": "t_ntc",
+          "label": "Handhole (NTC rated)"
+        },
+        {
+          "id": "t_h20",
+          "label": "Handhole (H-20 rated)"
+        },
+        {
+          "id": "t_manhole",
+          "label": "Manhole"
+        },
+        {
+          "id": "t_h25",
+          "label": "Vault (H-25 rated)"
+        }
       ],
-      "correctMap": { "t_ntc": "i_ntc", "t_h20": "i_h20", "t_manhole": "i_manhole", "t_h25": "i_h25" },
+      "correctMap": {
+        "t_ntc": "i_ntc",
+        "t_h20": "i_h20",
+        "t_manhole": "i_manhole",
+        "t_h25": "i_h25"
+      },
       "explanation": "Access structure choice scales with both traffic exposure and function: NTC handholes fit non-traffic easements/yards, H-20 handholes fit vehicle-traffic areas like driveways and parking lots, manholes fit major man-entry splice points, and H-25 vaults fit primary road/highway ROW with the heaviest truck loading."
     },
     {

@@ -18,7 +18,7 @@
       ],
       "answerIndex": 2,
       "explanation": "The 330-foot (100 m) maximum spacing between terminal pedestals is a hard limit — designers commonly target a tighter 250-280 feet as working practice, and spacing is measured along the actual cable route (accounting for offsets and bends), not the straight-line distance between pedestal locations.",
-      "citation": "RUS Bulletin 1751F-643 (\"Underground Plant Design\") Section 7 — CORRECTED citation; the pre-existing lesson JSX cites RUS 1751F-635 (\"Aerial Plant Construction\") for this underground-specific fact, which is a misapplied bulletin per the T06 major finding — see T06.md research log."
+      "citation": "RUS Bulletin 1751F-643 (\"Underground Plant Design\") Section 7. Note: RUS Bulletin 1751F-635 (\"Aerial Plant Construction\") does not apply to this underground-specific fact."
     },
     {
       "id": "T06-L08-Q2",
@@ -58,7 +58,7 @@
       ],
       "answerIndex": 1,
       "explanation": "The 20-30 foot standard slack figure is deliberately sized to serve two distinct future needs: repeated re-splicing over the pedestal's service life, and the ability to relocate the pedestal a modest distance without a costly new cable pull — both scenarios that a minimal, exact-length slack allowance would foreclose.",
-      "citation": "RUS Bulletin 1751F-643 (\"Underground Plant Design\") Section 7; BICSI OSPDR — CORRECTED citation, per the T06 major finding on 1751F-635 misapplication."
+      "citation": "RUS Bulletin 1751F-643 (\"Underground Plant Design\") Section 7; BICSI OSPDR."
     },
     {
       "id": "T06-L08-Q5",
