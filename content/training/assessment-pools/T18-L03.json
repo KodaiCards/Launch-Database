@@ -1,0 +1,127 @@
+{
+  "assessmentId": "T18-L03",
+  "kind": "lesson",
+  "courseId": "T18",
+  "lessonId": "T18.L03",
+  "drawCount": 4,
+  "passThreshold": 70,
+  "pool": [
+    {
+      "id": "T18-L03-Q1",
+      "type": "mc",
+      "prompt": "Which standard governs atmospheric testing requirements before a telecom crew enters a routine manhole to splice fiber?",
+      "choices": [
+        "29 CFR 1910.146 — Permit-Required Confined Spaces (full permit procedure required)",
+        "29 CFR 1910.268(o) — Telecommunications (test, ventilate, attend; no written permit for routine entry)",
+        "29 CFR 1910.147 — Control of Hazardous Energy (LOTO required before entry)",
+        "29 CFR 1910.269 — Electric Power Generation (applies only near energized conductors)"
+      ],
+      "answerIndex": 1,
+      "explanation": "29 CFR 1910.268(o) is the specific standard for telecom manhole work — a specific standard supersedes a general one for the condition it covers. The full 1910.146 PRCS procedure applies only when conditions cannot be made safe under 1910.268(o), e.g. chemical contamination that ventilation cannot clear.",
+      "citation": "29 CFR 1910.268(o); 29 CFR 1910.5(c)(1) — specific standard supersedes general standard."
+    },
+    {
+      "id": "T18-L03-Q2",
+      "type": "mc",
+      "prompt": "A multi-gas monitor lowered into a telecom vault reads: O2 = 20.1%, LEL = 18%, CO = 2 ppm, H2S = 0 ppm. What must the crew do?",
+      "choices": [
+        "All readings are within acceptable ranges — proceed with entry",
+        "O2 is in range but LEL = 18% exceeds the 10% LEL action level; ventilate and re-test before entry",
+        "CO = 2 ppm exceeds the safe limit; ventilate and re-test before entry",
+        "H2S = 0 ppm means the space is completely safe to enter without ventilation"
+      ],
+      "answerIndex": 1,
+      "explanation": "18% LEL means combustible gas is present at 18% of its explosive concentration. 29 CFR 1910.268(o)(2)(ii)(B) requires continuous forced ventilation whenever combustibles are detected; the 10% LEL figure is the industry action threshold. O2 being in range does not override the combustible-gas ventilation requirement.",
+      "citation": "29 CFR 1910.268(o)(2)(ii)(B); ANSI/ASSE Z117.1 (10% LEL industry action threshold)."
+    },
+    {
+      "id": "T18-L03-Q3",
+      "type": "mc",
+      "prompt": "What is the minimum oxygen percentage (by volume) below which an atmosphere is classified as oxygen-deficient and unsafe for entry without supplied-air equipment?",
+      "choices": [
+        "16.0%",
+        "18.0%",
+        "19.5%",
+        "20.9%"
+      ],
+      "answerIndex": 2,
+      "explanation": "Per 29 CFR 1910.146(b), an oxygen-deficient atmosphere is defined as below 19.5% O2 by volume. Below 16% O2, consciousness can be lost without warning. Normal air is approximately 20.9% O2. The acceptable range for confined space entry is 19.5%-23.5%.",
+      "citation": "29 CFR 1910.146(b) — Definitions."
+    },
+    {
+      "id": "T18-L03-Q4",
+      "type": "mc",
+      "prompt": "During manhole entry, what is the attendant's primary role?",
+      "choices": [
+        "Enter first to test conditions, then signal the entrant when it's safe",
+        "Stand at the opening and hand tools down to the worker below",
+        "Remain outside the space, monitor conditions and worker status, and initiate rescue procedures if needed",
+        "Complete the OSHA permit paperwork while the entrant is working below"
+      ],
+      "answerIndex": 2,
+      "explanation": "The attendant is a dedicated safety position: they remain topside, maintain continuous communication with the entrant, watch the monitor readout, and call for rescue if conditions change or communication is lost. The attendant does NOT enter the space unless relieved by another trained attendant — entering defeats the entire protection system.",
+      "citation": "29 CFR 1910.268(o) — manhole entry requirements; 29 CFR 1910.146(i) — attendant duties."
+    },
+    {
+      "id": "T18-L03-Q5",
+      "type": "mc",
+      "prompt": "What is the acceptable oxygen concentration RANGE for confined space entry?",
+      "choices": [
+        "18.0% to 21.0%",
+        "19.5% to 23.5%",
+        "20.9% to 25.0%",
+        "There is no upper bound — only a minimum oxygen threshold matters"
+      ],
+      "answerIndex": 1,
+      "explanation": "29 CFR 1910.146(b) defines both an oxygen-deficient threshold (below 19.5%) and an oxygen-enriched threshold (above 23.5%) — both ends are hazardous. Oxygen-enriched atmospheres dramatically increase fire/explosion risk even though more oxygen sounds intuitively safer.",
+      "citation": "29 CFR 1910.146(b)."
+    },
+    {
+      "id": "T18-L03-Q6",
+      "type": "mc",
+      "prompt": "In what ORDER must a confined space atmosphere be tested before entry, per OSHA testing sequence?",
+      "choices": [
+        "Toxic air contaminants, then flammable gases, then oxygen content",
+        "Oxygen content, then flammable gases and vapors, then toxic air contaminants",
+        "All three simultaneously with no required order",
+        "Flammable gases first, then oxygen, then toxic contaminants"
+      ],
+      "answerIndex": 1,
+      "explanation": "The internal atmosphere must be tested with a calibrated direct-reading instrument for oxygen content first, then flammable gases and vapors, then toxic air contaminants — in that order.",
+      "citation": "29 CFR 1910.146 (atmospheric testing sequence)."
+    },
+    {
+      "id": "T18-L03-Q7",
+      "type": "mc",
+      "prompt": "Why does a general-industry standard like 1910.146 (Permit-Required Confined Spaces) sometimes NOT apply to a routine telecom manhole entry, even though a manhole fits the general definition of a confined space?",
+      "choices": [
+        "Manholes are never confined spaces under any OSHA definition",
+        "29 CFR 1910.5(c)(1) provides that a specific standard (1910.268(o), written for telecom manhole entry) supersedes the more general standard (1910.146) for the condition it covers",
+        "Telecom workers are exempt from all confined space regulations by industry classification",
+        "1910.146 only applies to spaces larger than a manhole"
+      ],
+      "answerIndex": 1,
+      "explanation": "1910.5(c)(1) is a general OSHA interpretive doctrine: when a specific standard exists for a given condition, it supersedes a more general standard covering the same condition. 1910.268(o) was written specifically for telecom manhole/vault entry (test-ventilate-attend), so it applies in place of the full 1910.146 permit procedure for routine entries — unless conditions can't be made safe that way."
+    },
+    {
+      "id": "T18-L03-Q8",
+      "type": "drag-match",
+      "prompt": "Match each gas monitor reading condition to the correct crew action.",
+      "items": [
+        { "id": "i_o2low", "label": "O2 below 19.5% — do not enter without supplied air" },
+        { "id": "i_o2high", "label": "O2 above 23.5% — do not enter (fire/explosion risk)" },
+        { "id": "i_lel", "label": "LEL at or above 10% — ventilate and re-test before entry" },
+        { "id": "i_ok", "label": "O2 19.5-23.5%, LEL below 10%, toxics below limits — entry may proceed" }
+      ],
+      "targets": [
+        { "id": "t_o2low", "label": "Oxygen-deficient atmosphere" },
+        { "id": "t_o2high", "label": "Oxygen-enriched atmosphere" },
+        { "id": "t_lel", "label": "Combustible gas action level" },
+        { "id": "t_ok", "label": "Acceptable atmosphere" }
+      ],
+      "correctMap": { "t_o2low": "i_o2low", "t_o2high": "i_o2high", "t_lel": "i_lel", "t_ok": "i_ok" },
+      "explanation": "Confined space entry requires all three atmospheric conditions to be met simultaneously: oxygen within the 19.5-23.5% range, combustible gas below the 10% LEL action threshold, and toxic contaminants below their exposure limits.",
+      "citation": "29 CFR 1910.146(b); 29 CFR 1910.268(o)(2)(ii)(B); ANSI/ASSE Z117.1."
+    }
+  ]
+}

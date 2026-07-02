@@ -1,0 +1,126 @@
+{
+  "assessmentId": "T18-L09",
+  "kind": "lesson",
+  "courseId": "T18",
+  "lessonId": "T18.L09",
+  "drawCount": 4,
+  "passThreshold": 70,
+  "pool": [
+    {
+      "id": "T18-L09-Q1",
+      "type": "mc",
+      "prompt": "A technician cuts their hand on a strand wire; the foreman applies a bandage on site and the technician works the rest of the day without restriction. Is this recordable on the OSHA 300 log?",
+      "choices": [
+        "Yes — any cut requiring a bandage is recordable",
+        "No — bandaging alone is first aid and does not meet the recordable threshold",
+        "Yes — any hand injury on an OSP job is automatically recordable",
+        "No — only injuries requiring hospital treatment are recordable"
+      ],
+      "answerIndex": 1,
+      "explanation": "Bandaging is explicitly listed as a first-aid measure. First-aid-only treatment does not meet the recordable threshold — the distinction is the treatment given, not how severe the injury looks. If the same cut required sutures, staples, or prescription medication, it would be recordable.",
+      "citation": "29 CFR 1904.7(a) — Definition of first aid."
+    },
+    {
+      "id": "T18-L09-Q2",
+      "type": "mc",
+      "prompt": "A field technician falls from a bucket lift and is admitted to the hospital for an overnight observation stay. Per 29 CFR 1904.39, when must the employer report this to OSHA?",
+      "choices": [
+        "Within 8 hours of the incident",
+        "Within 24 hours of the incident",
+        "Within 7 days — only fatalities are 8-hour reportable",
+        "No reporting required unless the worker cannot return to work within 7 days"
+      ],
+      "answerIndex": 1,
+      "explanation": "29 CFR 1904.39 requires in-patient hospitalization to be reported to OSHA within 24 hours. A fatality is 8-hour reportable. These timelines apply to ALL employers regardless of size — including firms with 10 or fewer employees who are otherwise exempt from routine 300 log recordkeeping.",
+      "citation": "29 CFR 1904.39."
+    },
+    {
+      "id": "T18-L09-Q3",
+      "type": "mc",
+      "prompt": "A technician's vehicle drifts into a cone taper but misses the crew by 10 feet; no one is hurt and no equipment is damaged. Under federal OSHA rules, what must the employer do?",
+      "choices": [
+        "File an OSHA 300 entry — a near-miss is recordable",
+        "Nothing is legally required — federal OSHA has no mandatory near-miss reporting requirement",
+        "Report the near-miss to OSHA within 24 hours",
+        "Complete an OSHA 301 incident investigation report"
+      ],
+      "answerIndex": 1,
+      "explanation": "Near-miss reporting is voluntary under federal OSHA rules. An event with no injury, illness, or death does not meet the recordable threshold and does not trigger 1904.39 severe-incident reporting. Most safety-conscious employers still maintain voluntary near-miss programs as a leading-indicator tool.",
+      "citation": "29 CFR 1904.7(a); OSHA Near Miss Reporting Systems guidance."
+    },
+    {
+      "id": "T18-L09-Q4",
+      "type": "mc",
+      "prompt": "What is the OSHA safety metric that counts incidents resulting in days away from work, restricted work activity, or job transfer to another position?",
+      "choices": [
+        "TRIR (Total Recordable Incident Rate)",
+        "DART rate (Days Away, Restricted, or Transferred)",
+        "LTIR (Lost Time Incident Rate)",
+        "EMR (Experience Modification Rate)"
+      ],
+      "answerIndex": 1,
+      "explanation": "The DART rate is calculated from OSHA 300 log entries involving DART outcomes — the most serious tier of recordable incidents. Formula: (DART incidents x 200,000) / total hours worked, normalized to a rate per 100 full-time equivalent workers.",
+      "citation": "29 CFR 1904 — Recording and Reporting Occupational Injuries and Illnesses."
+    },
+    {
+      "id": "T18-L09-Q5",
+      "type": "mc",
+      "prompt": "An OSP contractor has 8 employees and believes they are completely exempt from OSHA recordkeeping. Is this correct?",
+      "choices": [
+        "Correct — firms with 10 or fewer employees have no OSHA recordkeeping obligations",
+        "Partially correct — they are exempt from routine 300 log maintenance but must still report fatalities, hospitalizations, amputations, and eye loss within the 1904.39 timelines",
+        "Incorrect — all employers regardless of size must maintain the full OSHA 300 log",
+        "Correct — but only if they are in a low-hazard NAICS code"
+      ],
+      "answerIndex": 1,
+      "explanation": "The 10-or-fewer-employee size exemption covers routine recordkeeping (maintaining the 300 log and posting the 300A summary). It does NOT exempt employers from severe incident reporting under 1904.39 — that requirement applies to every employer regardless of size.",
+      "citation": "29 CFR 1904.1 (size exemption); 29 CFR 1904.39 (severe incident reporting — all employers)."
+    },
+    {
+      "id": "T18-L09-Q6",
+      "type": "mc",
+      "prompt": "Which four incident types trigger the 29 CFR 1904.39 severe-incident reporting requirement, and what are their respective reporting windows?",
+      "choices": [
+        "Fatality (8 hr); in-patient hospitalization, amputation, and loss of an eye (each 24 hr)",
+        "All four types share a single 24-hour reporting window",
+        "Fatality (24 hr); hospitalization, amputation, and eye loss (each 8 hr)",
+        "Only fatalities are reportable under 1904.39 — the other three are voluntary"
+      ],
+      "answerIndex": 0,
+      "explanation": "A work-related fatality must be reported to OSHA within 8 hours. In-patient hospitalization, amputation, or loss of an eye must each be reported within 24 hours. These are distinct, mandatory reporting windows that apply regardless of employer size."
+    },
+    {
+      "id": "T18-L09-Q7",
+      "type": "mc",
+      "prompt": "What distinguishes a RECORDABLE injury from a merely first-aid injury under 29 CFR 1904.7?",
+      "choices": [
+        "The apparent severity of the wound as judged by the foreman",
+        "The type of medical treatment actually given — treatments defined as first aid (e.g., bandaging, over-the-counter medication at nonprescription strength) don't meet the recordable threshold, while sutures, prescription medication, or restricted work do",
+        "Whether the injury occurred during regular work hours",
+        "Whether the injured worker missed any part of their shift"
+      ],
+      "answerIndex": 1,
+      "explanation": "29 CFR 1904.7 defines recordability by the treatment actually provided, not by how the injury looks. A deep-looking cut that only needs a bandage is first aid (not recordable); a minor-looking cut requiring sutures is recordable. This is a common point of confusion for field supervisors."
+    },
+    {
+      "id": "T18-L09-Q8",
+      "type": "drag-match",
+      "prompt": "Match each incident type to its OSHA reporting timeline under 29 CFR 1904.39.",
+      "items": [
+        { "id": "i_fatality", "label": "Work-related fatality" },
+        { "id": "i_hosp", "label": "In-patient hospitalization" },
+        { "id": "i_amp", "label": "Amputation" },
+        { "id": "i_eye", "label": "Loss of an eye" }
+      ],
+      "targets": [
+        { "id": "t_8hr", "label": "8 hours" },
+        { "id": "t_24hr_a", "label": "24 hours (hospitalization)" },
+        { "id": "t_24hr_b", "label": "24 hours (amputation)" },
+        { "id": "t_24hr_c", "label": "24 hours (eye loss)" }
+      ],
+      "correctMap": { "t_8hr": "i_fatality", "t_24hr_a": "i_hosp", "t_24hr_b": "i_amp", "t_24hr_c": "i_eye" },
+      "explanation": "Fatalities require the fastest reporting window (8 hours) because of the severity and urgency. In-patient hospitalization, amputation, and loss of an eye each require reporting within 24 hours — all four apply regardless of employer size.",
+      "citation": "29 CFR 1904.39."
+    }
+  ]
+}

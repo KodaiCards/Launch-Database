@@ -1,0 +1,350 @@
+{
+  "assessmentId": "T18-final",
+  "kind": "topic_final",
+  "courseId": "T18",
+  "lessonId": null,
+  "drawCount": 15,
+  "passThreshold": 80,
+  "pool": [
+    {
+      "id": "T18-final-Q1",
+      "type": "mc",
+      "prompt": "Under the hierarchy of controls, why does OSHA/NIOSH rank Elimination above PPE, and why is stacking multiple layers (not just PPE) the correct field practice?",
+      "choices": [
+        "Elimination is cheaper than PPE, and cost is the only ranking criterion",
+        "Elimination removes the hazard entirely and doesn't depend on human behavior; PPE depends on correct selection, fit, and consistent use every time — layering controls (the 'Swiss cheese' model) means one layer failing doesn't cause an injury",
+        "PPE is actually the most effective control; the hierarchy is a historical convention with no safety basis",
+        "Administrative controls always outperform engineering controls in field conditions"
+      ],
+      "answerIndex": 1,
+      "explanation": "Elimination -> Substitution -> Engineering -> Administrative -> PPE ranks from most to least reliable because each higher level removes or reduces the hazard itself, while PPE only reduces injury after exposure and depends entirely on consistent human compliance. Layering multiple controls means the gaps in any one layer rarely align with the gaps in another.",
+      "citation": "NIOSH Hierarchy of Controls."
+    },
+    {
+      "id": "T18-final-Q2",
+      "type": "mc",
+      "prompt": "When does the General Duty Clause (OSH Act Section 5(a)(1)) come into play, as distinct from a specific OSHA standard like 29 CFR 1910.268?",
+      "choices": [
+        "It never applies if a specific standard exists for the industry",
+        "It is the catch-all authority OSHA uses to cite an employer for a recognized hazard likely to cause death or serious harm, when no specific standard directly addresses that exact hazard",
+        "It only applies to hazards that occurred more than once at the same worksite",
+        "It replaces all specific OSHA standards for telecommunications work"
+      ],
+      "answerIndex": 1,
+      "explanation": "The General Duty Clause is the catch-all: when a recognized hazard exists but no specific regulation covers the exact situation, OSHA can still cite the employer under Section 5(a)(1). Heat illness (no dedicated federal OSHA heat standard as of this writing) is a common real-world example."
+    },
+    {
+      "id": "T18-final-Q3",
+      "type": "mc",
+      "prompt": "Which OSHA standard is the PRIMARY federal safety standard for telecom OSP field work, and what does it cover?",
+      "choices": [
+        "29 CFR 1910.269 — covers electric power generation/transmission/distribution workers exclusively",
+        "29 CFR 1910.268 (Subpart R — Telecommunications) — covers overhead line work, manhole entry, grounding, and PPE for telecom crews",
+        "29 CFR 1926 Subpart M — covers all construction fall protection nationwide",
+        "29 CFR 1910.146 — covers only permit-required confined spaces in general industry"
+      ],
+      "answerIndex": 1,
+      "explanation": "29 CFR 1910.268 is the primary OSHA standard specifically for telecom field work, addressing the range of hazards a telecom crew actually faces: aerial fall protection, manhole entry, and grounding requirements.",
+      "citation": "29 CFR 1910.268(a) — Scope and Application."
+    },
+    {
+      "id": "T18-final-Q4",
+      "type": "mc",
+      "prompt": "During a group lockout on shared equipment with two authorized employees, what is required before the equipment can be re-energized?",
+      "choices": [
+        "Only the senior employee's lock needs to be removed",
+        "Each authorized employee who applied a personal lock to the group lockout hasp must remove their own lock before re-energization",
+        "A supervisor's verbal approval alone is sufficient",
+        "The equipment can be re-energized once work appears complete, regardless of lock status"
+      ],
+      "answerIndex": 1,
+      "explanation": "In a group lockout, each authorized employee's lock protects only that employee. Re-energization cannot occur until every individual lock is removed by the person who applied it.",
+      "citation": "29 CFR 1910.147(f)(3) — Group lockout or tagout."
+    },
+    {
+      "id": "T18-final-Q5",
+      "type": "mc",
+      "prompt": "What is the correct order of the six LOTO steps under 29 CFR 1910.147(d)?",
+      "choices": [
+        "Isolation -> Preparation -> Shutdown -> Verification -> Stored energy release -> Lockout application",
+        "Preparation -> Shutdown -> Isolation -> Lockout/tagout device application -> Stored energy release/restraint -> Verification of isolation",
+        "Shutdown -> Preparation -> Lockout application -> Isolation -> Verification -> Stored energy release",
+        "Preparation -> Verification -> Shutdown -> Isolation -> Lockout application -> Stored energy release"
+      ],
+      "answerIndex": 1,
+      "explanation": "The sequence is Preparation -> Shutdown -> Isolation -> Lockout/tagout device application -> Stored energy release/restraint -> Verification of isolation. Skipping the final verification step is one of the most frequently cited LOTO violations.",
+      "citation": "29 CFR 1910.147(d)(1)-(d)(6)."
+    },
+    {
+      "id": "T18-final-Q6",
+      "type": "mc",
+      "prompt": "Why does 29 CFR 1910.268(o) — not the full 1910.146 Permit-Required Confined Space procedure — normally govern a routine telecom manhole entry?",
+      "choices": [
+        "Manholes are legally not confined spaces",
+        "A more specific standard written for the exact condition (1910.268(o), telecom manhole entry) supersedes a more general standard (1910.146) covering that same condition, per 29 CFR 1910.5(c)(1)",
+        "1910.146 has been fully repealed and no longer applies to any industry",
+        "Telecom workers are categorically exempt from all confined space regulation"
+      ],
+      "answerIndex": 1,
+      "explanation": "1910.5(c)(1) is the standard OSHA doctrine: when a specific standard exists for a given condition, it takes precedence over a more general standard covering the same condition. The full 1910.146 PRCS procedure still applies if conditions can't be made safe under the streamlined 1910.268(o) test-ventilate-attend approach.",
+      "citation": "29 CFR 1910.268(o); 29 CFR 1910.5(c)(1)."
+    },
+    {
+      "id": "T18-final-Q7",
+      "type": "mc",
+      "prompt": "A gas monitor in a telecom vault reads O2 = 20.1%, LEL = 18%, CO = 2 ppm. What must the crew do before entry?",
+      "choices": [
+        "Proceed — all readings look acceptable at a glance",
+        "Ventilate and re-test — the 18% LEL exceeds the 10% LEL industry action threshold, even though oxygen is in range",
+        "Only worry about CO since it's the only toxic gas reading",
+        "Enter immediately since O2 above 19.5% always means the space is safe"
+      ],
+      "answerIndex": 1,
+      "explanation": "Oxygen being in the acceptable 19.5%-23.5% range does not override the combustible-gas requirement. 18% LEL means combustible gas is present at 18% of its explosive concentration — well above the 10% LEL action threshold — requiring continuous forced ventilation and re-testing before entry.",
+      "citation": "29 CFR 1910.268(o)(2)(ii)(B); ANSI/ASSE Z117.1 (10% LEL action threshold)."
+    },
+    {
+      "id": "T18-final-Q8",
+      "type": "mc",
+      "prompt": "What is the acceptable oxygen concentration range for confined space entry, and why does OSHA define BOTH a lower and an upper bound?",
+      "choices": [
+        "19.5%-23.5%; low oxygen risks asphyxiation, while oxygen-enriched atmospheres above 23.5% dramatically increase fire/explosion risk",
+        "18.0%-21.0%; only the lower bound matters for worker safety",
+        "20.9%-25.0%; there is no meaningful upper-bound risk",
+        "There is no defined range — only continuous monitoring for toxic gases matters"
+      ],
+      "answerIndex": 0,
+      "explanation": "29 CFR 1910.146(b) defines an oxygen-deficient threshold (below 19.5%, asphyxiation/unconsciousness risk) and an oxygen-enriched threshold (above 23.5%, fire/explosion risk) — both ends of the range are hazardous, even though more oxygen might intuitively sound safer.",
+      "citation": "29 CFR 1910.146(b)."
+    },
+    {
+      "id": "T18-final-Q9",
+      "type": "mc",
+      "prompt": "At what height above ground does 29 CFR 1910.268(g)(1) trigger the fall protection requirement for telecom pole work — and how does this differ from general construction?",
+      "choices": [
+        "6 feet, identical to 29 CFR 1926 Subpart M (construction)",
+        "4 feet — lower than the 6-foot trigger in 1926 Subpart M, because telecom OSP work is classified under 1910 (general industry) rather than 1926 (construction)",
+        "10 feet, higher than the construction standard",
+        "There is no height trigger for telecom pole work; fall protection is always optional below 40 feet"
+      ],
+      "answerIndex": 1,
+      "explanation": "1910.268(g)(1) triggers fall protection at more than 4 feet above ground on poles — a lower, more protective threshold than the 6-foot trigger in the construction fall-protection subpart, reflecting the different regulatory classification of telecom field work.",
+      "citation": "29 CFR 1910.268(g)(1)."
+    },
+    {
+      "id": "T18-final-Q10",
+      "type": "mc",
+      "prompt": "A worker's positioning system (body belt + pole strap) is their only protection at a pole work position. Their gaff pulls out unexpectedly. What is the risk?",
+      "choices": [
+        "None — a positioning system is engineered to arrest any fall automatically",
+        "The positioning strap may slip rather than catch the fall; only a PFAS (full-body harness + energy-absorbing lanyard/SRL) is designed to arrest a fall and limit the arrest force to 1,800 lbf or less",
+        "The 4-foot rule means no fall protection was required at all",
+        "The body belt will automatically deploy a backup lanyard"
+      ],
+      "answerIndex": 1,
+      "explanation": "A positioning system holds a worker at a fixed point for hands-free work but is not tested or designed to arrest an actual fall. Only a PFAS is engineered for fall arrest, with the maximum arresting force capped at 1,800 lbf under OSHA/ANSI Z359.",
+      "citation": "29 CFR 1910.268(g)(1); OSHA/ANSI Z359 maximum arresting force (1,800 lbf)."
+    },
+    {
+      "id": "T18-final-Q11",
+      "type": "mc",
+      "prompt": "Where must a fall-protection lanyard be attached when working in a bucket truck aerial lift, and why?",
+      "choices": [
+        "To a fixed external anchor like a pole crossarm, for maximum stability",
+        "To the boom or basket of the aerial lift itself, so the attachment point travels with the worker if the truck repositions",
+        "To the truck frame at ground level, for the shortest possible fall distance",
+        "Anywhere convenient — attachment point location has no safety significance"
+      ],
+      "answerIndex": 1,
+      "explanation": "Attaching to a fixed external structure can pull a worker out of the basket if the truck moves — a common and fatal error. Attaching to the boom or basket ensures the connection point stays with the worker and the lift.",
+      "citation": "29 CFR 1910.67(c)(2)(v)."
+    },
+    {
+      "id": "T18-final-Q12",
+      "type": "mc",
+      "prompt": "What is the minimum rubber insulating glove class required for work near a 7,200V phase-to-ground conductor, and what voltage range does that class cover?",
+      "choices": [
+        "Class 00, rated up to 500V AC",
+        "Class 1, rated up to 7,500V AC",
+        "Class 0, rated up to 1,000V AC",
+        "Class 3, rated up to 26,500V AC (required minimum for any distribution work)"
+      ],
+      "answerIndex": 1,
+      "explanation": "Class 1 gloves (rated up to 7,500V AC) cover 7,200V phase-to-ground with margin. Class 0 and Class 00 would be dangerously under-rated. A higher class than the minimum (e.g., Class 2) is acceptable but not required.",
+      "citation": "29 CFR 1910.137; ASTM D120 glove class voltage ratings."
+    },
+    {
+      "id": "T18-final-Q13",
+      "type": "mc",
+      "prompt": "Rubber insulating gloves must be laboratory re-tested at what maximum interval once in service, and why can't a visual inspection substitute for this?",
+      "choices": [
+        "12 months; visual inspection is an acceptable substitute if no cracks are visible",
+        "6 months; visual inspection alone cannot detect the micro-cracks and internal degradation that compromise insulation",
+        "24 months; gloves rarely degrade with normal handling",
+        "There is no re-test requirement once gloves pass their initial factory test"
+      ],
+      "answerIndex": 1,
+      "explanation": "ASTM D120 requires in-service rubber insulating gloves to be laboratory re-tested at intervals not exceeding 6 months. Visual inspection alone is insufficient because the insulation-compromising degradation is often invisible to the naked eye.",
+      "citation": "ASTM D120 (6-month in-service retest interval); 29 CFR 1910.137(b)(2)(ii)."
+    },
+    {
+      "id": "T18-final-Q14",
+      "type": "mc",
+      "prompt": "Which ANSI Z89.1 hard hat class is required for work near energized distribution conductors, and what does its voltage rating actually represent?",
+      "choices": [
+        "Class G (2,200V) — the standard rating represents a safe-contact voltage",
+        "Class E (dielectric-tested to 20,000V) — the rating is a lab dielectric TEST rating confirming the shell won't conduct under lab conditions at that voltage, not a guarantee of safety at that voltage in the field",
+        "Class C (Conductive) — provides no electrical protection but is required for all telecom work",
+        "There is no electrical rating for hard hats under ANSI Z89.1"
+      ],
+      "answerIndex": 1,
+      "explanation": "Class E hard hats are dielectric-tested to 20,000V, meaning the shell material won't conduct current at that test voltage under controlled lab conditions — this is a materials test, not a claim that the helmet makes 20,000V contact safe. Class G (2,200V) is insufficient for distribution voltage; Class C offers no electrical protection at all.",
+      "citation": "ANSI/ISEA Z89.1-2014 (R2019)."
+    },
+    {
+      "id": "T18-final-Q15",
+      "type": "mc",
+      "prompt": "How is the OSHA Minimum Approach Distance (MAD) for a specific energized conductor determined today, and what changed in the 2014 revision to 1910.269?",
+      "choices": [
+        "A fixed voltage-range table (e.g., '1-15 kV = 2 ft 2 in') has always been used and remains unchanged",
+        "Since 2014, MAD is calculated via the Appendix B formula in 29 CFR 1910.269(l)(2) for the exact phase-to-ground voltage, using the OSHA MAD Calculator — replacing the older fixed-range-table approach",
+        "MAD is set entirely by NESC clearance rules, not by OSHA",
+        "MAD is determined solely by the utility's internal policy, which overrides OSHA rules"
+      ],
+      "answerIndex": 1,
+      "explanation": "The 2014 revision replaced fixed voltage-range tables with a formula-based calculation (Appendix B) tied to the exact system voltage, implemented via the free OSHA MAD Calculator tool. Older training materials citing fixed-range values ('1-15 kV = 2 ft 2 in') reflect the outdated pre-2014 approach.",
+      "citation": "29 CFR 1910.269(l)(2) and Appendix B."
+    },
+    {
+      "id": "T18-final-Q16",
+      "type": "mc",
+      "prompt": "A non-1910.269-qualified worker must splice 18 inches from an energized 14.4 kV conductor, inside the calculated MAD. What is the correct response?",
+      "choices": [
+        "Proceed carefully while wearing Class E head protection",
+        "Put on Class 2 rubber gloves and proceed",
+        "Stop, notify the supervisor, and request de-energization or a qualified 1910.269 observer",
+        "Have a coworker watch from a distance in case of a shock"
+      ],
+      "answerIndex": 2,
+      "explanation": "PPE alone does not make a worker 1910.269-qualified. A non-qualified worker inside the MAB must stop and either have the conductor de-energized or work under a qualified 1910.269 observer's direct supervision.",
+      "citation": "29 CFR 1910.269(l)(1)-(l)(2) and Appendix B."
+    },
+    {
+      "id": "T18-final-Q17",
+      "type": "mc",
+      "prompt": "What is the minimum hi-vis apparel class required for daytime work in a roadway temporary traffic control zone, and does elevation in a bucket truck change this requirement?",
+      "choices": [
+        "Class 1; elevation exempts a worker from the requirement",
+        "Class 2 (ANSI/ISEA 107 daytime roadway minimum); elevation does not remove the struck-by exposure or the requirement",
+        "Class 3; required for daytime and nighttime work equally",
+        "No class standard exists — any visible vest satisfies the requirement"
+      ],
+      "answerIndex": 1,
+      "explanation": "Class 2 hi-vis is the minimum for daytime roadway TTC-zone work. Requirements are based on proximity to a traffic lane, not physical elevation — a worker in a bucket truck adjacent to live traffic is still exposed to a struck-by hazard from an errant vehicle.",
+      "citation": "MUTCD 11th Edition (2023), Part 6, Chapter 6E; ANSI/ISEA 107."
+    },
+    {
+      "id": "T18-final-Q18",
+      "type": "mc",
+      "prompt": "What device does MUTCD Chapter 6E require flaggers to use, and why is a hand-held flag alone not compliant?",
+      "choices": [
+        "A hand flag alone is fully compliant and preferred",
+        "A STOP/SLOW paddle (octagonal, STOP on one face and SLOW on the reverse) — it is more visible and less ambiguous to approaching drivers than a waved flag",
+        "A lighted wand, used interchangeably with a paddle at any time of day",
+        "No specific device is required; any visible signal is acceptable"
+      ],
+      "answerIndex": 1,
+      "explanation": "MUTCD Chapter 6E specifies the STOP/SLOW paddle as the required flagger device because it communicates a clear, unambiguous instruction (STOP or SLOW) that a waved flag cannot reliably convey to approaching drivers.",
+      "citation": "MUTCD 11th Edition (2023), Chapter 6E."
+    },
+    {
+      "id": "T18-final-Q19",
+      "type": "mc",
+      "prompt": "In what order should termination devices in a work zone be removed at the end of a job, and why?",
+      "choices": [
+        "Remove advance warning signs first, then taper cones, then termination cones, then activity-area cones — order doesn't affect safety",
+        "Confirm the activity area is clear, then remove activity-area cones toward the taper, then taper cones, then termination-area cones, then advance warning signs — removing termination devices LAST protects workers still in the zone",
+        "Remove all devices simultaneously for efficiency",
+        "Remove termination devices first so traffic can resume flowing while the rest of cleanup continues"
+      ],
+      "answerIndex": 1,
+      "explanation": "Removing termination devices last ensures traffic doesn't flow back through the work zone before the activity area is confirmed clear of workers and equipment. Driving through the termination area before the work space is cleared is a struck-by hazard for the remaining crew.",
+      "citation": "MUTCD 11th Edition (2023), Part 6, Chapter 6B."
+    },
+    {
+      "id": "T18-final-Q20",
+      "type": "mc",
+      "prompt": "Which section of a GHS Safety Data Sheet lists the specific PPE required when handling a hazardous chemical, and which section covers first-aid measures?",
+      "choices": [
+        "Section 8 covers PPE; Section 4 covers first aid",
+        "Section 2 covers PPE; Section 11 covers first aid",
+        "Section 1 covers both PPE and first aid",
+        "SDS documents do not have standardized section numbers across manufacturers"
+      ],
+      "answerIndex": 0,
+      "explanation": "The 16-section GHS SDS format is standardized: Section 4 covers first-aid measures, and Section 8 covers exposure controls and PPE — the same section numbers apply regardless of manufacturer under HazCom 2012.",
+      "citation": "29 CFR 1910.1200 (HazCom 2012 — 16-section GHS SDS format)."
+    },
+    {
+      "id": "T18-final-Q21",
+      "type": "mc",
+      "prompt": "What is the current OSHA PEL for respirable crystalline silica, and what is the primary engineering control an OSP crew should use during concrete saw-cutting to stay under it?",
+      "choices": [
+        "100 ug/m3 TWA; N95 respirators alone are sufficient",
+        "50 ug/m3 TWA (2016 rule); wet-cutting to suppress dust at the source",
+        "25 ug/m3 TWA; there is no engineering control, only administrative scheduling",
+        "There is no PEL for silica; only a voluntary guideline exists"
+      ],
+      "answerIndex": 1,
+      "explanation": "The current PEL is 50 ug/m3 as an 8-hour TWA under the 2016 silica rule. Wet-cutting is the primary engineering control — it suppresses dust at the point of generation rather than relying on respiratory PPE as the first line of defense.",
+      "citation": "29 CFR 1910.1053 (2016 OSHA silica rule)."
+    },
+    {
+      "id": "T18-final-Q22",
+      "type": "mc",
+      "prompt": "A technician cuts their hand and receives only a bandage on site, working the rest of the shift unrestricted. Is this OSHA-300-recordable, and why?",
+      "choices": [
+        "Yes — any visible injury is automatically recordable",
+        "No — bandaging is defined as first aid; recordability depends on the TREATMENT given, not how the injury looks",
+        "Yes, but only because it occurred on an OSP jobsite specifically",
+        "No — only injuries requiring an ambulance are recordable"
+      ],
+      "answerIndex": 1,
+      "explanation": "29 CFR 1904.7(a) defines recordability by the treatment actually provided. Bandaging is explicitly first aid and does not meet the recordable threshold — the same-looking cut requiring sutures would be recordable.",
+      "citation": "29 CFR 1904.7(a)."
+    },
+    {
+      "id": "T18-final-Q23",
+      "type": "mc",
+      "prompt": "An 8-employee OSP contractor believes they are fully exempt from OSHA recordkeeping. What is the correct legal position?",
+      "choices": [
+        "Fully exempt — the size exemption covers everything",
+        "Partially exempt — routine 300 log maintenance is exempted for small employers, but the 1904.39 severe-incident reporting duty (fatality, hospitalization, amputation, eye loss) applies to every employer regardless of size",
+        "Not exempt at all — all employers must maintain the full 300 log",
+        "Exempt only if they operate in a low-hazard industry classification, which telecom construction is not"
+      ],
+      "answerIndex": 1,
+      "explanation": "The size exemption applies only to routine recordkeeping (300 log/300A). Severe-incident reporting under 1904.39 is mandatory for every employer, of any size, in any industry.",
+      "citation": "29 CFR 1904.1; 29 CFR 1904.39."
+    },
+    {
+      "id": "T18-final-Q24",
+      "type": "drag-match",
+      "prompt": "Match each OSHA standard to the primary OSP safety topic it governs.",
+      "items": [
+        { "id": "i_1910268", "label": "Overhead pole work, manhole entry, telecom-specific fall protection" },
+        { "id": "i_1910147", "label": "Control of hazardous energy (six-step lockout/tagout)" },
+        { "id": "i_1910269", "label": "Minimum approach distance to energized power conductors" },
+        { "id": "i_1904", "label": "Recordkeeping and severe-incident reporting timelines" }
+      ],
+      "targets": [
+        { "id": "t_1910268", "label": "29 CFR 1910.268" },
+        { "id": "t_1910147", "label": "29 CFR 1910.147" },
+        { "id": "t_1910269", "label": "29 CFR 1910.269" },
+        { "id": "t_1904", "label": "29 CFR 1904" }
+      ],
+      "correctMap": { "t_1910268": "i_1910268", "t_1910147": "i_1910147", "t_1910269": "i_1910269", "t_1904": "i_1904" },
+      "explanation": "Each standard governs a distinct domain of OSP safety: 1910.268 for telecom-specific field hazards, 1910.147 for hazardous-energy control, 1910.269 for approach distance to power conductors, and 1904 for injury/illness recordkeeping and reporting timelines."
+    }
+  ]
+}

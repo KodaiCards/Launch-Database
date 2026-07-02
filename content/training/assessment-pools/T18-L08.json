@@ -1,0 +1,127 @@
+{
+  "assessmentId": "T18-L08",
+  "kind": "lesson",
+  "courseId": "T18",
+  "lessonId": "T18.L08",
+  "drawCount": 4,
+  "passThreshold": 70,
+  "pool": [
+    {
+      "id": "T18-L08-Q1",
+      "type": "mc",
+      "prompt": "Which section of a GHS Safety Data Sheet (SDS) specifies what PPE to wear when handling a hazardous chemical?",
+      "choices": [
+        "Section 2 — Hazard Identification",
+        "Section 4 — First-Aid Measures",
+        "Section 8 — Exposure Controls / PPE",
+        "Section 11 — Toxicological Information"
+      ],
+      "answerIndex": 2,
+      "explanation": "Section 8 (Exposure Controls/PPE) lists engineering controls, applicable exposure limits (OSHA PEL and ACGIH TLV), and specific PPE requirements — glove material, respirator classification, eye/face protection, and body protection.",
+      "citation": "29 CFR 1910.1200 (HazCom 2012 — GHS SDS format)."
+    },
+    {
+      "id": "T18-L08-Q2",
+      "type": "mc",
+      "prompt": "What is the current OSHA Permissible Exposure Limit (PEL) for crystalline silica dust (from concrete cutting), per the 2016 silica rule?",
+      "choices": [
+        "100 ug/m3 TWA (the original 1970s limit)",
+        "50 ug/m3 TWA (the current 2016 rule)",
+        "25 ug/m3 TWA (the ACGIH TLV)",
+        "There is no OSHA PEL for silica — it is only recommended"
+      ],
+      "answerIndex": 1,
+      "explanation": "The current OSHA PEL for crystalline silica is 50 ug/m3 as an 8-hour TWA, per the 2016 revised silica standard. The pre-2016 PEL was 100 ug/m3 — an outdated value that should not be cited. The ACGIH TLV of 25 ug/m3 is more conservative but not legally binding.",
+      "citation": "29 CFR 1910.1053 (2016 OSHA silica rule)."
+    },
+    {
+      "id": "T18-L08-Q3",
+      "type": "mc",
+      "prompt": "A technician splices fiber daily without gloves, wiping filling gel off with a rag. The gel is not acutely toxic. Is this a health concern?",
+      "choices": [
+        "No — if it doesn't cause immediate harm, there's no real hazard",
+        "No — filling gel is exempt from SDS requirements because it's not classified as dangerous",
+        "Yes — chronic daily skin contact with mineral oil-based gel causes cumulative skin damage; nitrile gloves and proper cleaning are required",
+        "Yes — but only if the worker has pre-existing skin conditions"
+      ],
+      "answerIndex": 2,
+      "explanation": "Chronic daily skin contact with mineral oil-based compounds causes cumulative dermatitis and skin damage over time, particularly with absorption through cracked skin. The SDS requires nitrile or latex gloves for routine handling. The hazard is chronic, not acute.",
+      "citation": "Manufacturer SDS for fiber optic filling gel (publicly posted); NIOSH ICSC for mineral oil."
+    },
+    {
+      "id": "T18-L08-Q4",
+      "type": "mc",
+      "prompt": "What is the international standard for classifying and labeling hazardous chemicals, adopted by OSHA under HazCom 2012, which standardized the 16-section SDS format and hazard pictograms?",
+      "choices": [
+        "ANSI Z400.1",
+        "GHS (Globally Harmonized System)",
+        "NFPA 704",
+        "ISO 45001"
+      ],
+      "answerIndex": 1,
+      "explanation": "OSHA adopted the Globally Harmonized System (GHS) for chemical classification and labeling under HazCom 2012, effective June 2015 for most industries. This is why modern SDS documents use the same 16-section structure and standardized pictograms regardless of manufacturer or country of origin.",
+      "citation": "29 CFR 1910.1200 (HazCom 2012)."
+    },
+    {
+      "id": "T18-L08-Q5",
+      "type": "mc",
+      "prompt": "A lead-acid battery spills electrolyte on a crew member's arm at a fiber equipment hut. What is the FIRST action — before reviewing the SDS?",
+      "choices": [
+        "Apply baking soda neutralizer immediately",
+        "Flush the affected skin with large amounts of water for at least 15-20 minutes, then seek medical attention",
+        "Cover with a clean dry cloth and go to urgent care",
+        "Apply the SDS Section 4 instructions only after arriving at a hospital"
+      ],
+      "answerIndex": 1,
+      "explanation": "For acid skin exposure, immediate and prolonged water flushing (15-20 minutes minimum) is the universal first-aid measure and takes priority over every other action, including reading the SDS. Baking soda neutralization is NOT recommended — the neutralization reaction generates heat and can worsen burns.",
+      "citation": "29 CFR 1910.151(c) (emergency eyewash/shower requirements); SDS Section 4 first-aid guidance for sulfuric acid."
+    },
+    {
+      "id": "T18-L08-Q6",
+      "type": "mc",
+      "prompt": "What is the primary engineering control for silica dust exposure during concrete saw-cutting on an OSP job?",
+      "choices": [
+        "Wearing a Class E hard hat",
+        "Wet-cutting — using water to suppress dust at the point of cutting",
+        "Working only during cooler parts of the day",
+        "Using a Class 2 rubber insulating glove"
+      ],
+      "answerIndex": 1,
+      "explanation": "Wet-cutting is the primary engineering control for silica dust — it suppresses dust at the source rather than relying on respiratory PPE alone. If visible dust is generated during saw-cutting, that dust level is far above the PEL, and the crew should switch to wet-cutting immediately."
+    },
+    {
+      "id": "T18-L08-Q7",
+      "type": "mc",
+      "prompt": "At what airborne silica concentration does OSHA require an employer to begin MEASURING (exposure monitoring), even before the 50 ug/m3 PEL is reached?",
+      "choices": [
+        "There is no separate action level — only the 50 ug/m3 PEL matters",
+        "25 ug/m3 as an 8-hour TWA (the action level)",
+        "100 ug/m3 as an 8-hour TWA",
+        "10 ug/m3 as an 8-hour TWA"
+      ],
+      "answerIndex": 1,
+      "explanation": "OSHA's 2016 silica rule requires employers to measure worker exposure once it may reach or exceed 25 ug/m3 as an 8-hour TWA — the action level — which is half the 50 ug/m3 PEL. This gives employers an early trigger to begin monitoring before the legal exposure limit is exceeded.",
+      "citation": "29 CFR 1910.1053 (2016 OSHA silica rule — action level)."
+    },
+    {
+      "id": "T18-L08-Q8",
+      "type": "drag-match",
+      "prompt": "Match each SDS section number to what it covers.",
+      "items": [
+        { "id": "i_s4", "label": "First-aid measures" },
+        { "id": "i_s8", "label": "Exposure controls and PPE" },
+        { "id": "i_s11", "label": "Toxicological information (health effects)" },
+        { "id": "i_s1", "label": "Product identity and supplier emergency contact" }
+      ],
+      "targets": [
+        { "id": "t_s4", "label": "Section 4" },
+        { "id": "t_s8", "label": "Section 8" },
+        { "id": "t_s11", "label": "Section 11" },
+        { "id": "t_s1", "label": "Section 1" }
+      ],
+      "correctMap": { "t_s4": "i_s4", "t_s8": "i_s8", "t_s11": "i_s11", "t_s1": "i_s1" },
+      "explanation": "The 16-section GHS SDS format is standardized: Section 1 (identity/contact), Section 4 (first aid), Section 8 (exposure controls/PPE), and Section 11 (toxicology) are among the sections a field worker is most likely to need quickly during a pre-task review or emergency.",
+      "citation": "29 CFR 1910.1200 (HazCom 2012 — 16-section GHS SDS format)."
+    }
+  ]
+}
