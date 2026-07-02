@@ -140,7 +140,7 @@
       ],
       "answerIndex": 1,
       "explanation": "Because splitter loss scales with split ratio and the GPON budget class is fixed, a higher split ratio trades directly against the remaining budget for everything else in the link — this is the same fixed-budget tradeoff principle applied to optical loss that appears throughout T05's structural design (clearance margin, EDS range, grade of construction).",
-      "citation": "Industry-standard PLC splitter insertion-loss figures (WebSearch-verified); ITU-T G.984 GPON budget classes."
+      "citation": "Industry-standard PLC splitter insertion-loss figures; ITU-T G.984 GPON budget classes."
     },
     {
       "id": "T05-final-Q11",
@@ -213,18 +213,47 @@
       "type": "drag-match",
       "prompt": "Match each T05 concept to the specific problem it addresses.",
       "items": [
-        { "id": "i_232", "label": "How high must the cable be above the road (accounting for final sag)?" },
-        { "id": "i_ila", "label": "Which pole owner's agreement authorizes attachment to their specific poles?" },
-        { "id": "i_otmr", "label": "Can a single-visit contractor handle this make-ready without waiting on the incumbent?" },
-        { "id": "i_eds", "label": "What stringing tension keeps an ADSS cable's fiber within safe mechanical strain?" }
+        {
+          "id": "i_232",
+          "label": "How high must the cable be above the road (accounting for final sag)?"
+        },
+        {
+          "id": "i_ila",
+          "label": "Which pole owner's agreement authorizes attachment to their specific poles?"
+        },
+        {
+          "id": "i_otmr",
+          "label": "Can a single-visit contractor handle this make-ready without waiting on the incumbent?"
+        },
+        {
+          "id": "i_eds",
+          "label": "What stringing tension keeps an ADSS cable's fiber within safe mechanical strain?"
+        }
       ],
       "targets": [
-        { "id": "t_232", "label": "Rule 232 (final sag/clearance)" },
-        { "id": "t_ila", "label": "ILA (Inter-utility License Agreement)" },
-        { "id": "t_otmr", "label": "OTMR simple-vs-complex classification" },
-        { "id": "t_eds", "label": "EDS/RTS ratio" }
+        {
+          "id": "t_232",
+          "label": "Rule 232 (final sag/clearance)"
+        },
+        {
+          "id": "t_ila",
+          "label": "ILA (Inter-utility License Agreement)"
+        },
+        {
+          "id": "t_otmr",
+          "label": "OTMR simple-vs-complex classification"
+        },
+        {
+          "id": "t_eds",
+          "label": "EDS/RTS ratio"
+        }
       ],
-      "correctMap": { "t_232": "i_232", "t_ila": "i_ila", "t_otmr": "i_otmr", "t_eds": "i_eds" },
+      "correctMap": {
+        "t_232": "i_232",
+        "t_ila": "i_ila",
+        "t_otmr": "i_otmr",
+        "t_eds": "i_eds"
+      },
       "explanation": "Each T05 concept addresses a distinct design question: Rule 232 governs ground clearance using final sag, the ILA is the pole-owner-specific attachment authorization, OTMR classification determines the make-ready process path, and the EDS/RTS ratio sets safe ADSS stringing tension — together forming the interlocking checklist an aerial designer works through on every project."
     },
     {

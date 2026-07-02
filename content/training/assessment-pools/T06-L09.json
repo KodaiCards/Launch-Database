@@ -18,7 +18,7 @@
       ],
       "answerIndex": 1,
       "explanation": "Section 35 covers direct-buried cable and cable in duct not part of an enclosed conduit system, applying to both supply and communication cables — the key distinction driving which section applies is the physical location context (open earth/open duct vs. an enclosed underground structure), not the cable's ownership or utility type.",
-      "citation": "NESC C2 Section 35 — WebSearch-verified (accessengineeringlibrary.com NESC section summary; multiple corroborating utility/engineering technical sources confirming Section 35's scope and title)."
+      "citation": "NESC C2 Section 35, confirmed via multiple independent utility/engineering technical sources."
     },
     {
       "id": "T06-L09-Q2",
@@ -32,7 +32,7 @@
       ],
       "answerIndex": 2,
       "explanation": "Section 34 specifically governs cable inside enclosed underground structures (manholes, handholes) — once the fiber enters the manhole, Section 34's installation requirements apply, distinct from Section 35's open-earth/open-duct scope.",
-      "citation": "NESC C2 Section 34 — WebSearch-verified, confirming Section 34's title and scope (\"cable in underground structures,\" including subsections on general requirements, installation, grounding/bonding)."
+      "citation": "NESC C2 Section 34 (\"cable in underground structures,\" including general requirements, installation, and grounding/bonding subsections)."
     },
     {
       "id": "T06-L09-Q3",
