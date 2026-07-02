@@ -1,0 +1,115 @@
+{
+  "assessmentId": "T04-L03",
+  "kind": "lesson",
+  "courseId": "T04",
+  "lessonId": "T04.L03",
+  "drawCount": 4,
+  "passThreshold": 70,
+  "pool": [
+    {
+      "id": "T04-L03-Q1",
+      "type": "mc",
+      "prompt": "After uploading field GPS pole locations to a GIS project, the points land approximately 200 ft west of where the poles actually are on the aerial imagery. What is the most likely cause?",
+      "choices": [
+        "The aerial imagery was captured on a cloudy day and has color distortion",
+        "A datum mismatch — the GPS unit recorded in one datum (e.g., NAD27) while the project basemap uses another (e.g., NAD83)",
+        "The GPS antenna was mounted on the wrong side of the vehicle",
+        "The pole numbering sequence was entered incorrectly in the field notebook"
+      ],
+      "answerIndex": 1,
+      "explanation": "A 100-300 ft systematic offset between GPS points and a basemap is the classic signature of a datum mismatch. Both datasets use latitude/longitude, but different datums define the Earth's origin and scale differently, producing a consistent spatial offset that reprojection corrects."
+    },
+    {
+      "id": "T04-L03-Q2",
+      "type": "mc",
+      "prompt": "A shapefile for a 'Poles' layer consists of three files: Poles.SHP, Poles.SHX, and Poles.DBF. You accidentally delete the .DBF file. What is lost?",
+      "choices": [
+        "The geometry — the software can no longer display the pole locations on the map",
+        "The spatial index — the layer will still display but will open slowly",
+        "The attribute table — pole numbers, heights, and all other tabular data attached to each point are gone",
+        "The coordinate system definition — all poles will appear at location (0, 0)"
+      ],
+      "answerIndex": 2,
+      "explanation": "The .DBF file stores all non-geometric data attached to each feature. .SHP holds the geometry; .SHX holds the spatial index. Deleting .DBF leaves the poles displaying on the map but with no attribute information.",
+      "citation": "Esri Shapefile Technical Description (standard GIS file format)."
+    },
+    {
+      "id": "T04-L03-Q3",
+      "type": "mc",
+      "prompt": "What is the reference model of the Earth's shape and size that a coordinate system is built on called?",
+      "choices": [
+        "A projection",
+        "A datum",
+        "A graticule",
+        "An ellipsoid grid"
+      ],
+      "answerIndex": 1,
+      "explanation": "The datum defines the reference ellipsoid and origin for a coordinate system. NAD83 and WGS84 are modern datums; NAD27 is the legacy US datum. Mixing layers with different datums without reprojection causes positional errors of 100-300 ft."
+    },
+    {
+      "id": "T04-L03-Q4",
+      "type": "mc",
+      "prompt": "A project is centered at longitude -88.5 degrees (Mississippi). Using UTM Zone = floor((longitude + 180) / 6) + 1, which UTM zone is correct?",
+      "choices": [
+        "Zone 14",
+        "Zone 15",
+        "Zone 16",
+        "Zone 17"
+      ],
+      "answerIndex": 2,
+      "explanation": "Step 1: -88.5 + 180 = 91.5. Step 2: 91.5 / 6 = 15.25. Step 3: floor(15.25) = 15. Step 4: 15 + 1 = 16. Zone 16 covers longitude -84 to -90 degrees, including central and southern Mississippi."
+    },
+    {
+      "id": "T04-L03-Q5",
+      "type": "mc",
+      "prompt": "Why must a utility locate/atlas layer in a GIS project be treated as 'guidance, not design truth'?",
+      "choices": [
+        "Utility locate data is always fabricated and should be ignored entirely",
+        "Utility locate/atlas records have highly variable accuracy — actual buried/aerial utility positions must still be confirmed with an 811 locate before excavation, regardless of what the GIS layer shows",
+        "Utility locate layers are only accurate for aerial utilities, never buried",
+        "GIS software cannot display utility locate data correctly, making the layer unusable"
+      ],
+      "answerIndex": 1,
+      "explanation": "Utility atlas/locate records vary widely in accuracy and currency across different utility owners and data sources. Treating them as authoritative without an 811 locate before excavation risks striking an undocumented or mispositioned utility."
+    },
+    {
+      "id": "T04-L03-Q6",
+      "type": "mc",
+      "prompt": "A GIS technician notices that a shapefile's .prj file is missing. What is the practical consequence when this shapefile is imported into a new project?",
+      "choices": [
+        "No consequence — the .prj file is purely optional metadata",
+        "The shapefile will import without a known coordinate system definition and may be placed in the wrong location entirely, since the software has no way to know which datum/projection the coordinates use",
+        "The attribute table becomes permanently corrupted",
+        "The geometry itself becomes unreadable without the .prj file"
+      ],
+      "answerIndex": 1,
+      "explanation": "The .prj file defines the coordinate reference system for the shapefile's coordinates. Without it, GIS software has no way to correctly interpret and place the geometry relative to other layers, risking a severe positional error or a failed import."
+    },
+    {
+      "id": "T04-L03-Q7",
+      "type": "mc",
+      "prompt": "Two adjacent UTM zones (e.g., Zone 15 and Zone 16) meet at a specific longitude boundary. What practical GIS challenge can arise for an OSP project route that crosses this boundary?",
+      "choices": [
+        "No challenge exists; UTM zones have no practical effect on project data",
+        "Points on either side of the zone boundary are measured relative to a different zone's central meridian, so a project spanning both zones needs a consistent projection choice (or an alternate statewide/regional CRS) to avoid distance and area distortions near the boundary",
+        "UTM zones only affect elevation data, never horizontal position",
+        "Crossing a UTM zone boundary automatically corrupts all GPS equipment in the field"
+      ],
+      "answerIndex": 1,
+      "explanation": "Projects near a UTM zone boundary can suffer increasing distortion in coordinates and calculated distances as they approach the zone edge, since each UTM zone is optimized around its own central meridian — a reason some projects use a state-plane or other regional CRS instead of raw UTM near a zone boundary."
+    },
+    {
+      "id": "T04-L03-Q8",
+      "type": "mc",
+      "prompt": "A field crew records pole GPS coordinates using a handheld unit set to WGS84, while the project basemap uses NAD83. Is this a problem, and why?",
+      "choices": [
+        "Always a severe problem — WGS84 and NAD83 produce wildly different, unusable coordinates",
+        "Generally a minor practical concern for most OSP-scale work in the continental US — WGS84 and NAD83 are very closely aligned (typically within about a meter or less in the continental US, though the exact offset varies by location and epoch) compared to the 100-300 ft NAD27/NAD83 mismatch, but confirming the datum on both sides and documenting it remains good practice",
+        "No difference whatsoever exists between WGS84 and NAD83 under any circumstances",
+        "This combination cannot be reprojected using any available GIS software"
+      ],
+      "answerIndex": 1,
+      "explanation": "WGS84 and NAD83 are closely aligned modern datums (the offset is typically small compared to the dramatic 100-300 ft NAD27-vs-NAD83 mismatch), but the exact offset is location- and epoch-dependent — good survey practice still documents and confirms which datum is in use rather than assuming they're interchangeable without verification."
+    }
+  ]
+}
