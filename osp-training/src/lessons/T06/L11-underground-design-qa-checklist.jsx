@@ -40,7 +40,7 @@ export const meta = {
     },
     {
       term: 'depth marking on plan',
-      definition: 'The notation on a design drawing that specifies the exact burial depth at key points along the route — particularly at road crossings, utility crossings, changes in soil type, and driveway crossings. A plan that shows conduit route without depth callouts at these critical points is incomplete: the bore crew and inspector cannot verify compliance with RUS 1751F-635 cover requirements without an explicit depth reference on the drawing. Standard format: a circled depth callout (e.g., "36\\" cover") at each critical point with an arrow to the relevant plan element.',
+      definition: 'The notation on a design drawing that specifies the exact burial depth at key points along the route — particularly at road crossings, utility crossings, changes in soil type, and driveway crossings. A plan that shows conduit route without depth callouts at these critical points is incomplete: the bore crew and inspector cannot verify compliance with RUS 1751F-643 cover requirements without an explicit depth reference on the drawing. Standard format: a circled depth callout (e.g., "36\\" cover") at each critical point with an arrow to the relevant plan element.',
     },
     {
       term: 'fill calc verification',
@@ -48,7 +48,7 @@ export const meta = {
     },
     {
       term: 'access spacing',
-      definition: 'The measured distance between successive terminal pedestals, manholes, or handholes along the underground route, verified against the RUS 1751F-635 maximum spacing rule of 330 feet. Access spacing must be verified along the actual cable route (not point-to-point straight-line distance). A design drawing should include dimensioned route segments between each access point so the reviewer can confirm that no segment exceeds the 330-foot maximum.',
+      definition: 'The measured distance between successive terminal pedestals, manholes, or handholes along the underground route, verified against the RUS 1751F-643 maximum spacing rule of 330 feet. Access spacing must be verified along the actual cable route (not point-to-point straight-line distance). A design drawing should include dimensioned route segments between each access point so the reviewer can confirm that no segment exceeds the 330-foot maximum.',
     },
   ],
 };
@@ -61,7 +61,7 @@ export const vocabulary_assumed = [
   { term: 'pedestal spacing', source_lesson_id: 'T06.L08' },
   { term: 'minimum cover', source_lesson_id: 'T06.L02' },
   { term: 'supply-communication separation', source_lesson_id: 'T06.L09' },
-  { term: 'RUS 1751F-635', source_lesson_id: 'T06.L02' },
+  { term: 'RUS 1751F-643', source_lesson_id: 'T06.L02' },
   { term: 'innerduct traceability', source_lesson_id: 'T06.L10' },
 ];
 
@@ -125,9 +125,9 @@ export default function T06L11_UndergroundDesignQAChecklist() {
             <p className="text-sm text-slate-300/90 mt-1">
               Required callouts: every road crossing, every driveway crossing, every utility crossing,
               every change in soil type or AHJ zone, every bore path segment where depth changes.
-              Verify each callout meets the applicable depth rule (RUS 1751F-635 §6 minimums; AHJ
+              Verify each callout meets the applicable depth rule (RUS 1751F-643 §6 minimums; AHJ
               may require more). Flag any road crossing without a depth callout as INCOMPLETE.
-              (Source: RUS 1751F-635 §6; T06.L02.)
+              (Source: RUS 1751F-643 §6; T06.L02.)
             </p>
           </div>
 
@@ -147,9 +147,9 @@ export default function T06L11_UndergroundDesignQAChecklist() {
             <p className="font-semibold text-slate-100">3. Pedestal spacing — along the cable route</p>
             <p className="text-sm text-slate-300/90 mt-1">
               Measure the cable-route distance (not straight-line) between each pair of successive
-              pedestals. Maximum = 330 feet (RUS 1751F-635 §7). Also verify pedestals are placed
+              pedestals. Maximum = 330 feet (RUS 1751F-643 §7). Also verify pedestals are placed
               at ALL branch points and service drop locations. Flag any segment over 330 feet as
-              NON-COMPLIANT. (Source: RUS 1751F-635 §7; T06.L08.)
+              NON-COMPLIANT. (Source: RUS 1751F-643 §7; T06.L08.)
             </p>
           </div>
 
@@ -184,7 +184,7 @@ export default function T06L11_UndergroundDesignQAChecklist() {
               For every bore shot: confirm the bore profile shows entry angle, target depth,
               exit angle, and that the profile respects minimum cover at all crossings. Confirm
               exit pit location does not conflict with utilities or paved surface where open-cut
-              would require a separate permit. (Source: T06.L07; RUS 1751F-635 §6.)
+              would require a separate permit. (Source: T06.L07; RUS 1751F-643 §6.)
             </p>
           </div>
 
@@ -205,7 +205,7 @@ export default function T06L11_UndergroundDesignQAChecklist() {
             <p className="text-sm text-slate-300/90 mt-1">
               Confirm that the design or installation notes call out minimum slack storage
               (20–30 feet per cable end) at all terminal pedestals and splice handholes.
-              (Source: RUS 1751F-635 §7; T06.L08.)
+              (Source: RUS 1751F-643 §7; T06.L08.)
             </p>
           </div>
         </div>
@@ -227,7 +227,7 @@ export default function T06L11_UndergroundDesignQAChecklist() {
           Both checks are required on RUS-funded projects. The engineer of record typically
           performs or reviews the design check before issuing for bid. The inspector performs
           the field check during construction inspection visits and during the project closeout
-          inspection. (Source: RUS 1751F-635 §11; field practice.)
+          inspection. (Source: RUS 1751F-643 §11; field practice.)
         </p>
       </section>
 
@@ -285,7 +285,7 @@ export default function T06L11_UndergroundDesignQAChecklist() {
               { text: 'Add a general note on the title block saying "36-inch cover unless otherwise shown"', correct: false },
             ],
             rationale:
-              'Missing depth callouts at road crossings are the most common single QA error in underground designs (RUS 1751F-635 §6). The bore crew cannot be held to a depth that is not on the drawing, and the inspector cannot verify compliance. The drawing must be revised before issue.',
+              'Missing depth callouts at road crossings are the most common single QA error in underground designs (RUS 1751F-643 §6). The bore crew cannot be held to a depth that is not on the drawing, and the inspector cannot verify compliance. The drawing must be revised before issue.',
           },
           {
             id: 'T06-L11-QA-Q2',
@@ -305,7 +305,7 @@ export default function T06L11_UndergroundDesignQAChecklist() {
             id: 'T06-L11-QA-Q3',
             type: 'mc',
             prompt:
-              'Two pedestals on a residential underground route are 380 feet apart (measured along the cable path). RUS 1751F-635 §7 sets a 330-foot maximum. What is the correct fix?',
+              'Two pedestals on a residential underground route are 380 feet apart (measured along the cable path). RUS 1751F-643 §7 sets a 330-foot maximum. What is the correct fix?',
             choices: [
               { text: 'Accept it — 380 feet is only 15% over and within rounding tolerance', correct: false },
               { text: 'Add an intermediate pedestal at approximately 190 feet from each end, bringing both sub-segments to 190 feet', correct: true },
@@ -408,12 +408,12 @@ export default function T06L11_UndergroundDesignQAChecklist() {
               'Pedestal spacing over 330 feet',
             ],
             answerIndex: 1,
-            explanation: 'Missing depth callouts at road crossings is the most common single error. A plan can show the conduit route without ever specifying the required burial depth — which means the bore crew and inspector have no documented depth to verify against. Depth callouts at road crossings, utility crossings, and grade transitions are required before a plan is issued for construction. (Source: field practice; RUS 1751F-635 §6; T06.L02.)',
+            explanation: 'Missing depth callouts at road crossings is the most common single error. A plan can show the conduit route without ever specifying the required burial depth — which means the bore crew and inspector have no documented depth to verify against. Depth callouts at road crossings, utility crossings, and grade transitions are required before a plan is issued for construction. (Source: field practice; RUS 1751F-643 §6; T06.L02.)',
           },
           {
             id: 'T06-L11-Q2',
             type: 'mc',
-            prompt: 'A design drawing shows a route segment from pedestal at stationing 620+00 to pedestal at stationing 623+50. The route follows the road shoulder with a 30-foot offset around a drainage culvert. What is the measured segment length, and does it comply with RUS 1751F-635 §7?',
+            prompt: 'A design drawing shows a route segment from pedestal at stationing 620+00 to pedestal at stationing 623+50. The route follows the road shoulder with a 30-foot offset around a drainage culvert. What is the measured segment length, and does it comply with RUS 1751F-643 §7?',
             choices: [
               '350 feet along route (stationing difference); non-compliant — exceeds 330-foot maximum',
               '350 feet but pedestal spacing is measured point-to-point, so this passes at 320 feet straight-line',
@@ -421,7 +421,7 @@ export default function T06L11_UndergroundDesignQAChecklist() {
               '350 feet along route; the culvert offset adds 30 feet → 380 feet total; non-compliant',
             ],
             answerIndex: 3,
-            explanation: 'Pedestal spacing is measured along the cable route, not straight-line. Stationing 620+00 to 623+50 = 350 feet of stationing (straight-line along the road). But the route offsets 30 feet around the culvert, adding approximately 30 feet of additional route length (the two sides of the offset). Total cable route distance ≈ 380 feet — 50 feet over the 330-foot maximum. Add an intermediate pedestal. There is no 10% tolerance; 330 feet is the hard limit. (Source: RUS 1751F-635 §7; T06.L08.)',
+            explanation: 'Pedestal spacing is measured along the cable route, not straight-line. Stationing 620+00 to 623+50 = 350 feet of stationing (straight-line along the road). But the route offsets 30 feet around the culvert, adding approximately 30 feet of additional route length (the two sides of the offset). Total cable route distance ≈ 380 feet — 50 feet over the 330-foot maximum. Add an intermediate pedestal. There is no 10% tolerance; 330 feet is the hard limit. (Source: RUS 1751F-643 §7; T06.L08.)',
           },
           {
             id: 'T06-L11-Q3',
@@ -447,7 +447,7 @@ export default function T06L11_UndergroundDesignQAChecklist() {
               'They are the same process performed at different project phases',
             ],
             answerIndex: 1,
-            explanation: 'A design drawing check is a pre-construction review of the plan — catching errors on paper before anyone digs. A field inspection is a during/post-construction check verifying that actual installation matches the design: conduit depth as-built, bore path actual vs. planned, materials installed match specification, pedestal locations per design. Both are required on RUS-funded projects. They catch different classes of errors because you can\'t see the conduit on paper when it\'s underground. (Source: RUS 1751F-635 §11; field practice.)',
+            explanation: 'A design drawing check is a pre-construction review of the plan — catching errors on paper before anyone digs. A field inspection is a during/post-construction check verifying that actual installation matches the design: conduit depth as-built, bore path actual vs. planned, materials installed match specification, pedestal locations per design. Both are required on RUS-funded projects. They catch different classes of errors because you can\'t see the conduit on paper when it\'s underground. (Source: RUS 1751F-643 §11; field practice.)',
           },
         ]}
       />
