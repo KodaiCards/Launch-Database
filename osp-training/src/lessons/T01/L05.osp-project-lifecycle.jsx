@@ -26,7 +26,7 @@ export const meta = {
     'testing',
     'as-built',
     'close-out',
-    'RUS Form 219',
+    'RUS Form 515',
   ],
   vocabulary_assumed: [
     { term: 'OSP', source_lesson_id: 'T01.L01' },
@@ -71,9 +71,9 @@ export default function T01L05_OspProjectLifecycle() {
           </thead>
           <tbody className="text-slate-300/90 text-sm">
             <tr className="border-t border-white/10">
-              <td className="px-3 py-2 font-mono">RUS Form 219</td>
-              <td className="px-3 py-2">Rural Utilities Service Form 219</td>
-              <td className="px-3 py-2">The USDA RUS project completion certification form required at close-out for RUS-funded OSP telecom projects. Governed by 7 CFR Part 1753 (RUS Telecommunications Program) [confirm specific section]. Must be PE-signed. Accompanies as-built drawings, splice records, and OTDR test records. Note: 7 CFR Part 1726 governs the Electric Borrowers program — a separate RUS program; do not cite 1726 for telecom close-out.</td>
+              <td className="px-3 py-2 font-mono">RUS Form 515</td>
+              <td className="px-3 py-2">Telecommunications System Construction Contract</td>
+              <td className="px-3 py-2">RUS's standard telecom construction contract form. Closeout documentation for RUS-funded OSP telecom projects is governed by 7 CFR 1753.49 (Closeout documents). Must be PE-signed. Accompanies as-built drawings, splice records, and OTDR test records. Note: RUS Form 219 ("Inventory of Work Orders," 7 CFR 1726.405) is an Electric Program form — a separate RUS program; do not cite Form 219 for telecom close-out.</td>
             </tr>
             <tr className="border-t border-white/10">
               <td className="px-3 py-2 font-mono">OTMR</td>
@@ -144,7 +144,8 @@ export default function T01L05_OspProjectLifecycle() {
             <strong>As-Built Documentation and Close-Out</strong> — After testing passes, the
             "as-built" package is created: updated drawings showing what was actually built
             (vs. what was designed), splice records, test records, permit copies. For
-            RUS-program projects, this includes RUS Form 219 and related documentation.
+            RUS-program projects, this includes the 7 CFR 1753.49 closeout documents and
+            related paperwork under the RUS Form 515 construction contract.
             The as-built package is handed over to the client and becomes the permanent
             record of the network.
           </li>
@@ -262,10 +263,10 @@ export default function T01L05_OspProjectLifecycle() {
           drawings) from the construction. Documentation team compiles the package.
         </p>
         <p className="text-sm text-slate-300/90 mt-1">
-          <strong>Key output for RUS-program projects:</strong> RUS Form 219 (project completion
-          report), certified as-built drawings, splice records, OTDR test records, permit
-          copies. This package is required before RUS will advance funds on the project and
-          before the network is accepted by the client.
+          <strong>Key output for RUS-program projects:</strong> the 7 CFR 1753.49 closeout
+          documents package, certified as-built drawings, splice records, OTDR test records,
+          permit copies. This package is required before RUS will advance funds on the project
+          and before the network is accepted by the client.
         </p>
       </section>
 
@@ -321,8 +322,8 @@ export default function T01L05_OspProjectLifecycle() {
           { id: 'T01-L05-FC-construction', front: 'Construction', back: 'Stage 5: installing the physical cable plant — aerial cable on poles, conduit underground, splice cases, handholes. Cables are typically installed first; splicing happens in a separate pass.' },
           { id: 'T01-L05-FC-testing', front: 'Testing', back: 'Stage 6: every fiber in the cable plant is tested. Tier 1 (OLTS — end-to-end loss) and Tier 2 (OTDR — event location and trace). Results compared to the design loss budget. Failed fibers are repaired before acceptance.' },
           { id: 'T01-L05-FC-as-built', front: 'As-built', back: 'Updated drawings that show what was actually built vs. what was designed. Part of the close-out package. Becomes the permanent O&M record — a technician in 2045 needs the as-built to trace a fault back to a specific splice case and fiber.' },
-          { id: 'T01-L05-FC-close-out', front: 'Close-out', back: 'Stage 7: the final documentation package handed to the client — as-built drawings, splice records, test records, permit copies. For RUS-program projects includes RUS Form 219. Required before RUS advances funds and before client acceptance.' },
-          { id: 'T01-L05-FC-rus-form-219', front: 'RUS Form 219', back: 'The USDA Rural Utilities Service project completion certification form. Required for RUS-funded OSP projects at close-out. Must be signed by the PE responsible for the project. Accompanies the as-built drawings, splice records, and OTDR test records.' },
+          { id: 'T01-L05-FC-close-out', front: 'Close-out', back: 'Stage 7: the final documentation package handed to the client — as-built drawings, splice records, test records, permit copies. For RUS-program projects, governed by 7 CFR 1753.49. Required before RUS advances funds and before client acceptance.' },
+          { id: 'T01-L05-FC-rus-form-515', front: 'RUS Form 515', back: 'The Telecommunications System Construction Contract — RUS\'s standard telecom construction contract form. Closeout documentation for RUS-funded OSP projects is governed by 7 CFR 1753.49, must be PE-signed, and accompanies the as-built drawings, splice records, and OTDR test records.' },
           { id: 'T01-L05-FC-otmr', front: 'OTMR (One-Touch Make-Ready)', back: 'FCC-mandated process (47 CFR 1.1411) that allows a qualified contractor hired by the new attacher to perform make-ready work in a single visit rather than waiting for each existing attachment owner to schedule separate work. Reduces make-ready timelines significantly.' },
         ]}
       />

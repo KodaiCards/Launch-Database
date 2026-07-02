@@ -58,8 +58,8 @@
         "Neither rule is FCC in origin; both are RUS bulletins"
       ],
       "answerIndex": 0,
-      "explanation": "47 CFR 1.1409 sets the pole attachment rate/fee formula. 47 CFR 1.1411 governs the timeline for pole access applications and make-ready (including the OTMR simple-make-ready completion window). They are commonly confused, but citing the wrong one misdirects a compliance question to the wrong regulatory text.",
-      "citation": "47 CFR 1.1409 (rate formula); 47 CFR 1.1411 (access/make-ready timeline, incl. OTMR)."
+      "explanation": "The core pole attachment rate/fee formula lives in 47 CFR 1.1406; 47 CFR 1.1409 governs a specific cost-apportionment input that feeds into that formula. 47 CFR 1.1411 governs the timeline for pole access applications and make-ready (including the OTMR simple-make-ready completion window). Rate-formula and timeline citations are commonly confused, but citing the wrong one misdirects a compliance question to the wrong regulatory text.",
+      "citation": "47 CFR 1.1406 (rate formula); 47 CFR 1.1409 (cost-apportionment input); 47 CFR 1.1411 (access/make-ready timeline, incl. OTMR)."
     },
     {
       "id": "T01-final-Q5",

@@ -156,8 +156,9 @@ export default function T01L01_OspVsIsp() {
           <p className="font-semibold text-amber-300 mb-1">Book vs. Field</p>
           <p className="text-slate-300/90">
             <strong>Book:</strong> Standards treat "OSP" and "ISP" as clean categories with
-            a single demarcation point. RUS Bulletin 1751F-630 defines OSP scope from the
-            central office to the customer premises. TIA-568.3-D covers ISP.
+            a single demarcation point. 47 CFR Part 32 §§32.2421-32.2423 (the FCC Uniform System
+            of Accounts) classifies OSP plant from the central office to the customer premises.
+            TIA-568.3-D covers ISP.
           </p>
           <p className="text-slate-300/90 mt-2">
             <strong>Field:</strong> In practice, there's a gray zone. The drop cable entering
@@ -259,7 +260,7 @@ export default function T01L01_OspVsIsp() {
           OSP can constitute a loan compliance violation.
         </p>
         <p className="mt-2">
-          Source: 47 CFR Part 32 (FCC Uniform System of Accounts); RUS Bulletin 1751F-630 §1.
+          Source: 47 CFR Part 32 §§32.2421-32.2423 (FCC Uniform System of Accounts).
         </p>
       </section>
 
@@ -343,7 +344,7 @@ export default function T01L01_OspVsIsp() {
               answerIndex: 1,
               explanation:
                 'Drop cables run outdoors from OSP infrastructure (a NAP on a pole or a curb pedestal) to the customer demarc. They are OSP, must be rated for outdoor use, and are built and tested by the OSP contractor. The ONT at the end of the drop is the demarc — the ONT itself is usually the customer-side equipment, but the fiber up to the ONT port is OSP.',
-              citation: 'RUS Bulletin 1751F-630 §1 — Scope of outside plant.',
+              citation: '47 CFR Part 32 §§32.2421-32.2423 — FCC plant-account classification (scope of outside plant).',
             },
             {
               id: 'T01-L01-Q2',
@@ -359,7 +360,7 @@ export default function T01L01_OspVsIsp() {
               answerIndex: 1,
               explanation:
                 'OSP-rated cable is designed for outdoor conditions (UV exposure, moisture, temperature swings) but is not automatically rated for indoor fire-code compliance. NEC Article 770 requires optical fiber inside buildings to be OFNR (riser) or OFNP (plenum) rated. Running OSP-only cable inside a building violates fire code in most jurisdictions unless the cable also carries an indoor rating (dual-rated cable).',
-              citation: 'NEC Article 770 (optical fiber cabling); RUS Bulletin 1751F-630 §1.',
+              citation: 'NEC Article 770 (optical fiber cabling); 47 CFR Part 32 §§32.2421-32.2423.',
             },
             {
               id: 'T01-L01-Q3',

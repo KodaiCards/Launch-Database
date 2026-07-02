@@ -40,7 +40,7 @@ export const meta = {
     'Identify the three vertical zones of a shared utility pole (supply, climbing, communication) and explain the safety purpose of each',
     'Explain how sag affects ground clearance and why clearance is measured at midspan rather than at the attachment point',
     'Read a pole tag to determine pole class, height, and ownership',
-    'Describe joint-use pole attachment rights and the role of FCC Part 1.1411 in governing attachment fees',
+    'Describe joint-use pole attachment rights and the role of FCC Part 1.1406 in governing attachment fees',
   ],
 };
 
@@ -243,7 +243,8 @@ export default function T01L02_PartsOfAPole() {
         <p className="mt-2 text-slate-300/90 text-sm">
           In most of the US, the electric utility owns the pole. Telecom companies (including
           fiber ISPs) are <em>attachers</em> — they pay annual attachment fees (set by FCC
-          rules under 47 CFR 1.1411) for the right to put their cable on someone else's pole.
+          rules under 47 CFR 1.1406, with §§1.1409-1.1410 apportioning specific cost inputs
+          into that rate formula) for the right to put their cable on someone else's pole.
           Some joint-use arrangements involve multiple owners. Before any fiber attachment,
           you need a pole attachment agreement and a make-ready permit from the pole owner.
           (Make-ready is covered in detail in T08.)
@@ -299,7 +300,7 @@ export default function T01L02_PartsOfAPole() {
           { id: 'T01-L02-FC-supply-space', front: 'Supply space', back: 'The top zone on a shared utility pole where high-voltage primary power lines (4–35 kV) attach. Only licensed utility electricians work in this zone. NESC requires minimum separation from the top of the communication space.' },
           { id: 'T01-L02-FC-neutral', front: 'Neutral', back: 'The return conductor for the electric distribution system, typically the lowest supply-space conductor. In RUS areas this is often the MGN (Multi-Grounded Neutral). Fiber messenger wires must maintain NESC clearance from the neutral.' },
           { id: 'T01-L02-FC-pole-class', front: 'Pole class', back: 'NESC / ANSI O5.1 classification of pole strength based on circumference 6 ft from the butt. Class 1 is strongest; Class 10 is weakest. Classes H1–H6 are for extra-heavy loads.' },
-          { id: 'T01-L02-FC-joint-use', front: 'Joint-use', back: 'A pole or conduit system shared by two or more companies — typically the electric utility (owner) and one or more telecom attachers. Most US utility poles are joint-use. Fiber companies pay annual attachment fees under FCC Part 1.1411 to attach to joint-use poles.' },
+          { id: 'T01-L02-FC-joint-use', front: 'Joint-use', back: 'A pole or conduit system shared by two or more companies — typically the electric utility (owner) and one or more telecom attachers. Most US utility poles are joint-use. Fiber companies pay annual attachment fees under FCC Part 1.1406 to attach to joint-use poles.' },
           { id: 'T01-L02-FC-clearance', front: 'Clearance', back: 'The vertical distance between two things on or below a pole — between a cable and the road beneath it (ground clearance), or between a fiber attachment and the neutral above it (vertical separation). NESC specifies minimum clearances for every combination. Always measured at midspan (the sag point), not at the attachment point.' },
           { id: 'T01-L02-FC-conduit', front: 'Conduit', back: 'A rigid or semi-rigid pipe that protects underground cables. Common types: Schedule 40 PVC (buried runs), HDPE (exposed risers, HDD bores), innerduct (sub-conduit inside a larger bore). Allows cable replacement without re-boring or re-trenching.' },
         ]}
@@ -399,8 +400,8 @@ export default function T01L02_PartsOfAPole() {
               ],
               answerIndex: 2,
               explanation:
-                'In most US markets, the electric utility owns the poles. Fiber companies are "attachers" who pay annual attachment fees under FCC Part 1.1411 (the pole attachment rules). Before installing fiber, the fiber company must obtain a pole attachment agreement and make-ready permit from the pole owner. Make-ready work (moving or adjusting existing attachments to make room for new fiber) is often the most time-consuming and expensive part of an aerial fiber project.',
-              citation: '47 CFR 1.1411; NESC C2-2023 §23.',
+                'In most US markets, the electric utility owns the poles. Fiber companies are "attachers" who pay annual attachment fees under FCC Part 1.1406 (the pole attachment rate formula, with §§1.1409-1.1410 apportioning specific cost inputs). Before installing fiber, the fiber company must obtain a pole attachment agreement and make-ready permit from the pole owner. Make-ready work (moving or adjusting existing attachments to make room for new fiber) is often the most time-consuming and expensive part of an aerial fiber project.',
+              citation: '47 CFR 1.1406; NESC C2-2023 §23.',
             },
           ]}
         />

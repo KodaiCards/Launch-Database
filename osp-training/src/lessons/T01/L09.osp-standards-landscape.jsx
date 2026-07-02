@@ -62,7 +62,7 @@ export const key_terms = [
   { term: 'NFPA', definition: 'National Fire Protection Association — publishes the NEC (NFPA 70), which governs electrical installations including cable entries into buildings, grounding, and bonding. Adopted by most jurisdictions.' },
   { term: 'ITU-T', definition: 'International Telecommunication Union – Telecommunication Standardization Sector — publishes the G-series fiber standards used globally (G.652.D for SMF, G.984 for GPON). International body; TIA aligns with ITU-T specs for North American use.' },
   { term: 'ICEA', definition: 'Insulated Cable Engineers Association — publishes cable construction standards including ICEA S-87-640 (OSP fiber cable construction). Not a regulatory body but widely cited in cable specifications and RUS material lists.' },
-  { term: 'FCC', definition: 'Federal Communications Commission — regulates pole attachment rates and processes (47 CFR Part 1.1411), the one-touch make-ready (OTMR) rules, and spectrum licensing. Critical authority for any project attaching to utility poles.' },
+  { term: 'FCC', definition: 'Federal Communications Commission — regulates pole attachment rates (47 CFR 1.1406) and access/make-ready timelines including one-touch make-ready (OTMR, 47 CFR 1.1411), plus spectrum licensing. Critical authority for any project attaching to utility poles.' },
   { term: 'USACE', definition: 'U.S. Army Corps of Engineers — administers Section 404 permits for work disturbing waters of the United States. Key permit for fiber work: NWP 57 pre-authorizes telecommunications line crossings including fiber conduit HDD bores under navigable waterways.' },
   { term: 'CFR', definition: 'Code of Federal Regulations — the official body of federal rules. OSP-relevant: 47 CFR (FCC telecom/pole attachment), 7 CFR Parts 1737/1738/1740 (RUS program), 29 CFR (OSHA safety), 33 CFR Part 330 (Corps Nationwide Permit program).' },
   { term: 'ANSI', definition: 'American National Standards Institute — coordinates voluntary standards accreditation in the US. ANSI O5.1 governs wood utility pole specifications. Many TIA and IEEE standards are also ANSI-accredited.' },
@@ -132,7 +132,7 @@ export default function T01L09_OspStandardsLandscape() {
             <tr className="border-t border-white/10">
               <td className="px-3 py-2 font-mono">FCC</td>
               <td className="px-3 py-2">Federal Communications Commission</td>
-              <td className="px-3 py-2">Federal agency regulating communications. Governs pole attachment rights (47 CFR 1.1411 — OTMR rules), spectrum, and telecommunications licensing. The FCC's pole attachment rules set timeline and fee limits for make-ready and attachment.</td>
+              <td className="px-3 py-2">Federal agency regulating communications. Governs pole attachment access/make-ready timelines (47 CFR 1.1411 — OTMR rules) and attachment rate/fee formulas (47 CFR 1.1406), plus spectrum and telecommunications licensing.</td>
             </tr>
             <tr className="border-t border-white/10">
               <td className="px-3 py-2 font-mono">USACE</td>
@@ -177,8 +177,8 @@ export default function T01L09_OspStandardsLandscape() {
             </p>
             <p className="text-slate-300/90 mt-1">
               <strong>ICEA S-87-640</strong> [confirm edition] — cable construction standard (how the cable
-              is built, what environmental performance it must meet). RUS 1753F-201 (RUS
-              cable acceptance listing) references ICEA for qualification testing.
+              is built, what environmental performance it must meet). RUS's accepted-materials
+              list (7 CFR Part 1755, RUS Bulletin 344-2) references ICEA for qualification testing.
             </p>
             <p className="text-slate-300/90 mt-1">
               <strong>TIA-598-D</strong> — fiber color-coding standard (the 12-color sequence
@@ -211,9 +211,11 @@ export default function T01L09_OspStandardsLandscape() {
               <strong>RUS Bulletin 1751F-635</strong> — underground plant on RUS-funded projects.
             </p>
             <p className="text-slate-300/90 mt-1">
-              <strong>RUS 1753F-201</strong> — RUS materials acceptance program. Materials
-              used on RUS-funded projects must either be on the RUS accepted products list
-              or obtain RUS approval. The 1753F-201 defines acceptance testing for cable.
+              <strong>RUS accepted-materials program (7 CFR Part 1755; RUS Bulletin 344-2)</strong> —
+              materials used on RUS-funded projects must either be on the RUS accepted
+              products list or obtain RUS approval. (RUS Bulletin 1753F-201 is a distinct
+              bulletin — "Acceptance Tests and Measurements of Telecommunications Plant" —
+              covering acceptance *testing* of completed plant, not the materials list itself.)
             </p>
           </div>
           <div className="p-4 border border-red-400/30 bg-red-400/5 rounded-lg">
@@ -307,7 +309,7 @@ export default function T01L09_OspStandardsLandscape() {
             </tr>
             <tr className="border-t border-white/10">
               <td className="px-3 py-2">Cable construction</td>
-              <td className="px-3 py-2">ICEA S-87-640; RUS 1753F-201 (RUS-funded projects)</td>
+              <td className="px-3 py-2">ICEA S-87-640; 7 CFR Part 1755 + RUS Bulletin 344-2 (RUS-funded projects, accepted materials)</td>
             </tr>
             <tr className="border-t border-white/10">
               <td className="px-3 py-2">Fiber color coding</td>
@@ -335,11 +337,11 @@ export default function T01L09_OspStandardsLandscape() {
             </tr>
             <tr className="border-t border-white/10">
               <td className="px-3 py-2">Pole attachment fees/timeline</td>
-              <td className="px-3 py-2">47 CFR 1.1411 (FCC OTMR rules)</td>
+              <td className="px-3 py-2">47 CFR 1.1406 (fee formula); 47 CFR 1.1411 (FCC OTMR/access timeline)</td>
             </tr>
             <tr className="border-t border-white/10">
               <td className="px-3 py-2">Infrastructure documentation</td>
-              <td className="px-3 py-2">ANSI/TIA-606-C; RUS Form 219 (RUS-funded close-out)</td>
+              <td className="px-3 py-2">ANSI/TIA-606-C; 7 CFR 1753.49 (RUS-funded close-out)</td>
             </tr>
             <tr className="border-t border-white/10">
               <td className="px-3 py-2">RUS-funded project design</td>
@@ -450,7 +452,7 @@ export default function T01L09_OspStandardsLandscape() {
           { id: 'T01-L09-FC-nfpa', front: 'NFPA', back: 'National Fire Protection Association — publishes the NEC (NFPA 70), which governs electrical installations including cable entries into buildings, grounding, and bonding. Adopted by most jurisdictions.' },
           { id: 'T01-L09-FC-itu-t', front: 'ITU-T', back: 'International Telecommunication Union – Telecommunication Standardization Sector — publishes the G-series fiber standards used globally (G.652.D for SMF, G.984 for GPON). International body; TIA aligns with ITU-T specs for North American use.' },
           { id: 'T01-L09-FC-icea', front: 'ICEA', back: 'Insulated Cable Engineers Association — publishes cable construction standards including ICEA S-87-640 (OSP fiber cable construction). Not a regulatory body but widely cited in cable specifications and RUS material lists.' },
-          { id: 'T01-L09-FC-fcc', front: 'FCC', back: 'Federal Communications Commission — regulates pole attachment rates and processes (47 CFR Part 1.1411), the one-touch make-ready (OTMR) rules, and spectrum licensing. Critical authority for any project attaching to utility poles.' },
+          { id: 'T01-L09-FC-fcc', front: 'FCC', back: 'Federal Communications Commission — regulates pole attachment rates (47 CFR 1.1406) and access/make-ready timelines including one-touch make-ready (OTMR, 47 CFR 1.1411), plus spectrum licensing. Critical authority for any project attaching to utility poles.' },
           { id: 'T01-L09-FC-usace', front: 'USACE', back: 'U.S. Army Corps of Engineers — administers Section 404 permits for work disturbing waters of the United States. The Nationwide Permit program is codified at 33 CFR Part 330. Key permit for fiber work: NWP 57 — "Electric Utility Line and Telecommunications Activities" — pre-authorizes telecommunications line crossings including fiber conduit HDD bores under navigable waterways (replaces former NWP 12 telecom scope; 2021 NWP package reissued in 2026 NWP package effective March 15, 2026, core scope unchanged). Note: 33 CFR Part 323 covers individual case-by-case Section 404 permits — a separate, more burdensome process that most fiber HDD bores avoid by qualifying under NWP 57.' },
           { id: 'T01-L09-FC-cfr', front: 'CFR', back: 'Code of Federal Regulations — the official body of federal rules. OSP-relevant: 47 CFR (FCC telecom/pole attachment), 7 CFR Parts 1737/1738/1740 (RUS program), 29 CFR (OSHA safety), 33 CFR Part 330 (Corps of Engineers Nationwide Permit program — pre-authorizes standard categories of work in waters of the US, including NWP 57 for telecom line crossings), 33 CFR Part 323 (individual Section 404 permits for specific dredge/fill projects). Note: 36 CFR is National Park Service / NHPA Section 106 historic preservation — not the Corps permitting authority.' },
           { id: 'T01-L09-FC-ansi', front: 'ANSI', back: 'American National Standards Institute — coordinates voluntary standards accreditation in the US. ANSI O5.1 governs wood utility pole specifications. Many TIA and IEEE standards are also ANSI-accredited.' },
@@ -485,7 +487,7 @@ export default function T01L09_OspStandardsLandscape() {
                 'FCC Part 1.1411 — pole attachment authorization',
                 'USACE Nationwide Permit 57 (NWP 57) — authorizes telecommunications line crossings of waters of the US, including fiber conduit HDD bores',
                 'NESC §32 — underground crossing clearances',
-                'RUS Form 219 — close-out authorization',
+                'RUS closeout documentation (7 CFR 1753.49) — close-out authorization',
               ],
               answerIndex: 1,
               explanation:
@@ -499,14 +501,14 @@ export default function T01L09_OspStandardsLandscape() {
                 'A splicer preparing for work on a RUS-funded project is told the cable must be "RUS-listed." What does this mean in practice?',
               choices: [
                 'The cable must be manufactured in the United States',
-                'The cable must appear on the RUS accepted products list for fiber cable (per RUS 1753F-201), meaning it has passed RUS qualification testing and meets RUS performance requirements for use on funded projects',
+                'The cable must appear on the RUS accepted products list for fiber cable (7 CFR Part 1755; RUS Bulletin 344-2), meaning it has passed RUS qualification testing and meets RUS performance requirements for use on funded projects',
                 'The cable must be labeled with the RUS logo on the outer jacket',
                 'The cable must be the lowest-cost option that meets TIA specifications',
               ],
               answerIndex: 1,
               explanation:
-                'RUS maintains an accepted products list for materials used on funded projects. Fiber cable acceptance is governed by RUS Bulletin 1753F-201, which references ICEA S-87-640 for qualification testing. Cable not on the RUS accepted list cannot be used on a RUS-funded project without specific RUS written approval. Using non-listed cable on a funded project can result in RUS rejecting the close-out and withholding loan advancement.',
-              citation: 'RUS Bulletin 1753F-201; RUS Bulletin 1751F-630 §3.',
+                'RUS maintains an accepted products list for materials used on funded projects, governed by 7 CFR Part 1755 and RUS Bulletin 344-2 ("List of Materials Acceptable for Use on Telecommunications Systems of RUS Borrowers"), which references ICEA S-87-640 for qualification testing. Cable not on the RUS accepted list cannot be used on a RUS-funded project without specific RUS written approval. Using non-listed cable on a funded project can result in RUS rejecting the close-out (7 CFR 1753.49) and withholding loan advancement.',
+              citation: '7 CFR Part 1755; RUS Bulletin 344-2.',
             },
             {
               id: 'T01-L09-Q3',

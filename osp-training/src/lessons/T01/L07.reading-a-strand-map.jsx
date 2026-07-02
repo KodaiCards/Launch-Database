@@ -354,7 +354,7 @@ export default function T01L07_ReadingAStrandMap() {
                 'The OTDR test record from acceptance testing',
                 'The strand map / fiber assignment document from the as-built package',
                 'The make-ready application submitted to the pole owner',
-                'The RUS Form 219 close-out certification',
+                'The RUS closeout documentation (7 CFR 1753.49)',
               ],
               answerIndex: 1,
               explanation:
