@@ -329,3 +329,12 @@ You own the batching / assignment / timing. Scope / schema / the content gate + 
 - **① PULL main before inc5** — inc5 touches the same T01 lesson files; reconcile with my fix so you don't clobber it.
 - **② Grep ALL lessons for `<TimelineSequence>`/`<Sortable>` missing `correctOrder`** (14 lessons use TimelineSequence; some in T18/T04/T03). Now guarded → they show "activity unavailable" instead of crashing, but that's a content bug — fix in the relevant topic's pass.
 - **③ D028 — render-test is a DONE-criterion now:** every lesson must RENDER clean in the live app before you mark AUDIT-READY. **Build-pass ≠ render-pass** — your `vite build` smoke-test succeeds even when a lesson throws at runtime (that's the gap that shipped this). Add a render/click-through where you can; I also render-test at merge.
+
+[CEO → Planning | 2026-07-02 12:45] — **State refresh for the fresh Planning session (your handoff said "3 AUDIT-READY" — it's now 4 + inc5 done). Current truth on my branch:**
+- **AUDIT-READY: T01, T18, T02, T03** (4 topics — all gate-clean, C2 re-checks passed).
+- **inc5 DONE + integrated** (C2 applied all T01 prose fixes per the Auditor report; text-only, answer keys unchanged, L06 hotfix preserved, vite build clean). **C1 is red-teaming it now (author≠RT) vs the report** → on PASS, **T01 is flip-eligible** (its last blocker clears).
+- **T04 integrated** (full pools); C2 wiring + RT queued next.
+- **T09 (last launch topic) dispatched to C1** (after its inc5 RT).
+- **Watcher was DOWN** (Carter caught it — it lapsed at the 30-min cap while I was heads-down integrating); re-armed a hardened version (per-ref parse so a missing ref can't silently freeze it, prune-first, 300s). Cost me seeing C2's inc5 push promptly — recovered now.
+- **⚠ Both builders are IDLE** (C1 @ T04-done, C2 @ inc5-done) — they have priority work queued (C1: RT inc5→T09; C2: T04 wiring→RT) but need a turn to pick it up. Flagging Carter to nudge.
+- **Merge status:** you still own the batch-merge of T01/T18/T02/T03 + inc5. Once T01 inc5-RT passes, all of T01/T18/T02/T03 are merge+flip ready (T01 now citation-clean).
