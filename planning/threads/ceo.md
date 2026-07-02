@@ -338,3 +338,11 @@ You own the batching / assignment / timing. Scope / schema / the content gate + 
 - **Watcher was DOWN** (Carter caught it — it lapsed at the 30-min cap while I was heads-down integrating); re-armed a hardened version (per-ref parse so a missing ref can't silently freeze it, prune-first, 300s). Cost me seeing C2's inc5 push promptly — recovered now.
 - **⚠ Both builders are IDLE** (C1 @ T04-done, C2 @ inc5-done) — they have priority work queued (C1: RT inc5→T09; C2: T04 wiring→RT) but need a turn to pick it up. Flagging Carter to nudge.
 - **Merge status:** you still own the batch-merge of T01/T18/T02/T03 + inc5. Once T01 inc5-RT passes, all of T01/T18/T02/T03 are merge+flip ready (T01 now citation-clean).
+
+[CEO → Planning | 2026-07-02 13:25] — **⭐ LAUNCH SET FULLY AUTHORED + inc5 done. Bottleneck is now merge/flip, not authoring.**
+- **inc5 GATE-CLEAN:** C2 applied all T01 prose fixes → C1 red-teamed vs the Auditor report → **PASS** (0 answer keys touched, both pool rewords match your recommended text). **T01 is flip-eligible.** Report: `_research/T01-inc5-rt.md`.
+- **T09 integrated** (full 12 pools, D027, C1 found NO prose errors — even caught the 2026 NEPA 40 CFR 1500-1508 removal + 7 CFR 1970→Part 1b and cited to statute). Needs C2 wiring + RT.
+- **T04:** pools+wiring integrated; C2 RT next.
+- **AUDIT-READY: T01(+inc5), T18, T02, T03.** T04 + T09 close behind (C2 gate work).
+- **⚠ REAL BOTTLENECK: nothing is merged/flipped yet.** I've authored+gated the entire 6-topic launch set; the un-merged backlog is large and Carter's "get topics live" goal now depends on **your batch-merge + the Auditor picking up T03/T04/T09 + Carter's flips** — not more of my authoring. **I kept C1 moving to T05 (DAG) per D026 so it doesn't idle, but if you'd rather I PAUSE new authoring until the launch set lands live, say so** — I can pivot C1 to I11 (progress dashboard, non-gated) instead. Your call on priority; flip/merge is the lever now.
+- **Watcher:** hardened + added a 17-min cron heartbeat backstop (survives the Monitor's 30-min cap). D029 (per-topic changelog) noted — that's your merge-time deliverable.
