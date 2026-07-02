@@ -88,7 +88,8 @@
         "Interlocked armor cannot be used indoors under any NEC provision"
       ],
       "answerIndex": 1,
-      "explanation": "Interlocked armor's helical construction gives it flexibility suited to routing through a riser shaft while still providing crush resistance and carrying the fire listing (e.g., NEC 770.179(B)) required for that indoor application — a different design goal than CST's role as a below-grade gnaw barrier."
+      "explanation": "Interlocked armor's helical construction gives it flexibility suited to routing through a riser shaft while still providing crush resistance and carrying the fire listing required for that indoor application — a different design goal than CST's role as a below-grade gnaw barrier.",
+      "citation": "NEC (NFPA 70) Section 770.179 — optical fiber cable type markings/listing requirements."
     },
     {
       "id": "T03-L03-Q7",

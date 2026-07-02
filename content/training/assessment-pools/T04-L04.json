@@ -1,0 +1,115 @@
+{
+  "assessmentId": "T04-L04",
+  "kind": "lesson",
+  "courseId": "T04",
+  "lessonId": "T04.L04",
+  "drawCount": 4,
+  "passThreshold": 70,
+  "pool": [
+    {
+      "id": "T04-L04-Q1",
+      "type": "mc",
+      "prompt": "The design stencil on a pole butt says '40 ft.' Your field measurement from ground line to pole top is 45 ft. What is the correct field action?",
+      "choices": [
+        "Use the stenciled 40 ft because the factory stencil is always correct",
+        "Use your field measurement of 45 ft and discard the stencil as inaccurate",
+        "Record both the stenciled value (40 ft) and your field measurement (45 ft), note the 5 ft discrepancy, and flag for design engineer review",
+        "Re-measure from the road surface instead of the ground line to reconcile the two values"
+      ],
+      "answerIndex": 2,
+      "explanation": "Both values are data points, not one-right-one-wrong. The stencil reflects manufactured length; the field measurement reflects actual above-grade height, which depends on burial depth. Record both, note the discrepancy, and flag — the design engineer decides which value to use.",
+      "citation": "RUS Bulletin 1751F-630 (aerial plant design)."
+    },
+    {
+      "id": "T04-L04-Q2",
+      "type": "mc",
+      "prompt": "During a pole audit, the gap between the highest existing telecom attachment (22 ft) and the proposed fiber height (23 ft) is 1 ft. What is the correct field action?",
+      "choices": [
+        "Approve the attachment — 1 ft gap is fine for telecom standards",
+        "Reject the attachment — 1 ft gap is below the minimum and the pole must be replaced",
+        "Record the 1 ft gap, add a make-ready flag to the audit record, and pass the data to the design engineer for formal clearance analysis",
+        "Move the proposed fiber to 25 ft to create more clearance and update the design drawing"
+      ],
+      "answerIndex": 2,
+      "explanation": "A 1 ft gap warrants a make-ready flag, but the field walker does not make the final determination — the design engineer applies formal clearance requirements. Field triage says 'flag it'; the field walker never approves/rejects an attachment or modifies the proposed design."
+    },
+    {
+      "id": "T04-L04-Q3",
+      "type": "mc",
+      "prompt": "What term describes all current utility attachments on a pole — by carrier name, attachment type, and measured height?",
+      "choices": [
+        "Load census",
+        "Existing occupancy",
+        "Attachment audit summary",
+        "Pole tag registry"
+      ],
+      "answerIndex": 1,
+      "explanation": "Existing occupancy is the baseline inventory the design engineer uses to determine whether a new attachment can be added without make-ready work. Accurate existing-occupancy documentation also protects the project sponsor during OTMR coordination."
+    },
+    {
+      "id": "T04-L04-Q4",
+      "type": "mc",
+      "prompt": "A field crew sees a pole with only 6 inches of clearance below the power company's neutral wire and decides to skip formal audit documentation since the make-ready need is 'obvious.' What's wrong with this approach?",
+      "choices": [
+        "Nothing — experienced crews can skip documentation when the outcome is obvious",
+        "The crew should have climbed the pole to confirm the measurement before deciding",
+        "Without documented attachment heights and a formal audit record, the design engineer has no data to order make-ready or price the OTMR scope, and the flag is un-traceable if disputed later",
+        "The crew should have called the power company first before auditing joint-use poles"
+      ],
+      "answerIndex": 2,
+      "explanation": "Even when make-ready is visually obvious, skipping documentation creates downstream problems: the engineer can't run formal analysis without measured heights, the OTMR contractor can't scope work without a recorded inventory, and a disputed make-ready has no audit trail to reference."
+    },
+    {
+      "id": "T04-L04-Q5",
+      "type": "mc",
+      "prompt": "A crew misidentifies a pole's class during the audit — recording Class 4 (lighter) when it is actually Class 3 (stronger, heavier duty). What downstream consequence follows if this error goes uncaught until the RUS review stage?",
+      "choices": [
+        "No consequence — pole class has no bearing on cost estimates or unit codes",
+        "The construction unit breakdown will show the wrong unit code, producing an incorrect materials list and cost estimate; if caught during RUS review, it triggers a deficiency finding and can add significant time to the review timeline",
+        "The contractor automatically corrects it without any documentation impact",
+        "RUS only verifies total pole count, never individual pole class"
+      ],
+      "answerIndex": 1,
+      "explanation": "Construction unit codes are specific to pole class and height — different classes are different unit codes with different material costs. An error propagates into the cost estimate and, if caught during RUS review, generates a deficiency finding requiring correction and resubmission."
+    },
+    {
+      "id": "T04-L04-Q6",
+      "type": "mc",
+      "prompt": "Why does the pole audit record both the stenciled pole length AND the field-measured height, rather than just recording whichever value seems more reliable?",
+      "choices": [
+        "Recording both is unnecessary busywork with no engineering value",
+        "The discrepancy itself is meaningful information — it may indicate the pole was reset at a different depth than originally installed, which the design engineer needs to know when assessing structural capacity, not just the final height number",
+        "Only the stenciled value has any legal standing; the field measurement is purely optional",
+        "Recording both values is required only for RUS-funded projects, never for private projects"
+      ],
+      "answerIndex": 1,
+      "explanation": "A discrepancy between stenciled length and field-measured height can indicate a pole reset at a different burial depth than original installation — information relevant to structural assessment that recording only one value would obscure."
+    },
+    {
+      "id": "T04-L04-Q7",
+      "type": "mc",
+      "prompt": "What is the functional difference between a field crew's make-ready 'flag' and a make-ready 'approval' or 'rejection'?",
+      "choices": [
+        "There is no difference; flag, approval, and rejection are interchangeable terms",
+        "A flag is a communication tool that alerts the design engineer to look closely at a specific pole during formal analysis; approval/rejection is a determination that only the design engineer (applying formal clearance rules) is authorized to make",
+        "Only the pole owner can flag a pole; field crews can only approve or reject",
+        "A flag automatically triggers pole replacement, while approval/rejection does not"
+      ],
+      "answerIndex": 1,
+      "explanation": "The field crew's role is limited to flagging conditions worth closer engineering review — not making the formal determination itself. This division of responsibility keeps engineering judgment calls with the design engineer, who applies the complete formal clearance analysis."
+    },
+    {
+      "id": "T04-L04-Q8",
+      "type": "mc",
+      "prompt": "Why is a pole audit considered a legal/engineering document rather than just a field convenience, even on jobs where make-ready needs seem visually self-evident?",
+      "choices": [
+        "It has no legal significance; it exists purely for internal crew reference",
+        "The audit record supports formal engineering analysis, OTMR scope pricing, and dispute resolution with existing attachment carriers — without it, downstream decisions and any future disputes have no documented basis to reference",
+        "Legal significance only applies to audits performed by a licensed PE, never by field crews",
+        "The audit becomes a legal document only after construction is complete"
+      ],
+      "answerIndex": 1,
+      "explanation": "The audit record is the traceable basis for engineering determinations, OTMR contractor scoping, and — if an existing carrier disputes a make-ready requirement — the documentation that supports the project's position. Its legal/engineering weight exists from the moment it's created, not retroactively."
+    }
+  ]
+}

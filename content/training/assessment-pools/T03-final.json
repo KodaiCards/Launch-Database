@@ -81,12 +81,12 @@
       "choices": [
         "G.657.A1 (10mm) — sufficient because 7.5mm rounds up to 10mm in practice",
         "G.657.A2 (7.5mm) — exactly meets the requirement; specifying G.657.B3 (5mm) would work too but is unnecessarily high-spec (and carries MFD-mismatch splice risk with G.652.D) for a requirement A2 already satisfies",
-        "G.652.D (30mm) — standard fiber is always preferred regardless of bend requirement",
+        "G.652.D (~30mm, a commonly-cited industry-convention minimum) — standard fiber is always preferred regardless of bend requirement",
         "Any G.657 grade works identically since they are functionally interchangeable"
       ],
       "answerIndex": 1,
       "explanation": "G.657.A2's 7.5mm rating exactly satisfies the stated requirement. G.657.B3 would technically also work but is over-spec'd for this need and, unlike A1/A2, isn't guaranteed splice-compatible with G.652.D without measurable loss risk.",
-      "citation": "ITU-T G.657 (A1=10mm, A2=7.5mm, B3=5mm)."
+      "citation": "ITU-T G.657 (A1=10mm, A2=7.5mm, B3=5mm — independently verified); G.652.D's ~30mm figure is an industry-convention rule of thumb, not independently pinned to a single ITU-T clause this session (see T03.md)."
     },
     {
       "id": "T03-final-Q7",

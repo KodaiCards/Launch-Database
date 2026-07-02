@@ -1,0 +1,114 @@
+{
+  "assessmentId": "T04-L08",
+  "kind": "lesson",
+  "courseId": "T04",
+  "lessonId": "T04.L08",
+  "drawCount": 4,
+  "passThreshold": 70,
+  "pool": [
+    {
+      "id": "T04-L08-Q1",
+      "type": "mc",
+      "prompt": "A design engineer receives a survey handoff package and discovers pole heights for the three poles at a bridge crossing are not included. What is the correct response?",
+      "choices": [
+        "Assume the pole heights are the same as adjacent poles — they're probably similar",
+        "Refuse to proceed with the bridge-crossing design until the survey team provides the as-surveyed pole heights, and notify the project manager",
+        "Use the utility company's database record for the pole heights — it's close enough",
+        "Note the gap in the design drawings and proceed — the contractor can measure during construction"
+      ],
+      "answerIndex": 1,
+      "explanation": "Bridge-crossing poles often have different heights than adjacent poles due to bridge structure requirements. Assuming they match, or using an unverified database record, substitutes a guess for a design input. The correct action is to notify the survey team and PM — the package is incomplete for this critical span."
+    },
+    {
+      "id": "T04-L08-Q2",
+      "type": "mc",
+      "prompt": "During a pre-release gap analysis, a photo log has a 400 ft gap in a densely vegetated segment (crew couldn't see through canopy). What is the correct handling?",
+      "choices": [
+        "Do not release the package until the 400 ft segment is re-photographed",
+        "Document the gap as a 'known limitation' in the cover document — note the reason, segment stations, and any drone ortho-photo coverage that partially fills the gap — then release the package",
+        "Remove the reference to the 400 ft segment from the handoff entirely so the engineer doesn't know",
+        "Estimate what the segment looks like from adjacent photo coverage and describe it as if photographed"
+      ],
+      "answerIndex": 1,
+      "explanation": "A photo gap in a vegetated segment is a documented limitation, not necessarily a design-blocking gap. Transparently documenting it (stations, reason, substitute data available) lets the engineer decide whether to request supplemental coverage or proceed with a note. Concealing or fabricating are both data-integrity failures."
+    },
+    {
+      "id": "T04-L08-Q3",
+      "type": "mc",
+      "prompt": "What is the term for a systematic review of the handoff package against a required checklist, to identify missing or incomplete data before release to the design engineer?",
+      "choices": [
+        "Field triage",
+        "Gap analysis",
+        "Constructability review",
+        "Deficiency notice"
+      ],
+      "answerIndex": 1,
+      "explanation": "Gap analysis is the pre-release quality gate. It classifies each checklist item as complete, a documented limitation (releasable with notation), or a must-resolve gap (blocks release) — preventing the engineer from discovering missing data mid-design."
+    },
+    {
+      "id": "T04-L08-Q4",
+      "type": "mc",
+      "prompt": "What is the primary reason to document a design constraint (such as a low-clearance power conductor at a specific pole) in the handoff package rather than just leaving it out?",
+      "choices": [
+        "The utility company requires documentation of all overhead conductors for regulatory compliance",
+        "The design engineer needs to know about conditions that limit design options before drawing, so they can plan around the constraint rather than designing into a problem discovered during construction",
+        "Design constraints are required for cost-ledger reconciliation",
+        "The as-surveyed record must include every observation regardless of whether it affects the design"
+      ],
+      "answerIndex": 1,
+      "explanation": "Documenting a design constraint upfront lets the engineer design around it from the start — far cheaper and less disruptive than discovering the same constraint mid-construction, when redesign and rework are far more costly."
+    },
+    {
+      "id": "T04-L08-Q5",
+      "type": "mc",
+      "prompt": "Why is 'the contractor can measure during construction' the WRONG response to a missing critical measurement in the handoff package (e.g., bridge-crossing pole heights)?",
+      "choices": [
+        "It is actually the correct and standard response for any missing measurement",
+        "By the time construction begins, the design (drawings, material orders, permits) has already been built around assumed or missing values — discovering the real measurement at that stage risks a design mismatch, rework, and schedule delay that would have been avoided by resolving the gap before design started",
+        "Contractors are not legally permitted to take field measurements",
+        "This response is only wrong for underground routes, not aerial routes"
+      ],
+      "answerIndex": 1,
+      "explanation": "Design decisions, material orders, and permits all get built on the assumption of correct input data. Deferring a critical measurement to construction time means the design phase proceeded on incomplete information, risking a costly mismatch discovered only after significant downstream work has already been committed."
+    },
+    {
+      "id": "T04-L08-Q6",
+      "type": "mc",
+      "prompt": "A gap analysis classifies a checklist item as a 'documented limitation' rather than a 'must-resolve gap.' What distinguishes these two categories?",
+      "choices": [
+        "There is no real distinction; both categories block package release identically",
+        "A documented limitation is releasable with a clear notation because the engineer can still proceed with available substitute data or reasonable design margin; a must-resolve gap blocks release because the missing information is essential and no substitute exists",
+        "Documented limitations only apply to photo logs; must-resolve gaps only apply to pole data",
+        "The classification is decided solely by the client, never by the survey team"
+      ],
+      "answerIndex": 1,
+      "explanation": "The gap-analysis classification hinges on whether the engineer has enough substitute information (or design margin) to proceed safely despite the gap. A vegetated photo-log gap with partial drone-ortho coverage might be releasable; missing bridge-crossing pole heights, with no safe substitute, blocks release."
+    },
+    {
+      "id": "T04-L08-Q7",
+      "type": "mc",
+      "prompt": "Why does fabricating a plausible-looking description of an unphotographed segment (rather than documenting the gap honestly) constitute a serious integrity failure, beyond simply being inconvenient?",
+      "choices": [
+        "It isn't actually a serious issue as long as the fabricated description is reasonably accurate",
+        "A fabricated description presents unverified guesswork as if it were field-verified data, which the design engineer will treat as reliable — a downstream design decision based on that false confidence could fail in a way that traces back to data that was never actually observed",
+        "Fabrication is only a problem if the client later discovers it",
+        "Fabricated descriptions are technically permitted as long as they're labeled 'estimated'"
+      ],
+      "answerIndex": 1,
+      "explanation": "The entire value of a survey handoff package is that the design engineer can trust it reflects actual field-verified conditions. A fabricated entry silently breaks that trust, and the engineer has no way to know which parts of the package are real observations versus invented ones — a much deeper problem than an honestly documented gap."
+    },
+    {
+      "id": "T04-L08-Q8",
+      "type": "mc",
+      "prompt": "What is the correct sequencing relationship between the gap analysis and the handoff package release?",
+      "choices": [
+        "The gap analysis happens after release, as a follow-up quality check",
+        "The gap analysis is a PRE-release quality gate — it runs before the package goes to the design engineer, so gaps are caught and classified (resolve, document, or proceed) before the engineer starts relying on the data",
+        "The gap analysis and release happen simultaneously with no sequencing relationship",
+        "The gap analysis only applies to RUS-funded projects, never to private projects"
+      ],
+      "answerIndex": 1,
+      "explanation": "Running the gap analysis before release is what makes it effective as a quality gate — catching and classifying gaps before the design engineer begins relying on the package prevents the more expensive mid-design discovery of missing or incomplete data."
+    }
+  ]
+}

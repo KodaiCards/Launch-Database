@@ -1,0 +1,116 @@
+{
+  "assessmentId": "T04-L06",
+  "kind": "lesson",
+  "courseId": "T04",
+  "lessonId": "T04.L06",
+  "drawCount": 4,
+  "passThreshold": 70,
+  "pool": [
+    {
+      "id": "T04-L06-Q1",
+      "type": "mc",
+      "prompt": "A state DOT permit agency requires a submittal of your proposed route plan for a road-crossing permit. Which file format is most appropriate?",
+      "choices": [
+        "KMZ — it opens in Google Earth and any field tablet",
+        "Shapefile — the standard GIS exchange format with full attribute data",
+        "PDF/A — the ISO archival PDF standard required for long-term records and formal permit submissions",
+        "DWG — the AutoCAD native format, since the DOT has engineers"
+      ],
+      "answerIndex": 2,
+      "explanation": "Permit agencies that archive records for years require PDF/A because it is self-contained — all fonts embedded, no external references, guaranteed identical rendering at any future date. KMZ requires Google Earth; a shapefile is a data format, not a printable plan; DWG requires AutoCAD and is the working format, not a submission format.",
+      "citation": "ISO/IEC 19005-1 (PDF/A-1)."
+    },
+    {
+      "id": "T04-L06-Q2",
+      "type": "mc",
+      "prompt": "You are delivering a shapefile of proposed pole locations to the design engineer. Which files must be included in the zip archive for the shapefile to be usable?",
+      "choices": [
+        "Only the .shp file — the others are optional extras",
+        "The .shp (geometry) and .dbf (attributes) files only",
+        "The .shp, .shx, .dbf, and .prj files — all four are required",
+        "The .shp and a .kmz file for visual reference"
+      ],
+      "answerIndex": 2,
+      "explanation": "A shapefile is a family of files: .shp (geometry), .shx (spatial index, required for fast access), .dbf (attribute table), and .prj (coordinate reference system definition). Missing the .prj means the shapefile will import without a known coordinate system and may land in the wrong location.",
+      "citation": "Esri Shapefile Technical Description."
+    },
+    {
+      "id": "T04-L06-Q3",
+      "type": "mc",
+      "prompt": "What is the practice of labeling each revision of a deliverable file with a date and revision number, so all recipients know which version they're working from, called?",
+      "choices": [
+        "Archiving",
+        "Versioning",
+        "Metadata tagging",
+        "Provenance logging"
+      ],
+      "answerIndex": 1,
+      "explanation": "Versioning prevents the common and costly mistake of an engineer or field crew working from a superseded survey file. A proper version label includes both the revision number and the date, e.g. 'RouteA_SurveyPackage_v2_2026-05-01.zip.'"
+    },
+    {
+      "id": "T04-L06-Q4",
+      "type": "mc",
+      "prompt": "A field crew member needs to check proposed pole locations on their smartphone while walking the route. Which format is most appropriate?",
+      "choices": [
+        "Shapefile — it contains the most complete attribute data",
+        "KMZ — it opens in Google Earth on any smartphone with no GIS software required",
+        "GeoTIFF — it provides the highest-resolution imagery",
+        "PDF/A — it renders identically on any device"
+      ],
+      "answerIndex": 1,
+      "explanation": "KMZ is the field-crew-friendly format — free Google Earth app on any smartphone, tap a location to see notes. Shapefile requires GIS software; GeoTIFF is a raster image format without clickable attributes; PDF/A is a static printable document without interactive GPS-synchronized positioning."
+    },
+    {
+      "id": "T04-L06-Q5",
+      "type": "mc",
+      "prompt": "Why does a single OSP route survey project typically require delivering the SAME underlying data in multiple formats (KMZ, shapefile, PDF/A) rather than just one universal format?",
+      "choices": [
+        "Multiple formats are required purely by regulatory mandate with no practical purpose",
+        "Different recipients need different capabilities: field crews need a lightweight app-friendly viewer (KMZ), the design engineer needs full attribute/GIS data (shapefile), and permit agencies need an archival, self-contained document (PDF/A) — no single format serves all three needs well",
+        "Format choice makes no practical difference; any one format would work equally well for all recipients",
+        "Multiple formats exist only because GIS software cannot standardize on one format"
+      ],
+      "answerIndex": 1,
+      "explanation": "Each format serves a distinct audience and use case: KMZ for lightweight mobile field access, shapefile for GIS-software-based engineering work with full attribute data, and PDF/A for long-term archival permit submissions — the differing needs justify producing multiple format deliverables from the same underlying survey data."
+    },
+    {
+      "id": "T04-L06-Q6",
+      "type": "mc",
+      "prompt": "A recipient opens a delivered file named 'FINAL_FINAL_USE_THIS_ONE.kmz.' What problem does this naming convention illustrate?",
+      "choices": [
+        "No problem — the name clearly communicates this is the correct file to use",
+        "It is the opposite of proper versioning — there's no way to tell how many revisions preceded this file or when it was created, risking someone unknowingly working from an even-more-superseded copy later",
+        "KMZ files cannot be renamed under any circumstances",
+        "This naming convention is required by RUS for all final deliverables"
+      ],
+      "answerIndex": 1,
+      "explanation": "Ad hoc labels like 'FINAL_FINAL' provide no structured information about revision sequence or creation date, defeating the purpose of versioning — a future recipient has no reliable way to confirm this is truly the most current version."
+    },
+    {
+      "id": "T04-L06-Q7",
+      "type": "mc",
+      "prompt": "Why might a design engineer specifically request the shapefile format rather than the KMZ, even though KMZ is easier to open?",
+      "choices": [
+        "KMZ files cannot contain any location data at all",
+        "The shapefile preserves the full attribute table (pole numbers, heights, notes, and other tabular fields) in a format GIS software can directly query and analyze, while KMZ's simpler structure is optimized for visual display rather than data-rich engineering analysis",
+        "Shapefiles are always smaller in file size than KMZ",
+        "KMZ files expire after 30 days and become unusable"
+      ],
+      "answerIndex": 1,
+      "explanation": "Shapefiles integrate directly into GIS analysis workflows with their full attribute data intact, which is what a design engineer needs for engineering work — KMZ prioritizes easy visual access (e.g., on Google Earth) over GIS-analysis-ready data structure."
+    },
+    {
+      "id": "T04-L06-Q8",
+      "type": "mc",
+      "prompt": "What is the risk of submitting a route plan permit application as a DWG file to a state DOT permit reviewer who may not have AutoCAD?",
+      "choices": [
+        "No risk — DWG is a universal format readable by any software",
+        "The reviewer may be unable to open or properly review the submittal at all, since DWG is a proprietary AutoCAD-native working format, not a universally accessible or long-term-archival document format like PDF/A",
+        "DWG files automatically convert themselves to PDF when opened by non-AutoCAD software",
+        "DWG is required by all state DOTs and no alternative format would be accepted anyway"
+      ],
+      "answerIndex": 1,
+      "explanation": "DWG is the design engineer's native working format, requiring AutoCAD (or compatible CAD software) to open — not a safe assumption for every permit reviewer. PDF/A is the appropriate submission format precisely because it's self-contained and universally viewable without specialized software."
+    }
+  ]
+}

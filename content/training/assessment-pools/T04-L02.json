@@ -1,0 +1,115 @@
+{
+  "assessmentId": "T04-L02",
+  "kind": "lesson",
+  "courseId": "T04",
+  "lessonId": "T04.L02",
+  "drawCount": 4,
+  "passThreshold": 70,
+  "pool": [
+    {
+      "id": "T04-L02-Q1",
+      "type": "mc",
+      "prompt": "A LiDAR sensor fires a laser pulse that produces three returns: first at 18 m elevation, second at 12 m, and last at 0.3 m. What does this pattern most likely indicate?",
+      "choices": [
+        "A single concrete structure at 18 m with two floors at 12 m and 0.3 m",
+        "A tree canopy at 18 m with mid-canopy at 12 m and the ground surface at 0.3 m",
+        "Three separate power lines at different heights",
+        "A data processing error — a single pulse can only produce one return"
+      ],
+      "answerIndex": 1,
+      "explanation": "Multiple returns from a single LiDAR pulse strongly indicate vegetation: the laser partially penetrates canopy gaps, producing a top-of-canopy return, a mid-canopy return, and a ground return. Solid surfaces like buildings typically produce a single return."
+    },
+    {
+      "id": "T04-L02-Q2",
+      "type": "mc",
+      "prompt": "A drone survey flight is planned at 80 m AGL using a camera with a 3.76 um pixel size and 24 mm focal length. Using GSD = (pixel size um x altitude m) / focal length mm, what is the approximate Ground Sample Distance (GSD)?",
+      "choices": [
+        "0.013 mm",
+        "12.5 mm (approximately 1.25 cm)",
+        "7.2 cm",
+        "1.5 m"
+      ],
+      "answerIndex": 1,
+      "explanation": "GSD = (3.76 x 80) / 24 = 300.8 / 24 ~= 12.53 mm ~= 1.25 cm. Each image pixel covers approximately 1.25 cm on the ground — sufficient detail for identifying poles and attachments."
+    },
+    {
+      "id": "T04-L02-Q3",
+      "type": "mc",
+      "prompt": "An OSP route survey corridor passes within 2 miles of a regional airport with Class D airspace. Before launching a drone, what is required per FAA Part 107?",
+      "choices": [
+        "Nothing — Part 107 rules only apply within 0.5 miles of an airport",
+        "Obtain prior authorization through LAANC or FAA DroneZone before flying in Class D airspace",
+        "File a verbal notice with the nearest air traffic control tower at least 30 minutes before flight",
+        "No authorization needed if the drone stays below 100 ft AGL"
+      ],
+      "answerIndex": 1,
+      "explanation": "Per 14 CFR 107.41, any UAS operation in Class B, C, D, or the Class E surface area designated for an airport requires prior ATC authorization. LAANC provides near-instant digital authorization. Flying without authorization in Class D is a federal violation regardless of altitude.",
+      "citation": "14 CFR 107.41 (airspace authorization)."
+    },
+    {
+      "id": "T04-L02-Q4",
+      "type": "mc",
+      "prompt": "What is the real-world ground distance represented by one pixel in an aerial drone image called?",
+      "choices": [
+        "Pixel resolution index",
+        "GSD (Ground Sample Distance)",
+        "Aerial density factor",
+        "Sensor footprint"
+      ],
+      "answerIndex": 1,
+      "explanation": "GSD is the key metric for planning a survey flight — a lower GSD means more detail per image. The formula GSD = (pixel size x altitude) / focal length lets you choose the right altitude for the required detail level. A GSD of 1-3 cm is typically sufficient for OSP corridor surveys."
+    },
+    {
+      "id": "T04-L02-Q5",
+      "type": "mc",
+      "prompt": "Why does LiDAR's multi-return capability matter specifically for OSP route surveying, beyond just distinguishing vegetation from bare earth?",
+      "choices": [
+        "It has no OSP-specific value beyond general vegetation mapping",
+        "It lets a surveyor identify both the true ground elevation AND canopy heights along a proposed route in a single pass, informing both bore/trench depth planning (ground surface) and vegetation-clearing/aerial-clearance planning (canopy) without a separate field visit for each",
+        "It only matters for underground routes, never aerial",
+        "It replaces the need for any ground-truth field verification entirely"
+      ],
+      "answerIndex": 1,
+      "explanation": "A single LiDAR pass captures both bare-earth ground elevation (useful for trenching/boring design) and canopy structure (useful for identifying vegetation-clearing needs along an aerial route) — combining what would otherwise require separate survey efforts."
+    },
+    {
+      "id": "T04-L02-Q6",
+      "type": "mc",
+      "prompt": "If the drone survey altitude in the GSD formula is doubled (with pixel size and focal length unchanged), what happens to the resulting GSD?",
+      "choices": [
+        "GSD is halved (finer resolution)",
+        "GSD doubles (coarser resolution) — since GSD is directly proportional to altitude in the formula",
+        "GSD is unaffected by altitude",
+        "GSD quadruples"
+      ],
+      "answerIndex": 1,
+      "explanation": "GSD = (pixel size x altitude) / focal length — altitude appears in direct proportion in the numerator, so doubling altitude doubles GSD (coarser, less detailed imagery). Flying higher covers more ground area per flight but at reduced per-pixel resolution."
+    },
+    {
+      "id": "T04-L02-Q7",
+      "type": "mc",
+      "prompt": "A survey team needs to fly a drone corridor that briefly clips the edge of Class D airspace near a regional airport. Is a blanket 'stay below 100 ft AGL' rule sufficient to avoid needing authorization?",
+      "choices": [
+        "Yes — altitude alone always determines whether authorization is needed",
+        "No — Part 107.41's authorization requirement is based on LATERAL airspace boundaries (being within the designated Class D surface area), not solely on altitude; flying low inside the boundary still requires authorization",
+        "Yes, but only for flights under 5 minutes in duration",
+        "No authorization is ever required for OSP survey work regardless of airspace class"
+      ],
+      "answerIndex": 1,
+      "explanation": "Class B/C/D/E-surface airspace authorization requirements under 107.41 are triggered by being within the airspace's lateral (and vertical) boundaries — a low-altitude flight inside the Class D surface area still requires prior authorization; altitude alone does not exempt the flight."
+    },
+    {
+      "id": "T04-L02-Q8",
+      "type": "mc",
+      "prompt": "Why would a survey team choose a lower flight altitude despite it requiring more individual flights to cover the same corridor length?",
+      "choices": [
+        "Lower altitude has no relationship to image quality, so the choice is arbitrary",
+        "Lower altitude produces a finer (smaller) GSD, giving higher-resolution imagery needed to positively identify small details like individual pole attachments — a tradeoff against needing more flights/time to cover the same total corridor",
+        "Lower altitude is always required by FAA regulation regardless of imaging needs",
+        "Lower altitude eliminates the need for any airspace authorization"
+      ],
+      "answerIndex": 1,
+      "explanation": "Since GSD scales directly with altitude, flying lower yields finer resolution imagery — useful when identifying small features like pole attachment hardware — at the cost of needing more flight passes (and time) to cover the same total corridor length compared to a higher, coarser-resolution survey."
+    }
+  ]
+}
