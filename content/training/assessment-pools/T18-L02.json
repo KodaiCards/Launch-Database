@@ -1,0 +1,120 @@
+{
+  "assessmentId": "T18-L02",
+  "kind": "lesson",
+  "courseId": "T18",
+  "lessonId": "T18.L02",
+  "drawCount": 4,
+  "passThreshold": 70,
+  "pool": [
+    {
+      "id": "T18-L02-Q1",
+      "type": "mc",
+      "prompt": "Two technicians are both working on a locked-out equipment rack. One applies a lock. Under 29 CFR 1910.147(f)(3), what must the second technician do?",
+      "choices": [
+        "Rely on the first technician's lock — only one lock per equipment item is needed",
+        "Apply their own separate padlock to a group lockout hasp on the same energy isolating device",
+        "Apply a tagout tag because only one lock is allowed per hasp",
+        "Notify the supervisor and wait outside the work area"
+      ],
+      "answerIndex": 1,
+      "explanation": "Per 29 CFR 1910.147(f)(3), in a group lockout each authorized employee must apply their own personal padlock to a group lockout hasp. The equipment cannot be re-energized until every worker has removed their own lock — one worker's lock protects only that worker.",
+      "citation": "29 CFR 1910.147(f)(3) — Group lockout or tagout."
+    },
+    {
+      "id": "T18-L02-Q2",
+      "type": "mc",
+      "prompt": "What is the physical device (breaker, valve, disconnect switch) that a lock or tag is applied to during a LOTO procedure called?",
+      "choices": [
+        "The energy isolating device",
+        "The equipment rack",
+        "The service panel",
+        "The safety interlock"
+      ],
+      "answerIndex": 0,
+      "explanation": "The energy isolating device (EID) is the mechanism that physically prevents energy from flowing to the equipment being serviced. The lock is applied to the EID — not to the equipment itself — because the EID is the control point where energy can actually be blocked."
+    },
+    {
+      "id": "T18-L02-Q3",
+      "type": "mc",
+      "prompt": "A technician is splicing fiber inside a remote fiber hut next to a battery backup rack, doing no work on the rack itself. Does 29 CFR 1910.147 LOTO apply?",
+      "choices": [
+        "Yes — apply LOTO because the fiber splicer uses 120V AC wall power",
+        "No — LOTO applies to servicing/maintenance of equipment; fiber splicing in the room isn't servicing the energized racks",
+        "Yes — any work in the same room as energized equipment requires LOTO",
+        "Yes, but only if the battery rack is within 3 feet of the splice work"
+      ],
+      "answerIndex": 1,
+      "explanation": "29 CFR 1910.147 applies to servicing and maintenance of machines and equipment where unexpected energization could injure the worker. Working near — but not servicing — the equipment does not trigger LOTO, though safe work practices near live equipment still apply under 1910.268.",
+      "citation": "29 CFR 1910.147(a)(1) — Scope and Application."
+    },
+    {
+      "id": "T18-L02-Q4",
+      "type": "mc",
+      "prompt": "After completing maintenance work, in what order does re-energization occur under 29 CFR 1910.147(e)?",
+      "choices": [
+        "Remove lock -> restore energy -> clear work area -> notify affected employees",
+        "Remove lock -> restore energy -> notify affected employees",
+        "Clear work area -> each worker removes own lock -> notify affected employees -> restore energy",
+        "Restore energy -> clear work area -> workers retrieve locks -> notify affected employees"
+      ],
+      "answerIndex": 2,
+      "explanation": "29 CFR 1910.147(e) requires: (1) remove tools/materials, (2) ensure all employees are clear, (3) each authorized employee removes their own lock, (4) notify affected employees, (5) restore energy. Workers must be clear and notified BEFORE re-energization.",
+      "citation": "29 CFR 1910.147(e)(1)-(e)(3)."
+    },
+    {
+      "id": "T18-L02-Q5",
+      "type": "mc",
+      "prompt": "What is the correct sequence of the six-step LOTO procedure under 29 CFR 1910.147(d)?",
+      "choices": [
+        "Shutdown -> Preparation -> Lockout application -> Isolation -> Verification -> Stored energy release",
+        "Preparation -> Shutdown -> Isolation -> Lockout/tagout device application -> Stored energy release/restraint -> Verification of isolation",
+        "Isolation -> Preparation -> Shutdown -> Verification -> Stored energy release -> Lockout application",
+        "Preparation -> Verification -> Shutdown -> Isolation -> Lockout application -> Stored energy release"
+      ],
+      "answerIndex": 1,
+      "explanation": "The sequence is: (1) preparation for shutdown, (2) machine/equipment shutdown, (3) isolation, (4) lockout/tagout device application, (5) stored energy release or restraint, (6) verification of isolation (zero-energy check). Verification is the final step and one of the most commonly skipped, most frequently cited failures.",
+      "citation": "29 CFR 1910.147(d)(1)-(d)(6)."
+    },
+    {
+      "id": "T18-L02-Q6",
+      "type": "mc",
+      "prompt": "Why does verification of isolation (the final LOTO step) matter, even after locks have been applied?",
+      "choices": [
+        "It confirms the actual zero-energy state — a lock alone doesn't guarantee the isolating device fully disconnected the energy source; the worker must attempt to restart/test to verify",
+        "It is a purely administrative step with no safety function",
+        "It replaces the need to apply a lock at all",
+        "It is only required when more than one worker is involved"
+      ],
+      "answerIndex": 0,
+      "explanation": "Verification means the authorized employee attempts to restart the machine (pressing the start button, testing circuits) after applying the lock, to confirm the energy source is actually isolated — a lock on the wrong device, or a device that didn't fully isolate, would otherwise go undetected. This step is one of the most frequently cited LOTO violations when skipped."
+    },
+    {
+      "id": "T18-L02-Q7",
+      "type": "mc",
+      "prompt": "During a group lockout on shared equipment, when can the equipment be re-energized?",
+      "choices": [
+        "As soon as the most senior technician removes their lock",
+        "Only after every authorized employee who applied a lock has personally removed their own lock",
+        "As soon as the supervisor gives verbal approval, regardless of locks still in place",
+        "After a fixed 30-minute waiting period, regardless of lock status"
+      ],
+      "answerIndex": 1,
+      "explanation": "In a group lockout, each authorized employee's lock protects only that employee. Re-energization cannot occur until every individual lock has been removed by the person who applied it — this ensures no worker is exposed to unexpected energization while still in the work area.",
+      "citation": "29 CFR 1910.147(f)(3)."
+    },
+    {
+      "id": "T18-L02-Q8",
+      "type": "mc",
+      "prompt": "A technician needs to work on a piece of equipment that has multiple energy sources (electrical AND stored pneumatic pressure). What does step 5 of the LOTO sequence require?",
+      "choices": [
+        "Only the electrical source needs isolation; stored pressure is not covered by LOTO",
+        "All stored or residual energy (including pneumatic, hydraulic, spring-loaded, or gravitational) must be released or restrained before work begins",
+        "Stored energy release is optional if the equipment has been powered off for more than an hour",
+        "Stored energy only needs to be addressed if it exceeds 1,800 lbf"
+      ],
+      "answerIndex": 1,
+      "explanation": "Step 5 of the LOTO sequence (29 CFR 1910.147(d)(5)) requires release or restraint of ALL stored or residual energy — not just the primary energy source being locked out. Pneumatic, hydraulic, spring-loaded, and gravitational energy can all injure a worker even after the primary electrical source is isolated.",
+      "citation": "29 CFR 1910.147(d)(5)."
+    }
+  ]
+}
