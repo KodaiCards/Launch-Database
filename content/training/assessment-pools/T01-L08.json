@@ -106,7 +106,8 @@
         "A designation for ribbon cable fiber counts above 288"
       ],
       "answerIndex": 1,
-      "explanation": "OS2 (ISO/IEC 11801) corresponds to G.652.D single-mode fiber — the standard for OSP trunk and feeder runs. OS1 maps to earlier G.652.A/B/C specs with higher water-peak attenuation, now rare in new installations."
+      "explanation": "OS2 (ISO/IEC 11801) corresponds to G.652.C or G.652.D single-mode fiber (low/zero water-peak) — the standard for OSP trunk and feeder runs, with maximum attenuation specified at 0.4 dB/km. OS1 maps to earlier G.652.A/B specs (max 1.0 dB/km), now rare in new installations.",
+      "citation": "ISO/IEC 11801 OS1/OS2 fiber category mapping to ITU-T G.652 sub-categories, corroborated via multiple independent fiber-industry technical summaries (see T01.md)."
     },
     {
       "id": "T01-L08-Q8",

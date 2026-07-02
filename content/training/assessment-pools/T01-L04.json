@@ -96,7 +96,8 @@
         "Bend radius requirements only apply to ribbon cable, not loose-tube fiber"
       ],
       "answerIndex": 1,
-      "explanation": "Slack fiber stored as coiled loops inside a splice tray must maintain a minimum bend radius (commonly cited around 30 mm) to avoid macrobend loss. Violating this is the single most common cause of unexpected post-splice OTDR loss."
+      "explanation": "Slack fiber stored as coiled loops inside a splice tray must maintain a minimum bend radius — commonly cited around 30 mm for single-mode fiber across fiber-management component vendor guides — to avoid macrobend loss; verify the exact figure against the specific tray manufacturer's datasheet, since it can vary by product. Violating this is the single most common cause of unexpected post-splice OTDR loss.",
+      "citation": "Fiber-management component vendor/industry guides (splice tray minimum bend radius, commonly 30 mm for single-mode fiber) — not a single formal standard's clause; treat as an industry-convention figure to be confirmed against the specific tray manufacturer's datasheet, per T01.md."
     },
     {
       "id": "T01-L04-Q8",
