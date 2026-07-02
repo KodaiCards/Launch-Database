@@ -1,7 +1,7 @@
 // Net-new — T06.L08 Riser, Pedestal, and NIU Placement
 // Working lesson: riser (pedestal mast), terminal pedestal, NIU placement,
 // vaulted NIU, pedestal spacing, slack-loop storage.
-// Sources: RUS 1751F-635 §7; net-new hardware details
+// Sources: RUS 1751F-643 §7; net-new hardware details
 
 import React from 'react';
 import LessonLayout from '../../components/LessonLayout.jsx';
@@ -49,7 +49,7 @@ export const meta = {
     },
     {
       term: 'pedestal spacing',
-      definition: 'The maximum distance between successive terminal pedestals along an underground fiber route, measured along the cable route (not in a straight line). RUS 1751F-635 §7 specifies a maximum spacing of 330 feet (100 m) between terminal pedestals in residential underground plant. Spacing beyond 330 feet creates access problems: technicians cannot efficiently pull slack or locate a splice point by routing the route between accessible points that are too far apart.',
+      definition: 'The maximum distance between successive terminal pedestals along an underground fiber route, measured along the cable route (not in a straight line). RUS 1751F-643 §7 specifies a maximum spacing of 330 feet (100 m) between terminal pedestals in residential underground plant. Spacing beyond 330 feet creates access problems: technicians cannot efficiently pull slack or locate a splice point by routing the route between accessible points that are too far apart.',
     },
     {
       term: 'slack-loop storage',
@@ -169,12 +169,12 @@ export default function T06L08_RiserPedestalAndNIUPlacement() {
           conduit can wick along the cable for hundreds of feet, causing moisture damage at
           splice points far from the pedestal. Apply conduit sealant (mastic putty or
           heat-shrink end-seal) at every conduit entry into the pedestal base.
-          (Source: RUS 1751F-635 §7; field practice.)
+          (Source: RUS 1751F-643 §7; field practice.)
         </p>
 
         <h3 className="mt-5 font-semibold">Pedestal spacing: the 330-foot rule</h3>
         <p>
-          RUS 1751F-635 §7 specifies that terminal pedestals in residential underground
+          RUS 1751F-643 §7 specifies that terminal pedestals in residential underground
           distribution plant shall be placed at a maximum spacing of <strong>330 feet
           (100 meters)</strong> measured along the cable route. This rule exists for
           a practical reason: when a technician needs to access the cable plant — to make
@@ -201,7 +201,7 @@ export default function T06L08_RiserPedestalAndNIUPlacement() {
         <div className="mt-4 p-4 border border-amber-400/30 bg-amber-400/5 rounded-lg text-sm">
           <p className="font-semibold text-amber-300 mb-1">Book vs. Field</p>
           <p className="text-slate-300/90">
-            <strong>Book:</strong> RUS 1751F-635 §7 states 330-foot maximum spacing for terminal
+            <strong>Book:</strong> RUS 1751F-643 §7 states 330-foot maximum spacing for terminal
             pedestals in residential underground plant.
           </p>
           <p className="text-slate-300/90 mt-2">
@@ -240,8 +240,8 @@ export default function T06L08_RiserPedestalAndNIUPlacement() {
           </li>
         </ol>
         <p className="mt-2 text-sm text-slate-300/70">
-          Source: RUS 1751F-635 §7; BICSI OSPDR (field chapter); field practice.
-          [confirm current RUS 1751F-635 slack requirement in your project's standard.]
+          Source: RUS 1751F-643 §7; BICSI OSPDR (field chapter); field practice.
+          [confirm current RUS 1751F-643 slack requirement in your project's standard.]
         </p>
 
         <h3 className="mt-5 font-semibold">NIU placement at the customer premises</h3>
@@ -274,7 +274,7 @@ export default function T06L08_RiserPedestalAndNIUPlacement() {
             <strong>Optical test port:</strong> The NIU must have an accessible SC/APC (or
             equivalent) test port that allows a technician to test the incoming fiber signal
             without entering the customer's premises or disconnecting customer equipment.
-            (Source: RUS 1751F-635 §7; field practice.)
+            (Source: RUS 1751F-643 §7; field practice.)
           </li>
         </ul>
 
@@ -296,7 +296,7 @@ export default function T06L08_RiserPedestalAndNIUPlacement() {
           <li>Accessible without equipment: a hand key or standard security bit opens it, not a backhoe</li>
         </ul>
         <p className="mt-2 text-sm text-slate-300/70">
-          Source: RUS 1751F-635 §7; NFPA 70 §830 (communications cable installation at buildings);
+          Source: RUS 1751F-643 §7; NFPA 70 §830 (communications cable installation at buildings);
           field practice.
         </p>
       </section>
@@ -318,7 +318,7 @@ export default function T06L08_RiserPedestalAndNIUPlacement() {
             top of the riser in a watertight conduit seal. The pedestal body is sealed against
             submersion to a specified depth (typically 3–6 feet) per NEMA rating. This approach
             keeps a surface-accessible pedestal while reducing water intrusion. (Field practice;
-            RUS 1751F-635 §7.)
+            RUS 1751F-643 §7.)
           </li>
           <li>
             <strong>Vaulted NIU with drain sump.</strong> Install a vault below grade with
@@ -384,7 +384,7 @@ export default function T06L08_RiserPedestalAndNIUPlacement() {
           {
             id: 'T06-L08-Q1',
             type: 'mc',
-            prompt: 'What is the maximum pedestal spacing specified by RUS 1751F-635 §7 for residential underground plant?',
+            prompt: 'What is the maximum pedestal spacing specified by RUS 1751F-643 §7 for residential underground plant?',
             choices: [
               '500 feet (150 m)',
               '250 feet (76 m)',
@@ -392,7 +392,7 @@ export default function T06L08_RiserPedestalAndNIUPlacement() {
               '400 feet (122 m)',
             ],
             answerIndex: 2,
-            explanation: 'RUS 1751F-635 §7 specifies a maximum spacing of 330 feet (100 m) between terminal pedestals in residential underground distribution plant. Most experienced designers use 250–280 feet as a working rule, keeping 330 feet as the hard maximum. Spacing is measured along the cable route, not in a straight line. (Source: RUS 1751F-635 §7.)',
+            explanation: 'RUS 1751F-643 §7 specifies a maximum spacing of 330 feet (100 m) between terminal pedestals in residential underground distribution plant. Most experienced designers use 250–280 feet as a working rule, keeping 330 feet as the hard maximum. Spacing is measured along the cable route, not in a straight line. (Source: RUS 1751F-643 §7.)',
           },
           {
             id: 'T06-L08-Q2',
@@ -405,7 +405,7 @@ export default function T06L08_RiserPedestalAndNIUPlacement() {
               'Circular coiling is only permitted in manholes, not pedestals',
             ],
             answerIndex: 1,
-            explanation: 'A circular coil stores tension as a loop — the cable at the top of the loop is under constant lateral force trying to straighten it, which eventually causes a kink at that point. A figure-8 coil alternates the direction of each loop, distributing tension evenly around the coil and preventing the kink-at-the-top failure mode. (Source: RUS 1751F-635 §7; field practice.)',
+            explanation: 'A circular coil stores tension as a loop — the cable at the top of the loop is under constant lateral force trying to straighten it, which eventually causes a kink at that point. A figure-8 coil alternates the direction of each loop, distributing tension evenly around the coil and preventing the kink-at-the-top failure mode. (Source: RUS 1751F-643 §7; field practice.)',
           },
           {
             id: 'T06-L08-Q3',
@@ -418,7 +418,7 @@ export default function T06L08_RiserPedestalAndNIUPlacement() {
               'No load rating required since it is in a parking lot, not on a road',
             ],
             answerIndex: 1,
-            explanation: 'Any vault installed where it can be driven over — driveways, parking lots, or any lawn area reachable by service vehicles — must have an H-20 load-rated lid. H-20 is the standard 2-axle highway live load class: 40,000 lb gross vehicle weight (20 short tons) with a rear axle load of 32,000 lb. A non-rated lid in a parking lot will fail under a delivery truck, creating a safety hazard and damaging the equipment inside. (Source: RUS 1751F-635 §7; NFPA 70 §830.)',
+            explanation: 'Any vault installed where it can be driven over — driveways, parking lots, or any lawn area reachable by service vehicles — must have an H-20 load-rated lid. H-20 is the standard 2-axle highway live load class: 40,000 lb gross vehicle weight (20 short tons) with a rear axle load of 32,000 lb. A non-rated lid in a parking lot will fail under a delivery truck, creating a safety hazard and damaging the equipment inside. (Source: RUS 1751F-643 §7; NFPA 70 §830.)',
           },
           {
             id: 'T06-L08-Q4',
@@ -431,7 +431,7 @@ export default function T06L08_RiserPedestalAndNIUPlacement() {
               '50 feet',
             ],
             answerIndex: 2,
-            explanation: 'Standard practice per RUS 1751F-635 §7 is a minimum of 20–30 feet of slack stored in a figure-8 coil on each cable end before splicing. This provides margin for 10–15 future re-splices (each consuming 1–2 feet) and for relocating the pedestal up to 15–20 feet without pulling new cable. (Source: RUS 1751F-635 §7; BICSI OSPDR; field practice.)',
+            explanation: 'Standard practice per RUS 1751F-643 §7 is a minimum of 20–30 feet of slack stored in a figure-8 coil on each cable end before splicing. This provides margin for 10–15 future re-splices (each consuming 1–2 feet) and for relocating the pedestal up to 15–20 feet without pulling new cable. (Source: RUS 1751F-643 §7; BICSI OSPDR; field practice.)',
           },
           {
             id: 'T06-L08-Q5',
@@ -444,7 +444,7 @@ export default function T06L08_RiserPedestalAndNIUPlacement() {
               'Because RUS requires sealed pedestals for all conduit diameters larger than 2 inches',
             ],
             answerIndex: 1,
-            explanation: 'Water enters a conduit at low points — including the pedestal base where the riser transitions from below grade. Once inside the conduit, water wicks along the fiber cable\'s interstitial spaces (between the buffer tubes and the sheath) for hundreds of feet. When it reaches a splice point, the moisture degrades the splice closure\'s gel and eventually causes fiber damage. A watertight conduit seal at the pedestal base stops the entry path. (Source: RUS 1751F-635 §7; field practice.)',
+            explanation: 'Water enters a conduit at low points — including the pedestal base where the riser transitions from below grade. Once inside the conduit, water wicks along the fiber cable\'s interstitial spaces (between the buffer tubes and the sheath) for hundreds of feet. When it reaches a splice point, the moisture degrades the splice closure\'s gel and eventually causes fiber damage. A watertight conduit seal at the pedestal base stops the entry path. (Source: RUS 1751F-643 §7; field practice.)',
           },
         ]}
       />

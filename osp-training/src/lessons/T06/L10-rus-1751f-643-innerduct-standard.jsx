@@ -1,6 +1,6 @@
 // Net-new — T06.L10 RUS 1751F-643 — Innerduct Standard
 // Advanced lesson: innerduct qualification, traceability, RUS acceptance testing.
-// Sources: RUS 1751F-643 paywalled — cited via RUS 1751F-635 cross-reference; field practice.
+// Sources: RUS 1751F-643 (Underground Plant Design) — primary text paywalled; field practice.
 
 import React from 'react';
 import LessonLayout from '../../components/LessonLayout.jsx';
@@ -33,7 +33,7 @@ export const meta = {
   key_terms: [
     {
       term: 'RUS 1751F-643 innerduct qualification',
-      definition: 'RUS Bulletin 1751F-643 is the RUS standard that specifies the material and performance requirements for innerduct (smaller duct installed inside a larger conduit) used on RUS-funded telecommunications projects. For innerduct to be used on a RUS-funded job, it must be listed on the RUS Accepted Materials List (AML) — meaning the manufacturer has submitted test data demonstrating that the innerduct meets RUS 1751F-643 requirements for wall thickness, tensile strength, UV resistance, chemical resistance, and long-term deformation resistance. Using non-listed innerduct on a RUS job is a contract non-compliance issue. (Source: RUS 1751F-635, cross-reference to RUS 1751F-643; [confirm current innerduct acceptance test requirements per RUS 1751F-643].)',
+      definition: 'RUS Bulletin 1751F-643 (Underground Plant Design) is the RUS standard that specifies the material and performance requirements for innerduct (smaller duct installed inside a larger conduit) used on RUS-funded telecommunications projects. For innerduct to be used on a RUS-funded job, it must be listed on the RUS Accepted Materials List (AML) — meaning the manufacturer has submitted test data demonstrating that the innerduct meets RUS 1751F-643 requirements for wall thickness, tensile strength, UV resistance, chemical resistance, and long-term deformation resistance. Using non-listed innerduct on a RUS job is a contract non-compliance issue. (Source: RUS 1751F-643; [confirm current innerduct acceptance test requirements against the current paid edition].)',
     },
     {
       term: 'innerduct traceability',
@@ -53,7 +53,7 @@ export const vocabulary_assumed = [
   { term: 'microduct', source_lesson_id: 'T06.L03' },
   { term: 'conduit fill', source_lesson_id: 'T06.L04' },
   { term: 'HDPE', source_lesson_id: 'T01.L08' },
-  { term: 'RUS 1751F-635', source_lesson_id: 'T06.L02' },
+  { term: 'RUS 1751F-643', source_lesson_id: 'T06.L02' },
   { term: 'pull tension', source_lesson_id: 'T06.L04' },
 ];
 
@@ -90,10 +90,9 @@ export default function T06L10_RUS1751F643InnterductStandard() {
           need to prove compliance.
         </p>
         <p className="mt-2 text-sm text-slate-300/70">
-          Note: RUS 1751F-643 is a paywalled RUS bulletin. The requirements summarized in
-          this lesson are derived from RUS 1751F-635, which cross-references and summarizes
-          the 1751F-643 requirements for buried plant design. Designers should verify directly
-          against the current edition of 1751F-643 when available.
+          Note: RUS 1751F-643 (Underground Plant Design) is a paywalled RUS bulletin.
+          Designers should verify directly against the current edition of 1751F-643 when
+          available.
           [confirm current innerduct acceptance test requirements per RUS 1751F-643]
         </p>
 
@@ -235,8 +234,8 @@ export default function T06L10_RUS1751F643InnterductStandard() {
           </li>
         </ol>
         <p className="mt-2 text-sm text-slate-300/70">
-          Source: RUS 1751F-635 §5 and §11 (cross-references to 1751F-643 for innerduct
-          requirements); field practice for documentation package structure.
+          Source: RUS 1751F-643 §5 and §11 (innerduct requirements and documentation package
+          structure); field practice for submittal formatting.
           [confirm current submittal requirements with RUS district office on your project]
         </p>
 
@@ -318,7 +317,7 @@ export default function T06L10_RUS1751F643InnterductStandard() {
               'The innerduct is made of HDPE, which automatically qualifies it for all RUS projects',
             ],
             answerIndex: 1,
-            explanation: 'RUS 1751F-643 listing means the manufacturer has submitted test data to RUS demonstrating that the product meets the specification for wall thickness, tensile strength, UV resistance, chemical resistance, and long-term deformation resistance. The product is then added to the RUS Accepted Materials List (AML). Listing is about factory qualification, not on-site inspection or distributor sourcing. (Source: RUS 1751F-635, cross-reference to RUS 1751F-643; [confirm current AML process at rd.usda.gov].)',
+            explanation: 'RUS 1751F-643 listing means the manufacturer has submitted test data to RUS demonstrating that the product meets the specification for wall thickness, tensile strength, UV resistance, chemical resistance, and long-term deformation resistance. The product is then added to the RUS Accepted Materials List (AML). Listing is about factory qualification, not on-site inspection or distributor sourcing. (Source: RUS 1751F-643; [confirm current AML process at rd.usda.gov].)',
           },
           {
             id: 'T06-L10-Q2',
@@ -331,7 +330,7 @@ export default function T06L10_RUS1751F643InnterductStandard() {
               'Purchase order, invoice, delivery receipt, installation report',
             ],
             answerIndex: 1,
-            explanation: 'Innerduct traceability includes: (1) type designation printed on the duct (e.g., "1.25-in SDR-11 HDPE RUS LISTED"), (2) manufacturing date code, (3) reel or lot number, and (4) the manufacturer\'s test certificate or compliance letter confirming 1751F-643 compliance. These four items allow an RUS auditor to trace the installed product back to the factory test that qualified it. (Source: RUS 1751F-635 §5; field practice.)',
+            explanation: 'Innerduct traceability includes: (1) type designation printed on the duct (e.g., "1.25-in SDR-11 HDPE RUS LISTED"), (2) manufacturing date code, (3) reel or lot number, and (4) the manufacturer\'s test certificate or compliance letter confirming 1751F-643 compliance. These four items allow an RUS auditor to trace the installed product back to the factory test that qualified it. (Source: RUS 1751F-643 §5; field practice.)',
           },
           {
             id: 'T06-L10-Q3',
@@ -344,7 +343,7 @@ export default function T06L10_RUS1751F643InnterductStandard() {
               'No — but the fix is to upgrade to a 4-inch outer conduit and keep all three innerducts',
             ],
             answerIndex: 1,
-            explanation: '45.1% exceeds the 40% fill rule. There is no rounding tolerance — 40% is the hard limit. The simplest fix is to use 2 × 1.25-inch innerducts (fill = 30%) or switch to 1-inch innerducts (fill = 28.8% for three). Both are compliant. Upgrading to a 4-inch conduit is also compliant but adds unnecessary cost when a 3-inch conduit with two 1.25-inch innerducts serves the design requirement. (Source: RUS 1751F-635 §5; T06.L04 conduit fill rule.)',
+            explanation: '45.1% exceeds the 40% fill rule. There is no rounding tolerance — 40% is the hard limit. The simplest fix is to use 2 × 1.25-inch innerducts (fill = 30%) or switch to 1-inch innerducts (fill = 28.8% for three). Both are compliant. Upgrading to a 4-inch conduit is also compliant but adds unnecessary cost when a 3-inch conduit with two 1.25-inch innerducts serves the design requirement. (Source: RUS 1751F-643 §5; T06.L04 conduit fill rule.)',
           },
           {
             id: 'T06-L10-Q4',
@@ -357,7 +356,7 @@ export default function T06L10_RUS1751F643InnterductStandard() {
               'Contact RUS to have the unlisted product added to the AML retroactively',
             ],
             answerIndex: 1,
-            explanation: 'Unlisted innerduct must not be installed on a RUS project. Once it\'s underground, removing and replacing it is extremely expensive — that cost falls on the contractor, not the project. The fix before installation is simple: stop work, require the contractor to provide the compliance letter or replace the product with listed material. Allowing installation and resolving documentation later is not acceptable — RUS audit standards require compliance BEFORE installation, not after. (Source: RUS 1751F-635 §5; field practice.)',
+            explanation: 'Unlisted innerduct must not be installed on a RUS project. Once it\'s underground, removing and replacing it is extremely expensive — that cost falls on the contractor, not the project. The fix before installation is simple: stop work, require the contractor to provide the compliance letter or replace the product with listed material. Allowing installation and resolving documentation later is not acceptable — RUS audit standards require compliance BEFORE installation, not after. (Source: RUS 1751F-643 §5; field practice.)',
           },
           {
             id: 'T06-L10-Q5',

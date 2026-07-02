@@ -1,6 +1,6 @@
 // T06.L03 — Conduit and Innerduct Selection
 // Working lesson: Schedule 40/80 PVC, HDPE, microduct, innerduct — when to use each
-// Source: Module09_OSPConstruction.jsx §9.4 partial + RUS 1751F-635 §5 + RUS 1751F-643 reference
+// Source: Module09_OSPConstruction.jsx §9.4 partial + RUS 1751F-643 (Underground Plant Design) §5
 
 import React, { useState } from 'react';
 import LessonLayout from '../../components/LessonLayout.jsx';
@@ -34,7 +34,7 @@ export const meta = {
     { term: 'HDD', source_lesson_id: 'T06.L01' },
     { term: 'plowing', source_lesson_id: 'T06.L01' },
     { term: 'minimum cover', source_lesson_id: 'T06.L02' },
-    { term: 'RUS 1751F-635', source_lesson_id: 'T06.L02' },
+    { term: 'RUS 1751F-643', source_lesson_id: 'T06.L02' },
   ],
   key_terms: [
     {
@@ -369,10 +369,10 @@ export default function T06L03_ConduitAndInnerductSelection() {
         <div className="mt-5 bg-blue-900/20 border border-blue-500/30 rounded-lg p-4 text-sm">
           <p className="font-semibold text-blue-300">Book practice (RUS design convention):</p>
           <p className="mt-1 text-slate-300/90">
-            RUS 1751F-635 §5 specifies conduit types and innerduct requirements for RUS-financed buried
-            plant. For RUS jobs, innerduct must meet RUS specifications (see RUS 1751F-643 for innerduct
-            qualification and traceability requirements [confirm current innerduct acceptance test per
-            RUS 1751F-643 — paywalled standard referenced via RUS 1751F-635]). The required color
+            RUS 1751F-643 (Underground Plant Design) §5 specifies conduit types and innerduct
+            requirements for RUS-financed buried plant, including the innerduct qualification and
+            traceability requirements covered in T06.L10 [confirm current innerduct acceptance test
+            against the current paid edition of RUS 1751F-643 — paywalled standard]. The required color
             sequence and documentation are part of the project closeout deliverables.
           </p>
         </div>
