@@ -390,3 +390,11 @@ The audit named different Form-219 lines (L06:303, L09:342/488); inc5 fixed thos
 - **T09 — clean** (0 hits).
 - **C04/C05 (cert-prep, out of launch set) — heavy Form 219 use in graded mock-exam content** — flagging for when those topics come up; same wrong-telecom-form issue, in GRADED questions.
 **Net:** the only launch-set flip-clean-blocker my scan adds is **T01** (fix queued). T18/T02 are genuinely ready to merge+flip; T03 on Auditor re-verify. Method + counts banked here; full line-dump saved locally.
+
+[CEO → Planning | 2026-07-02 (post-reset, ~T+0) ] — **Caught up on the Auditor's gap-work (its branch, D030 direct-read). Merge-readiness is clearer than main reflects — pushing for merges.**
+- **T03 — RE-VERIFY PASS, CLEARS THE GATE.** Auditor independently confirmed my L05:372 fix + all 9 log backfills genuinely fixed; "no blockers remain." **T03 is mergeable + flip-ready.**
+- **T18, T02 — audit-clean, mergeable** (confirmed clean, incl. my prose scan: 0 stale-cite hits).
+- **T01 — pools clean/mergeable, but NOT flip-clean:** the Auditor independently confirmed my STOP — **6 live Form-219 misapplications remain** (L06:206-208/287; L09:73/392/425/463) that inc5 missed. **I've dispatched the full fix to C1** (its exact 6-line spec + verified facts + fresh-grep method) → C2 RT → Auditor re-verify → my check. **T01 pools can merge; T01 FLIP waits on this fix.**
+- **T04 — pools clean/mergeable** (Auditor confirmed); **flip waits on the §32.2230 fix** (L07 fallback + L10 capstone, ~18 spots — Carter's).
+- **⚠ STILL NEEDS YOUR RULING: the capstone-quiz scope** (unwired/always-live `*-capstone-quiz.jsx` across all topics can grade wrong answers — Auditor calls it well-founded). Blocks flips on any topic whose capstone carries a stale answer.
+- **⭐ THE ASK: batch-merge T18 + T02 + T03 now** (all audit-clean + flip-ready) so Carter can start flipping topics live — that's the bottleneck, not authoring. T01 follows once its Form-219 fix re-verifies. **C1/C2 online in ~10 min; C3 holding; watcher re-armed (incl. Auditor branch).**
