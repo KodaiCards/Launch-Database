@@ -5,6 +5,7 @@
 import React from 'react';
 import LessonLayout from '../../components/LessonLayout.jsx';
 import Quiz from '../../components/primitives/Quiz.jsx';
+import GatedAssessment from '../../components/primitives/GatedAssessment.jsx';
 import Flashcard from '../../components/Flashcard.jsx';
 
 export const meta = {
@@ -368,6 +369,11 @@ export default function T09L09_TribalCoordinationThpoNho() {
       </section>
 
       {/* QUIZ */}
+      <GatedAssessment
+        courseId="T09"
+        assessmentId="T09-L09"
+        title="L09 Practice Quiz — Tribal Coordination"
+        fallback={
       <Quiz
         title="L09 Practice Quiz — Tribal Coordination"
         mode="multiple-choice"
@@ -436,6 +442,8 @@ export default function T09L09_TribalCoordinationThpoNho() {
         onComplete={(result) => {
           console.info('T09 L09 Quiz complete:', result);
         }}
+      />
+        }
       />
 
     </LessonLayout>

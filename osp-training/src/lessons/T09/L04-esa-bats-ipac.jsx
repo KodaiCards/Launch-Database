@@ -6,6 +6,7 @@
 import React from 'react';
 import LessonLayout from '../../components/LessonLayout.jsx';
 import Quiz from '../../components/primitives/Quiz.jsx';
+import GatedAssessment from '../../components/primitives/GatedAssessment.jsx';
 import Flashcard from '../../components/Flashcard.jsx';
 
 export const meta = {
@@ -427,6 +428,11 @@ export default function T09L04_ESABatsIPaC() {
       </div>
 
       {/* ── PER-LESSON QUIZ ──────────────────────────────────────────────── */}
+      <GatedAssessment
+        courseId="T09"
+        assessmentId="T09-L04"
+        title="T09.L04 Check — ESA, Bats, and IPaC"
+        fallback={
       <Quiz
         title="T09.L04 Check — ESA, Bats, and IPaC"
         mode="multiple-choice"
@@ -496,6 +502,8 @@ export default function T09L04_ESABatsIPaC() {
             citation: 'USFWS IPaC (ipac.ecosphere.fws.gov); 16 USC §1536 (ESA §7 consultation trigger).',
           },
         ]}
+      />
+        }
       />
 
     </LessonLayout>

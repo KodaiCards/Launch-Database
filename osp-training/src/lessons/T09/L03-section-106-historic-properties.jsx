@@ -7,6 +7,7 @@ import React from 'react';
 import LessonLayout from '../../components/LessonLayout.jsx';
 import BranchingScenario from '../../components/primitives/BranchingScenario.jsx';
 import Quiz from '../../components/primitives/Quiz.jsx';
+import GatedAssessment from '../../components/primitives/GatedAssessment.jsx';
 import Flashcard from '../../components/Flashcard.jsx';
 
 export const meta = {
@@ -437,6 +438,11 @@ export default function T09L03_Section106() {
       />
 
       {/* ── PER-LESSON QUIZ ──────────────────────────────────────────────── */}
+      <GatedAssessment
+        courseId="T09"
+        assessmentId="T09-L03"
+        title="T09.L03 Check — Section 106 — Historic Properties"
+        fallback={
       <Quiz
         title="T09.L03 Check — Section 106 — Historic Properties"
         mode="multiple-choice"
@@ -506,6 +512,8 @@ export default function T09L03_Section106() {
             citation: '36 CFR §800.2(c) (consulting parties); 54 USC §306108.',
           },
         ]}
+      />
+        }
       />
 
     </LessonLayout>

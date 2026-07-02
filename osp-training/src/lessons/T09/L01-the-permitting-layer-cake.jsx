@@ -5,6 +5,7 @@
 import React from 'react';
 import LessonLayout from '../../components/LessonLayout.jsx';
 import Quiz from '../../components/primitives/Quiz.jsx';
+import GatedAssessment from '../../components/primitives/GatedAssessment.jsx';
 import Flashcard from '../../components/Flashcard.jsx';
 
 export const meta = {
@@ -421,6 +422,11 @@ export default function T09L01_ThePermittingLayerCake() {
       </table>
 
       {/* ── PER-LESSON QUIZ ──────────────────────────────────────────────── */}
+      <GatedAssessment
+        courseId="T09"
+        assessmentId="T09-L01"
+        title="T09.L01 Check — The Permitting Layer Cake"
+        fallback={
       <Quiz
         title="T09.L01 Check — The Permitting Layer Cake"
         mode="multiple-choice"
@@ -501,6 +507,8 @@ export default function T09L01_ThePermittingLayerCake() {
             citation: 'M03 §3.1; 42 USC §4321 et seq. (NEPA statutory authority). [Note: CEQ regulations at 40 CFR §1508.1 et seq. removed eff. January 8, 2026 — cite to statutory authority and current agency guidance.]',
           },
         ]}
+      />
+        }
       />
 
     </LessonLayout>
