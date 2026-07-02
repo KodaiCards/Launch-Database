@@ -1,0 +1,124 @@
+{
+  "assessmentId": "T02-L07",
+  "kind": "lesson",
+  "courseId": "T02",
+  "lessonId": "T02.L07",
+  "drawCount": 4,
+  "passThreshold": 70,
+  "pool": [
+    {
+      "id": "T02-L07-Q1",
+      "type": "drag-match",
+      "prompt": "Match each wavelength to its primary use in OSP or fiber networks.",
+      "items": [
+        { "id": "i_850", "label": "850 nm" },
+        { "id": "i_1310", "label": "1310 nm" },
+        { "id": "i_1550", "label": "1550 nm" },
+        { "id": "i_1625", "label": "1625 nm" }
+      ],
+      "targets": [
+        { "id": "t_mmf", "label": "Multimode short-reach (data center / campus)" },
+        { "id": "t_gpon", "label": "GPON upstream + standard short-reach SMF transceivers" },
+        { "id": "t_longhaul", "label": "Long-haul, DWDM, minimum attenuation" },
+        { "id": "t_diagnosis", "label": "In-service OTDR macrobend hunting / diagnostic" }
+      ],
+      "correctMap": { "t_mmf": "i_850", "t_gpon": "i_1310", "t_longhaul": "i_1550", "t_diagnosis": "i_1625" },
+      "explanation": "850 nm: multimode short-reach. 1310 nm: O-band, GPON upstream, LR/LX SMF transceivers. 1550 nm: C-band, lowest loss, long-haul/DWDM. 1625 nm: L-band diagnostic, macrobend hunting on in-service fibers.",
+      "citation": "ITU-T G.652; ITU-T G.984 (GPON); OTDR best practice (FOA Reference Guide)."
+    },
+    {
+      "id": "T02-L07-Q2",
+      "type": "mc",
+      "prompt": "A technician is doing an OTDR trace on a live GPON fiber to locate a suspected macrobend. Which wavelength should they use, and why?",
+      "choices": [
+        "1310 nm, because it matches the GPON upstream wavelength and will show the bend clearly",
+        "1490 nm, to match the GPON downstream signal",
+        "1625 nm, because it exaggerates macrobend loss and is outside the GPON signal wavelengths — it can be injected without interrupting service",
+        "850 nm, because it has the highest sensitivity in the O-band"
+      ],
+      "answerIndex": 2,
+      "explanation": "1625 nm is outside the 1310/1490 nm GPON signal bands. With appropriate WDM filters, a 1625 nm OTDR pulse can be injected without interfering with live traffic, and macrobend loss grows with wavelength, so 1625 nm shows the bend more clearly.",
+      "fieldNote": "Check that the fiber's WDM filter system actually supports 1625 nm pass-through before injecting — some older PON filter designs block wavelengths above 1610 nm."
+    },
+    {
+      "id": "T02-L07-Q3",
+      "type": "mc",
+      "prompt": "CWDM uses 20 nm channel spacing; DWDM uses 0.8 nm (or tighter) channel spacing. What is the key consequence of this difference for field crews?",
+      "choices": [
+        "CWDM requires armored cable; DWDM can use standard OSP cable",
+        "DWDM requires much more precise laser wavelength stability and end-face cleanliness — including APC connectors — because the channels are so close together that small reflections can desensitize the narrow-linewidth lasers",
+        "CWDM can use multimode fiber; DWDM requires single-mode",
+        "There is no field implication — the spacing only matters to the system designer"
+      ],
+      "answerIndex": 1,
+      "explanation": "DWDM channels are 0.4-0.8 nm apart. A back-reflection negligible on a standard SMF link can degrade a DWDM system's narrow-linewidth lasers. APC connectors (>=60 dB ORL) are standard practice on DWDM routes for this reason.",
+      "fieldNote": "On a DWDM installation, end-face inspection with an IEC 61300-3-35 compliant scope is not optional — a single dirty APC connector can take down multiple 100G channels simultaneously."
+    },
+    {
+      "id": "T02-L07-Q4",
+      "type": "mc",
+      "prompt": "What is the ITU-T standard number and channel spacing for CWDM, and how does it compare to DWDM?",
+      "choices": [
+        "ITU-T G.694.2, 20 nm spacing (18 wavelengths, 1270-1610 nm) — much wider than DWDM's 0.4-0.8 nm spacing under G.694.1",
+        "ITU-T G.694.1, 0.8 nm spacing — identical to DWDM",
+        "ITU-T G.652, 100 nm spacing — wider than both CWDM and DWDM combined",
+        "There is no ITU-T standard for CWDM channel spacing"
+      ],
+      "answerIndex": 0,
+      "explanation": "ITU-T G.694.2 defines CWDM's 18 wavelengths spanning 1270-1610 nm at 20 nm spacing — wide enough to use uncooled lasers, unlike DWDM (G.694.1), which packs channels at 0.8 nm (100 GHz) or 0.4 nm (50 GHz) spacing within the C-band.",
+      "citation": "ITU-T G.694.2 (CWDM); ITU-T G.694.1 (DWDM)."
+    },
+    {
+      "id": "T02-L07-Q5",
+      "type": "mc",
+      "prompt": "Why does DWDM require thermoelectric-cooled (TEC) lasers while CWDM typically uses uncooled lasers?",
+      "choices": [
+        "TEC lasers are simply more expensive and offer no functional benefit for DWDM",
+        "DWDM's tight 0.4-0.8 nm channel spacing requires holding wavelength within roughly +/-0.1 nm to avoid adjacent-channel interference; CWDM's 20 nm spacing gives enough margin that uncooled lasers (whose wavelength drifts with temperature) are acceptable",
+        "CWDM lasers physically cannot be cooled due to their wavelength range",
+        "TEC cooling is required by OSHA for all long-haul optical equipment"
+      ],
+      "answerIndex": 1,
+      "explanation": "Laser wavelength drifts with temperature. DWDM's narrow channel spacing leaves very little room for drift before a channel bleeds into its neighbor, so temperature stabilization (TEC) is required. CWDM's much wider 20 nm spacing tolerates the wavelength drift of an uncooled laser."
+    },
+    {
+      "id": "T02-L07-Q6",
+      "type": "mc",
+      "prompt": "What OSP-relevant standard governs the GPON downstream/upstream wavelength plan (1490/1310 nm) that a field crew must avoid interfering with when injecting an OTDR test pulse?",
+      "choices": [
+        "ITU-T G.984 (GPON)",
+        "ITU-T G.652 (fiber cable characteristics only, not wavelength plan)",
+        "NESC C2-2023",
+        "IEEE 802.3"
+      ],
+      "answerIndex": 0,
+      "explanation": "ITU-T G.984 is the GPON standard, defining the downstream (1490 nm)/upstream (1310 nm) wavelength plan that WDM filters at each end must isolate from a diagnostic OTDR test injected at a separate wavelength like 1625 nm."
+    },
+    {
+      "id": "T02-L07-Q7",
+      "type": "mc",
+      "prompt": "A DWDM route shows unexplained signal degradation across multiple 100G channels simultaneously. What field cause is a strong first suspect, given DWDM's sensitivity to connector quality?",
+      "choices": [
+        "A single connector at any point on the shared optical path being dirty or improperly cleaned, since DWDM's tight channel spacing amplifies the impact of back-reflection from a single bad interface",
+        "The fiber's core diameter shrinking over time",
+        "A software bug in the DWDM multiplexer with no physical-layer cause",
+        "Ambient humidity affecting the glass's index of refraction"
+      ],
+      "answerIndex": 0,
+      "explanation": "Because all DWDM channels share the same physical fiber path and connectors, a single dirty or damaged connector — which might be a minor annoyance on a single-wavelength link — can desensitize the narrow-linewidth lasers across every channel riding that connector, explaining a multi-channel degradation."
+    },
+    {
+      "id": "T02-L07-Q8",
+      "type": "mc",
+      "prompt": "Which wavelength window sits within the C-band and is the standard choice for both lowest-attenuation long-haul transmission AND DWDM systems?",
+      "choices": [
+        "850 nm",
+        "1310 nm",
+        "1550 nm",
+        "1625 nm"
+      ],
+      "answerIndex": 2,
+      "explanation": "1550 nm falls within the C-band (roughly 1530-1565 nm), which combines the fiber's lowest attenuation window with the wavelength range where DWDM systems concentrate their channels — making it the natural choice for long-haul and DWDM applications."
+    }
+  ]
+}

@@ -1,0 +1,123 @@
+{
+  "assessmentId": "T02-L08",
+  "kind": "lesson",
+  "courseId": "T02",
+  "lessonId": "T02.L08",
+  "drawCount": 4,
+  "passThreshold": 70,
+  "pool": [
+    {
+      "id": "T02-L08-Q1",
+      "type": "mc",
+      "prompt": "A technician accidentally connects a yellow OS2 SMF patch cord to an aqua OM4 MMF patch panel port. What is the most likely result?",
+      "choices": [
+        "The link works fine — both have 125 um cladding diameter so they're compatible",
+        "The link experiences massive signal loss (likely 20+ dB) because the 9 um SMF core doesn't fill the 50 um MMF core, so most light from the MMF misses the SMF core",
+        "The link works at reduced speed (downgrade from 10GbE to 1GbE)",
+        "The OM4 cable converts the 1310 nm SMF wavelength to 850 nm automatically"
+      ],
+      "answerIndex": 1,
+      "explanation": "The 9 um SMF core is far smaller than the 50 um MMF core. Light coming from the MMF spreads across the full 50 um, but only a tiny fraction falls within the 9 um SMF core, causing 20-30 dB of loss — effectively killing the link.",
+      "fieldNote": "Color is a helpful cue (yellow = SMF, aqua = OM3/OM4, lime = OM5, orange = OM1/OM2) but always read the print on the cable — don't trust jacket color alone."
+    },
+    {
+      "id": "T02-L08-Q2",
+      "type": "mc",
+      "prompt": "For a 12 km OSP fiber run connecting a rural OLT headend to a remote distribution hub, which fiber type is required?",
+      "choices": [
+        "OM4 multimode — it supports higher bandwidth",
+        "OS2 single-mode (G.652.D) — 12 km is far beyond any MMF reach limit",
+        "OM5 multimode — it supports SWDM4 and can handle the distance",
+        "Either SMF or MMF — the distance is within OM3 spec"
+      ],
+      "answerIndex": 1,
+      "explanation": "OM3 MMF tops out at roughly 300 m for 10GbE at 850 nm; OM4 at roughly 400 m. No multimode fiber reaches beyond roughly 550 m for any standard Ethernet application. A 12 km run requires OS2 single-mode fiber."
+    },
+    {
+      "id": "T02-L08-Q3",
+      "type": "mc",
+      "prompt": "The OS1/OS2 fiber category designations under ISO/IEC 11801 map to which ITU-T G.652 sub-grades?",
+      "choices": [
+        "OS1 = G.652.B/C; OS2 = G.652.D only",
+        "OS1 = G.652.A/B (max ~1.0 dB/km); OS2 = G.652.C/D (max ~0.4 dB/km, low/zero water-peak)",
+        "OS1 and OS2 both map to the same G.652 sub-grade, differing only in jacket color",
+        "OS1 = G.657; OS2 = G.652 — the two designations refer to entirely different ITU-T standard families"
+      ],
+      "answerIndex": 1,
+      "explanation": "OS1 corresponds to the older G.652.A/B specs (higher attenuation, max ~1.0 dB/km). OS2 corresponds to the low/zero water-peak G.652.C/D specs (max ~0.4 dB/km), which is what nearly all current OSP deployments specify.",
+      "citation": "ISO/IEC 11801 OS1/OS2 category mapping to ITU-T G.652 sub-grades — independently verified via WebSearch; note this corrects a claim in this lesson's own inline prose (which states 'OS1 = G.652.B/C'), flagged as a content-accuracy finding rather than repeated here. See T02.md and T01.md research logs."
+    },
+    {
+      "id": "T02-L08-Q4",
+      "type": "mc",
+      "prompt": "Why does OM3/OM4/OM5 fiber have a higher bandwidth rating than OM1/OM2, even though all are 50 um core multimode?",
+      "choices": [
+        "OM3/OM4/OM5 uses a graded-index core profile optimized for 850 nm VCSEL launch conditions — this reduces modal dispersion by restricting which modes are excited",
+        "OM3/OM4/OM5 uses single-mode glass chemistry even though the core is larger",
+        "OM3/OM4/OM5 is manufactured at lower attenuation, which automatically increases bandwidth",
+        "OM3 was retroactively renamed from OM1 — it's the same fiber with a new label"
+      ],
+      "answerIndex": 0,
+      "explanation": "OM3/OM4/OM5 are 'laser-optimized' — their graded-index profile is tailored for 850 nm VCSEL sources, which excite fewer high-order modes than an LED overfilled launch. Fewer excited modes means less modal dispersion and more usable bandwidth at a given length."
+    },
+    {
+      "id": "T02-L08-Q5",
+      "type": "mc",
+      "prompt": "What is the primary reason a fiber optic crew must never assume compatibility between SMF and MMF connectors based on physical fit alone?",
+      "choices": [
+        "SMF and MMF connectors use physically different connector housings that cannot be mated",
+        "SMF and MMF often use identical connector types (LC, SC) that will physically mate, but the drastically different core sizes cause severe optical loss — a physical fit does not imply an optical match",
+        "MMF connectors are always keyed to prevent mating with SMF connectors",
+        "SMF and MMF cannot both use the same wavelength, making mating irrelevant"
+      ],
+      "answerIndex": 1,
+      "explanation": "Connector housings (LC, SC, etc.) are standardized independent of the fiber type inside — an SMF LC connector will physically mate with an MMF LC adapter. The mismatch that matters is optical (core size), not mechanical, which is exactly why color-coding and jacket printing exist as a secondary safeguard."
+    },
+    {
+      "id": "T02-L08-Q6",
+      "type": "mc",
+      "prompt": "What effective modal bandwidth (EMB) test methodology distinguishes OM3+ multimode fiber testing from older OM1/OM2 testing?",
+      "choices": [
+        "EMB testing evaluates fiber under laser (VCSEL-like) launch conditions rather than the older overfilled LED launch condition, since laser-optimized fiber's advantage only shows up under realistic laser launch",
+        "EMB testing is identical to overfilled launch bandwidth testing, just renamed",
+        "EMB testing only applies to single-mode fiber",
+        "EMB testing measures attenuation, not bandwidth, despite its name"
+      ],
+      "answerIndex": 0,
+      "explanation": "The effective modal bandwidth (EMB) metric was introduced specifically because laser-optimized (OM3+) fiber's performance advantage depends on realistic VCSEL-like launch conditions — an older overfilled-launch bandwidth test wouldn't reveal the improvement.",
+      "citation": "IEEE 802.3 effective modal bandwidth methodology; TIA-492AAAD [edition not independently pinned down this session]."
+    },
+    {
+      "id": "T02-L08-Q7",
+      "type": "mc",
+      "prompt": "A designer must choose between SMF and MMF for a new intra-building data center run of 80 meters at 10GbE. What is the strongest argument for MMF (OM4) in this scenario?",
+      "choices": [
+        "MMF always has lower attenuation than SMF at any distance",
+        "At this short distance, MMF transceivers (VCSEL-based) are typically lower-cost than SMF transceivers, and OM4's reach easily covers 80 m at 10GbE",
+        "SMF physically cannot operate over distances under 1 km",
+        "MMF is required by TIA-568 for all intra-building runs regardless of distance"
+      ],
+      "answerIndex": 1,
+      "explanation": "For short intra-building runs well within multimode's reach limits, MMF/VCSEL transceiver economics typically beat SMF/laser transceiver costs — SMF's long-reach advantage isn't needed at 80 m, so the cost argument favors MMF in this scenario."
+    },
+    {
+      "id": "T02-L08-Q8",
+      "type": "drag-match",
+      "prompt": "Match each fiber grade/color convention to its category.",
+      "items": [
+        { "id": "i_yellow", "label": "Yellow jacket" },
+        { "id": "i_aqua", "label": "Aqua jacket" },
+        { "id": "i_lime", "label": "Lime jacket" },
+        { "id": "i_orange", "label": "Orange jacket" }
+      ],
+      "targets": [
+        { "id": "t_smf", "label": "SMF (OS1/OS2)" },
+        { "id": "t_om34", "label": "OM3/OM4" },
+        { "id": "t_om5", "label": "OM5" },
+        { "id": "t_om12", "label": "OM1/OM2" }
+      ],
+      "correctMap": { "t_smf": "i_yellow", "t_om34": "i_aqua", "t_om5": "i_lime", "t_om12": "i_orange" },
+      "explanation": "Jacket color is a helpful visual cue (yellow=SMF, aqua=OM3/OM4, lime=OM5, orange=OM1/OM2) but is a convention, not a guarantee — always confirm with the jacket print before mating connectors, since color conventions can vary by vendor or region."
+    }
+  ]
+}

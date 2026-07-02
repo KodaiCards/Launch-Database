@@ -1,0 +1,124 @@
+{
+  "assessmentId": "T02-L04",
+  "kind": "lesson",
+  "courseId": "T02",
+  "lessonId": "T02.L04",
+  "drawCount": 4,
+  "passThreshold": 70,
+  "pool": [
+    {
+      "id": "T02-L04-Q1",
+      "type": "mc",
+      "prompt": "Why is 1625 nm the preferred OTDR wavelength for detecting macrobend loss on an in-service SMF link?",
+      "choices": [
+        "Because 1625 nm is in the water-peak absorption window, which highlights bends",
+        "Because macrobend loss grows with wavelength — 1625 nm exaggerates bend events compared to 1310 or 1550 nm, making them easier to detect",
+        "Because OTDR instruments can only generate 1625 nm for in-service testing",
+        "Because 1625 nm has the lowest background attenuation in G.652.D fiber"
+      ],
+      "answerIndex": 1,
+      "explanation": "Macrobend loss is wavelength-dependent and grows as wavelength increases. At 1625 nm, bend events barely visible at 1550 nm become clearly visible — making 1625 nm the diagnostic wavelength of choice for macrobend hunting without interrupting 1310/1550 nm service.",
+      "citation": "ITU-T G.652.D mandrel test conditions; OTDR best practice (FOA Reference Guide)."
+    },
+    {
+      "id": "T02-L04-Q2",
+      "type": "mc",
+      "prompt": "What is the minimum bend radius rule-of-thumb during cable pulling (dynamic condition), expressed as a multiple of the cable's outer diameter (OD)?",
+      "choices": [
+        "5x OD",
+        "10x OD",
+        "20x OD",
+        "50x OD"
+      ],
+      "answerIndex": 2,
+      "explanation": "20x OD during pulling (dynamic) prevents excessive fiber stress during installation, since pulling tension compounds bending stress. After installation, the static minimum drops to typically 10x OD. Always verify against the specific cable manufacturer's installation guide.",
+      "citation": "FOA field-training reference (fiber optic cable installation bend radius practice)."
+    },
+    {
+      "id": "T02-L04-Q3",
+      "type": "mc",
+      "prompt": "An OTDR trace shows elevated background loss (higher dB/km than expected) across a 200 m section of a conduit run, with no discrete events. What is the most likely cause?",
+      "choices": [
+        "A macrobend — a visible kink somewhere in that section",
+        "Microbend loss — likely from conduit overfill or over-tensioned pulling",
+        "A bad fusion splice in the middle of that section",
+        "The OTDR pulse width setting is too narrow for that section length"
+      ],
+      "answerIndex": 1,
+      "explanation": "Elevated distributed loss without discrete events is the signature of microbend loss — many tiny deformations along a length raise the effective dB/km. Macrobends show as discrete events; splice loss shows as a single point event.",
+      "fieldNote": "Common cause: overfilling conduit (e.g., pulling six cables through a 4-inch conduit designed for four) compresses the inner cables."
+    },
+    {
+      "id": "T02-L04-Q4",
+      "type": "mc",
+      "prompt": "What is the static (installed, at-rest) minimum bend radius rule-of-thumb, as a multiple of cable OD, once pulling tension is relieved?",
+      "choices": [
+        "5x OD",
+        "10x OD",
+        "20x OD",
+        "There is no static bend radius limit once the cable is installed"
+      ],
+      "answerIndex": 1,
+      "explanation": "Once installed and pulling tension is relieved, the static minimum bend radius rule of thumb drops to 10x OD — less conservative than the 20x OD dynamic (pulling) limit, since axial pulling tension no longer compounds the bend stress."
+    },
+    {
+      "id": "T02-L04-Q5",
+      "type": "mc",
+      "prompt": "What is the functional difference between macrobend and microbend loss, in terms of how they appear on an OTDR trace?",
+      "choices": [
+        "They are identical and cannot be distinguished on an OTDR trace",
+        "Macrobend appears as a discrete point-loss event (a visible kink); microbend appears as elevated distributed loss over a length, with no discrete event",
+        "Macrobend only occurs in multimode fiber; microbend only occurs in single-mode fiber",
+        "Macrobend is always caused by conduit overfill; microbend is always caused by a visible kink"
+      ],
+      "answerIndex": 1,
+      "explanation": "A macrobend is a visible, large-radius bend (like a tight loop) that produces a discrete event on the OTDR trace. A microbend is a series of microscopic deformations along the fiber's length (from pressure, conduit overfill, or over-tensioned pulling) that raises the distributed background loss without a single discrete event."
+    },
+    {
+      "id": "T02-L04-Q6",
+      "type": "mc",
+      "prompt": "A crew pulls six cables through a 4-inch conduit sized for four. What optical consequence is this most likely to cause?",
+      "choices": [
+        "Increased chromatic dispersion in all six cables",
+        "Microbend loss in the inner cables from compression against the conduit wall and adjacent cables",
+        "No optical consequence — conduit fill only affects future maintenance access",
+        "A permanent shift in the fiber's zero-dispersion wavelength"
+      ],
+      "answerIndex": 1,
+      "explanation": "Overfilling conduit compresses the cables inside it, and that compression creates microbend loss — many tiny deformations along the fiber that raise the effective attenuation. This is a common, preventable field error caught by checking conduit fill percentages before pull planning."
+    },
+    {
+      "id": "T02-L04-Q7",
+      "type": "mc",
+      "prompt": "Why do field crews often reserve 1625 nm testing for troubleshooting rather than using it for every routine acceptance test?",
+      "choices": [
+        "1625 nm testing is illegal on RUS-funded projects",
+        "1625 nm modules add cost, and the wavelength's job (exaggerating bend loss for diagnosis) isn't needed for a routine 1310/1550 nm acceptance test where no bend is suspected",
+        "1625 nm cannot be generated by any commercially available OTDR",
+        "1625 nm testing takes 10x longer than 1310/1550 testing"
+      ],
+      "answerIndex": 1,
+      "explanation": "The field rule '1310/1550 for acceptance, 1625 to hunt the kink' reflects that 1625 nm's value is specifically in exaggerating bend-related loss for diagnosis — not needed for standard acceptance testing when no bend problem is suspected, and the added test wavelength has a cost/time tradeoff."
+    },
+    {
+      "id": "T02-L04-Q8",
+      "type": "drag-match",
+      "prompt": "Match each bend-related concept to its correct description.",
+      "items": [
+        { "id": "i_macro", "label": "Visible large-radius bend producing a discrete OTDR event" },
+        { "id": "i_micro", "label": "Microscopic deformations along a length, raising distributed loss" },
+        { "id": "i_dynamic", "label": "20x cable OD minimum bend radius during pulling" },
+        { "id": "i_static", "label": "10x cable OD minimum bend radius once installed" }
+      ],
+      "targets": [
+        { "id": "t_macro", "label": "Macrobend" },
+        { "id": "t_micro", "label": "Microbend" },
+        { "id": "t_dynamic", "label": "Dynamic (pulling) bend radius rule" },
+        { "id": "t_static", "label": "Static (installed) bend radius rule" }
+      ],
+      "correctMap": { "t_macro": "i_macro", "t_micro": "i_micro", "t_dynamic": "i_dynamic", "t_static": "i_static" },
+      "explanation": "Macrobend and microbend are distinguished by cause and OTDR signature; dynamic and static bend radius rules are distinguished by whether pulling tension is present, which compounds bending stress.",
+      "citation": "FOA field-training reference (bend radius practice)."
+    }
+  ]
+}

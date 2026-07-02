@@ -1,0 +1,115 @@
+{
+  "assessmentId": "T02-L05",
+  "kind": "lesson",
+  "courseId": "T02",
+  "lessonId": "T02.L05",
+  "drawCount": 4,
+  "passThreshold": 70,
+  "pool": [
+    {
+      "id": "T02-L05-Q1",
+      "type": "mc",
+      "prompt": "A fiber link has 6 dB of total loss. What fraction of the original optical power reaches the receiver?",
+      "choices": [
+        "One-half (50%)",
+        "One-quarter (25%)",
+        "One-sixth (17%)",
+        "One-tenth (10%)"
+      ],
+      "answerIndex": 1,
+      "explanation": "6 dB = 3 dB + 3 dB. Each 3 dB halves the power, so 6 dB = 1/2 x 1/2 = 1/4 of original power. Check: 10^(-6/10) = 10^(-0.6) ~= 0.25."
+    },
+    {
+      "id": "T02-L05-Q2",
+      "type": "mc",
+      "prompt": "A transmitter outputs +3 dBm. The receiver sensitivity is -24 dBm. What is the available optical budget?",
+      "choices": [
+        "21 dB",
+        "27 dB",
+        "-21 dB",
+        "3 dB"
+      ],
+      "answerIndex": 1,
+      "explanation": "Budget = Tx power - Rx sensitivity = +3 dBm - (-24 dBm) = 3 + 24 = 27 dB. Subtracting a negative sensitivity flips to addition of its absolute value. The 27 dB is the total loss the cable plant can accumulate while still delivering adequate signal."
+    },
+    {
+      "id": "T02-L05-Q3",
+      "type": "mc",
+      "prompt": "Why do fiber link budgets use decibels instead of expressing loss as raw power ratios?",
+      "choices": [
+        "Decibels are required by OSHA for all electrical safety calculations",
+        "With dB, all the losses in a link (fiber + splices + connectors) simply ADD together instead of multiplying fractional ratios, making the math tractable by hand",
+        "Power meters can only output results in dBm, and dB is the natural input format",
+        "TIA standards prohibit the use of milliwatts in design documentation"
+      ],
+      "answerIndex": 1,
+      "explanation": "Logarithms convert multiplication into addition. Instead of multiplying fractional power-through ratios for every component, engineers add their dB losses — this is why the dB scale exists for cascaded network analysis."
+    },
+    {
+      "id": "T02-L05-Q4",
+      "type": "mc",
+      "prompt": "A power meter reads -17 dBm at a test point. Approximately how many microwatts (uW) is that?",
+      "choices": [
+        "200 uW",
+        "20 uW",
+        "2 uW",
+        "0.2 uW"
+      ],
+      "answerIndex": 1,
+      "explanation": "10^(-17/10) mW = 10^(-1.7) ~= 0.02 mW = 20 uW. Shortcut: -20 dBm = 10 uW; -17 dBm is 3 dB above that, so roughly double: ~20 uW.",
+      "fieldNote": "-17 dBm is within the normal range for a short SMF link or patch cord test. Receivers typically need at least -25 to -30 dBm to operate reliably."
+    },
+    {
+      "id": "T02-L05-Q5",
+      "type": "mc",
+      "prompt": "What is the correct rule for converting a 3 dB loss into a fraction of remaining power, and how does this scale for larger dB values?",
+      "choices": [
+        "3 dB = 1/3 of the power remains; the fraction scales linearly with dB",
+        "3 dB = roughly half (1/2) the power remains; each additional 3 dB halves it again (6 dB = 1/4, 9 dB = 1/8, etc.)",
+        "3 dB = 1/10 of the power remains; each additional 3 dB divides by 10 again",
+        "3 dB always equals exactly 0 dBm regardless of starting power"
+      ],
+      "answerIndex": 1,
+      "explanation": "3 dB corresponds to a power ratio of 10^(-3/10) ~= 0.501, essentially half. This 'halving' rule compounds: 6 dB ~= 1/4, 9 dB ~= 1/8, 10 dB = exactly 1/10 (a separate, exact reference point worth memorizing alongside the 3 dB rule)."
+    },
+    {
+      "id": "T02-L05-Q6",
+      "type": "mc",
+      "prompt": "Why is a link budget calculated as Tx power MINUS Rx sensitivity, rather than added or otherwise combined?",
+      "choices": [
+        "Because dBm values must always be positive before combining",
+        "Because the budget represents how much LOSS the link can tolerate between the transmitter's launch power and the minimum power the receiver still needs — the difference between what you send and the floor you must still clear",
+        "Because Tx and Rx values are always equal in a properly designed system",
+        "Because subtraction is only used for underground links, never aerial"
+      ],
+      "answerIndex": 1,
+      "explanation": "The link budget is the total allowable loss margin: everything the fiber, splices, and connectors can consume while still leaving the receiver at or above its sensitivity floor. Subtracting Rx sensitivity (often a negative dBm number) from Tx power yields that margin directly."
+    },
+    {
+      "id": "T02-L05-Q7",
+      "type": "mc",
+      "prompt": "If Tx power = +5 dBm and Rx sensitivity = -22 dBm, what is the available optical budget?",
+      "choices": [
+        "17 dB",
+        "27 dB",
+        "-17 dB",
+        "5 dB"
+      ],
+      "answerIndex": 1,
+      "explanation": "Budget = +5 - (-22) = 5 + 22 = 27 dB."
+    },
+    {
+      "id": "T02-L05-Q8",
+      "type": "mc",
+      "prompt": "10 dB of loss corresponds to what fraction of original power remaining — and how is this different from the '3 dB = half' rule?",
+      "choices": [
+        "1/2 of the power remains, same as 3 dB",
+        "1/10 of the power remains — 10 dB is an exact log10 reference point (10^(-1) = 0.1), distinct from the approximate 3 dB 'halving' rule",
+        "1/100 of the power remains",
+        "10 dB always means zero power remains"
+      ],
+      "answerIndex": 1,
+      "explanation": "10 dB corresponds exactly to a factor of 10 in power (10^(-10/10) = 10^(-1) = 0.1), a clean, exact reference point — unlike the 3 dB 'halving' shortcut, which is an approximation (10^(-3/10) ~= 0.501, not exactly 0.5)."
+    }
+  ]
+}
