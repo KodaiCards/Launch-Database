@@ -1,0 +1,121 @@
+{
+  "assessmentId": "T03-L11",
+  "kind": "lesson",
+  "courseId": "T03",
+  "lessonId": "T03.L11",
+  "drawCount": 4,
+  "passThreshold": 70,
+  "pool": [
+    {
+      "id": "T03-L11-Q1",
+      "type": "mc",
+      "prompt": "A cable datasheet shows attenuation at 1550 nm as '<= 0.25 dB/km.' You are planning a 40 km feeder link with an aging factor of 0.04 dB/km. What planning attenuation value should you use in your link budget?",
+      "choices": [
+        "0.25 dB/km",
+        "0.29 dB/km",
+        "0.21 dB/km",
+        "0.30 dB/km"
+      ],
+      "answerIndex": 1,
+      "explanation": "Planning attenuation = spec max + aging factor = 0.25 + 0.04 = 0.29 dB/km. You always start from the spec maximum (worst-case), not the typical value, since the aging factor is meant to protect against the worst realistic scenario over the cable's 20-40 year life.",
+      "citation": "FOA Reference Guide (attenuation aging-factor planning practice)."
+    },
+    {
+      "id": "T03-L11-Q2",
+      "type": "mc",
+      "prompt": "A cable datasheet shows MFD = 9.2 um +/- 0.4 um at 1310 nm. The 7 CFR 1755.902 requirement is 9.2 um +/- 0.5 um. Does this datasheet spec satisfy the RUS requirement?",
+      "choices": [
+        "No — the tolerance band is tighter than required, so it does not meet the spec",
+        "Yes — the tolerance band is tighter than required (8.8-9.6 um is fully inside the 8.7-9.7 um RUS window), meaning this cable satisfies the RUS requirement",
+        "No — the tolerance is too narrow; only +/- 0.5 um exactly is acceptable",
+        "Yes, but only if the cable is also ADSS type"
+      ],
+      "answerIndex": 1,
+      "explanation": "The 7 CFR 1755.902 requirement (9.2 +/- 0.5 um, 8.7-9.7 um range) is a MINIMUM acceptable tolerance window. A datasheet showing a tighter +/- 0.4 um band (8.8-9.6 um) is entirely contained within the RUS window, so it satisfies the requirement — a tighter tolerance is better, not a disqualification.",
+      "citation": "7 CFR 1755.902."
+    },
+    {
+      "id": "T03-L11-Q3",
+      "type": "drag-match",
+      "prompt": "Match each cable datasheet section to what it primarily contains.",
+      "items": [
+        { "id": "i_optical", "label": "Attenuation at 1310/1550 nm, MFD, chromatic dispersion" },
+        { "id": "i_mech", "label": "Tensile rating, crush resistance, minimum bend radius" },
+        { "id": "i_compliance", "label": "ICEA S-87-640 declaration, 7 CFR 1755.902, NEC fire rating" }
+      ],
+      "targets": [
+        { "id": "t_optical", "label": "Optical specifications" },
+        { "id": "t_mech", "label": "Mechanical specifications" },
+        { "id": "t_compliance", "label": "Compliance declarations" }
+      ],
+      "correctMap": { "t_optical": "i_optical", "t_mech": "i_mech", "t_compliance": "i_compliance" },
+      "explanation": "Optical specs govern signal performance (used in link budgets). Mechanical specs govern installation safety and long-term structural integrity. Compliance declarations are the contractual hook — what you verify against project spec requirements and RUS program rules."
+    },
+    {
+      "id": "T03-L11-Q4",
+      "type": "mc",
+      "prompt": "Why does a cable datasheet list two different minimum bend radius values — one for installation and one for long-term — with the installation value being the LARGER number?",
+      "choices": [
+        "They are the same value; listing both is just a formatting convention",
+        "The installation (dynamic pulling) bend radius requires a larger minimum radius because pulling tension compounds bending stress on the fiber; the long-term (static, installed) radius allows a smaller minimum radius because sustained gentle bending without pulling tension is less damaging",
+        "The long-term value applies only to armored cable; unarmored cable uses the installation value for both",
+        "Datasheets never list two different bend radius values; there is only ever one"
+      ],
+      "answerIndex": 1,
+      "explanation": "Counter-intuitively, the long-term (installed, static) minimum bend radius is the SMALLER number — because pulling tension during installation compounds with bending stress, requiring a larger (more conservative) radius during that dynamic phase. Once installed and tension is relieved, a tighter permanent bend becomes acceptable."
+    },
+    {
+      "id": "T03-L11-Q5",
+      "type": "mc",
+      "prompt": "What is the standard OSP cable operating temperature range, consistent across ICEA S-87-640 and major vendor datasheets?",
+      "choices": [
+        "-20C to +50C",
+        "-40C to +70C",
+        "0C to +40C",
+        "-60C to +85C"
+      ],
+      "answerIndex": 1,
+      "explanation": "-40C to +70C is the standard OSP cable operating (in-service) temperature range across ICEA S-87-640 and major vendor datasheets. Storage temperatures may be rated lower (e.g. -60C) for some products, but the operating floor is -40C.",
+      "citation": "ICEA S-87-640; consistent with major vendor datasheets (industry-standard cross-vendor figure, not independently pinned to primary ICEA text this session)."
+    },
+    {
+      "id": "T03-L11-Q6",
+      "type": "mc",
+      "prompt": "A designer is comparing two cable datasheets for the same application. Datasheet A shows attenuation as a 'typical' value with no spec-max listed. Datasheet B shows both a spec-max and a typical value. Which datasheet gives the designer enough information to build a defensible link budget, and why?",
+      "choices": [
+        "Datasheet A, because typical values are always more accurate",
+        "Datasheet B — a defensible planning value should start from the worst-case spec-max plus an aging margin, which Datasheet A doesn't provide; relying only on a 'typical' figure with no worst-case bound risks an under-margined design",
+        "Both datasheets provide identical planning information",
+        "Neither datasheet is usable without a third-party lab retest"
+      ],
+      "answerIndex": 1,
+      "explanation": "A link budget planning value should be built from the spec-max (worst-case) figure plus an aging factor, not from a 'typical' figure alone — typical values describe average production performance, not the worst-case boundary a robust design should plan against. Datasheet B, providing both, lets the designer build a properly conservative budget."
+    },
+    {
+      "id": "T03-L11-Q7",
+      "type": "mc",
+      "prompt": "What is the purpose of comparing a cable datasheet's compliance declarations (ICEA S-87-640, 7 CFR 1755.902, NEC fire rating) against a project's specification, separate from reviewing the optical/mechanical numbers?",
+      "choices": [
+        "Compliance declarations are purely decorative and have no contractual significance",
+        "Compliance declarations confirm the cable is contractually and code-eligible for the specific project (e.g., RUS-funded, indoor-rated) — a cable could have excellent optical/mechanical numbers but still be disqualified from a specific project if it lacks the required compliance declaration",
+        "Compliance declarations are only relevant for armored cable",
+        "Compliance declarations replace the need to check optical specs entirely"
+      ],
+      "answerIndex": 1,
+      "explanation": "A cable's optical and mechanical performance numbers don't automatically make it eligible for use on a given project — RUS-funded projects require 7 CFR 1755.902 conformance, indoor runs require the correct NEC fire listing, and so on. Compliance declarations are the separate, contractual/regulatory check that must also pass, independent of raw performance numbers."
+    },
+    {
+      "id": "T03-L11-Q8",
+      "type": "mc",
+      "prompt": "A cable is rated -40C to +70C for OPERATING temperature and -60C to +85C for STORAGE temperature. What is the practical significance of these being different ranges?",
+      "choices": [
+        "There is no practical difference; both ranges are interchangeable",
+        "The storage range describes conditions the cable can survive while inactive/unconnected/unstressed on a reel; the operating range describes conditions under which the cable must perform to its full optical/mechanical spec while installed and in service — a cable can be safely stored colder than it can safely operate",
+        "The storage range is always narrower than the operating range for all cable types",
+        "Storage temperature only applies to armored cable"
+      ],
+      "answerIndex": 1,
+      "explanation": "Storage ratings describe survivability under passive, unstressed conditions (a reel sitting in a warehouse or yard), which can tolerate a wider extreme than the operating rating, which guarantees full performance (attenuation, mechanical flexibility) while the cable is actively installed and in service."
+    }
+  ]
+}

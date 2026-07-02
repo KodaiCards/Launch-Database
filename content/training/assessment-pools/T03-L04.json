@@ -1,0 +1,122 @@
+{
+  "assessmentId": "T03-L04",
+  "kind": "lesson",
+  "courseId": "T03",
+  "lessonId": "T03.L04",
+  "drawCount": 4,
+  "passThreshold": 70,
+  "pool": [
+    {
+      "id": "T03-L04-Q1",
+      "type": "mc",
+      "prompt": "Which aerial cable type requires no bonding or grounding at any pole?",
+      "choices": [
+        "Figure-8 cable with integrated steel messenger",
+        "Lashed OSP cable on galvanized strand",
+        "ADSS all-dielectric cable",
+        "Armored aerial cable with CST steel layer"
+      ],
+      "answerIndex": 2,
+      "explanation": "ADSS has no metallic components, so no bonding or grounding is required. Figure-8 and lashed cables both include steel (messenger or strand), requiring bonding.",
+      "citation": "7 CFR 1755.902; CommScope ADSS vs. Lashed Fiber technical documentation."
+    },
+    {
+      "id": "T03-L04-Q2",
+      "type": "mc",
+      "prompt": "ADSS cable EDS (Every-Day Stress) design targets are commonly discussed as a percentage range of RTS (Rated Tensile Strength), used to determine whether vibration dampers are needed. What is the correct general relationship?",
+      "choices": [
+        "As EDS/RTS percentage increases into the higher end of vendor-recommended ranges, aeolian vibration fatigue risk increases, making Stockbridge-style dampers more likely to be recommended",
+        "EDS/RTS percentage has no relationship to vibration damper requirements",
+        "Lower EDS/RTS percentages always require MORE dampers than higher percentages",
+        "EDS/RTS percentage only affects sag, never vibration risk"
+      ],
+      "answerIndex": 0,
+      "explanation": "Higher everyday stress (as a percentage of rated tensile strength) generally increases susceptibility to aeolian vibration fatigue, which is why vendor guidance recommends dampers above a certain EDS/RTS threshold. Note: the exact percentage range cited across vendor sources varies (this session found different figures from different vendors, e.g. 16-25% vs 20-25%) — always confirm against the specific cable manufacturer's current technical bulletin rather than a memorized number.",
+      "citation": "ADSS cable vendor technical parameters (e.g., gl-fibercable.com-style guidance) — exact percentage range UNVERIFIED-EXACT this session; confirm against current manufacturer documentation."
+    },
+    {
+      "id": "T03-L04-Q3",
+      "type": "mc",
+      "prompt": "What pattern does a lashing machine use to bind a fiber cable to its messenger strand?",
+      "choices": [
+        "A straight parallel run alongside the messenger, with periodic clamps",
+        "A continuous helix (helical wrap) around both the fiber cable and the messenger",
+        "A single zip-tie style attachment every 10 feet",
+        "An adhesive bond with no mechanical wire attachment"
+      ],
+      "answerIndex": 1,
+      "explanation": "The lashing machine wraps lashing wire in a continuous helix around both the fiber cable and the messenger, binding them together. This distributes the attachment force evenly and lets the lashed cable flex with the messenger without concentrating stress at any single point."
+    },
+    {
+      "id": "T03-L04-Q4",
+      "type": "mc",
+      "prompt": "A new 288F feeder route uses all-ribbon cable and must cross a wide river corridor (310 m span). The project has joint-use poles already bonded for electric distribution. Which aerial cable choice is most appropriate?",
+      "choices": [
+        "ADSS at 288F — within typical ADSS fiber-count capability and no new bonding needed",
+        "Lashed ribbon cable on a galvanized messenger strand — handles the high fiber count, and since the bonding infrastructure already exists, ADSS's 'no bonding' advantage is largely moot here",
+        "Figure-8 self-supporting cable — reduces install time by 50%",
+        "Direct-burial in conduit under the river — avoids aerial span entirely"
+      ],
+      "answerIndex": 1,
+      "explanation": "288F is achievable with ADSS, but with a long span and existing bonded messenger infrastructure already in place, lashed ribbon cable on a properly-sized galvanized messenger is a strong choice: it handles very high fiber counts, and ADSS's main advantage (no bonding) provides less marginal value when bonding already exists on the route.",
+      "citation": "CommScope ADSS vs. Lashed technical comparison; RUS Bulletin 1751F-630."
+    },
+    {
+      "id": "T03-L04-Q5",
+      "type": "mc",
+      "prompt": "Why is a fully dielectric cable (like ADSS) sometimes required near high-voltage transmission line corridors, beyond simply avoiding bonding labor?",
+      "choices": [
+        "Dielectric cable is cheaper in every scenario",
+        "A metallic messenger or armor near energized high-voltage conductors can develop dangerous induced voltage; an all-dielectric cable eliminates that induced-voltage hazard entirely since there is no conductive path",
+        "Dielectric cable has higher fiber counts than any metallic-messenger alternative",
+        "NESC prohibits any metallic cable component within 500 feet of transmission lines"
+      ],
+      "answerIndex": 1,
+      "explanation": "Near high-voltage lines, a metallic messenger or armor can have dangerous voltage induced into it even without direct contact. ADSS's complete absence of metal removes this induced-voltage hazard, which is why it's commonly specified for transmission-line-corridor crossings, in addition to the bonding-labor savings."
+    },
+    {
+      "id": "T03-L04-Q6",
+      "type": "mc",
+      "prompt": "What is the difference between a lashed cable installation and a figure-8 cable installation in terms of the messenger's relationship to the fiber cable?",
+      "choices": [
+        "They are identical installation methods with different names",
+        "In lashed installation, a separate messenger strand is pre-installed and the fiber cable is later lashed to it in a second pass; in figure-8, the messenger is integrated into the cable jacket from the factory, so both are installed together in one pass",
+        "Figure-8 cable has no messenger at all",
+        "Lashed cable requires ADSS-type fiber; figure-8 requires standard loose-tube fiber"
+      ],
+      "answerIndex": 1,
+      "explanation": "Lashed installation is a two-step process: install the messenger strand first, then lash the fiber cable to it. Figure-8 cable integrates the messenger into the jacket at manufacture, letting the installer string one combined cable in a single pass — faster but less flexible for later cable swaps."
+    },
+    {
+      "id": "T03-L04-Q7",
+      "type": "mc",
+      "prompt": "Why does a metallic messenger (used in lashed or figure-8 aerial cable) require bonding at each pole, while ADSS does not?",
+      "choices": [
+        "Bonding is a purely aesthetic/labeling requirement with no safety function",
+        "A metallic messenger can accumulate induced voltage or serve as an unintended current path during fault conditions on the joint-use pole; bonding it to the grounding system safely discharges that voltage. ADSS has no metal to accumulate voltage in the first place",
+        "Bonding is only required for messengers longer than 1000 feet",
+        "ADSS actually does require bonding, contrary to vendor claims"
+      ],
+      "answerIndex": 1,
+      "explanation": "Metallic messengers can pick up induced voltage from nearby power conductors or become an unintended path during electrical faults; bonding provides a safe discharge path to ground. ADSS's complete lack of metal removes the underlying hazard, eliminating the corresponding bonding requirement."
+    },
+    {
+      "id": "T03-L04-Q8",
+      "type": "drag-match",
+      "prompt": "Match each aerial cable type to its bonding/grounding requirement.",
+      "items": [
+        { "id": "i_adss", "label": "No bonding or grounding required (no metallic components)" },
+        { "id": "i_fig8", "label": "Bonding required at dead-ends (integrated steel messenger)" },
+        { "id": "i_lashed", "label": "Bonding required at each pole (separate metallic messenger strand)" }
+      ],
+      "targets": [
+        { "id": "t_adss", "label": "ADSS" },
+        { "id": "t_fig8", "label": "Figure-8" },
+        { "id": "t_lashed", "label": "Lashed cable" }
+      ],
+      "correctMap": { "t_adss": "i_adss", "t_fig8": "i_fig8", "t_lashed": "i_lashed" },
+      "explanation": "ADSS's all-dielectric design eliminates the bonding requirement entirely. Figure-8 and lashed cable both incorporate a metallic messenger requiring bonding, though the exact bonding points differ by installation method.",
+      "citation": "7 CFR 1755.902; CommScope ADSS vs. Lashed Fiber technical documentation."
+    }
+  ]
+}

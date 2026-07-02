@@ -6,6 +6,7 @@ import LessonLayout from '../../components/LessonLayout.jsx';
 import SideBySide from '../../components/primitives/SideBySide.jsx';
 import WorkedExample from '../../components/primitives/WorkedExample.jsx';
 import Quiz from '../../components/primitives/Quiz.jsx';
+import GatedAssessment from '../../components/primitives/GatedAssessment.jsx';
 import Flashcard from '../../components/Flashcard.jsx';
 
 export const meta = {
@@ -456,67 +457,74 @@ export default function T03L04_MessengerLashedVsADSS() {
       />
 
       {/* ── PER-LESSON QUIZ ───────────────────────────────────────────────── */}
-      <Quiz
+      <GatedAssessment
+        courseId="T03"
+        assessmentId="T03-L04"
         title="T03.L04 Check — Messenger Cable, Lashed vs. ADSS"
-        mode="multiple-choice"
-        questions={[
-          {
-            id: 'T03-L04-Q1',
-            type: 'mc',
-            prompt:
-              'Which aerial cable type requires no bonding or grounding at any pole?',
-            choices: [
-              'Figure-8 cable with integrated steel messenger',
-              'Lashed OSP cable on galvanized strand',
-              'ADSS all-dielectric cable',
-              'Armored aerial cable with CST steel layer',
-            ],
-            answerIndex: 2,
-            explanation:
-              'ADSS has no metallic components. "No metal in the cable, therefore no bonding and grounding is required." (Source: CommScope ADSS vs. Lashed Fiber blog — verified). Figure-8 and lashed cables both include steel, requiring bonding.',
-            citation: 'CommScope ADSS vs. Lashed Fiber blog; 7 CFR 1755.902.',
-          },
-          {
-            id: 'T03-L04-Q2',
-            type: 'mc',
-            prompt:
-              'The EDS of an ADSS cable is typically targeted at what percentage of RTS?',
-            choices: [
-              '5–10% of RTS',
-              '16–25% of RTS',
-              '30–40% of RTS',
-              '50–60% of RTS',
-            ],
-            answerIndex: 1,
-            explanation:
-              '16–25% of RTS is the recommended EDS design target range. Below 16%: vibration damping generally not required. 16–25%: Stockbridge dampers recommended to prevent aeolian vibration fatigue. Above 25%: not recommended design territory. (Source: gl-fibercable.com ADSS technical parameters — verified via ≥2 independent sources)',
-          },
-          {
-            id: 'T03-L04-Q3',
-            type: 'fill-in-blank',
-            prompt:
-              'The lashing wire is applied in a ________ pattern around the fiber cable and messenger strand using a lashing machine.',
-            answer: 'helix',
-            answerDisplay: 'helix (helical)',
-            explanation:
-              'The lashing machine wraps the lashing wire in a continuous helix around both the fiber cable and the messenger, binding them together. The helical pattern distributes the attachment force evenly and allows the lashed cable to flex with the messenger without concentrating stress at any single point. (RUS 1751F-630)',
-          },
-          {
-            id: 'T03-L04-Q4',
-            type: 'mc',
-            prompt:
-              'A new 288F feeder route uses all-ribbon cable and needs to cross a wide river corridor (310 m span). The project has joint-use poles already bonded for electric distribution. Which aerial cable choice is most appropriate?',
-            choices: [
-              'ADSS at 288F — within the 432F limit and no new bonding needed',
-              'Lashed ribbon cable on a galvanized messenger strand — handles the high fiber count and the bonding already exists',
-              'Figure-8 self-supporting cable — reduces install time by 50%',
-              'Direct-burial in conduit under the river — avoids aerial span entirely',
-            ],
-            answerIndex: 1,
-            explanation:
-              '288F is achievable with ADSS, but this is a long span (310 m) with an existing bonded messenger infrastructure. Lashed ribbon cable on a galvanized messenger is the strong choice: it handles very high fiber counts (ribbon goes to 1,728F+), the bonding infrastructure already exists so the "no bonding" advantage of ADSS is reduced, and a messenger can handle the longer span with appropriate strand sizing. (CommScope ADSS vs. Lashed; RUS 1751F-630)',
-          },
-        ]}
+        fallback={
+        <Quiz
+          title="T03.L04 Check — Messenger Cable, Lashed vs. ADSS"
+          mode="multiple-choice"
+          questions={[
+            {
+              id: 'T03-L04-Q1',
+              type: 'mc',
+              prompt:
+                'Which aerial cable type requires no bonding or grounding at any pole?',
+              choices: [
+                'Figure-8 cable with integrated steel messenger',
+                'Lashed OSP cable on galvanized strand',
+                'ADSS all-dielectric cable',
+                'Armored aerial cable with CST steel layer',
+              ],
+              answerIndex: 2,
+              explanation:
+                'ADSS has no metallic components. "No metal in the cable, therefore no bonding and grounding is required." (Source: CommScope ADSS vs. Lashed Fiber blog — verified). Figure-8 and lashed cables both include steel, requiring bonding.',
+              citation: 'CommScope ADSS vs. Lashed Fiber blog; 7 CFR 1755.902.',
+            },
+            {
+              id: 'T03-L04-Q2',
+              type: 'mc',
+              prompt:
+                'The EDS of an ADSS cable is typically targeted at what percentage of RTS?',
+              choices: [
+                '5–10% of RTS',
+                '16–25% of RTS',
+                '30–40% of RTS',
+                '50–60% of RTS',
+              ],
+              answerIndex: 1,
+              explanation:
+                '16–25% of RTS is the recommended EDS design target range. Below 16%: vibration damping generally not required. 16–25%: Stockbridge dampers recommended to prevent aeolian vibration fatigue. Above 25%: not recommended design territory. (Source: gl-fibercable.com ADSS technical parameters — verified via ≥2 independent sources)',
+            },
+            {
+              id: 'T03-L04-Q3',
+              type: 'fill-in-blank',
+              prompt:
+                'The lashing wire is applied in a ________ pattern around the fiber cable and messenger strand using a lashing machine.',
+              answer: 'helix',
+              answerDisplay: 'helix (helical)',
+              explanation:
+                'The lashing machine wraps the lashing wire in a continuous helix around both the fiber cable and the messenger, binding them together. The helical pattern distributes the attachment force evenly and allows the lashed cable to flex with the messenger without concentrating stress at any single point. (RUS 1751F-630)',
+            },
+            {
+              id: 'T03-L04-Q4',
+              type: 'mc',
+              prompt:
+                'A new 288F feeder route uses all-ribbon cable and needs to cross a wide river corridor (310 m span). The project has joint-use poles already bonded for electric distribution. Which aerial cable choice is most appropriate?',
+              choices: [
+                'ADSS at 288F — within the 432F limit and no new bonding needed',
+                'Lashed ribbon cable on a galvanized messenger strand — handles the high fiber count and the bonding already exists',
+                'Figure-8 self-supporting cable — reduces install time by 50%',
+                'Direct-burial in conduit under the river — avoids aerial span entirely',
+              ],
+              answerIndex: 1,
+              explanation:
+                '288F is achievable with ADSS, but this is a long span (310 m) with an existing bonded messenger infrastructure. Lashed ribbon cable on a galvanized messenger is the strong choice: it handles very high fiber counts (ribbon goes to 1,728F+), the bonding infrastructure already exists so the "no bonding" advantage of ADSS is reduced, and a messenger can handle the longer span with appropriate strand sizing. (CommScope ADSS vs. Lashed; RUS 1751F-630)',
+            },
+          ]}
+        />
+        }
       />
 
     </LessonLayout>

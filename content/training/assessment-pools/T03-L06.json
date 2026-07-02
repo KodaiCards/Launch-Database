@@ -1,0 +1,119 @@
+{
+  "assessmentId": "T03-L06",
+  "kind": "lesson",
+  "courseId": "T03",
+  "lessonId": "T03.L06",
+  "drawCount": 4,
+  "passThreshold": 70,
+  "pool": [
+    {
+      "id": "T03-L06-Q1",
+      "type": "mc",
+      "prompt": "Which jacket type is standard for outdoor OSP cables exposed to direct sunlight?",
+      "choices": [
+        "PVC (polyvinyl chloride) — low cost and widely available",
+        "LSZH (Low Smoke Zero Halogen) — required for all outdoor applications",
+        "HDPE with 2-3% carbon black — UV-stabilized, standard for all OSP",
+        "LDPE (Low-Density Polyethylene) — most flexible option"
+      ],
+      "answerIndex": 2,
+      "explanation": "HDPE with 2-3% carbon black is the standard outdoor OSP jacket — carbon black absorbs UV to prevent oxidative degradation. PVC is common indoors but poor for outdoor UV exposure. LSZH is a fire-safety choice, not a UV solution. LDPE has lower compressive strength than HDPE.",
+      "citation": "ICEA S-87-640."
+    },
+    {
+      "id": "T03-L06-Q2",
+      "type": "mc",
+      "prompt": "A gel-free dry-block cable's main installation advantage over gel-filled is:",
+      "choices": [
+        "Higher fiber count per tube",
+        "Faster splice prep — approximately one-third the prep time (no gel cleanup required)",
+        "Better UV resistance from the carbon black/SAP combination",
+        "Longer span capability due to lower cable weight"
+      ],
+      "answerIndex": 1,
+      "explanation": "Dry-block (gel-free) cables eliminate gel cleanup from splice prep, cutting prep time to roughly a third of a gel-filled tube's requirement. On a high-count 288F or 432F closure, this time savings adds up to hours."
+    },
+    {
+      "id": "T03-L06-Q3",
+      "type": "drag-match",
+      "prompt": "Match each application to the correct jacket material choice.",
+      "items": [
+        { "id": "i_hospital", "label": "LSZH — low smoke/halogen for occupied indoor space fire safety" },
+        { "id": "i_db", "label": "HDPE + carbon black — UV/crush resistant for outdoor exposure" },
+        { "id": "i_plenum", "label": "OFNP-rated (plenum-listed) jacket compound" }
+      ],
+      "targets": [
+        { "id": "t_hospital", "label": "Indoor cable in hospital riser shaft" },
+        { "id": "t_db", "label": "OSP direct-burial in rural field" },
+        { "id": "t_plenum", "label": "Cable in data center air-handling plenum" }
+      ],
+      "correctMap": { "t_hospital": "i_hospital", "t_db": "i_db", "t_plenum": "i_plenum" },
+      "explanation": "Occupied indoor spaces (hospitals) favor LSZH for reduced toxic smoke in a fire; outdoor direct-burial needs HDPE's UV/crush resistance; plenum spaces require the specific OFNP-listed jacket compound tested to UL 910/NFPA 262."
+    },
+    {
+      "id": "T03-L06-Q4",
+      "type": "mc",
+      "prompt": "Why is gel-filled buffer tube technology still used on some OSP cable despite dry-block's faster splice prep?",
+      "choices": [
+        "Gel-filled cable is always cheaper to manufacture regardless of application",
+        "Gel provides a well-established, proven water-blocking mechanism, and some specifiers/operators prefer its long field track record over newer dry-block technology, particularly on legacy-matching or highly conservative designs",
+        "Dry-block technology cannot be used with loose-tube construction",
+        "Gel-filled cable has higher fiber count capacity than dry-block"
+      ],
+      "answerIndex": 1,
+      "explanation": "Gel-filled buffer tubes have a long, proven track record for water-blocking. Some project specifications or operators favor this established approach over newer dry-block designs, even accepting the splice-prep time tradeoff — technology adoption in OSP infrastructure design is often conservative given multi-decade service life expectations."
+    },
+    {
+      "id": "T03-L06-Q5",
+      "type": "mc",
+      "prompt": "Why does HDPE (rather than PVC) dominate as the outdoor OSP jacket material, given that PVC is often cheaper?",
+      "choices": [
+        "HDPE offers substantially better UV, moisture, and temperature-extreme resistance for outdoor exposure over a multi-decade service life; PVC degrades faster under sustained UV and temperature cycling",
+        "PVC cannot be manufactured in black, so it cannot achieve UV resistance",
+        "HDPE and PVC perform identically outdoors; the choice is purely aesthetic",
+        "PVC is prohibited by federal law for any outdoor telecommunications use"
+      ],
+      "answerIndex": 0,
+      "explanation": "HDPE's material properties (with carbon-black UV stabilization) hold up far better than PVC under sustained outdoor sun exposure, moisture, and temperature extremes across the 20-40 year design life OSP cable is expected to survive — the reason it's the outdoor-industry default despite a cost premium over PVC."
+    },
+    {
+      "id": "T03-L06-Q6",
+      "type": "mc",
+      "prompt": "On a high-fiber-count (432F) splice closure, why does the choice between gel-filled and dry-block buffer tubes have an outsized practical impact compared to a low-count (12F) closure?",
+      "choices": [
+        "It has no different impact — closure size is irrelevant to buffer tube type choice",
+        "The per-tube time savings from dry-block (skipping gel cleanup) multiplies across many more tubes on a high-count closure, turning a modest per-tube savings into a multi-hour difference in total splice-crew labor",
+        "Dry-block technology is only available in fiber counts above 288F",
+        "Gel-filled tubes cannot physically be manufactured at high fiber counts"
+      ],
+      "answerIndex": 1,
+      "explanation": "The per-tube prep time savings from skipping gel cleanup is roughly fixed per tube. On a high-count closure with many buffer tubes to open, that fixed per-tube savings compounds into a substantial total labor-hours difference — a much smaller effect on a closure with only a couple of tubes."
+    },
+    {
+      "id": "T03-L06-Q7",
+      "type": "mc",
+      "prompt": "A cable jacket needs to resist both direct-burial crush/soil loads AND UV exposure at the point where it transitions from buried to aerial. What jacket property combination is needed?",
+      "choices": [
+        "LSZH jacket, since fire safety is the only concern for any transition point",
+        "HDPE with carbon black — HDPE provides the mechanical crush resistance needed for buried sections, and its carbon-black UV stabilization protects the same jacket material once it's exposed to sunlight at the aerial transition",
+        "PVC jacket, since it is flexible enough to handle both mechanical loads and UV",
+        "No single jacket material can serve both purposes; a splice is always required at ground-to-aerial transitions"
+      ],
+      "answerIndex": 1,
+      "explanation": "HDPE with carbon black serves both roles simultaneously — HDPE's mechanical properties handle soil/crush loads underground, and the same carbon-black UV stabilization protects it once the same cable run transitions above ground into direct sun exposure, without requiring a jacket-material splice at the transition."
+    },
+    {
+      "id": "T03-L06-Q8",
+      "type": "mc",
+      "prompt": "What is the practical consequence of specifying LSZH jacket for an outdoor direct-burial OSP application, where it is not the standard choice?",
+      "choices": [
+        "LSZH provides identical UV and crush performance to HDPE outdoors, so there's no real consequence",
+        "LSZH is primarily engineered for indoor fire-safety (low smoke/halogen in a fire), not outdoor UV/mechanical durability — using it outdoors trades away the UV/crush optimization HDPE provides for a fire-safety property that isn't the priority underground",
+        "LSZH cannot legally be manufactured in any outdoor-rated form",
+        "LSZH costs the same as HDPE, so there's no functional or cost tradeoff either way"
+      ],
+      "answerIndex": 1,
+      "explanation": "LSZH's design priority is indoor fire safety (reduced toxic smoke and no halogen gases if burned) — a concern relevant to occupied indoor spaces, not buried cable. Specifying it outdoors means accepting a jacket optimized for the wrong risk profile instead of HDPE's UV/crush-optimized outdoor performance."
+    }
+  ]
+}

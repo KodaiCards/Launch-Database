@@ -4,6 +4,7 @@
 import React from 'react';
 import LessonLayout from '../../components/LessonLayout.jsx';
 import Quiz from '../../components/primitives/Quiz.jsx';
+import GatedAssessment from '../../components/primitives/GatedAssessment.jsx';
 import Flashcard from '../../components/Flashcard.jsx';
 
 export const meta = {
@@ -338,66 +339,73 @@ export default function T03L07_ArmorDeepDive() {
       />
 
       {/* ── PER-LESSON QUIZ ───────────────────────────────────────────────── */}
-      <Quiz
+      <GatedAssessment
+        courseId="T03"
+        assessmentId="T03-L07"
         title="T03.L07 Check — Armor Selection Deep-Dive"
-        mode="multiple-choice"
-        questions={[
-          {
-            id: 'T03-L07-Q1',
-            type: 'mc',
-            prompt:
-              'Which armor type is preferred for a direct-burial route in a coastal area where soil pH is low and corrosion is a concern, but no rodent activity has been documented?',
-            choices: [
-              'CST (corrugated steel tape) — highest rodent protection',
-              'Interlocked armor — best for all underground applications',
-              'CAT (corrugated aluminum tape) — lighter and better corrosion resistance than steel',
-              'No armor — conduit eliminates all mechanical risk',
-            ],
-            answerIndex: 2,
-            explanation:
-              'In a corrosive soil environment (low pH, coastal chlorides) with no documented rodent activity, aluminum armor (CAT) is preferred over steel CST. Aluminum forms a passive oxide layer that resists corrosion, whereas steel will rust if the outer jacket is breached. Without a rodent threat, the softer aluminum is acceptable. (ICEA S-87-640 armor options)',
-          },
-          {
-            id: 'T03-L07-Q2',
-            type: 'mc',
-            prompt:
-              'A CST-armored cable with NEC §770.179(B) UL listing is being installed in a building riser shaft. The contractor asks whether the metal armor requires bonding to the building ground. The correct answer is:',
-            choices: [
-              'No — the UL listing exempts the armor from NEC bonding requirements',
-              'No — riser shaft cables never require bonding regardless of armor type',
-              'Yes — any metallic component entering the building must be bonded to the building grounding system',
-              'Only if the cable is also carrying electrical power alongside fiber',
-            ],
-            answerIndex: 2,
-            explanation:
-              'Any metallic cable component — including CST armor — must be bonded to the building\'s grounding electrode system at the building entry. The UL listing confirms the cable is suitable for riser use, but it does not exempt the armor from the NEC bonding requirement. (NEC Art. 770 bonding requirements; confirmed via product documentation)',
-          },
-          {
-            id: 'T03-L07-Q3',
-            type: 'fill-in-blank',
-            prompt:
-              'A cable with no metallic components whatsoever — relying on aramid yarn or fiberglass for structural support — is called a ________ cable.',
-            answer: 'dielectric',
-            answerDisplay: 'dielectric',
-            explanation:
-              'A dielectric cable has zero metal content. No bonding or grounding is required at any attachment or entry point. ADSS aerial cables are dielectric. Dielectric duct cables are also available for underground runs in conduit where no bonding is desired and the conduit provides mechanical protection. (7 CFR 1755.902; CommScope ADSS documentation — verified)',
-          },
-          {
-            id: 'T03-L07-Q4',
-            type: 'mc',
-            prompt:
-              'A project engineer specifies CST-armored cable for an aerial lashed section. What is the practical risk of this over-specification?',
-            choices: [
-              'CST armor provides less UV protection than unarmored HDPE on aerial cable',
-              'The extra weight of CST armor increases sag, potentially violating NESC clearance requirements without heavier messenger strand',
-              'CST armor is not UL listed for outdoor use',
-              'There is no risk — CST armor is always acceptable regardless of installation environment',
-            ],
-            answerIndex: 1,
-            explanation:
-              'CST armor adds significant weight per unit length compared to unarmored cable. Increased cable weight means increased midspan sag for a given span and messenger tension. If the poles were engineered for unarmored cable weight, the CST version may push sag below NESC clearance requirements. The fix (shorter spans or heavier messenger) is expensive. Specify armor only where the threat justifies it.',
-          },
-        ]}
+        fallback={
+        <Quiz
+          title="T03.L07 Check — Armor Selection Deep-Dive"
+          mode="multiple-choice"
+          questions={[
+            {
+              id: 'T03-L07-Q1',
+              type: 'mc',
+              prompt:
+                'Which armor type is preferred for a direct-burial route in a coastal area where soil pH is low and corrosion is a concern, but no rodent activity has been documented?',
+              choices: [
+                'CST (corrugated steel tape) — highest rodent protection',
+                'Interlocked armor — best for all underground applications',
+                'CAT (corrugated aluminum tape) — lighter and better corrosion resistance than steel',
+                'No armor — conduit eliminates all mechanical risk',
+              ],
+              answerIndex: 2,
+              explanation:
+                'In a corrosive soil environment (low pH, coastal chlorides) with no documented rodent activity, aluminum armor (CAT) is preferred over steel CST. Aluminum forms a passive oxide layer that resists corrosion, whereas steel will rust if the outer jacket is breached. Without a rodent threat, the softer aluminum is acceptable. (ICEA S-87-640 armor options)',
+            },
+            {
+              id: 'T03-L07-Q2',
+              type: 'mc',
+              prompt:
+                'A CST-armored cable with NEC §770.179(B) UL listing is being installed in a building riser shaft. The contractor asks whether the metal armor requires bonding to the building ground. The correct answer is:',
+              choices: [
+                'No — the UL listing exempts the armor from NEC bonding requirements',
+                'No — riser shaft cables never require bonding regardless of armor type',
+                'Yes — any metallic component entering the building must be bonded to the building grounding system',
+                'Only if the cable is also carrying electrical power alongside fiber',
+              ],
+              answerIndex: 2,
+              explanation:
+                'Any metallic cable component — including CST armor — must be bonded to the building\'s grounding electrode system at the building entry. The UL listing confirms the cable is suitable for riser use, but it does not exempt the armor from the NEC bonding requirement. (NEC Art. 770 bonding requirements; confirmed via product documentation)',
+            },
+            {
+              id: 'T03-L07-Q3',
+              type: 'fill-in-blank',
+              prompt:
+                'A cable with no metallic components whatsoever — relying on aramid yarn or fiberglass for structural support — is called a ________ cable.',
+              answer: 'dielectric',
+              answerDisplay: 'dielectric',
+              explanation:
+                'A dielectric cable has zero metal content. No bonding or grounding is required at any attachment or entry point. ADSS aerial cables are dielectric. Dielectric duct cables are also available for underground runs in conduit where no bonding is desired and the conduit provides mechanical protection. (7 CFR 1755.902; CommScope ADSS documentation — verified)',
+            },
+            {
+              id: 'T03-L07-Q4',
+              type: 'mc',
+              prompt:
+                'A project engineer specifies CST-armored cable for an aerial lashed section. What is the practical risk of this over-specification?',
+              choices: [
+                'CST armor provides less UV protection than unarmored HDPE on aerial cable',
+                'The extra weight of CST armor increases sag, potentially violating NESC clearance requirements without heavier messenger strand',
+                'CST armor is not UL listed for outdoor use',
+                'There is no risk — CST armor is always acceptable regardless of installation environment',
+              ],
+              answerIndex: 1,
+              explanation:
+                'CST armor adds significant weight per unit length compared to unarmored cable. Increased cable weight means increased midspan sag for a given span and messenger tension. If the poles were engineered for unarmored cable weight, the CST version may push sag below NESC clearance requirements. The fix (shorter spans or heavier messenger) is expensive. Specify armor only where the threat justifies it.',
+            },
+          ]}
+        />
+        }
       />
 
     </LessonLayout>

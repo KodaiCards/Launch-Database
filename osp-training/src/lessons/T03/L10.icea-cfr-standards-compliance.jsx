@@ -5,6 +5,7 @@ import React from 'react';
 import LessonLayout from '../../components/LessonLayout.jsx';
 import Flashcard from '../../components/Flashcard.jsx';
 import Quiz from '../../components/primitives/Quiz.jsx';
+import GatedAssessment from '../../components/primitives/GatedAssessment.jsx';
 import WorkedExample from '../../components/primitives/WorkedExample.jsx';
 
 export const meta = {
@@ -346,85 +347,92 @@ export default function T03L10_StandardsCompliance() {
       />
 
       {/* QUIZ */}
-      <Quiz
+      <GatedAssessment
+        courseId="T03"
+        assessmentId="T03-L10"
         title="L10 Knowledge Check"
-        mode="multiple-choice"
-        questions={[
-          {
-            id: 'T03-L10-Q01',
-            type: 'mc',
-            prompt:
-              'On a RUS-financed project, if the buyer does not specify MFD, all single-mode fiber must be manufactured to what MFD at 1310 nm?',
-            choices: [
-              '8.6 µm ± 0.4 µm',
-              '9.2 µm ± 0.5 µm',
-              '10.0 µm ± 0.5 µm',
-              '9.0 µm ± 1.0 µm',
-            ],
-            answerIndex: 1,
-            explanation:
-              '7 CFR 1755.902 specifies 9.2 µm ± 0.5 µm at 1310 nm as the default unless the buyer specifies otherwise. This keeps all reels within a 8.7–9.7 µm window, limiting splice mismatch loss across a multi-reel project. (Source: 7 CFR 1755.902 via eCFR)',
-          },
-          {
-            id: 'T03-L10-Q02',
-            type: 'mc',
-            prompt:
-              'ICEA S-87-640\'s standard installation tensile rating for OSP fiber cable is:',
-            choices: [
-              '2,670 N (600 lbf)',
-              '1,000 N (225 lbf)',
-              '5,340 N (1,200 lbf)',
-              '890 N (200 lbf)',
-            ],
-            answerIndex: 0,
-            explanation:
-              'ICEA S-87-640 defines 2,670 N (600 lbf) as the standard installation tensile rating for OSP fiber cable. A lower-tier rating of 1,330 N (300 lbf) exists for lighter constructions [confirm current edition]. Exceeding the rated tensile during a pull risks fiber damage. (Source: ICEA S-87-640 via archive.org + secondary sources)',
-          },
-          {
-            id: 'T03-L10-Q03',
-            type: 'mc',
-            prompt:
-              'What is the key difference between qualification testing and acceptance testing?',
-            choices: [
-              'Qualification is done in the field; acceptance is done in the factory',
-              'Qualification is done once per cable design; acceptance is done on each production lot',
-              'Qualification tests optical performance; acceptance tests mechanical performance only',
-              'Qualification is required by ICEA; acceptance is required only by RUS',
-            ],
-            answerIndex: 1,
-            explanation:
-              'Qualification testing proves the design itself meets the standard — it is done once per new design before production begins. Acceptance testing verifies that each production lot of cable (or a statistical sample of it) continues to conform. Both are required on RUS projects. (Source: 7 CFR 1755.902; ICEA S-87-640)',
-          },
-          {
-            id: 'T03-L10-Q04',
-            type: 'dragdrop',
-            prompt:
-              'Match each cable parameter to its correct requirement from 7 CFR 1755.902.',
-            items: [
-              { id: 'mfd', label: '9.2 µm ± 0.5 µm at 1310 nm' },
-              { id: 'coating', label: '250 ± 15 µm OD' },
-              { id: 'colors', label: '12-color scheme' },
-            ],
-            targets: [
-              { id: 'tmfd', label: 'Single-mode fiber mode field diameter (default)' },
-              { id: 'tcoating', label: 'Fiber coating outside diameter' },
-              { id: 'tcolors', label: 'Fiber color coding (so each fiber is distinguishable)' },
-            ],
-            correctMap: { tmfd: 'mfd', tcoating: 'coating', tcolors: 'colors' },
-            explanation:
-              'All three values are direct requirements from 7 CFR 1755.902 (eCFR): MFD 9.2 µm ± 0.5 µm at 1310 nm; fiber coating OD 250 ± 15 µm; 12-color coding so every fiber is individually identifiable. These are the enforceable minimums on RUS-financed projects.',
-          },
-          {
-            id: 'T03-L10-Q05',
-            type: 'fill-in-blank',
-            prompt:
-              'A cable coating diameter reads 242 µm on a production test report. Is this within the 7 CFR 1755.902 tolerance of 250 ± 15 µm? The lower limit is ____µm.',
-            answer: '235',
-            answerDisplay: '235 µm (lower limit = 250 − 15 = 235 µm)',
-            explanation:
-              '250 − 15 = 235 µm (lower limit); 250 + 15 = 265 µm (upper limit). A measurement of 242 µm is within the 235–265 µm range, so it conforms. (Source: 7 CFR 1755.902)',
-          },
-        ]}
+        fallback={
+        <Quiz
+          title="L10 Knowledge Check"
+          mode="multiple-choice"
+          questions={[
+            {
+              id: 'T03-L10-Q01',
+              type: 'mc',
+              prompt:
+                'On a RUS-financed project, if the buyer does not specify MFD, all single-mode fiber must be manufactured to what MFD at 1310 nm?',
+              choices: [
+                '8.6 µm ± 0.4 µm',
+                '9.2 µm ± 0.5 µm',
+                '10.0 µm ± 0.5 µm',
+                '9.0 µm ± 1.0 µm',
+              ],
+              answerIndex: 1,
+              explanation:
+                '7 CFR 1755.902 specifies 9.2 µm ± 0.5 µm at 1310 nm as the default unless the buyer specifies otherwise. This keeps all reels within a 8.7–9.7 µm window, limiting splice mismatch loss across a multi-reel project. (Source: 7 CFR 1755.902 via eCFR)',
+            },
+            {
+              id: 'T03-L10-Q02',
+              type: 'mc',
+              prompt:
+                'ICEA S-87-640\'s standard installation tensile rating for OSP fiber cable is:',
+              choices: [
+                '2,670 N (600 lbf)',
+                '1,000 N (225 lbf)',
+                '5,340 N (1,200 lbf)',
+                '890 N (200 lbf)',
+              ],
+              answerIndex: 0,
+              explanation:
+                'ICEA S-87-640 defines 2,670 N (600 lbf) as the standard installation tensile rating for OSP fiber cable. A lower-tier rating of 1,330 N (300 lbf) exists for lighter constructions [confirm current edition]. Exceeding the rated tensile during a pull risks fiber damage. (Source: ICEA S-87-640 via archive.org + secondary sources)',
+            },
+            {
+              id: 'T03-L10-Q03',
+              type: 'mc',
+              prompt:
+                'What is the key difference between qualification testing and acceptance testing?',
+              choices: [
+                'Qualification is done in the field; acceptance is done in the factory',
+                'Qualification is done once per cable design; acceptance is done on each production lot',
+                'Qualification tests optical performance; acceptance tests mechanical performance only',
+                'Qualification is required by ICEA; acceptance is required only by RUS',
+              ],
+              answerIndex: 1,
+              explanation:
+                'Qualification testing proves the design itself meets the standard — it is done once per new design before production begins. Acceptance testing verifies that each production lot of cable (or a statistical sample of it) continues to conform. Both are required on RUS projects. (Source: 7 CFR 1755.902; ICEA S-87-640)',
+            },
+            {
+              id: 'T03-L10-Q04',
+              type: 'dragdrop',
+              prompt:
+                'Match each cable parameter to its correct requirement from 7 CFR 1755.902.',
+              items: [
+                { id: 'mfd', label: '9.2 µm ± 0.5 µm at 1310 nm' },
+                { id: 'coating', label: '250 ± 15 µm OD' },
+                { id: 'colors', label: '12-color scheme' },
+              ],
+              targets: [
+                { id: 'tmfd', label: 'Single-mode fiber mode field diameter (default)' },
+                { id: 'tcoating', label: 'Fiber coating outside diameter' },
+                { id: 'tcolors', label: 'Fiber color coding (so each fiber is distinguishable)' },
+              ],
+              correctMap: { tmfd: 'mfd', tcoating: 'coating', tcolors: 'colors' },
+              explanation:
+                'All three values are direct requirements from 7 CFR 1755.902 (eCFR): MFD 9.2 µm ± 0.5 µm at 1310 nm; fiber coating OD 250 ± 15 µm; 12-color coding so every fiber is individually identifiable. These are the enforceable minimums on RUS-financed projects.',
+            },
+            {
+              id: 'T03-L10-Q05',
+              type: 'fill-in-blank',
+              prompt:
+                'A cable coating diameter reads 242 µm on a production test report. Is this within the 7 CFR 1755.902 tolerance of 250 ± 15 µm? The lower limit is ____µm.',
+              answer: '235',
+              answerDisplay: '235 µm (lower limit = 250 − 15 = 235 µm)',
+              explanation:
+                '250 − 15 = 235 µm (lower limit); 250 + 15 = 265 µm (upper limit). A measurement of 242 µm is within the 235–265 µm range, so it conforms. (Source: 7 CFR 1755.902)',
+            },
+          ]}
+        />
+        }
       />
 
     </LessonLayout>

@@ -1,0 +1,120 @@
+{
+  "assessmentId": "T03-L03",
+  "kind": "lesson",
+  "courseId": "T03",
+  "lessonId": "T03.L03",
+  "drawCount": 4,
+  "passThreshold": 70,
+  "pool": [
+    {
+      "id": "T03-L03-Q1",
+      "type": "mc",
+      "prompt": "A cable routed from aerial attachment into an underground duct and then entering a building riser shaft requires which combination of specifications?",
+      "choices": [
+        "HDPE jacket only for all three segments — one cable type fits all",
+        "Weatherproof unarmored HDPE for the aerial segment, armor optional/redundant for the duct segment (conduit provides protection), and OFNR fire-rating for the riser entry",
+        "Interlocked armor throughout — handles all three environments",
+        "Tight-buffer construction to allow individual fiber termination in the building"
+      ],
+      "answerIndex": 1,
+      "explanation": "Each environment has different requirements: aerial needs weatherproof HDPE (armor unnecessary, messenger provides mechanical support); underground duct provides its own mechanical protection so armor is often redundant; riser entry requires OFNR fire rating. Three segments often mean three cable specs with splice points at transitions.",
+      "citation": "ICEA S-87-640; NEC (NFPA 70) Article 770."
+    },
+    {
+      "id": "T03-L03-Q2",
+      "type": "drag-match",
+      "prompt": "Match each armor type to its primary protection role.",
+      "items": [
+        { "id": "i_cst", "label": "Direct burial + rodent protection (gnaw barrier)" },
+        { "id": "i_inter", "label": "Indoor-outdoor riser with fire-listing requirement" },
+        { "id": "i_noarm", "label": "Aerial lashed to strand (tensile load handled by messenger)" }
+      ],
+      "targets": [
+        { "id": "t_cst", "label": "CST (corrugated steel tape)" },
+        { "id": "t_inter", "label": "Interlocked armor" },
+        { "id": "t_noarm", "label": "No armor" }
+      ],
+      "correctMap": { "t_cst": "i_cst", "t_inter": "i_inter", "t_noarm": "i_noarm" },
+      "explanation": "CST provides a steel gnaw barrier for direct-burial in rodent areas. Interlocked armor (helical metal strips) provides crush resistance with a fire rating for indoor-outdoor riser use. No armor is used aerially because the messenger handles mechanical support, and armor would add unnecessary weight."
+    },
+    {
+      "id": "T03-L03-Q3",
+      "type": "mc",
+      "prompt": "What internal component of a CST-armored cable lets installers remove the steel layer without damaging the fiber bundle?",
+      "choices": [
+        "A secondary gel-filled buffer layer",
+        "An internal ripcord (strong yarn or cord) that lets the installer split the armor layer cleanly without metal cutters",
+        "A magnetic release strip",
+        "There is no safe way to remove CST armor without risking fiber damage"
+      ],
+      "answerIndex": 1,
+      "explanation": "An internal ripcord under the corrugated steel armor lets the installer cleanly split the armor layer. Using metal cutters on armored cable without a ripcord risks nicking the inner cable assembly."
+    },
+    {
+      "id": "T03-L03-Q4",
+      "type": "mc",
+      "prompt": "A direct-burial OSP cable route passes through a property with a known woodchuck population. What is the minimum armor specification?",
+      "choices": [
+        "No armor — woodchucks cannot gnaw through HDPE jacket",
+        "Corrugated aluminum tape (CAT) — lighter than steel and sufficient for most rodents",
+        "CST (corrugated steel tape) armor — steel provides the gnaw-stop barrier",
+        "Armor is not required — use double-wall HDPE conduit instead"
+      ],
+      "answerIndex": 2,
+      "explanation": "CST armor is required in rodent-active areas for direct-burial cable — HDPE jacket alone is insufficient, since gnawing animals can penetrate polyethylene. Steel creates a mechanical barrier that aluminum (softer) does not provide against determined gnawing.",
+      "citation": "ICEA S-87-640 armor options; FOA OSP installation guidelines."
+    },
+    {
+      "id": "T03-L03-Q5",
+      "type": "mc",
+      "prompt": "Why might an OSP designer choose 'no armor' (a fully dielectric cable) for a direct-burial route even though CST would offer more mechanical protection?",
+      "choices": [
+        "Dielectric cable is never appropriate for direct burial under any circumstances",
+        "In areas with no documented rodent activity and where avoiding bonding/grounding obligations at splice points is a priority, an all-dielectric cable trades some mechanical robustness for eliminating the bonding requirement that any metallic armor component would introduce",
+        "Dielectric cable is always more expensive, so it's never chosen deliberately",
+        "Armor is illegal to install underground in any jurisdiction"
+      ],
+      "answerIndex": 1,
+      "explanation": "Metallic armor (CST or CAT) requires bonding to grounding systems at entries and splice points. Where rodent risk is low and the designer wants to avoid that bonding obligation entirely, an all-dielectric cable is a legitimate design choice, accepting reduced mechanical/gnaw protection in exchange."
+    },
+    {
+      "id": "T03-L03-Q6",
+      "type": "mc",
+      "prompt": "What is the functional tradeoff between interlocked armor and CST (corrugated steel tape) armor for an indoor-outdoor riser application?",
+      "choices": [
+        "There is no functional difference; the names are interchangeable",
+        "Interlocked armor (helical metal strips) provides flexible crush resistance suited to riser routing while carrying the required fire listing for indoor use, whereas CST is optimized primarily as a flat gnaw/crush barrier for underground direct-burial applications",
+        "CST is always preferred for riser applications because it is cheaper",
+        "Interlocked armor cannot be used indoors under any NEC provision"
+      ],
+      "answerIndex": 1,
+      "explanation": "Interlocked armor's helical construction gives it flexibility suited to routing through a riser shaft while still providing crush resistance and carrying the fire listing (e.g., NEC 770.179(B)) required for that indoor application — a different design goal than CST's role as a below-grade gnaw barrier."
+    },
+    {
+      "id": "T03-L03-Q7",
+      "type": "mc",
+      "prompt": "A splice case connects a CST-armored underground segment to an unarmored aerial segment at a pole riser. What must happen to the CST armor at this transition point?",
+      "choices": [
+        "Nothing — armor requires no special handling at a splice transition",
+        "The armor must be properly bonded/grounded at the transition per applicable code, since it is a metallic component even though the adjoining aerial cable is unarmored",
+        "The armor must be removed entirely before the splice case is closed",
+        "The transition is not permitted; armored and unarmored cable can never be spliced together"
+      ],
+      "answerIndex": 1,
+      "explanation": "Any metallic cable component, including CST armor, requires proper bonding/grounding treatment at transitions and entries per applicable code — this obligation exists independent of what type of cable it's being spliced to on the other side."
+    },
+    {
+      "id": "T03-L03-Q8",
+      "type": "mc",
+      "prompt": "Why does a three-segment route (aerial, duct, riser) often require three different cable specifications rather than one cable used throughout?",
+      "choices": [
+        "Because cable manufacturers refuse to make a single cable that spans all three environments",
+        "Because each environment presents a different dominant risk (weather/UV aerially, none needed in protected duct, fire code indoors) — no single spec is both cost-effective and code-compliant across all three, so segment-specific cable with splice transitions is the standard, economical design approach",
+        "Because NESC requires a minimum of three cable types on every project regardless of route",
+        "Because splicing is always required every 500 feet regardless of environment"
+      ],
+      "answerIndex": 1,
+      "explanation": "Using a single 'do everything' cable spec across aerial, duct, and riser segments would typically mean over-specifying for at least two of the three environments (e.g., paying for armor where a duct already protects the cable, or lacking fire rating where code requires it) — splicing segment-appropriate cable at transitions is the standard economical and compliant approach."
+    }
+  ]
+}
