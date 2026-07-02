@@ -1,9 +1,9 @@
-// Net-new — T06 Capstone Quiz integrating all T06 lessons
-// T06.L12 — T06 Capstone Quiz: Underground OSP Design
+// Net-new — T06 Capstone Review integrating all T06 lessons
+// D031: graded inline Quiz retired — the T06-final pool is the graded capstone gate now.
+// T06.L12 — T06 Capstone Review: Underground OSP Design
 
 import React from 'react';
 import LessonLayout from '../../components/LessonLayout.jsx';
-import Quiz from '../../components/primitives/Quiz.jsx';
 import WorkedExample from '../../components/primitives/WorkedExample.jsx';
 import BranchingScenario from '../../components/primitives/BranchingScenario.jsx';
 import Flashcard from '../../components/Flashcard.jsx';
@@ -11,9 +11,10 @@ import Flashcard from '../../components/Flashcard.jsx';
 export const meta = {
   id: 'T06.L12',
   course_id: 'T06',
-  title: 'T06 Capstone Quiz — Underground OSP Design',
+  title: 'T06 Capstone Review — Underground OSP Design',
   order: 12,
-  lesson_type: 'capstone-quiz',
+  lesson_type: 'capstone-review',
+  completesOnView: true,
   prerequisites: [
     'T06.L01', 'T06.L02', 'T06.L03', 'T06.L04',
     'T06.L05', 'T06.L06', 'T06.L07', 'T06.L08',
@@ -24,7 +25,7 @@ export const meta = {
     { term: 'HDD', source_lesson_id: 'T06.L01' },
     { term: 'open-cut trench', source_lesson_id: 'T06.L01' },
     { term: 'plowing', source_lesson_id: 'T06.L01' },
-    { term: 'RUS 1751F-635', source_lesson_id: 'T06.L02' },
+    { term: 'RUS 1751F-643', source_lesson_id: 'T06.L02' },
     { term: 'minimum cover', source_lesson_id: 'T06.L02' },
     { term: 'AHJ override', source_lesson_id: 'T06.L02' },
     { term: 'Schedule 40 PVC', source_lesson_id: 'T06.L03' },
@@ -72,8 +73,8 @@ export const key_terms = [
   { term: 'HDD', definition: 'Horizontal directional drilling — a trenchless underground construction method that steers a drill head along a planned path under an obstacle and pulls conduit back through the drilled hole without surface excavation.' },
   { term: 'open-cut trench', definition: 'An underground installation method that cuts a trench from the surface, lays conduit in the trench, then backfills and restores the surface.' },
   { term: 'plowing', definition: 'A trenchless underground installation method that pulls a blade through the soil at the target depth, simultaneously laying conduit into the slot the blade creates.' },
-  { term: 'RUS 1751F-635', definition: 'USDA Rural Utilities Service bulletin specifying minimum burial depths, separation rules, and construction standards for rural underground utilities.' },
-  { term: 'minimum cover', definition: 'The required depth of earth above conduit or cable per RUS 1751F-635 — 18 inches residential, 24–36 inches under paved roads depending on AHJ.' },
+  { term: 'RUS 1751F-643', definition: 'USDA Rural Utilities Service bulletin ("Underground Plant Design") specifying minimum burial depths, separation rules, and construction standards for rural underground utilities.' },
+  { term: 'minimum cover', definition: 'The required depth of earth above conduit or cable per RUS 1751F-643 — 18 inches residential, 24–36 inches under paved roads depending on AHJ.' },
   { term: 'AHJ override', definition: 'A local Authority Having Jurisdiction requirement that supersedes RUS or NEC standards when stricter — e.g., a state DOT requiring 48-inch cover under state highways.' },
   { term: 'Schedule 40 PVC', definition: 'Standard-wall PVC conduit rated for general burial and duct applications; most common for underground OSP conduit bundles.' },
   { term: 'Schedule 80 PVC', definition: 'Extra-thick-wall PVC conduit rated for higher mechanical strength and deeper burial; used under roads or where external loading is high.' },
@@ -113,20 +114,18 @@ export default function T06L12_CapstoneQuiz() {
     <LessonLayout meta={meta}>
 
       <section data-tier="foundations">
-        <h2>T06 Capstone — Underground OSP Design</h2>
+        <h2>T06 Capstone Review — Underground OSP Design</h2>
         <p>
-          This capstone covers all of T06 (L01–L11). Work through the Worked Example first —
-          the quiz includes questions about it. Then complete the 20-question quiz and the
-          design scenario. Score ≥ 80% to consider yourself ready to move to T07 (Staking).
-        </p>
-        <p className="mt-2">
-          Every answer is derivable from T06 lesson content. If you get stuck, the explanation
-          will point you to the lesson to review.
+          This review spans all of T06 (L01–L11). Work through the Worked Example and the
+          design scenario below — they pull together fill/pull-tension calculations and a
+          full underground-design decision path the way a real project would. The graded T06
+          capstone assessment — drawn from the full T06 pool — is the gate for the topic;
+          this page is reading/review material, not a graded quiz.
         </p>
 
         <h3 className="mt-6 font-semibold text-lg">Key Terms Review</h3>
         <p className="mt-2 text-sm text-slate-400">
-          Before diving into the scenarios and quiz, use these flashcards to refresh your memory on core T06 terminology.
+          Before working through the scenarios below, use these flashcards to refresh your memory on core T06 terminology.
         </p>
         <Flashcard
           deckId="T06-L12"
@@ -223,7 +222,7 @@ export default function T06L12_CapstoneQuiz() {
           {
             id: 'method-opencut',
             type: 'decision',
-            text: "Correct for most residential ROW. Open-cut trench at 24-inch minimum cover (RUS 1751F-635 §6 for residential) is appropriate. Now the wetland crossing: the 20% wetland segment needs a bore. What bore depth do you specify under the wetland?",
+            text: "Correct for most residential ROW. Open-cut trench at 24-inch minimum cover (RUS 1751F-643 §6 for residential) is appropriate. Now the wetland crossing: the 20% wetland segment needs a bore. What bore depth do you specify under the wetland?",
             choices: [
               { label: '18 inches — same as residential minimum', nextId: 'wetland-shallow' },
               { label: '36–48 inches below the deepest waterway bed point (scour depth) per USACE NWP conditions', nextId: 'wetland-deep' },
@@ -241,13 +240,13 @@ export default function T06L12_CapstoneQuiz() {
             text: "Correct. Wetland bore at 36–48 inches below bed. Now the road segments: the 40% paved road portion. You'll open-cut the road for the buried conduit. What burial depth do you specify under the road?",
             choices: [
               { label: '18 inches — same as residential', nextId: 'road-shallow' },
-              { label: '36 inches — standard for paved roads per RUS 1751F-635 §6 and most AHJs', nextId: 'road-deep' },
+              { label: '36 inches — standard for paved roads per RUS 1751F-643 §6 and most AHJs', nextId: 'road-deep' },
             ],
           },
           {
             id: 'road-shallow',
             type: 'outcome',
-            text: "Incorrect. Under paved roads, RUS 1751F-635 §6 specifies a minimum of 24–36 inches depending on road class and AHJ requirements. 18 inches is residential non-traffic. Under a paved road, 18 inches exposes the conduit to frost heave and subbase compaction during road maintenance. Most AHJs require 36 inches minimum under paved roads. [confirm with local AHJ]",
+            text: "Incorrect. Under paved roads, RUS 1751F-643 §6 specifies a minimum of 24–36 inches depending on road class and AHJ requirements. 18 inches is residential non-traffic. Under a paved road, 18 inches exposes the conduit to frost heave and subbase compaction during road maintenance. Most AHJs require 36 inches minimum under paved roads. [confirm with local AHJ]",
             variant: 'bad',
           },
           {
@@ -274,295 +273,6 @@ export default function T06L12_CapstoneQuiz() {
         ]}
       />
 
-      {/* CAPSTONE QUIZ — 20 questions covering all T06 lessons */}
-      <Quiz
-        title="T06 Capstone Quiz — 20 Questions"
-        mode="multiple-choice"
-        questions={[
-          // L01: Method selection
-          {
-            id: 'T06-CAP-Q01',
-            type: 'mc',
-            prompt: 'A route crosses an active railroad track where surface disturbance is prohibited by the railroad\'s encroachment permit. What underground construction method is required?',
-            choices: [
-              'Open-cut trench — fastest and most controllable',
-              'Plowing — no surface preparation needed',
-              'HDD (horizontal directional drilling) — the only trenchless method that can install conduit under the railroad without surface disruption',
-              'Trencher with steel cutting wheel — cuts through railroad ballast',
-            ],
-            answerIndex: 2,
-            explanation: 'When surface disturbance is prohibited (active railroad, major road without closure permit, environmentally sensitive zone), HDD is the only method that installs conduit without open-cutting the surface. Open-cut trench and plowing both require surface disturbance. (Source: T06.L01; RUS 1751F-635 §9.)',
-          },
-          // L01: Plowing limitation
-          {
-            id: 'T06-CAP-Q02',
-            type: 'mc',
-            prompt: 'Which soil type makes cable plowing impractical and likely to cause cable damage?',
-            choices: [
-              'Sandy loam with low rock content',
-              'Coastal wetland muck',
-              'Rock-dominated soil or soil with buried concrete debris',
-              'Compacted clay in residential lawns',
-            ],
-            answerIndex: 2,
-            explanation: 'Cable plowing requires the plow blade to cut through the soil without encountering immovable material. Rock and buried concrete stop the blade and can cause the cable to kink or shear under the tension. Sandy loam, wetland muck, and compacted clay (with no rock) are all plowable — the plow displaces the soil around the cable. (Source: T06.L01; CGA Best Practices v20.0 (2024).)',
-          },
-          // L02: Burial depth hierarchy
-          {
-            id: 'T06-CAP-Q03',
-            type: 'mc',
-            prompt: 'Which hierarchy correctly describes how burial depth is determined on an RUS-funded project?',
-            choices: [
-              'State DOT → NEC 830.47 → RUS 1751F-635',
-              'RUS 1751F-635 minimum → NEC 830.47 floor → AHJ may require more',
-              'NEC 830.47 is the only applicable standard; RUS adds no additional requirements',
-              'AHJ sets minimum; RUS and NEC are advisory only',
-            ],
-            answerIndex: 1,
-            explanation: 'The burial depth hierarchy for RUS-funded projects: RUS 1751F-635 sets the primary project standard. NEC 830.47 is the federal floor for communication cable. The AHJ (state DOT, county, local utility authority) may require more than both — their requirement applies if it\'s stricter. The deepest requirement from any applicable authority governs. (Source: RUS 1751F-635 §6; NEC 830.47; T06.L02.)',
-          },
-          // L03: Conduit material selection
-          {
-            id: 'T06-CAP-Q04',
-            type: 'mc',
-            prompt: 'Why is Schedule 80 PVC preferred over Schedule 40 PVC for conduit risers at pedestals?',
-            choices: [
-              'Schedule 80 is more UV-resistant and can be left exposed above grade',
-              'Schedule 80 has a thicker wall and greater crush resistance, providing better protection at the grade transition where mechanical stress is highest',
-              'Schedule 80 is required by RUS 1751F-635 for all buried conduit on funded projects',
-              'Schedule 80 is cheaper than Schedule 40 per linear foot',
-            ],
-            answerIndex: 1,
-            explanation: 'Schedule 80 PVC has a thicker wall (smaller inner diameter for the same nominal OD) than Schedule 40. At the riser — where the conduit transitions from horizontal buried to vertical pedestal entry — the conduit experiences the highest mechanical stress: settling soil loads, pedestal bumps, freeze-thaw cycling. The extra wall thickness of Schedule 80 provides resistance to crushing at this stress concentration point. (Source: T06.L03; RUS 1751F-635 §7.)',
-          },
-          // L03: HDPE conduit advantage
-          {
-            id: 'T06-CAP-Q05',
-            type: 'mc',
-            prompt: 'What is the primary advantage of HDPE conduit over PVC conduit for HDD-installed fiber runs?',
-            choices: [
-              'HDPE is UV-resistant and can be left exposed above grade without degrading',
-              'HDPE is flexible enough to follow curved bore paths without cracking, while PVC would shatter at the bending radii typical of HDD installations',
-              'HDPE costs less per linear foot than PVC for the same conduit size',
-              'HDPE has a larger internal diameter than PVC for the same nominal size',
-            ],
-            answerIndex: 1,
-            explanation: 'HDD bore paths follow a curved arc from entry to exit. PVC is rigid and will crack if bent beyond its rated radius — which is far straighter than typical HDD curves. HDPE is flexible and can follow the bore curve without cracking. This is why virtually all HDD-installed fiber conduit is HDPE rather than PVC. (Source: T06.L03; RUS 1751F-635 §5; CGA Best Practices v20.0 (2024).)',
-          },
-          // L04: Fill percentage
-          {
-            id: 'T06-CAP-Q06',
-            type: 'mc',
-            prompt: 'A 2-inch Schedule 40 PVC conduit (ID = 2.067 inches) will carry one 1.25-inch OD cable. What is the fill percentage, and is it compliant?',
-            choices: [
-              '36.6% — compliant (under 40% limit)',
-              '43.3% — non-compliant (exceeds 40% limit)',
-              '62.5% — OD ratio; fill calculation is always based on diameter ratio not area ratio',
-              '29.0% — compliant',
-            ],
-            answerIndex: 0,
-            explanation: 'Fill = (cable area / conduit area) × 100 = (π × 0.625²) / (π × 1.0335²) × 100 = (1.2272) / (3.3556) × 100 = 36.6%. This is under the 40% maximum — compliant. The fill calculation is ALWAYS based on cross-sectional AREA ratios (radius squared), not diameter ratios. (Source: T06.L04; 40% fill rule.)',
-          },
-          // L04: Pull tension
-          {
-            id: 'T06-CAP-Q07',
-            type: 'mc',
-            prompt: 'During a conduit pull-back, the pull tension gauge on the bore rig exceeds the cable manufacturer\'s rated maximum. What is the correct action?',
-            choices: [
-              'Continue pulling — the manufacturer\'s limit has a safety factor built in',
-              'Stop pulling immediately, back off tension, and investigate the cause (stuck conduit, inadequate lubrication, or blocked bore path)',
-              'Add more slurry to the bore path to reduce friction, then resume pulling at the same tension',
-              'Increase pull speed — higher speed reduces the static friction coefficient',
-            ],
-            answerIndex: 1,
-            explanation: 'Exceeding the rated maximum pull tension can deform the conduit wall or kink the cable inside, which may not be visible externally but will cause problems during mandrel testing or fiber installation. Stop immediately, back off tension, diagnose the cause (inadequate slurry, partial bore collapse, debris), address the root cause, and resume with lower tension. Adding slurry alone without stopping first risks further damage. (Source: T06.L04; cable manufacturer specs; field practice.)',
-          },
-          // L05: Manhole vs handhole
-          {
-            id: 'T06-CAP-Q08',
-            type: 'dragdrop',
-            prompt: 'Match each access structure to its correct use case.',
-            items: [
-              { id: 'mh', label: 'Manhole (traffic-rated)' },
-              { id: 'hh', label: 'Handhole (NTC — non-traffic)' },
-              { id: 'vault', label: 'Vault with H-20 rated lid' },
-            ],
-            targets: [
-              { id: 'tmh', label: 'Cable splice point under a paved road with live vehicle traffic above' },
-              { id: 'thh', label: 'Slack-loop storage point in a residential lawn away from driveways' },
-              { id: 'tvault', label: 'NIU demarcation in a commercial parking lot' },
-            ],
-            correctMap: { tmh: 'mh', thh: 'hh', tvault: 'vault' },
-            explanation: 'Manholes are traffic-rated for installation under paved roads where vehicle loads apply. NTC handholes are for non-traffic locations (residential lawns, utility easements). Vaults with H-20 lids are used when an enclosure must sit in a driveable surface (parking lot, driveway) — H-20 corresponds to AASHTO HS-20, a 20-ton GVW two-axle truck with a 32,000 lb rear axle (16 tons rear), the standard live-load rating for traffic-rated enclosures. (Source: T06.L05; T06.L08.)',
-          },
-          // L06: APWA color
-          {
-            id: 'T06-CAP-Q09',
-            type: 'mc',
-            prompt: 'A bore crew encounters orange locate paint marks during a pilot bore walkthrough. What does orange indicate per the APWA Uniform Color Code?',
-            choices: [
-              'Gas / petroleum pipeline',
-              'Electric supply cable',
-              'Communication / telephone / fiber',
-              'Water line',
-            ],
-            answerIndex: 2,
-            explanation: 'APWA Uniform Color Code: Red = electric supply. Yellow = gas / petroleum. Orange = communication / telephone / fiber / data. Blue = water. White = proposed excavation area. Green = sewer / drain. Purple = reclaimed water. Orange marks in the bore corridor mean an existing communication utility is present — the bore crew must verify clearance to that utility before proceeding. (Source: APWA Utility Color Code; T06.L06.)',
-          },
-          // L06: Red locate paint
-          {
-            id: 'T06-CAP-Q10',
-            type: 'fill-in-blank',
-            prompt: 'APWA uniform color code: red locate paint marks indicate a ____ utility.',
-            answer: 'electric',
-            answerDisplay: 'electric supply',
-            explanation: 'Red = electric power lines and cables. This is the highest-consequence utility to encounter — contact with energized electric supply cable is a potentially fatal utility strike. Red marks demand the most cautious approach: hand-dig or vacuum excavate to expose the utility before any bore or open-cut work proceeds in that zone. (Source: APWA Utility Color Code; T06.L06; CGA Best Practices v20.0 (2024).)',
-          },
-          // L07: Pilot bore
-          {
-            id: 'T06-CAP-Q11',
-            type: 'mc',
-            prompt: 'The HDD pilot bore has exited successfully at the far end. Before reaming, what must the crew confirm?',
-            choices: [
-              'That the bore depth matches the design profile at the midpoint (typically verified by the walkover locator during pilot bore)',
-              'That bentonite slurry is no longer needed — reaming uses water only',
-              'That the outer conduit is already attached to the drill string before reaming begins',
-              'That the exit pit has been filled and compacted before reaming',
-            ],
-            answerIndex: 0,
-            explanation: 'Before committing to reaming (which widens the bore path and makes it harder to change), the crew should verify that the pilot bore depth and path match the design profile — particularly at road crossings and utility crossings. The walkover locating system tracks the drill head depth during the pilot bore. If the actual depth is significantly shallower than the design calls for at a critical point, the pilot bore needs to be corrected before reaming. (Source: T06.L07; CGA Best Practices v20.0 (2024).)',
-          },
-          // L07: Bentonite function
-          {
-            id: 'T06-CAP-Q12',
-            type: 'mc',
-            prompt: 'Bentonite slurry mixed too thin (excessive water) during a long bore will cause which specific problem?',
-            choices: [
-              'Ground heave above the bore path from excessive pump pressure',
-              'Slurry fails to carry cuttings efficiently — cuttings settle in the bore path and pack the borehole, potentially causing the drill string to seize',
-              'Slurry crystallizes inside the conduit after installation, blocking future fiber pulls',
-              'The bore path collapses immediately due to insufficient wall pressure',
-            ],
-            answerIndex: 1,
-            explanation: 'Bentonite slurry viscosity must be within the working range. Too thin (too much water) → the slurry doesn\'t carry cuttings efficiently. Cuttings settle and pack the bore path, eventually seizing the drill stem or blocking the bore path. Too thick → pump pressure rises, risk of heave. The correct Marsh funnel viscosity for most fiber bore conditions is 36–48 seconds per quart. (Source: T06.L07; CGA Best Practices v20.0 (2024).)',
-          },
-          // L08: Pedestal placement
-          {
-            id: 'T06-CAP-Q13',
-            type: 'mc',
-            prompt: 'At what locations must pedestals ALWAYS be placed on a residential underground fiber route, regardless of spacing?',
-            choices: [
-              'Every 250 feet and at every fourth service address',
-              'At every branch point, every service drop location, and every mid-route point before the 330-foot maximum is exceeded',
-              'Only at the start and end of each route segment; intermediate pedestals are optional',
-              'At every 500-foot interval and wherever the contractor finds convenient access',
-            ],
-            answerIndex: 1,
-            explanation: 'Pedestals are mandatory at: (1) every branch point (where the route splits), (2) every service drop location (closest pedestal to the customer\'s property), (3) every intermediate point along the route before the 330-foot maximum spacing is reached, and (4) at the end of every dead-end route leg. "Every 250 feet" is a field rule-of-thumb, not an absolute requirement — the key is never exceeding 330 feet and always having access at every branch and service point. (Source: RUS 1751F-635 §7; T06.L08.)',
-          },
-          // L08: Slack loops
-          {
-            id: 'T06-CAP-Q14',
-            type: 'mc',
-            prompt: 'Slack loops in a pedestal are stored in a figure-8 coil pattern rather than a circular coil. How much slack is required per cable end per RUS practice?',
-            choices: [
-              '5–10 feet',
-              '10–15 feet',
-              '20–30 feet',
-              '50–100 feet',
-            ],
-            answerIndex: 2,
-            explanation: 'RUS 1751F-635 §7 and field practice require a minimum of 20–30 feet of slack per cable end in each terminal pedestal. This provides 10–15 future re-splice opportunities (each consuming 1–2 feet) and up to 15–20 feet of relocation margin if the pedestal must be moved. The figure-8 coil pattern prevents kinking at the top of the coil. (Source: RUS 1751F-635 §7; T06.L08.)',
-          },
-          // L09: NESC section application
-          {
-            id: 'T06-CAP-Q15',
-            type: 'mc',
-            prompt: 'A communication cable is direct-buried (no conduit) and must cross under a direct-buried 120V residential service cable. Which NESC section and rule govern the minimum vertical separation at this crossing?',
-            choices: [
-              'NESC §34 — because the cables are in an underground structure',
-              'NESC §35 Rule 354 — because the communication cable is direct-buried (not in a conduit system)',
-              'NESC §23 — because this is a clearance situation',
-              'NEC 830.47 — because this is a communication cable application',
-            ],
-            answerIndex: 1,
-            explanation: 'NESC §35 governs Direct-Buried Cable and Cable in Duct Not Part of a Conduit System — for both supply and communications cables. When a communication cable is direct-buried, Rule 354 (within §35) governs the minimum vertical separation when crossing supply cables. §34 applies to cable in underground structures (manholes, vaults). §23 covers aerial clearances, not underground. NEC 830.47 covers communications cable burial depth, not utility separation. (Source: NESC C2 §35 Rule 354 [confirm edition]; T06.L09.)',
-          },
-          // L09: Separation at crossing field practice
-          {
-            id: 'T06-CAP-Q16',
-            type: 'mc',
-            prompt: 'Why do experienced bore crews maintain 12 inches of vertical separation at supply-communication crossings even when NESC §35 Rule 354 may technically permit less?',
-            choices: [
-              'RUS 1751F-635 imposes a 12-inch minimum that overrides NESC §35 Rule 354 in all cases',
-              'Utility locate accuracy is typically ±18 inches — designing to 12 inches covers the locate tolerance and the NESC minimum simultaneously',
-              '12 inches is the NEC 830.47 communication cable cover requirement, which coincidentally equals the separation minimum',
-              'Crews use 12 inches because their bore rigs cannot be controlled to finer depth increments',
-            ],
-            answerIndex: 1,
-            explanation: 'Utility locate services typically have a positional accuracy of ±18 inches. If you design your bore to run 6 inches from a located supply cable and the locate is 12 inches off, your bore could run within 6 inches of the actual cable — or potentially contact it. Designing to 12 inches of separation covers the locate error range while still meeting the NESC §35 Rule 354 minimum. It\'s cheap insurance: a slightly deeper bore profile costs nothing but prevents a potentially fatal utility strike. (Source: field practice; CGA Best Practices v20.0; T06.L09.)',
-          },
-          // L10: AML requirement
-          {
-            id: 'T06-CAP-Q17',
-            type: 'mc',
-            prompt: 'A contractor substitutes a non-AML-listed innerduct product because it\'s available locally and "looks identical" to the specified material. What is the engineering consequence on a RUS-funded project?',
-            choices: [
-              'No consequence — the engineer of record can approve substitutions on-site',
-              'Minor documentation gap — easily resolved by adding the product to the submittal after installation',
-              'Material nonconformance that can require the contractor to remove and replace all non-listed innerduct at their own expense, without RUS loan reimbursement',
-              'The AML requirement applies only to fiber cable, not innerduct',
-            ],
-            answerIndex: 2,
-            explanation: 'Using non-AML-listed innerduct on a RUS-funded project is a contract nonconformance. RUS loan proceeds cannot be used to reimburse for non-compliant materials. If an auditor catches it, the corrective action is replacement — which on a buried conduit system means open-cutting to expose and replace the conduit, at the contractor\'s cost. This is why approving material submittals BEFORE installation is the required practice, not resolving documentation retroactively. (Source: RUS 1751F-643; RUS 1751F-635 §5; T06.L10.)',
-          },
-          // L10: Traceability item
-          {
-            id: 'T06-CAP-Q18',
-            type: 'mc',
-            prompt: 'Which of the following items is NOT part of RUS innerduct traceability documentation?',
-            choices: [
-              'Manufacturer\'s date code printed on the innerduct',
-              'Reel or lot number allowing factory test report cross-reference',
-              'The bore crew leader\'s name and certification number',
-              'Manufacturer\'s test certificate confirming RUS 1751F-643 compliance',
-            ],
-            answerIndex: 2,
-            explanation: 'Innerduct traceability consists of: (1) type designation on the duct, (2) date code, (3) reel/lot number, and (4) manufacturer\'s test certificate. The bore crew leader\'s name and certification are construction record items, not material traceability items — they go in the project inspection log, not the material submittal. (Source: RUS 1751F-635 §5; T06.L10.)',
-          },
-          // L11: QA review priority
-          {
-            id: 'T06-CAP-Q19',
-            type: 'mc',
-            prompt: 'When reviewing a design drawing, which of the four common errors is typically caught first and is the most frequent?',
-            choices: [
-              'Conduit fill overrun',
-              'Pedestal spacing violation',
-              'Missing burial depth callout at a road crossing',
-              'Innerduct material not AML-listed',
-            ],
-            answerIndex: 2,
-            explanation: 'Missing burial depth callouts at road crossings are the most common single error in underground fiber design plans. A designer can draw the entire conduit route correctly — right conduit, right pedestal spacing, right fill — and still omit the explicit depth annotation at road and utility crossings. Without a depth callout, neither the bore crew nor the inspector has a documented depth to verify compliance against. (Source: T06.L11; field practice.)',
-          },
-          // L06 + L09: Integrated scenario
-          {
-            id: 'T06-CAP-Q20',
-            type: 'mc',
-            prompt: 'During bore pit setup for an HDD crossing under a two-lane road, a crew member spots yellow locate paint crossing through the bore corridor at a 45° angle. The bore is scheduled to start in 30 minutes. What is the correct next action?',
-            choices: [
-              'Proceed with the bore — yellow = gas and the bore is going under the road, not near gas lines',
-              'Stop bore preparation, call the one-call locate service, hand-excavate to positively identify the yellow-marked utility and confirm vertical clearance before boring',
-              'Adjust bore depth by 6 inches to clear the yellow marks and proceed',
-              'Yellow marks are for proposed excavation — these are probably old survey marks from the permit application, not active utility locates',
-            ],
-            answerIndex: 1,
-            explanation: 'Yellow locate paint = gas / petroleum pipeline (APWA Uniform Color Code). A gas line crossing through the bore corridor is a serious hazard — contact with a gas line during HDD can cause a leak, explosion, or fire. The correct action is to STOP, call the one-call center, and hand-excavate or vacuum-excavate to positively identify the gas line\'s location and depth before any boring proceeds. "Adjusting depth by 6 inches" is not acceptable — locate accuracy is ±18 inches and the actual line could be at any depth in that range. (Source: APWA Utility Color Code; CGA Best Practices v20.0 (2024); T06.L06; T06.L07.)',
-          },
-        ]}
-        onComplete={(result) => {
-          console.info('T06 Capstone complete:', result);
-        }}
-      />
 
     </LessonLayout>
   );
