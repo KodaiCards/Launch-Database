@@ -1,6 +1,6 @@
 // T06.L06 — Separation from Foreign Utilities
 // Working lesson: APWA color codes, parallel separation, crossing separation, locate-before-dig
-// Source: Module09_OSPConstruction.jsx §9.1 + RUS 1751F-635 §6 + CGA Best Practices v20.0
+// Source: Module09_OSPConstruction.jsx §9.1 + RUS 1751F-643 §6 + CGA Best Practices v20.0
 
 import React from 'react';
 import LessonLayout from '../../components/LessonLayout.jsx';
@@ -52,7 +52,7 @@ export const meta = {
     {
       term: 'parallel separation',
       definition:
-        'The minimum horizontal distance maintained between a new conduit being installed and an existing foreign utility running in the same corridor. Unlike crossing separation (which applies at a single point), parallel separation must be maintained over the entire length of the parallel run. RUS 1751F-635 §6 specifies separation distances; many state DOTs and local AHJs require additional clearance.',
+        'The minimum horizontal distance maintained between a new conduit being installed and an existing foreign utility running in the same corridor. Unlike crossing separation (which applies at a single point), parallel separation must be maintained over the entire length of the parallel run. RUS 1751F-643 §6 specifies separation distances; many state DOTs and local AHJs require additional clearance.',
     },
     {
       term: 'crossing separation',
@@ -200,7 +200,7 @@ const quizQuestions = [
     choices: [
       'No — vertical separation (12 inches) and horizontal separation (18 inches) both exceed typical minimums',
       'Yes — fiber must always be installed north of electric supply to comply with NESC §35 Rule 354',
-      'Yes — 18-inch horizontal separation violates the RUS 1751F-635 §6 parallel separation requirement',
+      'Yes — 18-inch horizontal separation violates the RUS 1751F-643 §6 parallel separation requirement',
       'No problem in terms of depth, but a permit from the electric utility is still required for parallel runs in shared corridors',
     ],
     answerIndex: 3,
@@ -274,7 +274,7 @@ export default function T06L06_SeparationFromForeignUtilities() {
               <tr className="border-t border-white/10">
                 <td className="px-3 py-2 font-medium text-orange-400">ORANGE</td>
                 <td className="px-3 py-2">Telecommunications and CATV</td>
-                <td className="px-3 py-2">Coordinate with the carrier; 6-inch crossing separation minimum; parallel spacing per RUS 1751F-635 §6</td>
+                <td className="px-3 py-2">Coordinate with the carrier; 6-inch crossing separation minimum; parallel spacing per RUS 1751F-643 §6</td>
               </tr>
               <tr className="border-t border-white/10">
                 <td className="px-3 py-2 font-medium text-blue-400">BLUE</td>
@@ -395,9 +395,9 @@ export default function T06L06_SeparationFromForeignUtilities() {
               </tr>
               <tr className="border-t border-white/10">
                 <td className="px-3 py-2">Parallel comms to comms (same corridor)</td>
-                <td className="px-3 py-2">Per RUS 1751F-635 §6 and AHJ</td>
+                <td className="px-3 py-2">Per RUS 1751F-643 §6 and AHJ</td>
                 <td className="px-3 py-2">18–24 inches horizontal typical; varies by corridor crowding</td>
-                <td className="px-3 py-2">RUS 1751F-635 §6 [confirm section applicability per job type]</td>
+                <td className="px-3 py-2">RUS 1751F-643 §6 [confirm section applicability per job type]</td>
               </tr>
             </tbody>
           </table>
@@ -494,7 +494,7 @@ export default function T06L06_SeparationFromForeignUtilities() {
           <li>As-built submission of your conduit location relative to their facility</li>
         </ul>
         <p className="mt-2 text-sm">
-          RUS 1751F-635 §6 addresses coordination with other utilities on RUS projects. The specific
+          RUS 1751F-643 §6 addresses coordination with other utilities on RUS projects. The specific
           requirements depend on the utility's tariff, state utility commission rules, and the
           applicable joint-use agreement. Always identify foreign utility owners at the route-design
           stage and initiate encroachment coordination early — approval delays are a common project
@@ -505,7 +505,7 @@ export default function T06L06_SeparationFromForeignUtilities() {
           <p className="font-semibold">Parallel separation — design rule</p>
           <p className="mt-2 text-slate-300/90">
             For a fiber conduit running parallel to a utility line in a shared corridor, standard design
-            practice (per RUS 1751F-635 §6 and BICSI OSPDR) requires maintaining consistent horizontal
+            practice (per RUS 1751F-643 §6 and BICSI OSPDR) requires maintaining consistent horizontal
             separation over the entire parallel run length. If the separation at any point closes to less
             than the minimum, the fiber route must jog away or increase depth to maintain clearance.
             Inconsistent separation creates a "pinch point" that is both a code violation and a future

@@ -1,0 +1,116 @@
+{
+  "assessmentId": "T06-L02",
+  "kind": "lesson",
+  "courseId": "T06",
+  "lessonId": "T06.L02",
+  "drawCount": 4,
+  "passThreshold": 70,
+  "pool": [
+    {
+      "id": "T06-L02-Q1",
+      "type": "mc",
+      "prompt": "An RUS-financed buried fiber route crosses through a state highway ROW. RUS's own underground plant design bulletin sets a 36-inch minimum cover floor; the state DOT permit requires 48-inch cover. Which depth governs?",
+      "choices": [
+        "18 inches — the NEC 830.47 national floor always takes precedence",
+        "36 inches — the RUS floor governs on RUS-funded projects regardless of the permit",
+        "48 inches — the state DOT permit (AHJ override) is the binding requirement for this segment",
+        "42 inches — the average of the two conflicting requirements"
+      ],
+      "answerIndex": 2,
+      "explanation": "The AHJ override is the binding requirement — the state DOT controls the highway ROW and issues the encroachment permit, so if the permit specifies 48 inches, the design builds to 48 inches regardless of the RUS or NEC floors, which apply only where no stricter AHJ requirement exists."
+    },
+    {
+      "id": "T06-L02-Q2",
+      "type": "mc",
+      "prompt": "What does 'minimum cover' mean in the context of buried conduit installation?",
+      "choices": [
+        "The total depth of the trench from grade to trench bottom, including bedding material",
+        "The vertical distance from finished grade to the TOP of the installed conduit — the actual protective soil depth above the conduit itself",
+        "The distance from the conduit to the nearest parallel utility",
+        "The depth of the bore pit at the entry point of an HDD crossing"
+      ],
+      "answerIndex": 1,
+      "explanation": "Minimum cover specifically measures from finished grade down to the top of the conduit — this is the protective soil depth that shields the conduit from surface loads and mechanical damage, distinct from total trench depth (which also includes bedding below the conduit) or separation from other utilities."
+    },
+    {
+      "id": "T06-L02-Q3",
+      "type": "mc",
+      "prompt": "Why does the frost line matter for burial depth in northern states, even when a tiered federal/state depth standard is already met?",
+      "choices": [
+        "It doesn't matter once a regulatory depth floor is satisfied — frost has no additional effect on buried conduit",
+        "Repeated freeze-thaw cycling in soil above the frost line can cause frost heave, which exerts mechanical stress on buried conduit and cable over time — in regions with a deep frost line, satisfying only the regulatory depth floor may not be sufficient to avoid this long-term stress, so frost line depth is an independent design check alongside the regulatory minimum",
+        "Frost line only affects electrical supply cable, never communication conduit",
+        "Frost line depth is always shallower than any regulatory burial-depth floor, so it never becomes the binding constraint"
+      ],
+      "answerIndex": 1,
+      "explanation": "Frost heave from freeze-thaw cycling is a distinct physical phenomenon from the regulatory depth minimums — in deep-frost-line regions, a design that only satisfies the regulatory floor could still be shallow enough to experience frost-heave stress over time, which is why frost line is checked as an independent design consideration, not assumed to be automatically covered by meeting the regulatory minimum."
+    },
+    {
+      "id": "T06-L02-Q4",
+      "type": "mc",
+      "prompt": "You are designing a non-RUS private fiber build. The route runs through residential yards with no specific AHJ permit depth requirement documented. What is the minimum burial depth for direct-buried network-powered broadband communications cable (NPBC) per NEC 830.47?",
+      "choices": [
+        "6 inches",
+        "12 inches",
+        "18 inches",
+        "36 inches"
+      ],
+      "answerIndex": 2,
+      "explanation": "NEC 830.47 specifies 18 inches as the national floor for direct-buried network-powered broadband communications cable (a specific cable category) — this figure applies to NPBC specifically; general communication/fiber conduit on non-RUS private projects commonly uses a 24-inch practical industry floor instead, and this 18-inch figure is genuinely shallow, so most prudent designs exceed it even where not strictly required.",
+      "citation": "NEC 830.47 — NEC text is paywalled; the 18-inch NPBC figure is corroborated across multiple independent secondary/vendor sources (up.codes NEC mirror, industry burial-depth guides) consistent with the T01/T05 precedent for hedging paywalled-standard numeric values."
+    },
+    {
+      "id": "T06-L02-Q5",
+      "type": "mc",
+      "prompt": "On a plan-and-profile drawing, a designer annotates a 42-inch burial depth for a county road crossing but fails to show the transition back to the shallower residential-segment depth on the other side. Why is this a problem?",
+      "choices": [
+        "It is not a problem — the deeper depth on one segment automatically applies to adjacent segments",
+        "Without a clear transition annotation, the construction crew may simply continue at the deeper depth through the entire residential segment as well, adding unnecessary excavation cost (deeper trench, more backfill, more compaction) with no compliance benefit — plan-and-profile drawings must annotate depth changes at every surface-type transition to prevent this",
+        "The construction crew will automatically know to switch depths at the property line regardless of the drawing",
+        "The annotation gap will cause the permit itself to be automatically denied"
+      ],
+      "answerIndex": 1,
+      "explanation": "A missing transition annotation defaults the crew to whatever depth is shown on the drawing at the point they're working from — if that's the deeper road-crossing depth, they may carry it through the residential segment unnecessarily, wasting excavation cost without any compliance requirement driving that extra depth."
+    },
+    {
+      "id": "T06-L02-Q6",
+      "type": "mc",
+      "prompt": "What is the correct method for determining the binding burial depth for a given route segment when RUS, NEC, and an AHJ permit all specify different figures?",
+      "choices": [
+        "Always use the RUS figure regardless of what the AHJ permit specifies",
+        "Apply the MAXIMUM of all applicable tiers for that specific segment — RUS floor, NEC floor (where applicable), and any AHJ override — since the permit (when one exists) is always the binding document on a permitted job, and a stricter federal/RUS floor still applies where no AHJ override exists",
+        "Always use the NEC figure, since it is the nationally standardized model code",
+        "Average all three figures to arrive at a reasonable compromise depth"
+      ],
+      "answerIndex": 1,
+      "explanation": "The binding-depth rule is to apply the maximum across all applicable tiers for each specific segment, not to default to a single source — a segment under an AHJ-permitted road crossing is governed by the permit (typically the deepest requirement), while a segment with no AHJ override falls back to the RUS or NEC floor depending on funding source."
+    },
+    {
+      "id": "T06-L02-Q7",
+      "type": "mc",
+      "prompt": "Why might it be a mistake to assume that satisfying the deepest of RUS/NEC/AHJ requirements for a route's most demanding segment automatically means the entire route is compliant?",
+      "choices": [
+        "It isn't a mistake — the deepest single requirement anywhere on the route always applies uniformly to the whole route",
+        "Because burial-depth requirements are segment-specific (tied to surface type — road crossing vs. residential yard vs. open field), a route can legitimately require different depths at different points; assuming the deepest single-segment requirement applies everywhere either wastes excavation cost (over-digging where not required) or, in the reverse assumption, risks a genuine violation if a different segment actually has its own stricter requirement that wasn't separately checked",
+        "Burial depth requirements are always identical for every segment of a single project regardless of surface type",
+        "This assumption is always safe because AHJ permits never specify segment-specific depth requirements"
+      ],
+      "answerIndex": 1,
+      "explanation": "Burial depth is a per-segment determination tied to surface type and the specific AHJ jurisdiction crossed — a route's compliance can't be reduced to a single number without checking each segment independently, since different segments can have genuinely different governing requirements that a blanket assumption (in either direction) would miss."
+    },
+    {
+      "id": "T06-L02-Q8",
+      "type": "mc",
+      "prompt": "A RUS-funded project's underground plant design bulletin sets a 36-inch minimum cover floor for buried conduit under roads and traffic-bearing surfaces. Which RUS bulletin actually governs underground plant design and construction, and why does getting this citation right matter?",
+      "choices": [
+        "RUS Bulletin 1751F-635 — 'Aerial Plant Construction,' a bulletin scoped to overhead/lashed-cable pole attachment work, not underground plant",
+        "RUS Bulletin 1751F-643 — 'Underground Plant Design,' the bulletin actually scoped to underground plant construction (conduit, duct, innerduct, and cable-vault design); citing the correct bulletin matters because a designer or auditor relying on the wrong bulletin number could be pointed to content that doesn't actually address the underground-specific requirement being checked",
+        "Neither bulletin is real; underground burial depth for RUS projects is set entirely by NEC 830.47",
+        "RUS Bulletin 1753F-601, which specifically governs filled fiber optic cable material specifications, not burial depth"
+      ],
+      "answerIndex": 1,
+      "explanation": "RUS Bulletin 1751F-643 (\"Underground Plant Design,\" effective 2002) is the bulletin actually scoped to underground plant design and construction, including conduit/duct/innerduct arrangements and cable vaults. RUS Bulletin 1751F-635 is titled \"Aerial Plant Construction\" — a separate, overhead-scoped bulletin — and is not the correct citation for underground burial-depth or plant-design facts.",
+      "citation": "RUS Bulletin 1751F-643 (\"Underground Plant Design,\" eff. 2002-08-28) — WebSearch-verified (rd.usda.gov bulletin PDF listing). NOTE: this corrects a citation error found throughout the T06 lesson JSX, which cites RUS 1751F-635 (\"Aerial Plant Construction\" — WebSearch-verified via the same source) for underground plant design facts; see T06.md research log."
+    }
+  ]
+}

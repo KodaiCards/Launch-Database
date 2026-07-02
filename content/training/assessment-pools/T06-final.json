@@ -1,0 +1,304 @@
+{
+  "assessmentId": "T06-final",
+  "kind": "topic_final",
+  "courseId": "T06",
+  "lessonId": null,
+  "drawCount": 15,
+  "passThreshold": 80,
+  "pool": [
+    {
+      "id": "T06-final-Q1",
+      "type": "mc",
+      "prompt": "A fiber route must cross an active Class I railroad with no surface disturbance permitted, then continue for 6 miles through cooperative clay/loam farmland with no other crossings. What construction methods should each segment use, and why?",
+      "choices": [
+        "HDD for the entire route, since it's the most versatile method regardless of soil or crossing conditions",
+        "HDD for the railroad crossing (no surface disturbance requirement) and vibratory plowing for the farmland segment (cooperative soil, fast production, low restoration cost) — different segments of the same route can require entirely different best-fit methods, and locking in one method for the whole route risks forcing an infeasible or expensive method onto a segment that doesn't suit it",
+        "Open-cut trenching for the entire route, since it provides the most control over conduit placement everywhere",
+        "Vibratory plowing for the entire route, including the railroad crossing, since plowing is generally the fastest method"
+      ],
+      "answerIndex": 1,
+      "explanation": "This synthesizes T06.L01's segment-by-segment method-selection principle: the railroad crossing's no-surface-disturbance requirement makes HDD the only viable method there, while the cooperative farmland soil makes vibratory plowing the cost-effective choice for the rest of the route — a single-method-for-the-whole-route approach would either fail the railroad requirement or waste money on the farmland segment."
+    },
+    {
+      "id": "T06-final-Q2",
+      "type": "mc",
+      "prompt": "An RUS-financed buried fiber route crosses a state highway ROW. RUS's underground plant design bulletin sets a 36-inch minimum cover; the state DOT permit requires 48-inch cover. Which depth governs, and what is the general rule for resolving conflicts between RUS, NEC, and AHJ depth requirements?",
+      "choices": [
+        "36 inches always governs on RUS-funded projects, regardless of any AHJ permit",
+        "48 inches — the AHJ permit is the binding requirement for that specific segment; the general rule is to apply the MAXIMUM of all applicable tiers (RUS floor, NEC floor where applicable, AHJ override) for each specific segment, since the permit is always the binding document on a permitted job",
+        "18 inches — the NEC 830.47 floor always takes precedence over both RUS and AHJ requirements",
+        "42 inches — the average of the RUS and AHJ figures"
+      ],
+      "answerIndex": 1,
+      "explanation": "The AHJ permit governs this specific segment because it's the binding document for that jurisdiction — the general resolution rule (T06.L02) is applying the maximum across all applicable tiers per segment, not defaulting to a single source regardless of what the AHJ actually requires."
+    },
+    {
+      "id": "T06-final-Q3",
+      "type": "mc",
+      "prompt": "Which RUS bulletin actually governs underground plant design and construction, and why does the corrected citation matter for a designer relying on this bulletin?",
+      "choices": [
+        "RUS Bulletin 1751F-635 (\"Aerial Plant Construction\") — the bulletin most commonly cited for underground facts in older reference material",
+        "RUS Bulletin 1751F-643 (\"Underground Plant Design,\" eff. 2002) — the bulletin actually scoped to underground plant design/construction (conduit, duct, innerduct, cable vaults); citing 1751F-635 instead (a bulletin scoped to overhead pole-attachment/lashed-cable aerial construction) points a designer or auditor to content that doesn't actually address the underground-specific requirement being checked",
+        "Neither bulletin exists; underground plant design has no dedicated RUS bulletin",
+        "RUS Bulletin 1753F-601, which governs filled fiber optic cable material specifications only"
+      ],
+      "answerIndex": 1,
+      "explanation": "This is the T06 topic's major finding applied at the synthesis level: RUS 1751F-643 (\"Underground Plant Design\") is the correctly-scoped bulletin for burial depth, pedestal spacing, innerduct traceability, and design QA facts, while 1751F-635 (\"Aerial Plant Construction\") is a different, overhead-scoped bulletin that the pre-existing lesson JSX repeatedly misapplies to underground content.",
+      "citation": "RUS Bulletin 1751F-643 (\"Underground Plant Design\") — WebSearch-verified corrected citation; see T06.md research log for the full finding."
+    },
+    {
+      "id": "T06-final-Q4",
+      "type": "mc",
+      "prompt": "A 2.5-inch Schedule 40 PVC innerduct has an ID of 2.635 inches. Two 0.75-inch OD cables are to be installed. Using Fill% = total cable area / conduit area x 100%, what is the fill percentage, and is it compliant with a 40% rule?",
+      "choices": [
+        "Fill = 2 x (pi x 0.375^2) / (pi x 1.3175^2) = 2 x 0.4418/5.454 = 0.8836/5.454 = 16.2% — compliant, well under 40%",
+        "Fill = 32.4% — compliant but tight",
+        "Fill = 48.6% — non-compliant, over the 40% limit",
+        "Fill = 8.1% — compliant with very wide margin"
+      ],
+      "answerIndex": 0,
+      "explanation": "Conduit area = pi x (2.635/2)^2 = pi x 1.3175^2 = 5.454 in^2. Each cable area = pi x (0.75/2)^2 = pi x 0.375^2 = 0.4418 in^2. Two cables = 0.8836 in^2. Fill% = 0.8836/5.454 = 16.2%, comfortably under 40% — the same cross-sectional-area method used throughout T06.L04/L10/L11, applied to different stated inputs."
+    },
+    {
+      "id": "T06-final-Q5",
+      "type": "mc",
+      "prompt": "A design places three same-OD micro-cables in a conduit with a calculated fill percentage of 28% (well under 40%) and a jam ratio of 3.0 (in the 2.8-3.2 danger zone). Is this design safe to specify?",
+      "choices": [
+        "Yes — passing the 40% fill rule with margin is sufficient on its own to confirm the design is safe",
+        "No — fill percentage and jam ratio are independent checks measuring different physical failure modes (total cross-sectional capacity vs. triangular-lock geometry for same-size cable triads); a comfortable fill percentage provides no guarantee about jam ratio, and a jam ratio of 3.0 is squarely in the danger zone, requiring a design change (different conduit size or non-matching cable configuration) regardless of the fill result",
+        "Yes, because jam ratio only matters when fill percentage exceeds 35%",
+        "No, but only because the fill percentage is too low, not because of the jam ratio"
+      ],
+      "answerIndex": 1,
+      "explanation": "This is the T06.L04/L10/L11 recurring principle applied at the synthesis level: fill percentage and jam ratio are genuinely independent checks, and a comfortable fill result provides zero information about jam-ratio risk — a jam ratio of 3.0 requires design action regardless of how well the fill check passed."
+    },
+    {
+      "id": "T06-final-Q6",
+      "type": "mc",
+      "prompt": "A handhole is placed in a commercial parking lot where delivery trucks occasionally cross the corner, but is specified with an NTC (non-traffic) cover because the vault body itself was correctly sized for its splice/cable requirements. Is this design acceptable?",
+      "choices": [
+        "Yes — correct interior sizing is the only requirement for handhole/vault design",
+        "No — cover rating and interior sizing are independent design checks; the cover rating depends on actual surface traffic exposure at the lid's location (here, occasional delivery-truck traffic requires H-20, not NTC), regardless of how correctly the interior was sized for its splice/cable function",
+        "Yes, since NTC covers provide superior load resistance compared to H-20 covers",
+        "No, but only because the vault should have been a manhole instead of a handhole"
+      ],
+      "answerIndex": 1,
+      "explanation": "This synthesizes T06.L05: cover rating and interior sizing are two independent structural checks — a vault correctly sized inside can still be under-rated on its cover for its actual surface traffic exposure, and any vehicle-accessible location (including occasional delivery-truck crossing) requires H-20, not NTC."
+    },
+    {
+      "id": "T06-final-Q7",
+      "type": "mc",
+      "prompt": "A bore crew's 811 locate ticket shows a gas main 3 feet from the planned bore path, with the bore passing within 18 inches at closest approach. What should the crew do before boring, and why does this matter even though 18 inches is a code-compliant clearance from the locate mark?",
+      "choices": [
+        "Begin boring immediately, since 18 inches from the marked location already satisfies typical code minimums",
+        "Pothole-expose the gas main at the point of closest approach to confirm its ACTUAL position before boring — locate marks carry real positional tolerance (commonly plus-or-minus 18 inches or more), so an 18-inch clearance measured from the approximate mark could correspond to a much smaller real-world separation once the utility's true position is confirmed",
+        "Call the gas company and demand they relocate the main before proceeding",
+        "Increase the bore depth by 6 inches without confirming the gas main's actual position"
+      ],
+      "answerIndex": 1,
+      "explanation": "This is the core T06.L06/L07 field-verification principle: locate marks are approximate, not exact, so a clearance calculated from the mark (even if code-compliant on paper) doesn't guarantee the real-world clearance once the utility's true position is confirmed — physically confirming position before mechanized excavation is the only way to close this gap."
+    },
+    {
+      "id": "T06-final-Q8",
+      "type": "mc",
+      "prompt": "Match the correct scenario to which NESC underground section governs it: (a) fiber cable being pulled into an existing manhole, (b) fiber conduit running parallel to a direct-buried electric supply cable through open earth for 400 feet.",
+      "choices": [
+        "(a) Section 34 (cable in underground structures); (b) Section 35 (direct-buried cable/duct not part of a conduit system) — the governing section depends on the physical installation context (enclosed structure vs. open earth/duct), not on the cable's ownership or a route-wide designation",
+        "(a) Section 35; (b) Section 34 — the opposite pairing",
+        "Both scenarios are governed by Section 250, the loading-district rule",
+        "Neither scenario is governed by any NESC section since both involve communication (not supply) cable"
+      ],
+      "answerIndex": 0,
+      "explanation": "This is the T06.L09 core distinction: Section 34 applies specifically inside enclosed underground structures (manholes), while Section 35 applies to direct-buried/open-duct cable in open earth — the physical context at each specific point along a route determines which section governs, and a single route can transition between the two sections."
+    },
+    {
+      "id": "T06-final-Q9",
+      "type": "mc",
+      "prompt": "Bentonite slurry performs which three functions during HDD, and what happens if slurry pressure exceeds the formation's fracture gradient?",
+      "choices": [
+        "Slurry carries cuttings out, stabilizes the borehole, and lubricates pull-back; excessive pressure causes ground heave or a frac-out (slurry reaching the surface), which under or near a waterway is typically a reportable environmental event requiring an immediate stop, containment, documentation, and permit-authority notification",
+        "Slurry only lubricates pull-back; excessive pressure has no adverse consequence and simply indicates efficient drilling",
+        "Slurry neutralizes gas hazards and marks the bore path; excessive pressure only affects drilling speed, not safety or compliance",
+        "Slurry's only function is borehole stabilization; a frac-out is a normal, non-reportable part of HDD operations"
+      ],
+      "answerIndex": 0,
+      "explanation": "This connects T06.L07's three slurry functions to the ground-heave/frac-out failure mode: excessive slurry pressure fracturing the formation is what causes both ground heave and frac-out, and near a waterway a frac-out specifically triggers a reportable-event response protocol, not just a drilling-efficiency concern."
+    },
+    {
+      "id": "T06-final-Q10",
+      "type": "mc",
+      "prompt": "A pedestal design uses figure-8 slack coiling with 25 feet of slack per cable end, and pedestal spacing along a route is calculated at 380 feet using straight-line stationing (not accounting for a 30-ft route offset). What is correct about this design, and what needs correction?",
+      "choices": [
+        "Everything is correct as specified; no changes needed",
+        "The figure-8 coiling and 25-ft slack allowance are correct practice (distributes tension evenly; provides re-splice/relocation margin), but the 380-ft spacing calculation is WRONG if it used straight-line stationing instead of actual route distance — since pedestal spacing must be measured along the actual cable route (including offsets), the true route distance could exceed the 330-ft hard maximum even if straight-line stationing looked compliant",
+        "The slack allowance is wrong (should be circular coiling, not figure-8); the spacing calculation is correct as stated",
+        "Both the slack coiling method and the spacing calculation are incorrect"
+      ],
+      "answerIndex": 1,
+      "explanation": "This combines T06.L08's slack-storage best practice (figure-8 coiling avoids the kink-at-top failure mode; 20-30 ft allows future re-splicing/relocation) with the route-measurement principle from T06.L08/L11 (spacing must be measured along the actual route, not straight-line stationing) — the slack design is sound, but the spacing calculation needs re-verification using actual route distance, which could reveal a real violation of the 330-ft hard maximum."
+    },
+    {
+      "id": "T06-final-Q11",
+      "type": "mc",
+      "prompt": "An innerduct submittal lacks an 'RUS LISTED' marking and has no manufacturer compliance letter. The contractor argues the product 'looks identical' to the specified item. What is the correct response, and why does the buried context specifically matter here?",
+      "choices": [
+        "Allow installation since visual similarity is sufficient evidence of equivalence",
+        "Stop work and require proof of RUS 1751F-643 listing (compliance letter or product replacement) BEFORE installation — because this product will be buried, correcting a compliance gap AFTER installation requires expensive re-excavation, which is exactly why RUS audit standards require pre-installation verification rather than resolving documentation gaps after the fact",
+        "Allow installation and note the gap for later resolution, since the cost of stopping work exceeds any risk",
+        "Require only a verbal assurance from the contractor that the product is equivalent"
+      ],
+      "answerIndex": 1,
+      "explanation": "This combines T06.L10's listing-verification requirement with the broader buried-infrastructure cost-asymmetry principle: the specific reason pre-installation verification matters more for buried products is that post-installation correction requires re-excavation, a dramatically more expensive fix than catching the gap before the product goes underground."
+    },
+    {
+      "id": "T06-final-Q12",
+      "type": "mc",
+      "prompt": "A design-drawing QA checklist item reads 'confirm burial depth callouts are present at all crossings.' A reviewer confirms every crossing has a depth number and checks the box. Field inspection later finds one crossing's as-built depth doesn't match its AHJ permit requirement. What does this reveal about the checklist item's wording?",
+      "choices": [
+        "It reveals nothing wrong; the checklist item did exactly what it was designed to do",
+        "The checklist item verified only PRESENCE (a depth number exists) rather than CORRECTNESS (the depth number matches the actual applicable AHJ requirement for that specific crossing) — a checklist worded around presence rather than correctness creates a surface-level pass that misses substantive requirement mismatches, which is the same shallow-vs-thorough QA gap seen across fill-percentage, jam-ratio, and route-measurement checks throughout T06",
+        "It reveals the field inspector, not the design reviewer, made the actual error",
+        "It reveals that depth callouts should never be checked at the design-drawing stage, only in the field"
+      ],
+      "answerIndex": 1,
+      "explanation": "This is the T06 capstone QA-synthesis principle: checklist items worded around mere presence rather than correctness systematically miss substantive gaps — the fix is designing QA checks that verify the actual applicable value is correct, not just that a value exists, catching errors at the cheaper design-review stage rather than relying on field inspection."
+    },
+    {
+      "id": "T06-final-Q13",
+      "type": "mc",
+      "prompt": "A cable pull calculation for a route with three 90-degree bends shows 850 lbf required tension against a cable rated for 600 lbf. What are the TWO correct optimization steps, in order, before concluding the pull is infeasible?",
+      "choices": [
+        "Switch immediately to a completely different cable type, skipping any tension-reduction attempt",
+        "First, add cable lubricant to reduce the friction coefficient and recalculate (lubrication can meaningfully reduce required tension, since the capstan equation's exponential term is sensitive to the friction coefficient); if the recalculated tension still exceeds 600 lbf, add a mid-assist pull point at an intermediate structure to break the route into two shorter, independently-compliant pulls — exceeding the cable's rated tension is never an acceptable shortcut given the risk of undetected fiber damage",
+        "Increase the pull tension beyond the rated maximum, since cable ratings include a built-in safety margin that makes exceeding them acceptable in practice",
+        "Reduce the number of cables being pulled without addressing the bends or friction at all"
+      ],
+      "answerIndex": 1,
+      "explanation": "This is the T06.L04 optimization sequence: lubrication first (addressing the friction coefficient the capstan equation is sensitive to), then a mid-assist pull point if still over the limit — because the capstan equation's exponential relationship means friction reduction at each bend compounds through the whole calculation, lubrication alone can meaningfully change the outcome before a structural fix (mid-assist) is needed."
+    },
+    {
+      "id": "T06-final-Q14",
+      "type": "mc",
+      "prompt": "Why does T06 treat 'fill percentage compliant' and 'compliant with all applicable requirements' as two different statements, rather than treating fill-percentage compliance as sufficient proof of overall design adequacy?",
+      "choices": [
+        "They are actually identical statements; fill percentage compliance is the only meaningful design check for conduit/cable systems",
+        "Because a fully compliant fill-percentage calculation says nothing about jam ratio (a separate geometric jamming risk for same-size cable triads), the RTS/EDS input traceability to the correct product datasheet, or the pull-tension feasibility of actually installing that cable configuration — 'fill percentage compliant' is one necessary check among several independent checks, not a proxy for overall design adequacy",
+        "Fill percentage compliance automatically implies jam-ratio compliance in every real-world case",
+        "The distinction only matters for conduits larger than 4 inches in diameter"
+      ],
+      "answerIndex": 1,
+      "explanation": "This is the topic-wide synthesis of T06's repeated 'independent checks' pattern: fill percentage, jam ratio, and pull-tension feasibility are all genuinely separate physical/geometric concerns that a single passing calculation doesn't collectively guarantee — a thorough underground design verifies each independently rather than treating one as sufficient evidence for the others."
+    },
+    {
+      "id": "T06-final-Q15",
+      "type": "drag-match",
+      "prompt": "Match each T06 access structure/document concept to its defining characteristic.",
+      "items": [
+        { "id": "i_pullpoint", "label": "Sized only for cable coiling and a pulling grip; no splice provisions" },
+        { "id": "i_h20", "label": "Required cover rating for any vault reachable by vehicle traffic" },
+        { "id": "i_1751f643", "label": "The correctly-scoped RUS bulletin for underground plant design" },
+        { "id": "i_jamratio", "label": "Conduit ID / cable OD; danger zone approximately 2.8-3.2" }
+      ],
+      "targets": [
+        { "id": "t_pullpoint", "label": "Pull-point handhole" },
+        { "id": "t_h20", "label": "H-20 load rating" },
+        { "id": "t_1751f643", "label": "RUS Bulletin 1751F-643" },
+        { "id": "t_jamratio", "label": "Jam ratio" }
+      ],
+      "correctMap": { "t_pullpoint": "i_pullpoint", "t_h20": "i_h20", "t_1751f643": "i_1751f643", "t_jamratio": "i_jamratio" },
+      "explanation": "Each concept anchors a distinct T06 design dimension: pull-point handholes are the minimally-sized structure for extending a pull, H-20 is the traffic-load threshold for any vehicle-reachable cover, RUS 1751F-643 is the corrected underground-plant-design bulletin (replacing the pre-existing lesson JSX's erroneous 1751F-635 citation), and jam ratio is the independent same-size-cable jamming check distinct from fill percentage."
+    },
+    {
+      "id": "T06-final-Q16",
+      "type": "mc",
+      "prompt": "Across T06's design domains (construction method selection, burial depth, conduit/innerduct fill, pull tension, vault sizing, utility separation, HDD execution, pedestal spacing, NESC underground sections, innerduct listing, and design QA), what is the single unifying principle connecting how a designer or QA reviewer should handle a determination that appears to satisfy one requirement?",
+      "choices": [
+        "Satisfying any single applicable requirement is sufficient evidence that the overall design is fully compliant and complete",
+        "Each design domain in T06 has MULTIPLE independent requirements (method fit AND crossing constraints; RUS floor AND NEC floor AND AHJ override; fill percentage AND jam ratio; cover rating AND interior sizing; locate-mark clearance AND confirmed position; design-drawing correctness AND field as-built verification), and satisfying one does not imply the others are satisfied — genuine design/QA rigor requires verifying each applicable dimension independently rather than treating any single passing check as sufficient",
+        "Only the RUS bulletin citation matters; all other checks are secondary formalities",
+        "There is no unifying principle; each T06 design domain is entirely unrelated to the others"
+      ],
+      "answerIndex": 1,
+      "explanation": "This is the T06 capstone synthesis, generalizing the pattern that recurs across every lesson in this topic: whether it's construction-method fit, depth-tier resolution, fill-vs-jam-ratio, cover-vs-interior sizing, or design-vs-field verification, T06's design domains consistently require multiple INDEPENDENT checks — and the recurring failure mode this topic warns against is treating a single passing check as proof the whole design is sound."
+    },
+    {
+      "id": "T06-final-Q17",
+      "type": "mc",
+      "prompt": "A conduit route runs parallel to an electric supply cable for 600 feet with code-compliant separation distances (12 in vertical, 18 in horizontal). What ADDITIONAL step, beyond meeting the separation distances, is typically still required for this shared-corridor installation?",
+      "choices": [
+        "None — meeting separation distances is the complete requirement for any shared-corridor parallel run",
+        "Coordination with the existing utility owner (permit, notification, or inspection) — parallel runs in a shared corridor typically require this procedural step independent of whether separation distances are met; 'code-compliant separation' and 'no coordination required' are not the same thing",
+        "A complete re-route to eliminate any parallel proximity to the electric supply cable entirely",
+        "Installation of APWA warning tape is the only additional requirement, with no owner coordination needed"
+      ],
+      "answerIndex": 1,
+      "explanation": "This reinforces T06.L06's distinction between physical clearance compliance and procedural coordination requirements — a shared-corridor parallel run commonly needs utility-owner coordination as a separate step from meeting the separation-distance minimum, which is exactly the kind of gap a designer focused only on the distance numbers could miss."
+    },
+    {
+      "id": "T06-final-Q18",
+      "type": "mc",
+      "prompt": "A design specifies HDPE conduit for an HDD-bored segment and Schedule 40 PVC for an adjacent open-cut segment on the same route. Is this a design inconsistency that a reviewer should flag?",
+      "choices": [
+        "Yes — a single route must use identical conduit material throughout, regardless of installation method differences between segments",
+        "No — this is exactly the correct application of segment-specific material selection: HDPE's flexibility benefit is specific to navigating a curved HDD bore path, while the open-cut segment has no such bend-geometry constraint and can reasonably use Schedule 40 PVC — a reviewer should verify each segment's material fits ITS OWN installation context, not flag a difference between segments as an inconsistency by default",
+        "Yes, because mixing conduit materials always creates an incompatible splice point between segments",
+        "No, but only because Schedule 40 PVC is always cheaper regardless of the installation method"
+      ],
+      "answerIndex": 1,
+      "explanation": "This reinforces T06.L03's segment-specific material-selection principle: differing conduit materials across segments with genuinely different installation contexts (HDD bore geometry vs. straightforward open-cut) is the correct application of the design logic, not a red flag — a reviewer should check whether each segment's material fits its own context, not assume uniformity is inherently correct."
+    },
+    {
+      "id": "T06-final-Q19",
+      "type": "mc",
+      "prompt": "A crew notices unidentified paint markings during a plow operation that don't appear on the 811 locate sheet. Separately, on the same project, a QA reviewer notices a design drawing depth callout that's present but doesn't match the applicable AHJ permit value. What is the common underlying discipline connecting the correct response to both situations?",
+      "choices": [
+        "There is no common discipline; field utility markings and design-drawing QA are entirely unrelated activities",
+        "Both situations call for verifying ACTUAL, CONFIRMED information rather than accepting an assumption or a surface-level presence as sufficient — the unidentified marking requires physical investigation rather than assuming it's benign, and the depth callout requires verifying its VALUE against the actual AHJ requirement rather than just confirming a number is present; in both cases, stopping to confirm the substantive truth (not just the existence of some data point) is what prevents a downstream failure",
+        "Both situations require immediate project cancellation regardless of what further investigation would reveal",
+        "The common discipline is that both situations are exclusively the field crew's responsibility, never the design team's"
+      ],
+      "answerIndex": 1,
+      "explanation": "This connects T06's field-verification discipline (L06/L07) and its QA-correctness discipline (L11) as the same underlying principle applied in different contexts: don't accept an assumption, an approximate mark, or a mere data-presence as sufficient — verify the actual, substantive truth before proceeding, whether that's a utility's real position or a design value's real correctness."
+    },
+    {
+      "id": "T06-final-Q20",
+      "type": "mc",
+      "prompt": "A vault sized for 12 splice-node cables (OD 0.75 in, bend radius 7.5 in) meets its bend-radius-driven minimum interior width requirement. Separately, the same vault's lid is correctly H-20 rated for its parking-lot location. Does satisfying both of these mean the vault design is now fully complete?",
+      "choices": [
+        "Yes — interior sizing and cover rating are the only two design dimensions relevant to vault design",
+        "Not necessarily — T06's recurring pattern (fill vs. jam ratio, design-drawing vs. field verification, separation distance vs. coordination) suggests other independent checks likely still apply: pedestal/access-structure spacing along the route, conduit fill percentage entering the vault, innerduct listing/traceability documentation for materials used, and confirmed (not just marked) utility separation at the vault's specific location — each is an independent check that interior sizing and cover rating don't substitute for",
+        "Yes, because interior sizing and cover rating are the two most expensive components, so satisfying them guarantees overall compliance",
+        "No, but only because vaults specifically (unlike handholes) always require a third, unrelated check not covered anywhere in T06"
+      ],
+      "answerIndex": 1,
+      "explanation": "This is the T06 capstone principle applied to a compound scenario: even after correctly verifying two real design dimensions (interior sizing, cover rating), the recurring T06 lesson is that OTHER independent checks (spacing, fill, listing documentation, confirmed separation) still apply and aren't automatically satisfied by the two already-verified — a genuinely complete design review doesn't stop after clearing the most obvious checks."
+    },
+    {
+      "id": "T06-final-Q21",
+      "type": "mc",
+      "prompt": "Why does T06 repeatedly distinguish between a regulatory/design MINIMUM and a recommended FIELD-PRACTICE margin (e.g., NESC/Rule-354 code minimum vs. 12-inch field-practice separation; Rule 232-style minimum clearance vs. real-world margin; RUS 330-ft hard maximum vs. a 250-280-ft working target)?",
+      "choices": [
+        "The distinction is purely bureaucratic and has no practical engineering rationale",
+        "Because a design built to the bare regulatory minimum leaves no margin for real-world variation — locate-mark tolerance, construction imprecision, future settling or creep — that a design with intentional field-practice margin can absorb without becoming non-compliant; T06 consistently teaches designing with margin above the bare code minimum as good practice, not just meeting the minimum as sufficient",
+        "Field-practice margins are always more expensive and therefore should be avoided whenever the bare code minimum is legally sufficient",
+        "The distinction only applies to NESC-governed separation rules, not to any other T06 topic"
+      ],
+      "answerIndex": 1,
+      "explanation": "This is a cross-cutting T06 theme: bare regulatory minimums don't account for real-world variation (locate tolerance, construction imprecision, future conditions), which is why the topic repeatedly teaches designing with margin above the minimum as the professionally sound practice — the same zero-margin risk principle that appeared as a design/QA theme throughout T05, applied here to underground-specific contexts."
+    },
+    {
+      "id": "T06-final-Q22",
+      "type": "mc",
+      "prompt": "A project's underground design package is submitted for RUS review citing RUS Bulletin 1751F-635 as the authority for its burial-depth, pedestal-spacing, and innerduct-listing requirements. What is the risk of this submission, and what should have been cited instead?",
+      "choices": [
+        "There is no risk; 1751F-635 is a valid general-purpose RUS bulletin usable for any telecom construction topic",
+        "The submission cites the wrong bulletin — 1751F-635 is \"Aerial Plant Construction,\" scoped to overhead pole-attachment work, not underground plant design; an RUS reviewer checking the citation against the bulletin's actual scope could flag this as a documentation deficiency, since the cited authority doesn't actually address the underground-specific requirements being claimed. The correct citation for all of these underground facts is RUS 1751F-643, \"Underground Plant Design\"",
+        "The risk only applies to the innerduct-listing claim, not to burial depth or pedestal spacing",
+        "1751F-635 and 1751F-643 are functionally identical bulletins under different numbers, so either citation is acceptable"
+      ],
+      "answerIndex": 1,
+      "explanation": "This closes the loop on the T06 topic's major finding: submitting a design package that cites the wrong bulletin (1751F-635, aerial-scoped) for underground-specific claims creates a real audit/review risk, since a careful RUS reviewer checking the citation against the bulletin's actual scope would find a mismatch — the correct citation for burial depth, pedestal spacing, and innerduct listing is uniformly RUS 1751F-643.",
+      "citation": "RUS Bulletin 1751F-643 (\"Underground Plant Design\") — corrected citation per the T06 major finding; see T06.md research log."
+    }
+  ]
+}

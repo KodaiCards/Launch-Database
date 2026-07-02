@@ -1,0 +1,116 @@
+{
+  "assessmentId": "T06-L11",
+  "kind": "lesson",
+  "courseId": "T06",
+  "lessonId": "T06.L11",
+  "drawCount": 4,
+  "passThreshold": 70,
+  "pool": [
+    {
+      "id": "T06-L11-Q1",
+      "type": "mc",
+      "prompt": "What is the most common single design-drawing error found during underground QA review of RUS-funded plan sets?",
+      "choices": [
+        "Incorrect fiber color-coding on the cable schedule",
+        "Missing depth callouts at road crossings — a plan can show the conduit route without ever specifying the required burial depth, which means the bore crew and inspector have no documented depth to verify against; depth callouts at road crossings, utility crossings, and grade transitions are required before a plan is issued for construction",
+        "Missing splice tray part numbers in the bill of materials",
+        "Incorrect pole numbering on aerial reference drawings"
+      ],
+      "answerIndex": 1,
+      "explanation": "A missing depth callout is a specific, checkable QA gap — without it, there's no documented depth for the bore crew to build to or the inspector to verify against, which is why this is flagged as the single most common error in underground QA review."
+    },
+    {
+      "id": "T06-L11-Q2",
+      "type": "mc",
+      "prompt": "A design drawing shows a route segment from pedestal at stationing 620+00 to pedestal at stationing 623+50, following the road shoulder with a 30-foot offset around a drainage culvert. What is the measured segment length, and does it comply with the 330-foot maximum pedestal spacing?",
+      "choices": [
+        "350 feet (straight-line stationing only) — compliant since it's under 330 feet... wait, this is actually over the maximum",
+        "Approximately 380 feet — pedestal spacing is measured along the cable ROUTE, not straight-line: stationing 620+00 to 623+50 = 350 feet of straight-line stationing, but the 30-foot culvert offset adds approximately 30 feet of additional route length (both sides of the offset), for a total cable route distance of roughly 380 feet — 50 feet over the 330-foot maximum, requiring an intermediate pedestal (no 10% tolerance applies; 330 feet is a hard limit)",
+        "350 feet exactly, and this is compliant since 350 feet rounds down to under the 330-foot 'soft' guideline",
+        "The offset around the culvert is excluded from the spacing calculation, so straight-line stationing (350 ft) is the only relevant figure and it's non-compliant on its own"
+      ],
+      "answerIndex": 1,
+      "explanation": "This directly applies the T06.L08 route-measurement principle: 620+00 to 623+50 is 350 feet of straight-line stationing, but the actual cable ROUTE includes the 30-foot culvert offset, adding roughly 30 feet of real route distance — bringing the total to approximately 380 feet, which exceeds the 330-foot hard maximum (no tolerance) and requires an intermediate pedestal.",
+      "citation": "RUS Bulletin 1751F-643 (\"Underground Plant Design\") Section 7 — CORRECTED citation per the T06 major finding."
+    },
+    {
+      "id": "T06-L11-Q3",
+      "type": "mc",
+      "prompt": "A design drawing specifies 4 x 1.25-inch HDPE innerducts in a 4-inch Schedule 40 PVC outer conduit (ID = 4.026 inches). Is this design compliant with the 40% fill rule?",
+      "choices": [
+        "No — the fill percentage is 51%, well over the 40% limit",
+        "Yes, but just barely: Fill = 4 x (pi x 0.625^2) / (pi x 2.013^2) = 4 x 1.2272 / 12.730 = 4.909/12.730 = 38.6%, under the 40% maximum — a reviewer would note this as 'tight' and flag it as a potential issue if actual cable OD exceeds spec; sanity check: 38.6% fill leaves 61.4% of the conduit cross-section open, adequate for slurry circulation during bore",
+        "No — the design would need to use 3-inch innerducts instead to reach compliance",
+        "Yes, with substantial margin (fill under 20%)"
+      ],
+      "answerIndex": 1,
+      "explanation": "Fill = 4 x (pi x 0.625^2)/(pi x 2.013^2) = 4 x 1.2272/12.730 = 4.909/12.730 = 38.6%, just under the 40% limit — compliant but tight, which is exactly the kind of thin-margin design a thorough QA reviewer flags for attention even though it technically passes, since actual field cable OD could exceed spec and push the real fill over 40%."
+    },
+    {
+      "id": "T06-L11-Q4",
+      "type": "mc",
+      "prompt": "What is the key difference between a design drawing check and a field inspection check?",
+      "choices": [
+        "There is no meaningful difference; both terms describe the identical review activity performed at different times",
+        "A design drawing check is a PRE-construction review of the plan — catching errors on paper before anyone digs — while a field inspection is a DURING/POST-construction check verifying that the actual installation matches the design (conduit depth as-built, bore path actual vs. planned, materials installed match specification, pedestal locations per design); both are required on RUS-funded projects because they catch different classes of errors, since you can't see the conduit on paper once it's underground",
+        "Design drawing checks are optional; only field inspections are legally required on RUS-funded projects",
+        "Field inspections only verify cost, never technical compliance"
+      ],
+      "answerIndex": 1,
+      "explanation": "The two checks catch fundamentally different classes of errors precisely because of their timing — a design drawing check catches planning-stage errors before excavation begins, while a field inspection is the only way to verify actual as-built conditions (which can diverge from the design), which is why RUS-funded projects require both, not either one alone.",
+      "citation": "RUS Bulletin 1751F-643 (\"Underground Plant Design\") Section 11 — CORRECTED citation per the T06 major finding."
+    },
+    {
+      "id": "T06-L11-Q5",
+      "type": "mc",
+      "prompt": "A QA reviewer checks a design's fill percentage (38.6%, compliant) but doesn't separately check the jam ratio for the same three-innerduct configuration. What is the risk of stopping at the fill-percentage check?",
+      "choices": [
+        "There is no risk; passing the fill percentage automatically guarantees a safe jam ratio",
+        "Fill percentage and jam ratio are independent checks (per T06.L04/L10) — a design that comfortably passes fill percentage can still fall in the 2.8-3.2 jam-ratio danger zone if it involves cables of matching OD, so a QA review that stops at the fill check without independently verifying jam ratio could pass a design with a real jamming risk",
+        "Jam ratio only matters for outer conduits larger than 4 inches, so it's irrelevant to this specific scenario",
+        "The risk only exists for HDD-installed conduit, never for open-cut installations"
+      ],
+      "answerIndex": 1,
+      "explanation": "This reinforces T06.L10-Q6's principle at the QA-checklist level: a genuinely thorough underground QA review verifies fill percentage AND jam ratio independently, since passing one provides no guarantee about the other — exactly the kind of shallow-vs-thorough QA distinction that runs throughout this topic."
+    },
+    {
+      "id": "T06-L11-Q6",
+      "type": "mc",
+      "prompt": "A field inspector finds that the as-built conduit depth at a road crossing is 30 inches, while the design drawing specified 42 inches (the AHJ-permitted depth for that crossing). What is the correct QA finding and next step?",
+      "choices": [
+        "PASS — 30 inches still exceeds most general burial-depth floors, so the specific permit requirement doesn't need to be re-verified",
+        "FAIL — the as-built depth (30 inches) falls short of the AHJ-permitted requirement (42 inches) for this specific crossing; this is a real compliance gap discovered only through field inspection (not visible on the design drawing, which correctly specified 42 inches), requiring corrective action — potentially re-excavation to the permitted depth or an engineered exception approved by the AHJ",
+        "PASS — since the design drawing was correct, any as-built deviation is automatically the contractor's problem and doesn't affect the project's overall compliance status",
+        "The finding cannot be determined without knowing the frost line depth for this location"
+      ],
+      "answerIndex": 1,
+      "explanation": "This is a clean illustration of Q4's design-vs-field distinction in practice: the design drawing was correct (42 inches, matching the AHJ permit), but the field inspection catches a real as-built deviation that the drawing review alone could never have detected — exactly why both checks are required, and why this specific gap needs corrective action before the project can be considered compliant at this crossing."
+    },
+    {
+      "id": "T06-L11-Q7",
+      "type": "mc",
+      "prompt": "Across the T06 underground design QA checklist (missing depth callouts, route-length measurement errors, thin fill-percentage margins, jam-ratio blind spots, design-vs-field discrepancies), what is the common thread connecting these distinct QA findings?",
+      "choices": [
+        "There is no common thread; each finding is an isolated, unrelated technical detail specific to its own check",
+        "Each finding illustrates that a review verifying only the SURFACE-LEVEL presence of a requirement (a depth number is written down, a fill calculation exists, a design drawing looks correct) can still miss a SUBSTANTIVE gap (the depth is unverified in the field, the route measurement used the wrong method, the fill calculation didn't also check jam ratio) — genuine QA rigor requires verifying correctness and completeness against the full applicable standard, not just confirming a field was populated or a document exists",
+        "All findings are exclusively about cost overruns, with no engineering-compliance dimension",
+        "The common thread is that every finding traces back to a single missing RUS bulletin citation"
+      ],
+      "answerIndex": 1,
+      "explanation": "This is the T06 QA-checklist capstone synthesis, echoing the same shallow-vs-thorough QA principle established in T05.L14: across every distinct technical domain in this lesson, the recurring lesson is that a QA check verifying only surface-level presence (a number written down, a calculation performed, a drawing that looks complete) can miss a substantive underlying gap — real QA rigor means verifying against the full applicable requirement, not just checking that something was done."
+    },
+    {
+      "id": "T06-L11-Q8",
+      "type": "mc",
+      "prompt": "A QA checklist item reads 'Confirm burial depth callouts are present on the design drawing.' A reviewer checks the box because a depth number IS present at every crossing on the drawing. Later, a field inspection finds one of those depths (30 inches at a state highway crossing) doesn't match the AHJ permit's actual requirement (42 inches). What did the design-drawing QA check fail to catch?",
+      "choices": [
+        "Nothing was missed; the design-drawing QA checklist item only requires depth numbers to be PRESENT, not necessarily correct, so the check was performed correctly",
+        "The design-drawing QA check should have verified not just that a depth callout was PRESENT, but that the specific depth value was CORRECT against the applicable AHJ permit for that crossing — a checklist item worded around mere presence (rather than correctness) creates exactly the kind of surface-level pass that misses a substantive requirement mismatch",
+        "This gap can only ever be caught by field inspection, so the design-drawing check bears no responsibility for it",
+        "The gap indicates the field inspector made an error, not the design reviewer"
+      ],
+      "answerIndex": 1,
+      "explanation": "This is a concrete illustration of the Q7 synthesis principle: a QA checklist item worded around mere PRESENCE ('is a depth callout there?') rather than CORRECTNESS ('is the depth callout the right value for this crossing's actual AHJ requirement?') is a shallow check that can pass a design with a real, substantive error — the fix is designing QA checklist items that verify correctness, not just presence, catching this class of error before construction rather than relying on field inspection to catch it later."
+    }
+  ]
+}

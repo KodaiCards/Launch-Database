@@ -1,0 +1,116 @@
+{
+  "assessmentId": "T06-L08",
+  "kind": "lesson",
+  "courseId": "T06",
+  "lessonId": "T06.L08",
+  "drawCount": 4,
+  "passThreshold": 70,
+  "pool": [
+    {
+      "id": "T06-L08-Q1",
+      "type": "mc",
+      "prompt": "What is the maximum pedestal spacing specified by RUS's underground plant design bulletin for residential underground distribution plant?",
+      "choices": [
+        "150 feet — a conservative, tightly-spaced figure",
+        "660 feet (200 m)",
+        "330 feet (100 m) — the hard maximum; most experienced designers target 250-280 feet as a working rule, keeping 330 feet in reserve, with spacing measured along the actual cable route, not straight-line distance",
+        "1,000 feet, matching the general access-structure spacing guideline"
+      ],
+      "answerIndex": 2,
+      "explanation": "The 330-foot (100 m) maximum spacing between terminal pedestals is a hard limit — designers commonly target a tighter 250-280 feet as working practice, and spacing is measured along the actual cable route (accounting for offsets and bends), not the straight-line distance between pedestal locations.",
+      "citation": "RUS Bulletin 1751F-643 (\"Underground Plant Design\") Section 7 — CORRECTED citation; the pre-existing lesson JSX cites RUS 1751F-635 (\"Aerial Plant Construction\") for this underground-specific fact, which is a misapplied bulletin per the T06 major finding — see T06.md research log."
+    },
+    {
+      "id": "T06-L08-Q2",
+      "type": "mc",
+      "prompt": "Slack loops inside a pedestal are coiled in a figure-8 pattern rather than a circular coil. Why?",
+      "choices": [
+        "A figure-8 coil takes up less physical space than a circular coil for the same slack length",
+        "A circular coil stores tension as a loop — the cable at the top of the loop experiences constant lateral force trying to straighten it, eventually causing a kink at that point; a figure-8 coil alternates the direction of each loop, distributing tension evenly around the coil and preventing this kink-at-the-top failure mode",
+        "Figure-8 coiling is required only for armored cable, never for unarmored fiber",
+        "Figure-8 coiling allows the cable to be spliced without removing it from the pedestal"
+      ],
+      "answerIndex": 1,
+      "explanation": "The physical difference between the two coiling patterns matters mechanically: a circular coil concentrates bending stress at a consistent point (the top of the loop), risking a kink over time, while a figure-8 pattern's alternating loop direction distributes that stress evenly, avoiding the concentrated failure point."
+    },
+    {
+      "id": "T06-L08-Q3",
+      "type": "mc",
+      "prompt": "A vaulted NIU is installed flush with the finished grade in a commercial parking lot. What load rating must the vault lid have?",
+      "choices": [
+        "NTC (non-traffic cover) — an NIU is low-priority equipment not needing traffic-rated protection",
+        "H-20 — any vault installed where it can be driven over (driveways, parking lots, service-vehicle-reachable areas) must have an H-20 load-rated lid (32,000 lb rear axle load class); a non-rated lid in a parking lot will fail under a delivery truck, creating a safety hazard and damaging the equipment inside",
+        "H-40 — double the standard traffic rating, required for all commercial installations",
+        "No load rating is required as long as the vault is marked with a warning sign"
+      ],
+      "answerIndex": 1,
+      "explanation": "The same H-20 traffic-rating principle from T06.L05 applies directly to a flush-mounted NIU vault in a driveable area — the location's traffic exposure (not the equipment's priority level) determines the required cover rating, and a non-rated lid risks both safety hazard and equipment damage under vehicle load."
+    },
+    {
+      "id": "T06-L08-Q4",
+      "type": "mc",
+      "prompt": "What is standard practice for the minimum slack stored on each cable end in a terminal pedestal, and why?",
+      "choices": [
+        "5-10 feet — enough for a single future re-splice only",
+        "20-30 feet of slack, stored in a figure-8 coil on each cable end before splicing — this provides margin for 10-15 future re-splices (each consuming 1-2 feet) and allows relocating the pedestal up to 15-20 feet without pulling new cable",
+        "50-75 feet — an oversized margin that most designs avoid due to storage-space constraints",
+        "No slack is stored; pedestals are designed for exact-length cable runs with zero margin"
+      ],
+      "answerIndex": 1,
+      "explanation": "The 20-30 foot standard slack figure is deliberately sized to serve two distinct future needs: repeated re-splicing over the pedestal's service life, and the ability to relocate the pedestal a modest distance without a costly new cable pull — both scenarios that a minimal, exact-length slack allowance would foreclose.",
+      "citation": "RUS Bulletin 1751F-643 (\"Underground Plant Design\") Section 7; BICSI OSPDR — CORRECTED citation, per the T06 major finding on 1751F-635 misapplication."
+    },
+    {
+      "id": "T06-L08-Q5",
+      "type": "mc",
+      "prompt": "Why must all conduit entries into a pedestal base be sealed with mastic putty or heat-shrink conduit seal?",
+      "choices": [
+        "To prevent rodent entry into the pedestal only, with no other function",
+        "Water enters a conduit at low points — including the pedestal base where the riser transitions from below grade — and once inside, water wicks along the fiber cable's interstitial spaces for hundreds of feet, eventually reaching a splice point where it degrades the splice closure's gel and causes fiber damage; a watertight conduit seal at the pedestal base stops this entry path at its source",
+        "Sealing is purely a cosmetic requirement with no functional purpose",
+        "Sealing is only required in freezing climates, never in warmer regions"
+      ],
+      "answerIndex": 1,
+      "explanation": "The water-wicking mechanism is the real hazard: water entering unsealed conduit at the pedestal base doesn't stay local — it travels along the cable's interstitial spaces for potentially hundreds of feet before reaching and degrading a distant splice closure, which is why sealing at the entry point (stopping the water before it enters the cable system) is the effective control point."
+    },
+    {
+      "id": "T06-L08-Q6",
+      "type": "mc",
+      "prompt": "A design places terminal pedestals at exactly 330 feet apart (the hard maximum) along a straight residential street. If the actual cable route between two adjacent pedestals includes an unplanned 40-foot offset around an obstruction, what is the concern?",
+      "choices": [
+        "There is no concern — pedestal spacing is measured in straight-line distance, so the offset doesn't affect compliance",
+        "Since pedestal spacing is measured along the actual cable ROUTE (not straight-line distance), the 40-foot offset pushes the actual route length beyond the 330-foot hard maximum — a design that appeared compliant using straight-line distance would actually violate the spacing rule once the real route length is measured, requiring an intermediate pedestal",
+        "The 330-foot maximum only applies to the first pedestal in a sequence, not subsequent ones",
+        "Offsets around obstructions are always excluded from the spacing calculation regardless of length"
+      ],
+      "answerIndex": 1,
+      "explanation": "Because the 330-foot maximum is measured along the actual cable route (not straight-line distance between pedestal locations), an unplanned route offset can push a design that looked compliant on a straight-line basis into actual non-compliance — this is exactly the kind of measurement-method gap that a design review needs to catch before construction."
+    },
+    {
+      "id": "T06-L08-Q7",
+      "type": "mc",
+      "prompt": "Why does the pedestal-relocation slack allowance (15-20 feet of movement without a new cable pull) matter as a real design consideration, rather than just a nice-to-have margin?",
+      "choices": [
+        "It doesn't matter in practice; pedestals are never relocated after initial installation",
+        "Pedestal locations sometimes need to move after initial installation — due to a property owner's request, a driveway relocation, or a conflict discovered during other utility work — and having the built-in slack allowance means this common scenario can be handled by simply re-positioning the pedestal and re-coiling slack, rather than requiring an expensive new cable pull and splice",
+        "The slack allowance is only relevant for underground plant in commercial areas, never in residential settings",
+        "Pedestal relocation is illegal under RUS rules regardless of available slack"
+      ],
+      "answerIndex": 1,
+      "explanation": "The 15-20 foot relocation allowance addresses a genuinely common real-world scenario (post-installation pedestal moves for property, landscaping, or other utility conflicts) — designing in this margin upfront avoids the much more expensive alternative of a new cable pull and re-splice every time a minor relocation is needed."
+    },
+    {
+      "id": "T06-L08-Q8",
+      "type": "mc",
+      "prompt": "A contractor installs a pedestal's conduit entries without any sealant, reasoning that 'the pedestal itself is sealed, so water can't get in.' What is wrong with this reasoning?",
+      "choices": [
+        "Nothing is wrong; a sealed pedestal enclosure makes conduit-entry sealing redundant",
+        "The pedestal enclosure being sealed doesn't address the conduit entry point itself — water travels THROUGH the unsealed conduit (not around the pedestal housing) and wicks along the cable's interstitial spaces from that entry point, so sealing the pedestal shell has no effect on this specific water-entry path; the conduit entry itself must be independently sealed",
+        "This reasoning is correct only for aerial pedestals, not underground ones",
+        "The pedestal enclosure is never sealed in standard designs, making this reasoning irrelevant"
+      ],
+      "answerIndex": 1,
+      "explanation": "This reinforces Q5's specific mechanism: the water-entry path is through the conduit itself (following the cable's interstitial spaces), not around the pedestal housing — a well-sealed pedestal shell doesn't address this specific pathway, which is why the conduit entry requires its own independent seal regardless of how well-sealed the surrounding enclosure is."
+    }
+  ]
+}

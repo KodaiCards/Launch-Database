@@ -1,6 +1,6 @@
 // T06.L04 — Conduit Fill and Pull Tension
 // Working lesson: 40% fill rule, jam ratio, pull tension with friction factor
-// Source: Module09_OSPConstruction.jsx §9.4 + RUS 1751F-635 + PPI MAB reference
+// Source: Module09_OSPConstruction.jsx §9.4 + RUS 1751F-643 + PPI MAB reference
 
 import React from 'react';
 import LessonLayout from '../../components/LessonLayout.jsx';

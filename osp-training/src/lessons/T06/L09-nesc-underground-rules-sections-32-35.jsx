@@ -2,7 +2,7 @@
 // Advanced lesson: NESC §34 (cable in underground structures, supply + comm),
 // §35 (direct-buried cable and cable in duct not part of a conduit system, both supply + comm).
 // Supply-communication separation within those sections via Rules 320, 353, 354.
-// Sources: RUS 1751F-635 (summarizes NESC clauses); NESC C2-2023 §34/§35 [confirm edition]
+// Sources: RUS 1751F-643 (summarizes NESC clauses); NESC C2-2023 §34/§35 [confirm edition]
 // FIX WAVE A H-1: corrected §32/§35 comm-only framing → §34 (structures) / §35 (direct-buried+duct)
 // location distinction governs, not cable type. §32=Underground Conduit Systems (supply infra).
 // §33=Supply Cable. §34=Cable in Underground Structures (supply+comm). §35=Direct-Buried+Duct (supply+comm).
@@ -53,11 +53,11 @@ export const meta = {
     },
     {
       term: 'communication-to-ground clearance',
-      definition: 'The minimum depth at which a communication cable or conduit must be installed below finished grade to provide protection from surface disturbance (lawn aeration, agricultural tilling, frost heave, construction activity). NESC §35 and RUS 1751F-635 both specify cover requirements; the AHJ (authority having jurisdiction) may require greater depth for local conditions. [confirm current NESC C2 edition clause with AHJ at time of design]',
+      definition: 'The minimum depth at which a communication cable or conduit must be installed below finished grade to provide protection from surface disturbance (lawn aeration, agricultural tilling, frost heave, construction activity). NESC §35 and RUS 1751F-643 both specify cover requirements; the AHJ (authority having jurisdiction) may require greater depth for local conditions. [confirm current NESC C2 edition clause with AHJ at time of design]',
     },
     {
       term: 'NESC Rule 354',
-      definition: 'The specific NESC rule within §35 (Direct-Buried Cable and Cable in Duct) that governs the separation between supply facilities and communication facilities in direct-buried or open-duct underground installations. Rule 354 specifies minimum separation distances for crossings and parallel runs between supply and communication plant. This is distinct from Rule 320 (general underground conduit system rules) and Rule 353 (separation within conduit systems). [confirm current NESC C2 edition values — standard is paywalled; values summarized in RUS 1751F-635]',
+      definition: 'The specific NESC rule within §35 (Direct-Buried Cable and Cable in Duct) that governs the separation between supply facilities and communication facilities in direct-buried or open-duct underground installations. Rule 354 specifies minimum separation distances for crossings and parallel runs between supply and communication plant. This is distinct from Rule 320 (general underground conduit system rules) and Rule 353 (separation within conduit systems). [confirm current NESC C2 edition values — standard is paywalled; values summarized in RUS 1751F-643]',
     },
   ],
 };
@@ -123,7 +123,7 @@ export default function T06L09_NESCUndergroundRules() {
         </p>
         <p className="mt-2 text-sm text-slate-300/70">
           Note: NESC is a paywalled standard (NESC C2 [confirm edition] published by IEEE).
-          The values and rules referenced in this lesson are derived from RUS 1751F-635,
+          The values and rules referenced in this lesson are derived from RUS 1751F-643,
           which summarizes the applicable NESC requirements for RUS-funded projects.
           Designers working on non-RUS projects should verify directly against the current
           NESC edition. [confirm edition with AHJ at time of design]
@@ -152,7 +152,7 @@ export default function T06L09_NESCUndergroundRules() {
             <tr className="border-t border-white/10">
               <td className="px-3 py-2 font-mono">RUS</td>
               <td className="px-3 py-2">Rural Utilities Service</td>
-              <td className="px-3 py-2">Federal program; RUS 1751F-635 summarizes NESC underground rules for RUS-funded projects</td>
+              <td className="px-3 py-2">Federal program; RUS 1751F-643 summarizes NESC underground rules for RUS-funded projects</td>
             </tr>
           </tbody>
         </table>
@@ -179,7 +179,7 @@ export default function T06L09_NESCUndergroundRules() {
           supply cables and communication cables are governed by §34 when inside such structures.
           Key requirements deal with separation between supply and communication cables on cable
           racks inside manholes, grounding of metallic cable sheaths, and drainage requirements.
-          [confirm current NESC C2 §34 values with AHJ; RUS 1751F-635 summarizes applicable requirements]
+          [confirm current NESC C2 §34 values with AHJ; RUS 1751F-643 summarizes applicable requirements]
         </p>
 
         <h3 className="mt-5 font-semibold">§35: Direct-buried cable and cable in open duct</h3>
@@ -195,12 +195,12 @@ export default function T06L09_NESCUndergroundRules() {
           <li>Innerduct in open-trench conduit systems</li>
         </ul>
         <p className="mt-2">
-          Key §35 requirements (per RUS 1751F-635 [confirm current NESC C2 §35]):
+          Key §35 requirements (per RUS 1751F-643 [confirm current NESC C2 §35]):
         </p>
         <ul className="list-disc pl-5 space-y-2 mt-2 text-slate-300/90">
           <li>
             <strong>Minimum cover for direct-buried cable:</strong> 12 inches for communication
-            cable in non-traffic areas. RUS 1751F-635 and most AHJs require 18–24 inches in
+            cable in non-traffic areas. RUS 1751F-643 and most AHJs require 18–24 inches in
             practice. Under roads: typically 24–36 inches.
             [confirm current NESC C2 §35 cover clause]
           </li>
@@ -232,7 +232,7 @@ export default function T06L09_NESCUndergroundRules() {
             inches above the conduit (red for electric, yellow for gas, orange for telecom/fiber
             — APWA Uniform Color Code), and conduit markings (printed text on HDPE conduit
             identifying the owner and cable type). (Source: APWA Utility Color Code; RUS
-            1751F-635 §6.)
+            1751F-643 §6.)
           </li>
         </ul>
 
@@ -285,7 +285,7 @@ export default function T06L09_NESCUndergroundRules() {
             utility crossings, changes in cover depth), and the location of all pedestals
             and splice points. As-builts are submitted to the client, to the state
             one-call center (for 811 locate records), and to any applicable RUS loan
-            documentation package. (Source: RUS 1751F-635 §11; 47 CFR §32.2410 for plant
+            documentation package. (Source: RUS 1751F-643 §11; 47 CFR §32.2410 for plant
             account records.)
           </li>
         </ol>
@@ -299,7 +299,7 @@ export default function T06L09_NESCUndergroundRules() {
         <p>
           Some RUS projects install both electric and fiber plant simultaneously in a joint
           trench. This reduces ROW disturbance and construction cost but requires careful
-          design to meet both NESC §35 (Rule 354) and RUS 1751F-635 separation requirements
+          design to meet both NESC §35 (Rule 354) and RUS 1751F-643 separation requirements
           simultaneously.
         </p>
         <p className="mt-2">
@@ -336,7 +336,7 @@ export default function T06L09_NESCUndergroundRules() {
               'Only electric supply cables in residential underground systems',
             ],
             answerIndex: 2,
-            explanation: 'NESC §35 is titled "Direct-Buried Cable and Cable in Duct Not Part of a Conduit System." It applies to BOTH supply and communication cables in direct-buried or open-duct installations. The distinction is location type (open earth vs. enclosed structure), not cable type. §34 covers cables in underground structures (manholes, enclosed conduit systems). (Source: RUS 1751F-635, referencing NESC C2 [confirm edition].)',
+            explanation: 'NESC §35 is titled "Direct-Buried Cable and Cable in Duct Not Part of a Conduit System." It applies to BOTH supply and communication cables in direct-buried or open-duct installations. The distinction is location type (open earth vs. enclosed structure), not cable type. §34 covers cables in underground structures (manholes, enclosed conduit systems). (Source: RUS 1751F-643, referencing NESC C2 [confirm edition].)',
           },
           {
             id: 'T06-L09-Q2',
@@ -349,7 +349,7 @@ export default function T06L09_NESCUndergroundRules() {
               'Neither §34 nor §35 — manholes are governed only by OSHA confined-space rules',
             ],
             answerIndex: 2,
-            explanation: 'NESC §34 is titled "Cable in Underground Structures" and applies when cables — both supply and communication — are inside enclosed underground structures such as manholes and handholes. §35 applies to cables in the open earth or open duct. When the fiber enters the manhole, §34 governs the installation requirements inside the structure. (Source: RUS 1751F-635; NESC C2 [confirm edition].)',
+            explanation: 'NESC §34 is titled "Cable in Underground Structures" and applies when cables — both supply and communication — are inside enclosed underground structures such as manholes and handholes. §35 applies to cables in the open earth or open duct. When the fiber enters the manhole, §34 governs the installation requirements inside the structure. (Source: RUS 1751F-643; NESC C2 [confirm edition].)',
           },
           {
             id: 'T06-L09-Q3',
@@ -362,7 +362,7 @@ export default function T06L09_NESCUndergroundRules() {
               '24 inches',
             ],
             answerIndex: 2,
-            explanation: 'While NESC §35 / Rule 354 sets a code-minimum separation at crossings, field practice is to maintain 12 inches of vertical separation. The reasoning: utility locate tolerance is typically ±18 inches, meaning the existing supply cable could be 6–18 inches from where it\'s marked. Designing to 12 inches covers the locate error plus the NESC minimum simultaneously. (Source: field practice per CGA Best Practices v20.0; RUS 1751F-635.)',
+            explanation: 'While NESC §35 / Rule 354 sets a code-minimum separation at crossings, field practice is to maintain 12 inches of vertical separation. The reasoning: utility locate tolerance is typically ±18 inches, meaning the existing supply cable could be 6–18 inches from where it\'s marked. Designing to 12 inches covers the locate error plus the NESC minimum simultaneously. (Source: field practice per CGA Best Practices v20.0; RUS 1751F-643.)',
           },
           {
             id: 'T06-L09-Q4',
@@ -388,7 +388,7 @@ export default function T06L09_NESCUndergroundRules() {
               'Neither section applies to parallel runs — NESC only governs crossings',
             ],
             answerIndex: 1,
-            explanation: 'NESC §35 (Direct-Buried Cable and Cable in Duct Not Part of a Conduit System) applies here — the fiber conduit is in a bored or open-trench run through the open earth, not inside an enclosed underground structure. Rule 354 within §35 sets the specific supply-to-communication separation requirement for parallel runs. §34 would apply only if the cable were inside a manhole or enclosed conduit structure. (Source: RUS 1751F-635; NESC C2 [confirm edition].)',
+            explanation: 'NESC §35 (Direct-Buried Cable and Cable in Duct Not Part of a Conduit System) applies here — the fiber conduit is in a bored or open-trench run through the open earth, not inside an enclosed underground structure. Rule 354 within §35 sets the specific supply-to-communication separation requirement for parallel runs. §34 would apply only if the cable were inside a manhole or enclosed conduit structure. (Source: RUS 1751F-643; NESC C2 [confirm edition].)',
           },
           {
             id: 'T06-L09-Q6',
@@ -401,7 +401,7 @@ export default function T06L09_NESCUndergroundRules() {
               'No — communication conduit cannot share a trench with electric supply under any circumstances',
             ],
             answerIndex: 1,
-            explanation: 'NESC §35 / Rule 354 requires at minimum 6 inches of horizontal separation for communication conduit running parallel to electric supply in the same corridor [per NESC C2-2023 Rule 354 — confirm current edition value; the standard is paywalled and values may be updated in future editions]. At 4 inches, this design is non-compliant. Field best practice (driven by locate tolerance and damage prevention) calls for 12 inches or more. The fix is easy: re-route the trench or add a separation board between the two conduits. (Source: RUS 1751F-635; NESC C2 §35 / Rule 354 [confirm edition].)',
+            explanation: 'NESC §35 / Rule 354 requires at minimum 6 inches of horizontal separation for communication conduit running parallel to electric supply in the same corridor [per NESC C2-2023 Rule 354 — confirm current edition value; the standard is paywalled and values may be updated in future editions]. At 4 inches, this design is non-compliant. Field best practice (driven by locate tolerance and damage prevention) calls for 12 inches or more. The fix is easy: re-route the trench or add a separation board between the two conduits. (Source: RUS 1751F-643; NESC C2 §35 / Rule 354 [confirm edition].)',
           },
         ]}
       />

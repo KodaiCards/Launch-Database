@@ -1,0 +1,118 @@
+{
+  "assessmentId": "T06-L09",
+  "kind": "lesson",
+  "courseId": "T06",
+  "lessonId": "T06.L09",
+  "drawCount": 4,
+  "passThreshold": 70,
+  "pool": [
+    {
+      "id": "T06-L09-Q1",
+      "type": "mc",
+      "prompt": "What does NESC Section 35 govern, and to which cable types does it apply?",
+      "choices": [
+        "Section 35 covers only aerial clearances and doesn't address underground plant at all",
+        "Section 35, titled 'Direct-Buried Cable and Cable in Duct Not Part of a Conduit System,' applies to BOTH supply and communication cables in direct-buried or open-duct installations — the distinguishing factor is location type (open earth vs. enclosed structure), not cable type",
+        "Section 35 applies only to communication cables; supply cables are covered exclusively under Section 34",
+        "Section 35 only applies to cables inside manholes and enclosed conduit systems"
+      ],
+      "answerIndex": 1,
+      "explanation": "Section 35 covers direct-buried cable and cable in duct not part of an enclosed conduit system, applying to both supply and communication cables — the key distinction driving which section applies is the physical location context (open earth/open duct vs. an enclosed underground structure), not the cable's ownership or utility type.",
+      "citation": "NESC C2 Section 35 — WebSearch-verified (accessengineeringlibrary.com NESC section summary; multiple corroborating utility/engineering technical sources confirming Section 35's scope and title)."
+    },
+    {
+      "id": "T06-L09-Q2",
+      "type": "mc",
+      "prompt": "A fiber cable is being pulled into an existing manhole on a metro distribution route. Which NESC section governs the separation and installation requirements for this cable inside the manhole?",
+      "choices": [
+        "Section 35, since it covers all underground cable installations universally",
+        "Section 32, the general vertical-clearance rule used for aerial spans",
+        "Section 34, titled 'Cable in Underground Structures' — this section applies when cables (both supply and communication) are inside enclosed underground structures such as manholes and handholes; Section 35 applies instead to cable in the open earth or open duct",
+        "Section 250, the loading-district rule from the T05 aerial-design topic"
+      ],
+      "answerIndex": 2,
+      "explanation": "Section 34 specifically governs cable inside enclosed underground structures (manholes, handholes) — once the fiber enters the manhole, Section 34's installation requirements apply, distinct from Section 35's open-earth/open-duct scope.",
+      "citation": "NESC C2 Section 34 — WebSearch-verified, confirming Section 34's title and scope (\"cable in underground structures,\" including subsections on general requirements, installation, grounding/bonding)."
+    },
+    {
+      "id": "T06-L09-Q3",
+      "type": "mc",
+      "prompt": "A bore crew is installing communication conduit under a road where a direct-buried electric supply cable crosses at a 90-degree angle. What is the recommended field-practice separation at this crossing, beyond the code-minimum figure?",
+      "choices": [
+        "Exactly the code minimum with no additional margin, since exceeding it wastes excavation depth",
+        "Field practice commonly targets 12 inches of vertical separation — even though NESC §35/Rule 354 sets a code-minimum figure, the extra margin accounts for typical utility locate tolerance (often plus-or-minus 18 inches), meaning an existing supply cable could be 6-18 inches from its marked location; designing to 12 inches covers both the locate error and the code minimum simultaneously",
+        "0 inches — direct crossings are exempt from any separation requirement",
+        "10 feet, a figure with no relationship to locate tolerance or code minimums"
+      ],
+      "answerIndex": 1,
+      "explanation": "The 12-inch field-practice target is deliberately larger than the bare code minimum specifically to absorb locate-tolerance uncertainty — since an existing utility's marked position can be off by more than a foot, designing only to the code-minimum separation risks an actual field separation well below that minimum once real utility positions are confirmed."
+    },
+    {
+      "id": "T06-L09-Q4",
+      "type": "mc",
+      "prompt": "APWA orange warning tape buried above a communication conduit serves what purpose?",
+      "choices": [
+        "It provides electrical grounding continuity for the buried conduit",
+        "It is buried 6-12 inches above the conduit (much shallower than the conduit itself) as a visual warning — if an excavator digging in that location hits the tape, they see a 'CAUTION — COMMUNICATION CABLE BELOW' warning before the shovel or bucket reaches the actual conduit; it doesn't provide separation distance or electrical function, only advance warning",
+        "It provides the required minimum separation distance from parallel utilities",
+        "It marks the exact centerline of the conduit for future 811 locates with GPS-level precision"
+      ],
+      "answerIndex": 1,
+      "explanation": "Warning tape's function is purely as an advance visual warning, buried intentionally shallower than the conduit it protects — it intercepts excavation before the bucket reaches the actual cable, but provides no separation-distance credit and no electrical/locating function of its own.",
+      "citation": "APWA Utility Color Code; Common Ground Alliance Best Practices excavation-safety guidance — reused from T06-L06 verification."
+    },
+    {
+      "id": "T06-L09-Q5",
+      "type": "mc",
+      "prompt": "A designer is laying out an underground fiber route that will run parallel to an existing direct-buried electric supply cable for 400 feet in the same residential-street ROW corridor. Which NESC section primarily governs the separation requirement for this parallel run?",
+      "choices": [
+        "Section 34, since any two utilities sharing a corridor are automatically treated as being in an underground structure",
+        "Section 35 ('Direct-Buried Cable and Cable in Duct Not Part of a Conduit System') applies here — the fiber conduit is in a bored or open-trench run through open earth, not inside an enclosed underground structure; the specific supply-to-communication parallel-separation requirement lives within Section 35's Rule 354",
+        "Section 250, the same loading-district rule that governs aerial ice/wind design",
+        "No NESC section applies to parallel (non-crossing) runs; only crossing geometry is regulated"
+      ],
+      "answerIndex": 1,
+      "explanation": "Because the fiber conduit here is a bored/open-trench installation through open earth (not inside a manhole or enclosed structure), Section 35 — specifically Rule 354's separation requirement — is the applicable governing section, distinct from Section 34's enclosed-structure scope."
+    },
+    {
+      "id": "T06-L09-Q6",
+      "type": "mc",
+      "prompt": "A design shows communication conduit running in the same trench as a residential electric supply at 18 inches cover, with only 4 inches of horizontal separation in the parallel trench. Is this acceptable per NESC §35/Rule 354 and field best practice?",
+      "choices": [
+        "Yes — any horizontal separation greater than zero is compliant regardless of the specific distance",
+        "No — NESC §35/Rule 354 requires at minimum roughly 6 inches of horizontal separation for parallel communication-to-supply conduit runs [exact figure per the current NESC C2 edition — the standard is paywalled and values may be updated]; at 4 inches, this design is non-compliant, and field best practice (driven by locate tolerance) calls for 12 inches or more — the fix is to re-route the trench or add a separation board between the conduits",
+        "Yes, as long as the electric supply voltage is under 600V",
+        "No — any parallel run in the same trench is prohibited under all circumstances regardless of separation distance"
+      ],
+      "answerIndex": 1,
+      "explanation": "A 4-inch horizontal separation falls short of both the NESC §35/Rule 354 code-minimum figure and the more conservative field-practice target discussed in Q3 — this is a genuine non-compliance that requires either re-routing the trench or adding a physical separation board, not a marginal case.",
+      "citation": "NESC C2 Section 35 / Rule 354 (exact current numeric separation figure is in the paywalled primary standard — hedged per the T01/T05 precedent for paywalled-standard values)."
+    },
+    {
+      "id": "T06-L09-Q7",
+      "type": "mc",
+      "prompt": "Why does the NESC's underground framework distinguish between Section 34 (enclosed structures) and Section 35 (open earth/open duct) rather than using a single unified underground-cable rule?",
+      "choices": [
+        "The distinction is arbitrary and has no functional engineering basis",
+        "The physical installation context genuinely differs between the two scenarios — cable inside an enclosed structure (a manhole) has different access, ventilation, and mechanical-protection conditions than cable buried directly in open earth, which justifies separate rule sets tailored to each context's actual physical/safety conditions rather than a one-size-fits-all approach",
+        "Section 34 only exists for historical reasons and has been effectively superseded by Section 35 in current practice",
+        "The distinction only matters for supply cable, never for communication cable"
+      ],
+      "answerIndex": 1,
+      "explanation": "The Section 34/35 split reflects a genuine engineering distinction — enclosed-structure and open-earth/open-duct installations present different physical conditions (access, ventilation, mechanical protection) that justify tailored requirements for each context, consistent with the broader NESC pattern (seen in T05's Rules 232/235/250/261) of addressing distinct design dimensions with distinct rules rather than a single blanket requirement."
+    },
+    {
+      "id": "T06-L09-Q8",
+      "type": "mc",
+      "prompt": "A cable route starts as a direct-buried open-trench run (Section 35 scope), then enters a manhole for a splice point, then continues as direct-buried conduit on the other side. Does a single NESC section govern the entire route, or does the governing section change along the route?",
+      "choices": [
+        "A single section governs the entire route from end to end, chosen by whichever section applied at the route's starting point",
+        "The governing section changes along the route based on the actual physical installation context at each point — Section 35 applies to the open-trench segments on either side, while Section 34 applies specifically to the portion inside the manhole; a designer needs to apply the correct section to each physical context along the route, not assume one section covers the whole path",
+        "Neither section applies once a manhole is involved anywhere on the route",
+        "Only Section 34 applies to the entire route, since a manhole is present somewhere along it"
+      ],
+      "answerIndex": 1,
+      "explanation": "Since Section 34 and Section 35 are distinguished by physical installation context (enclosed structure vs. open earth/duct) rather than by the overall route or project, a single route can legitimately transition between the two governing sections at different points — this is the same segment-specific-requirement pattern seen elsewhere in this training (e.g., T05's per-span grade-of-construction determination), applied here to NESC underground-cable sections."
+    }
+  ]
+}

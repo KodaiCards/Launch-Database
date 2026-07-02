@@ -1,6 +1,6 @@
 // T06.L05 — Manhole, Handhole, and Vault Sizing
 // Working lesson: access structure types, H-20/H-25 loading, sizing for cable count, spacing
-// Source: Module09_OSPConstruction.jsx §9.5 + RUS 1751F-635 §7 + OFS IP-079 reference
+// Source: Module09_OSPConstruction.jsx §9.5 + RUS 1751F-643 §7 + OFS IP-079 reference
 
 import React from 'react';
 import LessonLayout from '../../components/LessonLayout.jsx';
@@ -291,7 +291,7 @@ export default function T06L05_ManholeHanhholeVaultSizing() {
           </table>
         </div>
         <p className="mt-2 text-xs text-slate-400">
-          Sizes sourced from OFS IP-079 [VERIFIED-public-source] as vendor reference; not a normative standard. Confirm with project spec and RUS 1751F-635 §7 for RUS-funded projects.
+          Sizes sourced from OFS IP-079 [VERIFIED-public-source] as vendor reference; not a normative standard. Confirm with project spec and RUS 1751F-643 §7 for RUS-funded projects.
         </p>
 
         <Flashcard
@@ -365,7 +365,7 @@ export default function T06L05_ManholeHanhholeVaultSizing() {
         <h3 className="mt-6 font-semibold">Access Structure Cross-Section Comparison</h3>
           {/* Book vs Field */}
         <div className="mt-5 bg-blue-900/20 border border-blue-500/30 rounded-lg p-4 text-sm">
-          <p className="font-semibold text-blue-300">Book practice (vault sizing checklist from OFS IP-079 and RUS 1751F-635):</p>
+          <p className="font-semibold text-blue-300">Book practice (vault sizing checklist from OFS IP-079 and RUS 1751F-643):</p>
           <ol className="mt-1 list-decimal pl-4 space-y-1 text-slate-300/90">
             <li>Confirm the largest cable's minimum bend radius fits within the vault interior without forcing a tight bend at the conduit entrance</li>
             <li>Confirm enough rack space for planned splice-tray count plus 25% growth reserve</li>

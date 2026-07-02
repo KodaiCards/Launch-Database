@@ -1,0 +1,121 @@
+{
+  "assessmentId": "T06-L05",
+  "kind": "lesson",
+  "courseId": "T06",
+  "lessonId": "T06.L05",
+  "drawCount": 4,
+  "passThreshold": 70,
+  "pool": [
+    {
+      "id": "T06-L05-Q1",
+      "type": "mc",
+      "prompt": "A handhole is being placed in a private residential driveway used for daily car traffic. What cover rating is required?",
+      "choices": [
+        "NTC (non-traffic cover) — residential driveways are light-traffic and NTC is sufficient",
+        "H-20 — driveways and parking areas with vehicle traffic require an H-20 rated frame and cover (32,000 lb rear axle load class), since even a personal car (2-4 tons) or a delivery vehicle can overload an NTC cover",
+        "H-25 — all residential applications require H-25 for future-proofing",
+        "No cover rating is required — a plastic lid is acceptable in residential settings"
+      ],
+      "answerIndex": 1,
+      "explanation": "H-20 is the standard load class for any location subject to vehicle traffic — driveways, parking areas — since NTC covers are only appropriate for yards, unpaved easements, and locations clearly off any vehicle path. A cracked NTC lid in a driveway is both a trip hazard and a permit violation.",
+      "citation": "AASHTO H-20 load class (32,000 lb rear axle load, 40,000 lb proof load per AASHTO M306) — WebSearch-verified across multiple independent manhole/vault manufacturer technical sources."
+    },
+    {
+      "id": "T06-L05-Q2",
+      "type": "mc",
+      "prompt": "What is the functional difference between a splice handhole and a pull-point handhole?",
+      "choices": [
+        "A splice handhole is man-entry; a pull-point handhole is reach-in only",
+        "A splice handhole contains fiber connections and may have splice trays, requiring interior depth for bend-radius transitions and slack coils; a pull-point handhole contains only slack cable with no splices — it exists solely to extend a cable pull and can be sized smaller since it only needs room to coil cable briefly and attach a pulling grip",
+        "A pull-point handhole is rated for H-25 traffic loading; a splice handhole always uses an NTC cover",
+        "There is no functional difference; the terms are interchangeable"
+      ],
+      "answerIndex": 1,
+      "explanation": "The distinction drives sizing: a splice handhole needs interior room for bend-radius transitions, splice-tray mounting, and slack coils, while a pull-point handhole only needs room to coil cable briefly and attach a pulling grip — confusing the two leads to either an oversized (wasted cost) or undersized (splice trays don't fit) structure."
+    },
+    {
+      "id": "T06-L05-Q3",
+      "type": "mc",
+      "prompt": "A vault is being sized for a 12-cable splice node (each cable OD 0.75 inches, minimum bend radius = 10x OD = 7.5 inches). What minimum interior dimension is driven by the bend radius, and why?",
+      "choices": [
+        "Minimum interior width must be at least 2 x bend radius = 15 inches — to make a 180-degree turnaround from conduit entry to the splice tray, the cable sweeps through a semicircle requiring the bend radius clearance on both sides of the turn (the actual usable vault interior must exceed 15 inches once cable body and working clearance are added)",
+        "Minimum interior depth must be at least the bend radius = 7.5 inches, with no width consideration",
+        "Minimum interior width must be at least the bend radius = 7.5 inches for each cable, summed across all 12 cables",
+        "Bend radius does not affect vault sizing at all — only cable count and splice tray count matter"
+      ],
+      "answerIndex": 0,
+      "explanation": "Making a 180-degree turnaround inside a vault (conduit entry to splice-tray working height) requires the interior dimension to accommodate the bend radius clearance through a semicircular sweep — 2 x 7.5 inches = 15 inches minimum for the cable turn alone, with the actual vault interior needing to exceed this once cable body diameter and working clearance are factored in."
+    },
+    {
+      "id": "T06-L05-Q4",
+      "type": "drag-match",
+      "prompt": "Match each access structure to its primary use case.",
+      "items": [
+        { "id": "i_ntc", "label": "Pull point in a residential utility easement, no vehicle traffic" },
+        { "id": "i_h20", "label": "Slack storage location in a commercial parking lot" },
+        { "id": "i_manhole", "label": "Major splice point on a campus backbone route, man-entry required for splice tray work" },
+        { "id": "i_h25", "label": "Network hub node under a primary state highway with heavy truck traffic" }
+      ],
+      "targets": [
+        { "id": "t_ntc", "label": "Handhole (NTC rated)" },
+        { "id": "t_h20", "label": "Handhole (H-20 rated)" },
+        { "id": "t_manhole", "label": "Manhole" },
+        { "id": "t_h25", "label": "Vault (H-25 rated)" }
+      ],
+      "correctMap": { "t_ntc": "i_ntc", "t_h20": "i_h20", "t_manhole": "i_manhole", "t_h25": "i_h25" },
+      "explanation": "Access structure choice scales with both traffic exposure and function: NTC handholes fit non-traffic easements/yards, H-20 handholes fit vehicle-traffic areas like driveways and parking lots, manholes fit major man-entry splice points, and H-25 vaults fit primary road/highway ROW with the heaviest truck loading."
+    },
+    {
+      "id": "T06-L05-Q5",
+      "type": "mc",
+      "prompt": "The rule of thumb for access structure spacing along a conduit route is 500-1,000 ft. What does this spacing actually optimize?",
+      "choices": [
+        "It ensures conduit fill stays below 40% by providing an intermediate access point to reduce cable count per segment",
+        "It keeps required pull tension within the cable's rated maximum by limiting the conduit-run length (and accumulated friction/bends) between pull points — beyond roughly 1,000 ft, bends and friction accumulate enough that a single-end pull frequently exceeds cable-rated tension, so access structures at this spacing allow mid-assist pulls",
+        "It satisfies a fixed NESC access-spacing requirement with no engineering rationale beyond code compliance",
+        "It ensures the access structures are visible to the 811 locate technician for marking purposes"
+      ],
+      "answerIndex": 1,
+      "explanation": "This connects directly to the T06.L04 pull-tension principle: the 500-1,000 ft spacing rule exists specifically to manage accumulated pull tension by keeping conduit runs short enough (with mid-assist points available) that a single pull stays within the cable's rated maximum, not for fill-percentage or code-visibility reasons."
+    },
+    {
+      "id": "T06-L05-Q6",
+      "type": "mc",
+      "prompt": "A designer specifies a textbook 1,000-ft spacing for an access structure, but the calculated location falls in the middle of a highway median with no safe construction access. What is the correct design response?",
+      "choices": [
+        "Install the access structure exactly at the 1,000-ft mark regardless of the median location, since the spacing rule is a hard requirement",
+        "Move the access structure to the nearest safe, accessible location (e.g., a nearby side street) even if this means the actual spacing is somewhat under 1,000 ft — the spacing rule is a design guideline for tension management, not an exact-location mandate, and constructability/safety take priority over hitting the precise textbook distance",
+        "Eliminate the access structure entirely and rely on a single continuous pull for the whole route",
+        "Widen the highway median specifically to accommodate the access structure at the calculated location"
+      ],
+      "answerIndex": 1,
+      "explanation": "The 500-1,000 ft figure is a design guideline driven by pull-tension management, not a precise mandated location — when the calculated spacing point falls somewhere impractical or unsafe (a highway median), the correct response is to move the access structure to the nearest safe, accessible location, accepting a somewhat shorter actual spacing rather than forcing construction into an unsafe or infeasible location."
+    },
+    {
+      "id": "T06-L05-Q7",
+      "type": "mc",
+      "prompt": "A vault design correctly sizes for cable bend radius and includes 12 splice trays for a 12-cable splice node, but is specified with an NTC (non-traffic) cover because 'the vault itself will be buried, only the lid is exposed.' The vault sits at the edge of a commercial parking lot where delivery trucks occasionally cut across the corner. What is the concern?",
+      "choices": [
+        "There is no concern; NTC covers are always sufficient once the vault body itself is properly sized",
+        "Cover rating is an independent decision from interior sizing — it depends on the actual traffic exposure at the lid's surface location, not on how well the vault interior was designed; a vault correctly sized inside but under-rated on its cover in a location with any vehicle traffic risk still fails, since the cover (not the vault body) is what bears the surface load",
+        "NTC covers are actually MORE load-resistant than H-20 covers, so this design decision is conservative and safe",
+        "Cover rating only matters for man-entry manholes, never for smaller vaults"
+      ],
+      "answerIndex": 1,
+      "explanation": "This reinforces that cover rating (Q1) and interior sizing (Q3) are independent design checks — a vault can be flawlessly sized for its cable/splice requirements while still having an under-rated cover for its actual traffic exposure, since the cover is a separate structural component bearing surface load, and occasional delivery-truck traffic at a parking-lot edge is exactly the kind of exposure that requires H-20, not NTC."
+    },
+    {
+      "id": "T06-L05-Q8",
+      "type": "mc",
+      "prompt": "A designer must choose between a pull-point handhole and a splice handhole at a specific route location where no splicing is planned, only a mid-route cable pull assist. Which is correct, and why does the choice matter beyond just naming convention?",
+      "choices": [
+        "A splice handhole should always be used everywhere, since it can also serve as a pull point with no downside",
+        "A pull-point handhole is correct — since no splicing is planned there, the smaller pull-point structure (sized only for cable coiling and a pulling grip, not splice-tray mounting and bend-radius transitions) avoids the unnecessary cost of a larger splice-handhole structure; specifying a splice handhole where only a pull point is needed wastes material and excavation cost for capability that will never be used",
+        "The choice has no cost or design implication either way; the two terms describe identical structures",
+        "A pull-point handhole is illegal to install anywhere on a route that also contains splice handholes"
+      ],
+      "answerIndex": 1,
+      "explanation": "This reinforces the Q2 distinction at the design-decision level: choosing the correctly-scoped structure for the actual function needed (pull assist vs. splice point) avoids paying for unused capability — a splice handhole's extra interior depth and splice-tray provisions are real cost drivers that shouldn't be specified where a smaller pull-point structure would fully serve the location's actual purpose."
+    }
+  ]
+}

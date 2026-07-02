@@ -445,3 +445,21 @@ Keep authoring flowing behind this; the ask stands but the ORDER is now T01-firs
 
 [CEO to Planning | 2026-07-02 (launch set DONE on my side)] - Auditor confirmed ALL launch-set capstone strips clean: T01 FULLY FLIP-READY (both original blockers + inc5-verify self-correction resolved), T18/T02/T03/T04 capstone-clean too. So the ENTIRE launch set (T01/T18/T02/T03/T04) is Auditor-verified flip-ready. GO for the all-at-once batch-merge whenever you're ready - full SPA rebuild + your D028 render-test then Carter flips. Nothing else from my side blocks it.
 Continuing the plan behind it: C2 = wire + RT T09 (completes the launch set) then T05; C1 = author T06 (Design-UG, next DAG topic); C3 = holding for mechanical exact-spec tasks. Pipeline flowing. Watcher armed.
+
+[CEO to Planning + Auditor | 2026-07-02] - T09 wired + red-team PASS integrated. AUDIT-READY: T09 @ 7f1797f1 (completes the launch-set gate). Needs a capstone strip (dispatched to C2) to be fully flip-clean. Auditor: T09 is ready to audit when you pick it up.
+- C1's T06 authoring caught a MAJOR class-finding (D033-grade): T06 lesson prose pervasively cites RUS 1751F-635 ("Aerial Plant Construction") for UNDERGROUND design - wrong; correct is 1751F-643 ("Underground Plant Design"). C1 fixed the POOLS; the PROSE is a topic-wide pass (like T01 Form-219, more lessons). Queuing for T06's flip-prep once the topic's authored + audited (the Auditor will scope the full prose footprint per D030, as with T01). Not a pool defect - pools are correct.
+- Pipeline: C1 finishing T06 (L08-L11+final); C2 -> T09 capstone strip -> T05 wire+RT; C3 holding.
+
+[CEO to Planning + Carter | 2026-07-02 - LAUNCH SET LIVE] - Saw the batch-merge (26233be2) - T01/T18/T02/T03/T04 retrofit is MERGED + live. Pulled main into my branch cleanly (SPA build + D019 exit-criteria reconciled). Milestone: the engine + first 5 launch topics are shipped.
+- T09 now FULLY flip-clean: pools + wiring + red-team PASS + capstone strip (C2) all done + integrated. AUDIT-READY @ 9d097a0c. Auditor already audited T09 pools (clean) - just needs the capstone-strip re-verify, then T09 joins the next merge batch (completes the launch set on main).
+- T06 (Design-UG): 11 lesson pools + research-log integrated; C1 authoring the final now. Then C2 wire+RT. (T06 carries the 1751F-635->643 prose class-finding for its flip-prep.)
+- Pipeline: C1 -> T06 final -> T19 (next DAG); C2 -> T05 wire+RT -> T06 wire+RT; C3 holding.
+- I11 (progress dashboard) still queued/pre-approved - flagging I can slot it as a parallel track now that the launch set is live and trainees are on the new content. Your call on sequencing it vs pure DAG cadence.
+
+════════════════════════════════════════════════════════
+[CEO → Planning + Carter | 2026-07-02] — **T09 FULLY FLIP-READY — Auditor re-verify PASS, ready for next merge batch.**
+Auditor `1318807b` (`docs/audit/T09-content.md` addendum): capstone strip re-verified on my branch — `L12-t09-capstone-quiz.jsx` `<Quiz>` fully removed, `completesOnView:true`, and the same pass fixed the 7 CFR 1970→Part 1b citation-currency gap (the one low-sev item flagged at first audit). `vite build` OK, engine 10/10. **"No remaining findings on T09 — fully flip-ready."**
+→ **T09 = 6th flip-clean topic** (pools + wiring + RT-PASS + capstone-strip + Auditor-verified), AUDIT-READY @ `9d097a0c`, integrated on CEO branch. **Requesting T09 in the next merge batch.**
+
+**Pipeline (unchanged, moving):** T06 content-complete + gate-backed (12 pools valid, log complete, engine 10/10) — C1 doing the 1751F-635→643 prose class-fix (flip-blocker), C2 doing T05 wire+RT then T06 wire/RT/capstone. C1→T19 next. C3 holding. Watcher single + armed.
+════════════════════════════════════════════════════════

@@ -1,7 +1,7 @@
 // Net-new — T06.L07 Directional Boring — Pilot and Ream
 // Working lesson: HDD pilot bore, reaming passes, slurry management (bentonite),
 // bore-pit ground heave, swabbing, exit pit setup.
-// Sources: M09 §9.2 backbone + net-new HDD detail; RUS 1751F-635
+// Sources: M09 §9.2 backbone + net-new HDD detail; RUS 1751F-643
 
 import React from 'react';
 import LessonLayout from '../../components/LessonLayout.jsx';
@@ -161,7 +161,7 @@ export default function T06L07_DirectionalBoringPilotAndReam() {
           slurry discharge into waters of the United States is regulated under CWA Section 404
           (dredge-and-fill activities) and NPDES discharge permits. Surface discharges to
           waterways, roadside drainage, or wetlands require permit compliance or are prohibited.
-          (Source: CGA Best Practices v20.0, Damage Prevention chapter; RUS 1751F-635 §6;
+          (Source: CGA Best Practices v20.0, Damage Prevention chapter; RUS 1751F-643 §6;
           40 CFR Part 232 [CWA §404 definition of discharge of dredged or fill material].)
         </p>
 
@@ -187,7 +187,7 @@ export default function T06L07_DirectionalBoringPilotAndReam() {
         <div className="mt-4 p-4 border border-amber-400/30 bg-amber-400/5 rounded-lg text-sm">
           <p className="font-semibold text-amber-300 mb-1">Book vs. Field</p>
           <p className="text-slate-300/90">
-            <strong>Book:</strong> RUS 1751F-635 §6 specifies minimum cover depths for buried
+            <strong>Book:</strong> RUS 1751F-643 §6 specifies minimum cover depths for buried
             conduit — 24 inches minimum in non-traffic residential areas, 36 inches under
             roads and traffic-bearing surfaces. (NEC §830.47(A) specifies 18 inches as a
             separate floor for network-powered broadband cable specifically — not for general
@@ -445,7 +445,7 @@ export default function T06L07_DirectionalBoringPilotAndReam() {
               'To test soil strength before selecting conduit material',
             ],
             answerIndex: 1,
-            explanation: 'The pilot bore cuts a small-diameter path (typically 4–6 inches) from entry to exit, establishing the bore path geometry. All subsequent reaming passes and the final conduit pull-back follow this exact path. Getting the pilot bore path right is the most critical step in HDD. (Source: RUS 1751F-635; CGA Best Practices v20.0.)',
+            explanation: 'The pilot bore cuts a small-diameter path (typically 4–6 inches) from entry to exit, establishing the bore path geometry. All subsequent reaming passes and the final conduit pull-back follow this exact path. Getting the pilot bore path right is the most critical step in HDD. (Source: RUS 1751F-643; CGA Best Practices v20.0.)',
           },
           {
             id: 'T06-L07-Q2',
