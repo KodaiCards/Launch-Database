@@ -202,3 +202,20 @@ Re-arming my watcher; holding to integrate C1's final + C2's red-team.
 - **Routing (author≠RT preserved):** fixes → C1 (source+cite or hedge the 2; backfill/soften the 4 log rows). Then **C2 does a combined re-RT** of the 6 fixed items **+ the first red-team of `T01-final`** (which post-dated C2's pass). Both builders need a turn — asking Carter to nudge C1 now.
 - **inc4 NOT done yet** — needs C1 fix → C2 re-RT+final-RT → I integrate + re-verify → then I ping you for the Auditor content-audit + Carter's flip green-light. Nothing merged; wave-1 (9 pools + wiring + final) integrated + build/loader/engine-verified on my branch, minus these 6 open items.
 - **Your 2 rulings still open** (19:45): the 5 live JSX-prose citation errors (scope) + the 403 primary-source gate question — the 403 point is now doubly relevant since both C1 and C2 hit the same proxy denial (RT confirms it's environmental, not an authoring failure).
+
+[CEO → Planning | 2026-07-02 06:20] — **✅ inc4 COMPLETE + GATE-CLEAN on my branch (`u2zw28`). Ready for your live-verify + Auditor content-audit → Carter's T01 flip green-light.** This is the "ping when integrated + verified" milestone.
+
+**What's done (all integrated + verified on my branch, NOT merged — you merge):**
+- **Content:** full T01 gated set — 9 lesson pools (`T01-L01…L09`, 8Q each) + `T01-final` (24Q). **96 questions, mc/drag-match only, 0 banned types.** Author = C1, research-log `_research/T01.md` + citation pre-check.
+- **Red-team (author≠RT):** C2 read all 96; PASS after one fix round. Original findings (2 R18-pattern uncited facts + 4 log-row gaps) all fixed by C1 + re-checked PASS. Report: `_research/T01-redteam.md`. Bonus: C1 caught a real accuracy bug fixing L08-Q7 (OS2 = G.652.C-or-D).
+- **Wiring (C2 Part 1):** `fill-in-blank` retired platform-wide (graceful skip-card), T01 L01–L09 wired to server-authoritative `PooledAssessment` via availability-gated `GatedAssessment` (inline fallback), `TopicFinal` mounted.
+- **My verification:** all 10 pools load via the real loader (correct dials, 0 banned); engine 10/10; full `npm ci`+`vite build` clean on the integrated tree. (Pools are runtime data, not bundled — the fix-pass content edits don't affect the SPA bundle.)
+
+**Over to you (per the flow):** your live/runtime verify → dispatch Auditor for the content-audit → Carter green-lights the flip → publish. **Publishing is trivial via WP-A's Publish control; I do NOT flip — that's Carter's call.**
+
+**Open for your decision (recap, now decision-time since the Auditor is next):**
+1. **403 gate ruling** — both C1 (author) AND C2 (RT) independently hit the egress-proxy 403 on primary-source WebFetch; all citations rest on WebSearch multi-source corroboration (primary text also paywalled). Does that clear the gate for the Auditor pass, or do you want a primary-source verification pass (you have local access)?
+2. **JSX-prose citation errors (scope)** — the 5 legacy citation errors are fixed in the POOLS but still print in the T01 lesson BODY text (RUS Form 219 ×4, etc.). Fold a gated JSX content-pass into inc4 or a fast follow-up? (Candidate: C1 authors the prose fix, C2 RTs.)
+3. **Cosmetic (non-blocking)** — L08-Q7 answer-choice text says "G.652.D" while the fixed explanation says "C or D"; answer-key still correct. Polish before flip, or ship as-is?
+
+Both builders HOLDING for next assignment (T18 Safety is next in the DAG once you direct).
