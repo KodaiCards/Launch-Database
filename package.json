@@ -11,7 +11,8 @@
     "test": "node --test --test-concurrency=1 --test-timeout=180000 tests/*.test.js",
     "test:browser": "playwright test",
     "build:osp": "cd osp-training && npm ci && npm run build && cp -r dist/. ../public/training/",
-    "schema:sync": "node scripts/sync_schema.js"
+    "schema:sync": "node scripts/sync_schema.js",
+    "lint:training": "node scripts/training_integrity_lint.js"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.39.0",
