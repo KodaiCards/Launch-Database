@@ -1,0 +1,351 @@
+{
+  "assessmentId": "T01-final",
+  "kind": "topic_final",
+  "courseId": "T01",
+  "lessonId": null,
+  "drawCount": 15,
+  "passThreshold": 80,
+  "pool": [
+    {
+      "id": "T01-final-Q1",
+      "type": "mc",
+      "prompt": "A splice case is being installed where an OSP drop cable, having already passed through the demarcation point, would continue into a building. Which statement correctly applies the OSP/ISP boundary?",
+      "choices": [
+        "Everything up to and including the ONT's fiber port is OSP; equipment and cabling beyond the ONT is ISP/customer responsibility",
+        "The entire cable is OSP for its whole physical length, regardless of what side of a wall it's on",
+        "Once a cable enters any building, it automatically becomes ISP even if it hasn't reached the demarc yet",
+        "OSP and ISP are accounting terms only and have no bearing on which contractor performs the work"
+      ],
+      "answerIndex": 0,
+      "explanation": "The demarcation point — typically the ONT in an FTTH deployment — is the formal boundary. Everything from the OLT through to the ONT's fiber port is OSP; equipment and wiring beyond it is ISP/customer-side. This determines which codes, contractor licensing, and cable ratings apply on each side.",
+      "citation": "BICSI/industry OSP-ISP demarcation convention; NEC Article 770 (indoor fiber rating requirements once past the demarc)."
+    },
+    {
+      "id": "T01-final-Q2",
+      "type": "mc",
+      "prompt": "The FCC's Uniform System of Accounts (47 CFR Part 32) classifies OSP cable plant by installation method into three accounts. Which pairing is correct?",
+      "choices": [
+        "2421 = Buried, 2422 = Aerial, 2423 = Underground",
+        "2421 = Aerial, 2422 = Underground, 2423 = Buried",
+        "2421 = Underground, 2422 = Buried, 2423 = Aerial",
+        "All three account numbers refer to the same generic 'OSP cable' category"
+      ],
+      "answerIndex": 1,
+      "explanation": "47 CFR Part 32 splits cable plant into distinct accounts by installation method: 2421 Aerial cable, 2422 Underground cable (in conduit/duct), 2423 Buried cable (direct-bury). This is the accounting basis for OSP plant depreciation and rate-base treatment.",
+      "citation": "47 CFR Sections 32.2421, 32.2422, 32.2423."
+    },
+    {
+      "id": "T01-final-Q3",
+      "type": "mc",
+      "prompt": "On a shared utility pole, ground clearance for a fiber span over a road is measured where — and why does that matter for a fiber crew reading field notes that say 'the cable is at 22 feet'?",
+      "choices": [
+        "At the attachment point on the pole; the 22-foot note already reflects the compliance-relevant number",
+        "At midspan (the lowest point of sag); '22 feet' likely refers to attachment height, which is a different, higher number than the actual ground clearance that determines compliance",
+        "Ground clearance isn't measured for telecom cable, only for electric supply conductors",
+        "At the exact center of the pole's height, regardless of span length"
+      ],
+      "answerIndex": 1,
+      "explanation": "Ground clearance is always measured at midspan — the lowest point of sag — not at the attachment height on the pole. A crew that treats a stated 'height' as automatically the compliance clearance number risks a clearance violation, since sag always pulls the cable lower at midspan than its attachment height."
+    },
+    {
+      "id": "T01-final-Q4",
+      "type": "mc",
+      "prompt": "Which FCC rule governs pole attachment RATE-setting (the fee formula), and which governs the TIMELINE for a utility to process a new attacher's pole-access application? Why does confusing the two matter?",
+      "choices": [
+        "47 CFR 1.1409 = rates; 47 CFR 1.1411 = access/make-ready timeline — citing 1.1411 for a fee dispute or 1.1409 for a missed deadline would point to the wrong rule",
+        "Both rules cover the same thing and are interchangeable citations",
+        "47 CFR 1.1411 = rates; 47 CFR 1.1409 = timeline — the reverse of the common mix-up",
+        "Neither rule is FCC in origin; both are RUS bulletins"
+      ],
+      "answerIndex": 0,
+      "explanation": "47 CFR 1.1409 sets the pole attachment rate/fee formula. 47 CFR 1.1411 governs the timeline for pole access applications and make-ready (including the OTMR simple-make-ready completion window). They are commonly confused, but citing the wrong one misdirects a compliance question to the wrong regulatory text.",
+      "citation": "47 CFR 1.1409 (rate formula); 47 CFR 1.1411 (access/make-ready timeline, incl. OTMR)."
+    },
+    {
+      "id": "T01-final-Q5",
+      "type": "mc",
+      "prompt": "A wood pole's strength class is determined by which measurement?",
+      "choices": [
+        "Its total height only",
+        "Its circumference measured 6 feet from the butt (the typical setting-depth reference point)",
+        "The number of attachments currently on it",
+        "Its age since installation"
+      ],
+      "answerIndex": 1,
+      "explanation": "ANSI O5.1 determines a wood pole's true class by circumference measured 6 feet from the butt. Class 1 is the strongest common class, with class numbers increasing as strength decreases and H1-H6 reserved for extra-heavy loads.",
+      "citation": "ANSI O5.1, Wood Poles — Specifications and Dimensions (Table 8M classification method)."
+    },
+    {
+      "id": "T01-final-Q6",
+      "type": "mc",
+      "prompt": "From outside in, what is the correct general layer order of a standard loose-tube OSP cable?",
+      "choices": [
+        "Central member -> buffer tubes -> jacket -> ripcord",
+        "Jacket -> ripcord/armor -> buffer tubes (with fibers in gel) -> central member",
+        "Buffer tubes -> jacket -> central member -> ripcord",
+        "There is no standard order; it varies randomly by manufacturer"
+      ],
+      "answerIndex": 1,
+      "explanation": "From the outside in: the HDPE jacket (UV/moisture barrier), then the ripcord and armor (if present), then color-coded buffer tubes holding fibers in water-blocking gel, with the central member running down the core. The central member is anchored inside the splice case to protect the buffer tubes from cable tension.",
+      "citation": "ICEA S-87-640, Standard for Optical Fiber Outside Plant Communications Cable."
+    },
+    {
+      "id": "T01-final-Q7",
+      "type": "mc",
+      "prompt": "Why does a figure-8 aerial cable configuration protect the fiber from mechanical tension?",
+      "choices": [
+        "The fiber itself is engineered to be tension-resistant, eliminating the need for a separate strength member",
+        "A separate steel or fiberglass messenger wire, lashed alongside the cable, carries all the tension between poles while the fiber cable carries none",
+        "Figure-8 cables are only used for spans under 50 feet, where tension is not a concern",
+        "The central member alone supports the full weight and tension of the aerial span"
+      ],
+      "answerIndex": 1,
+      "explanation": "In a figure-8 configuration, a separate messenger wire is lashed alongside the fiber cable and clamped at each pole to bear the aerial tension load, so the fiber cable itself hangs essentially tension-free. ADSS cable is the alternative approach — the strength members are built into the cable so no separate messenger is needed.",
+      "citation": "ICEA S-87-640 Annex D (figure-8 aerial self-supporting cable construction)."
+    },
+    {
+      "id": "T01-final-Q8",
+      "type": "mc",
+      "prompt": "What generic industry standard governs the mechanical and environmental (moisture, thermal cycling, weather-tightness) performance requirements for fiber optic splice closures, regardless of manufacturer?",
+      "choices": [
+        "RUS Bulletin 1751F-630 (Design of Aerial Plant)",
+        "Telcordia GR-771-CORE, Generic Requirements for Fiber Optic Splice Closures",
+        "TIA-568.3-D",
+        "NESC C2-2023"
+      ],
+      "answerIndex": 1,
+      "explanation": "Telcordia GR-771-CORE defines the industry-standard generic mechanical and environmental requirements for fiber optic splice closures, since they are deployed outdoors in uncontrolled environments for decades. RUS 1751F-630 is a distinct bulletin scoped to aerial-plant design, not splice-closure requirements.",
+      "citation": "Telcordia GR-771-CORE."
+    },
+    {
+      "id": "T01-final-Q9",
+      "type": "mc",
+      "prompt": "A splicer closes a splice case and later an OTDR reveals 0.4 dB of unexpected loss at that location, despite every individual splice reading under 0.05 dB on the fusion splicer. What is the most likely cause and correct fix?",
+      "choices": [
+        "The fusion splicer is defective; recalibrate it before continuing work",
+        "A slack loop or pigtail was pinched against the tray or case wall when the case was closed, creating a macrobend — reopen the case, re-route with proper bend radius, and reverify with the OTDR before final closure",
+        "0.4 dB is within acceptable tolerance and requires no action",
+        "The OTDR launch cable is defective; replace it and rerun the test"
+      ],
+      "answerIndex": 1,
+      "explanation": "This is the classic macrobend-after-closure scenario: genuine per-splice losses were excellent, but closing the case pinched a slack loop, creating loss that only shows up once the case is sealed. Reopening, re-routing with proper slack management, and rechecking before final closure is standard practice."
+    },
+    {
+      "id": "T01-final-Q10",
+      "type": "mc",
+      "prompt": "What are the seven stages of an OSP project lifecycle, in order?",
+      "choices": [
+        "Design, Survey, Construction, Permitting, Make-Ready, Testing, As-Built/Close-Out",
+        "Survey, Design, Permitting, Make-Ready, Construction, Testing, As-Built/Close-Out",
+        "Survey, Permitting, Design, Construction, Make-Ready, As-Built/Close-Out, Testing",
+        "Design, Permitting, Survey, Make-Ready, Testing, Construction, As-Built/Close-Out"
+      ],
+      "answerIndex": 1,
+      "explanation": "The order is: Route Survey (field data) -> Design (construction drawings) -> Permitting (jurisdictional approvals) -> Make-Ready (existing attachment adjustments) -> Construction (physical build) -> Testing (Tier 1/Tier 2 acceptance) -> As-Built and Close-Out (permanent documentation). Missing or short-cutting any stage creates downstream problems."
+    },
+    {
+      "id": "T01-final-Q11",
+      "type": "mc",
+      "prompt": "Under the FCC's One-Touch Make-Ready (OTMR) process, what is the maximum time to complete SIMPLE make-ready work once approved, and what does 'simple' mean in this context?",
+      "choices": [
+        "90 calendar days; 'simple' means any work under $10,000",
+        "15 business days; 'simple' means work that does NOT involve a likely service outage, damage risk, splicing an existing attacher's wire, wireless facility relocation, or pole replacement",
+        "There is no deadline for simple make-ready; only complex make-ready has a deadline",
+        "45 business days; 'simple' means aerial-only work with no underground component"
+      ],
+      "answerIndex": 1,
+      "explanation": "OTMR sets a 15-business-day completion deadline for simple make-ready. Complex make-ready — anything likely to cause a service outage or damage, requiring splicing an existing attacher's wire, involving wireless facility relocation, or requiring pole replacement — follows a different, longer multi-party timeline.",
+      "citation": "47 CFR 1.1411 (OTMR rules) — exact subsection lettering not independently re-verified this session; see T01.md."
+    },
+    {
+      "id": "T01-final-Q12",
+      "type": "mc",
+      "prompt": "For an RUS-funded telecommunications construction project, which RUS-published form is the standard construction contract, and why should 'RUS Form 219' NOT be cited for telecom project close-out?",
+      "choices": [
+        "RUS Form 515 is the standard telecom construction contract; RUS Form 219 ('Inventory of Work Orders') is governed by 7 CFR 1726.405 under the Electric Program, not telecom",
+        "RUS Form 219 is correct for both electric and telecom programs interchangeably",
+        "There is no standard RUS construction contract form for telecommunications projects",
+        "RUS Form 344-2 is the construction contract; Form 515 is for materials acceptance"
+      ],
+      "answerIndex": 0,
+      "explanation": "RUS Form 515 (Telecommunications System Construction Contract) is the telecom-program construction contract. RUS Form 219 is a distinct, Electric Program-specific form ('Inventory of Work Orders,' 7 CFR 1726.405) that should not be cited for telecom close-out — a citation error found in several places in this course's source material and corrected here.",
+      "citation": "rd.usda.gov Form 515; 7 CFR 1726.405 (Form 219, Electric Program — cited for contrast). See T01.md research log."
+    },
+    {
+      "id": "T01-final-Q13",
+      "type": "mc",
+      "prompt": "Which CFR section specifically covers telecommunications project closeout documentation requirements for RUS-funded construction?",
+      "choices": [
+        "7 CFR 1726.405 (an Electric Program section)",
+        "7 CFR 1753.49 (Closeout documents, under Telecommunications System Construction Policies and Procedures)",
+        "47 CFR 1.1411",
+        "29 CFR 1910.147"
+      ],
+      "answerIndex": 1,
+      "explanation": "7 CFR 1753.49 covers closeout documents specifically within the RUS telecommunications construction regulations. The borrower prepares these with, if needed, assistance from the General Field Representative, and the documents must be retained for RUS inspection for a set period after the engineer's contract closeout certification.",
+      "citation": "7 CFR 1753.49."
+    },
+    {
+      "id": "T01-final-Q14",
+      "type": "mc",
+      "prompt": "A construction crew starts installing aerial cable on segments where make-ready approval is still pending. What is the risk, and who typically bears the cost if a conflict results?",
+      "choices": [
+        "No risk exists — construction and make-ready can always run in parallel on the same segment",
+        "The installed cable may conflict with make-ready requirements (e.g., wrong attachment height once an existing attachment is moved), forcing rework — typically at the fiber company's expense under standard pole attachment agreements",
+        "The electric utility always bears rework costs regardless of who installed early",
+        "Testing costs increase, but there is no physical rework risk"
+      ],
+      "answerIndex": 1,
+      "explanation": "Make-ready clears the pole so a new attachment fits within NESC clearances without conflicting with existing attachments. Installing before make-ready is approved risks needing to move newly installed cable when the make-ready work later relocates an existing attachment — rework the fiber company typically pays for."
+    },
+    {
+      "id": "T01-final-Q15",
+      "type": "drag-match",
+      "prompt": "Match each OSP field role to its primary deliverable.",
+      "items": [
+        { "id": "i_staker", "label": "Field data package (pole measurements, attachments, GPS waypoints)" },
+        { "id": "i_designer", "label": "Construction drawings, splice matrix, load calculations" },
+        { "id": "i_splicer", "label": "Completed fusion splices + splice records + initial OTDR traces" },
+        { "id": "i_testtech", "label": "Tier 1 (OLTS) and Tier 2 (OTDR) acceptance test records" }
+      ],
+      "targets": [
+        { "id": "t_staker", "label": "Staker / Surveyor" },
+        { "id": "t_designer", "label": "OSP Designer" },
+        { "id": "t_splicer", "label": "Splicer" },
+        { "id": "t_testtech", "label": "Test Technician" }
+      ],
+      "correctMap": { "t_staker": "i_staker", "t_designer": "i_designer", "t_splicer": "i_splicer", "t_testtech": "i_testtech" },
+      "explanation": "Each field role hands off a specific deliverable to the next role in the project lifecycle: survey data feeds design; design feeds permitting/make-ready/construction; splicing feeds testing; testing feeds inspection and close-out."
+    },
+    {
+      "id": "T01-final-Q16",
+      "type": "mc",
+      "prompt": "Who is legally and personally liable for the accuracy of stamped OSP construction drawings on an RUS-funded project?",
+      "choices": [
+        "The project manager (PM)",
+        "The PE (Professional Engineer) whose stamp certifies the drawings meet applicable codes and are structurally sound",
+        "The staking technician who collected the original field survey",
+        "The RUS field inspector who performs the final walkthrough"
+      ],
+      "answerIndex": 1,
+      "explanation": "A PE's stamp is a personal legal certification. RUS-program work requires PE-stamped drawings and load calculations, and a PE who stamps inaccurate work risks license suspension or revocation from their state licensing board.",
+      "citation": "State professional engineering licensing requirements (NCEES-administered PE licensure)."
+    },
+    {
+      "id": "T01-final-Q17",
+      "type": "mc",
+      "prompt": "In a strand map notation reading 'F-001 / BT4-F7 -> FDH-003 -> DC-047 / BT2-F3 -> NAP-12 -> DROP / 1F -> 123 MAIN ST,' what does the segment 'DC-047 / BT2-F3' identify?",
+      "choices": [
+        "Distribution Cable 47, Buffer Tube 2, Fiber 3 — the specific post-splitter fiber serving this customer within that distribution cable",
+        "Drop Cable 47, Battery Terminal 2, Feed 3 — an electrical designation unrelated to fiber routing",
+        "Data Center 47, a network equipment rack identifier",
+        "Device Class 47, an OLT hardware model number"
+      ],
+      "answerIndex": 0,
+      "explanation": "DC = Distribution Cable, BT = Buffer Tube, F = Fiber. This notation tells a splicer or test technician exactly which physical fiber in which cable is being traced — essential for correct splicing and for locating a fault."
+    },
+    {
+      "id": "T01-final-Q18",
+      "type": "mc",
+      "prompt": "A 1:32 passive optical splitter at an FDH is described as 'passive.' What does that mean for insertion loss?",
+      "choices": [
+        "Passive means the splitter introduces zero insertion loss",
+        "Passive means no powered electronics are required, but the splitter still introduces significant insertion loss (commonly 15-17 dB for a 1:32 split) — the dominant loss element in a GPON link budget",
+        "Passive splitters only introduce loss above a 1:64 ratio",
+        "Passive refers to the splitter requiring battery backup rather than mains power"
+      ],
+      "answerIndex": 1,
+      "explanation": "\"Passive\" describes the absence of powered electronics, not the absence of loss. A 1:32 split divides power among 32 outputs — theoretical loss is about 15.05 dB, and real components typically land in the 15-17.5 dB range once manufacturing excess loss is included.",
+      "citation": "Vendor PLC splitter datasheets (1x32 insertion loss, commonly 15-17.5 dB); ITU-T G.984 (GPON link-budget context)."
+    },
+    {
+      "id": "T01-final-Q19",
+      "type": "mc",
+      "prompt": "Which pairing of code and its governing body is correct?",
+      "choices": [
+        "NESC is published by NFPA; NEC is published by IEEE",
+        "NESC (IEEE C2) governs overhead utility lines; NEC (NFPA 70) governs building electrical installations including indoor fiber cable ratings",
+        "Both NESC and NEC are published by the same body and cover identical scope",
+        "NESC governs indoor cabling; NEC governs outdoor aerial construction"
+      ],
+      "answerIndex": 1,
+      "explanation": "NESC (National Electrical Safety Code, IEEE C2) governs outdoor overhead utility line construction — clearances, attachment heights, loading. NEC (National Electrical Code, NFPA 70) governs indoor/building electrical installations, including OFNR/OFNP-rated fiber cable requirements once fiber crosses into a building.",
+      "citation": "IEEE C2 (NESC) and NFPA 70 (NEC) scope, independently verified — see T01.md."
+    },
+    {
+      "id": "T01-final-Q20",
+      "type": "mc",
+      "prompt": "A fiber project needs to cross a navigable river with a horizontal directional drill (HDD) bore. Which federal permit authorizes this, and which agency issues it?",
+      "choices": [
+        "FCC 47 CFR 1.1411 — issued by the Federal Communications Commission",
+        "USACE Nationwide Permit 57 (Electric Utility Line and Telecommunications Activities) — issued by the US Army Corps of Engineers",
+        "RUS Bulletin 1751F-630 — issued by USDA Rural Utilities Service",
+        "NESC clearance rule — issued by IEEE"
+      ],
+      "answerIndex": 1,
+      "explanation": "USACE (US Army Corps of Engineers) administers Section 404/Section 10 permits for work in navigable waters. NWP 57 specifically pre-authorizes telecommunications and electric utility line crossings, including most fiber HDD bores, subject to conditions.",
+      "citation": "USACE Nationwide Permit 57 (2021 reissuance)."
+    },
+    {
+      "id": "T01-final-Q21",
+      "type": "mc",
+      "prompt": "An RUS-funded project requires cable to be 'RUS-listed.' Which CFR part governs RUS's accepted-materials framework for telecommunications projects, and why is RUS Bulletin 1753F-201 the WRONG citation for this specific claim?",
+      "choices": [
+        "7 CFR Part 1755 governs accepted materials; 1753F-201 is actually titled 'Acceptance Tests and Measurements of Telecommunications Plant' — a testing bulletin, not a materials-list bulletin",
+        "47 CFR Part 32 governs accepted materials; 1753F-201 is the correct citation for materials acceptance",
+        "There is no RUS materials-acceptance framework for telecommunications projects",
+        "7 CFR Part 1726 governs telecom materials acceptance"
+      ],
+      "answerIndex": 0,
+      "explanation": "7 CFR Part 1755 (Telecommunications Policies on Specifications, Acceptable Materials, and Standard Contract Forms) governs RUS's accepted-materials requirements. RUS Bulletin 1753F-201 is a distinct bulletin covering acceptance testing of completed telecommunications plant — a real, verified citation error caught in this course's source material.",
+      "citation": "7 CFR Part 1755; RUS Bulletin 1753F-201 (correctly identified scope). See T01.md."
+    },
+    {
+      "id": "T01-final-Q22",
+      "type": "mc",
+      "prompt": "When NESC and an applicable RUS engineering bulletin specify different requirements for the same design element on an RUS-funded project, which governs?",
+      "choices": [
+        "NESC always overrides RUS bulletins because it is state-adopted law",
+        "The RUS bulletin always overrides NESC because it is a loan condition",
+        "The more stringent requirement governs — both function as floors, not ceilings, and a compliant design must satisfy both",
+        "Whichever standard is cheaper for the borrower to implement governs"
+      ],
+      "answerIndex": 2,
+      "explanation": "NESC compliance is required by state utility regulation; RUS bulletin compliance is a loan condition. Neither displaces the other — where they conflict, the design must meet the more stringent requirement, and the rationale should be documented."
+    },
+    {
+      "id": "T01-final-Q23",
+      "type": "mc",
+      "prompt": "What is the functional difference between an OLTS (Optical Loss Test Set) test and an OTDR (Optical Time-Domain Reflectometer) test?",
+      "choices": [
+        "OLTS (Tier 1) measures a single end-to-end insertion loss number; OTDR (Tier 2) locates and characterizes individual events (splices, bends, breaks) along the fiber's length",
+        "OLTS and OTDR measure identical data and are fully interchangeable",
+        "OLTS locates individual events; OTDR only produces a single end-to-end number",
+        "Both instruments are used exclusively for copper cable, not fiber"
+      ],
+      "answerIndex": 0,
+      "explanation": "OLTS gives a fast, single end-to-end loss number (Tier 1) using a light source and power meter but doesn't localize loss. OTDR (Tier 2) sends a light pulse and reads the reflected signal to locate and characterize every event along the fiber — splices, bends, breaks, connectors."
+    },
+    {
+      "id": "T01-final-Q24",
+      "type": "drag-match",
+      "prompt": "Match each standards body to its primary OSP-relevant publication or role.",
+      "items": [
+        { "id": "i_ieee", "label": "Publishes NESC (C2) — aerial line clearances and construction" },
+        { "id": "i_nfpa", "label": "Publishes NEC (NFPA 70) — building electrical/fiber entry requirements" },
+        { "id": "i_itut", "label": "Publishes G-series fiber performance specs (G.652, G.657, G.984)" },
+        { "id": "i_usace", "label": "Issues Nationwide Permit 57 for waterway crossings" },
+        { "id": "i_rus", "label": "Publishes 1751F-series engineering bulletins for funded OSP projects" }
+      ],
+      "targets": [
+        { "id": "t_ieee", "label": "IEEE" },
+        { "id": "t_nfpa", "label": "NFPA" },
+        { "id": "t_itut", "label": "ITU-T" },
+        { "id": "t_usace", "label": "USACE" },
+        { "id": "t_rus", "label": "RUS (USDA)" }
+      ],
+      "correctMap": { "t_ieee": "i_ieee", "t_nfpa": "i_nfpa", "t_itut": "i_itut", "t_usace": "i_usace", "t_rus": "i_rus" },
+      "explanation": "Five distinct bodies govern different aspects of the same OSP project simultaneously: IEEE (aerial code), NFPA (indoor electrical code), ITU-T (fiber performance specs), USACE (waterway crossing permits), and RUS (funded-project engineering bulletins)."
+    }
+  ]
+}
