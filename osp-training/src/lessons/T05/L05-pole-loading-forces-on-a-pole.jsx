@@ -5,6 +5,7 @@ import React from 'react';
 import LessonLayout from '../../components/LessonLayout.jsx';
 import WorkedExample from '../../components/primitives/WorkedExample.jsx';
 import Quiz from '../../components/primitives/Quiz.jsx';
+import GatedAssessment from '../../components/primitives/GatedAssessment.jsx';
 import Flashcard from '../../components/Flashcard.jsx';
 
 export const meta = {
@@ -380,6 +381,11 @@ export default function T05L05_PoleLoadingForcesOnAPole() {
       </section>
 
       {/* ── PER-LESSON QUIZ ──────────────────────────────────────────────── */}
+      <GatedAssessment
+        courseId="T05"
+        assessmentId="T05-L05"
+        title="T05.L05 Check — Pole Loading — Forces on a Pole"
+        fallback={
       <Quiz
         title="T05.L05 Check — Pole Loading — Forces on a Pole"
         mode="multiple-choice"
@@ -437,6 +443,8 @@ export default function T05L05_PoleLoadingForcesOnAPole() {
               'Wind span = (half of left span) + (half of right span) = (200/2) + (100/2) = 100 + 50 = 150 ft. Wind span is the average of the two adjacent spans, representing how much cable area "feeds" wind load into this pole from each direction.',
           },
         ]}
+      />
+        }
       />
 
     </LessonLayout>

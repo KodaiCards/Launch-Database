@@ -4,6 +4,7 @@
 import React from 'react';
 import LessonLayout from '../../components/LessonLayout.jsx';
 import Quiz from '../../components/primitives/Quiz.jsx';
+import GatedAssessment from '../../components/primitives/GatedAssessment.jsx';
 import Flashcard from '../../components/Flashcard.jsx';
 
 export const meta = {
@@ -391,6 +392,11 @@ export default function T05L03_CommToSupplySeparationRule235() {
       />
 
       {/* ── PER-LESSON QUIZ ──────────────────────────────────────────────── */}
+      <GatedAssessment
+        courseId="T05"
+        assessmentId="T05-L03"
+        title="T05.L03 Check — Comm-to-Supply Separation — Rule 235"
+        fallback={
       <Quiz
         title="T05.L03 Check — Comm-to-Supply Separation — Rule 235"
         mode="multiple-choice"
@@ -465,6 +471,8 @@ export default function T05L03_CommToSupplySeparationRule235() {
               'Rule 235 governs the separation between communication and supply lines on the same pole. The neutral is the lowermost supply conductor and is the reference point for measuring the required safety zone.',
           },
         ]}
+      />
+        }
       />
 
     </LessonLayout>

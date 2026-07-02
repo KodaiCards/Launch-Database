@@ -5,6 +5,7 @@ import React from 'react';
 import LessonLayout from '../../components/LessonLayout.jsx';
 import SideBySide from '../../components/primitives/SideBySide.jsx';
 import Quiz from '../../components/primitives/Quiz.jsx';
+import GatedAssessment from '../../components/primitives/GatedAssessment.jsx';
 import Flashcard from '../../components/Flashcard.jsx';
 
 export const meta = {
@@ -320,6 +321,11 @@ export default function T05L11_OPGWAndHybridCables() {
       </section>
 
       {/* ── PER-LESSON QUIZ ──────────────────────────────────────────────── */}
+      <GatedAssessment
+        courseId="T05"
+        assessmentId="T05-L11"
+        title="T05.L11 Check — OPGW and Hybrid Cables"
+        fallback={
       <Quiz
         title="T05.L11 Check — OPGW and Hybrid Cables"
         mode="multiple-choice"
@@ -385,6 +391,8 @@ export default function T05L11_OPGWAndHybridCables() {
               'ADSS is "all dielectric" — no metal. On a joint-use distribution pole, this means the fiber attachment doesn\'t require grounding hardware, doesn\'t pick up induced voltages from adjacent phase conductors, and can be safely worked on by comm-space crews. OPGW requires grounding at every structure and carries fault current — it belongs at the top of transmission structures, not in the comm space below a distribution neutral.',
           },
         ]}
+      />
+        }
       />
 
     </LessonLayout>

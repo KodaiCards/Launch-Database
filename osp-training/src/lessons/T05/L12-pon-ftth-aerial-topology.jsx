@@ -5,6 +5,7 @@ import React from 'react';
 import LessonLayout from '../../components/LessonLayout.jsx';
 import WorkedExample from '../../components/primitives/WorkedExample.jsx';
 import Quiz from '../../components/primitives/Quiz.jsx';
+import GatedAssessment from '../../components/primitives/GatedAssessment.jsx';
 import Flashcard from '../../components/Flashcard.jsx';
 
 export const meta = {
@@ -467,6 +468,11 @@ export default function T05L12_PONFTTHAerialTopology() {
       </section>
 
       {/* ── PER-LESSON QUIZ ──────────────────────────────────────────────── */}
+      <GatedAssessment
+        courseId="T05"
+        assessmentId="T05-L12"
+        title="T05.L12 Check — PON / FTTH Aerial Topology"
+        fallback={
       <Quiz
         title="T05.L12 Check — PON / FTTH Aerial Topology"
         mode="multiple-choice"
@@ -542,6 +548,8 @@ export default function T05L12_PONFTTHAerialTopology() {
               'Feeder fiber runs from the OLT to the FDH. ONE fiber strand per PON port enters the FDH splitter. The 32 distribution fibers exit the FDH toward the NAPs. Drops go from NAPs to individual homes. OPGW is a transmission-structure product, completely unrelated to FTTH distribution.',
           },
         ]}
+      />
+        }
       />
 
     </LessonLayout>

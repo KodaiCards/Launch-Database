@@ -4,6 +4,7 @@
 import React from 'react';
 import LessonLayout from '../../components/LessonLayout.jsx';
 import Quiz from '../../components/primitives/Quiz.jsx';
+import GatedAssessment from '../../components/primitives/GatedAssessment.jsx';
 import Flashcard from '../../components/Flashcard.jsx';
 
 export const meta = {
@@ -440,6 +441,11 @@ export default function T05L01_WhatNESCIsAndHowToReadIt() {
       </section>
 
       {/* ── PER-LESSON QUIZ ──────────────────────────────────────────────── */}
+      <GatedAssessment
+        courseId="T05"
+        assessmentId="T05-L01"
+        title="T05.L01 Check — What NESC Is and How to Read It"
+        fallback={
       <Quiz
         title="T05.L01 Check — What NESC Is and How to Read It"
         mode="multiple-choice"
@@ -500,6 +506,8 @@ export default function T05L01_WhatNESCIsAndHowToReadIt() {
               'IEEE publishes the NESC as document C2. The 2023 edition is formally cited as "IEEE C2-2023." You\'ll see "NESC 2023" and "IEEE C2-2023" used interchangeably in engineering documents.',
           },
         ]}
+      />
+        }
       />
 
     </LessonLayout>
