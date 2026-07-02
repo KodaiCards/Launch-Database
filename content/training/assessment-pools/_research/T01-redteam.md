@@ -151,3 +151,44 @@ resolves all six.
 **Recommendation:** fix the two zero-citation specific-fact questions (source + cite, or hedge
 the language) and backfill the four missing log rows before this pool set is flipped visible to
 trainees. Everything else — including all of `T01-final.json` — clears the gate as-is.
+
+## Re-check of C1's fix pass (2026-07-02, CEO signal 06:00) — all 6 items PASS
+
+C1 landed fixes for all 6 flagged items on the CEO branch. Re-verified each individually
+(targeted re-check, not a full 96-question re-read, per the CEO's scope):
+
+1. **`T01-L04-Q7`** — now carries a `citation` field ("fiber-management component vendor/industry
+   guides... not a single formal standard's clause; treat as an industry-convention figure") and
+   the explanation was softened from a bare "commonly around 30 mm" assertion to "commonly cited
+   around 30 mm... verify the exact figure against the specific tray manufacturer's datasheet."
+   `T01.md` now logs this fix with its own WebSearch corroboration (3 independent vendor sources).
+   **PASS** — no longer a zero-citation specific-fact assertion; correctly hedged as an
+   industry-convention figure, not a fixed standard's clause.
+2. **`T01-L08-Q7`** — now carries a `citation` field pointing at the ISO/IEC 11801 OS1/OS2↔G.652
+   mapping, corroborated in `T01.md`. C1 also corrected a real accuracy error while fixing this:
+   the original explanation said "OS1 maps to earlier G.652.A/B/C," incorrectly folding G.652.C
+   into OS1; the corrected explanation reads OS2 = G.652.C **or** D (0.4 dB/km max), OS1 = G.652.A/B
+   (1.0 dB/km max) — matches my own domain knowledge and the log's WebSearch corroboration.
+   **PASS**, with one minor observation (not a defect, not blocking): the answer **choice** text
+   itself still reads "corresponding to G.652.D SMF" only — true but now narrower than the fixed
+   explanation's "G.652.C or D." The choice isn't wrong (D is a valid answer), just no longer the
+   most complete statement given the explanation update. Cosmetic; doesn't affect answer-key
+   correctness since D is still unambiguously the single correct choice among the four options.
+3. **4 backfilled research-log rows** — `T01.md` now has dedicated rows for: BICSI OSPDRM
+   (Outside Plant Design Reference Manual) demarcation convention, ANSI/TIA-606-C, BICSI RCDD vs.
+   FOA CFOT/CFOS credentialing, and NFPA 70/IEEE C2 jurisdictional scope (the last one explicitly
+   points back to the pre-existing NEC Article 770 / NESC C2-2023 rows rather than re-verifying
+   from scratch, which is the right move — those facts were already independently verified).
+   Cross-checked each row's citation text against the actual pool `citation` field it backs:
+   `T01-L01-Q3` and `T01-final-Q1`'s "BICSI/industry demarcation convention" now resolves to the
+   OSPDRM row; `T01-L05-Q1`'s "ANSI/TIA-606-C" citation resolves exactly; `T01-L08-Q3`'s
+   "BICSI credentialing... FOA credentialing" resolves exactly; `T01-L08-Q4` and
+   `T01-final-Q19`'s "NFPA 70... IEEE C2... see T01.md" now resolves to a real row. **All 4 (6
+   with the 2 final echoes) paper-trail gaps are closed. PASS.**
+4. **Engine load check:** ran `routes/_assessment_pools.js`'s real loader against the fixed
+   files — `listPools()` returns all 10 pools with no validation errors. The fixes didn't
+   introduce any structural/type regressions.
+
+**Final verdict: PASS.** All 6 items from the original FINDINGS are resolved. Combined with the
+94 items that already passed, the full T01 set (96 questions, 10 pools) clears the gate. No
+outstanding red-team items for inc4.
