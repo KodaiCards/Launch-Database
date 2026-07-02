@@ -1,0 +1,116 @@
+{
+  "assessmentId": "T05-L02",
+  "kind": "lesson",
+  "courseId": "T05",
+  "lessonId": "T05.L02",
+  "drawCount": 4,
+  "passThreshold": 70,
+  "pool": [
+    {
+      "id": "T05-L02-Q1",
+      "type": "mc",
+      "prompt": "Per public secondary sources summarizing NESC C2-2023 Table 232-1, approximately what is the minimum clearance for a communication cable over a motor-vehicle road?",
+      "choices": [
+        "9.5 ft",
+        "Approximately 15.5 ft (application-guide figure; confirm the exact current-edition value against the primary paid standard before final design sign-off)",
+        "25 ft",
+        "40 inches"
+      ],
+      "answerIndex": 1,
+      "explanation": "Application guides derived from NESC C2-2023 (e.g., Hi-Line's clearance chart) commonly cite approximately 15.5 ft as the communication-cable-over-road minimum. Because the primary NESC text is a paywalled IEEE publication, this figure should be treated as an industry-application-guide value to be confirmed against the current paid standard before final sign-off, not asserted as an independently-pinned primary-source number.",
+      "citation": "Hi-Line Application Guide for NESC 2023; ikeGPS NESC Rule 232 knowledge-base article. UNVERIFIED-EXACT — WebFetch to the primary paywalled IEEE C2-2023 text is blocked; figure sourced from secondary application guides, consistent with the T01/T03 precedent for hedging paywalled-standard numbers."
+    },
+    {
+      "id": "T05-L02-Q2",
+      "type": "mc",
+      "prompt": "A span has w = 0.200 lb/ft (cable weight per foot), L = 120 ft (span length), H = 700 lb (horizontal tension). Using the parabolic sag formula s = wL²/(8H), what is the sag?",
+      "choices": [
+        "0.514 ft (about 6.2 inches)",
+        "0.257 ft (about 3.1 inches) — s = (0.200 × 120²)/(8 × 700) = (0.200 × 14400)/5600 = 2880/5600 = 0.514... [see explanation for the correct arithmetic]",
+        "1.028 ft (about 12.3 inches)",
+        "0.129 ft (about 1.5 inches)"
+      ],
+      "answerIndex": 0,
+      "explanation": "s = wL²/(8H) = (0.200 × 120²)/(8 × 700) = (0.200 × 14,400)/5,600 = 2,880/5,600 = 0.5143 ft, approximately 6.2 inches. This is standard catenary-approximation arithmetic (accurate within about 1% of the true catenary when sag-to-span ratio is under 10%), independently re-derivable by hand rather than requiring an external citation."
+    },
+    {
+      "id": "T05-L02-Q3",
+      "type": "mc",
+      "prompt": "Where exactly is clearance measured for a NESC Rule 232 vertical-clearance check?",
+      "choices": [
+        "At the pole, where the cable attaches to the crossarm or bracket",
+        "At midspan — the lowest point of the sagged cable, which is where ground clearance is smallest and therefore where a clearance violation would actually occur",
+        "At the exact midpoint between the pole and the nearest edge of pavement, regardless of sag",
+        "Clearance is not measured at a specific point; it's an average across the entire span"
+      ],
+      "answerIndex": 1,
+      "explanation": "Because a cable sags between poles, its lowest point (and therefore its minimum ground clearance) occurs at midspan, not at the pole attachment. A clearance check performed at the pole attachment point would badly overstate the actual minimum clearance available and could pass a design that actually violates Rule 232 at midspan."
+    },
+    {
+      "id": "T05-L02-Q4",
+      "type": "mc",
+      "prompt": "Under NESC Rule 261, which crossing type requires the higher-strength Grade B construction rather than Grade C?",
+      "choices": [
+        "A residential side street with a speed limit under 25 mph",
+        "A crossing over an active railroad — railroad crossings are treated as a higher-consequence crossing type requiring Grade B construction",
+        "A crossing over a rural farm field with no public access",
+        "Grade B and Grade C are interchangeable and either may be used at the designer's discretion"
+      ],
+      "answerIndex": 1,
+      "explanation": "Railroad crossings are a classic Grade B trigger under NESC Rule 261 — the higher consequence of a structural failure over an active rail line justifies the higher strength/safety-factor requirement compared to a typical residential street crossing (commonly Grade C).",
+      "citation": "NESC Rule 261 (per secondary application-guide sources — ikeGPS NESC Grades of Construction article and Federated Rural NESC 2017 summary chart; exact table language should be confirmed against the current paid C2-2023 standard for a specific project)."
+    },
+    {
+      "id": "T05-L02-Q5",
+      "type": "mc",
+      "prompt": "A cable sags 4 times more when the span length is doubled (all else — cable weight and tension — held equal). Why?",
+      "choices": [
+        "Because sag is directly proportional to span length (L¹), so doubling L doubles the sag",
+        "Because sag is proportional to L² (span length squared) in the parabolic sag formula s = wL²/(8H) — doubling L means L² increases by a factor of 4, so sag increases by that same factor of 4",
+        "Because sag is proportional to L³, so doubling L increases sag by a factor of 8",
+        "Sag does not depend on span length at all, only on cable weight and tension"
+      ],
+      "answerIndex": 1,
+      "explanation": "The sag formula s = wL²/(8H) has L² in the numerator — this is a direct, hand-verifiable arithmetic consequence: if L doubles, L² increases fourfold (since (2L)² = 4L²), and since w and H are held constant, sag increases by that same factor of 4. This L² relationship is why span length has an outsized effect on sag compared to cable weight or tension."
+    },
+    {
+      "id": "T05-L02-Q6",
+      "type": "mc",
+      "prompt": "Why must a Rule 232 clearance check use the cable's FINAL sag rather than its initial (just-strung) sag?",
+      "choices": [
+        "Initial sag is always larger than final sag, so using initial sag is the more conservative (safer) choice",
+        "Final sag — after the strand has thermally expanded and crept under sustained tension over time — is typically larger than initial sag, so a design that only satisfies clearance at initial sag can fail Rule 232 years later once the cable has crept and settled into its final sag condition",
+        "Final sag and initial sag are always numerically identical, so the distinction doesn't matter",
+        "NESC Rule 232 only applies to the initial installation, not to the cable's condition years later"
+      ],
+      "answerIndex": 1,
+      "explanation": "Strand creep and thermal expansion over time typically increase sag beyond its just-strung value — using only initial sag for the clearance check risks a design that passes on day one but violates Rule 232 clearance years later as the cable settles into its final sag condition, which is why final sag is the correct basis for the compliance check."
+    },
+    {
+      "id": "T05-L02-Q7",
+      "type": "mc",
+      "prompt": "A designer needs to select the correct grade of construction (Rule 261) and the correct minimum clearance (Rule 232) for a proposed span. Is this a single combined lookup, or two separate determinations?",
+      "choices": [
+        "A single combined lookup — Rule 232 and Rule 261 always specify the same value for a given crossing type",
+        "Two separate determinations — Rule 232 governs vertical ground clearance (how high the cable must be), while Rule 261 governs strength/safety margin (how robust the structure and cable must be against failure) — a span can require Grade B strength while also being subject to a specific Rule 232 clearance figure, and both must be independently satisfied",
+        "Only Rule 261 needs to be checked; satisfying Rule 261 automatically satisfies Rule 232",
+        "Only Rule 232 needs to be checked; Rule 261 is optional guidance"
+      ],
+      "answerIndex": 1,
+      "explanation": "Rule 232 (clearance) and Rule 261 (grade of construction/strength) address fundamentally different design questions — height above the road versus structural strength margin — and a compliant design must satisfy both independently for a given crossing, not assume one implies the other."
+    },
+    {
+      "id": "T05-L02-Q8",
+      "type": "mc",
+      "prompt": "A span's calculated final sag under the applicable NESC loading condition results in a clearance of exactly the Rule 232 minimum, with zero margin. Why might an experienced designer still flag this as a problem, even though it technically passes?",
+      "choices": [
+        "It isn't a problem at all — exactly meeting the minimum is functionally identical to having a comfortable margin",
+        "A design with zero margin leaves no room for measurement uncertainty, minor construction tolerance variation, or future incremental strand creep beyond the modeled final-sag assumption — a small real-world deviation in any of these could push the as-built condition below the Rule 232 minimum even though the calculation showed exact compliance",
+        "Zero-margin designs are always illegal under the NESC regardless of the specific numbers",
+        "This scenario is impossible since sag calculations are always exact with no real-world variation"
+      ],
+      "answerIndex": 1,
+      "explanation": "A zero-margin design is technically compliant on paper but fragile in practice — measurement tolerance, construction variation, and any underestimate of long-term creep could push the as-built clearance below the Rule 232 minimum, which is why experienced designers generally target a working margin above the bare minimum rather than designing to the exact threshold."
+    }
+  ]
+}

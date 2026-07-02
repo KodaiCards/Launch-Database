@@ -1,0 +1,118 @@
+{
+  "assessmentId": "T05-L05",
+  "kind": "lesson",
+  "courseId": "T05",
+  "lessonId": "T05.L05",
+  "drawCount": 4,
+  "passThreshold": 70,
+  "pool": [
+    {
+      "id": "T05-L05-Q1",
+      "type": "mc",
+      "prompt": "A running pole has a cable with wind span of 150 ft, strand OD = 0.5 in, in the Light loading district (9 psf wind pressure). Using F_wind = wind pressure × cable OD (ft) × wind span, what is the wind force contributed by this cable to the pole? (0.5 in = 0.0417 ft)",
+      "choices": [
+        "9 lb",
+        "56.25 lb",
+        "9 psf × 0.0417 ft × 150 ft = 56.3 lb",
+        "0.375 lb"
+      ],
+      "answerIndex": 2,
+      "explanation": "F_wind = 9 psf × 0.0417 ft × 150 ft = 56.3 lb (choice C states the calculation explicitly and matches this result — 9 × 0.0417 = 0.375 lb/ft, × 150 ft = 56.3 lb). This is standard wind-load arithmetic on stated inputs, independently re-derivable by hand."
+    },
+    {
+      "id": "T05-L05-Q2",
+      "type": "mc",
+      "prompt": "For a running pole with a 200-ft span on the left and a 100-ft span on the right, what is the wind span used for the pole's wind-load calculation?",
+      "choices": [
+        "300 ft (the sum of both spans)",
+        "150 ft — (200/2) + (100/2) = 100 + 50 = 150 ft, since wind span is the average of the adjacent half-spans on each side of the pole",
+        "100 ft (the shorter of the two spans)",
+        "200 ft (the longer of the two spans)"
+      ],
+      "answerIndex": 1,
+      "explanation": "Wind span is calculated as half of each adjacent span, summed: (200/2) + (100/2) = 100 + 50 = 150 ft. This reflects that each pole carries the wind load from half the span on either side of it — standard structural-loading arithmetic, independently re-derivable."
+    },
+    {
+      "id": "T05-L05-Q3",
+      "type": "mc",
+      "prompt": "Why does a dead-end pole typically require a larger pole class than a running pole carrying the same cables over the same span lengths?",
+      "choices": [
+        "Dead-end poles are always placed at higher elevations, increasing the wind load",
+        "A dead-end pole must resist the full unbalanced tension of the cable pulling in one direction (the cable terminates there rather than continuing through), while a running pole's cable tension is roughly balanced on both sides — the dead-end condition creates a much larger net horizontal force the pole must resist",
+        "Dead-end poles carry more total cables than running poles by definition",
+        "There is no structural difference between dead-end and running poles; the terminology is purely descriptive"
+      ],
+      "answerIndex": 1,
+      "explanation": "At a running pole, the cable continues through in both directions with roughly balanced tension pulling each way, producing minimal net horizontal force on the pole itself. At a dead-end pole, the cable terminates and its full tension pulls in one direction only, creating a substantial unbalanced horizontal force the pole structure must resist — this is why dead-end poles are structurally more demanding and typically need a larger class or additional support (guying)."
+    },
+    {
+      "id": "T05-L05-Q4",
+      "type": "drag-match",
+      "prompt": "Match each force type acting on a pole to its primary source.",
+      "items": [
+        { "id": "i_wind", "label": "Wind pressure × cable OD × wind span" },
+        { "id": "i_gravity", "label": "Cable weight per foot × weight span" },
+        { "id": "i_deadend", "label": "Full unbalanced cable tension pulling in one direction" }
+      ],
+      "targets": [
+        { "id": "t_wind", "label": "Horizontal wind force" },
+        { "id": "t_gravity", "label": "Vertical gravity force" },
+        { "id": "t_deadend", "label": "Dead-end tension force" }
+      ],
+      "correctMap": { "t_wind": "i_wind", "t_gravity": "i_gravity", "t_deadend": "i_deadend" },
+      "explanation": "A pole must resist several distinct force types simultaneously: horizontal wind force (driven by wind pressure acting on the cable's cross-sectional area over the wind span), vertical gravity force (the cable's weight pulling straight down over the weight span), and — at dead-end poles specifically — an additional unbalanced tension force from the cable terminating in one direction."
+    },
+    {
+      "id": "T05-L05-Q5",
+      "type": "mc",
+      "prompt": "A pole carries three separate cables (fiber, coax, telephone) at different attachment heights. How does the total wind load on the pole relate to each individual cable's wind load?",
+      "choices": [
+        "Only the highest cable's wind load matters; lower cables are shielded from wind by the pole itself",
+        "The total wind load is the sum of each individual cable's wind force (wind pressure × that cable's OD × its wind span), since each cable independently presents its own cross-sectional area to the wind — a multi-cable pole must account for the cumulative load of every attached cable, not just the largest one",
+        "Wind load only applies to the pole structure itself, never to attached cables",
+        "The total wind load is always identical to the single largest individual cable's wind load, regardless of how many cables are attached"
+      ],
+      "answerIndex": 1,
+      "explanation": "Each cable attached to a pole independently presents its own OD to the wind, contributing its own wind force — the pole's total wind loading calculation must sum the contribution from every attached cable, not just consider the largest one, since a pole with multiple cables genuinely experiences more cumulative wind load than one with a single cable."
+    },
+    {
+      "id": "T05-L05-Q6",
+      "type": "mc",
+      "prompt": "Why does pole loading calculation require BOTH a wind-span figure and a weight-span figure, rather than a single combined 'span' value?",
+      "choices": [
+        "Wind span and weight span are always numerically identical, so using either term is interchangeable",
+        "Wind span (based on horizontal wind force distribution) and weight span (based on vertical gravity load distribution, which can differ when the two adjacent spans and their elevations aren't symmetric) can differ in some configurations — using the correct span type for each force calculation is what makes the pole loading analysis accurate",
+        "Only wind span matters for pole design; weight span is a legacy term with no current use",
+        "Weight span only applies to underground cable installations"
+      ],
+      "answerIndex": 1,
+      "explanation": "Wind span and weight span are conceptually related (both derived from the adjacent span lengths) but can diverge in some configurations, particularly where elevation differences between adjacent spans affect how gravity load is distributed differently from how horizontal wind load is distributed — using the correct span type for each specific force calculation (wind force uses wind span, gravity force uses weight span) is what keeps the loading analysis accurate."
+    },
+    {
+      "id": "T05-L05-Q7",
+      "type": "mc",
+      "prompt": "A designer calculates pole loading for a running pole but forgets to account for the additional dead-end tension force that will actually occur once a planned future dead-end is added at that same pole. What is the risk of using the running-pole-only calculation for the current design?",
+      "choices": [
+        "There is no risk — running-pole and dead-end loading calculations always produce identical results",
+        "The pole may be under-designed for its actual future loading condition — since dead-end tension adds a substantial unbalanced horizontal force beyond what a running-pole calculation accounts for, a pole class selected using only the running-pole assumption could be insufficient once the dead-end condition is actually created, risking a structural deficiency that wasn't caught during design",
+        "The risk only affects the pole's aesthetic appearance, not its structural adequacy",
+        "Dead-end tension only matters for underground conduit, never for pole loading"
+      ],
+      "answerIndex": 1,
+      "explanation": "Since dead-end tension is a materially larger and different force than the balanced tension at a running pole, designing only for the running-pole condition when a future dead-end is planned at that location risks selecting an under-strength pole class — the loading calculation needs to reflect the pole's actual (or planned future) structural role, not just its current configuration."
+    },
+    {
+      "id": "T05-L05-Q8",
+      "type": "mc",
+      "prompt": "For a running pole with a 180-ft span on one side and a 220-ft span on the other, what is the wind span used in the pole's wind-load calculation?",
+      "choices": [
+        "400 ft (the sum of both spans)",
+        "200 ft — (180/2) + (220/2) = 90 + 110 = 200 ft",
+        "180 ft (the shorter span)",
+        "220 ft (the longer span)"
+      ],
+      "answerIndex": 1,
+      "explanation": "Wind span = (180/2) + (220/2) = 90 + 110 = 200 ft, applying the same half-span-summed-on-each-side method used for the 200/100 example — independently re-derivable arithmetic that generalizes regardless of the specific span values."
+    }
+  ]
+}

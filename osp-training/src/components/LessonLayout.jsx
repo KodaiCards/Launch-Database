@@ -39,6 +39,10 @@ const LESSON_TYPE_CONFIG = {
     label: 'Capstone Quiz',
     badge: 'bg-rose-700/30 text-rose-200 border border-rose-400/40',
   },
+  'capstone-review': {
+    label: 'Capstone Review',
+    badge: 'bg-rose-700/30 text-rose-200 border border-rose-400/40',
+  },
   'mock-exam': {
     label: 'Mock Exam',
     badge: 'bg-red-800/30 text-red-200 border border-red-400/40',
@@ -206,6 +210,12 @@ export function LessonLayout({ meta, children }) {
 
   useEffect(() => {
     markSeen?.();
+    // D031: retired capstone-quiz lessons carry no graded interactive of their
+    // own anymore (the topic-final pool is the graded gate) — they complete on
+    // view, like any other reading material.
+    if (meta?.completesOnView) {
+      markComplete?.();
+    }
   }, [meta?.id]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // Called by Quiz (and other primitives) via LessonProgressContext when the
