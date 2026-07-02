@@ -1,0 +1,114 @@
+{
+  "assessmentId": "T05-L14",
+  "kind": "lesson",
+  "courseId": "T05",
+  "lessonId": "T05.L14",
+  "drawCount": 4,
+  "passThreshold": 70,
+  "pool": [
+    {
+      "id": "T05-L14-Q1",
+      "type": "mc",
+      "prompt": "A design package for Macon, GA shows a 200-ft ADSS span over a county road with a calculated final-sag clearance of 16.2 ft (using the correct Light-district wind loading). The NESC Rule 232 minimum for the road crossing is approximately 15.5 ft. The design margin is 0.7 ft. What is the correct QA verdict?",
+      "choices": [
+        "PASS — 16.2 ft exceeds the approximately 15.5 ft minimum, so the design is compliant",
+        "FLAG for insufficient margin — while 16.2 ft technically exceeds the ~15.5 ft minimum, field practice for road crossings calls for at least 1 ft of margin above the minimum (ideally 2 ft) to account for further sag growth over time, field measurement uncertainty, and the gap between calculated and as-built sag; a 0.7 ft margin is thin enough that the cable may drift below the Rule 232 minimum within a few years of creep and thermal cycling",
+        "FAIL — 16.2 ft is below the minimum and the design must be rejected outright",
+        "PASS with no comment needed — margin above the bare minimum is never a QA consideration"
+      ],
+      "answerIndex": 1,
+      "explanation": "This applies the zero-margin design-risk principle (established in T05.L02/L07) at the QA-review level: a design that technically passes the minimum with only 0.7 ft of margin is a real QA concern, not a clean pass, because it leaves too little buffer for further creep, thermal cycling, and measurement uncertainty — the correct QA action is to flag it for a larger margin, not to simply check the pass/fail box."
+    },
+    {
+      "id": "T05-L14-Q2",
+      "type": "mc",
+      "prompt": "During a QA review, a span crosses a seasonal drainage channel that connects to a navigable river during high-water season. The design labels the crossing Grade C. What is the correct QA comment?",
+      "choices": [
+        "Grade C is correct — since the channel isn't permanently navigable, it doesn't trigger the Grade B navigable-waterway requirement",
+        "Flag for verification before permit filing — Rule 261's navigable-waterway Grade B trigger can apply to a waterway that is only seasonally navigable, and the actual determination of 'navigable' status is made by the applicable AHJ (which could be a state waterway authority, USACE, or the state public utility commission), not by the designer's own assumption — the design should not proceed on an unverified Grade C assumption for this crossing",
+        "No comment needed — grade of construction is purely at the designer's discretion",
+        "Automatically upgrade to Grade B without any AHJ verification, just to be safe"
+      ],
+      "answerIndex": 1,
+      "explanation": "The key QA principle here is that the designer's own Grade C assumption for an ambiguous navigability case is exactly the kind of determination that should be routed to the appropriate AHJ rather than made unilaterally — the same document/flag/route pattern established across multiple topics in this training (T04's site-walk pattern, T09's wetland-ambiguity pattern) applies directly to this NESC grade-of-construction ambiguity."
+    },
+    {
+      "id": "T05-L14-Q3",
+      "type": "mc",
+      "prompt": "A QA check finds a route uses poles from two different owners — a local electric co-op (80% of poles) and an ILEC (20% of poles). The design package includes an executed ILA with the electric co-op only. What is the QA status for the ILEC-owned section?",
+      "choices": [
+        "PASS for the entire route — the electric co-op's ILA, since they own the majority of poles, extends to cover the ILEC's poles as well",
+        "FAIL for the ILEC section specifically — an ILA is specific to its signing pole owner (per T05.L08); the co-op's ILA does not extend to the ILEC's poles, and without a separate executed ILA with the ILEC, no attachment application can be filed on their poles — the design team needs to begin ILA negotiation with the ILEC, which can take weeks to months and may affect project schedule and route design",
+        "PASS for the entire route — since the ILEC only owns a minority (20%) of poles, their agreement is not legally required",
+        "The route must be redesigned entirely underground to avoid the multi-owner ILA requirement"
+      ],
+      "answerIndex": 1,
+      "explanation": "This directly applies the T05.L08 principle that an ILA is specific to its signing pole owner — a route crossing multiple pole-owner territories needs a separate agreement with EACH owner, and a QA reviewer who only checks 'is there an ILA on file' without verifying it covers ALL the relevant pole owners would miss exactly this kind of gap, which has a real schedule impact since ILA negotiation can take weeks to months."
+    },
+    {
+      "id": "T05-L14-Q4",
+      "type": "mc",
+      "prompt": "Clearance calculations must use final sag rather than initial sag to ensure the cable will still meet NESC Rule 232 clearance requirements. Why does final sag matter specifically for a QA reviewer checking a design package?",
+      "choices": [
+        "It doesn't matter for QA — checking initial sag alone is sufficient since it's always the more conservative figure",
+        "Because final sag — after thermal elongation and creep under sustained tension — is typically larger than initial (just-strung) sag, a QA reviewer who sees a design based only on initial sag calculations should flag it as incomplete: a design that shows adequate clearance on installation day using initial sag could still violate Rule 232 within 2-5 years as the cable settles into its final sag condition",
+        "Final sag and initial sag are always numerically identical for any cable type",
+        "Final sag only applies to underground cable, never to aerial cable"
+      ],
+      "answerIndex": 1,
+      "explanation": "This is a specific, checkable QA item: a reviewer should verify the submitted calculation explicitly used final (not just initial) sag, since a design based only on initial sag could pass an installation-day check while still being on track to violate clearance a few years later as the cable creeps and thermally expands — catching this at the QA stage is far cheaper than discovering a field clearance violation years after construction."
+    },
+    {
+      "id": "T05-L14-Q5",
+      "type": "mc",
+      "prompt": "You're doing QA on an ADSS design. The cable has RTS = 3,000 lb. The design specifies stringing tension H = 900 lb. Is this within the acceptable EDS range?",
+      "choices": [
+        "Yes — 900 lb is a reasonable tension for a 3,000 lb RTS cable and requires no further comment",
+        "No — EDS = H/RTS = 900/3,000 = 30%, which EXCEEDS the typical 16-25% EDS range; the design should be flagged to reduce stringing tension into the manufacturer's specified range (e.g., 20% EDS would be 0.20 × 3,000 = 600 lb) to avoid mechanically stressing the fiber",
+        "Yes — any tension below the full RTS is automatically acceptable regardless of the specific percentage",
+        "No — the tension is too LOW, not too high, and should be increased"
+      ],
+      "answerIndex": 1,
+      "explanation": "EDS = H/RTS = 900/3,000 = 0.30 = 30%, exceeding the typical 16-25% EDS convention discussed in T05.L10 — a QA reviewer applying this same arithmetic check should flag the design and recommend a corrected stringing tension (e.g., 600 lb for 20% EDS) rather than accepting the as-submitted 900 lb figure."
+    },
+    {
+      "id": "T05-L14-Q6",
+      "type": "mc",
+      "prompt": "What is the common thread across the five QA findings covered in this lesson (thin clearance margin, unverified Grade C assumption, incomplete multi-owner ILA coverage, initial-vs-final sag, and out-of-range EDS)?",
+      "choices": [
+        "There is no common thread; each finding is an unrelated, isolated technical detail",
+        "In each case, a design that appears to 'pass' at a surface level (a number that's technically above/below a threshold, a document that's technically on file) actually has a substantive gap once checked against the FULL applicable standard or scope — a competent QA process must verify substantive correctness and completeness, not just the presence of a passing-looking number or document",
+        "All five findings only apply to ADSS cable specifically, never to other cable types",
+        "All five findings are exclusively cost-related, with no engineering-compliance dimension"
+      ],
+      "answerIndex": 1,
+      "explanation": "This is the QA-checklist lesson's core teaching point, echoed from similar QA/gap-analysis principles across the course (T09's gap-analysis lessons, T05.L04's grade-of-construction QA note): a shallow QA check that only verifies a field is populated or a number clears a threshold can miss substantive problems that a deeper, standard-aware review would catch — genuine QA requires checking correctness against the full applicable requirement, not just surface-level presence."
+    },
+    {
+      "id": "T05-L14-Q7",
+      "type": "mc",
+      "prompt": "A QA reviewer, pressed for time, decides to skip verifying the ILA coverage for a multi-pole-owner route since 'the design package includes an ILA, so that box is checked.' What risk does this shortcut create?",
+      "choices": [
+        "No risk — the mere presence of an ILA document in the package is sufficient regardless of which poles it actually covers",
+        "The risk that a portion of the route (here, the ILEC's 20% of poles) has NO valid attachment authority at all, since the on-file ILA only covers the co-op's poles — this gap wouldn't be caught by a shortcut 'is there an ILA' check, only by verifying the ILA's actual scope matches every pole owner along the route",
+        "The risk only affects billing, never construction authorization",
+        "This shortcut is always safe as long as the majority pole owner's ILA is present"
+      ],
+      "answerIndex": 1,
+      "explanation": "This reinforces Q3's specific finding at the QA-process level: a shortcut check that only confirms a document's presence (rather than its actual scope/coverage) can miss a real gap — here, an entire pole-owner's worth of the route with no valid attachment authority — which is exactly the kind of substantive gap the Q6 principle warns against."
+    },
+    {
+      "id": "T05-L14-Q8",
+      "type": "mc",
+      "prompt": "A design package shows a calculated EDS of 22% for an ADSS span (within the 16-25% range) but the QA reviewer notices the calculation used the cable's nominal RTS rating rather than the RTS figure from the specific manufacturer's datasheet for the exact cable model specified. Why does this distinction matter?",
+      "choices": [
+        "It doesn't matter — RTS is a universal constant identical across all ADSS cable models and manufacturers",
+        "Because RTS varies by specific cable model and manufacturer (different fiber counts, strength member designs, and constructions have different RTS ratings), using a generic 'nominal' RTS instead of the actual specified cable's datasheet RTS could produce an EDS calculation that looks compliant but is based on the wrong denominator — the QA reviewer should verify the RTS figure traces to the actual specified product's datasheet, not a generic assumption",
+        "RTS only matters for OPGW cable, never for ADSS",
+        "This distinction only matters if the span crosses a Grade B waterway"
+      ],
+      "answerIndex": 1,
+      "explanation": "This extends the Q5/Q6 principle one level deeper: even a seemingly correct EDS calculation (22%, within range) could be built on an incorrect input if the RTS figure doesn't actually trace back to the specified cable model's real datasheet — a thorough QA check verifies not just that the formula was applied, but that every input to the formula is the correct, traceable value for the actual specified product."
+    }
+  ]
+}

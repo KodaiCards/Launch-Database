@@ -1,0 +1,120 @@
+{
+  "assessmentId": "T05-L12",
+  "kind": "lesson",
+  "courseId": "T05",
+  "lessonId": "T05.L12",
+  "drawCount": 4,
+  "passThreshold": 70,
+  "pool": [
+    {
+      "id": "T05-L12-Q1",
+      "type": "mc",
+      "prompt": "Why is PON (Passive Optical Network) called a 'passive' optical network?",
+      "choices": [
+        "The fiber itself is passive — it carries light without emitting any, which is true of all fiber but doesn't describe PON specifically",
+        "The optical splitters distributing signal from the OLT to multiple ONTs are purely passive components (no power, no active electronics) — light is simply split by passive optics, unlike an active Ethernet topology that requires powered switches at intermediate points",
+        "PON networks require no maintenance whatsoever once installed",
+        "PON only carries passive video content, never active data services"
+      ],
+      "answerIndex": 1,
+      "explanation": "PON's defining architectural feature is that the splitting points between the OLT and multiple ONTs use purely passive optical splitters — no powered electronics in the distribution path — in contrast to an active Ethernet architecture, which requires powered switches at intermediate points. This is why PON avoids the cost and maintenance burden of powering and maintaining field electronics between the OLT and the customer."
+    },
+    {
+      "id": "T05-L12-Q2",
+      "type": "mc",
+      "prompt": "A 1:32 PLC splitter has approximately 17 dB of insertion loss. Approximately how much insertion loss does a 1:64 PLC splitter have?",
+      "choices": [
+        "8.5 dB (half of 17 dB, since twice the ports)",
+        "Approximately 20.5 dB — insertion loss increases by roughly 3 dB per doubling of the split ratio (a logarithmic, not linear, relationship), so 1:64 adds roughly 3.5 dB over the 1:32 figure",
+        "34 dB (double the 1:32 figure, since twice the ports)",
+        "17 dB (unchanged, since PLC splitter loss doesn't depend on split ratio)"
+      ],
+      "answerIndex": 1,
+      "explanation": "PLC splitter loss follows an approximately logarithmic (dB) relationship with split ratio, not a linear one — doubling the number of output ports adds roughly 3 dB of insertion loss, not double the dB figure. A 1:32 splitter at ~17 dB and a 1:64 splitter at ~20.5 dB reflects this ~3.5 dB step, consistent with published industry splitter-loss tables.",
+      "citation": "Industry-standard PLC splitter insertion-loss tables (multiple independent vendor/technical sources: 1:32 ≈ 17.0 dB, 1:64 ≈ 20.5 dB), WebSearch-verified this session."
+    },
+    {
+      "id": "T05-L12-Q3",
+      "type": "mc",
+      "prompt": "Using a worked example: feeder = 1.5 mi, drop = 0.3 mi, G.652.D fiber at 0.40 dB/km, 3 connector pairs at 0.75 dB each, and a 1:32 splitter at 17 dB (GPON Class B+ budget = 28 dB), what is the total ODN (Optical Distribution Network) loss, and does it fit the budget?",
+      "choices": [
+        "Approximately 14.5 dB total — fits comfortably within the 28 dB budget",
+        "Approximately 22.4 dB total — [1.5 mi + 0.3 mi = 1.8 mi ≈ 2.90 km fiber, × 0.40 dB/km ≈ 1.16 dB] + [3 × 0.75 dB = 2.25 dB connector loss] + [17 dB splitter loss] ≈ 20.4 dB, plus margin/splice allowance brings it close to but within the 28 dB Class B+ budget — fits, with meaningful but not excessive margin",
+        "Approximately 35 dB total — exceeds the 28 dB budget and would fail acceptance testing",
+        "Approximately 45 dB total — dramatically exceeds any GPON class budget"
+      ],
+      "answerIndex": 1,
+      "explanation": "Summing the loss contributors: fiber loss (~1.8 mi ≈ 2.9 km × 0.40 dB/km ≈ 1.16 dB) + connector loss (3 × 0.75 dB = 2.25 dB) + splitter loss (17 dB) totals approximately 20.4 dB before splice margin — well under the 28 dB GPON Class B+ budget, with headroom remaining for splice losses and aging margin, confirming the design is viable under this budget class."
+    },
+    {
+      "id": "T05-L12-Q4",
+      "type": "mc",
+      "prompt": "GPON, defined by ITU-T standard G.984, delivers what downstream and upstream data rates?",
+      "choices": [
+        "1 Gbps downstream / 1 Gbps upstream (symmetric)",
+        "2.488 Gbps downstream / 1.244 Gbps upstream — an asymmetric design, with downstream typically at 1490 nm and upstream at 1310 nm",
+        "10 Gbps downstream / 10 Gbps upstream (symmetric)",
+        "100 Mbps downstream / 100 Mbps upstream"
+      ],
+      "answerIndex": 1,
+      "explanation": "ITU-T G.984 (GPON) specifies an asymmetric rate of 2.488 Gbps downstream and 1.244 Gbps upstream — the higher downstream rate reflects typical residential traffic patterns (more download than upload), and the two directions use different wavelengths (1490 nm downstream, 1310 nm upstream) to share the same fiber.",
+      "citation": "ITU-T G.984 / G.984.2 Amendment 1 — 'Industry best practice for 2.488 Gbit/s downstream, 1.244 Gbit/s upstream G-PON,' confirmed via WebSearch (itu.int recommendation page + multiple independent GPON technical references)."
+    },
+    {
+      "id": "T05-L12-Q5",
+      "type": "mc",
+      "prompt": "You need to place a Fiber Distribution Hub (FDH) to serve 32 homes spread across a neighborhood, using a 1:32 passive splitter housed in the FDH. What cable segment runs FROM the OLT TO the FDH?",
+      "choices": [
+        "Distribution fiber — a 32-strand cable serving individual homes directly from the OLT",
+        "Feeder fiber — the trunk segment carrying the PON signal from the OLT/central office out to the FDH, where the passive splitter then divides the single feeder strand's signal to serve the 32 downstream drop connections",
+        "Drop cable — the same cable type used for the final home connection",
+        "OPGW — since it needs to carry high-capacity backbone traffic"
+      ],
+      "answerIndex": 1,
+      "explanation": "Feeder fiber is the trunk segment carrying the PON signal from the OLT out to the splitter location (here, the FDH) — the splitting into 32 individual paths happens AT the FDH via the passive splitter, after which distribution/drop cables carry the split signal onward to individual homes. Understanding this hierarchy (feeder → splitter → distribution/drop) is fundamental to PON topology design."
+    },
+    {
+      "id": "T05-L12-Q6",
+      "type": "mc",
+      "prompt": "Why does the choice between a 1:32 and a 1:64 splitter matter for a design's optical loss budget, beyond simply serving more or fewer homes?",
+      "choices": [
+        "It doesn't matter for the loss budget — splitter loss is identical regardless of split ratio",
+        "A 1:64 splitter burns roughly 3.5 dB more of the total optical budget than a 1:32 splitter (20.5 dB vs 17 dB) — since the GPON budget class (e.g., Class B+ at 28 dB) is fixed, choosing the higher split ratio to serve more homes per FDH leaves proportionally less budget remaining for fiber length, connector loss, and splice/aging margin, which can constrain how far the FDH can be from the OLT or how many splices the route can tolerate",
+        "A 1:64 splitter always requires active power, unlike a 1:32 splitter",
+        "The splitter choice only affects upstream traffic, never downstream"
+      ],
+      "answerIndex": 1,
+      "explanation": "Because splitter loss scales with the split ratio and the overall GPON budget class is fixed, a higher-split-ratio choice (1:64 vs 1:32) directly trades off against the remaining budget available for everything else in the link (fiber length, connectors, splices, aging margin) — a design serving more homes per FDH via a higher split ratio has less room for a long feeder run or many splices, which is a real design tradeoff, not just a homes-served decision."
+    },
+    {
+      "id": "T05-L12-Q7",
+      "type": "mc",
+      "prompt": "A design calculates total ODN loss at 26.5 dB against a GPON Class B+ budget of 28 dB — a margin of only 1.5 dB. What is the practical concern with this design, even though it technically passes?",
+      "choices": [
+        "There is no concern; passing the budget calculation at any margin is equally acceptable",
+        "A thin margin (1.5 dB) leaves little room for real-world variables not fully captured in the initial calculation — connector degradation over time, splice quality variation, or a future splice added for a repair — any of which could push the actual as-built loss above the budget and cause link failure, echoing the same zero-margin design risk discussed for NESC clearance in T05.L02",
+        "A 1.5 dB margin is actually excessive and indicates the design is over-engineered",
+        "GPON links have no aging or degradation considerations, so margin is irrelevant"
+      ],
+      "answerIndex": 1,
+      "explanation": "This mirrors the T05.L02 zero-margin clearance-design principle applied to optical loss budgets: a thin margin doesn't account for real-world variation (connector wear, splice quality, future repair splices) that a pure calculation might not fully capture — a design with more comfortable margin is more resilient to these real-world factors than one that just barely clears the budget threshold on paper."
+    },
+    {
+      "id": "T05-L12-Q8",
+      "type": "drag-match",
+      "prompt": "Match each PON/FTTH cable segment to its role in the topology.",
+      "items": [
+        { "id": "i_feeder", "label": "Trunk segment from the OLT/CO out to the splitter location (e.g., an FDH)" },
+        { "id": "i_dist", "label": "Segment from the splitter toward a smaller serving area (e.g., a neighborhood cluster)" },
+        { "id": "i_drop", "label": "Final segment connecting an individual home to the network" }
+      ],
+      "targets": [
+        { "id": "t_feeder", "label": "Feeder fiber" },
+        { "id": "t_dist", "label": "Distribution fiber" },
+        { "id": "t_drop", "label": "Drop cable" }
+      ],
+      "correctMap": { "t_feeder": "i_feeder", "t_dist": "i_dist", "t_drop": "i_drop" },
+      "explanation": "The PON/FTTH topology hierarchy runs feeder (OLT to splitter) -> distribution (splitter toward the serving area) -> drop (final home connection) — each segment serves a distinct architectural role, and understanding this hierarchy is fundamental to correctly designing an FTTH network's physical layout and loss budget allocation."
+    }
+  ]
+}
