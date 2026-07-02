@@ -1,0 +1,120 @@
+{
+  "assessmentId": "T09-L07",
+  "kind": "lesson",
+  "courseId": "T09",
+  "lessonId": "T09.L07",
+  "drawCount": 4,
+  "passThreshold": 70,
+  "pool": [
+    {
+      "id": "T09-L07-Q1",
+      "type": "mc",
+      "prompt": "Which access instrument is generally considered the strongest choice for long-term fiber routes across private property because it is recorded and binds future owners?",
+      "choices": [
+        "License",
+        "Express easement",
+        "Prescriptive easement",
+        "Fee-simple acquisition"
+      ],
+      "answerIndex": 1,
+      "explanation": "A recorded express easement is written, signed, notarized, and filed at the county recorder's office (or equivalent local office), making it part of the public land record. It 'runs with the land' — binding future owners even if they were unaware of it at purchase — which gives the fiber company the long-term route security a revocable license cannot provide."
+    },
+    {
+      "id": "T09-L07-Q2",
+      "type": "mc",
+      "prompt": "A crew finds an existing cable on a route with no recorded easement documentation, apparently relying on decades of historical use. What makes this kind of unrecorded, use-based claim (a prescriptive easement) risky to rely on?",
+      "choices": [
+        "Prescriptive easements are illegal in every state",
+        "Because it was never formally recorded and depends on historical continuous use, a prescriptive easement claim may not hold up if the property changed hands, if the use was interrupted, or if the specific state's statutory requirements for establishing one were not clearly met — unlike a recorded express easement, there is no public-record proof of the right",
+        "Prescriptive easements automatically expire after exactly 5 years in every jurisdiction",
+        "Prescriptive easements require an upfront payment to the county to be valid"
+      ],
+      "answerIndex": 1,
+      "explanation": "A prescriptive easement is a use-based, unrecorded claim to continue an established pattern of use — its legal strength depends on satisfying a specific state's statutory requirements (duration, continuity, openness of use) and can be disputed by a new owner unaware of and unbound by any recorded instrument, which is precisely why it's a weaker foundation for a permanent OSP route than a recorded express easement."
+    },
+    {
+      "id": "T09-L07-Q3",
+      "type": "mc",
+      "prompt": "What is the critical legal difference between an easement and a license as access instruments for fiber routes?",
+      "choices": [
+        "An easement is personal and revocable; a license runs with the land",
+        "A license is recorded in the public record; an easement is not",
+        "A properly recorded easement runs with the land and survives a property sale, binding future owners; a license is typically personal to the current owner and revocable at their discretion",
+        "There is no meaningful legal difference between the two"
+      ],
+      "answerIndex": 2,
+      "explanation": "This is the core distinction the lesson establishes: a recorded easement runs with the land (survives ownership changes, binds successors), while a license is a personal, generally revocable permission granted by the current owner — which is why a license offers far weaker long-term route security for permanent OSP infrastructure."
+    },
+    {
+      "id": "T09-L07-Q4",
+      "type": "mc",
+      "prompt": "When is fee-simple acquisition (outright land purchase) typically the appropriate access instrument in OSP projects, rather than an easement?",
+      "choices": [
+        "For all linear route right-of-way, because it always provides maximum security",
+        "For discrete facility sites — fiber huts, equipment buildings, splice vaults — where the fiber company needs exclusive control of a specific parcel, rather than for the long linear corridor a route traverses",
+        "Fee-simple acquisition is never a valid access instrument for OSP projects",
+        "Only for temporary construction staging areas, never for permanent facilities"
+      ],
+      "answerIndex": 1,
+      "explanation": "Fee-simple acquisition (full ownership) makes practical and economic sense for a discrete facility site requiring exclusive control (a hut, equipment building, or splice vault) but is generally impractical for the long linear corridor of a fiber route, where an easement (which grants only the specific right needed, not full ownership of the underlying land) is the standard instrument."
+    },
+    {
+      "id": "T09-L07-Q5",
+      "type": "mc",
+      "prompt": "What does it mean, in practical terms, for an easement to 'run with the land'?",
+      "choices": [
+        "The easement must be physically located along a public road",
+        "The easement survives a sale of the property and continues to bind whoever owns the property next, on the same terms, even if the new owner did not personally negotiate or sign it",
+        "The easement automatically expires the moment the current property owner sells",
+        "The easement requires renewal by the new owner every year to remain valid"
+      ],
+      "answerIndex": 1,
+      "explanation": "'Runs with the land' is the defining feature that gives a recorded easement its long-term value for infrastructure: the right attaches to the property itself (not to the specific original grantor), so a subsequent buyer is legally bound by the same terms even without personally negotiating them — this is what protects a fiber company's access decades after the original agreement was signed."
+    },
+    {
+      "id": "T09-L07-Q6",
+      "type": "mc",
+      "prompt": "A fiber company is negotiating access for a 20-mile permanent aerial/underground route across dozens of private parcels. Recording each individual express easement is administratively heavier than using a license for each parcel. Why might the fiber company still choose recorded express easements over licenses across the entire route?",
+      "choices": [
+        "Recording easements is actually always faster and cheaper than negotiating licenses, so there's no real tradeoff",
+        "Because the route is intended as PERMANENT infrastructure, a license's revocability creates an unacceptable long-term risk (any owner along the route could revoke access at any time), while the heavier upfront administrative cost of recording express easements buys durable, binding access that survives every future ownership change along the entire route",
+        "Licenses are illegal for any linear infrastructure project regardless of duration",
+        "The fiber company has no real choice — recording is legally mandatory for any private-property crossing"
+      ],
+      "answerIndex": 1,
+      "explanation": "The tradeoff is upfront administrative cost (recording each easement) versus long-term risk exposure (a license's revocability). For infrastructure explicitly intended to be permanent, the durable and binding nature of a recorded easement — which survives every future sale along the route — outweighs the heavier initial recording effort, since a single revoked license anywhere along a 20-mile route could force a costly reroute."
+    },
+    {
+      "id": "T09-L07-Q7",
+      "type": "mc",
+      "prompt": "A property along a fiber route is sold to a new owner who was never personally consulted and does not recall seeing any agreement about the buried fiber crossing their land. A recorded express easement exists in the county land record for that crossing. Is the new owner bound by it?",
+      "choices": [
+        "No — a new owner is never bound by any agreement they did not personally sign",
+        "Yes — because the easement is recorded and runs with the land, the new owner is legally bound by its terms as a matter of public record, regardless of whether they were personally aware of it at the time of purchase",
+        "Only if the fiber company re-negotiates a brand-new agreement with the new owner",
+        "Only if the new owner personally lived in the county at the time the easement was originally recorded"
+      ],
+      "answerIndex": 1,
+      "explanation": "This is the practical consequence of an easement 'running with the land': because it is filed in the public land record, a buyer is legally charged with constructive notice of it regardless of actual personal awareness — the new owner is bound by the recorded terms without needing a fresh agreement, which is exactly the durability that makes recorded easements the preferred instrument for permanent linear infrastructure."
+    },
+    {
+      "id": "T09-L07-Q8",
+      "type": "drag-match",
+      "prompt": "Match each private-property access instrument to its defining characteristic.",
+      "items": [
+        { "id": "i_express", "label": "Written, signed, notarized, and recorded — runs with the land" },
+        { "id": "i_prescriptive", "label": "Unrecorded, based on historical continuous use — legally uncertain" },
+        { "id": "i_license", "label": "Personal to the current owner and typically revocable" },
+        { "id": "i_feesimple", "label": "Outright ownership — used for discrete facility sites needing exclusive control" }
+      ],
+      "targets": [
+        { "id": "t_express", "label": "Express easement" },
+        { "id": "t_prescriptive", "label": "Prescriptive easement" },
+        { "id": "t_license", "label": "License" },
+        { "id": "t_feesimple", "label": "Fee-simple acquisition" }
+      ],
+      "correctMap": { "t_express": "i_express", "t_prescriptive": "i_prescriptive", "t_license": "i_license", "t_feesimple": "i_feesimple" },
+      "explanation": "The four access instruments sit on a spectrum from weakest to strongest long-term security: a revocable license offers the least durability, a prescriptive easement is unrecorded and legally uncertain, a recorded express easement runs with the land and is the standard choice for permanent linear routes, and fee-simple acquisition (full ownership) is reserved for discrete sites needing exclusive control rather than the linear corridor itself."
+    }
+  ]
+}
