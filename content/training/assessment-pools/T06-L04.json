@@ -57,7 +57,7 @@
       ],
       "answerIndex": 1,
       "explanation": "Jam ratio (conduit ID / cable OD) and fill percentage are two DIFFERENT checks measuring different failure modes — three cables can pass the 40% fill rule comfortably while still landing in the 2.8-3.2 jam-ratio danger zone, where they can wedge into a triangular lock at a bend and stop the pull entirely, which is why a thorough design checks both independently.",
-      "citation": "Jam ratio danger zone approximately 2.8-3.2 (WebSearch-verified: Polywater cable jam ratio technical paper, multiple independent electrical-installation trade references)."
+      "citation": "Jam ratio danger zone approximately 2.8-3.2 (Polywater cable jam ratio technical paper, corroborated by multiple independent electrical-installation trade references)."
     },
     {
       "id": "T06-L04-Q5",

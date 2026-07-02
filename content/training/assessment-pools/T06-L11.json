@@ -31,7 +31,7 @@
       ],
       "answerIndex": 1,
       "explanation": "This directly applies the T06.L08 route-measurement principle: 620+00 to 623+50 is 350 feet of straight-line stationing, but the actual cable ROUTE includes the 30-foot culvert offset, adding roughly 30 feet of real route distance — bringing the total to approximately 380 feet, which exceeds the 330-foot hard maximum (no tolerance) and requires an intermediate pedestal.",
-      "citation": "RUS Bulletin 1751F-643 (\"Underground Plant Design\") Section 7 — CORRECTED citation per the T06 major finding."
+      "citation": "RUS Bulletin 1751F-643 (\"Underground Plant Design\") Section 7."
     },
     {
       "id": "T06-L11-Q3",
@@ -58,7 +58,7 @@
       ],
       "answerIndex": 1,
       "explanation": "The two checks catch fundamentally different classes of errors precisely because of their timing — a design drawing check catches planning-stage errors before excavation begins, while a field inspection is the only way to verify actual as-built conditions (which can diverge from the design), which is why RUS-funded projects require both, not either one alone.",
-      "citation": "RUS Bulletin 1751F-643 (\"Underground Plant Design\") Section 11 — CORRECTED citation per the T06 major finding."
+      "citation": "RUS Bulletin 1751F-643 (\"Underground Plant Design\") Section 11."
     },
     {
       "id": "T06-L11-Q5",

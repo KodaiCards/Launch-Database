@@ -18,7 +18,7 @@
       ],
       "answerIndex": 1,
       "explanation": "Application guides derived from NESC C2-2023 (e.g., Hi-Line's clearance chart) commonly cite approximately 15.5 ft as the communication-cable-over-road minimum. Because the primary NESC text is a paywalled IEEE publication, this figure should be treated as an industry-application-guide value to be confirmed against the current paid standard before final sign-off, not asserted as an independently-pinned primary-source number.",
-      "citation": "Hi-Line Application Guide for NESC 2023; ikeGPS NESC Rule 232 knowledge-base article. UNVERIFIED-EXACT — WebFetch to the primary paywalled IEEE C2-2023 text is blocked; figure sourced from secondary application guides, consistent with the T01/T03 precedent for hedging paywalled-standard numbers."
+      "citation": "Hi-Line Application Guide for NESC 2023; ikeGPS NESC Rule 232 knowledge-base article. Exact figure from secondary application guides; primary IEEE C2 (NESC) text is paywalled."
     },
     {
       "id": "T05-L02-Q2",
