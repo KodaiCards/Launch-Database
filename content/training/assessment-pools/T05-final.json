@@ -1,0 +1,309 @@
+{
+  "assessmentId": "T05-final",
+  "kind": "topic_final",
+  "courseId": "T05",
+  "lessonId": null,
+  "drawCount": 15,
+  "passThreshold": 80,
+  "pool": [
+    {
+      "id": "T05-final-Q1",
+      "type": "mc",
+      "prompt": "The NESC is published by IEEE as document C2 (currently C2-2023). Which four rules form the core skeleton of aerial design covered across this topic, and what does each answer?",
+      "choices": [
+        "Rule 232 (vertical clearance), Rule 235 (comm-to-supply separation), Rule 250 (regional weather loading), Rule 261 (grade of construction/strength) — an aerial design must satisfy all four simultaneously, not just one",
+        "Only Rule 232 matters; the other rule numbers are informal industry shorthand with no independent regulatory weight",
+        "Rule 232, 233, 234, and 235 — four consecutive numbered rules covering only clearance",
+        "Rules 1.1406, 1.1409, 1.1411, and 1.1413 — these are actually FCC rules, not NESC rules"
+      ],
+      "answerIndex": 0,
+      "explanation": "Rules 232/235/250/261 form the core aerial-design checklist established in T05.L01 and applied throughout the topic — clearance, separation, weather loading, and construction grade are independent design dimensions that must each be satisfied, not a single combined check.",
+      "citation": "IEEE C2-2023 (NESC)."
+    },
+    {
+      "id": "T05-final-Q2",
+      "type": "mc",
+      "prompt": "A span has w = 0.200 lb/ft, L = 150 ft, H = 800 lb. Using s = wL²/(8H), calculate the sag, and explain why final (not initial) sag must be used for the NESC Rule 232 compliance check.",
+      "choices": [
+        "s = (0.200 x 150²)/(8 x 800) = 4,500/6,400 = 0.703 ft; final sag must be used because strand creep and thermal expansion over time typically increase sag beyond its just-strung value, so a design that only satisfies clearance at initial sag risks a real violation years later",
+        "s = 0.352 ft; initial sag should be used since it's always the more conservative (larger) figure",
+        "s = 1.406 ft; span length doesn't actually affect sag in the parabolic formula",
+        "s = 0.176 ft; final and initial sag are always numerically identical"
+      ],
+      "answerIndex": 0,
+      "explanation": "s = (0.200 x 150²)/(8 x 800) = (0.200 x 22,500)/6,400 = 4,500/6,400 = 0.703 ft. Final sag (accounting for creep/thermal expansion) is the correct compliance basis because it's typically larger than initial sag — a design based only on initial sag could pass on installation day but violate Rule 232 within a few years as the cable settles into its final condition."
+    },
+    {
+      "id": "T05-final-Q3",
+      "type": "mc",
+      "prompt": "The communication worker safety zone (CWSZ) at a joint-use pole under 8.7 kV is approximately 40 inches, measured at the pole. A pole audit finds 42 inches at the pole, but the neutral sags 10 inches more than the comm cable between poles. What is the actual midspan safety zone, and is it compliant?",
+      "choices": [
+        "42 inches — sag differential between conductors doesn't affect the safety zone measurement",
+        "32 inches (42 - 10 = 32 inches) — NON-compliant, since 32 inches falls below the 40-inch minimum even though the at-pole measurement of 42 inches appeared to pass with margin",
+        "52 inches (42 + 10 = 52 inches) — compliant with extra margin",
+        "The safety zone cannot be determined without knowing the exact pole class"
+      ],
+      "answerIndex": 1,
+      "explanation": "Because the neutral sags 10 inches more than the comm cable, the vertical gap shrinks at midspan: 42 - 10 = 32 inches, below the 40-inch minimum — a violation an at-pole-only check would miss, illustrating why Rule 235 compliance requires checking the full span, not just the pole attachment point.",
+      "citation": "NESC C2-2023 Rule 235C4/238E."
+    },
+    {
+      "id": "T05-final-Q4",
+      "type": "mc",
+      "prompt": "Under Rule 261, which crossing type is a classic trigger for the higher-strength Grade B construction, and what does Section 26 govern in relation to that determination?",
+      "choices": [
+        "Grade B applies to residential streets; Section 26 sets clearance heights, not strength factors",
+        "Grade B applies to higher-consequence crossings like active railroads and navigable waterways; Section 26 provides the numeric load and strength factor matrices that translate a Grade B determination into an actual structural design requirement (larger pole class, more robust hardware)",
+        "Grade B and Grade C are functionally identical; Section 26 is purely archival documentation with no design impact",
+        "Grade B only applies to underground crossings, never aerial spans"
+      ],
+      "answerIndex": 1,
+      "explanation": "Rule 261 determines WHICH grade applies to a given crossing scenario (railroads, navigable waterways, and other higher-consequence crossings trigger Grade B), while Section 26 supplies the numeric strength/load factors that convert that grade determination into a concrete structural design requirement — a compliant design needs both pieces working together.",
+      "citation": "NESC C2-2023 Rule 261 / Section 26 (per secondary application guides; exact table values are in the paywalled primary standard)."
+    },
+    {
+      "id": "T05-final-Q5",
+      "type": "mc",
+      "prompt": "A cable messenger has OD = 0.5 in and is in the Heavy loading district (0.50 in radial ice, 4 psf wind, 0°F). Using w_ice = 1.244 x t x (D+t), what is the ice load per foot, and why does this matter more than the cable's bare weight?",
+      "choices": [
+        "w_ice = 0.311 lb/ft — roughly 3.5x the typical bare cable weight, making it the secondary loading factor",
+        "w_ice = 0.622 lb/ft — roughly 7x a typical bare 6M strand's own weight (~0.088 lb/ft), meaning ice accumulation (not the cable's inherent weight) is the DOMINANT vertical load factor in Heavy-district regions, which is why correctly identifying the applicable loading district matters structurally, not just administratively",
+        "w_ice = 1.244 lb/ft — exactly double the bare cable weight",
+        "Ice load is irrelevant to pole structural design; only wind load matters"
+      ],
+      "answerIndex": 1,
+      "explanation": "w_ice = 1.244 x 0.50 x (0.50+0.50) = 1.244 x 0.50 x 1.00 = 0.622 lb/ft — roughly 7x the bare cable weight, confirming that in Heavy-district regions, ice accumulation (not bare cable weight) dominates the vertical load a pole must be designed to resist."
+    },
+    {
+      "id": "T05-final-Q6",
+      "type": "mc",
+      "prompt": "Macon, GA falls in which NESC loading district, and why does correctly identifying this matter economically, not just for compliance?",
+      "choices": [
+        "Heavy — assuming Heavy-district loading for any southern project is always the safest and most cost-neutral choice",
+        "Light (0 in ice, 9 psf wind, +30°F) — the southeastern US falls in the Light district; assuming a more conservative Heavy-district loading for a Light-district project (like Macon) would unnecessarily inflate pole class and hardware cost without a corresponding safety benefit, since the actual regional weather conditions don't demand it",
+        "Medium — this is the default assumption absent specific regional data",
+        "Extreme Wind — Rule 250C applies to all Georgia projects regardless of structure height"
+      ],
+      "answerIndex": 1,
+      "explanation": "Macon, GA (and the broader southeastern US) falls in the Light loading district — correctly identifying this (rather than defaulting to a more conservative assumption) avoids unnecessarily inflating project cost through over-specified pole class and hardware, since Rule 250C's Extreme Wind overlay is a separate, height-triggered (60 ft+) requirement independent of the base loading district.",
+      "citation": "NESC C2-2023 Rule 250 loading district map."
+    },
+    {
+      "id": "T05-final-Q7",
+      "type": "mc",
+      "prompt": "An ADSS cable has RTS = 4,000 lb. Using the 16-25% EDS-of-RTS industry convention, what is the acceptable stringing tension range, and what happens if the design specifies H = 1,200 lb?",
+      "choices": [
+        "Acceptable range is 640-1,000 lb; H=1,200 lb (30% EDS) EXCEEDS the upper bound, risking fiber microbending/strain and progressive attenuation increase over time — the design should be flagged and corrected to within the manufacturer's specified range",
+        "Acceptable range is 1,000-2,000 lb; H=1,200 lb is well within range and requires no comment",
+        "Acceptable range is 320-500 lb; H=1,200 lb is far too low and risks excessive sag",
+        "There is no defined acceptable range for ADSS stringing tension"
+      ],
+      "answerIndex": 0,
+      "explanation": "Lower bound = 0.16 x 4,000 = 640 lb; upper bound = 0.25 x 4,000 = 1,000 lb. H=1,200 lb gives EDS = 1,200/4,000 = 30%, exceeding the 25% upper bound — this is exactly the kind of over-tension QA finding covered in T05.L14, risking fiber strain/microbending rather than a clearance problem.",
+      "citation": "ADSS manufacturer guidelines (industry-convention EDS/RTS range, reused from T02/T03's hedge on this figure)."
+    },
+    {
+      "id": "T05-final-Q8",
+      "type": "mc",
+      "prompt": "Why is a steel messenger strand not recommended for aerial fiber near 115-kV transmission lines, and how does ADSS solve this specific problem?",
+      "choices": [
+        "Steel strand is simply too heavy; ADSS solves this purely through lighter weight, unrelated to electrical properties",
+        "Steel strand is electrically conductive and can pick up induced voltage from the nearby high-voltage line through electromagnetic induction — a shock hazard and grounding complication; ADSS's all-dielectric (non-conductive) construction eliminates this hazard entirely by using no conductive strength member",
+        "Steel strand cannot physically support any cable weight near transmission lines",
+        "There is no actual difference between steel messenger and ADSS in this context"
+      ],
+      "answerIndex": 1,
+      "explanation": "The hazard is specifically electrical: a conductive steel messenger near high-voltage lines can develop induced voltages through electromagnetic induction, while ADSS's all-dielectric construction has no conductive path to pick up that induced voltage — this is why ADSS, not steel-strand-supported cable, is the standard choice near high-voltage transmission corridors."
+    },
+    {
+      "id": "T05-final-Q9",
+      "type": "mc",
+      "prompt": "How does OPGW's structural/electrical role differ fundamentally from ADSS, and what does this mean for where each is appropriately used?",
+      "choices": [
+        "They are functionally interchangeable; the choice is purely aesthetic preference",
+        "OPGW replaces the overhead shield wire at the top of transmission towers and must carry ground fault current (requiring grounding at every structure), making it a transmission-structure product; ADSS is all-dielectric with no grounding requirement, making it the appropriate choice for joint-use distribution pole comm-space attachment — using OPGW in a distribution comm space would introduce unnecessary electrical hazard and complexity",
+        "ADSS is only used on transmission towers; OPGW is only used on distribution poles",
+        "Both cable types require identical grounding and fault-current engineering regardless of application"
+      ],
+      "answerIndex": 1,
+      "explanation": "This synthesizes T05.L10/L11's structural distinction: OPGW's fault-current-carrying, grounded design fits its transmission shield-wire role; ADSS's dielectric, grounding-free design fits the distribution comm-space context — applying either cable type outside its intended structural role introduces mismatched complexity or hazard."
+    },
+    {
+      "id": "T05-final-Q10",
+      "type": "mc",
+      "prompt": "A 1:32 PLC splitter has approximately 17 dB insertion loss; a 1:64 splitter has approximately 20.5 dB. Why does this roughly 3.5 dB difference matter for a GPON design's optical budget (e.g., Class B+ at 28 dB), beyond simply serving more homes?",
+      "choices": [
+        "It doesn't matter for the budget — splitter loss is negligible compared to fiber and connector loss",
+        "Because the GPON budget class is fixed, choosing the higher split ratio (1:64) to serve more homes leaves proportionally less of the 28 dB budget remaining for fiber length, connectors, splices, and aging margin — a real design tradeoff between homes-served-per-FDH and how far/how many splices the route can tolerate",
+        "1:64 splitters always require active power, unlike 1:32 splitters",
+        "The splitter choice only affects upstream traffic direction"
+      ],
+      "answerIndex": 1,
+      "explanation": "Because splitter loss scales with split ratio and the GPON budget class is fixed, a higher split ratio trades directly against the remaining budget for everything else in the link — this is the same fixed-budget tradeoff principle applied to optical loss that appears throughout T05's structural design (clearance margin, EDS range, grade of construction).",
+      "citation": "Industry-standard PLC splitter insertion-loss figures (WebSearch-verified); ITU-T G.984 GPON budget classes."
+    },
+    {
+      "id": "T05-final-Q11",
+      "type": "mc",
+      "prompt": "Your company wants to add a 12-fiber cable to a route where an existing telephone company already has a messenger strand. What technique could reduce cost by avoiding a full new-attachment application at every pole, and what should NOT be assumed about it?",
+      "choices": [
+        "Overlashing (attaching to the existing messenger) can avoid the cost/delay of a full new independent attachment application and make-ready at each pole — but the specific notice/coordination requirement toward the existing attacher should be confirmed for the situation, not assumed to be either an absolute veto or entirely unregulated",
+        "Overlashing always requires zero coordination of any kind with the existing attacher, in every jurisdiction",
+        "Overlashing is illegal under all FCC pole attachment rules",
+        "Overlashing always requires a MORE burdensome process than a full new attachment"
+      ],
+      "answerIndex": 0,
+      "explanation": "This applies the T05.L08 hedge: overlashing genuinely can reduce project scope/cost, but the specific applicable coordination/notice requirement is a regulated area that should be confirmed for the specific situation rather than assumed to be either extreme (absolute veto or zero coordination)."
+    },
+    {
+      "id": "T05-final-Q12",
+      "type": "mc",
+      "prompt": "A new attacher files an OTMR application on Monday. Per 47 CFR 1.1411, when does the 15-day deemed-approved clock start, and why does the completeness requirement matter for the pole owner's fairness, not just the new attacher's speed?",
+      "choices": [
+        "The clock starts on filing (Monday) regardless of completeness — completeness has no bearing on fairness",
+        "The clock starts only when the application is declared COMPLETE — this protects the pole owner from being forced into deemed approval based on insufficient information to actually evaluate the request, balancing the new attacher's interest in speed against the pole owner's need for adequate information to make a real engineering/safety determination",
+        "The clock never actually starts under OTMR; all applications require indefinite pole-owner review",
+        "The clock starts exactly 30 days after filing regardless of any other factor"
+      ],
+      "answerIndex": 1,
+      "explanation": "The completeness trigger is a deliberate fairness balance (T05.L09): it protects the deemed-approved mechanism's integrity by ensuring the pole owner had adequate information before the automatic-approval consequence could apply — without it, a pole owner could be forced into approving a request they never had a fair chance to evaluate.",
+      "citation": "47 CFR 1.1411 — reused from the T01 research pass."
+    },
+    {
+      "id": "T05-final-Q13",
+      "type": "mc",
+      "prompt": "A route has 10 make-ready poles: 7 simple (OTMR-eligible transfers), 2 complex (require incumbent splicing), and 1 with an unresolvable midspan conflict exceeding the project's cost threshold. What is the correct combined project-management response?",
+      "choices": [
+        "Treat all 10 poles as a single sequential blocker, waiting for the most complex pole to resolve before touching any others",
+        "Run the 7 simple poles' OTMR process and the 2 complex poles' traditional multi-party process in PARALLEL, while placing the 1 cost-exceeding conflict pole on a design hold for a separate design-level decision — three distinct tracks proceeding on their own appropriate timelines",
+        "Cancel the entire route because one pole has an unresolvable conflict",
+        "Force the conflict pole through OTMR regardless of complexity, since OTMR is always fastest"
+      ],
+      "answerIndex": 1,
+      "explanation": "This is the T05.L13 make-ready project-management synthesis: parallel tracking of simple/complex make-ready avoids wasted schedule time, while a genuinely over-threshold conflict gets its own design hold rather than blocking the rest of the route's progress."
+    },
+    {
+      "id": "T05-final-Q14",
+      "type": "mc",
+      "prompt": "A QA reviewer checks a route using poles from two owners (an electric co-op at 80%, an ILEC at 20%) and finds an executed ILA with the co-op only. What is the correct QA finding, and why does a shortcut 'is there an ILA on file' check risk missing it?",
+      "choices": [
+        "PASS for the entire route, since the co-op's ILA (majority owner) extends automatically to the ILEC's poles",
+        "FAIL for the ILEC section — an ILA is specific to its signing pole owner (T05.L08); a shortcut check that only confirms 'an ILA is on file' without verifying its actual scope would miss that the ILEC's 20% of poles has NO valid attachment authority at all, a real gap that needs its own separate ILA negotiation (which can take weeks to months)",
+        "PASS, since the ILEC only owns a minority of poles and their agreement isn't legally required",
+        "The route must be redesigned entirely underground to avoid the multi-owner issue"
+      ],
+      "answerIndex": 1,
+      "explanation": "This is the T05.L14 QA synthesis principle applied directly: a shallow check (document presence) misses a substantive gap (actual scope/coverage) — the ILA-coverage finding is a specific instance of the broader T05.L14 pattern where surface-level 'passing' checks miss real problems that only a deeper, standard-aware review catches."
+    },
+    {
+      "id": "T05-final-Q15",
+      "type": "mc",
+      "prompt": "A design shows 16.2 ft final-sag clearance over a road where the NESC Rule 232 minimum is approximately 15.5 ft — a 0.7 ft margin. Separately, a GPON design shows 26.5 dB total loss against a 28 dB budget — a 1.5 dB margin. What common QA principle applies to both?",
+      "choices": [
+        "Neither margin is a concern; any calculation that technically clears its threshold is an unqualified pass",
+        "Both are thin-margin designs that technically pass but leave little room for real-world variation (further creep/thermal cycling for the clearance case; connector degradation, splice quality, or repair splices for the loss-budget case) — a QA reviewer should flag both for additional margin rather than accepting a bare pass, since the same zero-margin design risk applies across structural and optical domains alike",
+        "The clearance margin matters but the optical margin does not, since optical links have no aging considerations",
+        "Both designs should be automatically rejected regardless of the specific numbers, since any margin under 5 units is unacceptable"
+      ],
+      "answerIndex": 1,
+      "explanation": "This is the topic's cross-domain synthesis: the zero-margin design risk (established for NESC clearance in T05.L02/L07/L14) applies equally to optical loss budgets (T05.L12) — a genuinely competent QA process recognizes this as the same underlying principle (design for realistic variation, not just the calculated minimum) across structural and optical engineering alike."
+    },
+    {
+      "id": "T05-final-Q16",
+      "type": "drag-match",
+      "prompt": "Match each T05 concept to the specific problem it addresses.",
+      "items": [
+        { "id": "i_232", "label": "How high must the cable be above the road (accounting for final sag)?" },
+        { "id": "i_ila", "label": "Which pole owner's agreement authorizes attachment to their specific poles?" },
+        { "id": "i_otmr", "label": "Can a single-visit contractor handle this make-ready without waiting on the incumbent?" },
+        { "id": "i_eds", "label": "What stringing tension keeps an ADSS cable's fiber within safe mechanical strain?" }
+      ],
+      "targets": [
+        { "id": "t_232", "label": "Rule 232 (final sag/clearance)" },
+        { "id": "t_ila", "label": "ILA (Inter-utility License Agreement)" },
+        { "id": "t_otmr", "label": "OTMR simple-vs-complex classification" },
+        { "id": "t_eds", "label": "EDS/RTS ratio" }
+      ],
+      "correctMap": { "t_232": "i_232", "t_ila": "i_ila", "t_otmr": "i_otmr", "t_eds": "i_eds" },
+      "explanation": "Each T05 concept addresses a distinct design question: Rule 232 governs ground clearance using final sag, the ILA is the pole-owner-specific attachment authorization, OTMR classification determines the make-ready process path, and the EDS/RTS ratio sets safe ADSS stringing tension — together forming the interlocking checklist an aerial designer works through on every project."
+    },
+    {
+      "id": "T05-final-Q17",
+      "type": "mc",
+      "prompt": "Across T05's design topics (clearance, separation, loading, grade of construction, sag-tension, joint-use, OTMR, ADSS, OPGW, PON topology, make-ready, QA), what is the single recurring principle tying together how a designer or QA reviewer should handle a calculation or determination that appears to 'pass' but has thin margin or incomplete verification?",
+      "choices": [
+        "Always accept any number or document that technically clears its stated threshold, since a passing calculation is definitionally sufficient",
+        "A genuinely thorough design/QA process verifies substantive correctness and adequate margin against the FULL applicable requirement — not just whether a number is technically above/below a threshold or a document is technically on file — because real-world variation (creep, thermal cycling, connector degradation, incomplete multi-owner coverage, incorrect input values) can turn a bare pass into a real failure that a shallow check would miss",
+        "Margin and thoroughness only matter for federally-regulated aspects of the design, never for NESC compliance",
+        "There is no consistent principle; each T05 topic requires an entirely unrelated verification approach"
+      ],
+      "answerIndex": 1,
+      "explanation": "This is the T05 capstone synthesis: whether it's clearance margin, optical budget margin, ILA scope coverage, or an EDS input traced to the correct datasheet, the recurring lesson is that surface-level 'passing' checks are insufficient — genuine design and QA rigor means verifying substantive correctness and realistic margin against the complete applicable standard, a principle that generalizes across every specific technical domain covered in this topic."
+    },
+    {
+      "id": "T05-final-Q18",
+      "type": "mc",
+      "prompt": "A running pole has a wind span calculated as (200/2) + (100/2) = 150 ft for wind-force purposes. Separately, a dead-end pole at the same route requires a larger pole class than an equivalent running pole. What is the common structural principle connecting wind-span calculation and the dead-end/running-pole distinction?",
+      "choices": [
+        "There is no connection; wind span and dead-end tension are entirely unrelated pole-loading concepts",
+        "Both reflect that a pole's structural loading depends on its SPECIFIC role and geometry at that location — wind span apportions horizontal wind force based on the actual adjacent span lengths on each side, while the dead-end condition creates a fundamentally different (unbalanced) horizontal tension force than a running pole's balanced condition; in both cases, generic assumptions about 'a pole' without accounting for its specific structural role risk an incorrect loading calculation",
+        "Wind span only matters for dead-end poles, never for running poles",
+        "Both concepts only apply to ADSS cable, never to standard messenger-strand cable"
+      ],
+      "answerIndex": 1,
+      "explanation": "This connects T05.L05's two loading concepts: wind span apportionment and the running-vs-dead-end structural distinction both illustrate that a pole's actual loading depends on its specific geometric/structural role at that exact location, not a generic assumption — a design that doesn't account for each pole's specific condition risks an inaccurate structural calculation."
+    },
+    {
+      "id": "T05-final-Q19",
+      "type": "mc",
+      "prompt": "Why does a midspan make-ready conflict (existing cable sag creates insufficient clearance for a new cable, even though pole-attachment heights are compliant) connect directly to the Rule 232/235 clearance principles covered earlier in T05?",
+      "choices": [
+        "It doesn't connect; midspan make-ready conflicts are an entirely separate concept from NESC clearance rules",
+        "Both rely on the same underlying fact: a cable's lowest/tightest point relative to another cable or the ground occurs at midspan due to sag, not at the pole attachment — a make-ready survey that only checks pole-attachment heights (like a Rule 232/235 check that only measures at the pole) can miss a genuine midspan violation that only manifests once the actual sag behavior along the full span is considered",
+        "Midspan make-ready conflicts only occur with ADSS cable, never with standard messenger-supported cable",
+        "Rule 232/235 only apply to new construction, never to make-ready surveys of existing cable"
+      ],
+      "answerIndex": 1,
+      "explanation": "This is a direct application of the sag/midspan principle running throughout T05 (established in L02/L03/L07, applied to make-ready surveys in L13): whether it's ground clearance, comm-to-supply separation, or a new-vs-existing cable conflict, the tightest point is typically at midspan due to sag — an at-pole-only check systematically misses this class of violation."
+    },
+    {
+      "id": "T05-final-Q20",
+      "type": "mc",
+      "prompt": "A project team leases fiber strands within a utility's OPGW for a 12-mile backbone segment (an IRU arrangement). Why does the OSP designer's responsibility (verifying the optical loss budget) remain necessary even though the utility owns and structurally maintains the physical OPGW cable?",
+      "choices": [
+        "It isn't necessary — physical ownership by the utility guarantees the fiber's optical performance automatically meets any network requirement",
+        "Because physical/structural ownership and optical network performance are separate concerns — the utility's responsibility covers the OPGW's structural/electrical engineering (fault current rating, grounding), while the OSP designer's responsibility covers the fiber network layer (strand count, splice points, loss budget); the leasing company still needs to independently confirm the optical performance meets its own network's requirements",
+        "Loss budget verification is only required for aerial ADSS cable, never for leased OPGW fiber",
+        "The utility is legally obligated to guarantee zero optical loss on any leased fiber segment regardless of distance"
+      ],
+      "answerIndex": 1,
+      "explanation": "This reinforces the T05.L11 division-of-responsibility principle: OPGW ownership and structural maintenance don't substitute for the OSP designer's own fiber-network-layer verification — the two are genuinely separate concerns, and skipping the loss-budget check because 'the utility owns the cable' would be a real design gap."
+    },
+    {
+      "id": "T05-final-Q21",
+      "type": "mc",
+      "prompt": "A QA reviewer finds a design with EDS = 22% for an ADSS span (technically within the 16-25% range), but notices the calculation used a generic 'nominal' RTS figure rather than the RTS from the exact specified cable model's datasheet. Why does this deeper-level check matter, even though the surface-level EDS number looks compliant?",
+      "choices": [
+        "It doesn't matter — RTS is a universal constant identical across all ADSS cable models and manufacturers",
+        "Because RTS varies by specific cable model/manufacturer, an EDS calculation built on a generic assumption rather than the actual specified product's datasheet RTS could look compliant while being based on the wrong denominator — genuine QA rigor traces every input in a calculation to its correct, product-specific source, not just checking that the final formula output falls in an acceptable range",
+        "This distinction only matters for OPGW cable, never for ADSS",
+        "Generic nominal RTS figures are always more conservative (lower) than actual datasheet figures, so using them is always safe"
+      ],
+      "answerIndex": 1,
+      "explanation": "This extends the T05.L14 QA-rigor principle one level deeper: even a formula correctly applied can produce a misleading 'pass' if one of its inputs isn't traced to the correct source — thorough QA verifies the full calculation chain, not just that the final number falls in range."
+    },
+    {
+      "id": "T05-final-Q22",
+      "type": "mc",
+      "prompt": "T05.L01 establishes that NESC Rules 232, 235, 250, and 261 must each be independently satisfied. How does this principle extend to the FCC pole-attachment framework (47 CFR 1.1406/1.1409/1.1411) covered in T05.L08/L09, and why can't a designer treat NESC compliance alone as sufficient for a joint-use aerial project?",
+      "choices": [
+        "It doesn't extend; FCC rules are purely a billing/paperwork matter with zero relationship to NESC structural compliance",
+        "The two frameworks govern genuinely different but interdependent dimensions of the same project: NESC determines whether the physical design is structurally/safely compliant, while the FCC pole-attachment framework governs the business/procedural path (application, rate formula, access timeline) to actually get that design approved and installed — a design can be fully NESC-compliant but still blocked, delayed, or improperly cost-allocated without also satisfying the FCC-side process",
+        "FCC rules supersede and replace all NESC requirements for any project involving pole attachment",
+        "NESC and FCC rules regulate identical content, making one framework redundant"
+      ],
+      "answerIndex": 1,
+      "explanation": "This is the T05.L08 principle applied at the topic-synthesis level: a joint-use aerial project genuinely requires satisfying both frameworks — NESC for physical/structural safety, FCC pole-attachment rules for the procedural/business path — since satisfying only one leaves the project either unsafe (NESC gap) or stalled/mispriced (FCC-process gap), which is why T05 treats both as core, not optional, content."
+    }
+  ]
+}
