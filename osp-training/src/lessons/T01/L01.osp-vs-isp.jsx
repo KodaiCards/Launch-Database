@@ -7,6 +7,7 @@ import LessonLayout from '../../components/LessonLayout.jsx';
 import Flashcard from '../../components/Flashcard.jsx';
 import SideBySide from '../../components/primitives/SideBySide.jsx';
 import Quiz from '../../components/primitives/Quiz.jsx';
+import GatedAssessment from '../../components/primitives/GatedAssessment.jsx';
 
 export const meta = {
   id: 'T01.L01',
@@ -319,68 +320,75 @@ export default function T01L01_OspVsIsp() {
       />
 
       {/* ── PRACTICE QUIZ ───────────────────────────────────────────────── */}
-      <Quiz
+      <GatedAssessment
+        courseId="T01"
+        assessmentId="T01-L01"
         title="T01.L01 Check — OSP vs. ISP"
-        mode="multiple-choice"
-        questions={[
-          {
-            id: 'T01-L01-Q1',
-            type: 'mc',
-            prompt:
-              'A drop cable running from a utility pole down to a house and connecting to an ONT on the exterior wall. Which category does this drop cable fall under?',
-            choices: [
-              'Inside plant (ISP) — it serves a single customer',
-              'Outside plant (OSP) — it runs outdoors between OSP infrastructure and the customer demarc',
-              'Neither — drop cables are a special third category',
-              'Inside plant (ISP) — because it terminates at the ONT',
-            ],
-            answerIndex: 1,
-            explanation:
-              'Drop cables run outdoors from OSP infrastructure (a NAP on a pole or a curb pedestal) to the customer demarc. They are OSP, must be rated for outdoor use, and are built and tested by the OSP contractor. The ONT at the end of the drop is the demarc — the ONT itself is usually the customer-side equipment, but the fiber up to the ONT port is OSP.',
-            citation: 'RUS Bulletin 1751F-630 §1 — Scope of outside plant.',
-          },
-          {
-            id: 'T01-L01-Q2',
-            type: 'mc',
-            prompt:
-              'An OSP contractor runs fiber through a building\'s exterior wall and terminates it on a patch panel in the telecom room. Why might this raise a code compliance concern?',
-            choices: [
-              'OSP contractors are not allowed to touch patch panels — only ISP contractors can do that',
-              'OSP-rated cable may not be rated for indoor use — NEC Article 770 requires riser or plenum-rated fiber inside buildings; OSP-only rated cable may not comply',
-              'Patch panels are not permitted in telecom rooms by RUS standards',
-              'There is no compliance concern — OSP cable is acceptable everywhere',
-            ],
-            answerIndex: 1,
-            explanation:
-              'OSP-rated cable is designed for outdoor conditions (UV exposure, moisture, temperature swings) but is not automatically rated for indoor fire-code compliance. NEC Article 770 requires optical fiber inside buildings to be OFNR (riser) or OFNP (plenum) rated. Running OSP-only cable inside a building violates fire code in most jurisdictions unless the cable also carries an indoor rating (dual-rated cable).',
-            citation: 'NEC Article 770 (optical fiber cabling); RUS Bulletin 1751F-630 §1.',
-          },
-          {
-            id: 'T01-L01-Q3',
-            type: 'fill-in-blank',
-            prompt:
-              'The boundary point between OSP and ISP infrastructure — where one contractor\'s responsibility ends — is called the ____ point.',
-            answer: 'demarcation',
-            answerDisplay: 'demarcation',
-            explanation:
-              'The demarcation point (demarc) is the formal handoff between OSP and ISP. In FTTH, it is typically the ONT or a small fiber termination box at the customer premises entry. As-built documentation must clearly identify the demarc location.',
-          },
-          {
-            id: 'T01-L01-Q4',
-            type: 'mc',
-            prompt:
-              'The OLT (Optical Line Terminal) is located at the provider\'s headend. The ONT (Optical Network Terminal) is located at the customer premises. Between them is a continuous OSP fiber path. Which statement about the OLT is correct?',
-            choices: [
-              'The OLT is the customer\'s equipment and is installed by the OSP contractor',
-              'The OLT is the provider\'s active equipment at the headend that originates and receives the optical signal for all customer connections on that fiber segment',
-              'The OLT is the same device as the ONT, just named differently depending on location',
-              'The OLT terminates only the feeder cable; distribution cables are served by a different device',
-            ],
-            answerIndex: 1,
-            explanation:
-              'The OLT is the provider\'s active equipment at the headend or central office. It originates the downstream optical signal and receives the upstream signal from all ONTs on that PON (Passive Optical Network). The OLT-to-ONT path is entirely OSP fiber. The OSP contractor builds and tests that path but does not install or configure the OLT or ONT equipment — that is done by the provider\'s network team.',
-          },
-        ]}
+        fallback={
+        <Quiz
+          title="T01.L01 Check — OSP vs. ISP"
+          mode="multiple-choice"
+          questions={[
+            {
+              id: 'T01-L01-Q1',
+              type: 'mc',
+              prompt:
+                'A drop cable running from a utility pole down to a house and connecting to an ONT on the exterior wall. Which category does this drop cable fall under?',
+              choices: [
+                'Inside plant (ISP) — it serves a single customer',
+                'Outside plant (OSP) — it runs outdoors between OSP infrastructure and the customer demarc',
+                'Neither — drop cables are a special third category',
+                'Inside plant (ISP) — because it terminates at the ONT',
+              ],
+              answerIndex: 1,
+              explanation:
+                'Drop cables run outdoors from OSP infrastructure (a NAP on a pole or a curb pedestal) to the customer demarc. They are OSP, must be rated for outdoor use, and are built and tested by the OSP contractor. The ONT at the end of the drop is the demarc — the ONT itself is usually the customer-side equipment, but the fiber up to the ONT port is OSP.',
+              citation: 'RUS Bulletin 1751F-630 §1 — Scope of outside plant.',
+            },
+            {
+              id: 'T01-L01-Q2',
+              type: 'mc',
+              prompt:
+                'An OSP contractor runs fiber through a building\'s exterior wall and terminates it on a patch panel in the telecom room. Why might this raise a code compliance concern?',
+              choices: [
+                'OSP contractors are not allowed to touch patch panels — only ISP contractors can do that',
+                'OSP-rated cable may not be rated for indoor use — NEC Article 770 requires riser or plenum-rated fiber inside buildings; OSP-only rated cable may not comply',
+                'Patch panels are not permitted in telecom rooms by RUS standards',
+                'There is no compliance concern — OSP cable is acceptable everywhere',
+              ],
+              answerIndex: 1,
+              explanation:
+                'OSP-rated cable is designed for outdoor conditions (UV exposure, moisture, temperature swings) but is not automatically rated for indoor fire-code compliance. NEC Article 770 requires optical fiber inside buildings to be OFNR (riser) or OFNP (plenum) rated. Running OSP-only cable inside a building violates fire code in most jurisdictions unless the cable also carries an indoor rating (dual-rated cable).',
+              citation: 'NEC Article 770 (optical fiber cabling); RUS Bulletin 1751F-630 §1.',
+            },
+            {
+              id: 'T01-L01-Q3',
+              type: 'fill-in-blank',
+              prompt:
+                'The boundary point between OSP and ISP infrastructure — where one contractor\'s responsibility ends — is called the ____ point.',
+              answer: 'demarcation',
+              answerDisplay: 'demarcation',
+              explanation:
+                'The demarcation point (demarc) is the formal handoff between OSP and ISP. In FTTH, it is typically the ONT or a small fiber termination box at the customer premises entry. As-built documentation must clearly identify the demarc location.',
+            },
+            {
+              id: 'T01-L01-Q4',
+              type: 'mc',
+              prompt:
+                'The OLT (Optical Line Terminal) is located at the provider\'s headend. The ONT (Optical Network Terminal) is located at the customer premises. Between them is a continuous OSP fiber path. Which statement about the OLT is correct?',
+              choices: [
+                'The OLT is the customer\'s equipment and is installed by the OSP contractor',
+                'The OLT is the provider\'s active equipment at the headend that originates and receives the optical signal for all customer connections on that fiber segment',
+                'The OLT is the same device as the ONT, just named differently depending on location',
+                'The OLT terminates only the feeder cable; distribution cables are served by a different device',
+              ],
+              answerIndex: 1,
+              explanation:
+                'The OLT is the provider\'s active equipment at the headend or central office. It originates the downstream optical signal and receives the upstream signal from all ONTs on that PON (Passive Optical Network). The OLT-to-ONT path is entirely OSP fiber. The OSP contractor builds and tests that path but does not install or configure the OLT or ONT equipment — that is done by the provider\'s network team.',
+            },
+          ]}
+        />
+        }
       />
 
     </LessonLayout>

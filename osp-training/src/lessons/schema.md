@@ -188,7 +188,7 @@ All 7 primitives are **default exports**. Use `import PrimitiveName from '...'` 
 
 | Primitive | Import (default) | Required props |
 |---|---|---|
-| `<Quiz>` | `import Quiz from '../../components/primitives/Quiz.jsx'` | `title`, `mode` (`'multiple-choice'`/`'drag-match'`/`'fill-in-blank'`), `questions` array (see Quiz.example.jsx), `onComplete?` |
+| `<Quiz>` | `import Quiz from '../../components/primitives/Quiz.jsx'` | `title`, `mode` (`'multiple-choice'`/`'drag-match'` — `'fill-in-blank'` is retired platform-wide, Carter's typed-answer ban 2026-07-01), `questions` array (see Quiz.example.jsx), `onComplete?` |
 | `<WorkedExample>` | `import WorkedExample from '../../components/primitives/WorkedExample.jsx'` | `title`, `formula`, `variables` array, `steps` fn, `sanityCheck` fn |
 | `<BranchingScenario>` | `import BranchingScenario from '../../components/primitives/BranchingScenario.jsx'` | `scenarioId`, `title`, `startNodeId`, `nodes` FSM object |
 | `<Sortable>` | `import Sortable from '../../components/primitives/Sortable.jsx'` | `title`, `items` array `[{id, label}]`, `correctOrder` array of ids |

@@ -6,6 +6,7 @@ import React from 'react';
 import LessonLayout from '../../components/LessonLayout.jsx';
 import Flashcard from '../../components/Flashcard.jsx';
 import Quiz from '../../components/primitives/Quiz.jsx';
+import GatedAssessment from '../../components/primitives/GatedAssessment.jsx';
 
 export const meta = {
   id: 'T01.L07',
@@ -294,67 +295,74 @@ export default function T01L07_ReadingAStrandMap() {
       </table>
 
       {/* ── PRACTICE QUIZ ───────────────────────────────────────────────── */}
-      <Quiz
+      <GatedAssessment
+        courseId="T01"
+        assessmentId="T01-L07"
         title="T01.L07 Check — Reading a Strand Map"
-        mode="multiple-choice"
-        questions={[
-          {
-            id: 'T01-L07-Q1',
-            type: 'mc',
-            prompt:
-              'A strand map notation reads: "F-001 / BT6-F11 → FDH-002 → DC-031 / BT1-F4 → NAP-08 → 456 ELM ST." What does "BT1-F4" refer to?',
-            choices: [
-              'Battery Terminal 1, Fault 4 — an alarm condition on the cable',
-              'Buffer Tube 1, Fiber 4 — the specific fiber within distribution cable DC-031 that serves 456 Elm St',
-              'Building Terminal 1, Fiber 4 — the ISP wiring inside the customer building',
-              'Block Terminal 1, Feed 4 — the FDH output port assignment',
-            ],
-            answerIndex: 1,
-            explanation:
-              'In strand map notation, BT = Buffer Tube, F = Fiber. BT1-F4 means Buffer Tube 1, Fiber 4 in the named cable (DC-031). This tells the splicer which physical fiber to connect at each splice case and tells the test technician which fiber to test from end to end.',
-          },
-          {
-            id: 'T01-L07-Q2',
-            type: 'mc',
-            prompt:
-              'A 1:32 passive optical splitter at an FDH introduces approximately how much insertion loss on each output port?',
-            choices: [
-              'About 3 dB (half the power)',
-              'About 10 dB (one-tenth the power)',
-              'About 15–16 dB (approximately 1/32 of the power)',
-              'No loss — "passive" means no loss',
-            ],
-            answerIndex: 2,
-            explanation:
-              '"Passive" means no powered electronics — not no loss. A 1:32 splitter divides the signal among 32 outputs. Each output receives 1/32 of the input power, which in dB is: 10 × log₁₀(1/32) = 10 × (−1.505) = −15.05 dB, plus insertion loss of the splitter itself (typically 0.5–1 dB more), totaling about 15–16 dB. This is the dominant loss in a GPON link budget. The OLT must launch enough power to reach through this loss on the farthest, lossiest customer path.',
-            citation: 'ITU-T G.984 (GPON); TIA-568.3-D Annex.',
-          },
-          {
-            id: 'T01-L07-Q3',
-            type: 'fill-in-blank',
-            prompt:
-              'The small closure or terminal on a pole or pedestal where distribution fiber is connected to individual customer drop cables is called a ____.',
-            answer: 'NAP',
-            answerDisplay: 'NAP (Network Access Point)',
-            explanation:
-              'NAPs are the last OSP infrastructure before the customer drop. They may be small dome-style closures on a pole, a wall-mount box at the street, or a small pedestal at the curb. Each NAP serves 1–4 customer drops in a typical FTTH deployment.',
-          },
-          {
-            id: 'T01-L07-Q4',
-            type: 'mc',
-            prompt:
-              'A field technician needs to locate the splice case where a specific distribution cable fiber is connected to the feeder cable. Which document is the primary source for this information?',
-            choices: [
-              'The OTDR test record from acceptance testing',
-              'The strand map / fiber assignment document from the as-built package',
-              'The make-ready application submitted to the pole owner',
-              'The RUS Form 219 close-out certification',
-            ],
-            answerIndex: 1,
-            explanation:
-              'The strand map (part of the as-built documentation) shows the complete fiber path from headend to customer: which splice cases connect which cables, and which buffer tube and fiber number is at each connection point. The OTDR record tells you about signal quality, not fiber routing. The strand map is the go-to navigation document for any O&M work on the fiber plant.',
-          },
-        ]}
+        fallback={
+        <Quiz
+          title="T01.L07 Check — Reading a Strand Map"
+          mode="multiple-choice"
+          questions={[
+            {
+              id: 'T01-L07-Q1',
+              type: 'mc',
+              prompt:
+                'A strand map notation reads: "F-001 / BT6-F11 → FDH-002 → DC-031 / BT1-F4 → NAP-08 → 456 ELM ST." What does "BT1-F4" refer to?',
+              choices: [
+                'Battery Terminal 1, Fault 4 — an alarm condition on the cable',
+                'Buffer Tube 1, Fiber 4 — the specific fiber within distribution cable DC-031 that serves 456 Elm St',
+                'Building Terminal 1, Fiber 4 — the ISP wiring inside the customer building',
+                'Block Terminal 1, Feed 4 — the FDH output port assignment',
+              ],
+              answerIndex: 1,
+              explanation:
+                'In strand map notation, BT = Buffer Tube, F = Fiber. BT1-F4 means Buffer Tube 1, Fiber 4 in the named cable (DC-031). This tells the splicer which physical fiber to connect at each splice case and tells the test technician which fiber to test from end to end.',
+            },
+            {
+              id: 'T01-L07-Q2',
+              type: 'mc',
+              prompt:
+                'A 1:32 passive optical splitter at an FDH introduces approximately how much insertion loss on each output port?',
+              choices: [
+                'About 3 dB (half the power)',
+                'About 10 dB (one-tenth the power)',
+                'About 15–16 dB (approximately 1/32 of the power)',
+                'No loss — "passive" means no loss',
+              ],
+              answerIndex: 2,
+              explanation:
+                '"Passive" means no powered electronics — not no loss. A 1:32 splitter divides the signal among 32 outputs. Each output receives 1/32 of the input power, which in dB is: 10 × log₁₀(1/32) = 10 × (−1.505) = −15.05 dB, plus insertion loss of the splitter itself (typically 0.5–1 dB more), totaling about 15–16 dB. This is the dominant loss in a GPON link budget. The OLT must launch enough power to reach through this loss on the farthest, lossiest customer path.',
+              citation: 'ITU-T G.984 (GPON); TIA-568.3-D Annex.',
+            },
+            {
+              id: 'T01-L07-Q3',
+              type: 'fill-in-blank',
+              prompt:
+                'The small closure or terminal on a pole or pedestal where distribution fiber is connected to individual customer drop cables is called a ____.',
+              answer: 'NAP',
+              answerDisplay: 'NAP (Network Access Point)',
+              explanation:
+                'NAPs are the last OSP infrastructure before the customer drop. They may be small dome-style closures on a pole, a wall-mount box at the street, or a small pedestal at the curb. Each NAP serves 1–4 customer drops in a typical FTTH deployment.',
+            },
+            {
+              id: 'T01-L07-Q4',
+              type: 'mc',
+              prompt:
+                'A field technician needs to locate the splice case where a specific distribution cable fiber is connected to the feeder cable. Which document is the primary source for this information?',
+              choices: [
+                'The OTDR test record from acceptance testing',
+                'The strand map / fiber assignment document from the as-built package',
+                'The make-ready application submitted to the pole owner',
+                'The RUS Form 219 close-out certification',
+              ],
+              answerIndex: 1,
+              explanation:
+                'The strand map (part of the as-built documentation) shows the complete fiber path from headend to customer: which splice cases connect which cables, and which buffer tube and fiber number is at each connection point. The OTDR record tells you about signal quality, not fiber routing. The strand map is the go-to navigation document for any O&M work on the fiber plant.',
+            },
+          ]}
+        />
+        }
       />
 
     </LessonLayout>

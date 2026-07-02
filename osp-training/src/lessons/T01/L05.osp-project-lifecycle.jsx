@@ -7,6 +7,7 @@ import LessonLayout from '../../components/LessonLayout.jsx';
 import Flashcard from '../../components/Flashcard.jsx';
 import BranchingScenario from '../../components/primitives/BranchingScenario.jsx';
 import Quiz from '../../components/primitives/Quiz.jsx';
+import GatedAssessment from '../../components/primitives/GatedAssessment.jsx';
 
 export const meta = {
   id: 'T01.L05',
@@ -381,69 +382,76 @@ export default function T01L05_OspProjectLifecycle() {
       />
 
       {/* ── PRACTICE QUIZ ───────────────────────────────────────────────── */}
-      <Quiz
+      <GatedAssessment
+        courseId="T01"
+        assessmentId="T01-L05"
         title="T01.L05 Check — OSP Project Lifecycle"
-        mode="multiple-choice"
-        questions={[
-          {
-            id: 'T01-L05-Q1',
-            type: 'mc',
-            prompt:
-              'What is the primary purpose of the as-built documentation package delivered at close-out?',
-            choices: [
-              'To satisfy the project manager that the construction crew followed the design exactly',
-              'To serve as the permanent record of what was actually built — used for O&M, fault troubleshooting, and future network expansion for the life of the infrastructure',
-              'To justify the project cost to the funding agency',
-              'To document the test results that prove the fiber meets manufacturer specifications',
-            ],
-            answerIndex: 1,
-            explanation:
-              'The as-built is a 25+ year document. It\'s used by O&M technicians to locate faults, by expansion designers to understand the existing plant, and by regulators to verify compliance. While it may also satisfy the client and funding agency, its primary value is as the permanent operational record. Test records are part of the as-built package but are not the package\'s primary purpose.',
-            citation: 'RUS Bulletin 1751F-630 §14; ANSI/TIA-606-C.',
-          },
-          {
-            id: 'T01-L05-Q2',
-            type: 'mc',
-            prompt:
-              'A construction crew begins installing aerial cable on a pole route while make-ready is still pending approval on two segments. Which risk does this create?',
-            choices: [
-              'No risk — construction and make-ready can proceed in parallel on the same segment',
-              'The crew may install cable that later conflicts with make-ready requirements, forcing rework at the fiber company\'s expense',
-              'Testing cannot occur until all permits are finalized',
-              'The OTDR calibration will be inaccurate if the cable is tested before make-ready is complete',
-            ],
-            answerIndex: 1,
-            explanation:
-              'Make-ready clears the pole so the new attachment fits within NESC clearances and doesn\'t conflict with existing attachments. Installing before make-ready is approved risks installing at the wrong height, creating clearance violations, or needing to move the newly installed cable when the make-ready work moves an existing attachment. This is a rework cost borne by the fiber company under most pole attachment agreements.',
-            citation: '47 CFR 1.1411 (OTMR pole attachment rules); NESC C2-2023 §§23.',
-          },
-          {
-            id: 'T01-L05-Q3',
-            type: 'fill-in-blank',
-            prompt:
-              'The phase of an OSP project where existing attachments on shared poles are moved or modified to make room for the new fiber attachment is called ____.',
-            answer: 'make-ready',
-            answerDisplay: 'make-ready',
-            explanation:
-              'Make-ready work prepares a pole to accept the new attachment within NESC clearances. It may involve raising existing cables, relocating hardware, or replacing the pole if it cannot accommodate the load. The pole owner\'s crew (or their authorized contractor) performs make-ready, but the fiber company bears the cost under standard pole attachment agreements.',
-            citation: '47 CFR 1.1411; FCC 18-111 (OTMR rules).',
-          },
-          {
-            id: 'T01-L05-Q4',
-            type: 'mc',
-            prompt:
-              'In a large OSP project, which two stages most commonly run in parallel (overlapping in time) to shorten the overall project schedule?',
-            choices: [
-              'Survey and design — they cannot start at the same time',
-              'Testing and close-out — close-out forms are prepared while final testing is in progress',
-              'Permitting and make-ready — permitting applications and make-ready requests can be submitted simultaneously after design is substantially complete',
-              'Construction and testing — OTDR testing is performed while cable is still being installed',
-            ],
-            answerIndex: 2,
-            explanation:
-              'Permitting and make-ready are both applications that go to external parties (regulators and the pole owner, respectively) after design is substantially complete. Both have external review/approval timelines outside the project\'s control. Running them in parallel — submitting both as soon as the design supports them — is standard practice to reduce the overall project schedule. Note: actual construction on any segment must still wait until both that segment\'s permits AND make-ready are complete.',
-          },
-        ]}
+        fallback={
+        <Quiz
+          title="T01.L05 Check — OSP Project Lifecycle"
+          mode="multiple-choice"
+          questions={[
+            {
+              id: 'T01-L05-Q1',
+              type: 'mc',
+              prompt:
+                'What is the primary purpose of the as-built documentation package delivered at close-out?',
+              choices: [
+                'To satisfy the project manager that the construction crew followed the design exactly',
+                'To serve as the permanent record of what was actually built — used for O&M, fault troubleshooting, and future network expansion for the life of the infrastructure',
+                'To justify the project cost to the funding agency',
+                'To document the test results that prove the fiber meets manufacturer specifications',
+              ],
+              answerIndex: 1,
+              explanation:
+                'The as-built is a 25+ year document. It\'s used by O&M technicians to locate faults, by expansion designers to understand the existing plant, and by regulators to verify compliance. While it may also satisfy the client and funding agency, its primary value is as the permanent operational record. Test records are part of the as-built package but are not the package\'s primary purpose.',
+              citation: 'RUS Bulletin 1751F-630 §14; ANSI/TIA-606-C.',
+            },
+            {
+              id: 'T01-L05-Q2',
+              type: 'mc',
+              prompt:
+                'A construction crew begins installing aerial cable on a pole route while make-ready is still pending approval on two segments. Which risk does this create?',
+              choices: [
+                'No risk — construction and make-ready can proceed in parallel on the same segment',
+                'The crew may install cable that later conflicts with make-ready requirements, forcing rework at the fiber company\'s expense',
+                'Testing cannot occur until all permits are finalized',
+                'The OTDR calibration will be inaccurate if the cable is tested before make-ready is complete',
+              ],
+              answerIndex: 1,
+              explanation:
+                'Make-ready clears the pole so the new attachment fits within NESC clearances and doesn\'t conflict with existing attachments. Installing before make-ready is approved risks installing at the wrong height, creating clearance violations, or needing to move the newly installed cable when the make-ready work moves an existing attachment. This is a rework cost borne by the fiber company under most pole attachment agreements.',
+              citation: '47 CFR 1.1411 (OTMR pole attachment rules); NESC C2-2023 §§23.',
+            },
+            {
+              id: 'T01-L05-Q3',
+              type: 'fill-in-blank',
+              prompt:
+                'The phase of an OSP project where existing attachments on shared poles are moved or modified to make room for the new fiber attachment is called ____.',
+              answer: 'make-ready',
+              answerDisplay: 'make-ready',
+              explanation:
+                'Make-ready work prepares a pole to accept the new attachment within NESC clearances. It may involve raising existing cables, relocating hardware, or replacing the pole if it cannot accommodate the load. The pole owner\'s crew (or their authorized contractor) performs make-ready, but the fiber company bears the cost under standard pole attachment agreements.',
+              citation: '47 CFR 1.1411; FCC 18-111 (OTMR rules).',
+            },
+            {
+              id: 'T01-L05-Q4',
+              type: 'mc',
+              prompt:
+                'In a large OSP project, which two stages most commonly run in parallel (overlapping in time) to shorten the overall project schedule?',
+              choices: [
+                'Survey and design — they cannot start at the same time',
+                'Testing and close-out — close-out forms are prepared while final testing is in progress',
+                'Permitting and make-ready — permitting applications and make-ready requests can be submitted simultaneously after design is substantially complete',
+                'Construction and testing — OTDR testing is performed while cable is still being installed',
+              ],
+              answerIndex: 2,
+              explanation:
+                'Permitting and make-ready are both applications that go to external parties (regulators and the pole owner, respectively) after design is substantially complete. Both have external review/approval timelines outside the project\'s control. Running them in parallel — submitting both as soon as the design supports them — is standard practice to reduce the overall project schedule. Note: actual construction on any segment must still wait until both that segment\'s permits AND make-ready are complete.',
+            },
+          ]}
+        />
+        }
       />
 
       {/* ── TYING IT TOGETHER ─────────────────────────────────────────── */}

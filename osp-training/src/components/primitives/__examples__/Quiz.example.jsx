@@ -2,8 +2,10 @@ import React from 'react';
 import Quiz from '../Quiz.jsx';
 
 /**
- * Quiz.example — Fiber physics multiple-choice + fill-in-blank demo.
- * Shows all three modes so authoring agents can see the prop contract in action.
+ * Quiz.example — Fiber physics multiple-choice + drag-match demo.
+ * Shows both live modes so authoring agents can see the prop contract in
+ * action. `fill-in-blank` is retired platform-wide (Carter's typed-answer
+ * ban, 2026-07-01) and intentionally has no example here.
  */
 
 const MC_QUESTIONS = [
@@ -62,22 +64,6 @@ const DRAG_QUESTIONS = [
   },
 ];
 
-const FILL_QUESTIONS = [
-  {
-    id: 'fp-fill-1',
-    type: 'fill-in-blank',
-    prompt:
-      'The maximum allowable attenuation for a field-installed fusion splice is ____ dB per splice, per the Telcordia GR-20 standard.',
-    answer: '0.3',
-    answerDisplay: '0.3 dB',
-    explanation:
-      'GR-20 sets 0.3 dB as the acceptance threshold. Good shop practice targets ≤0.10 dB, but a splice must measure under 0.3 dB to pass field acceptance.',
-    citation: 'Telcordia GR-20-CORE Issue 4, §10.2.',
-    fieldNote:
-      'If your splicer reports 0.05–0.08 dB, that\'s a solid fusion. Anything above 0.20 dB means re-inspect the cleave and retry.',
-  },
-];
-
 export default function QuizExample() {
   return (
     <div className="max-w-2xl mx-auto space-y-8 py-8 px-4">
@@ -104,18 +90,6 @@ export default function QuizExample() {
           mode="drag-match"
           questions={DRAG_QUESTIONS}
           onComplete={r => console.log('Drag done', r)}
-        />
-      </section>
-
-      <section>
-        <h2 className="text-lg font-semibold text-slate-300 mb-3">
-          Mode: fill-in-blank
-        </h2>
-        <Quiz
-          title="Standards Values"
-          mode="fill-in-blank"
-          questions={FILL_QUESTIONS}
-          onComplete={r => console.log('Fill done', r)}
         />
       </section>
     </div>
