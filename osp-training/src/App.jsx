@@ -110,11 +110,7 @@ function AppLayout() {
       </main>
 
       <footer className="border-t border-white/10 text-xs text-slate-400/70">
-        <div className="max-w-7xl mx-auto px-6 py-3 flex justify-between flex-wrap gap-2">
-          <span>
-            Training content includes textbook references and field practice.
-            Not a substitute for AHJ-issued permits or stamped engineering drawings.
-          </span>
+        <div className="max-w-7xl mx-auto px-6 py-3 flex justify-end flex-wrap gap-2">
           <span className="text-slate-500">
             Macon, GA · NESC Light loading district
           </span>

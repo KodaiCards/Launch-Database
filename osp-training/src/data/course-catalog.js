@@ -99,8 +99,8 @@ export const courses = [
     title: 'Permitting & Environmental',
     section: 'general',
     available: true,
-    estimated_minutes: 315,   // 12 lessons × ~26 min avg
-    lesson_count: 12,
+    estimated_minutes: 315,   // 11 content lessons (~26 min avg)
+    lesson_count: 11,   // capstone review lesson removed 2026-07-02 — graded final = the pooled TopicFinal assessment
     prerequisites: ['T01', 'T04'],
     description:
       'Permitting layer cake (federal/state/county/municipal), NEPA CE C-8, Section 106 NHPA/SHPO/THPO, ESA & IPaC, USACE NWP 12 (2026 reissue), state DOT encroachment, ROW/easement basics.',
@@ -111,8 +111,8 @@ export const courses = [
     title: 'OSP Design — Aerial',
     section: 'general',
     available: true,
-    estimated_minutes: 425,   // 15 lessons × ~28 min avg
-    lesson_count: 15,
+    estimated_minutes: 425,   // 14 content lessons (~28 min avg)
+    lesson_count: 14,   // capstone review lesson removed 2026-07-02 — graded final = the pooled TopicFinal assessment
     prerequisites: ['T01', 'T02', 'T03', 'T04'],
     description:
       'NESC clearances, pole loading, grades of construction, sag/tension, loading districts, joint-use rules, ADSS design, PON/FTTH topology at the distribution level.',
@@ -123,8 +123,8 @@ export const courses = [
     title: 'OSP Design — Underground',
     section: 'general',
     available: true,
-    estimated_minutes: 320,   // 12 lessons × ~27 min avg
-    lesson_count: 12,
+    estimated_minutes: 320,   // 11 content lessons (~27 min avg)
+    lesson_count: 11,   // capstone review lesson removed 2026-07-02 — graded final = the pooled TopicFinal assessment
     prerequisites: ['T01', 'T03', 'T04'],
     description:
       'Conduit/duct selection, burial-depth rules, manhole/handhole/vault sizing, HDD vs. trenching vs. plowing decision matrix, route alignment, separation from foreign utilities.',
@@ -499,7 +499,7 @@ export const lessonFileIndex = {
   'T05.L12': '../lessons/T05/L12-pon-ftth-aerial-topology.jsx',
   'T05.L13': '../lessons/T05/L13-make-ready-in-the-design.jsx',
   'T05.L14': '../lessons/T05/L14-aerial-design-qa-checklist.jsx',
-  'T05.L15': '../lessons/T05/L15.t05-capstone-quiz.jsx',
+  // T05.L15 capstone review removed 2026-07-02 (graded final = pooled TopicFinal)
 
   // ── T06 OSP Design — Underground ─────────────────────────────────────────
   'T06.L01': '../lessons/T06/L01-hdd-vs-open-cut-vs-plowing.jsx',
@@ -513,7 +513,7 @@ export const lessonFileIndex = {
   'T06.L09': '../lessons/T06/L09-nesc-underground-rules-sections-32-35.jsx',
   'T06.L10': '../lessons/T06/L10-rus-1751f-643-innerduct-standard.jsx',
   'T06.L11': '../lessons/T06/L11-underground-design-qa-checklist.jsx',
-  'T06.L12': '../lessons/T06/L12-t06-capstone-quiz.jsx',
+  // T06.L12 capstone review removed 2026-07-02 (graded final = pooled TopicFinal)
 
   // ── T07 Staking ───────────────────────────────────────────────────────────
   'T07.L01': '../lessons/T07/L01-what-a-staker-does.jsx',
@@ -553,7 +553,7 @@ export const lessonFileIndex = {
   'T09.L09': '../lessons/T09/L09-tribal-coordination-thpo-nho.jsx',
   'T09.L10': '../lessons/T09/L10-permit-tracking-pm-problem.jsx',
   'T09.L11': '../lessons/T09/L11-rus-environmental-review.jsx',
-  'T09.L12': '../lessons/T09/L12-t09-capstone-quiz.jsx',
+  // T09.L12 capstone review removed 2026-07-02 (graded final = pooled TopicFinal)
 
   // ── T18 Safety & OSHA ─────────────────────────────────────────────────────
   'T18.L01': '../lessons/T18/L01-hazard-awareness-risk-hierarchy.jsx',

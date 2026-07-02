@@ -1,0 +1,312 @@
+{
+  "assessmentId": "T19-final",
+  "kind": "topic_final",
+  "courseId": "T19",
+  "lessonId": null,
+  "drawCount": 15,
+  "passThreshold": 80,
+  "pool": [
+    {
+      "id": "T19-final-Q1",
+      "type": "mc",
+      "prompt": "What is the physical location, in a CO or hut, where an OSP engineer's responsibility for a fiber cable ends?",
+      "choices": [
+        "The building wall, where conduit enters",
+        "The ODF/MDF splice organizer, where OSP fibers are broken out and spliced to inside-plant pigtails",
+        "The OLT port, once the patch cord is connected",
+        "The MEF primary protector"
+      ],
+      "answerIndex": 1,
+      "explanation": "The OSP termination point is the ODF splice organizer inside the MDF bay — where OSP feeder fibers are broken out and connected to inside-plant pigtails by fusion splice. This is the OSP/ISP boundary for the fiber path itself.",
+      "citation": "TIA-569-E [confirm edition]."
+    },
+    {
+      "id": "T19-final-Q2",
+      "type": "mc",
+      "prompt": "In a fiber network, what does the MDF (Main Distribution Frame) typically take the form of, and why?",
+      "choices": [
+        "A 66-block copper cross-connect, because copper is still used for cross-connects in fiber networks",
+        "An ODF (Optical Distribution Frame) — a rack with fusion-splice trays and connector panels, since the terminating medium is fiber",
+        "A CMTS chassis",
+        "A generator transfer panel"
+      ],
+      "answerIndex": 1,
+      "explanation": "An ODF is the fiber-specific equivalent of a traditional copper MDF, holding splice organizers and connector panels (LC, SC, MPO) instead of copper cross-connect blocks.",
+      "citation": "TIA-569-E [confirm edition]."
+    },
+    {
+      "id": "T19-final-Q3",
+      "type": "mc",
+      "prompt": "An OSP engineer is designing feeder plant for a GPON FTTH network with an OLT rated Class B+. What is the maximum total optical loss the link can have from OLT port to subscriber ONT?",
+      "choices": ["13 dB", "20 dB", "28 dB", "35 dB"],
+      "answerIndex": 2,
+      "explanation": "GPON Class B+ (ITU-T G.984.2) sets a maximum 28 dB loss ceiling (with a 13 dB minimum) from OLT port to ONT. This budget must cover fiber attenuation, splitter loss, splice loss, and connector loss.",
+      "citation": "ITU-T G.984.2."
+    },
+    {
+      "id": "T19-final-Q4",
+      "type": "mc",
+      "prompt": "Per ITU-T G.671, what is the standards-ceiling maximum insertion loss for a 1x32 PLC passive optical splitter, and why should this figure be used in link-budget design rather than typical field-measured values (roughly 17-17.5 dB)?",
+      "choices": [
+        "17.0 dB — always design to the field-typical value",
+        "18.1 dB — designing to this worst-case ceiling guarantees the link passes with any compliant installed splitter, even though real units often perform better",
+        "25.0 dB regardless of split ratio",
+        "There is no standardized ceiling"
+      ],
+      "answerIndex": 1,
+      "explanation": "ITU-T G.671 sets 18.1 dB as the compliance ceiling for a 1x32 PLC splitter. Designing to this worst case ensures the link passes even if the installed splitter is right at its allowed maximum, rather than optimistically assuming better-than-spec field performance.",
+      "citation": "ITU-T G.671 [confirm edition]."
+    },
+    {
+      "id": "T19-final-Q5",
+      "type": "mc",
+      "prompt": "In a -48VDC CO power plant, which terminal of the battery string is grounded at 0 V (the battery return), under the negative-ground convention?",
+      "choices": [
+        "The negative (-) terminal",
+        "The positive (+) terminal — the negative terminal drives the load at -48 V",
+        "Neither terminal — DC plants are floating/isolated from earth",
+        "Both terminals are grounded simultaneously"
+      ],
+      "answerIndex": 1,
+      "explanation": "Under the negative-ground convention, the battery's positive terminal is the grounded battery return (0 V); the negative terminal supplies the load at -48 V through the distribution bus.",
+      "citation": "Standard telecom DC power-plant convention."
+    },
+    {
+      "id": "T19-final-Q6",
+      "type": "mc",
+      "prompt": "An OSP engineer is sizing a battery string for a rural hut. OLT load = 32 A. Required reserve = 4 hours. De-rating factor = 0.8. What is the required battery capacity?",
+      "choices": ["128 Ah", "160 Ah", "102.4 Ah", "80 Ah"],
+      "answerIndex": 1,
+      "explanation": "Raw Ah = 32 A x 4 h = 128 Ah. De-rating DIVIDES by the factor: 128 / 0.8 = 160 Ah. This accounts for high-temperature capacity loss and end-of-life degradation.",
+      "citation": "Standard battery-plant sizing methodology."
+    },
+    {
+      "id": "T19-final-Q7",
+      "type": "mc",
+      "prompt": "What happens to CO equipment during the interval between utility failure and the generator reaching stable output?",
+      "choices": [
+        "Equipment shuts down and restarts once the generator is running",
+        "The battery plant supplies DC continuously — no power interruption or reset occurs",
+        "A UPS bridges the gap using stored AC energy",
+        "The ATS momentarily disconnects all loads for safety"
+      ],
+      "answerIndex": 1,
+      "explanation": "The battery plant is a continuous, uninterrupted DC source. When utility fails, rectifiers stop and the batteries instantly supply the DC bus — equipment never sees an interruption. The generator's transfer time is entirely absorbed by battery reserve.",
+      "citation": "Standard telecom power-failure sequence; Telcordia GR-63-CORE [paywalled — general principle, exact transfer-time figure not independently verified this session]."
+    },
+    {
+      "id": "T19-final-Q8",
+      "type": "mc",
+      "prompt": "Per NFPA 110, a standby generator's monthly exercise requirement is:",
+      "choices": [
+        "10% of nameplate load for 10 minutes",
+        "At least 30% of nameplate kW for a minimum of 30 continuous minutes",
+        "100% load for 5 minutes",
+        "No load ('no-load run') for 1 hour"
+      ],
+      "answerIndex": 1,
+      "explanation": "NFPA 110 requires monthly exercise at no less than 30% of nameplate kW for a minimum of 30 continuous minutes. Running unloaded does not verify load-carrying capability.",
+      "citation": "NFPA 110 [confirm current edition]."
+    },
+    {
+      "id": "T19-final-Q9",
+      "type": "mc",
+      "prompt": "What is the primary risk of storing diesel generator fuel for more than roughly 12 months without treatment?",
+      "choices": [
+        "Significant evaporation losses",
+        "Degradation — water absorption, microbial growth, and oxidation form gum, sludge, and sediment that clog fuel injectors",
+        "The fuel becomes a regulated hazardous waste after 12 months",
+        "The fuel becomes electrically conductive"
+      ],
+      "answerIndex": 1,
+      "explanation": "Stored diesel degrades via oxidation, water absorption, and microbial growth, forming contamination that can clog injectors and cause generator failure on demand. Fuel polishing or stabilizer treatment mitigates this.",
+      "citation": "ASTM D975 [confirm current edition]."
+    },
+    {
+      "id": "T19-final-Q10",
+      "type": "mc",
+      "prompt": "What is the ASHRAE-recommended thermal envelope for telecom/IT equipment inlet temperature (all A-class equipment)?",
+      "choices": ["10-35°C", "18-27°C", "0-50°C", "20-24°C only"],
+      "answerIndex": 1,
+      "explanation": "ASHRAE TC 9.9's recommended envelope is 18-27°C (64.4-80.6°F) for all A-class equipment. This is the recommended range for reliability/efficiency — the wider ALLOWABLE range (e.g., Class A2's 10-35°C) is a broader tolerance band, not the design target.",
+      "citation": "ASHRAE TC 9.9 [confirm current edition]."
+    },
+    {
+      "id": "T19-final-Q11",
+      "type": "mc",
+      "prompt": "A fire suppression system discharges a gaseous chemical agent (e.g., Novec 1230) into a CO equipment room. What happens to the OLT equipment after suppression and ventilation?",
+      "choices": [
+        "Destroyed — gaseous agents are as damaging as water",
+        "Typically operational — clean agents leave no residue and cause no electrical shorts; a commissioning check verifies no heat/smoke damage",
+        "Must be replaced immediately as insurance policy",
+        "Requires connector lens cleaning due to agent residue bonding to ferrules"
+      ],
+      "answerIndex": 1,
+      "explanation": "Clean-agent suppression is specifically designed to avoid equipment damage — no residue, no electrical shorts. After ventilation and a smoke/heat-damage inspection, operations typically resume without equipment replacement.",
+      "citation": "NFPA 75 [confirm edition]; NFPA 76 [confirm edition]."
+    },
+    {
+      "id": "T19-final-Q12",
+      "type": "mc",
+      "prompt": "A lightning strike hits a pole 400 m from a rural hut. The feeder cable messenger is bonded to the MGN at every pole, and the hut has NO primary protector at building entry. What is the most likely outcome?",
+      "choices": [
+        "No damage — fiber core is non-conductive",
+        "OLT line-card damage — the GPR transient travels via the bonded messenger and armor to the OLT chassis, destroying unprotected line cards",
+        "Minor, temporary signal interference only",
+        "Cable jacket rupture from thermal expansion"
+      ],
+      "answerIndex": 1,
+      "explanation": "The metallic messenger and armor (not the dielectric fiber core) form a GPR conduction path. Without a primary protector clamping the transient and bonding it to the GES, the surge routes through the armor into the OLT chassis.",
+      "citation": "RUS Bulletin 1751F-815 — Electrical Protection of Outside Plant."
+    },
+    {
+      "id": "T19-final-Q13",
+      "type": "mc",
+      "prompt": "What does the IBT-entry (Intersystem Bonding Termination) accomplish at a CO building entry, per NEC Art. 250.94?",
+      "choices": [
+        "Converts OSP cable metallic members to fiber-only",
+        "Provides a single accessible, listed bonding point where all incoming systems (power, telecom, cable TV) converge — preventing multiple separate ground points that create ground loops",
+        "Continuously measures ground resistance and auto-alarms",
+        "Connects the -48VDC power plant to the OSP cable's power feed"
+      ],
+      "answerIndex": 1,
+      "explanation": "NEC Art. 250.94 requires an accessible, listed device with capacity for at least three intersystem bonding conductors, giving all incoming systems a single common ground reference and preventing ground loops.",
+      "citation": "NEC (NFPA 70) Art. 250.94."
+    },
+    {
+      "id": "T19-final-Q14",
+      "type": "mc",
+      "prompt": "Per TIA-607-D, what is the minimum TBB (Telecommunications Bonding Backbone) conductor size for a short backbone run, and what installation rule applies?",
+      "choices": [
+        "#12 AWG; may be spliced at each floor",
+        "#6 AWG minimum, scaling up with length; must be a single continuous, non-spliced conductor",
+        "#2 AWG regardless of length; splicing permitted",
+        "No minimum size specified"
+      ],
+      "answerIndex": 1,
+      "explanation": "TIA-607-D specifies #6 AWG copper minimum, scaling to much larger conductors for longer runs, and the TBB must be a single continuous conductor with no splices, ensuring a consistent low-impedance ground reference.",
+      "citation": "TIA-607-D [confirm current edition]."
+    },
+    {
+      "id": "T19-final-Q15",
+      "type": "mc",
+      "prompt": "A CO building has its MEF 65 feet from the ODF rack. The OSP engineer wants to run gel-filled OSP feeder cable the full 65 feet before terminating. What NEC rule does this violate?",
+      "choices": [
+        "NEC Art. 250.94 — IBT must be within 50 feet of building entry",
+        "NEC Art. 770.113 — unlisted OSP-grade fiber cable is permitted inside a building only for the first 50 feet from the point of entrance, and must then terminate in an enclosure or transition to listed cable",
+        "NEC Art. 230.70 — service entrance equipment location",
+        "No NEC rule applies to fiber cable length inside buildings"
+      ],
+      "answerIndex": 1,
+      "explanation": "NEC Art. 770.113 is the section that limits unlisted (OSP-grade) fiber cable to 50 feet inside a building before it must terminate in an enclosure or transition to listed inside-plant cable. (Note: Art. 770.26 covers a different topic — fire-spread prevention/firestopping — and should not be cited for the 50-foot rule.)",
+      "citation": "NEC (NFPA 70) Art. 770.113 [confirm current edition]."
+    },
+    {
+      "id": "T19-final-Q16",
+      "type": "mc",
+      "prompt": "Why is a trunk cable (pre-terminated MPO/MTP) preferred over individual pigtail splices for connections between adjacent ODF racks in a high-density CO?",
+      "choices": [
+        "Trunk cables have lower loss than fusion splices",
+        "Trunk cables eliminate field splicing between racks — faster to install and more space-efficient, even though fusion splice loss (0.05-0.10 dB) is actually lower than MPO connector loss (roughly 0.5-1.0 dB per pair)",
+        "TIA-568 mandates trunk cables between any two adjacent racks",
+        "Trunk cables allow bidirectional signals on a single fiber, unlike splices"
+      ],
+      "answerIndex": 1,
+      "explanation": "Trunk cables are an installation-convenience and space-efficiency measure, not a loss-reduction measure — fusion splicing is actually lower-loss. The benefit is eliminating field splicing time and splice-organizer space between racks.",
+      "citation": "TIA-568.3-D [confirm edition]."
+    },
+    {
+      "id": "T19-final-Q17",
+      "type": "mc",
+      "prompt": "A 72-fiber feeder cable serves FDH-1 (24 fibers, designated split) and FDH-2 (48 fibers, designated express) in a bus topology. A splicer accidentally splices fibers 1-24 as express instead of split. What is the result?",
+      "choices": [
+        "No effect — the OLT reroutes automatically",
+        "FDH-1 is completely dark — fibers 1-24 now route to FDH-2 instead of FDH-1's splitters, so FDH-1's splitters receive no light",
+        "50% signal loss at FDH-1 only",
+        "FDH-2 is overloaded and fails"
+      ],
+      "answerIndex": 1,
+      "explanation": "Express vs. split is binary at the FOSC. Fibers spliced express when they should split never reach the intended FDH's splitters — resulting in complete loss of service for that FDH's subscribers until the splice error is found and corrected.",
+      "citation": "Standard express/split FOSC design practice."
+    },
+    {
+      "id": "T19-final-Q18",
+      "type": "mc",
+      "prompt": "Inside an FDH, what does a 1x32 splitter cassette do?",
+      "choices": [
+        "Amplifies the optical signal for longer subscriber reach",
+        "Takes one feeder input fiber and passively splits its signal to 32 subscriber output fibers, with no electronics or power required",
+        "Converts the optical signal to electrical for local distribution",
+        "Filters wavelengths to separate video overlay from data"
+      ],
+      "answerIndex": 1,
+      "explanation": "A splitter cassette is entirely passive — a device made of fused fiber (or a PLC) that splits one input into multiple outputs with no electronics, no power supply, and no moving parts. A 1x32 splitter divides one feeder signal into 32 subscriber outputs.",
+      "citation": "ITU-T G.671 [confirm edition]; standard FDH internal architecture."
+    },
+    {
+      "id": "T19-final-Q19",
+      "type": "mc",
+      "prompt": "Why are GPON subscriber ports at the FDH connector field always SC/APC rather than SC/UPC?",
+      "choices": [
+        "SC/UPC is physically incompatible with FDH housings",
+        "The angled APC ferrule reduces back-reflection substantially versus a flat UPC connector; elevated back-reflection at one subscriber port can degrade upstream signal quality for all subscribers sharing that splitter",
+        "SC/APC is required for aesthetic/color-coding reasons only, with no technical basis",
+        "SC/APC carries higher optical power than SC/UPC"
+      ],
+      "answerIndex": 1,
+      "explanation": "Because a GPON splitter shares one feeder input across many subscribers, back-reflection at any single port can propagate upstream and degrade the entire shared PON branch. The angled APC ferrule minimizes this risk — the reason SC/APC is mandatory at GPON subscriber ports.",
+      "citation": "ITU-T G.984.2."
+    },
+    {
+      "id": "T19-final-Q20",
+      "type": "mc",
+      "prompt": "You measured a fiber pair at 4.8 dB loss to the demarc during OSP handoff. A week later, ISP re-tests and reports 6.1 dB. Whose responsibility is it to investigate?",
+      "choices": [
+        "ISP's — they caused it by patching",
+        "Yours (OSP) — a 1.3 dB shift is well outside normal OLTS measurement repeatability and indicates real degradation or contamination on the OSP side of the demarc",
+        "Neither — 1.3 dB is within normal measurement noise",
+        "The equipment manufacturer's"
+      ],
+      "answerIndex": 1,
+      "explanation": "A 1.3 dB shift exceeds normal OLTS repeatability (roughly +/-0.2 dB). The OSP engineer must inspect the fiber route, check the demarc connector, clean or repair as needed, and re-test to confirm resolution.",
+      "citation": "Standard OLTS repeatability practice; OSP/ISP handoff-boundary convention."
+    },
+    {
+      "id": "T19-final-Q21",
+      "type": "mc",
+      "prompt": "ISP reports a fiber failed signal acceptance with RX power of -35 dBm (acceptable range roughly -28 to -5 dBm). Your OLTS baseline at handoff was 4.8 dB. What is the correct first diagnostic step?",
+      "choices": [
+        "Ask ISP to re-test the fiber with OLTS at the demarc to compare against your 4.8 dB baseline",
+        "Order a replacement fiber immediately",
+        "Assume -35 dBm is within a different, undocumented acceptable range",
+        "Ask ISP to increase OLT receiver gain to compensate"
+      ],
+      "answerIndex": 0,
+      "explanation": "Re-testing at the demarc isolates the fault location. If ISP's re-test matches your 4.8 dB baseline, the fiber is fine and the problem is downstream (patch cable, port, or receiver). If it doesn't match, the fiber degraded and is OSP's responsibility.",
+      "citation": "Standard fiber-handoff fault-isolation sequence."
+    },
+    {
+      "id": "T19-final-Q22",
+      "type": "drag-match",
+      "prompt": "Match each element of the full OSP-to-ISP signal chain to the correct description.",
+      "items": [
+        { "id": "i_headend", "label": "OLT/headend — active equipment; ISP-owned; feeds the OSP feeder fiber" },
+        { "id": "i_odf", "label": "ODF/MDF — OSP/ISP boundary; OSP splices feeder to pigtails here" },
+        { "id": "i_feeder", "label": "Feeder fiber — headend to FDH; pure OSP design and construction scope" },
+        { "id": "i_fdh", "label": "FDH — passive splitter enclosure; clearest OSP/ISP demarcation point in most designs" },
+        { "id": "i_drop", "label": "Drop fiber — FDH connector field to ONT; last-mile OSP-installed segment" },
+        { "id": "i_ont", "label": "ONT — the demarc; carrier-owned up to its input, customer-owned beyond its output" }
+      ],
+      "targets": [
+        { "id": "t_1", "label": "OLT/headend" },
+        { "id": "t_2", "label": "ODF/MDF" },
+        { "id": "t_3", "label": "Feeder fiber" },
+        { "id": "t_4", "label": "FDH" },
+        { "id": "t_5", "label": "Drop fiber" },
+        { "id": "t_6", "label": "ONT" }
+      ],
+      "correctMap": { "t_1": "i_headend", "t_2": "i_odf", "t_3": "i_feeder", "t_4": "i_fdh", "t_5": "i_drop", "t_6": "i_ont" },
+      "explanation": "The full signal chain: OLT (headend, active, ISP) -> ODF/MDF (OSP/ISP boundary) -> feeder fiber (pure OSP) -> FDH (passive splitter, clearest OSP/ISP demarc) -> drop fiber (OSP-installed last segment) -> ONT (the demarc — carrier-owned to its input, customer-owned beyond)."
+    }
+  ]
+}

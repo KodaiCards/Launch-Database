@@ -107,3 +107,40 @@ test('a client-supplied score cannot fake a pass (grade only reads answers)', ()
   assert.equal(r.score, 0);
   assert.equal(r.passed, false);
 });
+
+// A drag-match whose items are authored in target/answer order (the gameable shape
+// Carter caught live: option N answers target N).
+const ALIGNED_DM = {
+  id: 'dm', type: 'drag-match', prompt: 'Match',
+  items:   [{ id: 'i1', label: 'A' }, { id: 'i2', label: 'B' }, { id: 'i3', label: 'C' }, { id: 'i4', label: 'D' }],
+  targets: [{ id: 't1', label: '1' }, { id: 't2', label: '2' }, { id: 't3', label: '3' }, { id: 't4', label: '4' }],
+  correctMap: { t1: 'i1', t2: 'i2', t3: 'i3', t4: 'i4' },
+};
+
+test('_presentItems never returns options positionally aligned with targets (anti-gaming)', () => {
+  const fullyAligned = items => ALIGNED_DM.targets.every((t, i) => items[i] && items[i].id === ALIGNED_DM.correctMap[t.id]);
+  assert.ok(fullyAligned(ALIGNED_DM.items), 'fixture is authored fully-aligned');
+  // Across many attempts the presented order must NEVER be fully aligned, and must vary.
+  const orders = new Set();
+  for (let i = 0; i < 200; i++) {
+    const shown = pools._presentItems(ALIGNED_DM);
+    assert.equal(fullyAligned(shown), false, 'presented options must not be positionally aligned');
+    assert.equal(shown.length, ALIGNED_DM.items.length, 'no options dropped');
+    assert.deepEqual([...shown].map(x => x.id).sort(), ['i1', 'i2', 'i3', 'i4'], 'same option set, reordered');
+    orders.add(shown.map(x => x.id).join(','));
+  }
+  assert.ok(orders.size > 1, 'option order varies across attempts');
+});
+
+test('drawnQuestionsForClient shuffles drag-match options and still strips the key; grading is order-independent', () => {
+  const pool = pools.validatePool({ ...RAW, pool: [...RAW.pool, ALIGNED_DM] });
+  const payload = pools.drawnQuestionsForClient(pool, ['dm']);
+  const shown = payload[0];
+  assert.equal('correctMap' in shown, false, 'answer key stripped');
+  assert.ok(Array.isArray(shown.items) && shown.items.length === 4, 'options present');
+  const fullyAligned = ALIGNED_DM.targets.every((t, i) => shown.items[i] && shown.items[i].id === ALIGNED_DM.correctMap[t.id]);
+  assert.equal(fullyAligned, false, 'client never sees positionally-aligned options');
+  // Grading reads the pool's correctMap by id — presentation order does not change the score.
+  const r = pools.grade(pool, ['dm'], { dm: { t1: 'i1', t2: 'i2', t3: 'i3', t4: 'i4' } });
+  assert.equal(r.correct, 1, 'correct id-mapping still grades correct regardless of shown order');
+});
