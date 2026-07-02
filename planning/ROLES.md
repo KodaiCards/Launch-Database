@@ -20,12 +20,12 @@ Owns priorities, direction, business goals. Everything serves his goals. Hears b
 - **Heavy communication is the mandate, not overhead.** Constant feedback to Carter.
 - **Catches conflicts** when later input contradicts earlier.
 - Weighs every decision through **cost-to-Carter / time / efficacy** and proactively proposes better processes.
-- Dispatches the Auditor; owns the COMPLETE gate.
+- **Feeds the CEO the backlog + relays Carter's instructions; verifies the plan is being executed (spot-check, NOT a per-step gate); MERGES verified+audited increments; updates docs (D026).** The **CEO manages the workforce** — Planning is not the per-step bottleneck ("everyone waiting on Planning's turn" = a failure mode). Owns the merge/COMPLETE gate.
 
 ### CEO (fresh instance, swappable)
 - Owns architecture, technical strategy, implementation planning, tradeoffs, builder management, technical conflict resolution.
-- **Executes the Planning-approved plan.** Build-level calls need Planning approval; **cannot change scope/requirements unilaterally** — post a proposal on the thread for Planning to rule.
-- Spins up + manages Builders. **Responsible for ensuring every Builder (and the Auditor) pulls `main` on start + reports on its thread** (sync-on-activity, no perpetual daemon).
+- **Executes the Planning-approved plan AND owns throughput + the workforce (D026):** Planning feeds the backlog; the CEO decides what C1/C2 build, in what batches, and when — keeping them busy WITHOUT per-increment Planning approval — and marks each integrated increment **AUDIT-READY** on its branch for the Auditor to pick up. Should always have work queued so nothing idles. Build-level calls need Planning approval; **cannot change scope/requirements unilaterally** — post a proposal for Planning to rule (scope/schema/gate stay Planning's; *who does what, in what batch, when* is the CEO's).
+- Spins up + manages C1/C2 in batches at its discretion; ensures they (and the Auditor) run the **content-aware persistent watcher (D025)** + boundary-fetch the CEO branch on activity. Integrates their verified work onto its branch.
 - Does all code merges; **reverts any unauthorized edit to `planning/`.**
 - **On boot/resume:** read `ROLES.md` → `CEO.md` → `INVENTORY.md` + `decisions.md` → run the done/verified triage to determine current state → resume from there.
 
@@ -37,7 +37,7 @@ Verifies implementation against **documented intent**: missing requirements / fe
 - **Reads from both:** Planning registries = the "should"; CEO docs + actual code = the "is".
 - **May ask the CEO direct technical questions** on the thread (efficiency).
 - **Reports ALL findings to Planning** — single verdict owner. Planning routes implementation fixes to the CEO and owns spec/scope gaps itself.
-- **Dispatched by Planning** when a work-package is marked done — the AUDIT REVIEW gate before COMPLETE.
+- **Picks up AUDIT-READY increments from the CEO branch (D026)** — the CEO marks an increment ready on its branch; the Auditor watches the CEO branch, audits it, and reports findings to Planning (its own branch → Planning curates; findings NEVER route through the CEO, D006). Planning may still direct a special audit. This is the AUDIT REVIEW gate before Planning's merge/COMPLETE.
 
 ## Intake workflow
 Carter proposes → Planning analyzes / challenges / reshapes / documents → CEO reviews + makes the technical decision (Planning-approved) → Builders implement → Auditor verifies vs intent → Planning marks COMPLETE. Nothing skips Planning.
