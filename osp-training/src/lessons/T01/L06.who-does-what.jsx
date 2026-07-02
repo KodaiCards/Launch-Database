@@ -287,6 +287,7 @@ export default function T01L06_WhoDoesWhat() {
             detail: 'Updates drawings to as-built conditions. Compiles splice records, test records, permits. Delivers final package to client and RUS (Form 219).',
           },
         ]}
+        correctOrder={['survey', 'design', 'permit', 'makready', 'construct', 'splice', 'test', 'inspect', 'asbuilt']}
       />
 
       {/* ── ADVANCED ────────────────────────────────────────────────────── */}
