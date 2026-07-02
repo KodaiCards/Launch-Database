@@ -8,6 +8,7 @@ import React from 'react';
 import LessonLayout from '../../components/LessonLayout.jsx';
 import BranchingScenario from '../../components/primitives/BranchingScenario.jsx';
 import Quiz from '../../components/primitives/Quiz.jsx';
+import GatedAssessment from '../../components/primitives/GatedAssessment.jsx';
 import Flashcard from '../../components/Flashcard.jsx';
 
 export const meta = {
@@ -1096,6 +1097,11 @@ export default function T09L02_NepaTypes() {
       />
 
       {/* ── PER-LESSON QUIZ ──────────────────────────────────────────────── */}
+      <GatedAssessment
+        courseId="T09"
+        assessmentId="T09-L02"
+        title="T09.L02 Check — NEPA: CE, EA, and EIS"
+        fallback={
       <Quiz
         title="T09.L02 Check — NEPA: CE, EA, and EIS"
         mode="multiple-choice"
@@ -1181,6 +1187,8 @@ export default function T09L02_NepaTypes() {
             citation: 'NHPA §106 procedure per 54 USC §306108; ESA §7 consultation per 16 USC §1536; CWA §404 permitting per 33 USC §1344; 7 CFR Part 1b (eff. April 3, 2026; replaced 7 CFR Part 1970).',
           },
         ]}
+      />
+        }
       />
 
     </LessonLayout>

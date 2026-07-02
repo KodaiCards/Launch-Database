@@ -6,6 +6,7 @@ import React from 'react';
 import LessonLayout from '../../components/LessonLayout.jsx';
 import BranchingScenario from '../../components/primitives/BranchingScenario.jsx';
 import Quiz from '../../components/primitives/Quiz.jsx';
+import GatedAssessment from '../../components/primitives/GatedAssessment.jsx';
 import Flashcard from '../../components/Flashcard.jsx';
 
 export const meta = {
@@ -448,6 +449,11 @@ export default function T09L08_MunicipalRowTimelinesReality() {
       />
 
       {/* QUIZ */}
+      <GatedAssessment
+        courseId="T09"
+        assessmentId="T09-L08"
+        title="L08 Practice Quiz — Municipal ROW"
+        fallback={
       <Quiz
         title="L08 Practice Quiz — Municipal ROW"
         mode="multiple-choice"
@@ -531,6 +537,8 @@ export default function T09L08_MunicipalRowTimelinesReality() {
         onComplete={(result) => {
           console.info('T09 L08 Quiz complete:', result);
         }}
+      />
+        }
       />
 
     </LessonLayout>

@@ -5,6 +5,7 @@
 import React from 'react';
 import LessonLayout from '../../components/LessonLayout.jsx';
 import Quiz from '../../components/primitives/Quiz.jsx';
+import GatedAssessment from '../../components/primitives/GatedAssessment.jsx';
 import Flashcard from '../../components/Flashcard.jsx';
 
 export const meta = {
@@ -185,59 +186,71 @@ export default function T09L07_RowEasementsPrivateProperty() {
 
       <section data-tier="foundations">
         <h3>Check Your Understanding</h3>
+        <GatedAssessment
+          courseId="T09"
+          assessmentId="T09-L07"
+          title="T09.L07 Check — ROW, Easements, and Private Property"
+          fallback={
         <Quiz
           questions={[
             {
               id: 'T09-L07-Q1',
-              question: 'Which access instrument is the gold standard for long-term fiber routes across private property because it is recorded and binds future owners?',
-              options: [
-                { text: 'License', correct: false },
-                { text: 'Express easement', correct: true },
-                { text: 'Prescriptive easement', correct: false },
-                { text: 'Fee-simple acquisition', correct: false },
-              ],
+              type: 'mc',
+              prompt: 'Which access instrument is the gold standard for long-term fiber routes across private property because it is recorded and binds future owners?',
+              choices: ['License', 'Express easement', 'Prescriptive easement', 'Fee-simple acquisition'],
+              answerIndex: 1,
             },
             {
               id: 'T09-L07-Q2',
-              question: 'What makes a prescriptive easement risky for OSP engineers to rely on when they find existing cables with no recorded easement documentation?',
-              options: [
-                { text: 'It is always illegal in all states', correct: false },
-                { text: 'It was never formally recorded, relied on historical use, and may not hold up if property changed hands or continuous use was interrupted', correct: true },
-                { text: 'It requires payment to the county', correct: false },
-                { text: 'It only lasts 5 years', correct: false },
+              type: 'mc',
+              prompt: 'What makes a prescriptive easement risky for OSP engineers to rely on when they find existing cables with no recorded easement documentation?',
+              choices: [
+                'It is always illegal in all states',
+                'It was never formally recorded, relied on historical use, and may not hold up if property changed hands or continuous use was interrupted',
+                'It requires payment to the county',
+                'It only lasts 5 years',
               ],
+              answerIndex: 1,
             },
             {
               id: 'T09-L07-Q3',
-              question: 'What is the critical difference between an easement and a license?',
-              options: [
-                { text: 'An easement is personal and revocable; a license runs with the land', correct: false },
-                { text: 'A license is recorded; an easement is not recorded', correct: false },
-                { text: 'An easement is recorded and runs with the land; a license is revocable and personal to the owner', correct: true },
-                { text: 'There is no difference', correct: false },
+              type: 'mc',
+              prompt: 'What is the critical difference between an easement and a license?',
+              choices: [
+                'An easement is personal and revocable; a license runs with the land',
+                'A license is recorded; an easement is not recorded',
+                'An easement is recorded and runs with the land; a license is revocable and personal to the owner',
+                'There is no difference',
               ],
+              answerIndex: 2,
             },
             {
               id: 'T09-L07-Q4',
-              question: 'When is fee-simple acquisition typically used in OSP projects?',
-              options: [
-                { text: 'For all linear route right-of-way because it provides the most security', correct: false },
-                { text: 'For fiber huts, equipment buildings, and splice vaults where exclusive control is needed', correct: true },
-                { text: 'Never — it is not a valid access instrument', correct: false },
-                { text: 'Only for temporary construction access', correct: false },
+              type: 'mc',
+              prompt: 'When is fee-simple acquisition typically used in OSP projects?',
+              choices: [
+                'For all linear route right-of-way because it provides the most security',
+                'For fiber huts, equipment buildings, and splice vaults where exclusive control is needed',
+                'Never — it is not a valid access instrument',
+                'Only for temporary construction access',
               ],
+              answerIndex: 1,
             },
             {
               id: 'T09-L07-Q5',
-              question: 'What does it mean for an easement to "run with the land"?',
-              options: [
-                { text: 'It must be physically located on a road', correct: false },
-                { text: 'It survives property sales and binds future owners to the same terms', correct: true },
-                { text: 'It expires after the current property owner sells', correct: false },
-                { text: 'It requires annual renewal', correct: false },
+              type: 'mc',
+              prompt: 'What does it mean for an easement to "run with the land"?',
+              choices: [
+                'It must be physically located on a road',
+                'It survives property sales and binds future owners to the same terms',
+                'It expires after the current property owner sells',
+                'It requires annual renewal',
               ],
+              answerIndex: 1,
             },
           ]}
+        />
+          }
         />
       </section>
 

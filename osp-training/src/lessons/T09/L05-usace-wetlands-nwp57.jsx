@@ -11,6 +11,7 @@ import React from 'react';
 import LessonLayout from '../../components/LessonLayout.jsx';
 import BranchingScenario from '../../components/primitives/BranchingScenario.jsx';
 import Quiz from '../../components/primitives/Quiz.jsx';
+import GatedAssessment from '../../components/primitives/GatedAssessment.jsx';
 import Flashcard from '../../components/Flashcard.jsx';
 
 export const meta = {
@@ -458,6 +459,11 @@ export default function T09L05_USACEWetlandsNWP57() {
       />
 
       {/* ── PER-LESSON QUIZ ──────────────────────────────────────────────── */}
+      <GatedAssessment
+        courseId="T09"
+        assessmentId="T09-L05"
+        title="T09.L05 Check — USACE Wetlands Permits: NWP 57"
+        fallback={
       <Quiz
         title="T09.L05 Check — USACE Wetlands Permits: NWP 57"
         mode="multiple-choice"
@@ -527,6 +533,8 @@ export default function T09L05_USACEWetlandsNWP57() {
             citation: 'USACE NWP 57 (2021 reissuance); 33 CFR §330.5 (general conditions); 33 USC §403 (Rivers and Harbors Act §10).',
           },
         ]}
+      />
+        }
       />
 
     </LessonLayout>

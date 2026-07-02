@@ -6,6 +6,7 @@ import React from 'react';
 import LessonLayout from '../../components/LessonLayout.jsx';
 import WorkedExample from '../../components/primitives/WorkedExample.jsx';
 import Quiz from '../../components/primitives/Quiz.jsx';
+import GatedAssessment from '../../components/primitives/GatedAssessment.jsx';
 import Flashcard from '../../components/Flashcard.jsx';
 
 export const meta = {
@@ -473,6 +474,11 @@ export default function T09L10_PermitTrackingPmProblem() {
       </section>
 
       {/* QUIZ */}
+      <GatedAssessment
+        courseId="T09"
+        assessmentId="T09-L10"
+        title="L10 Practice Quiz — Permit Tracking"
+        fallback={
       <Quiz
         title="L10 Practice Quiz — Permit Tracking"
         mode="multiple-choice"
@@ -541,6 +547,8 @@ export default function T09L10_PermitTrackingPmProblem() {
         onComplete={(result) => {
           console.info('T09 L10 Quiz complete:', result);
         }}
+      />
+        }
       />
 
     </LessonLayout>

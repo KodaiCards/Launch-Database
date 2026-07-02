@@ -8,6 +8,7 @@ import React from 'react';
 import LessonLayout from '../../components/LessonLayout.jsx';
 import BranchingScenario from '../../components/primitives/BranchingScenario.jsx';
 import Quiz from '../../components/primitives/Quiz.jsx';
+import GatedAssessment from '../../components/primitives/GatedAssessment.jsx';
 import Flashcard from '../../components/Flashcard.jsx';
 
 export const meta = {
@@ -491,6 +492,11 @@ export default function T09L06_StateDOTEncroachmentPermits() {
       />
 
       {/* ── PER-LESSON QUIZ ──────────────────────────────────────────────── */}
+      <GatedAssessment
+        courseId="T09"
+        assessmentId="T09-L06"
+        title="T09.L06 Check — State DOT Encroachment Permits"
+        fallback={
       <Quiz
         title="T09.L06 Check — State DOT Encroachment Permits"
         mode="multiple-choice"
@@ -560,6 +566,8 @@ export default function T09L06_StateDOTEncroachmentPermits() {
             citation: 'M03 §3.5; T09 Brief §2 (L06 vocabulary: as-built submittal); DOT encroachment permit closeout requirements.',
           },
         ]}
+      />
+        }
       />
 
     </LessonLayout>

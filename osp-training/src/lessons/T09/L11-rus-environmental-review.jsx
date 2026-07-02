@@ -6,6 +6,7 @@
 import React from 'react';
 import LessonLayout from '../../components/LessonLayout.jsx';
 import Quiz from '../../components/primitives/Quiz.jsx';
+import GatedAssessment from '../../components/primitives/GatedAssessment.jsx';
 import Flashcard from '../../components/Flashcard.jsx';
 
 export const meta = {
@@ -365,6 +366,11 @@ export default function T09L11_RusEnvironmentalReview() {
       </section>
 
       {/* QUIZ */}
+      <GatedAssessment
+        courseId="T09"
+        assessmentId="T09-L11"
+        title="L11 Practice Quiz — RUS Environmental Review"
+        fallback={
       <Quiz
         title="L11 Practice Quiz — RUS Environmental Review"
         mode="multiple-choice"
@@ -433,6 +439,8 @@ export default function T09L11_RusEnvironmentalReview() {
         onComplete={(result) => {
           console.info('T09 L11 Quiz complete:', result);
         }}
+      />
+        }
       />
 
     </LessonLayout>
