@@ -1,0 +1,126 @@
+{
+  "assessmentId": "T01-L02",
+  "kind": "lesson",
+  "courseId": "T01",
+  "lessonId": "T01.L02",
+  "drawCount": 4,
+  "passThreshold": 70,
+  "pool": [
+    {
+      "id": "T01-L02-Q1",
+      "type": "mc",
+      "prompt": "On a shared utility pole, where does fiber optic cable typically attach relative to electric power lines?",
+      "choices": [
+        "At the very top — fiber gets priority because it is more sensitive to interference",
+        "In the supply space alongside primary power conductors",
+        "In the communication space — below the climbing space, below the primary power conductors and the neutral",
+        "Directly below the primary conductors with no required separation"
+      ],
+      "answerIndex": 2,
+      "explanation": "Fiber is a telecom cable and attaches in the communication space, the lowest zone on a shared pole. Supply (power) lines occupy the top zone. A mandatory climbing space separates the two zones so linemen can climb without their body bridging high-voltage and telecom equipment.",
+      "citation": "NESC C2-2023 (general clearance/space-separation rules for shared poles — see T01.md research log for verification scope)."
+    },
+    {
+      "id": "T01-L02-Q2",
+      "type": "mc",
+      "prompt": "A cable is attached to a pole at 24 feet above the ground and sags to 20 feet above the ground at midspan. Where is ground clearance measured for compliance purposes?",
+      "choices": [
+        "At the attachment point on the pole (24 feet)",
+        "At midspan — the lowest point of the sag (20 feet in this example)",
+        "At the halfway point between attachment height and sag height",
+        "Ground clearance is not measured for telecom cable, only for power lines"
+      ],
+      "answerIndex": 1,
+      "explanation": "Ground clearance is measured at midspan — the lowest point of the cable's sag — not at the attachment height on the pole. This is why crews must always clarify whether a stated height is \"attachment height\" or \"midspan clearance\"; they are different numbers, and only the midspan number determines compliance with minimum clearance rules over roads and other surfaces.",
+      "citation": "NESC C2-2023 (clearance measurement convention — exact rule/table number not independently verified this session; verify against the adopted edition before design lock)."
+    },
+    {
+      "id": "T01-L02-Q3",
+      "type": "mc",
+      "prompt": "What is the name of the mandatory clearance zone between the supply space and communication space on a shared utility pole — a gap where nothing is attached, reserved so linemen can safely climb without bridging the two zones?",
+      "choices": [
+        "Communication space",
+        "Climbing space",
+        "Supply space",
+        "Neutral zone"
+      ],
+      "answerIndex": 1,
+      "explanation": "Climbing space is a mandatory clearance zone — nothing is attached in it. It exists purely so a lineman climbing the pole never has their body bridging the gap between high-voltage supply conductors and telecom equipment. Violating climbing-space requirements is a serious compliance failure that endangers anyone who climbs that pole.",
+      "citation": "NESC C2-2023 (climbing-space requirement — document-level verified; exact rule number not independently confirmed, see T01.md)."
+    },
+    {
+      "id": "T01-L02-Q4",
+      "type": "mc",
+      "prompt": "Who typically OWNS the utility poles that fiber companies attach to in most US markets, and under what FCC rule are the attachment fees set?",
+      "choices": [
+        "The fiber company owns the pole; no FCC rule applies",
+        "The electric utility owns the pole; fiber companies pay annual attachment fees set under 47 CFR 1.1409 (the pole attachment rate formula)",
+        "Local government owns the pole as public infrastructure; fees are set by BICSI",
+        "The electric utility owns the pole; fees are set under 47 CFR 1.1411 (the pole-access application timeline rule)"
+      ],
+      "answerIndex": 1,
+      "explanation": "In most US markets the electric utility owns the pole, and fiber companies are \"attachers\" who pay annual attachment fees. The rate/fee formula lives in 47 CFR 1.1409. (47 CFR 1.1411 governs the *timeline* for a utility to process a pole-access application — a procedural rule, not the fee-setting rule; do not cite 1.1411 for attachment fees.)",
+      "citation": "47 CFR 1.1409 (pole attachment rate formula); contrast with 47 CFR 1.1411 (application/survey timeline — see T01.md research log for the correction)."
+    },
+    {
+      "id": "T01-L02-Q5",
+      "type": "mc",
+      "prompt": "What does RUS Bulletin 1751F-630 (\"Design of Aerial Plant\") govern that is directly relevant to pole work?",
+      "choices": [
+        "Indoor fiber patch panel labeling conventions",
+        "Design requirements for RUS-funded aerial construction — including pole attachment, sag, and clearance design",
+        "FCC pole attachment rate calculations",
+        "Buried cable trenching depth only"
+      ],
+      "answerIndex": 1,
+      "explanation": "1751F-630 is RUS's aerial-plant design bulletin, issued to RUS telecommunications borrowers through the Outside Plant Branch. For RUS-funded projects, it is the governing reference for aerial construction design choices — how poles, attachments, sag, and clearance are engineered — not for FCC rate-setting or indoor work.",
+      "citation": "RUS Bulletin 1751F-630, \"Design of Aerial Plant.\""
+    },
+    {
+      "id": "T01-L02-Q6",
+      "type": "mc",
+      "prompt": "A wood pole's class (strength rating) is determined by measuring its circumference at what point?",
+      "choices": [
+        "At the very top of the pole",
+        "6 feet from the butt (bottom) of the pole",
+        "At the midpoint of the pole's total length",
+        "At the ground line only, regardless of setting depth"
+      ],
+      "answerIndex": 1,
+      "explanation": "ANSI O5.1 determines a wood pole's true class by measuring its circumference 6 feet from the butt — the setting-depth reference point. Class 1 is the strongest common class; class numbers increase as strength decreases, with H1-H6 reserved for extra-heavy loads.",
+      "citation": "ANSI O5.1 (Wood Poles — Specifications and Dimensions) — Table 8M classification method."
+    },
+    {
+      "id": "T01-L02-Q7",
+      "type": "drag-match",
+      "prompt": "Match each vertical zone on a shared utility pole to what occupies it.",
+      "items": [
+        { "id": "i_supply", "label": "High-voltage primary power conductors" },
+        { "id": "i_climbing", "label": "Nothing — mandatory open gap for linemen" },
+        { "id": "i_comm", "label": "Telecom cables (fiber, coax, copper)" }
+      ],
+      "targets": [
+        { "id": "t_top", "label": "Supply space (top zone)" },
+        { "id": "t_mid", "label": "Climbing space (middle zone)" },
+        { "id": "t_bottom", "label": "Communication space (bottom zone)" }
+      ],
+      "correctMap": { "t_top": "i_supply", "t_mid": "i_climbing", "t_bottom": "i_comm" },
+      "explanation": "A shared pole is divided top-to-bottom: supply space (high-voltage power, licensed electricians only), climbing space (a mandatory empty gap for safe climbing), and communication space (telecom cables, where fiber attaches, typically at the bottom).",
+      "citation": "NESC C2-2023 (pole zone structure — document-level verified)."
+    },
+    {
+      "id": "T01-L02-Q8",
+      "type": "mc",
+      "prompt": "In RUS-program areas, the neutral conductor at a pole is often also the MGN. What does MGN stand for, and why does it matter to a fiber crew?",
+      "choices": [
+        "Main Ground Node — it has no bearing on fiber work",
+        "Multi-Grounded Neutral — grounded at every pole; fiber messenger wires must maintain NESC clearance from it and, in some areas, bond to it under specific requirements",
+        "Metallic Grounding Network — used only for electric transmission lines, never distribution",
+        "Modular Ground Nexus — a term specific to ADSS cable installations only"
+      ],
+      "answerIndex": 1,
+      "explanation": "MGN (Multi-Grounded Neutral) is the electric distribution system's return conductor, grounded at every pole in many RUS-program areas. Fiber messenger wires must maintain NESC-specified clearance from the neutral, and bonding the messenger to the neutral/MGN has specific grounding requirements a crew must follow.",
+      "citation": "RUS Bulletin 1751F-630 (RUS-area MGN bonding context for aerial plant)."
+    }
+  ]
+}
