@@ -5,7 +5,6 @@ import React from 'react';
 import LessonLayout from '../../components/LessonLayout.jsx';
 import SideBySide from '../../components/primitives/SideBySide.jsx';
 import Quiz from '../../components/primitives/Quiz.jsx';
-import GatedAssessment from '../../components/primitives/GatedAssessment.jsx';
 import Flashcard from '../../components/Flashcard.jsx';
 
 export const meta = {
@@ -369,7 +368,7 @@ export default function T03L05_G652VsG657BendInsensitive() {
 
         <h3 className="mt-4 font-semibold">The G.652 vs. G.657 decision in the full design workflow</h3>
         <p>
-          The fiber-type choice you make here directly drives downstream design phases that you'll learn in T06 (underground conduit sizing) and T11 (fusion splicing compatibility). Here's why this matters: T02 taught you that macrobend loss is the enemy, especially at 1550 nm. Standard G.652.D has a minimum installation bend radius of roughly 240 mm (9.5 inches) for a typical 12 mm OSP cable. That's fine for a straight aerial span or a gently curved burial run. But what happens when an OSP feeder cable has to make a 90-degree turn inside a conduit at a distribution handhole? Or when a fiber drop cable has to make a 5 mm radius turn inside a building?
+          The fiber-type choice you make here directly drives downstream design phases that you'll learn in T06 (underground conduit sizing) and T11 (fusion splicing compatibility). Here's why this matters: T02 taught you that macrobend loss is the enemy, especially at 1550 nm. Using the CABLE-level installation (dynamic-pull) rule from T03.L11 — roughly 20&times; the cable's outer diameter — a typical 12 mm OSP cable containing G.652.D fiber has an installation-pull minimum bend radius of roughly 240 mm (9.5 inches). This is a distinct figure from the ~30 mm bare-fiber long-term bend-radius convention cited elsewhere in this lesson (and in the graded quiz below) — the 240 mm number applies to the whole cable during the dynamic stress of pulling, while the ~30 mm figure is an industry-convention long-term/loaded bend-radius reference for the bare fiber itself, not the installed cable. Don't confuse the two: they answer different questions (safe pulling radius for this cable vs. long-term bare-fiber bend tolerance) and are not interchangeable. See T03.L11 for the general installation-vs-long-term bend radius distinction (installation number is larger/less restrictive; long-term is smaller). [Cable-level 20&times;OD installation-pull convention; ~30 mm bare-fiber figure per industry convention, not a single pinned ITU-T clause — see T03 research log.] That's fine for a straight aerial span or a gently curved burial run. But what happens when an OSP feeder cable has to make a 90-degree turn inside a conduit at a distribution handhole? Or when a fiber drop cable has to make a 5 mm radius turn inside a building?
         </p>
         <p className="mt-2">
           If you specify G.652.D for that tight-bend scenario, you're guaranteeing macrobend loss that will fail the link budget. The fix is either (a) redesign the conduit with larger radius bends (costs $3k–5k in civil work), or (b) re-spec the cable to G.657.A1 or A2 ($0.10–0.20/meter difference, negligible total). Architects and crew leads who understand G.657 subcategories make the right call at design time. Crews who don't end up with tight bends and field-installed cable that fails 6 months later.
@@ -454,84 +453,77 @@ export default function T03L05_G652VsG657BendInsensitive() {
       />
 
       {/* ── PER-LESSON QUIZ ───────────────────────────────────────────────── */}
-      <GatedAssessment
-        courseId="T03"
-        assessmentId="T03-L05"
+      <Quiz
         title="T03.L05 Check — G.652 vs. G.657 Bend-Insensitive Fiber"
-        fallback={
-        <Quiz
-          title="T03.L05 Check — G.652 vs. G.657 Bend-Insensitive Fiber"
-          mode="multiple-choice"
-          questions={[
-            {
-              id: 'T03-L05-Q1',
-              type: 'mc',
-              prompt:
-                'A GPON drop cable must navigate a 7.5 mm bend at a wall entry point. Which is the minimum ITU-T G.657 grade meeting this requirement?',
-              choices: [
-                'G.652.D — standard fiber handles most field bends',
-                'G.657.A1 — rated to 10 mm minimum; 7.5 mm is within this spec',
-                'G.657.A2 — rated to 7.5 mm minimum; exactly meets the requirement',
-                'G.657.B3 — only ultra-bend-insensitive handles 7.5 mm',
-              ],
-              answerIndex: 2,
-              explanation:
-                'G.657.A2 is rated to a minimum bend radius of 7.5 mm — exactly meeting this requirement. G.657.A1 is rated to 10 mm and would not be sufficient at 7.5 mm. G.657.B3 would also work but is unnecessarily high-spec for this application. G.652.D minimum is ~30 mm for installation. (Source: ITU-T G.657 2024 — verified)',
-            },
-            {
-              id: 'T03-L05-Q2',
-              type: 'mc',
-              prompt:
-                'A long-haul carrier is handing off fiber at your CO. The splice record shows the incoming fiber is ITU-T G.655. Your distribution plant uses G.652.D. What should you do before splicing G.652.D directly onto the G.655 carrier fiber?',
-              choices: [
-                'Splice directly — G.655 and G.652.D are fully interchangeable at the core level',
-                'Measure actual splice loss at the G.655/G.652.D interface — MFD differences may add measurable loss that needs to be budgeted',
-                'Replace the entire distribution plant with G.655 fiber for compatibility',
-                'G.655 is a multimode fiber — you cannot splice it to G.652.D single-mode',
-              ],
-              answerIndex: 1,
-              explanation:
-                'G.655 (NZDSF) and G.652.D both are single-mode fibers, but G.655 typically has a slightly different MFD. Splicing them together may introduce measurable splice loss that would not occur at a G.652.D-to-G.652.D joint. Before finalizing the link budget, measure the actual splice loss at the interface. If it is within budget, proceed. If not, use an intermediate fiber or discuss the MFD issue with the carrier. (Source: ITU-T G.655 — itu.int)',
-            },
-            {
-              id: 'T03-L05-Q3',
-              type: 'mc',
-              prompt:
-                'G.657.B3 fiber differs from G.657.A1 primarily in which way?',
-              choices: [
-                'B3 has a smaller physical core diameter (7 µm vs. 9 µm)',
-                'B3 is not guaranteed backward-compatible with G.652.D for zero-loss splicing due to potential MFD tolerance differences',
-                'B3 has higher attenuation at 1550 nm than G.657.A1',
-                'B3 cannot be used with GPON systems',
-              ],
-              answerIndex: 1,
-              explanation:
-                'G.657.B3 uses a trench-assisted refractive index profile that achieves very low bend loss but may have a slightly different MFD compared to G.652.D. It is NOT guaranteed backward-compatible with G.652.D for zero-loss splicing. In contrast, G.657.A1 and A2 are fully splice-compatible with G.652.D. (Source: hfcl.com G.657 blog; OFS technical literature — verified)',
-            },
-            {
-              id: 'T03-L05-Q4',
-              type: 'dragdrop',
-              prompt:
-                'Match each installation scenario to the minimum G.657 fiber grade required.',
-              items: [
-                { id: 'trunk',  label: 'OSP trunk cable on a gently curved aerial span (min bend ~200 mm)' },
-                { id: 'drop10', label: 'FTTH drop cable with a 10 mm bend at a splice closure entry' },
-                { id: 'drop75', label: 'GPON aerial drop with a 7.5 mm bend at a building wall entry' },
-                { id: 'mdubend', label: 'In-building MDU with 5 mm radius corners in tight cable tray' },
-              ],
-              targets: [
-                { id: 'tg652', label: 'G.652.D — standard OSP fiber is sufficient' },
-                { id: 'ta1',   label: 'G.657.A1 — minimum 10 mm bend radius' },
-                { id: 'ta2',   label: 'G.657.A2 — minimum 7.5 mm bend radius' },
-                { id: 'tb3',   label: 'G.657.B3 — minimum 5 mm bend radius' },
-              ],
-              correctMap: { tg652: 'trunk', ta1: 'drop10', ta2: 'drop75', tb3: 'mdubend' },
-              explanation:
-                'Trunk (200 mm bend) → G.652.D handles easily. Drop (10 mm) → G.657.A1 exactly meets the minimum. GPON wall entry (7.5 mm) → G.657.A2 minimum. MDU tight corner (5 mm) → G.657.B3 required. Each step down in bend radius requires the next G.657 grade. (ITU-T G.657 2024 — verified)',
-            },
-          ]}
-        />
-        }
+        mode="multiple-choice"
+        questions={[
+          {
+            id: 'T03-L05-Q1',
+            type: 'mc',
+            prompt:
+              'A GPON drop cable must navigate a 7.5 mm bend at a wall entry point. Which is the minimum ITU-T G.657 grade meeting this requirement?',
+            choices: [
+              'G.652.D — standard fiber handles most field bends',
+              'G.657.A1 — rated to 10 mm minimum; 7.5 mm is within this spec',
+              'G.657.A2 — rated to 7.5 mm minimum; exactly meets the requirement',
+              'G.657.B3 — only ultra-bend-insensitive handles 7.5 mm',
+            ],
+            answerIndex: 2,
+            explanation:
+              'G.657.A2 is rated to a minimum bend radius of 7.5 mm — exactly meeting this requirement. G.657.A1 is rated to 10 mm and would not be sufficient at 7.5 mm. G.657.B3 would also work but is unnecessarily high-spec for this application. G.652.D minimum is ~30 mm for installation. (Source: ITU-T G.657 2024 — verified)',
+          },
+          {
+            id: 'T03-L05-Q2',
+            type: 'mc',
+            prompt:
+              'A long-haul carrier is handing off fiber at your CO. The splice record shows the incoming fiber is ITU-T G.655. Your distribution plant uses G.652.D. What should you do before splicing G.652.D directly onto the G.655 carrier fiber?',
+            choices: [
+              'Splice directly — G.655 and G.652.D are fully interchangeable at the core level',
+              'Measure actual splice loss at the G.655/G.652.D interface — MFD differences may add measurable loss that needs to be budgeted',
+              'Replace the entire distribution plant with G.655 fiber for compatibility',
+              'G.655 is a multimode fiber — you cannot splice it to G.652.D single-mode',
+            ],
+            answerIndex: 1,
+            explanation:
+              'G.655 (NZDSF) and G.652.D both are single-mode fibers, but G.655 typically has a slightly different MFD. Splicing them together may introduce measurable splice loss that would not occur at a G.652.D-to-G.652.D joint. Before finalizing the link budget, measure the actual splice loss at the interface. If it is within budget, proceed. If not, use an intermediate fiber or discuss the MFD issue with the carrier. (Source: ITU-T G.655 — itu.int)',
+          },
+          {
+            id: 'T03-L05-Q3',
+            type: 'mc',
+            prompt:
+              'G.657.B3 fiber differs from G.657.A1 primarily in which way?',
+            choices: [
+              'B3 has a smaller physical core diameter (7 µm vs. 9 µm)',
+              'B3 is not guaranteed backward-compatible with G.652.D for zero-loss splicing due to potential MFD tolerance differences',
+              'B3 has higher attenuation at 1550 nm than G.657.A1',
+              'B3 cannot be used with GPON systems',
+            ],
+            answerIndex: 1,
+            explanation:
+              'G.657.B3 uses a trench-assisted refractive index profile that achieves very low bend loss but may have a slightly different MFD compared to G.652.D. It is NOT guaranteed backward-compatible with G.652.D for zero-loss splicing. In contrast, G.657.A1 and A2 are fully splice-compatible with G.652.D. (Source: hfcl.com G.657 blog; OFS technical literature — verified)',
+          },
+          {
+            id: 'T03-L05-Q4',
+            type: 'dragdrop',
+            prompt:
+              'Match each installation scenario to the minimum G.657 fiber grade required.',
+            items: [
+              { id: 'trunk',  label: 'OSP trunk cable on a gently curved aerial span (min bend ~200 mm)' },
+              { id: 'drop10', label: 'FTTH drop cable with a 10 mm bend at a splice closure entry' },
+              { id: 'drop75', label: 'GPON aerial drop with a 7.5 mm bend at a building wall entry' },
+              { id: 'mdubend', label: 'In-building MDU with 5 mm radius corners in tight cable tray' },
+            ],
+            targets: [
+              { id: 'tg652', label: 'G.652.D — standard OSP fiber is sufficient' },
+              { id: 'ta1',   label: 'G.657.A1 — minimum 10 mm bend radius' },
+              { id: 'ta2',   label: 'G.657.A2 — minimum 7.5 mm bend radius' },
+              { id: 'tb3',   label: 'G.657.B3 — minimum 5 mm bend radius' },
+            ],
+            correctMap: { tg652: 'trunk', ta1: 'drop10', ta2: 'drop75', tb3: 'mdubend' },
+            explanation:
+              'Trunk (200 mm bend) → G.652.D handles easily. Drop (10 mm) → G.657.A1 exactly meets the minimum. GPON wall entry (7.5 mm) → G.657.A2 minimum. MDU tight corner (5 mm) → G.657.B3 required. Each step down in bend radius requires the next G.657 grade. (ITU-T G.657 2024 — verified)',
+          },
+        ]}
       />
 
     </LessonLayout>
