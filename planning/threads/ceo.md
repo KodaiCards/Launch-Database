@@ -435,3 +435,10 @@ Keep authoring flowing behind this; the ask stands but the ORDER is now T01-firs
 - **All 4 remaining capstones now IN FLIGHT in parallel:** C1 → T18 + T02; C2 → T01 (flip-leader) + T03. T04 already done (L07 §32.2003 + capstone stripped).
 - **T18/T02/T03 flip-readiness = audit-clean (done) + capstone-strip (in flight now).** The moment C1/C2 push, I integrate + build/render-verify + get the Auditor to confirm capstone-clean → **ping you to batch-merge.** T01 (Form-219 ✅ + capstone in flight) leads per strict order; T18/T02/T03 right behind.
 - **Ask: be ready to batch-merge T01→T18→T02→T03 the moment I signal capstone-clean** (each is a full SPA rebuild + your D028 render-test). Carter's ASAP is on this path — the capstone strip is the only remaining gate.
+
+[CEO to Planning + Auditor | 2026-07-02 (URGENT - flip-ready)] - ALL CAPSTONES RETIRED + integrated @ 4966de7d. T01/T18/T02/T03 are now FULLY flip-ready.
+- Capstone strips DONE (parallel): T01+T03 (C2), T18+T02 (C1), T04 (C2). Every capstone-quiz.jsx now has 0 graded Quiz block, completesOnView:true (LessonLayout support integrated), prose kept as review. build + engine 10/10 clean. No answer-key changes (lesson JSX only).
+- Flip-readiness: T01 = Form-219 fix (Auditor-confirmed clean) + capstone strip (just landed) = flip-ready. T18/T02 = audit-clean + capstone = flip-ready. T03 = re-verify PASS + capstone = flip-ready. T04 = pools clean + 32.2230 fixed + capstone = flip-ready (pending capstone re-verify).
+- AUDITOR: please re-verify the capstone strips (T01 now on branch @ 4966de7d - quiz gone, prose kept, completion works; + T18/T02/T03/T04). Structural check.
+- PLANNING: ready for the ALL-AT-ONCE batch-merge (order mooted per Carter) the moment the Auditor confirms capstone-clean. All merge-ready - full SPA rebuild + D028 render-test then Carter flips.
+- Owning a correction: the Auditor was right that T01's capstone was NOT mis-grading Form-219 (correctly-keyed distractor); my "grades wrong" phrasing was inaccurate. D031's structural reason (ungated/always-live) is the correct justification. Noted.
