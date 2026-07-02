@@ -1,0 +1,126 @@
+{
+  "assessmentId": "T03-L05",
+  "kind": "lesson",
+  "courseId": "T03",
+  "lessonId": "T03.L05",
+  "drawCount": 4,
+  "passThreshold": 70,
+  "pool": [
+    {
+      "id": "T03-L05-Q1",
+      "type": "mc",
+      "prompt": "A GPON drop cable must navigate a 7.5 mm bend at a wall entry point. Which is the minimum ITU-T G.657 grade meeting this requirement?",
+      "choices": [
+        "G.652.D — standard fiber handles most field bends",
+        "G.657.A1 — rated to 10 mm minimum; 7.5 mm is within this spec",
+        "G.657.A2 — rated to 7.5 mm minimum; exactly meets the requirement",
+        "G.657.B3 — only ultra-bend-insensitive handles 7.5 mm"
+      ],
+      "answerIndex": 2,
+      "explanation": "G.657.A2 is rated to a minimum bend radius of 7.5 mm — exactly meeting this requirement. G.657.A1 is rated to 10 mm and would not be sufficient at 7.5 mm. G.657.B3 (5 mm) would also work but is unnecessarily high-spec.",
+      "citation": "ITU-T G.657 (2024)."
+    },
+    {
+      "id": "T03-L05-Q2",
+      "type": "mc",
+      "prompt": "A long-haul carrier hands off fiber at your CO. The splice record shows the incoming fiber is ITU-T G.655; your distribution plant uses G.652.D. What should you do before splicing directly?",
+      "choices": [
+        "Splice directly — G.655 and G.652.D are fully interchangeable at the core level",
+        "Measure actual splice loss at the G.655/G.652.D interface — MFD differences may add measurable loss that needs to be budgeted",
+        "Replace the entire distribution plant with G.655 fiber for compatibility",
+        "G.655 is a multimode fiber — you cannot splice it to G.652.D single-mode"
+      ],
+      "answerIndex": 1,
+      "explanation": "G.655 (NZDSF) and G.652.D are both single-mode, but G.655 typically has a different MFD. Splicing them together may introduce measurable loss beyond a same-type splice — measure actual loss at the interface before finalizing the link budget.",
+      "citation": "ITU-T G.655."
+    },
+    {
+      "id": "T03-L05-Q3",
+      "type": "mc",
+      "prompt": "G.657.B3 fiber differs from G.657.A1 primarily in which way?",
+      "choices": [
+        "B3 has a smaller physical core diameter (7 um vs. 9 um)",
+        "B3 is not guaranteed backward-compatible with G.652.D for zero-loss splicing due to potential MFD tolerance differences",
+        "B3 has higher attenuation at 1550 nm than G.657.A1",
+        "B3 cannot be used with GPON systems"
+      ],
+      "answerIndex": 1,
+      "explanation": "G.657.B3 uses a trench-assisted refractive index profile achieving very low bend loss but may have a slightly different MFD compared to G.652.D — it is NOT guaranteed backward-compatible with G.652.D for zero-loss splicing, unlike G.657.A1/A2.",
+      "citation": "ITU-T G.657."
+    },
+    {
+      "id": "T03-L05-Q4",
+      "type": "drag-match",
+      "prompt": "Match each installation scenario to the minimum G.657 fiber grade required.",
+      "items": [
+        { "id": "i_trunk", "label": "OSP trunk cable on a gently curved aerial span (~200 mm bend)" },
+        { "id": "i_drop10", "label": "FTTH drop cable with a 10 mm bend at a splice closure entry" },
+        { "id": "i_drop75", "label": "GPON aerial drop with a 7.5 mm bend at a building wall entry" },
+        { "id": "i_mdu", "label": "In-building MDU with 5 mm radius corners in tight cable tray" }
+      ],
+      "targets": [
+        { "id": "t_trunk", "label": "G.652.D (standard, no bend-insensitivity needed)" },
+        { "id": "t_drop10", "label": "G.657.A1 (10 mm minimum)" },
+        { "id": "t_drop75", "label": "G.657.A2 (7.5 mm minimum)" },
+        { "id": "t_mdu", "label": "G.657.B3 (5 mm minimum)" }
+      ],
+      "correctMap": { "t_trunk": "i_trunk", "t_drop10": "i_drop10", "t_drop75": "i_drop75", "t_mdu": "i_mdu" },
+      "explanation": "Bend radius requirements scale with installation tightness: gentle aerial curves need no special bend-insensitivity, while progressively tighter bends (10mm, 7.5mm, 5mm) require the correspondingly rated G.657 sub-grade.",
+      "citation": "ITU-T G.657 (A1=10mm, A2=7.5mm, B3=5mm)."
+    },
+    {
+      "id": "T03-L05-Q5",
+      "type": "mc",
+      "prompt": "Why is G.657.A1/A2 fully splice-compatible with G.652.D while G.657.B3 is not guaranteed to be?",
+      "choices": [
+        "A1/A2 and G.652.D share the same MFD specification, so no intrinsic splice loss penalty occurs at the interface; B3's more aggressive trench-assisted design achieves lower bend loss at the cost of a potentially different MFD, introducing a splice-loss risk at a B3/G.652.D interface",
+        "There is no real difference — all G.657 sub-grades are equally compatible with G.652.D",
+        "A1/A2 are multimode while B3 is single-mode, making B3 inherently incompatible",
+        "Splice compatibility depends only on jacket color, not fiber grade"
+      ],
+      "answerIndex": 0,
+      "explanation": "G.657.A1/A2 were designed to maintain the same MFD as G.652.D, preserving splice compatibility. G.657.B3's more extreme bend-insensitivity (down to 5mm) uses a more aggressive index profile that can shift MFD away from G.652.D's value, creating a real (if often small) splice-loss risk that should be verified, not assumed."
+    },
+    {
+      "id": "T03-L05-Q6",
+      "type": "mc",
+      "prompt": "ITU-T G.655 is described as Non-Zero Dispersion-Shifted Single-Mode Fiber, engineered for long-haul DWDM. How does its typical chromatic dispersion at 1550 nm compare to G.652.D's ~17 ps/(nm*km)?",
+      "choices": [
+        "G.655 has much higher dispersion (50+ ps/(nm*km)) to enable longer reach",
+        "G.655 has reduced dispersion (typically 1-10 ps/(nm*km)) to reduce four-wave mixing in DWDM systems while still allowing dispersion-compensating techniques",
+        "G.655 has zero dispersion at all wavelengths, unlike G.652.D",
+        "G.655 and G.652.D have identical dispersion profiles"
+      ],
+      "answerIndex": 1,
+      "explanation": "G.655's non-zero-dispersion-shifted design deliberately keeps some dispersion (typically 1-10 ps/(nm*km), lower than G.652.D's ~17) to suppress four-wave mixing in DWDM systems while still leaving enough dispersion for compensation techniques to work effectively.",
+      "citation": "ITU-T G.655."
+    },
+    {
+      "id": "T03-L05-Q7",
+      "type": "mc",
+      "prompt": "What is the primary use case for ITU-T G.656 (Wideband NZDSF), and why is it rarely specified for new builds?",
+      "choices": [
+        "G.656 is the current default standard for all new OSP trunk cable",
+        "G.656 offers a wider low-dispersion passband (S-, C-, and L-bands, 1460-1625 nm) for metro/access WDM applications, but is now rarely seen in new builds — primarily encountered when reviewing legacy infrastructure",
+        "G.656 is exclusively for multimode data-center applications",
+        "G.656 was withdrawn by ITU-T and is no longer a valid standard"
+      ],
+      "answerIndex": 1,
+      "explanation": "G.656 was designed for wideband metro/access WDM applications with a low-dispersion passband spanning S-, C-, and L-bands. It's rarely chosen for new designs today, so a field engineer is more likely to encounter it when documenting or troubleshooting legacy infrastructure than when specifying new builds.",
+      "citation": "ITU-T G.656."
+    },
+    {
+      "id": "T03-L05-Q8",
+      "type": "mc",
+      "prompt": "What is the approximate minimum installation bend radius for standard G.652.D fiber, and how does it compare to G.657's bend-insensitive grades?",
+      "choices": [
+        "~30 mm for G.652.D — significantly larger (less tolerant of tight bends) than any G.657 sub-grade (5-10 mm)",
+        "G.652.D and all G.657 grades share the identical ~10 mm minimum bend radius",
+        "G.652.D has no minimum bend radius specification at all",
+        "G.652.D's minimum bend radius (30 mm) is actually smaller than G.657.A1's (10 mm)"
+      ],
+      "answerIndex": 0,
+      "explanation": "G.652.D's standard minimum installation bend radius is around 30 mm — meaningfully larger (i.e., less bend-tolerant) than G.657's specialized sub-grades (A1=10mm, A2=7.5mm, B3=5mm), which is precisely why G.657 was developed for tight-bend applications like FTTH drops and in-building routing."
+    }
+  ]
+}

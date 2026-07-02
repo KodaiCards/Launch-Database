@@ -1,0 +1,117 @@
+{
+  "assessmentId": "T03-L07",
+  "kind": "lesson",
+  "courseId": "T03",
+  "lessonId": "T03.L07",
+  "drawCount": 4,
+  "passThreshold": 70,
+  "pool": [
+    {
+      "id": "T03-L07-Q1",
+      "type": "mc",
+      "prompt": "Which armor type is preferred for a direct-burial route in a coastal area where soil pH is low and corrosion is a concern, but no rodent activity has been documented?",
+      "choices": [
+        "CST (corrugated steel tape) — highest rodent protection",
+        "Interlocked armor — best for all underground applications",
+        "CAT (corrugated aluminum tape) — lighter and better corrosion resistance than steel in this environment",
+        "No armor — conduit eliminates all mechanical risk"
+      ],
+      "answerIndex": 2,
+      "explanation": "In corrosive soil (low pH, coastal chlorides) with no documented rodent activity, aluminum armor is preferred over steel. Aluminum forms a passive oxide layer that resists corrosion, whereas exposed steel will rust if the outer jacket is breached. Without a rodent threat, the softer aluminum is acceptable.",
+      "citation": "ICEA S-87-640 armor options."
+    },
+    {
+      "id": "T03-L07-Q2",
+      "type": "mc",
+      "prompt": "A CST-armored cable with a fire listing for riser use is being installed in a building riser shaft. Does the metal armor require bonding to the building ground?",
+      "choices": [
+        "No — the fire listing exempts the armor from NEC bonding requirements",
+        "No — riser shaft cables never require bonding regardless of armor type",
+        "Yes — any metallic component entering the building must be bonded to the building grounding system",
+        "Only if the cable is also carrying electrical power alongside fiber"
+      ],
+      "answerIndex": 2,
+      "explanation": "Any metallic cable component, including CST armor, must be bonded to the building's grounding electrode system at the building entry. A fire listing confirms the cable is suitable for riser use — it does not exempt the armor from the separate NEC bonding requirement.",
+      "citation": "NEC (NFPA 70) Article 770 bonding requirements."
+    },
+    {
+      "id": "T03-L07-Q3",
+      "type": "mc",
+      "prompt": "A cable with no metallic components whatsoever, relying on aramid yarn or fiberglass for structural support, is called what?",
+      "choices": [
+        "Armored cable",
+        "A dielectric cable",
+        "A hybrid cable",
+        "A conductive cable"
+      ],
+      "answerIndex": 1,
+      "explanation": "A dielectric cable has zero metal content, so no bonding or grounding is required at any attachment or entry point. ADSS aerial cables are dielectric, and dielectric duct cables are also available for underground runs where bonding avoidance is desired and the conduit provides mechanical protection.",
+      "citation": "7 CFR 1755.902; CommScope ADSS documentation."
+    },
+    {
+      "id": "T03-L07-Q4",
+      "type": "mc",
+      "prompt": "A project engineer specifies CST-armored cable for an aerial lashed section where no rodent, crush, or corrosion risk exists. What is the practical downside of this over-specification?",
+      "choices": [
+        "There is no downside — more armor is always strictly better",
+        "Unnecessary added weight and cost, plus an added bonding obligation at every attachment point that a simpler unarmored or dielectric cable would not require, for a risk that doesn't exist in an aerial-lashed application",
+        "CST armor makes the cable physically incompatible with lashing machines",
+        "CST-armored cable cannot carry more than 24 fibers"
+      ],
+      "answerIndex": 1,
+      "explanation": "CST armor's benefit (rodent/crush protection) is largely irrelevant for an aerial lashed cable, which isn't exposed to those below-grade risks. Specifying it anyway adds unnecessary weight, cost, and a bonding obligation at every attachment point — a design cost with no corresponding benefit in that application."
+    },
+    {
+      "id": "T03-L07-Q5",
+      "type": "mc",
+      "prompt": "Why does aluminum's corrosion resistance (relative to steel) depend on the specific environment, rather than being universally 'better'?",
+      "choices": [
+        "Aluminum's passive oxide layer resists corrosion well in many soils, but certain aggressive chemical environments can still degrade it — the choice between CAT and CST should weigh the SPECIFIC documented soil/environmental conditions, not a blanket rule that one metal always outperforms the other",
+        "Aluminum is corrosion-proof in literally every environment with no exceptions",
+        "Steel is always more corrosion-resistant than aluminum in every environment",
+        "Corrosion resistance is irrelevant to armor material selection"
+      ],
+      "answerIndex": 0,
+      "explanation": "Aluminum's self-passivating oxide layer performs well against many corrosive conditions (including many coastal/low-pH soils), but material selection should still be based on the documented site-specific soil chemistry and risk profile (rodent activity, corrosion, mechanical threat) rather than a universal assumption either way."
+    },
+    {
+      "id": "T03-L07-Q6",
+      "type": "mc",
+      "prompt": "What is the fundamental tradeoff a designer weighs when choosing between an armored cable (CST/CAT/interlocked) and a fully dielectric cable for a given route segment?",
+      "choices": [
+        "There is no tradeoff — dielectric cable is always superior in every application",
+        "Armored cable trades added bonding/grounding obligations and weight/cost for mechanical protection (rodent, crush, corrosion resistance where relevant); dielectric cable trades away that mechanical protection for eliminating bonding obligations and reducing weight — the right choice depends on the documented site-specific risk profile",
+        "The only factor that matters is which cable is cheaper per foot",
+        "Dielectric cable is always required by federal law for direct burial"
+      ],
+      "answerIndex": 1,
+      "explanation": "This is a genuine engineering tradeoff, not a universal rule: armored cable adds mechanical robustness at the cost of bonding obligations and added weight/cost, while dielectric cable avoids those costs but sacrifices the mechanical protection armor provides — the correct choice depends on documented rodent activity, crush risk, corrosion environment, and proximity to energized conductors on that specific route segment."
+    },
+    {
+      "id": "T03-L07-Q7",
+      "type": "mc",
+      "prompt": "A route has documented rodent activity AND runs through corrosive coastal soil. Which armor choice best addresses both risks simultaneously?",
+      "choices": [
+        "CAT (aluminum) alone — corrosion resistance covers both concerns",
+        "CST (steel) with appropriate corrosion-resistant coating or jacket protection — steel provides the necessary rodent gnaw-barrier that aluminum does not reliably provide, while jacket/coating measures address the corrosion risk",
+        "No armor — the two risks cancel each other out",
+        "Dielectric cable, since avoiding metal avoids both risks entirely"
+      ],
+      "answerIndex": 1,
+      "explanation": "When both a rodent threat AND a corrosion concern exist on the same route, aluminum's lighter gnaw resistance is the weaker link — steel's gnaw-stop capability is needed for the rodent risk, with the corrosion concern addressed through jacket integrity and coating rather than substituting to the softer, less rodent-resistant metal."
+    },
+    {
+      "id": "T03-L07-Q8",
+      "type": "mc",
+      "prompt": "Why is the ripcord under CST armor described as a functional necessity rather than a convenience feature?",
+      "choices": [
+        "It's purely a convenience feature with no real functional necessity",
+        "Without a ripcord, removing steel armor requires metal cutters, which carry real risk of nicking or damaging the fiber bundle underneath — the ripcord provides a way to split the armor cleanly without that risk, making it a functional safety feature for splice prep",
+        "The ripcord is only used to identify the cable manufacturer",
+        "The ripcord replaces the need for any buffer tube inside the cable"
+      ],
+      "answerIndex": 1,
+      "explanation": "Splicers need to open armored cable regularly. Without an internal ripcord, the only way to remove steel armor is with metal cutting tools, which risk nicking the fiber bundle or buffer tubes beneath — a real damage risk on a component the splicer needs to preserve intact. The ripcord removes that risk."
+    }
+  ]
+}

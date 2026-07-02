@@ -1,0 +1,122 @@
+{
+  "assessmentId": "T03-L10",
+  "kind": "lesson",
+  "courseId": "T03",
+  "lessonId": "T03.L10",
+  "drawCount": 4,
+  "passThreshold": 70,
+  "pool": [
+    {
+      "id": "T03-L10-Q1",
+      "type": "mc",
+      "prompt": "On a RUS-financed project, if the buyer does not specify MFD, what must all single-mode fiber be manufactured to at 1310 nm?",
+      "choices": [
+        "8.6 um +/- 0.4 um",
+        "9.2 um +/- 0.5 um",
+        "10.0 um +/- 0.5 um",
+        "9.0 um +/- 1.0 um"
+      ],
+      "answerIndex": 1,
+      "explanation": "7 CFR 1755.902 specifies 9.2 um +/- 0.5 um at 1310 nm as the default unless the buyer specifies otherwise, keeping all reels within an 8.7-9.7 um window and limiting splice mismatch loss across a multi-reel project.",
+      "citation": "7 CFR 1755.902."
+    },
+    {
+      "id": "T03-L10-Q2",
+      "type": "mc",
+      "prompt": "ICEA S-87-640 defines a standard installation tensile rating for OSP fiber cable. What is the commonly cited value?",
+      "choices": [
+        "2,670 N (approximately 600 lbf)",
+        "1,000 N (approximately 225 lbf)",
+        "5,340 N (approximately 1,200 lbf)",
+        "890 N (approximately 200 lbf)"
+      ],
+      "answerIndex": 0,
+      "explanation": "ICEA S-87-640 defines 2,670 N (~600 lbf) as the standard installation tensile rating for OSP fiber cable, with a lighter-construction tier commonly cited around 1,330 N (~300 lbf). Exceeding the rated tensile during a pull risks fiber damage. Verify against the current edition before design lock.",
+      "citation": "ICEA S-87-640 — exact figure sourced from secondary/vendor technical literature this session, not independently confirmed against the paywalled primary standard text; treat as UNVERIFIED-EXACT and verify against the current edition."
+    },
+    {
+      "id": "T03-L10-Q3",
+      "type": "mc",
+      "prompt": "What is the key difference between qualification testing and acceptance testing under RUS/ICEA cable standards?",
+      "choices": [
+        "Qualification is done in the field; acceptance is done in the factory",
+        "Qualification is done once per cable design (before production begins); acceptance is done on each production lot to verify ongoing conformance",
+        "Qualification tests optical performance; acceptance tests mechanical performance only",
+        "Qualification is required by ICEA; acceptance is required only by RUS"
+      ],
+      "answerIndex": 1,
+      "explanation": "Qualification testing proves the design itself meets the standard, done once per new design. Acceptance testing verifies each production lot (or a statistical sample) continues to conform. Both are required on RUS projects.",
+      "citation": "7 CFR 1755.902; ICEA S-87-640."
+    },
+    {
+      "id": "T03-L10-Q4",
+      "type": "drag-match",
+      "prompt": "Match each cable parameter to its correct requirement from 7 CFR 1755.902.",
+      "items": [
+        { "id": "i_mfd", "label": "9.2 um +/- 0.5 um at 1310 nm" },
+        { "id": "i_coating", "label": "Approximately 250 um OD (industry-standard base value)" },
+        { "id": "i_colors", "label": "12-color scheme" }
+      ],
+      "targets": [
+        { "id": "t_mfd", "label": "Single-mode fiber mode field diameter (default)" },
+        { "id": "t_coating", "label": "Fiber coating outside diameter" },
+        { "id": "t_colors", "label": "Fiber color coding (so each fiber is distinguishable)" }
+      ],
+      "correctMap": { "t_mfd": "i_mfd", "t_coating": "i_coating", "t_colors": "i_colors" },
+      "explanation": "7 CFR 1755.902 covers all three: MFD default (9.2 +/- 0.5 um at 1310 nm, independently confirmed this session), the standard fiber coating OD (250 um is a near-universal industry base value), and the requirement that fiber color coding make every fiber individually identifiable — consistent with the TIA-598 12-color scheme referenced elsewhere in this course.",
+      "citation": "7 CFR 1755.902."
+    },
+    {
+      "id": "T03-L10-Q5",
+      "type": "mc",
+      "prompt": "A cable coating diameter reads 242 um on a production test report, against a 7 CFR 1755.902-style tolerance of 250 +/- 15 um. Does this conform, and what is the lower limit of the acceptable range?",
+      "choices": [
+        "Conforms; lower limit = 240 um",
+        "Conforms; lower limit = 235 um (250 - 15)",
+        "Does not conform; 242 um is below the lower limit",
+        "Cannot be determined without knowing the fiber's core diameter"
+      ],
+      "answerIndex": 1,
+      "explanation": "250 - 15 = 235 um (lower limit); 250 + 15 = 265 um (upper limit). A measurement of 242 um falls within the 235-265 um range, so it conforms."
+    },
+    {
+      "id": "T03-L10-Q6",
+      "type": "mc",
+      "prompt": "Why does RUS specify a default MFD tolerance (9.2 +/- 0.5 um) even when a specific buyer hasn't stated their own requirement?",
+      "choices": [
+        "To make the specification legally void if unspecified",
+        "To ensure a baseline consistency across all fiber reels manufactured for RUS-funded projects, limiting splice-mismatch loss when reels from different production runs are joined — the default protects project quality even absent a buyer-specific spec",
+        "Because MFD has no actual effect on splice quality",
+        "Because RUS requires every project to use exactly the same fiber manufacturer"
+      ],
+      "answerIndex": 1,
+      "explanation": "Without a default, fiber from different manufacturers or production runs could have MFD values scattered widely, causing unpredictable splice-loss spikes when reels are joined mid-project. RUS's default tolerance provides a floor of consistency across all RUS-funded fiber, protecting project quality even when the buyer hasn't specified their own tighter requirement."
+    },
+    {
+      "id": "T03-L10-Q7",
+      "type": "mc",
+      "prompt": "Why are BOTH qualification testing and acceptance testing required on a RUS project, rather than just one or the other?",
+      "choices": [
+        "They test the same thing and having both is pure redundancy with no added value",
+        "Qualification proves the cable DESIGN itself meets the standard (a one-time check before any production begins), while acceptance testing catches manufacturing-process drift or lot-specific defects that could occur even with a qualified design — the two checks cover different failure modes",
+        "Qualification is only required for armored cable; acceptance is only required for dielectric cable",
+        "Only qualification testing is actually required; acceptance testing is optional under RUS rules"
+      ],
+      "answerIndex": 1,
+      "explanation": "Qualification testing validates that a cable design, as engineered, meets the standard — but it doesn't guarantee every subsequent production lot will be manufactured correctly. Acceptance testing on each lot (or a statistical sample) catches manufacturing-process issues that qualification testing, being a one-time design check, cannot detect."
+    },
+    {
+      "id": "T03-L10-Q8",
+      "type": "mc",
+      "prompt": "A production lot's cable tensile rating tests at 2,200 N, below the ~2,670 N (600 lbf) standard installation rating cited for ICEA S-87-640. What should happen to this lot?",
+      "choices": [
+        "Ship it anyway — tensile rating is a suggestion, not a requirement",
+        "The lot fails acceptance testing for that parameter and should not be used for standard-tension pulls without further evaluation — exceeding a cable's actual rated tensile during installation risks fiber damage",
+        "The rating discrepancy is irrelevant since qualification testing already passed",
+        "Automatically re-classify the cable as a lighter-duty tier without any further testing"
+      ],
+      "answerIndex": 1,
+      "explanation": "Acceptance testing exists precisely to catch a production lot that doesn't meet its rated specification, even if the design was previously qualified. A lot testing below its rated tensile strength should not be treated as meeting spec — using it for a standard-tension pull risks exceeding its actual (lower) capacity and damaging the fiber during installation."
+    }
+  ]
+}
