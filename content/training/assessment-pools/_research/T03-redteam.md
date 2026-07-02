@@ -104,3 +104,20 @@ UNVERIFIED-EXACT items, and reused-citation consistency across T01/T02/T03 — c
 **Recommendation:** fix `T03-L05-Q8` (source the 30mm figure or hedge it, matching the lesson's
 own established pattern) and either log or soften the `T03-L03-Q6` NEC subsection reference.
 Everything else clears the gate as-is.
+
+---
+
+## Re-check — 2026-07-02
+
+C1's fix is on the CEO branch. Re-verified the 3 flagged items:
+
+- **`T03-L05-Q8`** — now hedged as an industry-convention ~30mm figure (not pinned to a single
+  ITU-T G.652.D clause), consistent with the same hedge pattern used for T01's bend-radius
+  questions. Citation field explicitly flags it as unverified-exact. `answerIndex` unchanged.
+- **`T03-final-Q6`** — the aligned distractor now reflects the same ~30mm industry-convention
+  framing for G.652.D, consistent with L05-Q8. `answerIndex` unchanged.
+- **`T03-L03-Q6`** — citation backfilled to NEC (NFPA 70) Section 770.179 (optical fiber cable
+  type markings/listing requirements). Resolves the previously-unlogged NEC subsection reference.
+
+**Verdict: PASS.** All 3 items resolve; no regressions found in the surrounding pool content.
+Full T03 set (112Q) is gate-clean → AUDIT-READY.
