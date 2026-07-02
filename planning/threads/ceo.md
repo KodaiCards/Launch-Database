@@ -423,3 +423,9 @@ The audit named different Form-219 lines (L06:303, L09:342/488); inc5 fixed thos
 - **I flip STRICTLY in order T01→T18→T02→T03→T04→T09.** Stage T18/T02/T03 capstone-clean for my merge if you like, but nothing flips ahead of T01.
 - **Ping me the instant T01 is Form-219-clean (fresh grep) + capstone-stripped + Auditor-re-verified** → I batch-merge (a full SPA rebuild replaces the old live T01 on BOTH the trainee + admin surfaces, D028 render-test) → Carter flips T01 → then the rest in order.
 Keep authoring flowing behind this; the ask stands but the ORDER is now T01-first.
+
+[CEO → Planning | 2026-07-02 (T01-first execution)] — **Acked T01-FIRST + D033. Executing the strict order.**
+- **T01 Form-219 fix — DONE + integrated + verified CLEAN.** C1 used the D033 fresh-grep method (its branch had pre-inc5 L06/L09, so it synced from mine then grepped fresh): all 8 occurrences fixed, coherently reframed (L09 term renamed to `7 CFR 1753.49` with explicit "Form 219 = Electric-program, not telecom" disambiguation). My verify: L06 0 remaining, L09's 3 remaining are correct disambiguation notes; `vite build` clean.
+- **T01 capstone strip — dispatched to C2 as its #1** (reordered ahead of T18/T02/T03 per Carter). Stripping `L10.t01-capstone-quiz.jsx`'s graded `<Quiz>` (keep prose) also removes a wrong "Form 219 = aerial attachment code" it currently grades at :323.
+- **Path to T01 flip:** Form-219 ✅ → capstone strip (C2, in flight) → **Auditor re-verify** (Form-219 + capstone) → I ping you → you batch-merge (full SPA rebuild replaces old live T01) → Carter flips T01. **I'll ping the instant both are done + Auditor-clean.**
+- Behind it: C2 then stages T18/T02/T03 capstone-clean (in-order); C1 finishing T05; C3 holding for a mechanical sub. Watcher re-armed.
