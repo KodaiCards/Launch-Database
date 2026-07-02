@@ -39,8 +39,8 @@ export const courses = [
     title: 'Fundamentals & Vocabulary',
     section: 'general',
     available: true,
-    estimated_minutes: 195,   // 10 lessons × ~20 min avg
-    lesson_count: 10,
+    estimated_minutes: 195,   // 9 content lessons (~20 min avg)
+    lesson_count: 9,   // capstone review lesson removed 2026-07-02 — graded final = the pooled TopicFinal assessment
     prerequisites: [],        // root — no prereqs
     description:
       'Defines the OSP universe: OSP vs. ISP, parts of a pole, parts of a cable, splice-case anatomy, project lifecycle. Every downstream topic assumes this vocabulary.',
@@ -51,8 +51,8 @@ export const courses = [
     title: 'Safety & OSHA',
     section: 'general',
     available: true,
-    estimated_minutes: 240,   // 10 lessons × ~24 min avg (safety = longer)
-    lesson_count: 10,
+    estimated_minutes: 240,   // 9 content lessons (~24 min avg, safety = longer)
+    lesson_count: 9,   // capstone review lesson removed 2026-07-02 — graded final = the pooled TopicFinal assessment
     prerequisites: ['T01'],
     description:
       'OSHA 1910.268, 1910.269, 1910.146 confined space, LOTO, fall protection, PPE, PPG glove classes, traffic control, MAD/MAB awareness. Taught early so every field-touching topic can reference it.',
@@ -63,8 +63,8 @@ export const courses = [
     title: 'Fiber Physics',
     section: 'general',
     available: true,
-    estimated_minutes: 324,   // 12 lessons × ~27 min avg
-    lesson_count: 12,
+    estimated_minutes: 324,   // 11 content lessons (~27 min avg)
+    lesson_count: 11,   // capstone review lesson removed 2026-07-02 — graded final = the pooled TopicFinal assessment
     prerequisites: ['T01'],
     description:
       'Why light travels in glass, attenuation, dispersion, macrobend/microbend, decibels, link budgets, wavelength windows used in OSP.',
@@ -75,8 +75,8 @@ export const courses = [
     title: 'Cable Selection & Materials',
     section: 'general',
     available: true,
-    estimated_minutes: 312,   // 12 lessons × ~26 min avg
-    lesson_count: 12,
+    estimated_minutes: 312,   // 11 content lessons (~26 min avg)
+    lesson_count: 11,   // capstone review lesson removed 2026-07-02 — graded final = the pooled TopicFinal assessment
     prerequisites: ['T01', 'T02'],
     description:
       'Loose-tube vs. ribbon, OSP-rated jackets, armor types, messenger options, RUS-listed materials, fiber-count selection, pulling tension and bend-radius specs.',
@@ -87,8 +87,8 @@ export const courses = [
     title: 'Route Survey & Pre-Engineering',
     section: 'general',
     available: true,
-    estimated_minutes: 240,   // 10 lessons × ~24 min avg
-    lesson_count: 10,
+    estimated_minutes: 240,   // 9 content lessons (~24 min avg)
+    lesson_count: 9,   // capstone review lesson removed 2026-07-02 — graded final = the pooled TopicFinal assessment
     prerequisites: ['T01', 'T18'],
     description:
       'Site walks, drone/LiDAR capture, GIS landbase creation, pole audits, existing-utility identification, route-alternatives analysis, deliverables that hand off to design.',
@@ -435,7 +435,7 @@ export const lessonFileIndex = {
   'T02.L09': '../lessons/T02/L09.polarization-mode-dispersion.jsx',
   'T02.L10': '../lessons/T02/L10.fiber-characterization-testing.jsx',
   'T02.L11': '../lessons/T02/L11.fiber-physics-field-vs-book.jsx',
-  'T02.L12': '../lessons/T02/L12.t02-capstone-quiz.jsx',
+  // T02.L12 capstone review removed 2026-07-02 (graded final = pooled TopicFinal)
   // ── T01 Fundamentals & Vocabulary ────────────────────────────────────────
   'T01.L01': '../lessons/T01/L01.osp-vs-isp.jsx',
   'T01.L02': '../lessons/T01/L02.parts-of-a-pole.jsx',
@@ -446,7 +446,7 @@ export const lessonFileIndex = {
   'T01.L07': '../lessons/T01/L07.reading-a-strand-map.jsx',
   'T01.L08': '../lessons/T01/L08.key-acronyms-field-reference.jsx',
   'T01.L09': '../lessons/T01/L09.osp-standards-landscape.jsx',
-  'T01.L10': '../lessons/T01/L10.t01-capstone-quiz.jsx',
+  // T01.L10 capstone review removed 2026-07-02 (graded final = pooled TopicFinal)
 
   // ── T03 Cable Selection & Materials ──────────────────────────────────────
   'T03.L01': '../lessons/T03/L01.loose-tube-tight-buffer-ribbon.jsx',
@@ -460,7 +460,7 @@ export const lessonFileIndex = {
   'T03.L09': '../lessons/T03/L09.adss-span-wind-ice-loading.jsx',
   'T03.L10': '../lessons/T03/L10.icea-cfr-standards-compliance.jsx',
   'T03.L11': '../lessons/T03/L11.cable-spec-reading-datasheet.jsx',
-  'T03.L12': '../lessons/T03/L12.t03-capstone.jsx',
+  // T03.L12 capstone review removed 2026-07-02 (graded final = pooled TopicFinal)
   // ── T02 expansion — long-haul awareness (added 2026-05-16) ───────────────
   // NOTE: T02.L07b inserts between existing L07 and L08 in teaching order.
   // On-disk filenames L08–L12 are unchanged; only the lesson sequence position
@@ -482,7 +482,7 @@ export const lessonFileIndex = {
   'T04.L07': '../lessons/T04/L07-47-cfr-32-record-keeping.jsx',
   'T04.L08': '../lessons/T04/L08-handoff-to-design.jsx',
   'T04.L09': '../lessons/T04/L09-rus-pre-engineering.jsx',
-  'T04.L10': '../lessons/T04/L10-t04-capstone-quiz.jsx',
+  // T04.L10 capstone review removed 2026-07-02 (graded final = pooled TopicFinal)
 
   // ── T05 OSP Design — Aerial ───────────────────────────────────────────────
   'T05.L01': '../lessons/T05/L01-what-nesc-is-and-how-to-read-it.jsx',
@@ -565,7 +565,7 @@ export const lessonFileIndex = {
   'T18.L07': '../lessons/T18/L07-working-near-energized-conductors.jsx',
   'T18.L08': '../lessons/T18/L08-hazardous-materials-osp.jsx',
   'T18.L09': '../lessons/T18/L09-incident-reporting-osha-300.jsx',
-  'T18.L10': '../lessons/T18/L10-t18-capstone-quiz.jsx',
+  // T18.L10 capstone review removed 2026-07-02 (graded final = pooled TopicFinal)
 
   // ── T19 Headend / CO + Rack-Side Hardware Basics ─────────────────────────
   'T19.L01': '../lessons/T19/L01.co-hut-headend-layout.jsx',
