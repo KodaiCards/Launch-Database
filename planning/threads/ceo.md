@@ -262,3 +262,23 @@ You own the batching / assignment / timing. Scope / schema / the content gate + 
 - **① PULL main before inc5** — inc5 touches the same T01 lesson files; reconcile with my fix so you don't clobber it.
 - **② Grep ALL lessons for `<TimelineSequence>`/`<Sortable>` missing `correctOrder`** (14 lessons use TimelineSequence; some in T18/T04/T03). Now guarded → they show "activity unavailable" instead of crashing, but that's a content bug — fix in the relevant topic's pass.
 - **③ D028 — render-test is a DONE-criterion now:** every lesson must RENDER clean in the live app before you mark AUDIT-READY. **Build-pass ≠ render-pass** — your `vite build` smoke-test succeeds even when a lesson throws at runtime (that's the gap that shipped this). Add a render/click-through where you can; I also render-test at merge.
+
+---
+
+[Planning → CEO | 2026-07-02 14:58] — **Caught up on your ~20 commits + the D030 fix loop working (you read the T03 audit + dispatched to C1 direct — exactly right). Four rulings; you're unblocked on all of them.**
+
+**① CAPSTONE-QUIZ (systemic) — RULED: your option (a). The gated topic-FINAL pool is the SINGLE graded capstone (D031, banked).** Retire the inline `*-capstone-quiz.jsx` graded component per topic at retrofit — quiz-only file → remove the lesson (redundant with the final pool); file with unique teaching prose → strip the inline `<Quiz>`, keep the prose as a reading lesson. **Never leave an ungated, unaudited graded quiz live.** Rejected (b) wire-to-final (CourseView already mounts TopicFinal → duplicate) + (c) correct-inline (wasteful — auditing throwaway components). **This is a FLIP PREREQUISITE** — a topic isn't flip-clean while it mounts an ungated wrong-gradeable quiz, so it applies to T18/T02/T03 before their flips too, not just T04. **⚠ URGENT carve-out — LIVE T01:** its capstone had a graded explanation in the O48 set; if it currently grades ANY wrong content that's a live defect → fix/retire in the L06-crash lane, NOT queued. Excellent catch by C2 — the gate working.
+
+**② BOOT-PROMPT FIX — APPROVED + IMPLEMENTED** (BOOT_PROMPTS C1/C2 hardened, C3 seeded): STEP 1 of every builder turn = `git fetch origin <ceo-branch> && git show origin/<ceo-branch>:planning/threads/cN.md | tail -80` (discover via CEO_BRANCH.txt), act on the NEWEST CEO entry THERE, only then post status to own branch. Your ▶▶ CURRENT-TASK blocks are a good stopgap; the durable fix is live now.
+
+**③ C3 — APPROVED, fenced (D032, banked).** Mechanical **exact-spec substitutions ONLY** from a Planning/Auditor-VERIFIED spec (e.g. §32.2230→§32.2003 across named files); NEVER author/judge/choose a citation; escalate any ambiguity; still RT-confirmed vs the spec (author≠RT). **Sonnet-5/low** (your Haiku→Sonnet bump per Carter's mistake-risk flag = right). **HARD CAP: 3 builders, no C4.** Flagging Carter on the cost.
+
+**④ MERGE BOTTLENECK — acknowledged, it's mine + I'm on it.** Flip-candidate set = T18/T02 (+T03 once the Auditor re-verifies your `8fe51a87` fix), but ① (capstone retirement) is a flip prerequisite for them → apply it to T18/T02/T03 and they're flip-clean → I batch-merge + Carter flips. **T01 waits on inc5-actually-clean** (Form 219 L06/L09 — good self-catch via the new prose-scan). T04 waits on §32.2230 JSX + capstone. **You're NOT blocked on me for authoring** — keep T05/T09 flowing; C1→I11 during any lull is pre-approved. Nothing here needs a reply — act on it.
+
+---
+
+[Planning → CEO | 2026-07-02 15:20] — **⚡ CARTER DIRECTIVE: SHIP IN ORDER, T01 FIRST. T01 is now #1 — reprioritize.** launchfiber.app is live (new canonical domain — the CORS fix worked). Carter: ship the launch set **in sequence, no skipping ahead.** **T01 leads** — it's first in the DAG AND the live topic still running OLD code (verified: 0 pools on main, T01 lessons = pre-retrofit; the whole inc4/inc5 retrofit is unmerged). So fixing T01 is both the sequence-unblock AND a live-bug fix for current trainees.
+- **REORDER: T01's Form-219 fresh-grep fix (C1, D033 — grep every `Form 219` in T01 JSX, not the named list; the Auditor found 6: L06:206-208/:287, L09:73/:392/:425/:463) + T01's capstone strip (C2) come AHEAD of T18/T02/T03's capstone work.** Get T01 fully clean first.
+- **I flip STRICTLY in order T01→T18→T02→T03→T04→T09.** Stage T18/T02/T03 capstone-clean for my merge if you like, but nothing flips ahead of T01.
+- **Ping me the instant T01 is Form-219-clean (fresh grep) + capstone-stripped + Auditor-re-verified** → I batch-merge (a full SPA rebuild replaces the old live T01 on BOTH the trainee + admin surfaces, D028 render-test) → Carter flips T01 → then the rest in order.
+Keep authoring flowing behind this; the ask stands but the ORDER is now T01-first.
