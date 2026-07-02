@@ -143,14 +143,34 @@ function drawQuestionIds(pool, rng = Math.random) {
   return _shuffle(pool.pool.map(q => q.id), rng).slice(0, pool.drawCount);
 }
 
+// Present a drag-match question's OPTIONS (items) in a randomized order that is
+// GUARANTEED not positionally aligned with the targets — i.e. target[i]'s correct
+// item must not sit at option index i for every target. Without this the exam is
+// trivially gameable ("pick option N for target N"): the engine returns items in
+// pool/answer order, which mirrors target order. Presentation-only — grading is by
+// id (correctMap), so option order never affects the score. Runs here (pre-strip)
+// because it needs correctMap, which is stripped before the client sees the payload.
+function _presentItems(q, rng = Math.random) {
+  if (q.type !== 'drag-match' || !Array.isArray(q.items) || q.items.length < 2) return q.items;
+  const targets = q.targets || [];
+  const cm = q.correctMap || {};
+  const fullyAligned = items =>
+    targets.length > 0 && targets.every((t, i) => items[i] && items[i].id === cm[t.id]);
+  let items = _shuffle(q.items, rng);
+  for (let tries = 0; tries < 16 && fullyAligned(items); tries++) items = _shuffle(q.items, rng);
+  // Deterministic last-resort swap for tiny N if the RNG kept landing aligned.
+  if (fullyAligned(items)) [items[0], items[1]] = [items[1], items[0]];
+  return items;
+}
+
 // Build the client payload for a set of drawn ids: full question minus answer keys.
 // Missing ids are skipped (defensive — a pool edit shouldn't 500 an open attempt).
-function drawnQuestionsForClient(pool, drawnIds) {
+function drawnQuestionsForClient(pool, drawnIds, rng = Math.random) {
   const byId = new Map(pool.pool.map(q => [q.id, q]));
   return drawnIds
     .map(id => byId.get(id))
     .filter(Boolean)
-    .map(stripAnswerKey);
+    .map(q => stripAnswerKey(q.type === 'drag-match' ? { ...q, items: _presentItems(q, rng) } : q));
 }
 
 function stripAnswerKey(q) {
@@ -204,4 +224,5 @@ module.exports = {
   stripAnswerKey,
   grade,
   _shuffle,
+  _presentItems,
 };
