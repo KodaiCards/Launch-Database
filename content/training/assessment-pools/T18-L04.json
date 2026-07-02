@@ -79,15 +79,16 @@
     {
       "id": "T18-L04-Q6",
       "type": "mc",
-      "prompt": "Since January 1, 1998, what has OSHA prohibited for use as fall ARREST equipment (as opposed to positioning)?",
+      "prompt": "29 CFR 1926.500/1926.502 (the CONSTRUCTION fall-protection standard) has prohibited body belts for fall ARREST use since January 1, 1998. Telecom OSP work falls under 1910.268 (general industry), not 1926 — so what governs the body-belt-vs-harness question for a telecom pole crew?",
       "choices": [
-        "Full-body harnesses",
-        "Energy-absorbing lanyards",
-        "Body belts (waist-only belts) used alone for fall arrest",
-        "Self-retracting lifelines (SRLs)"
+        "Nothing — 1910.268 has no equivalent requirement, so body belts remain acceptable for fall arrest in telecom work",
+        "The 1926.502 date and rule apply directly to telecom work too, since OSHA construction rules always override 1910 general industry rules",
+        "1910.268 doesn't import the 1926.502 date, but a full-body harness meeting ANSI Z359.11 is still the applicable requirement for any PFAS (fall arrest) used in telecom pole work — a body belt/pole strap remains acceptable ONLY as a positioning system, never for fall arrest",
+        "Fall arrest equipment requirements are entirely voluntary for telecom crews"
       ],
       "answerIndex": 2,
-      "explanation": "Body belts have not been allowed for fall ARREST under OSHA construction fall-protection rules since January 1, 1998 — a full-body harness meeting ANSI Z359.11 is the only acceptable connection for fall arrest. A body belt can still be used as part of a positioning system, but not as fall-arrest protection."
+      "explanation": "The January 1, 1998 body-belt prohibition is specifically a 29 CFR 1926.500/1926.502 CONSTRUCTION provision and does not directly bind 1910.268 (general industry) telecom work — this is a real cross-standard distinction, not an assumption. However, the practical outcome for telecom crews is the same: a body belt/pole strap positioning system is not tested or designed for fall arrest, and ANSI Z359.11 (full-body harness standard, referenced across the fall-protection industry regardless of which CFR part applies) is the applicable requirement whenever a PFAS is used. Do not cite the 1926.502 date as if it were a 1910.268 rule.",
+      "citation": "29 CFR 1926.500/1926.502 (body belt fall-arrest prohibition, effective January 1, 1998 — a CONSTRUCTION-specific rule, not directly applicable to 1910.268 telecom work); ANSI Z359.11 (full-body harness standard, cross-industry)."
     },
     {
       "id": "T18-L04-Q7",
