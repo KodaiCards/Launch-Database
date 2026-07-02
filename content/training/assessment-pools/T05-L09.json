@@ -1,0 +1,119 @@
+{
+  "assessmentId": "T05-L09",
+  "kind": "lesson",
+  "courseId": "T05",
+  "lessonId": "T05.L09",
+  "drawCount": 4,
+  "passThreshold": 70,
+  "pool": [
+    {
+      "id": "T05-L09-Q1",
+      "type": "mc",
+      "prompt": "A new attacher files an OTMR application on a Monday. Per 47 CFR 1.1411, when does the 15-day approval clock for simple make-ready START?",
+      "choices": [
+        "The same Monday the application is filed",
+        "On the date the pole owner declares the application COMPLETE — an incomplete application does not start the clock, similar to the Section 106 completeness-triggered clock covered in T09",
+        "Exactly 30 days after filing, regardless of completeness",
+        "The clock never has a defined start date under OTMR rules"
+      ],
+      "answerIndex": 1,
+      "explanation": "Like several other regulatory review clocks covered across this training (Section 106's 30-day SHPO clock, the FCC's municipal shot clocks), the OTMR simple make-ready clock is tied to application COMPLETENESS, not the raw filing date — an incomplete submission does not start the 15-day clock.",
+      "citation": "47 CFR 1.1411 — reused from the T01 research pass's independent verification of the OTMR framework."
+    },
+    {
+      "id": "T05-L09-Q2",
+      "type": "drag-match",
+      "prompt": "Classify each make-ready scenario as Simple (OTMR eligible) or Complex (multi-party required).",
+      "items": [
+        { "id": "i_raise", "label": "Raising a coax cable 4 inches using existing hooks, no splicing needed" },
+        { "id": "i_splice", "label": "A telephone cable must be spliced because all its slack is deployed" }
+      ],
+      "targets": [
+        { "id": "t_simple", "label": "Simple (OTMR eligible)" },
+        { "id": "t_complex", "label": "Complex (multi-party required)" }
+      ],
+      "correctMap": { "t_simple": "i_raise", "t_complex": "i_splice" },
+      "explanation": "Simple make-ready (OTMR-eligible) covers work like repositioning an existing attachment using its existing hardware with no splicing — a single qualified contractor can complete it in one visit. Complex make-ready — like a splice required because a cable has no remaining slack — typically requires the involvement of the affected attacher and falls outside the streamlined OTMR single-visit process."
+    },
+    {
+      "id": "T05-L09-Q3",
+      "type": "mc",
+      "prompt": "If a pole owner declares OTMR make-ready 'complex' on 5 poles in an application, what must they provide per 47 CFR 1.1411?",
+      "choices": [
+        "Nothing — the pole owner has sole, unreviewable discretion to classify make-ready as complex with no justification required",
+        "A reasoned explanation/basis for the complex classification — the pole owner cannot simply assert complexity without justification, since an unreviewable blanket complex-classification power would undermine OTMR's purpose of streamlining make-ready for genuinely simple work",
+        "A cash payment to the new attacher for the inconvenience",
+        "Nothing is required until the new attacher formally appeals the classification"
+      ],
+      "answerIndex": 1,
+      "explanation": "OTMR's framework requires the pole owner to provide a basis for a complex-make-ready classification rather than exercising unreviewable discretion — this check exists specifically because an unconstrained ability to declare any make-ready 'complex' would defeat the purpose of the streamlined simple-make-ready pathway.",
+      "citation": "47 CFR 1.1411 — reused from the T01 research pass."
+    },
+    {
+      "id": "T05-L09-Q4",
+      "type": "mc",
+      "prompt": "Per 47 CFR 1.1411, if the pole owner does not respond to a complete OTMR application within 15 calendar days of the completeness declaration, what happens?",
+      "choices": [
+        "The application is automatically denied",
+        "The application is treated as deemed approved — the 15-calendar-day figure functions as a hard deadline with a specific consequence (deemed approval) for non-response, not merely an aspirational target",
+        "The applicant must resubmit the entire application from scratch",
+        "The clock simply resets and restarts for another 15 days indefinitely"
+      ],
+      "answerIndex": 1,
+      "explanation": "The deemed-approved consequence is what gives the 15-day figure real teeth as a deadline — without a specific consequence for non-response, a stated timeline would be aspirational rather than enforceable; the deemed-approved mechanism is what makes OTMR's speed guarantee meaningful in practice.",
+      "citation": "47 CFR 1.1411."
+    },
+    {
+      "id": "T05-L09-Q5",
+      "type": "mc",
+      "prompt": "What was the specific FCC action that created the modern OTMR (One-Touch Make-Ready) framework?",
+      "choices": [
+        "The Telecommunications Act of 1996",
+        "The FCC's 2018 pole attachment/infrastructure order (the same broader 2018 rulemaking that also established the municipal small-wireless-facility shot clocks covered in T09) — OTMR streamlined simple make-ready into a single-visit process for a qualified contractor hired by the new attacher",
+        "The original 1996 Pole Attachment Act",
+        "A 2023 FCC order responding to the Sackett v. EPA decision"
+      ],
+      "answerIndex": 1,
+      "explanation": "OTMR emerged from the FCC's 2018 infrastructure-deployment rulemaking (the same broader order package that established the municipal shot clocks covered in T09.L08) — allowing a qualified contractor hired by the new attacher to perform simple make-ready in a single visit, rather than waiting for each existing attachment owner to separately schedule their own work."
+    },
+    {
+      "id": "T05-L09-Q6",
+      "type": "mc",
+      "prompt": "Why does the simple-vs-complex make-ready classification matter so much to a project's schedule, beyond just determining who performs the physical work?",
+      "choices": [
+        "It has no schedule impact — simple and complex make-ready always take the same amount of time",
+        "Simple (OTMR-eligible) make-ready follows a single-visit, streamlined timeline with a deemed-approved backstop, while complex make-ready typically requires coordination with the affected attacher's own schedule and resources — a route with a high proportion of complex make-ready can face a substantially longer and less predictable timeline than one that's mostly OTMR-eligible",
+        "The classification only affects cost, never schedule",
+        "Complex make-ready is always faster than simple make-ready because it involves more parties working in parallel"
+      ],
+      "answerIndex": 1,
+      "explanation": "The practical schedule consequence of the simple/complex distinction is real: OTMR-eligible work has a defined, backstopped fast timeline, while complex make-ready depends on the affected attacher's own scheduling and resource availability — a project team assessing a route's overall timeline needs to know the actual mix of simple vs. complex make-ready across the poles involved, not just the total pole count."
+    },
+    {
+      "id": "T05-L09-Q7",
+      "type": "mc",
+      "prompt": "A route has 20 poles requiring make-ready: 15 are simple (OTMR-eligible, no splicing) and 5 are complex (require an existing attacher's coordination). What is the correct project-management approach to minimize total schedule time?",
+      "choices": [
+        "Wait until all 5 complex poles are fully resolved before starting any of the 15 simple poles, to keep the project sequential and easy to track",
+        "Run the OTMR-eligible simple make-ready and the complex make-ready processes in PARALLEL from the start — since the two tracks have different timelines and different responsible parties, sequencing them one-after-another needlessly extends the total project schedule compared to working both tracks simultaneously",
+        "Cancel the 5 complex poles from the route entirely to avoid the coordination requirement",
+        "Convert the 5 complex poles to simple poles by re-classifying them without pole-owner involvement"
+      ],
+      "answerIndex": 1,
+      "explanation": "Because OTMR-eligible and complex make-ready involve different processes, timelines, and responsible parties, running them in parallel from the start — rather than sequencing simple-then-complex or complex-then-simple — minimizes the project's total schedule time, since the two tracks don't have to wait on each other to begin."
+    },
+    {
+      "id": "T05-L09-Q8",
+      "type": "mc",
+      "prompt": "Why does OTMR's deemed-approved mechanism specifically require the application to be COMPLETE before the 15-day clock starts, rather than starting the clock on any submission regardless of completeness?",
+      "choices": [
+        "It doesn't actually matter — the clock always starts on the raw filing date regardless of completeness",
+        "Starting the clock only on a complete application protects the pole owner from being forced into a deemed-approval outcome based on insufficient information to actually evaluate the request — the completeness requirement balances the new attacher's interest in a fast, predictable timeline against the pole owner's need for adequate information to make a real safety/engineering determination",
+        "The completeness requirement exists purely to slow down new attachers and has no legitimate engineering purpose",
+        "Completeness only matters for complex make-ready, never for simple make-ready"
+      ],
+      "answerIndex": 1,
+      "explanation": "The completeness trigger reflects a deliberate balance: it protects the deemed-approved mechanism's integrity by ensuring the pole owner actually had adequate information to evaluate the request before the clock (and its automatic-approval consequence) starts running — without this safeguard, a pole owner could be forced into deemed approval of a request they never had a fair opportunity to properly review."
+    }
+  ]
+}

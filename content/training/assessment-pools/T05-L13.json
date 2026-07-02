@@ -1,0 +1,115 @@
+{
+  "assessmentId": "T05-L13",
+  "kind": "lesson",
+  "courseId": "T05",
+  "lessonId": "T05.L13",
+  "drawCount": 4,
+  "passThreshold": 70,
+  "pool": [
+    {
+      "id": "T05-L13-Q1",
+      "type": "mc",
+      "prompt": "Which type of make-ready conflict occurs at the midpoint of a span rather than at a pole?",
+      "choices": [
+        "Transfer conflict — existing cable must move to a new hook position at the pole",
+        "Midspan conflict — an existing cable's sag at the center of the span creates insufficient clearance for the new cable, even though the attachment heights at both end poles are acceptable; the conflict point is in the air between poles, and resolution typically requires re-tensioning the existing cable or shortening the span",
+        "Splice conflict — a cable must be spliced because it has no remaining slack",
+        "Grounding conflict — a cable lacks proper bonding at the pole"
+      ],
+      "answerIndex": 1,
+      "explanation": "A midspan conflict is distinctive because the pole-attachment heights on each end of the span can be fully compliant while the sag behavior in between still creates a clearance problem — this is why a make-ready survey needs to check the entire span, not just the pole attachment points, connecting directly to the T05.L02/L07 principle that clearance must be verified at midspan, not just at the pole."
+    },
+    {
+      "id": "T05-L13-Q2",
+      "type": "mc",
+      "prompt": "Your field survey finds 5 poles where an existing cable must be transferred to a new bolt position (no splicing required) and 1 pole where a telephone cable must be spliced because all its slack is deployed. Under OTMR, which poles can your contractor handle in one visit?",
+      "choices": [
+        "All 6 poles — OTMR covers all comm-space make-ready regardless of splicing",
+        "The 5 transfer poles only — transfers with no splicing are simple make-ready (OTMR-eligible per 47 CFR 1.1411), while splicing is explicitly complex make-ready requiring the affected attacher's own crew via the traditional multi-party process; the splice pole runs in parallel on that separate track",
+        "None of the 6 poles — any pole with any conflict elsewhere on the route disqualifies the entire application from OTMR",
+        "Only the splice pole, since it's the highest-priority conflict"
+      ],
+      "answerIndex": 1,
+      "explanation": "OTMR's simple-make-ready scope specifically excludes splicing — the 5 no-splice transfer poles qualify for the OTMR contractor's single-visit process, while the 1 splice-required pole falls to the incumbent telephone company's own crew via the traditional multi-party process, consistent with the simple-vs-complex distinction covered in T05.L09.",
+      "citation": "47 CFR 1.1411 — reused from the T01 research pass's independent verification."
+    },
+    {
+      "id": "T05-L13-Q3",
+      "type": "mc",
+      "prompt": "When a new attacher's arrival requires an existing (incumbent) attacher to move their cable, who typically pays for the incumbent's cable transfer?",
+      "choices": [
+        "The pole owner pays, since it's their responsibility to maintain orderly attachment placement",
+        "The new attacher pays — under FCC rules and standard joint-use agreements, the party triggering the need for make-ready (the new attachment) is responsible for the associated make-ready costs, including paying for incumbents to move their existing cables to make room, even though the incumbent didn't cause the conflict",
+        "The incumbent pays, since they're the ones physically performing the cable move",
+        "Costs are always split 50/50 between the new attacher and the incumbent regardless of circumstances"
+      ],
+      "answerIndex": 1,
+      "explanation": "The 'cost causer pays' principle is standard in joint-use economics: the new attacher, whose arrival triggers the need to make room, bears the make-ready cost — including paying incumbents to move their own existing cables — which is why make-ready cost is a critical, often underestimated variable in aerial build economics."
+    },
+    {
+      "id": "T05-L13-Q4",
+      "type": "mc",
+      "prompt": "On a large multi-pole project with a mix of OTMR-eligible and complex make-ready poles, what is the correct project-management approach for minimizing total schedule time?",
+      "choices": [
+        "Wait for all complex make-ready poles to fully resolve before submitting any OTMR-eligible applications, to keep the project simple to track",
+        "Run OTMR-eligible make-ready and complex make-ready applications IN PARALLEL from the start — filing both processes simultaneously (rather than waiting for one to finish before starting the other) lets OTMR sections complete make-ready and begin construction while the complex poles are still working through the traditional multi-party process, avoiding weeks of wasted schedule time",
+        "Cancel all complex make-ready poles from the route to avoid the multi-party process entirely",
+        "Only pursue OTMR-eligible make-ready; complex make-ready poles should always be excluded from a project's scope"
+      ],
+      "answerIndex": 1,
+      "explanation": "This is the same parallel-processing principle established in T05.L09 (and echoed in T09.L10's permit critical-path lesson): running the two distinct make-ready tracks concurrently from the start avoids the schedule waste of sequencing them, since OTMR-eligible sections can proceed to construction independently while complex poles work through their own (typically longer) process."
+    },
+    {
+      "id": "T05-L13-Q5",
+      "type": "mc",
+      "prompt": "A route has a pole where make-ready involves an unresolvable midspan conflict requiring a full re-route, with an estimated cost far exceeding the project's per-pole budget threshold. What project-management response does this scenario call for?",
+      "choices": [
+        "Proceeding automatically regardless of cost, since any identified make-ready must always be completed as originally planned",
+        "A design hold — triggered either by make-ready cost exceeding a defined budget threshold (a percentage of build cost, set per-project or per-company policy) or by an unresolvable engineering conflict requiring re-routing — pausing that segment for a design-level decision (alternate route, cost re-negotiation, or scope change) rather than proceeding on the original plan",
+        "Immediately canceling the entire project regardless of how small a fraction of the route this pole represents",
+        "A design hold triggered automatically anytime ANY make-ready cost exists on a route, regardless of amount"
+      ],
+      "answerIndex": 1,
+      "explanation": "A design hold is a targeted response to a specific triggering condition — either cost exceeding a defined threshold or an engineering conflict that can't be resolved within the existing design — not a blanket response to the mere existence of make-ready cost (which is normal on most aerial routes) or an automatic project-wide cancellation for a single problematic segment."
+    },
+    {
+      "id": "T05-L13-Q6",
+      "type": "mc",
+      "prompt": "Why does a make-ready survey need to identify midspan conflicts specifically, rather than only checking clearance and separation at each pole's attachment point?",
+      "choices": [
+        "It doesn't need to — pole-attachment-point checks are always sufficient to guarantee full-span compliance",
+        "Because differential sag behavior between conductors (different weights, tensions, or materials) can shrink clearance or separation to a non-compliant level somewhere along the span even when both end-pole attachment points are individually compliant — the same principle established for Rule 232 clearance (T05.L02) and Rule 235 separation (T05.L03) applies directly to make-ready conflict identification",
+        "Midspan conflicts are purely theoretical and have never actually occurred in real OSP construction",
+        "Midspan conflicts only matter for underground cable, never for aerial cable"
+      ],
+      "answerIndex": 1,
+      "explanation": "This directly connects T05.L13's make-ready survey practice back to the fundamental clearance/separation principles established earlier in the course: because different conductors can sag by different amounts, an at-pole-only check can miss a real midspan violation, which is why a thorough make-ready survey checks the full span, not just the pole attachment points."
+    },
+    {
+      "id": "T05-L13-Q7",
+      "type": "mc",
+      "prompt": "A route has 10 poles: 7 simple (OTMR transfer only), 2 complex (require incumbent splicing), and 1 with an unresolvable midspan conflict exceeding the cost threshold. What is the correct combined project-management approach?",
+      "choices": [
+        "Treat all 10 poles identically and wait for the single most complex pole to resolve before touching any of the others",
+        "Run the 7 simple poles' OTMR process and the 2 complex poles' traditional multi-party process in PARALLEL, while placing the 1 cost-exceeding midspan-conflict pole on a design hold for a separate design-level decision — three distinct tracks proceeding on their own appropriate timelines rather than one single blocking sequence",
+        "Cancel the entire 10-pole route because one pole has an unresolvable conflict",
+        "Force the midspan-conflict pole through OTMR regardless of its complexity, since OTMR is always the fastest option"
+      ],
+      "answerIndex": 1,
+      "explanation": "This synthesizes the full T05.L13 toolkit: simple/complex make-ready run in parallel (Q4), while a genuinely unresolvable, over-threshold conflict gets a design hold (Q5) rather than blocking the other 9 poles' progress — treating all poles as a single blocking sequence, or canceling the whole route over one pole, both waste the schedule flexibility the parallel-track approach is designed to capture."
+    },
+    {
+      "id": "T05-L13-Q8",
+      "type": "mc",
+      "prompt": "A new attacher successfully argues that an incumbent's cable transfer isn't strictly necessary if the new attacher instead accepts a tighter (but still just-barely-compliant) attachment position. Why might this trade-off still be a poor design decision, even if it avoids paying for the incumbent's transfer?",
+      "choices": [
+        "It's never a poor decision — avoiding make-ready cost is always the correct priority regardless of other factors",
+        "A just-barely-compliant attachment position is a zero-margin design (the same risk discussed in T05.L02/L07/L12) — it leaves no room for measurement tolerance, construction variation, or future creep, meaning the short-term cost savings from avoiding the incumbent transfer could be offset by a real compliance failure discovered later, which would then require an even more disruptive and costly fix",
+        "This trade-off is illegal under all circumstances regardless of the specific numbers involved",
+        "Attachment position has no relationship to compliance margin of any kind"
+      ],
+      "answerIndex": 1,
+      "explanation": "This connects the make-ready cost-avoidance instinct to the recurring zero-margin design risk established across T05: a tight, just-barely-compliant position saves money now but leaves no buffer against real-world variation — the short-term make-ready savings could be outweighed by the cost and disruption of fixing a later-discovered compliance failure, which is why experienced designers weigh margin, not just immediate cost, when making this kind of trade-off."
+    }
+  ]
+}

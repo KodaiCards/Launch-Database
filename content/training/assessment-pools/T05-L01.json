@@ -1,0 +1,122 @@
+{
+  "assessmentId": "T05-L01",
+  "kind": "lesson",
+  "courseId": "T05",
+  "lessonId": "T05.L01",
+  "drawCount": 4,
+  "passThreshold": 70,
+  "pool": [
+    {
+      "id": "T05-L01-Q1",
+      "type": "mc",
+      "prompt": "The National Electrical Safety Code (NESC) is published by which organization?",
+      "choices": [
+        "ANSI (American National Standards Institute)",
+        "IEEE (Institute of Electrical and Electronics Engineers)",
+        "FCC (Federal Communications Commission)",
+        "NFPA (National Fire Protection Association)"
+      ],
+      "answerIndex": 1,
+      "explanation": "The NESC is IEEE's C2 standard (currently C2-2023). ANSI accredits it as a national standard but does not author it; the FCC regulates pole attachment access/fees but does not write clearance/loading rules; NFPA publishes the NEC (electrical code inside buildings), a different document covering different scope.",
+      "citation": "IEEE C2-2023 (NESC); standards.ieee.org."
+    },
+    {
+      "id": "T05-L01-Q2",
+      "type": "mc",
+      "prompt": "The NESC's document number and current (2026) edition are:",
+      "choices": [
+        "C1 / C1-2023",
+        "C2 / C2-2023",
+        "70 / NFPA 70-2023",
+        "1.1411 / 47 CFR 1.1411-2023"
+      ],
+      "answerIndex": 1,
+      "explanation": "The NESC is IEEE document C2, currently at the C2-2023 edition — the standard is typically revised on a 5-year cycle. NFPA 70 is the NEC, a different document; 47 CFR 1.1411 is an FCC pole-access-timeline rule, not a NESC clearance/loading standard.",
+      "citation": "IEEE C2-2023 (NESC)."
+    },
+    {
+      "id": "T05-L01-Q3",
+      "type": "drag-match",
+      "prompt": "Match each NESC Rule to the design question it answers.",
+      "items": [
+        { "id": "i_232", "label": "How high must the cable be above the road?" },
+        { "id": "i_235", "label": "How far must my cable stay from the power lines on the same pole?" },
+        { "id": "i_250", "label": "What ice/wind/temperature loads must my design withstand for this region?" },
+        { "id": "i_261", "label": "What grade of construction (strength margin) does this crossing require?" }
+      ],
+      "targets": [
+        { "id": "t_232", "label": "Rule 232" },
+        { "id": "t_235", "label": "Rule 235" },
+        { "id": "t_250", "label": "Rule 250" },
+        { "id": "t_261", "label": "Rule 261" }
+      ],
+      "correctMap": { "t_232": "i_232", "t_235": "i_235", "t_250": "i_250", "t_261": "i_261" },
+      "explanation": "These four rules form the core aerial-design skeleton: Rule 232 sets vertical ground clearance, Rule 235 sets comm-to-supply separation on the shared pole, Rule 250 defines the regional weather loading a design must survive, and Rule 261 sets the grade of construction (strength/safety factor) required for a given crossing type."
+    },
+    {
+      "id": "T05-L01-Q4",
+      "type": "mc",
+      "prompt": "A new fiber attachment crosses an active railroad and a county road in the same span. Two AHJs apply: the railroad authority and the county road department. Which clearance standard should govern the final design?",
+      "choices": [
+        "The NESC minimum for the road crossing only — railroad crossings are exempt from NESC",
+        "The most restrictive (highest) of the applicable clearance requirements across both AHJs — the NESC sets a baseline minimum, but a railroad authority's own crossing agreement can require greater clearance, and the design must satisfy every applicable requirement simultaneously",
+        "Whichever AHJ's requirement is cheaper to satisfy, since only one AHJ's sign-off is legally required",
+        "The county road department's requirement only, since railroads do not have jurisdiction over aerial cable"
+      ],
+      "answerIndex": 1,
+      "explanation": "When multiple AHJs' requirements apply to the same span, the design must satisfy the most restrictive one — the NESC is a baseline minimum, and a railroad crossing agreement or the railroad's own engineering standards can require greater clearance than the NESC road-crossing minimum alone."
+    },
+    {
+      "id": "T05-L01-Q5",
+      "type": "mc",
+      "prompt": "Why does the NESC organize its design requirements into numbered rules (232, 235, 250, 261, etc.) rather than a single unified clearance table?",
+      "choices": [
+        "The numbering is arbitrary and has no functional significance",
+        "Each rule addresses a distinct design dimension (vertical clearance, inter-conductor separation, regional weather loading, strength/safety grade) that must be checked independently — an aerial design has to satisfy all applicable rules simultaneously, not just one",
+        "Only Rule 232 is legally binding; the others are optional best-practice guidance",
+        "The rule numbers correspond to publication years, not design topics"
+      ],
+      "answerIndex": 1,
+      "explanation": "The NESC's rule structure reflects that aerial design has multiple independent dimensions that must all be satisfied together — a design that passes the Rule 232 ground-clearance check but fails the Rule 235 comm-to-supply separation check is still non-compliant, which is why a designer works through the applicable rules as a checklist, not a single lookup."
+    },
+    {
+      "id": "T05-L01-Q6",
+      "type": "mc",
+      "prompt": "A designer wants to determine the minimum tension a strand must be strung at. Which combination of NESC concepts from this lesson does that calculation actually depend on?",
+      "choices": [
+        "Rule 232 alone, since it's the vertical clearance rule",
+        "Rule 232 (the clearance the final sag must satisfy) together with Rule 250 (the regional ice/wind loading the cable must be designed to survive) — stringing tension is chosen to keep the FINAL sag within the Rule 232 minimum under the Rule 250 loading conditions for that district",
+        "Rule 261 alone, since grade of construction sets pole strength",
+        "None of the rules in this lesson relate to stringing tension"
+      ],
+      "answerIndex": 1,
+      "explanation": "Stringing tension isn't set by a single rule in isolation — it's chosen so that the resulting final sag (after creep and thermal expansion, under the applicable Rule 250 regional loading) still satisfies the Rule 232 ground-clearance minimum, illustrating how the NESC's separate rules interact in a real design calculation rather than being checked independently."
+    },
+    {
+      "id": "T05-L01-Q7",
+      "type": "mc",
+      "prompt": "Why is it important for a fiber designer to know the specific NESC rule number governing a design question, rather than just knowing the general concept?",
+      "choices": [
+        "It isn't important — general familiarity with clearance concepts is sufficient for professional practice",
+        "Because permit reviewers, PE stamps, and QA checklists reference specific rule numbers as the basis for a design decision — citing the correct rule number (e.g., \"complies with Rule 232\" vs. a vague \"meets clearance requirements\") is what makes a design defensible and auditable against the actual standard it claims to follow",
+        "Rule numbers are only relevant for underground design, never for aerial",
+        "Rule numbers change every year, so memorizing them is a waste of time"
+      ],
+      "answerIndex": 1,
+      "explanation": "A design package that cites the specific applicable rule (Rule 232 for clearance, Rule 235 for separation) gives a permit reviewer or auditor a precise, checkable basis for verifying compliance — a vague general reference to 'clearance requirements' without the rule number is much harder to audit and defend."
+    },
+    {
+      "id": "T05-L01-Q8",
+      "type": "mc",
+      "prompt": "Since primary NESC standard text is a paywalled IEEE publication, how should a designer handle citing specific NESC rule numbers and table values in project documentation?",
+      "choices": [
+        "Never cite specific rule numbers since the text isn't freely available",
+        "Cite the specific rule number as the authority (e.g., 'per NESC C2-2023 Rule 232'), while sourcing the actual numeric values from the current paid standard or from well-established secondary application guides — and flag any figure not independently confirmed against the primary text as needing verification before final design sign-off",
+        "Use any clearance number found on the internet without attribution",
+        "Only cite the NESC by its general name, never by specific rule or table number"
+      ],
+      "answerIndex": 1,
+      "explanation": "The correct practice is citing the specific rule as the authority while being transparent about the sourcing path for exact numeric values — application guides and secondary sources are useful for understanding and cross-checking, but a design's final numeric compliance should be confirmed against the current primary standard before sign-off, especially since editions do change over time."
+    }
+  ]
+}

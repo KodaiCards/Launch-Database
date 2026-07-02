@@ -1,0 +1,120 @@
+{
+  "assessmentId": "T05-L04",
+  "kind": "lesson",
+  "courseId": "T05",
+  "lessonId": "T05.L04",
+  "drawCount": 4,
+  "passThreshold": 70,
+  "pool": [
+    {
+      "id": "T05-L04-Q1",
+      "type": "mc",
+      "prompt": "Under NESC Rule 261, which crossing type is a classic trigger for Grade B construction rather than Grade C?",
+      "choices": [
+        "A two-lane county road in a rural area",
+        "A span crossing an active Class I railroad — the higher consequence of a failure over an active rail line justifies the higher Grade B strength requirement",
+        "A residential neighborhood street",
+        "A rural farm field with no public access"
+      ],
+      "answerIndex": 1,
+      "explanation": "Railroad crossings are treated as a higher-consequence crossing type under Rule 261, requiring Grade B construction — the stronger structural/strength requirement reflects the greater consequence of a structural failure over active rail traffic compared to a typical road or residential crossing.",
+      "citation": "NESC Rule 261 (per ikeGPS Grades of Construction article and Federated Rural NESC 2017 summary chart)."
+    },
+    {
+      "id": "T05-L04-Q2",
+      "type": "drag-match",
+      "prompt": "Match each crossing scenario to the grade of construction it requires.",
+      "items": [
+        { "id": "i_rail", "label": "Span crossing an active Class I railroad" },
+        { "id": "i_street", "label": "Span crossing a residential neighborhood street" }
+      ],
+      "targets": [
+        { "id": "t_gradeb", "label": "Grade B" },
+        { "id": "t_gradec", "label": "Grade C" }
+      ],
+      "correctMap": { "t_gradeb": "i_rail", "t_gradec": "i_street" },
+      "explanation": "Grade B (the higher strength requirement) typically applies to higher-consequence crossings like active railroads, while Grade C (a lower strength requirement) typically applies to lower-consequence crossings like residential streets — matching the general NESC pattern of scaling structural requirements to the consequence of a failure.",
+      "citation": "NESC Rule 261 (per ikeGPS Grades of Construction article and Federated Rural NESC 2017 summary chart)."
+    },
+    {
+      "id": "T05-L04-Q3",
+      "type": "mc",
+      "prompt": "NESC Section 26 provides the load and strength factor matrices referenced by Rule 261's grade determinations. Conceptually, how does a Grade B classification affect structural design compared to Grade C?",
+      "choices": [
+        "Grade B uses lower load factors — it's designed for lighter loads",
+        "Grade B requires higher strength/load factors than Grade C, meaning the pole, hardware, and cable system must be designed with a greater structural safety margin — a Grade B crossing is more expensive to build than an equivalent Grade C crossing because of this higher margin requirement",
+        "Grade B and Grade C use identical load factors; the distinction only affects permit paperwork",
+        "Grade B only applies to underground construction, never to aerial"
+      ],
+      "answerIndex": 1,
+      "explanation": "Grade B's higher strength/load factors translate directly into a more robust (and more expensive) structural design — stronger poles, more conservative hardware ratings, tighter design margins — reflecting the greater consequence of a failure at a Grade B crossing type.",
+      "citation": "NESC C2-2023 Section 26 (concept confirmed via secondary sources; exact numeric factor tables are in the paywalled primary standard — confirm current values before final design sign-off)."
+    },
+    {
+      "id": "T05-L04-Q4",
+      "type": "mc",
+      "prompt": "An aerial fiber route needs a Grade B determination for a railroad crossing, but the project budget was estimated using Grade C pole prices. What's the practical impact?",
+      "choices": [
+        "None — Grade B poles are the same price as Grade C poles; only the permit fee is higher",
+        "The project needs a real cost re-estimate for that crossing — Grade B's higher strength requirement typically means a larger pole class, more robust hardware, and potentially tighter design margins, all of which increase material and possibly labor cost compared to the Grade C assumption the original budget was built on",
+        "The distinction is purely administrative and has zero cost impact anywhere",
+        "Grade B is always cheaper than Grade C because it requires fewer permits"
+      ],
+      "answerIndex": 1,
+      "explanation": "Because Grade B's higher structural requirement typically drives a larger pole class and more robust hardware than Grade C, discovering a Grade B requirement after budgeting at Grade C prices creates a real cost gap that needs to be reconciled — this is exactly the kind of design-to-budget mismatch a QA process should catch before construction, not after."
+    },
+    {
+      "id": "T05-L04-Q5",
+      "type": "mc",
+      "prompt": "The NESC rule that specifies WHEN each grade of construction applies, and the section that provides the actual numeric load/strength factors, are respectively:",
+      "choices": [
+        "Rule 232 / Section 25",
+        "Rule 261 / Section 26 — Rule 261 determines which grade applies to a given crossing scenario, and Section 26 supplies the numeric load and strength factor matrices used in the actual structural calculation",
+        "Rule 250 / Section 23",
+        "Rule 235 / Section 24"
+      ],
+      "answerIndex": 1,
+      "explanation": "Rule 261 is the applicability rule (which crossing scenarios require which grade), while Section 26 is where the actual numeric strength/load factor tables live for use in the structural design calculation — two distinct references that work together in a Grade B/C determination.",
+      "citation": "NESC C2-2023 Rule 261 / Section 26 (per secondary application guides — exact table values require the paid primary standard)."
+    },
+    {
+      "id": "T05-L04-Q6",
+      "type": "mc",
+      "prompt": "Why does a designer need to determine the grade of construction (Rule 261) EARLY in the design process, rather than after the pole class and material specifications have already been selected?",
+      "choices": [
+        "Grade of construction has no bearing on pole class or material selection, so timing doesn't matter",
+        "Because the grade of construction directly drives the structural strength requirement (via Section 26's load/strength factors), which in turn determines the required pole class and hardware rating — selecting materials before determining the grade risks specifying an under-strength (non-compliant) or needlessly over-strength (wasteful) design that has to be redone",
+        "Grade determination can only legally happen after construction begins, per NESC procedure",
+        "Grade of construction only matters for underground routes"
+      ],
+      "answerIndex": 1,
+      "explanation": "Since the grade of construction feeds directly into the structural strength calculation that determines pole class and hardware selection, determining the grade after materials are already specified risks a costly redo — either an under-strength design that fails compliance, or an over-strength design that wastes budget — which is why grade determination belongs early in the design sequence."
+    },
+    {
+      "id": "T05-L04-Q7",
+      "type": "mc",
+      "prompt": "A route has two crossings: a residential street (Grade C) and, further along the same route, an active railroad (Grade B). Does the Grade B requirement at the railroad crossing apply to the entire route, or just that specific span?",
+      "choices": [
+        "Grade B applies to the entire route once it's triggered anywhere along it",
+        "Grade of construction is determined per crossing/span based on that specific location's characteristics — the railroad span requires Grade B while the residential street span can remain Grade C, since each span's grade reflects the consequence of a failure AT THAT LOCATION, not a route-wide blanket requirement",
+        "Grade C applies to the entire route since it's the lower (more common) requirement",
+        "The route must be redesigned entirely underground to avoid the grade determination"
+      ],
+      "answerIndex": 1,
+      "explanation": "Grade of construction under Rule 261 is a per-span/per-crossing determination based on that specific location's crossing characteristics, not a route-wide blanket rule — a route can legitimately have different grade requirements at different spans depending on what each span crosses."
+    },
+    {
+      "id": "T05-L04-Q8",
+      "type": "mc",
+      "prompt": "Why is it insufficient for a QA reviewer to check only that SOME grade of construction was assigned to each span, without verifying that the assigned grade matches the crossing type's actual requirement?",
+      "choices": [
+        "It's sufficient — the presence of any grade designation, correct or not, satisfies the compliance check",
+        "Because assigning the wrong grade (e.g., labeling a railroad crossing as Grade C when it should be Grade B) produces a design with insufficient structural strength for the actual consequence of failure at that location — checking that a field is filled in, without verifying it's the CORRECT value for that specific crossing type, misses exactly the kind of error that matters most",
+        "Grade of construction is purely a documentation field with no structural design consequence",
+        "QA reviewers are not qualified to check grade-of-construction determinations under any circumstances"
+      ],
+      "answerIndex": 1,
+      "explanation": "A QA check that only verifies a field was populated (rather than verifying the value is correct for that specific crossing type) can pass a genuinely under-strength design — this mirrors the broader QA principle (also seen in T09's gap-analysis lessons) that a compliance check must verify substantive correctness, not just the presence of a value."
+    }
+  ]
+}

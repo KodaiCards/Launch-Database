@@ -1,0 +1,117 @@
+{
+  "assessmentId": "T05-L06",
+  "kind": "lesson",
+  "courseId": "T05",
+  "lessonId": "T05.L06",
+  "drawCount": 4,
+  "passThreshold": 70,
+  "pool": [
+    {
+      "id": "T05-L06-Q1",
+      "type": "mc",
+      "prompt": "What are the design loads for the NESC Heavy loading district?",
+      "choices": [
+        "0 in ice, 9 psf wind, +30°F",
+        "0.50 in ice, 4 psf wind, 0°F — the highest ice-loading combination of the three NESC districts",
+        "0.25 in ice, 4 psf wind, +15°F",
+        "1.0 in ice, 0 psf wind, -20°F"
+      ],
+      "answerIndex": 1,
+      "explanation": "The Heavy loading district (typically the northeastern US) uses the highest radial ice thickness (0.50 in) of the three districts, combined with 4 psf wind and 0°F design temperature — reflecting the combined ice-and-cold-weather structural demand of that region.",
+      "citation": "NESC C2-2023 Rule 250 Table 250-1, corroborated by IAEI Magazine's 2002 NESC article, ikeGPS NESC Weather Loadings article, and RUS Bulletin 1724E-150 — exact current-edition table values should be confirmed against the paid primary standard for final design."
+    },
+    {
+      "id": "T05-L06-Q2",
+      "type": "mc",
+      "prompt": "A 0.5-inch OD cable messenger is in the Heavy district (0.50 in radial ice). Using w_ice = 1.244 × t × (D + t), where t = ice radial thickness and D = cable OD, calculate the ice load per foot.",
+      "choices": [
+        "0.311 lb/ft",
+        "0.622 lb/ft — w_ice = 1.244 × 0.50 × (0.50 + 0.50) = 1.244 × 0.50 × 1.00 = 0.622 lb/ft",
+        "1.244 lb/ft",
+        "0.155 lb/ft"
+      ],
+      "answerIndex": 1,
+      "explanation": "w_ice = 1.244 × 0.50 × (0.50 + 0.50) = 1.244 × 0.50 × 1.00 = 0.622 lb/ft. This is standard arithmetic on the stated ice-load formula and inputs, independently re-derivable by hand — for context, this ice load is roughly 7x heavier than a typical bare 6M strand's own weight (~0.088 lb/ft), illustrating why ice loading dominates structural design in Heavy districts."
+    },
+    {
+      "id": "T05-L06-Q3",
+      "type": "mc",
+      "prompt": "Macon, GA is in which NESC loading district?",
+      "choices": [
+        "Medium",
+        "Heavy",
+        "Extreme Wind (Rule 250C)",
+        "Light — 0 in ice, 9 psf wind, +30°F; the southeastern US (Georgia, Florida, Alabama, Mississippi, Louisiana, most of Texas) falls in the Light district"
+      ],
+      "answerIndex": 3,
+      "explanation": "Macon, GA falls in the NESC Light loading district, characteristic of the southeastern US — this region's design loads assume zero radial ice, a lower 9 psf wind pressure, and a milder +30°F design temperature compared to the Medium or Heavy districts further north.",
+      "citation": "NESC C2-2023 Rule 250 loading district map, corroborated by ikeGPS NESC Weather Loadings article, IAEI Magazine 2002 NESC article, and RUS Bulletin 1724E-150."
+    },
+    {
+      "id": "T05-L06-Q4",
+      "type": "mc",
+      "prompt": "The NESC Extreme Wind overlay (Rule 250C) applies to structures in mapped coastal wind zones that are:",
+      "choices": [
+        "More than 40 ft tall",
+        "60 feet or more above ground — height is the trigger, not distance from the coast or general state location; a 40-ft pole in a coastal hurricane zone does NOT trigger Rule 250C, while a 60-ft structure at the same location DOES",
+        "Within 10 miles of the coastline regardless of height",
+        "Any pole in a state that borders the Atlantic or Gulf of Mexico"
+      ],
+      "answerIndex": 1,
+      "explanation": "Rule 250C applies specifically to structures 60 feet or more above ground within the mapped Extreme Wind zones — height above ground is the trigger, not simple coastal proximity or state-level location, which is why a shorter pole in the same coastal zone can be exempt while a taller structure at the identical location is not.",
+      "citation": "NESC C2-2023 Rule 250C, reused from the T01 research pass's independent verification of the same rule and 60-ft threshold."
+    },
+    {
+      "id": "T05-L06-Q5",
+      "type": "mc",
+      "prompt": "In the ice load formula w_ice = 1.244 × t × (D + t), where does the coefficient 1.244 come from?",
+      "choices": [
+        "It is an arbitrary regulatory constant with no physical derivation",
+        "It derives from ice density (57 lb/ft³) times pi, divided by 144 (converting square inches to square feet): 57 × π / 144 ≈ 1.2435, rounded to 1.244 — a physically-derived conversion coefficient, not an arbitrary regulatory number",
+        "It represents the maximum allowable ice accumulation in inches",
+        "It is the ratio of Heavy district loading to Light district loading"
+      ],
+      "answerIndex": 1,
+      "explanation": "57 × π / 144 = 1.2435, which rounds to the 1.244 coefficient used in the formula — this is a straightforward, independently re-derivable physical calculation converting ice density and the geometry of an annular ice sheath into a per-foot weight coefficient, not an arbitrarily chosen regulatory number."
+    },
+    {
+      "id": "T05-L06-Q6",
+      "type": "mc",
+      "prompt": "A designer is preparing an aerial design for a project in Macon, GA and initially assumes Heavy-district ice loading (0.50 in ice) out of caution. What is the practical consequence of this over-conservative assumption?",
+      "choices": [
+        "There is no consequence — using a higher-than-required loading assumption is always free from a cost perspective",
+        "The design will likely be significantly over-engineered (larger pole class, stronger hardware) for the actual Light-district conditions Macon experiences, unnecessarily inflating project cost — the correct approach is to confirm the actual applicable district (Light, for Macon) rather than defaulting to the most conservative assumption",
+        "The over-conservative assumption automatically satisfies Rule 250C's Extreme Wind requirement as a bonus",
+        "Using Heavy-district loading in a Light district area is actually a NESC violation, since it wastes material"
+      ],
+      "answerIndex": 1,
+      "explanation": "While over-designing might seem 'safe,' it carries a real cost penalty — assuming Heavy-district ice loading (0.622 lb/ft in the Q2 example) for a Light-district project (0 in ice) means specifying unnecessarily robust poles and hardware, inflating cost without a corresponding safety benefit, which is why confirming the actual applicable loading district is a real economic decision, not just a formality."
+    },
+    {
+      "id": "T05-L06-Q7",
+      "type": "mc",
+      "prompt": "Why does a Heavy-district ice load calculation (0.622 lb/ft in the Q2 example) matter so much more to the overall pole loading than the cable's own bare weight (roughly 0.088 lb/ft for a typical 6M strand)?",
+      "choices": [
+        "It doesn't matter more — ice load and bare cable weight are always numerically equal",
+        "Because the ice load in this example is roughly 7 times the bare cable weight, it dominates the total vertical (gravity) load the pole must be designed to support in a Heavy district — a design that only accounts for bare cable weight without the applicable ice load would be dramatically under-designed for actual winter conditions in that region",
+        "Ice load only affects horizontal wind force, never vertical gravity load",
+        "Bare cable weight is irrelevant to pole design in any loading district"
+      ],
+      "answerIndex": 1,
+      "explanation": "Since ice load (0.622 lb/ft) is roughly 7x the bare cable weight (0.088 lb/ft) in this Heavy-district example, ice accumulation — not the cable's inherent weight — is the dominant vertical load factor in regions where it applies, which is exactly why correctly identifying the applicable loading district and its ice figure is structurally consequential, not a minor detail."
+    },
+    {
+      "id": "T05-L06-Q8",
+      "type": "mc",
+      "prompt": "A cable messenger has OD = 0.375 in and is in a district with 0.25 in radial ice. Using w_ice = 1.244 × t × (D+t), what is the ice load per foot?",
+      "choices": [
+        "0.194 lb/ft — w_ice = 1.244 × 0.25 × (0.375 + 0.25) = 1.244 × 0.25 × 0.625 = 0.1944 lb/ft",
+        "0.311 lb/ft",
+        "0.622 lb/ft",
+        "1.244 lb/ft"
+      ],
+      "answerIndex": 0,
+      "explanation": "w_ice = 1.244 × 0.25 × (0.375 + 0.25) = 1.244 × 0.25 × 0.625 = 0.1944 lb/ft, approximately 0.19 lb/ft — independently re-derivable arithmetic applying the same formula to different stated inputs, confirming the calculation method generalizes correctly."
+    }
+  ]
+}

@@ -1,0 +1,118 @@
+{
+  "assessmentId": "T05-L11",
+  "kind": "lesson",
+  "courseId": "T05",
+  "lessonId": "T05.L11",
+  "drawCount": 4,
+  "passThreshold": 70,
+  "pool": [
+    {
+      "id": "T05-L11-Q1",
+      "type": "mc",
+      "prompt": "OPGW (Optical Ground Wire) is most commonly found on which type of structure?",
+      "choices": [
+        "40-ft joint-use distribution poles in residential neighborhoods — OPGW is not used there",
+        "High-voltage transmission towers, replacing the conventional overhead ground/shield wire at the very top of the structure, above all phase conductors — a transmission-structure product, not a distribution product",
+        "Underground handholes and vaults",
+        "Cellular tower guy wires"
+      ],
+      "answerIndex": 1,
+      "explanation": "OPGW replaces the conventional overhead ground/shield wire at the top of transmission towers (above all phase conductors), combining the lightning-shielding/fault-current function of a traditional shield wire with embedded optical fibers. It is fundamentally a transmission-structure product — a 40-ft joint-use distribution pole would use ADSS, lashed cable, or coax instead, not OPGW."
+    },
+    {
+      "id": "T05-L11-Q2",
+      "type": "mc",
+      "prompt": "Why must OPGW's metallic outer strands be sized to handle ground fault current, rather than just the mechanical load of supporting its own weight?",
+      "choices": [
+        "To prevent aeolian vibration from damaging the fiber core — a different, unrelated failure mode",
+        "Because OPGW physically replaces the shield wire and inherits its electrical function: when a fault occurs on the transmission line, ground fault current (potentially thousands of amps for milliseconds) flows through OPGW's metallic strands to the tower ground system — those strands must be sized to absorb that thermal energy pulse without the inner temperature rising enough to damage the fiber core",
+        "Fault current sizing is irrelevant to OPGW design; only mechanical tensile strength matters",
+        "OPGW's metallic strands exist purely for cosmetic/branding purposes and carry no functional load"
+      ],
+      "answerIndex": 1,
+      "explanation": "Because OPGW takes over the shield wire's electrical role in the transmission structure, it must also handle that role's electrical consequence — carrying substantial ground fault current during a fault event. The metallic strand sizing (the 'fault current rating') is specifically engineered to absorb that thermal pulse without damaging the embedded fiber, a design requirement that has no equivalent in a purely dielectric cable like ADSS."
+    },
+    {
+      "id": "T05-L11-Q3",
+      "type": "mc",
+      "prompt": "Your company is leasing fiber strands inside an electric utility's OPGW for a 12-mile backbone segment (an IRU arrangement). As the OSP designer, what is your primary responsibility for the OPGW portion of the design?",
+      "choices": [
+        "Designing the OPGW cable's fault current rating and metallic strand sizing",
+        "Designing the OPGW's grounding scheme at each transmission structure",
+        "The fiber network side: strand count, optical loss budget over the 12-mile segment, and where you'll splice or hand off to your own distribution network — the OPGW's structural design, fault-current sizing, and grounding remain the utility's responsibility, since attachment/lease agreements for OPGW are handled at the utility-to-utility level, not the pole-attachment level",
+        "Nothing — leasing OPGW fiber requires no design input from the OSP designer at all"
+      ],
+      "answerIndex": 2,
+      "explanation": "When leasing fiber strands within someone else's OPGW, the OSP designer's scope is the fiber network layer (strand count, loss budget, splice/handoff points) — the OPGW's structural/electrical engineering (fault current rating, grounding at every structure) remains entirely the owning utility's responsibility, reflecting that OPGW attachment/lease arrangements operate at a different regulatory and contractual level than standard pole attachment."
+    },
+    {
+      "id": "T05-L11-Q4",
+      "type": "mc",
+      "prompt": "Why is ADSS generally preferred over OPGW for joint-use distribution pole attachments?",
+      "choices": [
+        "ADSS has a higher fiber count capacity than OPGW in every case",
+        "ADSS is all-dielectric (no metal) — on a joint-use distribution pole, this means the fiber attachment doesn't require grounding hardware, doesn't pick up induced voltages from adjacent phase conductors, and can be safely worked on by communication-space crews without the electrical hazards and grounding requirements OPGW carries. OPGW requires grounding at every structure and carries fault current — appropriate at the top of transmission structures, not in the comm space below a distribution neutral",
+        "ADSS is always cheaper than OPGW regardless of application",
+        "ADSS and OPGW are functionally interchangeable; the choice is purely aesthetic"
+      ],
+      "answerIndex": 1,
+      "explanation": "ADSS's defining advantage in a joint-use distribution context is precisely its all-dielectric construction — no grounding hardware needed, no induced-voltage pickup, and safe for comm-space crews to work on without special electrical precautions. OPGW's fault-current-carrying and grounding requirements are appropriate to its transmission-structure role but would be a mismatched, unnecessary electrical hazard if used in the comm space of a distribution pole."
+    },
+    {
+      "id": "T05-L11-Q5",
+      "type": "mc",
+      "prompt": "A design team mistakenly specifies OPGW for a new fiber attachment on a 40-ft joint-use distribution pole corridor, reasoning that 'more robust cable is always better.' What is the actual problem with this choice?",
+      "choices": [
+        "There is no problem — OPGW is simply a superior product in every application",
+        "OPGW is engineered for a fundamentally different structural/electrical role (transmission shield wire replacement, fault-current carrying, structure-by-structure grounding) that doesn't apply to a distribution comm-space attachment — specifying it there introduces unnecessary grounding requirements and electrical complexity without any corresponding benefit, since a distribution pole's comm space has no shield-wire function for OPGW to serve",
+        "OPGW is illegal to install on any pole shorter than 60 ft",
+        "OPGW cannot physically be spliced to any other fiber cable type"
+      ],
+      "answerIndex": 1,
+      "explanation": "The mismatch isn't about general robustness — it's about applying a product engineered for a specific structural/electrical role (transmission shield-wire replacement with fault-current duty) to a context (distribution comm space) that has no use for that role, while still inheriting its grounding/electrical complexity. 'More robust' doesn't mean 'better fit' when the extra robustness serves a function the application doesn't need."
+    },
+    {
+      "id": "T05-L11-Q6",
+      "type": "mc",
+      "prompt": "Why does an IRU (Indefeasible Right of Use) arrangement for OPGW fiber strands involve a different contractual structure than a standard pole attachment agreement?",
+      "choices": [
+        "There is no real difference; IRU and pole attachment agreements are legally identical",
+        "OPGW is embedded within a structural/electrical component of the transmission system itself (the shield wire), owned and operated at the utility-to-utility or carrier-to-utility level — leasing fiber strands inside it is fundamentally different from attaching a separate cable to a pole under standard FCC pole-attachment rules, which is why OPGW fiber leasing uses its own contractual framework (the IRU) rather than the pole-attachment application process covered in T05.L08/L09",
+        "IRU arrangements are only used for underground conduit, never for aerial cable of any kind",
+        "IRU arrangements eliminate the need for any optical loss budget calculation"
+      ],
+      "answerIndex": 1,
+      "explanation": "Because OPGW is structurally and electrically integrated into the transmission system itself (rather than being a separate attachment to an existing pole), leasing fiber capacity within it operates under a different contractual model (the IRU) than the pole-attachment application process — this distinction is why T05.L11 treats OPGW fiber leasing as a separate topic from the joint-use/OTMR pole-attachment material in T05.L08/L09."
+    },
+    {
+      "id": "T05-L11-Q7",
+      "type": "drag-match",
+      "prompt": "Match each aerial cable type to its typical structural context.",
+      "items": [
+        { "id": "i_opgw", "label": "Replaces the overhead shield wire at the top of a transmission tower; carries fault current" },
+        { "id": "i_adss", "label": "All-dielectric; standard choice for joint-use distribution pole attachment" },
+        { "id": "i_lashed", "label": "Requires a separate messenger strand; conventional distribution-pole installation method" }
+      ],
+      "targets": [
+        { "id": "t_opgw", "label": "OPGW" },
+        { "id": "t_adss", "label": "ADSS" },
+        { "id": "t_lashed", "label": "Lashed cable" }
+      ],
+      "correctMap": { "t_opgw": "i_opgw", "t_adss": "i_adss", "t_lashed": "i_lashed" },
+      "explanation": "Each cable type has a distinct structural niche: OPGW belongs at the top of transmission towers as a shield-wire replacement carrying fault current, ADSS is the standard all-dielectric choice for joint-use distribution pole attachment where grounding-free simplicity matters, and lashed cable is the conventional method requiring its own separate messenger strand on distribution poles."
+    },
+    {
+      "id": "T05-L11-Q8",
+      "type": "mc",
+      "prompt": "A utility offers to lease OPGW fiber strands to your company along a 12-mile transmission corridor, with the utility handling all structural/electrical aspects. Your company's engineering team still needs to verify one thing before committing to the lease: the optical loss budget over the full 12-mile segment. Why is this verification necessary even though the utility owns and maintains the physical cable?",
+      "choices": [
+        "It isn't necessary — the utility's ownership of the physical cable guarantees the fiber network performance will automatically meet any requirement",
+        "Because the OSP designer's responsibility (per T05.L11) is specifically the fiber NETWORK side — strand count, splice/handoff points, and the optical loss budget over the leased segment — regardless of who owns the physical cable, the leasing company still needs to confirm the fiber's actual optical performance meets their network's requirements before committing traffic to that path",
+        "Loss budget only matters for underground fiber, never for aerial OPGW",
+        "The utility is legally required to guarantee zero loss on any leased fiber segment"
+      ],
+      "answerIndex": 1,
+      "explanation": "Ownership of the physical cable and responsibility for the fiber's actual optical performance are separate concerns — even though the utility handles OPGW's structural/electrical engineering, the leasing company (the OSP designer) still owns the fiber-network-layer verification (loss budget, splice points) since that's what determines whether the leased strands will actually support the intended traffic, which is exactly the division of responsibility established in Q3."
+    }
+  ]
+}

@@ -77,10 +77,12 @@ export default function T18L10_CapstoneQuiz() {
       <section data-tier="foundations">
         <h2>T18 Capstone Review — Safety &amp; OSHA</h2>
         <p>
-          This review spans all nine content lessons in T18. Work through the branching scenarios
-          below to pressure-test how the standards from T18.L01–L09 combine in a real multi-hazard
-          field decision. The graded T18 capstone assessment — drawn from the full T18 pool — is
-          the gate for the topic; this page is reading/review material, not a graded quiz.
+          This review spans all nine content lessons in T18. Work through the branching
+          scenarios below — they pressure-test hazard recognition, LOTO, confined space entry,
+          fall protection, PPE selection, traffic control, minimum approach distances, hazardous
+          materials handling, and incident classification the way a real OSP safety situation
+          would. The graded T18 capstone assessment — drawn from the full T18 pool — is the gate
+          for the topic; this page is reading/review material, not a graded quiz.
         </p>
         <p className="mt-2">
           T18 is a prerequisite gate for every field-touching topic in this curriculum — if a
@@ -88,6 +90,8 @@ export default function T18L10_CapstoneQuiz() {
           the field.
         </p>
       </section>
+
+      {/* ── 22 MC QUESTIONS RETIRED (D031) — see T18-final pool for the graded capstone ── */}
 
       {/* ── BRANCHING SCENARIO 1 — Confined Space Entry Decision ────────── */}
       <BranchingScenario

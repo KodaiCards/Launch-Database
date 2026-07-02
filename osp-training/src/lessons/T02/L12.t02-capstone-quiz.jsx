@@ -55,9 +55,10 @@ export default function T02L12_CapstoneQuiz() {
       <section data-tier="foundations">
         <h2>T02 Capstone Review — Fiber Physics</h2>
         <p>
-          This review spans all of T02.L01–L11. Work through the link-budget example below to
-          pressure-test how the physics from those lessons combines into a real design
-          calculation. The graded T02 capstone assessment — drawn from the full T02 pool — is
+          This review spans all eleven content lessons in T02. Work through the link-budget
+          calculator below — it pressure-tests the full toolkit (dB math, attenuation planning
+          values, splice/connector loss, safety margin) the way a real fiber-physics design
+          check would. The graded T02 capstone assessment — drawn from the full T02 pool — is
           the gate for the topic; this page is reading/review material, not a graded quiz.
         </p>
       </section>
@@ -65,7 +66,7 @@ export default function T02L12_CapstoneQuiz() {
       {/* WORKED EXAMPLE: capstone link budget verification */}
       <WorkedExample
         title="Capstone Budget Verification — Before You Start the Quiz"
-        description="Work through this budget first. The quiz will include questions about it. A 22 km OS2 SMF link at 1550 nm: Tx = +4 dBm, Rx sensitivity = −26 dBm, 7 splices, 6 connectors, 3 dB safety margin."
+        description="A 22 km OS2 SMF link at 1550 nm: Tx = +4 dBm, Rx sensitivity = −26 dBm, 7 splices, 6 connectors, 3 dB safety margin."
         variables={[
           { key: 'tx', label: 'Tx power', units: 'dBm', default: 4, min: -5, max: 10, step: 0.5 },
           { key: 'rx', label: 'Rx sensitivity', units: 'dBm', default: -26, min: -40, max: -5, step: 0.5 },
@@ -107,6 +108,8 @@ export default function T02L12_CapstoneQuiz() {
         resultUnit="dB"
         resultDecimals={2}
       />
+
+      {/* ── 20 MC/DRAG-MATCH QUESTIONS RETIRED (D031) — see T02-final pool for the graded capstone ── */}
 
     </LessonLayout>
   );

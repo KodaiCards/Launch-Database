@@ -28,7 +28,7 @@ export const meta = {
     'Form 307',
     'Form 740',
     'Form 740c',
-    'Form 219',
+    '7 CFR 1753.49',
     'Form 565',
     'Form 524',
     'Form 1744',
@@ -70,7 +70,7 @@ export const key_terms = [
   { term: 'Form 307', definition: 'Bid Bond. Required surety submitted with a bid on a RUS construction contract — guarantees the contractor will enter into the construction contract at the bid price if awarded.' },
   { term: 'Form 740', definition: 'Construction Contract. Awarded construction agreement between RUS borrower and contractor — establishes scope, schedule, payment terms, and RUS oversight rights. The master document binding all parties to the project.' },
   { term: 'Form 740c', definition: 'Contractor Closeout. Contractor declares work complete and releases borrower from contractor claims — final contractor certification before RUS final inspection. Reconciles all change orders against the original contract.' },
-  { term: 'Form 219', definition: 'Final Inspection Report. RUS field inspector certifies as-built meets approved plans and RUS requirements. Cross-checked against all invoices. Signed by contractor and certified by A/E, triggers final RUS loan advancement.' },
+  { term: '7 CFR 1753.49', definition: 'Closeout documents. The governing telecom-program regulation for RUS project close-out: certified as-built drawings, splice records, OTDR test records, and permit copies, PE-signed, cross-checked against invoices — required before RUS advances final funds and the client accepts the network. (Note: RUS Form 219, "Inventory of Work Orders," is a separate Electric Program form under 7 CFR 1726.405 — not a telecom close-out document.)' },
   { term: 'Form 565', definition: 'Compliance Statement. Borrower certifies project complied with all approved requirements, standards, and RUS conditions — the final compliance affidavit confirming all loan and design conditions were met.' },
   { term: 'Form 524', definition: 'Plans + Specifications Approval Request. Plans and specifications submitted to RUS for review and approval before construction — RUS must approve design before construction begins. Carries PE stamp and RUS approval signature.' },
   { term: 'Form 1744', definition: 'Loan Agreement Certifications. Borrower certifies loan-agreement-specific compliance items at advance — certifies the borrower has met all loan preconditions before RUS advances funds for construction.' },
@@ -389,9 +389,9 @@ export default function T01L09_OspStandardsLandscape() {
               <td className="px-3 py-2">Closeout phase</td>
             </tr>
             <tr className="border-t border-white/10">
-              <td className="px-3 py-2 font-mono">Form 219</td>
-              <td className="px-3 py-2">Final Inspection Report</td>
-              <td className="px-3 py-2">RUS field inspector certifies as-built meets approved plans and RUS requirements — the definitive list of what was actually built vs. what was contracted. Cross-checked against all invoices. Signed by contractor and certified by A/E, triggers final RUS loan advancement.</td>
+              <td className="px-3 py-2 font-mono">7 CFR 1753.49</td>
+              <td className="px-3 py-2">Closeout Documents</td>
+              <td className="px-3 py-2">Certified as-built drawings, splice records, and OTDR test records showing what was actually built vs. what was contracted — cross-checked against all invoices, PE-signed, triggers final RUS loan advancement. (RUS Form 219 is a distinct Electric Program form and does not apply to telecom close-out.)</td>
               <td className="px-3 py-2">Final phase</td>
             </tr>
             <tr className="border-t border-white/10">
@@ -422,7 +422,7 @@ export default function T01L09_OspStandardsLandscape() {
         </table>
 
         <p className="text-sm text-slate-300/90 mb-4">
-          <strong>Book vs. Field:</strong> The textbook sequence is: Form 1744 (A/E agreement) → Form 524 (construction contract) → Form 307 (bid bond) → Forms 565 &amp; 740 (daily inspection and inventory during construction) → Form 1755-A (easement, usually already obtained) → Form 219 (final close-out). In practice, easement acquisition and design can overlap with bidding, timelines compress, and a single delay in any one form can halt project funding. The PE and borrower's project manager spend as much time managing paper as managing the work itself.
+          <strong>Book vs. Field:</strong> The textbook sequence is: Form 1744 (A/E agreement) → Form 524 (construction contract) → Form 307 (bid bond) → Forms 565 &amp; 740 (daily inspection and inventory during construction) → Form 1755-A (easement, usually already obtained) → 7 CFR 1753.49 closeout documents (final close-out). In practice, easement acquisition and design can overlap with bidding, timelines compress, and a single delay in any one form can halt project funding. The PE and borrower's project manager spend as much time managing paper as managing the work itself.
         </p>
 
         <h3 className="mt-6 font-semibold">When Standards Conflict</h3>
@@ -460,7 +460,7 @@ export default function T01L09_OspStandardsLandscape() {
           { id: 'T01-L09-FC-form-307', front: 'Form 307', back: 'Bid Bond. Required surety submitted with a bid on a RUS construction contract — guarantees the contractor will enter into the construction contract at the bid price if awarded. Standard federal procurement requirement.' },
           { id: 'T01-L09-FC-form-740', front: 'Form 740', back: 'Construction Contract. Awarded construction agreement between RUS borrower and contractor — establishes scope, schedule, payment terms, and RUS oversight rights. The master document binding all parties to the project.' },
           { id: 'T01-L09-FC-form-740c', front: 'Form 740c', back: 'Contractor Closeout. Contractor declares work complete and releases borrower from contractor claims — final contractor certification before RUS final inspection. Reconciles all change orders and extras against the original contract.' },
-          { id: 'T01-L09-FC-form-219', front: 'Form 219', back: 'Final Inspection Report. RUS field inspector certifies as-built meets approved plans and RUS requirements. Cross-checked against all invoices. Signed by contractor and certified by A/E, triggers final RUS loan advancement.' },
+          { id: 'T01-L09-FC-form-219', front: '7 CFR 1753.49', back: 'Closeout documents. Certified as-built drawings, splice records, and OTDR test records showing what was actually built vs. what was contracted. Cross-checked against all invoices. PE-signed, triggers final RUS loan advancement for telecom-program projects. (RUS Form 219 — Inventory of Work Orders, 7 CFR 1726.405 — is a separate Electric Program form, not the telecom close-out document.)' },
           { id: 'T01-L09-FC-form-524', front: 'Form 524', back: 'Plans + Specifications Approval Request. Plans and specifications submitted to RUS for review and approval before construction — RUS must approve design before construction begins. The formal design document carrying PE stamp and RUS approval signature.' },
           { id: 'T01-L09-FC-form-565', front: 'Form 565', back: 'Compliance Statement. Borrower certifies project complied with all approved requirements, standards, and RUS conditions — the final compliance affidavit confirming all loan and design conditions were met. Foundation of RUS audit defensibility.' },
           { id: 'T01-L09-FC-form-1744', front: 'Form 1744', back: 'Loan Agreement Certifications. Borrower certifies loan-agreement-specific compliance items at advance — certifies the borrower has met all loan preconditions before RUS advances funds for construction. May be submitted multiple times as milestones are reached.' },
