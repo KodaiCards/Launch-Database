@@ -1,0 +1,116 @@
+{
+  "assessmentId": "T09-L08",
+  "kind": "lesson",
+  "courseId": "T09",
+  "lessonId": "T09.L08",
+  "drawCount": 4,
+  "passThreshold": 70,
+  "pool": [
+    {
+      "id": "T09-L08-Q1",
+      "type": "mc",
+      "prompt": "A new ISP wants to build fiber in a mid-size city. The city says 'you need a franchise agreement before we'll issue any ROW permits.' Under 47 USC 253(a), what is the legal limitation on this requirement?",
+      "choices": [
+        "Franchise agreements are always illegal under federal law, so this requirement is automatically void",
+        "47 USC 253(a) prohibits state/local requirements that prohibit or have the effect of prohibiting telecom service — a franchise requirement used as an indefinite delay tactic or an effectively prohibitive barrier can violate this provision, but a reasonable franchise process with reasonable terms and timelines is still permissible; the law limits abuse of the process, not the process itself",
+        "The city has unlimited authority to require any franchise terms it wants with no federal limitation whatsoever",
+        "47 USC 253(a) only applies to wireless carriers, never to wireline/fiber providers"
+      ],
+      "answerIndex": 1,
+      "explanation": "47 USC 253(a) preempts state/local requirements that prohibit or effectively prohibit telecom service, while preserving reasonable, competitively-neutral ROW management authority. A franchise requirement is not automatically unlawful — the legal risk arises when the process becomes a de facto prohibition (indefinite delay, unreasonable terms) rather than a legitimate ROW management tool.",
+      "citation": "47 USC 253(a)."
+    },
+    {
+      "id": "T09-L08-Q2",
+      "type": "mc",
+      "prompt": "A fiber route crosses a city street that was resurfaced 2 years ago. The city has a 5-year pavement cut moratorium on recently resurfaced streets. What construction method is the permittee most likely required to use for this street crossing?",
+      "choices": [
+        "Standard open-cut trenching, since moratoriums typically only apply to gas and water utilities",
+        "A trenchless method (such as directional boring) that avoids cutting the recently resurfaced pavement, since the moratorium period has not yet expired",
+        "The permittee can ignore the moratorium as long as they pay an extra fee",
+        "The moratorium only applies to new construction, not to fiber installation"
+      ],
+      "answerIndex": 1,
+      "explanation": "A pavement cut moratorium restricts open-cut trenching on recently resurfaced streets to protect the municipality's paving investment for a defined period — a permittee working within that window is typically required to use a trenchless method (directional boring) that avoids disturbing the pavement, rather than being exempted or able to pay their way around the restriction."
+    },
+    {
+      "id": "T09-L08-Q3",
+      "type": "mc",
+      "prompt": "The FCC's 2018 Declaratory Ruling and Third Report and Order (aligned with the BDAC Model Code) established a 60-day shot clock for review of certain small wireless facility collocation applications. What does 'complete application' mean in the context of this kind of shot clock?",
+      "choices": [
+        "Any application, regardless of missing documents, starts the clock the moment it is submitted",
+        "An application containing all required documents, fees, drawings, bonds, and certifications per the municipality's published checklist — the clock does not start (or restarts) until the application reaches this completeness threshold",
+        "The clock is fixed and unrelated to whether the application is complete",
+        "Completeness is determined solely by the applicant's own certification, with no municipal review"
+      ],
+      "answerIndex": 1,
+      "explanation": "The shot-clock framework (60 days for collocation using a preexisting structure, 90 days for a new structure, effective Jan 14, 2019 per the FCC's 2018 order) only starts running once the municipality has received a genuinely complete application — using the municipality's published checklist verbatim on first submission is what starts the clock immediately rather than losing time to a completeness dispute.",
+      "citation": "FCC Declaratory Ruling and Third Report and Order, \"Accelerating Wireless Broadband Deployment by Removing Barriers to Infrastructure Investment\" (2018), eff. Jan. 14, 2019; consistent with the FCC BDAC Model Code for Municipalities (2018) 60-day/90-day shot-clock framework."
+    },
+    {
+      "id": "T09-L08-Q4",
+      "type": "mc",
+      "prompt": "A city's ROW permit includes a condition requiring the fiber company to pay a monthly fee of a set amount per linear foot of fiber installed in the ROW. This is most accurately described as:",
+      "choices": [
+        "A one-time permit processing fee",
+        "An ongoing municipal fiber fee — a recurring per-linear-foot (or percentage-of-revenue, or per-mile) charge for occupying the public ROW, distinct from a one-time application/processing fee",
+        "An illegal fee under all circumstances, since 47 USC 253(a) bans any ROW fee",
+        "A franchise agreement in its entirety"
+      ],
+      "answerIndex": 1,
+      "explanation": "A recurring per-linear-foot charge for ongoing ROW occupancy is a municipal fiber fee, distinct in kind from a one-time permit processing fee — municipalities retain some authority to charge reasonable, competitively-neutral compensation for ROW use under 47 USC 253(a), so such fees are not automatically unlawful, though their reasonableness can be a point of dispute."
+    },
+    {
+      "id": "T09-L08-Q5",
+      "type": "mc",
+      "prompt": "Which of the following is LEAST likely to be part of a complete municipal ROW permit application packet for a fiber project?",
+      "choices": [
+        "A traffic control plan for any work affecting travel lanes",
+        "A ROW restoration bond",
+        "A copy of the applicant's federal tax return for the prior three years",
+        "Plan-and-profile or route drawings showing the proposed installation"
+      ],
+      "answerIndex": 2,
+      "explanation": "A federal tax return is not a standard component of a municipal ROW permit application — typical packets include a traffic control plan, restoration bond, and design/route drawings, which relate directly to managing the ROW impact and ensuring restoration, not to the applicant's general financial history."
+    },
+    {
+      "id": "T09-L08-Q6",
+      "type": "mc",
+      "prompt": "Why might using a municipality's published permit checklist verbatim on first submission be a meaningfully better strategy than submitting a 'reasonably complete' application based on prior experience with other cities?",
+      "choices": [
+        "There's no real difference; all municipal checklists are functionally identical",
+        "Because the applicable shot clock (e.g., the FCC's 60/90-day framework) only starts on a genuinely complete application per THAT municipality's specific requirements — a package that was complete for a different city can still be deficient for this one, silently costing the applicant the round-trip delay of a completeness rejection and resubmission",
+        "Because municipalities are legally required to accept any application regardless of format",
+        "Because using a checklist eliminates the need for a traffic control plan"
+      ],
+      "answerIndex": 1,
+      "explanation": "Since municipal permit requirements are not federally standardized, an application package that satisfied one city's checklist can still be missing an item required by a different city — and because the shot clock only starts on THIS municipality's definition of complete, using its specific published checklist (rather than assuming transferability from prior experience) avoids losing time to an avoidable completeness rejection."
+    },
+    {
+      "id": "T09-L08-Q7",
+      "type": "mc",
+      "prompt": "A municipality imposes a franchise-agreement requirement that has, in practice, taken over 3 years to negotiate with no end in sight, effectively preventing the ISP from ever obtaining ROW access. How does this scenario relate to 47 USC 253(a)?",
+      "choices": [
+        "It has no relationship to Section 253(a), since franchise agreements are entirely outside federal jurisdiction",
+        "This is exactly the kind of scenario Section 253(a) is meant to address — an indefinitely-stalled franchise process functioning as a de facto prohibition on providing telecom service can constitute a violation, even though a reasonable, time-bound franchise process is legally permissible",
+        "The ISP has no recourse of any kind under federal law regardless of how long the process takes",
+        "Section 253(a) only applies to fees, never to process delays"
+      ],
+      "answerIndex": 1,
+      "explanation": "The distinction the lesson draws is between a reasonable, bounded franchise process (permissible) and one that functions as an indefinite, effectively prohibitive barrier (the kind of 'effect of prohibiting' service that Section 253(a) targets) — a franchise negotiation with no realistic end point crosses from legitimate ROW management into the territory the statute was designed to prevent."
+    },
+    {
+      "id": "T09-L08-Q8",
+      "type": "mc",
+      "prompt": "A municipality's ROW ordinance imposes a work-zone permit requirement in addition to the encroachment/ROW permit already required for the same fiber project. Why might a municipality require both rather than treating them as duplicative?",
+      "choices": [
+        "This is always an error and the two permits are legally identical everywhere",
+        "The ROW/encroachment permit governs the right to install infrastructure in the ROW itself, while a work-zone permit specifically governs the traffic/pedestrian-safety management of the active construction zone during the work window — they address distinct regulatory concerns (long-term ROW occupancy rights vs. short-term active-work-zone safety) even though both apply to the same project",
+        "Work-zone permits are only required for road construction, never for utility installation, so this scenario is impossible",
+        "The two permits are duplicative and a permittee can simply ignore whichever one is more burdensome"
+      ],
+      "answerIndex": 1,
+      "explanation": "An encroachment/ROW permit and a work-zone permit serve different regulatory purposes even on the same project — the former authorizes the underlying right to install infrastructure in the ROW, while the latter specifically manages the safety of the active work zone during construction (closely tied to the TCP/MUTCD requirements) — treating them as interchangeable risks missing a distinct permit requirement."
+    }
+  ]
+}

@@ -1,0 +1,114 @@
+{
+  "assessmentId": "T09-L10",
+  "kind": "lesson",
+  "courseId": "T09",
+  "lessonId": "T09.L10",
+  "drawCount": 4,
+  "passThreshold": 70,
+  "pool": [
+    {
+      "id": "T09-L10-Q1",
+      "type": "mc",
+      "prompt": "A project has four permits in parallel review: Municipal ROW (submitted Day 0, 45-day review), State DOT (submitted Day 0, 90-day review), Section 106 SHPO (submitted Day 15, 30-day review — clock starts Day 15), and USACE PCN (submitted Day 10, 45-day review). Which is the critical-path permit and when does it complete?",
+      "choices": [
+        "Municipal ROW, completing Day 45",
+        "State DOT, completing Day 90 — the latest of the four completion dates (MRO Day 45, DOT Day 90, SHPO Day 45, PCN Day 55)",
+        "Section 106 SHPO, completing Day 45",
+        "USACE PCN, completing Day 55"
+      ],
+      "answerIndex": 1,
+      "explanation": "Computing each: Municipal ROW = Day 0 + 45 = Day 45. State DOT = Day 0 + 90 = Day 90. SHPO = Day 15 + 30 = Day 45. USACE PCN = Day 10 + 45 = Day 55. The critical path is determined by the LATEST completion date among all required permits — State DOT at Day 90 is the binding constraint, since construction cannot start until every permit clears, regardless of how much earlier the others finish."
+    },
+    {
+      "id": "T09-L10-Q2",
+      "type": "mc",
+      "prompt": "Using the same scenario: the project has a 7-day construction mobilization lag after the last permit is issued. If the PE stamp for the DOT permit wasn't ready and the DOT permit wasn't submitted until Day 30 (instead of Day 0), what is the new earliest construction start date?",
+      "choices": [
+        "Day 97 (unchanged from the original plan)",
+        "Day 127 — DOT now completes Day 30 + 90 = Day 120, plus the 7-day mobilization lag = Day 127, a 30-day slip caused entirely by the delayed submission",
+        "Day 120, since the mobilization lag only applies to the original schedule",
+        "Day 90, since the DOT permit's review period is unaffected by submission date"
+      ],
+      "answerIndex": 1,
+      "explanation": "DOT completion shifts to Day 30 + 90 = Day 120 (submission date moves the whole 90-day clock), and the 7-day mobilization lag still applies after the last permit clears: Day 120 + 7 = Day 127. This is 30 days later than the original Day 90 + 7 = Day 97 — a direct, one-to-one consequence of the 30-day submission delay on the critical-path permit, illustrating why the critical-path permit's submission date deserves the most schedule protection."
+    },
+    {
+      "id": "T09-L10-Q3",
+      "type": "mc",
+      "prompt": "A project PM discovers on Day 80 that the critical-path DOT permit (expected Day 90) has been returned by the DOT district office for a missing surety bond. The PM must resubmit with the bond. A realistic new DOT completion date is Day 120. A customer commitment requires construction to start by Day 100. What should the PM do FIRST?",
+      "choices": [
+        "Wait until Day 90 to see if the situation resolves on its own before telling the customer anything",
+        "Immediately communicate the projected delay to the customer (so they can adjust their own plans) while simultaneously working to accelerate the resubmission — expediting the bond procurement, submitting the moment the bond is ready, and flagging the urgency directly with the DOT reviewer",
+        "Quietly absorb the delay and hope the customer doesn't ask about the schedule",
+        "Cancel the project rather than risk missing the customer commitment"
+      ],
+      "answerIndex": 1,
+      "explanation": "A schedule-critical finding discovered on Day 80 should be communicated immediately, not held pending an uncertain resolution — the customer needs lead time to adjust their own plans, and proactive communication preserves trust. In parallel, the PM should actively work every lever available to accelerate the resubmission (expedited bond procurement, same-day resubmission, direct reviewer contact) rather than passively waiting for the process to run its normal course."
+    },
+    {
+      "id": "T09-L10-Q4",
+      "type": "mc",
+      "prompt": "When tracking both a municipal ROW permit and an OTMR make-ready permit on an aerial fiber project, what is the ideal timing relationship between the two?",
+      "choices": [
+        "Make-ready should always finish as early as possible, regardless of ROW permit timing",
+        "Concurrent completion — make-ready finishing and the ROW permit clearing at roughly the same time — since finishing make-ready first leaves the crew idle waiting for ROW access, and clearing the ROW permit first leaves the crew unable to work because make-ready isn't done",
+        "The ROW permit should always finish well before make-ready begins, with no other sequencing consideration",
+        "The two are entirely independent and their relative timing has no cost impact"
+      ],
+      "answerIndex": 2,
+      "explanation": "Both a too-early make-ready completion (idle crew waiting for ROW access) and a too-early ROW permit clearance (crew has access but can't yet work because make-ready isn't done) create idle time and cost. The PM's job is to stagger submission dates so the two tracks land in the same window, targeting concurrent completion rather than optimizing either one in isolation."
+    },
+    {
+      "id": "T09-L10-Q5",
+      "type": "mc",
+      "prompt": "Four permits are in review: Permit A (submitted Day 5, 60-day review), Permit B (submitted Day 0, 50-day review), Permit C (submitted Day 20, 20-day review), Permit D (submitted Day 0, 65-day review). Which permit is critical-path?",
+      "choices": [
+        "Permit A, completing Day 65",
+        "Permit D, completing Day 65 — tied with Permit A's completion date, but Permit D was the one actually holding the latest completion given its later start relative to review length is not the deciding factor; compute each: A=5+60=65, B=0+50=50, C=20+20=40, D=0+65=65 — A and D are tied at Day 65, both critical-path",
+        "Permit C, completing Day 40",
+        "Permit B, completing Day 50"
+      ],
+      "answerIndex": 1,
+      "explanation": "Computing each completion date: Permit A = Day 5 + 60 = Day 65. Permit B = Day 0 + 50 = Day 50. Permit C = Day 20 + 20 = Day 40. Permit D = Day 0 + 65 = Day 65. Permits A and D are tied for the latest completion date (Day 65) — this scenario illustrates that critical-path analysis can produce more than one binding permit, and both A and D would need schedule protection, not just one."
+    },
+    {
+      "id": "T09-L10-Q6",
+      "type": "mc",
+      "prompt": "A PM tracks permit review periods but does not track submission dates with the same rigor, reasoning that 'the review period is what matters.' Why is this an incomplete approach to critical-path permit tracking?",
+      "choices": [
+        "It isn't incomplete — review period alone fully determines the critical path",
+        "A permit's actual completion date depends on BOTH its submission date and its review-period length (completion = submission date + review period) — tracking review period alone without equally rigorous submission-date tracking makes it impossible to actually compute or protect the true critical path, since a late submission on a short-review permit can still complete later than an early submission on a long-review permit",
+        "Submission dates only matter for permits with less than a 30-day review period",
+        "Review period and submission date are the same thing in permit tracking"
+      ],
+      "answerIndex": 1,
+      "explanation": "Critical-path determination is a function of both variables together (completion = submission date + review period), not review period alone — the Q2 scenario demonstrates this directly: a 30-day submission slip on the DOT permit produced an equal 30-day slip in the overall project's earliest start date, showing that submission-date discipline is just as consequential to the critical path as the review-period length itself."
+    },
+    {
+      "id": "T09-L10-Q7",
+      "type": "mc",
+      "prompt": "A project has three permits: Permit X (submitted Day 0, 30-day review, completes Day 30), Permit Y (submitted Day 0, 40-day review, completes Day 40), Permit Z (submitted Day 0, 35-day review, completes Day 35). Two weeks into the project, Permit Y's review agency announces a 15-day processing backlog affecting all pending applications. What is the new critical path?",
+      "choices": [
+        "The critical path is unaffected because Permit Y was already the longest-review permit",
+        "Permit Y becomes even more clearly the critical-path permit — its new projected completion is Day 55 (Day 40 + 15-day backlog), widening the gap over Permits X (Day 30) and Z (Day 35), so schedule-protection effort should concentrate entirely on Permit Y",
+        "Permit X becomes the new critical path since it was submitted first",
+        "The critical path must be recalculated from scratch with no way to determine which permit is now binding"
+      ],
+      "answerIndex": 1,
+      "explanation": "Since Permit Y was already the longest-lead-time permit (Day 40) before the backlog, adding a 15-day agency-wide delay to it (new completion Day 55) doesn't just keep it critical-path — it widens the gap over the other two permits substantially. This illustrates that once a critical-path permit is identified, a new delay specifically affecting that permit deserves the most schedule-protection attention, since it directly extends the project's earliest possible start date."
+    },
+    {
+      "id": "T09-L10-Q8",
+      "type": "mc",
+      "prompt": "Why does concurrent-completion sequencing (targeting make-ready and the ROW permit to finish in the same week) require the PM to actively STAGGER submission dates, rather than simply submitting both applications on Day 0?",
+      "choices": [
+        "It doesn't require staggering — submitting everything on Day 0 always produces concurrent completion regardless of review-period differences",
+        "Because make-ready and the ROW permit typically have different review-period lengths, submitting both on the same Day 0 would make them complete on different dates (whichever has the shorter review period finishes first) — achieving genuine concurrent completion requires deliberately offsetting the submission dates so the LONGER-review item is submitted earlier, aligning their completion dates despite the differing review lengths",
+        "Staggering submission dates is only relevant for permits with identical review periods",
+        "The PM has no control over submission timing since both applications are filed the moment they're ready"
+      ],
+      "answerIndex": 1,
+      "explanation": "If make-ready and the ROW permit have different review-period lengths, a same-day submission produces staggered (not concurrent) completions. Achieving genuine concurrent completion is a deliberate scheduling act: the PM submits the longer-review-period item earlier (offsetting by roughly the difference in review lengths) so both tracks land in the same completion window, rather than assuming simultaneous submission automatically produces simultaneous completion."
+    }
+  ]
+}
