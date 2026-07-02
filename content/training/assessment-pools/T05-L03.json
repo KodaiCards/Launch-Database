@@ -1,0 +1,120 @@
+{
+  "assessmentId": "T05-L03",
+  "kind": "lesson",
+  "courseId": "T05",
+  "lessonId": "T05.L03",
+  "drawCount": 4,
+  "passThreshold": 70,
+  "pool": [
+    {
+      "id": "T05-L03-Q1",
+      "type": "mc",
+      "prompt": "The communication worker safety zone (CWSZ) at a joint-use distribution pole, for supply voltages under 8.7 kV, is approximately how many inches, measured at the pole?",
+      "choices": [
+        "12 inches",
+        "40 inches — the standard clearance between the top of the communication space and the bottom of the supply space (under 8.7 kV) required by NESC Rule 235C4/238E",
+        "72 inches",
+        "6 inches"
+      ],
+      "answerIndex": 1,
+      "explanation": "The 40-inch communication worker safety zone is the standard clearance between communication equipment/hardware and the lowest supply-space attachment (for supply conductors under 8.7 kV), giving a communication worker a safe working corridor without contacting energized supply equipment.",
+      "citation": "NESC C2-2023 Rule 235C4/238E, corroborated by ikeGPS and utility joint-use engineering guides (We-Energies, Chelan County PUD)."
+    },
+    {
+      "id": "T05-L03-Q2",
+      "type": "mc",
+      "prompt": "A pole inspector measures: neutral at 28 ft, a new comm attachment (just installed) at 25 ft 2 in, and an existing comm cable at 21 ft. The required safety zone under 8.7 kV is 40 inches. Which attachment is creating a violation?",
+      "choices": [
+        "The existing comm cable at 21 ft — it is too close to the neutral",
+        "The new comm attachment at 25 ft 2 in — the gap to the neutral (28 ft − 25 ft 2 in = 2 ft 10 in = 34 in) is less than the required 40-inch safety zone, a violation; the existing cable at 21 ft has a 7-ft (84-inch) gap to the neutral and is compliant",
+        "Neither attachment violates the safety zone",
+        "Both attachments violate the safety zone"
+      ],
+      "answerIndex": 1,
+      "explanation": "Gap to neutral for the new attachment: 28 ft − 25 ft 2 in = 2 ft 10 in = 34 inches, which is less than the required 40-inch minimum — a violation. The existing cable at 21 ft has a gap of 28 − 21 = 7 ft = 84 inches, well above the 40-inch minimum and fully compliant. This is straightforward arithmetic on the stated measurements, independently verifiable."
+    },
+    {
+      "id": "T05-L03-Q3",
+      "type": "mc",
+      "prompt": "An inspection finds 42 inches of safety zone measured at the pole. At midspan, the neutral sags 8 inches more than the comm cable (i.e., the gap shrinks by 8 inches at midspan relative to the at-pole measurement). What is the actual safety zone at midspan, and is it compliant with the 40-inch minimum?",
+      "choices": [
+        "42 inches — midspan sag does not affect the safety zone measurement",
+        "34 inches (42 − 8 = 34 inches) — NON-compliant, since 34 inches is below the 40-inch minimum, even though the at-pole measurement of 42 inches appeared to pass with margin",
+        "50 inches (42 + 8 = 50 inches) — compliant with extra margin",
+        "The safety zone cannot be calculated at midspan under any circumstances"
+      ],
+      "answerIndex": 1,
+      "explanation": "Because the neutral sags 8 inches more than the comm cable between poles, the vertical gap between them shrinks at midspan relative to the at-pole measurement: 42 − 8 = 34 inches, which falls below the 40-inch minimum — a real violation that an at-pole-only inspection would miss, illustrating why differential sag between conductors matters for a genuine compliance check, not just the at-pole clearance."
+    },
+    {
+      "id": "T05-L03-Q4",
+      "type": "drag-match",
+      "prompt": "Match each pole zone to its description.",
+      "items": [
+        { "id": "i_supply", "label": "High-voltage phase conductors and neutral — off limits to communication crews" },
+        { "id": "i_climbing", "label": "Clear vertical corridor between supply and comm zones, incl. the safety zone" },
+        { "id": "i_comm", "label": "Where communication attachers (telecom, CATV, fiber) place their cables" }
+      ],
+      "targets": [
+        { "id": "t_supply", "label": "Supply space" },
+        { "id": "t_climbing", "label": "Climbing space" },
+        { "id": "t_comm", "label": "Communication space" }
+      ],
+      "correctMap": { "t_supply": "i_supply", "t_climbing": "i_climbing", "t_comm": "i_comm" },
+      "explanation": "The vertical zones of a joint-use pole run top to bottom: supply space (highest, energized conductors), climbing space (the clear corridor that includes the communication worker safety zone), and communication space (where telecom/CATV/fiber attachments live) — this ordering exists specifically to keep communication workers physically separated from energized supply conductors."
+    },
+    {
+      "id": "T05-L03-Q5",
+      "type": "mc",
+      "prompt": "The required midspan separation between a communication cable and the neutral, for voltages under 8.7 kV, compares to the at-pole separation how?",
+      "choices": [
+        "It is exactly the same 40 inches as at-pole — sag does not change the midspan requirement",
+        "It can differ from the at-pole figure because midspan measurement must account for the actual (potentially differential) sag of each conductor — a design that satisfies the at-pole gap can still fail at midspan if the conductors sag by different amounts, which is why both points require independent verification",
+        "The midspan requirement is always smaller than the at-pole requirement",
+        "Midspan separation is not a NESC Rule 235 consideration at all"
+      ],
+      "answerIndex": 1,
+      "explanation": "Because Rule 235's separation requirement must hold along the entire span (not just at the pole), and different conductors can sag by different amounts under load, midspan clearance requires its own check accounting for each conductor's actual sag behavior — an at-pole pass does not guarantee a midspan pass.",
+      "citation": "ikeGPS NESC Rule 235 article; NESC C2-2023 Rule 235."
+    },
+    {
+      "id": "T05-L03-Q6",
+      "type": "mc",
+      "prompt": "A communication worker is attaching a new splice case to the top comm position on a joint-use pole. After installation, the measured distance from the bottom of the neutral to the top of the new splice case hardware is 35 inches. Is this compliant with the 40-inch safety zone requirement?",
+      "choices": [
+        "Yes — any clearance above 30 inches is acceptable",
+        "No — 35 inches is below the required 40-inch communication worker safety zone (under 8.7 kV), and the splice case installation must be relocated lower on the pole (or the situation otherwise resolved) before it can be considered compliant",
+        "Yes — splice cases are exempt from the safety zone requirement since they are passive hardware, not active equipment",
+        "The answer depends on the cable's fiber count, not on the physical clearance"
+      ],
+      "answerIndex": 1,
+      "explanation": "35 inches falls short of the 40-inch minimum safety zone required under 8.7 kV — this is a straightforward numeric comparison, and the installation is non-compliant regardless of the fact that a splice case is passive hardware rather than active equipment, since the safety-zone requirement is about physical proximity to energized supply conductors, not about the equipment's function."
+    },
+    {
+      "id": "T05-L03-Q7",
+      "type": "mc",
+      "prompt": "Why does NESC Rule 235 specifically reference the neutral (rather than only the phase conductors) as the lower boundary of the supply space for separation purposes?",
+      "choices": [
+        "The neutral is irrelevant to Rule 235; only phase conductors matter",
+        "The neutral is typically the lowest conductor in the supply space, so it is the practical reference point closest to the communication space — the required separation is measured from whichever supply-space conductor is lowest, which in standard distribution construction is usually the neutral",
+        "Phase conductors are always located below the neutral in standard construction",
+        "The neutral carries higher voltage than the phase conductors, making it the greater hazard"
+      ],
+      "answerIndex": 1,
+      "explanation": "In standard joint-use distribution pole construction, the neutral is typically the lowest conductor in the supply space — since Rule 235's separation requirement is measured from the lowest supply-space conductor down to the highest comm-space attachment, the neutral is the practical reference point that determines whether the safety zone is satisfied."
+    },
+    {
+      "id": "T05-L03-Q8",
+      "type": "mc",
+      "prompt": "A pole audit flags a new comm attachment with a compliant 42-inch at-pole safety zone, but does not check midspan sag differential between the comm cable and the neutral. Why is this audit incomplete?",
+      "choices": [
+        "It is not incomplete — an at-pole compliance check is sufficient on its own",
+        "Because Rule 235 separation must be maintained along the whole span, and if the neutral sags more than the comm cable (a common real-world condition given differing conductor weights and tensions), the actual minimum separation occurs at midspan, not at the pole — an at-pole-only audit can pass a design that actually violates the safety zone requirement somewhere along the span",
+        "It is incomplete only because the audit didn't check the cable's fiber count",
+        "It is incomplete only because the audit didn't verify the pole class"
+      ],
+      "answerIndex": 1,
+      "explanation": "This reinforces the Q3 principle at the audit-practice level: because differential sag between the neutral and the comm cable can shrink the separation below its at-pole value somewhere along the span, a complete Rule 235 compliance check must verify midspan clearance as well, not stop at the at-pole measurement."
+    }
+  ]
+}
