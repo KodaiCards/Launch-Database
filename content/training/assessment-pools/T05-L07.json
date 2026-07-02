@@ -1,0 +1,114 @@
+{
+  "assessmentId": "T05-L07",
+  "kind": "lesson",
+  "courseId": "T05",
+  "lessonId": "T05.L07",
+  "drawCount": 4,
+  "passThreshold": 70,
+  "pool": [
+    {
+      "id": "T05-L07-Q1",
+      "type": "mc",
+      "prompt": "A cable has w = 0.200 lb/ft, L = 120 ft, H = 700 lb. Calculate sag using s = wL²/(8H).",
+      "choices": [
+        "0.257 ft (about 3.1 inches)",
+        "0.514 ft (about 6.2 inches) — s = (0.200 × 120²)/(8 × 700) = 2,880/5,600 = 0.514 ft",
+        "1.029 ft (about 12.3 inches)",
+        "0.129 ft (about 1.5 inches)"
+      ],
+      "answerIndex": 1,
+      "explanation": "s = (0.200 × 120²)/(8 × 700) = (0.200 × 14,400)/5,600 = 2,880/5,600 = 0.514 ft, approximately 6.2 inches — this is the same standard parabolic sag formula and arithmetic used in T05.L02, independently re-derivable by hand."
+    },
+    {
+      "id": "T05-L07-Q2",
+      "type": "mc",
+      "prompt": "The sag formula shows sag is proportional to L². If you increase the span from 150 ft to 300 ft (keeping w and H the same), what happens to the sag?",
+      "choices": [
+        "Doubles — span doubled, so sag doubles",
+        "Quadruples — since sag is proportional to L², doubling L means L² increases by a factor of (2)² = 4, so sag increases by that same factor of 4",
+        "Stays the same — sag is independent of span length",
+        "Increases by a factor of 8"
+      ],
+      "answerIndex": 1,
+      "explanation": "Because s = wL²/(8H) has L² in the numerator, doubling L multiplies L² by 4 (since (2L)² = 4L²) — with w and H held constant, sag increases fourfold, not merely doubling. This is straightforward, hand-verifiable arithmetic on the formula's structure."
+    },
+    {
+      "id": "T05-L07-Q3",
+      "type": "mc",
+      "prompt": "Why must NESC clearance checks use final sag rather than initial (just-strung) sag?",
+      "choices": [
+        "Initial sag is always larger than final sag, so using initial sag is more conservative",
+        "Final sag — reflecting strand creep and thermal expansion under sustained tension over the cable's service life — is typically larger than initial sag, so a design that only satisfies clearance at initial sag risks a real clearance violation once the cable settles into its final sag condition years later",
+        "Final sag and initial sag are numerically identical in all cases",
+        "NESC clearance rules only apply during the initial installation, not afterward"
+      ],
+      "answerIndex": 1,
+      "explanation": "Since strand creep and thermal expansion typically increase sag beyond its just-strung value, a compliance check based only on initial sag can pass a design that later fails the clearance requirement once the cable reaches its final (settled) sag condition — final sag is the defensible basis for a durable compliance check."
+    },
+    {
+      "id": "T05-L07-Q4",
+      "type": "mc",
+      "prompt": "A cable is in the Heavy district (0.50 in ice, 4 psf wind). Cable bare weight = 0.145 lb/ft, cable OD = 0.50 in. Which step of the clearance check MUST be done before applying the sag formula?",
+      "choices": [
+        "Calculate the ruling span for the entire section, then compute the COMBINED load (bare weight + ice load + wind load) that the sag formula's w term must represent under the applicable Heavy-district loading condition — using bare cable weight alone in the sag formula would understate the actual sag under real winter loading",
+        "Skip directly to the sag formula using only the bare cable weight, since ice and wind loads are separate calculations",
+        "Determine the pole class first, since sag depends on pole class",
+        "Contact the FCC for pole attachment approval before any sag calculation can proceed"
+      ],
+      "answerIndex": 0,
+      "explanation": "The sag formula's w term should represent the actual total load the cable experiences under the design condition being checked — in a Heavy district, that means combining bare cable weight with the applicable ice load (and often wind load, combined vectorially) before applying s = wL²/(8H), since using bare weight alone would produce a sag figure that understates the cable's actual worst-case sag under winter loading."
+    },
+    {
+      "id": "T05-L07-Q5",
+      "type": "mc",
+      "prompt": "The parabolic sag formula s = wL²/(8H) is accurate within about 1% of the true catenary shape under what condition?",
+      "choices": [
+        "Only when the span is under 50 ft, regardless of sag amount",
+        "When the sag-to-span ratio (s/L) is below approximately 10% — most practical OSP aerial spans satisfy this condition, which is why the simpler parabolic approximation is the standard working formula rather than the more complex catenary equation",
+        "Only when the cable tension exceeds 1,000 lb",
+        "The parabolic formula is never accurate for any real-world span"
+      ],
+      "answerIndex": 1,
+      "explanation": "The parabolic approximation is a well-established, standard simplification of the true catenary curve, valid within about 1% error when s/L stays below roughly 10% — a condition most practical aerial OSP spans satisfy, which is why the simpler parabolic formula is the standard tool for everyday sag-tension calculations rather than the more mathematically complex catenary equation."
+    },
+    {
+      "id": "T05-L07-Q6",
+      "type": "mc",
+      "prompt": "Two identical cables are strung at different tensions: Cable A at H=500 lb, Cable B at H=1,000 lb, both on the same 150-ft span with the same w. Which cable has more sag, and why?",
+      "choices": [
+        "Cable B has more sag, since higher tension always produces more sag",
+        "Cable A has more sag — since H (tension) is in the denominator of s = wL²/(8H), a LOWER tension produces a LARGER sag for the same span and cable weight; Cable B's doubled tension halves its sag relative to Cable A",
+        "Both cables have identical sag regardless of tension, since sag only depends on span and weight",
+        "Sag cannot be determined without knowing the cable's exact material composition"
+      ],
+      "answerIndex": 1,
+      "explanation": "Because H is in the denominator of s = wL²/(8H), sag is inversely proportional to tension — Cable A's lower tension (500 lb) produces roughly double the sag of Cable B's higher tension (1,000 lb) for the same span and weight, which is why stringing tension is a key design lever for controlling sag and satisfying Rule 232 clearance."
+    },
+    {
+      "id": "T05-L07-Q7",
+      "type": "mc",
+      "prompt": "Why does the sag-to-span ratio (s/L) matter as a design check beyond just confirming the parabolic formula's accuracy?",
+      "choices": [
+        "It has no other design significance beyond formula-accuracy validation",
+        "A very high s/L ratio (excessive sag relative to span) can itself indicate an under-tensioned or overloaded span that risks failing clearance requirements, even before checking the formula's accuracy — the ratio is a useful sanity check on whether the span's sag behavior is within a normal, well-designed range",
+        "s/L ratio only matters for underground cable installations",
+        "A high s/L ratio always indicates the cable material is defective"
+      ],
+      "answerIndex": 1,
+      "explanation": "Beyond validating which formula (parabolic vs. catenary) is appropriate, an unusually high s/L ratio is itself a signal worth investigating — it can indicate insufficient stringing tension or an overloaded span that's likely to have clearance problems, making the ratio a useful quick sanity check during design review, not just a formula-selection technicality."
+    },
+    {
+      "id": "T05-L07-Q8",
+      "type": "mc",
+      "prompt": "A cable has w = 0.145 lb/ft, L = 200 ft, H = 900 lb. Calculate sag using s = wL²/(8H).",
+      "choices": [
+        "0.806 ft (about 9.7 inches) — s = (0.145 × 200²)/(8 × 900) = (0.145 × 40,000)/7,200 = 5,800/7,200 = 0.806 ft",
+        "0.403 ft (about 4.8 inches)",
+        "1.611 ft (about 19.3 inches)",
+        "0.201 ft (about 2.4 inches)"
+      ],
+      "answerIndex": 0,
+      "explanation": "s = (0.145 × 200²)/(8 × 900) = (0.145 × 40,000)/7,200 = 5,800/7,200 = 0.806 ft, approximately 9.7 inches — the same formula applied to a different set of stated inputs, independently re-derivable arithmetic."
+    }
+  ]
+}

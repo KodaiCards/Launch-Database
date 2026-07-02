@@ -1,0 +1,119 @@
+{
+  "assessmentId": "T05-L08",
+  "kind": "lesson",
+  "courseId": "T05",
+  "lessonId": "T05.L08",
+  "drawCount": 4,
+  "passThreshold": 70,
+  "pool": [
+    {
+      "id": "T05-L08-Q1",
+      "type": "mc",
+      "prompt": "Which federal regulation governs the rate formula and access rules for telecommunications attachers on poles owned by regulated utilities?",
+      "choices": [
+        "NESC C2-2023 Rule 261",
+        "47 CFR Part 1 (Subpart J, pole attachment rules) — including 47 CFR 1.1406 (rate formula) and 47 CFR 1.1411 (access/make-ready timeline, incl. OTMR)",
+        "7 CFR Part 1755",
+        "36 CFR Part 800"
+      ],
+      "answerIndex": 1,
+      "explanation": "The NESC governs structural/clearance design; FCC pole attachment rules (47 CFR Part 1, Subpart J) govern the business/regulatory side — the rate formula (§1.1406) and access/make-ready timelines including OTMR (§1.1411) — a distinct but related layer of requirements that a joint-use designer must also satisfy.",
+      "citation": "47 CFR 1.1406; 47 CFR 1.1411 — reused from the T01 research pass's independent verification (including the T01 inc5 fix-pass correction distinguishing the rate formula at 1.1406 from the cost-apportionment sub-rule at 1.1409)."
+    },
+    {
+      "id": "T05-L08-Q2",
+      "type": "mc",
+      "prompt": "Your company wants to add a 12-fiber cable to a route where an existing telephone company already has a messenger strand on the poles. What attachment approach could save money by avoiding a full new-attachment application (and associated make-ready) at each pole?",
+      "choices": [
+        "Apply for a CLEC license from the FCC — this addresses regulatory status, not physical attachment method",
+        "Overlashing — attaching the new cable to the EXISTING messenger strand rather than installing a new independent messenger and attachment point, which can avoid the cost and delay of a full new-attachment application and pole-by-pole make-ready at each location",
+        "File an OTMR application to replace the existing telephone company's messenger entirely",
+        "Request that the pole owner remove the existing telephone company's attachment to make room"
+      ],
+      "answerIndex": 1,
+      "explanation": "Overlashing — securing a new cable to an already-attached messenger strand rather than installing an entirely new independent attachment — is a recognized cost-saving technique specifically because it can avoid the need for a full new-attachment application and associated make-ready analysis at every pole along the route."
+    },
+    {
+      "id": "T05-L08-Q3",
+      "type": "mc",
+      "prompt": "In the standard joint-use attachment sequence, what is the correct order of the first three major steps?",
+      "choices": [
+        "Field survey → Submit attachment application → Execute the Inter-utility License Agreement (ILA)",
+        "Execute the ILA (establishing the overall contractual relationship with the pole owner) → Field survey (to identify make-ready needs) → Submit attachment application (incorporating survey findings)",
+        "Submit attachment application → Execute the ILA → Field survey",
+        "Field survey → Execute the ILA → Submit attachment application"
+      ],
+      "answerIndex": 1,
+      "explanation": "The ILA is the foundational contract establishing the attacher's overall right to attach to that pole owner's poles — it typically must exist before pole-specific work begins. The field survey then identifies the specific make-ready needs for the proposed route, and the attachment application (incorporating those survey findings) follows."
+    },
+    {
+      "id": "T05-L08-Q4",
+      "type": "mc",
+      "prompt": "An existing CATV attacher on a pole corridor objects to your plan to overlash a 12-fiber cable to their messenger, claiming you need their written approval before proceeding. Is this correct?",
+      "choices": [
+        "Yes — the existing attacher has an absolute veto right over any use of their messenger strand",
+        "Not necessarily as an absolute veto — pole attachment regulatory frameworks generally address overlashing rights and notice requirements between attachers, and the specific applicable rule (which can distinguish between overlashing by the SAME attacher's own future capacity vs. a DIFFERENT attacher's new cable) should be confirmed rather than assuming either an automatic right or an automatic veto",
+        "No — an attacher may overlash to any existing messenger on any pole without any notice or coordination whatsoever",
+        "This question is entirely outside the scope of any pole attachment regulation"
+      ],
+      "answerIndex": 1,
+      "explanation": "Overlashing rights and required notice/coordination between attachers is a real, regulated area, but the details (whether it's a notice requirement vs. an approval requirement, and whether it differs based on who is doing the overlashing) are specific enough that they should be confirmed against the current applicable rule for the specific situation rather than assumed as either an absolute veto or an unconditional right — a hedge consistent with not asserting an unverified specific regulatory conclusion."
+    },
+    {
+      "id": "T05-L08-Q5",
+      "type": "drag-match",
+      "prompt": "Match each joint-use term to its correct description.",
+      "items": [
+        { "id": "i_ila", "label": "Signed contract between pole owner and attacher that must exist before any work" },
+        { "id": "i_clec", "label": "Competitive telephone company; typically pays a specific FCC attachment rate formula" },
+        { "id": "i_overlash", "label": "Attaching a new cable to an existing messenger strand rather than a new independent attachment" }
+      ],
+      "targets": [
+        { "id": "t_ila", "label": "ILA" },
+        { "id": "t_clec", "label": "CLEC" },
+        { "id": "t_overlash", "label": "Overlashing" }
+      ],
+      "correctMap": { "t_ila": "i_ila", "t_clec": "i_clec", "t_overlash": "i_overlash" },
+      "explanation": "The ILA is the foundational pole-owner/attacher contract, CLEC status affects which FCC rate formula category applies to a telecom attacher, and overlashing is the specific technique of adding cable capacity to an existing messenger rather than installing a wholly new attachment — three distinct joint-use concepts a designer needs to track."
+    },
+    {
+      "id": "T05-L08-Q6",
+      "type": "mc",
+      "prompt": "Why does a joint-use designer need to understand BOTH the NESC (structural/clearance rules) and FCC pole attachment rules (47 CFR Part 1, Subpart J), rather than just one or the other?",
+      "choices": [
+        "Only the NESC matters for design; FCC rules are purely an accounting/billing concern with no design impact",
+        "The two frameworks govern different but interdependent dimensions of the same project — the NESC determines whether a physical attachment location and configuration is structurally/safely compliant, while the FCC rules govern the business process (application, timeline, fees, access rights) for actually getting that attachment approved and installed — a design can be NESC-compliant but still blocked or delayed without satisfying the FCC-side process",
+        "Only the FCC rules matter; NESC compliance is optional for non-regulated attachers",
+        "The NESC and FCC rules cover the exact same content, so understanding one is sufficient"
+      ],
+      "answerIndex": 1,
+      "explanation": "A joint-use project has two genuinely distinct compliance dimensions that both matter: NESC governs whether the physical design is safe and structurally sound, while FCC pole attachment rules govern the business/procedural path to actually get that design approved, timelined, and priced — a designer who only understands one dimension risks either an unsafe design or a procedurally stalled project."
+    },
+    {
+      "id": "T05-L08-Q7",
+      "type": "mc",
+      "prompt": "A route requires attachment to poles owned by two different utilities along its length. Does a single ILA with one utility cover the poles owned by the other?",
+      "choices": [
+        "Yes — an ILA with any pole owner automatically covers all poles regardless of ownership",
+        "No — an ILA is specific to its signing pole owner; poles owned by a different utility require their own separate ILA (or equivalent agreement) with that specific owner before attachment work on their poles can proceed",
+        "Yes, but only if both utilities are regulated by the same state public service commission",
+        "ILAs are never required for any pole attachment regardless of ownership"
+      ],
+      "answerIndex": 1,
+      "explanation": "An ILA is a bilateral contract specific to its signing pole owner — attaching to a different utility's poles along the same physical route requires its own separate agreement with that owner, since the first utility's ILA has no legal authority over poles it doesn't own, which is a common project-management gap when a route crosses multiple pole-owner territories."
+    },
+    {
+      "id": "T05-L08-Q8",
+      "type": "mc",
+      "prompt": "A project team assumes overlashing always avoids the full attachment-application process entirely, with zero coordination required with the existing attacher. Is this assumption safe?",
+      "choices": [
+        "Yes — overlashing is always a completely unregulated activity requiring no notice or coordination of any kind",
+        "No — while overlashing can reduce the scope of work compared to a full new independent attachment, the specific applicable notice/coordination requirements toward the existing attacher (and pole owner) should be confirmed for the specific situation rather than assumed to be zero — treating overlashing as entirely unregulated risks a real compliance gap",
+        "Yes, but only for CATV attachers, never for telephone company attachers",
+        "No — overlashing actually requires an even MORE burdensome application process than a new independent attachment"
+      ],
+      "answerIndex": 1,
+      "explanation": "This reinforces the Q4 hedge: overlashing genuinely can reduce project scope/cost compared to a full new attachment, but assuming it requires literally zero notice or coordination in every case oversimplifies a regulated area — the correct practice is confirming the specific applicable requirement rather than assuming the most favorable interpretation by default."
+    }
+  ]
+}
