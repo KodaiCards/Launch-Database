@@ -5,6 +5,7 @@ import React from 'react';
 import LessonLayout from '../../components/LessonLayout.jsx';
 import WorkedExample from '../../components/primitives/WorkedExample.jsx';
 import Quiz from '../../components/primitives/Quiz.jsx';
+import GatedAssessment from '../../components/primitives/GatedAssessment.jsx';
 import Flashcard from '../../components/Flashcard.jsx';
 
 export const meta = {
@@ -281,68 +282,75 @@ Total:                               7.95 dB`}
       />
 
       {/* ── PER-LESSON QUIZ ──────────────────────────────────────────────── */}
-      <Quiz
+      <GatedAssessment
+        courseId="T02"
+        assessmentId="T02-L05"
         title="T02.L05 Check — Decibels"
-        mode="multiple-choice"
-        questions={[
-          {
-            id: 'T02-L05-Q1',
-            type: 'mc',
-            prompt:
-              'A fiber link has 6 dB of total loss. What fraction of the original optical power reaches the receiver?',
-            choices: [
-              'One-half (50%)',
-              'One-quarter (25%)',
-              'One-sixth (17%)',
-              'One-tenth (10%)',
-            ],
-            answerIndex: 1,
-            explanation:
-              '6 dB = 3 dB + 3 dB. Each 3 dB halves the power. So 6 dB = ½ × ½ = ¼ of original power. Alternatively: 10^(−6/10) = 10^(−0.6) ≈ 0.25. The "3 dB = half" rule applied twice gives you the same answer.',
-          },
-          {
-            id: 'T02-L05-Q2',
-            type: 'fill-in-blank',
-            prompt:
-              'A transmitter outputs +3 dBm. The receiver sensitivity is −24 dBm. The available optical budget is ____ dB.',
-            answer: '27',
-            answerDisplay: '27 dB',
-            explanation:
-              'Budget = Tx power − Rx sensitivity = +3 dBm − (−24 dBm) = 3 + 24 = 27 dB. You subtract the (negative) receiver sensitivity, which means you add its absolute value. The 27 dB is the total loss the cable plant can accumulate while still delivering enough signal to the receiver.',
-          },
-          {
-            id: 'T02-L05-Q3',
-            type: 'mc',
-            prompt:
-              'Why do fiber link budgets use decibels instead of expressing loss as raw power ratios?',
-            choices: [
-              'Decibels are required by OSHA for all electrical safety calculations',
-              'Because with dB, all the losses in a link add together — fiber + splices + connectors — instead of multiplying fractional ratios, making the math tractable by hand',
-              'Because power meters only output results in dBm, and dB is the natural input format',
-              'Because TIA standards prohibit the use of milliwatts in design documentation',
-            ],
-            answerIndex: 1,
-            explanation:
-              'Logarithms convert multiplication into addition. Instead of calculating (0.95) × (0.97) × (0.89) × ... for every component\'s fractional power through, you add their dB losses: 0.22 + 0.13 + 0.50 + ... That\'s why engineers created the dB scale for cascaded network analysis.',
-          },
-          {
-            id: 'T02-L05-Q4',
-            type: 'mc',
-            prompt:
-              'A power meter reads −17 dBm at a test point. Approximately how many microwatts (µW) is that?',
-            choices: [
-              '200 µW',
-              '20 µW',
-              '2 µW',
-              '0.2 µW',
-            ],
-            answerIndex: 1,
-            explanation:
-              '−17 dBm: 10^(−17/10) = 10^(−1.7) = 10^(−2) × 10^(0.3) = 0.01 × 2 = 0.02 mW = 20 µW. Using the shortcut: −20 dBm = 10 µW, and −17 is 3 dB above −20, so approximately double: ≈ 20 µW.',
-            fieldNote:
-              'A fiber power meter that reads −17 dBm is within the normal range for a short SMF link or a patch cord connection test. Receivers typically need at least −25 to −30 dBm to operate reliably.',
-          },
-        ]}
+        fallback={
+        <Quiz
+          title="T02.L05 Check — Decibels"
+          mode="multiple-choice"
+          questions={[
+            {
+              id: 'T02-L05-Q1',
+              type: 'mc',
+              prompt:
+                'A fiber link has 6 dB of total loss. What fraction of the original optical power reaches the receiver?',
+              choices: [
+                'One-half (50%)',
+                'One-quarter (25%)',
+                'One-sixth (17%)',
+                'One-tenth (10%)',
+              ],
+              answerIndex: 1,
+              explanation:
+                '6 dB = 3 dB + 3 dB. Each 3 dB halves the power. So 6 dB = ½ × ½ = ¼ of original power. Alternatively: 10^(−6/10) = 10^(−0.6) ≈ 0.25. The "3 dB = half" rule applied twice gives you the same answer.',
+            },
+            {
+              id: 'T02-L05-Q2',
+              type: 'fill-in-blank',
+              prompt:
+                'A transmitter outputs +3 dBm. The receiver sensitivity is −24 dBm. The available optical budget is ____ dB.',
+              answer: '27',
+              answerDisplay: '27 dB',
+              explanation:
+                'Budget = Tx power − Rx sensitivity = +3 dBm − (−24 dBm) = 3 + 24 = 27 dB. You subtract the (negative) receiver sensitivity, which means you add its absolute value. The 27 dB is the total loss the cable plant can accumulate while still delivering enough signal to the receiver.',
+            },
+            {
+              id: 'T02-L05-Q3',
+              type: 'mc',
+              prompt:
+                'Why do fiber link budgets use decibels instead of expressing loss as raw power ratios?',
+              choices: [
+                'Decibels are required by OSHA for all electrical safety calculations',
+                'Because with dB, all the losses in a link add together — fiber + splices + connectors — instead of multiplying fractional ratios, making the math tractable by hand',
+                'Because power meters only output results in dBm, and dB is the natural input format',
+                'Because TIA standards prohibit the use of milliwatts in design documentation',
+              ],
+              answerIndex: 1,
+              explanation:
+                'Logarithms convert multiplication into addition. Instead of calculating (0.95) × (0.97) × (0.89) × ... for every component\'s fractional power through, you add their dB losses: 0.22 + 0.13 + 0.50 + ... That\'s why engineers created the dB scale for cascaded network analysis.',
+            },
+            {
+              id: 'T02-L05-Q4',
+              type: 'mc',
+              prompt:
+                'A power meter reads −17 dBm at a test point. Approximately how many microwatts (µW) is that?',
+              choices: [
+                '200 µW',
+                '20 µW',
+                '2 µW',
+                '0.2 µW',
+              ],
+              answerIndex: 1,
+              explanation:
+                '−17 dBm: 10^(−17/10) = 10^(−1.7) = 10^(−2) × 10^(0.3) = 0.01 × 2 = 0.02 mW = 20 µW. Using the shortcut: −20 dBm = 10 µW, and −17 is 3 dB above −20, so approximately double: ≈ 20 µW.',
+              fieldNote:
+                'A fiber power meter that reads −17 dBm is within the normal range for a short SMF link or a patch cord connection test. Receivers typically need at least −25 to −30 dBm to operate reliably.',
+            },
+          ]}
+        />
+        }
       />
 
     </LessonLayout>

@@ -5,6 +5,7 @@ import React from 'react';
 import LessonLayout from '../../components/LessonLayout.jsx';
 import BranchingScenario from '../../components/primitives/BranchingScenario.jsx';
 import Quiz from '../../components/primitives/Quiz.jsx';
+import GatedAssessment from '../../components/primitives/GatedAssessment.jsx';
 import Flashcard from '../../components/Flashcard.jsx';
 
 export const meta = {
@@ -298,60 +299,67 @@ export default function T02L11_FiberPhysicsFieldVsBook() {
       />
 
       {/* ── PER-LESSON QUIZ ──────────────────────────────────────────────── */}
-      <Quiz
+      <GatedAssessment
+        courseId="T02"
+        assessmentId="T02-L11"
         title="T02.L11 Check — Field vs. Book"
-        mode="multiple-choice"
-        questions={[
-          {
-            id: 'T02-L11-Q1',
-            type: 'mc',
-            prompt:
-              'When troubleshooting unexpected high loss on a newly installed OSP fiber link, what should you always do FIRST?',
-            choices: [
-              'Request a cable replacement from the supplier',
-              'Re-do all fusion splices in the suspect section',
-              'Clean and inspect all connector end-faces with a compliant scope, then re-run the OTDR',
-              'Run a PMD measurement to rule out polarization issues',
-            ],
-            answerIndex: 2,
-            explanation:
-              'Contaminated connector end-faces are the most common cause of unexpected loss on new installations. A dirty connector can add 1–5 dB of loss in a single mated pair. Before pulling cable, re-doing splices, or ordering replacement materials, clean all connectors with a proper dry + wet method and inspect with an IEC 61300-3-35 [confirm edition] compliant scope.',
-            fieldNote:
-              'Experienced OSP crews clean connectors as a reflex — before every mating, before every OTDR test, before sign-off. It takes 30 seconds per connector and saves hours of troubleshooting on bad days.',
-          },
-          {
-            id: 'T02-L11-Q2',
-            type: 'mc',
-            prompt:
-              'An aerial fiber link shows higher attenuation in winter OTDR readings than summer readings. The excess is ~0.08 dB/km at 1550 nm in January vs July. This is most likely caused by:',
-            choices: [
-              'Moisture penetrating the cable jacket in winter',
-              'Temperature-induced changes in fiber attenuation and microbend from cable contraction in cold temperatures',
-              'The OTDR instrument is less accurate at cold ambient temperatures',
-              'UV damage accelerating in winter months due to lower sun angle',
-            ],
-            answerIndex: 1,
-            explanation:
-              'Fiber attenuation increases at lower temperatures. G.652.D has a small temperature coefficient of attenuation (typically ≤ 0.05 dB/km increase from +20°C to −40°C for standard fiber). Additionally, loose-tube cable shortens in cold weather, potentially causing slight fiber buckle in the buffer tube and adding microbend loss. The 3 dB safety margin in a link budget is designed to absorb this seasonal variation.',
-            citation: 'ITU-T G.652.D temperature-dependent attenuation spec; FOA Reference Guide.',
-          },
-          {
-            id: 'T02-L11-Q3',
-            type: 'mc',
-            prompt:
-              'A G.657.B3 drop cable is spliced to a G.652.D trunk cable at a distribution point. The installer reports the splice shows 0.12 dB loss — which seems high for a fusion splice. Is this expected?',
-            choices: [
-              'No — any fusion splice over 0.10 dB should be re-done immediately',
-              'Possibly — G.657.B3 has a larger MFD mismatch with G.652.D than G.657.A1. Inherent loss from the MFD mismatch can contribute 0.05–0.15 dB even with a perfect geometric splice. Verify against the fiber specification before re-doing.',
-              'Yes — 0.12 dB is below the FOA 0.15 dB planning value, so it passes',
-              'No — G.657.B3 and G.652.D cannot be fusion spliced',
-            ],
-            answerIndex: 1,
-            explanation:
-              'G.657.B3 is optimized for bend insensitivity and has a different MFD from G.652.D (smaller MFD). When splicing G.657.B3 to G.652.D, there is an inherent mode-field mismatch loss in addition to any geometric splice imperfection. Depending on the specific fibers, this mismatch can contribute 0.05–0.20 dB of loss that cannot be reduced by re-splicing. Check the fiber manufacturer\'s splice loss table for the specific G.657.B3 product before declaring a 0.12 dB splice as a rework candidate.',
-            citation: 'ITU-T G.657 (2016 — [confirm edition]); fiber manufacturer splice loss tables for G.657/G.652 mixing.',
-          },
-        ]}
+        fallback={
+        <Quiz
+          title="T02.L11 Check — Field vs. Book"
+          mode="multiple-choice"
+          questions={[
+            {
+              id: 'T02-L11-Q1',
+              type: 'mc',
+              prompt:
+                'When troubleshooting unexpected high loss on a newly installed OSP fiber link, what should you always do FIRST?',
+              choices: [
+                'Request a cable replacement from the supplier',
+                'Re-do all fusion splices in the suspect section',
+                'Clean and inspect all connector end-faces with a compliant scope, then re-run the OTDR',
+                'Run a PMD measurement to rule out polarization issues',
+              ],
+              answerIndex: 2,
+              explanation:
+                'Contaminated connector end-faces are the most common cause of unexpected loss on new installations. A dirty connector can add 1–5 dB of loss in a single mated pair. Before pulling cable, re-doing splices, or ordering replacement materials, clean all connectors with a proper dry + wet method and inspect with an IEC 61300-3-35 [confirm edition] compliant scope.',
+              fieldNote:
+                'Experienced OSP crews clean connectors as a reflex — before every mating, before every OTDR test, before sign-off. It takes 30 seconds per connector and saves hours of troubleshooting on bad days.',
+            },
+            {
+              id: 'T02-L11-Q2',
+              type: 'mc',
+              prompt:
+                'An aerial fiber link shows higher attenuation in winter OTDR readings than summer readings. The excess is ~0.08 dB/km at 1550 nm in January vs July. This is most likely caused by:',
+              choices: [
+                'Moisture penetrating the cable jacket in winter',
+                'Temperature-induced changes in fiber attenuation and microbend from cable contraction in cold temperatures',
+                'The OTDR instrument is less accurate at cold ambient temperatures',
+                'UV damage accelerating in winter months due to lower sun angle',
+              ],
+              answerIndex: 1,
+              explanation:
+                'Fiber attenuation increases at lower temperatures. G.652.D has a small temperature coefficient of attenuation (typically ≤ 0.05 dB/km increase from +20°C to −40°C for standard fiber). Additionally, loose-tube cable shortens in cold weather, potentially causing slight fiber buckle in the buffer tube and adding microbend loss. The 3 dB safety margin in a link budget is designed to absorb this seasonal variation.',
+              citation: 'ITU-T G.652.D temperature-dependent attenuation spec; FOA Reference Guide.',
+            },
+            {
+              id: 'T02-L11-Q3',
+              type: 'mc',
+              prompt:
+                'A G.657.B3 drop cable is spliced to a G.652.D trunk cable at a distribution point. The installer reports the splice shows 0.12 dB loss — which seems high for a fusion splice. Is this expected?',
+              choices: [
+                'No — any fusion splice over 0.10 dB should be re-done immediately',
+                'Possibly — G.657.B3 has a larger MFD mismatch with G.652.D than G.657.A1. Inherent loss from the MFD mismatch can contribute 0.05–0.15 dB even with a perfect geometric splice. Verify against the fiber specification before re-doing.',
+                'Yes — 0.12 dB is below the FOA 0.15 dB planning value, so it passes',
+                'No — G.657.B3 and G.652.D cannot be fusion spliced',
+              ],
+              answerIndex: 1,
+              explanation:
+                'G.657.B3 is optimized for bend insensitivity and has a different MFD from G.652.D (smaller MFD). When splicing G.657.B3 to G.652.D, there is an inherent mode-field mismatch loss in addition to any geometric splice imperfection. Depending on the specific fibers, this mismatch can contribute 0.05–0.20 dB of loss that cannot be reduced by re-splicing. Check the fiber manufacturer\'s splice loss table for the specific G.657.B3 product before declaring a 0.12 dB splice as a rework candidate.',
+              citation: 'ITU-T G.657 (2016 — [confirm edition]); fiber manufacturer splice loss tables for G.657/G.652 mixing.',
+            },
+          ]}
+        />
+        }
       />
 
     </LessonLayout>

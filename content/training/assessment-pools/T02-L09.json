@@ -1,0 +1,114 @@
+{
+  "assessmentId": "T02-L09",
+  "kind": "lesson",
+  "courseId": "T02",
+  "lessonId": "T02.L09",
+  "drawCount": 4,
+  "passThreshold": 70,
+  "pool": [
+    {
+      "id": "T02-L09-Q1",
+      "type": "mc",
+      "prompt": "Why does PMD accumulate with the square root of fiber length (sqrt(L)) rather than linearly (like chromatic dispersion)?",
+      "choices": [
+        "Because PMD only occurs at splice points, which occur at regular intervals",
+        "Because PMD is a random-walk process — polarization coupling along the fiber varies randomly, and random-walk processes scale as sqrt(L) rather than linearly",
+        "Because PMD is inversely proportional to fiber length — it decreases as the link gets longer",
+        "Because PMD units are ps/sqrt(km), and this is just a unit convention with no physical meaning"
+      ],
+      "answerIndex": 1,
+      "explanation": "Chromatic dispersion is deterministic and accumulates linearly. PMD is statistical — polarization coupling along real fiber is random, and random-walk accumulation (root-mean-square sum of independent random contributions) scales as sqrt(L)."
+    },
+    {
+      "id": "T02-L09-Q2",
+      "type": "mc",
+      "prompt": "A 150 km link has a measured PMD coefficient of 0.8 ps/sqrt(km). What is the resulting rms DGD (Differential Group Delay)?",
+      "choices": [
+        "0.8 ps",
+        "9.8 ps",
+        "120 ps",
+        "150 ps"
+      ],
+      "answerIndex": 1,
+      "explanation": "DGD_rms = PMD coefficient x sqrt(L) = 0.8 ps/sqrt(km) x sqrt(150 km) = 0.8 x 12.247 ~= 9.8 ps."
+    },
+    {
+      "id": "T02-L09-Q3",
+      "type": "mc",
+      "prompt": "A link's rms DGD is calculated at 9.8 ps. The system is being evaluated for 40 Gb/s operation, where the bit period is 25 ps and the tolerable DGD is roughly 10% of the bit period (2.5 ps). What does this suggest?",
+      "choices": [
+        "The upgrade will work fine — 9.8 ps is well within tolerance",
+        "9.8 ps significantly exceeds the ~2.5 ps tolerance for 40 Gb/s, meaning the link will likely fail or require PMD compensation hardware — the upgrade should be evaluated carefully before commitment",
+        "DGD has no relationship to achievable bit rate",
+        "The link would need to be shortened to exactly 25 km to pass"
+      ],
+      "answerIndex": 1,
+      "explanation": "At 40 Gb/s, the bit period is 1/(40e9) = 25 ps, and the DGD tolerance is roughly 10% of that (~2.5 ps). A 9.8 ps rms DGD far exceeds this tolerance, signaling a real risk of PMD-induced signal degradation without compensation."
+    },
+    {
+      "id": "T02-L09-Q4",
+      "type": "mc",
+      "prompt": "What field installation practice most directly increases the PMD of installed cable above its factory specification?",
+      "choices": [
+        "Leaving coiled slack at each splice case",
+        "Over-tensioned lashing wire, conduit overfill, or tight bend radii — chronic mechanical stress on the fiber increases birefringence and raises PMD above the factory value",
+        "Using fusion splices instead of mechanical splices",
+        "Installing in cold weather (below 0 degrees C)"
+      ],
+      "answerIndex": 1,
+      "explanation": "PMD is caused by geometric imperfections and stress-induced birefringence. Factory PMD specs reflect fiber under no external stress; chronic installation stress (over-tensioned lashing, conduit overfill, tight bends) adds birefringence that raises installed PMD above the datasheet value."
+    },
+    {
+      "id": "T02-L09-Q5",
+      "type": "mc",
+      "prompt": "How does the bit period at 40 Gb/s (25 ps) compare to the bit period at 10 Gb/s (100 ps), and what does this mean for PMD tolerance as bit rate increases?",
+      "choices": [
+        "40 Gb/s has a longer bit period, making it more PMD-tolerant than 10 Gb/s",
+        "40 Gb/s has a shorter bit period (25 ps vs 100 ps) — a quarter as long — meaning the SAME absolute DGD value becomes proportionally more disruptive at higher bit rates, so PMD tolerance tightens as speed increases",
+        "Bit period and PMD tolerance are unrelated",
+        "Both bit rates have identical bit periods; only wavelength changes the tolerance"
+      ],
+      "answerIndex": 1,
+      "explanation": "Bit period = 1/bit rate, so higher bit rates mean shorter bit periods (40 Gb/s = 25 ps vs 10 Gb/s = 100 ps). Since PMD tolerance is roughly a fixed percentage of the bit period, the same fiber that was fine at 10 Gb/s can fail at 40 Gb/s purely because the tolerance window shrank."
+    },
+    {
+      "id": "T02-L09-Q6",
+      "type": "mc",
+      "prompt": "If a fiber's PMD coefficient is 0.8 ps/sqrt(km), what is the DGD at 300 km, and how does it compare to the DGD at 150 km (9.8 ps)?",
+      "choices": [
+        "DGD at 300 km = 19.6 ps — exactly double the 150 km value, since PMD scales linearly",
+        "DGD at 300 km = 0.8 x sqrt(300) ~= 13.9 ps — only about 1.41x (sqrt(2)) the 150 km value, illustrating the sqrt(L) scaling",
+        "DGD at 300 km is identical to 150 km because PMD saturates after 100 km",
+        "DGD at 300 km cannot be calculated without also knowing the fiber's chromatic dispersion"
+      ],
+      "answerIndex": 1,
+      "explanation": "Because PMD scales as sqrt(L), doubling the length does NOT double the DGD — it multiplies by sqrt(2) ~= 1.41. This is the practical consequence of the random-walk scaling: PMD grows much more slowly with distance than a linear process like chromatic dispersion would."
+    },
+    {
+      "id": "T02-L09-Q7",
+      "type": "mc",
+      "prompt": "Why is PMD generally a bigger concern for older, pre-G.652.D fiber than for modern G.652.D fiber?",
+      "choices": [
+        "PMD is not affected by fiber manufacturing generation at all",
+        "Manufacturing process improvements over time reduced the geometric imperfections that cause stress-induced birefringence, so modern low-PMD fiber has a lower PMD coefficient than older fiber vintages",
+        "Older fiber always has a smaller core, which increases PMD",
+        "PMD only affects fiber manufactured before 1990"
+      ],
+      "answerIndex": 1,
+      "explanation": "PMD coefficient depends significantly on manufacturing precision — geometric imperfections (non-circular core, internal stress) drive birefringence. Manufacturing improvements over successive fiber generations have generally lowered typical PMD coefficients, which is why legacy long-haul routes are more likely to hit PMD limits when upgraded to higher bit rates."
+    },
+    {
+      "id": "T02-L09-Q8",
+      "type": "mc",
+      "prompt": "What is the practical engineering response when a PMD assessment shows a route is likely to fail at a target upgrade bit rate?",
+      "choices": [
+        "Proceed with the upgrade regardless — PMD estimates are rarely accurate in the field",
+        "Consider PMD compensation hardware, a lower target bit rate, splitting the route into shorter segments with regeneration, or replacing the highest-PMD fiber sections — PMD compensation is expensive and complex, so the tradeoffs should be evaluated carefully",
+        "Simply increase transmitter power to overcome PMD",
+        "PMD cannot be mitigated once fiber is installed; the only option is full route replacement"
+      ],
+      "answerIndex": 1,
+      "explanation": "PMD is not fixable by increasing power (it's a pulse-spreading/timing effect, not a power-loss effect). Realistic mitigations include PMD compensation hardware, choosing a lower bit rate, regenerating the signal over shorter spans, or replacing the worst-offending fiber sections — each with real cost/complexity tradeoffs to weigh."
+    }
+  ]
+}

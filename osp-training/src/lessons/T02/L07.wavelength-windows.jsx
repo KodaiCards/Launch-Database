@@ -4,6 +4,7 @@
 import React from 'react';
 import LessonLayout from '../../components/LessonLayout.jsx';
 import Quiz from '../../components/primitives/Quiz.jsx';
+import GatedAssessment from '../../components/primitives/GatedAssessment.jsx';
 import Flashcard from '../../components/Flashcard.jsx';
 
 export const meta = {
@@ -356,72 +357,79 @@ export default function T02L07_WavelengthWindows() {
       </table>
 
       {/* ── PER-LESSON QUIZ ──────────────────────────────────────────────── */}
-      <Quiz
+      <GatedAssessment
+        courseId="T02"
+        assessmentId="T02-L07"
         title="T02.L07 Check — Wavelength Windows"
-        mode="multiple-choice"
-        questions={[
-          {
-            id: 'T02-L07-Q1',
-            type: 'dragdrop',
-            prompt:
-              'Match each wavelength to its primary use in OSP or fiber networks.',
-            items: [
-              { id: 'w850', label: '850 nm' },
-              { id: 'w1310', label: '1310 nm' },
-              { id: 'w1550', label: '1550 nm' },
-              { id: 'w1625', label: '1625 nm' },
-            ],
-            targets: [
-              { id: 'mmf', label: 'Multimode short-reach (data center / campus)' },
-              { id: 'gpon-up', label: 'GPON upstream + standard short-reach SMF transceivers' },
-              { id: 'longhaul', label: 'Long-haul, DWDM, minimum attenuation' },
-              { id: 'diagnosis', label: 'In-service OTDR macrobend hunting / diagnostic' },
-            ],
-            correctMap: {
-              mmf: 'w850',
-              'gpon-up': 'w1310',
-              longhaul: 'w1550',
-              diagnosis: 'w1625',
+        fallback={
+        <Quiz
+          title="T02.L07 Check — Wavelength Windows"
+          mode="multiple-choice"
+          questions={[
+            {
+              id: 'T02-L07-Q1',
+              type: 'dragdrop',
+              prompt:
+                'Match each wavelength to its primary use in OSP or fiber networks.',
+              items: [
+                { id: 'w850', label: '850 nm' },
+                { id: 'w1310', label: '1310 nm' },
+                { id: 'w1550', label: '1550 nm' },
+                { id: 'w1625', label: '1625 nm' },
+              ],
+              targets: [
+                { id: 'mmf', label: 'Multimode short-reach (data center / campus)' },
+                { id: 'gpon-up', label: 'GPON upstream + standard short-reach SMF transceivers' },
+                { id: 'longhaul', label: 'Long-haul, DWDM, minimum attenuation' },
+                { id: 'diagnosis', label: 'In-service OTDR macrobend hunting / diagnostic' },
+              ],
+              correctMap: {
+                mmf: 'w850',
+                'gpon-up': 'w1310',
+                longhaul: 'w1550',
+                diagnosis: 'w1625',
+              },
+              explanation:
+                '850 nm: multimode short-reach. 1310 nm: O-band, GPON upstream, LR/LX SMF transceivers. 1550 nm: C-band, lowest loss, long-haul/DWDM. 1625 nm: L-band diagnostic, macrobend hunting on in-service fibers.',
+              citation: 'ITU-T G.652; ITU-T G.984 (GPON); OTDR best practice (FOA Reference Guide).',
             },
-            explanation:
-              '850 nm: multimode short-reach. 1310 nm: O-band, GPON upstream, LR/LX SMF transceivers. 1550 nm: C-band, lowest loss, long-haul/DWDM. 1625 nm: L-band diagnostic, macrobend hunting on in-service fibers.',
-            citation: 'ITU-T G.652; ITU-T G.984 (GPON); OTDR best practice (FOA Reference Guide).',
-          },
-          {
-            id: 'T02-L07-Q2',
-            type: 'mc',
-            prompt:
-              'A technician is doing an OTDR trace on a live GPON fiber to locate a suspected macrobend. Which wavelength should they use, and why?',
-            choices: [
-              '1310 nm, because it matches the GPON upstream wavelength and will show the bend clearly',
-              '1490 nm, to match the GPON downstream signal',
-              '1625 nm, because it exaggerates macrobend loss and is outside the GPON signal wavelengths — it can be injected without interrupting service',
-              '850 nm, because it has the highest sensitivity in the O-band',
-            ],
-            answerIndex: 2,
-            explanation:
-              '1625 nm is outside the 1310/1490 nm GPON signal bands. With appropriate WDM filters at each end of the fiber, a 1625 nm OTDR pulse can be injected without interfering with live traffic. And because macrobend loss grows with wavelength, 1625 nm will show the bend more clearly than 1310 or 1550 nm.',
-            fieldNote:
-              'Check that the fiber\'s WDM filter system actually supports 1625 nm pass-through before injecting. Some older PON filter designs block all wavelengths above 1610 nm.',
-          },
-          {
-            id: 'T02-L07-Q3',
-            type: 'mc',
-            prompt:
-              'CWDM uses 20 nm channel spacing; DWDM uses 0.8 nm channel spacing. What is the key consequence of this difference for field crews?',
-            choices: [
-              'CWDM requires armored cable; DWDM can use standard OSP cable',
-              'DWDM requires much more precise laser wavelength stability and end-face cleanliness — including APC connectors — because the channels are so close together that small reflections can desensitize the narrow-linewidth lasers',
-              'CWDM can use multimode fiber; DWDM requires single-mode',
-              'There is no field implication — the spacing only matters to the system designer',
-            ],
-            answerIndex: 1,
-            explanation:
-              'DWDM channels are 0.4–0.8 nm apart. A back-reflection that\'s negligible on a standard SMF link can be within the laser\'s frequency response on a DWDM system, causing noise and sensitivity degradation. APC connectors (≥ 60 dB ORL) are standard practice on DWDM routes for this reason.',
-            fieldNote:
-              'On a DWDM installation, end-face inspection with an IEC 61300-3-35 [confirm edition] compliant scope is not optional — it\'s the standard. A single dirty APC connector can take down multiple 100G channels simultaneously.',
-          },
-        ]}
+            {
+              id: 'T02-L07-Q2',
+              type: 'mc',
+              prompt:
+                'A technician is doing an OTDR trace on a live GPON fiber to locate a suspected macrobend. Which wavelength should they use, and why?',
+              choices: [
+                '1310 nm, because it matches the GPON upstream wavelength and will show the bend clearly',
+                '1490 nm, to match the GPON downstream signal',
+                '1625 nm, because it exaggerates macrobend loss and is outside the GPON signal wavelengths — it can be injected without interrupting service',
+                '850 nm, because it has the highest sensitivity in the O-band',
+              ],
+              answerIndex: 2,
+              explanation:
+                '1625 nm is outside the 1310/1490 nm GPON signal bands. With appropriate WDM filters at each end of the fiber, a 1625 nm OTDR pulse can be injected without interfering with live traffic. And because macrobend loss grows with wavelength, 1625 nm will show the bend more clearly than 1310 or 1550 nm.',
+              fieldNote:
+                'Check that the fiber\'s WDM filter system actually supports 1625 nm pass-through before injecting. Some older PON filter designs block all wavelengths above 1610 nm.',
+            },
+            {
+              id: 'T02-L07-Q3',
+              type: 'mc',
+              prompt:
+                'CWDM uses 20 nm channel spacing; DWDM uses 0.8 nm channel spacing. What is the key consequence of this difference for field crews?',
+              choices: [
+                'CWDM requires armored cable; DWDM can use standard OSP cable',
+                'DWDM requires much more precise laser wavelength stability and end-face cleanliness — including APC connectors — because the channels are so close together that small reflections can desensitize the narrow-linewidth lasers',
+                'CWDM can use multimode fiber; DWDM requires single-mode',
+                'There is no field implication — the spacing only matters to the system designer',
+              ],
+              answerIndex: 1,
+              explanation:
+                'DWDM channels are 0.4–0.8 nm apart. A back-reflection that\'s negligible on a standard SMF link can be within the laser\'s frequency response on a DWDM system, causing noise and sensitivity degradation. APC connectors (≥ 60 dB ORL) are standard practice on DWDM routes for this reason.',
+              fieldNote:
+                'On a DWDM installation, end-face inspection with an IEC 61300-3-35 [confirm edition] compliant scope is not optional — it\'s the standard. A single dirty APC connector can take down multiple 100G channels simultaneously.',
+            },
+          ]}
+        />
+        }
       />
 
     </LessonLayout>
