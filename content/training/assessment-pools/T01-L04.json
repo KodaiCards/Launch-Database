@@ -1,0 +1,122 @@
+{
+  "assessmentId": "T01-L04",
+  "kind": "lesson",
+  "courseId": "T01",
+  "lessonId": "T01.L04",
+  "drawCount": 4,
+  "passThreshold": 70,
+  "pool": [
+    {
+      "id": "T01-L04-Q1",
+      "type": "mc",
+      "prompt": "After a splicer completes all fusion splices in a case, the OTDR shows 0.4 dB of unexpected loss at that location — but the splicer machine showed every splice under 0.05 dB. What is the most likely explanation?",
+      "choices": [
+        "The fusion splicer machine is defective and must be returned for calibration",
+        "A fiber or pigtail inside the case is bent too tightly (macrobend), creating loss that wasn't present while the case was open but appeared once it was closed",
+        "The OTDR launch cable is defective and introducing error",
+        "0.4 dB is within spec for a fusion splice"
+      ],
+      "answerIndex": 1,
+      "explanation": "This is the classic macrobend-after-closure scenario. The individual splice losses were genuine and excellent. But when the case was closed, a slack loop was pinched against the tray edge or case wall, creating a tight bend. Open the case, find the tight bend, re-route with proper slack management, and recheck with the OTDR before final closure."
+    },
+    {
+      "id": "T01-L04-Q2",
+      "type": "mc",
+      "prompt": "A splicer forgets to anchor a cable's central member to the splice case frame. What is the likely long-term consequence?",
+      "choices": [
+        "Higher initial splice loss, since the central member conducts heat away from the splice",
+        "No consequence — the central member serves no function inside the splice case",
+        "Cable tension from aerial sag changes or underground ground movement can pull the buffer tubes through the case entry, breaking the splices",
+        "Water will enter the case through the central member anchor point"
+      ],
+      "answerIndex": 2,
+      "explanation": "The central member is the cable's structural backbone. Anchoring it stops external cable tension at the anchor point instead of letting it transfer to the fragile buffer tubes. An unanchored central member is a deferred failure — often not discovered until years later when the splice section shows rising loss or a full break."
+    },
+    {
+      "id": "T01-L04-Q3",
+      "type": "mc",
+      "prompt": "A splice case where cables enter from both ends and the cable continues through — rather than terminating inside it — is which type of closure?",
+      "choices": [
+        "Dome closure",
+        "Inline closure",
+        "Pedestal closure",
+        "Butt closure"
+      ],
+      "answerIndex": 1,
+      "explanation": "Inline (or in-line) closures are used at mid-route splice points where the cable continues beyond the splice — the cable enters one end, splices are made, and the cable exits the other end. Dome (butt) closures are for stub/terminal locations where cables end inside the case."
+    },
+    {
+      "id": "T01-L04-Q4",
+      "type": "mc",
+      "prompt": "A splice record for a case must be preserved for the life of the cable plant (20-40 years). Which of the following is LEAST critical to include in that record?",
+      "choices": [
+        "Which buffer tube color from Cable A is spliced to which buffer tube color from Cable B",
+        "The name of the vendor who manufactured the splice case",
+        "The individual fiber splice loss for each splice (from the splicer or OTDR)",
+        "The date the splicing was performed and the technician's ID"
+      ],
+      "answerIndex": 1,
+      "explanation": "The splice record must include cable/buffer-tube identification, individual splice losses (for comparison if loss increases later), and date/technician for traceability. The closure manufacturer's name is nice to have for reordering sealing materials but is the least critical — it can usually be determined by physical inspection if missing."
+    },
+    {
+      "id": "T01-L04-Q5",
+      "type": "mc",
+      "prompt": "Fiber optic splice closures used by carriers in the field are designed and tested against which generic industry requirements document?",
+      "choices": [
+        "RUS Form 219",
+        "Telcordia GR-771-CORE (Generic Requirements for Fiber Optic Splice Closures)",
+        "NEC Article 770",
+        "TIA-568.3-D"
+      ],
+      "answerIndex": 1,
+      "explanation": "Telcordia GR-771-CORE defines the generic mechanical and environmental requirements for fiber optic splice closures — thermal aging, freeze-thaw cycling, weather tightness, water spray resistance, and more — since closures sit outdoors in uncontrolled environments for decades.",
+      "citation": "Telcordia GR-771-CORE, Generic Requirements for Fiber Optic Splice Closures."
+    },
+    {
+      "id": "T01-L04-Q6",
+      "type": "mc",
+      "prompt": "What distinguishes a re-enterable splice closure from a non-re-enterable one?",
+      "choices": [
+        "Re-enterable closures can be opened, modified, and resealed with the same sealing system; non-re-enterable closures (heat-shrink/epoxy) are destroyed on reopening and need new sealing materials",
+        "Re-enterable closures are only used underground; non-re-enterable closures are only used aerially",
+        "There is no functional difference — the terms are marketing labels",
+        "Non-re-enterable closures cost more because they use gel seals"
+      ],
+      "answerIndex": 0,
+      "explanation": "Re-enterable (gel-sealed or mechanically-sealed) closures are common in OSP because networks evolve — new customers, re-splices, troubleshooting all require opening the case. Non-re-enterable (heat-shrink) closures are typically used for permanent buried mid-span splices where no future access is anticipated."
+    },
+    {
+      "id": "T01-L04-Q7",
+      "type": "mc",
+      "prompt": "What minimum bend radius consideration applies to slack fiber stored inside a splice tray?",
+      "choices": [
+        "None — fiber inside a splice case is not subject to bend radius limits",
+        "A minimum bend radius (commonly around 30 mm for coiled fiber in a splice case) must be maintained to avoid macrobend loss",
+        "Bend radius only matters for the cable jacket, not for bare fiber inside the case",
+        "Bend radius requirements only apply to ribbon cable, not loose-tube fiber"
+      ],
+      "answerIndex": 1,
+      "explanation": "Slack fiber stored as coiled loops inside a splice tray must maintain a minimum bend radius (commonly cited around 30 mm) to avoid macrobend loss. Violating this is the single most common cause of unexpected post-splice OTDR loss."
+    },
+    {
+      "id": "T01-L04-Q8",
+      "type": "drag-match",
+      "prompt": "Match each splice case component to its function.",
+      "items": [
+        { "id": "i_port", "label": "Sealed opening where the cable enters, clamped to a retention bracket" },
+        { "id": "i_central", "label": "Bolted/clamped to the case frame so cable tension doesn't reach the splices" },
+        { "id": "i_fanout", "label": "Where the jacket is stripped back and buffer tubes are routed to trays" },
+        { "id": "i_sleeve", "label": "Heat-shrink tube placed over a fusion splice, then heated to protect it" }
+      ],
+      "targets": [
+        { "id": "t_port", "label": "Cable entry port" },
+        { "id": "t_central", "label": "Central member anchor" },
+        { "id": "t_fanout", "label": "Fan-out / organizer" },
+        { "id": "t_sleeve", "label": "Splice protector sleeve" }
+      ],
+      "correctMap": { "t_port": "i_port", "t_central": "i_central", "t_fanout": "i_fanout", "t_sleeve": "i_sleeve" },
+      "explanation": "Cable entry ports seal and anchor the incoming cable; the central member anchor takes all cable tension so it never reaches the splices; the fan-out area routes stripped buffer tubes to their trays; each individual splice gets a heat-shrink protector sleeve.",
+      "citation": "Telcordia GR-771-CORE (splice closure functional design criteria)."
+    }
+  ]
+}

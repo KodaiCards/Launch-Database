@@ -1,0 +1,128 @@
+{
+  "assessmentId": "T01-L03",
+  "kind": "lesson",
+  "courseId": "T01",
+  "lessonId": "T01.L03",
+  "drawCount": 4,
+  "passThreshold": 70,
+  "pool": [
+    {
+      "id": "T01-L03-Q1",
+      "type": "mc",
+      "prompt": "A splicer needs to open a loose-tube OSP cable. What is the correct tool/method for slitting the outer jacket without damaging the buffer tubes inside?",
+      "choices": [
+        "A sharp knife — score along the length with light pressure",
+        "The ripcord (or a purpose-built ring-type cable slitting tool) — pulled lengthwise, it slits the jacket cleanly without risking the buffer tubes below",
+        "A hacksaw — the steel armor below the jacket protects the buffer tubes",
+        "Diagonal cutters — snip the end of the jacket and peel it back"
+      ],
+      "answerIndex": 1,
+      "explanation": "The ripcord is built into the cable for exactly this purpose — grab it and pull lengthwise to slit the jacket cleanly. A knife risks cutting into the buffer tubes and damaging fibers; diagonal cutters can crush buffer tubes.",
+      "citation": "ICEA S-87-640, Standard for Optical Fiber Outside Plant Communications Cable (loose-tube OSP cable construction)."
+    },
+    {
+      "id": "T01-L03-Q2",
+      "type": "mc",
+      "prompt": "What is the purpose of water-blocking gel inside a buffer tube?",
+      "choices": [
+        "To lubricate the fibers during fusion splicing",
+        "To prevent water from migrating along the cable length if the jacket is breached",
+        "To act as an electrical insulator between fibers",
+        "To cushion the fibers against impact damage"
+      ],
+      "answerIndex": 1,
+      "explanation": "Water-blocking gel is a petroleum-based compound filling the buffer tube. If the jacket and armor are damaged — say, from a dig-in — the gel physically blocks water from migrating along the cable via the buffer tube to a splice case, which could otherwise flood a splice location miles away by capillary action.",
+      "citation": "ICEA S-87-640 (OSP cable construction — water-blocking requirements)."
+    },
+    {
+      "id": "T01-L03-Q3",
+      "type": "mc",
+      "prompt": "In a figure-8 aerial cable installation, what is the name of the component that carries all the mechanical tension between poles, so the fiber cable itself carries none?",
+      "choices": [
+        "Central member",
+        "Messenger",
+        "Ripcord",
+        "Armor"
+      ],
+      "answerIndex": 1,
+      "explanation": "The steel messenger wire is lashed alongside the fiber cable in a figure-8 configuration. At each pole, the messenger — not the fiber cable — is clamped and takes all the aerial tension load. This protects the fibers from the bending and stretching that direct tension would cause.",
+      "citation": "ICEA S-87-640 Annex D (figure-8 aerial self-supporting cable construction)."
+    },
+    {
+      "id": "T01-L03-Q4",
+      "type": "mc",
+      "prompt": "A job spec requires \"dielectric cable\" for an aerial installation. Which is a valid reason this requirement might be specified?",
+      "choices": [
+        "Dielectric cable has lower attenuation than metallic-armored cable",
+        "Dielectric cable contains no metal, so it needs no bonding/grounding at each pole — useful where no ground continuity on the cable is wanted, or near high-voltage lines",
+        "Dielectric cable is always cheaper than armored cable for aerial use",
+        "Dielectric cable is required by RUS for all aerial fiber installations"
+      ],
+      "answerIndex": 1,
+      "explanation": "Dielectric (all-glass/all-plastic, no-metal) cable requires no bonding or grounding, which matters where a non-metallic cable is preferred — for example, near high-voltage lines or where no ground-continuity path on the cable itself is wanted. ADSS (All-Dielectric Self-Supporting) is the common aerial dielectric option.",
+      "citation": "ICEA S-87-640 Annex F (all-dielectric self-supporting cable)."
+    },
+    {
+      "id": "T01-L03-Q5",
+      "type": "mc",
+      "prompt": "What does ICEA S-87-640 formally cover, and what do its Annex D and Annex F sections address?",
+      "choices": [
+        "Indoor patch cable connectors; Annex D covers SC connectors, Annex F covers LC connectors",
+        "The Standard for Optical Fiber Outside Plant Communications Cable; Annex D covers figure-8 aerial self-supporting cable, Annex F covers all-dielectric self-supporting (ADSS) cable",
+        "FCC pole attachment rate rules; Annex D and F have no cable-construction content",
+        "NESC clearance rules for aerial fiber; Annex D/F are reserved for future revisions"
+      ],
+      "answerIndex": 1,
+      "explanation": "ICEA S-87-640 is the industry standard for OSP fiber cable intended for outdoor use — aerial, direct-buried, or in duct. Annex D adds requirements specific to figure-8 aerial self-supporting cable; Annex F covers all-dielectric self-supporting (ADSS) cable.",
+      "citation": "ICEA S-87-640, formal scope and annex structure."
+    },
+    {
+      "id": "T01-L03-Q6",
+      "type": "mc",
+      "prompt": "How can a splicer tell whether an OSP cable jacket is LSZH (Low-Smoke Zero-Halogen) rated, given that OSP jackets are standardly black regardless of type?",
+      "choices": [
+        "By the jacket color — LSZH cable always ships in a distinct color",
+        "By reading the printed legend on the jacket (looking for \"LSZH,\" \"OFNR,\" or \"OFNP\" in the print) — TIA-598 does not use jacket color to distinguish OSP cable types or ratings",
+        "By the diameter of the cable — LSZH cable is always thinner",
+        "There is no way to identify LSZH cable without lab testing"
+      ],
+      "answerIndex": 1,
+      "explanation": "Standard OSP cable jackets are black HDPE, and the carbon black itself provides UV resistance — colored pigments can't match it, so TIA-598 does not use jacket color as an OSP type/rating indicator. LSZH (and indoor ratings like OFNR/OFNP) are identified by the printed legend on the jacket, not by color. A non-black jacket on OSP cable is a vendor-specific variant, not a standard color convention.",
+      "citation": "TIA-598 (fiber cable color coding standard — scope does not extend jacket color to type/rating identification)."
+    },
+    {
+      "id": "T01-L03-Q7",
+      "type": "mc",
+      "prompt": "Inside a buffer tube, individual fibers are identified using a repeating color sequence. How many distinct colors make up that base sequence before it repeats (with a stripe marker) on higher fiber counts?",
+      "choices": [
+        "6 colors",
+        "8 colors",
+        "12 colors",
+        "24 colors"
+      ],
+      "answerIndex": 2,
+      "explanation": "TIA-598 defines a 12-color sequence used for both individual fiber coloring and buffer tube coloring. For fiber/tube counts beyond 12, the same 12-color sequence repeats with an added stripe or binder marker to distinguish the repeat group (e.g., fibers 13-24 repeat the 12 colors with a contrasting stripe).",
+      "citation": "TIA-598 (12-color fiber/buffer-tube identification sequence)."
+    },
+    {
+      "id": "T01-L03-Q8",
+      "type": "drag-match",
+      "prompt": "Match each layer of a standard loose-tube OSP cable to its primary function.",
+      "items": [
+        { "id": "i_jacket", "label": "UV/moisture barrier against the outside world" },
+        { "id": "i_ripcord", "label": "Lets you slit the jacket open without damaging what's inside" },
+        { "id": "i_buffer", "label": "Holds a group of fibers in water-blocking gel" },
+        { "id": "i_central", "label": "Gives the cable its shape; anchored in the splice case" }
+      ],
+      "targets": [
+        { "id": "t_jacket", "label": "Outer jacket (HDPE)" },
+        { "id": "t_ripcord", "label": "Ripcord" },
+        { "id": "t_buffer", "label": "Buffer tube" },
+        { "id": "t_central", "label": "Central member" }
+      ],
+      "correctMap": { "t_jacket": "i_jacket", "t_ripcord": "i_ripcord", "t_buffer": "i_buffer", "t_central": "i_central" },
+      "explanation": "From outside in: the HDPE jacket resists UV and moisture; the ripcord lets you open the jacket cleanly; buffer tubes hold groups of fibers in water-blocking gel; the central member (steel or GRP rod) gives the cable its shape and must be anchored inside the splice case so cable tension doesn't pull through and break the splices.",
+      "citation": "ICEA S-87-640 (standard loose-tube OSP cable layer construction)."
+    }
+  ]
+}

@@ -1,0 +1,121 @@
+{
+  "assessmentId": "T01-L07",
+  "kind": "lesson",
+  "courseId": "T01",
+  "lessonId": "T01.L07",
+  "drawCount": 4,
+  "passThreshold": 70,
+  "pool": [
+    {
+      "id": "T01-L07-Q1",
+      "type": "mc",
+      "prompt": "A strand map notation reads: \"F-001 / BT6-F11 -> FDH-002 -> DC-031 / BT1-F4 -> NAP-08 -> 456 ELM ST.\" What does \"BT1-F4\" refer to?",
+      "choices": [
+        "Battery Terminal 1, Fault 4 — an alarm condition on the cable",
+        "Buffer Tube 1, Fiber 4 — the specific fiber within distribution cable DC-031 that serves 456 Elm St",
+        "Building Terminal 1, Fiber 4 — ISP wiring inside the customer building",
+        "Block Terminal 1, Feed 4 — an FDH output port assignment"
+      ],
+      "answerIndex": 1,
+      "explanation": "In strand map notation, BT = Buffer Tube, F = Fiber. BT1-F4 means Buffer Tube 1, Fiber 4 in the named cable (DC-031) — telling the splicer which physical fiber to connect at each splice case and the test technician which fiber to trace end to end."
+    },
+    {
+      "id": "T01-L07-Q2",
+      "type": "mc",
+      "prompt": "A 1:32 passive optical splitter at an FDH introduces approximately how much insertion loss on each output?",
+      "choices": [
+        "About 3 dB (half the power)",
+        "About 10 dB (one-tenth the power)",
+        "About 15-17 dB (roughly 1/32 of the power, plus manufacturing excess loss)",
+        "No loss — \"passive\" means no loss"
+      ],
+      "answerIndex": 2,
+      "explanation": "\"Passive\" means no powered electronics — not no loss. Theoretical loss for a 1:32 split is 10 x log10(32) ~= 15.05 dB; real PLC splitters add manufacturing excess loss, commonly landing in the 15-17.5 dB range across vendor datasheets. This is the dominant loss element in a GPON link budget.",
+      "citation": "Vendor PLC splitter datasheets (1x32 insertion loss specifications, commonly cited in the 15-17.5 dB range); ITU-T G.984 (GPON link-budget context)."
+    },
+    {
+      "id": "T01-L07-Q3",
+      "type": "mc",
+      "prompt": "What is the small closure or terminal on a pole or pedestal where distribution fiber connects to individual customer drop cables called?",
+      "choices": [
+        "FDH (Fiber Distribution Hub)",
+        "NAP (Network Access Point)",
+        "Splice case",
+        "OLT port"
+      ],
+      "answerIndex": 1,
+      "explanation": "NAPs are the last OSP infrastructure before the customer drop — a small dome-style closure, wall-mount box, or curb pedestal. Each NAP typically serves 1-4 customer drops in a standard FTTH deployment."
+    },
+    {
+      "id": "T01-L07-Q4",
+      "type": "mc",
+      "prompt": "A field technician needs to locate the splice case connecting a specific distribution fiber to the feeder cable. Which document is the primary source for this?",
+      "choices": [
+        "The OTDR test record from acceptance testing",
+        "The strand map / fiber assignment document from the as-built package",
+        "The make-ready application submitted to the pole owner",
+        "The RUS project closeout certification"
+      ],
+      "answerIndex": 1,
+      "explanation": "The strand map (part of the as-built package) shows the complete fiber path from headend to customer, including which splice cases connect which cables and the buffer tube/fiber number at each connection point. The OTDR record tells you about signal quality, not fiber routing."
+    },
+    {
+      "id": "T01-L07-Q5",
+      "type": "mc",
+      "prompt": "In the FTTH hierarchy, what is the correct order of cable/equipment from the headend to the customer?",
+      "choices": [
+        "OLT -> Distribution cable -> FDH -> Feeder cable -> NAP -> Drop -> ONT",
+        "OLT -> Feeder cable -> FDH (splitters) -> Distribution cable -> NAP -> Drop -> ONT",
+        "ONT -> Drop -> NAP -> FDH -> Feeder cable -> Distribution cable -> OLT",
+        "OLT -> NAP -> FDH -> Feeder cable -> Distribution cable -> Drop -> ONT"
+      ],
+      "answerIndex": 1,
+      "explanation": "The signal originates at the OLT, travels the large-count feeder cable to the FDH where passive splitters fan it out to distribution cables, which run to NAPs where individual drop cables branch off to each customer's ONT."
+    },
+    {
+      "id": "T01-L07-Q6",
+      "type": "mc",
+      "prompt": "Why does GIS integration of strand map data matter for OSP operations, compared to paper diagrams?",
+      "choices": [
+        "It doesn't matter — paper diagrams are equally effective and GIS adds no value",
+        "It lets the NOC query which OLT port serves a given address in seconds, lets field techs access the map on a tablet, and lets designers see existing plant before designing a new route",
+        "GIS integration is required by NESC for all aerial fiber installations",
+        "GIS integration eliminates the need for splice records"
+      ],
+      "answerIndex": 1,
+      "explanation": "Storing strand map data as a live, queryable GIS layer (rather than static paper diagrams) lets operations staff and field crews answer routing questions in seconds instead of digging through paper files, and lets designers see what's already in the ground before planning new routes."
+    },
+    {
+      "id": "T01-L07-Q7",
+      "type": "mc",
+      "prompt": "What is the typical fiber count range for a feeder cable versus a distribution cable in an FTTH network?",
+      "choices": [
+        "Feeder: 1-2 fibers; Distribution: 72-288 fibers",
+        "Feeder: 72-288 fibers; Distribution: 12-48 fibers",
+        "Feeder and distribution cables always carry the same fiber count",
+        "Feeder: 12-48 fibers; Distribution: 1-2 fibers"
+      ],
+      "answerIndex": 1,
+      "explanation": "Feeder cable is large-count trunk infrastructure (commonly 72-288 fibers) running from the headend to the FDH. Distribution cable is medium-count (commonly 12-48 fibers) fanning out from the FDH to NAPs along streets — a feeder failure affects far more customers than a distribution failure."
+    },
+    {
+      "id": "T01-L07-Q8",
+      "type": "drag-match",
+      "prompt": "Match each FTTH hierarchy level to its role.",
+      "items": [
+        { "id": "i_olt", "label": "Originates the optical signal at the headend" },
+        { "id": "i_fdh", "label": "Contains the passive splitter that fans one feeder fiber into many" },
+        { "id": "i_nap", "label": "Where distribution fibers connect to individual customer drops" },
+        { "id": "i_ont", "label": "Converts the fiber signal to ethernet at the customer premises" }
+      ],
+      "targets": [
+        { "id": "t_olt", "label": "OLT" },
+        { "id": "t_fdh", "label": "FDH" },
+        { "id": "t_nap", "label": "NAP" },
+        { "id": "t_ont", "label": "ONT" }
+      ],
+      "correctMap": { "t_olt": "i_olt", "t_fdh": "i_fdh", "t_nap": "i_nap", "t_ont": "i_ont" },
+      "explanation": "Signal path: OLT (origin) -> feeder -> FDH (split point) -> distribution -> NAP (access point) -> drop -> ONT (demarc/customer conversion)."
+    }
+  ]
+}
