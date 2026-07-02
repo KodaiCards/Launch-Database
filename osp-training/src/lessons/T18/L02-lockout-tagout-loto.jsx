@@ -5,6 +5,7 @@ import React from 'react';
 import LessonLayout from '../../components/LessonLayout.jsx';
 import BranchingScenario from '../../components/primitives/BranchingScenario.jsx';
 import Quiz from '../../components/primitives/Quiz.jsx';
+import GatedAssessment from '../../components/primitives/GatedAssessment.jsx';
 import Flashcard from '../../components/Flashcard.jsx';
 
 export const meta = {
@@ -421,71 +422,78 @@ export default function T18L02_LockoutTagout() {
       />
 
       {/* ── PER-LESSON QUIZ ──────────────────────────────────────────────── */}
-      <Quiz
+      <GatedAssessment
+        courseId="T18"
+        assessmentId="T18-L02"
         title="T18.L02 Check — Lockout/Tagout"
-        mode="multiple-choice"
-        questions={[
-          {
-            id: 'T18-L02-Q1',
-            type: 'mc',
-            prompt:
-              'Two technicians — Alex and Jordan — are both working on a locked-out equipment rack. Alex applies a lock. Under 29 CFR 1910.147(f)(3), what should Jordan do?',
-            choices: [
-              'Jordan relies on Alex\'s lock; only one lock per equipment item is needed',
-              'Jordan applies their own separate padlock to a group lockout hasp on the same energy isolating device',
-              'Jordan applies a tagout tag because only one lock is allowed per hasp',
-              'Jordan notifies the supervisor and waits outside the work area',
-            ],
-            answerIndex: 1,
-            explanation:
-              'Per 29 CFR 1910.147(f)(3), in a group lockout, each authorized employee must apply their own personal padlock to a group lockout hasp. The equipment cannot be re-energized until every worker has removed their own lock. One worker\'s lock protects only that worker — Jordan cannot rely on Alex\'s key.',
-            citation: '29 CFR 1910.147(f)(3) — Group lockout or tagout (ecfr.gov).',
-          },
-          {
-            id: 'T18-L02-Q2',
-            type: 'fill-in-blank',
-            prompt:
-              'The physical device (breaker, valve, disconnect switch) that the lock or tag is applied to during a LOTO procedure is called the ____.',
-            answer: 'energy isolating device',
-            answerDisplay: 'energy isolating device (EID)',
-            explanation:
-              'The energy isolating device is the mechanism that physically prevents energy from flowing to the equipment being serviced. The lock is applied to the EID — not to the equipment itself. This distinction matters because the EID is the control point where energy can be blocked.',
-          },
-          {
-            id: 'T18-L02-Q3',
-            type: 'mc',
-            prompt:
-              'On an OSP job, a technician is splicing fiber inside a remote fiber hut next to a battery backup rack. No powered equipment is being serviced — just fiber splicing in the same room. LOTO requirements under 1910.147:',
-            choices: [
-              'Apply to the fiber splicer because it uses 120V AC wall power',
-              'Do not apply because fiber splicing is not "servicing or maintenance of equipment" on the energized racks in the room',
-              'Apply because any work in the same room as energized equipment requires LOTO',
-              'Apply only if the battery rack is within 3 feet of the splice work area',
-            ],
-            answerIndex: 1,
-            explanation:
-              '29 CFR 1910.147 applies to "servicing and maintenance of machines and equipment" — work on the equipment itself where unexpected energization could injure the worker. Fiber splicing in a hut does not involve servicing the battery rack or powered shelves. The technician is working on fiber, not on the energized racks. No LOTO required for the racks (though safe work practices near live equipment still apply per 1910.268).',
-            citation: '29 CFR 1910.147(a)(1) — Scope and Application (ecfr.gov).',
-            fieldNote:
-              'The trigger for LOTO is "servicing or maintenance on equipment" — not simply working near powered equipment. However, if your splicing work requires you to reach into or behind a powered rack, that changes the analysis.',
-          },
-          {
-            id: 'T18-L02-Q4',
-            type: 'mc',
-            prompt:
-              'After completing maintenance work, in what order does re-energization occur under 29 CFR 1910.147(e)?',
-            choices: [
-              'Remove lock → restore energy → clear work area → notify affected employees',
-              'Remove lock → restore energy → notify affected employees',
-              'Clear work area → each worker removes own lock → notify affected employees → restore energy',
-              'Restore energy → clear work area → workers retrieve locks → notify affected employees',
-            ],
-            answerIndex: 2,
-            explanation:
-              '29 CFR 1910.147(e) requires: (1) remove tools/materials from work area, (2) ensure all employees are clear, (3) each authorized employee removes their own lock, (4) notify affected employees, (5) restore energy. Workers must be clear and notified BEFORE re-energization — not after.',
-            citation: '29 CFR 1910.147(e)(1)–(e)(3) (ecfr.gov).',
-          },
-        ]}
+        fallback={
+        <Quiz
+          title="T18.L02 Check — Lockout/Tagout"
+          mode="multiple-choice"
+          questions={[
+            {
+              id: 'T18-L02-Q1',
+              type: 'mc',
+              prompt:
+                'Two technicians — Alex and Jordan — are both working on a locked-out equipment rack. Alex applies a lock. Under 29 CFR 1910.147(f)(3), what should Jordan do?',
+              choices: [
+                'Jordan relies on Alex\'s lock; only one lock per equipment item is needed',
+                'Jordan applies their own separate padlock to a group lockout hasp on the same energy isolating device',
+                'Jordan applies a tagout tag because only one lock is allowed per hasp',
+                'Jordan notifies the supervisor and waits outside the work area',
+              ],
+              answerIndex: 1,
+              explanation:
+                'Per 29 CFR 1910.147(f)(3), in a group lockout, each authorized employee must apply their own personal padlock to a group lockout hasp. The equipment cannot be re-energized until every worker has removed their own lock. One worker\'s lock protects only that worker — Jordan cannot rely on Alex\'s key.',
+              citation: '29 CFR 1910.147(f)(3) — Group lockout or tagout (ecfr.gov).',
+            },
+            {
+              id: 'T18-L02-Q2',
+              type: 'fill-in-blank',
+              prompt:
+                'The physical device (breaker, valve, disconnect switch) that the lock or tag is applied to during a LOTO procedure is called the ____.',
+              answer: 'energy isolating device',
+              answerDisplay: 'energy isolating device (EID)',
+              explanation:
+                'The energy isolating device is the mechanism that physically prevents energy from flowing to the equipment being serviced. The lock is applied to the EID — not to the equipment itself. This distinction matters because the EID is the control point where energy can be blocked.',
+            },
+            {
+              id: 'T18-L02-Q3',
+              type: 'mc',
+              prompt:
+                'On an OSP job, a technician is splicing fiber inside a remote fiber hut next to a battery backup rack. No powered equipment is being serviced — just fiber splicing in the same room. LOTO requirements under 1910.147:',
+              choices: [
+                'Apply to the fiber splicer because it uses 120V AC wall power',
+                'Do not apply because fiber splicing is not "servicing or maintenance of equipment" on the energized racks in the room',
+                'Apply because any work in the same room as energized equipment requires LOTO',
+                'Apply only if the battery rack is within 3 feet of the splice work area',
+              ],
+              answerIndex: 1,
+              explanation:
+                '29 CFR 1910.147 applies to "servicing and maintenance of machines and equipment" — work on the equipment itself where unexpected energization could injure the worker. Fiber splicing in a hut does not involve servicing the battery rack or powered shelves. The technician is working on fiber, not on the energized racks. No LOTO required for the racks (though safe work practices near live equipment still apply per 1910.268).',
+              citation: '29 CFR 1910.147(a)(1) — Scope and Application (ecfr.gov).',
+              fieldNote:
+                'The trigger for LOTO is "servicing or maintenance on equipment" — not simply working near powered equipment. However, if your splicing work requires you to reach into or behind a powered rack, that changes the analysis.',
+            },
+            {
+              id: 'T18-L02-Q4',
+              type: 'mc',
+              prompt:
+                'After completing maintenance work, in what order does re-energization occur under 29 CFR 1910.147(e)?',
+              choices: [
+                'Remove lock → restore energy → clear work area → notify affected employees',
+                'Remove lock → restore energy → notify affected employees',
+                'Clear work area → each worker removes own lock → notify affected employees → restore energy',
+                'Restore energy → clear work area → workers retrieve locks → notify affected employees',
+              ],
+              answerIndex: 2,
+              explanation:
+                '29 CFR 1910.147(e) requires: (1) remove tools/materials from work area, (2) ensure all employees are clear, (3) each authorized employee removes their own lock, (4) notify affected employees, (5) restore energy. Workers must be clear and notified BEFORE re-energization — not after.',
+              citation: '29 CFR 1910.147(e)(1)–(e)(3) (ecfr.gov).',
+            },
+          ]}
+        />
+        }
       />
 
     </LessonLayout>

@@ -5,6 +5,7 @@ import React from 'react';
 import LessonLayout from '../../components/LessonLayout.jsx';
 import SideBySide from '../../components/primitives/SideBySide.jsx';
 import Quiz from '../../components/primitives/Quiz.jsx';
+import GatedAssessment from '../../components/primitives/GatedAssessment.jsx';
 import Flashcard from '../../components/Flashcard.jsx';
 
 export const meta = {
@@ -439,70 +440,77 @@ export default function T18L04_FallProtectionPolesAerialLifts() {
       />
 
       {/* ── PER-LESSON QUIZ ──────────────────────────────────────────────── */}
-      <Quiz
+      <GatedAssessment
+        courseId="T18"
+        assessmentId="T18-L04"
         title="T18.L04 Check — Fall Protection"
-        mode="multiple-choice"
-        questions={[
-          {
-            id: 'T18-L04-Q1',
-            type: 'mc',
-            prompt:
-              'Under 29 CFR 1910.268(g)(1), fall protection is required when working on a pole at what height above ground?',
-            choices: [
-              '6 feet (same as construction industry)',
-              '10 feet',
-              '4 feet',
-              'Fall protection is required only when using a bucket truck',
-            ],
-            answerIndex: 2,
-            explanation:
-              '29 CFR 1910.268(g)(1) — the telecommunications standard — triggers the fall protection requirement at more than 4 feet above ground. This differs from 29 CFR 1926 Subpart M (construction), which triggers at 6 feet. Telecom OSP work falls under 1910 (general industry), not 1926 (construction), so the 4-foot trigger applies.',
-            citation: '29 CFR 1910.268(g)(1) (osha.gov; OSHA interpretation letter 2012-08-27).',
-          },
-          {
-            id: 'T18-L04-Q2',
-            type: 'mc',
-            prompt:
-              'A worker\'s body belt and pole strap are the ONLY fall protection they\'re using at the work position on a 40-foot pole. The gaff on the right leg pulls out of the rotten pole wood. What happens?',
-            choices: [
-              'The pole strap (positioning system) automatically arrests the fall by holding the worker against the pole',
-              'The body belt automatically deploys an energy-absorbing lanyard to arrest the fall',
-              'The positioning system may not catch the fall — only a PFAS (full-body harness + arrest lanyard) provides fall arrest protection',
-              'The 4-foot rule means fall protection isn\'t required at 40 feet — the height threshold is for when to start using gear, not for the type of gear',
-            ],
-            answerIndex: 2,
-            explanation:
-              'A positioning system (body belt + pole strap) is designed to hold the worker at the work position — not to arrest a fall. If the gaff pulls out and the body shifts suddenly, the positioning strap may slip rather than catch the fall. Only a PFAS — full-body harness connected to an energy-absorbing lanyard or SRL anchored above the worker — is designed to arrest a fall and limit the arrest force to ≤1,800 lbf.',
-            citation: '29 CFR 1910.268(g)(1); ANSI Z359.1 ("The Fall Protection Code") + Z359.11 (Full Body Harnesses) — body belt restrictions within the ANSI Z359 series.',
-          },
-          {
-            id: 'T18-L04-Q3',
-            type: 'fill-in-blank',
-            prompt:
-              'When working in a bucket truck aerial lift, OSHA 29 CFR 1910.67 requires that the worker\'s fall protection lanyard be attached to the ____.',
-            answer: 'boom or basket',
-            answerDisplay: 'boom or basket (of the aerial lift)',
-            explanation:
-              'Attaching to the boom or basket (not to an external structure) ensures the fall protection travels with the worker if the truck moves. Attaching to a fixed structure (pole, crossarm, anchor outside the basket) can pull the worker out of the basket if the truck repositions — a common and fatal error. The attachment point must stay with the lift.',
-            citation: '29 CFR 1910.67(c)(2)(v) (ecfr.gov).',
-          },
-          {
-            id: 'T18-L04-Q4',
-            type: 'mc',
-            prompt:
-              'OSHA\'s 2012 interpretation letter on 29 CFR 1910.268 states that telecom workers "generally may free-climb" to their work position. This means:',
-            choices: [
-              'No fall protection is required at any point on a utility pole',
-              'Fall protection is required at all times during both climbing and at the work position',
-              'Fall protection is required at the work position but climbing to reach the position may be done without fall protection',
-              'Free-climbing is permitted only for poles shorter than 30 feet',
-            ],
-            answerIndex: 2,
-            explanation:
-              'The OSHA 2012 interpretation letter is explicit: 1910.268 permits employees to free-climb to work positions on poles without fall protection during the climb itself. However, fall protection is required at the work position — where the worker stops and performs their task — if that position is more than 4 feet above ground. Free-climb covers movement; protection is required at the station.',
-            citation: 'OSHA interpretation letter 2012-08-27 (osha.gov/laws-regs/standardinterpretations/2012-08-27).',
-          },
-        ]}
+        fallback={
+        <Quiz
+          title="T18.L04 Check — Fall Protection"
+          mode="multiple-choice"
+          questions={[
+            {
+              id: 'T18-L04-Q1',
+              type: 'mc',
+              prompt:
+                'Under 29 CFR 1910.268(g)(1), fall protection is required when working on a pole at what height above ground?',
+              choices: [
+                '6 feet (same as construction industry)',
+                '10 feet',
+                '4 feet',
+                'Fall protection is required only when using a bucket truck',
+              ],
+              answerIndex: 2,
+              explanation:
+                '29 CFR 1910.268(g)(1) — the telecommunications standard — triggers the fall protection requirement at more than 4 feet above ground. This differs from 29 CFR 1926 Subpart M (construction), which triggers at 6 feet. Telecom OSP work falls under 1910 (general industry), not 1926 (construction), so the 4-foot trigger applies.',
+              citation: '29 CFR 1910.268(g)(1) (osha.gov; OSHA interpretation letter 2012-08-27).',
+            },
+            {
+              id: 'T18-L04-Q2',
+              type: 'mc',
+              prompt:
+                'A worker\'s body belt and pole strap are the ONLY fall protection they\'re using at the work position on a 40-foot pole. The gaff on the right leg pulls out of the rotten pole wood. What happens?',
+              choices: [
+                'The pole strap (positioning system) automatically arrests the fall by holding the worker against the pole',
+                'The body belt automatically deploys an energy-absorbing lanyard to arrest the fall',
+                'The positioning system may not catch the fall — only a PFAS (full-body harness + arrest lanyard) provides fall arrest protection',
+                'The 4-foot rule means fall protection isn\'t required at 40 feet — the height threshold is for when to start using gear, not for the type of gear',
+              ],
+              answerIndex: 2,
+              explanation:
+                'A positioning system (body belt + pole strap) is designed to hold the worker at the work position — not to arrest a fall. If the gaff pulls out and the body shifts suddenly, the positioning strap may slip rather than catch the fall. Only a PFAS — full-body harness connected to an energy-absorbing lanyard or SRL anchored above the worker — is designed to arrest a fall and limit the arrest force to ≤1,800 lbf.',
+              citation: '29 CFR 1910.268(g)(1); ANSI Z359.1 ("The Fall Protection Code") + Z359.11 (Full Body Harnesses) — body belt restrictions within the ANSI Z359 series.',
+            },
+            {
+              id: 'T18-L04-Q3',
+              type: 'fill-in-blank',
+              prompt:
+                'When working in a bucket truck aerial lift, OSHA 29 CFR 1910.67 requires that the worker\'s fall protection lanyard be attached to the ____.',
+              answer: 'boom or basket',
+              answerDisplay: 'boom or basket (of the aerial lift)',
+              explanation:
+                'Attaching to the boom or basket (not to an external structure) ensures the fall protection travels with the worker if the truck moves. Attaching to a fixed structure (pole, crossarm, anchor outside the basket) can pull the worker out of the basket if the truck repositions — a common and fatal error. The attachment point must stay with the lift.',
+              citation: '29 CFR 1910.67(c)(2)(v) (ecfr.gov).',
+            },
+            {
+              id: 'T18-L04-Q4',
+              type: 'mc',
+              prompt:
+                'OSHA\'s 2012 interpretation letter on 29 CFR 1910.268 states that telecom workers "generally may free-climb" to their work position. This means:',
+              choices: [
+                'No fall protection is required at any point on a utility pole',
+                'Fall protection is required at all times during both climbing and at the work position',
+                'Fall protection is required at the work position but climbing to reach the position may be done without fall protection',
+                'Free-climbing is permitted only for poles shorter than 30 feet',
+              ],
+              answerIndex: 2,
+              explanation:
+                'The OSHA 2012 interpretation letter is explicit: 1910.268 permits employees to free-climb to work positions on poles without fall protection during the climb itself. However, fall protection is required at the work position — where the worker stops and performs their task — if that position is more than 4 feet above ground. Free-climb covers movement; protection is required at the station.',
+              citation: 'OSHA interpretation letter 2012-08-27 (osha.gov/laws-regs/standardinterpretations/2012-08-27).',
+            },
+          ]}
+        />
+        }
       />
 
     </LessonLayout>
