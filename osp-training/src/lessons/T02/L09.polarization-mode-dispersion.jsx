@@ -5,6 +5,7 @@ import React from 'react';
 import LessonLayout from '../../components/LessonLayout.jsx';
 import SliderExploration from '../../components/primitives/SliderExploration.jsx';
 import Quiz from '../../components/primitives/Quiz.jsx';
+import GatedAssessment from '../../components/primitives/GatedAssessment.jsx';
 import Flashcard from '../../components/Flashcard.jsx';
 
 export const meta = {
@@ -313,58 +314,65 @@ Step 4:          = 1.41 ps`}
       </section>
 
       {/* ── PER-LESSON QUIZ ──────────────────────────────────────────────── */}
-      <Quiz
+      <GatedAssessment
+        courseId="T02"
+        assessmentId="T02-L09"
         title="T02.L09 Check — PMD"
-        mode="multiple-choice"
-        questions={[
-          {
-            id: 'T02-L09-Q1',
-            type: 'mc',
-            prompt:
-              'Why does PMD accumulate with the square root of fiber length (√L) rather than linearly (like chromatic dispersion)?',
-            choices: [
-              'Because PMD only occurs at splice points, which occur at regular intervals',
-              'Because PMD is a random-walk process — polarization coupling along the fiber varies randomly, and random-walk processes scale as √L rather than linearly',
-              'Because PMD is inversely proportional to fiber length — it decreases as the link gets longer',
-              'Because PMD units are ps/√km and this is just a unit convention with no physical meaning',
-            ],
-            answerIndex: 1,
-            explanation:
-              'Chromatic dispersion is deterministic and accumulates linearly: ΔT = D × Δλ × L. PMD is statistical — the polarization coupling along real fiber is random (due to random imperfections and random external stresses). Random-walk accumulation is the root-mean-square sum of random independent contributions, which scales as √N (number of steps) or equivalently √L.',
-            citation: 'ITU-T G.652.D PMD specification; FOA Reference Guide — PMD section.',
-          },
-          {
-            id: 'T02-L09-Q2',
-            type: 'mc',
-            prompt:
-              'A 150 km link on pre-G.652.D fiber has a measured PMD coefficient of 0.8 ps/√km. The system is being upgraded to 40 Gb/s. What is the rms DGD, and is this upgrade likely to succeed?',
-            choices: [
-              'DGD = 9.8 ps. 40G needs DGD < 2.5 ps — this upgrade will very likely fail without PMD compensation',
-              'DGD = 9.8 ps. 40G needs DGD < 25 ps — this upgrade will work fine',
-              'DGD = 120 ps. The upgrade will fail at any bit rate above 2.5G',
-              'DGD = 0.8 ps — the PMD coefficient is already the DGD for any length',
-            ],
-            answerIndex: 0,
-            explanation:
-              'DGD_rms = 0.8 ps/√km × √150 km = 0.8 × 12.25 = 9.8 ps. At 40 Gb/s, the bit period is 25 ps; 10% tolerance = 2.5 ps max DGD. 9.8 ps >> 2.5 ps — this link will likely fail or require PMD compensation hardware (PMD compensators are expensive and complex). The upgrade should be evaluated carefully before commitment.',
-            citation: 'ITU-T G.652.D; 40G PMD budget analysis; ITU-T G.Sup39 [confirm edition].',
-          },
-          {
-            id: 'T02-L09-Q3',
-            type: 'mc',
-            prompt:
-              'What field installation practice most directly increases the PMD of installed cable above its factory specification?',
-            choices: [
-              'Leaving coiled slack at each splice case',
-              'Over-tensioned lashing wire, conduit overfill, or tight bend radii — chronic mechanical stress on the fiber increases birefringence and raises PMD above the factory value',
-              'Using fusion splices instead of mechanical splices',
-              'Installing in cold weather (below 0°C)',
-            ],
-            answerIndex: 1,
-            explanation:
-              'PMD is caused by geometric imperfections and stress-induced birefringence. Factory PMD specs reflect fiber under no external stress. Chronic stress from over-tensioned lashing, conduit overfill, or tight bends adds birefringence that raises the installed PMD coefficient above the fiber\'s datasheet value. Good installation practice protects both attenuation and PMD performance.',
-          },
-        ]}
+        fallback={
+        <Quiz
+          title="T02.L09 Check — PMD"
+          mode="multiple-choice"
+          questions={[
+            {
+              id: 'T02-L09-Q1',
+              type: 'mc',
+              prompt:
+                'Why does PMD accumulate with the square root of fiber length (√L) rather than linearly (like chromatic dispersion)?',
+              choices: [
+                'Because PMD only occurs at splice points, which occur at regular intervals',
+                'Because PMD is a random-walk process — polarization coupling along the fiber varies randomly, and random-walk processes scale as √L rather than linearly',
+                'Because PMD is inversely proportional to fiber length — it decreases as the link gets longer',
+                'Because PMD units are ps/√km and this is just a unit convention with no physical meaning',
+              ],
+              answerIndex: 1,
+              explanation:
+                'Chromatic dispersion is deterministic and accumulates linearly: ΔT = D × Δλ × L. PMD is statistical — the polarization coupling along real fiber is random (due to random imperfections and random external stresses). Random-walk accumulation is the root-mean-square sum of random independent contributions, which scales as √N (number of steps) or equivalently √L.',
+              citation: 'ITU-T G.652.D PMD specification; FOA Reference Guide — PMD section.',
+            },
+            {
+              id: 'T02-L09-Q2',
+              type: 'mc',
+              prompt:
+                'A 150 km link on pre-G.652.D fiber has a measured PMD coefficient of 0.8 ps/√km. The system is being upgraded to 40 Gb/s. What is the rms DGD, and is this upgrade likely to succeed?',
+              choices: [
+                'DGD = 9.8 ps. 40G needs DGD < 2.5 ps — this upgrade will very likely fail without PMD compensation',
+                'DGD = 9.8 ps. 40G needs DGD < 25 ps — this upgrade will work fine',
+                'DGD = 120 ps. The upgrade will fail at any bit rate above 2.5G',
+                'DGD = 0.8 ps — the PMD coefficient is already the DGD for any length',
+              ],
+              answerIndex: 0,
+              explanation:
+                'DGD_rms = 0.8 ps/√km × √150 km = 0.8 × 12.25 = 9.8 ps. At 40 Gb/s, the bit period is 25 ps; 10% tolerance = 2.5 ps max DGD. 9.8 ps >> 2.5 ps — this link will likely fail or require PMD compensation hardware (PMD compensators are expensive and complex). The upgrade should be evaluated carefully before commitment.',
+              citation: 'ITU-T G.652.D; 40G PMD budget analysis; ITU-T G.Sup39 [confirm edition].',
+            },
+            {
+              id: 'T02-L09-Q3',
+              type: 'mc',
+              prompt:
+                'What field installation practice most directly increases the PMD of installed cable above its factory specification?',
+              choices: [
+                'Leaving coiled slack at each splice case',
+                'Over-tensioned lashing wire, conduit overfill, or tight bend radii — chronic mechanical stress on the fiber increases birefringence and raises PMD above the factory value',
+                'Using fusion splices instead of mechanical splices',
+                'Installing in cold weather (below 0°C)',
+              ],
+              answerIndex: 1,
+              explanation:
+                'PMD is caused by geometric imperfections and stress-induced birefringence. Factory PMD specs reflect fiber under no external stress. Chronic stress from over-tensioned lashing, conduit overfill, or tight bends adds birefringence that raises the installed PMD coefficient above the fiber\'s datasheet value. Good installation practice protects both attenuation and PMD performance.',
+            },
+          ]}
+        />
+        }
       />
 
     </LessonLayout>

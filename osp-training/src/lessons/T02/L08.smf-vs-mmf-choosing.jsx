@@ -5,6 +5,7 @@ import React from 'react';
 import LessonLayout from '../../components/LessonLayout.jsx';
 import SideBySide from '../../components/primitives/SideBySide.jsx';
 import Quiz from '../../components/primitives/Quiz.jsx';
+import GatedAssessment from '../../components/primitives/GatedAssessment.jsx';
 import Flashcard from '../../components/Flashcard.jsx';
 
 export const meta = {
@@ -389,69 +390,76 @@ export default function T02L08_SMFvsMMFChoosing() {
       />
 
       {/* ── PER-LESSON QUIZ ──────────────────────────────────────────────── */}
-      <Quiz
+      <GatedAssessment
+        courseId="T02"
+        assessmentId="T02-L08"
         title="T02.L08 Check — SMF vs. MMF"
-        mode="multiple-choice"
-        questions={[
-          {
-            id: 'T02-L08-Q1',
-            type: 'mc',
-            prompt:
-              'A technician accidentally connects a yellow OS2 SMF patch cord to an aqua OM4 MMF patch panel port. What is the most likely result?',
-            choices: [
-              'The link works fine — both have 125 µm cladding diameter so they\'re compatible',
-              'The link experiences massive signal loss (likely 20+ dB) because the 9 µm SMF core doesn\'t fill the 50 µm MMF core, so most light from the MMF misses the SMF core',
-              'The link works at reduced speed (downgrade from 10GbE to 1GbE)',
-              'The OM4 cable converts the 1310 nm SMF wavelength to 850 nm automatically',
-            ],
-            answerIndex: 1,
-            explanation:
-              'The 9 µm SMF core is far smaller than the 50 µm MMF core. Light coming from the MMF spreads across the full 50 µm — but only a tiny fraction of it falls within the 9 µm SMF core. Result: 20–30 dB of loss at the interface, effectively killing the link. The reverse (SMF into MMF) also fails, but for the opposite reason: the SMF\'s tiny core launches a beam much smaller than the MMF accepts well at high bit rates.',
-            fieldNote:
-              'Color is your friend: yellow jacket = SMF, aqua = OM3/OM4, lime = OM5, orange = OM1/OM2. But don\'t trust jacket color alone — always read the print on the cable.',
-          },
-          {
-            id: 'T02-L08-Q2',
-            type: 'mc',
-            prompt:
-              'For a 12 km OSP fiber run connecting a rural OLT headend to a remote distribution hub, which fiber type is required?',
-            choices: [
-              'OM4 multimode — it supports higher bandwidth',
-              'OS2 single-mode (G.652.D) — 12 km is far beyond any MMF reach limit',
-              'OM5 multimode — it supports SWDM4 and can handle the distance',
-              'Either SMF or MMF — the distance is within OM3 spec',
-            ],
-            answerIndex: 1,
-            explanation:
-              'OM3 MMF tops out at ~300 m for 10GbE at 850 nm. OM4 at ~400 m. OM5 doesn\'t extend reach significantly beyond OM4 for standard applications. 12 km requires OS2 SMF. No multimode fiber reaches beyond ~550 m for any standard Ethernet application.',
-          },
-          {
-            id: 'T02-L08-Q3',
-            type: 'fill-in-blank',
-            prompt:
-              'The current standard OSP single-mode fiber grade is ____.',
-            answer: /os2|g\.652\.d|g652d|g652\.d/i,
-            answerDisplay: 'OS2 (ITU-T G.652.D)',
-            explanation:
-              'OS2 corresponds to ITU-T G.652.D — the "water-peak reduced" standard SMF with ≤ 0.40 dB/km @ 1310 nm and ≤ 0.30 dB/km @ 1550 nm. OS1 (G.652.B/C) is the older, less performant variant. Almost all new OSP deployments specify OS2/G.652.D.',
-          },
-          {
-            id: 'T02-L08-Q4',
-            type: 'mc',
-            prompt:
-              'Why does OM3/OM4/OM5 fiber have a higher bandwidth rating than OM1/OM2, even though all are 50 µm core multimode?',
-            choices: [
-              'OM3/OM4/OM5 uses a graded-index core profile optimized for 850 nm VCSEL launch conditions — this reduces modal dispersion by restricting which modes are excited',
-              'OM3/OM4/OM5 uses single-mode glass chemistry even though the core is larger',
-              'OM3/OM4/OM5 is manufactured at lower attenuation, which automatically increases bandwidth',
-              'OM3 was retroactively renamed from OM1 — it\'s the same fiber with a new label',
-            ],
-            answerIndex: 0,
-            explanation:
-              'OM3/OM4/OM5 are "laser-optimized" — the graded-index profile is tailored for 850 nm VCSEL sources. VCSEL launch characteristics excite fewer high-order modes than an LED overfilled launch. Fewer modes → less modal dispersion → more bandwidth at a given length. This is why the effective modal bandwidth (EMB) test metric was introduced for OM3+ instead of the older overfilled launch bandwidth test.',
-            citation: 'TIA-492AAAD (OM4) [confirm edition]; IEEE 802.3 — effective modal bandwidth methodology.',
-          },
-        ]}
+        fallback={
+        <Quiz
+          title="T02.L08 Check — SMF vs. MMF"
+          mode="multiple-choice"
+          questions={[
+            {
+              id: 'T02-L08-Q1',
+              type: 'mc',
+              prompt:
+                'A technician accidentally connects a yellow OS2 SMF patch cord to an aqua OM4 MMF patch panel port. What is the most likely result?',
+              choices: [
+                'The link works fine — both have 125 µm cladding diameter so they\'re compatible',
+                'The link experiences massive signal loss (likely 20+ dB) because the 9 µm SMF core doesn\'t fill the 50 µm MMF core, so most light from the MMF misses the SMF core',
+                'The link works at reduced speed (downgrade from 10GbE to 1GbE)',
+                'The OM4 cable converts the 1310 nm SMF wavelength to 850 nm automatically',
+              ],
+              answerIndex: 1,
+              explanation:
+                'The 9 µm SMF core is far smaller than the 50 µm MMF core. Light coming from the MMF spreads across the full 50 µm — but only a tiny fraction of it falls within the 9 µm SMF core. Result: 20–30 dB of loss at the interface, effectively killing the link. The reverse (SMF into MMF) also fails, but for the opposite reason: the SMF\'s tiny core launches a beam much smaller than the MMF accepts well at high bit rates.',
+              fieldNote:
+                'Color is your friend: yellow jacket = SMF, aqua = OM3/OM4, lime = OM5, orange = OM1/OM2. But don\'t trust jacket color alone — always read the print on the cable.',
+            },
+            {
+              id: 'T02-L08-Q2',
+              type: 'mc',
+              prompt:
+                'For a 12 km OSP fiber run connecting a rural OLT headend to a remote distribution hub, which fiber type is required?',
+              choices: [
+                'OM4 multimode — it supports higher bandwidth',
+                'OS2 single-mode (G.652.D) — 12 km is far beyond any MMF reach limit',
+                'OM5 multimode — it supports SWDM4 and can handle the distance',
+                'Either SMF or MMF — the distance is within OM3 spec',
+              ],
+              answerIndex: 1,
+              explanation:
+                'OM3 MMF tops out at ~300 m for 10GbE at 850 nm. OM4 at ~400 m. OM5 doesn\'t extend reach significantly beyond OM4 for standard applications. 12 km requires OS2 SMF. No multimode fiber reaches beyond ~550 m for any standard Ethernet application.',
+            },
+            {
+              id: 'T02-L08-Q3',
+              type: 'fill-in-blank',
+              prompt:
+                'The current standard OSP single-mode fiber grade is ____.',
+              answer: /os2|g\.652\.d|g652d|g652\.d/i,
+              answerDisplay: 'OS2 (ITU-T G.652.D)',
+              explanation:
+                'OS2 corresponds to ITU-T G.652.D — the "water-peak reduced" standard SMF with ≤ 0.40 dB/km @ 1310 nm and ≤ 0.30 dB/km @ 1550 nm. OS1 (G.652.B/C) is the older, less performant variant. Almost all new OSP deployments specify OS2/G.652.D.',
+            },
+            {
+              id: 'T02-L08-Q4',
+              type: 'mc',
+              prompt:
+                'Why does OM3/OM4/OM5 fiber have a higher bandwidth rating than OM1/OM2, even though all are 50 µm core multimode?',
+              choices: [
+                'OM3/OM4/OM5 uses a graded-index core profile optimized for 850 nm VCSEL launch conditions — this reduces modal dispersion by restricting which modes are excited',
+                'OM3/OM4/OM5 uses single-mode glass chemistry even though the core is larger',
+                'OM3/OM4/OM5 is manufactured at lower attenuation, which automatically increases bandwidth',
+                'OM3 was retroactively renamed from OM1 — it\'s the same fiber with a new label',
+              ],
+              answerIndex: 0,
+              explanation:
+                'OM3/OM4/OM5 are "laser-optimized" — the graded-index profile is tailored for 850 nm VCSEL sources. VCSEL launch characteristics excite fewer high-order modes than an LED overfilled launch. Fewer modes → less modal dispersion → more bandwidth at a given length. This is why the effective modal bandwidth (EMB) test metric was introduced for OM3+ instead of the older overfilled launch bandwidth test.',
+              citation: 'TIA-492AAAD (OM4) [confirm edition]; IEEE 802.3 — effective modal bandwidth methodology.',
+            },
+          ]}
+        />
+        }
       />
 
     </LessonLayout>

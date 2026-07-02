@@ -5,6 +5,7 @@
 import React from 'react';
 import LessonLayout from '../../components/LessonLayout.jsx';
 import Quiz from '../../components/primitives/Quiz.jsx';
+import GatedAssessment from '../../components/primitives/GatedAssessment.jsx';
 import Flashcard from '../../components/Flashcard.jsx';
 
 export const meta = {
@@ -314,75 +315,82 @@ export default function T02L01_WhyLightTravelsInGlass() {
       </div>
 
       {/* ── PER-LESSON QUIZ ──────────────────────────────────────────────── */}
-      <Quiz
+      <GatedAssessment
+        courseId="T02"
+        assessmentId="T02-L01"
         title="T02.L01 Check — Why Light Travels in Glass"
-        mode="multiple-choice"
-        questions={[
-          {
-            id: 'T02-L01-Q1',
-            type: 'mc',
-            prompt:
-              'What phenomenon prevents light from leaking out the side of a fiber optic strand?',
-            choices: [
-              'Electromagnetic shielding from the outer jacket',
-              'Total internal reflection at the core-cladding boundary',
-              'Absorption of stray light by the buffer coating',
-              'Magnetic alignment of photons along the fiber axis',
-            ],
-            answerIndex: 1,
-            explanation:
-              'Total internal reflection (TIR) occurs when light hits the core-cladding boundary at an angle shallower than the critical angle. Because the core has a higher index of refraction than the cladding, 100% of the light bounces back into the core — nothing escapes.',
-            citation:
-              'ITU-T G.652 (2024); FOA Reference Guide — Fiber Optic Technology.',
-            fieldNote:
-              'When a fiber is bent too sharply, some rays hit the boundary at angles steeper than the critical angle and escape. That\'s macrobend loss — the reason bend radius rules matter in the field.',
-          },
-          {
-            id: 'T02-L01-Q2',
-            type: 'mc',
-            prompt:
-              'A single-mode fiber has a core diameter of approximately 9 µm. A 50/125 multimode fiber has a core diameter of 50 µm. What is the primary optical consequence of the SMF\'s smaller core?',
-            choices: [
-              'SMF cannot carry 1550 nm wavelengths',
-              'SMF carries only one propagation mode, eliminating modal dispersion and allowing longer transmission distances',
-              'SMF requires a higher launch power to overcome the smaller cross-section',
-              'SMF has higher attenuation than multimode at all wavelengths',
-            ],
-            answerIndex: 1,
-            explanation:
-              'The tiny SMF core allows only the fundamental mode to propagate. With no higher-order modes, there is no modal dispersion. This is why SMF can carry signals for tens of kilometers where MMF tops out at hundreds of meters to a few kilometers.',
-            citation:
-              'ITU-T G.652.D — Characteristics of a single-mode optical fiber and cable.',
-          },
-          {
-            id: 'T02-L01-Q3',
-            type: 'fill-in-blank',
-            prompt:
-              'The outer glass layer surrounding the core of a fiber is called the ____.',
-            answer: 'cladding',
-            answerDisplay: 'cladding',
-            explanation:
-              'The cladding surrounds the core and has a lower index of refraction. That difference is what creates total internal reflection at the boundary, trapping light inside the core.',
-          },
-          {
-            id: 'T02-L01-Q4',
-            type: 'mc',
-            prompt:
-              'Numerical Aperture (NA) describes which property of a fiber?',
-            choices: [
-              'The maximum operating temperature of the outer sheath',
-              'The half-angle of the cone of light the fiber will accept and propagate via TIR',
-              'The total length of fiber on a standard shipping reel',
-              'The ratio of core diameter to cladding diameter',
-            ],
-            answerIndex: 1,
-            explanation:
-              'NA = √(n₁² − n₂²), where n₁ is the core index and n₂ is the cladding index. It describes the acceptance cone at the launch end. Higher NA = accepts a wider cone = more light coupled in. SMF has low NA (~0.12–0.14); multimode has higher NA (0.20–0.275).',
-            citation: 'FOA Reference Guide; ITU-T G.652.D.',
-            fieldNote:
-              'In practice, NA matters when you\'re troubleshooting splice loss between fiber types. Mismatched NA between two spliced fibers causes inherent loss even with perfect core alignment.',
-          },
-        ]}
+        fallback={
+        <Quiz
+          title="T02.L01 Check — Why Light Travels in Glass"
+          mode="multiple-choice"
+          questions={[
+            {
+              id: 'T02-L01-Q1',
+              type: 'mc',
+              prompt:
+                'What phenomenon prevents light from leaking out the side of a fiber optic strand?',
+              choices: [
+                'Electromagnetic shielding from the outer jacket',
+                'Total internal reflection at the core-cladding boundary',
+                'Absorption of stray light by the buffer coating',
+                'Magnetic alignment of photons along the fiber axis',
+              ],
+              answerIndex: 1,
+              explanation:
+                'Total internal reflection (TIR) occurs when light hits the core-cladding boundary at an angle shallower than the critical angle. Because the core has a higher index of refraction than the cladding, 100% of the light bounces back into the core — nothing escapes.',
+              citation:
+                'ITU-T G.652 (2024); FOA Reference Guide — Fiber Optic Technology.',
+              fieldNote:
+                'When a fiber is bent too sharply, some rays hit the boundary at angles steeper than the critical angle and escape. That\'s macrobend loss — the reason bend radius rules matter in the field.',
+            },
+            {
+              id: 'T02-L01-Q2',
+              type: 'mc',
+              prompt:
+                'A single-mode fiber has a core diameter of approximately 9 µm. A 50/125 multimode fiber has a core diameter of 50 µm. What is the primary optical consequence of the SMF\'s smaller core?',
+              choices: [
+                'SMF cannot carry 1550 nm wavelengths',
+                'SMF carries only one propagation mode, eliminating modal dispersion and allowing longer transmission distances',
+                'SMF requires a higher launch power to overcome the smaller cross-section',
+                'SMF has higher attenuation than multimode at all wavelengths',
+              ],
+              answerIndex: 1,
+              explanation:
+                'The tiny SMF core allows only the fundamental mode to propagate. With no higher-order modes, there is no modal dispersion. This is why SMF can carry signals for tens of kilometers where MMF tops out at hundreds of meters to a few kilometers.',
+              citation:
+                'ITU-T G.652.D — Characteristics of a single-mode optical fiber and cable.',
+            },
+            {
+              id: 'T02-L01-Q3',
+              type: 'fill-in-blank',
+              prompt:
+                'The outer glass layer surrounding the core of a fiber is called the ____.',
+              answer: 'cladding',
+              answerDisplay: 'cladding',
+              explanation:
+                'The cladding surrounds the core and has a lower index of refraction. That difference is what creates total internal reflection at the boundary, trapping light inside the core.',
+            },
+            {
+              id: 'T02-L01-Q4',
+              type: 'mc',
+              prompt:
+                'Numerical Aperture (NA) describes which property of a fiber?',
+              choices: [
+                'The maximum operating temperature of the outer sheath',
+                'The half-angle of the cone of light the fiber will accept and propagate via TIR',
+                'The total length of fiber on a standard shipping reel',
+                'The ratio of core diameter to cladding diameter',
+              ],
+              answerIndex: 1,
+              explanation:
+                'NA = √(n₁² − n₂²), where n₁ is the core index and n₂ is the cladding index. It describes the acceptance cone at the launch end. Higher NA = accepts a wider cone = more light coupled in. SMF has low NA (~0.12–0.14); multimode has higher NA (0.20–0.275).',
+              citation: 'FOA Reference Guide; ITU-T G.652.D.',
+              fieldNote:
+                'In practice, NA matters when you\'re troubleshooting splice loss between fiber types. Mismatched NA between two spliced fibers causes inherent loss even with perfect core alignment.',
+            },
+          ]}
+        />
+        }
       />
 
     </LessonLayout>

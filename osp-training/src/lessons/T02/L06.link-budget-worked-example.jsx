@@ -6,6 +6,7 @@ import LessonLayout from '../../components/LessonLayout.jsx';
 import LinkBudgetCalculator from '../../components/LinkBudgetCalculator.jsx';
 import WorkedExample from '../../components/primitives/WorkedExample.jsx';
 import Quiz from '../../components/primitives/Quiz.jsx';
+import GatedAssessment from '../../components/primitives/GatedAssessment.jsx';
 import Flashcard from '../../components/Flashcard.jsx';
 
 export const meta = {
@@ -353,54 +354,61 @@ Total loss:                               9.60 dB`}
       />
 
       {/* ── PER-LESSON QUIZ ──────────────────────────────────────────────── */}
-      <Quiz
+      <GatedAssessment
+        courseId="T02"
+        assessmentId="T02-L06"
         title="T02.L06 Check — Link Budget"
-        mode="multiple-choice"
-        questions={[
-          {
-            id: 'T02-L06-Q1',
-            type: 'mc',
-            prompt:
-              'A fiber link has: Tx = +5 dBm, Rx sensitivity = −22 dBm, fiber = 25 km × 0.25 dB/km, 8 splices × 0.15 dB, 6 connectors × 0.30 dB, 3 dB safety margin. Does this link pass?',
-            choices: [
-              'Yes — headroom is positive',
-              'No — headroom is negative',
-              'Yes, but just barely — headroom is 0 dB',
-              'Cannot be determined without knowing the fiber type',
-            ],
-            answerIndex: 0,
-            explanation:
-              'Budget = 5 − (−22) = 27 dB. Losses: fiber = 25 × 0.25 = 6.25 dB, splices = 8 × 0.15 = 1.20 dB, connectors = 6 × 0.30 = 1.80 dB, margin = 3.00 dB. Total = 12.25 dB. Headroom = 27.0 − 12.25 = 14.75 dB. Link passes with 14.75 dB headroom.',
-            citation: 'Link budget calculation methodology; FOA planning values.',
-          },
-          {
-            id: 'T02-L06-Q2',
-            type: 'mc',
-            prompt:
-              'Why does a link budget always include a "safety margin" (typically 3 dB) that is reserved and never allocated to components?',
-            choices: [
-              'To account for the loss introduced by the OTDR measurement cable',
-              'To reserve optical power for fiber aging, thermal effects, connector wear over time, and future re-splices',
-              'Because TIA-568 requires a 3 dB mandatory reserve on all SMF links',
-              'To account for the difference between 1310 nm and 1550 nm planning values',
-            ],
-            answerIndex: 1,
-            explanation:
-              'Optical fiber plant degrades over time: fiber attenuation increases slightly with age and temperature cycling; connectors accumulate contamination and wear; splice cases experience freeze-thaw stress. A 3 dB margin ensures the link still works after 20+ years of service, re-splices, and component replacements.',
-            fieldNote:
-              'On RUS-financed projects, the design life expectation is 30+ years. A 3 dB safety margin is standard practice. Some customers require 4–5 dB. Removing it to squeeze in more distance is a deferred failure.',
-          },
-          {
-            id: 'T02-L06-Q3',
-            type: 'fill-in-blank',
-            prompt:
-              'If Tx power = +3 dBm and Rx sensitivity = −25 dBm, the available optical budget is ____ dB.',
-            answer: '28',
-            answerDisplay: '28 dB',
-            explanation:
-              'Budget = Tx − Rx = +3 − (−25) = 3 + 25 = 28 dB. Subtracting a negative sensitivity flips to addition of the absolute value.',
-          },
-        ]}
+        fallback={
+        <Quiz
+          title="T02.L06 Check — Link Budget"
+          mode="multiple-choice"
+          questions={[
+            {
+              id: 'T02-L06-Q1',
+              type: 'mc',
+              prompt:
+                'A fiber link has: Tx = +5 dBm, Rx sensitivity = −22 dBm, fiber = 25 km × 0.25 dB/km, 8 splices × 0.15 dB, 6 connectors × 0.30 dB, 3 dB safety margin. Does this link pass?',
+              choices: [
+                'Yes — headroom is positive',
+                'No — headroom is negative',
+                'Yes, but just barely — headroom is 0 dB',
+                'Cannot be determined without knowing the fiber type',
+              ],
+              answerIndex: 0,
+              explanation:
+                'Budget = 5 − (−22) = 27 dB. Losses: fiber = 25 × 0.25 = 6.25 dB, splices = 8 × 0.15 = 1.20 dB, connectors = 6 × 0.30 = 1.80 dB, margin = 3.00 dB. Total = 12.25 dB. Headroom = 27.0 − 12.25 = 14.75 dB. Link passes with 14.75 dB headroom.',
+              citation: 'Link budget calculation methodology; FOA planning values.',
+            },
+            {
+              id: 'T02-L06-Q2',
+              type: 'mc',
+              prompt:
+                'Why does a link budget always include a "safety margin" (typically 3 dB) that is reserved and never allocated to components?',
+              choices: [
+                'To account for the loss introduced by the OTDR measurement cable',
+                'To reserve optical power for fiber aging, thermal effects, connector wear over time, and future re-splices',
+                'Because TIA-568 requires a 3 dB mandatory reserve on all SMF links',
+                'To account for the difference between 1310 nm and 1550 nm planning values',
+              ],
+              answerIndex: 1,
+              explanation:
+                'Optical fiber plant degrades over time: fiber attenuation increases slightly with age and temperature cycling; connectors accumulate contamination and wear; splice cases experience freeze-thaw stress. A 3 dB margin ensures the link still works after 20+ years of service, re-splices, and component replacements.',
+              fieldNote:
+                'On RUS-financed projects, the design life expectation is 30+ years. A 3 dB safety margin is standard practice. Some customers require 4–5 dB. Removing it to squeeze in more distance is a deferred failure.',
+            },
+            {
+              id: 'T02-L06-Q3',
+              type: 'fill-in-blank',
+              prompt:
+                'If Tx power = +3 dBm and Rx sensitivity = −25 dBm, the available optical budget is ____ dB.',
+              answer: '28',
+              answerDisplay: '28 dB',
+              explanation:
+                'Budget = Tx − Rx = +3 − (−25) = 3 + 25 = 28 dB. Subtracting a negative sensitivity flips to addition of the absolute value.',
+            },
+          ]}
+        />
+        }
       />
 
     </LessonLayout>
