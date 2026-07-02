@@ -1,0 +1,122 @@
+{
+  "assessmentId": "T19-L03",
+  "kind": "lesson",
+  "courseId": "T19",
+  "lessonId": "T19.L03",
+  "drawCount": 4,
+  "passThreshold": 70,
+  "pool": [
+    {
+      "id": "T19-L03-Q1",
+      "type": "mc",
+      "prompt": "In a –48VDC CO power plant, which terminal of the battery string is connected to earth ground (held at 0 V)?",
+      "choices": [
+        "The negative (–) terminal, because negative voltage is referenced to earth",
+        "The positive (+) terminal — this is the negative-ground convention, where the positive terminal is grounded at 0 V and the negative terminal drives the load at –48 V",
+        "Neither terminal is grounded — DC plants are floating (isolated) from earth",
+        "Both terminals are grounded, with –48 V maintained as a differential"
+      ],
+      "answerIndex": 1,
+      "explanation": "In the negative-ground convention, the battery's positive terminal is the battery return — connected to earth ground at 0 V. Equipment chassis bond to this 0 V return. The battery's negative terminal connects through the distribution bus to equipment loads at –48 V. Counterintuitive, but correct.",
+      "citation": "Standard telecom DC power-plant convention (foundational; consistent across NEBS-rated equipment design practice)."
+    },
+    {
+      "id": "T19-L03-Q2",
+      "type": "mc",
+      "prompt": "A –48V battery string consists of 24 cells in series. What is the nominal voltage per cell?",
+      "choices": ["1 V", "2 V", "4 V", "12 V"],
+      "answerIndex": 1,
+      "explanation": "24 cells x 2 V per cell = 48 V nominal. Float voltage (fully charged) is typically 2.25-2.27 V per cell, so a fully charged 24-cell string measures roughly 54 V.",
+      "citation": "Standard VRLA battery-string convention."
+    },
+    {
+      "id": "T19-L03-Q3",
+      "type": "mc",
+      "prompt": "An OSP engineer is specifying the power plant for a rural FTTH hut. The OLT draws 32 A at –48 VDC. The required reserve time is 4 hours. De-rating factor is 0.8 (for temperature and end-of-life). What is the required battery string capacity?",
+      "choices": [
+        "128 Ah (32 x 4 = 128 Ah, no de-rating)",
+        "160 Ah (32 x 4 / 0.8 = 160 Ah)",
+        "102.4 Ah (32 x 4 x 0.8 = 102.4 Ah)",
+        "80 Ah (32 x 4 / 1.6 = 80 Ah)"
+      ],
+      "answerIndex": 1,
+      "explanation": "Step 1: Raw Ah = Load x Time = 32 A x 4 h = 128 Ah. Step 2: De-rating DIVIDES the raw Ah by the de-rating factor (not multiplies) to account for capacity loss at high temperature and end-of-life degradation. Sized Ah = 128 / 0.8 = 160 Ah.",
+      "citation": "Standard battery-sizing methodology; consistent with BICSI 002 [confirm edition] battery-plant sizing guidance."
+    },
+    {
+      "id": "T19-L03-Q4",
+      "type": "mc",
+      "prompt": "A CO battery plant shows a bus voltage of –54 V during normal operations (utility power normal, equipment running). Is this a fault condition?",
+      "choices": [
+        "Yes — the nominal voltage is –48 V; –54 V indicates overcharging and cell damage",
+        "No — –54 V is the expected float voltage for a fully charged 24-cell VRLA string at roughly 2.25 V per cell (24 x 2.25 = 54 V). Equipment must be rated for this full float voltage range.",
+        "Yes — normal operating voltage should be exactly –48 V; any deviation means a rectifier fault",
+        "No — but voltage above –52 V triggers an automatic load-disconnect in all NEBS equipment"
+      ],
+      "answerIndex": 1,
+      "explanation": "Float voltage for VRLA cells is typically 2.25-2.27 V per cell [verify with battery manufacturer; see IEEE 1188 [confirm edition] for VRLA maintenance and float-voltage test methodology]. At 24 cells, this is 54-54.5 V. A bus reading of -54 V is normal fully-charged float voltage, not a fault.",
+      "citation": "IEEE 1188 [confirm edition] — VRLA battery maintenance methodology."
+    },
+    {
+      "id": "T19-L03-Q5",
+      "type": "mc",
+      "prompt": "Which component in a CO power plant continuously charges the battery strings while simultaneously supplying DC power to the equipment?",
+      "choices": [
+        "The ATS (Automatic Transfer Switch)",
+        "The PDU (Power Distribution Unit)",
+        "The rectifier",
+        "The VRLA battery management controller"
+      ],
+      "answerIndex": 2,
+      "explanation": "Rectifiers convert AC utility power to regulated DC and perform both functions simultaneously: supply DC to equipment AND maintain float charge on the battery strings. When utility fails, rectifiers stop supplying power and the batteries discharge through the same bus without any switching event.",
+      "citation": "Standard telecom DC power-plant architecture."
+    },
+    {
+      "id": "T19-L03-Q6",
+      "type": "mc",
+      "prompt": "Why do modern telecom power plants use –48VDC rather than AC directly from batteries?",
+      "choices": [
+        "Batteries store DC energy natively; running equipment on DC avoids the extra hardware, cost, and failure point of an inverter needed to convert battery DC back to AC",
+        "AC power cannot be transmitted more than 50 feet inside a building",
+        "The FCC mandates DC power for all telecommunications equipment",
+        "DC power is required so that fiber optic signals can be carried on the same conductors"
+      ],
+      "answerIndex": 0,
+      "explanation": "When utility power fails, stored energy (batteries) must supply the equipment. Batteries store DC natively. If equipment ran on AC, an inverter would be needed to convert battery DC back to AC — extra hardware, extra cost, and a potential failure point. Running equipment directly on DC eliminates that conversion step.",
+      "citation": "Standard telecom power-engineering rationale."
+    },
+    {
+      "id": "T19-L03-Q7",
+      "type": "mc",
+      "prompt": "What does VRLA stand for, and why is it the standard battery technology in CO power plants?",
+      "choices": [
+        "Variable-Rate Lithium Array — high-density lithium cells for compact installations",
+        "Valve-Regulated Lead-Acid — sealed, maintenance-free (no water topping-off), and spill-proof, so it can be installed in equipment bays without a dedicated battery room",
+        "Voltage-Regulated Line Adapter — a power-conditioning device, not a battery type",
+        "Vented Reserve Lead-Acid — an open-vent design requiring monthly water top-off"
+      ],
+      "answerIndex": 1,
+      "explanation": "Valve-Regulated Lead-Acid (VRLA) batteries are sealed and maintenance-free. Two subtypes exist: AGM (Absorbent Glass Mat, most common in CO applications) and gel. VRLA's spill-proof, no-topping-off design lets it be installed directly in equipment bays rather than requiring a dedicated flooded-cell battery room.",
+      "citation": "Standard VRLA battery technology description."
+    },
+    {
+      "id": "T19-L03-Q8",
+      "type": "drag-match",
+      "prompt": "Match each –48VDC power-plant term to its correct definition.",
+      "items": [
+        { "id": "i_rectifier", "label": "Converts AC utility power to regulated DC and float-charges the batteries" },
+        { "id": "i_battery_return", "label": "The positive terminal side of the battery plant, held at 0 V (earth ground)" },
+        { "id": "i_distribution_bus", "label": "The copper busbar with fused positions distributing DC to each equipment load" },
+        { "id": "i_float_voltage", "label": "The constant DC voltage rectifiers maintain to keep batteries fully charged without overcharging" }
+      ],
+      "targets": [
+        { "id": "t_rectifier", "label": "rectifier" },
+        { "id": "t_battery_return", "label": "battery return" },
+        { "id": "t_distribution_bus", "label": "distribution bus" },
+        { "id": "t_float_voltage", "label": "float voltage" }
+      ],
+      "correctMap": { "t_rectifier": "i_rectifier", "t_battery_return": "i_battery_return", "t_distribution_bus": "i_distribution_bus", "t_float_voltage": "i_float_voltage" },
+      "explanation": "Rectifiers do double duty: supplying equipment DC load and float-charging the batteries. The battery return is the grounded positive terminal. The distribution bus fans DC out to individual fused equipment loads. Float voltage is the steady charging voltage (2.25-2.27 V/cell for VRLA) that keeps the string topped off without overcharging."
+    }
+  ]
+}

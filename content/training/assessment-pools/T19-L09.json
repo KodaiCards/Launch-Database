@@ -1,0 +1,115 @@
+{
+  "assessmentId": "T19-L09",
+  "kind": "lesson",
+  "courseId": "T19",
+  "lessonId": "T19.L09",
+  "drawCount": 4,
+  "passThreshold": 70,
+  "pool": [
+    {
+      "id": "T19-L09-Q1",
+      "type": "mc",
+      "prompt": "Inside an FDH, the modular bay slots accept what type of module that houses the passive optical splitters?",
+      "choices": ["Splice organizer trays", "Splitter cassettes", "FOSC modules", "Distribution frames"],
+      "answerIndex": 1,
+      "explanation": "Modular bay slots accept splitter cassettes. Each cassette is a self-contained module housing one or more passive splitters. Splice trays sit in the feeder-entry section; FOSCs are separate closures; distribution frames are headend-side hardware.",
+      "citation": "Standard FDH internal-architecture terminology."
+    },
+    {
+      "id": "T19-L09-Q2",
+      "type": "mc",
+      "prompt": "A 1x32 splitter cassette takes how many input fiber(s) and presents how many subscriber output port(s)?",
+      "choices": ["32 input / 1 output", "2 input / 32 output", "1 input / 32 output", "4 input / 8 output"],
+      "answerIndex": 2,
+      "explanation": "A 1x32 splitter takes ONE feeder input and splits it to 32 subscriber outputs — the defining topology of PON: one feeder strand serves up to 32 subscribers on GPON (up to 128 on XGS-PON with higher OLT transmit power).",
+      "citation": "ITU-T G.984.2; ITU-T G.9807.1 [confirm edition]."
+    },
+    {
+      "id": "T19-L09-Q3",
+      "type": "mc",
+      "prompt": "The demarc for a residential GPON subscriber is typically located at:",
+      "choices": [
+        "The FDH connector field port",
+        "The OLT port card in the headend",
+        "The ONT mounted at the customer premises",
+        "The splice organizer tray inside the FDH"
+      ],
+      "answerIndex": 2,
+      "explanation": "The demarc is the ONT at the subscriber's premises. The carrier owns and maintains everything from the OLT through the feeder, FDH splitter, and drop fiber to the ONT input port. The customer owns the ONT output ports and everything beyond.",
+      "citation": "Standard demarcation-point convention in FTTH deployments."
+    },
+    {
+      "id": "T19-L09-Q4",
+      "type": "mc",
+      "prompt": "Before connecting a subscriber's drop fiber to an FDH port that appears physically free (dust cap on, no fiber installed), what should a field technician do?",
+      "choices": [
+        "Connect immediately — a dust cap means the port is available",
+        "Verify OSS (Operations Support System) records to confirm the port is unassigned before connecting",
+        "Call the NOC to have them release the port, without checking OSS records directly",
+        "Remove the cassette and inspect the splitter internally"
+      ],
+      "answerIndex": 1,
+      "explanation": "A physical dust cap does not mean the port is OSS-unassigned. A capped port may belong to a temporarily-disconnected subscriber or a pending install. Physical plant and OSS records must agree before a technician connects a new subscriber to a port.",
+      "citation": "Standard field-provisioning practice."
+    },
+    {
+      "id": "T19-L09-Q5",
+      "type": "mc",
+      "prompt": "Per ITU-T G.671, what is the maximum allowable insertion loss for a 1x32 PLC (Planar Lightwave Circuit) passive optical splitter, and why should this figure — rather than typical field-measured values — be used in a GPON link budget?",
+      "choices": [
+        "17.0 dB — always use the typical field-measured value, since it reflects real-world performance",
+        "18.1 dB is the standards ceiling; design to this worst-case figure so that if the link passes at 18.1 dB, it will pass with any compliant installed splitter, even though field units often measure lower (roughly 17-17.5 dB)",
+        "25.0 dB — the splitter loss figure is the same regardless of split ratio",
+        "There is no standardized maximum; each manufacturer sets its own limit with no common ceiling"
+      ],
+      "answerIndex": 1,
+      "explanation": "ITU-T G.671 sets 18.1 dB as the maximum allowable insertion loss for a 1x32 PLC splitter. Field-installed units from major manufacturers often measure better (roughly 17-17.5 dB) under lab conditions, but a link budget should be designed to the 18.1 dB standards ceiling — if the design passes at that figure, it will pass with any compliant device.",
+      "citation": "ITU-T G.671 [confirm edition]."
+    },
+    {
+      "id": "T19-L09-Q6",
+      "type": "mc",
+      "prompt": "Drop fiber typically connects the FDH connector field to which of the following?",
+      "choices": [
+        "The OLT in the headend rack",
+        "The feeder splice point in the FOSC",
+        "The ONT at the subscriber demarc",
+        "The TMGB in the headend equipment room"
+      ],
+      "answerIndex": 2,
+      "explanation": "Drop fiber is the last segment — from the FDH connector field to the subscriber ONT (the demarc). It is distinct from feeder fiber (OLT/headend to FDH) and from express fiber (passing through an FOSC without being accessed).",
+      "citation": "Standard FTTH signal-chain terminology."
+    },
+    {
+      "id": "T19-L09-Q7",
+      "type": "mc",
+      "prompt": "Why are GPON subscriber ports in an FDH connector field always specified as SC/APC rather than SC/UPC?",
+      "choices": [
+        "SC/UPC connectors are physically incompatible with the FDH housing",
+        "The APC ferrule's roughly 8-degree angled face reduces back-reflection by around 60 dB compared to a flat UPC connector; in a shared PON, elevated back-reflection at even one subscriber port can degrade upstream signal quality for all subscribers sharing that splitter",
+        "SC/APC is cheaper to manufacture than SC/UPC at scale",
+        "SC/APC connectors carry more optical power than SC/UPC connectors"
+      ],
+      "answerIndex": 1,
+      "explanation": "The angled APC ferrule reduces back-reflection substantially compared to a flat UPC connector. Because a GPON splitter shares one feeder input across up to 32-64 subscribers, elevated back-reflection at any single subscriber port can propagate upstream and degrade signal quality for the entire shared PON branch — not just the affected subscriber.",
+      "citation": "ITU-T G.984.2; standard GPON connector-type convention."
+    },
+    {
+      "id": "T19-L09-Q8",
+      "type": "drag-match",
+      "prompt": "Match each zone inside an FDH cabinet to what it contains.",
+      "items": [
+        { "id": "i_zone1", "label": "Gel-free splice organizer tray where feeder buffer tubes are fanned out and fibers spliced or expressed through" },
+        { "id": "i_zone2", "label": "Removable splitter cassettes housing the passive optical splitters" },
+        { "id": "i_zone3", "label": "SC/APC ports, one per subscriber, where the field tech plugs in the drop fiber" }
+      ],
+      "targets": [
+        { "id": "t_zone1", "label": "Zone 1 — Feeder Entry" },
+        { "id": "t_zone2", "label": "Zone 2 — Modular Bay Slots" },
+        { "id": "t_zone3", "label": "Zone 3 — Subscriber Connector Field" }
+      ],
+      "correctMap": { "t_zone1": "i_zone1", "t_zone2": "i_zone2", "t_zone3": "i_zone3" },
+      "explanation": "The three FDH zones flow left to right (or bottom to top): feeder entry (splice tray, express/split decision), modular bay slots (splitter cassettes), and the subscriber connector field (labeled SC/APC ports for drop fiber connections)."
+    }
+  ]
+}

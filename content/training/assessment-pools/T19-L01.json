@@ -1,0 +1,125 @@
+{
+  "assessmentId": "T19-L01",
+  "kind": "lesson",
+  "courseId": "T19",
+  "lessonId": "T19.L01",
+  "drawCount": 4,
+  "passThreshold": 70,
+  "pool": [
+    {
+      "id": "T19-L01-Q1",
+      "type": "mc",
+      "prompt": "An OSP crew pulls a feeder cable through conduit into a rural FTTH hut. Where does the OSP engineer's responsibility end inside the building?",
+      "choices": [
+        "At the OLT shelf, when the fiber is plugged into the OLT port",
+        "At the ODF (Optical Distribution Frame) splice organizer in the MDF bay, where OSP fibers are broken out and spliced to inside-plant pigtails",
+        "At the building wall, where the conduit enters",
+        "At the MEF primary protector — anything past the protector is ISP work"
+      ],
+      "answerIndex": 1,
+      "explanation": "The OSP termination point is the ODF splice organizer — where OSP feeder fiber's individual fibers are broken out and connected (by fusion splice) to inside-plant pigtails. The conduit entry through the wall (MEF) is also OSP work, but the final handoff point is the ODF. The patch cord from the ODF to the OLT is inside-plant work.",
+      "citation": "TIA-569-E [confirm edition] — telecommunications pathways and spaces."
+    },
+    {
+      "id": "T19-L01-Q2",
+      "type": "mc",
+      "prompt": "A rural ISP is building an FTTH network to serve 600 subscribers spread across a 15-mile radius. The nearest carrier CO is 35 miles away. What building type is most appropriate for the OSP headend termination point?",
+      "choices": [
+        "A full telephone-company CO with 10,000 sq ft of equipment space",
+        "A prefab hut (roughly 12x20 ft) placed centrally in the service area, containing an OLT shelf, small battery plant, and HVAC",
+        "A standard office building with the OLT in a server closet",
+        "No building — the OLT should be mounted on a pole in a weatherproof enclosure"
+      ],
+      "answerIndex": 1,
+      "explanation": "For 600 subscribers in a rural FTTH deployment, a prefab hut is the standard solution — it provides the controlled environment (temperature, security, power) an OLT needs without the cost of a full CO. RUS-program engineering packages routinely include prefab-hut building specifications as part of the OSP engineer's deliverable.",
+      "citation": "Industry-standard rural FTTH hut design practice on RUS-program builds."
+    },
+    {
+      "id": "T19-L01-Q3",
+      "type": "mc",
+      "prompt": "The MEF (Main Entrance Facility) at a CO or hut is most accurately described as:",
+      "choices": [
+        "The room where the OLT equipment is installed",
+        "The location where OSP cables enter the building, primary protectors are mounted, bonding hardware is installed, and service loops are coiled",
+        "The outdoor pad where the generator and ATS are located",
+        "The battery room containing rectifiers and DC distribution panels"
+      ],
+      "answerIndex": 1,
+      "explanation": "The MEF (also called MPOE — Minimum Point of Entry) is the physical location where OSP cables transition from the outside plant into the building. Primary protectors mount here (or immediately adjacent), bonding hardware connects OSP armor to the building grounding system, and service loops are coiled for future re-terminations. The OSP engineer owns this zone.",
+      "citation": "TIA-569-E [confirm edition]."
+    },
+    {
+      "id": "T19-L01-Q4",
+      "type": "mc",
+      "prompt": "In a fiber network, the MDF (Main Distribution Frame) is most often built as which type of frame, and why?",
+      "choices": [
+        "A 66-block copper cross-connect frame, because fiber networks still use copper for cross-connects",
+        "An ODF (Optical Distribution Frame) — a rack holding fusion-splice trays and connector panels, because the terminating medium is fiber, not copper",
+        "A patch bay identical to an audio recording studio's patch bay, with no splice capability",
+        "A CMTS chassis, because all MDFs in modern networks are cable-TV equipment"
+      ],
+      "answerIndex": 1,
+      "explanation": "An ODF (Optical Distribution Frame) is the fiber-specific equivalent of the traditional copper MDF. Where a copper MDF held 66-blocks and 110-blocks, an ODF holds splice organizers with fusion-splice trays and connector panels (LC, SC, MPO) on the front face. All OSP feeder fibers land at the ODF first.",
+      "citation": "TIA-569-E [confirm edition] — pathways and spaces terminology."
+    },
+    {
+      "id": "T19-L01-Q5",
+      "type": "mc",
+      "prompt": "An OSP project manager reviews a hut building specification for a RUS-funded FTTH build. The spec includes the OLT shelf, battery plant, and HVAC — but says nothing about conduit entry sleeves, duct seal, or service loops. What is the most likely consequence?",
+      "choices": [
+        "No consequence — the ISP team will handle conduit entry details during commissioning",
+        "The building will be installed without sealed conduit entries and without service loops. Moisture can migrate through unsealed conduit into the building, and the crew may have to cut through finished wall to route service loops when the cable is re-terminated",
+        "The RUS inspector will catch the omission during design review and automatically add the missing spec",
+        "The general contractor will default to code-minimum conduit sealing, which is sufficient for a hut"
+      ],
+      "answerIndex": 1,
+      "explanation": "Conduit entry sealing, duct seal, and service-loop routing are OSP deliverables that must be specified at design time. Nobody else defaults to specifying them. Unsealed conduit entries are a documented moisture-ingress and rodent-intrusion path in rural huts, and missing service loops mean the first cable re-termination requires pulling new cable.",
+      "citation": "Field practice; industry rural-hut design guidance."
+    },
+    {
+      "id": "T19-L01-Q6",
+      "type": "mc",
+      "prompt": "Per TIA-942-C's [confirm edition] telecom-space taxonomy, which space is the equivalent of a smaller facility's MEF — the first point inside the building where service providers' cables converge?",
+      "choices": [
+        "MER (Main Equipment Room)",
+        "MEET (Main Equipment Entry for Telecommunications)",
+        "TR (Telecommunications Room)",
+        "EDA (Equipment Distribution Area)"
+      ],
+      "answerIndex": 1,
+      "explanation": "TIA-942-C defines MEET as the first point inside a building where service-provider cables converge — the larger-facility equivalent of the MEF. MER is the primary equipment room, TR is a secondary equipment room, and EDA is the zone at the edge of a TR serving individual racks (entirely inside-plant scope).",
+      "citation": "TIA-942-C [confirm edition] — awareness-level space taxonomy."
+    },
+    {
+      "id": "T19-L01-Q7",
+      "type": "drag-match",
+      "prompt": "Match each CO/headend building zone to whether it is OSP territory, an OSP/ISP shared boundary, or ISP-only territory.",
+      "items": [
+        { "id": "i_osp", "label": "OSP territory (OSP deliverable)" },
+        { "id": "i_boundary", "label": "OSP/ISP boundary (OSP terminates, ISP patches out)" },
+        { "id": "i_isp", "label": "ISP territory (awareness only for OSP)" }
+      ],
+      "targets": [
+        { "id": "t_mef", "label": "MEF — conduit entry, primary protector, bonding, service loop" },
+        { "id": "t_mdf", "label": "MDF/ODF room — splice trays, patch panels, feeder-to-pigtail splices" },
+        { "id": "t_mer", "label": "MER/Equipment Room — OLT shelves, CMTS, routers, switches" }
+      ],
+      "correctMap": { "t_mef": "i_osp", "t_mdf": "i_boundary", "t_mer": "i_isp" },
+      "explanation": "The MEF is a pure OSP deliverable — conduit sleeves, duct seal, service loops, and bonding hardware are the OSP engineer's design responsibility. The MDF/ODF room is the shared boundary: OSP terminates its feeder fibers there, and the ISP patches out to active equipment. The MER (equipment room) is ISP territory — OSP engineers only need awareness of what's there and why."
+    },
+    {
+      "id": "T19-L01-Q8",
+      "type": "mc",
+      "prompt": "What is the key difference between an MDF and an IDF in a telecom building?",
+      "choices": [
+        "An MDF is outdoors and an IDF is indoors",
+        "The MDF is the primary cross-connect point where OSP cables first terminate; the IDF is a secondary cross-connect point serving a floor or wing, connected back to the MDF via backbone cabling",
+        "An MDF only exists in fiber networks; an IDF only exists in copper networks",
+        "The IDF is always larger than the MDF because it serves more subscribers"
+      ],
+      "answerIndex": 1,
+      "explanation": "The MDF is the primary cross-connect point in a CO or headend, where OSP cables land first. The IDF is a secondary cross-connect point serving a floor or wing within a larger building, tied back to the MDF via backbone cabling. Small huts and headends typically have no IDF at all — the MDF is the only frame.",
+      "citation": "TIA-569-E [confirm edition]."
+    }
+  ]
+}

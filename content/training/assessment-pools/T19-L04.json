@@ -1,0 +1,127 @@
+{
+  "assessmentId": "T19-L04",
+  "kind": "lesson",
+  "courseId": "T19",
+  "lessonId": "T19.L04",
+  "drawCount": 4,
+  "passThreshold": 70,
+  "pool": [
+    {
+      "id": "T19-L04-Q1",
+      "type": "mc",
+      "prompt": "What happens to CO equipment during the window between utility power failure and the generator reaching stable output?",
+      "choices": [
+        "Equipment shuts down and restarts when generator power is available",
+        "The battery plant supplies DC continuously — equipment runs without any power interruption or reset",
+        "The ATS buffers the transition so equipment sees no voltage dip, without any battery involvement",
+        "A UPS temporarily supplies AC power from stored energy during the generator start period"
+      ],
+      "answerIndex": 1,
+      "explanation": "The CO battery plant is a continuous, uninterrupted DC source. When utility fails, rectifiers stop converting AC to DC and the batteries immediately supply the DC bus — no switching, no delay. The generator's transfer time (typically 10-15 seconds for a modern diesel unit) is entirely absorbed by the battery reserve.",
+      "citation": "Telcordia GR-63-CORE [paywalled — exact transfer-time figure not independently re-verified this session; general battery-sustains-load-during-transfer principle is standard telecom power-plant design practice]."
+    },
+    {
+      "id": "T19-L04-Q2",
+      "type": "mc",
+      "prompt": "Per NFPA 110, standby generators should be exercised under load at a minimum of what percentage of rated nameplate kilowatts, for how long, each month?",
+      "choices": [
+        "10% of rated load for 10 minutes",
+        "30% of rated load for at least 30 continuous minutes",
+        "50% of rated load for 1 hour",
+        "100% of rated load for 15 minutes"
+      ],
+      "answerIndex": 1,
+      "explanation": "NFPA 110 requires monthly exercise at no less than 30% of rated nameplate kW for a minimum of 30 continuous minutes (timed from when the generator accepts the load), followed by a cooldown period. Running a generator unloaded does not verify load-carrying capability and can promote cylinder glaze and carbon buildup.",
+      "citation": "NFPA 110 [confirm current edition] — monthly generator exercise requirement."
+    },
+    {
+      "id": "T19-L04-Q3",
+      "type": "mc",
+      "prompt": "A generator consistently fails to meet its 30%-of-nameplate monthly load-test requirement over the course of a year. What does NFPA 110 require as a result?",
+      "choices": [
+        "Nothing additional — monthly testing at any load level satisfies the standard",
+        "An annual supplemental load-bank test: not less than 50% of nameplate kW for 30 continuous minutes, then not less than 75% of nameplate kW for 1 continuous hour (1.5 hours total)",
+        "Immediate generator replacement",
+        "A one-time test at 100% of rated load for 5 minutes"
+      ],
+      "answerIndex": 1,
+      "explanation": "If a diesel generator does not meet the monthly 30%-of-nameplate requirement, NFPA 110 requires an annual supplemental load-bank test: 50% nameplate kW for 30 minutes, then 75% nameplate kW for 1 hour — a conditional, tiered test, not a single 'full-load' test. If the unit consistently meets its monthly requirement, the annual supplemental test is not required.",
+      "citation": "NFPA 110 [confirm current edition] — annual supplemental load test provisions."
+    },
+    {
+      "id": "T19-L04-Q4",
+      "type": "mc",
+      "prompt": "What is the primary risk of storing diesel fuel in a generator tank for more than roughly 12 months without treatment?",
+      "choices": [
+        "Diesel evaporates significantly, reducing tank level by 20-30% per year",
+        "Diesel becomes electrically conductive, creating a shock hazard when topping off the tank",
+        "Diesel degrades — water absorption, microbial growth, and oxidation form gum, sludge, and sediment that can clog fuel injectors and cause generator failure on demand",
+        "Diesel fuel exceeding 12 months is classified as a hazardous material and must be disposed of"
+      ],
+      "answerIndex": 2,
+      "explanation": "Diesel fuel stored for extended periods without treatment undergoes oxidation, water absorption, and microbial growth (especially in humid climates), forming gum, sludge, and particulate contamination that can clog fuel injectors. Fuel polishing (filtration + water removal) or stabilizer treatment extends storage life.",
+      "citation": "ASTM D975 [confirm current edition] — diesel fuel stability; industry generator-maintenance practice."
+    },
+    {
+      "id": "T19-L04-Q5",
+      "type": "mc",
+      "prompt": "An OSP engineer is sizing a generator for a rural FTTH hut. The rectifiers draw 4 kW (AC input). The HVAC unit is a 2-ton split system with 2.5 kW running draw and a 7 kW starting surge. Lighting and monitoring draw 0.5 kW. What generator rating should be specified, including 25% headroom?",
+      "choices": [
+        "7 kW — sum of running loads is 7 kW; the generator handles steady state",
+        "10 kW — running loads plus 25% headroom",
+        "20 kW — must handle the HVAC starting surge (7 kW) plus other coincident running loads (4.5 kW), then 25% headroom",
+        "5 kW — rectifiers are the only critical load; HVAC can be shut off during outages"
+      ],
+      "answerIndex": 2,
+      "explanation": "Generator sizing must handle the worst-case coincident surge, not just steady-state running load. Peak coincident demand: HVAC starting surge (7 kW) + rectifiers (4 kW) + lighting (0.5 kW) = 11.5 kW. With 25% headroom: 11.5 x 1.25 = 14.4 kW — round up to the next standard size, 15 or 20 kW.",
+      "citation": "Standard generator-sizing methodology accounting for motor starting surge."
+    },
+    {
+      "id": "T19-L04-Q6",
+      "type": "mc",
+      "prompt": "What is an ATS (Automatic Transfer Switch) and what event triggers it to act?",
+      "choices": [
+        "A device that monitors the utility AC feed and automatically switches the building's electrical load from utility to generator power when utility fails, and back when utility is restored",
+        "A switch inside the OLT chassis that transfers traffic between line cards during a failure",
+        "A manual switch that a technician must throw on-site whenever a power outage occurs",
+        "A device that converts –48VDC to 120VAC for equipment that requires AC input"
+      ],
+      "answerIndex": 0,
+      "explanation": "The ATS monitors utility voltage and automatically switches the building load between utility and generator sources. It closes the generator breaker only once generator output is stable (within frequency and voltage spec), and transfers back to utility once utility power is confirmed stable for a programmed confirmation period.",
+      "citation": "Standard ATS function description; consistent with NFPA 110 [confirm edition] generator-transfer practice."
+    },
+    {
+      "id": "T19-L04-Q7",
+      "type": "mc",
+      "prompt": "A rural FTTH hut experiences a 6-hour utility outage. The battery plant was specified for 4-hour reserve, and no generator was included in the design (marked 'future provision only'). What is the correct assessment of this outcome?",
+      "choices": [
+        "This is expected — 4-hour reserve is always sufficient regardless of outage duration",
+        "This is an engineering/design-spec omission, not an operations failure — for a production CO in an area with outages that can exceed the battery reserve, a generator should have been part of the original engineering package",
+        "This is the battery vendor's fault for failing before its rated time",
+        "This is the ISP's fault for not adding a generator after commissioning"
+      ],
+      "answerIndex": 1,
+      "explanation": "The battery performed exactly to its 4-hour spec. The real issue is that the design spec did not match the operational environment: in an area where utility outages routinely exceed the battery reserve, a generator is not optional. 'Future provision' trades upfront savings for a guaranteed, more expensive retrofit later.",
+      "citation": "Field practice; RUS-program rural-hut engineering-package norms."
+    },
+    {
+      "id": "T19-L04-Q8",
+      "type": "drag-match",
+      "prompt": "Match each step in the power-failure sequence to its approximate timing.",
+      "items": [
+        { "id": "i_t0", "label": "Utility fails; batteries instantly become the sole DC source, no equipment interruption" },
+        { "id": "i_crank", "label": "Generator engine cranks and reaches stable operating speed" },
+        { "id": "i_transfer", "label": "ATS closes generator breaker, opens utility breaker; rectifiers resume DC output" },
+        { "id": "i_restore", "label": "Utility restores; ATS confirms stability, transfers back, generator cools down and stops" }
+      ],
+      "targets": [
+        { "id": "t_t0", "label": "t = 0 s" },
+        { "id": "t_crank", "label": "t = 2-12 s" },
+        { "id": "t_transfer", "label": "t = 12-15 s (typical); up to 30 s worst-case per NEBS spec [paywalled — exact figure not independently verified]" },
+        { "id": "t_restore", "label": "Utility restoration (minutes to hours later)" }
+      ],
+      "correctMap": { "t_t0": "i_t0", "t_crank": "i_crank", "t_transfer": "i_transfer", "t_restore": "i_restore" },
+      "explanation": "The full sequence: batteries take over instantly at utility failure; the generator cranks and stabilizes over roughly 2-12 seconds; the ATS transfers the load once generator output is stable (typically 10-15 s, with a NEBS-cited 30 s worst-case ceiling); and when utility power returns and is confirmed stable, the ATS transfers back and the generator runs a cooldown cycle before shutting down."
+    }
+  ]
+}

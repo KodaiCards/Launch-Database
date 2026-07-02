@@ -1,0 +1,122 @@
+{
+  "assessmentId": "T19-L11",
+  "kind": "lesson",
+  "courseId": "T19",
+  "lessonId": "T19.L11",
+  "drawCount": 4,
+  "passThreshold": 70,
+  "pool": [
+    {
+      "id": "T19-L11-Q1",
+      "type": "mc",
+      "prompt": "You have designed a fiber path from a street pedestal to a CO headend. Where does your (OSP) responsibility STOP and the ISP's responsibility BEGIN?",
+      "choices": [
+        "At the connector on the patch panel (the demarcation point); everything downstream to the OLT is ISP responsibility",
+        "At the CO entrance; once the fiber is inside the CO building, it's the ISP's problem",
+        "At the OLT input; you are responsible for testing the signal all the way to the receiver",
+        "At the provisioning request; once ISP asks for the fiber, it's theirs to manage"
+      ],
+      "answerIndex": 0,
+      "explanation": "The demarcation point (usually a connector on a patch panel, FDH, or LIU) is where OSP fiber terminates and ISP provisioning begins. The OSP engineer is responsible for delivering the fiber to that point within loss spec. ISP owns everything from that connector downstream to their equipment.",
+      "citation": "Standard OSP/ISP handoff-boundary convention."
+    },
+    {
+      "id": "T19-L11-Q2",
+      "type": "mc",
+      "prompt": "You measured a fiber pair at 4.8 dB loss to the demarcation point during handoff. One week later, ISP re-tests the same fiber with an OLTS and reports 6.1 dB loss. Who is responsible for investigating and fixing this?",
+      "choices": [
+        "ISP — they caused the problem by touching the connector during patching",
+        "You (OSP) — the fiber degraded or the connector got contaminated, which happened on your side of the demarc",
+        "Neither — a 1.3 dB difference is within normal OLTS measurement uncertainty",
+        "The equipment manufacturer — the OLTS or fiber is malfunctioning"
+      ],
+      "answerIndex": 1,
+      "explanation": "A 1.3 dB shift is well outside normal OLTS repeatability (roughly +/-0.2 dB) and indicates a real problem on the OSP side of the demarc — a dirty connector, a bent or pinched fiber, or a degraded splice. The OSP engineer must inspect the fiber route, check the connector, clean or repair as needed, and re-test.",
+      "citation": "Standard OLTS measurement-repeatability practice; OSP/ISP handoff responsibility convention."
+    },
+    {
+      "id": "T19-L11-Q3",
+      "type": "mc",
+      "prompt": "ISP reports that a fiber failed signal acceptance at the OLT. The RX power is -35 dBm (well below the acceptable range of roughly -28 to -5 dBm for a GPON port). Your OLTS baseline showed 4.8 dB loss to the demarc. What is your first diagnostic step?",
+      "choices": [
+        "Ask ISP to re-test the fiber with OLTS at the demarc to see if the loss matches your baseline of 4.8 dB",
+        "Assume the fiber is bad and order a replacement fiber from the cable supplier",
+        "Check the OLT specification to see if -35 dBm is actually within a different acceptable range",
+        "Ask ISP to manually increase the OLT receiver gain to compensate for the low power"
+      ],
+      "answerIndex": 0,
+      "explanation": "Re-testing the fiber with OLTS at the demarc is the quickest diagnostic. If ISP measures 4.8 dB (matching your baseline), the fiber is good and the problem is downstream — patch cable loss, port issue, or receiver problem. If ISP measures 6+ dB, the fiber degraded and is OSP's responsibility. Always isolate the problem location at the demarcation point first.",
+      "citation": "Standard fiber-handoff troubleshooting sequence."
+    },
+    {
+      "id": "T19-L11-Q4",
+      "type": "mc",
+      "prompt": "In OSP-to-ISP handoff terminology, the physical location where OSP-terminated fiber meets ISP equipment (usually a connector on a patch panel or FDH) is called what?",
+      "choices": ["The provisioning point", "The demarcation point", "The cross-connect origin", "The acceptance boundary"],
+      "answerIndex": 1,
+      "explanation": "The demarcation point (or 'demarc') is the boundary between OSP and ISP scope. The OSP engineer owns the fiber path TO that point; the ISP owns everything FROM that point downstream.",
+      "citation": "Standard telecom demarcation-point terminology."
+    },
+    {
+      "id": "T19-L11-Q5",
+      "type": "mc",
+      "prompt": "A fiber passes your OLTS test at handoff (4.8 dB — acceptable). A week later, ISP reports the fiber fails signal acceptance with -35 dBm RX power at the OLT. ISP swaps their patch cable and the fiber then passes at a normal RX level. Whose problem was this?",
+      "choices": [
+        "OSP's problem — the fiber itself must have been marginal even though it tested acceptable",
+        "ISP's problem — a bad patch cable between the demarc and the OLT introduced excessive loss; the OSP fiber was never the issue",
+        "A shared problem requiring both parties to redesign the link budget",
+        "Neither party's problem — RX power fluctuations of this size are considered normal"
+      ],
+      "answerIndex": 1,
+      "explanation": "Since the fiber tested acceptable at handoff and the issue resolved after ISP swapped their patch cable, the root cause was on the ISP side of the demarc — a bad, pinched, or excessively long patch cable. The OSP fiber's performance never changed; the OSP engineer should document the fiber as verified and let ISP resolve their hardware issue.",
+      "citation": "Standard OSP/ISP fault-isolation practice."
+    },
+    {
+      "id": "T19-L11-Q6",
+      "type": "mc",
+      "prompt": "In a 'Fiber-to-the-LIU' handoff scenario (medium CO with active equipment), where is the demarcation point?",
+      "choices": [
+        "The FDH connector, because all fiber networks demarcate at the FDH regardless of building type",
+        "The LIU output connector — OSP fiber terminates on a pigtail inside the LIU mounted in the OLT chassis; ISP owns the patch cable and port configuration from there",
+        "The OLT port itself, since the LIU is considered part of the OSP scope",
+        "There is no fixed demarc in this scenario — it is negotiated case-by-case with no standard convention"
+      ],
+      "answerIndex": 1,
+      "explanation": "In the fiber-to-the-LIU scenario, OSP fiber terminates on a pigtail inside an LIU mounted in the OLT chassis. The demarc is the LIU output connector — the OSP engineer owns the fiber to that connector; the ISP owns the patch cable to the OLT port and the port configuration.",
+      "citation": "Standard OSP/ISP handoff scenario mapping (patch panel / LIU / FDH demarc variants)."
+    },
+    {
+      "id": "T19-L11-Q7",
+      "type": "mc",
+      "prompt": "What is the correct first action when ISP reports a fiber connector at the demarc measures dirty/contaminated, causing elevated loss after OSP handoff?",
+      "choices": [
+        "The OSP engineer must immediately replace the entire fiber run regardless of the cause",
+        "Ask ISP to clean the connector with isopropyl alcohol wipes and compressed air, then re-test; if loss returns to the original baseline, document the cleaning and move on",
+        "Ignore the report — connector contamination after handoff is always the OSP's fault and requires no ISP action",
+        "Assume the OLTS itself is miscalibrated and stop investigating the fiber"
+      ],
+      "answerIndex": 1,
+      "explanation": "Connector contamination that occurs during ISP handling, after a clean OSP handoff, is a mutual/ISP-side handoff issue best resolved by having ISP clean and re-test the connector. If loss returns to baseline after cleaning, document it; if not, further inspection of the fiber route is warranted.",
+      "citation": "Standard connector-contamination troubleshooting practice."
+    },
+    {
+      "id": "T19-L11-Q8",
+      "type": "drag-match",
+      "prompt": "Match each responsibility to the correct party (OSP or ISP).",
+      "items": [
+        { "id": "i_osp", "label": "OSP" },
+        { "id": "i_isp", "label": "ISP" }
+      ],
+      "targets": [
+        { "id": "t_design", "label": "Design fiber path from street to CO headend" },
+        { "id": "t_patch", "label": "Patch fiber from demarc to OLT input port" },
+        { "id": "t_test_demarc", "label": "Test fiber loss end-to-end to demarc with OLTS" },
+        { "id": "t_config", "label": "Configure OLT port wavelength and power settings" },
+        { "id": "t_inspect", "label": "Inspect fiber route for bends and damage" },
+        { "id": "t_monitor", "label": "Monitor RX power at OLT receiver during handshake" }
+      ],
+      "correctMap": { "t_design": "i_osp", "t_patch": "i_isp", "t_test_demarc": "i_osp", "t_config": "i_isp", "t_inspect": "i_osp", "t_monitor": "i_isp" },
+      "explanation": "OSP scope ends at the demarc: design, build, end-to-end testing to the demarc, and fiber-route inspection are all OSP. ISP scope begins at the demarc: patching to active equipment, port/protocol configuration, and monitoring signal levels are all ISP."
+    }
+  ]
+}

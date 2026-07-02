@@ -1,0 +1,117 @@
+{
+  "assessmentId": "T19-L07",
+  "kind": "lesson",
+  "courseId": "T19",
+  "lessonId": "T19.L07",
+  "drawCount": 4,
+  "passThreshold": 70,
+  "pool": [
+    {
+      "id": "T19-L07-Q1",
+      "type": "mc",
+      "prompt": "An OSP engineer completes splicing a 96-fiber feeder cable to pigtails in the splice organizer. The pigtail connectors are now accessible on the ODF front-face patch panel. What is the OSP engineer's final deliverable before the ISP team can commission the OLT?",
+      "choices": [
+        "Install patch cords from the ODF front face to the OLT GPON ports",
+        "Provide a labeled splicing matrix showing which ODF port corresponds to which OSP feeder fiber, feeder route, and OLT port assignment",
+        "Test each OLT port with an OTDR from the ODF front face",
+        "Configure the OLT with the fiber port assignments via CLI"
+      ],
+      "answerIndex": 1,
+      "explanation": "The OSP engineer's deliverable is a labeled, accurate splicing matrix showing which ODF front-face port corresponds to which physical feeder fiber, FDH, splitter branch, and subscriber address range. Installing patch cords and configuring the OLT are ISP team tasks.",
+      "citation": "Standard OSP-to-ISP handoff practice (consistent with TIA-569-E [confirm edition] pathways/spaces framework)."
+    },
+    {
+      "id": "T19-L07-Q2",
+      "type": "mc",
+      "prompt": "A cross-connect ODF architecture adds one additional connector pair in the signal path compared to an interconnect architecture. If each connector pair contributes roughly 0.30 dB loss (factory pre-terminated), how does the extra connector pair affect the OSP plant design?",
+      "choices": [
+        "No effect — 0.30 dB is within measurement error and can be ignored",
+        "The additional 0.30 dB reduces the available link budget from 28 dB to 27.70 dB. On a budget-constrained link near the 28 dB Class B+ limit, this reduction could push the link from passing to failing.",
+        "The additional connector pair is only in ISP-side wiring and is not subtracted from the OSP link budget",
+        "Cross-connect architecture adds 1.0 dB (not 0.30 dB) because it requires two connectors instead of one at the ODF"
+      ],
+      "answerIndex": 1,
+      "explanation": "Every connector pair in the signal path subtracts from the 28 dB GPON Class B+ optical budget. Cross-connect adds one pair at the ODF cross-connect field that interconnect does not have. Planning values: roughly 0.30 dB for factory pre-terminated pigtails, up to 0.50-0.75 dB for field-polished connectors — always account for architecture-dependent connector count in the link budget.",
+      "citation": "ITU-T G.984.2 (28 dB Class B+ ceiling); TIA-568.3-D [confirm edition] connector-loss planning values."
+    },
+    {
+      "id": "T19-L07-Q3",
+      "type": "mc",
+      "prompt": "A pigtail's bare fiber end is connected to the OSP feeder fiber by which process?",
+      "choices": ["Mechanical splicing with a gel-index-matched connector", "Fusion splicing", "A field-terminated connector crimped onto the feeder fiber", "Solder-based bonding"],
+      "answerIndex": 1,
+      "explanation": "The bare fiber end of a pigtail is fusion-spliced to the corresponding OSP feeder fiber inside the splice organizer. Factory termination of the connector end yields better optical performance than field termination; fusion splicing provides a low-loss, permanent connection (typically 0.05-0.10 dB) between the pigtail and the feeder fiber.",
+      "citation": "Standard fiber splicing practice."
+    },
+    {
+      "id": "T19-L07-Q4",
+      "type": "mc",
+      "prompt": "Why is a trunk cable (pre-terminated MPO/MTP cable) used for connections between adjacent ODF patch panels in a high-density CO, rather than individual pigtail splices?",
+      "choices": [
+        "Trunk cables have lower loss than pigtail splices — MPO connectors outperform fusion splices",
+        "Trunk cables eliminate the need for field splicing between adjacent racks — faster to install, use less rack space, and maintain organized routing in a high-density environment",
+        "Trunk cables are required by TIA-568 between any two adjacent fiber racks",
+        "Trunk cables allow technicians to route signals bidirectionally on a single fiber"
+      ],
+      "answerIndex": 1,
+      "explanation": "Trunk cables with factory MPO/MTP connectors eliminate inter-rack splicing entirely — a plug-in operation with no fusion splicer or splice-organizer space consumed. Note that fusion splice loss (0.05-0.10 dB) is actually lower than MPO connector loss (roughly 0.5-1.0 dB per mated pair) — trunks are an installation-convenience measure, not a loss-reduction measure.",
+      "citation": "TIA-568.3-D [confirm edition]; standard high-density CO practice."
+    },
+    {
+      "id": "T19-L07-Q5",
+      "type": "mc",
+      "prompt": "What is the difference between an interconnect architecture and a cross-connect architecture at an ODF, per TIA-568.3-D?",
+      "choices": [
+        "Interconnect uses a single patch cord directly from active equipment to the cable side (no cross-connect field); cross-connect terminates active equipment and cable at separate passive fields, joined by a jumper cord",
+        "Interconnect requires two separate racks; cross-connect can be done in a single rack",
+        "Interconnect is only used for copper; cross-connect is only used for fiber",
+        "There is no functional difference — the terms are interchangeable in all standards documents"
+      ],
+      "answerIndex": 0,
+      "explanation": "In an interconnect architecture, the OLT port connects via a single patch cord directly to the OSP feeder fiber at the ODF — simple, lower loss, but any circuit move requires re-patching at the OLT port. Cross-connect terminates OLT ports and feeder fibers on separate ODF sections joined by a jumper — more flexible for rearrangement, but with an added connector-pair loss.",
+      "citation": "TIA-568.3-D [confirm edition] §6."
+    },
+    {
+      "id": "T19-L07-Q6",
+      "type": "mc",
+      "prompt": "What is the primary function of a splice organizer within an ODF rack?",
+      "choices": [
+        "It houses active OLT line cards and provides port configuration",
+        "It holds and protects fusion splices, coiling excess fiber and protecting individual heat-shrink splice protectors — typically 12 or 24 splices per removable tray",
+        "It converts electrical signals to optical signals for transmission",
+        "It supplies –48VDC power to patch panels"
+      ],
+      "answerIndex": 1,
+      "explanation": "A splice organizer is a rack-mounted or wall-mounted enclosure protecting and organizing fusion splices. Splice trays hold typically 12 or 24 splices, with spliced fiber lengths coiled inside. Standalone splice organizers (e.g., a 4U enclosure with 12 trays) are used when the feeder fiber count exceeds what a compact LIU can accommodate.",
+      "citation": "Standard ODF/splice-organizer construction practice."
+    },
+    {
+      "id": "T19-L07-Q7",
+      "type": "mc",
+      "prompt": "For a 144-fiber feeder cable terminating on standard 1U patch panels (24 LC ports per panel), how many rack units (U) of patch panel space alone are needed, before adding fiber management or splice organizer space?",
+      "choices": ["1U", "3U", "6U", "12U"],
+      "answerIndex": 2,
+      "explanation": "144 fibers ÷ 24 ports per 1U panel = 6U of patch panel space. Additional space is needed for splice organizer capacity (typically 2-4U per 144 splices) and fiber management panels (radius-controlled panels preventing micro-bend loss), plus 30-50% growth headroom for future feeder cables.",
+      "citation": "Standard patch panel density and ODF planning practice."
+    },
+    {
+      "id": "T19-L07-Q8",
+      "type": "drag-match",
+      "prompt": "Match each ODF rack-side hardware term to its function.",
+      "items": [
+        { "id": "i_patch_panel", "label": "Passive rack-mounted panel with connectors on the front face for patch cords" },
+        { "id": "i_liu", "label": "Combines a patch panel with an integrated splice tray in a single compact unit" },
+        { "id": "i_trunk", "label": "Pre-terminated multi-fiber cable with factory MPO/MTP connectors on both ends" },
+        { "id": "i_pigtail", "label": "Short factory-terminated fiber, connector on one end, bare fiber (fusion-spliced) on the other" }
+      ],
+      "targets": [
+        { "id": "t_patch_panel", "label": "patch panel" },
+        { "id": "t_liu", "label": "LIU (Light Interface Unit)" },
+        { "id": "t_trunk", "label": "trunk cable" },
+        { "id": "t_pigtail", "label": "pigtail" }
+      ],
+      "correctMap": { "t_patch_panel": "i_patch_panel", "t_liu": "i_liu", "t_trunk": "i_trunk", "t_pigtail": "i_pigtail" },
+      "explanation": "Each ODF rack-side component has a distinct role: the patch panel is the passive connector field; the LIU combines a patch panel with a splice tray in one compact unit; trunk cables provide plug-in inter-rack connections without field splicing; pigtails bridge the fusion-spliced feeder fiber to a factory-terminated connector."
+    }
+  ]
+}
