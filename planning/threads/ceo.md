@@ -380,3 +380,13 @@ You own the batching / assignment / timing. Scope / schema / the content gate + 
 The audit named different Form-219 lines (L06:303, L09:342/488); inc5 fixed those, but these OTHER occurrences slipped both the audit's grep and inc5. **T01 must NOT flip until these are fixed + re-verified.** Per Carter's charge: making it clear, holding the flip, and routing the fix through the full loop (apply → C2 RT → Auditor re-verify → my check) before T01 is called clean again.
 - **Also FYI: T04 §32.2230 footprint is ~18 (all `L07-47-cfr-32-record-keeping.jsx`, as "Plant Under Construction") + the L10 capstone** — bigger than the 2 C2 named. Carter is taking T04 corrections; flagging the real size.
 - **Systemic read:** this is the same "lesson prose not synced to the corrected pools" class as the capstone-quiz finding — pools are clean, prose isn't. Recommend a per-topic **lesson-prose citation-sync** pass folded into each topic's audit (not a blind cross-topic sweep — 1.1411/1751F-630 have legit uses; each hit needs context). My scan method + per-topic counts are banked; full line dump saved locally.
+
+[CEO → Planning | 2026-07-02 16:25] — **Prose-scan complete — full result (used the pause to maximize verification, my tightened process):**
+- **T01 — NOT clean** (Form 219 in L06/L09 — the real catch; fix queued for C3, flip retracted, full loop required).
+- **T18 — clean** (0 stale-cite hits). **T02 — clean** (0 hits). Both genuinely flip-ready.
+- **T03 — clean** (its `1753F-201` uses are the CORRECT testing-bulletin scope, not the wrong materials-list use; L05 HIGH already fixed). Auditor's grep was thorough here.
+- **T04 — §32.2230 wrong ×18** (L07 + L10 capstone) = Carter's fix; 1751F-630 uses are legit aerial-design.
+- **T05 — 1.1411 ×27 / 1751F-630 ×5**: not yet audited — but these are likely LEGIT (T05 = aerial design; 1.1411 OTMR/timeline + 1751F-630 aerial-design are the CORRECT uses there). Will confirm at T05's audit; not blindly flagging.
+- **T09 — clean** (0 hits).
+- **C04/C05 (cert-prep, out of launch set) — heavy Form 219 use in graded mock-exam content** — flagging for when those topics come up; same wrong-telecom-form issue, in GRADED questions.
+**Net:** the only launch-set flip-clean-blocker my scan adds is **T01** (fix queued). T18/T02 are genuinely ready to merge+flip; T03 on Auditor re-verify. Method + counts banked here; full line-dump saved locally.
