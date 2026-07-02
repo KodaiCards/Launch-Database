@@ -48,7 +48,7 @@ Key terms: **EC** = engineering contract (umbrella, carries `program`: rus/bau/g
 - **CRLF fakes "stale deploy" diffs:** `core.autocrlf=true` means working-tree files are CRLF but deployed blobs are LF — never byte-compare a live asset against a working-tree file; use `git show <ref>:path` or `tr -d '\r'`. When "nothing changed on the URL," suspect routing/launcher/tile before the pipeline.
 - **`tests/` is plural** — `npm test` globs `tests/*.test.js`; a file in `test/` is invisible.
 - **Money math is server-side only; customer-facing surfaces never leak internal $** (rate/estimated/actual/cost/margin) — verify on every merge that touches portals.
-- Railway domain: `launchfiberadminportal.xyz`; auto-deploy from `main`; **one shared DB** (dev = prod — treat destructive ops accordingly; backups are on as of 2026-07-01).
+- Railway domain: **`launchfiber.app`** (canonical as of 2026-07-02, Carter; old `launchfiberadminportal.xyz` kept during the transition). ⚠ **Any new domain MUST be added to the `ALLOWED_ORIGINS` env var (comma-separated, exact `https://…`, no trailing slash) or CORS rejects it — the "origin not allowed" error** (`server.js:74/84`). auto-deploy from `main`; **one shared DB** (dev = prod — treat destructive ops accordingly; backups are on as of 2026-07-01).
 
 ## How we work (governance source of truth = `planning/ROLES.md`)
 
