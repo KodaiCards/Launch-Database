@@ -37,9 +37,20 @@ export const meta = {
   // 'working'              : applied/procedural content — the main body of lessons
   // 'advanced'             : deeper specialist content (optional for most learners)
   // 'capstone-quiz'        : end-of-topic assessment (no body content — pure Quiz)
+  //                          [RETIRED per D031 — the topic-final pool is the
+  //                          single graded capstone now; do not add new ones]
+  // 'capstone-review'      : ex-capstone-quiz lesson, graded Quiz stripped (D031)
+  //                          — retains its teaching prose as a reading lesson;
+  //                          pair with `completesOnView: true` below
   // 'mock-exam'            : timed certification practice exam
   // 'hands-on-walkthrough' : guided interactive walkthrough / field simulation
   lesson_type: 'foundation',
+
+  // Optional. When true, LessonLayout marks this lesson complete on first view
+  // instead of waiting for a graded Quiz's reportScore (D031 capstone-review
+  // lessons use this — they have no graded interactive of their own; the
+  // topic-final pool is the real gate). Omit for any lesson with a real quiz.
+  // completesOnView: true,
 
   // Array of lesson IDs that must be completed before this lesson unlocks.
   // Use the full dotted form: "T01.L01", "T01.L02".
