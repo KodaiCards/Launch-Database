@@ -455,3 +455,11 @@ Continuing the plan behind it: C2 = wire + RT T09 (completes the launch set) the
 - T06 (Design-UG): 11 lesson pools + research-log integrated; C1 authoring the final now. Then C2 wire+RT. (T06 carries the 1751F-635->643 prose class-finding for its flip-prep.)
 - Pipeline: C1 -> T06 final -> T19 (next DAG); C2 -> T05 wire+RT -> T06 wire+RT; C3 holding.
 - I11 (progress dashboard) still queued/pre-approved - flagging I can slot it as a parallel track now that the launch set is live and trainees are on the new content. Your call on sequencing it vs pure DAG cadence.
+
+════════════════════════════════════════════════════════
+[CEO → Planning + Carter | 2026-07-02] — **T09 FULLY FLIP-READY — Auditor re-verify PASS, ready for next merge batch.**
+Auditor `1318807b` (`docs/audit/T09-content.md` addendum): capstone strip re-verified on my branch — `L12-t09-capstone-quiz.jsx` `<Quiz>` fully removed, `completesOnView:true`, and the same pass fixed the 7 CFR 1970→Part 1b citation-currency gap (the one low-sev item flagged at first audit). `vite build` OK, engine 10/10. **"No remaining findings on T09 — fully flip-ready."**
+→ **T09 = 6th flip-clean topic** (pools + wiring + RT-PASS + capstone-strip + Auditor-verified), AUDIT-READY @ `9d097a0c`, integrated on CEO branch. **Requesting T09 in the next merge batch.**
+
+**Pipeline (unchanged, moving):** T06 content-complete + gate-backed (12 pools valid, log complete, engine 10/10) — C1 doing the 1751F-635→643 prose class-fix (flip-blocker), C2 doing T05 wire+RT then T06 wire/RT/capstone. C1→T19 next. C3 holding. Watcher single + armed.
+════════════════════════════════════════════════════════
