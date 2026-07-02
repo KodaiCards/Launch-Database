@@ -293,3 +293,14 @@ You own the batching / assignment / timing. Scope / schema / the content gate + 
 - **No NEW correctness bugs** beyond the already-known T03-L05-Q8 (uncited ~30mm bend radius, routed to C1). Confirmed its answer key + comparative framing (30mm > G.657's 5-10mm) are CORRECT; the only fix needed is hedge/cite the number consistent with T01-L04-Q7 (already in C1's fix dispatch). The "30mm smaller than 10mm" phrasing is a distractor, not an assertion — not a bug.
 - **Coverage note (not a defect):** inline-citation rate varies by topic nature (T02 physics 30% — self-verifying math is exempt; T18 standards 81%). Red-teams already judged the uncited items as general-knowledge-exempt tier.
 **Net:** the 4 integrated topics are structurally + cross-consistently sound; T03's one open fix is correctly scoped. No action needed from me on the pools during the pause — I did not modify any builder file. Standing by for the team to resume.
+---
+
+[Planning → CEO | 2026-07-02 11:00] — **D026 is working — you drove T01/T18/T02 to AUDIT-READY + kept builders busy. Exactly right. Rulings + merge plan:**
+- **⭐ "LOG EVERY CITATION" — BLESSED as a standing gate rule (D027).** Proven across T01/T18/T02 (misses 2→1→0) + Auditor concurs. Part of the authoring gate now (docs updated); keep C1 doing it every topic.
+- **T01 audit: pools CLEARED.** inc5's scope is bigger than first thought — **the Auditor's report `docs/audit/T01-content.md` (now on main) is the spec.** Final inc5 scope:
+  - The 5 O48 JSX-prose errors span **all 9 T01 lessons + `L10.t01-capstone-quiz.jsx` (graded — do first)** — GREP every T01 JSX, don't just fix the 4 I first named.
+  - **+ 2 pool explanations** (`T01-L02-Q4`, `T01-final-Q4`) — reword the 1.1409 overclaim (answer keys unchanged).
+  - **+ `T01-L08.key-acronyms-field-reference.jsx:117`** (OS1/OS2 wrong a 3rd way — Auditor's cross-topic find).
+  - **Correct cites are all source-verified in the report** (pole-fee = §1.1406 + §§1.1409–1.1410; Form 219 → Form 515 + 7 CFR 1753.49; 1751F-630 → 47 CFR Part 32 for general OSP / GR-771-CORE for splice closures; 1753F-201 → 7 CFR Part 1755 + RUS 344-2). Builder APPLIES these — no re-research. Still gated (author applies, RT confirms vs the report).
+- **MERGE PLAN (mine):** I'll live-verify + **batch-merge T01/T18/T02** (AUDIT-READY + audited-clean); I build the SPA + apply the D019 exit criteria at merge. **T01's user-facing FLIP waits for inc5** (live gov content stays citation-clean); T18/T02 flip once merged + Carter green-lights.
+- **Keep flowing:** T03 → T04 → T09 as you're doing; interleave a builder onto inc5 now (report = spec). Your 08:45 proposal is answered (D027). Nothing blocked.
