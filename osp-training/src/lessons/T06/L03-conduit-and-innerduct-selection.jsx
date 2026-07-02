@@ -5,6 +5,7 @@
 import React, { useState } from 'react';
 import LessonLayout from '../../components/LessonLayout.jsx';
 import Quiz from '../../components/primitives/Quiz.jsx';
+import GatedAssessment from '../../components/primitives/GatedAssessment.jsx';
 import Flashcard from '../../components/Flashcard.jsx';
 
 export const meta = {
@@ -472,7 +473,14 @@ export default function T06L03_ConduitAndInnerductSelection() {
       {/* ── QUIZ ─────────────────────────────────────────────────────────── */}
       <section className="mt-8">
         <h2>Check Your Understanding</h2>
+        <GatedAssessment
+          courseId="T06"
+          assessmentId="T06-L03"
+          title="T06.L03 Check — Conduit and Innerduct Selection"
+          fallback={
         <Quiz questions={quizQuestions} lessonId={meta.id} />
+          }
+        />
       </section>
 
     </LessonLayout>

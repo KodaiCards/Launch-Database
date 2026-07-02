@@ -7,6 +7,7 @@ import React from 'react';
 import LessonLayout from '../../components/LessonLayout.jsx';
 import BranchingScenario from '../../components/primitives/BranchingScenario.jsx';
 import Quiz from '../../components/primitives/Quiz.jsx';
+import GatedAssessment from '../../components/primitives/GatedAssessment.jsx';
 import Flashcard from '../../components/Flashcard.jsx';
 
 export const meta = {
@@ -393,6 +394,11 @@ export default function T06L11_UndergroundDesignQAChecklist() {
       />
 
       {/* ── PER-LESSON QUIZ ──────────────────────────────────────────────── */}
+      <GatedAssessment
+        courseId="T06"
+        assessmentId="T06-L11"
+        title="T06.L11 Check — Underground Design QA"
+        fallback={
       <Quiz
         title="T06.L11 Check — Underground Design QA"
         mode="multiple-choice"
@@ -450,6 +456,8 @@ export default function T06L11_UndergroundDesignQAChecklist() {
             explanation: 'A design drawing check is a pre-construction review of the plan — catching errors on paper before anyone digs. A field inspection is a during/post-construction check verifying that actual installation matches the design: conduit depth as-built, bore path actual vs. planned, materials installed match specification, pedestal locations per design. Both are required on RUS-funded projects. They catch different classes of errors because you can\'t see the conduit on paper when it\'s underground. (Source: RUS 1751F-643 §11; field practice.)',
           },
         ]}
+      />
+        }
       />
 
     </LessonLayout>

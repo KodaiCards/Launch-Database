@@ -6,6 +6,7 @@ import React from 'react';
 import LessonLayout from '../../components/LessonLayout.jsx';
 import WorkedExample from '../../components/primitives/WorkedExample.jsx';
 import Quiz from '../../components/primitives/Quiz.jsx';
+import GatedAssessment from '../../components/primitives/GatedAssessment.jsx';
 import Flashcard from '../../components/Flashcard.jsx';
 
 export const meta = {
@@ -497,7 +498,7 @@ export default function T06L02_BurialDepthRules() {
         <ul className="space-y-2 text-slate-300 text-sm list-disc ml-5">
           <li><strong>T06.L01 HDD vs. Open-Cut vs. Plowing</strong> — shallow-soil jurisdictions with low frost lines and shallow utility clearances may eliminate plowing entirely, forcing HDD or open-cut; depth rules are a hard constraint on method choice</li>
           <li><strong>T06.L05 Manhole/Handhole/Vault Sizing</strong> — the depth you bury conduit at directly determines the vault depth needed for access; H-20 vs. H-25 loading requirements change with vault depth and surface type</li>
-          <li><strong>T05.L02 NESC Rules</strong> — the 1751F-643 and NEC 830.47 rules you verify here are the SAME rules you cited during site survey in T04; they're constraints on the design before you ever purchase a shovel</li>
+          <li><strong>T06.L09 NESC Underground Rules</strong> — the 1751F-643 and NEC 830.47 rules you verify here are the SAME rules you cited during site survey in T04; they're constraints on the design before you ever purchase a shovel</li>
         </ul>
         <p className="text-slate-200 mt-3 text-sm italic">
           Burial depth is the bridge between abstract regulations and physical construction — get it wrong in design and the contractor digs too shallow, hits a water main, and you're writing change orders at $15K/day delay cost.
@@ -507,7 +508,14 @@ export default function T06L02_BurialDepthRules() {
       {/* ── QUIZ ─────────────────────────────────────────────────────────── */}
       <section className="mt-8">
         <h2>Check Your Understanding</h2>
+        <GatedAssessment
+          courseId="T06"
+          assessmentId="T06-L02"
+          title="T06.L02 Check — Burial Depth Rules"
+          fallback={
         <Quiz questions={quizQuestions} lessonId={meta.id} />
+          }
+        />
       </section>
 
     </LessonLayout>

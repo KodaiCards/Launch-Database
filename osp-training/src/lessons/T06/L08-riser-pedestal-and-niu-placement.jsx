@@ -6,6 +6,7 @@
 import React from 'react';
 import LessonLayout from '../../components/LessonLayout.jsx';
 import Quiz from '../../components/primitives/Quiz.jsx';
+import GatedAssessment from '../../components/primitives/GatedAssessment.jsx';
 import Flashcard from '../../components/Flashcard.jsx';
 
 export const meta = {
@@ -377,6 +378,11 @@ export default function T06L08_RiserPedestalAndNIUPlacement() {
       </div>
 
       {/* ── PER-LESSON QUIZ ──────────────────────────────────────────────── */}
+      <GatedAssessment
+        courseId="T06"
+        assessmentId="T06-L08"
+        title="T06.L08 Check — Riser, Pedestal, and NIU Placement"
+        fallback={
       <Quiz
         title="T06.L08 Check — Riser, Pedestal, and NIU Placement"
         mode="multiple-choice"
@@ -447,6 +453,8 @@ export default function T06L08_RiserPedestalAndNIUPlacement() {
             explanation: 'Water enters a conduit at low points — including the pedestal base where the riser transitions from below grade. Once inside the conduit, water wicks along the fiber cable\'s interstitial spaces (between the buffer tubes and the sheath) for hundreds of feet. When it reaches a splice point, the moisture degrades the splice closure\'s gel and eventually causes fiber damage. A watertight conduit seal at the pedestal base stops the entry path. (Source: RUS 1751F-643 §7; field practice.)',
           },
         ]}
+      />
+        }
       />
 
     </LessonLayout>
