@@ -324,7 +324,7 @@ export default function T01L10_CapstoneQuiz() {
             ],
             answerIndex: 2,
             explanation:
-              'Option C correctly states: OSP scope (OLT → ONT via feeder, FDH, distribution, NAP, drop); NESC as the aerial clearance code; ripcord function; strand map purpose. Option A reverses OSP/ISP and mislocates the demarc. Option B reverses ripcord and messenger functions and reverses pole zone order. Option D confuses ITU-T G.652 (optical fiber performance) with fire-rating standards, and misidentifies RUS Form 219 (a close-out document, not an aerial code) and the FDH location. T01.L01–L09.',
+              'Option C correctly states: OSP scope (OLT → ONT via feeder, FDH, distribution, NAP, drop); NESC as the aerial clearance code; ripcord function; strand map purpose. Option A reverses OSP/ISP and mislocates the demarc. Option B reverses ripcord and messenger functions and reverses pole zone order. Option D confuses ITU-T G.652 (optical fiber performance) with fire-rating standards, and misidentifies RUS Form 219 (an Electric Program document — "Inventory of Work Orders," 7 CFR 1726.405 — not a telecom close-out document and not an aerial code) and the FDH location. T01.L01–L09.',
           },
         ]}
         onComplete={(result) => {

@@ -301,7 +301,7 @@ export default function T01L06_WhoDoesWhat() {
           <li>Construction drawings must be stamped and signed by a licensed PE.</li>
           <li>Load calculations (pole loading, sag-tension) must be certified by a PE.</li>
           <li>In some states, the make-ready engineering analysis (which determines whether a pole can handle an additional attachment) also requires PE certification.</li>
-          <li>The RUS Form 219 project completion certification must be signed by the PE responsible for the project.</li>
+          <li>The RUS closeout documentation (7 CFR 1753.49) must be signed by the PE responsible for the project.</li>
         </ul>
         <p className="mt-2 text-sm text-slate-300/90">
           The PE's stamp is a legal obligation — it means the PE is personally liable for

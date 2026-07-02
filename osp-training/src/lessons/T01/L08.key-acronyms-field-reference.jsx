@@ -114,7 +114,7 @@ export default function T01L08_KeyAcronymsFieldReference() {
             <tr className="border-t border-white/10">
               <td className="px-3 py-2 font-mono">OS2</td>
               <td className="px-3 py-2">Optical Single-mode, class 2</td>
-              <td className="px-3 py-2">ISO/IEC 11801 designation for G.652.D SMF — the standard low-water-peak single-mode fiber for long-distance OSP and backbone deployments. OS1 maps to G.652.A/B/C (earlier SMF specs with higher water-peak attenuation, rare in new installations). Note: G.657.A2 bend-insensitive fiber has tighter macrobend specs than G.652.D and is used for tight-bend drop applications — OS2 is the standard for mainstream OSP trunk and feeder runs. When a project calls out OS2, it requires G.652.D-compliant fiber.</td>
+              <td className="px-3 py-2">ISO/IEC 11801 designation for G.652.C/D SMF (low/zero water-peak) — the standard for long-distance OSP and backbone deployments. OS1 maps to G.652.A/B (earlier SMF specs with higher water-peak attenuation, rare in new installations). Note: G.657.A2 bend-insensitive fiber has tighter macrobend specs than G.652.D and is used for tight-bend drop applications — OS2 is the standard for mainstream OSP trunk and feeder runs. When a project calls out OS2, it requires G.652.C/D-compliant fiber.</td>
             </tr>
             <tr className="border-t border-white/10">
               <td className="px-3 py-2 font-mono">ADSS</td>

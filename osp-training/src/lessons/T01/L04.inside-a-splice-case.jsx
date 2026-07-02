@@ -238,7 +238,7 @@ export default function T01L04_InsideASpliceCase() {
           and date/technician. This record follows the splice case for its entire 25-year
           life — a technician opening the case in 2045 needs to know what's in there.
           Many RUS-program contracts require splice records as part of the close-out package
-          (RUS Form 219 documentation).
+          (RUS Form 515 / 7 CFR 1753.49 closeout documentation).
         </p>
       </section>
 
@@ -259,10 +259,11 @@ export default function T01L04_InsideASpliceCase() {
           anticipated and absolute moisture exclusion is required.
         </p>
         <p className="mt-2 text-sm text-slate-300/90">
-          RUS Bulletin 1751F-630 §8 requires that splice enclosures for aerial and underground
-          cable provide mechanical protection and moisture ingress resistance for the life of
-          the cable plant (typically 25+ years). Selection between re-enterable and
-          non-re-enterable is a design decision documented in the construction specs.
+          Telcordia GR-771-CORE (Generic Requirements for Fiber Optic Splice Closures) requires
+          that splice enclosures for aerial and underground cable provide mechanical protection
+          and moisture ingress resistance for the life of the cable plant (typically 25+ years).
+          Selection between re-enterable and non-re-enterable is a design decision documented in
+          the construction specs.
         </p>
       </section>
 

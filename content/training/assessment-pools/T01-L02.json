@@ -59,8 +59,8 @@
         "The electric utility owns the pole; fees are set under 47 CFR 1.1411 (the pole-access application timeline rule)"
       ],
       "answerIndex": 1,
-      "explanation": "In most US markets the electric utility owns the pole, and fiber companies are \"attachers\" who pay annual attachment fees. The rate/fee formula lives in 47 CFR 1.1409. (47 CFR 1.1411 governs the *timeline* for a utility to process a pole-access application — a procedural rule, not the fee-setting rule; do not cite 1.1411 for attachment fees.)",
-      "citation": "47 CFR 1.1409 (pole attachment rate formula); contrast with 47 CFR 1.1411 (application/survey timeline — see T01.md research log for the correction)."
+      "explanation": "In most US markets the electric utility owns the pole, and fiber companies are \"attachers\" who pay annual attachment fees. The core rate formula lives in 47 CFR 1.1406; 47 CFR 1.1409 governs a specific cost-apportionment input that feeds into that formula. (47 CFR 1.1411 governs the *timeline* for a utility to process a pole-access application — a procedural rule, not the fee-setting rule; do not cite 1.1411 for attachment fees.)",
+      "citation": "47 CFR 1.1406 (pole attachment rate formula); 47 CFR 1.1409 (cost-apportionment input); contrast with 47 CFR 1.1411 (application/survey timeline — see T01.md research log for the correction)."
     },
     {
       "id": "T01-L02-Q5",
