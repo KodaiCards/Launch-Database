@@ -1,0 +1,126 @@
+{
+  "assessmentId": "T18-L05",
+  "kind": "lesson",
+  "courseId": "T18",
+  "lessonId": "T18.L05",
+  "drawCount": 4,
+  "passThreshold": 70,
+  "pool": [
+    {
+      "id": "T18-L05-Q1",
+      "type": "mc",
+      "prompt": "A telecom crew works on a joint-use pole near an energized 7,200V phase-to-ground conductor. What is the MINIMUM rubber insulating glove class required if an authorized employee must work within the minimum approach distance?",
+      "choices": [
+        "Class 00 (rated <=500V AC)",
+        "Class 0 (rated <=1,000V AC)",
+        "Class 1 (rated <=7,500V AC)",
+        "Class 2 (rated <=17,000V AC)"
+      ],
+      "answerIndex": 2,
+      "explanation": "Class 1 rubber insulating gloves are rated for a maximum-use voltage of 7,500V AC, covering 7,200V phase-to-ground with margin. Class 0 (1,000V) and Class 00 (500V) would be dangerously under-rated. Class 2 (17,000V) would work but is higher than the minimum required.",
+      "citation": "29 CFR 1910.137; ASTM D120 glove class voltage ratings."
+    },
+    {
+      "id": "T18-L05-Q2",
+      "type": "mc",
+      "prompt": "An OSP crew splices fiber from a bucket truck in a lane closure on a 45 mph highway during daylight. What is the MINIMUM required hi-vis apparel class?",
+      "choices": [
+        "Class 1 — minimum background material",
+        "Class 2 — daytime roadway minimum",
+        "Class 3 — required only at night",
+        "No hi-vis required — they're elevated, not walking in traffic"
+      ],
+      "answerIndex": 1,
+      "explanation": "Class 2 hi-vis is the minimum for daytime work in a temporary traffic control zone on a public roadway. Elevation in a bucket doesn't eliminate the struck-by hazard from approaching vehicles. MUTCD and OSHA requirements are based on proximity to a traffic lane.",
+      "citation": "ANSI/ISEA 107; MUTCD 11th Edition (2023), Part 6, Chapter 6E."
+    },
+    {
+      "id": "T18-L05-Q3",
+      "type": "mc",
+      "prompt": "Which ANSI Z89.1 hard hat class provides electrical protection tested to 20,000 volts and is required when working near energized distribution conductors?",
+      "choices": [
+        "Class G (General)",
+        "Class C (Conductive)",
+        "Class E (Electrical)",
+        "There is no electrical rating class for hard hats"
+      ],
+      "answerIndex": 2,
+      "explanation": "ANSI Z89.1 Class E (Electrical) is tested to 20,000V. Class G (General) is rated for 2,200V — insufficient for distribution voltage work. Class C (Conductive) provides no electrical protection at all. Note that the 20kV rating is a lab dielectric test rating, not a safe-contact voltage.",
+      "citation": "ANSI/ISEA Z89.1-2014 (R2019)."
+    },
+    {
+      "id": "T18-L05-Q4",
+      "type": "mc",
+      "prompt": "A crew member is pulling cable through conduit wearing standard leather work gloves. An energized 4,160V conductor is 2 feet away, within the minimum approach distance. Are the leather gloves sufficient?",
+      "choices": [
+        "Yes — leather is a natural insulator and provides some protection",
+        "Yes — if the worker is careful not to touch the conductor directly",
+        "No — leather work gloves provide zero electrical insulation; rubber insulating gloves (minimum Class 1) are required",
+        "Yes — 4,160V is below the threshold where insulating gloves are required"
+      ],
+      "answerIndex": 2,
+      "explanation": "Leather work gloves provide ZERO electrical insulation — they are rated for mechanical protection only (cuts, abrasion, grip). Being within the minimum approach distance of an energized 4,160V conductor requires rubber insulating gloves rated Class 1 (7,500V) or higher.",
+      "citation": "29 CFR 1910.137."
+    },
+    {
+      "id": "T18-L05-Q5",
+      "type": "mc",
+      "prompt": "A crew arrives with Class 2 rubber insulating gloves (rated 17,000V) whose last re-test date is stamped 8 months ago. What should they do?",
+      "choices": [
+        "Use them — they're rated for the voltage being worked near",
+        "Remove them from service and tag them for laboratory re-testing",
+        "Do a visual inspection only; if no cracks are visible, they're acceptable",
+        "Use them for today only, then send them for re-testing tomorrow"
+      ],
+      "answerIndex": 1,
+      "explanation": "Rubber insulating gloves must be re-tested by a qualified laboratory at intervals not exceeding 6 months from the last test date. At 8 months, these gloves are overdue regardless of apparent condition — visual inspection alone cannot detect the micro-cracks or degradation that compromise insulation.",
+      "citation": "ASTM D120 (6-month in-service retest interval); 29 CFR 1910.137(b)(2)(ii)."
+    },
+    {
+      "id": "T18-L05-Q6",
+      "type": "mc",
+      "prompt": "What is the correct voltage-rating order (lowest to highest) of rubber insulating glove classes 00, 0, 1, and 2?",
+      "choices": [
+        "Class 2 (500V) < Class 1 (1,000V) < Class 0 (7,500V) < Class 00 (17,000V)",
+        "Class 00 (500V) < Class 0 (1,000V) < Class 1 (7,500V) < Class 2 (17,000V)",
+        "All four classes carry the same voltage rating; the number indicates glove thickness only",
+        "Class 00 (17,000V) < Class 0 (7,500V) < Class 1 (1,000V) < Class 2 (500V)"
+      ],
+      "answerIndex": 1,
+      "explanation": "The classes scale upward with the number: Class 00 = 500V AC, Class 0 = 1,000V AC, Class 1 = 7,500V AC, Class 2 = 17,000V AC (with Class 3 and 4 rated even higher, up to 36,000V). Selecting the wrong direction could leave a worker dangerously under-protected.",
+      "citation": "ASTM D120 glove class voltage ratings."
+    },
+    {
+      "id": "T18-L05-Q7",
+      "type": "mc",
+      "prompt": "What does a worker need to upgrade to if daytime Class 2 hi-vis work runs into low-light conditions (dawn, dusk, overcast)?",
+      "choices": [
+        "No change is needed — Class 2 covers all lighting conditions",
+        "Class 3 hi-vis apparel",
+        "Downgrade to Class 1 since traffic is lighter at those times",
+        "Switch to a hard hat only, no vest required"
+      ],
+      "answerIndex": 1,
+      "explanation": "Class 3 hi-vis is the higher-visibility standard used for nighttime or low-light conditions and high-speed roadways. Crews should proactively upgrade to Class 3 as lighting degrades rather than waiting to be told."
+    },
+    {
+      "id": "T18-L05-Q8",
+      "type": "drag-match",
+      "prompt": "Match each PPE item to the class/rating threshold that makes it adequate for the described hazard.",
+      "items": [
+        { "id": "i_glove", "label": "Rubber insulating glove for a 7,200V phase-to-ground conductor" },
+        { "id": "i_hardhat", "label": "Hard hat for work near energized distribution conductors" },
+        { "id": "i_hivis", "label": "Hi-vis apparel for daytime roadway work" },
+        { "id": "i_gloveretest", "label": "Maximum interval before a rubber glove must be laboratory re-tested" }
+      ],
+      "targets": [
+        { "id": "t_glove", "label": "Class 1 (rated <=7,500V)" },
+        { "id": "t_hardhat", "label": "ANSI Z89.1 Class E (20,000V dielectric test)" },
+        { "id": "t_hivis", "label": "ANSI/ISEA 107 Class 2 (daytime minimum)" },
+        { "id": "t_gloveretest", "label": "6 months" }
+      ],
+      "correctMap": { "t_glove": "i_glove", "t_hardhat": "i_hardhat", "t_hivis": "i_hivis", "t_gloveretest": "i_gloveretest" },
+      "explanation": "Each PPE item has a specific minimum rating for its associated hazard: Class 1 gloves for distribution-range voltage, Class E hard hats near energized conductors, Class 2 hi-vis for daytime roadway work, and a 6-month re-test cycle for rubber insulating gloves in service."
+    }
+  ]
+}
