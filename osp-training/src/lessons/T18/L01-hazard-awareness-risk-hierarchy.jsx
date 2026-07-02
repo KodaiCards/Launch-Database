@@ -5,6 +5,7 @@ import React from 'react';
 import LessonLayout from '../../components/LessonLayout.jsx';
 import Sortable from '../../components/primitives/Sortable.jsx';
 import Quiz from '../../components/primitives/Quiz.jsx';
+import GatedAssessment from '../../components/primitives/GatedAssessment.jsx';
 import Flashcard from '../../components/Flashcard.jsx';
 
 export const meta = {
@@ -331,72 +332,79 @@ export default function T18L01_HazardAwarenessRiskHierarchy() {
       />
 
       {/* ── PER-LESSON QUIZ ──────────────────────────────────────────────── */}
-      <Quiz
+      <GatedAssessment
+        courseId="T18"
+        assessmentId="T18-L01"
         title="T18.L01 Check — Hazard Awareness & the Risk Hierarchy"
-        mode="multiple-choice"
-        questions={[
-          {
-            id: 'T18-L01-Q1',
-            type: 'mc',
-            prompt:
-              'A fiber crew is scheduled to work in a manhole adjacent to a sewer main. Before any work begins, the foreman identifies a potential sewer gas (hydrogen sulfide) hazard. According to the hierarchy of controls, which action is MOST effective?',
-            choices: [
-              'Require all workers in the manhole to wear full-face respirators (PPE)',
-              'Post a sign at the manhole warning of H₂S hazard (administrative control)',
-              'Reschedule the work to a location with a vault instead of a manhole (elimination)',
-              'Run a forced-air blower into the manhole for 15 minutes before entry (engineering control)',
-            ],
-            answerIndex: 2,
-            explanation:
-              'Elimination (rescheduling to a vault, or redesigning the route to avoid the sewer-adjacent manhole) removes the hazard entirely. The engineering control (blower) is second-best — it reduces exposure but the sewer gas source still exists. PPE and administrative controls address the hazard only after the worker is in proximity to it.',
-            citation:
-              'NIOSH Hierarchy of Controls; 29 CFR 1910.268(o)(2) (atmospheric testing before manhole entry).',
-            fieldNote:
-              'In practice, rerouting isn\'t always possible. The next best layer is the engineering control: force-ventilate, continuous-monitor with a calibrated gas detector, and keep the attendant topside. PPE (SCBA if H₂S is confirmed) comes after those controls are running.',
-          },
-          {
-            id: 'T18-L01-Q2',
-            type: 'mc',
-            prompt:
-              'The General Duty Clause (OSH Act § 5(a)(1)) most accurately means:',
-            choices: [
-              'Employers only need to comply with OSHA rules that specifically name their industry',
-              'Workers are responsible for identifying their own hazards and providing their own PPE',
-              'Employers must protect workers from recognized hazards even when no specific OSHA rule addresses the exact situation',
-              'OSHA can only cite violations if the employer has been warned in a prior inspection',
-            ],
-            answerIndex: 2,
-            explanation:
-              'The General Duty Clause is the catch-all authority. When a hazard exists and no specific regulation directly covers it, OSHA can still cite the employer under § 5(a)(1) if the hazard is "recognized" (known in the industry) and likely to cause death or serious harm. Heat illness on outdoor construction sites is a common example — no specific OSHA heat standard exists as of this writing, but employers are regularly cited under the General Duty Clause.',
-            citation: 'OSH Act § 5(a)(1) (osha.gov/laws-regs/oshact/section5).',
-          },
-          {
-            id: 'T18-L01-Q3',
-            type: 'fill-in-blank',
-            prompt:
-              'An OSHA ____ is the document that lists the composition, exposure limits, PPE requirements, and first-aid procedures for a hazardous chemical used on the job site.',
-            answer: 'SDS',
-            answerDisplay: 'Safety Data Sheet (SDS)',
-            explanation:
-              'The Safety Data Sheet (SDS) replaced the old Material Safety Data Sheet (MSDS) when OSHA adopted the Globally Harmonized System (GHS) under HazCom 2012 (29 CFR 1910.1200). The 16-section format is standardized so workers can find information quickly regardless of the product manufacturer.',
-          },
-          {
-            id: 'T18-L01-Q4',
-            type: 'mc',
-            prompt:
-              'Which OSHA regulation is the primary safety standard specifically covering telecom OSP field work — overhead lines, manholes, and grounding requirements for crews like fiber and telephone crews?',
-            choices: [
-              '29 CFR 1910.146 — Permit-Required Confined Spaces',
-              '29 CFR 1910.268 — Telecommunications (Subpart R)',
-              '29 CFR 1926 Subpart M — Fall Protection (Construction)',
-              '29 CFR 1910.269 — Electric Power Generation, Transmission, and Distribution',
-            ],
-            answerIndex: 1,
-            explanation:
-              '29 CFR 1910.268 (Subpart R — Telecommunications) is the primary OSHA standard for telecom field work. It covers overhead line safety, underground manhole work, atmospheric testing before manhole entry, fall protection on poles, and PPE requirements for telecom crews. The other listed standards are real and important, but they are supplementary or apply to different trades.',
-            citation: '29 CFR 1910.268(a) — Scope and Application (ecfr.gov; osha.gov).',
-          },
-        ]}
+        fallback={
+        <Quiz
+          title="T18.L01 Check — Hazard Awareness & the Risk Hierarchy"
+          mode="multiple-choice"
+          questions={[
+            {
+              id: 'T18-L01-Q1',
+              type: 'mc',
+              prompt:
+                'A fiber crew is scheduled to work in a manhole adjacent to a sewer main. Before any work begins, the foreman identifies a potential sewer gas (hydrogen sulfide) hazard. According to the hierarchy of controls, which action is MOST effective?',
+              choices: [
+                'Require all workers in the manhole to wear full-face respirators (PPE)',
+                'Post a sign at the manhole warning of H₂S hazard (administrative control)',
+                'Reschedule the work to a location with a vault instead of a manhole (elimination)',
+                'Run a forced-air blower into the manhole for 15 minutes before entry (engineering control)',
+              ],
+              answerIndex: 2,
+              explanation:
+                'Elimination (rescheduling to a vault, or redesigning the route to avoid the sewer-adjacent manhole) removes the hazard entirely. The engineering control (blower) is second-best — it reduces exposure but the sewer gas source still exists. PPE and administrative controls address the hazard only after the worker is in proximity to it.',
+              citation:
+                'NIOSH Hierarchy of Controls; 29 CFR 1910.268(o)(2) (atmospheric testing before manhole entry).',
+              fieldNote:
+                'In practice, rerouting isn\'t always possible. The next best layer is the engineering control: force-ventilate, continuous-monitor with a calibrated gas detector, and keep the attendant topside. PPE (SCBA if H₂S is confirmed) comes after those controls are running.',
+            },
+            {
+              id: 'T18-L01-Q2',
+              type: 'mc',
+              prompt:
+                'The General Duty Clause (OSH Act § 5(a)(1)) most accurately means:',
+              choices: [
+                'Employers only need to comply with OSHA rules that specifically name their industry',
+                'Workers are responsible for identifying their own hazards and providing their own PPE',
+                'Employers must protect workers from recognized hazards even when no specific OSHA rule addresses the exact situation',
+                'OSHA can only cite violations if the employer has been warned in a prior inspection',
+              ],
+              answerIndex: 2,
+              explanation:
+                'The General Duty Clause is the catch-all authority. When a hazard exists and no specific regulation directly covers it, OSHA can still cite the employer under § 5(a)(1) if the hazard is "recognized" (known in the industry) and likely to cause death or serious harm. Heat illness on outdoor construction sites is a common example — no specific OSHA heat standard exists as of this writing, but employers are regularly cited under the General Duty Clause.',
+              citation: 'OSH Act § 5(a)(1) (osha.gov/laws-regs/oshact/section5).',
+            },
+            {
+              id: 'T18-L01-Q3',
+              type: 'fill-in-blank',
+              prompt:
+                'An OSHA ____ is the document that lists the composition, exposure limits, PPE requirements, and first-aid procedures for a hazardous chemical used on the job site.',
+              answer: 'SDS',
+              answerDisplay: 'Safety Data Sheet (SDS)',
+              explanation:
+                'The Safety Data Sheet (SDS) replaced the old Material Safety Data Sheet (MSDS) when OSHA adopted the Globally Harmonized System (GHS) under HazCom 2012 (29 CFR 1910.1200). The 16-section format is standardized so workers can find information quickly regardless of the product manufacturer.',
+            },
+            {
+              id: 'T18-L01-Q4',
+              type: 'mc',
+              prompt:
+                'Which OSHA regulation is the primary safety standard specifically covering telecom OSP field work — overhead lines, manholes, and grounding requirements for crews like fiber and telephone crews?',
+              choices: [
+                '29 CFR 1910.146 — Permit-Required Confined Spaces',
+                '29 CFR 1910.268 — Telecommunications (Subpart R)',
+                '29 CFR 1926 Subpart M — Fall Protection (Construction)',
+                '29 CFR 1910.269 — Electric Power Generation, Transmission, and Distribution',
+              ],
+              answerIndex: 1,
+              explanation:
+                '29 CFR 1910.268 (Subpart R — Telecommunications) is the primary OSHA standard for telecom field work. It covers overhead line safety, underground manhole work, atmospheric testing before manhole entry, fall protection on poles, and PPE requirements for telecom crews. The other listed standards are real and important, but they are supplementary or apply to different trades.',
+              citation: '29 CFR 1910.268(a) — Scope and Application (ecfr.gov; osha.gov).',
+            },
+          ]}
+        />
+        }
       />
 
     </LessonLayout>

@@ -4,6 +4,7 @@
 import React from 'react';
 import LessonLayout from '../../components/LessonLayout.jsx';
 import Quiz from '../../components/primitives/Quiz.jsx';
+import GatedAssessment from '../../components/primitives/GatedAssessment.jsx';
 import Sortable from '../../components/primitives/Sortable.jsx';
 import Flashcard from '../../components/Flashcard.jsx';
 
@@ -361,89 +362,96 @@ export default function T18L09_IncidentReportingOSHA300() {
       />
 
       {/* ── PER-LESSON QUIZ ──────────────────────────────────────────────── */}
-      <Quiz
-        title="T18.L09 Check — Incident Reporting &amp; OSHA 300"
-        mode="multiple-choice"
-        questions={[
-          {
-            id: 'T18-L09-Q1',
-            type: 'mc',
-            prompt:
-              'A technician cuts their hand on a strand wire. The foreman applies a bandage on site; the technician works the rest of the day without restriction. Is this incident recordable on the OSHA 300 log?',
-            choices: [
-              'Yes — any cut requiring a bandage is recordable',
-              'No — bandaging alone is first aid and does not meet the recordable threshold',
-              'Yes — any hand injury on an OSP job is automatically recordable',
-              'No — only injuries requiring hospital treatment are recordable',
-            ],
-            answerIndex: 1,
-            explanation:
-              'Bandaging (wound closure with adhesive bandages or Steri-Strips) is explicitly listed as a first-aid measure in 29 CFR 1904.7(a). First-aid-only treatment does not meet the recordable threshold. If the same cut required sutures, staples, or prescription medication, it would be recordable. The distinction is the treatment, not the severity of the injury by appearance.',
-            citation: '29 CFR 1904.7(a) — Definition of first aid (ecfr.gov).',
-          },
-          {
-            id: 'T18-L09-Q2',
-            type: 'mc',
-            prompt:
-              'A field technician falls from a bucket lift and is transported to the hospital for an overnight observation stay. Per 29 CFR 1904.39, when must the employer report this to OSHA?',
-            choices: [
-              'Within 8 hours of the incident',
-              'Within 24 hours of the incident',
-              'Within 7 days — only fatalities are 8-hour reportable',
-              'No reporting required unless the worker cannot return to work within 7 days',
-            ],
-            answerIndex: 1,
-            explanation:
-              '29 CFR 1904.39 requires in-patient hospitalization to be reported to OSHA within 24 hours. A fatality is 8-hour reportable. Amputations and loss of an eye are also 24-hour reportable. These timelines apply to ALL employers regardless of size — including firms with ≤ 10 employees who are otherwise exempt from routine 300 log recordkeeping.',
-            citation: '29 CFR 1904.39 (ecfr.gov) — VERIFIED primary source.',
-          },
-          {
-            id: 'T18-L09-Q3',
-            type: 'mc',
-            prompt:
-              'A technician\'s vehicle drifts into a cone taper but misses the crew by 10 feet. No one is hurt and no equipment is damaged. Under OSHA rules, the employer must:',
-            choices: [
-              'File an OSHA 300 entry — a near-miss is recordable',
-              'Nothing — OSHA has no near-miss reporting requirement',
-              'Report the near-miss to OSHA within 24 hours',
-              'Complete an OSHA 301 incident investigation report',
-            ],
-            answerIndex: 1,
-            explanation:
-              'Near-miss reporting is voluntary under federal OSHA rules. An event with no injury, illness, or death does not meet the 29 CFR 1904.7 recordable threshold, and it does not trigger 1904.39 severe incident reporting. However, most safety-conscious employers maintain voluntary near-miss programs as a leading-indicator tool. OSHA has stated it will not use voluntary near-miss reports as a basis for citations under 29 CFR 1904.35(b)(1)(i) and OSH Act §11(c) whistleblower protections — this is an enforcement policy encouraging voluntary reporting, not an absolute statutory immunity.',
-            citation:
-              'OSHA Near Miss Reporting Systems (osha.gov/near-miss-reporting); 29 CFR 1904.7(a) (recordable definition).',
-            fieldNote:
-              'Even though it\'s not legally required, report it internally. That near-miss just told you the work zone setup isn\'t providing adequate protection — fix it before the next event is a recordable.',
-          },
-          {
-            id: 'T18-L09-Q4',
-            type: 'fill-in-blank',
-            prompt:
-              'The OSHA metric that counts incidents resulting in days away from work, restricted work activity, or job transfer to another position is called the ____ rate.',
-            answer: 'DART',
-            answerDisplay: 'DART (Days Away, Restricted, or Transferred)',
-            explanation:
-              'The DART rate is calculated from the OSHA 300 log entries that involve DART outcomes — the most serious tier of recordable incidents. It is calculated as: (Number of DART incidents × 200,000) / Total hours worked. The 200,000 normalizes to a rate per 100 full-time equivalent workers. OSHA and industry benchmarks use DART rates to compare safety performance across employers.',
-            citation: '29 CFR 1904 — Recording and Reporting Occupational Injuries and Illnesses (ecfr.gov).',
-          },
-          {
-            id: 'T18-L09-Q5',
-            type: 'mc',
-            prompt:
-              'An OSP contractor has 8 employees. They believe they are completely exempt from OSHA recordkeeping because they have fewer than 10 employees. This belief is:',
-            choices: [
-              'Correct — firms with ≤ 10 employees have no OSHA recordkeeping obligations',
-              'Partially correct — they are exempt from routine 300 log maintenance but must still report fatalities, hospitalizations, amputations, and eye loss within the 1904.39 timelines',
-              'Incorrect — all employers regardless of size must maintain the full OSHA 300 log',
-              'Correct — but only if they are in a low-hazard NAICS code',
-            ],
-            answerIndex: 1,
-            explanation:
-              'The ≤ 10 employee size exemption under 29 CFR 1904.1 covers routine recordkeeping — maintaining the 300 log and posting the 300A summary. It does NOT exempt employers from severe incident reporting under 29 CFR 1904.39 (fatality, hospitalization, amputation, eye loss). The severe reporting requirement applies to every employer regardless of size. Additionally, a telecom construction firm is not in a low-hazard NAICS code — the exemption would not apply even if other conditions were met.',
-            citation: '29 CFR 1904.1 (size exemption); 29 CFR 1904.39 (severe incident reporting — all employers); ecfr.gov.',
-          },
-        ]}
+      <GatedAssessment
+        courseId="T18"
+        assessmentId="T18-L09"
+        title="T18.L09 Check — Incident Reporting & OSHA 300"
+        fallback={
+        <Quiz
+          title="T18.L09 Check — Incident Reporting &amp; OSHA 300"
+          mode="multiple-choice"
+          questions={[
+            {
+              id: 'T18-L09-Q1',
+              type: 'mc',
+              prompt:
+                'A technician cuts their hand on a strand wire. The foreman applies a bandage on site; the technician works the rest of the day without restriction. Is this incident recordable on the OSHA 300 log?',
+              choices: [
+                'Yes — any cut requiring a bandage is recordable',
+                'No — bandaging alone is first aid and does not meet the recordable threshold',
+                'Yes — any hand injury on an OSP job is automatically recordable',
+                'No — only injuries requiring hospital treatment are recordable',
+              ],
+              answerIndex: 1,
+              explanation:
+                'Bandaging (wound closure with adhesive bandages or Steri-Strips) is explicitly listed as a first-aid measure in 29 CFR 1904.7(a). First-aid-only treatment does not meet the recordable threshold. If the same cut required sutures, staples, or prescription medication, it would be recordable. The distinction is the treatment, not the severity of the injury by appearance.',
+              citation: '29 CFR 1904.7(a) — Definition of first aid (ecfr.gov).',
+            },
+            {
+              id: 'T18-L09-Q2',
+              type: 'mc',
+              prompt:
+                'A field technician falls from a bucket lift and is transported to the hospital for an overnight observation stay. Per 29 CFR 1904.39, when must the employer report this to OSHA?',
+              choices: [
+                'Within 8 hours of the incident',
+                'Within 24 hours of the incident',
+                'Within 7 days — only fatalities are 8-hour reportable',
+                'No reporting required unless the worker cannot return to work within 7 days',
+              ],
+              answerIndex: 1,
+              explanation:
+                '29 CFR 1904.39 requires in-patient hospitalization to be reported to OSHA within 24 hours. A fatality is 8-hour reportable. Amputations and loss of an eye are also 24-hour reportable. These timelines apply to ALL employers regardless of size — including firms with ≤ 10 employees who are otherwise exempt from routine 300 log recordkeeping.',
+              citation: '29 CFR 1904.39 (ecfr.gov) — VERIFIED primary source.',
+            },
+            {
+              id: 'T18-L09-Q3',
+              type: 'mc',
+              prompt:
+                'A technician\'s vehicle drifts into a cone taper but misses the crew by 10 feet. No one is hurt and no equipment is damaged. Under OSHA rules, the employer must:',
+              choices: [
+                'File an OSHA 300 entry — a near-miss is recordable',
+                'Nothing — OSHA has no near-miss reporting requirement',
+                'Report the near-miss to OSHA within 24 hours',
+                'Complete an OSHA 301 incident investigation report',
+              ],
+              answerIndex: 1,
+              explanation:
+                'Near-miss reporting is voluntary under federal OSHA rules. An event with no injury, illness, or death does not meet the 29 CFR 1904.7 recordable threshold, and it does not trigger 1904.39 severe incident reporting. However, most safety-conscious employers maintain voluntary near-miss programs as a leading-indicator tool. OSHA has stated it will not use voluntary near-miss reports as a basis for citations under 29 CFR 1904.35(b)(1)(i) and OSH Act §11(c) whistleblower protections — this is an enforcement policy encouraging voluntary reporting, not an absolute statutory immunity.',
+              citation:
+                'OSHA Near Miss Reporting Systems (osha.gov/near-miss-reporting); 29 CFR 1904.7(a) (recordable definition).',
+              fieldNote:
+                'Even though it\'s not legally required, report it internally. That near-miss just told you the work zone setup isn\'t providing adequate protection — fix it before the next event is a recordable.',
+            },
+            {
+              id: 'T18-L09-Q4',
+              type: 'fill-in-blank',
+              prompt:
+                'The OSHA metric that counts incidents resulting in days away from work, restricted work activity, or job transfer to another position is called the ____ rate.',
+              answer: 'DART',
+              answerDisplay: 'DART (Days Away, Restricted, or Transferred)',
+              explanation:
+                'The DART rate is calculated from the OSHA 300 log entries that involve DART outcomes — the most serious tier of recordable incidents. It is calculated as: (Number of DART incidents × 200,000) / Total hours worked. The 200,000 normalizes to a rate per 100 full-time equivalent workers. OSHA and industry benchmarks use DART rates to compare safety performance across employers.',
+              citation: '29 CFR 1904 — Recording and Reporting Occupational Injuries and Illnesses (ecfr.gov).',
+            },
+            {
+              id: 'T18-L09-Q5',
+              type: 'mc',
+              prompt:
+                'An OSP contractor has 8 employees. They believe they are completely exempt from OSHA recordkeeping because they have fewer than 10 employees. This belief is:',
+              choices: [
+                'Correct — firms with ≤ 10 employees have no OSHA recordkeeping obligations',
+                'Partially correct — they are exempt from routine 300 log maintenance but must still report fatalities, hospitalizations, amputations, and eye loss within the 1904.39 timelines',
+                'Incorrect — all employers regardless of size must maintain the full OSHA 300 log',
+                'Correct — but only if they are in a low-hazard NAICS code',
+              ],
+              answerIndex: 1,
+              explanation:
+                'The ≤ 10 employee size exemption under 29 CFR 1904.1 covers routine recordkeeping — maintaining the 300 log and posting the 300A summary. It does NOT exempt employers from severe incident reporting under 29 CFR 1904.39 (fatality, hospitalization, amputation, eye loss). The severe reporting requirement applies to every employer regardless of size. Additionally, a telecom construction firm is not in a low-hazard NAICS code — the exemption would not apply even if other conditions were met.',
+              citation: '29 CFR 1904.1 (size exemption); 29 CFR 1904.39 (severe incident reporting — all employers); ecfr.gov.',
+            },
+          ]}
+        />
+        }
       />
 
     </LessonLayout>

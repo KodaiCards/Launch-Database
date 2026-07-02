@@ -5,6 +5,7 @@ import React from 'react';
 import LessonLayout from '../../components/LessonLayout.jsx';
 import Sortable from '../../components/primitives/Sortable.jsx';
 import Quiz from '../../components/primitives/Quiz.jsx';
+import GatedAssessment from '../../components/primitives/GatedAssessment.jsx';
 import Flashcard from '../../components/Flashcard.jsx';
 
 export const meta = {
@@ -430,87 +431,94 @@ export default function T18L05_PPEHandsHeadEyesFeet() {
       />
 
       {/* ── PER-LESSON QUIZ ──────────────────────────────────────────────── */}
-      <Quiz
+      <GatedAssessment
+        courseId="T18"
+        assessmentId="T18-L05"
         title="T18.L05 Check — PPE: Hands, Head, Eyes, Feet"
-        mode="multiple-choice"
-        questions={[
-          {
-            id: 'T18-L05-Q1',
-            type: 'mc',
-            prompt:
-              'A telecom crew is working on a joint-use pole. The nearest energized distribution conductor is operating at 7,200V phase-to-ground. The authorized employee needs to work within the minimum approach distance (under qualified worker supervision). What is the MINIMUM rubber insulating glove class required?',
-            choices: [
-              'Class 00 (rated ≤ 500V AC)',
-              'Class 0 (rated ≤ 1,000V AC)',
-              'Class 1 (rated ≤ 7,500V AC)',
-              'Class 2 (rated ≤ 17,000V AC)',
-            ],
-            answerIndex: 2,
-            explanation:
-              'Class 1 rubber insulating gloves are rated for a maximum-use voltage of 7,500V AC per 29 CFR 1910.137 and ASTM D120. This covers 7,200V phase-to-ground with margin. Class 0 (1,000V) and Class 00 (500V) would be dangerously under-rated for distribution voltage. Class 2 (17,000V) would work but is a higher class than the minimum required — using a higher class is acceptable but not required.',
-            citation: '29 CFR 1910.137; OSHA eTool — Electric Power (osha.gov/etools/electric-power).',
-          },
-          {
-            id: 'T18-L05-Q2',
-            type: 'mc',
-            prompt:
-              'An OSP crew is splicing fiber from a bucket truck in a lane closure on a 45 mph state highway during daylight. The MINIMUM required hi-vis apparel class is:',
-            choices: [
-              'Class 1 — minimum background material',
-              'Class 2 — daytime roadway minimum',
-              'Class 3 — required only at night',
-              'No hi-vis required — they\'re elevated in the bucket, not walking in traffic',
-            ],
-            answerIndex: 1,
-            explanation:
-              'Class 2 hi-vis is the minimum for daytime work in a temporary traffic control zone on a public roadway. The worker is in or adjacent to a lane of traffic, regardless of elevation in a bucket. MUTCD Part 6 and OSHA requirements are based on proximity to a traffic lane — being in a bucket doesn\'t eliminate the struck-by hazard from approaching vehicles.',
-            citation: 'ANSI/ISEA 107 [confirm edition]; MUTCD 11th Edition (2023), Part 6, Chapter 6E.',
-            fieldNote: 'If the job runs into low-light conditions (dawn, dusk, overcast), upgrade to Class 3 without waiting to be told.',
-          },
-          {
-            id: 'T18-L05-Q3',
-            type: 'fill-in-blank',
-            prompt:
-              'An ANSI Z89.1 Class ____ hard hat provides electrical protection up to 20,000 volts and is required when working near energized distribution conductors.',
-            answer: 'E',
-            answerDisplay: 'E (Class E)',
-            explanation:
-              'ANSI Z89.1 Class E (Electrical) is rated for 20,000V phase-to-ground. Class G (General) is rated for 2,200V — not sufficient for distribution voltage work. Class C (Conductive) provides no electrical protection at all. The "E" in Class E stands for Electrical.',
-            citation: 'ANSI/ISEA Z89.1-2014 (R2019); 29 CFR 1910.268(b) PPE reference; OSHA Safety and Health Information Bulletin (SHIB) on safety helmets.',
-          },
-          {
-            id: 'T18-L05-Q4',
-            type: 'mc',
-            prompt:
-              'A crew member is pulling cable through conduit and wearing their standard leather work gloves. An energized 4,160V conductor is 2 feet away. Are the leather work gloves sufficient for electrical protection?',
-            choices: [
-              'Yes — leather is a natural insulator and provides some protection',
-              'Yes — if the worker is careful not to touch the conductor directly',
-              'No — leather work gloves provide zero electrical protection; rubber insulating gloves (minimum Class 1) are required',
-              'Yes — 4,160V is below the threshold where insulating gloves are required',
-            ],
-            answerIndex: 2,
-            explanation:
-              'Leather work gloves provide ZERO electrical insulation. They are rated for mechanical protection only — cuts, abrasions, grip. Being 2 feet from an energized 4,160V conductor puts the worker within the minimum approach distance requirement. Rubber insulating gloves (Class 1 — rated to 7,500V — or higher) are required. "Being careful not to touch" is not a hazard control — it\'s wishful thinking.',
-            citation: '29 CFR 1910.137; OSHA eTool — Electric Power.',
-          },
-          {
-            id: 'T18-L05-Q5',
-            type: 'mc',
-            prompt:
-              'You arrive on site with Class 2 rubber insulating gloves (rated 17,000V). The last re-test date stamped on the cuff is 8 months ago. What should you do?',
-            choices: [
-              'Use them — they are rated for the voltage you are working near',
-              'Remove them from service and tag them for laboratory re-testing',
-              'Do a visual inspection only; if no cracks are visible, they are acceptable',
-              'Use them for today only, then send them for re-testing tomorrow',
-            ],
-            answerIndex: 1,
-            explanation:
-              'ASTM D120 §10.3 requires rubber insulating gloves to be re-tested by a qualified laboratory at intervals not exceeding 6 months from the date of the last test. At 8 months, these gloves are overdue regardless of apparent condition. Remove from service and tag for laboratory re-testing. Visual inspection alone is not sufficient — micro-cracks and degradation that compromise insulation are invisible to the naked eye.',
-            citation: 'ASTM D120-14a §10.3; 29 CFR 1910.137(b)(2)(ii) — in-service testing intervals.',
-          },
-        ]}
+        fallback={
+        <Quiz
+          title="T18.L05 Check — PPE: Hands, Head, Eyes, Feet"
+          mode="multiple-choice"
+          questions={[
+            {
+              id: 'T18-L05-Q1',
+              type: 'mc',
+              prompt:
+                'A telecom crew is working on a joint-use pole. The nearest energized distribution conductor is operating at 7,200V phase-to-ground. The authorized employee needs to work within the minimum approach distance (under qualified worker supervision). What is the MINIMUM rubber insulating glove class required?',
+              choices: [
+                'Class 00 (rated ≤ 500V AC)',
+                'Class 0 (rated ≤ 1,000V AC)',
+                'Class 1 (rated ≤ 7,500V AC)',
+                'Class 2 (rated ≤ 17,000V AC)',
+              ],
+              answerIndex: 2,
+              explanation:
+                'Class 1 rubber insulating gloves are rated for a maximum-use voltage of 7,500V AC per 29 CFR 1910.137 and ASTM D120. This covers 7,200V phase-to-ground with margin. Class 0 (1,000V) and Class 00 (500V) would be dangerously under-rated for distribution voltage. Class 2 (17,000V) would work but is a higher class than the minimum required — using a higher class is acceptable but not required.',
+              citation: '29 CFR 1910.137; OSHA eTool — Electric Power (osha.gov/etools/electric-power).',
+            },
+            {
+              id: 'T18-L05-Q2',
+              type: 'mc',
+              prompt:
+                'An OSP crew is splicing fiber from a bucket truck in a lane closure on a 45 mph state highway during daylight. The MINIMUM required hi-vis apparel class is:',
+              choices: [
+                'Class 1 — minimum background material',
+                'Class 2 — daytime roadway minimum',
+                'Class 3 — required only at night',
+                'No hi-vis required — they\'re elevated in the bucket, not walking in traffic',
+              ],
+              answerIndex: 1,
+              explanation:
+                'Class 2 hi-vis is the minimum for daytime work in a temporary traffic control zone on a public roadway. The worker is in or adjacent to a lane of traffic, regardless of elevation in a bucket. MUTCD Part 6 and OSHA requirements are based on proximity to a traffic lane — being in a bucket doesn\'t eliminate the struck-by hazard from approaching vehicles.',
+              citation: 'ANSI/ISEA 107 [confirm edition]; MUTCD 11th Edition (2023), Part 6, Chapter 6E.',
+              fieldNote: 'If the job runs into low-light conditions (dawn, dusk, overcast), upgrade to Class 3 without waiting to be told.',
+            },
+            {
+              id: 'T18-L05-Q3',
+              type: 'fill-in-blank',
+              prompt:
+                'An ANSI Z89.1 Class ____ hard hat provides electrical protection up to 20,000 volts and is required when working near energized distribution conductors.',
+              answer: 'E',
+              answerDisplay: 'E (Class E)',
+              explanation:
+                'ANSI Z89.1 Class E (Electrical) is rated for 20,000V phase-to-ground. Class G (General) is rated for 2,200V — not sufficient for distribution voltage work. Class C (Conductive) provides no electrical protection at all. The "E" in Class E stands for Electrical.',
+              citation: 'ANSI/ISEA Z89.1-2014 (R2019); 29 CFR 1910.268(b) PPE reference; OSHA Safety and Health Information Bulletin (SHIB) on safety helmets.',
+            },
+            {
+              id: 'T18-L05-Q4',
+              type: 'mc',
+              prompt:
+                'A crew member is pulling cable through conduit and wearing their standard leather work gloves. An energized 4,160V conductor is 2 feet away. Are the leather work gloves sufficient for electrical protection?',
+              choices: [
+                'Yes — leather is a natural insulator and provides some protection',
+                'Yes — if the worker is careful not to touch the conductor directly',
+                'No — leather work gloves provide zero electrical protection; rubber insulating gloves (minimum Class 1) are required',
+                'Yes — 4,160V is below the threshold where insulating gloves are required',
+              ],
+              answerIndex: 2,
+              explanation:
+                'Leather work gloves provide ZERO electrical insulation. They are rated for mechanical protection only — cuts, abrasions, grip. Being 2 feet from an energized 4,160V conductor puts the worker within the minimum approach distance requirement. Rubber insulating gloves (Class 1 — rated to 7,500V — or higher) are required. "Being careful not to touch" is not a hazard control — it\'s wishful thinking.',
+              citation: '29 CFR 1910.137; OSHA eTool — Electric Power.',
+            },
+            {
+              id: 'T18-L05-Q5',
+              type: 'mc',
+              prompt:
+                'You arrive on site with Class 2 rubber insulating gloves (rated 17,000V). The last re-test date stamped on the cuff is 8 months ago. What should you do?',
+              choices: [
+                'Use them — they are rated for the voltage you are working near',
+                'Remove them from service and tag them for laboratory re-testing',
+                'Do a visual inspection only; if no cracks are visible, they are acceptable',
+                'Use them for today only, then send them for re-testing tomorrow',
+              ],
+              answerIndex: 1,
+              explanation:
+                'ASTM D120 §10.3 requires rubber insulating gloves to be re-tested by a qualified laboratory at intervals not exceeding 6 months from the date of the last test. At 8 months, these gloves are overdue regardless of apparent condition. Remove from service and tag for laboratory re-testing. Visual inspection alone is not sufficient — micro-cracks and degradation that compromise insulation are invisible to the naked eye.',
+              citation: 'ASTM D120-14a §10.3; 29 CFR 1910.137(b)(2)(ii) — in-service testing intervals.',
+            },
+          ]}
+        />
+        }
       />
 
     </LessonLayout>
