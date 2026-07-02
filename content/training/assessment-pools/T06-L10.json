@@ -1,0 +1,115 @@
+{
+  "assessmentId": "T06-L10",
+  "kind": "lesson",
+  "courseId": "T06",
+  "lessonId": "T06.L10",
+  "drawCount": 4,
+  "passThreshold": 70,
+  "pool": [
+    {
+      "id": "T06-L10-Q1",
+      "type": "mc",
+      "prompt": "What does 'RUS 1751F-643 listed' mean for an innerduct product on an RUS-funded project?",
+      "choices": [
+        "It means the specific installed reel passed an on-site field inspection",
+        "It means the manufacturer has submitted test data to RUS demonstrating the product meets the specification for wall thickness, tensile strength, UV resistance, chemical resistance, and long-term deformation resistance — the product is then added to the RUS Accepted Materials List (AML); listing is about factory qualification, not on-site inspection or distributor sourcing",
+        "It means the product was sourced from a distributor located within the RUS borrower's service territory",
+        "It means the innerduct was manufactured after the bulletin's most recent revision date"
+      ],
+      "answerIndex": 1,
+      "explanation": "RUS 1751F-643 listing (\"Underground Plant Design\") reflects factory-level test qualification against the bulletin's material specifications, resulting in AML inclusion — this is a manufacturing/testing qualification, distinct from any on-site inspection or sourcing consideration."
+    },
+    {
+      "id": "T06-L10-Q2",
+      "type": "mc",
+      "prompt": "What four items constitute innerduct traceability documentation for an RUS project closeout package?",
+      "choices": [
+        "The installer's name, the installation date, the GPS coordinates, and a photo of the trench",
+        "The type designation printed on the duct (e.g., '1.25-in SDR-11 HDPE RUS LISTED'), the manufacturing date code, the reel or lot number, and the manufacturer's test certificate or compliance letter confirming 1751F-643 compliance — these four items allow an RUS auditor to trace the installed product back to the factory test that qualified it",
+        "Only the manufacturer's name and a general product catalog reference",
+        "The as-built drawing, the pull-tension calculation, the fill-percentage calculation, and the jam-ratio calculation"
+      ],
+      "answerIndex": 1,
+      "explanation": "The four traceability items (type designation, date code, reel/lot number, and compliance certificate) are specifically what an RUS auditor needs to trace an installed innerduct back to the factory test that originally qualified it for the AML — a documentation chain that would be broken by missing any one of these items.",
+      "citation": "RUS Bulletin 1751F-643 (\"Underground Plant Design\") Section 5."
+    },
+    {
+      "id": "T06-L10-Q3",
+      "type": "mc",
+      "prompt": "3 x 1.25-inch innerducts are planned for a 3-inch Schedule 40 PVC outer conduit (ID = 3.230 inches). The fill calculation shows 45.1%. Is this compliant with a 40% fill rule?",
+      "choices": [
+        "Yes — 45.1% is close enough to 40% to be treated as compliant with rounding tolerance",
+        "No — 45.1% exceeds the 40% fill rule with no rounding tolerance; the simplest fix is to use 2 x 1.25-inch innerducts (fill = 30%) or switch to 1-inch innerducts (fill = 28.8% for three) — both compliant, and cheaper than upgrading to a 4-inch outer conduit",
+        "Yes — the 40% rule only applies to innerducts smaller than 1.25 inches",
+        "No — but the only compliant fix is upgrading to a larger outer conduit; reducing innerduct count or size is not an option"
+      ],
+      "answerIndex": 1,
+      "explanation": "45.1% exceeds the 40% fill limit with no rounding tolerance applied — the most cost-effective fixes are reducing innerduct count (2 x 1.25-inch = 30% fill) or size (1-inch innerducts = 28.8% for three), both of which resolve the fill violation without the added cost of upgrading the outer conduit size unnecessarily."
+    },
+    {
+      "id": "T06-L10-Q4",
+      "type": "mc",
+      "prompt": "A contractor is about to install innerduct that appears identical to the specified product but has no 'RUS LISTED' text on it and no manufacturer compliance letter in the submittal file. What is the correct action?",
+      "choices": [
+        "Allow installation and resolve the documentation gap after the fact, since removing installed innerduct is expensive",
+        "Stop work before installation and require the contractor to provide the compliance letter or replace the product with listed material — unlisted innerduct must not be installed on an RUS project, and RUS audit standards require compliance BEFORE installation, not after, since removing and replacing already-installed innerduct is extremely expensive and falls on the contractor",
+        "Install the innerduct and simply note the missing documentation in the closeout package for RUS's awareness",
+        "Allow installation only if the contractor verbally confirms the product is equivalent to the listed one"
+      ],
+      "answerIndex": 1,
+      "explanation": "The correct sequence is to resolve the compliance question BEFORE installation, not after — once underground, removing and replacing unlisted innerduct is an extremely expensive fix that falls on the contractor, which is exactly why RUS audit standards require the compliance documentation to be confirmed pre-installation."
+    },
+    {
+      "id": "T06-L10-Q5",
+      "type": "mc",
+      "prompt": "A reel of HDPE innerduct has a date code showing it was manufactured 26 months ago and has been stored outside in direct sun. What is the concern?",
+      "choices": [
+        "Most AML-listed HDPE innerduct has a maximum outdoor direct-sun storage life of roughly 12-24 months [confirm the specific limit against the manufacturer's current data sheet] — at 26 months of outdoor exposure, the UV stabilizer additives are likely depleted, and UV-degraded HDPE becomes brittle and can crack under the mechanical stress of conduit pull-back or underground freeze-thaw cycling; an inspector should reject this reel and require fresh-stock replacement",
+        "There is no concern — HDPE has no meaningful storage-life limitation once manufactured",
+        "The concern only applies if the innerduct will be installed in a freezing climate; sun exposure alone is never a problem",
+        "26 months of storage improves HDPE's flexibility, making it MORE suitable for HDD installation, not less"
+      ],
+      "answerIndex": 0,
+      "explanation": "UV stabilizer depletion after extended outdoor storage is a real, well-documented material-degradation concern for HDPE — brittleness from UV exposure can lead to cracking under the mechanical stress of pull-back or freeze-thaw cycling, which is why an inspector finding a reel at 26 months of sun exposure should reject it pending confirmation against current manufacturer storage-life guidance."
+    },
+    {
+      "id": "T06-L10-Q6",
+      "type": "mc",
+      "prompt": "Why does the 40% fill rule apply independently of the jam-ratio check (T06.L04), rather than being the same check under a different name?",
+      "choices": [
+        "They are actually the same check; 'fill rule' and 'jam ratio' are two names for an identical calculation",
+        "Fill rule measures TOTAL cross-sectional area occupied relative to conduit area (a heat-dissipation and general-capacity concern), while jam ratio measures the geometric relationship between conduit ID and individual cable OD specific to three-same-size-cable configurations (a mechanical-jamming concern) — a design can pass one check while still failing the other, which is why both are verified independently",
+        "The 40% fill rule only applies to copper cable, while jam ratio only applies to fiber cable",
+        "Jam ratio is a subset calculation that is always automatically satisfied whenever the 40% fill rule passes"
+      ],
+      "answerIndex": 1,
+      "explanation": "This connects back to T06.L04's principle: fill percentage and jam ratio measure genuinely different physical concerns (total area occupied vs. a specific geometric jamming condition for same-size cable triads) — a design at 34% fill (comfortably under 40%) can still land in the 2.8-3.2 jam-ratio danger zone if three same-size cables are involved, which is exactly why both checks are performed independently rather than treating one as a proxy for the other."
+    },
+    {
+      "id": "T06-L10-Q7",
+      "type": "mc",
+      "prompt": "Why does RUS require pre-installation compliance verification for innerduct (rather than allowing post-installation documentation) specifically for a BURIED product, when a similar gap for an above-ground component might be more easily correctable?",
+      "choices": [
+        "There is no meaningful difference between buried and above-ground components in terms of correction cost or difficulty",
+        "The cost and disruption asymmetry between pre- and post-installation correction is far more severe for buried infrastructure — fixing a documentation or compliance gap after installation for a buried innerduct requires re-excavation, while an above-ground component might be more readily accessed and swapped; this asymmetry is exactly why the pre-installation compliance gate matters more for buried products",
+        "RUS's pre-installation requirement is purely a bureaucratic formality with no practical cost-avoidance rationale",
+        "The requirement is identical in strictness for buried and above-ground components; no distinction is actually made"
+      ],
+      "answerIndex": 1,
+      "explanation": "The specific reason pre-installation verification matters more for buried products is the asymmetric cost of post-installation correction — re-excavating to replace non-compliant buried innerduct is dramatically more expensive and disruptive than correcting an accessible above-ground component, which is exactly the economic logic behind requiring the compliance check before the product goes underground."
+    },
+    {
+      "id": "T06-L10-Q8",
+      "type": "mc",
+      "prompt": "A submittal package includes a manufacturer's compliance letter referencing '1751F-643' for an innerduct product, but the letter is dated 8 years before the current project. What should a reviewer verify before accepting this as current proof of listing?",
+      "choices": [
+        "Nothing further; any dated compliance letter referencing the bulletin number is automatically sufficient regardless of age",
+        "The reviewer should confirm the product referenced in the letter is still actively on the current RUS Accepted Materials List (AML) and that the specific reel/lot being installed traces back to a still-qualified product line — AML status and product formulations can change over time, so an old compliance letter alone doesn't guarantee the currently-installed material still meets the standard",
+        "The letter's age is irrelevant since RUS 1751F-643 has never been revised since its original 2002 issuance",
+        "An 8-year-old letter is always invalid regardless of AML status, requiring a brand-new letter for every project regardless of circumstances"
+      ],
+      "answerIndex": 1,
+      "explanation": "An old compliance letter establishes that a product was qualified AT THAT TIME — it doesn't automatically confirm the product formulation or its AML status hasn't changed since, which is why a thorough reviewer verifies current AML standing rather than treating any dated letter referencing the right bulletin number as sufficient proof on its own."
+    }
+  ]
+}
