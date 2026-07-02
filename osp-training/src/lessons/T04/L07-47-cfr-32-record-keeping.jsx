@@ -210,7 +210,7 @@ export default function T04L07_47CFR32RecordKeeping() {
                 <td className="px-3 py-2">Company vehicle operating costs — mileage, fuel, maintenance allocated to a project. Field survey truck days go here. This is an <em>operating expense account</em> (income statement), not a plant account (balance sheet) — the distinction matters for RUS cost-pool reporting.</td>
               </tr>
               <tr className="border-t border-white/10">
-                <td className="px-3 py-2 font-mono text-slate-300">§ 32.2230</td>
+                <td className="px-3 py-2 font-mono text-slate-300">§ 32.2003</td>
                 <td className="px-3 py-2">Telecommunications Plant Under Construction</td>
                 <td className="px-3 py-2">A holding account for all plant-in-progress costs before the project is placed in service. Survey labor, engineering costs, and materials all temporarily accumulate here during the project, then transfer to the permanent accounts when construction is complete and the plant is "placed in service."</td>
               </tr>
@@ -236,7 +236,7 @@ export default function T04L07_47CFR32RecordKeeping() {
             <p className="text-slate-300/90">
               Survey labor during the pre-construction phase typically goes to the
               <strong> Telecommunications Plant Under Construction</strong> account
-              (§ 32.2230) as engineering or survey labor, or to a project-specific engineering
+              (§ 32.2003) as engineering or survey labor, or to a project-specific engineering
               sub-account if the borrower's accounting system tracks it separately. The key
               is to note the project code on your timesheet — not just "survey" but which
               project route and which work phase (site-walk, drone flight, data processing,
@@ -257,7 +257,7 @@ export default function T04L07_47CFR32RecordKeeping() {
             <h4 className="font-semibold text-slate-200 mb-2">Equipment (drone rental)</h4>
             <p className="text-slate-300/90">
               Equipment rental — a drone hired for LiDAR capture — is a project cost
-              that accumulates in the Plant Under Construction account (§ 32.2230) until
+              that accumulates in the Plant Under Construction account (§ 32.2003) until
               the project is placed in service. If the drone is company-owned, it may
               be depreciated through a separate equipment account. Either way, the rental
               or allocated depreciation cost goes to the project and must be supported by
@@ -268,7 +268,7 @@ export default function T04L07_47CFR32RecordKeeping() {
             <h4 className="font-semibold text-slate-200 mb-2">Subcontractor survey firm</h4>
             <p className="text-slate-300/90">
               When a survey firm is brought in as a subcontractor, their invoice cost
-              goes to the project's Plant Under Construction account (§ 32.2230) as
+              goes to the project's Plant Under Construction account (§ 32.2003) as
               contracted engineering services. The invoice must match the purchase order
               and the work order — a lump-sum "surveying services" invoice without a
               breakdown may be questioned during an RUS audit.
@@ -396,7 +396,7 @@ export default function T04L07_47CFR32RecordKeeping() {
 
         <h3 className="mt-4 font-semibold">The "placed in service" concept — why Plant Under Construction is a temporary account</h3>
         <p>
-          The Plant Under Construction account (§ 32.2230) is a staging area in the financial
+          The Plant Under Construction account (§ 32.2003) is a staging area in the financial
           records. During the active survey and construction phase, all costs accumulate there
           because the plant isn't yet generating service or revenue. When the network is
           complete and placed in service — the fiber is lit, test passes, customers connect —
@@ -503,7 +503,7 @@ export default function T04L07_47CFR32RecordKeeping() {
             prompt:
               'Correct. Actual odometer readings by project-day give you a defensible vehicle cost allocation. Now: the drone rental invoice ($1,200) came in as "LiDAR Survey Services — Route A." Which plant account does it go to?',
             choices: [
-              { label: 'Plant Under Construction (§ 32.2230) — project-specific engineering cost; supported by the dated invoice', nextId: 'drone-poc' },
+              { label: 'Plant Under Construction (§ 32.2003) — project-specific engineering cost; supported by the dated invoice', nextId: 'drone-poc' },
               { label: 'Cable and Wire Facilities (§ 32.2410) — the drone captured data about the cable route', nextId: 'drone-cable' },
               { label: 'Motor vehicle expense (§ 32.6112) — drone is a type of aerial vehicle used for survey work', nextId: 'drone-vehicle' },
             ],
@@ -511,12 +511,12 @@ export default function T04L07_47CFR32RecordKeeping() {
           'drone-poc': {
             id: 'drone-poc',
             prompt:
-              'Correct. The drone rental goes to Plant Under Construction (§ 32.2230), supported by the invoice. All four cost types are now correctly allocated: labor (by route/phase, project-coded timesheets), vehicle (actual odometer logs), equipment (invoice to Plant Under Construction), subcontract GIS firm (invoice to Plant Under Construction). This is the documentation level that makes a Form 1755-A reconciliation clean and an RUS audit defensible.',
+              'Correct. The drone rental goes to Plant Under Construction (§ 32.2003), supported by the invoice. All four cost types are now correctly allocated: labor (by route/phase, project-coded timesheets), vehicle (actual odometer logs), equipment (invoice to Plant Under Construction), subcontract GIS firm (invoice to Plant Under Construction). This is the documentation level that makes a Form 1755-A reconciliation clean and an RUS audit defensible.',
             isEnd: true,
             outcome: 'success',
             outcomeLabel: 'All four cost types correctly allocated',
             explanation:
-              'Survey costs — labor, vehicle, equipment, subcontract — accumulate in Plant Under Construction (§ 32.2230) during the survey/engineering phase, supported by original source documents. When the project is placed in service, the accounting team transfers these costs to permanent plant accounts (§ 32.2410 for cable and wire facilities, § 32.2411 for poles, § 32.2111 for land, etc.) based on what was actually installed.',
+              'Survey costs — labor, vehicle, equipment, subcontract — accumulate in Plant Under Construction (§ 32.2003) during the survey/engineering phase, supported by original source documents. When the project is placed in service, the accounting team transfers these costs to permanent plant accounts (§ 32.2410 for cable and wire facilities, § 32.2411 for poles, § 32.2111 for land, etc.) based on what was actually installed.',
           },
           'drone-cable': {
             id: 'drone-cable',
@@ -526,17 +526,17 @@ export default function T04L07_47CFR32RecordKeeping() {
             outcome: 'failure',
             outcomeLabel: 'Incorrect account — survey costs are not cable materials',
             explanation:
-              'Cable and Wire Facilities (§ 32.2410) is the asset account for physical cable and conduit. Survey and engineering costs go to Plant Under Construction (§ 32.2230) until the project is placed in service. Note the distinction: §32.2210 = Central office—switching (not cable); §32.2410 = Cable and wire facilities (the OSP plant account).',
+              'Cable and Wire Facilities (§ 32.2410) is the asset account for physical cable and conduit. Survey and engineering costs go to Plant Under Construction (§ 32.2003) until the project is placed in service. Note the distinction: §32.2210 = Central office—switching (not cable); §32.2410 = Cable and wire facilities (the OSP plant account).',
           },
           'drone-vehicle': {
             id: 'drone-vehicle',
             prompt:
-              'A drone doesn\'t belong in Motor vehicle expense (§ 32.6112), which covers conventional vehicle operating costs. A drone rental is a contracted engineering service cost — goes to Plant Under Construction (§ 32.2230) like any other survey subcontract.',
+              'A drone doesn\'t belong in Motor vehicle expense (§ 32.6112), which covers conventional vehicle operating costs. A drone rental is a contracted engineering service cost — goes to Plant Under Construction (§ 32.2003) like any other survey subcontract.',
             isEnd: true,
             outcome: 'failure',
             outcomeLabel: 'Motor vehicle expense is for truck/vehicle operating costs, not drone rental',
             explanation:
-              'Motor vehicle expense (§ 32.6112) covers conventional vehicle costs. A drone rental is a contracted service — engineering or survey labor via a specialized tool. It goes to Plant Under Construction (§ 32.2230) as a project engineering cost.',
+              'Motor vehicle expense (§ 32.6112) covers conventional vehicle costs. A drone rental is a contracted service — engineering or survey labor via a specialized tool. It goes to Plant Under Construction (§ 32.2003) as a project engineering cost.',
           },
         }}
       />
@@ -559,13 +559,13 @@ export default function T04L07_47CFR32RecordKeeping() {
             choices: [
               'Cable and Wire Facilities (§ 32.2410) — because the survey work is for a cable project',
               'Motor vehicle expense (§ 32.6112) — because field survey requires trucks and equipment',
-              'Telecommunications Plant Under Construction (§ 32.2230) — a temporary staging account for all in-progress project costs before the plant is placed in service',
+              'Telecommunications Plant Under Construction (§ 32.2003) — a temporary staging account for all in-progress project costs before the plant is placed in service',
               'Poles (§ 32.2411) — because the survey documents existing poles',
             ],
             answerIndex: 2,
             explanation:
-              'Plant Under Construction (§ 32.2230) is the correct temporary account for all survey and engineering costs during the project development phase. It accumulates costs until the plant is placed in service, at which point the accounting team transfers costs to the permanent plant accounts (§ 32.2410 for cable and wire facilities, § 32.2411 for poles, § 32.2111 for land, etc.). Cable and Wire Facilities (§ 32.2410) and Poles (§ 32.2411) are permanent plant accounts for installed infrastructure, not for pre-construction survey costs. Note: §32.2210 is Central office—switching — not cable; §32.2420 is the parent-category heading "Cable and Wire Facilities" (see T13.L10 and T16.L08 for detailed account hierarchy).',
-            citation: '47 CFR 32 § 32.2230 (Telecommunications Plant Under Construction); FCC USOA (ecfr.gov/current/title-47/chapter-I/subchapter-B/part-32).',
+              'Plant Under Construction (§ 32.2003) is the correct temporary account for all survey and engineering costs during the project development phase. It accumulates costs until the plant is placed in service, at which point the accounting team transfers costs to the permanent plant accounts (§ 32.2410 for cable and wire facilities, § 32.2411 for poles, § 32.2111 for land, etc.). Cable and Wire Facilities (§ 32.2410) and Poles (§ 32.2411) are permanent plant accounts for installed infrastructure, not for pre-construction survey costs. Note: §32.2210 is Central office—switching — not cable; §32.2420 is the parent-category heading "Cable and Wire Facilities" (see T13.L10 and T16.L08 for detailed account hierarchy).',
+            citation: '47 CFR 32 § 32.2003 (Telecommunications Plant Under Construction); FCC USOA (ecfr.gov/current/title-47/chapter-I/subchapter-B/part-32).',
           },
           {
             id: 'T04-L07-Q2',
@@ -591,7 +591,7 @@ export default function T04L07_47CFR32RecordKeeping() {
             answer: 'Uniform System of Accounts',
             answerDisplay: 'Uniform System of Accounts (USOA)',
             explanation:
-              'The Uniform System of Accounts (USOA) is the core of 47 CFR Part 32. It defines every account number — § 32.2410 (Cable and Wire Facilities), § 32.2411 (Poles), § 32.2111 (Land), § 32.6112 (Motor vehicle expense), § 32.2230 (Plant Under Construction), § 32.2210 (Central office—switching) — that RUS borrowers and FCC-regulated carriers use to classify and record plant investment and operating costs. Note: §32.2210 is frequently misidentified as "Cable and Wire" — the actual cable plant account is §32.2410.',
+              'The Uniform System of Accounts (USOA) is the core of 47 CFR Part 32. It defines every account number — § 32.2410 (Cable and Wire Facilities), § 32.2411 (Poles), § 32.2111 (Land), § 32.6112 (Motor vehicle expense), § 32.2003 (Plant Under Construction), § 32.2210 (Central office—switching) — that RUS borrowers and FCC-regulated carriers use to classify and record plant investment and operating costs. Note: §32.2210 is frequently misidentified as "Cable and Wire" — the actual cable plant account is §32.2410.',
             citation: '47 CFR Part 32 — Uniform System of Accounts (USOA) for Telecommunications Companies.',
           },
           {
