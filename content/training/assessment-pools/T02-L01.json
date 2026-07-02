@@ -1,0 +1,125 @@
+{
+  "assessmentId": "T02-L01",
+  "kind": "lesson",
+  "courseId": "T02",
+  "lessonId": "T02.L01",
+  "drawCount": 4,
+  "passThreshold": 70,
+  "pool": [
+    {
+      "id": "T02-L01-Q1",
+      "type": "mc",
+      "prompt": "What phenomenon prevents light from leaking out the side of a fiber optic strand?",
+      "choices": [
+        "Electromagnetic shielding from the outer jacket",
+        "Total internal reflection at the core-cladding boundary",
+        "Absorption of stray light by the buffer coating",
+        "Magnetic alignment of photons along the fiber axis"
+      ],
+      "answerIndex": 1,
+      "explanation": "Total internal reflection (TIR) occurs when light hits the core-cladding boundary at an angle shallower than the critical angle. Because the core has a higher index of refraction than the cladding, 100% of the light bounces back into the core.",
+      "citation": "ITU-T G.652 (2024); standard fiber-optics physics (Snell's law derivation)."
+    },
+    {
+      "id": "T02-L01-Q2",
+      "type": "mc",
+      "prompt": "A single-mode fiber has a core diameter of approximately 9 um; a 50/125 multimode fiber has a 50 um core. What is the primary optical consequence of SMF's smaller core?",
+      "choices": [
+        "SMF cannot carry 1550 nm wavelengths",
+        "SMF carries only one propagation mode, eliminating modal dispersion and allowing longer transmission distances",
+        "SMF requires higher launch power to overcome the smaller cross-section",
+        "SMF has higher attenuation than multimode at all wavelengths"
+      ],
+      "answerIndex": 1,
+      "explanation": "The tiny SMF core allows only the fundamental mode to propagate. With no higher-order modes, there is no modal dispersion — this is why SMF carries signals for tens of kilometers where MMF tops out at hundreds of meters to a few kilometers.",
+      "citation": "ITU-T G.652.D — Characteristics of a single-mode optical fibre and cable."
+    },
+    {
+      "id": "T02-L01-Q3",
+      "type": "mc",
+      "prompt": "What is the outer glass layer surrounding the core of a fiber called, and what is its function?",
+      "choices": [
+        "The buffer tube — it holds multiple fibers together in a bundle",
+        "The cladding — it has a lower index of refraction than the core, creating the total internal reflection effect at the boundary",
+        "The jacket — it is the primary UV/moisture barrier for the whole cable",
+        "The ripcord — it lets the cable be opened without cutting into the fiber"
+      ],
+      "answerIndex": 1,
+      "explanation": "The cladding surrounds the core and has a lower index of refraction. That difference is what creates total internal reflection at the boundary, trapping light inside the core. Buffer tube, jacket, and ripcord are cable-construction elements, not the fiber's own optical layers."
+    },
+    {
+      "id": "T02-L01-Q4",
+      "type": "mc",
+      "prompt": "What does Numerical Aperture (NA) describe in a fiber, and how does SMF's NA compare to multimode's?",
+      "choices": [
+        "The maximum operating temperature of the outer sheath; SMF and MMF are identical",
+        "The half-angle of the cone of light the fiber will accept and propagate via TIR; SMF has a low NA (~0.12-0.14) compared to multimode's higher NA (0.20-0.275)",
+        "The total length of fiber on a standard shipping reel; NA has no optical meaning",
+        "The ratio of core diameter to cladding diameter; NA is always 1.0 for standard fiber"
+      ],
+      "answerIndex": 1,
+      "explanation": "NA = sqrt(n1^2 - n2^2), where n1 is the core index and n2 is the cladding index. It describes the light-acceptance cone at the launch end. Higher NA means a wider acceptance cone and more coupled light; SMF's low NA reflects its narrow core geometry.",
+      "citation": "FOA Reference Guide; ITU-T G.652.D."
+    },
+    {
+      "id": "T02-L01-Q5",
+      "type": "mc",
+      "prompt": "What is the index of refraction, and how do the core and cladding of a standard G.652.D fiber compare?",
+      "choices": [
+        "A number describing how much a material bends light (vacuum = 1.000); in fiber, the core has a slightly HIGHER index than the cladding (core ~1.468, cladding ~1.463, difference ~0.003-0.005)",
+        "A measure of how much power a fiber can carry; core and cladding have identical index values",
+        "The speed of light in the fiber measured in km/s; only the cladding has a defined index",
+        "A unitless ratio always equal to 1.5 for all glass materials"
+      ],
+      "answerIndex": 0,
+      "explanation": "The index of refraction tells you how much a transparent material bends light — vacuum is exactly 1.000, glass is roughly 1.46-1.50. In fiber, the core is formulated with a slightly higher index than the cladding, which is precisely what causes total internal reflection at the boundary."
+    },
+    {
+      "id": "T02-L01-Q6",
+      "type": "mc",
+      "prompt": "ITU-T G.652.D specifies Mode Field Diameter (MFD) at 1310 nm as approximately 8.8-9.6 um (9.2 +/- 0.4 um nominal). Why does MFD mismatch between two spliced fibers matter, even if both are G.652.D?",
+      "choices": [
+        "It doesn't matter — MFD is a marketing spec with no splicing consequence",
+        "Manufacturing tolerance means two G.652.D fibers can have slightly different actual MFD within the allowed range; that mismatch causes additional splice loss even with perfect physical/geometric alignment",
+        "MFD only matters for multimode fiber, never single-mode",
+        "MFD mismatch is fully compensated by any modern fusion splicer automatically"
+      ],
+      "answerIndex": 1,
+      "explanation": "MFD is the effective diameter of the light beam (slightly larger than the physical core, measured at the 1/e^2 intensity point). Two G.652.D-compliant fibers can each be within spec but have different actual MFD values — the mismatch between them contributes to splice loss independent of splice technique.",
+      "citation": "ITU-T G.652.D; 7 CFR 1755.902 (RUS fiber cable performance specification)."
+    },
+    {
+      "id": "T02-L01-Q7",
+      "type": "mc",
+      "prompt": "Snell's Law (n1 x sin(theta1) = n2 x sin(theta2)) governs what happens when light crosses the core-cladding boundary. What happens to a ray as its angle to the surface gets shallower (angle from the normal gets larger, approaching 90 degrees)?",
+      "choices": [
+        "The ray always passes straight through into the cladding, regardless of angle",
+        "The refracted ray in the cladding bends further from the normal, until at the critical angle it would run exactly along the boundary — beyond that angle, total internal reflection occurs",
+        "The ray's wavelength shifts to compensate for the angle change",
+        "Snell's Law only applies to light traveling from cladding to core, not core to cladding"
+      ],
+      "answerIndex": 1,
+      "explanation": "Since the core's index (n1) is higher than the cladding's (n2), the refracted ray on the cladding side bends away from the normal as the incident angle increases. At the critical angle, the refracted ray would run exactly along the boundary; beyond that angle, no light refracts through — it all reflects back into the core (TIR)."
+    },
+    {
+      "id": "T02-L01-Q8",
+      "type": "drag-match",
+      "prompt": "Match each fiber-physics term to its definition.",
+      "items": [
+        { "id": "i_core", "label": "Inner glass cylinder where light actually travels" },
+        { "id": "i_cladding", "label": "Outer glass layer with a lower index of refraction than the core" },
+        { "id": "i_na", "label": "Half-angle of the light cone a fiber will accept and propagate" },
+        { "id": "i_mfd", "label": "Effective diameter of the light beam, measured at the 1/e^2 intensity point" }
+      ],
+      "targets": [
+        { "id": "t_core", "label": "Core" },
+        { "id": "t_cladding", "label": "Cladding" },
+        { "id": "t_na", "label": "Numerical Aperture (NA)" },
+        { "id": "t_mfd", "label": "Mode Field Diameter (MFD)" }
+      ],
+      "correctMap": { "t_core": "i_core", "t_cladding": "i_cladding", "t_na": "i_na", "t_mfd": "i_mfd" },
+      "explanation": "Core and cladding are the two physical glass layers whose index difference creates TIR. NA describes the light-acceptance geometry at the fiber's launch end. MFD describes the effective (not physical) beam diameter inside a single-mode fiber, which is slightly larger than the physical core due to the evanescent field.",
+      "citation": "ITU-T G.652.D."
+    }
+  ]
+}

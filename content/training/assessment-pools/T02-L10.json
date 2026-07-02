@@ -1,0 +1,117 @@
+{
+  "assessmentId": "T02-L10",
+  "kind": "lesson",
+  "courseId": "T02",
+  "lessonId": "T02.L10",
+  "drawCount": 4,
+  "passThreshold": 70,
+  "pool": [
+    {
+      "id": "T02-L10-Q1",
+      "type": "mc",
+      "prompt": "A carrier is upgrading an 80 km G.652 fiber route from 10 Gb/s to 100 Gb/s DWDM. Which characterization tests are most important before activation?",
+      "choices": [
+        "Only OTDR testing at 1310 nm — the route is already G.652",
+        "CD characterization (to calculate dispersion compensation module requirements) and PMD measurement (to verify the route is within 100G coherent system tolerances)",
+        "Attenuation cut-back test on all fiber reels — no field tests needed",
+        "Connector end-face inspection only — 100G is self-correcting for dispersion"
+      ],
+      "answerIndex": 1,
+      "explanation": "For a DWDM upgrade, the critical parameters are CD profile (to size dispersion compensation) and PMD (to confirm the fiber is within the 100G coherent system's tolerance). A standard OTDR trace won't reveal CD or PMD — those require dedicated characterization instruments."
+    },
+    {
+      "id": "T02-L10-Q2",
+      "type": "mc",
+      "prompt": "An OTDR trace shows a 'gainer' event at a splice — the splice appears to have -0.2 dB loss (power increased after the splice). What should the technician do?",
+      "choices": [
+        "Accept the result — the splice is working perfectly and adding signal",
+        "Replace the splice immediately — negative loss indicates a bad physical connection",
+        "Run a bidirectional OTDR test and average the two measurements — the apparent gain is a backscatter artifact caused by differing fiber backscatter coefficients, not real optical gain",
+        "Re-run the OTDR with a shorter pulse width to eliminate the artifact"
+      ],
+      "answerIndex": 2,
+      "explanation": "Gainers are OTDR backscatter artifacts when two fibers with different backscatter coefficients are spliced. The bidirectional average is the true splice loss — e.g., if one direction shows -0.2 dB and the other +0.4 dB, the true loss is (-0.2+0.4)/2 = 0.1 dB.",
+      "citation": "IEC 61280-4-2 (bidirectional OTDR testing for installed single-mode cable plant)."
+    },
+    {
+      "id": "T02-L10-Q3",
+      "type": "mc",
+      "prompt": "What field method for chromatic dispersion (CD) measurement uses a modulated broadband source and measures the phase difference between wavelengths?",
+      "choices": [
+        "The pulse-delay method",
+        "The phase-shift method",
+        "The cut-back method",
+        "The mandrel wrap method"
+      ],
+      "answerIndex": 1,
+      "explanation": "The phase-shift method injects a sinusoidally modulated broadband optical signal and measures the relative phase of the detected signal at different wavelengths. The phase difference is proportional to the group-delay difference, from which the dispersion coefficient D is calculated."
+    },
+    {
+      "id": "T02-L10-Q4",
+      "type": "mc",
+      "prompt": "Why is bidirectional OTDR testing standard practice for splice loss records, rather than accepting a single-direction measurement?",
+      "choices": [
+        "Bidirectional testing is only needed for multimode fiber",
+        "Single-direction OTDR measurements can show a splice as artificially better OR worse than its true loss due to backscatter-coefficient mismatch between the two spliced fibers; averaging both directions cancels out that artifact",
+        "Bidirectional testing is faster than single-direction testing",
+        "Single-direction testing cannot detect any splice events at all"
+      ],
+      "answerIndex": 1,
+      "explanation": "Backscatter coefficient differences between two spliced fibers bias a single-direction OTDR reading — sometimes showing a 'gainer' (apparent negative loss), sometimes an inflated loss. Averaging measurements from both directions cancels this artifact and yields the true splice loss.",
+      "citation": "IEC 61280-4-2 — bidirectional attenuation/ORL measurement for installed single-mode cable plant."
+    },
+    {
+      "id": "T02-L10-Q5",
+      "type": "mc",
+      "prompt": "What does IEC 61280-4-2 specifically standardize?",
+      "choices": [
+        "Fusion splicer calibration procedures",
+        "Attenuation and optical return loss (ORL) measurement of installed single-mode fiber optic cable plant, including bidirectional OTDR testing practices",
+        "Manufacturing tolerances for buffer tube color coding",
+        "RUS materials acceptance testing for buried conduit"
+      ],
+      "answerIndex": 1,
+      "explanation": "IEC 61280-4-2 covers attenuation and ORL measurement of installed single-mode cable plant (fibers, connectors, splices, and other passive devices) across residential, commercial, industrial, data center, and OSP environments, including OTDR configuration and bidirectional testing guidance.",
+      "citation": "IEC 61280-4-2, Fibre-optic communication subsystem test procedures — Part 4-2."
+    },
+    {
+      "id": "T02-L10-Q6",
+      "type": "mc",
+      "prompt": "Why can't a standard OTDR trace reveal a fiber route's PMD value?",
+      "choices": [
+        "OTDR and PMD measurement are the same test with different names",
+        "A standard OTDR measures backscattered light intensity vs. distance (for loss/event location); PMD is a polarization-dependent timing effect that requires a dedicated PMD test instrument (e.g., interferometric or fixed-analyzer methods), not an OTDR",
+        "OTDR can measure PMD, but only above 1550 nm",
+        "PMD can only be measured in a laboratory, never in the field"
+      ],
+      "answerIndex": 1,
+      "explanation": "OTDR and PMD testing measure fundamentally different physical phenomena. OTDR characterizes loss and reflectance events along a fiber's length using backscattered light. PMD requires specialized instrumentation that measures polarization-dependent group delay, which an OTDR is not designed to detect."
+    },
+    {
+      "id": "T02-L10-Q7",
+      "type": "mc",
+      "prompt": "A splice gainer of -0.2 dB in one direction and +0.4 dB in the reverse direction are recorded for the same splice. What is the correct averaged splice loss value to record?",
+      "choices": [
+        "-0.2 dB (accept the more favorable reading)",
+        "+0.4 dB (accept the more conservative reading)",
+        "0.1 dB (the average of the two directional readings)",
+        "0.6 dB (the sum of the two directional readings)"
+      ],
+      "answerIndex": 2,
+      "explanation": "Bidirectional averaging: (-0.2 + 0.4) / 2 = 0.1 dB. This cancels the backscatter-coefficient artifact and yields the splice's true loss, which is neither the artificially low nor artificially high single-direction reading."
+    },
+    {
+      "id": "T02-L10-Q8",
+      "type": "mc",
+      "prompt": "Before activating a 100G coherent DWDM system on an existing 80 km G.652 route originally built for 10 Gb/s, why is CD compensation module sizing dependent on field-measured CD, not just the fiber's ITU-T spec value?",
+      "choices": [
+        "Field-measured CD is always identical to the spec value, so measurement is unnecessary",
+        "Real installed fiber's CD can vary from a single generic spec figure due to manufacturing variation, splicing of different fiber vintages/types along the route, and temperature — field characterization gives the actual value needed to correctly size compensation rather than relying on an assumed nominal figure",
+        "CD compensation modules are sized only by distance, never by measured dispersion",
+        "CD only matters for multimode fiber, not the SMF route described"
+      ],
+      "answerIndex": 1,
+      "explanation": "A real 80 km route may include fiber from multiple manufacturing runs, possibly even different fiber vintages spliced together over the years, each with slightly different actual CD. Field-measuring the actual accumulated CD (rather than assuming a textbook nominal value) is what lets an engineer correctly size the dispersion compensation module for that specific route."
+    }
+  ]
+}

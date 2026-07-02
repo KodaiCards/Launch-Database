@@ -1,0 +1,121 @@
+{
+  "assessmentId": "T02-L03",
+  "kind": "lesson",
+  "courseId": "T02",
+  "lessonId": "T02.L03",
+  "drawCount": 4,
+  "passThreshold": 70,
+  "pool": [
+    {
+      "id": "T02-L03-Q1",
+      "type": "mc",
+      "prompt": "A junior designer asks why 1550 nm has the lowest fiber attenuation but is not always the best choice for a short 5 km link. What is the most accurate answer?",
+      "choices": [
+        "1550 nm transceivers are banned for runs under 10 km by TIA standards",
+        "On a short link the attenuation savings from 1550 nm is minimal, while 1550 nm's chromatic dispersion (~17 ps/(nm*km)) is higher than 1310 nm's (near the G.652 zero-dispersion point), and 1310 nm transceivers are often cheaper",
+        "1550 nm cannot be used over single-mode fiber under 10 km due to power constraints",
+        "1310 nm has lower attenuation than 1550 nm on short links"
+      ],
+      "answerIndex": 1,
+      "explanation": "On a 5 km SMF link, the attenuation difference between 1310 and 1550 nm is small in absolute dB terms. The 1310 nm window sits near the G.652 zero-dispersion wavelength, making it more forgiving for lower-cost transceivers. 1550 nm pays off mainly for long haul or WDM.",
+      "citation": "ITU-T G.652.D (2024) — zero-dispersion wavelength 1300-1324 nm; CD at 1550 nm ~17 ps/(nm*km)."
+    },
+    {
+      "id": "T02-L03-Q2",
+      "type": "drag-match",
+      "prompt": "Match each dispersion type to its primary cause.",
+      "items": [
+        { "id": "i_cd", "label": "Different wavelengths travel at different speeds in glass (SMF)" },
+        { "id": "i_modal", "label": "Different light paths (modes) travel different distances (MMF)" },
+        { "id": "i_pmd", "label": "Different polarization orientations arrive at slightly different times (SMF at high bit rates)" }
+      ],
+      "targets": [
+        { "id": "t_cd", "label": "Chromatic Dispersion (CD)" },
+        { "id": "t_modal", "label": "Modal Dispersion" },
+        { "id": "t_pmd", "label": "Polarization Mode Dispersion (PMD)" }
+      ],
+      "correctMap": { "t_cd": "i_cd", "t_modal": "i_modal", "t_pmd": "i_pmd" },
+      "explanation": "Chromatic dispersion (CD): wavelength-dependent speed difference in SMF. Modal dispersion: path-length difference between modes in MMF. PMD: polarization-dependent speed difference in SMF at high bit rates.",
+      "citation": "ITU-T G.652.D; FOA Reference Guide."
+    },
+    {
+      "id": "T02-L03-Q3",
+      "type": "mc",
+      "prompt": "On a 100 km SMF link at 1550 nm, chromatic dispersion D = 17 ps/(nm*km) and laser spectral width delta-lambda = 0.1 nm. What is the total chromatic dispersion (delta-T)?",
+      "choices": [
+        "17 ps",
+        "1.7 ps",
+        "170 ps",
+        "1700 ps"
+      ],
+      "answerIndex": 2,
+      "explanation": "delta-T = D x delta-lambda x L = 17 ps/(nm*km) x 0.1 nm x 100 km = 170 ps. This exceeds one bit period at 10 Gb/s (100 ps/bit), which is why dispersion compensation is often needed on 10G long-haul SMF links at 1550 nm."
+    },
+    {
+      "id": "T02-L03-Q4",
+      "type": "mc",
+      "prompt": "Why does multimode fiber have a bandwidth rating (MHz*km) while single-mode fiber does not need one?",
+      "choices": [
+        "Single-mode fiber is too expensive to test for bandwidth",
+        "Multimode bandwidth is limited by modal dispersion, since different modes travel different path lengths and arrive at different times; single-mode carries only one mode, so modal dispersion is zero",
+        "Single-mode fiber has infinite bandwidth at all distances",
+        "The MHz*km rating applies to the outer jacket, not the fiber itself"
+      ],
+      "answerIndex": 1,
+      "explanation": "SMF's tiny core allows only the fundamental mode to propagate — there are no higher-order modes to arrive late, so modal dispersion is zero. SMF bandwidth is instead limited by chromatic dispersion and PMD, which are compensated at the system level rather than expressed as a simple MHz*km figure."
+    },
+    {
+      "id": "T02-L03-Q5",
+      "type": "mc",
+      "prompt": "What is the ITU-T G.652 zero-dispersion wavelength range?",
+      "choices": [
+        "1550-1565 nm",
+        "850-940 nm",
+        "1300-1324 nm",
+        "1625-1650 nm"
+      ],
+      "answerIndex": 2,
+      "explanation": "G.652 fiber is designed with a zero-dispersion wavelength near 1310 nm, within the allowable range of 1300-1324 nm — which is why 1310 nm is the natural, lowest-dispersion operating window for standard SMF.",
+      "citation": "ITU-T G.652 zero-dispersion wavelength specification."
+    },
+    {
+      "id": "T02-L03-Q6",
+      "type": "mc",
+      "prompt": "A designer is choosing between 1310 nm and 1550 nm for a new 8 km rural SMF link with no WDM plans. What is the strongest technical argument for 1310 nm here?",
+      "choices": [
+        "1310 nm is closer to G.652's zero-dispersion wavelength and pairs with lower-cost transceivers, and the attenuation penalty over 8 km is small",
+        "1310 nm always has lower attenuation than 1550 nm at any distance",
+        "1550 nm cannot physically propagate over single-mode fiber",
+        "1310 nm is required by NESC for all aerial fiber runs"
+      ],
+      "answerIndex": 0,
+      "explanation": "For a short, non-WDM link, the lower dispersion and lower transceiver cost at 1310 nm outweigh 1550 nm's lower attenuation, which only becomes decisive at longer distances or when WDM/DWDM multiplexing is involved."
+    },
+    {
+      "id": "T02-L03-Q7",
+      "type": "mc",
+      "prompt": "What is the fundamental difference between how chromatic dispersion (CD) and polarization mode dispersion (PMD) accumulate with fiber length?",
+      "choices": [
+        "Both accumulate identically, linearly with length",
+        "CD accumulates linearly with length (deterministic, delta-T = D x delta-lambda x L); PMD accumulates with the square root of length (statistical, random-walk process)",
+        "CD accumulates with the square root of length; PMD accumulates linearly",
+        "Neither CD nor PMD depends on fiber length"
+      ],
+      "answerIndex": 1,
+      "explanation": "CD is deterministic and scales linearly with length. PMD arises from random polarization coupling along the fiber and scales as sqrt(L), following random-walk statistics rather than a deterministic linear sum."
+    },
+    {
+      "id": "T02-L03-Q8",
+      "type": "mc",
+      "prompt": "At 10 Gb/s, the bit period is 100 ps. A 100 km SMF link at 1550 nm accumulates 170 ps of chromatic dispersion with a given laser spectral width. What does this imply?",
+      "choices": [
+        "Nothing — dispersion in ps has no relationship to bit period",
+        "The accumulated dispersion (170 ps) exceeds the bit period (100 ps), signaling that dispersion compensation is likely needed to avoid inter-symbol interference at this bit rate/distance/wavelength combination",
+        "The link will work perfectly regardless of the dispersion value",
+        "170 ps of dispersion only matters for multimode fiber"
+      ],
+      "answerIndex": 1,
+      "explanation": "When accumulated dispersion approaches or exceeds the bit period, adjacent bits' pulses smear into each other (inter-symbol interference), degrading the signal. 170 ps > 100 ps signals a real risk requiring dispersion compensation or a different design choice (e.g., shorter distance, narrower-linewidth laser, or 1310 nm instead)."
+    }
+  ]
+}

@@ -1,0 +1,116 @@
+{
+  "assessmentId": "T02-L11",
+  "kind": "lesson",
+  "courseId": "T02",
+  "lessonId": "T02.L11",
+  "drawCount": 4,
+  "passThreshold": 70,
+  "pool": [
+    {
+      "id": "T02-L11-Q1",
+      "type": "mc",
+      "prompt": "When troubleshooting unexpected high loss on a newly installed OSP fiber link, what should you always do FIRST?",
+      "choices": [
+        "Request a cable replacement from the supplier",
+        "Re-do all fusion splices in the suspect section",
+        "Clean and inspect all connector end-faces with a compliant scope, then re-run the OTDR",
+        "Run a PMD measurement to rule out polarization issues"
+      ],
+      "answerIndex": 2,
+      "explanation": "Contaminated connector end-faces are the most common cause of unexpected loss on new installations — a dirty connector can add 1-5 dB of loss in a single mated pair. Clean and inspect before re-doing splices or ordering replacement materials."
+    },
+    {
+      "id": "T02-L11-Q2",
+      "type": "mc",
+      "prompt": "An aerial fiber link shows higher attenuation in winter OTDR readings than summer readings (~0.08 dB/km excess at 1550 nm in January vs. July). What is the most likely cause?",
+      "choices": [
+        "Moisture penetrating the cable jacket in winter",
+        "Temperature-induced changes in fiber attenuation and microbend from cable contraction in cold temperatures",
+        "The OTDR instrument is less accurate at cold ambient temperatures",
+        "UV damage accelerating in winter months due to lower sun angle"
+      ],
+      "answerIndex": 1,
+      "explanation": "Fiber attenuation increases slightly at lower temperatures, and loose-tube cable shortens in cold weather, potentially causing slight fiber buckle in the buffer tube and adding microbend loss. The 3 dB safety margin in a link budget is designed to absorb this seasonal variation.",
+      "citation": "ITU-T G.652.D temperature-dependent attenuation characteristics; FOA Reference Guide."
+    },
+    {
+      "id": "T02-L11-Q3",
+      "type": "mc",
+      "prompt": "A G.657.B3 drop cable is spliced to a G.652.D trunk cable, and the splice shows 0.12 dB loss — which seems high for a fusion splice. Is this expected?",
+      "choices": [
+        "No — any fusion splice over 0.10 dB should be re-done immediately",
+        "Possibly — G.657.B3 has a larger MFD mismatch with G.652.D than some other combinations. Inherent loss from the MFD mismatch can contribute 0.05-0.15 dB even with a perfect geometric splice; verify against the fiber specification before re-doing",
+        "Yes — 0.12 dB is below a planning value, so it automatically passes with no further thought needed",
+        "No — G.657.B3 and G.652.D cannot be fusion spliced at all"
+      ],
+      "answerIndex": 1,
+      "explanation": "G.657.B3 is optimized for bend insensitivity and has a different MFD from G.652.D. Splicing the two fiber types together introduces inherent mode-field mismatch loss on top of any geometric splice imperfection, so an apparently 'high' splice loss may actually be expected — check the manufacturer's splice loss table before assuming a rework is needed."
+    },
+    {
+      "id": "T02-L11-Q4",
+      "type": "mc",
+      "prompt": "Why does 'the book' (theoretical spec values) sometimes diverge from what a field crew actually measures on a real, aging installed cable plant?",
+      "choices": [
+        "Book values are always wrong and should be ignored entirely",
+        "Book values are laboratory/spec-sheet figures under controlled, often ideal or worst-case conditions; real field measurements reflect actual installation quality, seasonal/temperature effects, connector contamination, and cumulative aging that the book figure doesn't capture directly",
+        "Field measurements are always less accurate than book values, so book values should be trusted over test results",
+        "There is no meaningful difference between book values and field measurements in practice"
+      ],
+      "answerIndex": 1,
+      "explanation": "Standards specs describe controlled test conditions or worst-case boundaries. Field performance reflects real installation quality, environmental exposure, connector cleanliness, and cumulative wear — which is exactly why designers build margin into their planning values rather than relying on book numbers alone."
+    },
+    {
+      "id": "T02-L11-Q5",
+      "type": "mc",
+      "prompt": "A crew finds a connector loss reading that seems too good to be true — nearly 0 dB on a mated pair that should typically show some measurable loss. What should they suspect first?",
+      "choices": [
+        "That the connectors are simply exceptionally well-manufactured, and no further check is warranted",
+        "A measurement artifact — verify the test setup (reference cords, meter calibration, launch conditions) before accepting an implausibly low reading as real",
+        "That the fiber type has changed mid-link, explaining the anomaly",
+        "That PMD has canceled out the connector loss"
+      ],
+      "answerIndex": 1,
+      "explanation": "An implausibly good reading is as much a red flag as a bad one — it often signals a measurement setup problem (bad reference cord, miscalibrated meter, wrong launch condition) rather than genuinely perfect hardware. Field discipline means questioning results that don't match physical expectations in either direction, not just the bad ones."
+    },
+    {
+      "id": "T02-L11-Q6",
+      "type": "mc",
+      "prompt": "Why does the practice of building a 3 dB safety margin into link budgets (T02.L06) directly connect to the field-vs-book gap discussed in this lesson?",
+      "choices": [
+        "It doesn't connect — margin and field variance are unrelated topics",
+        "The safety margin exists specifically to absorb the gap between book/spec performance and real field performance over the plant's service life — seasonal attenuation swings, connector wear, and installation-induced microbend are exactly what the margin is meant to cover",
+        "The safety margin only covers dispersion, not attenuation variance",
+        "Margin is a purely legal requirement with no technical justification"
+      ],
+      "answerIndex": 1,
+      "explanation": "The link-budget margin (T02.L06) and the field-vs-book gap (this lesson) describe the same underlying reality from two angles: real installed fiber performs somewhat differently from its spec sheet over time and conditions, and the margin is the engineering tool that keeps the design robust against that reality."
+    },
+    {
+      "id": "T02-L11-Q7",
+      "type": "mc",
+      "prompt": "What is the practical first step before concluding that a mixed-fiber-type splice (e.g., G.657.B3 to G.652.D) has failed a loss threshold?",
+      "choices": [
+        "Immediately re-splice without further investigation",
+        "Check whether the manufacturer's published splice-loss table for that specific fiber-type combination already accounts for the observed loss as normal MFD-mismatch loss, before treating it as a rework candidate",
+        "Assume the splicer machine is miscalibrated",
+        "Switch to a different fiber vendor entirely"
+      ],
+      "answerIndex": 1,
+      "explanation": "Mixed-fiber-type splices carry an inherent MFD-mismatch loss component that a same-type splice wouldn't have. Comparing the observed loss against the specific manufacturer's mixed-type splice-loss table — rather than a generic same-type threshold — avoids unnecessary rework on a splice that is actually performing as expected."
+    },
+    {
+      "id": "T02-L11-Q8",
+      "type": "mc",
+      "prompt": "What connector end-face inspection standard is referenced across this course for verifying cleanliness before accepting a suspect low-loss or high-loss reading?",
+      "choices": [
+        "IEC 61300-3-35",
+        "ANSI O5.1",
+        "NESC C2-2023",
+        "29 CFR 1910.268"
+      ],
+      "answerIndex": 0,
+      "explanation": "IEC 61300-3-35 is the connector end-face inspection standard (pass/fail zones for cleanliness and defects) referenced when a technician needs to verify a connector's physical condition before trusting an optical loss measurement.",
+      "citation": "IEC 61300-3-35 — fiber optic connector end-face visual inspection [edition not independently pinned down this session; treat as UNVERIFIED-EXACT for the specific revision]."
+    }
+  ]
+}
