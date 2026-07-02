@@ -5,6 +5,7 @@ import React from 'react';
 import LessonLayout from '../../components/LessonLayout.jsx';
 import BranchingScenario from '../../components/primitives/BranchingScenario.jsx';
 import Quiz from '../../components/primitives/Quiz.jsx';
+import GatedAssessment from '../../components/primitives/GatedAssessment.jsx';
 import Flashcard from '../../components/Flashcard.jsx';
 
 export const meta = {
@@ -399,70 +400,77 @@ export default function T03L03_ArmorJacketSelection() {
       />
 
       {/* ── PER-LESSON QUIZ ───────────────────────────────────────────────── */}
-      <Quiz
+      <GatedAssessment
+        courseId="T03"
+        assessmentId="T03-L03"
         title="T03.L03 Check — Armor and Jacket Selection"
-        mode="multiple-choice"
-        questions={[
-          {
-            id: 'T03-L03-Q1',
-            type: 'mc',
-            prompt:
-              'A cable routed from aerial attachment into an underground duct and then entering a building riser shaft requires which combination of specifications?',
-            choices: [
-              'HDPE jacket only for all three segments — one cable type fits all',
-              'CST armor for the direct-burial segment, unarmored for aerial, OFNR-listed for the riser entry',
-              'Interlocked armor throughout — handles all three environments',
-              'Tight-buffer construction to allow individual fiber termination in the building',
-            ],
-            answerIndex: 1,
-            explanation:
-              'Each environment has different requirements. Aerial: unarmored, weatherproof HDPE. Underground duct: conduit provides protection, so armor is optional/redundant for the duct section. Riser entry: OFNR fire rating is required for the riser shaft — this dictates the cable specification for that segment. Three segments often = three cable specs with splice points at each transition. (ICEA S-87-640; NEC §770)',
-          },
-          {
-            id: 'T03-L03-Q2',
-            type: 'dragdrop',
-            prompt:
-              'Match each armor type to its primary protection role.',
-            items: [
-              { id: 'cst',    label: 'CST (corrugated steel tape)' },
-              { id: 'inter',  label: 'Interlocked armor' },
-              { id: 'noarm',  label: 'No armor' },
-            ],
-            targets: [
-              { id: 'tcst',   label: 'Direct burial + rodent protection (gnaw barrier)' },
-              { id: 'tinter', label: 'Indoor-outdoor riser with NEC §770.179(B) listing' },
-              { id: 'tnoarm', label: 'Aerial lashed to strand (tensile load only)' },
-            ],
-            correctMap: { tcst: 'cst', tinter: 'inter', tnoarm: 'noarm' },
-            explanation:
-              'CST: steel gnaw barrier for direct-burial in rodent areas. Interlocked armor: helical metal strips for indoor-outdoor riser crush resistance with fire rating. No armor: aerial cable relies on the messenger for mechanical support — armor adds unnecessary weight.',
-          },
-          {
-            id: 'T03-L03-Q3',
-            type: 'fill-in-blank',
-            prompt:
-              'The ________ inside a CST-armored cable lets installers remove the steel layer without damaging the fiber bundle.',
-            answer: 'ripcord',
-            answerDisplay: 'ripcord',
-            explanation:
-              'An internal ripcord (strong yarn or cord) under the corrugated steel armor lets the installer split the armor layer cleanly. This is confirmed in OCC D-Series product documentation: "steel-armor is easily removed with an internal ripcord." Using metal cutters on armored cable without a ripcord risks nicking the inner cable assembly.',
-          },
-          {
-            id: 'T03-L03-Q4',
-            type: 'mc',
-            prompt:
-              'A direct-burial OSP cable route passes through a property with a known woodchuck population. What is the minimum armor specification?',
-            choices: [
-              'No armor — woodchucks cannot gnaw through HDPE jacket',
-              'Corrugated aluminum tape (CAT) — lighter than steel and sufficient for most rodents',
-              'CST (corrugated steel tape) armor — steel provides the gnaw-stop barrier',
-              'Armor is not required — use double-wall HDPE conduit instead',
-            ],
-            answerIndex: 2,
-            explanation:
-              'CST armor is required in rodent-active areas for direct-burial cable. HDPE jacket alone is insufficient — gnawing animals can penetrate polyethylene. Steel creates a mechanical barrier that stops rodent damage. (Source: ICEA S-87-640 Annex; FOA OSP installation guidelines). Double-wall conduit is an alternative but the question specifies direct-burial cable, not conduit.',
-          },
-        ]}
+        fallback={
+        <Quiz
+          title="T03.L03 Check — Armor and Jacket Selection"
+          mode="multiple-choice"
+          questions={[
+            {
+              id: 'T03-L03-Q1',
+              type: 'mc',
+              prompt:
+                'A cable routed from aerial attachment into an underground duct and then entering a building riser shaft requires which combination of specifications?',
+              choices: [
+                'HDPE jacket only for all three segments — one cable type fits all',
+                'CST armor for the direct-burial segment, unarmored for aerial, OFNR-listed for the riser entry',
+                'Interlocked armor throughout — handles all three environments',
+                'Tight-buffer construction to allow individual fiber termination in the building',
+              ],
+              answerIndex: 1,
+              explanation:
+                'Each environment has different requirements. Aerial: unarmored, weatherproof HDPE. Underground duct: conduit provides protection, so armor is optional/redundant for the duct section. Riser entry: OFNR fire rating is required for the riser shaft — this dictates the cable specification for that segment. Three segments often = three cable specs with splice points at each transition. (ICEA S-87-640; NEC §770)',
+            },
+            {
+              id: 'T03-L03-Q2',
+              type: 'dragdrop',
+              prompt:
+                'Match each armor type to its primary protection role.',
+              items: [
+                { id: 'cst',    label: 'CST (corrugated steel tape)' },
+                { id: 'inter',  label: 'Interlocked armor' },
+                { id: 'noarm',  label: 'No armor' },
+              ],
+              targets: [
+                { id: 'tcst',   label: 'Direct burial + rodent protection (gnaw barrier)' },
+                { id: 'tinter', label: 'Indoor-outdoor riser with NEC §770.179(B) listing' },
+                { id: 'tnoarm', label: 'Aerial lashed to strand (tensile load only)' },
+              ],
+              correctMap: { tcst: 'cst', tinter: 'inter', tnoarm: 'noarm' },
+              explanation:
+                'CST: steel gnaw barrier for direct-burial in rodent areas. Interlocked armor: helical metal strips for indoor-outdoor riser crush resistance with fire rating. No armor: aerial cable relies on the messenger for mechanical support — armor adds unnecessary weight.',
+            },
+            {
+              id: 'T03-L03-Q3',
+              type: 'fill-in-blank',
+              prompt:
+                'The ________ inside a CST-armored cable lets installers remove the steel layer without damaging the fiber bundle.',
+              answer: 'ripcord',
+              answerDisplay: 'ripcord',
+              explanation:
+                'An internal ripcord (strong yarn or cord) under the corrugated steel armor lets the installer split the armor layer cleanly. This is confirmed in OCC D-Series product documentation: "steel-armor is easily removed with an internal ripcord." Using metal cutters on armored cable without a ripcord risks nicking the inner cable assembly.',
+            },
+            {
+              id: 'T03-L03-Q4',
+              type: 'mc',
+              prompt:
+                'A direct-burial OSP cable route passes through a property with a known woodchuck population. What is the minimum armor specification?',
+              choices: [
+                'No armor — woodchucks cannot gnaw through HDPE jacket',
+                'Corrugated aluminum tape (CAT) — lighter than steel and sufficient for most rodents',
+                'CST (corrugated steel tape) armor — steel provides the gnaw-stop barrier',
+                'Armor is not required — use double-wall HDPE conduit instead',
+              ],
+              answerIndex: 2,
+              explanation:
+                'CST armor is required in rodent-active areas for direct-burial cable. HDPE jacket alone is insufficient — gnawing animals can penetrate polyethylene. Steel creates a mechanical barrier that stops rodent damage. (Source: ICEA S-87-640 Annex; FOA OSP installation guidelines). Double-wall conduit is an alternative but the question specifies direct-burial cable, not conduit.',
+            },
+          ]}
+        />
+        }
       />
 
     </LessonLayout>

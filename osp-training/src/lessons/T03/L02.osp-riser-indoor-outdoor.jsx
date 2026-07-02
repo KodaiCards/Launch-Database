@@ -6,6 +6,7 @@ import LessonLayout from '../../components/LessonLayout.jsx';
 import BranchingScenario from '../../components/primitives/BranchingScenario.jsx';
 import Sortable from '../../components/primitives/Sortable.jsx';
 import Quiz from '../../components/primitives/Quiz.jsx';
+import GatedAssessment from '../../components/primitives/GatedAssessment.jsx';
 import Flashcard from '../../components/Flashcard.jsx';
 
 export const meta = {
@@ -388,69 +389,76 @@ export default function T03L02_OSPRiserIndoorOutdoor() {
       />
 
       {/* ── PER-LESSON QUIZ ───────────────────────────────────────────────── */}
-      <Quiz
+      <GatedAssessment
+        courseId="T03"
+        assessmentId="T03-L02"
         title="T03.L02 Check — OSP vs. Riser vs. Indoor/Outdoor"
-        mode="multiple-choice"
-        questions={[
-          {
-            id: 'T03-L02-Q1',
-            type: 'mc',
-            prompt:
-              'Which fiber optic cable type is required for installation in an air-handling plenum?',
-            choices: [
-              'OFNR — passes the riser vertical flame test',
-              'OFNG — unlisted general use',
-              'OFNP — passes UL 910 / NFPA 262 flame and smoke test',
-              'Any cable rated OSP with UV-stabilized HDPE jacket',
-            ],
-            answerIndex: 2,
-            explanation:
-              'OFNP (Optical Fiber Nonconductive Plenum) is required in air-handling plenums. It must pass UL 910 / NFPA 262 for both low flame spread and low smoke density. OFNR can be used in riser shafts but NOT in plenums. (NEC Article 770)',
-            citation: 'NEC NFPA 70-2023 §770; UL 910 / NFPA 262.',
-          },
-          {
-            id: 'T03-L02-Q2',
-            type: 'mc',
-            prompt:
-              'An unlisted outdoor OSP cable enters a commercial building at grade level. The termination panel is 35 ft from the building entry. What is required?',
-            choices: [
-              'Transition to OFNP immediately at the building entry',
-              'No additional action — 35 ft is under the 50 ft limit in NEC §770.48(A)',
-              'Transition to OFNR at the 25 ft mark',
-              'The cable cannot enter a building at all without a transition',
-            ],
-            answerIndex: 1,
-            explanation:
-              '35 ft is within the 50 ft unlisted entry allowance under NEC §770.48(A). No transition is required. The 50 ft limit applies to the total run of unlisted cable inside the building from the building entry point. (Source: NEC §770.48 — confirmed via public NEC commentary)',
-            fieldNote:
-              'Always confirm with the local AHJ — some jurisdictions require indoor fire-rated cable for any interior run regardless of the 50 ft federal code provision.',
-          },
-          {
-            id: 'T03-L02-Q3',
-            type: 'fill-in-blank',
-            prompt:
-              'The carbon black content in HDPE OSP jacket material provides ________ resistance.',
-            answer: 'UV',
-            answerDisplay: 'UV (ultraviolet)',
-            explanation:
-              '2–3% carbon black is added to HDPE jacket compound specifically to absorb UV radiation and prevent oxidative photodegradation. Without it, the HDPE jacket would become brittle and crack within a few years of sun exposure. (Source: bwnfiber.com; shobeirshimi.com)',
-          },
-          {
-            id: 'T03-L02-Q4',
-            type: 'mc',
-            prompt:
-              'Which cable type can legally substitute for OFNR cable in a building riser shaft?',
-            choices: [
-              'OFNG (unlisted general-use)',
-              'Standard OSP with HDPE jacket',
-              'OFNP (plenum-rated)',
-              'No cable can substitute — only OFNR is permitted in riser shafts',
-            ],
-            answerIndex: 2,
-            explanation:
-              'OFNP is a higher fire rating than OFNR and can substitute downward. A plenum-rated cable exceeds the riser requirement. The NEC Article 770 substitution hierarchy: OFNP can go anywhere; OFNR can go in risers and general areas (but not plenums); OFNG is limited to unlisted locations only.',
-          },
-        ]}
+        fallback={
+        <Quiz
+          title="T03.L02 Check — OSP vs. Riser vs. Indoor/Outdoor"
+          mode="multiple-choice"
+          questions={[
+            {
+              id: 'T03-L02-Q1',
+              type: 'mc',
+              prompt:
+                'Which fiber optic cable type is required for installation in an air-handling plenum?',
+              choices: [
+                'OFNR — passes the riser vertical flame test',
+                'OFNG — unlisted general use',
+                'OFNP — passes UL 910 / NFPA 262 flame and smoke test',
+                'Any cable rated OSP with UV-stabilized HDPE jacket',
+              ],
+              answerIndex: 2,
+              explanation:
+                'OFNP (Optical Fiber Nonconductive Plenum) is required in air-handling plenums. It must pass UL 910 / NFPA 262 for both low flame spread and low smoke density. OFNR can be used in riser shafts but NOT in plenums. (NEC Article 770)',
+              citation: 'NEC NFPA 70-2023 §770; UL 910 / NFPA 262.',
+            },
+            {
+              id: 'T03-L02-Q2',
+              type: 'mc',
+              prompt:
+                'An unlisted outdoor OSP cable enters a commercial building at grade level. The termination panel is 35 ft from the building entry. What is required?',
+              choices: [
+                'Transition to OFNP immediately at the building entry',
+                'No additional action — 35 ft is under the 50 ft limit in NEC §770.48(A)',
+                'Transition to OFNR at the 25 ft mark',
+                'The cable cannot enter a building at all without a transition',
+              ],
+              answerIndex: 1,
+              explanation:
+                '35 ft is within the 50 ft unlisted entry allowance under NEC §770.48(A). No transition is required. The 50 ft limit applies to the total run of unlisted cable inside the building from the building entry point. (Source: NEC §770.48 — confirmed via public NEC commentary)',
+              fieldNote:
+                'Always confirm with the local AHJ — some jurisdictions require indoor fire-rated cable for any interior run regardless of the 50 ft federal code provision.',
+            },
+            {
+              id: 'T03-L02-Q3',
+              type: 'fill-in-blank',
+              prompt:
+                'The carbon black content in HDPE OSP jacket material provides ________ resistance.',
+              answer: 'UV',
+              answerDisplay: 'UV (ultraviolet)',
+              explanation:
+                '2–3% carbon black is added to HDPE jacket compound specifically to absorb UV radiation and prevent oxidative photodegradation. Without it, the HDPE jacket would become brittle and crack within a few years of sun exposure. (Source: bwnfiber.com; shobeirshimi.com)',
+            },
+            {
+              id: 'T03-L02-Q4',
+              type: 'mc',
+              prompt:
+                'Which cable type can legally substitute for OFNR cable in a building riser shaft?',
+              choices: [
+                'OFNG (unlisted general-use)',
+                'Standard OSP with HDPE jacket',
+                'OFNP (plenum-rated)',
+                'No cable can substitute — only OFNR is permitted in riser shafts',
+              ],
+              answerIndex: 2,
+              explanation:
+                'OFNP is a higher fire rating than OFNR and can substitute downward. A plenum-rated cable exceeds the riser requirement. The NEC Article 770 substitution hierarchy: OFNP can go anywhere; OFNR can go in risers and general areas (but not plenums); OFNG is limited to unlisted locations only.',
+            },
+          ]}
+        />
+        }
       />
 
     </LessonLayout>

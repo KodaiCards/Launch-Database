@@ -5,6 +5,7 @@ import React from 'react';
 import LessonLayout from '../../components/LessonLayout.jsx';
 import BranchingScenario from '../../components/primitives/BranchingScenario.jsx';
 import Quiz from '../../components/primitives/Quiz.jsx';
+import GatedAssessment from '../../components/primitives/GatedAssessment.jsx';
 import Flashcard from '../../components/Flashcard.jsx';
 
 export const meta = {
@@ -379,70 +380,77 @@ export default function T03L06_CableSheathJacketMaterial() {
       />
 
       {/* ── PER-LESSON QUIZ ───────────────────────────────────────────────── */}
-      <Quiz
+      <GatedAssessment
+        courseId="T03"
+        assessmentId="T03-L06"
         title="T03.L06 Check — Cable Sheath & Jacket Material"
-        mode="multiple-choice"
-        questions={[
-          {
-            id: 'T03-L06-Q1',
-            type: 'mc',
-            prompt:
-              'Which jacket type is standard for outdoor OSP cables exposed to direct sunlight?',
-            choices: [
-              'PVC (polyvinyl chloride) — low cost and widely available',
-              'LSZH (Low Smoke Zero Halogen) — required for all outdoor applications',
-              'HDPE with 2–3% carbon black — UV-stabilized, standard for all OSP',
-              'LDPE (Low-Density Polyethylene) — most flexible option',
-            ],
-            answerIndex: 2,
-            explanation:
-              'HDPE with 2–3% carbon black is the standard outdoor OSP jacket. The carbon black absorbs UV radiation to prevent oxidative degradation. PVC is a common indoor jacket but poor for outdoor UV. LSZH is a fire-safety material choice, not an UV-resistance solution. LDPE has lower compressive strength than HDPE. (Source: ICEA S-87-640; bwnfiber.com; shobeirshimi.com — verified)',
-          },
-          {
-            id: 'T03-L06-Q2',
-            type: 'mc',
-            prompt:
-              'A gel-free dry-block cable\'s main installation advantage over gel-filled is:',
-            choices: [
-              'Higher fiber count per tube',
-              'Faster splice prep — approximately 1/3 the prep time (no gel cleanup required)',
-              'Better UV resistance from the carbon black SAP combination',
-              'Longer span capability due to lower cable weight',
-            ],
-            answerIndex: 1,
-            explanation:
-              'Dry-block (gel-free) cables eliminate gel cleanup from splice prep. "Accomplished in approximately one third the time required for the same operation in a \'wet\' tube cable." (Source: remee.com gel-free loose-tube article — verified). On a high-count 288F or 432F closure, the time savings per tube adds up to hours.',
-          },
-          {
-            id: 'T03-L06-Q3',
-            type: 'dragdrop',
-            prompt:
-              'Match each application to the correct jacket material specification.',
-            items: [
-              { id: 'hospital', label: 'Indoor cable in hospital riser shaft' },
-              { id: 'db',       label: 'OSP direct-burial in rural field' },
-              { id: 'plenum',   label: 'Cable in data center air-handling plenum' },
-            ],
-            targets: [
-              { id: 'tlszh',  label: 'LSZH + OFNR listed' },
-              { id: 'thdpe',  label: 'HDPE with carbon black (outdoor-rated)' },
-              { id: 'tofnp',  label: 'OFNP plenum-rated jacket (UL 910 / NFPA 262)' },
-            ],
-            correctMap: { tlszh: 'hospital', thdpe: 'db', tofnp: 'plenum' },
-            explanation:
-              'Hospital riser: LSZH (no halogen in healthcare) + OFNR listed for the riser shaft. OSP direct burial: HDPE with carbon black — UV resistance and outdoor durability. Data center plenum: OFNP-listed plenum material is required regardless of LSZH designation. (NEC Art. 770; ICEA S-87-640; NEC §770.48)',
-          },
-          {
-            id: 'T03-L06-Q4',
-            type: 'fill-in-blank',
-            prompt:
-              'The chemical additive in an HDPE outer jacket that prevents UV photodegradation is called ________ ________.',
-            answer: 'carbon black',
-            answerDisplay: 'carbon black',
-            explanation:
-              '2–3% carbon black is compounded into the HDPE jacket. Carbon black absorbs UV radiation, shielding the polymer chains from the oxidative damage that sunlight would otherwise cause. It is why all OSP cables are black — not for looks, but for longevity. (bwnfiber.com; shobeirshimi.com — verified)',
-          },
-        ]}
+        fallback={
+        <Quiz
+          title="T03.L06 Check — Cable Sheath & Jacket Material"
+          mode="multiple-choice"
+          questions={[
+            {
+              id: 'T03-L06-Q1',
+              type: 'mc',
+              prompt:
+                'Which jacket type is standard for outdoor OSP cables exposed to direct sunlight?',
+              choices: [
+                'PVC (polyvinyl chloride) — low cost and widely available',
+                'LSZH (Low Smoke Zero Halogen) — required for all outdoor applications',
+                'HDPE with 2–3% carbon black — UV-stabilized, standard for all OSP',
+                'LDPE (Low-Density Polyethylene) — most flexible option',
+              ],
+              answerIndex: 2,
+              explanation:
+                'HDPE with 2–3% carbon black is the standard outdoor OSP jacket. The carbon black absorbs UV radiation to prevent oxidative degradation. PVC is a common indoor jacket but poor for outdoor UV. LSZH is a fire-safety material choice, not an UV-resistance solution. LDPE has lower compressive strength than HDPE. (Source: ICEA S-87-640; bwnfiber.com; shobeirshimi.com — verified)',
+            },
+            {
+              id: 'T03-L06-Q2',
+              type: 'mc',
+              prompt:
+                'A gel-free dry-block cable\'s main installation advantage over gel-filled is:',
+              choices: [
+                'Higher fiber count per tube',
+                'Faster splice prep — approximately 1/3 the prep time (no gel cleanup required)',
+                'Better UV resistance from the carbon black SAP combination',
+                'Longer span capability due to lower cable weight',
+              ],
+              answerIndex: 1,
+              explanation:
+                'Dry-block (gel-free) cables eliminate gel cleanup from splice prep. "Accomplished in approximately one third the time required for the same operation in a \'wet\' tube cable." (Source: remee.com gel-free loose-tube article — verified). On a high-count 288F or 432F closure, the time savings per tube adds up to hours.',
+            },
+            {
+              id: 'T03-L06-Q3',
+              type: 'dragdrop',
+              prompt:
+                'Match each application to the correct jacket material specification.',
+              items: [
+                { id: 'hospital', label: 'Indoor cable in hospital riser shaft' },
+                { id: 'db',       label: 'OSP direct-burial in rural field' },
+                { id: 'plenum',   label: 'Cable in data center air-handling plenum' },
+              ],
+              targets: [
+                { id: 'tlszh',  label: 'LSZH + OFNR listed' },
+                { id: 'thdpe',  label: 'HDPE with carbon black (outdoor-rated)' },
+                { id: 'tofnp',  label: 'OFNP plenum-rated jacket (UL 910 / NFPA 262)' },
+              ],
+              correctMap: { tlszh: 'hospital', thdpe: 'db', tofnp: 'plenum' },
+              explanation:
+                'Hospital riser: LSZH (no halogen in healthcare) + OFNR listed for the riser shaft. OSP direct burial: HDPE with carbon black — UV resistance and outdoor durability. Data center plenum: OFNP-listed plenum material is required regardless of LSZH designation. (NEC Art. 770; ICEA S-87-640; NEC §770.48)',
+            },
+            {
+              id: 'T03-L06-Q4',
+              type: 'fill-in-blank',
+              prompt:
+                'The chemical additive in an HDPE outer jacket that prevents UV photodegradation is called ________ ________.',
+              answer: 'carbon black',
+              answerDisplay: 'carbon black',
+              explanation:
+                '2–3% carbon black is compounded into the HDPE jacket. Carbon black absorbs UV radiation, shielding the polymer chains from the oxidative damage that sunlight would otherwise cause. It is why all OSP cables are black — not for looks, but for longevity. (bwnfiber.com; shobeirshimi.com — verified)',
+            },
+          ]}
+        />
+        }
       />
 
     </LessonLayout>

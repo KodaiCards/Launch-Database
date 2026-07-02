@@ -6,6 +6,7 @@ import LessonLayout from '../../components/LessonLayout.jsx';
 import WorkedExample from '../../components/primitives/WorkedExample.jsx';
 import SliderExploration from '../../components/primitives/SliderExploration.jsx';
 import Quiz from '../../components/primitives/Quiz.jsx';
+import GatedAssessment from '../../components/primitives/GatedAssessment.jsx';
 import Flashcard from '../../components/Flashcard.jsx';
 
 export const meta = {
@@ -531,66 +532,73 @@ export default function T03L09_ADSSSpanWindIceLoading() {
       />
 
       {/* ── PER-LESSON QUIZ ───────────────────────────────────────────────── */}
-      <Quiz
+      <GatedAssessment
+        courseId="T03"
+        assessmentId="T03-L09"
         title="T03.L09 Check — ADSS Span, Wind, and Ice Loading"
-        mode="multiple-choice"
-        questions={[
-          {
-            id: 'T03-L09-Q1',
-            type: 'mc',
-            prompt:
-              'A project site in central Georgia (Light loading district) has an ADSS cable with OD = 0.71 in. What is the ice load (w_ice) per foot for this cable under NESC design conditions?',
-            choices: [
-              '0 lb/ft — Light district has no ice loading',
-              '0.044 lb/ft — calculated using w_ice = 1.244 × 0.25 × (0.71 + 0.25)',
-              '0.135 lb/ft — calculated using w_ice = 1.244 × 0.50 × (0.71 + 0.50)',
-              '0.068 lb/ft — equal to the cable weight per foot',
-            ],
-            answerIndex: 0,
-            explanation:
-              'Light loading district has zero radial ice: t = 0 in. Therefore w_ice = 1.244 × 0 × (D + 0) = 0 lb/ft. No ice load applies. Only wind load (9 lb/ft²) and cable self-weight need to be combined for the total transverse load. [Confirm: Macon, GA is in the Light district — consistent with central Georgia geography; verify via NESC C2-2023 loading district map or RUS engineering support]',
-          },
-          {
-            id: 'T03-L09-Q2',
-            type: 'mc',
-            prompt:
-              'An ADSS cable in the Heavy loading district has an OD = 0.71 in. (D = 0.71 in.) and t = 0.50 in. of radial ice. What is w_ice using the NESC formula?',
-            choices: [
-              '0.750 lb/ft',
-              '0.377 lb/ft',
-              '1.244 × 0.50 × 1.21 ≈ 0.752 lb/ft',
-              '0.068 lb/ft',
-            ],
-            answerIndex: 2,
-            explanation:
-              'w_ice = 1.244 × t × (D + t) = 1.244 × 0.50 × (0.71 + 0.50) = 1.244 × 0.50 × 1.21 ≈ 0.752 lb/ft. Step-by-step: D + t = 0.71 + 0.50 = 1.21 in.; 1.244 × 0.50 = 0.622; 0.622 × 1.21 = 0.75262 → rounds to ≈ 0.752 lb/ft using the exact constant π×57/144 = 1.2435. This adds substantially to the vertical load in the Heavy district.',
-          },
-          {
-            id: 'T03-L09-Q3',
-            type: 'fill-in-blank',
-            prompt:
-              'NESC Extreme Wind loading must be considered whenever any part of a pole or its conductors is ________ feet or more above the ground.',
-            answer: '60',
-            answerDisplay: '60 feet',
-            explanation:
-              'NESC Rule 250C: "If any part of a pole or the conductors attached to it is 60 feet or more above the ground, then extreme wind loading has to be considered." (Source: IAEI 2007 NESC article — verified) This uses regional wind speed maps (ASCE 7) rather than the flat district table values.',
-          },
-          {
-            id: 'T03-L09-Q4',
-            type: 'mc',
-            prompt:
-              'In the parabolic sag formula Sag = (w × L²) / (8 × T), what happens to sag if the span L is doubled while all other values stay the same?',
-            choices: [
-              'Sag doubles',
-              'Sag increases by 50%',
-              'Sag quadruples (increases by 4×)',
-              'Sag is unchanged — sag is independent of span',
-            ],
-            answerIndex: 2,
-            explanation:
-              'Sag is proportional to L² (span squared). If L doubles, L² increases by 4×, so sag quadruples. This quadratic relationship is why long spans are challenging: doubling span length from 150 ft to 300 ft quadruples the sag under the same loading and tension. This is why long-span designs require either much higher cable tension or NESC clearance is exceeded.',
-          },
-        ]}
+        fallback={
+        <Quiz
+          title="T03.L09 Check — ADSS Span, Wind, and Ice Loading"
+          mode="multiple-choice"
+          questions={[
+            {
+              id: 'T03-L09-Q1',
+              type: 'mc',
+              prompt:
+                'A project site in central Georgia (Light loading district) has an ADSS cable with OD = 0.71 in. What is the ice load (w_ice) per foot for this cable under NESC design conditions?',
+              choices: [
+                '0 lb/ft — Light district has no ice loading',
+                '0.044 lb/ft — calculated using w_ice = 1.244 × 0.25 × (0.71 + 0.25)',
+                '0.135 lb/ft — calculated using w_ice = 1.244 × 0.50 × (0.71 + 0.50)',
+                '0.068 lb/ft — equal to the cable weight per foot',
+              ],
+              answerIndex: 0,
+              explanation:
+                'Light loading district has zero radial ice: t = 0 in. Therefore w_ice = 1.244 × 0 × (D + 0) = 0 lb/ft. No ice load applies. Only wind load (9 lb/ft²) and cable self-weight need to be combined for the total transverse load. [Confirm: Macon, GA is in the Light district — consistent with central Georgia geography; verify via NESC C2-2023 loading district map or RUS engineering support]',
+            },
+            {
+              id: 'T03-L09-Q2',
+              type: 'mc',
+              prompt:
+                'An ADSS cable in the Heavy loading district has an OD = 0.71 in. (D = 0.71 in.) and t = 0.50 in. of radial ice. What is w_ice using the NESC formula?',
+              choices: [
+                '0.750 lb/ft',
+                '0.377 lb/ft',
+                '1.244 × 0.50 × 1.21 ≈ 0.752 lb/ft',
+                '0.068 lb/ft',
+              ],
+              answerIndex: 2,
+              explanation:
+                'w_ice = 1.244 × t × (D + t) = 1.244 × 0.50 × (0.71 + 0.50) = 1.244 × 0.50 × 1.21 ≈ 0.752 lb/ft. Step-by-step: D + t = 0.71 + 0.50 = 1.21 in.; 1.244 × 0.50 = 0.622; 0.622 × 1.21 = 0.75262 → rounds to ≈ 0.752 lb/ft using the exact constant π×57/144 = 1.2435. This adds substantially to the vertical load in the Heavy district.',
+            },
+            {
+              id: 'T03-L09-Q3',
+              type: 'fill-in-blank',
+              prompt:
+                'NESC Extreme Wind loading must be considered whenever any part of a pole or its conductors is ________ feet or more above the ground.',
+              answer: '60',
+              answerDisplay: '60 feet',
+              explanation:
+                'NESC Rule 250C: "If any part of a pole or the conductors attached to it is 60 feet or more above the ground, then extreme wind loading has to be considered." (Source: IAEI 2007 NESC article — verified) This uses regional wind speed maps (ASCE 7) rather than the flat district table values.',
+            },
+            {
+              id: 'T03-L09-Q4',
+              type: 'mc',
+              prompt:
+                'In the parabolic sag formula Sag = (w × L²) / (8 × T), what happens to sag if the span L is doubled while all other values stay the same?',
+              choices: [
+                'Sag doubles',
+                'Sag increases by 50%',
+                'Sag quadruples (increases by 4×)',
+                'Sag is unchanged — sag is independent of span',
+              ],
+              answerIndex: 2,
+              explanation:
+                'Sag is proportional to L² (span squared). If L doubles, L² increases by 4×, so sag quadruples. This quadratic relationship is why long spans are challenging: doubling span length from 150 ft to 300 ft quadruples the sag under the same loading and tension. This is why long-span designs require either much higher cable tension or NESC clearance is exceeded.',
+            },
+          ]}
+        />
+        }
       />
 
     </LessonLayout>
