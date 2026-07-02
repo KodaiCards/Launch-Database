@@ -5,6 +5,7 @@ import React from 'react';
 import LessonLayout from '../../components/LessonLayout.jsx';
 import BranchingScenario from '../../components/primitives/BranchingScenario.jsx';
 import Quiz from '../../components/primitives/Quiz.jsx';
+import GatedAssessment from '../../components/primitives/GatedAssessment.jsx';
 import Flashcard from '../../components/Flashcard.jsx';
 
 export const meta = {
@@ -438,6 +439,11 @@ export default function T05L09_OTMRInAerialDesign() {
       />
 
       {/* ── PER-LESSON QUIZ ──────────────────────────────────────────────── */}
+      <GatedAssessment
+        courseId="T05"
+        assessmentId="T05-L09"
+        title="T05.L09 Check — OTMR in Aerial Design"
+        fallback={
       <Quiz
         title="T05.L09 Check — OTMR in Aerial Design"
         mode="multiple-choice"
@@ -510,6 +516,8 @@ export default function T05L09_OTMRInAerialDesign() {
               'If the pole owner misses the 15-calendar-day approval decision clock (which starts after the completeness determination), the application is treated as deemed approved by operation of law. The new attacher should document this in writing and give the pole owner a short final notice before proceeding to schedule make-ready.',
           },
         ]}
+      />
+        }
       />
 
     </LessonLayout>

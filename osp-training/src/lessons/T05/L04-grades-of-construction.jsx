@@ -5,6 +5,7 @@ import React from 'react';
 import LessonLayout from '../../components/LessonLayout.jsx';
 import BranchingScenario from '../../components/primitives/BranchingScenario.jsx';
 import Quiz from '../../components/primitives/Quiz.jsx';
+import GatedAssessment from '../../components/primitives/GatedAssessment.jsx';
 import Flashcard from '../../components/Flashcard.jsx';
 
 export const meta = {
@@ -440,6 +441,11 @@ export default function T05L04_GradesOfConstruction() {
       />
 
       {/* ── PER-LESSON QUIZ ──────────────────────────────────────────────── */}
+      <GatedAssessment
+        courseId="T05"
+        assessmentId="T05-L04"
+        title="T05.L04 Check — Grades of Construction"
+        fallback={
       <Quiz
         title="T05.L04 Check — Grades of Construction"
         mode="multiple-choice"
@@ -515,6 +521,8 @@ export default function T05L04_GradesOfConstruction() {
               'Rule 261 tells you which grade (B, C, or N) applies to each crossing type. Section 26 translates that grade into the actual numerical multipliers used in structural calculations. You need both: Rule 261 for the determination, Section 26 for the calculation.',
           },
         ]}
+      />
+        }
       />
 
     </LessonLayout>

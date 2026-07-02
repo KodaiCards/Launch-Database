@@ -6,6 +6,7 @@ import LessonLayout from '../../components/LessonLayout.jsx';
 import WorkedExample from '../../components/primitives/WorkedExample.jsx';
 import SliderExploration from '../../components/primitives/SliderExploration.jsx';
 import Quiz from '../../components/primitives/Quiz.jsx';
+import GatedAssessment from '../../components/primitives/GatedAssessment.jsx';
 import Flashcard from '../../components/Flashcard.jsx';
 
 export const meta = {
@@ -482,6 +483,11 @@ export default function T05L07_SagTensionHowCableHangs() {
       </section>
 
       {/* ── PER-LESSON QUIZ ──────────────────────────────────────────────── */}
+      <GatedAssessment
+        courseId="T05"
+        assessmentId="T05-L07"
+        title="T05.L07 Check — Sag-Tension — How Cable Hangs"
+        fallback={
       <Quiz
         title="T05.L07 Check — Sag-Tension — How Cable Hangs"
         mode="multiple-choice"
@@ -557,6 +563,8 @@ export default function T05L07_SagTensionHowCableHangs() {
               'When sag is less than 10% of span length (s < L/10), the parabola and catenary differ by less than 1%. Almost all OSP spans have sag-to-span ratios below 5%, making the parabolic formula highly accurate for practical design use.',
           },
         ]}
+      />
+        }
       />
 
     </LessonLayout>

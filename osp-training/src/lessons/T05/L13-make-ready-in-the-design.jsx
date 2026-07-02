@@ -5,6 +5,7 @@ import React from 'react';
 import LessonLayout from '../../components/LessonLayout.jsx';
 import BranchingScenario from '../../components/primitives/BranchingScenario.jsx';
 import Quiz from '../../components/primitives/Quiz.jsx';
+import GatedAssessment from '../../components/primitives/GatedAssessment.jsx';
 import Flashcard from '../../components/Flashcard.jsx';
 
 export const meta = {
@@ -382,6 +383,11 @@ export default function T05L13_MakeReadyInTheDesign() {
       />
 
       {/* ── PER-LESSON QUIZ ──────────────────────────────────────────────── */}
+      <GatedAssessment
+        courseId="T05"
+        assessmentId="T05-L13"
+        title="T05.L13 Check — Make-Ready in the Design"
+        fallback={
       <Quiz
         title="T05.L13 Check — Make-Ready in the Design"
         mode="multiple-choice"
@@ -457,6 +463,8 @@ export default function T05L13_MakeReadyInTheDesign() {
               'A design hold is triggered by economics (make-ready cost exceeds budget threshold) or by unresolvable engineering conflicts (midspan conflicts that require re-routing, pole replacements that need additional permits). It is not triggered by the existence of any make-ready or by a specific pole count. The threshold is defined per project or per company policy — typically a percentage of build cost.',
           },
         ]}
+      />
+        }
       />
 
     </LessonLayout>

@@ -6,6 +6,7 @@ import LessonLayout from '../../components/LessonLayout.jsx';
 import WorkedExample from '../../components/primitives/WorkedExample.jsx';
 import SliderExploration from '../../components/primitives/SliderExploration.jsx';
 import Quiz from '../../components/primitives/Quiz.jsx';
+import GatedAssessment from '../../components/primitives/GatedAssessment.jsx';
 import Flashcard from '../../components/Flashcard.jsx';
 
 export const meta = {
@@ -485,6 +486,11 @@ export default function T05L02_VerticalClearanceRule232() {
       </section>
 
       {/* ── PER-LESSON QUIZ ──────────────────────────────────────────────── */}
+      <GatedAssessment
+        courseId="T05"
+        assessmentId="T05-L02"
+        title="T05.L02 Check — Vertical Clearance — Rule 232"
+        fallback={
       <Quiz
         title="T05.L02 Check — Vertical Clearance — Rule 232"
         mode="multiple-choice"
@@ -562,6 +568,8 @@ export default function T05L02_VerticalClearanceRule232() {
               'The sag formula s = wL²/(8H) shows that sag grows with L². Double the span from 150 ft to 300 ft, and the sag increases by a factor of (300/150)² = 4. This quadratic relationship is the main reason longer spans require either higher attachment heights or higher stringing tensions.',
           },
         ]}
+      />
+        }
       />
 
     </LessonLayout>

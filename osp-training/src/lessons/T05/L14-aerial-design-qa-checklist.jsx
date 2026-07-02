@@ -6,6 +6,7 @@ import LessonLayout from '../../components/LessonLayout.jsx';
 import BranchingScenario from '../../components/primitives/BranchingScenario.jsx';
 import Sortable from '../../components/primitives/Sortable.jsx';
 import Quiz from '../../components/primitives/Quiz.jsx';
+import GatedAssessment from '../../components/primitives/GatedAssessment.jsx';
 import Flashcard from '../../components/Flashcard.jsx';
 
 export const meta = {
@@ -287,6 +288,11 @@ export default function T05L14_AerialDesignQAChecklist() {
       />
 
       {/* ── PER-LESSON QUIZ ──────────────────────────────────────────────── */}
+      <GatedAssessment
+        courseId="T05"
+        assessmentId="T05-L14"
+        title="T05.L14 Check — Aerial Design QA"
+        fallback={
       <Quiz
         title="T05.L14 Check — Aerial Design QA"
         mode="multiple-choice"
@@ -362,6 +368,8 @@ export default function T05L14_AerialDesignQAChecklist() {
               'EDS is typically 16–25% of RTS. H = 900 lb / RTS = 3,000 lb → EDS = 30%. This EXCEEDS the typical maximum of 25%, meaning the fiber will be mechanically stressed in everyday conditions, causing microbending and progressive attenuation increase. The correct design tension for this cable would be 0.20 × 3,000 = 600 lb (20% EDS). QA comment: reduce stringing tension to within manufacturer\'s specified EDS range.',
           },
         ]}
+      />
+        }
       />
 
     </LessonLayout>

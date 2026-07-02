@@ -6,6 +6,7 @@ import LessonLayout from '../../components/LessonLayout.jsx';
 import WorkedExample from '../../components/primitives/WorkedExample.jsx';
 import SliderExploration from '../../components/primitives/SliderExploration.jsx';
 import Quiz from '../../components/primitives/Quiz.jsx';
+import GatedAssessment from '../../components/primitives/GatedAssessment.jsx';
 import Flashcard from '../../components/Flashcard.jsx';
 
 export const meta = {
@@ -467,6 +468,11 @@ export default function T05L10_ADSSAerialDesign() {
       </section>
 
       {/* ── PER-LESSON QUIZ ──────────────────────────────────────────────── */}
+      <GatedAssessment
+        courseId="T05"
+        assessmentId="T05-L10"
+        title="T05.L10 Check — ADSS Aerial Design"
+        fallback={
       <Quiz
         title="T05.L10 Check — ADSS Aerial Design"
         mode="multiple-choice"
@@ -542,6 +548,8 @@ export default function T05L10_ADSSAerialDesign() {
               'EDS of 16–25% of RTS is the field-validated range from ADSS manufacturer guidelines (Focabex, Corning). Below 16% RTS: sag becomes too large, clearance is compromised. Above 25% RTS: everyday tension begins to mechanically load the fiber, causing microbending and increased attenuation over time.',
           },
         ]}
+      />
+        }
       />
 
     </LessonLayout>

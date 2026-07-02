@@ -5,6 +5,7 @@ import React from 'react';
 import LessonLayout from '../../components/LessonLayout.jsx';
 import BranchingScenario from '../../components/primitives/BranchingScenario.jsx';
 import Quiz from '../../components/primitives/Quiz.jsx';
+import GatedAssessment from '../../components/primitives/GatedAssessment.jsx';
 import Flashcard from '../../components/Flashcard.jsx';
 
 export const meta = {
@@ -452,6 +453,11 @@ export default function T05L08_JointUseWhoOwnsWhatOnThePole() {
       />
 
       {/* ── PER-LESSON QUIZ ──────────────────────────────────────────────── */}
+      <GatedAssessment
+        courseId="T05"
+        assessmentId="T05-L08"
+        title="T05.L08 Check — Joint Use & Pole Attachment"
+        fallback={
       <Quiz
         title="T05.L08 Check — Joint Use & Pole Attachment"
         mode="multiple-choice"
@@ -528,6 +534,8 @@ export default function T05L08_JointUseWhoOwnsWhatOnThePole() {
             ],
           },
         ]}
+      />
+        }
       />
 
     </LessonLayout>

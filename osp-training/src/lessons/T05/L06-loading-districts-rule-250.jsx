@@ -6,6 +6,7 @@ import LessonLayout from '../../components/LessonLayout.jsx';
 import WorkedExample from '../../components/primitives/WorkedExample.jsx';
 import SliderExploration from '../../components/primitives/SliderExploration.jsx';
 import Quiz from '../../components/primitives/Quiz.jsx';
+import GatedAssessment from '../../components/primitives/GatedAssessment.jsx';
 import Flashcard from '../../components/Flashcard.jsx';
 
 export const meta = {
@@ -516,6 +517,11 @@ export default function T05L06_LoadingDistrictsRule250() {
       </section>
 
       {/* ── PER-LESSON QUIZ ──────────────────────────────────────────────── */}
+      <GatedAssessment
+        courseId="T05"
+        assessmentId="T05-L06"
+        title="T05.L06 Check — Loading Districts — Rule 250"
+        fallback={
       <Quiz
         title="T05.L06 Check — Loading Districts — Rule 250"
         mode="multiple-choice"
@@ -591,6 +597,8 @@ export default function T05L06_LoadingDistrictsRule250() {
               'The coefficient derives from the annular ice cross-section area formula (π × t × (D + t)) multiplied by the unit conversion (÷144 to convert in² to ft²), then multiplied by ice density (57 lb/ft³). 57 × π / 144 = 1.2435, rounded to 1.244 for field use.',
           },
         ]}
+      />
+        }
       />
 
     </LessonLayout>
