@@ -202,10 +202,11 @@ export default function T01L06_WhoDoesWhat() {
             <p className="mt-1">
               Updates the design drawings to reflect field-as-built conditions based on
               construction redlines. Compiles the final as-built package: drawings, splice
-              records, test records, permit copies. For RUS-program: assembles the RUS
-              Form 219 documentation package.
+              records, test records, permit copies. For RUS-program telecom projects:
+              assembles the closeout documentation required under 7 CFR 1753.49, tied to
+              the RUS Form 515 construction contract.
             </p>
-            <p className="mt-1"><strong>Delivers to:</strong> Client (as-built package and close-out report); RUS (Form 219 package for fund advancement).</p>
+            <p className="mt-1"><strong>Delivers to:</strong> Client (as-built package and close-out report); RUS (7 CFR 1753.49 closeout package for fund advancement).</p>
           </div>
         </div>
 
@@ -284,7 +285,7 @@ export default function T01L06_WhoDoesWhat() {
           {
             id: 'asbuilt',
             label: 'As-built team compiles documentation package',
-            detail: 'Updates drawings to as-built conditions. Compiles splice records, test records, permits. Delivers final package to client and RUS (Form 219).',
+            detail: 'Updates drawings to as-built conditions. Compiles splice records, test records, permits. Delivers final package to client and RUS (7 CFR 1753.49 closeout documents, tied to the RUS Form 515 construction contract).',
           },
         ]}
         correctOrder={['survey', 'design', 'permit', 'makready', 'construct', 'splice', 'test', 'inspect', 'asbuilt']}
