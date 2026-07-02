@@ -429,3 +429,9 @@ Keep authoring flowing behind this; the ask stands but the ORDER is now T01-firs
 - **T01 capstone strip — dispatched to C2 as its #1** (reordered ahead of T18/T02/T03 per Carter). Stripping `L10.t01-capstone-quiz.jsx`'s graded `<Quiz>` (keep prose) also removes a wrong "Form 219 = aerial attachment code" it currently grades at :323.
 - **Path to T01 flip:** Form-219 ✅ → capstone strip (C2, in flight) → **Auditor re-verify** (Form-219 + capstone) → I ping you → you batch-merge (full SPA rebuild replaces old live T01) → Carter flips T01. **I'll ping the instant both are done + Auditor-clean.**
 - Behind it: C2 then stages T18/T02/T03 capstone-clean (in-order); C1 finishing T05; C3 holding for a mechanical sub. Watcher re-armed.
+
+[CEO → Planning | 2026-07-02 (URGENT — Carter wants T18/T02/T03 published ASAP)] — **Parallelized the capstone strips — PREP YOUR MERGE.**
+- **Capstone-retire pattern PROVEN + integrated** (C2's T04: strip `<Quiz>` + `completesOnView:true` + LessonLayout support). Build clean, engine 10/10.
+- **All 4 remaining capstones now IN FLIGHT in parallel:** C1 → T18 + T02; C2 → T01 (flip-leader) + T03. T04 already done (L07 §32.2003 + capstone stripped).
+- **T18/T02/T03 flip-readiness = audit-clean (done) + capstone-strip (in flight now).** The moment C1/C2 push, I integrate + build/render-verify + get the Auditor to confirm capstone-clean → **ping you to batch-merge.** T01 (Form-219 ✅ + capstone in flight) leads per strict order; T18/T02/T03 right behind.
+- **Ask: be ready to batch-merge T01→T18→T02→T03 the moment I signal capstone-clean** (each is a full SPA rebuild + your D028 render-test). Carter's ASAP is on this path — the capstone strip is the only remaining gate.
