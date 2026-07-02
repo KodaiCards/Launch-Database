@@ -1,0 +1,117 @@
+{
+  "assessmentId": "T09-L11",
+  "kind": "lesson",
+  "courseId": "T09",
+  "lessonId": "T09.L11",
+  "drawCount": 4,
+  "passThreshold": 70,
+  "pool": [
+    {
+      "id": "T09-L11-Q1",
+      "type": "mc",
+      "prompt": "A RUS-financed aerial-fiber project follows an existing highway ROW for 15 miles. An IPaC screen reveals a documented population of Northern Long-Eared Bat (NLEB) within the route corridor. The proposed construction includes 2 miles of tree clearing on a forested segment adjacent to the ROW. What is the most likely outcome for the RUS environmental review?",
+      "choices": [
+        "The project automatically qualifies for a categorical exclusion with no further action, since aerial fiber in existing ROW is a standard CE category",
+        "NLEB presence in an area with proposed tree clearing is an extraordinary circumstance under 7 CFR Part 1b — the CE is not automatic, and the applicant must either complete an Environmental Impact Memorandum (EIM) documenting limited impact (e.g., a tree-clearing avoidance window, or IPaC showing the corridor is not critical habitat) or complete ESA Section 7 informal consultation before the CE can be validly used",
+        "The project is automatically escalated to a full Environmental Impact Statement regardless of the extent of tree clearing",
+        "NLEB presence is irrelevant to the RUS environmental review since RUS review only considers ground disturbance, not tree clearing"
+      ],
+      "answerIndex": 1,
+      "explanation": "Documented T&E species presence combined with proposed tree clearing is a textbook extraordinary circumstance under 7 CFR Part 1b — it takes the action out of automatic CE eligibility even though the project type (aerial fiber in existing ROW) otherwise qualifies. The path forward is either a documented EIM showing limited impact (e.g., clearing scheduled outside the species' active season) or ESA Section 7 informal consultation, not an automatic escalation to a full EIS.",
+      "citation": "7 CFR Part 1b (RUS/USDA NEPA implementing procedures, eff. April 3, 2026); 87 FR 73488 (NLEB Endangered reclassification, eff. March 31, 2023); 16 USC 1536 (ESA Section 7)."
+    },
+    {
+      "id": "T09-L11-Q2",
+      "type": "mc",
+      "prompt": "What is the key difference between an Environmental Impact Memorandum (EIM) and a full Environmental Assessment (EA) in the current 7 CFR Part 1b framework?",
+      "choices": [
+        "There is no difference — the two terms describe the identical document",
+        "An EIM is a more streamlined document used to address a specific extraordinary circumstance that would otherwise block a CE (documenting that the impact from that specific circumstance is limited), while a full EA is a more comprehensive review used when a project's overall impacts are uncertain enough to require broader analysis beyond a single narrow circumstance",
+        "An EIM always takes longer to complete than a full EA",
+        "An EIM is only used for RUS ReConnect-funded projects, never for BEAD-funded projects"
+      ],
+      "answerIndex": 1,
+      "explanation": "The EIM is a lighter-weight tool scoped to resolving a specific extraordinary circumstance (like documented T&E species presence) that would otherwise prevent use of an available CE — it lets a project remain on the CE track once the specific circumstance is addressed, rather than escalating the entire project to the broader, more resource-intensive full EA-level review."
+    },
+    {
+      "id": "T09-L11-Q3",
+      "type": "mc",
+      "prompt": "A project is funded by both RUS (a ReConnect grant) and BEAD (NTIA/state broadband office). Both programs use the same categorical exclusion language for existing-ROW aerial fiber. Does this mean the project only needs ONE NEPA determination?",
+      "choices": [
+        "Yes, automatically — dual federal funding always collapses into a single combined review with no coordination needed",
+        "Not necessarily as a blanket rule — while agencies can coordinate as co-lead or cooperating agencies to avoid duplicative review of the same physical action, whether a single combined NEPA determination applies depends on the specific interagency coordination arrangement in place for that project, not simply on the funding sources sharing similar CE language",
+        "No — each federal funding source always legally requires a fully separate, uncoordinated NEPA process regardless of any similarity in CE language",
+        "The question is moot because RUS and BEAD can never fund the same project simultaneously"
+      ],
+      "answerIndex": 1,
+      "explanation": "Similar CE language between two federal programs doesn't automatically produce a single combined determination — that outcome depends on whether the specific agencies have an interagency coordination or co-lead/cooperating-agency arrangement for the project. A project team should confirm the actual coordination mechanism in place rather than assuming either extreme (fully separate reviews, or automatic consolidation) applies by default.",
+      "citation": "7 CFR Part 1b (eff. April 3, 2026)."
+    },
+    {
+      "id": "T09-L11-Q4",
+      "type": "mc",
+      "prompt": "RUS Form 307 (Construction and Operation Report) is filed at what point in the project lifecycle, and what does it document regarding environmental review?",
+      "choices": [
+        "It is filed before construction begins and documents the project's initial NEPA determination",
+        "It is a construction closeout document filed after the project is built, attesting the project was constructed according to approved plans and that all environmental conditions were met — for example, confirming tree clearing occurred outside a required avoidance window, or that a wetland crossing used the bore method required by NWP 57 PCN conditions; environmental commitments made during review become enforceable through this closeout",
+        "It documents the applicant's initial ESA Section 7 consultation request",
+        "It replaces the need for any environmental review during project planning"
+      ],
+      "answerIndex": 1,
+      "explanation": "RUS Form 307 is a closeout document, not a planning-stage document — it confirms after the fact that environmental conditions attached during the review process (seasonal clearing windows, required construction methods for a permitted crossing) were actually followed during construction. This is the mechanism that makes environmental commitments made during planning enforceable rather than merely aspirational."
+    },
+    {
+      "id": "T09-L11-Q5",
+      "type": "mc",
+      "prompt": "A project team completed its NLEB extraordinary-circumstances review in January 2022, correctly noting the species was Threatened at that time and requesting no formal consultation. Construction is now scheduled for later in 2026. Should the project rely on the January 2022 determination?",
+      "choices": [
+        "Yes — an extraordinary-circumstances determination, once made, never needs to be revisited regardless of how much time passes",
+        "No — species listing status is not static, and NLEB specifically was reclassified from Threatened to Endangered effective March 31, 2023; a determination made before that reclassification would understate the species' current protections and should be re-verified before a 2026 construction start",
+        "Yes, because RUS environmental determinations are valid indefinitely once issued",
+        "No, but only because RUS Form 307 requires a fresh 2026 review regardless of species status"
+      ],
+      "answerIndex": 1,
+      "explanation": "This mirrors the ESA/IPaC timing principle from T09.L04: species status changes over time, and NLEB's Threatened-to-Endangered reclassification (effective March 31, 2023) is exactly the kind of change that can make a multi-year-old extraordinary-circumstances determination stale — re-verifying current status before a 2026 construction start is the defensible practice, not treating the 2022 determination as permanently valid.",
+      "citation": "87 FR 73488 (NLEB Endangered reclassification, eff. March 31, 2023)."
+    },
+    {
+      "id": "T09-L11-Q6",
+      "type": "mc",
+      "prompt": "Why does the RUS environmental review framework (7 CFR Part 1b) matter specifically to a field crew or PM working a RUS-funded fiber project, beyond being a planning-stage paperwork exercise?",
+      "choices": [
+        "It doesn't matter to field/PM staff — environmental review is purely a pre-construction desk exercise with no field-level consequence",
+        "Environmental commitments made during the CE/EIM review (seasonal tree-clearing windows, required construction methods for permitted crossings) become binding conditions that field crews must actually follow, and RUS Form 307 closeout specifically verifies compliance with those conditions after construction — meaning a field crew's actual construction practices, not just the paperwork, determine whether the project's environmental review holds up",
+        "It only matters for wetland crossings, never for tree clearing or species-related conditions",
+        "RUS environmental review only applies to fully underground routes, never to aerial routes"
+      ],
+      "answerIndex": 1,
+      "explanation": "The environmental review process generates real, binding field-level conditions (timing restrictions, construction-method requirements) — and Form 307's closeout role means a field crew's actual on-the-ground practices are what get verified and documented, not just the planning-stage paperwork. This is the same principle established elsewhere in T09: documented commitments made during review must be honored during execution, and the closeout process is what confirms they were."
+    },
+    {
+      "id": "T09-L11-Q7",
+      "type": "mc",
+      "prompt": "A RUS-funded project's CE was validly used after an EIM documented that tree clearing would occur outside the NLEB active season. During construction, an unexpected equipment delay pushes the actual clearing date into the restricted window. What is the correct response?",
+      "choices": [
+        "Proceed with clearing anyway since the CE was already validly granted before construction started",
+        "Stop and address the deviation before clearing in the restricted window — the CE's validity was conditioned on the specific commitment made in the EIM (clearing outside the season), so a schedule change that violates that commitment reopens the extraordinary-circumstances issue and requires either rescheduling the clearing or pursuing the consultation that was avoided by the original EIM",
+        "The delay is irrelevant because RUS Form 307 will simply document what actually happened regardless of the original commitment",
+        "Only the design engineer needs to be notified; construction can proceed without further environmental review"
+      ],
+      "answerIndex": 1,
+      "explanation": "A CE granted on the strength of a specific EIM commitment is conditioned on that commitment being honored — an equipment-delay-driven schedule slip into the restricted window isn't a paperwork footnote, it's a deviation from the basis on which the CE was validly used. The correct response is to stop and resolve the deviation (reschedule, or now pursue the ESA consultation the EIM was designed to avoid) rather than treat Form 307 as simply documenting whatever happens after the fact."
+    },
+    {
+      "id": "T09-L11-Q8",
+      "type": "mc",
+      "prompt": "How does the EIM-based CE pathway (documenting a limited-impact circumstance to preserve CE eligibility) relate to the broader NEPA tiering system (CE/EA/EIS) covered earlier in T09?",
+      "choices": [
+        "The EIM is unrelated to NEPA tiering — it is a purely RUS-internal financial document",
+        "The EIM is a tool specifically for staying on the CE tier despite an extraordinary circumstance that would otherwise require escalating to the EA tier — it lets a project resolve a narrow, specific issue (like documented T&E species presence) without triggering the broader, more resource-intensive EA-level review that a full escalation would require",
+        "The EIM always automatically escalates a project to the EIS tier, the most intensive review level",
+        "The EIM replaces the CE/EA/EIS tiering system entirely for RUS-funded projects"
+      ],
+      "answerIndex": 1,
+      "explanation": "The EIM's function is precisely to preserve the CE tier's efficiency when a narrow extraordinary circumstance arises, avoiding the need to escalate the entire project to the broader EA tier — it's a targeted tool within the tiering system, not a separate system or an automatic escalation trigger, which is why understanding when an EIM is sufficient (versus when full EA-level review is actually required) is a practically important distinction for project scheduling."
+    }
+  ]
+}

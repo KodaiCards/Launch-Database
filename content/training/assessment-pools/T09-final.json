@@ -1,0 +1,315 @@
+{
+  "assessmentId": "T09-final",
+  "kind": "topic_final",
+  "courseId": "T09",
+  "lessonId": null,
+  "drawCount": 15,
+  "passThreshold": 80,
+  "pool": [
+    {
+      "id": "T09-final-Q1",
+      "type": "mc",
+      "prompt": "A fiber route will receive a BEAD grant. Which of the following correctly describes what triggers federal environmental review on this project?",
+      "choices": [
+        "Nothing triggers it automatically — federal review only applies if a state agency requests it",
+        "The federal nexus created by the BEAD funding activates NEPA, Section 106, and ESA Section 7 review as applicable — the presence of federal funding is what connects the project to these federal statutory obligations, independent of any state or local permitting layer",
+        "Federal review only applies if the route crosses a wetland",
+        "Federal review only applies to projects over 50 miles in length"
+      ],
+      "answerIndex": 1,
+      "explanation": "The federal nexus (BEAD funding, in this case) is what activates federal environmental review requirements — NEPA, Section 106, and ESA Section 7 as applicable to the project's specific circumstances — independent of whatever state/local/private permitting layers also apply.",
+      "citation": "42 USC 4321 et seq.; 54 USC 306108; 16 USC 1536."
+    },
+    {
+      "id": "T09-final-Q2",
+      "type": "mc",
+      "prompt": "As of mid-2026, why should a permitting document cite NEPA to its statute (42 USC 4321 et seq.) rather than to CEQ's former implementing regulations at 40 CFR Parts 1500-1508?",
+      "choices": [
+        "Because 40 CFR 1500-1508 never existed",
+        "Because CEQ's NEPA implementing regulations at 40 CFR 1500-1508 were removed from the CFR (interim rule eff. April 11, 2025, finalized eff. January 8, 2026) — citing them as current binding authority in mid-2026 would be citing a rescinded regulation; agencies now implement NEPA through their own agency-specific procedures",
+        "Because NEPA itself was repealed",
+        "Because the statute was renumbered to a different USC title"
+      ],
+      "answerIndex": 1,
+      "explanation": "This is a live regulatory change independently verified this session: CEQ's NEPA implementing regulations were rescinded, with the removal finalized effective January 8, 2026 — meaning as of the current date, citing 40 CFR 1500-1508 as binding authority would itself be a citation error.",
+      "citation": "Federal Register, \"Removal of National Environmental Policy Act Implementing Regulations\" (eff. Jan. 8, 2026); E.O. 14154."
+    },
+    {
+      "id": "T09-final-Q3",
+      "type": "mc",
+      "prompt": "A BEAD-funded aerial fiber route qualifies for a categorical exclusion by project type, but the corridor includes documented Northern Long-Eared Bat habitat. Is the CE automatically usable?",
+      "choices": [
+        "Yes — matching a listed CE project type is always sufficient on its own",
+        "No — documented T&E species presence is an extraordinary circumstance requiring further action (ESA Section 7 consultation, or a documented limited-impact rationale via an EIM) before the CE can be validly used, even though the project type otherwise qualifies",
+        "No — the project must automatically escalate to a full EIS",
+        "Yes, as long as construction happens at night"
+      ],
+      "answerIndex": 1,
+      "explanation": "Matching a CE-eligible project type is necessary but not sufficient — the extraordinary-circumstances screen is a separate, mandatory check, and documented T&E species presence is a classic example of a factor that can take an otherwise-qualifying action out of automatic CE eligibility.",
+      "citation": "7 CFR Part 1b (eff. April 3, 2026); 16 USC 1536."
+    },
+    {
+      "id": "T09-final-Q4",
+      "type": "mc",
+      "prompt": "An IPaC screen for tree-clearing work is 18 months old. Why should it be re-run before mobilization rather than trusted at face value?",
+      "choices": [
+        "It never needs to be re-run once obtained",
+        "Species listings, ranges, and critical habitat designations change over time — an 18-month-old screen risks missing a status change (e.g., NLEB's Threatened-to-Endangered reclassification, effective March 31, 2023) that materially changes the applicable protections and required avoidance measures",
+        "IPaC screens expire automatically after exactly 30 days with no exceptions",
+        "Re-screening is only required if the project physically relocates"
+      ],
+      "answerIndex": 1,
+      "explanation": "Species status is dynamic, not static — the NLEB reclassification is a concrete, real-world example of exactly this kind of change, which is why a stale screen risks understating the applicable protections for a project mobilizing well after the original screen date.",
+      "citation": "87 FR 73488 (NLEB Endangered reclassification, eff. March 31, 2023)."
+    },
+    {
+      "id": "T09-final-Q5",
+      "type": "mc",
+      "prompt": "A route crosses a 0.08-acre mapped wetland with no other jurisdictional triggers. What is the applicable USACE authorization pathway, and how did the 2023 Sackett v. EPA decision affect how a project team should approach an ambiguous nearby seasonal drainage feature on the same route?",
+      "choices": [
+        "NWP 57 likely applies to the wetland crossing without a PCN below the applicable threshold; for the ambiguous drainage feature, apply the post-Sackett continuous-surface-connection standard (narrower than the pre-2023 significant-nexus test) and request a formal jurisdictional determination if genuinely uncertain, rather than assuming either outcome",
+        "An individual USACE permit is always required regardless of wetland size or waterway type",
+        "Sackett v. EPA eliminated all USACE jurisdiction over any feature, so no permit analysis is needed for either feature",
+        "NWP 57 only applies to electric utilities, so a fiber project must always pursue an individual permit"
+      ],
+      "answerIndex": 0,
+      "explanation": "NWP 57 (2021 reissuance) is the streamlined pathway for qualifying telecom crossings, potentially without a PCN below the applicable acreage threshold. For the ambiguous drainage feature, Sackett narrowed (not eliminated) CWA jurisdiction to wetlands with a continuous surface connection to a relatively permanent water body — genuine uncertainty should be resolved through a formal jurisdictional determination, not an assumption in either direction.",
+      "citation": "USACE NWP 57 (2021 reissuance); Sackett v. EPA, 598 U.S. ___ (2023); 33 USC 1344."
+    },
+    {
+      "id": "T09-final-Q6",
+      "type": "mc",
+      "prompt": "A fiber route initiation package is submitted to the SHPO with a missing field photo log. When does the Section 106 review clock start, and why does an incomplete first submission create real (not merely cosmetic) schedule risk?",
+      "choices": [
+        "The clock starts on original submission regardless of completeness, so there is no real schedule risk",
+        "The clock starts only on a COMPLETE submission — an incomplete package adds the full round-trip time (identification of the gap, notification, resubmission, clock restart) to the schedule, which is avoidable with a complete first submission",
+        "The clock starts on the date the SHPO responds with any comment, complete or not",
+        "There is no defined clock for Section 106 review"
+      ],
+      "answerIndex": 1,
+      "explanation": "Since the review clock is tied to submission completeness, an incomplete package doesn't just delay the initial response — it adds the entire round-trip delay to the project schedule, which is why using the SHPO's specific documentation requirements on first submission is a genuine schedule-risk mitigation.",
+      "citation": "36 CFR 800.4(b)(2); 54 USC 306108."
+    },
+    {
+      "id": "T09-final-Q7",
+      "type": "mc",
+      "prompt": "The SHPO issues an adverse-effect finding for an aerial route visible in the viewshed of a historic farmstead. Does this automatically halt the project, and how does the Area of Potential Effects (APE) concept relate to this finding?",
+      "choices": [
+        "The adverse-effect finding automatically and permanently halts the project with no resolution path",
+        "The finding does not automatically halt the project — resolution can include design modification or a Memorandum of Agreement; the finding was possible in the first place because the APE was correctly scoped to include the relevant viewshed (a setting/visual effect), not just the physical construction footprint, which is why artificially narrowing the APE risks missing this kind of effect during initial identification",
+        "The APE has no relationship to adverse-effect findings; they are determined independently",
+        "The project must pay a fee to the SHPO to waive the finding"
+      ],
+      "answerIndex": 1,
+      "explanation": "This synthesizes two T09.L03 concepts: an adverse-effect finding triggers further consultation/resolution (design change or MOA), not automatic termination — and the finding was only possible because the APE correctly included the viewshed as a functionally-defined area of potential effect, illustrating why APE scoping decisions have downstream consequences for what gets caught (or missed) in review.",
+      "citation": "36 CFR 800.5-800.6; 36 CFR 800.16(d); 54 USC 306108."
+    },
+    {
+      "id": "T09-final-Q8",
+      "type": "mc",
+      "prompt": "A route crosses tribal land belonging to a tribe with an approved THPO program, then continues off tribal land through areas with no documented tribal cultural significance. How should the consulting-party structure be organized, and separately, why might government-to-government consultation extend beyond the standard 30-day window?",
+      "choices": [
+        "One party handles the entire route regardless of segment; timeline is unaffected by consultation type",
+        "The THPO leads review for the on-tribal-land segment while the SHPO remains primary for the off-tribal-land segments — a single route can have different lead consulting parties by segment; separately, government-to-government protocols (formal tribal council engagement, distinct decision processes) can reasonably extend the timeline beyond the standard 30-day figure that applies to a routine SHPO exchange",
+        "The federal agency must choose only one of the two consulting parties for the entire route",
+        "Neither party has jurisdiction once any part of the route crosses tribal land"
+      ],
+      "answerIndex": 1,
+      "explanation": "This combines two T09.L09 principles: consulting-party structure is segment-specific (THPO for on-tribal-land, SHPO for off-tribal-land portions of the same route), and government-to-government consultation follows a distinct protocol that can reasonably extend beyond the routine 30-day SHPO timeline.",
+      "citation": "54 USC 302702; 54 USC 306108."
+    },
+    {
+      "id": "T09-final-Q9",
+      "type": "mc",
+      "prompt": "A fiber project in Georgia crosses an area identified by an Alabama-based federally recognized tribe as ancestral hunting territory — not current tribal land. The route has a federal nexus. How does this affect the Section 106 process?",
+      "choices": [
+        "It has no effect, since the tribe is not physically near the project and the land is not current tribal land",
+        "Federal agencies must consult with a tribe that attaches religious/cultural significance to historic properties that may be affected, regardless of current land ownership or the tribe's physical distance from the property — historic properties of significance are frequently on ancestral, aboriginal, or ceded lands far from a tribe's present location",
+        "Consultation is only required if the tribe currently owns the specific parcel",
+        "Consultation is entirely optional and may be skipped without documentation"
+      ],
+      "answerIndex": 1,
+      "explanation": "The consultation trigger under 36 CFR 800.2(c)(2)(ii) turns on documented cultural/religious significance, not current land ownership or geographic proximity — a tribe in a different state can still be an appropriate consulting party for a documented ancestral-lands area within the APE.",
+      "citation": "36 CFR 800.2(c)(2)(ii); 54 USC 306108."
+    },
+    {
+      "id": "T09-final-Q10",
+      "type": "mc",
+      "prompt": "A state DOT requires PE-stamped plan-and-profile drawings for a highway bore. The designer holds a PE license, but not in the project's state. Separately, the as-built conduit depth comes in 6 inches below the DOT-permitted minimum. How should both issues be handled?",
+      "choices": [
+        "Both are minor issues that can be resolved after the fact with no schedule impact",
+        "The PE stamp is invalid unless the designer holds licensure (or an approved reciprocity credential) in that specific state — PE licensure is state-specific; the depth shortfall is a real permit-condition violation requiring the project to stop and resolve it (re-bore or seek a documented DOT deviation) before continuing, since the as-built submittal will document it at closeout regardless",
+        "Neither issue matters since state DOT requirements are federally standardized",
+        "Only the depth issue matters; PE licensing is nationally reciprocal by default"
+      ],
+      "answerIndex": 1,
+      "explanation": "Both issues reflect the same underlying principle from T09.L06: state DOT requirements (PE licensing rules, depth minimums) are binding conditions specific to that jurisdiction, not aspirational guidelines — an out-of-state-only PE stamp and a below-minimum as-built depth are both real compliance problems requiring resolution, not items to be smoothed over administratively."
+    },
+    {
+      "id": "T09-final-Q11",
+      "type": "mc",
+      "prompt": "A city requires a franchise agreement before issuing any ROW permits, and the negotiation has run over 3 years with no end in sight. How does 47 USC 253(a) apply to this scenario, versus a city with a reasonable, time-bound franchise process?",
+      "choices": [
+        "Section 253(a) bans all franchise agreements outright, making both scenarios equally unlawful",
+        "A reasonable, bounded franchise process is permissible under Section 253(a) since it preserves legitimate ROW management authority; an indefinitely-stalled process functioning as a de facto prohibition on providing service is the kind of 'effect of prohibiting' scenario the statute is designed to address — the distinguishing factor is whether the process functions as legitimate management or effective prohibition",
+        "Section 253(a) has no application to municipal franchise agreements at all",
+        "Both scenarios are entirely lawful regardless of duration since municipalities have unlimited franchise authority"
+      ],
+      "answerIndex": 1,
+      "explanation": "The key distinction from T09.L08 is between reasonable ROW management (permissible) and a process that functions as an indefinite, effectively prohibitive barrier (the scenario Section 253(a) targets) — a franchise negotiation with no realistic end point crosses that line, while a bounded, reasonable process does not.",
+      "citation": "47 USC 253(a)."
+    },
+    {
+      "id": "T09-final-Q12",
+      "type": "mc",
+      "prompt": "The FCC's 2018 order established shot clocks for small wireless facility applications. What does 'complete application' mean in this framework, and why does using a municipality's specific published checklist matter more than relying on prior experience with other cities?",
+      "choices": [
+        "Any application starts the clock immediately regardless of documentation completeness",
+        "A complete application contains all required documents/fees/drawings/bonds/certifications per THAT municipality's specific checklist — the clock only starts on this threshold, so a package that satisfied a different city's checklist can still be deficient here, silently costing the round-trip delay of a completeness rejection",
+        "Completeness is determined solely by the applicant's self-certification with no municipal review",
+        "The 60/90-day shot clocks apply uniformly regardless of application completeness"
+      ],
+      "answerIndex": 1,
+      "explanation": "Since municipal permit requirements are not federally standardized, an application package complete for one city can still be deficient for another — using the specific municipality's published checklist (not assuming transferability) is what avoids losing time to an avoidable completeness rejection and starts the applicable shot clock (60 days for collocation, 90 for new structure) immediately.",
+      "citation": "FCC Declaratory Ruling and Third Report and Order (2018), eff. Jan. 14, 2019; FCC BDAC Model Code for Municipalities (2018)."
+    },
+    {
+      "id": "T09-final-Q13",
+      "type": "mc",
+      "prompt": "Why is a recorded express easement generally the preferred access instrument for a permanent 20-mile fiber route across many private parcels, despite the heavier upfront administrative cost of recording each one compared to using licenses?",
+      "choices": [
+        "Recording is actually always faster and cheaper, so there is no real tradeoff to weigh",
+        "Because the route is permanent infrastructure, a license's revocability creates unacceptable long-term risk (any parcel owner could revoke access at any time, forcing a costly reroute), while a recorded easement runs with the land and binds all future owners regardless of whether they personally negotiated it — the heavier upfront recording cost buys durable route security across every future ownership change",
+        "Licenses are illegal for any linear infrastructure regardless of project duration",
+        "There is no meaningful legal difference between an easement and a license"
+      ],
+      "answerIndex": 1,
+      "explanation": "This is the core T09.L07 tradeoff: administrative cost now (recording) versus risk exposure later (a license's revocability) — for infrastructure explicitly intended to be permanent, durable binding access across every future ownership change outweighs the heavier initial recording effort."
+    },
+    {
+      "id": "T09-final-Q14",
+      "type": "mc",
+      "prompt": "Four permits are in parallel review: Municipal ROW (Day 0, 45-day review), State DOT (Day 0, 90-day review), Section 106 SHPO (Day 15, 30-day review), USACE PCN (Day 10, 45-day review). If the DOT permit slips to a Day 30 submission due to a missing PE stamp, what is the new project-level impact, and which permit was critical-path both before and after the slip?",
+      "choices": [
+        "State DOT was critical-path before (completing Day 90) and remains critical-path after the slip (now completing Day 30+90=Day 120), directly extending the project's earliest possible start by 30 days — the exact size of the submission delay",
+        "The critical path shifts to the Municipal ROW permit after the DOT slip",
+        "The slip has no effect on the overall project schedule since other permits are unaffected",
+        "USACE PCN becomes critical-path after the DOT slip"
+      ],
+      "answerIndex": 0,
+      "explanation": "Before the slip: DOT completes Day 90 (latest of MRO Day 45, DOT Day 90, SHPO Day 45, PCN Day 55) — critical-path. After a 30-day submission slip: DOT completes Day 30+90=Day 120, a 30-day extension that flows directly into the project's earliest start date, since DOT remains the binding permit throughout."
+    },
+    {
+      "id": "T09-final-Q15",
+      "type": "mc",
+      "prompt": "Why does the ideal timing relationship between an OTMR make-ready permit and a municipal ROW permit require the PM to deliberately stagger submission dates, rather than submitting both on the same day?",
+      "choices": [
+        "It doesn't require staggering — same-day submission always produces concurrent completion",
+        "Because the two typically have different review-period lengths, a same-day submission produces staggered completions (whichever has the shorter review finishes first, leaving the crew idle either way) — achieving genuine concurrent completion requires submitting the longer-review item earlier, offsetting by roughly the difference in review lengths",
+        "Staggering is only relevant when review periods happen to be identical",
+        "The PM has no influence over submission timing on either permit"
+      ],
+      "answerIndex": 1,
+      "explanation": "This is the T09.L10 concurrent-completion principle: differing review-period lengths mean same-day submission produces staggered completions, which creates idle-crew cost in either direction — genuine concurrency is a deliberate scheduling act (offsetting submission dates), not an automatic outcome of simultaneous filing."
+    },
+    {
+      "id": "T09-final-Q16",
+      "type": "mc",
+      "prompt": "Under 7 CFR Part 1b, what does RUS Form 307 verify, and why does this closeout role matter beyond being a paperwork formality?",
+      "choices": [
+        "It verifies the applicant's initial funding eligibility before construction begins",
+        "It is a post-construction closeout document confirming the project was built per approved plans and that environmental commitments made during review (e.g., a seasonal tree-clearing avoidance window, or a required bore method for a permitted wetland crossing) were actually followed — making environmental commitments made during planning enforceable through the closeout process rather than merely aspirational",
+        "It replaces the need for any pre-construction environmental review",
+        "It is filed only when a project fails to meet its environmental commitments"
+      ],
+      "answerIndex": 1,
+      "explanation": "Form 307's function is to verify — after construction — that the specific environmental conditions attached during the CE/EIM review were actually honored in the field, which is what gives those planning-stage commitments real enforceability rather than leaving them as unverified promises.",
+      "citation": "7 CFR Part 1b (eff. April 3, 2026)."
+    },
+    {
+      "id": "T09-final-Q17",
+      "type": "mc",
+      "prompt": "A project's CE was validly used after an EIM documented tree clearing would occur outside NLEB's active season. An equipment delay pushes clearing into the restricted window. What should happen, and how does this connect to the general site-walk documentation principle used elsewhere in OSP training?",
+      "choices": [
+        "Proceed with clearing since the CE was already granted before the delay occurred",
+        "Stop and resolve the deviation (reschedule or pursue the consultation the EIM was meant to avoid) before clearing in the restricted window — the CE's validity was conditioned on the specific EIM commitment, so a schedule change that breaks that commitment reopens the issue; this mirrors the broader pattern that a field-level party (a construction crew here, a surveyor elsewhere) does not have the authority to unilaterally override a documented determination made through the proper review channel",
+        "Form 307 will simply document whatever actually happened, so no field-level action is needed",
+        "Only the design engineer needs informal notice; construction may proceed regardless"
+      ],
+      "answerIndex": 1,
+      "explanation": "A CE granted on the strength of a specific EIM commitment is conditioned on that commitment being honored — deviating from it isn't a paperwork footnote but a real reopening of the extraordinary-circumstances issue, consistent with the broader T09 principle (echoing T04's site-walk pattern) that field-level parties document and route decisions to the appropriate authority rather than proceeding on their own judgment when a documented determination is at stake."
+    },
+    {
+      "id": "T09-final-Q18",
+      "type": "drag-match",
+      "prompt": "Match each T09 concept to the review/document it governs.",
+      "items": [
+        { "id": "i_nexus", "label": "Federal funding or permit connecting a project to NEPA/Section 106/ESA review" },
+        { "id": "i_thpo", "label": "Assumes SHPO's consulting-party role on tribal land" },
+        { "id": "i_eim", "label": "Resolves a specific extraordinary circumstance to preserve CE eligibility" },
+        { "id": "i_form307", "label": "Post-construction verification that environmental commitments were followed" }
+      ],
+      "targets": [
+        { "id": "t_nexus", "label": "Federal nexus" },
+        { "id": "t_thpo", "label": "THPO" },
+        { "id": "t_eim", "label": "Environmental Impact Memorandum (EIM)" },
+        { "id": "t_form307", "label": "RUS Form 307" }
+      ],
+      "correctMap": { "t_nexus": "i_nexus", "t_thpo": "i_thpo", "t_eim": "i_eim", "t_form307": "i_form307" },
+      "explanation": "Each concept anchors a distinct stage of the T09 permitting/environmental framework: the federal nexus determines whether federal review applies at all, a THPO can replace the SHPO for tribal-land Section 106 review, an EIM lets a project stay on the CE track despite a narrow extraordinary circumstance, and RUS Form 307 closes the loop by verifying after construction that the environmental commitments made during review were actually honored."
+    },
+    {
+      "id": "T09-final-Q19",
+      "type": "mc",
+      "prompt": "A project team assumes tribal Section 106 consultation will complete on the same 30-day timeline as a routine SHPO review, based on how other permits on the project have gone. What is the risk, and how should the team instead identify potential tribal/NHO consulting-party interests?",
+      "choices": [
+        "There is no risk since tribal and SHPO review always run identically",
+        "The risk is a schedule overrun, since government-to-government consultation protocols can extend beyond 30 days; the team should identify potential tribal/NHO interests EARLY in planning rather than waiting for the SHPO to surface a concern, since the SHPO is not necessarily positioned to identify a tribe's ancestral-lands interest on the tribe's behalf",
+        "The risk is that tribal consultation will always be faster, making the estimate overly conservative",
+        "Tribal consultation is never part of the critical path regardless of timing"
+      ],
+      "answerIndex": 1,
+      "explanation": "This combines two T09.L09 points: government-to-government consultation can reasonably extend beyond the routine 30-day SHPO figure, and because the SHPO doesn't necessarily know a distant tribe's ancestral-lands interest in the APE, proactive early identification (rather than waiting for the SHPO to flag it) avoids discovering a schedule-critical requirement late."
+    },
+    {
+      "id": "T09-final-Q20",
+      "type": "mc",
+      "prompt": "A wetland crossing qualifies for NWP 57 without a PCN based on acreage, but the same crossing also crosses a Section 10 navigable waterway. Does the small wetland-acreage impact mean no PCN is required?",
+      "choices": [
+        "Yes — impact acreage alone always determines whether a PCN is required, regardless of waterway type",
+        "Not necessarily — NWP 57's general conditions can require a PCN based on factors beyond wetland acreage, including the crossing of a Section 10 navigable waterway itself, so a small wetland-acreage impact does not automatically mean no PCN is needed when Section 10 authority is also implicated",
+        "No — Section 10 waterways are entirely outside NWP 57's scope",
+        "A PCN is never required for navigable waterway crossings under any nationwide permit"
+      ],
+      "answerIndex": 1,
+      "explanation": "PCN triggers under NWP 57 are not driven by wetland acreage alone — a Section 10 navigable-waterway crossing can independently trigger the PCN requirement under the general conditions, meaning acreage-based reasoning alone can miss a real PCN obligation.",
+      "citation": "USACE NWP 57 (2021 reissuance); 33 CFR 330.5; 33 USC 403."
+    },
+    {
+      "id": "T09-final-Q21",
+      "type": "mc",
+      "prompt": "A permitting team assumes that because they obtained a state DOT encroachment permit in State A with a specific PE-licensing and bond-threshold combination, the same requirements will transfer directly to a project in State B. Separately, a municipal ROW permit application uses a checklist that satisfied a different city. What common mistake do both scenarios share?",
+      "choices": [
+        "Both scenarios reflect correct, safe assumptions with no real risk",
+        "Both scenarios assume a jurisdiction-specific requirement (state DOT rules, municipal permit checklists) transfers unchanged to a different jurisdiction, when in fact these requirements are not federally standardized and vary meaningfully between states and between municipalities — the correct practice in both cases is to independently confirm the SPECIFIC jurisdiction's current requirements rather than relying on prior experience elsewhere",
+        "Both scenarios are examples of federal preemption overriding all local variation",
+        "Neither scenario involves any real jurisdictional variation since permitting rules are uniform nationwide"
+      ],
+      "answerIndex": 1,
+      "explanation": "This synthesizes the T09.L06 and T09.L08 pattern: state DOT requirements and municipal permit checklists are both jurisdiction-specific rather than nationally standardized, so an assumption of direct transferability between jurisdictions (whether states or cities) risks a real compliance or schedule failure — independent confirmation of the specific jurisdiction's current requirements is the defensible practice in both cases."
+    },
+    {
+      "id": "T09-final-Q22",
+      "type": "mc",
+      "prompt": "Across T09's regulatory landscape (NEPA, Section 106, ESA, USACE, tribal consultation, state/municipal permitting), what is the single recurring principle that ties together how a field-level or project-management team should handle an ambiguous or borderline finding (a possible wetland feature, an uncertain species impact, an unclear historic-property effect)?",
+      "choices": [
+        "Always assume the most conservative, restrictive outcome to avoid any risk of a violation",
+        "Always assume the most permissive outcome to avoid delaying the project",
+        "Document the observation, flag it clearly, and route the determination to the appropriate authority or regulatory process (USACE for WOTUS status, USFWS for species impact, SHPO/THPO for historic-property effect) rather than making the binding legal or jurisdictional determination in the field — the field/PM role is to surface the issue accurately, not to resolve it unilaterally",
+        "Ignore ambiguous findings unless a regulatory agency proactively raises the issue first"
+      ],
+      "answerIndex": 2,
+      "explanation": "This is the unifying T09 principle, echoed across L05 (wetland ambiguity, post-Sackett), L04 (species screening), and L03/L09 (historic-property/tribal consulting-party identification): a field or project team's role is to accurately document and route ambiguous findings to the party with the actual authority and expertise to resolve them, not to make the binding determination themselves in either direction — neither over-conservative avoidance nor under-cautious dismissal serves the project as well as an accurate, well-routed record."
+    }
+  ]
+}

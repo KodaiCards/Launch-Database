@@ -1,0 +1,119 @@
+{
+  "assessmentId": "T09-L04",
+  "kind": "lesson",
+  "courseId": "T09",
+  "lessonId": "T09.L04",
+  "drawCount": 4,
+  "passThreshold": 70,
+  "pool": [
+    {
+      "id": "T09-L04-Q1",
+      "type": "mc",
+      "prompt": "A BEAD-funded aerial fiber route will require removing 12 trees to place 4 new poles in a wooded gap. The project area is in documented Northern Long-Eared Bat (NLEB) range. The project is scheduled to begin April 15. NLEB is federally listed as Endangered. What is the correct action before mobilizing?",
+      "choices": [
+        "Proceed — existing-pole attachment is the primary activity and the 12-tree removal is minor",
+        "Screen the tree-clearing activity through USFWS IPaC and apply the applicable seasonal avoidance window and/or consultation requirement for NLEB before clearing — take of an Endangered species is prohibited under the ESA, and NLEB roosting/maternity season typically falls within spring/summer",
+        "Proceed with clearing at night to avoid disturbing any bats",
+        "Skip the review since only ground-disturbing activities (not tree clearing) trigger ESA review"
+      ],
+      "answerIndex": 1,
+      "explanation": "Tree clearing that could remove occupied bat roost trees during the active season implicates the ESA's take prohibition for an Endangered species. The correct sequence is to screen through IPaC, identify the applicable seasonal avoidance window (commonly framed around the April-October active season for NLEB), and either avoid clearing in that window or complete the required consultation before mobilizing.",
+      "citation": "16 USC 1538 (ESA take prohibition); 87 FR 73488 (NLEB Endangered reclassification rule, published Nov. 30, 2022, effective March 31, 2023 per delay notice 88 FR 5528); USFWS IPaC."
+    },
+    {
+      "id": "T09-L04-Q2",
+      "type": "mc",
+      "prompt": "An IPaC screen flags two bat species in a fiber project footprint. The activity-specific guidance states standard avoidance measures are sufficient for tree-clearing activities outside a defined seasonal window. No critical habitat is designated in the footprint. What level of ESA consultation is typically required?",
+      "choices": [
+        "No consultation required — the IPaC output alone clears the project regardless of what it says",
+        "Following the IPaC-recommended standard avoidance measures (e.g., clearing outside the seasonal window) typically allows the project to proceed without formal consultation; if avoidance measures cannot be met, informal consultation with USFWS is the next step",
+        "A full formal consultation with a Biological Opinion is always required regardless of IPaC guidance",
+        "The project must be redesigned entirely to avoid the footprint"
+      ],
+      "answerIndex": 1,
+      "explanation": "IPaC's activity-specific guidance is designed to let projects self-screen: if standard avoidance measures (like seasonal timing restrictions) are followed, many projects can proceed without formal USFWS consultation. If the project cannot meet those avoidance measures — for example, if clearing must happen inside the restricted window — informal consultation with USFWS becomes the next step to determine whether further review is needed.",
+      "citation": "16 USC 1536 (ESA Section 7); USFWS IPaC guidance."
+    },
+    {
+      "id": "T09-L04-Q3",
+      "type": "mc",
+      "prompt": "A project team reviewed bat species listings in January 2022 and confirmed the Northern Long-Eared Bat was listed as Threatened at that time. The project begins construction in June 2023. What action is required before starting construction?",
+      "choices": [
+        "No action — the January 2022 review is sufficient for the 2023 construction start",
+        "Re-verify current species status before construction — NLEB was reclassified from Threatened to Endangered effective March 31, 2023, meaning a stale 2022 review would understate the applicable protections and consultation requirements for a June 2023 start",
+        "No action is needed because species status never changes once listed",
+        "The project only needs to re-check status if construction is delayed by more than 5 years"
+      ],
+      "answerIndex": 1,
+      "explanation": "NLEB's status changed materially between the January 2022 review and the June 2023 construction start: the final rule reclassifying NLEB as Endangered was published November 30, 2022, with an effective date of March 31, 2023. A stale review from before the reclassification would incorrectly treat the species as merely Threatened, understating the applicable ESA protections for a project starting after the effective date.",
+      "citation": "87 FR 73488 (NLEB Endangered reclassification rule); effective date delayed to March 31, 2023 per 88 FR 5528; 16 USC 1536."
+    },
+    {
+      "id": "T09-L04-Q4",
+      "type": "mc",
+      "prompt": "Which USFWS tool is the standard first step for ESA screening on a BEAD-funded fiber project?",
+      "choices": [
+        "National Wetland Inventory (NWI) mapper",
+        "IPaC (Information for Planning and Consultation)",
+        "The National Register of Historic Places database",
+        "The FCC's Universal Licensing System"
+      ],
+      "answerIndex": 1,
+      "explanation": "IPaC is USFWS's standard project-planning tool for ESA screening — it generates a species list and activity-specific guidance for a defined project footprint, serving as the entry point for determining whether informal or formal ESA Section 7 consultation is needed.",
+      "citation": "USFWS IPaC (ipac.ecosphere.fws.gov); 16 USC 1536 (ESA Section 7 consultation trigger)."
+    },
+    {
+      "id": "T09-L04-Q5",
+      "type": "mc",
+      "prompt": "Why does species listing status matter so much for how a fiber project times its tree-clearing activity, beyond simply 'checking a box' during planning?",
+      "choices": [
+        "It doesn't matter — listing status has no bearing on the timing of construction activities",
+        "A species' listing status (and its associated seasonal avoidance windows, e.g., a bat maternity/roosting season) directly determines whether a specific construction-window choice is compliant with the ESA's take prohibition — clearing trees inside an active-season window for an Endangered species without the appropriate consultation can constitute unlawful take",
+        "Listing status only affects paperwork, never actual construction scheduling",
+        "Listing status matters only for federally-owned land, never for private ROW"
+      ],
+      "answerIndex": 1,
+      "explanation": "The practical consequence of a species' listing status is that it drives real construction-scheduling constraints (like seasonal tree-clearing windows) — clearing during an active roosting/breeding season for a listed species without appropriate consultation risks an unlawful take under the ESA, which is why confirming current listing status (not a stale prior-year check) directly shapes when tree-clearing work can legally proceed."
+    },
+    {
+      "id": "T09-L04-Q6",
+      "type": "mc",
+      "prompt": "A project team's IPaC screen from 14 months ago showed no bat species present in the project footprint. The project is about to mobilize. What is the correct practice regarding that screen?",
+      "choices": [
+        "Rely on the original screen indefinitely — IPaC results never need to be refreshed once obtained",
+        "Re-run the IPaC screen close to the actual mobilization date — species ranges, listing statuses, and designated critical habitat can change over time, so a screen conducted more than a year prior may no longer reflect current conditions",
+        "IPaC screens are only valid for 30 days and must be discarded after that regardless of project status",
+        "Re-screening is only required if the project physically relocates to a new footprint"
+      ],
+      "answerIndex": 1,
+      "explanation": "Species listings, ranges, and critical habitat designations are not static — a 14-month-old IPaC screen risks missing a status change (like the NLEB Threatened-to-Endangered reclassification) or a range update that occurred after the original screen. Re-running the screen close to actual mobilization is the practical way to catch such changes before they become a compliance problem in the field."
+    },
+    {
+      "id": "T09-L04-Q7",
+      "type": "mc",
+      "prompt": "Why is 'take' under the ESA relevant to a fiber construction crew doing tree-clearing work, rather than being purely a concern for hunters or land developers?",
+      "choices": [
+        "It isn't relevant — the ESA take prohibition only applies to intentional wildlife harm, never to incidental habitat disturbance from construction",
+        "The ESA's take prohibition covers actions that harm or harass a listed species, which can include destroying an occupied roost tree during an active season — construction activities like tree clearing can constitute unlawful take even without any intent to harm the species directly",
+        "Take only applies to species listed as Threatened, never species listed as Endangered",
+        "Take prohibitions only apply on federal land, never on private ROW"
+      ],
+      "answerIndex": 1,
+      "explanation": "The ESA's take prohibition is broad enough to cover habitat-disturbing actions like removing an occupied roost tree during an active season, not just direct/intentional harm — this is precisely why tree-clearing timing (avoiding the active roosting/maternity season for a listed bat species) is a real compliance consideration for a construction crew, not just a wildlife-agency concern.",
+      "citation": "16 USC 1538 (ESA take prohibition)."
+    },
+    {
+      "id": "T09-L04-Q8",
+      "type": "mc",
+      "prompt": "A project's IPaC report recommends clearing trees only between November 1 and March 31 to avoid NLEB's active season. The construction schedule originally targeted an April start. What is the most defensible response?",
+      "choices": [
+        "Ignore the IPaC recommendation and proceed on the original April schedule since IPaC output is only advisory",
+        "Adjust the tree-clearing schedule to comply with the recommended window (or, if that's not feasible, pursue the appropriate consultation with USFWS before clearing in the restricted window) rather than defaulting to the original schedule and treating the guidance as optional",
+        "Cancel the project entirely, since any conflict with an IPaC-recommended window is unresolvable",
+        "Clear the trees at night during the restricted window, since bats are nocturnal and less likely to be disturbed after dark"
+      ],
+      "answerIndex": 1,
+      "explanation": "IPaC's activity-specific guidance describes standard avoidance measures that let a project proceed without formal consultation when followed; treating that guidance as optional and clearing on the original schedule anyway abandons the low-friction compliance pathway in favor of a real ESA take risk. The defensible response is to adjust the schedule to the recommended window, or pursue consultation if the window genuinely cannot be met."
+    }
+  ]
+}
