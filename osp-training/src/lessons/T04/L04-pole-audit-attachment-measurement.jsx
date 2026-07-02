@@ -5,6 +5,7 @@ import React from 'react';
 import LessonLayout from '../../components/LessonLayout.jsx';
 import WorkedExample from '../../components/primitives/WorkedExample.jsx';
 import Quiz from '../../components/primitives/Quiz.jsx';
+import GatedAssessment from '../../components/primitives/GatedAssessment.jsx';
 import Flashcard from '../../components/Flashcard.jsx';
 
 export const meta = {
@@ -472,6 +473,11 @@ export default function T04L04_PoleAuditAttachmentMeasurement() {
       </section>
 
       {/* ── PER-LESSON QUIZ ──────────────────────────────────────────────── */}
+      <GatedAssessment
+        courseId="T04"
+        assessmentId="T04-L04"
+        title="T04.L04 Check — Pole Audit and Attachment Measurement"
+        fallback={
       <Quiz
         title="T04.L04 Check — Pole Audit and Attachment Measurement"
         mode="multiple-choice"
@@ -534,6 +540,8 @@ export default function T04L04_PoleAuditAttachmentMeasurement() {
               'Even when make-ready is visually obvious, skipping the documentation creates problems downstream: the design engineer cannot run the formal analysis without measured attachment heights; the OTMR contractor cannot scope the work without a recorded existing-occupancy inventory; if the make-ready is disputed by an existing carrier, there\'s no audit record to reference. The audit is a legal and engineering document, not just a field convenience.',
           },
         ]}
+      />
+        }
       />
 
     </LessonLayout>

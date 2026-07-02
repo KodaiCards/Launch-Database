@@ -6,6 +6,7 @@ import React from 'react';
 import LessonLayout from '../../components/LessonLayout.jsx';
 import Flashcard from '../../components/Flashcard.jsx';
 import Quiz from '../../components/primitives/Quiz.jsx';
+import GatedAssessment from '../../components/primitives/GatedAssessment.jsx';
 
 export const meta = {
   id: 'T01.L08',
@@ -113,7 +114,7 @@ export default function T01L08_KeyAcronymsFieldReference() {
             <tr className="border-t border-white/10">
               <td className="px-3 py-2 font-mono">OS2</td>
               <td className="px-3 py-2">Optical Single-mode, class 2</td>
-              <td className="px-3 py-2">ISO/IEC 11801 designation for G.652.D SMF — the standard low-water-peak single-mode fiber for long-distance OSP and backbone deployments. OS1 maps to G.652.A/B/C (earlier SMF specs with higher water-peak attenuation, rare in new installations). Note: G.657.A2 bend-insensitive fiber has tighter macrobend specs than G.652.D and is used for tight-bend drop applications — OS2 is the standard for mainstream OSP trunk and feeder runs. When a project calls out OS2, it requires G.652.D-compliant fiber.</td>
+              <td className="px-3 py-2">ISO/IEC 11801 designation for G.652.C/D SMF (low/zero water-peak) — the standard for long-distance OSP and backbone deployments. OS1 maps to G.652.A/B (earlier SMF specs with higher water-peak attenuation, rare in new installations). Note: G.657.A2 bend-insensitive fiber has tighter macrobend specs than G.652.D and is used for tight-bend drop applications — OS2 is the standard for mainstream OSP trunk and feeder runs. When a project calls out OS2, it requires G.652.C/D-compliant fiber.</td>
             </tr>
             <tr className="border-t border-white/10">
               <td className="px-3 py-2 font-mono">ADSS</td>
@@ -400,65 +401,72 @@ export default function T01L08_KeyAcronymsFieldReference() {
       />
 
       {/* ── PRACTICE QUIZ ───────────────────────────────────────────────── */}
-      <Quiz
+      <GatedAssessment
+        courseId="T01"
+        assessmentId="T01-L08"
         title="T01.L08 Check — Key Acronyms"
-        mode="drag-match"
-        questions={[
-          {
-            id: 'T01-L08-Q1',
-            type: 'dragdrop',
-            prompt: 'Match each acronym to its full name.',
-            items: [
-              { id: 'otdr', label: 'OTDR' },
-              { id: 'mgn', label: 'MGN' },
-              { id: 'nesc', label: 'NESC' },
-              { id: 'loto', label: 'LOTO' },
-              { id: 'rus', label: 'RUS' },
-            ],
-            targets: [
-              { id: 'totdr', label: 'Optical Time-Domain Reflectometer' },
-              { id: 'tmgn', label: 'Multi-Grounded Neutral' },
-              { id: 'tnesc', label: 'National Electrical Safety Code' },
-              { id: 'tloto', label: 'Lockout / Tagout' },
-              { id: 'trus', label: 'Rural Utilities Service' },
-            ],
-            correctMap: {
-              totdr: 'otdr',
-              tmgn: 'mgn',
-              tnesc: 'nesc',
-              tloto: 'loto',
-              trus: 'rus',
+        fallback={
+        <Quiz
+          title="T01.L08 Check — Key Acronyms"
+          mode="drag-match"
+          questions={[
+            {
+              id: 'T01-L08-Q1',
+              type: 'dragdrop',
+              prompt: 'Match each acronym to its full name.',
+              items: [
+                { id: 'otdr', label: 'OTDR' },
+                { id: 'mgn', label: 'MGN' },
+                { id: 'nesc', label: 'NESC' },
+                { id: 'loto', label: 'LOTO' },
+                { id: 'rus', label: 'RUS' },
+              ],
+              targets: [
+                { id: 'totdr', label: 'Optical Time-Domain Reflectometer' },
+                { id: 'tmgn', label: 'Multi-Grounded Neutral' },
+                { id: 'tnesc', label: 'National Electrical Safety Code' },
+                { id: 'tloto', label: 'Lockout / Tagout' },
+                { id: 'trus', label: 'Rural Utilities Service' },
+              ],
+              correctMap: {
+                totdr: 'otdr',
+                tmgn: 'mgn',
+                tnesc: 'nesc',
+                tloto: 'loto',
+                trus: 'rus',
+              },
+              explanation:
+                'OTDR = Optical Time-Domain Reflectometer (fiber test instrument). MGN = Multi-Grounded Neutral (electric utility neutral wire grounded at every pole). NESC = National Electrical Safety Code (IEEE C2, aerial utility line code). LOTO = Lockout/Tagout (OSHA 1910.147 safety procedure). RUS = Rural Utilities Service (USDA funding and standards agency for rural OSP).',
             },
-            explanation:
-              'OTDR = Optical Time-Domain Reflectometer (fiber test instrument). MGN = Multi-Grounded Neutral (electric utility neutral wire grounded at every pole). NESC = National Electrical Safety Code (IEEE C2, aerial utility line code). LOTO = Lockout/Tagout (OSHA 1910.147 safety procedure). RUS = Rural Utilities Service (USDA funding and standards agency for rural OSP).',
-          },
-          {
-            id: 'T01-L08-Q2',
-            type: 'mc',
-            prompt:
-              'An OSP project is federally funded through the RUS program. Which acronym represents the federal environmental review requirement that applies to this project?',
-            choices: [
-              'MUTCD — the traffic control manual',
-              'NEPA — the National Environmental Policy Act requires environmental review of federally funded projects',
-              'NESC — the electrical safety code governs all federal utility work',
-              'LOTO — lockout/tagout is required before environmental review',
-            ],
-            answerIndex: 1,
-            explanation:
-              'NEPA (National Environmental Policy Act) requires environmental review of projects using federal funding. RUS-funded fiber projects must comply with NEPA. Most qualify for a Categorical Exclusion (CE C-8 for telecom projects) — a streamlined process that avoids a full Environmental Impact Statement. MUTCD governs traffic control in work zones. NESC governs aerial line safety. LOTO is a construction safety procedure, not an environmental review.',
-            citation: 'NEPA (42 U.S.C. §4321 et seq.); RUS Environmental Review procedures.',
-          },
-          {
-            id: 'T01-L08-Q3',
-            type: 'fill-in-blank',
-            prompt:
-              'The BICSI credential for inside-plant and data center designers — covering TIA-568, TIA-569, TIA-606, and TIA-607 — is called the ____.',
-            answer: 'RCDD',
-            answerDisplay: 'RCDD (Registered Communications Distribution Designer)',
-            explanation:
-              'The RCDD (Registered Communications Distribution Designer) is BICSI\'s primary credential for ISP and data-center design professionals. It covers the four-telecom-spaces model, backbone vs. horizontal cabling, TIA-606-D administration, and TIA-607 bonding/grounding for inside plant. OSP designers working on the general learning track in this training program are not required to hold an RCDD — it\'s primarily a career credential for ISP specialists.',
-          },
-        ]}
+            {
+              id: 'T01-L08-Q2',
+              type: 'mc',
+              prompt:
+                'An OSP project is federally funded through the RUS program. Which acronym represents the federal environmental review requirement that applies to this project?',
+              choices: [
+                'MUTCD — the traffic control manual',
+                'NEPA — the National Environmental Policy Act requires environmental review of federally funded projects',
+                'NESC — the electrical safety code governs all federal utility work',
+                'LOTO — lockout/tagout is required before environmental review',
+              ],
+              answerIndex: 1,
+              explanation:
+                'NEPA (National Environmental Policy Act) requires environmental review of projects using federal funding. RUS-funded fiber projects must comply with NEPA. Most qualify for a Categorical Exclusion (CE C-8 for telecom projects) — a streamlined process that avoids a full Environmental Impact Statement. MUTCD governs traffic control in work zones. NESC governs aerial line safety. LOTO is a construction safety procedure, not an environmental review.',
+              citation: 'NEPA (42 U.S.C. §4321 et seq.); RUS Environmental Review procedures.',
+            },
+            {
+              id: 'T01-L08-Q3',
+              type: 'fill-in-blank',
+              prompt:
+                'The BICSI credential for inside-plant and data center designers — covering TIA-568, TIA-569, TIA-606, and TIA-607 — is called the ____.',
+              answer: 'RCDD',
+              answerDisplay: 'RCDD (Registered Communications Distribution Designer)',
+              explanation:
+                'The RCDD (Registered Communications Distribution Designer) is BICSI\'s primary credential for ISP and data-center design professionals. It covers the four-telecom-spaces model, backbone vs. horizontal cabling, TIA-606-D administration, and TIA-607 bonding/grounding for inside plant. OSP designers working on the general learning track in this training program are not required to hold an RCDD — it\'s primarily a career credential for ISP specialists.',
+            },
+          ]}
+        />
+        }
       />
 
     </LessonLayout>

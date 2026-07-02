@@ -1,0 +1,116 @@
+{
+  "assessmentId": "T05-L10",
+  "kind": "lesson",
+  "courseId": "T05",
+  "lessonId": "T05.L10",
+  "drawCount": 4,
+  "passThreshold": 70,
+  "pool": [
+    {
+      "id": "T05-L10-Q1",
+      "type": "mc",
+      "prompt": "An ADSS cable has RTS = 3,500 lb and EDS = 18%. What is the correct stringing tension H to use in the sag formula?",
+      "choices": [
+        "3,500 lb (the full RTS)",
+        "630 lb — H = EDS × RTS = 0.18 × 3,500 = 630 lb; EDS is expressed as a decimal fraction of RTS, and stringing at full RTS would strain the fiber",
+        "1,750 lb (half of RTS)",
+        "18 lb (treating EDS as a direct pound figure rather than a percentage)"
+      ],
+      "answerIndex": 1,
+      "explanation": "H = EDS × RTS = 0.18 × 3,500 = 630 lb — straightforward arithmetic converting the percentage EDS figure to an absolute stringing tension. Stringing at full RTS (3,500 lb) would place the fiber under excessive strain, which is exactly why EDS is deliberately set as a fraction of RTS, not the full rated tensile strength."
+    },
+    {
+      "id": "T05-L10-Q2",
+      "type": "mc",
+      "prompt": "Why is a steel messenger strand NOT recommended for aerial fiber runs near 115-kV transmission lines?",
+      "choices": [
+        "Steel strand weighs more, increasing sag in the Heavy district — a structural, not electrical, concern",
+        "Steel strand is electrically conductive and can pick up significant induced voltage through electromagnetic induction from the nearby high-voltage line — enough to create a shock hazard to workers and grounding/bonding complications; ADSS (all-dielectric self-supporting) cable avoids this entirely by using only non-conductive strength members",
+        "Steel strand is more expensive than ADSS in every application, regardless of proximity to transmission lines",
+        "Steel strand cannot physically support the weight of a fiber cable over any span length"
+      ],
+      "answerIndex": 1,
+      "explanation": "Near high-voltage transmission lines, a conductive steel messenger can develop induced voltages through electromagnetic induction from the nearby line — a real shock hazard and a grounding/bonding complication. ADSS cable's all-dielectric construction (no conductive strength member) eliminates this specific hazard, which is why ADSS is the standard choice for aerial fiber near high-voltage transmission corridors."
+    },
+    {
+      "id": "T05-L10-Q3",
+      "type": "mc",
+      "prompt": "An ADSS cable with w = 0.260 lb/ft is strung at EDS = 560 lb on a 200-ft span. Wind load adds w_wind = 0.408 lb/ft (vectorially combining with bare weight to give w_combined = 0.668 lb/ft). What is the wind-loaded sag?",
+      "choices": [
+        "2.32 ft (27.9 inches) — this is actually the NO-WIND sag using bare weight alone, not the wind-loaded figure",
+        "5.96 ft (about 71.6 inches) — s_wind = w_combined × L²/(8H) = (0.668 × 200²)/(8 × 560) = (0.668 × 40,000)/4,480 = 26,720/4,480 = 5.96 ft",
+        "3.35 ft — this would be the result for a shorter 150-ft span, not the stated 200-ft span",
+        "8.93 ft — this would require a substantially heavier combined load than the stated 0.668 lb/ft"
+      ],
+      "answerIndex": 1,
+      "explanation": "s_wind = w_combined × L²/(8H) = (0.668 × 200²)/(8 × 560) = (0.668 × 40,000)/4,480 = 26,720/4,480 = 5.96 ft — this is the same sag formula applied with the combined (bare weight + wind) load rather than bare weight alone, since a genuine clearance check must account for the worst-case loading condition, not just the calmer no-wind sag figure."
+    },
+    {
+      "id": "T05-L10-Q4",
+      "type": "mc",
+      "prompt": "Which of the following is a situation where aeolian vibration is most likely to cause ADSS cable fatigue failure?",
+      "choices": [
+        "A sheltered urban canyon with irregular, gusty wind — turbulent gusts don't sustain the resonance needed for fatigue damage",
+        "An open, exposed span (e.g., across a field) with steady, low-velocity wind (roughly 2-15 mph) and no vibration dampers — this combination of open exposure, sustained steady wind, and no damping is the classic condition for aeolian-vibration fatigue damage at suspension clamps",
+        "A span subject to heavy ice loading with no wind at all — ice loading is a static weight problem, not a vibration problem",
+        "Any span, regardless of wind conditions, exposure, or damping"
+      ],
+      "answerIndex": 1,
+      "explanation": "Aeolian vibration is driven by steady, low-velocity wind (roughly 2-15 mph per engineering literature) creating sustained resonant oscillation — open, exposed spans with no dampers are the classic risk condition, while irregular urban gusts don't sustain the resonance needed, and static ice loading is an entirely different (non-vibration) failure mode.",
+      "citation": "Utility Products / engineering literature on aeolian vibration wind-speed range (approximately 2-15 mph steady wind); WebSearch-corroborated, consistent with the lesson's own 3-15 mph figure."
+    },
+    {
+      "id": "T05-L10-Q5",
+      "type": "mc",
+      "prompt": "ADSS EDS is typically what percentage range of RTS, and what happens if a design strings outside this range in either direction?",
+      "choices": [
+        "5-10% of RTS; stringing outside this range has no practical consequence either way",
+        "Approximately 16-25% of RTS (an industry-convention range from ADSS manufacturer guidelines, not a single pinned formal-standard figure) — stringing below 16% risks excessive sag and compromised clearance; stringing above 25% begins mechanically loading the fiber itself, causing microbending and increased attenuation over time",
+        "50-75% of RTS; this is the range used regardless of manufacturer",
+        "ADSS cables have no meaningful EDS range; any tension up to full RTS is acceptable"
+      ],
+      "answerIndex": 1,
+      "explanation": "The 16-25% EDS range is a field-validated industry convention (reused from the T02/T03 hedge on this same figure, where conflicting vendor sources — 16-25% vs 20-25% — were found and not forced into a single precise number). Under-stringing risks excessive sag/clearance problems; over-stringing risks mechanically straining the fiber itself, causing microbending and long-term attenuation increase.",
+      "citation": "ADSS manufacturer guidelines (industry-convention EDS/RTS range) — reused from T02/T03's hedge on this figure; conflicting vendor sources found, not asserted as a single pinned standard clause."
+    },
+    {
+      "id": "T05-L10-Q6",
+      "type": "mc",
+      "prompt": "Why does the wind-loaded sag calculation (Q3, 5.96 ft) matter more for a NESC clearance check than the no-wind sag figure (2.32 ft) alone?",
+      "choices": [
+        "It doesn't matter more — the smaller of the two figures should always be used for the clearance check, since that's the more optimistic scenario",
+        "A clearance check must be satisfied under the WORST-CASE loading condition the design is expected to experience, not just the calm-weather condition — since wind loading increases sag substantially (5.96 ft vs 2.32 ft in this example), a design that only checks clearance under no-wind conditions could actually violate Rule 232 during windy conditions, which the design must also survive",
+        "Wind-loaded sag is only relevant for ADSS cable, never for standard messenger-strand-supported cable",
+        "The two figures are always numerically identical regardless of wind conditions"
+      ],
+      "answerIndex": 1,
+      "explanation": "This connects directly to the broader T05.L02/L07 principle that a clearance check must use the design's actual worst-case condition — for wind-sensitive designs like ADSS, that means the wind-loaded sag (here, 5.96 ft, more than double the no-wind figure of 2.32 ft), not the calmer no-wind sag, since a design that only satisfies clearance in calm weather would actually violate Rule 232 during the windy conditions the pole is designed to survive."
+    },
+    {
+      "id": "T05-L10-Q7",
+      "type": "mc",
+      "prompt": "A designer strings an ADSS cable at EDS = 30% of RTS, reasoning that a higher tension will minimize sag and improve clearance margin. What is the risk of this decision?",
+      "choices": [
+        "There is no risk — higher tension always produces a strictly better, safer design with no downside",
+        "Stringing above the roughly 25% RTS upper bound of the typical EDS range risks mechanically loading the fiber itself (microbending), causing increased attenuation over time — the designer has traded a clearance-margin benefit for a fiber-performance risk that may not manifest until well after installation",
+        "The risk only affects the cable's outer jacket color, not its performance",
+        "30% EDS is actually within the safe range and poses no risk of any kind"
+      ],
+      "answerIndex": 1,
+      "explanation": "While higher tension does reduce sag (via the inverse relationship in s=wL²/(8H)), pushing EDS above the roughly 25% RTS convention risks straining the fiber itself — microbending and gradually increasing attenuation are a real, if delayed, consequence that wouldn't be caught by an installation-day clearance check but could degrade network performance over the cable's service life."
+    },
+    {
+      "id": "T05-L10-Q8",
+      "type": "mc",
+      "prompt": "An ADSS cable has RTS = 4,200 lb. What is the acceptable stringing tension range using the standard 16-25% EDS-of-RTS industry convention?",
+      "choices": [
+        "210 lb to 336 lb",
+        "672 lb to 1,050 lb — 16% × 4,200 = 672 lb (lower bound); 25% × 4,200 = 1,050 lb (upper bound)",
+        "1,050 lb to 2,100 lb",
+        "2,100 lb to 4,200 lb"
+      ],
+      "answerIndex": 1,
+      "explanation": "Applying the 16-25% EDS-of-RTS convention: lower bound = 0.16 × 4,200 = 672 lb; upper bound = 0.25 × 4,200 = 1,050 lb — the same arithmetic approach as Q1, applied to different stated RTS/EDS inputs to confirm the range's calculation method generalizes."
+    }
+  ]
+}

@@ -5,6 +5,7 @@ import React from 'react';
 import LessonLayout from '../../components/LessonLayout.jsx';
 import WorkedExample from '../../components/primitives/WorkedExample.jsx';
 import Quiz from '../../components/primitives/Quiz.jsx';
+import GatedAssessment from '../../components/primitives/GatedAssessment.jsx';
 import Flashcard from '../../components/Flashcard.jsx';
 
 export const meta = {
@@ -313,83 +314,90 @@ export default function T02L02_AttenuationThreeNumbers() {
       />
 
       {/* ── PER-LESSON QUIZ ──────────────────────────────────────────────── */}
-      <Quiz
+      <GatedAssessment
+        courseId="T02"
+        assessmentId="T02-L02"
         title="T02.L02 Check — Attenuation Three Numbers"
-        mode="multiple-choice"
-        questions={[
-          {
-            id: 'T02-L02-Q1',
-            type: 'mc',
-            prompt:
-              'A G.652.D fiber link is being budgeted at 1550 nm. Which attenuation value is most defensible to use when the actual cable datasheet is not yet available?',
-            choices: [
-              '0.18 dB/km — the best vendor "typical" figure seen in recent datasheets',
-              '0.22–0.25 dB/km — slightly above typical datasheet, leaving margin for aging and uncertainty',
-              '0.30 dB/km — the ITU-T G.652.D specification maximum',
-              '0.50 dB/km — a safe round conservative figure for any SMF',
-            ],
-            answerIndex: 1,
-            explanation:
-              '0.22–0.25 dB/km is the standard OSP designer planning value at 1550 nm. Using the 0.18 dB/km typical leaves no margin; using 0.30 dB/km (spec max) wastes headroom. Always confirm with the actual project datasheet once the fiber is specified.',
-            citation:
-              'ITU-T G.652.D (2024) — attenuation coefficient ≤ 0.30 dB/km @ 1550 nm max. Vendor datasheets (Corning SMF-28 Ultra, etc.) typically show 0.18–0.22 dB/km.',
-            fieldNote:
-              'On RUS-program jobs, you often don\'t know the exact fiber reel until materials are procured. The 0.22–0.25 dB/km planning value is the standard "design-before-procurement" assumption across most OSP firms.',
-          },
-          {
-            id: 'T02-L02-Q2',
-            type: 'mc',
-            prompt:
-              'The G.652.D spec maximum at 1550 nm is ≤ 0.30 dB/km, but typical production fiber measures 0.18–0.22 dB/km. Why is the spec maximum so much higher than what you actually get?',
-            choices: [
-              'Standards bodies deliberately inflate numbers to be bribed by fiber manufacturers',
-              'The spec maximum is the worst-case boundary for qualifying fiber — any fiber performing worse than this fails G.652.D. It\'s not a typical value; it\'s a rejection threshold.',
-              'The 0.30 dB/km figure applies only to 1310 nm, not 1550 nm',
-              'Fiber attenuation increases over time, so the spec allows headroom for aging to 0.30 dB/km',
-            ],
-            answerIndex: 1,
-            explanation:
-              'Spec maximums are quality thresholds, not typical performance targets. A fiber measuring 0.30 dB/km barely passes G.652.D. Production fiber is designed well inside the spec to ensure reliable yield. The gap between spec-max and typical is a quality margin, not an error.',
-            citation: 'ITU-T G.652.D (2024 edition).',
-          },
-          {
-            id: 'T02-L02-Q3',
-            type: 'fill-in-blank',
-            prompt:
-              'A spec sheet says "TIA-568 compliant" for connectors but doesn\'t specify a revision or connector grade. The loss value you can plan around is ____.',
-            answer: /ambiguous|unknown|unclear|cannot be determined|not determinable/i,
-            answerDisplay: 'ambiguous / cannot be determined without knowing the revision and connector grade',
-            explanation:
-              'TIA-568 connector loss values have changed across revisions and now distinguish between standard and reference-grade connector categories. "TIA-568 compliant" without a revision letter is too vague for planning — the difference between connector grades can be a factor of two or more in loss budget terms.',
-            citation: 'TIA-568.3-D [confirm current edition] — reference-grade connector loss categories.',
-            fieldNote:
-              'The practical workaround: ask for a tested loss certificate per connector/cord from the vendor. That sidesteps the revision ambiguity entirely.',
-          },
-          {
-            id: 'T02-L02-Q4',
-            type: 'dragdrop',
-            prompt:
-              'Match each attenuation value to the correct category for G.652.D SMF at 1550 nm.',
-            items: [
-              { id: 'v030', label: '≤ 0.30 dB/km' },
-              { id: 'v022', label: '0.22–0.25 dB/km' },
-              { id: 'v018', label: '≈ 0.18–0.22 dB/km' },
-            ],
-            targets: [
-              { id: 'spec', label: 'ITU-T G.652.D specification maximum' },
-              { id: 'plan', label: 'Designer planning value' },
-              { id: 'typical', label: 'Typical vendor datasheet value' },
-            ],
-            correctMap: {
-              spec: 'v030',
-              plan: 'v022',
-              typical: 'v018',
+        fallback={
+        <Quiz
+          title="T02.L02 Check — Attenuation Three Numbers"
+          mode="multiple-choice"
+          questions={[
+            {
+              id: 'T02-L02-Q1',
+              type: 'mc',
+              prompt:
+                'A G.652.D fiber link is being budgeted at 1550 nm. Which attenuation value is most defensible to use when the actual cable datasheet is not yet available?',
+              choices: [
+                '0.18 dB/km — the best vendor "typical" figure seen in recent datasheets',
+                '0.22–0.25 dB/km — slightly above typical datasheet, leaving margin for aging and uncertainty',
+                '0.30 dB/km — the ITU-T G.652.D specification maximum',
+                '0.50 dB/km — a safe round conservative figure for any SMF',
+              ],
+              answerIndex: 1,
+              explanation:
+                '0.22–0.25 dB/km is the standard OSP designer planning value at 1550 nm. Using the 0.18 dB/km typical leaves no margin; using 0.30 dB/km (spec max) wastes headroom. Always confirm with the actual project datasheet once the fiber is specified.',
+              citation:
+                'ITU-T G.652.D (2024) — attenuation coefficient ≤ 0.30 dB/km @ 1550 nm max. Vendor datasheets (Corning SMF-28 Ultra, etc.) typically show 0.18–0.22 dB/km.',
+              fieldNote:
+                'On RUS-program jobs, you often don\'t know the exact fiber reel until materials are procured. The 0.22–0.25 dB/km planning value is the standard "design-before-procurement" assumption across most OSP firms.',
             },
-            explanation:
-              'The spec maximum (≤ 0.30 dB/km) is the worst-case standard threshold. Typical datasheets show 0.18–0.22 dB/km. Designers plan around 0.22–0.25 dB/km — above typical to leave margin, well below spec-max to avoid over-conservatism.',
-            citation: 'ITU-T G.652.D (2024); vendor datasheets; OSP design practice.',
-          },
-        ]}
+            {
+              id: 'T02-L02-Q2',
+              type: 'mc',
+              prompt:
+                'The G.652.D spec maximum at 1550 nm is ≤ 0.30 dB/km, but typical production fiber measures 0.18–0.22 dB/km. Why is the spec maximum so much higher than what you actually get?',
+              choices: [
+                'Standards bodies deliberately inflate numbers to be bribed by fiber manufacturers',
+                'The spec maximum is the worst-case boundary for qualifying fiber — any fiber performing worse than this fails G.652.D. It\'s not a typical value; it\'s a rejection threshold.',
+                'The 0.30 dB/km figure applies only to 1310 nm, not 1550 nm',
+                'Fiber attenuation increases over time, so the spec allows headroom for aging to 0.30 dB/km',
+              ],
+              answerIndex: 1,
+              explanation:
+                'Spec maximums are quality thresholds, not typical performance targets. A fiber measuring 0.30 dB/km barely passes G.652.D. Production fiber is designed well inside the spec to ensure reliable yield. The gap between spec-max and typical is a quality margin, not an error.',
+              citation: 'ITU-T G.652.D (2024 edition).',
+            },
+            {
+              id: 'T02-L02-Q3',
+              type: 'fill-in-blank',
+              prompt:
+                'A spec sheet says "TIA-568 compliant" for connectors but doesn\'t specify a revision or connector grade. The loss value you can plan around is ____.',
+              answer: /ambiguous|unknown|unclear|cannot be determined|not determinable/i,
+              answerDisplay: 'ambiguous / cannot be determined without knowing the revision and connector grade',
+              explanation:
+                'TIA-568 connector loss values have changed across revisions and now distinguish between standard and reference-grade connector categories. "TIA-568 compliant" without a revision letter is too vague for planning — the difference between connector grades can be a factor of two or more in loss budget terms.',
+              citation: 'TIA-568.3-D [confirm current edition] — reference-grade connector loss categories.',
+              fieldNote:
+                'The practical workaround: ask for a tested loss certificate per connector/cord from the vendor. That sidesteps the revision ambiguity entirely.',
+            },
+            {
+              id: 'T02-L02-Q4',
+              type: 'dragdrop',
+              prompt:
+                'Match each attenuation value to the correct category for G.652.D SMF at 1550 nm.',
+              items: [
+                { id: 'v030', label: '≤ 0.30 dB/km' },
+                { id: 'v022', label: '0.22–0.25 dB/km' },
+                { id: 'v018', label: '≈ 0.18–0.22 dB/km' },
+              ],
+              targets: [
+                { id: 'spec', label: 'ITU-T G.652.D specification maximum' },
+                { id: 'plan', label: 'Designer planning value' },
+                { id: 'typical', label: 'Typical vendor datasheet value' },
+              ],
+              correctMap: {
+                spec: 'v030',
+                plan: 'v022',
+                typical: 'v018',
+              },
+              explanation:
+                'The spec maximum (≤ 0.30 dB/km) is the worst-case standard threshold. Typical datasheets show 0.18–0.22 dB/km. Designers plan around 0.22–0.25 dB/km — above typical to leave margin, well below spec-max to avoid over-conservatism.',
+              citation: 'ITU-T G.652.D (2024); vendor datasheets; OSP design practice.',
+            },
+          ]}
+        />
+        }
       />
 
       {/* ── TYING IT TOGETHER ─────────────────────────────────────────── */}

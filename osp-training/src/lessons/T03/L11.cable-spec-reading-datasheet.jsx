@@ -5,6 +5,7 @@ import React from 'react';
 import LessonLayout from '../../components/LessonLayout.jsx';
 import Flashcard from '../../components/Flashcard.jsx';
 import Quiz from '../../components/primitives/Quiz.jsx';
+import GatedAssessment from '../../components/primitives/GatedAssessment.jsx';
 import WorkedExample from '../../components/primitives/WorkedExample.jsx';
 
 export const meta = {
@@ -364,84 +365,91 @@ export default function T03L11_DatasheetReading() {
       />
 
       {/* QUIZ */}
-      <Quiz
+      <GatedAssessment
+        courseId="T03"
+        assessmentId="T03-L11"
         title="L11 Knowledge Check"
-        mode="multiple-choice"
-        questions={[
-          {
-            id: 'T03-L11-Q01',
-            type: 'mc',
-            prompt:
-              'A cable datasheet shows attenuation at 1550 nm as "≤ 0.25 dB/km." You are planning a 40 km feeder link with an aging factor of 0.04 dB/km. What planning attenuation value should you use in your link budget?',
-            choices: [
-              '0.25 dB/km',
-              '0.29 dB/km',
-              '0.21 dB/km',
-              '0.30 dB/km',
-            ],
-            answerIndex: 1,
-            explanation:
-              'Planning attenuation = spec max + aging factor = 0.25 + 0.04 = 0.29 dB/km. You always start from the spec maximum (worst-case), not the typical value. The aging factor accounts for performance degradation over the cable\'s 20–40 year life. (Source: FOA Reference Guide)',
-          },
-          {
-            id: 'T03-L11-Q02',
-            type: 'mc',
-            prompt:
-              'A cable datasheet shows MFD = 9.2 µm ± 0.4 µm at 1310 nm. The 7 CFR 1755.902 requirement is 9.2 µm ± 0.5 µm. Does this datasheet spec satisfy the RUS requirement?',
-            choices: [
-              'No — the tolerance band is tighter than required, so it does not meet the spec',
-              'Yes — the tolerance band is tighter than required, meaning this cable is within the RUS window',
-              'No — the tolerance is too narrow; only ± 0.5 µm exactly is acceptable',
-              'Yes, but only if the cable is also ADSS type',
-            ],
-            answerIndex: 1,
-            explanation:
-              'The 7 CFR 1755.902 requirement is 9.2 µm ± 0.5 µm (8.7–9.7 µm range). A datasheet showing ± 0.4 µm (8.8–9.6 µm range) is a tighter specification — all fibers within that band also fall within the RUS band. A tighter tolerance is better, not a disqualification. (Source: 7 CFR 1755.902)',
-          },
-          {
-            id: 'T03-L11-Q03',
-            type: 'dragdrop',
-            prompt: 'Match each cable datasheet section to what it primarily contains.',
-            items: [
-              { id: 'optical', label: 'Attenuation at 1310/1550 nm, MFD, chromatic dispersion' },
-              { id: 'mechanical', label: 'Tensile rating, crush resistance, minimum bend radius' },
-              { id: 'compliance', label: 'ICEA S-87-640 declaration, 7 CFR 1755.902, NEC fire rating' },
-            ],
-            targets: [
-              { id: 'toptical', label: 'Optical specifications' },
-              { id: 'tmechanical', label: 'Mechanical specifications' },
-              { id: 'tcompliance', label: 'Compliance declarations' },
-            ],
-            correctMap: { toptical: 'optical', tmechanical: 'mechanical', tcompliance: 'compliance' },
-            explanation:
-              'Optical specs govern signal performance (link budget use). Mechanical specs govern installation safety and long-term integrity. Compliance declarations are the contractual hook — they are what you verify against project spec requirements and RUS program rules.',
-          },
-          {
-            id: 'T03-L11-Q04',
-            type: 'mc',
-            prompt:
-              'Why does a cable datasheet list two different minimum bend radius values — one for installation and one for long-term?',
-            choices: [
-              'They are the same value; listing both is just a formatting convention',
-              'The installation bend radius is the tighter (smaller) limit; long-term allows a larger radius because permanent bends are under lower load',
-              'The installation bend radius requires a larger minimum radius (typically 20× cable OD) because dynamic pulling stress is more damaging; the long-term (loaded) radius allows a tighter (smaller) radius permanently — typically 10× cable OD — because sustained gentle bending is less damaging than dynamic stress',
-              'The long-term value applies only to armored cable; unarmored cable uses the installation value for both',
-            ],
-            answerIndex: 2,
-            explanation:
-              'The installation bend radius requires a LARGER minimum radius number (e.g., 20× OD) — you cannot bend tighter than this number during the pull. The long-term (loaded) radius allows a SMALLER minimum radius (e.g., 10× OD) in the permanent installed position. Counter-intuitively, the long-term limit is the smaller number: you can route cable in a tighter permanent bend than you can during the dynamic stress of pulling. Violating the long-term limit causes microbend loss that builds up over years of installation.',
-          },
-          {
-            id: 'T03-L11-Q05',
-            type: 'fill-in-blank',
-            prompt:
-              'Standard OSP cable operating temperature range per ICEA S-87-640 and Corning SMF-28 Ultra datasheets is −__°C to +70°C.',
-            answer: '40',
-            answerDisplay: '−40°C (standard OSP rating per ICEA S-87-640 and Corning SMF-28 Ultra)',
-            explanation:
-              '−40°C to +70°C is the standard OSP cable operating temperature range confirmed across ICEA S-87-640 and major vendor datasheets including Corning SMF-28 Ultra. Storage temperatures may be rated to −60°C for some products, but the operating (in-service) floor is −40°C. (Source: ICEA S-87-640; Corning SMF-28 Ultra datasheet)',
-          },
-        ]}
+        fallback={
+        <Quiz
+          title="L11 Knowledge Check"
+          mode="multiple-choice"
+          questions={[
+            {
+              id: 'T03-L11-Q01',
+              type: 'mc',
+              prompt:
+                'A cable datasheet shows attenuation at 1550 nm as "≤ 0.25 dB/km." You are planning a 40 km feeder link with an aging factor of 0.04 dB/km. What planning attenuation value should you use in your link budget?',
+              choices: [
+                '0.25 dB/km',
+                '0.29 dB/km',
+                '0.21 dB/km',
+                '0.30 dB/km',
+              ],
+              answerIndex: 1,
+              explanation:
+                'Planning attenuation = spec max + aging factor = 0.25 + 0.04 = 0.29 dB/km. You always start from the spec maximum (worst-case), not the typical value. The aging factor accounts for performance degradation over the cable\'s 20–40 year life. (Source: FOA Reference Guide)',
+            },
+            {
+              id: 'T03-L11-Q02',
+              type: 'mc',
+              prompt:
+                'A cable datasheet shows MFD = 9.2 µm ± 0.4 µm at 1310 nm. The 7 CFR 1755.902 requirement is 9.2 µm ± 0.5 µm. Does this datasheet spec satisfy the RUS requirement?',
+              choices: [
+                'No — the tolerance band is tighter than required, so it does not meet the spec',
+                'Yes — the tolerance band is tighter than required, meaning this cable is within the RUS window',
+                'No — the tolerance is too narrow; only ± 0.5 µm exactly is acceptable',
+                'Yes, but only if the cable is also ADSS type',
+              ],
+              answerIndex: 1,
+              explanation:
+                'The 7 CFR 1755.902 requirement is 9.2 µm ± 0.5 µm (8.7–9.7 µm range). A datasheet showing ± 0.4 µm (8.8–9.6 µm range) is a tighter specification — all fibers within that band also fall within the RUS band. A tighter tolerance is better, not a disqualification. (Source: 7 CFR 1755.902)',
+            },
+            {
+              id: 'T03-L11-Q03',
+              type: 'dragdrop',
+              prompt: 'Match each cable datasheet section to what it primarily contains.',
+              items: [
+                { id: 'optical', label: 'Attenuation at 1310/1550 nm, MFD, chromatic dispersion' },
+                { id: 'mechanical', label: 'Tensile rating, crush resistance, minimum bend radius' },
+                { id: 'compliance', label: 'ICEA S-87-640 declaration, 7 CFR 1755.902, NEC fire rating' },
+              ],
+              targets: [
+                { id: 'toptical', label: 'Optical specifications' },
+                { id: 'tmechanical', label: 'Mechanical specifications' },
+                { id: 'tcompliance', label: 'Compliance declarations' },
+              ],
+              correctMap: { toptical: 'optical', tmechanical: 'mechanical', tcompliance: 'compliance' },
+              explanation:
+                'Optical specs govern signal performance (link budget use). Mechanical specs govern installation safety and long-term integrity. Compliance declarations are the contractual hook — they are what you verify against project spec requirements and RUS program rules.',
+            },
+            {
+              id: 'T03-L11-Q04',
+              type: 'mc',
+              prompt:
+                'Why does a cable datasheet list two different minimum bend radius values — one for installation and one for long-term?',
+              choices: [
+                'They are the same value; listing both is just a formatting convention',
+                'The installation bend radius is the tighter (smaller) limit; long-term allows a larger radius because permanent bends are under lower load',
+                'The installation bend radius requires a larger minimum radius (typically 20× cable OD) because dynamic pulling stress is more damaging; the long-term (loaded) radius allows a tighter (smaller) radius permanently — typically 10× cable OD — because sustained gentle bending is less damaging than dynamic stress',
+                'The long-term value applies only to armored cable; unarmored cable uses the installation value for both',
+              ],
+              answerIndex: 2,
+              explanation:
+                'The installation bend radius requires a LARGER minimum radius number (e.g., 20× OD) — you cannot bend tighter than this number during the pull. The long-term (loaded) radius allows a SMALLER minimum radius (e.g., 10× OD) in the permanent installed position. Counter-intuitively, the long-term limit is the smaller number: you can route cable in a tighter permanent bend than you can during the dynamic stress of pulling. Violating the long-term limit causes microbend loss that builds up over years of installation.',
+            },
+            {
+              id: 'T03-L11-Q05',
+              type: 'fill-in-blank',
+              prompt:
+                'Standard OSP cable operating temperature range per ICEA S-87-640 and Corning SMF-28 Ultra datasheets is −__°C to +70°C.',
+              answer: '40',
+              answerDisplay: '−40°C (standard OSP rating per ICEA S-87-640 and Corning SMF-28 Ultra)',
+              explanation:
+                '−40°C to +70°C is the standard OSP cable operating temperature range confirmed across ICEA S-87-640 and major vendor datasheets including Corning SMF-28 Ultra. Storage temperatures may be rated to −60°C for some products, but the operating (in-service) floor is −40°C. (Source: ICEA S-87-640; Corning SMF-28 Ultra datasheet)',
+            },
+          ]}
+        />
+        }
       />
 
     </LessonLayout>

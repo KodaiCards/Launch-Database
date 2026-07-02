@@ -1,0 +1,117 @@
+{
+  "assessmentId": "T04-L05",
+  "kind": "lesson",
+  "courseId": "T04",
+  "lessonId": "T04.L05",
+  "drawCount": 4,
+  "passThreshold": 70,
+  "pool": [
+    {
+      "id": "T04-L05-Q1",
+      "type": "mc",
+      "prompt": "During a route walk, you observe wetland-delineation flagging along 300 ft of Route B. What is the correct field-survey action?",
+      "choices": [
+        "Avoid Route B entirely and recommend Route A without documenting the wetland observation",
+        "Note the wetland markers in the survey documentation, flag 'possible jurisdictional wetland — USACE Section 404 review may be required,' and include the GPS coordinates in the handoff package",
+        "Remove the wetland flagging stakes so the designer doesn't see them",
+        "Mark Route B as 'not constructable' and eliminate it from consideration without further documentation"
+      ],
+      "answerIndex": 1,
+      "explanation": "The field surveyor documents and flags — not makes the jurisdictional determination. Record the location, note the observation, and flag it for regulatory review. The project team then decides whether to pursue a permit for Route B or select Route A.",
+      "citation": "33 CFR Part 320-332 — USACE Section 404 wetland permit framework."
+    },
+    {
+      "id": "T04-L05-Q2",
+      "type": "mc",
+      "prompt": "An experienced project manager makes a fast aerial-vs-underground call in the field based on observation, without completing a formal weighted scoring matrix. What is true about this approach?",
+      "choices": [
+        "It is always wrong and should be replaced with a formal matrix for every decision",
+        "It is a valid field-triage technique that can accelerate early decisions, but the scoring matrix should still be completed afterward for RUS documentation and project defensibility",
+        "It is only acceptable if the PM has more than 20 years of experience",
+        "The matrix and the PM's intuition will always produce the same answer, so either is acceptable alone"
+      ],
+      "answerIndex": 1,
+      "explanation": "Experienced field triage is a real and effective technique. But the matrix serves a documentation purpose field intuition cannot replace: RUS loan packages require documented route alternatives, clients may dispute a selection without a paper trail, and post-construction audits reference design-phase documentation."
+    },
+    {
+      "id": "T04-L05-Q3",
+      "type": "mc",
+      "prompt": "What term describes the degree to which a proposed route can be built with available equipment, within physical terrain constraints, and within the project timeline?",
+      "choices": [
+        "Permittability",
+        "Constructability",
+        "Serviceability",
+        "Feasibility index"
+      ],
+      "answerIndex": 1,
+      "explanation": "Constructability is one of the four primary field-level criteria for comparing route alternatives. Low constructability (rock excavation, no staging area, narrow access) adds cost and schedule risk even when the engineering design is sound."
+    },
+    {
+      "id": "T04-L05-Q4",
+      "type": "mc",
+      "prompt": "Which field observation indicates the HIGHEST permitting risk for a proposed underground route segment?",
+      "choices": [
+        "The route follows a county road shoulder for 4 miles with no crossings",
+        "The route crosses a state highway once, requiring a state DOT encroachment permit",
+        "The route crosses an active navigable river — county records show it's a federally designated waterway",
+        "The route passes through private agricultural land with a known easement already recorded"
+      ],
+      "answerIndex": 2,
+      "explanation": "Crossing a federally designated navigable waterway is the highest-risk scenario listed. If a crossing doesn't qualify for USACE Nationwide Permit 57 (Electric Utility Line and Telecommunications Activities), an individual permit process can take 90 days to 18 months — far longer than state DOT crossings (typically 3-6 months) or routine county ROW work.",
+      "citation": "USACE NWP 57; 33 CFR Part 330.1(b)."
+    },
+    {
+      "id": "T04-L05-Q5",
+      "type": "mc",
+      "prompt": "USACE Nationwide Permit 57 can bundle which two federal authorizations into a single permit for a qualifying telecom waterway crossing?",
+      "choices": [
+        "Section 10 (Rivers and Harbors Act) and Section 404 (Clean Water Act)",
+        "NEPA and the Endangered Species Act",
+        "FCC pole-attachment rules and NESC clearance rules",
+        "RUS loan approval and USDA environmental review"
+      ],
+      "answerIndex": 0,
+      "explanation": "NWP 57 authorizes both Section 10 (Rivers and Harbors Act, navigable waters) and Section 404 (Clean Water Act, dredge/fill) for qualifying telecommunications line crossings in a single permit, rather than requiring two separate authorizations.",
+      "citation": "USACE NWP 57; 33 CFR Part 330.1(b)."
+    },
+    {
+      "id": "T04-L05-Q6",
+      "type": "mc",
+      "prompt": "What are the four primary field-level criteria commonly used to compare route alternatives (aerial vs. underground, Route A vs. Route B)?",
+      "choices": [
+        "Cost, schedule, aesthetics, and customer preference only",
+        "Constructability, permitting risk, cost, and environmental/regulatory exposure (e.g., wetlands, waterway crossings)",
+        "Only cost and distance — all other factors are secondary",
+        "Fiber count, splice count, attenuation, and PMD"
+      ],
+      "answerIndex": 1,
+      "explanation": "Route comparison weighs constructability (terrain/access/equipment), permitting risk (crossing types, jurisdictional review timelines), cost, and environmental/regulatory exposure — the field-level criteria that feed into the formal weighted scoring matrix for RUS documentation."
+    },
+    {
+      "id": "T04-L05-Q7",
+      "type": "mc",
+      "prompt": "Why does documenting a route alternative's constraints matter even for a route the team ultimately does NOT select?",
+      "choices": [
+        "It doesn't matter; only the selected route's documentation is retained",
+        "RUS loan packages and project defensibility require documented alternatives with written justification for why the selected route was chosen over the others — an undocumented rejected alternative leaves the selection decision unsupported if challenged",
+        "Documenting rejected alternatives is prohibited to avoid confusing the design engineer",
+        "Only aerial alternatives need to be documented; underground alternatives are always assumed"
+      ],
+      "answerIndex": 1,
+      "explanation": "A defensible route selection requires showing what alternatives were considered and why they were rejected, not just documenting the winning choice — this is part of what makes the selection auditable and disputable-proof."
+    },
+    {
+      "id": "T04-L05-Q8",
+      "type": "mc",
+      "prompt": "A route segment through private agricultural land already has a recorded easement. How does this affect that segment's relative risk compared to an unresolved ROW segment?",
+      "choices": [
+        "It has no effect — easement status is irrelevant to route risk assessment",
+        "A recorded easement means ROW access is already legally resolved for that segment, lowering its risk profile relative to a segment where ROW negotiation or acquisition still needs to happen",
+        "A recorded easement always increases risk because it restricts route flexibility",
+        "Easement status only matters for aerial routes, never underground"
+      ],
+      "answerIndex": 1,
+      "explanation": "An already-recorded easement removes a major source of schedule/permitting risk (ROW access negotiation) from that segment — a meaningful factor when comparing route alternatives on overall risk and timeline."
+    }
+  ]
+}

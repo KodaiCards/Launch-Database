@@ -5,6 +5,7 @@ import React from 'react';
 import LessonLayout from '../../components/LessonLayout.jsx';
 import SideBySide from '../../components/primitives/SideBySide.jsx';
 import Quiz from '../../components/primitives/Quiz.jsx';
+import GatedAssessment from '../../components/primitives/GatedAssessment.jsx';
 import Flashcard from '../../components/Flashcard.jsx';
 
 export const meta = {
@@ -410,72 +411,79 @@ export default function T03L01_LooseTubeTightBufferRibbon() {
       />
 
       {/* ── PER-LESSON QUIZ ───────────────────────────────────────────────── */}
-      <Quiz
+      <GatedAssessment
+        courseId="T03"
+        assessmentId="T03-L01"
         title="T03.L01 Check — Cable Construction Types"
-        mode="multiple-choice"
-        questions={[
-          {
-            id: 'T03-L01-Q1',
-            type: 'mc',
-            prompt:
-              'A 144-fiber OSP trunk cable uses which primary construction type?',
-            choices: [
-              'Tight-buffer (each fiber individually coated to 900 µm)',
-              'Loose-tube (fibers float in gel or dry-block buffer tubes)',
-              'Figure-8 (fiber + messenger integrated in one jacket)',
-              'Rollable ribbon only (no loose-tube option exists at 144F)',
-            ],
-            answerIndex: 1,
-            explanation:
-              'Loose-tube is the dominant OSP trunk cable construction. Fibers float freely in oversize buffer tubes, protecting them from tensile and thermal stress across the temperature range experienced outdoors. Tight-buffer is primarily for indoor/premises use. (Source: FOA Reference Guide to OSP design)',
-          },
-          {
-            id: 'T03-L01-Q2',
-            type: 'dragdrop',
-            prompt:
-              'Match each cable construction type to its key advantage.',
-            items: [
-              { id: 'lt',  label: 'Loose-tube' },
-              { id: 'tb',  label: 'Tight-buffer' },
-              { id: 'rib', label: 'Ribbon' },
-              { id: 'rr',  label: 'Rollable ribbon' },
-            ],
-            targets: [
-              { id: 'tlt',  label: 'Thermal and tensile protection for outdoor runs' },
-              { id: 'ttb',  label: 'Direct fiber termination without fanout kit' },
-              { id: 'trib', label: 'Mass-fusion splicing of 12 fibers per cycle' },
-              { id: 'trr',  label: 'High fiber density with rollable handling' },
-            ],
-            correctMap: { tlt: 'lt', ttb: 'tb', trib: 'rib', trr: 'rr' },
-            explanation:
-              'Loose-tube: thermal/tensile slack protects OSP fibers. Tight-buffer: 900 µm OD allows direct termination. Ribbon: mass-fusion splicing is 12× faster per fiber on high-count cables. Rollable ribbon: combines density of ribbon with easier tube coiling — per OFS documentation "doubling fiber density" vs. loose fibers.',
-          },
-          {
-            id: 'T03-L01-Q3',
-            type: 'fill-in-blank',
-            prompt:
-              'In a loose-tube cable, the buffer tube\'s inner diameter is ________ than the fiber bundle to allow for slack.',
-            answer: 'larger',
-            answerDisplay: 'larger',
-            explanation:
-              'The intentional oversize of the buffer tube is the defining feature of loose-tube construction. That extra space — whether filled with gel or dry-block SAP tape — lets fibers move freely when the cable contracts in cold weather or bends during installation, preventing tensile stress on the glass. (ICEA S-87-640)',
-          },
-          {
-            id: 'T03-L01-Q4',
-            type: 'mc',
-            prompt:
-              'You are specifying cable for a 288-fiber feeder route where rapid splice closure is the highest priority. Which construction type provides the greatest splicing speed advantage?',
-            choices: [
-              'Loose-tube with gel-filled buffer tubes',
-              'Tight-buffer breakout cable',
-              'Ribbon or rollable ribbon with mass-fusion splicing',
-              'Figure-8 self-supporting cable',
-            ],
-            answerIndex: 2,
-            explanation:
-              'Ribbon and rollable ribbon enable mass-fusion splicing — 12 fibers per splicer cycle. For 288 fibers: 24 ribbon cycles vs. 288 individual cycles with loose fiber. The time savings at a single splice closure can be 6–8 hours. This is the primary reason high-count feeder cables use ribbon construction. (ICEA S-87-640; TIA-598-D)',
-          },
-        ]}
+        fallback={
+        <Quiz
+          title="T03.L01 Check — Cable Construction Types"
+          mode="multiple-choice"
+          questions={[
+            {
+              id: 'T03-L01-Q1',
+              type: 'mc',
+              prompt:
+                'A 144-fiber OSP trunk cable uses which primary construction type?',
+              choices: [
+                'Tight-buffer (each fiber individually coated to 900 µm)',
+                'Loose-tube (fibers float in gel or dry-block buffer tubes)',
+                'Figure-8 (fiber + messenger integrated in one jacket)',
+                'Rollable ribbon only (no loose-tube option exists at 144F)',
+              ],
+              answerIndex: 1,
+              explanation:
+                'Loose-tube is the dominant OSP trunk cable construction. Fibers float freely in oversize buffer tubes, protecting them from tensile and thermal stress across the temperature range experienced outdoors. Tight-buffer is primarily for indoor/premises use. (Source: FOA Reference Guide to OSP design)',
+            },
+            {
+              id: 'T03-L01-Q2',
+              type: 'dragdrop',
+              prompt:
+                'Match each cable construction type to its key advantage.',
+              items: [
+                { id: 'lt',  label: 'Loose-tube' },
+                { id: 'tb',  label: 'Tight-buffer' },
+                { id: 'rib', label: 'Ribbon' },
+                { id: 'rr',  label: 'Rollable ribbon' },
+              ],
+              targets: [
+                { id: 'tlt',  label: 'Thermal and tensile protection for outdoor runs' },
+                { id: 'ttb',  label: 'Direct fiber termination without fanout kit' },
+                { id: 'trib', label: 'Mass-fusion splicing of 12 fibers per cycle' },
+                { id: 'trr',  label: 'High fiber density with rollable handling' },
+              ],
+              correctMap: { tlt: 'lt', ttb: 'tb', trib: 'rib', trr: 'rr' },
+              explanation:
+                'Loose-tube: thermal/tensile slack protects OSP fibers. Tight-buffer: 900 µm OD allows direct termination. Ribbon: mass-fusion splicing is 12× faster per fiber on high-count cables. Rollable ribbon: combines density of ribbon with easier tube coiling — per OFS documentation "doubling fiber density" vs. loose fibers.',
+            },
+            {
+              id: 'T03-L01-Q3',
+              type: 'fill-in-blank',
+              prompt:
+                'In a loose-tube cable, the buffer tube\'s inner diameter is ________ than the fiber bundle to allow for slack.',
+              answer: 'larger',
+              answerDisplay: 'larger',
+              explanation:
+                'The intentional oversize of the buffer tube is the defining feature of loose-tube construction. That extra space — whether filled with gel or dry-block SAP tape — lets fibers move freely when the cable contracts in cold weather or bends during installation, preventing tensile stress on the glass. (ICEA S-87-640)',
+            },
+            {
+              id: 'T03-L01-Q4',
+              type: 'mc',
+              prompt:
+                'You are specifying cable for a 288-fiber feeder route where rapid splice closure is the highest priority. Which construction type provides the greatest splicing speed advantage?',
+              choices: [
+                'Loose-tube with gel-filled buffer tubes',
+                'Tight-buffer breakout cable',
+                'Ribbon or rollable ribbon with mass-fusion splicing',
+                'Figure-8 self-supporting cable',
+              ],
+              answerIndex: 2,
+              explanation:
+                'Ribbon and rollable ribbon enable mass-fusion splicing — 12 fibers per splicer cycle. For 288 fibers: 24 ribbon cycles vs. 288 individual cycles with loose fiber. The time savings at a single splice closure can be 6–8 hours. This is the primary reason high-count feeder cables use ribbon construction. (ICEA S-87-640; TIA-598-D)',
+            },
+          ]}
+        />
+        }
       />
 
     </LessonLayout>

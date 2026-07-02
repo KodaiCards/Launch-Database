@@ -4,6 +4,7 @@
 import React from 'react';
 import LessonLayout from '../../components/LessonLayout.jsx';
 import Quiz from '../../components/primitives/Quiz.jsx';
+import GatedAssessment from '../../components/primitives/GatedAssessment.jsx';
 import Flashcard from '../../components/Flashcard.jsx';
 
 export const meta = {
@@ -447,93 +448,100 @@ export default function T18L08_HazardousMaterialsOSP() {
       />
 
       {/* ── PER-LESSON QUIZ ──────────────────────────────────────────────── */}
-      <Quiz
+      <GatedAssessment
+        courseId="T18"
+        assessmentId="T18-L08"
         title="T18.L08 Check — Hazardous Materials on an OSP Job"
-        mode="multiple-choice"
-        questions={[
-          {
-            id: 'T18-L08-Q1',
-            type: 'mc',
-            prompt:
-              'Which section of the GHS Safety Data Sheet (SDS) specifies what PPE to wear when handling a hazardous chemical?',
-            choices: [
-              'Section 2 — Hazard Identification',
-              'Section 4 — First-Aid Measures',
-              'Section 8 — Exposure Controls / PPE',
-              'Section 11 — Toxicological Information',
-            ],
-            answerIndex: 2,
-            explanation:
-              'Section 8 (Exposure Controls / PPE) lists the engineering controls required (ventilation), the applicable exposure limits (OSHA PEL and ACGIH TLV), and the specific PPE requirements: glove type and material, respirator classification, eye and face protection, and body protection. In a field emergency or pre-task check, Section 8 is the first section to open after Section 4 (first aid).',
-            citation:
-              '29 CFR 1910.1200 (HazCom 2012 — GHS SDS format requirement); 16-section GHS SDS format (ecfr.gov).',
-          },
-          {
-            id: 'T18-L08-Q2',
-            type: 'mc',
-            prompt:
-              'The OSHA Permissible Exposure Limit (PEL) for crystalline silica dust (from concrete cutting) under the 2016 silica rule is:',
-            choices: [
-              '100 µg/m³ TWA (the original 1970s limit)',
-              '50 µg/m³ TWA (the current 2016 rule)',
-              '25 µg/m³ TWA (the ACGIH TLV)',
-              'There is no OSHA PEL for silica — it is only recommended',
-            ],
-            answerIndex: 1,
-            explanation:
-              'The current OSHA PEL for crystalline silica is 50 µg/m³ as an 8-hour TWA, per 29 CFR 1910.1053 (the 2016 revised silica standard). The pre-2016 PEL was 100 µg/m³ — that value appears in older training materials and should not be cited. The ACGIH TLV of 25 µg/m³ is more conservative and is often used as the best-practice target, but it is not legally binding.',
-            citation:
-              '29 CFR 1910.1053 (ecfr.gov) — VERIFIED primary source; 2016 OSHA silica rule.',
-            fieldNote:
-              'Wet-cutting is the primary engineering control for silica. If visible dust is generated during saw-cutting, switch to wet-cutting immediately — visible dust is far above the PEL.',
-          },
-          {
-            id: 'T18-L08-Q3',
-            type: 'mc',
-            prompt:
-              'A technician splices fiber daily without gloves, wiping the filling gel off with a rag and moving on. The gel is not acutely toxic. Is this a health concern?',
-            choices: [
-              'No — if it doesn\'t cause immediate harm, there\'s no real hazard',
-              'No — filling gel is exempt from SDS requirements because it\'s not classified as dangerous',
-              'Yes — chronic daily skin contact with mineral oil-based gel causes cumulative skin damage; nitrile gloves and proper cleaning are required',
-              'Yes — but only if the worker has pre-existing skin conditions',
-            ],
-            answerIndex: 2,
-            explanation:
-              'Filling gel is not acutely toxic, but chronic daily skin contact with mineral oil-based compounds causes cumulative dermatitis and skin damage over time — particularly with absorption through cracked skin. The SDS requires nitrile or latex gloves for routine handling and specifies approved cleaning methods. Using gasoline or acetone to clean gel adds a solvent exposure hazard. The hazard is chronic, not acute — "it doesn\'t burn me" is not the right standard for a chemical you handle every working day.',
-            citation:
-              'Manufacturer SDS for fiber optic filling gel (Corning, OFS, AFL — publicly posted); NIOSH ICSC for mineral oil.',
-          },
-          {
-            id: 'T18-L08-Q4',
-            type: 'fill-in-blank',
-            prompt:
-              'The international standard for classifying and labeling hazardous chemicals, adopted by OSHA under HazCom 2012, which standardized the 16-section SDS format and hazard pictograms, is called the ____.',
-            answer: 'GHS',
-            answerDisplay: 'GHS (Globally Harmonized System)',
-            explanation:
-              'OSHA adopted the Globally Harmonized System (GHS) for chemical classification and labeling under HazCom 2012 (29 CFR 1910.1200), effective June 2015 for most industries. This is why all modern SDS documents in the U.S. use the same 16-section structure and standardized pictograms (flame, skull-and-crossbones, health hazard symbol, etc.) regardless of manufacturer or country of origin.',
-            citation:
-              '29 CFR 1910.1200 (HazCom 2012); GHS adoption in the U.S. (ecfr.gov — VERIFIED primary source).',
-          },
-          {
-            id: 'T18-L08-Q5',
-            type: 'mc',
-            prompt:
-              'A lead-acid battery at a fiber equipment hut spills electrolyte on a crew member\'s arm. The first action (before reviewing the SDS) should be:',
-            choices: [
-              'Apply baking soda neutralizer immediately',
-              'Flush the affected skin with large amounts of water for at least 15–20 minutes, then seek medical attention',
-              'Cover with a clean dry cloth and go to urgent care',
-              'Apply the SDS Section 4 instructions only after arriving at a hospital',
-            ],
-            answerIndex: 1,
-            explanation:
-              'For acid skin exposure, immediate and prolonged water flushing (15–20 minutes minimum) is the universal first-aid measure and takes priority over every other action, including reading the SDS. This is what SDS Section 4 (First-Aid Measures) specifies for sulfuric acid contact. Baking soda neutralization is NOT recommended by most SDS documents — the neutralization reaction generates heat and can worsen burns. Get to an eye wash station or running water first; read Section 4 while the flush is running if possible.',
-            citation:
-              '29 CFR 1910.1000 Table Z-1 (sulfuric acid PEL); OSHA 29 CFR 1910.151(c) (emergency eyewash/shower requirements); SDS Section 4 first-aid guidance for sulfuric acid.',
-          },
-        ]}
+        fallback={
+        <Quiz
+          title="T18.L08 Check — Hazardous Materials on an OSP Job"
+          mode="multiple-choice"
+          questions={[
+            {
+              id: 'T18-L08-Q1',
+              type: 'mc',
+              prompt:
+                'Which section of the GHS Safety Data Sheet (SDS) specifies what PPE to wear when handling a hazardous chemical?',
+              choices: [
+                'Section 2 — Hazard Identification',
+                'Section 4 — First-Aid Measures',
+                'Section 8 — Exposure Controls / PPE',
+                'Section 11 — Toxicological Information',
+              ],
+              answerIndex: 2,
+              explanation:
+                'Section 8 (Exposure Controls / PPE) lists the engineering controls required (ventilation), the applicable exposure limits (OSHA PEL and ACGIH TLV), and the specific PPE requirements: glove type and material, respirator classification, eye and face protection, and body protection. In a field emergency or pre-task check, Section 8 is the first section to open after Section 4 (first aid).',
+              citation:
+                '29 CFR 1910.1200 (HazCom 2012 — GHS SDS format requirement); 16-section GHS SDS format (ecfr.gov).',
+            },
+            {
+              id: 'T18-L08-Q2',
+              type: 'mc',
+              prompt:
+                'The OSHA Permissible Exposure Limit (PEL) for crystalline silica dust (from concrete cutting) under the 2016 silica rule is:',
+              choices: [
+                '100 µg/m³ TWA (the original 1970s limit)',
+                '50 µg/m³ TWA (the current 2016 rule)',
+                '25 µg/m³ TWA (the ACGIH TLV)',
+                'There is no OSHA PEL for silica — it is only recommended',
+              ],
+              answerIndex: 1,
+              explanation:
+                'The current OSHA PEL for crystalline silica is 50 µg/m³ as an 8-hour TWA, per 29 CFR 1910.1053 (the 2016 revised silica standard). The pre-2016 PEL was 100 µg/m³ — that value appears in older training materials and should not be cited. The ACGIH TLV of 25 µg/m³ is more conservative and is often used as the best-practice target, but it is not legally binding.',
+              citation:
+                '29 CFR 1910.1053 (ecfr.gov) — VERIFIED primary source; 2016 OSHA silica rule.',
+              fieldNote:
+                'Wet-cutting is the primary engineering control for silica. If visible dust is generated during saw-cutting, switch to wet-cutting immediately — visible dust is far above the PEL.',
+            },
+            {
+              id: 'T18-L08-Q3',
+              type: 'mc',
+              prompt:
+                'A technician splices fiber daily without gloves, wiping the filling gel off with a rag and moving on. The gel is not acutely toxic. Is this a health concern?',
+              choices: [
+                'No — if it doesn\'t cause immediate harm, there\'s no real hazard',
+                'No — filling gel is exempt from SDS requirements because it\'s not classified as dangerous',
+                'Yes — chronic daily skin contact with mineral oil-based gel causes cumulative skin damage; nitrile gloves and proper cleaning are required',
+                'Yes — but only if the worker has pre-existing skin conditions',
+              ],
+              answerIndex: 2,
+              explanation:
+                'Filling gel is not acutely toxic, but chronic daily skin contact with mineral oil-based compounds causes cumulative dermatitis and skin damage over time — particularly with absorption through cracked skin. The SDS requires nitrile or latex gloves for routine handling and specifies approved cleaning methods. Using gasoline or acetone to clean gel adds a solvent exposure hazard. The hazard is chronic, not acute — "it doesn\'t burn me" is not the right standard for a chemical you handle every working day.',
+              citation:
+                'Manufacturer SDS for fiber optic filling gel (Corning, OFS, AFL — publicly posted); NIOSH ICSC for mineral oil.',
+            },
+            {
+              id: 'T18-L08-Q4',
+              type: 'fill-in-blank',
+              prompt:
+                'The international standard for classifying and labeling hazardous chemicals, adopted by OSHA under HazCom 2012, which standardized the 16-section SDS format and hazard pictograms, is called the ____.',
+              answer: 'GHS',
+              answerDisplay: 'GHS (Globally Harmonized System)',
+              explanation:
+                'OSHA adopted the Globally Harmonized System (GHS) for chemical classification and labeling under HazCom 2012 (29 CFR 1910.1200), effective June 2015 for most industries. This is why all modern SDS documents in the U.S. use the same 16-section structure and standardized pictograms (flame, skull-and-crossbones, health hazard symbol, etc.) regardless of manufacturer or country of origin.',
+              citation:
+                '29 CFR 1910.1200 (HazCom 2012); GHS adoption in the U.S. (ecfr.gov — VERIFIED primary source).',
+            },
+            {
+              id: 'T18-L08-Q5',
+              type: 'mc',
+              prompt:
+                'A lead-acid battery at a fiber equipment hut spills electrolyte on a crew member\'s arm. The first action (before reviewing the SDS) should be:',
+              choices: [
+                'Apply baking soda neutralizer immediately',
+                'Flush the affected skin with large amounts of water for at least 15–20 minutes, then seek medical attention',
+                'Cover with a clean dry cloth and go to urgent care',
+                'Apply the SDS Section 4 instructions only after arriving at a hospital',
+              ],
+              answerIndex: 1,
+              explanation:
+                'For acid skin exposure, immediate and prolonged water flushing (15–20 minutes minimum) is the universal first-aid measure and takes priority over every other action, including reading the SDS. This is what SDS Section 4 (First-Aid Measures) specifies for sulfuric acid contact. Baking soda neutralization is NOT recommended by most SDS documents — the neutralization reaction generates heat and can worsen burns. Get to an eye wash station or running water first; read Section 4 while the flush is running if possible.',
+              citation:
+                '29 CFR 1910.1000 Table Z-1 (sulfuric acid PEL); OSHA 29 CFR 1910.151(c) (emergency eyewash/shower requirements); SDS Section 4 first-aid guidance for sulfuric acid.',
+            },
+          ]}
+        />
+        }
       />
 
     </LessonLayout>

@@ -1,0 +1,117 @@
+{
+  "assessmentId": "T03-L09",
+  "kind": "lesson",
+  "courseId": "T03",
+  "lessonId": "T03.L09",
+  "drawCount": 4,
+  "passThreshold": 70,
+  "pool": [
+    {
+      "id": "T03-L09-Q1",
+      "type": "mc",
+      "prompt": "A project site is in the NESC 'Light' loading district (zero radial ice by definition). What is the ice load (w_ice) contribution for this cable?",
+      "choices": [
+        "0 lb/ft — Light district has no radial ice loading by definition",
+        "A value proportional to cable diameter, calculated the same way as Heavy district",
+        "0.5 lb/ft, a flat default regardless of district",
+        "Ice load cannot be determined without knowing the exact cable OD"
+      ],
+      "answerIndex": 0,
+      "explanation": "The Light loading district is defined with zero radial ice thickness (t=0 in). Since the ice-load formula is proportional to ice thickness, zero thickness means zero ice load — only wind load and cable self-weight apply in this district.",
+      "citation": "NESC C2-2023 loading district framework."
+    },
+    {
+      "id": "T03-L09-Q2",
+      "type": "mc",
+      "prompt": "An ADSS cable in the Heavy loading district has OD = 0.71 in and radial ice thickness t = 0.50 in. Using the NESC ice-load formula w_ice = K x t x (D+t) with K~1.244 (lb/ft, inches), what is the approximate ice load?",
+      "choices": [
+        "0.750 lb/ft",
+        "0.377 lb/ft",
+        "~0.752 lb/ft (1.244 x 0.50 x 1.21)",
+        "0.068 lb/ft"
+      ],
+      "answerIndex": 2,
+      "explanation": "w_ice = 1.244 x t x (D+t) = 1.244 x 0.50 x (0.71+0.50) = 1.244 x 0.50 x 1.21 ~= 0.752 lb/ft. Note: the exact K constant derives from an assumed ice density (commonly cited as 56-57 lb/ft^3 depending on NESC edition), so always confirm the constant against the specific adopted NESC edition before a final design calculation.",
+      "citation": "NESC ice-loading formula (K constant UNVERIFIED-EXACT across NESC editions this session — verify against adopted edition)."
+    },
+    {
+      "id": "T03-L09-Q3",
+      "type": "mc",
+      "prompt": "NESC Rule 250C (Extreme Wind loading) must be considered whenever any part of a pole or its conductors is how many feet or more above the ground?",
+      "choices": [
+        "40 feet",
+        "50 feet",
+        "60 feet",
+        "80 feet"
+      ],
+      "answerIndex": 2,
+      "explanation": "NESC Rule 250C requires Extreme Wind loading consideration whenever any part of a pole or the conductors attached to it is 60 feet or more above the ground. This case uses regional wind speed maps (rather than the standard three-district table) to determine the applicable wind load.",
+      "citation": "NESC C2-2023 Rule 250C."
+    },
+    {
+      "id": "T03-L09-Q4",
+      "type": "mc",
+      "prompt": "In the parabolic sag formula Sag = (w x L^2) / (8 x T), what happens to sag if the span length L is doubled while all other values stay the same?",
+      "choices": [
+        "Sag doubles",
+        "Sag increases by 50%",
+        "Sag quadruples (increases by 4x)",
+        "Sag is unchanged — sag is independent of span"
+      ],
+      "answerIndex": 2,
+      "explanation": "Sag is proportional to L^2. Doubling L increases L^2 by 4x, so sag quadruples — this quadratic relationship is why long spans are challenging: doubling span length from 150 ft to 300 ft quadruples the sag under the same loading and tension, often requiring much higher cable tension to stay within NESC clearance."
+    },
+    {
+      "id": "T03-L09-Q5",
+      "type": "mc",
+      "prompt": "Why does NESC's Extreme Wind rule use regional wind speed MAPS rather than the flat three-district loading table used for combined ice/wind loading?",
+      "choices": [
+        "The two systems are actually identical; maps and tables produce the same result everywhere",
+        "Wind speed varies significantly by specific geography (coastal exposure, terrain, elevation) in ways the coarse three-district (Light/Medium/Heavy) table doesn't capture — a dedicated regional map (based on ASCE 7 data) gives more location-specific accuracy for the extreme-wind case, which applies to taller/more exposed structures",
+        "Regional maps are only used when ice loading is exactly zero",
+        "The three-district table was discontinued and replaced entirely by wind maps in the 2023 edition"
+      ],
+      "answerIndex": 1,
+      "explanation": "The standard three-district table (Light/Medium/Heavy) is a simplified, coarse geographic grouping for combined ice/wind design. The Extreme Wind rule (Rule 250C), which specifically targets taller/more wind-exposed structures, uses regional wind speed maps for more geographically precise wind data, since wind exposure varies more granularly than the district table captures."
+    },
+    {
+      "id": "T03-L09-Q6",
+      "type": "mc",
+      "prompt": "A 150 ft span and a 300 ft span carry identical cable at identical tension. Roughly how does the 300 ft span's sag compare to the 150 ft span's sag?",
+      "choices": [
+        "Identical sag on both spans",
+        "Twice the sag on the 300 ft span",
+        "Four times the sag on the 300 ft span",
+        "Half the sag on the 300 ft span"
+      ],
+      "answerIndex": 2,
+      "explanation": "Since sag scales with span length squared (L^2), doubling the span (150 to 300 ft) quadruples the sag at the same tension and loading — a direct consequence of the parabolic sag formula."
+    },
+    {
+      "id": "T03-L09-Q7",
+      "type": "mc",
+      "prompt": "Why must a designer verify ice-loading and wind-loading district assignments specifically for the project's geographic location rather than assuming a default?",
+      "choices": [
+        "District assignment has no real effect on the final design",
+        "Loading district (Light/Medium/Heavy) directly determines the ice thickness and wind pressure values used in structural calculations — using the wrong district produces an incorrectly sized/tensioned cable design that could violate NESC clearance or fail under actual local conditions",
+        "All of the continental US is assigned to the same loading district",
+        "District assignment only matters for copper cable, not fiber"
+      ],
+      "answerIndex": 1,
+      "explanation": "Loading district assignment directly drives the ice thickness (t) and wind pressure inputs to the sag/tension/clearance calculations. An incorrect district assignment produces a design that may be under-built for actual local ice/wind conditions (safety and clearance risk) or needlessly over-built (unnecessary cost)."
+    },
+    {
+      "id": "T03-L09-Q8",
+      "type": "mc",
+      "prompt": "What two load types combine (along with the cable's own weight) to determine the total transverse load on an aerial ADSS cable under NESC design conditions?",
+      "choices": [
+        "Wind load and ice load",
+        "Only wind load — ice load is never a factor for fiber cable",
+        "Only ice load — wind load only applies to power conductors",
+        "Chromatic dispersion and PMD, translated into a mechanical load equivalent"
+      ],
+      "answerIndex": 0,
+      "explanation": "Wind load and ice load (where the loading district specifies nonzero ice) combine with the cable's self-weight to determine the total transverse load used in sag/tension/clearance calculations — both are real mechanical loads that apply to fiber cable exactly as they do to other aerial conductors."
+    }
+  ]
+}

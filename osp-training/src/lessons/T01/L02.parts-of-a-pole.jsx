@@ -6,6 +6,7 @@ import React from 'react';
 import LessonLayout from '../../components/LessonLayout.jsx';
 import Flashcard from '../../components/Flashcard.jsx';
 import Quiz from '../../components/primitives/Quiz.jsx';
+import GatedAssessment from '../../components/primitives/GatedAssessment.jsx';
 
 export const meta = {
   id: 'T01.L02',
@@ -39,7 +40,7 @@ export const meta = {
     'Identify the three vertical zones of a shared utility pole (supply, climbing, communication) and explain the safety purpose of each',
     'Explain how sag affects ground clearance and why clearance is measured at midspan rather than at the attachment point',
     'Read a pole tag to determine pole class, height, and ownership',
-    'Describe joint-use pole attachment rights and the role of FCC Part 1.1411 in governing attachment fees',
+    'Describe joint-use pole attachment rights and the role of FCC Part 1.1406 in governing attachment fees',
   ],
 };
 
@@ -242,7 +243,8 @@ export default function T01L02_PartsOfAPole() {
         <p className="mt-2 text-slate-300/90 text-sm">
           In most of the US, the electric utility owns the pole. Telecom companies (including
           fiber ISPs) are <em>attachers</em> — they pay annual attachment fees (set by FCC
-          rules under 47 CFR 1.1411) for the right to put their cable on someone else's pole.
+          rules under 47 CFR 1.1406, with §§1.1409-1.1410 apportioning specific cost inputs
+          into that rate formula) for the right to put their cable on someone else's pole.
           Some joint-use arrangements involve multiple owners. Before any fiber attachment,
           you need a pole attachment agreement and a make-ready permit from the pole owner.
           (Make-ready is covered in detail in T08.)
@@ -298,7 +300,7 @@ export default function T01L02_PartsOfAPole() {
           { id: 'T01-L02-FC-supply-space', front: 'Supply space', back: 'The top zone on a shared utility pole where high-voltage primary power lines (4–35 kV) attach. Only licensed utility electricians work in this zone. NESC requires minimum separation from the top of the communication space.' },
           { id: 'T01-L02-FC-neutral', front: 'Neutral', back: 'The return conductor for the electric distribution system, typically the lowest supply-space conductor. In RUS areas this is often the MGN (Multi-Grounded Neutral). Fiber messenger wires must maintain NESC clearance from the neutral.' },
           { id: 'T01-L02-FC-pole-class', front: 'Pole class', back: 'NESC / ANSI O5.1 classification of pole strength based on circumference 6 ft from the butt. Class 1 is strongest; Class 10 is weakest. Classes H1–H6 are for extra-heavy loads.' },
-          { id: 'T01-L02-FC-joint-use', front: 'Joint-use', back: 'A pole or conduit system shared by two or more companies — typically the electric utility (owner) and one or more telecom attachers. Most US utility poles are joint-use. Fiber companies pay annual attachment fees under FCC Part 1.1411 to attach to joint-use poles.' },
+          { id: 'T01-L02-FC-joint-use', front: 'Joint-use', back: 'A pole or conduit system shared by two or more companies — typically the electric utility (owner) and one or more telecom attachers. Most US utility poles are joint-use. Fiber companies pay annual attachment fees under FCC Part 1.1406 to attach to joint-use poles.' },
           { id: 'T01-L02-FC-clearance', front: 'Clearance', back: 'The vertical distance between two things on or below a pole — between a cable and the road beneath it (ground clearance), or between a fiber attachment and the neutral above it (vertical separation). NESC specifies minimum clearances for every combination. Always measured at midspan (the sag point), not at the attachment point.' },
           { id: 'T01-L02-FC-conduit', front: 'Conduit', back: 'A rigid or semi-rigid pipe that protects underground cables. Common types: Schedule 40 PVC (buried runs), HDPE (exposed risers, HDD bores), innerduct (sub-conduit inside a larger bore). Allows cable replacement without re-boring or re-trenching.' },
         ]}
@@ -331,72 +333,79 @@ export default function T01L02_PartsOfAPole() {
       </div>
 
       {/* ── PRACTICE QUIZ ───────────────────────────────────────────────── */}
-      <Quiz
+      <GatedAssessment
+        courseId="T01"
+        assessmentId="T01-L02"
         title="T01.L02 Check — Parts of a Pole"
-        mode="multiple-choice"
-        questions={[
-          {
-            id: 'T01-L02-Q1',
-            type: 'mc',
-            prompt:
-              'On a shared utility pole, where does fiber optic cable typically attach relative to electric power lines?',
-            choices: [
-              'At the very top — fiber gets priority because it is more sensitive to interference',
-              'In the supply space alongside primary power conductors',
-              'In the communication space, below the climbing space, below primary power and the neutral',
-              'Directly below the primary conductors with no required separation',
-            ],
-            answerIndex: 2,
-            explanation:
-              'Fiber is a telecom cable and attaches in the communication space, which is the lowest zone on the pole. Supply (power) lines are at the top. A required climbing space separates the two zones. NESC clearance rules specify the minimum separation between the communication space and the supply space.',
-            citation: 'NESC C2-2023 §§23, 235.',
-          },
-          {
-            id: 'T01-L02-Q2',
-            type: 'mc',
-            prompt:
-              'A cable is attached to a pole at 24 feet above the ground. At midspan, the cable sags to 20 feet above the ground. The midspan clearance above a public road at that location must be at least approximately 15.5 feet for telecom under traffic lanes per NESC Rule 232 / Table 232-1 (values may update each 5-year NESC revision; verify with the current adopted edition before design lock). Does this installation pass?',
-            choices: [
-              'No — the attachment height of 24 feet is below the minimum 25-foot rule',
-              'Yes — 20 feet of midspan clearance exceeds the 15.5-foot minimum',
-              'No — the 4-foot sag exceeds the maximum allowable sag of 3 feet',
-              'Yes — but only if the cable is lashed to a steel messenger',
-            ],
-            answerIndex: 1,
-            explanation:
-              'Ground clearance is measured at midspan — the lowest point — not at the attachment point. The 20-foot midspan clearance exceeds the NESC minimum of approximately 15.5 feet for telecom cable over a traffic lane (NESC Rule 232 / Table 232-1; verify exact value against the current adopted NESC edition before design lock), so this installation passes on clearance. (Other factors like span length and loading district also affect the full design calculation.)',
-            citation: 'NESC C2-2023 Rule 232 / Table 232-1 (clearances over roads; values subject to revision each 5-year NESC cycle).',
-            fieldNote:
-              'Crews often say "cable is at 22 feet" meaning attachment height. Always ask: "Is that attachment height or midspan clearance?" They are different numbers. A 4-foot sag on a 22-foot attachment = 18 feet midspan — different answer for your compliance check.',
-          },
-          {
-            id: 'T01-L02-Q3',
-            type: 'fill-in-blank',
-            prompt:
-              'The required open gap between the supply space and communication space on a shared utility pole, which allows linemen to safely climb without their body bridging the two zones, is called the ____ space.',
-            answer: 'climbing',
-            answerDisplay: 'climbing',
-            explanation:
-              'The climbing space is a mandatory clearance zone — nothing is attached in it. NESC specifies its minimum dimensions. Violating climbing space requirements is a serious compliance failure that endangers every person who climbs that pole.',
-            citation: 'NESC C2-2023 §§23, 236.',
-          },
-          {
-            id: 'T01-L02-Q4',
-            type: 'mc',
-            prompt:
-              'Who typically OWNS the utility poles that fiber companies attach to in most US markets?',
-            choices: [
-              'The fiber company, since they installed the fiber',
-              'The local government (city or county) as public infrastructure',
-              'The electric utility — fiber companies pay annual attachment fees for the right to use the pole',
-              'BICSI, as the standard-setting body for OSP infrastructure',
-            ],
-            answerIndex: 2,
-            explanation:
-              'In most US markets, the electric utility owns the poles. Fiber companies are "attachers" who pay annual attachment fees under FCC Part 1.1411 (the pole attachment rules). Before installing fiber, the fiber company must obtain a pole attachment agreement and make-ready permit from the pole owner. Make-ready work (moving or adjusting existing attachments to make room for new fiber) is often the most time-consuming and expensive part of an aerial fiber project.',
-            citation: '47 CFR 1.1411; NESC C2-2023 §23.',
-          },
-        ]}
+        fallback={
+        <Quiz
+          title="T01.L02 Check — Parts of a Pole"
+          mode="multiple-choice"
+          questions={[
+            {
+              id: 'T01-L02-Q1',
+              type: 'mc',
+              prompt:
+                'On a shared utility pole, where does fiber optic cable typically attach relative to electric power lines?',
+              choices: [
+                'At the very top — fiber gets priority because it is more sensitive to interference',
+                'In the supply space alongside primary power conductors',
+                'In the communication space, below the climbing space, below primary power and the neutral',
+                'Directly below the primary conductors with no required separation',
+              ],
+              answerIndex: 2,
+              explanation:
+                'Fiber is a telecom cable and attaches in the communication space, which is the lowest zone on the pole. Supply (power) lines are at the top. A required climbing space separates the two zones. NESC clearance rules specify the minimum separation between the communication space and the supply space.',
+              citation: 'NESC C2-2023 §§23, 235.',
+            },
+            {
+              id: 'T01-L02-Q2',
+              type: 'mc',
+              prompt:
+                'A cable is attached to a pole at 24 feet above the ground. At midspan, the cable sags to 20 feet above the ground. The midspan clearance above a public road at that location must be at least approximately 15.5 feet for telecom under traffic lanes per NESC Rule 232 / Table 232-1 (values may update each 5-year NESC revision; verify with the current adopted edition before design lock). Does this installation pass?',
+              choices: [
+                'No — the attachment height of 24 feet is below the minimum 25-foot rule',
+                'Yes — 20 feet of midspan clearance exceeds the 15.5-foot minimum',
+                'No — the 4-foot sag exceeds the maximum allowable sag of 3 feet',
+                'Yes — but only if the cable is lashed to a steel messenger',
+              ],
+              answerIndex: 1,
+              explanation:
+                'Ground clearance is measured at midspan — the lowest point — not at the attachment point. The 20-foot midspan clearance exceeds the NESC minimum of approximately 15.5 feet for telecom cable over a traffic lane (NESC Rule 232 / Table 232-1; verify exact value against the current adopted NESC edition before design lock), so this installation passes on clearance. (Other factors like span length and loading district also affect the full design calculation.)',
+              citation: 'NESC C2-2023 Rule 232 / Table 232-1 (clearances over roads; values subject to revision each 5-year NESC cycle).',
+              fieldNote:
+                'Crews often say "cable is at 22 feet" meaning attachment height. Always ask: "Is that attachment height or midspan clearance?" They are different numbers. A 4-foot sag on a 22-foot attachment = 18 feet midspan — different answer for your compliance check.',
+            },
+            {
+              id: 'T01-L02-Q3',
+              type: 'fill-in-blank',
+              prompt:
+                'The required open gap between the supply space and communication space on a shared utility pole, which allows linemen to safely climb without their body bridging the two zones, is called the ____ space.',
+              answer: 'climbing',
+              answerDisplay: 'climbing',
+              explanation:
+                'The climbing space is a mandatory clearance zone — nothing is attached in it. NESC specifies its minimum dimensions. Violating climbing space requirements is a serious compliance failure that endangers every person who climbs that pole.',
+              citation: 'NESC C2-2023 §§23, 236.',
+            },
+            {
+              id: 'T01-L02-Q4',
+              type: 'mc',
+              prompt:
+                'Who typically OWNS the utility poles that fiber companies attach to in most US markets?',
+              choices: [
+                'The fiber company, since they installed the fiber',
+                'The local government (city or county) as public infrastructure',
+                'The electric utility — fiber companies pay annual attachment fees for the right to use the pole',
+                'BICSI, as the standard-setting body for OSP infrastructure',
+              ],
+              answerIndex: 2,
+              explanation:
+                'In most US markets, the electric utility owns the poles. Fiber companies are "attachers" who pay annual attachment fees under FCC Part 1.1406 (the pole attachment rate formula, with §§1.1409-1.1410 apportioning specific cost inputs). Before installing fiber, the fiber company must obtain a pole attachment agreement and make-ready permit from the pole owner. Make-ready work (moving or adjusting existing attachments to make room for new fiber) is often the most time-consuming and expensive part of an aerial fiber project.',
+              citation: '47 CFR 1.1406; NESC C2-2023 §23.',
+            },
+          ]}
+        />
+        }
       />
 
       {/* ── TYING IT TOGETHER ─────────────────────────────────────────── */}

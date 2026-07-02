@@ -1,0 +1,119 @@
+{
+  "assessmentId": "T09-L03",
+  "kind": "lesson",
+  "courseId": "T09",
+  "lessonId": "T09.L03",
+  "drawCount": 4,
+  "passThreshold": 70,
+  "pool": [
+    {
+      "id": "T09-L03-Q1",
+      "type": "mc",
+      "prompt": "A fiber route initiation package is submitted to the SHPO on Monday. The SHPO returns it on Friday citing a missing field photo log. When does the 30-day Section 106 review clock start?",
+      "choices": [
+        "On Monday — when the package was originally submitted",
+        "On the date a complete resubmission (including the missing photo log) is received by the SHPO — an incomplete submission does not start the clock",
+        "On Friday — when the SHPO responded",
+        "The clock never resets regardless of completeness"
+      ],
+      "answerIndex": 1,
+      "explanation": "The Section 106 review clock starts when the SHPO receives a complete submission with adequate documentation to make a determination. An incomplete package (missing required elements like a field photo log) does not start the clock — it restarts only once the missing information is provided.",
+      "citation": "36 CFR 800.4(b)(2); 54 USC 306108."
+    },
+    {
+      "id": "T09-L03-Q2",
+      "type": "mc",
+      "prompt": "The SHPO issues an adverse-effect finding for a new aerial fiber route that will be visible in the viewshed of a National Register-listed historic farmstead. What are the available resolution options?",
+      "choices": [
+        "The project must stop entirely — an adverse-effect finding automatically ends the federal undertaking",
+        "The agency and consulting parties resolve the adverse effect through further consultation — options can include design modification (e.g., alternate route, undergrounding a segment, pole placement changes) or a Memorandum of Agreement documenting mitigation measures — the project is not automatically terminated",
+        "The applicant can simply pay a fee to the SHPO to waive the finding",
+        "Only the federal agency (not the SHPO or applicant) can propose resolution options"
+      ],
+      "answerIndex": 1,
+      "explanation": "An adverse-effect finding triggers further consultation to resolve the effect, not automatic project termination. Resolution can include project design changes to avoid or minimize the effect, or a Memorandum of Agreement (MOA) among consulting parties documenting agreed mitigation — the process is collaborative among the agency, SHPO/THPO, and other consulting parties.",
+      "citation": "36 CFR 800.5-800.6; 54 USC 306108."
+    },
+    {
+      "id": "T09-L03-Q3",
+      "type": "mc",
+      "prompt": "For a BEAD-funded aerial fiber route, the area of potential effects (APE) would typically include which of the following?",
+      "choices": [
+        "Only the land directly beneath the poles where construction crews will physically work",
+        "The geographic area within which the undertaking may directly or indirectly cause alterations to historic properties — for an aerial route this can include the viewshed around visually-sensitive historic properties, not just the physical construction footprint",
+        "Only properties formally listed on the National Register, regardless of distance from construction",
+        "A fixed 500-foot buffer applied identically to every project type"
+      ],
+      "answerIndex": 1,
+      "explanation": "The APE is defined functionally, not just as the physical construction footprint — it's the geographic area within which the undertaking may directly OR indirectly affect historic properties. For an aerial fiber route near a visually-sensitive historic property, the APE can extend to the relevant viewshed, since a new aerial line could constitute a visual/setting effect even without any ground disturbance at the historic property itself.",
+      "citation": "36 CFR 800.16(d) (APE definition); 54 USC 306108."
+    },
+    {
+      "id": "T09-L03-Q4",
+      "type": "mc",
+      "prompt": "In the Section 106 process, who can be identified as a consulting party beyond the SHPO and the lead federal agency?",
+      "choices": [
+        "Only the SHPO and the federal agency are ever consulting parties — no one else",
+        "Local governments with jurisdiction over the affected area, the applicant for federal assistance/permit/approval, Indian tribes and Native Hawaiian organizations with interests in the area, and other individuals/organizations with a demonstrated interest in the undertaking's effects on historic properties",
+        "Only the property owner of the specific historic property in question",
+        "Only members of Congress representing the project's district"
+      ],
+      "answerIndex": 1,
+      "explanation": "Section 106 consulting parties extend well beyond the SHPO and federal agency: a local government with jurisdiction, the federal-assistance/permit applicant, tribes/NHOs with interests in the APE, and other parties with a demonstrated interest in the undertaking's historic-property effects can all be identified as consulting parties.",
+      "citation": "36 CFR 800.2(c) (consulting parties); 54 USC 306108."
+    },
+    {
+      "id": "T09-L03-Q5",
+      "type": "mc",
+      "prompt": "Why does an incomplete Section 106 submission (e.g., a missing field photo log) create real schedule risk, rather than being a minor paperwork inconvenience?",
+      "choices": [
+        "It doesn't create schedule risk — the SHPO always processes incomplete submissions on the original schedule",
+        "Because the 30-day review clock does not start until the SHPO has a complete submission — an incomplete first submission silently adds the full round-trip time (SHPO review, rejection notice, resubmission, and re-review) to the project schedule, which is avoidable with a complete-on-first-submission package",
+        "Because incomplete submissions are automatically escalated to a full EIS",
+        "Because the SHPO charges an additional fee for each resubmission"
+      ],
+      "answerIndex": 1,
+      "explanation": "Since the review clock only starts on a COMPLETE submission, an incomplete first package doesn't just delay the SHPO's initial response — it adds the entire round-trip (identify the gap, notify, resubmit, restart the clock) to the project timeline, which is why submitting complete documentation the first time is a genuine schedule-risk mitigation, not just administrative tidiness."
+    },
+    {
+      "id": "T09-L03-Q6",
+      "type": "mc",
+      "prompt": "A project team wants to define the APE for an aerial fiber route as narrowly as possible — just the physical pole-line corridor — to minimize the number of historic properties requiring evaluation. Is this a defensible approach under 36 CFR 800.16(d)?",
+      "choices": [
+        "Yes — the APE is always limited to the physical construction footprint by regulatory definition",
+        "No — because the APE definition is functional (based on where the undertaking may directly OR indirectly affect historic properties, including visual/setting effects), artificially narrowing it to only the physical footprint risks omitting properties with a genuine viewshed or setting effect, which can surface as a deficiency later in review rather than resolving the issue",
+        "Yes, as long as the SHPO doesn't object during the initial 30-day window",
+        "No — the APE must always be defined as the entire county regardless of project scope"
+      ],
+      "answerIndex": 1,
+      "explanation": "Because the APE definition turns on where effects (direct or indirect, including visual/setting effects) may occur — not simply on where construction physically happens — artificially narrowing the APE to just the pole-line footprint risks omitting a historic property with a genuine viewshed effect. That omission doesn't make the effect disappear; it just risks surfacing as a deficiency or a later adverse-effect dispute rather than being addressed during the initial identification phase."
+    },
+    {
+      "id": "T09-L03-Q7",
+      "type": "mc",
+      "prompt": "A fiber project's Section 106 package lists only the SHPO and the federal lead agency as consulting parties, despite the route running through a city with a documented local historic-preservation commission and near land with tribal cultural significance. Is this consulting-party list complete?",
+      "choices": [
+        "Yes — the SHPO and lead agency are the only parties Section 106 requires",
+        "No — a local government with jurisdiction over the affected area and a tribe/NHO with a demonstrated interest in the APE are both entitled to participate as consulting parties, and omitting them risks an incomplete Section 106 record",
+        "Yes, because tribes and local governments can only participate if they pay a formal application fee to join",
+        "No — but only because federal law requires a minimum of five consulting parties on every project"
+      ],
+      "answerIndex": 1,
+      "explanation": "Section 106's consulting-party provisions extend beyond the SHPO and federal agency to include a local government with jurisdiction and tribes/NHOs with a demonstrated interest in the APE — omitting parties who are entitled to participate risks both an incomplete administrative record and a later procedural challenge to the review.",
+      "citation": "36 CFR 800.2(c); 54 USC 306108."
+    },
+    {
+      "id": "T09-L03-Q8",
+      "type": "mc",
+      "prompt": "What is the practical relationship between a project's APE and the number of historic properties that must be evaluated in the Section 106 process?",
+      "choices": [
+        "There is no relationship — the number of properties evaluated is fixed regardless of APE size",
+        "A larger, more accurately-scoped APE (including relevant viewshed/setting areas) means more historic properties fall within the review, which increases the identification workload but also reduces the risk of missing a property with a genuine effect that later surfaces as a compliance problem",
+        "A larger APE always eliminates the need for a photo log",
+        "The APE only affects which agency has jurisdiction, never which properties are evaluated"
+      ],
+      "answerIndex": 1,
+      "explanation": "The APE directly drives the scope of the historic-property identification effort — the tradeoff is between the upfront workload of evaluating more properties (correctly scoped APE) versus the downstream compliance risk of an artificially narrow APE that misses a property with a real effect, which is the core reason APE-scoping is treated as a consequential early decision rather than a formality."
+    }
+  ]
+}

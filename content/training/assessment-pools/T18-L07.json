@@ -1,0 +1,119 @@
+{
+  "assessmentId": "T18-L07",
+  "kind": "lesson",
+  "courseId": "T18",
+  "lessonId": "T18.L07",
+  "drawCount": 4,
+  "passThreshold": 70,
+  "pool": [
+    {
+      "id": "T18-L07-Q1",
+      "type": "mc",
+      "prompt": "An OSP worker who is NOT trained/qualified under 29 CFR 1910.269 needs to splice 18 inches from an energized 14.4 kV distribution conductor. What should they do?",
+      "choices": [
+        "Proceed quickly — 18 inches is close but manageable with a Class E hard hat",
+        "Put on Class 2 rubber insulating gloves and proceed",
+        "Stop work, notify the supervisor, and request the utility de-energize the conductor or provide a qualified 1910.269 observer",
+        "Ask the closest crew member to watch from below in case of a shock"
+      ],
+      "answerIndex": 2,
+      "explanation": "Non-1910.269-qualified workers must stay outside the Minimum Approach Distance (MAD). At 14.4 kV the MAD is approximately 2 feet — 18 inches is inside that boundary. The correct action is to stop and request de-energization or a qualified observer. Class E hard hats and rubber gloves do not make a worker 1910.269-qualified.",
+      "citation": "29 CFR 1910.269(l)(1)-(l)(2) and Appendix B."
+    },
+    {
+      "id": "T18-L07-Q2",
+      "type": "mc",
+      "prompt": "How is the OSHA Minimum Approach Distance (MAD) for a specific energized conductor determined?",
+      "choices": [
+        "A fixed table based on voltage ranges (e.g., '1-15 kV = 2 ft 2 in')",
+        "The Appendix B formula in 29 CFR 1910.269(l)(2), applied via the OSHA MAD Calculator for the specific system voltage",
+        "The NESC clearance rules for the applicable loading district",
+        "The utility's internal safety policy, which supersedes OSHA rules"
+      ],
+      "answerIndex": 1,
+      "explanation": "Since the 2014 revision to 29 CFR 1910.269, the MAD is calculated using the Appendix B formula for the specific phase-to-ground voltage — not a fixed range table. Fixed-table values in older training materials do not reflect the current rule.",
+      "citation": "29 CFR 1910.269(l)(2) and Appendix B; OSHA MAD Calculator (osha.gov)."
+    },
+    {
+      "id": "T18-L07-Q3",
+      "type": "mc",
+      "prompt": "A telecom crew member works in the communication space on a joint-use pole; the supply conductors above are energized at 7.2 kV. What is the crew member's obligation under 29 CFR 1910.269?",
+      "choices": [
+        "Exempt because they are in the communication space, not the supply space",
+        "1910.269 does not apply to telecom workers on joint-use poles",
+        "1910.269 applies; the non-qualified crew member must stay outside the MAB for 7.2 kV, and work within it requires de-energization or a qualified 1910.269 observer",
+        "The crew member must obtain 1910.269 qualification before any work on a joint-use pole"
+      ],
+      "answerIndex": 2,
+      "explanation": "1910.269(a)(1) extends to telecom work on joint-use structures where supply conductors are energized. Being in the communication space doesn't exempt the worker — it usually means work is outside the MAB, which is why routine communication-space work is normally acceptable. Proximity to the energized supply conductors triggers the de-energization/qualified-observer requirement.",
+      "citation": "29 CFR 1910.269(a)(1) — Scope."
+    },
+    {
+      "id": "T18-L07-Q4",
+      "type": "mc",
+      "prompt": "What is the free public tool at osha.gov that calculates the Minimum Approach Distance for a specific phase-to-ground voltage?",
+      "choices": [
+        "The MAD (Minimum Approach Distance) Calculator",
+        "The OSHA Voltage Compliance Estimator",
+        "The NESC Clearance Tool",
+        "The eTool Power Line Locator"
+      ],
+      "answerIndex": 0,
+      "explanation": "The OSHA MAD Calculator applies the Appendix B formula from 29 CFR 1910.269(l)(2). Enter the system voltage and grounding configuration; the calculator returns the MAD in feet and inches. This is the correct tool to use before work near energized conductors of specific or unknown voltage.",
+      "citation": "29 CFR 1910.269(l)(2) Appendix B; OSHA MAD Calculator."
+    },
+    {
+      "id": "T18-L07-Q5",
+      "type": "mc",
+      "prompt": "Why did OSHA move away from a fixed voltage-range table for Minimum Approach Distance in the 2014 revision to 1910.269?",
+      "choices": [
+        "Fixed tables were replaced with a formula-based approach (Appendix B) that calculates MAD for the exact phase-to-ground voltage, rather than grouping voltages into broad ranges that could over- or under-protect at the edges of a range",
+        "OSHA eliminated MAD requirements entirely in 2014",
+        "The fixed table was replaced because it was found to be more protective than necessary",
+        "Voltage-specific calculation was required to align with NESC clearance rules, which took precedence"
+      ],
+      "answerIndex": 0,
+      "explanation": "A formula-based approach calculates the MAD precisely for the actual system voltage rather than lumping a range of voltages (e.g., 1-15 kV) into a single distance — which could be imprecise at either end of the range. The OSHA MAD Calculator implements this formula so workers don't need to do the calculation by hand."
+    },
+    {
+      "id": "T18-L07-Q6",
+      "type": "mc",
+      "prompt": "What must happen before a non-1910.269-qualified worker can perform work that would otherwise require entering the Minimum Approach Boundary (MAB) around an energized conductor?",
+      "choices": [
+        "Nothing — any worker with proper PPE may enter the MAB",
+        "Either the conductor is de-energized, OR a qualified 1910.269 observer is present to supervise/manage the work near it",
+        "The worker must simply notify their supervisor after the fact",
+        "The worker may enter the MAB only during daylight hours"
+      ],
+      "answerIndex": 1,
+      "explanation": "A non-qualified worker cannot simply don PPE and enter the MAB. The two acceptable paths are de-energization of the conductor, or work performed under the direct supervision of a worker who IS 1910.269-qualified and manages the approach-distance risk."
+    },
+    {
+      "id": "T18-L07-Q7",
+      "type": "mc",
+      "prompt": "RUS Bulletin 1751F-810 belongs to which RUS engineering bulletin series?",
+      "choices": [
+        "Splice case selection criteria (a distinct series not covering 1751F-810)",
+        "The 1751F-8xx electrical protection and grounding series (which includes 1751F-801, -802, -805, -810, -815) — covering protection of communication facilities/equipment from electrical hazards",
+        "Materials acceptance testing procedures",
+        "Right-of-way permitting timelines"
+      ],
+      "answerIndex": 1,
+      "explanation": "RUS Bulletin 1751F-810 is part of the RUS 1751F-8xx series on electrical protection and grounding (which groups 1751F-801, -802, -805, -810, and -815), covering protection of telecom/central-office facilities from electrical hazards — grounding, bonding, and induced-voltage protection relevant to OSP work near power systems.",
+      "citation": "RUS Bulletin 1751F-810 series grouping (1751F-801/-802/-805/-810/-815, electrical protection and grounding) — confirmed via WebSearch; the precise individual-bulletin title was not independently confirmed against full document text (rd.usda.gov PDF not directly fetchable — WebFetch blocked), so this question tests the series/topic association rather than an exact title string. See T18.md."
+    },
+    {
+      "id": "T18-L07-Q8",
+      "type": "mc",
+      "prompt": "Being 'in the communication space' on a joint-use pole generally puts a worker outside the Minimum Approach Boundary for the supply conductors above. Does this mean the worker can ignore 1910.269 entirely on that pole?",
+      "choices": [
+        "Yes — communication-space work is entirely outside 1910.269's scope",
+        "No — 1910.269 still applies to the pole; the worker must stay aware of proximity, since any task that brings them closer to the supply conductors (e.g., a lashing bracket near the neutral) can bring them inside the MAB and trigger the de-energization/qualified-observer requirement",
+        "Yes, unless the pole is taller than 40 feet",
+        "No — but only during aerial lift work, not while climbing"
+      ],
+      "answerIndex": 1,
+      "explanation": "Routine communication-space work is normally outside the MAB, which is why it's generally acceptable without special measures — but this is a matter of typical distance, not an exemption. Any task that reduces the distance to the energized supply conductors can bring the worker inside the MAB, at which point the standard 1910.269 requirements (de-energization or qualified observer) apply."
+    }
+  ]
+}

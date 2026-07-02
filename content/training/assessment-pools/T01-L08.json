@@ -1,0 +1,126 @@
+{
+  "assessmentId": "T01-L08",
+  "kind": "lesson",
+  "courseId": "T01",
+  "lessonId": "T01.L08",
+  "drawCount": 4,
+  "passThreshold": 70,
+  "pool": [
+    {
+      "id": "T01-L08-Q1",
+      "type": "drag-match",
+      "prompt": "Match each acronym to its full name.",
+      "items": [
+        { "id": "otdr", "label": "OTDR" },
+        { "id": "mgn", "label": "MGN" },
+        { "id": "nesc", "label": "NESC" },
+        { "id": "loto", "label": "LOTO" },
+        { "id": "rus", "label": "RUS" }
+      ],
+      "targets": [
+        { "id": "totdr", "label": "Optical Time-Domain Reflectometer" },
+        { "id": "tmgn", "label": "Multi-Grounded Neutral" },
+        { "id": "tnesc", "label": "National Electrical Safety Code" },
+        { "id": "tloto", "label": "Lockout / Tagout" },
+        { "id": "trus", "label": "Rural Utilities Service" }
+      ],
+      "correctMap": { "totdr": "otdr", "tmgn": "mgn", "tnesc": "nesc", "tloto": "loto", "trus": "rus" },
+      "explanation": "OTDR = Optical Time-Domain Reflectometer (fiber test instrument). MGN = Multi-Grounded Neutral (electric utility neutral wire grounded at every pole). NESC = National Electrical Safety Code (IEEE C2, aerial utility line code). LOTO = Lockout/Tagout (OSHA hazardous-energy control procedure). RUS = Rural Utilities Service (USDA funding and standards agency for rural OSP)."
+    },
+    {
+      "id": "T01-L08-Q2",
+      "type": "mc",
+      "prompt": "An OSP project is federally funded through the RUS program. Which acronym represents the federal environmental review requirement that applies?",
+      "choices": [
+        "MUTCD — the traffic control manual",
+        "NEPA — the National Environmental Policy Act requires environmental review of federally funded projects",
+        "NESC — the electrical safety code governs all federal utility work",
+        "LOTO — lockout/tagout is required before environmental review"
+      ],
+      "answerIndex": 1,
+      "explanation": "NEPA (National Environmental Policy Act, 42 U.S.C. Section 4321 et seq.) requires environmental review of federally funded projects, including RUS-funded fiber projects. RUS codifies its own environmental review procedures at 7 CFR Part 1970 (which replaced the former 7 CFR Part 1794 in 2016), including categorical exclusions for typical telecom/broadband construction.",
+      "citation": "42 U.S.C. Section 4321 et seq. (NEPA); 7 CFR Part 1970 (RUS environmental review procedures)."
+    },
+    {
+      "id": "T01-L08-Q3",
+      "type": "mc",
+      "prompt": "What is the BICSI credential most associated with inside-plant and data-center design work (covering TIA-568, TIA-569, TIA-606, and TIA-607)?",
+      "choices": [
+        "RCDD (Registered Communications Distribution Designer)",
+        "CFOT (Certified Fiber Optic Technician)",
+        "CFOS/O (Certified Fiber Optic Specialist / Outside Plant)",
+        "PE (Professional Engineer)"
+      ],
+      "answerIndex": 0,
+      "explanation": "The RCDD is BICSI's primary credential for ISP and data-center design professionals, covering the telecom-spaces model and TIA cabling/administration/bonding standards. CFOT and CFOS/O are FOA (not BICSI) credentials focused on hands-on fiber technician and OSP specialist skills, not general design.",
+      "citation": "BICSI credentialing program scope (RCDD); FOA credentialing program scope (CFOT/CFOS)."
+    },
+    {
+      "id": "T01-L08-Q4",
+      "type": "mc",
+      "prompt": "What is the key functional difference between NEC and NESC — two codes commonly confused by new OSP crews?",
+      "choices": [
+        "They are the same code published under two different names",
+        "NEC (NFPA 70) governs electrical installations including cable entries into buildings and grounding; NESC (IEEE C2) governs overhead utility lines including aerial fiber attachment clearances and loading",
+        "NEC applies only to fiber; NESC applies only to copper",
+        "NESC is a voluntary guideline with no legal force; NEC is federal law"
+      ],
+      "answerIndex": 1,
+      "explanation": "NEC (National Electrical Code, NFPA 70) governs indoor/building electrical installations, including where OSP cable enters a building and how it must be grounded. NESC (National Electrical Safety Code, IEEE C2) governs outdoor overhead utility line construction — clearances, loading, attachment heights for aerial fiber. Both apply to a single fiber project, at different points along the route.",
+      "citation": "NFPA 70 (NEC) scope; IEEE C2 (NESC) scope — both independently verified this session (see T01.md)."
+    },
+    {
+      "id": "T01-L08-Q5",
+      "type": "mc",
+      "prompt": "What does OLTS measure, and how does it differ from an OTDR test?",
+      "choices": [
+        "OLTS (Optical Loss Test Set) measures end-to-end insertion loss using a light source and power meter (Tier 1); OTDR locates and characterizes individual events along the fiber (Tier 2) but doesn't need to be paired with a photodetector at the far end",
+        "OLTS and OTDR measure the exact same thing and are interchangeable",
+        "OLTS locates individual splice events; OTDR only measures total end-to-end loss",
+        "OLTS is used only for copper cable testing, never for fiber"
+      ],
+      "answerIndex": 0,
+      "explanation": "OLTS (Tier 1) gives a single end-to-end insertion loss number using a light source at one end and a power meter at the other — fast, but it doesn't tell you WHERE any loss is. OTDR (Tier 2) sends a light pulse and reads the reflected signal to locate and characterize every event (splice, bend, break, connector) along the fiber's length."
+    },
+    {
+      "id": "T01-L08-Q6",
+      "type": "mc",
+      "prompt": "What is the function of an IBT (Insulated Bonding Transformer) on a long aerial fiber run in an RUS-program (MGN) area?",
+      "choices": [
+        "It amplifies the optical signal at intervals along the route",
+        "It bonds the cable messenger to the MGN while isolating the messenger from induced AC voltage, providing bonding continuity without a shock hazard from longitudinal induced voltage",
+        "It converts the fiber signal from single-mode to multi-mode",
+        "It replaces the need for a grounding electrode system entirely"
+      ],
+      "answerIndex": 1,
+      "explanation": "On long aerial runs near power lines, an IBT bonds a metallic messenger to the multi-grounded neutral (MGN) for lightning/fault protection while isolating it from dangerous induced AC voltage that can build up over long parallel runs with power lines."
+    },
+    {
+      "id": "T01-L08-Q7",
+      "type": "mc",
+      "prompt": "What does the designation \"OS2\" mean when it appears on a fiber cable spec, per ISO/IEC 11801?",
+      "choices": [
+        "A multi-mode fiber grade used only for short indoor runs",
+        "The optical single-mode class corresponding to G.652.D SMF — the standard low-water-peak single-mode fiber for long-distance OSP and backbone deployments",
+        "A splice case classification for underground vaults",
+        "A designation for ribbon cable fiber counts above 288"
+      ],
+      "answerIndex": 1,
+      "explanation": "OS2 (ISO/IEC 11801) corresponds to G.652.C or G.652.D single-mode fiber (low/zero water-peak) — the standard for OSP trunk and feeder runs, with maximum attenuation specified at 0.4 dB/km. OS1 maps to earlier G.652.A/B specs (max 1.0 dB/km), now rare in new installations.",
+      "citation": "ISO/IEC 11801 OS1/OS2 fiber category mapping to ITU-T G.652 sub-categories, corroborated via multiple independent fiber-industry technical summaries (see T01.md)."
+    },
+    {
+      "id": "T01-L08-Q8",
+      "type": "mc",
+      "prompt": "What is an AHJ (Authority Having Jurisdiction), and why does a single OSP project typically involve more than one?",
+      "choices": [
+        "A single national regulator that oversees all aspects of an OSP project",
+        "The regulatory body or official enforcing codes in a specific location or aspect of the project — a project can have multiple AHJs (e.g., a state utility commission for NESC, a local fire marshal for NEC, the Corps of Engineers for waterway crossings)",
+        "A BICSI-issued individual credential, not an organization",
+        "An acronym specific to RUS-funded projects only, with no application elsewhere"
+      ],
+      "answerIndex": 1,
+      "explanation": "AHJ is a general regulatory-compliance term — the entity with legal authority to enforce a given code in a given jurisdiction or domain. A single fiber project can have several AHJs simultaneously, each enforcing a different applicable code (NESC, NEC, environmental, waterway crossing, etc.)."
+    }
+  ]
+}

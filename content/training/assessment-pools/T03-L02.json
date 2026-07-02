@@ -1,0 +1,122 @@
+{
+  "assessmentId": "T03-L02",
+  "kind": "lesson",
+  "courseId": "T03",
+  "lessonId": "T03.L02",
+  "drawCount": 4,
+  "passThreshold": 70,
+  "pool": [
+    {
+      "id": "T03-L02-Q1",
+      "type": "mc",
+      "prompt": "Which fiber optic cable type is required for installation in an air-handling plenum?",
+      "choices": [
+        "OFNR — passes the riser vertical flame test",
+        "OFNG — unlisted general use",
+        "OFNP — passes UL 910 / NFPA 262 flame and smoke test",
+        "Any cable rated OSP with UV-stabilized HDPE jacket"
+      ],
+      "answerIndex": 2,
+      "explanation": "OFNP (Optical Fiber Nonconductive Plenum) is required in air-handling plenums, passing UL 910 / NFPA 262 for low flame spread and low smoke density. OFNR can be used in riser shafts but NOT in plenums.",
+      "citation": "NEC (NFPA 70) Article 770; UL 910 / NFPA 262."
+    },
+    {
+      "id": "T03-L02-Q2",
+      "type": "mc",
+      "prompt": "An unlisted outdoor OSP cable enters a commercial building at grade level. The termination panel is 35 ft from the building entry. What is required?",
+      "choices": [
+        "Transition to OFNP immediately at the building entry",
+        "No additional action — 35 ft is under the 50 ft unlisted-entry limit in NEC Section 770.48(A)",
+        "Transition to OFNR at the 25 ft mark",
+        "The cable cannot enter a building at all without a transition"
+      ],
+      "answerIndex": 1,
+      "explanation": "35 ft is within the 50 ft unlisted entry allowance under NEC Section 770.48(A). The 50-ft limit applies to the total run of unlisted cable inside the building, measured from the point of entrance, and can be extended further with RMC/IMC conduit.",
+      "citation": "NEC (NFPA 70) Section 770.48(A).",
+      "fieldNote": "Always confirm with the local AHJ — some jurisdictions require indoor fire-rated cable for any interior run regardless of the 50 ft federal code provision."
+    },
+    {
+      "id": "T03-L02-Q3",
+      "type": "mc",
+      "prompt": "What does the carbon black content (typically 2-3%) in HDPE OSP jacket material provide?",
+      "choices": [
+        "Increased tensile strength for aerial spans",
+        "UV resistance — it absorbs UV radiation and prevents oxidative photodegradation that would otherwise make the jacket brittle within a few years",
+        "Fire resistance equivalent to LSZH jackets",
+        "Improved splice loss performance"
+      ],
+      "answerIndex": 1,
+      "explanation": "Carbon black is added specifically to absorb UV radiation and prevent oxidative photodegradation. Without it, the HDPE jacket would become brittle and crack within a few years of sun exposure — this is why nearly all outdoor OSP cable jackets are black."
+    },
+    {
+      "id": "T03-L02-Q4",
+      "type": "mc",
+      "prompt": "Which cable type can legally substitute for OFNR cable in a building riser shaft?",
+      "choices": [
+        "OFNG (unlisted general-use)",
+        "Standard OSP with HDPE jacket",
+        "OFNP (plenum-rated)",
+        "No cable can substitute — only OFNR is permitted in riser shafts"
+      ],
+      "answerIndex": 2,
+      "explanation": "OFNP, being rated for the more demanding plenum environment (stricter flame/smoke requirements), can substitute for OFNR in a riser shaft — a higher-rated cable can always fill a lower-rated application's role, but not vice versa."
+    },
+    {
+      "id": "T03-L02-Q5",
+      "type": "mc",
+      "prompt": "Why can't an OFNR-rated cable be substituted for OFNP in a plenum space?",
+      "choices": [
+        "OFNR and OFNP are functionally identical, so substitution is always fine",
+        "OFNR is rated to the less stringent riser vertical-flame-spread test, not the plenum-specific low-smoke/flame test (UL 910 / NFPA 262) that a plenum space requires — the rating hierarchy only allows substituting UP, not down",
+        "OFNR cable is physically incompatible with plenum spaces due to size",
+        "OFNP is always cheaper than OFNR, so there's no reason to substitute downward anyway"
+      ],
+      "answerIndex": 1,
+      "explanation": "Fire/smoke rating hierarchy runs one direction: a higher-rated cable (OFNP) can be used where a lower rating (OFNR) is specified, but not the reverse. OFNR has not been tested to the more stringent plenum-specific standard, so it cannot legally substitute for OFNP."
+    },
+    {
+      "id": "T03-L02-Q6",
+      "type": "mc",
+      "prompt": "An unlisted OSP cable needs to run 80 ft inside a building from its point of entrance — beyond the standard 50 ft allowance. What is the correct way to legally extend this?",
+      "choices": [
+        "It cannot be done; the cable must be entirely replaced with a listed indoor cable",
+        "Enclose the cable in RMC (rigid metal conduit) or IMC (intermediate metal conduit) — the 50-ft measurement restarts from where the cable exits the conduit",
+        "Simply document an exception and proceed with the unlisted cable at 80 ft",
+        "Splice to a shorter listed cable segment only for the final 30 ft"
+      ],
+      "answerIndex": 1,
+      "explanation": "NEC allows extending the effective point of entrance by continuously enclosing the unlisted cable in RMC or IMC conduit. The 50-ft unlisted-cable allowance then measures from where the cable emerges from that conduit, not from the original building entry point."
+    },
+    {
+      "id": "T03-L02-Q7",
+      "type": "mc",
+      "prompt": "Why does NEC Article 770 distinguish 'plenum,' 'riser,' and general unlisted-cable ratings rather than using one universal indoor fiber cable spec?",
+      "choices": [
+        "The distinction is purely a marketing device with no fire-safety basis",
+        "Different indoor spaces present different fire/smoke propagation risks — plenums circulate air throughout a building (making smoke/flame spread especially dangerous), while risers are vertical shafts with their own but different vertical fire-spread risk — each demands a matched cable rating",
+        "Plenum and riser cable are electrically different and cannot be interchanged for signal-quality reasons",
+        "The distinction only applies to copper cable, not fiber"
+      ],
+      "answerIndex": 1,
+      "explanation": "Plenum spaces are part of the building's air-handling system, so a fire there can spread smoke and flame throughout the building via ductwork — hence the strictest test (UL 910/NFPA 262). Riser shafts pose a different but still serious vertical fire-spread risk, hence a distinct riser test. Matching cable rating to actual fire-risk profile is the point of the distinction."
+    },
+    {
+      "id": "T03-L02-Q8",
+      "type": "drag-match",
+      "prompt": "Match each fiber cable fire rating to its typical installation environment.",
+      "items": [
+        { "id": "i_ofnp", "label": "Air-handling plenum" },
+        { "id": "i_ofnr", "label": "Vertical riser shaft" },
+        { "id": "i_unlisted", "label": "Up to 50 ft inside a building from point of entrance" }
+      ],
+      "targets": [
+        { "id": "t_ofnp", "label": "OFNP" },
+        { "id": "t_ofnr", "label": "OFNR" },
+        { "id": "t_unlisted", "label": "Unlisted OSP cable" }
+      ],
+      "correctMap": { "t_ofnp": "i_ofnp", "t_ofnr": "i_ofnr", "t_unlisted": "i_unlisted" },
+      "explanation": "OFNP is required in plenum spaces (strictest fire/smoke test). OFNR is required in vertical riser shafts. Unlisted OSP cable is permitted for a limited run (50 ft, extendable via conduit) from the building's point of entrance under NEC 770.48(A).",
+      "citation": "NEC (NFPA 70) Article 770."
+    }
+  ]
+}

@@ -5,6 +5,7 @@ import React from 'react';
 import LessonLayout from '../../components/LessonLayout.jsx';
 import Sortable from '../../components/primitives/Sortable.jsx';
 import Quiz from '../../components/primitives/Quiz.jsx';
+import GatedAssessment from '../../components/primitives/GatedAssessment.jsx';
 import Flashcard from '../../components/Flashcard.jsx';
 
 export const meta = {
@@ -454,6 +455,11 @@ export default function T04L09_RusPreEngineering() {
       />
 
       {/* ── PER-LESSON QUIZ ──────────────────────────────────────────────── */}
+      <GatedAssessment
+        courseId="T04"
+        assessmentId="T04-L09"
+        title="T04.L09 Check — Pre-Engineering for RUS Jobs"
+        fallback={
       <Quiz
         title="T04.L09 Check — Pre-Engineering for RUS Jobs"
         mode="multiple-choice"
@@ -518,6 +524,8 @@ export default function T04L09_RusPreEngineering() {
             citation: 'RUS Bulletin 1751F-630 Appendix (submittal requirements); 7 CFR Part 1755 (construction package documentation standards).',
           },
         ]}
+      />
+        }
       />
 
     </LessonLayout>

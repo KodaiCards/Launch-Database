@@ -6,6 +6,7 @@ import React from 'react';
 import LessonLayout from '../../components/LessonLayout.jsx';
 import Flashcard from '../../components/Flashcard.jsx';
 import Quiz from '../../components/primitives/Quiz.jsx';
+import GatedAssessment from '../../components/primitives/GatedAssessment.jsx';
 
 export const meta = {
   id: 'T01.L04',
@@ -237,7 +238,7 @@ export default function T01L04_InsideASpliceCase() {
           and date/technician. This record follows the splice case for its entire 25-year
           life — a technician opening the case in 2045 needs to know what's in there.
           Many RUS-program contracts require splice records as part of the close-out package
-          (RUS Form 219 documentation).
+          (RUS Form 515 / 7 CFR 1753.49 closeout documentation).
         </p>
       </section>
 
@@ -258,10 +259,11 @@ export default function T01L04_InsideASpliceCase() {
           anticipated and absolute moisture exclusion is required.
         </p>
         <p className="mt-2 text-sm text-slate-300/90">
-          RUS Bulletin 1751F-630 §8 requires that splice enclosures for aerial and underground
-          cable provide mechanical protection and moisture ingress resistance for the life of
-          the cable plant (typically 25+ years). Selection between re-enterable and
-          non-re-enterable is a design decision documented in the construction specs.
+          Telcordia GR-771-CORE (Generic Requirements for Fiber Optic Splice Closures) requires
+          that splice enclosures for aerial and underground cable provide mechanical protection
+          and moisture ingress resistance for the life of the cable plant (typically 25+ years).
+          Selection between re-enterable and non-re-enterable is a design decision documented in
+          the construction specs.
         </p>
       </section>
 
@@ -306,68 +308,75 @@ export default function T01L04_InsideASpliceCase() {
       </div>
 
       {/* ── PRACTICE QUIZ ───────────────────────────────────────────────── */}
-      <Quiz
+      <GatedAssessment
+        courseId="T01"
+        assessmentId="T01-L04"
         title="T01.L04 Check — Inside a Splice Case"
-        mode="multiple-choice"
-        questions={[
-          {
-            id: 'T01-L04-Q1',
-            type: 'mc',
-            prompt:
-              'After a splicer completes all fusion splices in a splice case, they notice the OTDR shows 0.4 dB of unexpected loss at that location — but the splicer machine showed all splices under 0.05 dB. What is the most likely explanation?',
-            choices: [
-              'The fusion splicer machine is defective and must be returned for calibration',
-              'A fiber or pigtail inside the case is bent too tightly (macrobend), creating loss that wasn\'t present when the case was open for splicing but appeared when closed',
-              'The OTDR launch cable is defective and introducing error',
-              'The loss is within spec — 0.4 dB is acceptable for a fusion splice',
-            ],
-            answerIndex: 1,
-            explanation:
-              'This is the classic macrobend-after-closure scenario. The individual splice losses were genuine (0.05 dB each is excellent). But when the case was closed, a slack fiber loop was inadvertently pinched against the tray edge or case wall, creating a tight bend. 0.4 dB at 1550 nm is significant and unacceptable. Open the case, find the tight bend, re-route the fiber with proper slack management, and recheck with the OTDR before final closure.',
-            fieldNote:
-              'Always do a final OTDR scan with the case closed but before making it weatherproof. That\'s your last chance to catch macrobend issues without reopening sealed entries.',
-          },
-          {
-            id: 'T01-L04-Q2',
-            type: 'mc',
-            prompt:
-              'A splicer forgets to anchor the central member of the cable to the splice case frame before completing the work. What is the likely long-term consequence?',
-            choices: [
-              'The splices will have higher initial loss because the central member conducts heat away from the splice',
-              'No consequence — the central member serves no function inside the splice case',
-              'Cable tension from aerial sag changes or underground ground movement can pull the buffer tubes through the case entry, breaking the splices',
-              'Water will enter the case through the central member anchor point',
-            ],
-            answerIndex: 2,
-            explanation:
-              'The central member is the cable\'s structural backbone. It must be anchored so external cable tension (from aerial sag changes, thermal expansion, or underground settling) stops at the central member anchor and doesn\'t transfer to the fragile buffer tubes inside the case. An unanchored central member is a deferred splice failure waiting to happen — often not discovered until years later when the splice section shows gradually increasing loss or a full break.',
-          },
-          {
-            id: 'T01-L04-Q3',
-            type: 'fill-in-blank',
-            prompt:
-              'A splice case where cables enter from both ends — continuing through the case — rather than terminating inside it is called a(n) ____ closure.',
-            answer: 'inline',
-            answerDisplay: 'inline',
-            explanation:
-              'Inline (or in-line) closures are used at mid-route splice points where the cable continues beyond the splice. The cable enters one end of the case, the splices are made, and the cable exits the other end. Dome closures are for stub or terminal locations where cables end inside the case.',
-          },
-          {
-            id: 'T01-L04-Q4',
-            type: 'mc',
-            prompt:
-              'A splice record for a particular splice case must be preserved for the life of the cable plant (20–40 years). Which of the following information is LEAST critical to include in the splice record?',
-            choices: [
-              'Which buffer tube color from Cable A is spliced to which buffer tube color from Cable B',
-              'The name of the vendor who manufactured the splice case',
-              'The individual fiber splice loss for each splice (from the splicer or OTDR)',
-              'The date the splicing was performed and the technician\'s ID',
-            ],
-            answerIndex: 1,
-            explanation:
-              'The splice record must include: cable and buffer tube identification (so a future technician knows what\'s connected to what), individual fiber splice losses (for comparison if loss increases later — a sign of physical degradation), and date/technician (for traceability). The closure manufacturer\'s name is nice to have (for reordering sealing materials) but it is the least critical piece. If it\'s missing, the case can be physically inspected to determine the manufacturer.',
-          },
-        ]}
+        fallback={
+        <Quiz
+          title="T01.L04 Check — Inside a Splice Case"
+          mode="multiple-choice"
+          questions={[
+            {
+              id: 'T01-L04-Q1',
+              type: 'mc',
+              prompt:
+                'After a splicer completes all fusion splices in a splice case, they notice the OTDR shows 0.4 dB of unexpected loss at that location — but the splicer machine showed all splices under 0.05 dB. What is the most likely explanation?',
+              choices: [
+                'The fusion splicer machine is defective and must be returned for calibration',
+                'A fiber or pigtail inside the case is bent too tightly (macrobend), creating loss that wasn\'t present when the case was open for splicing but appeared when closed',
+                'The OTDR launch cable is defective and introducing error',
+                'The loss is within spec — 0.4 dB is acceptable for a fusion splice',
+              ],
+              answerIndex: 1,
+              explanation:
+                'This is the classic macrobend-after-closure scenario. The individual splice losses were genuine (0.05 dB each is excellent). But when the case was closed, a slack fiber loop was inadvertently pinched against the tray edge or case wall, creating a tight bend. 0.4 dB at 1550 nm is significant and unacceptable. Open the case, find the tight bend, re-route the fiber with proper slack management, and recheck with the OTDR before final closure.',
+              fieldNote:
+                'Always do a final OTDR scan with the case closed but before making it weatherproof. That\'s your last chance to catch macrobend issues without reopening sealed entries.',
+            },
+            {
+              id: 'T01-L04-Q2',
+              type: 'mc',
+              prompt:
+                'A splicer forgets to anchor the central member of the cable to the splice case frame before completing the work. What is the likely long-term consequence?',
+              choices: [
+                'The splices will have higher initial loss because the central member conducts heat away from the splice',
+                'No consequence — the central member serves no function inside the splice case',
+                'Cable tension from aerial sag changes or underground ground movement can pull the buffer tubes through the case entry, breaking the splices',
+                'Water will enter the case through the central member anchor point',
+              ],
+              answerIndex: 2,
+              explanation:
+                'The central member is the cable\'s structural backbone. It must be anchored so external cable tension (from aerial sag changes, thermal expansion, or underground settling) stops at the central member anchor and doesn\'t transfer to the fragile buffer tubes inside the case. An unanchored central member is a deferred splice failure waiting to happen — often not discovered until years later when the splice section shows gradually increasing loss or a full break.',
+            },
+            {
+              id: 'T01-L04-Q3',
+              type: 'fill-in-blank',
+              prompt:
+                'A splice case where cables enter from both ends — continuing through the case — rather than terminating inside it is called a(n) ____ closure.',
+              answer: 'inline',
+              answerDisplay: 'inline',
+              explanation:
+                'Inline (or in-line) closures are used at mid-route splice points where the cable continues beyond the splice. The cable enters one end of the case, the splices are made, and the cable exits the other end. Dome closures are for stub or terminal locations where cables end inside the case.',
+            },
+            {
+              id: 'T01-L04-Q4',
+              type: 'mc',
+              prompt:
+                'A splice record for a particular splice case must be preserved for the life of the cable plant (20–40 years). Which of the following information is LEAST critical to include in the splice record?',
+              choices: [
+                'Which buffer tube color from Cable A is spliced to which buffer tube color from Cable B',
+                'The name of the vendor who manufactured the splice case',
+                'The individual fiber splice loss for each splice (from the splicer or OTDR)',
+                'The date the splicing was performed and the technician\'s ID',
+              ],
+              answerIndex: 1,
+              explanation:
+                'The splice record must include: cable and buffer tube identification (so a future technician knows what\'s connected to what), individual fiber splice losses (for comparison if loss increases later — a sign of physical degradation), and date/technician (for traceability). The closure manufacturer\'s name is nice to have (for reordering sealing materials) but it is the least critical piece. If it\'s missing, the case can be physically inspected to determine the manufacturer.',
+            },
+          ]}
+        />
+        }
       />
 
     </LessonLayout>

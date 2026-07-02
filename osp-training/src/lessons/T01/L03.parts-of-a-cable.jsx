@@ -6,6 +6,7 @@ import React from 'react';
 import LessonLayout from '../../components/LessonLayout.jsx';
 import Flashcard from '../../components/Flashcard.jsx';
 import Quiz from '../../components/primitives/Quiz.jsx';
+import GatedAssessment from '../../components/primitives/GatedAssessment.jsx';
 
 export const meta = {
   id: 'T01.L03',
@@ -313,68 +314,75 @@ export default function T01L03_PartsOfACable() {
       </div>
 
       {/* ── PRACTICE QUIZ ───────────────────────────────────────────────── */}
-      <Quiz
+      <GatedAssessment
+        courseId="T01"
+        assessmentId="T01-L03"
         title="T01.L03 Check — Parts of a Cable"
-        mode="multiple-choice"
-        questions={[
-          {
-            id: 'T01-L03-Q1',
-            type: 'mc',
-            prompt:
-              'A splicer needs to open a loose-tube OSP cable to begin work. What is the correct tool or method for slitting the outer jacket without damaging the buffer tubes inside?',
-            choices: [
-              'A sharp knife — score along the length with light pressure',
-              'A cable stripper or the ripcord — the ripcord slits the jacket cleanly without risking damage to buffer tubes below',
-              'A hacksaw — the steel armor below the jacket protects the buffer tubes',
-              'Diagonal cutters — snip the end of the jacket and peel it back',
-            ],
-            answerIndex: 1,
-            explanation:
-              'The ripcord is designed for this purpose — grab it and pull lengthwise to slit the jacket cleanly. A ring-type cable slitting tool is the purpose-built alternative. Using a knife risks cutting into buffer tubes, which would damage the fibers inside. Diagonal cutters can crush buffer tubes.',
-            fieldNote:
-              'Always find and test the ripcord before buying a cable on a job site. Some older cable (or poorly stored cable) may have a ripcord that\'s already been partially pulled, making it short. Know where it is before you need it.',
-          },
-          {
-            id: 'T01-L03-Q2',
-            type: 'mc',
-            prompt:
-              'What is the purpose of water-blocking gel inside a buffer tube?',
-            choices: [
-              'To lubricate the fibers during fusion splicing',
-              'To prevent water from migrating along the cable length if the jacket is breached',
-              'To act as an electrical insulator between fibers',
-              'To cushion the fibers against impact damage',
-            ],
-            answerIndex: 1,
-            explanation:
-              'Water-blocking gel is a petroleum-based thixotropic compound that fills the buffer tube. If the jacket and armor are damaged (say, from a dig-in), the gel physically blocks water from migrating through the air gap along the cable to the splice case. Without gel (or dry water-block), a single jacket breach can flood a splice case miles away via capillary action along the buffer tubes.',
-          },
-          {
-            id: 'T01-L03-Q3',
-            type: 'fill-in-blank',
-            prompt:
-              'In a figure-8 aerial cable installation, the component that carries all the mechanical tension between poles (so the fiber cable does not) is called the ____.',
-            answer: 'messenger',
-            answerDisplay: 'messenger',
-            explanation:
-              'The steel messenger wire is lashed alongside the fiber cable. At each pole, the messenger is clamped and attached — all the aerial tension loads go through the messenger. The fiber cable hangs from the messenger with no tension. This protects the fibers from the bending and stretching that tension would cause.',
-          },
-          {
-            id: 'T01-L03-Q4',
-            type: 'mc',
-            prompt:
-              'A job spec requires "dielectric cable" for an aerial installation. Which of the following is a reason this requirement might be specified?',
-            choices: [
-              'Dielectric cable has lower attenuation than metallic-armored cable',
-              'Dielectric cable contains no metal, so it does not require bonding and grounding at each pole — useful where no ground continuity on the cable is desired or where the installation is near high-voltage lines',
-              'Dielectric cable is cheaper than armored cable for aerial use',
-              'Dielectric cable is required by RUS for all aerial fiber installations',
-            ],
-            answerIndex: 1,
-            explanation:
-              'Dielectric cable (ADSS or dielectric-armored) contains no metal conductor. This means no bonding/grounding requirement at each pole, no induced voltage path, and in some designs the ability to be strung in closer proximity to high-voltage supply conductors (with engineering sign-off). The tradeoff is that dielectric cable cannot carry grounding continuity along the messenger — each splice case is an isolated island electrically. RUS does not mandate dielectric for all aerial — cable type selection is a design decision based on the route conditions.',
-          },
-        ]}
+        fallback={
+        <Quiz
+          title="T01.L03 Check — Parts of a Cable"
+          mode="multiple-choice"
+          questions={[
+            {
+              id: 'T01-L03-Q1',
+              type: 'mc',
+              prompt:
+                'A splicer needs to open a loose-tube OSP cable to begin work. What is the correct tool or method for slitting the outer jacket without damaging the buffer tubes inside?',
+              choices: [
+                'A sharp knife — score along the length with light pressure',
+                'A cable stripper or the ripcord — the ripcord slits the jacket cleanly without risking damage to buffer tubes below',
+                'A hacksaw — the steel armor below the jacket protects the buffer tubes',
+                'Diagonal cutters — snip the end of the jacket and peel it back',
+              ],
+              answerIndex: 1,
+              explanation:
+                'The ripcord is designed for this purpose — grab it and pull lengthwise to slit the jacket cleanly. A ring-type cable slitting tool is the purpose-built alternative. Using a knife risks cutting into buffer tubes, which would damage the fibers inside. Diagonal cutters can crush buffer tubes.',
+              fieldNote:
+                'Always find and test the ripcord before buying a cable on a job site. Some older cable (or poorly stored cable) may have a ripcord that\'s already been partially pulled, making it short. Know where it is before you need it.',
+            },
+            {
+              id: 'T01-L03-Q2',
+              type: 'mc',
+              prompt:
+                'What is the purpose of water-blocking gel inside a buffer tube?',
+              choices: [
+                'To lubricate the fibers during fusion splicing',
+                'To prevent water from migrating along the cable length if the jacket is breached',
+                'To act as an electrical insulator between fibers',
+                'To cushion the fibers against impact damage',
+              ],
+              answerIndex: 1,
+              explanation:
+                'Water-blocking gel is a petroleum-based thixotropic compound that fills the buffer tube. If the jacket and armor are damaged (say, from a dig-in), the gel physically blocks water from migrating through the air gap along the cable to the splice case. Without gel (or dry water-block), a single jacket breach can flood a splice case miles away via capillary action along the buffer tubes.',
+            },
+            {
+              id: 'T01-L03-Q3',
+              type: 'fill-in-blank',
+              prompt:
+                'In a figure-8 aerial cable installation, the component that carries all the mechanical tension between poles (so the fiber cable does not) is called the ____.',
+              answer: 'messenger',
+              answerDisplay: 'messenger',
+              explanation:
+                'The steel messenger wire is lashed alongside the fiber cable. At each pole, the messenger is clamped and attached — all the aerial tension loads go through the messenger. The fiber cable hangs from the messenger with no tension. This protects the fibers from the bending and stretching that tension would cause.',
+            },
+            {
+              id: 'T01-L03-Q4',
+              type: 'mc',
+              prompt:
+                'A job spec requires "dielectric cable" for an aerial installation. Which of the following is a reason this requirement might be specified?',
+              choices: [
+                'Dielectric cable has lower attenuation than metallic-armored cable',
+                'Dielectric cable contains no metal, so it does not require bonding and grounding at each pole — useful where no ground continuity on the cable is desired or where the installation is near high-voltage lines',
+                'Dielectric cable is cheaper than armored cable for aerial use',
+                'Dielectric cable is required by RUS for all aerial fiber installations',
+              ],
+              answerIndex: 1,
+              explanation:
+                'Dielectric cable (ADSS or dielectric-armored) contains no metal conductor. This means no bonding/grounding requirement at each pole, no induced voltage path, and in some designs the ability to be strung in closer proximity to high-voltage supply conductors (with engineering sign-off). The tradeoff is that dielectric cable cannot carry grounding continuity along the messenger — each splice case is an isolated island electrically. RUS does not mandate dielectric for all aerial — cable type selection is a design decision based on the route conditions.',
+            },
+          ]}
+        />
+        }
       />
 
       {/* ── TYING IT TOGETHER ─────────────────────────────────────────── */}

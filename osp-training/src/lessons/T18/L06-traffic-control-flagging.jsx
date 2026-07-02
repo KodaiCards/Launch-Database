@@ -5,6 +5,7 @@ import React from 'react';
 import LessonLayout from '../../components/LessonLayout.jsx';
 import BranchingScenario from '../../components/primitives/BranchingScenario.jsx';
 import Quiz from '../../components/primitives/Quiz.jsx';
+import GatedAssessment from '../../components/primitives/GatedAssessment.jsx';
 import Flashcard from '../../components/Flashcard.jsx';
 
 export const meta = {
@@ -445,76 +446,83 @@ export default function T18L06_TrafficControlFlagging() {
       />
 
       {/* ── PER-LESSON QUIZ ──────────────────────────────────────────────── */}
-      <Quiz
-        title="T18.L06 Check — Traffic Control &amp; Flagging"
-        mode="multiple-choice"
-        questions={[
-          {
-            id: 'T18-L06-Q1',
-            type: 'mc',
-            prompt:
-              'The minimum hi-vis apparel class for a roadway flagger during daytime work in a MUTCD temporary traffic control zone is:',
-            choices: [
-              'Class 1 — minimum background material',
-              'Class 2 — ANSI/ISEA 107 roadway minimum',
-              'Class 3 — required only at night',
-              'No class standard — any bright-colored vest is acceptable',
-            ],
-            answerIndex: 1,
-            explanation:
-              'ANSI/ISEA 107 Class 2 is the minimum for daytime roadway work in a temporary traffic control zone. Class 3 is required for nighttime or high-speed (> 50 mph) zones. Class 1 is for off-road, low-traffic environments. MUTCD Part 6 Chapter 6E requires hi-vis garments meeting ANSI/ISEA 107 for all work zone personnel.',
-            citation:
-              'MUTCD 11th Edition (2023), Part 6, Chapter 6E (mutcd.fhwa.dot.gov); ANSI/ISEA 107 [confirm edition].',
-            fieldNote:
-              'When in doubt, Class 3 is always acceptable where Class 2 is the minimum. Upgrade proactively for low-light conditions.',
-          },
-          {
-            id: 'T18-L06-Q2',
-            type: 'mc',
-            prompt:
-              'Per MUTCD Chapter 6E, flaggers must use which device to control traffic?',
-            choices: [
-              'A hand flag (standard traffic flag)',
-              'A STOP/SLOW paddle (octagonal paddles with STOP on one face and SLOW on the reverse)',
-              'Either a flag or a paddle — the choice is the flagger\'s',
-              'A lighted wand at night, flag during the day',
-            ],
-            answerIndex: 1,
-            explanation:
-              'MUTCD Chapter 6E specifies the STOP/SLOW paddle as the required device for flaggers. A hand flag alone is not compliant. The paddle is more visible and less ambiguous than a waved flag. The STOP face is red with white letters; the SLOW face is orange with black letters.',
-            citation:
-              'MUTCD 11th Edition (2023), Chapter 6E (mutcd.fhwa.dot.gov — free public source).',
-          },
-          {
-            id: 'T18-L06-Q3',
-            type: 'mc',
-            prompt:
-              'Which section of a MUTCD work zone is defined as the space between the end of the taper and the location where workers are actively working?',
-            choices: [
-              'Advance warning area',
-              'Transition area',
-              'Buffer space (longitudinal)',
-              'Termination area',
-            ],
-            answerIndex: 2,
-            explanation:
-              'The longitudinal buffer space is the empty zone between the end of the transition taper and the closest worker or equipment in the activity area. It serves as a vehicle-recovery zone. If a driver exits the lane at the taper, the buffer is the distance before they reach the crew. The buffer length scales with approach speed.',
-            citation:
-              'MUTCD 11th Edition (2023), Part 6, Chapter 6C — Advance Warning Area and Activity Area (mutcd.fhwa.dot.gov).',
-          },
-          {
-            id: 'T18-L06-Q4',
-            type: 'fill-in-blank',
-            prompt:
-              'The MUTCD is published by the ____, which is the federal agency responsible for highway safety standards in the United States.',
-            answer: 'FHWA',
-            answerDisplay: 'FHWA (Federal Highway Administration)',
-            explanation:
-              'The Federal Highway Administration (FHWA) is the U.S. DOT agency that publishes the MUTCD. States adopt the MUTCD as a condition of receiving federal highway funding, making it effectively the national standard for all work zone traffic control.',
-            citation:
-              'MUTCD 11th Edition (2023), Chapter 6A.01 — Purpose and Background (mutcd.fhwa.dot.gov).',
-          },
-        ]}
+      <GatedAssessment
+        courseId="T18"
+        assessmentId="T18-L06"
+        title="T18.L06 Check — Traffic Control & Flagging"
+        fallback={
+        <Quiz
+          title="T18.L06 Check — Traffic Control &amp; Flagging"
+          mode="multiple-choice"
+          questions={[
+            {
+              id: 'T18-L06-Q1',
+              type: 'mc',
+              prompt:
+                'The minimum hi-vis apparel class for a roadway flagger during daytime work in a MUTCD temporary traffic control zone is:',
+              choices: [
+                'Class 1 — minimum background material',
+                'Class 2 — ANSI/ISEA 107 roadway minimum',
+                'Class 3 — required only at night',
+                'No class standard — any bright-colored vest is acceptable',
+              ],
+              answerIndex: 1,
+              explanation:
+                'ANSI/ISEA 107 Class 2 is the minimum for daytime roadway work in a temporary traffic control zone. Class 3 is required for nighttime or high-speed (> 50 mph) zones. Class 1 is for off-road, low-traffic environments. MUTCD Part 6 Chapter 6E requires hi-vis garments meeting ANSI/ISEA 107 for all work zone personnel.',
+              citation:
+                'MUTCD 11th Edition (2023), Part 6, Chapter 6E (mutcd.fhwa.dot.gov); ANSI/ISEA 107 [confirm edition].',
+              fieldNote:
+                'When in doubt, Class 3 is always acceptable where Class 2 is the minimum. Upgrade proactively for low-light conditions.',
+            },
+            {
+              id: 'T18-L06-Q2',
+              type: 'mc',
+              prompt:
+                'Per MUTCD Chapter 6E, flaggers must use which device to control traffic?',
+              choices: [
+                'A hand flag (standard traffic flag)',
+                'A STOP/SLOW paddle (octagonal paddles with STOP on one face and SLOW on the reverse)',
+                'Either a flag or a paddle — the choice is the flagger\'s',
+                'A lighted wand at night, flag during the day',
+              ],
+              answerIndex: 1,
+              explanation:
+                'MUTCD Chapter 6E specifies the STOP/SLOW paddle as the required device for flaggers. A hand flag alone is not compliant. The paddle is more visible and less ambiguous than a waved flag. The STOP face is red with white letters; the SLOW face is orange with black letters.',
+              citation:
+                'MUTCD 11th Edition (2023), Chapter 6E (mutcd.fhwa.dot.gov — free public source).',
+            },
+            {
+              id: 'T18-L06-Q3',
+              type: 'mc',
+              prompt:
+                'Which section of a MUTCD work zone is defined as the space between the end of the taper and the location where workers are actively working?',
+              choices: [
+                'Advance warning area',
+                'Transition area',
+                'Buffer space (longitudinal)',
+                'Termination area',
+              ],
+              answerIndex: 2,
+              explanation:
+                'The longitudinal buffer space is the empty zone between the end of the transition taper and the closest worker or equipment in the activity area. It serves as a vehicle-recovery zone. If a driver exits the lane at the taper, the buffer is the distance before they reach the crew. The buffer length scales with approach speed.',
+              citation:
+                'MUTCD 11th Edition (2023), Part 6, Chapter 6C — Advance Warning Area and Activity Area (mutcd.fhwa.dot.gov).',
+            },
+            {
+              id: 'T18-L06-Q4',
+              type: 'fill-in-blank',
+              prompt:
+                'The MUTCD is published by the ____, which is the federal agency responsible for highway safety standards in the United States.',
+              answer: 'FHWA',
+              answerDisplay: 'FHWA (Federal Highway Administration)',
+              explanation:
+                'The Federal Highway Administration (FHWA) is the U.S. DOT agency that publishes the MUTCD. States adopt the MUTCD as a condition of receiving federal highway funding, making it effectively the national standard for all work zone traffic control.',
+              citation:
+                'MUTCD 11th Edition (2023), Chapter 6A.01 — Purpose and Background (mutcd.fhwa.dot.gov).',
+            },
+          ]}
+        />
+        }
       />
 
     </LessonLayout>

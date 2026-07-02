@@ -1,0 +1,127 @@
+{
+  "assessmentId": "T18-L06",
+  "kind": "lesson",
+  "courseId": "T18",
+  "lessonId": "T18.L06",
+  "drawCount": 4,
+  "passThreshold": 70,
+  "pool": [
+    {
+      "id": "T18-L06-Q1",
+      "type": "mc",
+      "prompt": "What is the minimum hi-vis apparel class for a roadway flagger during daytime work in a MUTCD temporary traffic control zone?",
+      "choices": [
+        "Class 1 — minimum background material",
+        "Class 2 — ANSI/ISEA 107 roadway minimum",
+        "Class 3 — required only at night",
+        "No class standard — any bright-colored vest is acceptable"
+      ],
+      "answerIndex": 1,
+      "explanation": "ANSI/ISEA 107 Class 2 is the minimum for daytime roadway work in a temporary traffic control zone. Class 3 is required for nighttime or high-speed (>50 mph) zones; Class 1 is for off-road, low-traffic environments.",
+      "citation": "MUTCD 11th Edition (2023), Part 6, Chapter 6E; ANSI/ISEA 107."
+    },
+    {
+      "id": "T18-L06-Q2",
+      "type": "mc",
+      "prompt": "Per MUTCD Chapter 6E, which device must flaggers use to control traffic?",
+      "choices": [
+        "A hand flag (standard traffic flag)",
+        "A STOP/SLOW paddle (octagonal, STOP on one face, SLOW on the reverse)",
+        "Either a flag or a paddle — the flagger's choice",
+        "A lighted wand at night, flag during the day"
+      ],
+      "answerIndex": 1,
+      "explanation": "MUTCD Chapter 6E specifies the STOP/SLOW paddle as the required device for flaggers. A hand flag alone is not compliant — the paddle is more visible and less ambiguous. STOP is red with white letters; SLOW is orange with black letters.",
+      "citation": "MUTCD 11th Edition (2023), Chapter 6E."
+    },
+    {
+      "id": "T18-L06-Q3",
+      "type": "mc",
+      "prompt": "Which section of a MUTCD temporary traffic control zone is the empty space between the end of the taper and the closest worker or equipment in the activity area?",
+      "choices": [
+        "Advance warning area",
+        "Transition area",
+        "Buffer space (longitudinal)",
+        "Termination area"
+      ],
+      "answerIndex": 2,
+      "explanation": "The longitudinal buffer space serves as a vehicle-recovery zone: if a driver exits the lane at the taper, the buffer is the distance before they reach the crew. Buffer length scales with approach speed.",
+      "citation": "MUTCD 11th Edition (2023), Part 6, Chapter 6C."
+    },
+    {
+      "id": "T18-L06-Q4",
+      "type": "mc",
+      "prompt": "The MUTCD is published by which federal agency?",
+      "choices": [
+        "OSHA (Occupational Safety and Health Administration)",
+        "FHWA (Federal Highway Administration)",
+        "NHTSA (National Highway Traffic Safety Administration)",
+        "FCC (Federal Communications Commission)"
+      ],
+      "answerIndex": 1,
+      "explanation": "The Federal Highway Administration (FHWA), part of US DOT, publishes the MUTCD. States adopt the MUTCD as a condition of receiving federal highway funding, making it effectively the national standard for work zone traffic control.",
+      "citation": "MUTCD 11th Edition (2023), Chapter 6A.01."
+    },
+    {
+      "id": "T18-L06-Q5",
+      "type": "mc",
+      "prompt": "What is the correct order in which a work zone's temporary traffic control components should be REMOVED at the end of a job?",
+      "choices": [
+        "Advance warning signs first, then termination-area cones, then taper cones, then activity-area cones",
+        "Confirm activity area clear -> remove activity-area cones toward the taper -> remove taper cones -> remove termination-area cones -> remove advance warning signs",
+        "Remove all cones and signs simultaneously regardless of order",
+        "Remove advance warning signs, taper, and activity-area cones simultaneously, then termination cones last"
+      ],
+      "answerIndex": 1,
+      "explanation": "Removing termination devices LAST — after the activity area is clear — protects the workers still in the zone. Driving through the termination area before the work space is cleared creates a struck-by hazard for the remaining crew.",
+      "citation": "MUTCD 11th Edition (2023), Part 6, Chapter 6B — General Requirements."
+    },
+    {
+      "id": "T18-L06-Q6",
+      "type": "mc",
+      "prompt": "What are the five components of a MUTCD temporary traffic control (TTC) zone, in order from a driver's approach?",
+      "choices": [
+        "Buffer, Transition, Advance Warning, Activity, Termination",
+        "Advance Warning, Transition, Activity, Buffer, Termination",
+        "Termination, Activity, Buffer, Transition, Advance Warning",
+        "Advance Warning, Buffer, Activity, Transition, Termination"
+      ],
+      "answerIndex": 1,
+      "explanation": "A TTC zone consists of: Advance Warning Area (alerts approaching drivers), Transition Area (channelizes traffic via a taper), Buffer Space (vehicle-recovery zone with no work permitted), Activity Area (the actual work space), and Termination Area (where traffic returns to normal).",
+      "citation": "MUTCD 11th Edition (2023), Part 6."
+    },
+    {
+      "id": "T18-L06-Q7",
+      "type": "mc",
+      "prompt": "What does OSHA/MUTCD guidance say about workers exposed to traffic or construction equipment within the right-of-way, regarding hi-vis apparel — does elevation in a bucket truck change the requirement?",
+      "choices": [
+        "Elevated workers are exempt from hi-vis requirements since they're not directly in the traffic lane",
+        "All workers within the right-of-way exposed to traffic or equipment must wear hi-vis meeting Class 2 or 3 — elevation does not remove the struck-by exposure or the requirement",
+        "Hi-vis is only required for the flagger, not other crew members",
+        "Hi-vis requirements apply only to nighttime work regardless of elevation"
+      ],
+      "answerIndex": 1,
+      "explanation": "MUTCD/ANSI requirements apply based on proximity to a traffic lane and right-of-way exposure, not physical elevation. A worker in a bucket truck adjacent to a live lane is still exposed to the struck-by hazard from an errant vehicle and must wear the appropriate hi-vis class."
+    },
+    {
+      "id": "T18-L06-Q8",
+      "type": "drag-match",
+      "prompt": "Match each traffic control device or role to its correct description.",
+      "items": [
+        { "id": "i_paddle", "label": "Octagonal device: STOP on one face, SLOW on the reverse" },
+        { "id": "i_taper", "label": "Channelizes traffic out of the closed lane" },
+        { "id": "i_buffer", "label": "Empty recovery zone with no work permitted" },
+        { "id": "i_termination", "label": "Where traffic returns to its normal path" }
+      ],
+      "targets": [
+        { "id": "t_paddle", "label": "STOP/SLOW paddle" },
+        { "id": "t_taper", "label": "Transition area" },
+        { "id": "t_buffer", "label": "Buffer space" },
+        { "id": "t_termination", "label": "Termination area" }
+      ],
+      "correctMap": { "t_paddle": "i_paddle", "t_taper": "i_taper", "t_buffer": "i_buffer", "t_termination": "i_termination" },
+      "explanation": "Each element of MUTCD Part 6 traffic control serves a distinct role: the STOP/SLOW paddle directs traffic at a flagger station; the transition area's taper merges traffic out of a lane; the buffer space is a deliberately empty recovery zone; and the termination area returns traffic to normal flow.",
+      "citation": "MUTCD 11th Edition (2023), Part 6, Chapters 6C and 6E."
+    }
+  ]
+}

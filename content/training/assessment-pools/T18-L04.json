@@ -1,0 +1,120 @@
+{
+  "assessmentId": "T18-L04",
+  "kind": "lesson",
+  "courseId": "T18",
+  "lessonId": "T18.L04",
+  "drawCount": 4,
+  "passThreshold": 70,
+  "pool": [
+    {
+      "id": "T18-L04-Q1",
+      "type": "mc",
+      "prompt": "Under 29 CFR 1910.268(g)(1), fall protection is required when working on a pole at what height above ground?",
+      "choices": [
+        "6 feet (same as construction industry)",
+        "10 feet",
+        "4 feet",
+        "Fall protection is required only when using a bucket truck"
+      ],
+      "answerIndex": 2,
+      "explanation": "29 CFR 1910.268(g)(1) — the telecommunications standard — triggers the fall protection requirement at more than 4 feet above ground on poles. This differs from 29 CFR 1926 Subpart M (construction), which triggers at 6 feet. Telecom OSP work falls under 1910 (general industry), not 1926 (construction).",
+      "citation": "29 CFR 1910.268(g)(1)."
+    },
+    {
+      "id": "T18-L04-Q2",
+      "type": "mc",
+      "prompt": "A worker's body belt and pole strap are the ONLY fall protection they use at their work position on a 40-foot pole. Their gaff pulls out of rotten wood. What happens?",
+      "choices": [
+        "The pole strap (positioning system) automatically arrests the fall by holding the worker against the pole",
+        "The body belt automatically deploys an energy-absorbing lanyard to arrest the fall",
+        "The positioning system may not catch the fall — only a PFAS (full-body harness + arrest lanyard) provides fall arrest protection",
+        "The 4-foot rule means fall protection isn't required at 40 feet"
+      ],
+      "answerIndex": 2,
+      "explanation": "A positioning system (body belt + pole strap) is designed to hold the worker at the work position — not to arrest a fall. If the gaff pulls out and the body shifts suddenly, the positioning strap may slip rather than catch the fall. Only a PFAS is designed to arrest a fall and limit the arrest force to 1,800 lbf or less.",
+      "citation": "29 CFR 1910.268(g)(1); ANSI Z359.1/Z359.11 (body belt restrictions within the Z359 series)."
+    },
+    {
+      "id": "T18-L04-Q3",
+      "type": "mc",
+      "prompt": "When working in a bucket truck aerial lift, where must a worker's fall protection lanyard be attached?",
+      "choices": [
+        "To a fixed anchor point outside the basket, such as the pole being worked on",
+        "To the boom or basket of the aerial lift itself",
+        "To the truck's frame at ground level",
+        "Fall protection is not required in a bucket truck"
+      ],
+      "answerIndex": 1,
+      "explanation": "Attaching to the boom or basket ensures the fall protection travels with the worker if the truck moves. Attaching to a fixed structure outside the basket (pole, crossarm) can pull the worker out of the basket if the truck repositions — a common and fatal error.",
+      "citation": "29 CFR 1910.67(c)(2)(v) — exact sub-clause per the source lesson; substance independently corroborated, sub-clause letter not independently re-verified this session (see T18.md)."
+    },
+    {
+      "id": "T18-L04-Q4",
+      "type": "mc",
+      "prompt": "An OSHA interpretation letter on 29 CFR 1910.268 addresses telecom workers reaching their work position on a pole. What does it establish?",
+      "choices": [
+        "No fall protection is required at any point on a utility pole",
+        "Fall protection is required at all times during both climbing and at the work position",
+        "Fall protection is required at the work position (if more than 4 ft up); climbing to reach that position may be done without fall protection ('free-climbing')",
+        "Free-climbing is permitted only for poles shorter than 30 feet"
+      ],
+      "answerIndex": 2,
+      "explanation": "The letter addresses a telecom pole-climbing scenario and confirms the distinction: 1910.268 permits employees to free-climb (move) to their work position on poles without fall protection during the climb itself, but requires fall protection at the work position — where the worker stops to perform a task — if it is more than 4 feet above ground.",
+      "citation": "OSHA Letter of Interpretation 2012-08-27; substance corroborated via WebSearch (full letter text not independently re-fetched, see T18.md)."
+    },
+    {
+      "id": "T18-L04-Q5",
+      "type": "mc",
+      "prompt": "What is the maximum arresting force (MAF) a full-body harness/PFAS system is permitted to expose a falling worker to, per OSHA/ANSI Z359 requirements?",
+      "choices": [
+        "800 lbf",
+        "1,800 lbf",
+        "3,600 lbf",
+        "There is no maximum — any force that stops the fall is acceptable"
+      ],
+      "answerIndex": 1,
+      "explanation": "OSHA and ANSI Z359 both limit maximum arresting force to 1,800 lbf (8 kN) for a full-body harness system. Energy-absorbing lanyards and self-retracting lifelines are engineered and tested to stay within this limit.",
+      "citation": "OSHA/ANSI Z359 maximum arresting force standard."
+    },
+    {
+      "id": "T18-L04-Q6",
+      "type": "mc",
+      "prompt": "29 CFR 1926.500/1926.502 (the CONSTRUCTION fall-protection standard) has prohibited body belts for fall ARREST use since January 1, 1998. Telecom OSP work falls under 1910.268 (general industry), not 1926 — so what governs the body-belt-vs-harness question for a telecom pole crew?",
+      "choices": [
+        "Nothing — 1910.268 has no equivalent requirement, so body belts remain acceptable for fall arrest in telecom work",
+        "The 1926.502 date and rule apply directly to telecom work too, since OSHA construction rules always override 1910 general industry rules",
+        "1910.268 doesn't import the 1926.502 date, but a full-body harness meeting ANSI Z359.11 is still the applicable requirement for any PFAS (fall arrest) used in telecom pole work — a body belt/pole strap remains acceptable ONLY as a positioning system, never for fall arrest",
+        "Fall arrest equipment requirements are entirely voluntary for telecom crews"
+      ],
+      "answerIndex": 2,
+      "explanation": "The January 1, 1998 body-belt prohibition is specifically a 29 CFR 1926.500/1926.502 CONSTRUCTION provision and does not directly bind 1910.268 (general industry) telecom work — this is a real cross-standard distinction, not an assumption. However, the practical outcome for telecom crews is the same: a body belt/pole strap positioning system is not tested or designed for fall arrest, and ANSI Z359.11 (full-body harness standard, referenced across the fall-protection industry regardless of which CFR part applies) is the applicable requirement whenever a PFAS is used. Do not cite the 1926.502 date as if it were a 1910.268 rule.",
+      "citation": "29 CFR 1926.500/1926.502 (body belt fall-arrest prohibition, effective January 1, 1998 — a CONSTRUCTION-specific rule, not directly applicable to 1910.268 telecom work); ANSI Z359.11 (full-body harness standard, cross-industry)."
+    },
+    {
+      "id": "T18-L04-Q7",
+      "type": "mc",
+      "prompt": "Why is the fall protection height trigger different for telecom pole work (1910.268, >4 ft) versus general construction (1926 Subpart M, 6 ft)?",
+      "choices": [
+        "It's an inconsistency with no regulatory basis and either number may be used",
+        "Telecom OSP field work falls under 1910 (general industry standards), not 1926 (construction standards) — different regulatory subparts set different trigger heights for their respective industries",
+        "The 4-foot trigger only applies to underground work, not aerial",
+        "1910.268 was written before 1926 Subpart M and is now obsolete"
+      ],
+      "answerIndex": 1,
+      "explanation": "Telecom OSP work is classified under 29 CFR 1910 (general industry) rather than 1926 (construction), and 1910.268(g)(1) sets its own trigger height (>4 ft) specific to pole work — distinct from the 6-ft trigger in the construction fall-protection subpart. Crews must know which regulatory framework applies to their specific work."
+    },
+    {
+      "id": "T18-L04-Q8",
+      "type": "mc",
+      "prompt": "What is the functional difference between a POSITIONING system (body belt + pole strap) and a PFAS (Personal Fall Arrest System)?",
+      "choices": [
+        "They are the same thing with different names",
+        "A positioning system holds the worker at a fixed work position (not designed to catch a fall); a PFAS (full-body harness + energy-absorbing lanyard/SRL) is engineered specifically to arrest a fall and limit arrest force",
+        "A PFAS is only used for aerial lifts; positioning systems are only used on poles",
+        "A positioning system is stronger and provides more fall protection than a PFAS"
+      ],
+      "answerIndex": 1,
+      "explanation": "A positioning system lets a worker lean back and work hands-free at a fixed point — it is not tested or designed to arrest a fall from height. A PFAS (full-body harness anchored via an energy-absorbing lanyard or SRL) is specifically engineered and tested to stop a fall while limiting the arrest force to 1,800 lbf or less. Using a positioning system as the sole protection against an actual fall is a critical safety gap."
+    }
+  ]
+}

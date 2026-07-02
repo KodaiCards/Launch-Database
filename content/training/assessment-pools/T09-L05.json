@@ -1,0 +1,119 @@
+{
+  "assessmentId": "T09-L05",
+  "kind": "lesson",
+  "courseId": "T09",
+  "lessonId": "T09.L05",
+  "drawCount": 4,
+  "passThreshold": 70,
+  "pool": [
+    {
+      "id": "T09-L05-Q1",
+      "type": "mc",
+      "prompt": "As of the 2021 reissuance, which Nationwide Permit covers telecom fiber crossings of wetlands and waterways?",
+      "choices": [
+        "NWP 12 — utility line activities (a separate general category)",
+        "NWP 57 — electric utility line and telecommunications activities",
+        "NWP 3 — maintenance",
+        "There is no nationwide permit applicable to telecom crossings; only individual permits apply"
+      ],
+      "answerIndex": 1,
+      "explanation": "NWP 57 was reissued in 2021 specifically covering electric utility line and telecommunications activities, providing a streamlined authorization pathway for qualifying fiber crossings of jurisdictional waters/wetlands, bundling Section 10 (Rivers and Harbors Act) and Section 404 (Clean Water Act) authorization.",
+      "citation": "USACE NWP 57 (2021 reissuance)."
+    },
+    {
+      "id": "T09-L05-Q2",
+      "type": "mc",
+      "prompt": "A fiber bore crosses a 0.08-acre mapped wetland. No T&E species are present per IPaC. No Section 106 issues. No navigable waterway. What is the correct permit action under NWP 57?",
+      "choices": [
+        "File a pre-construction notification (PCN) — any wetland impact requires PCN under NWP 57 regardless of size",
+        "Below the applicable acreage/pre-construction notification threshold, the activity may proceed under NWP 57's general conditions without a PCN — verify the specific threshold and any regional conditions with the local USACE district before proceeding",
+        "No permit of any kind is needed for wetland crossings under 0.1 acres",
+        "An individual (non-nationwide) permit is required regardless of impact size"
+      ],
+      "answerIndex": 1,
+      "explanation": "NWP 57 sets acreage/impact thresholds below which a PCN is not required for the general permit to apply, subject to general and regional conditions that can vary by USACE district — a 0.08-acre wetland impact with no other jurisdictional triggers is a scenario likely to fall under a no-PCN pathway, but district-specific regional conditions should be confirmed rather than assumed uniformly.",
+      "citation": "USACE NWP 57 (2021 reissuance); 33 CFR Part 330 (general conditions)."
+    },
+    {
+      "id": "T09-L05-Q3",
+      "type": "mc",
+      "prompt": "After the 2023 Sackett v. EPA Supreme Court decision, what is the recommended approach when a project route crosses a seasonal drainage ditch with uncertain WOTUS status?",
+      "choices": [
+        "Assume non-jurisdiction automatically — Sackett eliminated all USACE authority over any seasonal feature",
+        "Apply the post-Sackett standard (a wetland must be adjacent to a relatively permanent water body and have a continuous surface connection to it to be jurisdictional — the prior 'significant nexus' test was rejected) and, where status is genuinely uncertain, seek a jurisdictional determination from USACE rather than assuming either outcome",
+        "Assume jurisdiction automatically under the pre-Sackett significant-nexus test, since that test is still binding",
+        "The feature's status is irrelevant since NWP 57 covers all crossings regardless of WOTUS jurisdiction"
+      ],
+      "answerIndex": 1,
+      "explanation": "Sackett v. EPA (598 U.S. ___, 2023) rejected the 'significant nexus' test and narrowed CWA jurisdiction to wetlands with a continuous surface connection to a relatively permanent water body — a meaningful narrowing, but not a blanket elimination of jurisdiction over all seasonal features. For a genuinely uncertain case, requesting a formal jurisdictional determination from USACE is the defensible approach rather than assuming either outcome.",
+      "citation": "Sackett v. EPA, 598 U.S. ___ (2023); 33 USC 1344."
+    },
+    {
+      "id": "T09-L05-Q4",
+      "type": "mc",
+      "prompt": "A fiber bore crossing a navigable river (a Section 10 waterway) will have a total wetland impact of only 0.02 acres. Is a pre-construction notification (PCN) required?",
+      "choices": [
+        "No — impact acreage alone always determines whether a PCN is required, regardless of waterway type",
+        "A Section 10 navigable-waterway crossing can trigger PCN requirements under NWP 57's general conditions independent of the wetland-acreage threshold — the navigable-waterway crossing itself, not just wetland acreage, can be the PCN trigger",
+        "No — Section 10 waterways are entirely outside NWP 57's scope",
+        "A PCN is never required for navigable waterway crossings"
+      ],
+      "answerIndex": 1,
+      "explanation": "NWP 57's general conditions can require a PCN based on factors beyond wetland acreage, including crossing of a Section 10 navigable waterway — so a small wetland-acreage impact does not automatically mean no PCN is needed if the crossing also implicates Section 10 navigable-waters authority.",
+      "citation": "USACE NWP 57 (2021 reissuance); 33 CFR 330.5 (general conditions); 33 USC 403 (Rivers and Harbors Act Section 10)."
+    },
+    {
+      "id": "T09-L05-Q5",
+      "type": "mc",
+      "prompt": "Why does NWP 57 matter specifically for OSP fiber projects, compared to relying on an individual USACE permit for every wetland or waterway crossing?",
+      "choices": [
+        "It doesn't matter — individual permits and NWP 57 have identical review timelines",
+        "NWP 57 bundles Section 10 and Section 404 authorization into a single streamlined general permit for qualifying telecom/utility crossings, avoiding the individual-permit process that can take substantially longer (an individual permit review can run from roughly 90 days to well over a year, versus a much faster general-permit pathway for a qualifying crossing)",
+        "NWP 57 eliminates the need for any environmental review whatsoever",
+        "NWP 57 only applies to electric utilities, never to telecommunications"
+      ],
+      "answerIndex": 1,
+      "explanation": "The practical value of NWP 57 for fiber projects is schedule: a qualifying crossing gets a single streamlined general-permit authorization bundling Section 10 and Section 404, versus the substantially longer individual-permit review pathway required for crossings that don't qualify for a nationwide permit.",
+      "citation": "USACE NWP 57 (2021 reissuance)."
+    },
+    {
+      "id": "T09-L05-Q6",
+      "type": "mc",
+      "prompt": "A field surveyor observes what looks like a wetland feature during a route walk but is uncertain whether it meets the post-Sackett jurisdictional test. What is the correct field-level action, consistent with the general site-walk pattern used elsewhere in the OSP training?",
+      "choices": [
+        "The surveyor should make the final jurisdictional call in the field and document the conclusion as fact",
+        "The surveyor documents the observation (GPS coordinates, photos, description) and flags it for the project team/regulatory review to determine jurisdictional status — the field surveyor does not have the authority or tools to make the binding jurisdictional determination",
+        "The surveyor should remove any flagging or avoid documenting the feature to simplify the route design",
+        "The surveyor should assume it is automatically non-jurisdictional and proceed without any documentation"
+      ],
+      "answerIndex": 1,
+      "explanation": "Consistent with the general site-walk principle (document, flag, route to the appropriate authority), a field surveyor's role for an ambiguous wetland feature is to document the observation for the project team, not to make the binding jurisdictional call — that determination properly belongs to USACE (or the project's environmental consultant working with USACE) applying the current post-Sackett standard."
+    },
+    {
+      "id": "T09-L05-Q7",
+      "type": "mc",
+      "prompt": "A project team assumes every wetland crossing on a route automatically requires a full individual USACE permit, and pads the schedule accordingly. What is the risk of this overly conservative assumption?",
+      "choices": [
+        "There is no risk — assuming the most conservative permit pathway is always correct and has no downside",
+        "The assumption may unnecessarily inflate the project schedule and cost — many qualifying crossings can use the substantially faster NWP 57 general-permit pathway instead of an individual permit, so failing to evaluate NWP 57 eligibility for each crossing leaves schedule and cost benefits on the table",
+        "The assumption guarantees the project will pass Section 106 review automatically",
+        "The assumption eliminates the need for any wetland delineation work"
+      ],
+      "answerIndex": 1,
+      "explanation": "Defaulting to the individual-permit assumption without evaluating NWP 57 eligibility for each crossing risks needlessly inflating schedule and cost — the entire value of the nationwide permit framework is that qualifying crossings can bypass the much longer individual-permit review, so an accurate per-crossing eligibility assessment (not a blanket conservative assumption) is the economically correct approach."
+    },
+    {
+      "id": "T09-L05-Q8",
+      "type": "mc",
+      "prompt": "How did the Sackett v. EPA decision change the practical field-survey approach to identifying potentially jurisdictional wetland features, compared to the pre-2023 significant-nexus era?",
+      "choices": [
+        "It eliminated the need for any wetland field survey work entirely going forward",
+        "It narrowed the legal test for jurisdiction (requiring a continuous surface connection to a relatively permanent water body rather than a broader ecological significant-nexus standard), which means some features that might have been treated as jurisdictional under the old test may now be non-jurisdictional — but field surveyors still document and flag ambiguous features for a formal determination rather than making that legal call themselves",
+        "It expanded jurisdiction to cover every wetland feature regardless of connection to a water body",
+        "It transferred all wetland-jurisdiction authority from USACE to the EPA"
+      ],
+      "answerIndex": 1,
+      "explanation": "Sackett narrowed (rather than eliminated) the legal test for CWA wetland jurisdiction — the practical field-survey discipline doesn't change: surveyors still document and flag potentially jurisdictional features rather than making the legal determination themselves, but the substantive standard those determinations are now measured against is narrower than the pre-2023 significant-nexus test."
+    }
+  ]
+}

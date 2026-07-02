@@ -1,0 +1,121 @@
+{
+  "assessmentId": "T03-L08",
+  "kind": "lesson",
+  "courseId": "T03",
+  "lessonId": "T03.L08",
+  "drawCount": 4,
+  "passThreshold": 70,
+  "pool": [
+    {
+      "id": "T03-L08-Q1",
+      "type": "mc",
+      "prompt": "Drop cables to residential premises typically contain how many fibers?",
+      "choices": [
+        "1 fiber only — one subscriber needs one fiber path",
+        "2-12 fibers — small counts for individual premises drops",
+        "24-96 fibers — same as distribution cables",
+        "144-288 fibers — high count for future expansion"
+      ],
+      "answerIndex": 1,
+      "explanation": "2-12 fibers is the standard drop count for residential premises. Most residential homes need 2-4 fibers (1-2 active plus spares). Higher fiber counts belong at the distribution and feeder tiers, not individual residential drops.",
+      "citation": "FOA FTTH design guide."
+    },
+    {
+      "id": "T03-L08-Q2",
+      "type": "mc",
+      "prompt": "A figure-8 drop cable integrates the steel messenger into the cable jacket. What is the primary installation advantage?",
+      "choices": [
+        "Eliminates the need for any bonding at the pole dead-end",
+        "Reduces installation time — by as much as fifty percent — by eliminating the separate messenger pre-installation step",
+        "Allows fiber counts up to 432F in a compact form factor",
+        "The cable is dielectric so no NEC requirements apply"
+      ],
+      "answerIndex": 1,
+      "explanation": "A figure-8 cable integrates the messenger into the jacket, so the installer strings one cable rather than pre-installing a separate strand and then lashing the fiber — cutting installation time significantly. The integrated steel messenger still requires bonding at dead-ends.",
+      "citation": "outsideplantcabling.com and fibereast.com aerial installation guides (verified via 2+ independent sources)."
+    },
+    {
+      "id": "T03-L08-Q3",
+      "type": "mc",
+      "prompt": "What term describes installed, spliced fiber strands that are not currently carrying traffic but can be activated in the future without pulling new cable?",
+      "choices": [
+        "Idle fiber",
+        "Dark fiber",
+        "Spare conduit",
+        "Reserve trunk"
+      ],
+      "answerIndex": 1,
+      "explanation": "Dark fiber refers to physically installed, spliced fiber strands with no active electronics currently connected. Specifying dark fiber at initial construction is standard practice, since the incremental cost of extra fibers during the initial pull is far lower than a future cable replacement when capacity is needed."
+    },
+    {
+      "id": "T03-L08-Q4",
+      "type": "mc",
+      "prompt": "For a new 48-unit MDU on a GPON-based FTTH build using 2 fibers per unit, what is the raw fiber count needed before applying any growth margin?",
+      "choices": [
+        "24 fibers",
+        "48 fibers",
+        "96 fibers",
+        "144 fibers"
+      ],
+      "answerIndex": 2,
+      "explanation": "48 units x 2 fibers per unit = 96 fibers raw requirement. A growth margin (commonly 15-25%) would then be added on top of this base count when selecting the actual distribution cable size."
+    },
+    {
+      "id": "T03-L08-Q5",
+      "type": "mc",
+      "prompt": "Why does an OSP designer typically specify more dark fiber capacity than current demand requires, even though it raises the upfront cable cost?",
+      "choices": [
+        "Dark fiber is required by law on all RUS-funded projects regardless of demand",
+        "The marginal cost of a few extra fibers during the initial cable pull is small compared to the cost of a full future cable replacement or overlash project once capacity runs out — front-loading capacity is usually the more economical long-term choice",
+        "Dark fiber fibers actually reduce attenuation on the active fibers in the same cable",
+        "Dark fiber has no cost implication since unused fibers are billed separately by the manufacturer"
+      ],
+      "answerIndex": 1,
+      "explanation": "The economics favor over-provisioning: adding a modest number of extra fibers during an already-planned construction project costs relatively little, while going back years later to add capacity (new cable pull, new splicing, new permits) is significantly more expensive — the classic build-for-growth argument in OSP design."
+    },
+    {
+      "id": "T03-L08-Q6",
+      "type": "mc",
+      "prompt": "Why does a residential drop cable NOT use ribbon construction, even though ribbon offers splicing speed advantages at higher fiber counts?",
+      "choices": [
+        "Ribbon construction cannot physically be manufactured at low fiber counts",
+        "At a typical 2-12 fiber drop count, ribbon's mass-fusion speed advantage is negligible (splicing 2-12 individual fibers is already fast), so the added cost/complexity of ribbon construction isn't justified — ribbon's advantage grows with fiber count, favoring high-count feeder/distribution cable instead",
+        "Ribbon cable is illegal for residential FTTH applications",
+        "Ribbon construction is only compatible with G.657 fiber, not G.652"
+      ],
+      "answerIndex": 1,
+      "explanation": "Ribbon's mass-fusion-splicing advantage compounds with fiber count — it matters enormously at 288F or 432F but is nearly irrelevant at a 2-12 fiber drop count, where individually splicing a handful of fibers is already fast. Drop cables therefore typically use simpler, lower-cost loose-tube or tight-buffer construction."
+    },
+    {
+      "id": "T03-L08-Q7",
+      "type": "mc",
+      "prompt": "A figure-8 drop cable's integrated steel messenger still requires bonding at dead-ends. Why does this NOT eliminate the time-savings advantage figure-8 provides over separately-lashed cable?",
+      "choices": [
+        "It does eliminate the advantage entirely — figure-8 offers no net time savings once bonding is factored in",
+        "Bonding at dead-ends is a small, fixed task performed at pole termination points, while the eliminated step (pre-installing a separate messenger strand along the entire span before lashing) was a much larger per-span labor cost — the net installation time savings remains substantial",
+        "Bonding requirements only apply to lashed cable, not figure-8, making the comparison moot",
+        "Figure-8 cable is dielectric, so bonding is never actually required in practice"
+      ],
+      "answerIndex": 1,
+      "explanation": "The time savings figure-8 provides comes from skipping the separate messenger-strand pre-installation step across the full span length — a substantial per-span labor cost. Bonding at dead-ends is a small, localized task at termination points, not a per-span cost, so it doesn't offset the larger time savings."
+    },
+    {
+      "id": "T03-L08-Q8",
+      "type": "drag-match",
+      "prompt": "Match each fiber tier to its typical fiber count range.",
+      "items": [
+        { "id": "i_feeder", "label": "96F-864F (or higher in dense urban builds)" },
+        { "id": "i_dist", "label": "24F-96F, sized for subscribers served plus growth margin" },
+        { "id": "i_drop", "label": "2-12F for residential premises" }
+      ],
+      "targets": [
+        { "id": "t_feeder", "label": "Feeder cable" },
+        { "id": "t_dist", "label": "Distribution cable" },
+        { "id": "t_drop", "label": "Drop cable" }
+      ],
+      "correctMap": { "t_feeder": "i_feeder", "t_dist": "i_dist", "t_drop": "i_drop" },
+      "explanation": "Fiber count scales down the closer you get to the individual customer: feeder cable carries the highest counts (aggregating many customers), distribution cable serves a neighborhood segment, and the drop cable serves a single premises.",
+      "citation": "FOA FTTH design guide."
+    }
+  ]
+}

@@ -6,6 +6,7 @@ import LessonLayout from '../../components/LessonLayout.jsx';
 import BranchingScenario from '../../components/primitives/BranchingScenario.jsx';
 import TimelineSequence from '../../components/primitives/TimelineSequence.jsx';
 import Quiz from '../../components/primitives/Quiz.jsx';
+import GatedAssessment from '../../components/primitives/GatedAssessment.jsx';
 import Flashcard from '../../components/Flashcard.jsx';
 
 export const meta = {
@@ -464,66 +465,73 @@ export default function T03L08_DropCableSelection() {
       />
 
       {/* ── PER-LESSON QUIZ ───────────────────────────────────────────────── */}
-      <Quiz
+      <GatedAssessment
+        courseId="T03"
+        assessmentId="T03-L08"
         title="T03.L08 Check — Drop Cable Selection"
-        mode="multiple-choice"
-        questions={[
-          {
-            id: 'T03-L08-Q1',
-            type: 'mc',
-            prompt:
-              'Drop cables to residential premises typically contain how many fibers?',
-            choices: [
-              '1 fiber only — one subscriber needs one fiber path',
-              '2–12 fibers — small counts for individual premises drops',
-              '24–96 fibers — same as distribution cables',
-              '144–288 fibers — high count for future expansion',
-            ],
-            answerIndex: 1,
-            explanation:
-              '2–12 fibers is the standard drop count for residential premises. (Source: FOA FTTH design guide — verified). Most residential homes need 2–4 fibers (1–2 active + spares). Higher fiber counts belong at the distribution and feeder tiers, not individual residential drops.',
-          },
-          {
-            id: 'T03-L08-Q2',
-            type: 'mc',
-            prompt:
-              'A figure-8 drop cable integrates the steel messenger into the cable jacket. What is the primary installation advantage?',
-            choices: [
-              'Eliminates the need for any bonding at the pole dead-end',
-              'Reduces installation time by up to 50% by eliminating the separate messenger pre-installation step',
-              'Allows fiber counts up to 432F in a compact form factor',
-              'The cable is dielectric so no NEC requirements apply',
-            ],
-            answerIndex: 1,
-            explanation:
-              'A figure-8 cable integrates the messenger into the jacket, so the installer strings one cable rather than pre-installing a separate strand and then lashing the fiber. "Reduces time and costs to install, by as much as fifty percent." (Source: outsideplantcabling.com + fibereast.com — verified via ≥2 sources). Note: the integrated steel messenger still requires bonding at dead-ends.',
-          },
-          {
-            id: 'T03-L08-Q3',
-            type: 'fill-in-blank',
-            prompt:
-              'Installed fiber strands that are not currently carrying traffic but can be activated in the future without pulling new cable are called ________ fibers.',
-            answer: 'dark',
-            answerDisplay: 'dark (dark fiber)',
-            explanation:
-              'Dark fiber refers to physically installed, spliced fiber strands with no active electronics currently connected. Specifying dark fiber at initial construction is standard practice because the incremental cost of additional fibers during the initial cable pull is far lower than the cost of a future cable replacement when capacity is needed.',
-          },
-          {
-            id: 'T03-L08-Q4',
-            type: 'mc',
-            prompt:
-              'For a new 48-unit MDU on a GPON-based FTTH build using 2 fibers per unit, what is the minimum distribution cable fiber count that provides a 20% growth margin?',
-            choices: [
-              '48F — exactly one fiber per unit',
-              '96F — two active fibers per unit with no growth margin',
-              '120F — 96 active fibers × 1.25 = 120 with 25% growth margin',
-              '48F — 2 active fibers per unit means only 24 units are planned',
-            ],
-            answerIndex: 2,
-            explanation:
-              '48 units × 2 fibers = 96 fibers for 100% take rate. Add 20% growth margin: 96 × 1.20 = 115.2 → round up to the next standard cable count of 120F. Standard cable counts are typically 12, 24, 48, 72, 96, 120, 144, 216, 288, 432... 120F is the correct minimum spec. 96F provides zero growth margin.',
-          },
-        ]}
+        fallback={
+        <Quiz
+          title="T03.L08 Check — Drop Cable Selection"
+          mode="multiple-choice"
+          questions={[
+            {
+              id: 'T03-L08-Q1',
+              type: 'mc',
+              prompt:
+                'Drop cables to residential premises typically contain how many fibers?',
+              choices: [
+                '1 fiber only — one subscriber needs one fiber path',
+                '2–12 fibers — small counts for individual premises drops',
+                '24–96 fibers — same as distribution cables',
+                '144–288 fibers — high count for future expansion',
+              ],
+              answerIndex: 1,
+              explanation:
+                '2–12 fibers is the standard drop count for residential premises. (Source: FOA FTTH design guide — verified). Most residential homes need 2–4 fibers (1–2 active + spares). Higher fiber counts belong at the distribution and feeder tiers, not individual residential drops.',
+            },
+            {
+              id: 'T03-L08-Q2',
+              type: 'mc',
+              prompt:
+                'A figure-8 drop cable integrates the steel messenger into the cable jacket. What is the primary installation advantage?',
+              choices: [
+                'Eliminates the need for any bonding at the pole dead-end',
+                'Reduces installation time by up to 50% by eliminating the separate messenger pre-installation step',
+                'Allows fiber counts up to 432F in a compact form factor',
+                'The cable is dielectric so no NEC requirements apply',
+              ],
+              answerIndex: 1,
+              explanation:
+                'A figure-8 cable integrates the messenger into the jacket, so the installer strings one cable rather than pre-installing a separate strand and then lashing the fiber. "Reduces time and costs to install, by as much as fifty percent." (Source: outsideplantcabling.com + fibereast.com — verified via ≥2 sources). Note: the integrated steel messenger still requires bonding at dead-ends.',
+            },
+            {
+              id: 'T03-L08-Q3',
+              type: 'fill-in-blank',
+              prompt:
+                'Installed fiber strands that are not currently carrying traffic but can be activated in the future without pulling new cable are called ________ fibers.',
+              answer: 'dark',
+              answerDisplay: 'dark (dark fiber)',
+              explanation:
+                'Dark fiber refers to physically installed, spliced fiber strands with no active electronics currently connected. Specifying dark fiber at initial construction is standard practice because the incremental cost of additional fibers during the initial cable pull is far lower than the cost of a future cable replacement when capacity is needed.',
+            },
+            {
+              id: 'T03-L08-Q4',
+              type: 'mc',
+              prompt:
+                'For a new 48-unit MDU on a GPON-based FTTH build using 2 fibers per unit, what is the minimum distribution cable fiber count that provides a 20% growth margin?',
+              choices: [
+                '48F — exactly one fiber per unit',
+                '96F — two active fibers per unit with no growth margin',
+                '120F — 96 active fibers × 1.25 = 120 with 25% growth margin',
+                '48F — 2 active fibers per unit means only 24 units are planned',
+              ],
+              answerIndex: 2,
+              explanation:
+                '48 units × 2 fibers = 96 fibers for 100% take rate. Add 20% growth margin: 96 × 1.20 = 115.2 → round up to the next standard cable count of 120F. Standard cable counts are typically 12, 24, 48, 72, 96, 120, 144, 216, 288, 432... 120F is the correct minimum spec. 96F provides zero growth margin.',
+            },
+          ]}
+        />
+        }
       />
 
     </LessonLayout>

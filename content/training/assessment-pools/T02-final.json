@@ -1,0 +1,336 @@
+{
+  "assessmentId": "T02-final",
+  "kind": "topic_final",
+  "courseId": "T02",
+  "lessonId": null,
+  "drawCount": 15,
+  "passThreshold": 80,
+  "pool": [
+    {
+      "id": "T02-final-Q1",
+      "type": "mc",
+      "prompt": "What phenomenon confines light inside a fiber optic strand, and what geometric/material property of the fiber makes it possible?",
+      "choices": [
+        "Electromagnetic shielding from the jacket; requires a metallic armor layer",
+        "Total internal reflection at the core-cladding boundary; possible because the core's index of refraction is slightly higher than the cladding's",
+        "Magnetic confinement; requires the fiber to be kept below a critical temperature",
+        "Vacuum-sealed core; requires the fiber to be evacuated of air during manufacturing"
+      ],
+      "answerIndex": 1,
+      "explanation": "Total internal reflection occurs when the core (higher index) and cladding (lower index) create a boundary where light hitting at an angle greater than the critical angle reflects entirely back into the core rather than refracting out.",
+      "citation": "ITU-T G.652 (2024)."
+    },
+    {
+      "id": "T02-final-Q2",
+      "type": "mc",
+      "prompt": "What are the ITU-T G.652.D maximum attenuation figures at 1310 nm and 1550 nm, and why does the gap between spec-max and typical vendor values matter for link budgeting?",
+      "choices": [
+        "0.4 dB/km at both wavelengths; the gap is irrelevant since designers always use spec-max",
+        "<=0.4 dB/km at 1310 nm, <=0.3 dB/km at 1550 nm; the spec max is a rejection threshold, not a typical value — using it directly in a budget wastes achievable margin, so designers use an intermediate planning value",
+        "0.3 dB/km at 1310 nm, 0.4 dB/km at 1550 nm; typical values always exceed spec max",
+        "There is no defined maximum; only vendor datasheets set the limit"
+      ],
+      "answerIndex": 1,
+      "explanation": "G.652.D's spec maximums (0.4 dB/km @1310nm, 0.3 dB/km @1550nm) represent the worst fiber that still qualifies — real production fiber performs meaningfully better. Designers use a planning value between typical and spec-max to balance realistic margin against over-conservatism.",
+      "citation": "ITU-T G.652.D attenuation coefficient specification."
+    },
+    {
+      "id": "T02-final-Q3",
+      "type": "mc",
+      "prompt": "A 100 km SMF link at 1550 nm has chromatic dispersion D=17 ps/(nm*km) and a laser spectral width of 0.1 nm. What is the total chromatic dispersion, and what does exceeding the 10 Gb/s bit period (100 ps) imply?",
+      "choices": [
+        "170 ps; since it exceeds the 100 ps bit period, dispersion compensation is likely needed to avoid inter-symbol interference",
+        "17 ps; well within tolerance for any bit rate",
+        "1700 ps; the link is completely unusable at any bit rate",
+        "10 ps; dispersion is negligible at 1550 nm"
+      ],
+      "answerIndex": 0,
+      "explanation": "Total CD = D x delta-lambda x L = 17 x 0.1 x 100 = 170 ps, which exceeds the 10 Gb/s bit period, signaling a real inter-symbol-interference risk requiring dispersion compensation.",
+      "citation": "ITU-T G.652 chromatic dispersion coefficient (~17 ps/(nm*km) at 1550 nm)."
+    },
+    {
+      "id": "T02-final-Q4",
+      "type": "mc",
+      "prompt": "What is the ITU-T G.652 zero-dispersion wavelength range, and why does this make 1310 nm a natural, low-cost choice for short-to-medium SMF links?",
+      "choices": [
+        "1550-1565 nm; 1550 nm is therefore the low-dispersion choice",
+        "1300-1324 nm; 1310 nm sits near this zero-dispersion point, minimizing chromatic dispersion and allowing lower-cost transceivers on shorter links",
+        "850-940 nm; this range applies only to multimode fiber",
+        "There is no zero-dispersion wavelength for standard G.652 fiber"
+      ],
+      "answerIndex": 1,
+      "explanation": "G.652's zero-dispersion wavelength falls within 1300-1324 nm, very close to the 1310 nm operating window — which is why 1310 nm transceivers face minimal dispersion penalty and are commonly the economical choice for shorter links.",
+      "citation": "ITU-T G.652 zero-dispersion wavelength specification."
+    },
+    {
+      "id": "T02-final-Q5",
+      "type": "mc",
+      "prompt": "What are the dynamic (pulling) and static (installed) minimum bend radius rules of thumb, expressed as multiples of cable outer diameter (OD)?",
+      "choices": [
+        "10x OD dynamic, 20x OD static — static is more conservative because the cable settles over time",
+        "20x OD dynamic (pulling), 10x OD static (installed) — dynamic is more conservative because pulling tension compounds bending stress",
+        "Both are always 15x OD regardless of condition",
+        "There are no standardized bend radius multiples; every cable requires unique lab testing"
+      ],
+      "answerIndex": 1,
+      "explanation": "20x OD during pulling accounts for the added axial tension that compounds bend stress; once installed and tension is relieved, the static minimum relaxes to 10x OD. Never use the static limit during active pulling."
+    },
+    {
+      "id": "T02-final-Q6",
+      "type": "mc",
+      "prompt": "An OTDR trace shows elevated distributed background loss over a 200 m conduit section with no discrete events, versus a different trace showing a single discrete loss spike. How do these two signatures map to macrobend vs. microbend?",
+      "choices": [
+        "Both signatures indicate macrobend; microbend never appears on an OTDR trace",
+        "The distributed elevated loss (no discrete event) indicates microbend, often from conduit overfill or over-tensioned pulling; the discrete spike indicates a macrobend (a visible kink)",
+        "The discrete spike indicates microbend; the distributed loss indicates macrobend",
+        "Neither signature is diagnostically meaningful without a PMD test"
+      ],
+      "answerIndex": 1,
+      "explanation": "Microbend loss is caused by many tiny deformations along a fiber's length, producing elevated distributed loss without a single discrete event. A macrobend is a visible large-radius bend that produces a discrete point-loss event."
+    },
+    {
+      "id": "T02-final-Q7",
+      "type": "mc",
+      "prompt": "Why is 1625 nm the preferred OTDR wavelength for hunting a suspected macrobend on a LIVE GPON fiber, without interrupting service?",
+      "choices": [
+        "1625 nm matches the GPON signal wavelengths exactly, so it directly measures live traffic loss",
+        "Macrobend loss grows with wavelength, so 1625 nm exaggerates bend events for easier detection, AND 1625 nm sits outside the GPON 1310/1490 nm signal bands, so it can be injected via WDM filters without disrupting live service",
+        "1625 nm is the only wavelength OTDR instruments can generate",
+        "1625 nm has zero attenuation, making all events equally visible"
+      ],
+      "answerIndex": 1,
+      "explanation": "1625 nm serves two purposes simultaneously: bend-loss sensitivity increases with wavelength (making bends more visible), and 1625 nm falls outside GPON's live signal bands, so WDM filters can pass the diagnostic pulse without interrupting subscriber traffic."
+    },
+    {
+      "id": "T02-final-Q8",
+      "type": "mc",
+      "prompt": "A fiber link has 6 dB of total loss. What fraction of original power reaches the receiver, and what shortcut rule explains this?",
+      "choices": [
+        "One-half; because dB values always mean half-power regardless of magnitude",
+        "One-quarter; because 6 dB = 3 dB + 3 dB, and each 3 dB roughly halves the power (1/2 x 1/2 = 1/4)",
+        "One-tenth; because 6 dB rounds to the 10 dB = 1/10 rule",
+        "One-sixth; because dB values divide linearly by the numeric value"
+      ],
+      "answerIndex": 1,
+      "explanation": "The '3 dB = half power' shortcut compounds: 6 dB = two 3 dB steps = 1/2 x 1/2 = 1/4 of original power. Exact check: 10^(-6/10) ~= 0.25."
+    },
+    {
+      "id": "T02-final-Q9",
+      "type": "mc",
+      "prompt": "A transmitter outputs +5 dBm and the receiver's sensitivity is -22 dBm. After accounting for 6.25 dB fiber loss, 1.20 dB splice loss, 1.80 dB connector loss, and a 3 dB safety margin, what is the remaining headroom?",
+      "choices": [
+        "12.25 dB",
+        "14.75 dB",
+        "27.0 dB",
+        "-2.25 dB (link fails)"
+      ],
+      "answerIndex": 1,
+      "explanation": "Budget = +5 - (-22) = 27 dB. Total losses+margin = 6.25+1.20+1.80+3.00 = 12.25 dB. Headroom = 27.0 - 12.25 = 14.75 dB — a passing link with substantial margin remaining."
+    },
+    {
+      "id": "T02-final-Q10",
+      "type": "mc",
+      "prompt": "Why does a link budget always reserve a safety margin (typically 3 dB) as a distinct line item, rather than only budgeting for fiber, splice, and connector loss?",
+      "choices": [
+        "The margin is a legal formality with no engineering basis",
+        "The margin reserves optical power headroom for future degradation — fiber aging, thermal effects, connector wear, and future re-splices — over the plant's multi-decade service life",
+        "The margin exists only to round the total loss number to a whole number",
+        "The margin is required only for links exceeding 100 km"
+      ],
+      "answerIndex": 1,
+      "explanation": "OSP fiber plant is expected to remain in service for decades. The safety margin protects against the real, predictable degradation that accumulates over that service life — aging, thermal cycling, connector wear, and future maintenance work — so the link keeps working long after initial acceptance testing."
+    },
+    {
+      "id": "T02-final-Q11",
+      "type": "mc",
+      "prompt": "CWDM uses 20 nm channel spacing (ITU-T G.694.2); DWDM uses 0.4-0.8 nm spacing (ITU-T G.694.1). What field-relevant consequence follows from DWDM's much tighter spacing?",
+      "choices": [
+        "DWDM requires no special connector care since channels are so close together they average out any imperfection",
+        "DWDM requires temperature-stabilized (cooled) lasers and meticulous connector end-face cleanliness (often APC connectors) because tight channel spacing leaves little room for wavelength drift or back-reflection interference",
+        "DWDM can only be deployed on multimode fiber",
+        "CWDM cannot be used with single-mode fiber at all"
+      ],
+      "answerIndex": 1,
+      "explanation": "DWDM's narrow channel spacing requires precise, stable laser wavelength (hence cooled lasers) and minimal back-reflection (hence APC connectors and rigorous end-face cleaning) — margins that CWDM's much wider 20 nm spacing doesn't demand.",
+      "citation": "ITU-T G.694.1 (DWDM); ITU-T G.694.2 (CWDM)."
+    },
+    {
+      "id": "T02-final-Q12",
+      "type": "mc",
+      "prompt": "Why does single-mode fiber not require a bandwidth (MHz*km) rating the way multimode fiber does?",
+      "choices": [
+        "SMF is too expensive to bandwidth-test in a factory setting",
+        "SMF's tiny core allows only the fundamental mode to propagate, eliminating modal dispersion entirely; SMF's bandwidth is instead limited by chromatic dispersion and PMD, which are managed at the system level rather than a simple length-independent MHz*km figure",
+        "SMF has literally infinite bandwidth regardless of distance or wavelength",
+        "The MHz*km rating applies only to the cable jacket, never to the glass fiber"
+      ],
+      "answerIndex": 1,
+      "explanation": "Modal dispersion — the dominant bandwidth limiter in MMF — doesn't exist in SMF because only one mode propagates. SMF's real bandwidth limits (CD, PMD) are system-level engineering problems, not captured by a simple per-fiber MHz*km spec."
+    },
+    {
+      "id": "T02-final-Q13",
+      "type": "mc",
+      "prompt": "A 12 km rural OSP run needs to connect an OLT headend to a distribution hub. Why does this distance rule out any multimode fiber option, including OM5?",
+      "choices": [
+        "OM5 has no practical reach limit and could handle this distance easily",
+        "Even the best-performing multimode grades top out around 400-550 m for standard Ethernet applications — orders of magnitude short of 12 km, which requires OS2 single-mode (G.652.D)",
+        "Multimode fiber cannot be installed outdoors under any circumstances",
+        "OM5's reach exceeds SMF's reach for distances under 20 km"
+      ],
+      "answerIndex": 1,
+      "explanation": "Even laser-optimized OM4/OM5 fiber tops out around 400-550 m for standard 10GbE applications due to modal dispersion — nowhere close to 12 km. Only single-mode fiber, with its dispersion-free fundamental-mode propagation, can span that distance."
+    },
+    {
+      "id": "T02-final-Q14",
+      "type": "mc",
+      "prompt": "What is the correct ISO/IEC 11801 OS1/OS2 mapping to ITU-T G.652 sub-grades, and why is this a genuine point of confusion worth double-checking against a primary source?",
+      "choices": [
+        "OS1 = G.652.B/C, OS2 = G.652.D — a commonly repeated but subtly incorrect mapping",
+        "OS1 = G.652.A/B (higher attenuation, older spec), OS2 = G.652.C/D (low/zero water-peak, current spec) — the correct mapping; a review of this course's own source material found inconsistent claims about this mapping across different lessons, underscoring the value of independent verification",
+        "OS1 and OS2 are unrelated to ITU-T G.652 and instead map to G.657 exclusively",
+        "OS1 = G.655, OS2 = G.652 — the two designations refer to entirely different fiber families"
+      ],
+      "answerIndex": 1,
+      "explanation": "OS1 corresponds to G.652.A/B (older, higher water-peak attenuation, max ~1.0 dB/km); OS2 corresponds to G.652.C/D (low/zero water-peak, max ~0.4 dB/km) — the grade nearly all modern OSP deployments specify. Independent WebSearch verification of this exact mapping caught an inconsistency between two lessons' own inline claims in this course's source material.",
+      "citation": "ISO/IEC 11801 OS1/OS2 category mapping to ITU-T G.652 sub-grades."
+    },
+    {
+      "id": "T02-final-Q15",
+      "type": "mc",
+      "prompt": "Why does PMD accumulate with sqrt(length) rather than linearly, and what practical consequence follows for a route being considered for a bit-rate upgrade?",
+      "choices": [
+        "PMD accumulates linearly, identically to chromatic dispersion — there is no sqrt(L) behavior",
+        "PMD is a random-walk statistical process (polarization coupling varies randomly along the fiber), so it scales as sqrt(L); the practical consequence is that doubling a route's length only multiplies DGD by sqrt(2) (~1.41x), not 2x — but a route's DGD can still exceed a higher bit rate's tighter tolerance even without doubling in length",
+        "PMD decreases with length, so longer routes are always safer for bit-rate upgrades",
+        "PMD is entirely eliminated by using G.652.D fiber, regardless of length"
+      ],
+      "answerIndex": 1,
+      "explanation": "PMD's random-walk nature means length-scaling is sub-linear (sqrt(L)), unlike CD's linear scaling. But the real risk driver for an upgrade isn't length alone — it's that higher bit rates have much tighter absolute DGD tolerances (shorter bit periods), so a route that was fine at a lower bit rate can fail a PMD check purely because the tolerance window shrank."
+    },
+    {
+      "id": "T02-final-Q16",
+      "type": "mc",
+      "prompt": "A 150 km route has a PMD coefficient of 0.8 ps/sqrt(km). What is the rms DGD, and is a 40 Gb/s upgrade (tolerance ~2.5 ps) likely to succeed without compensation?",
+      "choices": [
+        "DGD = 9.8 ps; the upgrade will very likely fail or require PMD compensation, since 9.8 ps far exceeds the ~2.5 ps tolerance",
+        "DGD = 9.8 ps; the upgrade will succeed easily, since 40G's tolerance is much larger than 9.8 ps",
+        "DGD = 120 ps; the route fails at any bit rate",
+        "DGD cannot be calculated without also knowing the chromatic dispersion"
+      ],
+      "answerIndex": 0,
+      "explanation": "DGD_rms = 0.8 x sqrt(150) = 0.8 x 12.247 ~= 9.8 ps. At 40 Gb/s (25 ps bit period, ~10% tolerance = 2.5 ps), 9.8 ps far exceeds tolerance, signaling a real need for PMD compensation or a different upgrade path."
+    },
+    {
+      "id": "T02-final-Q17",
+      "type": "mc",
+      "prompt": "What OTDR artifact occurs when two spliced fibers with different backscatter coefficients produce an apparent NEGATIVE loss reading in one test direction, and how is it correctly resolved?",
+      "choices": [
+        "This is a 'gainer' artifact — resolved by running the OTDR in both directions and averaging the two readings, which cancels the backscatter-coefficient bias",
+        "This indicates a genuinely defective splice that must be replaced immediately",
+        "This indicates the OTDR pulse width is set too wide and must be narrowed",
+        "This is a normal, expected reading requiring no further verification"
+      ],
+      "answerIndex": 0,
+      "explanation": "A 'gainer' is a backscatter artifact, not real optical gain. The correct practice — standardized in IEC 61280-4-2 — is bidirectional OTDR testing with averaging, which cancels the artifact and reveals the true splice loss.",
+      "citation": "IEC 61280-4-2 — bidirectional attenuation measurement for installed single-mode cable plant."
+    },
+    {
+      "id": "T02-final-Q18",
+      "type": "mc",
+      "prompt": "Before activating a 100G coherent DWDM system on an existing route, why must CD and PMD be field-characterized rather than assumed from the fiber's generic spec sheet?",
+      "choices": [
+        "Field characterization is a formality with no technical basis",
+        "Real installed fiber can include multiple manufacturing vintages, splices between different fiber grades, and route-specific installation stress — all of which can shift actual CD/PMD away from a single generic nominal spec value, so measured values are needed to correctly size compensation and confirm the upgrade is viable",
+        "CD and PMD are identical for every G.652 fiber ever manufactured, so field testing is redundant",
+        "Only attenuation needs field verification; CD and PMD are always negligible"
+      ],
+      "answerIndex": 1,
+      "explanation": "A real route's fiber history (manufacturing runs, splice-in of different vintages, installation-induced stress) means actual CD/PMD can diverge from an idealized spec figure — field characterization gives the engineer the real numbers needed for a reliable high-bit-rate upgrade."
+    },
+    {
+      "id": "T02-final-Q19",
+      "type": "mc",
+      "prompt": "What is the first troubleshooting step when a newly installed OSP fiber link shows unexpected high loss, and why does this step come before re-splicing or requesting a cable replacement?",
+      "choices": [
+        "Immediately re-splice the entire suspect section",
+        "Clean and inspect all connector end-faces with a compliant scope, then re-test — because contaminated connectors are the most common cause of unexpected new-installation loss and are the fastest, cheapest thing to rule out first",
+        "Order a full cable replacement from the supplier",
+        "Run a PMD test, since PMD is always the first suspect on new links"
+      ],
+      "answerIndex": 1,
+      "explanation": "Connector contamination is both extremely common and extremely fast to check/fix (30 seconds per connector) compared to re-splicing or cable replacement — making it the correct first troubleshooting step before more invasive or costly actions."
+    },
+    {
+      "id": "T02-final-Q20",
+      "type": "mc",
+      "prompt": "A splice between G.657.B3 (bend-insensitive drop cable) and G.652.D (standard trunk cable) shows 0.12 dB loss. Why might this NOT indicate a bad splice?",
+      "choices": [
+        "0.12 dB always indicates a bad splice regardless of fiber type combination",
+        "G.657.B3 and G.652.D have different Mode Field Diameters; splicing dissimilar fiber types introduces an inherent MFD-mismatch loss component in addition to any geometric splice quality, so 0.12 dB may be within the expected range for this specific fiber-type combination",
+        "G.657.B3 and G.652.D physically cannot be fusion spliced together",
+        "0.12 dB only matters for multimode-to-multimode splices"
+      ],
+      "answerIndex": 1,
+      "explanation": "Mixed fiber-type splices (different MFD values) carry inherent loss beyond geometric alignment quality. The correct check is against the manufacturer's specific splice-loss table for that fiber combination, not a generic same-type threshold."
+    },
+    {
+      "id": "T02-final-Q21",
+      "type": "mc",
+      "prompt": "Why does an OSP designer building a link budget use decibels (which are added) rather than raw power ratios (which are multiplied) for cascaded fiber, splice, and connector losses?",
+      "choices": [
+        "Decibels are legally required by RUS for all fiber calculations",
+        "Logarithms convert multiplication of fractional power ratios into simple addition, making by-hand link-budget arithmetic tractable across many cascaded components",
+        "Power meters cannot display raw watts, only decibels",
+        "Decibels are only used for aesthetic/reporting reasons and have no mathematical benefit"
+      ],
+      "answerIndex": 1,
+      "explanation": "Because dB is a logarithmic scale, cascaded losses along a link simply add together in dB terms instead of requiring the designer to multiply a chain of fractional power-through ratios — the entire reason the dB scale is used for network-loss budgeting."
+    },
+    {
+      "id": "T02-final-Q22",
+      "type": "mc",
+      "prompt": "Why is temperature-related attenuation and microbend variation (e.g., ~0.08 dB/km excess loss in winter vs. summer on an aerial route) an argument FOR building margin into a link budget, rather than an argument for re-testing every season?",
+      "choices": [
+        "Because seasonal variation is imaginary and doesn't actually occur",
+        "Because the whole point of the reserved safety margin (T02.L06) is to absorb exactly this kind of predictable, recurring environmental variation over the plant's service life, so the link continues to function without requiring seasonal redesign",
+        "Because winter testing is illegal under OSHA cold-weather rules",
+        "Because temperature variation only affects multimode fiber, not SMF"
+      ],
+      "answerIndex": 1,
+      "explanation": "Seasonal attenuation swings from temperature-dependent fiber loss and cold-weather cable contraction/microbend are a known, recurring phenomenon — exactly the kind of predictable degradation the link-budget safety margin is designed to absorb, so the link keeps working across seasons without needing to be re-engineered each winter."
+    },
+    {
+      "id": "T02-final-Q23",
+      "type": "mc",
+      "prompt": "What connector-related standard governs pass/fail end-face inspection criteria, and why does this matter for both DWDM systems and routine troubleshooting?",
+      "choices": [
+        "IEC 61300-3-35 — because a dirty or defective connector end-face can cause anything from a single mated-pair loss anomaly (routine troubleshooting) to a multi-channel DWDM outage from back-reflection on a shared path",
+        "ANSI O5.1 — a wood-pole classification standard unrelated to connectors",
+        "29 CFR 1910.268 — an OSHA telecom safety standard unrelated to connector cleanliness",
+        "NESC C2-2023 — an aerial line clearance standard unrelated to connectors"
+      ],
+      "answerIndex": 0,
+      "explanation": "IEC 61300-3-35 defines the visual inspection pass/fail zones for connector end-faces. Because a single dirty connector can desensitize every channel sharing a DWDM path, and connector contamination is the leading cause of new-install troubleshooting calls, this standard underlies both scenarios.",
+      "citation": "IEC 61300-3-35 [edition not independently pinned down this session; UNVERIFIED-EXACT for the specific revision]."
+    },
+    {
+      "id": "T02-final-Q24",
+      "type": "drag-match",
+      "prompt": "Match each fiber-physics concept to the phenomenon or rule it describes.",
+      "items": [
+        { "id": "i_tir", "label": "Confines light inside the core via the core/cladding index difference" },
+        { "id": "i_cd", "label": "Wavelength-dependent speed difference; scales LINEARLY with fiber length" },
+        { "id": "i_pmd", "label": "Polarization-dependent timing effect; scales with SQRT of fiber length" },
+        { "id": "i_margin", "label": "Reserved link-budget headroom absorbing aging, temperature, and wear over decades" }
+      ],
+      "targets": [
+        { "id": "t_tir", "label": "Total Internal Reflection" },
+        { "id": "t_cd", "label": "Chromatic Dispersion" },
+        { "id": "t_pmd", "label": "Polarization Mode Dispersion" },
+        { "id": "t_margin", "label": "Safety margin" }
+      ],
+      "correctMap": { "t_tir": "i_tir", "t_cd": "i_cd", "t_pmd": "i_pmd", "t_margin": "i_margin" },
+      "explanation": "These four concepts span the course: TIR is the basic confinement mechanism; CD and PMD are the two dispersion mechanisms with different length-scaling behavior; and the safety margin is the practical engineering tool that keeps designs robust against real-world variance."
+    }
+  ]
+}

@@ -5,6 +5,7 @@ import React from 'react';
 import LessonLayout from '../../components/LessonLayout.jsx';
 import SliderExploration from '../../components/primitives/SliderExploration.jsx';
 import Quiz from '../../components/primitives/Quiz.jsx';
+import GatedAssessment from '../../components/primitives/GatedAssessment.jsx';
 import Flashcard from '../../components/Flashcard.jsx';
 
 export const meta = {
@@ -311,54 +312,61 @@ export default function T02L10_FiberCharacterizationTesting() {
       </section>
 
       {/* ── PER-LESSON QUIZ ──────────────────────────────────────────────── */}
-      <Quiz
+      <GatedAssessment
+        courseId="T02"
+        assessmentId="T02-L10"
         title="T02.L10 Check — Fiber Characterization"
-        mode="multiple-choice"
-        questions={[
-          {
-            id: 'T02-L10-Q1',
-            type: 'mc',
-            prompt:
-              'A carrier is upgrading an 80 km G.652 fiber route from 10 Gb/s to 100 Gb/s DWDM. Which characterization tests are most important before activation?',
-            choices: [
-              'Only OTDR testing at 1310 nm — the route is already G.652',
-              'CD characterization (to calculate dispersion compensation module requirements) and PMD measurement (to verify the route is within 100G coherent system tolerances)',
-              'Attenuation cut-back test on all fiber reels — no field tests needed',
-              'Connector end-face inspection only — 100G is self-correcting for dispersion',
-            ],
-            answerIndex: 1,
-            explanation:
-              'For a DWDM upgrade, the critical parameters are: (1) CD profile per channel to calculate how much dispersion compensation is needed, and (2) PMD to confirm the fiber is within the 100G coherent system\'s tolerance. A standard OTDR trace won\'t reveal the CD or PMD of the fiber — those require dedicated characterization instruments. Connector inspection is also important but isn\'t the characterization gap.',
-            citation: 'ITU-T G.652.D; ITU-T G.Sup39 [confirm edition] — field test methods for WDM transmission.',
-          },
-          {
-            id: 'T02-L10-Q2',
-            type: 'mc',
-            prompt:
-              'An OTDR trace shows a "gainer" event at a splice — the splice appears to have −0.2 dB loss (i.e., power increased after the splice). What should the technician do?',
-            choices: [
-              'Accept the result — the splice is working perfectly and adding signal',
-              'Replace the splice immediately — negative loss indicates a bad physical connection',
-              'Run a bidirectional OTDR test and average the two measurements — the apparent gain is a backscatter artifact caused by differing fiber backscatter coefficients, not real optical gain',
-              'Re-run the OTDR with a shorter pulse width to eliminate the artifact',
-            ],
-            answerIndex: 2,
-            explanation:
-              'Gainers are OTDR backscatter artifacts when two fibers with different backscatter coefficients are spliced. The bidirectional average is the true splice loss — if one direction shows −0.2 dB and the other shows +0.4 dB, the true splice loss is (−0.2 + 0.4) / 2 = 0.1 dB. Accepting a negative loss reading as real would cause you to record a splice loss that doesn\'t exist.',
-            fieldNote:
-              'Bidirectional OTDR testing is standard practice (IEC 61280-4-2). Never sign off on a splice log with un-averaged one-directional values — especially when you see gainers. Most OTDR analysis software can automatically compute bidirectional averages when you load both traces.',
-          },
-          {
-            id: 'T02-L10-Q3',
-            type: 'fill-in-blank',
-            prompt:
-              'The field method for CD measurement that uses a modulated broadband source and measures the phase difference between wavelengths is called the ____ method.',
-            answer: /phase.?shift|phase shift/i,
-            answerDisplay: 'phase shift method',
-            explanation:
-              'The phase shift method measures chromatic dispersion by injecting a sinusoidally modulated broadband optical signal and measuring the relative phase of the detected signal at different wavelengths. The phase difference is proportional to the group delay difference, from which the dispersion coefficient D (ps/nm·km) is calculated.',
-          },
-        ]}
+        fallback={
+        <Quiz
+          title="T02.L10 Check — Fiber Characterization"
+          mode="multiple-choice"
+          questions={[
+            {
+              id: 'T02-L10-Q1',
+              type: 'mc',
+              prompt:
+                'A carrier is upgrading an 80 km G.652 fiber route from 10 Gb/s to 100 Gb/s DWDM. Which characterization tests are most important before activation?',
+              choices: [
+                'Only OTDR testing at 1310 nm — the route is already G.652',
+                'CD characterization (to calculate dispersion compensation module requirements) and PMD measurement (to verify the route is within 100G coherent system tolerances)',
+                'Attenuation cut-back test on all fiber reels — no field tests needed',
+                'Connector end-face inspection only — 100G is self-correcting for dispersion',
+              ],
+              answerIndex: 1,
+              explanation:
+                'For a DWDM upgrade, the critical parameters are: (1) CD profile per channel to calculate how much dispersion compensation is needed, and (2) PMD to confirm the fiber is within the 100G coherent system\'s tolerance. A standard OTDR trace won\'t reveal the CD or PMD of the fiber — those require dedicated characterization instruments. Connector inspection is also important but isn\'t the characterization gap.',
+              citation: 'ITU-T G.652.D; ITU-T G.Sup39 [confirm edition] — field test methods for WDM transmission.',
+            },
+            {
+              id: 'T02-L10-Q2',
+              type: 'mc',
+              prompt:
+                'An OTDR trace shows a "gainer" event at a splice — the splice appears to have −0.2 dB loss (i.e., power increased after the splice). What should the technician do?',
+              choices: [
+                'Accept the result — the splice is working perfectly and adding signal',
+                'Replace the splice immediately — negative loss indicates a bad physical connection',
+                'Run a bidirectional OTDR test and average the two measurements — the apparent gain is a backscatter artifact caused by differing fiber backscatter coefficients, not real optical gain',
+                'Re-run the OTDR with a shorter pulse width to eliminate the artifact',
+              ],
+              answerIndex: 2,
+              explanation:
+                'Gainers are OTDR backscatter artifacts when two fibers with different backscatter coefficients are spliced. The bidirectional average is the true splice loss — if one direction shows −0.2 dB and the other shows +0.4 dB, the true splice loss is (−0.2 + 0.4) / 2 = 0.1 dB. Accepting a negative loss reading as real would cause you to record a splice loss that doesn\'t exist.',
+              fieldNote:
+                'Bidirectional OTDR testing is standard practice (IEC 61280-4-2). Never sign off on a splice log with un-averaged one-directional values — especially when you see gainers. Most OTDR analysis software can automatically compute bidirectional averages when you load both traces.',
+            },
+            {
+              id: 'T02-L10-Q3',
+              type: 'fill-in-blank',
+              prompt:
+                'The field method for CD measurement that uses a modulated broadband source and measures the phase difference between wavelengths is called the ____ method.',
+              answer: /phase.?shift|phase shift/i,
+              answerDisplay: 'phase shift method',
+              explanation:
+                'The phase shift method measures chromatic dispersion by injecting a sinusoidally modulated broadband optical signal and measuring the relative phase of the detected signal at different wavelengths. The phase difference is proportional to the group delay difference, from which the dispersion coefficient D (ps/nm·km) is calculated.',
+            },
+          ]}
+        />
+        }
       />
 
     </LessonLayout>

@@ -74,7 +74,7 @@
 | OSP/ISP training SPA (`osp-training/` → `public/training/`), competency-gated completion (≥70%/competency, no manual button) | ✅ (infra) | — | — |
 | Self-signup (`trainee`), training-only lockdown, admin per-person progress + drill-down | ✅ | — | — |
 | Per-staff content visibility (track→subject→lesson, presets + overrides, migration 0079) | ✅ | **Better model:** status-driven default role (see only completed/verified), expand from there — vs current manual per-user | Retarget to content-status defaults? |
-| **Curriculum content accuracy** (T01–T22 + C04/C05) | 🔴 | R18 incident (authored from memory) QUARANTINED; standing gate = research-log + independent red-team per topic; ~13 topics lack any research foundation; live citation errors flagged | CEO triage 2026-06-28: the 6-agent audit never produced output; ~0 topics gated to bar → overhaul all per-topic via the gate in teaching order (lean, no upfront audit pass) |
+| **Curriculum content accuracy** (T01–T22 + C04/C05) | 🟡 | **⭐ LAUNCH SET LIVE 2026-07-02: T01/T18/T02/T03/T04 merged + flipped on `launchfiber.app`** (assessment engine live; per-lesson pools + topic-final; capstones retired D031; every Q gated: author≠RT + Auditor content-audit + D027 log-every-cite + D033 fresh-grep + D028 render-test — all 54 lessons render clean). Rest (T09/T05/T06…T22, C04/C05) authored or WIP but **HIDDEN/unpublished**. R18 authored-from-memory quarantine STILL STANDING for any ungated content. | next: continue the DAG (T09→T05→…) through the gate; flip as each clears |
 | Interactive components + broken-tool repair | 🟡 | Some tools reported broken; component health check needed | — |
 | Add-staff path (so completion tracking is usable) | 🟡/❓ | See System F | — |
 

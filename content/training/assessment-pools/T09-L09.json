@@ -1,0 +1,116 @@
+{
+  "assessmentId": "T09-L09",
+  "kind": "lesson",
+  "courseId": "T09",
+  "lessonId": "T09.L09",
+  "drawCount": 4,
+  "passThreshold": 70,
+  "pool": [
+    {
+      "id": "T09-L09-Q1",
+      "type": "mc",
+      "prompt": "A BEAD-funded fiber project crosses tribal land belonging to a federally recognized tribe that has an approved THPO program. Who is the primary Section 106 consulting party for the portion of the route on tribal land?",
+      "choices": [
+        "The state SHPO remains the sole primary consulting party regardless of any THPO program",
+        "The tribe's THPO assumes the SHPO's consulting-party role for the portion of the route on tribal land — the SHPO is still notified, but the THPO leads that segment's review",
+        "The federal lead agency handles historic-property review directly with no THPO or SHPO involvement",
+        "The county historic preservation office takes over from the SHPO on tribal land"
+      ],
+      "answerIndex": 1,
+      "explanation": "Under the NHPA, a tribe with an approved THPO program assumes the SHPO's consulting-party role for historic properties on that tribe's tribal land. The SHPO remains informed, but the THPO leads the review for the tribal-land portion of the route; for any off-tribal-land portions of the same route, the SHPO remains the primary consulting party.",
+      "citation": "54 USC 302702; 54 USC 306108."
+    },
+    {
+      "id": "T09-L09-Q2",
+      "type": "mc",
+      "prompt": "Why does government-to-government tribal consultation often extend the Section 106 timeline beyond the standard 30-day SHPO review window?",
+      "choices": [
+        "It never actually extends the timeline — THPO review always completes faster than SHPO review",
+        "Government-to-government consultation follows protocols distinct from a standard agency-to-SHPO exchange (e.g., formal tribal council engagement, respect for tribal government scheduling and internal decision processes, and often in-person or more extensive dialogue for culturally sensitive findings) — these protocol requirements can reasonably extend the timeline beyond the 30-day figure that applies to a routine SHPO submission",
+        "The extension is due entirely to tribes charging higher review fees than SHPOs",
+        "It is illegal for tribal consultation to take longer than 30 days under any circumstances"
+      ],
+      "answerIndex": 1,
+      "explanation": "Government-to-government consultation is a distinct protocol from a standard SHPO submission — it reflects the tribe's sovereign governmental status and often involves formal tribal council engagement and culturally sensitive dialogue that a routine 30-day SHPO exchange doesn't require, which is why project teams should plan for a longer, less rigidly-clocked timeline for meaningful tribal consultation rather than assuming the standard 30-day figure applies uniformly."
+    },
+    {
+      "id": "T09-L09-Q3",
+      "type": "mc",
+      "prompt": "A fiber project in rural Georgia crosses an area that a federally recognized tribe based in Alabama has identified as an ancestral hunting territory — not current tribal land. The route has a federal nexus (BEAD funding). How does this affect the Section 106 process?",
+      "choices": [
+        "It does not affect the process at all, since the tribe is not physically located near the project and the land is not current tribal land",
+        "Federal agencies must consult with a tribe that attaches religious and cultural significance to historic properties that may be affected, regardless of the current physical distance between the tribe and the property, and regardless of whether the land is current tribal land — historic properties of cultural significance are frequently located on ancestral, aboriginal, or ceded lands far from a tribe's present location",
+        "Consultation is only required if the tribe currently owns the specific parcel in question",
+        "Consultation is optional and can be skipped if the SHPO does not flag any concern"
+      ],
+      "answerIndex": 1,
+      "explanation": "The consultation obligation under 36 CFR 800.2(c)(2)(ii) turns on cultural/religious significance to a tribe, not on current tribal-land ownership or geographic proximity — a tribe located in a different state can still be an appropriate consulting party for a documented ancestral, aboriginal, or ceded-land area, which is a common and legally significant scenario in Section 106 practice.",
+      "citation": "36 CFR 800.2(c)(2)(ii); 54 USC 306108."
+    },
+    {
+      "id": "T09-L09-Q4",
+      "type": "mc",
+      "prompt": "When does NHO (Native Hawaiian Organization) consultation apply to a fiber project located on the continental United States?",
+      "choices": [
+        "Never — NHO consultation only applies to projects physically located in Hawaii",
+        "It can apply outside Hawaii when a project may affect documented sites of Native Hawaiian cultural or ancestral significance — an uncommon but real scenario tied to the specific historic properties in the APE, not to geographic proximity to Hawaii",
+        "NHO consultation is legally identical to THPO consultation with no distinction",
+        "NHO consultation only applies to federally-owned land"
+      ],
+      "answerIndex": 1,
+      "explanation": "Like tribal consultation, NHO consultation is triggered by cultural/religious significance documented within the specific APE, not by geographic proximity to Hawaii — while uncommon on the continental US, it can apply where a project's APE includes a documented site of Native Hawaiian cultural or ancestral significance (for example, near a known heiau or burial site connected to Native Hawaiian history outside Hawaii)."
+    },
+    {
+      "id": "T09-L09-Q5",
+      "type": "mc",
+      "prompt": "A project manager assumes tribal consultation is only necessary if the route physically crosses land currently owned by a federally recognized tribe. Why is this assumption incomplete?",
+      "choices": [
+        "It is not incomplete — current tribal-land ownership is the only trigger for consultation",
+        "It ignores the broader trigger of cultural/religious significance — a tribe can be an appropriate consulting party for a documented ancestral, aboriginal, or ceded-land area even when the route does not cross current tribal land and the tribe's present location is physically distant from the project",
+        "It is incomplete only because it should also include state-recognized (not just federally recognized) tribes",
+        "It is incomplete only for underground routes, not aerial routes"
+      ],
+      "answerIndex": 1,
+      "explanation": "Restricting the consultation trigger to current tribal-land ownership misses the actual regulatory standard, which turns on documented cultural/religious significance to a tribe — a project team relying only on the current-ownership assumption risks omitting a consulting party whose ancestral-land interest in the APE is legally recognized regardless of present-day land ownership or the tribe's physical location."
+    },
+    {
+      "id": "T09-L09-Q6",
+      "type": "mc",
+      "prompt": "A project schedule assumes tribal Section 106 consultation will complete on the same 30-day timeline used for a routine SHPO review, based on how other permits in the project have gone. What is the risk of this scheduling assumption?",
+      "choices": [
+        "There is no risk — tribal and SHPO consultation always run on identical timelines",
+        "The risk is a schedule overrun: government-to-government consultation protocols (formal tribal council engagement, respect for tribal governmental decision processes) can reasonably extend beyond the 30-day figure, so treating it as interchangeable with a routine SHPO review risks an inaccurate critical-path estimate for the overall permitting schedule",
+        "The risk is that tribal consultation will always complete faster than 30 days, making the schedule overly conservative",
+        "There is no schedule risk because tribal consultation is not part of the federal permitting critical path"
+      ],
+      "answerIndex": 1,
+      "explanation": "Because meaningful government-to-government consultation follows a different protocol than a routine SHPO submission, assuming it fits the same 30-day window risks understating the true critical-path duration for the overall Section 106 process — a project team should budget tribal consultation as a distinct, potentially longer track rather than folding it into the standard SHPO timeline assumption."
+    },
+    {
+      "id": "T09-L09-Q7",
+      "type": "mc",
+      "prompt": "A route crosses tribal land belonging to a tribe with an approved THPO program, then continues off tribal land for several more miles through areas with no documented tribal cultural significance. How should the Section 106 consulting-party structure for this single route be organized?",
+      "choices": [
+        "One party (either the THPO or the SHPO, whichever responds first) handles the entire route regardless of segment",
+        "The THPO leads review for the on-tribal-land segment while the SHPO remains the primary consulting party for the off-tribal-land segments — a single route can have different lead consulting parties for different segments based on land status and documented cultural significance",
+        "The federal lead agency must choose only one of the two and exclude the other from the entire route",
+        "Neither the THPO nor the SHPO has jurisdiction once a route crosses tribal land at any point"
+      ],
+      "answerIndex": 1,
+      "explanation": "Section 106 consulting-party structure is segment-specific, not route-wide: the THPO's assumption of SHPO functions applies to the tribal-land portion, while the SHPO remains the consulting party for the off-tribal-land segments of the same route — a single project can legitimately have more than one lead consulting party across its length."
+    },
+    {
+      "id": "T09-L09-Q8",
+      "type": "mc",
+      "prompt": "What is the practical reason a project team should identify potential tribal and NHO consulting-party interests EARLY in project planning, rather than waiting for the SHPO to flag a concern during standard review?",
+      "choices": [
+        "There is no benefit to early identification — tribal consultation timing is unaffected by when it starts",
+        "Because government-to-government consultation can take substantially longer than a routine SHPO review, and because the consultation trigger (cultural/religious significance to ancestral lands) is not something a SHPO is necessarily positioned to identify on the tribe's behalf, waiting for the SHPO to surface a tribal interest risks discovering a schedule-critical consultation requirement late, after other project milestones have already been planned around a shorter timeline",
+        "SHPOs are legally required to identify all tribal interests, so no independent identification is ever necessary",
+        "Early identification is only relevant for NHO consultation, never for THPO/tribal consultation"
+      ],
+      "answerIndex": 1,
+      "explanation": "The SHPO's review does not necessarily surface every tribal or NHO cultural interest in the APE, since those interests are specific to the tribe/NHO's own knowledge of ancestral, aboriginal, or ceded lands — proactively identifying potential tribal/NHO consulting parties early avoids the risk of discovering a longer-than-planned consultation requirement late in the schedule, after other project milestones were set around an incomplete picture of the consulting-party landscape."
+    }
+  ]
+}

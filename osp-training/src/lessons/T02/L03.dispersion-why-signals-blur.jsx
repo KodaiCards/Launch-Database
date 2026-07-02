@@ -5,6 +5,7 @@ import React from 'react';
 import LessonLayout from '../../components/LessonLayout.jsx';
 import SliderExploration from '../../components/primitives/SliderExploration.jsx';
 import Quiz from '../../components/primitives/Quiz.jsx';
+import GatedAssessment from '../../components/primitives/GatedAssessment.jsx';
 import Flashcard from '../../components/Flashcard.jsx';
 
 export const meta = {
@@ -328,86 +329,93 @@ Step 5: ΔT = 170 ps`}
       </section>
 
       {/* ── PER-LESSON QUIZ ──────────────────────────────────────────────── */}
-      <Quiz
+      <GatedAssessment
+        courseId="T02"
+        assessmentId="T02-L03"
         title="T02.L03 Check — Dispersion"
-        mode="multiple-choice"
-        questions={[
-          {
-            id: 'T02-L03-Q1',
-            type: 'mc',
-            prompt:
-              'A junior designer asks why 1550 nm has the lowest fiber attenuation but is not always the best choice for a short 5 km link. The most accurate answer is:',
-            choices: [
-              '1550 nm transceivers are banned for runs under 10 km by TIA standards',
-              'At 1550 nm, chromatic dispersion in G.652 is approximately 17 ps/(nm·km) — on short links the attenuation savings is minimal but the dispersion is higher, and 1310 nm transceiver costs are often lower',
-              '1550 nm cannot be used over single-mode fiber under 10 km due to power constraints',
-              '1310 nm has lower attenuation than 1550 nm on short links',
-            ],
-            answerIndex: 1,
-            explanation:
-              'On a 5 km SMF link, the difference in attenuation between 1310 and 1550 nm is small in absolute dB terms. The 1310 nm window sits near the G.652 zero-dispersion wavelength, making it more forgiving for lower-cost transceivers. 1550 nm pays its way only when the lower attenuation matters (long haul) or when DWDM/WDM multiplexing is required.',
-            citation:
-              'G.652 zero-dispersion wavelength: 1300–1324 nm. CD at 1550 nm: ~17 ps/(nm·km). ITU-T G.652.D (2024).',
-            fieldNote:
-              'On short campus or loop runs, designers default to 1310 nm BiDi or LR optics — cheaper, plentiful, no dispersion compensation needed. 1550 nm enters when DWDM, long-haul, or amplification is in the picture.',
-          },
-          {
-            id: 'T02-L03-Q2',
-            type: 'dragdrop',
-            prompt:
-              'Match each dispersion type to its primary cause.',
-            items: [
-              { id: 'cd', label: 'Chromatic Dispersion (CD)' },
-              { id: 'modal', label: 'Modal Dispersion' },
-              { id: 'pmd', label: 'Polarization Mode Dispersion (PMD)' },
-            ],
-            targets: [
-              { id: 'speed', label: 'Different wavelengths travel at different speeds in glass (SMF)' },
-              { id: 'path', label: 'Different light paths (modes) travel different distances (MMF)' },
-              { id: 'polar', label: 'Different polarization orientations arrive at slightly different times (SMF at high bit rates)' },
-            ],
-            correctMap: {
-              speed: 'cd',
-              path: 'modal',
-              polar: 'pmd',
+        fallback={
+        <Quiz
+          title="T02.L03 Check — Dispersion"
+          mode="multiple-choice"
+          questions={[
+            {
+              id: 'T02-L03-Q1',
+              type: 'mc',
+              prompt:
+                'A junior designer asks why 1550 nm has the lowest fiber attenuation but is not always the best choice for a short 5 km link. The most accurate answer is:',
+              choices: [
+                '1550 nm transceivers are banned for runs under 10 km by TIA standards',
+                'At 1550 nm, chromatic dispersion in G.652 is approximately 17 ps/(nm·km) — on short links the attenuation savings is minimal but the dispersion is higher, and 1310 nm transceiver costs are often lower',
+                '1550 nm cannot be used over single-mode fiber under 10 km due to power constraints',
+                '1310 nm has lower attenuation than 1550 nm on short links',
+              ],
+              answerIndex: 1,
+              explanation:
+                'On a 5 km SMF link, the difference in attenuation between 1310 and 1550 nm is small in absolute dB terms. The 1310 nm window sits near the G.652 zero-dispersion wavelength, making it more forgiving for lower-cost transceivers. 1550 nm pays its way only when the lower attenuation matters (long haul) or when DWDM/WDM multiplexing is required.',
+              citation:
+                'G.652 zero-dispersion wavelength: 1300–1324 nm. CD at 1550 nm: ~17 ps/(nm·km). ITU-T G.652.D (2024).',
+              fieldNote:
+                'On short campus or loop runs, designers default to 1310 nm BiDi or LR optics — cheaper, plentiful, no dispersion compensation needed. 1550 nm enters when DWDM, long-haul, or amplification is in the picture.',
             },
-            explanation:
-              'Chromatic dispersion (CD): wavelength-dependent speed difference in SMF. Modal dispersion: path-length difference between modes in MMF. PMD: polarization-dependent speed difference in SMF at high bit rates.',
-            citation:
-              'ITU-T G.652.D; FOA Reference Guide — Fiber Optic Fundamentals.',
-          },
-          {
-            id: 'T02-L03-Q3',
-            type: 'mc',
-            prompt:
-              'You are working a 100 km SMF link at 1550 nm. Chromatic dispersion D = 17 ps/(nm·km), and the laser spectral width Δλ = 0.1 nm. What is the total chromatic dispersion (ΔT)?',
-            choices: [
-              '17 ps',
-              '1.7 ps',
-              '170 ps',
-              '1700 ps',
-            ],
-            answerIndex: 2,
-            explanation:
-              'ΔT = D × Δλ × L = 17 ps/(nm·km) × 0.1 nm × 100 km = 170 ps. This is wider than one bit period at 10 Gb/s (100 ps/bit), which is why dispersion compensation is needed on 10G long-haul SMF links at 1550 nm.',
-            citation: 'ITU-T G.652 dispersion coefficient; link budget calculation methodology.',
-          },
-          {
-            id: 'T02-L03-Q4',
-            type: 'mc',
-            prompt:
-              'Why does multimode fiber have a bandwidth rating (MHz·km) while single-mode fiber does not need one?',
-            choices: [
-              'Single-mode fiber is too expensive to test for bandwidth',
-              'Multimode fiber bandwidth is limited by modal dispersion — different modes travel different path lengths and arrive at different times. Single-mode carries only one mode, so modal dispersion is zero.',
-              'Single-mode fiber has infinite bandwidth at all distances',
-              'The MHz·km rating applies to the outer jacket, not the fiber itself',
-            ],
-            answerIndex: 1,
-            explanation:
-              'Single-mode fiber\'s tiny core allows only the fundamental (lowest-order) mode to propagate — there are no higher-order modes to arrive late. Modal dispersion is zero. SMF bandwidth is limited by chromatic dispersion and PMD instead, but those don\'t produce a simple MHz·km figure — they are compensated at the system level.',
-          },
-        ]}
+            {
+              id: 'T02-L03-Q2',
+              type: 'dragdrop',
+              prompt:
+                'Match each dispersion type to its primary cause.',
+              items: [
+                { id: 'cd', label: 'Chromatic Dispersion (CD)' },
+                { id: 'modal', label: 'Modal Dispersion' },
+                { id: 'pmd', label: 'Polarization Mode Dispersion (PMD)' },
+              ],
+              targets: [
+                { id: 'speed', label: 'Different wavelengths travel at different speeds in glass (SMF)' },
+                { id: 'path', label: 'Different light paths (modes) travel different distances (MMF)' },
+                { id: 'polar', label: 'Different polarization orientations arrive at slightly different times (SMF at high bit rates)' },
+              ],
+              correctMap: {
+                speed: 'cd',
+                path: 'modal',
+                polar: 'pmd',
+              },
+              explanation:
+                'Chromatic dispersion (CD): wavelength-dependent speed difference in SMF. Modal dispersion: path-length difference between modes in MMF. PMD: polarization-dependent speed difference in SMF at high bit rates.',
+              citation:
+                'ITU-T G.652.D; FOA Reference Guide — Fiber Optic Fundamentals.',
+            },
+            {
+              id: 'T02-L03-Q3',
+              type: 'mc',
+              prompt:
+                'You are working a 100 km SMF link at 1550 nm. Chromatic dispersion D = 17 ps/(nm·km), and the laser spectral width Δλ = 0.1 nm. What is the total chromatic dispersion (ΔT)?',
+              choices: [
+                '17 ps',
+                '1.7 ps',
+                '170 ps',
+                '1700 ps',
+              ],
+              answerIndex: 2,
+              explanation:
+                'ΔT = D × Δλ × L = 17 ps/(nm·km) × 0.1 nm × 100 km = 170 ps. This is wider than one bit period at 10 Gb/s (100 ps/bit), which is why dispersion compensation is needed on 10G long-haul SMF links at 1550 nm.',
+              citation: 'ITU-T G.652 dispersion coefficient; link budget calculation methodology.',
+            },
+            {
+              id: 'T02-L03-Q4',
+              type: 'mc',
+              prompt:
+                'Why does multimode fiber have a bandwidth rating (MHz·km) while single-mode fiber does not need one?',
+              choices: [
+                'Single-mode fiber is too expensive to test for bandwidth',
+                'Multimode fiber bandwidth is limited by modal dispersion — different modes travel different path lengths and arrive at different times. Single-mode carries only one mode, so modal dispersion is zero.',
+                'Single-mode fiber has infinite bandwidth at all distances',
+                'The MHz·km rating applies to the outer jacket, not the fiber itself',
+              ],
+              answerIndex: 1,
+              explanation:
+                'Single-mode fiber\'s tiny core allows only the fundamental (lowest-order) mode to propagate — there are no higher-order modes to arrive late. Modal dispersion is zero. SMF bandwidth is limited by chromatic dispersion and PMD instead, but those don\'t produce a simple MHz·km figure — they are compensated at the system level.',
+            },
+          ]}
+        />
+        }
       />
 
     </LessonLayout>

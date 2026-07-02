@@ -7,6 +7,7 @@ import LessonLayout from '../../components/LessonLayout.jsx';
 import Flashcard from '../../components/Flashcard.jsx';
 import BranchingScenario from '../../components/primitives/BranchingScenario.jsx';
 import Quiz from '../../components/primitives/Quiz.jsx';
+import GatedAssessment from '../../components/primitives/GatedAssessment.jsx';
 
 export const meta = {
   id: 'T01.L05',
@@ -25,7 +26,7 @@ export const meta = {
     'testing',
     'as-built',
     'close-out',
-    'RUS Form 219',
+    'RUS Form 515',
   ],
   vocabulary_assumed: [
     { term: 'OSP', source_lesson_id: 'T01.L01' },
@@ -70,9 +71,9 @@ export default function T01L05_OspProjectLifecycle() {
           </thead>
           <tbody className="text-slate-300/90 text-sm">
             <tr className="border-t border-white/10">
-              <td className="px-3 py-2 font-mono">RUS Form 219</td>
-              <td className="px-3 py-2">Rural Utilities Service Form 219</td>
-              <td className="px-3 py-2">The USDA RUS project completion certification form required at close-out for RUS-funded OSP telecom projects. Governed by 7 CFR Part 1753 (RUS Telecommunications Program) [confirm specific section]. Must be PE-signed. Accompanies as-built drawings, splice records, and OTDR test records. Note: 7 CFR Part 1726 governs the Electric Borrowers program — a separate RUS program; do not cite 1726 for telecom close-out.</td>
+              <td className="px-3 py-2 font-mono">RUS Form 515</td>
+              <td className="px-3 py-2">Telecommunications System Construction Contract</td>
+              <td className="px-3 py-2">RUS's standard telecom construction contract form. Closeout documentation for RUS-funded OSP telecom projects is governed by 7 CFR 1753.49 (Closeout documents). Must be PE-signed. Accompanies as-built drawings, splice records, and OTDR test records. Note: RUS Form 219 ("Inventory of Work Orders," 7 CFR 1726.405) is an Electric Program form — a separate RUS program; do not cite Form 219 for telecom close-out.</td>
             </tr>
             <tr className="border-t border-white/10">
               <td className="px-3 py-2 font-mono">OTMR</td>
@@ -143,7 +144,8 @@ export default function T01L05_OspProjectLifecycle() {
             <strong>As-Built Documentation and Close-Out</strong> — After testing passes, the
             "as-built" package is created: updated drawings showing what was actually built
             (vs. what was designed), splice records, test records, permit copies. For
-            RUS-program projects, this includes RUS Form 219 and related documentation.
+            RUS-program projects, this includes the 7 CFR 1753.49 closeout documents and
+            related paperwork under the RUS Form 515 construction contract.
             The as-built package is handed over to the client and becomes the permanent
             record of the network.
           </li>
@@ -261,10 +263,10 @@ export default function T01L05_OspProjectLifecycle() {
           drawings) from the construction. Documentation team compiles the package.
         </p>
         <p className="text-sm text-slate-300/90 mt-1">
-          <strong>Key output for RUS-program projects:</strong> RUS Form 219 (project completion
-          report), certified as-built drawings, splice records, OTDR test records, permit
-          copies. This package is required before RUS will advance funds on the project and
-          before the network is accepted by the client.
+          <strong>Key output for RUS-program projects:</strong> the 7 CFR 1753.49 closeout
+          documents package, certified as-built drawings, splice records, OTDR test records,
+          permit copies. This package is required before RUS will advance funds on the project
+          and before the network is accepted by the client.
         </p>
       </section>
 
@@ -320,8 +322,8 @@ export default function T01L05_OspProjectLifecycle() {
           { id: 'T01-L05-FC-construction', front: 'Construction', back: 'Stage 5: installing the physical cable plant — aerial cable on poles, conduit underground, splice cases, handholes. Cables are typically installed first; splicing happens in a separate pass.' },
           { id: 'T01-L05-FC-testing', front: 'Testing', back: 'Stage 6: every fiber in the cable plant is tested. Tier 1 (OLTS — end-to-end loss) and Tier 2 (OTDR — event location and trace). Results compared to the design loss budget. Failed fibers are repaired before acceptance.' },
           { id: 'T01-L05-FC-as-built', front: 'As-built', back: 'Updated drawings that show what was actually built vs. what was designed. Part of the close-out package. Becomes the permanent O&M record — a technician in 2045 needs the as-built to trace a fault back to a specific splice case and fiber.' },
-          { id: 'T01-L05-FC-close-out', front: 'Close-out', back: 'Stage 7: the final documentation package handed to the client — as-built drawings, splice records, test records, permit copies. For RUS-program projects includes RUS Form 219. Required before RUS advances funds and before client acceptance.' },
-          { id: 'T01-L05-FC-rus-form-219', front: 'RUS Form 219', back: 'The USDA Rural Utilities Service project completion certification form. Required for RUS-funded OSP projects at close-out. Must be signed by the PE responsible for the project. Accompanies the as-built drawings, splice records, and OTDR test records.' },
+          { id: 'T01-L05-FC-close-out', front: 'Close-out', back: 'Stage 7: the final documentation package handed to the client — as-built drawings, splice records, test records, permit copies. For RUS-program projects, governed by 7 CFR 1753.49. Required before RUS advances funds and before client acceptance.' },
+          { id: 'T01-L05-FC-rus-form-515', front: 'RUS Form 515', back: 'The Telecommunications System Construction Contract — RUS\'s standard telecom construction contract form. Closeout documentation for RUS-funded OSP projects is governed by 7 CFR 1753.49, must be PE-signed, and accompanies the as-built drawings, splice records, and OTDR test records.' },
           { id: 'T01-L05-FC-otmr', front: 'OTMR (One-Touch Make-Ready)', back: 'FCC-mandated process (47 CFR 1.1411) that allows a qualified contractor hired by the new attacher to perform make-ready work in a single visit rather than waiting for each existing attachment owner to schedule separate work. Reduces make-ready timelines significantly.' },
         ]}
       />
@@ -381,69 +383,76 @@ export default function T01L05_OspProjectLifecycle() {
       />
 
       {/* ── PRACTICE QUIZ ───────────────────────────────────────────────── */}
-      <Quiz
+      <GatedAssessment
+        courseId="T01"
+        assessmentId="T01-L05"
         title="T01.L05 Check — OSP Project Lifecycle"
-        mode="multiple-choice"
-        questions={[
-          {
-            id: 'T01-L05-Q1',
-            type: 'mc',
-            prompt:
-              'What is the primary purpose of the as-built documentation package delivered at close-out?',
-            choices: [
-              'To satisfy the project manager that the construction crew followed the design exactly',
-              'To serve as the permanent record of what was actually built — used for O&M, fault troubleshooting, and future network expansion for the life of the infrastructure',
-              'To justify the project cost to the funding agency',
-              'To document the test results that prove the fiber meets manufacturer specifications',
-            ],
-            answerIndex: 1,
-            explanation:
-              'The as-built is a 25+ year document. It\'s used by O&M technicians to locate faults, by expansion designers to understand the existing plant, and by regulators to verify compliance. While it may also satisfy the client and funding agency, its primary value is as the permanent operational record. Test records are part of the as-built package but are not the package\'s primary purpose.',
-            citation: 'RUS Bulletin 1751F-630 §14; ANSI/TIA-606-C.',
-          },
-          {
-            id: 'T01-L05-Q2',
-            type: 'mc',
-            prompt:
-              'A construction crew begins installing aerial cable on a pole route while make-ready is still pending approval on two segments. Which risk does this create?',
-            choices: [
-              'No risk — construction and make-ready can proceed in parallel on the same segment',
-              'The crew may install cable that later conflicts with make-ready requirements, forcing rework at the fiber company\'s expense',
-              'Testing cannot occur until all permits are finalized',
-              'The OTDR calibration will be inaccurate if the cable is tested before make-ready is complete',
-            ],
-            answerIndex: 1,
-            explanation:
-              'Make-ready clears the pole so the new attachment fits within NESC clearances and doesn\'t conflict with existing attachments. Installing before make-ready is approved risks installing at the wrong height, creating clearance violations, or needing to move the newly installed cable when the make-ready work moves an existing attachment. This is a rework cost borne by the fiber company under most pole attachment agreements.',
-            citation: '47 CFR 1.1411 (OTMR pole attachment rules); NESC C2-2023 §§23.',
-          },
-          {
-            id: 'T01-L05-Q3',
-            type: 'fill-in-blank',
-            prompt:
-              'The phase of an OSP project where existing attachments on shared poles are moved or modified to make room for the new fiber attachment is called ____.',
-            answer: 'make-ready',
-            answerDisplay: 'make-ready',
-            explanation:
-              'Make-ready work prepares a pole to accept the new attachment within NESC clearances. It may involve raising existing cables, relocating hardware, or replacing the pole if it cannot accommodate the load. The pole owner\'s crew (or their authorized contractor) performs make-ready, but the fiber company bears the cost under standard pole attachment agreements.',
-            citation: '47 CFR 1.1411; FCC 18-111 (OTMR rules).',
-          },
-          {
-            id: 'T01-L05-Q4',
-            type: 'mc',
-            prompt:
-              'In a large OSP project, which two stages most commonly run in parallel (overlapping in time) to shorten the overall project schedule?',
-            choices: [
-              'Survey and design — they cannot start at the same time',
-              'Testing and close-out — close-out forms are prepared while final testing is in progress',
-              'Permitting and make-ready — permitting applications and make-ready requests can be submitted simultaneously after design is substantially complete',
-              'Construction and testing — OTDR testing is performed while cable is still being installed',
-            ],
-            answerIndex: 2,
-            explanation:
-              'Permitting and make-ready are both applications that go to external parties (regulators and the pole owner, respectively) after design is substantially complete. Both have external review/approval timelines outside the project\'s control. Running them in parallel — submitting both as soon as the design supports them — is standard practice to reduce the overall project schedule. Note: actual construction on any segment must still wait until both that segment\'s permits AND make-ready are complete.',
-          },
-        ]}
+        fallback={
+        <Quiz
+          title="T01.L05 Check — OSP Project Lifecycle"
+          mode="multiple-choice"
+          questions={[
+            {
+              id: 'T01-L05-Q1',
+              type: 'mc',
+              prompt:
+                'What is the primary purpose of the as-built documentation package delivered at close-out?',
+              choices: [
+                'To satisfy the project manager that the construction crew followed the design exactly',
+                'To serve as the permanent record of what was actually built — used for O&M, fault troubleshooting, and future network expansion for the life of the infrastructure',
+                'To justify the project cost to the funding agency',
+                'To document the test results that prove the fiber meets manufacturer specifications',
+              ],
+              answerIndex: 1,
+              explanation:
+                'The as-built is a 25+ year document. It\'s used by O&M technicians to locate faults, by expansion designers to understand the existing plant, and by regulators to verify compliance. While it may also satisfy the client and funding agency, its primary value is as the permanent operational record. Test records are part of the as-built package but are not the package\'s primary purpose.',
+              citation: 'RUS Bulletin 1751F-630 §14; ANSI/TIA-606-C.',
+            },
+            {
+              id: 'T01-L05-Q2',
+              type: 'mc',
+              prompt:
+                'A construction crew begins installing aerial cable on a pole route while make-ready is still pending approval on two segments. Which risk does this create?',
+              choices: [
+                'No risk — construction and make-ready can proceed in parallel on the same segment',
+                'The crew may install cable that later conflicts with make-ready requirements, forcing rework at the fiber company\'s expense',
+                'Testing cannot occur until all permits are finalized',
+                'The OTDR calibration will be inaccurate if the cable is tested before make-ready is complete',
+              ],
+              answerIndex: 1,
+              explanation:
+                'Make-ready clears the pole so the new attachment fits within NESC clearances and doesn\'t conflict with existing attachments. Installing before make-ready is approved risks installing at the wrong height, creating clearance violations, or needing to move the newly installed cable when the make-ready work moves an existing attachment. This is a rework cost borne by the fiber company under most pole attachment agreements.',
+              citation: '47 CFR 1.1411 (OTMR pole attachment rules); NESC C2-2023 §§23.',
+            },
+            {
+              id: 'T01-L05-Q3',
+              type: 'fill-in-blank',
+              prompt:
+                'The phase of an OSP project where existing attachments on shared poles are moved or modified to make room for the new fiber attachment is called ____.',
+              answer: 'make-ready',
+              answerDisplay: 'make-ready',
+              explanation:
+                'Make-ready work prepares a pole to accept the new attachment within NESC clearances. It may involve raising existing cables, relocating hardware, or replacing the pole if it cannot accommodate the load. The pole owner\'s crew (or their authorized contractor) performs make-ready, but the fiber company bears the cost under standard pole attachment agreements.',
+              citation: '47 CFR 1.1411; FCC 18-111 (OTMR rules).',
+            },
+            {
+              id: 'T01-L05-Q4',
+              type: 'mc',
+              prompt:
+                'In a large OSP project, which two stages most commonly run in parallel (overlapping in time) to shorten the overall project schedule?',
+              choices: [
+                'Survey and design — they cannot start at the same time',
+                'Testing and close-out — close-out forms are prepared while final testing is in progress',
+                'Permitting and make-ready — permitting applications and make-ready requests can be submitted simultaneously after design is substantially complete',
+                'Construction and testing — OTDR testing is performed while cable is still being installed',
+              ],
+              answerIndex: 2,
+              explanation:
+                'Permitting and make-ready are both applications that go to external parties (regulators and the pole owner, respectively) after design is substantially complete. Both have external review/approval timelines outside the project\'s control. Running them in parallel — submitting both as soon as the design supports them — is standard practice to reduce the overall project schedule. Note: actual construction on any segment must still wait until both that segment\'s permits AND make-ready are complete.',
+            },
+          ]}
+        />
+        }
       />
 
       {/* ── TYING IT TOGETHER ─────────────────────────────────────────── */}

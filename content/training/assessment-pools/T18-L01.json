@@ -1,0 +1,126 @@
+{
+  "assessmentId": "T18-L01",
+  "kind": "lesson",
+  "courseId": "T18",
+  "lessonId": "T18.L01",
+  "drawCount": 4,
+  "passThreshold": 70,
+  "pool": [
+    {
+      "id": "T18-L01-Q1",
+      "type": "mc",
+      "prompt": "A fiber crew must work in a manhole adjacent to a sewer main with a potential H2S (sewer gas) hazard. Which action is MOST effective per the hierarchy of controls?",
+      "choices": [
+        "Require all workers to wear full-face respirators (PPE)",
+        "Post a sign at the manhole warning of the hazard (administrative control)",
+        "Reschedule the work to a vault location instead of the sewer-adjacent manhole (elimination)",
+        "Run a forced-air blower into the manhole for 15 minutes before entry (engineering control)"
+      ],
+      "answerIndex": 2,
+      "explanation": "Elimination removes the hazard entirely and ranks above every other control. The engineering control (blower) is next-best since the gas source still exists. PPE and administrative controls only address the hazard once a worker is already near it.",
+      "citation": "NIOSH Hierarchy of Controls; 29 CFR 1910.268(o)(2) (atmospheric testing before manhole entry)."
+    },
+    {
+      "id": "T18-L01-Q2",
+      "type": "mc",
+      "prompt": "What does the General Duty Clause (OSH Act Section 5(a)(1)) require of employers?",
+      "choices": [
+        "Employers only need to comply with OSHA rules that specifically name their industry",
+        "Workers are responsible for identifying their own hazards and providing their own PPE",
+        "Employers must protect workers from recognized hazards even when no specific OSHA rule addresses the exact situation",
+        "OSHA can only cite violations after a prior warning inspection"
+      ],
+      "answerIndex": 2,
+      "explanation": "The General Duty Clause is the catch-all authority: when a hazard exists and no specific regulation directly covers it, OSHA can still cite the employer if the hazard is recognized and likely to cause death or serious harm.",
+      "citation": "OSH Act Section 5(a)(1) (osha.gov)."
+    },
+    {
+      "id": "T18-L01-Q3",
+      "type": "mc",
+      "prompt": "What is the document that lists composition, exposure limits, PPE requirements, and first-aid procedures for a hazardous chemical used on the job site?",
+      "choices": [
+        "OSHA 300 log",
+        "SDS (Safety Data Sheet)",
+        "Pole attachment agreement",
+        "As-built drawing"
+      ],
+      "answerIndex": 1,
+      "explanation": "The Safety Data Sheet (SDS) replaced the old Material Safety Data Sheet (MSDS) when OSHA adopted the Globally Harmonized System (GHS) under HazCom 2012 (29 CFR 1910.1200). The 16-section format is standardized across manufacturers.",
+      "citation": "29 CFR 1910.1200 (HazCom 2012)."
+    },
+    {
+      "id": "T18-L01-Q4",
+      "type": "mc",
+      "prompt": "Which OSHA regulation is the primary federal safety standard specifically covering telecom OSP field work — overhead lines, manholes, and grounding for crews like fiber and telephone crews?",
+      "choices": [
+        "29 CFR 1910.146 — Permit-Required Confined Spaces",
+        "29 CFR 1910.268 — Telecommunications (Subpart R)",
+        "29 CFR 1926 Subpart M — Fall Protection (Construction)",
+        "29 CFR 1910.269 — Electric Power Generation, Transmission, and Distribution"
+      ],
+      "answerIndex": 1,
+      "explanation": "29 CFR 1910.268 (Subpart R — Telecommunications) is the primary OSHA standard for telecom field work: overhead line safety, underground manhole work, atmospheric testing, fall protection on poles, and PPE for telecom crews.",
+      "citation": "29 CFR 1910.268(a) — Scope and Application."
+    },
+    {
+      "id": "T18-L01-Q5",
+      "type": "drag-match",
+      "prompt": "Match each hazard category an OSP crew scans for to an example.",
+      "items": [
+        { "id": "i_physical", "label": "Falls from poles or aerial lifts; trench cave-in" },
+        { "id": "i_electrical", "label": "Energized distribution conductors on a joint-use pole" },
+        { "id": "i_chemical", "label": "Filling gel, conduit cement, sewer gas in a manhole" },
+        { "id": "i_environmental", "label": "Heat stress, lightning, traffic, unstable ground" }
+      ],
+      "targets": [
+        { "id": "t_physical", "label": "Physical hazard" },
+        { "id": "t_electrical", "label": "Electrical hazard" },
+        { "id": "t_chemical", "label": "Chemical hazard" },
+        { "id": "t_environmental", "label": "Environmental hazard" }
+      ],
+      "correctMap": { "t_physical": "i_physical", "t_electrical": "i_electrical", "t_chemical": "i_chemical", "t_environmental": "i_environmental" },
+      "explanation": "OSP crews scan for four hazard categories daily: physical (falls, cave-ins, struck-by), electrical (energized conductors, induced voltage), chemical (gel, solvents, gases), and environmental (heat, weather, traffic, terrain)."
+    },
+    {
+      "id": "T18-L01-Q6",
+      "type": "mc",
+      "prompt": "What two things must a 'competent person' (as defined under OSHA) have, and where is a competent person required in OSP work?",
+      "choices": [
+        "Only formal certification from a third party; required for all PPE inspections",
+        "The training to identify hazards AND the authorization to take prompt corrective action to eliminate them; required for excavation/trenching and confined space entry",
+        "Only supervisory job title; required only for LOTO procedures",
+        "Only years of experience with no training requirement; required for all fall-protection tasks"
+      ],
+      "answerIndex": 1,
+      "explanation": "A competent person, per 29 CFR 1926.32(f), must be capable of identifying existing and predictable hazards AND have the authorization to take prompt corrective measures. It's not just a title — both the training and the authority to stop work are required. OSP work requires a designated competent person for excavation/trenching (1926 Subpart P) and confined space entry.",
+      "citation": "29 CFR 1926.32(f)."
+    },
+    {
+      "id": "T18-L01-Q7",
+      "type": "mc",
+      "prompt": "Why does OSHA's hierarchy of controls model favor stacking MULTIPLE control layers (e.g., engineering AND administrative AND PPE) rather than relying on just one?",
+      "choices": [
+        "Each control layer has gaps (the 'Swiss cheese' model); stacking layers means the gaps rarely align, so protection holds even if one layer fails",
+        "OSHA requires a minimum of three controls per hazard regardless of the situation",
+        "Using multiple layers reduces the paperwork burden for the employer",
+        "PPE alone is always sufficient; other layers are optional extras"
+      ],
+      "answerIndex": 0,
+      "explanation": "The Swiss cheese model: each control layer has holes (gaps in protection). Alone, a hole lets a hazard through. Layered together, the holes rarely align, so protection holds even when one layer fails. A crew with PPE but no engineering or administrative controls has only one layer — and OSHA inspectors look for evidence of layered controls, not just PPE presence."
+    },
+    {
+      "id": "T18-L01-Q8",
+      "type": "mc",
+      "prompt": "What must be established BEFORE workers enter a roadway work area, manhole work area, or excavation site — not after?",
+      "choices": [
+        "A safety zone — the protected area defined by traffic control devices or physical distance, inside which workers perform tasks and outside which the public is excluded",
+        "The OSHA 300 log entry for the day's work",
+        "A signed pole attachment agreement",
+        "A splice record for the completed work"
+      ],
+      "answerIndex": 0,
+      "explanation": "The safety zone concept applies to roadway work zones (MUTCD, 29 CFR 1910.268(m)), manhole work areas, and excavation sites. It must be established before workers enter the area, not improvised after work has already begun.",
+      "citation": "29 CFR 1910.268(m); MUTCD (roadway work zone context)."
+    }
+  ]
+}

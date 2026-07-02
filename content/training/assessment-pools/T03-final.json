@@ -1,0 +1,339 @@
+{
+  "assessmentId": "T03-final",
+  "kind": "topic_final",
+  "courseId": "T03",
+  "lessonId": null,
+  "drawCount": 15,
+  "passThreshold": 80,
+  "pool": [
+    {
+      "id": "T03-final-Q1",
+      "type": "mc",
+      "prompt": "A 144-fiber OSP trunk route requires rapid splice closure at each distribution point, while a 6-fiber residential drop nearby does not. Why do these two applications favor different cable constructions?",
+      "choices": [
+        "Both should use ribbon construction regardless of fiber count",
+        "The trunk route benefits from ribbon's mass-fusion splicing speed advantage, which compounds meaningfully at high fiber counts; the drop's low fiber count makes that advantage negligible, favoring simpler, lower-cost loose-tube or tight-buffer construction instead",
+        "Fiber count has no bearing on construction type selection",
+        "Drop cables must always match the trunk cable's construction type"
+      ],
+      "answerIndex": 1,
+      "explanation": "Ribbon's mass-fusion-splicing advantage scales with fiber count — critical at 144F+ trunk counts, negligible at a 2-12 fiber drop where individually splicing a handful of fibers is already fast."
+    },
+    {
+      "id": "T03-final-Q2",
+      "type": "mc",
+      "prompt": "An unlisted outdoor OSP cable needs to run 35 ft inside a commercial building from its point of entrance to a termination panel. Is a fire-rated transition required, and under what NEC provision?",
+      "choices": [
+        "Yes — any indoor run over 10 ft requires OFNR",
+        "No — 35 ft is within the 50 ft unlisted-entry allowance under NEC Section 770.48(A)",
+        "Yes — all unlisted cable must transition to OFNP immediately at building entry",
+        "No — unlisted cable has no length restriction indoors under any circumstance"
+      ],
+      "answerIndex": 1,
+      "explanation": "NEC Section 770.48(A) permits unlisted OSP cable up to 50 ft inside a building from the point of entrance without a fire-rating transition, extendable further with RMC/IMC conduit.",
+      "citation": "NEC (NFPA 70) Section 770.48(A)."
+    },
+    {
+      "id": "T03-final-Q3",
+      "type": "mc",
+      "prompt": "Why is HDPE with 2-3% carbon black the standard outdoor OSP jacket material rather than PVC or plain (uncolored) HDPE?",
+      "choices": [
+        "Carbon black is purely a labeling/identification convention with no functional role",
+        "Carbon black absorbs UV radiation and prevents oxidative photodegradation that would otherwise make HDPE brittle within a few years of sun exposure; PVC lacks HDPE's outdoor durability profile",
+        "PVC and plain HDPE are equally durable outdoors; the choice is purely aesthetic",
+        "Carbon black is required only for aerial cable, never for buried cable"
+      ],
+      "answerIndex": 1,
+      "explanation": "Carbon black's UV-absorption function is why nearly all outdoor OSP jackets are black — without it, HDPE degrades under sustained sun exposure. HDPE's overall material properties (with carbon black) outperform PVC across the temperature/UV/moisture extremes of outdoor multi-decade service."
+    },
+    {
+      "id": "T03-final-Q4",
+      "type": "mc",
+      "prompt": "A direct-burial route passes through documented rodent territory with normal (non-corrosive) soil conditions. What armor specification is appropriate, and why?",
+      "choices": [
+        "No armor — HDPE jacket alone is sufficient against rodents",
+        "CST (corrugated steel tape) armor — steel provides the mechanical gnaw-stop barrier that HDPE jacket alone, and softer aluminum armor, do not reliably provide against determined rodent activity",
+        "CAT (aluminum) armor — lighter and equally effective against rodents as steel",
+        "ADSS-style dielectric construction, since it eliminates all metal-related risk including rodent damage"
+      ],
+      "answerIndex": 1,
+      "explanation": "CST armor's steel barrier is specifically needed where documented rodent activity exists — HDPE alone can be gnawed through, and aluminum armor is a softer, less reliable gnaw barrier than steel.",
+      "citation": "ICEA S-87-640 armor options."
+    },
+    {
+      "id": "T03-final-Q5",
+      "type": "mc",
+      "prompt": "Why does ADSS aerial cable require no bonding or grounding at any pole, while both figure-8 and lashed cable do?",
+      "choices": [
+        "ADSS is exempt from NESC rules entirely",
+        "ADSS has no metallic components (fully dielectric construction); figure-8 and lashed cable both incorporate a metallic messenger, which can accumulate induced voltage or serve as an unintended fault-current path and therefore must be bonded to ground",
+        "Bonding is only a labeling requirement, not a safety requirement, for any cable type",
+        "ADSS cannot be installed on joint-use poles, avoiding the bonding question entirely"
+      ],
+      "answerIndex": 1,
+      "explanation": "ADSS's complete absence of metal removes the underlying hazard (induced voltage, fault-current path) that bonding is designed to address. Any metallic messenger, whether integrated (figure-8) or separate (lashed), carries that hazard and therefore requires bonding.",
+      "citation": "7 CFR 1755.902; CommScope ADSS vs. Lashed Fiber technical documentation."
+    },
+    {
+      "id": "T03-final-Q6",
+      "type": "mc",
+      "prompt": "A GPON drop cable needs a 7.5 mm bend at a wall entry. Which ITU-T G.657 grade is the minimum sufficient choice, and why not over-spec to a tighter grade?",
+      "choices": [
+        "G.657.A1 (10mm) — sufficient because 7.5mm rounds up to 10mm in practice",
+        "G.657.A2 (7.5mm) — exactly meets the requirement; specifying G.657.B3 (5mm) would work too but is unnecessarily high-spec (and carries MFD-mismatch splice risk with G.652.D) for a requirement A2 already satisfies",
+        "G.652.D (~30mm, a commonly-cited industry-convention minimum) — standard fiber is always preferred regardless of bend requirement",
+        "Any G.657 grade works identically since they are functionally interchangeable"
+      ],
+      "answerIndex": 1,
+      "explanation": "G.657.A2's 7.5mm rating exactly satisfies the stated requirement. G.657.B3 would technically also work but is over-spec'd for this need and, unlike A1/A2, isn't guaranteed splice-compatible with G.652.D without measurable loss risk.",
+      "citation": "ITU-T G.657 (A1=10mm, A2=7.5mm, B3=5mm — independently verified); G.652.D's ~30mm figure is an industry-convention rule of thumb, not independently pinned to a single ITU-T clause this session (see T03.md)."
+    },
+    {
+      "id": "T03-final-Q7",
+      "type": "mc",
+      "prompt": "A carrier hands off G.655 fiber at a CO, to be spliced into a G.652.D distribution plant. What must happen before finalizing the link budget?",
+      "choices": [
+        "Splice directly with no further verification — G.655 and G.652.D are always fully interchangeable",
+        "Measure the actual splice loss at the G.655/G.652.D interface, since MFD differences between the two fiber types may add measurable loss beyond a same-type splice",
+        "Reject the G.655 handoff entirely — mixed fiber-type splicing is never permitted",
+        "Replace the entire distribution plant with G.655 for compatibility"
+      ],
+      "answerIndex": 1,
+      "explanation": "G.655 (NZDSF) and G.652.D are both single-mode but typically have different MFD. Mixed-type splices carry an inherent MFD-mismatch loss risk that should be measured and budgeted rather than assumed away.",
+      "citation": "ITU-T G.655."
+    },
+    {
+      "id": "T03-final-Q8",
+      "type": "mc",
+      "prompt": "On a RUS-financed project, if the buyer does not specify MFD, what is the default requirement at 1310 nm, and why does RUS impose this default rather than leaving it fully unspecified?",
+      "choices": [
+        "9.2 um +/- 0.5 um; the default ensures baseline reel-to-reel consistency, limiting splice-mismatch loss when reels from different production runs are joined on a multi-reel project",
+        "9.2 um +/- 0.5 um; the default exists purely as a legal formality with no technical justification",
+        "There is no default — MFD is always negotiated per project",
+        "8.6 um +/- 0.4 um; a tighter default than G.652.D's own typical spec"
+      ],
+      "answerIndex": 0,
+      "explanation": "Without a default, fiber MFD across different manufacturers/production runs could scatter widely, causing unpredictable splice-loss spikes when reels are joined. RUS's default tolerance provides a consistency floor protecting project quality even absent a buyer-specific spec.",
+      "citation": "7 CFR 1755.902."
+    },
+    {
+      "id": "T03-final-Q9",
+      "type": "mc",
+      "prompt": "Why does a cable datasheet list an installation (dynamic) minimum bend radius that is LARGER than its long-term (static) minimum bend radius?",
+      "choices": [
+        "The two values are identical; any apparent difference is a printing error",
+        "Pulling tension during installation compounds with bending stress on the fiber, requiring a more conservative (larger) minimum radius during that dynamic phase; once installed and tension is relieved, a tighter permanent bend becomes acceptable",
+        "The long-term value is always larger because cables stiffen over time",
+        "Long-term bend radius only applies to armored cable"
+      ],
+      "answerIndex": 1,
+      "explanation": "Counter-intuitively, the long-term (static, installed) minimum is the smaller number — installation tension compounds bending stress, demanding the larger dynamic-condition minimum, while a permanent bend under no pulling tension can be tighter."
+    },
+    {
+      "id": "T03-final-Q10",
+      "type": "mc",
+      "prompt": "A cable datasheet shows attenuation spec-max of 0.25 dB/km at 1550 nm. For a 40 km link with a 0.04 dB/km aging factor, what planning attenuation value should the designer use, and why start from spec-max rather than the typical value?",
+      "choices": [
+        "0.25 dB/km — aging factor is optional and typically omitted",
+        "0.29 dB/km — planning attenuation = spec-max + aging factor; starting from the worst-case spec-max (not the more optimistic typical value) protects the design against real-world variance and multi-decade degradation",
+        "0.21 dB/km — subtract the aging factor from spec-max",
+        "0.04 dB/km — use only the aging factor, ignoring the datasheet spec"
+      ],
+      "answerIndex": 1,
+      "explanation": "Planning attenuation = spec max + aging factor = 0.25 + 0.04 = 0.29 dB/km. Building from the worst-case spec-max (not a rosier typical figure) is the conservative, defensible design practice."
+    },
+    {
+      "id": "T03-final-Q11",
+      "type": "mc",
+      "prompt": "What is the correct relationship between qualification testing and acceptance testing on a RUS-financed cable project?",
+      "choices": [
+        "They test identical things and one can substitute for the other",
+        "Qualification testing proves the cable DESIGN meets the standard, done once before production begins; acceptance testing verifies each production LOT continues to conform — both are required because they catch different failure modes (design flaws vs. manufacturing-process drift)",
+        "Only acceptance testing is required; qualification testing is optional",
+        "Qualification testing is performed in the field; acceptance testing is performed at the factory"
+      ],
+      "answerIndex": 1,
+      "explanation": "Qualification (design-level, one-time) and acceptance (lot-level, ongoing) testing address different risks: a qualified design can still ship a defective production lot, which acceptance testing is designed to catch.",
+      "citation": "7 CFR 1755.902; ICEA S-87-640."
+    },
+    {
+      "id": "T03-final-Q12",
+      "type": "mc",
+      "prompt": "NESC Rule 250C requires Extreme Wind loading consideration at what height threshold, and why does this rule use regional wind maps instead of the standard three-district loading table?",
+      "choices": [
+        "40 feet; regional maps are used because ice loading doesn't apply above 40 feet",
+        "60 feet; regional wind speed maps (based on ASCE 7 data) capture location-specific wind exposure more precisely than the coarse Light/Medium/Heavy district table, which matters more for taller, more wind-exposed structures",
+        "100 feet; the flat district table is used instead of maps above this height",
+        "There is no height threshold; Extreme Wind always applies"
+      ],
+      "answerIndex": 1,
+      "explanation": "Extreme Wind (Rule 250C) applies at 60 ft or more above ground and uses regional wind speed maps for more granular geographic accuracy than the coarser three-district table used for standard combined ice/wind design.",
+      "citation": "NESC C2-2023 Rule 250C."
+    },
+    {
+      "id": "T03-final-Q13",
+      "type": "mc",
+      "prompt": "If a 150 ft aerial span is redesigned to 300 ft at the same cable tension and loading, what happens to sag?",
+      "choices": [
+        "Sag stays the same",
+        "Sag doubles",
+        "Sag quadruples, since sag is proportional to span length squared (L^2)",
+        "Sag is halved"
+      ],
+      "answerIndex": 2,
+      "explanation": "Sag = (w x L^2)/(8 x T). Doubling L quadruples L^2, so sag quadruples at the same tension and loading — a key reason long-span aerial design requires careful tension/clearance engineering."
+    },
+    {
+      "id": "T03-final-Q14",
+      "type": "mc",
+      "prompt": "Why might a designer choose lashed ribbon cable on an existing bonded messenger over ADSS for a very high fiber-count (288F) river-crossing span, even though ADSS eliminates bonding?",
+      "choices": [
+        "ADSS cannot physically be manufactured above 24F",
+        "When bonding infrastructure already exists on the route (e.g., existing joint-use poles bonded for electric distribution), ADSS's main advantage (avoiding bonding) provides less marginal value, while lashed ribbon on a properly-sized messenger reliably handles the high fiber count and long span",
+        "Lashed cable is always cheaper than ADSS regardless of context",
+        "ADSS is illegal to install over water crossings"
+      ],
+      "answerIndex": 1,
+      "explanation": "ADSS's core benefit — avoiding bonding — matters less when bonding infrastructure is already in place on the route. In that context, other factors (fiber count capacity, span-length tension handling) can favor lashed ribbon on an appropriately engineered messenger instead.",
+      "citation": "CommScope ADSS vs. Lashed technical comparison; RUS Bulletin 1751F-630."
+    },
+    {
+      "id": "T03-final-Q15",
+      "type": "mc",
+      "prompt": "A datasheet shows a cable's storage temperature rating (-60C to +85C) is wider than its operating temperature rating (-40C to +70C). What does this difference mean in practice?",
+      "choices": [
+        "The two ratings are interchangeable and either can be used for design purposes",
+        "Storage rating describes survivability under passive, unstressed conditions (e.g., a reel in a warehouse); operating rating guarantees full performance (attenuation, mechanical flexibility) only within its narrower range while the cable is actively installed and in service",
+        "The storage rating is a manufacturing error and should be disregarded",
+        "Operating temperature only matters for armored cable, not standard OSP cable"
+      ],
+      "answerIndex": 1,
+      "explanation": "A cable can survive (without permanent damage) a wider temperature swing while passively stored than it can while actively operating and expected to deliver full optical/mechanical performance — the two ratings answer different engineering questions."
+    },
+    {
+      "id": "T03-final-Q16",
+      "type": "mc",
+      "prompt": "What does the ISO/IEC 11801 OS1/OS2 fiber category mapping to ITU-T G.652 sub-grades tell you, and why is precision about this mapping important given a documented cross-lesson inconsistency found in this course's own material?",
+      "choices": [
+        "OS1 = G.652.A/B (older, higher attenuation), OS2 = G.652.C/D (low/zero water-peak, current standard); an independent verification pass across this course's T01/T02/T03 material caught an inconsistent claim in one lesson's own prose ('OS1 = G.652.B/C'), underscoring why citations should be independently re-checked rather than trusted from any single source, including this course's own text",
+        "OS1 and OS2 are unrelated to any ITU-T standard",
+        "OS1 = G.657, OS2 = G.652 — entirely separate fiber families",
+        "There is no meaningful difference between OS1 and OS2"
+      ],
+      "answerIndex": 0,
+      "explanation": "The correct mapping (OS1=G.652.A/B, OS2=G.652.C/D) was independently verified via WebSearch. A separate lesson in this course's own source material stated an inconsistent mapping, which the citation-gate process caught and corrected — a concrete example of why the gate exists.",
+      "citation": "ISO/IEC 11801 OS1/OS2 to ITU-T G.652 sub-grade mapping — see T01.md/T02.md research logs for the original finding."
+    },
+    {
+      "id": "T03-final-Q17",
+      "type": "mc",
+      "prompt": "Which cable construction (loose-tube, tight-buffer, ribbon, or rollable ribbon) is most appropriate for an OSP feeder route needing both high fiber count AND fast splice closure, and which for a short indoor patch requiring direct termination?",
+      "choices": [
+        "Ribbon/rollable ribbon for the high-count feeder (mass-fusion speed); tight-buffer for the short indoor patch (direct termination without a fanout kit)",
+        "Loose-tube for both applications, since it is the universal default",
+        "Tight-buffer for the feeder (highest fiber density); ribbon for the indoor patch (fastest termination)",
+        "Figure-8 for both, since it always minimizes installation time"
+      ],
+      "answerIndex": 0,
+      "explanation": "Ribbon/rollable ribbon's mass-fusion advantage matters most at high fiber counts (feeder routes), while tight-buffer's 900 um individually-coated fibers suit short indoor runs needing quick direct termination without fanout hardware."
+    },
+    {
+      "id": "T03-final-Q18",
+      "type": "mc",
+      "prompt": "A cable must be installed both in a corrosive coastal soil environment AND in an area with documented rodent activity. What is the correct armor reasoning?",
+      "choices": [
+        "Choose CAT (aluminum) alone, since corrosion resistance is the priority",
+        "Choose CST (steel), since steel's gnaw-stop capability is needed for the rodent risk; address the corrosion concern through jacket integrity/coating rather than substituting to a softer, less rodent-resistant metal",
+        "No armor is needed since the two risks offset each other",
+        "Switch to ADSS, since dielectric cable is used underground for direct burial"
+      ],
+      "answerIndex": 1,
+      "explanation": "When both risks exist on the same route, the weaker-link risk (rodent gnaw resistance, where aluminum underperforms steel) should drive the armor choice, with corrosion addressed through jacket/coating measures rather than by picking the less rodent-resistant metal."
+    },
+    {
+      "id": "T03-final-Q19",
+      "type": "mc",
+      "prompt": "Why does OFNP fire-rated cable satisfy a riser-shaft requirement that specifies OFNR, but not the reverse (OFNR satisfying a plenum requirement)?",
+      "choices": [
+        "OFNP and OFNR are functionally identical, so either direction is fine",
+        "The fire-rating hierarchy runs one direction — OFNP is tested to the more stringent plenum standard (UL 910/NFPA 262), so it can substitute upward for the less demanding riser rating, but OFNR (tested only to the riser standard) has not been proven to the plenum-level standard and cannot substitute downward",
+        "OFNR is always the higher-rated cable, not OFNP",
+        "Substitution direction depends only on cable color, not test rating"
+      ],
+      "answerIndex": 1,
+      "explanation": "Fire/smoke rating substitution only works in the direction of higher-to-lower rated environment: a cable tested to a stricter standard (OFNP/plenum) can be used where a less strict rating (OFNR/riser) is specified, but not vice versa."
+    },
+    {
+      "id": "T03-final-Q20",
+      "type": "mc",
+      "prompt": "For a 48-unit MDU FTTH build at 2 fibers/unit, what is the raw fiber count before growth margin, and why does a designer typically add margin on top of this raw number?",
+      "choices": [
+        "48 raw fibers; margin is never added on RUS-funded projects",
+        "96 raw fibers (48 x 2); margin is added because the incremental cost of a modestly larger cable during initial construction is far cheaper than a future cable replacement or overlash once capacity is exhausted",
+        "24 raw fibers; margin is irrelevant since MDUs never grow",
+        "192 raw fibers; the calculation always doubles unit count regardless of fibers-per-unit"
+      ],
+      "answerIndex": 1,
+      "explanation": "48 units x 2 fibers/unit = 96 raw fibers. Growth margin is added on top because expanding capacity later (new pull, new splicing, new permits) costs far more than slightly over-sizing the cable during an already-planned construction project."
+    },
+    {
+      "id": "T03-final-Q21",
+      "type": "mc",
+      "prompt": "What must a designer verify before assuming a Light NESC loading district applies zero ice load to a project, given that district assignment directly drives sag/tension/clearance calculations?",
+      "choices": [
+        "Nothing — all of North America is in the Light district by default",
+        "The project's actual documented geographic loading district assignment (Light/Medium/Heavy per NESC), since using the wrong district produces an incorrectly sized/tensioned design that could violate clearance or be under-built for real local conditions",
+        "Only the wind district matters; ice district is never relevant to fiber cable",
+        "District assignment is chosen by the cable manufacturer, not the designer"
+      ],
+      "answerIndex": 1,
+      "explanation": "Loading district assignment (which sets the ice thickness and wind pressure inputs) must be verified against the specific project location, not assumed — an incorrect assignment risks either an unsafe under-built design or unnecessary over-building cost."
+    },
+    {
+      "id": "T03-final-Q22",
+      "type": "mc",
+      "prompt": "A designer sees a datasheet listing 'typical' attenuation with no spec-maximum figure at all. What should the designer do before using this datasheet to build a link budget?",
+      "choices": [
+        "Proceed directly using the typical value as the planning figure",
+        "Request the spec-maximum (worst-case) figure from the manufacturer before building the budget — a defensible planning value should be built from spec-max plus an aging margin, not from a typical figure alone, which has no guaranteed worst-case bound",
+        "Assume the typical value already includes sufficient margin and proceed",
+        "Reject the cable outright; missing a typical value always disqualifies a datasheet"
+      ],
+      "answerIndex": 1,
+      "explanation": "A 'typical' value describes average production performance, not a guaranteed worst-case boundary. Without a spec-max figure, the designer lacks the information needed to build a properly conservative link budget and should request it before proceeding."
+    },
+    {
+      "id": "T03-final-Q23",
+      "type": "mc",
+      "prompt": "Why does a dielectric duct cable (used underground in conduit, with no armor) make sense in a scenario where CST armor would normally be specified?",
+      "choices": [
+        "Dielectric duct cable is never appropriate underground",
+        "Where the conduit itself provides the mechanical/crush protection that armor would otherwise supply, and no rodent risk applies (conduit blocks rodent access), a dielectric cable can forgo armor's added weight, cost, and bonding obligation while relying on the conduit for protection instead",
+        "Dielectric cable is required by federal law for all underground conduit runs",
+        "CST armor cannot physically fit inside standard conduit"
+      ],
+      "answerIndex": 1,
+      "explanation": "When conduit itself supplies mechanical protection and blocks rodent access, the case for armor (which duplicates part of that protective function) weakens — a dielectric cable can be the more economical choice in that specific context, avoiding armor's bonding obligation."
+    },
+    {
+      "id": "T03-final-Q24",
+      "type": "drag-match",
+      "prompt": "Match each cable construction/material concept to its correct role.",
+      "items": [
+        { "id": "i_loosetube", "label": "Oversize buffer tube protecting fibers from thermal/tensile stress outdoors" },
+        { "id": "i_carbonblack", "label": "UV stabilizer in HDPE outdoor jacket compound" },
+        { "id": "i_ripcord", "label": "Lets installers remove steel armor without cutting tools" },
+        { "id": "i_dielectric", "label": "No metallic components; no bonding/grounding required" }
+      ],
+      "targets": [
+        { "id": "t_loosetube", "label": "Loose-tube construction" },
+        { "id": "t_carbonblack", "label": "Carbon black" },
+        { "id": "t_ripcord", "label": "Ripcord (under armor)" },
+        { "id": "t_dielectric", "label": "Dielectric cable (e.g., ADSS)" }
+      ],
+      "correctMap": { "t_loosetube": "i_loosetube", "t_carbonblack": "i_carbonblack", "t_ripcord": "i_ripcord", "t_dielectric": "i_dielectric" },
+      "explanation": "These four concepts span cable construction, jacket material, armor handling, and aerial cable design — each addressing a distinct engineering requirement in OSP cable selection.",
+      "citation": "ICEA S-87-640; 7 CFR 1755.902."
+    }
+  ]
+}

@@ -1,0 +1,115 @@
+{
+  "assessmentId": "T09-L06",
+  "kind": "lesson",
+  "courseId": "T09",
+  "lessonId": "T09.L06",
+  "drawCount": 4,
+  "passThreshold": 70,
+  "pool": [
+    {
+      "id": "T09-L06-Q1",
+      "type": "mc",
+      "prompt": "A fiber project requires boring under a state highway. The state DOT requires PE-stamped plan-and-profile drawings in the encroachment permit application. The designer holds a PE license, but not in the project's state. What is the correct action?",
+      "choices": [
+        "Submit the drawings with the designer's out-of-state PE stamp — PE licensure is nationally reciprocal by default",
+        "The PE stamping the drawings must be licensed in the state where the work occurs — most state DOTs require an in-state (or state-specific reciprocity/comity-approved) PE license, so an out-of-state-only PE cannot validly stamp the submission without confirming that state's specific reciprocity rule",
+        "PE stamps are only required for structural work, never for utility/telecom installations, so this is a non-issue",
+        "The DOT will accept any PE stamp regardless of state as long as the engineer is licensed somewhere"
+      ],
+      "answerIndex": 1,
+      "explanation": "PE licensure is state-specific; a PE stamp is only valid where the engineer holds licensure (or an approved reciprocity/comity credential) in that specific state. A designer licensed elsewhere cannot simply apply their stamp to work in a state where they lack that state's license or an approved reciprocity pathway — this is exactly the kind of state-specific requirement the source material flags as varying by jurisdiction and needing AHJ confirmation.",
+      "citation": "State PE licensing requirements vary by jurisdiction — confirm the specific state's reciprocity/comity rule with the state licensing board and the AHJ (state DOT) before relying on an out-of-state license."
+    },
+    {
+      "id": "T09-L06-Q2",
+      "type": "mc",
+      "prompt": "A fiber bore under a state highway ROW achieves a conduit depth of 36 inches to top of conduit at the road centerline. The permit's stated DOT minimum for this road class is 42 inches. Construction is underway. What should happen?",
+      "choices": [
+        "Continue — 36 inches is close enough to 42 inches that the shortfall is immaterial",
+        "Stop and address the depth deficiency (re-bore deeper, or seek a documented deviation/variance from the DOT) before continuing — an as-built depth below the permitted minimum is a permit-condition violation that the as-built submittal will document and the DOT can reject at closeout",
+        "Continue, and simply note the discrepancy in internal project files without informing the DOT",
+        "Continue — depth requirements only apply to the design drawings, not to actual as-built construction"
+      ],
+      "answerIndex": 1,
+      "explanation": "The permitted minimum depth is a binding condition of the encroachment permit, not an aspirational target — an as-built depth below that minimum is a real permit-condition violation that the required as-built submittal will surface at closeout. The correct response is to stop and resolve the deficiency (re-bore, or seek a documented DOT-approved deviation) rather than proceed and hope it goes unnoticed."
+    },
+    {
+      "id": "T09-L06-Q3",
+      "type": "mc",
+      "prompt": "Which of the following components is typically part of a state DOT encroachment permit package for a fiber bore under a state highway?",
+      "choices": [
+        "Application form only — most DOTs have simplified the process to a single form for telecom",
+        "A more complete package typically including the application form, PE-stamped plan-and-profile drawings, a traffic control plan (TCP) compliant with MUTCD, and a surety bond — the specific combination and thresholds vary by state and should be confirmed against that DOT's current requirements",
+        "Only a traffic control plan — depth and design drawings are not required for telecom work",
+        "Only a surety bond — drawings and TCP are optional for utility work"
+      ],
+      "answerIndex": 1,
+      "explanation": "A typical state DOT encroachment permit package bundles several distinct components — the application, PE-stamped design drawings, a MUTCD-compliant TCP, and a surety bond — rather than a single simplified form. The exact package composition and specific thresholds (e.g., bond amount, when a PE stamp is required) vary by state DOT and should be confirmed against that specific AHJ's current requirements rather than assumed uniform."
+    },
+    {
+      "id": "T09-L06-Q4",
+      "type": "mc",
+      "prompt": "What is the primary purpose of the as-built submittal required by most state DOTs after a fiber bore is completed?",
+      "choices": [
+        "To calculate the final permit fee based on actual construction quantities",
+        "To document the actual as-installed location, depth, and configuration of the infrastructure — which may differ from the design drawings due to bore deflections or depth adjustments — creating the record needed for future utility-conflict analysis when the road is later modified or expanded",
+        "To satisfy a purely administrative filing requirement with no downstream use",
+        "To transfer ownership of the installed conduit to the state DOT"
+      ],
+      "answerIndex": 1,
+      "explanation": "The as-built submittal exists because actual construction can diverge from the design (bore deflection, depth changes, alignment adjustments) — capturing the true as-installed configuration is what makes future utility-conflict analysis possible when the DOT later modifies or expands that section of road, which is the practical reason this closeout requirement exists beyond mere paperwork."
+    },
+    {
+      "id": "T09-L06-Q5",
+      "type": "mc",
+      "prompt": "Why does a surety bond matter to a state DOT for an encroachment permit, beyond being a generic financial formality?",
+      "choices": [
+        "It doesn't serve a real purpose — it is purely a revenue source for the DOT",
+        "It is a financial guarantee that gives the DOT recourse if the contractor fails to properly restore the ROW (e.g., an improperly backfilled bore pit or a failed pavement patch) — the DOT can draw on the bond to cover restoration costs without having to pursue separate legal action against the contractor first",
+        "It guarantees the fiber will remain operational for the life of the bond",
+        "It replaces the need for an as-built submittal"
+      ],
+      "answerIndex": 1,
+      "explanation": "The surety bond gives the DOT a direct financial remedy if ROW restoration fails (an improperly backfilled bore pit, a failing pavement patch) — the DOT can draw on the bond directly rather than needing to pursue a separate collection action, which is the practical risk-management purpose behind requiring the bond as a condition of the permit."
+    },
+    {
+      "id": "T09-L06-Q6",
+      "type": "mc",
+      "prompt": "A permitting team assumes that because they successfully obtained an encroachment permit for a fiber bore in State A with a specific PE-licensing and bond-threshold combination, the identical requirements will apply to an upcoming project in State B. Is this assumption safe?",
+      "choices": [
+        "Yes — state DOT encroachment permit requirements are federally standardized and identical across all states",
+        "No — DOT encroachment permit requirements (PE licensing rules, bond thresholds, specific package components) vary by state and sometimes by DOT district within a state, so a requirement combination confirmed for one state's AHJ should not be assumed to transfer to a different state without independently confirming that state's current requirements",
+        "Yes, as long as both states are in the same FCC region",
+        "No — but only because bond amounts vary, while every other requirement is nationally uniform"
+      ],
+      "answerIndex": 1,
+      "explanation": "State DOT encroachment permit requirements are explicitly state-specific (and sometimes district-specific within a state) — carrying an assumption from one state's confirmed requirements to a different state without re-verifying is exactly the kind of unhedged generalization the source material warns against, since PE licensing rules, bond thresholds, and package components are not federally standardized."
+    },
+    {
+      "id": "T09-L06-Q7",
+      "type": "mc",
+      "prompt": "What is the relationship between the traffic control plan (TCP) required in a state DOT encroachment permit and MUTCD compliance?",
+      "choices": [
+        "There is no relationship — TCPs are a purely state-specific concept unrelated to MUTCD",
+        "A TCP submitted as part of a state DOT encroachment permit must comply with the Manual on Uniform Traffic Control Devices (MUTCD) and any applicable state DOT supplements — MUTCD sets the baseline standard for temporary traffic control that the state-specific TCP must meet",
+        "MUTCD compliance is optional for telecom projects, unlike for road-construction projects",
+        "TCPs replace the need for MUTCD compliance entirely once approved by the DOT"
+      ],
+      "answerIndex": 1,
+      "explanation": "A TCP is the project-specific application of the MUTCD's baseline temporary-traffic-control standards (plus any state DOT supplements) to a specific work zone — the TCP doesn't exist independent of MUTCD, it's how MUTCD compliance gets documented and approved for a specific location and scope of work."
+    },
+    {
+      "id": "T09-L06-Q8",
+      "type": "mc",
+      "prompt": "A contractor begins boring under a state highway before the encroachment permit has been issued, reasoning that the application is 'almost certainly going to be approved.' What is the legal exposure of this action?",
+      "choices": [
+        "None — starting work before permit issuance is a common and legally acceptable industry shortcut",
+        "The contractor is working without right-of-entry to state ROW, which constitutes unauthorized encroachment/trespass on state property, exposing the contractor (and potentially the project) to civil and potentially criminal liability regardless of how likely eventual approval seemed",
+        "The only consequence is a small late fee added to the eventual permit cost",
+        "This is legal as long as the TCP portion of the application was pre-approved separately"
+      ],
+      "answerIndex": 1,
+      "explanation": "Right-of-entry to state highway ROW is granted through the encroachment permit itself — starting work before that permit is issued means the contractor has no right-of-entry and is legally an unauthorized encroachment/trespass on state property, regardless of how confident the team was about eventual approval. This is a real liability exposure, not a minor procedural technicality."
+    }
+  ]
+}

@@ -1,0 +1,121 @@
+{
+  "assessmentId": "T01-L06",
+  "kind": "lesson",
+  "courseId": "T01",
+  "lessonId": "T01.L06",
+  "drawCount": 4,
+  "passThreshold": 70,
+  "pool": [
+    {
+      "id": "T01-L06-Q1",
+      "type": "mc",
+      "prompt": "A splicer arrives to begin work but finds no records identifying which cable entries should connect to which. Who is primarily responsible for this gap?",
+      "choices": [
+        "The splicer — they should have requested the records before arriving",
+        "The designer — the splice map (which fibers/buffer tubes connect at each case) is part of the design package handed to the splicer",
+        "The test technician — they own all documentation",
+        "No one — splice records are created entirely by the splicer during splicing"
+      ],
+      "answerIndex": 1,
+      "explanation": "The designer produces the splice design (splice map) as part of the design package — which fibers connect to which, which buffer tubes are through-spliced vs. broken out. The splicer creates individual fiber splice records (actual loss, fiber-by-fiber detail) during work, but the splice map itself comes from design. Arriving without it is a design-to-field handoff failure."
+    },
+    {
+      "id": "T01-L06-Q2",
+      "type": "mc",
+      "prompt": "An inspector finds a span where fiber cable hangs below the minimum ground clearance required by permit. What is the inspector's correct next action?",
+      "choices": [
+        "Add it to the punch list and notify the PM — the construction crew must correct it before acceptance",
+        "Immediately call the electric utility to report a hazard",
+        "Adjust the cable sag themselves using tools in their truck",
+        "Accept the span since small clearance violations are typically waived"
+      ],
+      "answerIndex": 0,
+      "explanation": "The inspector's job is to identify and document non-conformances, not to fix them. Punch-listing the violation and notifying the PM triggers the correct correction workflow — the construction crew adjusts the installation, and the inspector re-inspects. Inspectors performing construction corrections themselves would compromise their independence as a QA function."
+    },
+    {
+      "id": "T01-L06-Q3",
+      "type": "mc",
+      "prompt": "What is the role of the licensed engineer who stamps and signs OSP construction drawings on an RUS-funded project?",
+      "choices": [
+        "PE (Professional Engineer) — certifies the drawings meet applicable codes and are structurally sound, and is personally liable for that certification",
+        "PM (Project Manager) — coordinates schedule and budget but has no stamping authority",
+        "Staker — collects field survey data but does not review or certify designs",
+        "Test technician — verifies fiber performance, not drawing accuracy"
+      ],
+      "answerIndex": 0,
+      "explanation": "The PE (Professional Engineer) is state-licensed to certify engineering work. Their stamp is a legal certification they personally stand behind, carrying professional liability — a PE who stamps inaccurate work risks license suspension or revocation. RUS-program work requires PE-stamped drawings.",
+      "citation": "State professional engineering licensing requirements (NCEES-administered PE licensure is standard across US states)."
+    },
+    {
+      "id": "T01-L06-Q4",
+      "type": "mc",
+      "prompt": "Who performs the final acceptance testing of a completed fiber plant, generating the formal Tier 1 and Tier 2 test records?",
+      "choices": [
+        "The splicer — the in-process OTDR checks made during splicing are the same as the acceptance test",
+        "The make-ready crew — they perform final verification before the permit is closed",
+        "The test technician — performing bidirectional OTDR traces and end-to-end insertion loss tests on every fiber against the design's acceptance criteria",
+        "The designer — they set the acceptance criteria and personally verify the plant against them"
+      ],
+      "answerIndex": 2,
+      "explanation": "The test technician performs the formal, independent, end-to-end acceptance test on every fiber in the as-built plant. The splicer's per-splice OTDR checks are real-time quality checks during splicing, not the acceptance test."
+    },
+    {
+      "id": "T01-L06-Q5",
+      "type": "mc",
+      "prompt": "What does a make-ready crew do, and who do they typically work for?",
+      "choices": [
+        "They install the new fiber cable; they work for the fiber company",
+        "They move, raise, or rearrange EXISTING attachments on shared poles to restore NESC clearances for the new attachment; they work for the pole owner (or an authorized contractor)",
+        "They perform final acceptance testing; they work for the client's engineer",
+        "They stamp construction drawings; they work for the state licensing board"
+      ],
+      "answerIndex": 1,
+      "explanation": "The make-ready crew works for the pole owner (or its authorized contractor). They modify existing attachments to make room for the new fiber and restore required clearances — they do not install the new fiber themselves; that's the construction crew's job."
+    },
+    {
+      "id": "T01-L06-Q6",
+      "type": "mc",
+      "prompt": "On a small regional OSP contractor, one technician often performs multiple roles (e.g., staking AND permitting AND final OTDR testing). What is the risk this creates, according to standard field practice?",
+      "choices": [
+        "There is no risk — combining roles is always safer because fewer people are involved",
+        "It's not inherently wrong, but documentation and final test records are exactly the tasks most likely to get skipped when one person is overloaded — and that gap surfaces years later during troubleshooting",
+        "Combining roles is illegal on any RUS-funded project",
+        "Combining roles eliminates the need for a PE stamp"
+      ],
+      "answerIndex": 1,
+      "explanation": "Small-shop OSP work often has one person wearing multiple hats — that's a normal reality, not a violation. The risk is that documentation and final test records are the tasks most likely to be shortcut under time pressure, and that gap becomes a costly problem for whoever troubleshoots the network years later."
+    },
+    {
+      "id": "T01-L06-Q7",
+      "type": "mc",
+      "prompt": "A test technician needs to determine pass/fail for a fiber's acceptance test. What must they have to make that determination?",
+      "choices": [
+        "The make-ready completion notice",
+        "The design's loss budget / acceptance criteria to compare the measured OTDR and OLTS results against",
+        "The staker's field notes from the original route survey",
+        "The permitting specialist's list of executed permits"
+      ],
+      "answerIndex": 1,
+      "explanation": "A test technician without the design loss budget can measure loss but cannot determine pass/fail — pass/fail is always a comparison against the design's stated acceptance criteria for that specific fiber path."
+    },
+    {
+      "id": "T01-L06-Q8",
+      "type": "drag-match",
+      "prompt": "Match each OSP field role to what it delivers, and to whom.",
+      "items": [
+        { "id": "i_staker", "label": "Field data package -> Designer" },
+        { "id": "i_designer", "label": "Design package -> PM, Permitting team, Make-ready application team" },
+        { "id": "i_splicer", "label": "Splice records + initial OTDR traces -> Test technician" },
+        { "id": "i_inspector", "label": "Punch list + acceptance recommendation -> PM" }
+      ],
+      "targets": [
+        { "id": "t_staker", "label": "Staker / Surveyor" },
+        { "id": "t_designer", "label": "OSP Designer" },
+        { "id": "t_splicer", "label": "Splicer" },
+        { "id": "t_inspector", "label": "Inspector / QA Technician" }
+      ],
+      "correctMap": { "t_staker": "i_staker", "t_designer": "i_designer", "t_splicer": "i_splicer", "t_inspector": "i_inspector" },
+      "explanation": "Each role has a defined handoff: the staker's field data feeds the designer; the design package feeds the PM, permitting, and make-ready teams; the splicer's records feed the test technician; the inspector's punch list feeds the PM for acceptance sign-off."
+    }
+  ]
+}
