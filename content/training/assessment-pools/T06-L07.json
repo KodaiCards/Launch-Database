@@ -1,0 +1,115 @@
+{
+  "assessmentId": "T06-L07",
+  "kind": "lesson",
+  "courseId": "T06",
+  "lessonId": "T06.L07",
+  "drawCount": 4,
+  "passThreshold": 70,
+  "pool": [
+    {
+      "id": "T06-L07-Q1",
+      "type": "mc",
+      "prompt": "What is the purpose of the pilot bore in HDD (horizontal directional drilling)?",
+      "choices": [
+        "To install the final conduit in one pass without reaming",
+        "To establish the bore path along the design profile before enlarging for conduit — a small-diameter path (typically 4-6 inches) from entry to exit, which all subsequent reaming passes and the final conduit pull-back follow exactly",
+        "To remove existing utilities from the bore corridor",
+        "To test soil strength before selecting conduit material"
+      ],
+      "answerIndex": 1,
+      "explanation": "The pilot bore establishes the bore path geometry that every subsequent step follows — getting this initial path right is the most critical step in HDD, since reaming and conduit pull-back cannot correct a poorly-placed pilot path."
+    },
+    {
+      "id": "T06-L07-Q2",
+      "type": "mc",
+      "prompt": "Bentonite slurry performs which THREE functions during HDD?",
+      "choices": [
+        "Carries drill cuttings back out of the bore path to the entry pit, stabilizes the borehole walls to prevent collapse, and lubricates the bore path to reduce pull tension during conduit installation",
+        "Neutralizes underground gases, seals conduit joints, and marks the bore path for future locates",
+        "Increases pull tension, prevents UV exposure, and kills invasive roots",
+        "Replaces conduit backfill, bonds conduit to soil, and identifies utility crossings"
+      ],
+      "answerIndex": 0,
+      "explanation": "Bentonite slurry has exactly three functions: cuttings removal, borehole wall stabilization, and pull-back lubrication — slurry that returns to the surface (a frac-out) must be managed as waste rather than left in place."
+    },
+    {
+      "id": "T06-L07-Q3",
+      "type": "mc",
+      "prompt": "Ground heave during HDD boring is caused by:",
+      "choices": [
+        "Insufficient slurry pressure allowing borehole collapse",
+        "Excessive slurry pressure fracturing the formation and forcing slurry upward through soil voids to the surface — preventing heave requires staying within the formation's fracture gradient, a bore-specific pressure limit",
+        "Conduit material that is too rigid for the bore radius",
+        "A bore path that is too shallow for the conduit OD"
+      ],
+      "answerIndex": 1,
+      "explanation": "Ground heave results from excessive slurry pressure fracturing the soil formation and pushing slurry up through voids to the surface — the opposite failure mode (insufficient pressure) instead causes borehole collapse, which is why bore pressure must be managed within a formation-specific range, not simply maximized for cuttings removal."
+    },
+    {
+      "id": "T06-L07-Q4",
+      "type": "mc",
+      "prompt": "What is the purpose of a swabbing pass before conduit pull-back?",
+      "choices": [
+        "To enlarge the bore path to its final diameter",
+        "To verify the bore path is open and free of obstructions before committing the conduit — a foam-tipped mandrel is pulled through the bore, and if it passes cleanly with normal tension, the bore is ready; if it sticks or requires excessive force, a problem in the bore path must be resolved before conduit installation",
+        "To pump bentonite slurry into the borehole for the first time",
+        "To locate utility crossings within the bore corridor"
+      ],
+      "answerIndex": 1,
+      "explanation": "Swabbing is a verification step that catches bore-path problems BEFORE the conduit is committed to the hole — if the swab passage reveals a problem, it's far cheaper to resolve at that stage than to discover it mid-pull with an expensive conduit already partially installed."
+    },
+    {
+      "id": "T06-L07-Q5",
+      "type": "mc",
+      "prompt": "When slurry breaks through to the surface during boring under or near a waterway, what is this event called, and what is the correct response?",
+      "choices": [
+        "A 'frac-out' (fracture-out) — response is to stop drilling immediately, contain surface slurry, document the event, and notify the applicable permit authority, since this is typically a reportable environmental event under USACE Nationwide Permit conditions and most state DOT encroachment permits",
+        "A 'blow-out,' which requires no reporting since it's a routine and expected part of HDD operations",
+        "A 'seep event,' which only requires internal documentation with no external notification",
+        "A 'surface return,' which is desirable and indicates the bore is progressing correctly"
+      ],
+      "answerIndex": 0,
+      "explanation": "A frac-out occurs when slurry pressure exceeds the formation's fracture gradient and slurry reaches the surface — near or under a waterway, this is typically a reportable environmental event under the applicable USACE permit conditions and state DOT encroachment permit terms, requiring the crew to stop, contain, document, and notify the permit authority rather than simply continuing.",
+      "citation": "Common Ground Alliance (CGA) Best Practices excavation-safety guidance — WebSearch-verified CGA Best Practices is a real, actively-maintained industry consensus document (version 20.0 published April 2024; a subsequent version 21.0 has since been published — the T06 lesson's citation to 'v20.0' should be confirmed against the current edition for any project relying on a specific version's exact language)."
+    },
+    {
+      "id": "T06-L07-Q6",
+      "type": "mc",
+      "prompt": "Why is the pilot-bore step considered the single most critical step in the HDD sequence, more so than the reaming or pull-back steps?",
+      "choices": [
+        "It isn't more critical; every HDD step carries equal risk and importance",
+        "Because every subsequent step (reaming, swabbing, conduit pull-back) follows the exact path the pilot bore establishes — an error in the pilot bore's geometry propagates through every later step, while reaming and pull-back have no ability to correct a poorly-placed pilot path once drilling has committed to it",
+        "Because the pilot bore is the only step that requires bentonite slurry",
+        "Because the pilot bore is the only step subject to any regulatory oversight"
+      ],
+      "answerIndex": 1,
+      "explanation": "Since reaming and pull-back are geometrically constrained to follow the path the pilot bore already established, any error in that initial path (wrong depth, wrong alignment relative to a crossing utility) cannot be corrected downstream — this is why disproportionate care goes into pilot-bore path planning and execution relative to the later steps."
+    },
+    {
+      "id": "T06-L07-Q7",
+      "type": "mc",
+      "prompt": "A drill operator notices slurry pressure climbing steadily during a bore under a river and is tempted to push through quickly to finish the crossing before addressing it. What is the risk of this decision?",
+      "choices": [
+        "There is no risk; higher slurry pressure always improves cuttings removal with no downside",
+        "Climbing slurry pressure beyond the formation's fracture gradient risks a frac-out — under a river, this is a reportable environmental event requiring an immediate stop, containment, documentation, and permit-authority notification, so pushing through to 'finish quickly' converts a manageable pressure issue into a compliance and environmental incident",
+        "The only risk is a minor increase in project cost, with no environmental or regulatory consequence",
+        "Slurry pressure has no relationship to frac-out risk; frac-out is caused only by shallow bore depth"
+      ],
+      "answerIndex": 1,
+      "explanation": "This connects Q3 (ground heave/excessive pressure) and Q5 (frac-out reporting) directly to an operational decision point: ignoring rising slurry pressure to push through faster is exactly the choice that converts a manageable, correctable pressure issue into a frac-out — a reportable environmental event with real regulatory consequences, especially under a waterway."
+    },
+    {
+      "id": "T06-L07-Q8",
+      "type": "mc",
+      "prompt": "Before conduit pull-back, a swabbing pass requires excessive force partway through the bore. What does this indicate, and what is the correct response?",
+      "choices": [
+        "Nothing significant — excessive swab force is normal and the crew should proceed directly to conduit pull-back",
+        "It indicates a problem in the bore path at that location (e.g., a partial collapse, an obstruction, or an under-reamed section) — the correct response is to resolve the issue (re-ream, clear the obstruction) before committing the conduit to the hole, since attempting pull-back through an unverified problem risks getting the conduit itself stuck or damaged, a far more expensive failure than addressing the swab finding first",
+        "The crew should immediately abandon the bore and start an entirely new pilot bore from scratch",
+        "Excessive swab force means the slurry needs to be replaced with a different formulation, with no other action needed"
+      ],
+      "answerIndex": 1,
+      "explanation": "The entire purpose of swabbing (Q4) is to catch bore-path problems before the conduit is committed — excessive force during the swab pass is a direct signal that something needs to be resolved at that location, and proceeding to conduit pull-back anyway risks a much more costly stuck-conduit failure than addressing the swab-detected issue first."
+    }
+  ]
+}

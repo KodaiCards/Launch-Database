@@ -1,0 +1,123 @@
+{
+  "assessmentId": "T06-L06",
+  "kind": "lesson",
+  "courseId": "T06",
+  "lessonId": "T06.L06",
+  "drawCount": 4,
+  "passThreshold": 70,
+  "pool": [
+    {
+      "id": "T06-L06-Q1",
+      "type": "mc",
+      "prompt": "An 811 locate ticket returns yellow flags marking a gas line 3 feet south of a proposed bore path, with the bore passing within 18 inches of the gas main at closest approach. What is the correct next step before boring begins?",
+      "choices": [
+        "Begin boring — 18 inches of separation from the locate mark is already code-compliant",
+        "Pothole-expose the gas main at the point of closest approach to confirm its actual depth and lateral position before boring — locate marks are approximate, and the actual gas main could be significantly closer than the flag indicates, putting the real separation well below any required minimum once boring is underway",
+        "Move the bore path to increase separation to at least 36 inches without exposing the utility",
+        "Call the gas company and ask them to relocate the gas main before proceeding"
+      ],
+      "answerIndex": 1,
+      "explanation": "Locate marks are approximate, not exact — typical locate tolerance can be off by a foot or more, meaning an 18-inch clearance from the flag could actually be a much smaller real-world separation. Standard practice (consistent with CGA Best Practices excavation-safety guidance) is to pothole-expose the utility at the closest-approach point and build the bore path from the CONFIRMED position, not the approximate locate mark.",
+      "citation": "CGA (Common Ground Alliance) Best Practices excavation-safety guidance — WebSearch-verified as an established industry excavation-safety reference (corroborated via bluestakes.org's CGA Best Practices Appendix B document)."
+    },
+    {
+      "id": "T06-L06-Q2",
+      "type": "mc",
+      "prompt": "Orange flags are placed along the edge of a property during a residential 811 locate. What utility do orange flags mark, per the APWA Uniform Color Code?",
+      "choices": [
+        "Electric power lines",
+        "Gas or oil lines",
+        "Telecommunications or CATV",
+        "Potable water"
+      ],
+      "answerIndex": 2,
+      "explanation": "Per the APWA Uniform Color Code: Red = electric power, Yellow = gas/oil/steam/petroleum, Orange = communication/alarm/signal lines (telecom/CATV), Blue = water/irrigation. The orange flags mark existing telecommunications infrastructure — likely a copper or fiber run belonging to an incumbent carrier, cable provider, or competitive fiber carrier.",
+      "citation": "APWA Uniform Color Code — WebSearch-verified (apwa.org official color code PDF, multiple independent corroborating 811/locate-industry sources)."
+    },
+    {
+      "id": "T06-L06-Q3",
+      "type": "mc",
+      "prompt": "A crew plowing a residential route notices unidentified paint markings in the yard that don't appear on the 811 locate sheet. What should they do?",
+      "choices": [
+        "Continue plowing — if it were important, it would already be on the locate sheet",
+        "Move the plow path 2 feet away from the marking and continue without further investigation",
+        "Stop work and manually investigate the marking (pothole-expose if needed) before resuming mechanized excavation — unidentified marks could be an expired prior locate, a private lateral not in the 811 system, or a survey mark, and any of these possibilities warrants confirming what's actually there before continuing",
+        "Report the discrepancy to the 811 center and continue mechanized excavation while waiting for a response"
+      ],
+      "answerIndex": 2,
+      "explanation": "Unidentified marks are exactly the kind of ambiguous field observation that requires stopping and investigating rather than assuming a benign explanation — moving the path by 2 feet doesn't resolve the ambiguity, since an unidentified utility could extend laterally beyond the mark in an unknown direction."
+    },
+    {
+      "id": "T06-L06-Q4",
+      "type": "mc",
+      "prompt": "A fiber conduit runs parallel to an electric supply conduit for 600 feet in a shared utility corridor. The electric is at 24-inch depth; the fiber is planned at 36-inch depth, 18 inches to the south (12 inches vertical separation, 18 inches horizontal separation — both exceeding typical code minimums). Is there any remaining concern?",
+      "choices": [
+        "No — vertical and horizontal separation both exceeding typical minimums means the design is fully complete with no further action needed",
+        "The separation distances are likely code-compliant, but parallel runs in a shared utility corridor typically ALSO require coordination with the existing utility owner — the electric utility may require an encroachment permit, notification, or inspection for a 600-ft parallel run even when separation distances are met; 'code-compliant separation' and 'no coordination required' are not the same thing",
+        "Yes — fiber must always be installed north of electric supply lines to comply with NESC underground rules, regardless of actual separation distance",
+        "Yes — 18-inch horizontal separation is always non-compliant regardless of context"
+      ],
+      "answerIndex": 1,
+      "explanation": "Meeting the separation-distance minimum addresses only one dimension of a shared-corridor parallel run — the procedural/coordination requirement (permit, notification, inspection from the existing utility owner) is a separate consideration that a design satisfying only the distance minimum can still miss, which is why 'compliant separation' shouldn't be assumed to mean 'fully cleared for construction.'"
+    },
+    {
+      "id": "T06-L06-Q5",
+      "type": "drag-match",
+      "prompt": "Match each APWA flag color to the utility it marks.",
+      "items": [
+        { "id": "i_red", "label": "Electric power lines and conduit" },
+        { "id": "i_yellow", "label": "Gas, oil, steam, petroleum mains" },
+        { "id": "i_orange", "label": "Telecommunications and CATV" },
+        { "id": "i_blue", "label": "Potable water mains" }
+      ],
+      "targets": [
+        { "id": "t_red", "label": "Red flags" },
+        { "id": "t_yellow", "label": "Yellow flags" },
+        { "id": "t_orange", "label": "Orange flags" },
+        { "id": "t_blue", "label": "Blue flags" }
+      ],
+      "correctMap": { "t_red": "i_red", "t_yellow": "i_yellow", "t_orange": "i_orange", "t_blue": "i_blue" },
+      "explanation": "The APWA Uniform Color Code standardizes utility-marking colors nationwide: Red for electric, Yellow for gas/oil/petroleum, Orange for telecom/CATV, and Blue for potable water — a fiber crew needs to recognize all four (plus Green/sewer and Purple/reclaimed water) to correctly interpret any 811 locate.",
+      "citation": "APWA Uniform Color Code — reused from T06-L06-Q2 verification."
+    },
+    {
+      "id": "T06-L06-Q6",
+      "type": "mc",
+      "prompt": "Why does the correct response to an unidentified utility marking (Q3) mirror the correct response to a marked gas line at closer-than-expected separation (Q1), even though one scenario involves a known utility and the other an unknown one?",
+      "choices": [
+        "The two scenarios don't actually share a common principle; they require entirely different responses",
+        "Both scenarios share the same underlying principle: don't proceed with mechanized excavation based on an ASSUMED position or identity when the actual field evidence (a locate mark's approximate tolerance, or an unmarked flag) leaves genuine uncertainty — the correct response in both cases is to stop and physically confirm the actual condition (pothole-expose or manually investigate) before continuing",
+        "The gas-line scenario requires immediate evacuation, while the unidentified-marking scenario requires only a brief pause",
+        "Only the gas-line scenario is a genuine safety issue; the unidentified-marking scenario is purely a documentation concern"
+      ],
+      "answerIndex": 1,
+      "explanation": "Both scenarios reduce to the same underlying principle: field evidence with genuine uncertainty (approximate locate tolerance, or an unidentified mark) should never be resolved by assumption — the correct response is always to physically confirm the actual condition before mechanized excavation proceeds, regardless of whether the utility in question is a known, marked line or an unidentified marking."
+    },
+    {
+      "id": "T06-L06-Q7",
+      "type": "mc",
+      "prompt": "A designer assumes that meeting NESC-based separation minimums between a fiber conduit and a parallel electric supply line automatically satisfies every requirement for building in that shared corridor. What is the gap in this assumption?",
+      "choices": [
+        "There is no gap; separation-distance compliance is the only requirement for any shared-corridor installation",
+        "Separation distance addresses the PHYSICAL clearance requirement, but shared-corridor construction often has a SEPARATE procedural requirement — coordination with the existing utility owner (permit, notification, inspection) — that isn't satisfied merely by meeting the distance minimum; a designer who only checks separation distance can still be missing a required coordination step",
+        "NESC separation minimums are only advisory and have no bearing on shared-corridor design at all",
+        "The gap only applies to gas lines, never to electric supply lines"
+      ],
+      "answerIndex": 1,
+      "explanation": "This is the Q4 principle stated generally: physical separation-distance compliance and procedural coordination requirements are two independent dimensions of shared-corridor construction, and satisfying one doesn't automatically satisfy the other — a complete design check verifies both."
+    },
+    {
+      "id": "T06-L06-Q8",
+      "type": "mc",
+      "prompt": "A field crew sees green flags along a route and, unsure what they mark, assumes they're a duplicate of the nearby orange (telecom) flags. What is the risk of this assumption, and what is the correct action instead?",
+      "choices": [
+        "There is no risk; green and orange flags always mark the same utility category under the APWA color code",
+        "Green flags mark sewer/drain lines — a completely different utility category from orange (telecom/CATV); assuming they're duplicative rather than confirming the actual APWA color-code meaning risks missing a real sewer-line hazard during excavation. The correct action is to confirm the actual meaning of each flag color present (per the APWA code) rather than assuming any two colors are interchangeable",
+        "Green flags are purely decorative and don't correspond to any utility",
+        "The risk only matters if the crew is using open-cut trenching, not for HDD or plowing"
+      ],
+      "answerIndex": 1,
+      "explanation": "Green flags mark an entirely distinct utility category (sewer/drain) from orange (telecom/CATV) under the APWA color code — treating any two flag colors as interchangeable without confirming their actual meaning risks missing a genuinely different utility hazard, reinforcing that a crew needs to know the full color code, not just the colors relevant to their own utility type."
+    }
+  ]
+}
