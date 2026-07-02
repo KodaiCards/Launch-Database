@@ -1,0 +1,119 @@
+{
+  "assessmentId": "T09-L02",
+  "kind": "lesson",
+  "courseId": "T09",
+  "lessonId": "T09.L02",
+  "drawCount": 4,
+  "passThreshold": 70,
+  "pool": [
+    {
+      "id": "T09-L02-Q1",
+      "type": "mc",
+      "prompt": "What is the correct order of NEPA review tiers from least to most intensive?",
+      "choices": [
+        "EIS -> EA -> CE (most to least)",
+        "CE -> EA -> EIS (least to most)",
+        "EA -> CE -> EIS",
+        "All three tiers require the same level of documentation"
+      ],
+      "answerIndex": 1,
+      "explanation": "The NEPA statutory tiers run from least to most intensive: a Categorical Exclusion (CE) for actions with no significant environmental effect, an Environmental Assessment (EA) for actions where significance is uncertain, and an Environmental Impact Statement (EIS) for actions with likely significant impact. Most BEAD/RUS aerial fiber-in-existing-ROW projects qualify for a CE.",
+      "citation": "42 USC 4332 (NEPA statutory tiers). NOTE: CEQ's former implementing regulations at 40 CFR Parts 1500-1508 were removed from the CFR effective January 8, 2026; NEPA tiers are now implemented through agency-specific procedures rather than a single CEQ-wide regulation (see T09-L01-Q6 / research log)."
+    },
+    {
+      "id": "T09-L02-Q2",
+      "type": "mc",
+      "prompt": "A BEAD-funded aerial fiber route qualifies for a categorical exclusion based on its project type (utility construction in existing ROW). The route corridor includes documented habitat for the Northern Long-Eared Bat, an endangered species. What must happen before the CE can be used?",
+      "choices": [
+        "Nothing — a CE is automatic for utility construction in existing ROW regardless of species presence",
+        "The extraordinary-circumstances analysis must be completed — documented T&E species presence is a classic extraordinary circumstance that can take an otherwise-qualifying action out of CE eligibility until addressed (e.g., through ESA Section 7 consultation or a documented no-impact rationale)",
+        "The project must automatically escalate to a full EIS",
+        "The project can proceed under the CE as long as construction happens at night"
+      ],
+      "answerIndex": 1,
+      "explanation": "A CE is not automatic merely because the project type qualifies — the extraordinary-circumstances analysis checks for factors (like documented T&E species presence) that could take the action out of CE eligibility. Documented Northern Long-Eared Bat habitat is exactly this kind of extraordinary circumstance, requiring further review (ESA Section 7 informal consultation, or a well-documented no-impact analysis) before the CE can be validly used.",
+      "citation": "16 USC 1536 (ESA Section 7); 7 CFR Part 1b (RUS/USDA NEPA implementing procedures, eff. April 3, 2026 — replaced the former 7 CFR Part 1970, now reserved)."
+    },
+    {
+      "id": "T09-L02-Q3",
+      "type": "mc",
+      "prompt": "A BEAD fiber project completes an Environmental Assessment (EA). The lead federal agency concludes there is no significant environmental impact. What document does the agency issue to authorize the project to proceed?",
+      "choices": [
+        "A Record of Decision (ROD)",
+        "A Finding of No Significant Impact (FONSI)",
+        "A Categorical Exclusion Memo",
+        "A Section 106 Memorandum of Agreement"
+      ],
+      "answerIndex": 1,
+      "explanation": "A FONSI is the document an agency issues after an EA concludes the action will not have a significant environmental impact, authorizing the project to proceed without preparing a full EIS. A Record of Decision is instead the culminating document for an EIS-tier review, not an EA.",
+      "citation": "42 USC 4332(C) (NEPA statutory anchor for environmental review documentation)."
+    },
+    {
+      "id": "T09-L02-Q4",
+      "type": "mc",
+      "prompt": "Under the current (post-April 2026) RUS/USDA NEPA implementing framework at 7 CFR Part 1b, what type of construction does the categorical exclusion for utility construction in existing ROW typically apply to?",
+      "choices": [
+        "Any construction project receiving federal funding, regardless of location or ROW status",
+        "Utility construction (such as aerial fiber attachment or replacement) confined to an existing, previously-disturbed right-of-way, where the action does not involve new ROW acquisition or major new ground disturbance",
+        "Only new greenfield construction outside any existing ROW",
+        "Only underground construction, never aerial"
+      ],
+      "answerIndex": 1,
+      "explanation": "The categorical exclusion for utility work in existing ROW is scoped to construction confined to a previously-disturbed corridor — new ROW acquisition, major new ground disturbance, or extension beyond the existing corridor typically takes the action out of this CE category and into an EA-level review.",
+      "citation": "7 CFR Part 1b (RUS/USDA NEPA implementing procedures, eff. April 3, 2026; replaced 7 CFR 1970.54, now reserved)."
+    },
+    {
+      "id": "T09-L02-Q5",
+      "type": "mc",
+      "prompt": "A BEAD fiber project triggers three extraordinary circumstances simultaneously: historic properties in the area of potential effects (Section 106), threatened and endangered species habitat (ESA Section 7), and wetlands (Section 404). Are these three reviews mutually exclusive, or can they proceed in parallel?",
+      "choices": [
+        "They must always be resolved in a fixed sequential order with no parallel review permitted",
+        "They are independent statutory review tracks (NHPA, ESA, CWA) that can generally proceed in parallel, though a project team should sequence agency outreach for the reviews most likely to be schedule-critical given the project's specific conditions",
+        "Only one of the three reviews applies to any single project; the others are automatically waived",
+        "None of the three can begin until a full EIS is completed first"
+      ],
+      "answerIndex": 1,
+      "explanation": "Section 106 (NHPA), ESA Section 7, and CWA Section 404 are independent statutory authorities administered by different agencies (SHPO/THPO and the federal lead agency, USFWS, and USACE respectively) and can generally be pursued in parallel — the practical project-management task is sequencing outreach so that whichever review has the longest or least-predictable timeline (often Section 106 in areas with dense findable historic properties) doesn't sit unaddressed as the last-discovered blocker.",
+      "citation": "54 USC 306108 (NHPA Section 106); 16 USC 1536 (ESA Section 7); 33 USC 1344 (CWA Section 404); 7 CFR Part 1b (eff. April 3, 2026)."
+    },
+    {
+      "id": "T09-L02-Q6",
+      "type": "mc",
+      "prompt": "Why does the T09.L02 lesson caution against treating a categorical exclusion as fully 'automatic' once a project's general type matches a listed CE category?",
+      "choices": [
+        "Because CEs were entirely eliminated by the January 2026 CEQ regulation removal",
+        "Because a listed CE category is a necessary but not sufficient condition — the extraordinary-circumstances analysis is a separate, mandatory second check, and a documented factor like T&E species presence or a wetland crossing can take an otherwise-qualifying action out of CE eligibility until specifically addressed",
+        "Because CEs only apply to state-funded projects, never federally-funded ones",
+        "Because CEs require a full EIS to be prepared as a backup regardless of outcome"
+      ],
+      "answerIndex": 1,
+      "explanation": "Matching a project type to a CE category is necessary but not sufficient — every CE use also requires an extraordinary-circumstances screen. This is the core teaching point distinguishing 'CE-eligible project type' from 'CE actually usable for this specific project,' since a documented extraordinary circumstance (T&E species, wetlands, historic properties) can require additional review before the CE can be validly applied."
+    },
+    {
+      "id": "T09-L02-Q7",
+      "type": "mc",
+      "prompt": "A project team completes an EA and the agency issues a FONSI. What does this specifically NOT mean?",
+      "choices": [
+        "It does not mean the project has zero environmental effects whatsoever — a FONSI means the agency concluded the effects are not SIGNIFICANT enough to require a full EIS, not that there are no effects at all",
+        "It does not authorize the project to proceed under NEPA",
+        "It does not require any documentation of the analysis that led to the finding",
+        "It does not apply to federally-funded projects, only privately-funded ones"
+      ],
+      "answerIndex": 0,
+      "explanation": "A FONSI is a finding that impacts are not SIGNIFICANT, based on the EA's analysis — it is not a certification of zero impact. This distinction matters because a FONSI can still carry mitigation commitments or conditions tied to the specific effects the EA did identify, even though those effects were assessed as non-significant."
+    },
+    {
+      "id": "T09-L02-Q8",
+      "type": "mc",
+      "prompt": "A project's environmental review needs are determined jointly by RUS (a ReConnect grant) and NTIA (BEAD funding). Does the fact that two federal agencies are involved mean two separate, fully independent NEPA processes must be completed from scratch?",
+      "choices": [
+        "Yes, always — each federal funding source always requires its own completely independent NEPA process with no coordination possible",
+        "Not necessarily — agencies can coordinate as co-lead or cooperating agencies on a single NEPA review when a project has multiple federal funding sources, though the specific coordination mechanism depends on the agencies' respective procedures and any interagency agreement in place",
+        "No — only the first agency to fund the project has any NEPA obligation",
+        "No — federal agencies are legally barred from coordinating on a shared NEPA review"
+      ],
+      "answerIndex": 1,
+      "explanation": "Multiple federal funding sources on one project doesn't automatically mean duplicative, fully separate NEPA reviews — agencies can and do coordinate (e.g., as co-lead or cooperating agencies) to avoid redundant review of the same physical action, though the exact mechanism depends on each agency's own NEPA implementing procedures and any interagency coordination agreement for the specific project."
+    }
+  ]
+}
