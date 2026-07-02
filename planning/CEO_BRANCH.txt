@@ -1,0 +1,5 @@
+claude/ceo-fresh-instance-boot-u2zw28
+# ^ LINE 1 = the current CEO branch name. Read it with:
+#   git show origin/main:planning/CEO_BRANCH.txt | head -1 | tr -d '[:space:]'
+# Planning updates line 1 at each CEO-session swap (D026). C1/C2 + the Auditor read it
+# to discover + watch/fetch the CEO branch without a hardcoded slug or a Carter nudge (fixes O47).
