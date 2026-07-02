@@ -219,9 +219,20 @@ function MultipleChoice({ q, revealed, onAnswer }) {
 function DragMatch({ q, revealed, onAnswer }) {
   const [mapping, setMapping]   = useState({});
   const [dragging, setDragging] = useState(null);
+  // Shuffle the item tray once per mount (Fisher–Yates) so answer POSITION never
+  // hints the mapping — the old definition-order tray was gameable (Carter
+  // 2026-06-29 anti-cheat). Lazy initializer → stable across re-renders.
+  const [shuffledItems] = useState(() => {
+    const a = [...q.items];
+    for (let i = a.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [a[i], a[j]] = [a[j], a[i]];
+    }
+    return a;
+  });
 
   const usedItems = new Set(Object.values(mapping));
-  const trayItems = q.items.filter(it => !usedItems.has(it.id));
+  const trayItems = shuffledItems.filter(it => !usedItems.has(it.id));
 
   function onDragStart(e, itemId) {
     setDragging(itemId);
