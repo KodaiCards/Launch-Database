@@ -366,12 +366,13 @@ export default function T05L03_CommToSupplySeparationRule235() {
             prompt:
               'A pole inspector measures the following heights on a joint-use distribution pole (12.5 kV, under 8.7 kV phase-to-ground):\n\n- Neutral: 28 ft\n- New comm attachment (just installed): 25 ft 2 in.\n- Existing comm cable: 21 ft\n\nWhich attachment is creating a Rule 235 violation and why?',
             choices: [
-              { text: 'The existing comm cable at 21 ft — it is too close to the neutral.', correct: false },
-              { text: 'The new comm attachment at 25 ft 2 in. — it is only 22 inches below the neutral, violating the ≈ 40-inch safety zone requirement.', correct: true },
-              { text: 'The neutral at 28 ft — it should be higher on the pole to create adequate separation.', correct: false },
-              { text: 'No violation — the new attachment and existing cable are both below the neutral.', correct: false },
+              'The existing comm cable at 21 ft — it is too close to the neutral.',
+              'The new comm attachment at 25 ft 2 in. — it is only 22 inches below the neutral, violating the ≈ 40-inch safety zone requirement.',
+              'The neutral at 28 ft — it should be higher on the pole to create adequate separation.',
+              'No violation — the new attachment and existing cable are both below the neutral.',
             ],
-            rationale:
+            answerIndex: 1,
+            explanation:
               'The safety zone is measured from the neutral DOWN to the top comm attachment. Neutral at 28 ft, new attachment at 25 ft 2 in. = 2 ft 10 in. = 34 inches of separation. The required safety zone is approximately 40 inches. 34 inches < 40 inches — the new attachment is in the climbing space. The fix: lower the new attachment at least 6 more inches below the neutral, or rearrange existing cables to create adequate vertical space.',
           },
           {
@@ -380,12 +381,13 @@ export default function T05L03_CommToSupplySeparationRule235() {
             prompt:
               'An inspection finds 42 inches of safety zone at the pole. At midspan, the neutral sags 8 inches more than the comm cable. What is the actual safety zone at midspan, and is it compliant?',
             choices: [
-              { text: '42 inches — midspan sag does not affect the safety zone measurement.', correct: false },
-              { text: '34 inches — NESC requires a 30-inch midspan minimum, so this is compliant.', correct: true },
-              { text: '50 inches — at midspan the cables are farther apart, so the safety zone increases.', correct: false },
-              { text: '34 inches — NESC requires a 40-inch midspan minimum, so this is a violation.', correct: false },
+              '42 inches — midspan sag does not affect the safety zone measurement.',
+              '34 inches — NESC requires a 30-inch midspan minimum, so this is compliant.',
+              '50 inches — at midspan the cables are farther apart, so the safety zone increases.',
+              '34 inches — NESC requires a 40-inch midspan minimum, so this is a violation.',
             ],
-            rationale:
+            answerIndex: 1,
+            explanation:
               'Midspan gap = at-pole gap (42 in.) minus the differential sag (neutral sagged 8 in. more than comm cable = 8 in. of gap reduction). 42 − 8 = 34 inches at midspan. NESC requires approximately 30 inches at midspan (vs. ≈ 40 at the pole), so 34 inches is compliant — but only barely. This is why designers target more than the minimum at-pole to leave buffer for differential sag.',
           },
         ]}

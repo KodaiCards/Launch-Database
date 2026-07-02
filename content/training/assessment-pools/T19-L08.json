@@ -1,0 +1,120 @@
+{
+  "assessmentId": "T19-L08",
+  "kind": "lesson",
+  "courseId": "T19",
+  "lessonId": "T19.L08",
+  "drawCount": 4,
+  "passThreshold": 70,
+  "pool": [
+    {
+      "id": "T19-L08-Q1",
+      "type": "mc",
+      "prompt": "An OSP engineer specifies a rack-mount FOSC for the CO headend to organize splices from a new 144-fiber feeder cable. The FOSC has 6 splice trays at 24 splices each. How many fibers can this FOSC accommodate?",
+      "choices": [
+        "72 fibers (6 trays x 12 splices per tray)",
+        "144 fibers (6 trays x 24 splices per tray)",
+        "288 fibers (6 trays x 48 splices per tray)",
+        "96 fibers (4 trays occupied, 2 reserved for future)"
+      ],
+      "answerIndex": 1,
+      "explanation": "6 splice trays x 24 splices per tray = 144 splice positions = 144 fibers. A 144-fiber feeder cable requires exactly 144 splice positions (one per fiber, each spliced to a pigtail). Specify the next size up (or an 8-tray unit) to leave growth capacity.",
+      "citation": "Standard splice-tray capacity conventions."
+    },
+    {
+      "id": "T19-L08-Q2",
+      "type": "mc",
+      "prompt": "A 72-fiber feeder cable is designed to serve FDH-1 (24 fibers) and FDH-2 (48 fibers) in a bus topology. At FDH-1, fibers 1-24 are designated to split; fibers 25-72 are designated to express to FDH-2. A splicer accidentally splices fibers 1-24 as express (connecting them to the FDH-2 continuing cable). What happens to FDH-1 service?",
+      "choices": [
+        "FDH-1 service is unaffected — the OLT at the CO will detect the error and reroute signals automatically",
+        "FDH-1 service is fully out. Fibers 1-24 now route to FDH-2 instead of FDH-1's splitter cassettes. FDH-1's splitters have no light signal. All subscribers on FDH-1 are dark.",
+        "FDH-1 experiences 50% signal loss but some service continues",
+        "FDH-2 service is disrupted because the extra fibers overload the FDH-2 splitter capacity"
+      ],
+      "answerIndex": 1,
+      "explanation": "Express vs. split is a binary choice at the FOSC. If a fiber is spliced express when it should split, that fiber does not deliver light to its intended FDH's splitters. All ONTs on that FDH's distribution fibers lose downstream light. The splice matrix and the FOSC design must be in precise agreement.",
+      "citation": "Standard express/split FOSC design practice."
+    },
+    {
+      "id": "T19-L08-Q3",
+      "type": "mc",
+      "prompt": "Why is gel filling compound NOT used in rack-mount FOSCs inside a CO headend?",
+      "choices": [
+        "Gel filling is prohibited by TIA-568 for inside-plant enclosures",
+        "Gel filling is not needed in a controlled indoor environment — no weather, no moisture intrusion through cable entry ports. The headend FOSC provides dust and mechanical protection only; gel is an outdoor weatherproofing measure unnecessary inside a building.",
+        "Gel filling causes signal loss in optical splices above 20°C",
+        "CO headend FOSCs use foam-block fill instead of gel for the same sealing purpose"
+      ],
+      "answerIndex": 1,
+      "explanation": "Gel filling compound in OSP FOSCs serves one purpose: weatherproof sealing against moisture ingress in outdoor environments. Inside a CO headend, the enclosure is dry and temperature-stable — no weather seal is needed. The rack-mount FOSC provides organization and dust/mechanical protection only.",
+      "citation": "Standard inside-plant vs. outside-plant FOSC design comparison."
+    },
+    {
+      "id": "T19-L08-Q4",
+      "type": "mc",
+      "prompt": "An organizer tray inside an FOSC or rack-mount splice enclosure typically holds how many fusion splices per tray?",
+      "choices": ["4 or 8", "12 or 24", "48 or 96", "1 only"],
+      "answerIndex": 1,
+      "explanation": "Standard splice tray capacities are 12 or 24 splices. Tray type and quantity determine the total splice capacity of the enclosure — for a 144-fiber cable, you need either 12 x 12-splice trays or 6 x 24-splice trays.",
+      "citation": "Standard splice-organizer tray specifications."
+    },
+    {
+      "id": "T19-L08-Q5",
+      "type": "mc",
+      "prompt": "A CO building has its conduit entry (MEF) on the south wall and the ODF rack on the north side of the equipment room — 65 feet away. An OSP engineer specifies running the gel-filled OSP feeder cable the full 65 feet from the MEF to the ODF rack before terminating. What NEC code requirement does this violate?",
+      "choices": [
+        "NEC Art. 250.94 — requires the IBT to be within 50 feet of the building entry",
+        "NEC Art. 770.113 — unlisted (OSP-grade) optical fiber cable is permitted inside a building only for the first 50 feet from the point of entrance, and must then terminate in an enclosure or transition to listed inside-plant cable. At 65 feet, the run exceeds this limit without a transition point.",
+        "NEC Art. 230.70 — service entrance equipment must be located within 50 feet of the utility meter",
+        "No NEC requirement applies to fiber optic cable length inside a building"
+      ],
+      "answerIndex": 1,
+      "explanation": "NEC Art. 770.113 permits unlisted (OSP-grade) optical fiber cable inside a building only for the first 50 feet from the point of building entrance, and it must terminate in an enclosure. For a 65-foot MEF-to-ODF run, the OSP engineer must specify a splice organizer or FOSC transition point within the first 50 feet, then run listed plenum/riser cable the remaining distance.",
+      "citation": "NEC (NFPA 70) Art. 770.113 [confirm current edition — this is the section governing the 50-foot unlisted-cable rule; Art. 770.26 governs a separate topic, fire-spread prevention/firestopping]."
+    },
+    {
+      "id": "T19-L08-Q6",
+      "type": "mc",
+      "prompt": "What is the practical difference between a rack-mount FOSC and a dome-style outdoor closure?",
+      "choices": [
+        "They are functionally identical; the only difference is paint color",
+        "A rack-mount FOSC is designed for 19-inch equipment racks (1U-4U) with a hinged front-access door for frequent re-entry; a dome-style closure is a weatherproof outdoor enclosure with gasketed cable entries, designed for infrequent re-entry",
+        "A rack-mount FOSC can only hold copper cross-connects, never fiber splices",
+        "A dome-style closure is always larger and holds more splices than any rack-mount FOSC"
+      ],
+      "answerIndex": 1,
+      "explanation": "The rack-mount FOSC is built for the indoor, controlled headend environment — frequent re-entry as new feeders terminate, no weather sealing needed, front-access door with no tools required in most designs. The dome-style closure is built for outdoor exposure — weatherproof gaskets, infrequent re-entry, and a sealed cable-entry design.",
+      "citation": "Standard OSP vs. inside-plant FOSC construction comparison."
+    },
+    {
+      "id": "T19-L08-Q7",
+      "type": "mc",
+      "prompt": "What are 'express fibers' at an intermediate FOSC or FDH?",
+      "choices": [
+        "Fibers that are spliced and terminated at that location for local service",
+        "Fibers that pass through a splice enclosure without being broken out or spliced — they continue to the next downstream location untouched",
+        "Fibers reserved exclusively for emergency/priority traffic",
+        "A fiber type rated for higher bandwidth than standard feeder fiber"
+      ],
+      "answerIndex": 1,
+      "explanation": "Express fibers pass through a splice enclosure or junction point without being accessed — common in ring and bus OSP topologies where a single cable serves multiple FDHs or COs in sequence. Only the fibers needed at that node are split; the rest express through untouched.",
+      "citation": "Standard bus/ring OSP topology terminology."
+    },
+    {
+      "id": "T19-L08-Q8",
+      "type": "drag-match",
+      "prompt": "Match each FOSC characteristic to whether it applies to outside-plant (OSP) or headend/inside-plant FOSCs.",
+      "items": [
+        { "id": "i_osp", "label": "Outside-plant (OSP) FOSC" },
+        { "id": "i_headend", "label": "Headend/inside-plant FOSC" }
+      ],
+      "targets": [
+        { "id": "t_weatherproof", "label": "Weatherproof gaskets, heat-shrink boots or compression fittings at cable entry" },
+        { "id": "t_gelfree_rack", "label": "Gel-free by default, rack-mounted, no weatherproofing needed" },
+        { "id": "t_infrequent", "label": "Infrequent re-entry — sealed for years" },
+        { "id": "t_frequent", "label": "Frequent re-entry as new feeders terminate; tool-free front-access door" }
+      ],
+      "correctMap": { "t_weatherproof": "i_osp", "t_gelfree_rack": "i_headend", "t_infrequent": "i_osp", "t_frequent": "i_headend" },
+      "explanation": "OSP FOSCs must survive outdoor exposure — weatherproof entry seals and infrequent re-entry. Headend FOSCs live in a controlled indoor environment — gel-free by default, no weatherproofing needed, and designed for frequent re-entry as new feeder cables terminate over the facility's life."
+    }
+  ]
+}

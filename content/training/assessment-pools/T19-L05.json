@@ -1,0 +1,115 @@
+{
+  "assessmentId": "T19-L05",
+  "kind": "lesson",
+  "courseId": "T19",
+  "lessonId": "T19.L05",
+  "drawCount": 4,
+  "passThreshold": 70,
+  "pool": [
+    {
+      "id": "T19-L05-Q1",
+      "type": "mc",
+      "prompt": "An OLT shelf draws 2.4 kW of DC power. Rectifiers draw 0.8 kW. Lighting draws 0.3 kW. What is the approximate heat load in BTU/hr that the HVAC must remove (using 1 kW = 3,412 BTU/hr)?",
+      "choices": ["3,500 BTU/hr", "11,942 BTU/hr", "34,120 BTU/hr", "8,500 BTU/hr"],
+      "answerIndex": 1,
+      "explanation": "Total power = 2.4 + 0.8 + 0.3 = 3.5 kW. Heat load = 3.5 kW x 3,412 BTU/hr per kW = 11,942 BTU/hr. Add roughly 15-20% for solar gain through an insulated building in a hot climate, and specify HVAC capacity with N+1 redundancy.",
+      "citation": "Standard BTU/hr-per-kW conversion (1 kW = 3,412 BTU/hr, from the definition of the BTU)."
+    },
+    {
+      "id": "T19-L05-Q2",
+      "type": "mc",
+      "prompt": "A fire breaks out in a CO equipment room protected by a clean-agent suppression system (e.g., Novec 1230 or FM-200). The system activates. After the fire is suppressed and the room ventilated, what happens to the OLT equipment?",
+      "choices": [
+        "The OLT equipment is destroyed — gaseous agents are as damaging as water to electronics",
+        "The OLT equipment is typically operational — clean agents suppress fire without residue, liquid, or electrical damage; a normal commissioning check verifies no heat or smoke damage",
+        "The OLT must be replaced immediately as a precaution, regardless of inspection results",
+        "The gaseous agent bonds to connector surfaces, requiring lens cleaning of all fiber connectors"
+      ],
+      "answerIndex": 1,
+      "explanation": "Clean-agent suppression systems are designed specifically to suppress fires in electronic environments without equipment damage. They leave no residue and cause no electrical shorts. After discharge, the room is ventilated and equipment is inspected for smoke or heat damage; if none is found, operations resume.",
+      "citation": "NFPA 75 [confirm edition]; NFPA 76 [confirm edition]."
+    },
+    {
+      "id": "T19-L05-Q3",
+      "type": "mc",
+      "prompt": "What is the ASHRAE-recommended upper temperature limit for the equipment inlet of IT and telecom equipment (ASHRAE TC 9.9)?",
+      "choices": ["18°C (64.4°F)", "22°C (71.6°F)", "27°C (80.6°F)", "35°C (95°F)"],
+      "answerIndex": 2,
+      "explanation": "ASHRAE TC 9.9's RECOMMENDED thermal envelope for all A-class IT/telecom equipment is 18-27°C (64.4-80.6°F) at the equipment inlet — this is the recommended operating range for reliability and efficiency, not the wider ALLOWABLE range (which for Class A2 extends further, to roughly 10-35°C). The recommended envelope is what an OSP engineer should design HVAC capacity around.",
+      "citation": "ASHRAE TC 9.9 [confirm current edition] thermal guidelines for data processing environments."
+    },
+    {
+      "id": "T19-L05-Q4",
+      "type": "mc",
+      "prompt": "A pre-action sprinkler system activates (both conditions are met: fire detector triggers AND a sprinkler head fuses from heat). What is the primary concern for the CO equipment?",
+      "choices": [
+        "No concern — pre-action systems use clean agent, not water",
+        "Water discharge. Pre-action delays water release compared to a wet-pipe system, but once both conditions are met, water does discharge — electronics in the affected zone will be damaged",
+        "Overpressure — the system pressurizes the room to suppress the fire without water or agent",
+        "CO2 discharge — pre-action systems use CO2 rather than water or clean agent"
+      ],
+      "answerIndex": 1,
+      "explanation": "Pre-action sprinkler systems still deliver water once both conditions are met (detector activation + head fusion). The two-condition requirement reduces false discharges compared to wet-pipe systems, but when a real fire occurs, water does discharge and electronics will be damaged. Pre-action is a middle ground — better than wet-pipe, not as equipment-safe as clean-agent.",
+      "citation": "Standard fire-suppression system comparison; NFPA 13 [confirm edition] pre-action valve requirements."
+    },
+    {
+      "id": "T19-L05-Q5",
+      "type": "mc",
+      "prompt": "What is the fundamental difference between a CRAC (Computer Room Air Conditioner) and a residential air conditioner, from a telecom equipment-room design standpoint?",
+      "choices": [
+        "A CRAC removes only latent heat (humidity); a residential unit removes only sensible heat",
+        "A CRAC is designed primarily to remove sensible heat while maintaining tight humidity control (precision cooling); a residential unit removes both sensible and latent heat without precision humidity control",
+        "A CRAC and a residential air conditioner are functionally identical — the only difference is the brand name",
+        "A CRAC operates only on –48VDC power; residential units require 120VAC"
+      ],
+      "answerIndex": 1,
+      "explanation": "A CRAC is precision cooling: it removes sensible heat (equipment-generated) while maintaining tight humidity control (roughly +/-5% RH) to prevent static discharge and condensation risk. A residential AC removes both sensible and latent heat but without the same humidity precision — inadequate for a dense equipment room.",
+      "citation": "Standard CRAC vs. residential HVAC design distinction; ASHRAE TC 9.9 [confirm edition]."
+    },
+    {
+      "id": "T19-L05-Q6",
+      "type": "mc",
+      "prompt": "Why should a rural FTTH hut HVAC design specify N+1 redundancy (two independent cooling units, each capable of handling full load) rather than a single mini-split?",
+      "choices": [
+        "N+1 is only a suggestion with no real operational consequence",
+        "If the single unit's compressor fails during a hot summer, the hut can reach equipment-damaging temperatures and trigger OLT thermal shutdown within roughly 90 minutes to 2 hours — the N+1 unit's cost is small relative to an emergency service call plus downtime",
+        "N+1 redundancy is required by federal law for all telecom buildings regardless of size",
+        "A single mini-split unit cannot legally be installed in a telecom hut under any circumstances"
+      ],
+      "answerIndex": 1,
+      "explanation": "Many rural FTTH huts are built with a single mini-split and no redundancy. When the compressor fails in a hot climate, hut interior temperatures can climb rapidly and trigger OLT thermal protection shutdown. The cost of an N+1 redundant unit at install time is small compared to an emergency HVAC service call plus service outage.",
+      "citation": "Field practice; ASHRAE TC 9.9 / BICSI 002 [confirm edition] redundancy guidance."
+    },
+    {
+      "id": "T19-L05-Q7",
+      "type": "mc",
+      "prompt": "In an arid or high-altitude climate where relative humidity can drop below roughly 20% RH, what additional risk does the OSP engineer need to design around?",
+      "choices": [
+        "No additional risk — low humidity is only a concern in wet climates",
+        "Electrostatic discharge (ESD) risk on electronic equipment increases at very low humidity, so HVAC selection should include humidification capability (a CRAC unit or a separate humidifier with a humidity controller), unlike a standard mini-split",
+        "Low humidity causes fiber connectors to crack and must be replaced more frequently",
+        "Low humidity requires switching from –48VDC to 120VAC power distribution"
+      ],
+      "answerIndex": 1,
+      "explanation": "At relative humidity below roughly 20%, static electricity buildup on electronic equipment creates ESD risk. Purpose-built CRAC units include humidification capability; standard mini-split units do not. In arid or high-altitude climates, the OSP engineer should specify a CRAC with humidification or a separate humidity-controlled humidifier, and include the humidity spec in the commissioning checklist.",
+      "citation": "ASHRAE TC 9.9 [confirm edition] humidity-range guidance."
+    },
+    {
+      "id": "T19-L05-Q8",
+      "type": "drag-match",
+      "prompt": "Match each fire suppression option to its key equipment-damage characteristic.",
+      "items": [
+        { "id": "i_clean", "label": "Minimal damage — equipment operational after discharge, no residue" },
+        { "id": "i_preaction", "label": "Significant damage — water discharges once both detector and head conditions are met" },
+        { "id": "i_none", "label": "Total-loss risk if fire progresses beyond incipient stage — relies on early detection and fire-department response only" }
+      ],
+      "targets": [
+        { "id": "t_clean", "label": "Clean-agent suppression (Novec 1230, FM-200)" },
+        { "id": "t_preaction", "label": "Pre-action sprinkler" },
+        { "id": "t_none", "label": "No suppression system (very small rural huts)" }
+      ],
+      "correctMap": { "t_clean": "i_clean", "t_preaction": "i_preaction", "t_none": "i_none" },
+      "explanation": "Clean-agent is the equipment-safest option, required by NFPA 75/76 [confirm edition] for full CO equipment rooms. Pre-action still delivers water once triggered, reducing false-discharge risk but not eliminating fire-related equipment damage. Very small rural huts often have no suppression system at all, relying on early smoke/heat detection with a NOC alarm and fire-department response."
+    }
+  ]
+}
