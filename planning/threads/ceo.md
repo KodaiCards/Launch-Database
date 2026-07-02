@@ -463,3 +463,40 @@ Auditor `1318807b` (`docs/audit/T09-content.md` addendum): capstone strip re-ver
 
 **Pipeline (unchanged, moving):** T06 content-complete + gate-backed (12 pools valid, log complete, engine 10/10) — C1 doing the 1751F-635→643 prose class-fix (flip-blocker), C2 doing T05 wire+RT then T06 wire/RT/capstone. C1→T19 next. C3 holding. Watcher single + armed.
 ════════════════════════════════════════════════════════
+
+---
+
+[Planning → CEO | 2026-07-02 15:50] — **FYI + convention update (Carter live-review; I did the launch-set fix myself, applies to your future topics).** **⭐ D031 REVISED — REMOVE the capstone-review lesson ENTIRELY (don't keep it as a stripped review page).** With the graded capstone = the pooled `TopicFinal` button, the `L10/L12` review page is just an empty tab leaking process-notes → users don't need it. Mechanism (I did it on T01/T18/T02/T03/T04): decrement `lesson_count` in `course-catalog.js` (drives BOTH the SPA list AND the server `curriculumTree`, which parses that file) + drop the `lessonFileIndex` entry + delete the orphaned `.jsx`. **Apply this to every remaining topic (T09/T05/…) as you build/flip — no capstone-review lesson.** **② Also (Carter): strip USER-FACING INTERNAL notes from content** — e.g. "Retry (new question set)"→"Retry" (done in `PooledAssessment`), and the "see TXX.md research log" / "UNVERIFIED-EXACT" refs must NOT appear in trainee-visible answer explanations/citations (I'm doing a careful per-instance cleanup on the launch pools; author future pools WITHOUT those internal refs in the `citation`/`explanation` fields). No process-notes in trainee-facing text.
+
+---
+
+[Planning → CEO | 2026-07-02 19:30] — **⛔ USER-FACING QUALITY + ASSESSMENT-INTEGRITY FIXES (ALL of Carter's live-review notes this session, consolidated — Carter's directive: "make sure all the notes make their way to the CEO. This will not happen again"). Dispatch these; fix on your branch → I verify (with a REAL user-playthrough now) + merge. These touch LIVE published content.**
+
+**① ⛔ CRITICAL LIVE BUG — drag-match answer order NOT shuffled in `PooledAssessment.jsx`.** The exam runner (powers every topic-final + pooled lesson test) renders match options `items.map(...)` (~L197) in POOL order = PROMPT order → option N answers prompt N → **trivially gameable** (Carter caught it live on the T03 Topic Final: "Loose-tube"→option 1, "Carbon black"→option 2, …). **The inc2 Fisher–Yates shuffle only ever landed in `Quiz.jsx`; it was never applied to the new `PooledAssessment`/`TopicFinal` runner.** FIX: shuffle the option list, **stable per attempt** (useMemo/seed once per drawn question so it doesn't re-jump on re-render). Assert ZERO positional correlation between prompt order and option order, across ALL drag-match Qs. Highest priority — it's live.
+
+**② VERIFY the pool DRAW is random per-attempt** (Carter asked "used a pool as required?"). Confirm on the live engine that a fresh attempt draws a different subset + order (server-authoritative, inc1) — don't assume; prove it.
+
+**③ REMOVE user-facing junk notes (Carter: "shit that's not needed"):**
+- The **footer disclaimer** "Training content includes textbook references and field practice. Not a substitute for AHJ-issued permits or stamped engineering drawings." → REMOVE (training layout footer).
+- **Internal notes leaking into trainee-visible answer explanations/citations** — "see TXX.md research log", "UNVERIFIED-EXACT …", "NOTE: this corrects a citation error found in the source lesson material…" → STRIP from the launch pools (careful, per-instance — varied phrasings, not a safe one-shot regex) + never author them into `citation`/`explanation` fields.
+- (Done by Planning, FYI + apply to remaining topics) capstone-review lessons REMOVED (D031 revised) · "Retry (new question set)"→"Retry".
+
+**④ STANDING CONVENTIONS — author every future topic to these:** drag-match options ALWAYS shuffled (no positional alignment) · ZERO internal/process notes in trainee-facing text · no capstone-review lessons · per-topic change log (D029) · **a real user-playthrough (take the assessment, read the trainee text as a user) is now a DONE-criterion before AUDIT-READY** (D034 — the render-test wasn't enough; nobody actually PLAYED the quiz). Report AUDIT-READY when the launch-set fixes are integrated + you've played them; I re-verify by playthrough + merge.
+
+════════════════════════════════════════════════════════
+[CEO → Planning + Carter | 2026-07-02 | O51 fix-cycle progress] — **The CRITICAL live bug is FIXED. O51 status:**
+
+**① ⛔ drag-match not shuffled — FIXED + verified.** Root: the exam runner presented `items` in pool/answer order → target[i]'s correct option at index i. **60 of 63 drag-match Qs were fully positionally aligned (gameable).** Fix landed **server-side** (`routes/_assessment_pools.js` `_presentItems`, `1e835f5c`), NOT the client — because the guarantee needs the answer key (client never receives `correctMap`), and grading is by-id so option order is presentation-only. `_presentItems` shuffles + **guarantees non-full-alignment** (re-shuffle-until-not, deterministic last-resort swap). Stable per attempt (client holds the start payload; each attempt = fresh draw). +2 regression tests → **engine 12/12.** The integrity lint ran `_presentItems` 50× on every drag-match Q across all 104 pools → **0 aligned.** (I did NOT do the client-side useMemo you sketched — server-side is the correct single home + gives the hard guarantee; happy to discuss.)
+
+**② pool-draw randomness — VERIFIED.** T05-final (draw 15/22): 5 attempts → 5 distinct subsets+orders. Server-authoritative, proven not assumed.
+
+**③ user-facing junk:** footer disclaimer **REMOVED** (`App.jsx`, `becb0c8c`… my commit). Internal-note strip: I built a **lint** that pins every instance — **52 total across the live+new pools.** Split: **launch set (LIVE, yours per your note): T01=13, T02=5, T03=7, T04=2, T18=3 (=30)**; **mine: T05=5, T06=16, T09=1 (=22)**, T19=0. I've **dispatched C1** to strip its T05/T06/T09 instances (author knows the real citations; C2 RTs). **Run `npm run lint:training` for the exact file:field list** — it's your launch-set worklist too.
+
+**④ conventions + D034:** integrity **lint built** (`scripts/training_integrity_lint.js`, `npm run lint:training`): asserts (a) no internal notes in trainee-visible fields, (b) drag-match never presented aligned, (c) draws random. Exit 1 blocks merge; currently red on the 52 note-findings, green on integrity. Conventions pushed to C1; pushing to C2/C3 next. **Verification note (D034):** I verified via the unit tests + the lint across all 104 pools + the draw proof — not a live browser playthrough (needs the live DB you have). Per your flow, you do the real playthrough-verify before merge.
+
+**Not-yet-AUDIT-READY:** the internal-note strip is in flight (you: launch set; C1: T05/T06/T09). Once those land + lint goes green, I'll report the batch AUDIT-READY.
+
+**FYI — watcher:** I read your "watcher stays disarmed" as **Planning's flip-watcher** (Carter pings Planning). My **CEO integration-watcher** (catches builder/Auditor pushes so I integrate) is the one Carter earlier asked me to keep always-on — I'm keeping it armed. Carter: say the word if you want mine off too.
+
+**FYI — T19 edge case:** T19's capstone is **non-terminal** (L10 capstone, content lesson **L11** after it). CourseView generates lessons contiguously `L01..L{lesson_count}`, so the plain "decrement + drop L10" removal would ORPHAN L11. T19's capstone removal needs an **L11→L10 renumber** (file + pool + indexes) — deferring to T19 flip-prep (not in the immediate T05/T06/T09 flip lane). Flagging so the revised-D031 mechanism note can add: "if capstone isn't the last lesson, renumber the trailing content lesson(s) down."
+════════════════════════════════════════════════════════
