@@ -5,6 +5,7 @@
 import React from 'react';
 import LessonLayout from '../../components/LessonLayout.jsx';
 import Quiz from '../../components/primitives/Quiz.jsx';
+import GatedAssessment from '../../components/primitives/GatedAssessment.jsx';
 import Flashcard from '../../components/Flashcard.jsx';
 
 export const meta = {
@@ -302,6 +303,11 @@ export default function T06L10_RUS1751F643InnterductStandard() {
       </section>
 
       {/* ── PER-LESSON QUIZ ──────────────────────────────────────────────── */}
+      <GatedAssessment
+        courseId="T06"
+        assessmentId="T06-L10"
+        title="T06.L10 Check — RUS 1751F-643 Innerduct Standard"
+        fallback={
       <Quiz
         title="T06.L10 Check — RUS 1751F-643 Innerduct Standard"
         mode="multiple-choice"
@@ -372,6 +378,8 @@ export default function T06L10_RUS1751F643InnterductStandard() {
             explanation: 'Most AML-listed HDPE innerduct has a maximum outdoor direct-sun storage life of 12–24 months. At 26 months of outdoor exposure, the UV stabilizer additives are likely depleted. UV-degraded HDPE becomes brittle and can crack under the mechanical stress of conduit pull-back or underground freeze-thaw cycling. An inspector should reject this reel and require fresh-stock replacement. [confirm specific storage life limit with the manufacturer\'s data sheet.] (Source: field practice; manufacturer data.)',
           },
         ]}
+      />
+        }
       />
 
     </LessonLayout>

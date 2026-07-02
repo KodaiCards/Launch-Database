@@ -7,6 +7,7 @@ import React from 'react';
 import LessonLayout from '../../components/LessonLayout.jsx';
 import BranchingScenario from '../../components/primitives/BranchingScenario.jsx';
 import Quiz from '../../components/primitives/Quiz.jsx';
+import GatedAssessment from '../../components/primitives/GatedAssessment.jsx';
 import Flashcard from '../../components/Flashcard.jsx';
 
 export const meta = {
@@ -430,6 +431,11 @@ export default function T06L07_DirectionalBoringPilotAndReam() {
       />
 
       {/* ── PER-LESSON QUIZ ──────────────────────────────────────────────── */}
+      <GatedAssessment
+        courseId="T06"
+        assessmentId="T06-L07"
+        title="T06.L07 Check — Directional Boring"
+        fallback={
       <Quiz
         title="T06.L07 Check — Directional Boring"
         mode="multiple-choice"
@@ -495,6 +501,8 @@ export default function T06L07_DirectionalBoringPilotAndReam() {
             explanation: 'A frac-out (short for fracture-out or frack-out) occurs when slurry pressure exceeds the formation\'s fracture gradient and slurry reaches the surface. Under or near waterways, this is a reportable environmental event under USACE NWP conditions and most state DOT encroachment permits. Response: stop drilling immediately, contain surface slurry, document, and notify the permit authority.',
           },
         ]}
+      />
+        }
       />
 
     </LessonLayout>

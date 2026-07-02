@@ -11,6 +11,7 @@
 import React from 'react';
 import LessonLayout from '../../components/LessonLayout.jsx';
 import Quiz from '../../components/primitives/Quiz.jsx';
+import GatedAssessment from '../../components/primitives/GatedAssessment.jsx';
 import Flashcard from '../../components/Flashcard.jsx';
 
 export const meta = {
@@ -321,6 +322,11 @@ export default function T06L09_NESCUndergroundRules() {
       </section>
 
       {/* ── PER-LESSON QUIZ ──────────────────────────────────────────────── */}
+      <GatedAssessment
+        courseId="T06"
+        assessmentId="T06-L09"
+        title="T06.L09 Check — NESC Underground Rules"
+        fallback={
       <Quiz
         title="T06.L09 Check — NESC Underground Rules"
         mode="multiple-choice"
@@ -404,6 +410,8 @@ export default function T06L09_NESCUndergroundRules() {
             explanation: 'NESC §35 / Rule 354 requires at minimum 6 inches of horizontal separation for communication conduit running parallel to electric supply in the same corridor [per NESC C2-2023 Rule 354 — confirm current edition value; the standard is paywalled and values may be updated in future editions]. At 4 inches, this design is non-compliant. Field best practice (driven by locate tolerance and damage prevention) calls for 12 inches or more. The fix is easy: re-route the trench or add a separation board between the two conduits. (Source: RUS 1751F-643; NESC C2 §35 / Rule 354 [confirm edition].)',
           },
         ]}
+      />
+        }
       />
 
     </LessonLayout>

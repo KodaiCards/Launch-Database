@@ -6,6 +6,7 @@ import React from 'react';
 import LessonLayout from '../../components/LessonLayout.jsx';
 import WorkedExample from '../../components/primitives/WorkedExample.jsx';
 import Quiz from '../../components/primitives/Quiz.jsx';
+import GatedAssessment from '../../components/primitives/GatedAssessment.jsx';
 import Flashcard from '../../components/Flashcard.jsx';
 
 export const meta = {
@@ -558,7 +559,14 @@ export default function T06L04_ConduitFillAndPullTension() {
       {/* ── QUIZ ─────────────────────────────────────────────────────────── */}
       <section className="mt-8">
         <h2>Check Your Understanding</h2>
+        <GatedAssessment
+          courseId="T06"
+          assessmentId="T06-L04"
+          title="T06.L04 Check — Conduit Fill and Pull Tension"
+          fallback={
         <Quiz questions={fixedQuizQuestions} lessonId={meta.id} />
+          }
+        />
       </section>
 
     </LessonLayout>
