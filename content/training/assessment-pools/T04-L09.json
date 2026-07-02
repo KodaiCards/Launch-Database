@@ -1,0 +1,117 @@
+{
+  "assessmentId": "T04-L09",
+  "kind": "lesson",
+  "courseId": "T04",
+  "lessonId": "T04.L09",
+  "drawCount": 4,
+  "passThreshold": 70,
+  "pool": [
+    {
+      "id": "T04-L09-Q1",
+      "type": "mc",
+      "prompt": "During a pole audit for a RUS-funded project, a crew member misidentifies three wood poles as Class 4 (40 ft) when they are actually Class 3 (45 ft). How does this field error affect the RUS construction package?",
+      "choices": [
+        "It has no effect — the PE will verify pole classes during the engineering review",
+        "The construction unit breakdown will show the wrong unit code, producing an incorrect materials list and cost estimate; if discovered during RUS review, it triggers a deficiency response and a return field visit",
+        "RUS reviewers do not verify individual pole classes, only total pole count",
+        "The contractor will catch the error during construction and adjust the order with no pre-engineering impact"
+      ],
+      "answerIndex": 1,
+      "explanation": "Construction unit codes are specific to pole class and height — different codes carry different material costs. Using the wrong code produces an incorrect cost estimate; if caught during RUS review, it generates a deficiency finding requiring a corrected data sheet and revised unit breakdown, adding significant time to the review timeline.",
+      "citation": "RUS Bulletin 1751F-630; ANSI O5.1 (wood pole classes and dimensions)."
+    },
+    {
+      "id": "T04-L09-Q2",
+      "type": "mc",
+      "prompt": "What is the primary purpose of the field engineering data sheet (FEDS) in the RUS pre-engineering process?",
+      "choices": [
+        "To certify that the design engineer is licensed in the project state",
+        "To document physical route conditions — pole specs, spans, crossings, make-ready flags — from the field survey, providing the structured field data the design engineer uses for the plan set and cost estimate",
+        "To serve as the construction contract between the borrower and the contractor",
+        "To satisfy the NEPA environmental review requirement for the construction package"
+      ],
+      "answerIndex": 1,
+      "explanation": "The FEDS translates the field crew's site walk and pole audit observations into the structured format the design engineer needs for the pre-engineering package — plan set, construction unit breakdown, and cost estimate all depend on an accurate FEDS.",
+      "citation": "7 CFR Part 1755 (RUS pre-engineering documentation requirements)."
+    },
+    {
+      "id": "T04-L09-Q3",
+      "type": "mc",
+      "prompt": "What is a standardized code used in RUS construction documentation to describe a specific unit of telecommunications plant — such as a single pole, a mile of cable, or a road crossing — called?",
+      "choices": [
+        "A field engineering data sheet",
+        "A construction unit code",
+        "A plant asset tag",
+        "A materials acceptance number"
+      ],
+      "answerIndex": 1,
+      "explanation": "Construction unit codes standardize the description and costing of plant components across all borrowers and projects. The unit breakdown lists every code with its quantity and unit cost, producing the total cost estimate RUS reviews before authorizing the loan for construction.",
+      "citation": "7 CFR Part 1755; RUS Bulletin 1751F-630 (aerial plant construction unit references)."
+    },
+    {
+      "id": "T04-L09-Q4",
+      "type": "mc",
+      "prompt": "An RUS construction package is returned with a deficiency: 'The cover sheet uses revision number FINAL rather than a numeric revision. Please resubmit with numeric revision labeling.' What kind of deficiency is this?",
+      "choices": [
+        "A substantive engineering deficiency requiring a return field visit to correct",
+        "A formatting deficiency — the reviewer cannot determine which version they are reviewing without numeric revision labeling; correction is administrative but must be done before RUS will continue the review",
+        "A trivial comment that can be ignored since engineering content is what matters",
+        "An error the PE can waive with a certification letter"
+      ],
+      "answerIndex": 1,
+      "explanation": "This is a formatting/documentation deficiency, not a substantive engineering error — but it still blocks continued review, since the reviewer needs to reliably track which version is under review. Correction is administrative (relabel and resubmit) rather than requiring new field work."
+    },
+    {
+      "id": "T04-L09-Q5",
+      "type": "mc",
+      "prompt": "Why does a single misidentified pole class create cascading impact across the RUS construction package rather than being an isolated correction?",
+      "choices": [
+        "It doesn't cascade; the error stays contained to a single line item with no other effects",
+        "The unit code feeds into the materials list, cost estimate, and (if caught during RUS review) the review timeline itself — an error at the field-audit stage propagates through every downstream document that relies on that unit code",
+        "Pole class errors only affect the as-built drawing, never the cost estimate",
+        "RUS construction packages don't use pole class as an input to any calculation"
+      ],
+      "answerIndex": 1,
+      "explanation": "Because the construction unit code (driven by field-measured pole class/height) is an input to the materials list and cost estimate, an error at the source propagates forward through every document built on that data — which is why field-audit accuracy matters well beyond the audit record itself."
+    },
+    {
+      "id": "T04-L09-Q6",
+      "type": "mc",
+      "prompt": "What is the relationship between the FEDS (field engineering data sheet) and the design engineer's plan set?",
+      "choices": [
+        "They are unrelated documents produced independently",
+        "The FEDS is the structured field-data INPUT the design engineer uses to produce the plan set — the plan set is a downstream engineering product built from the FEDS's field observations",
+        "The plan set is produced first, and the FEDS is generated afterward to summarize it",
+        "The FEDS replaces the need for a plan set entirely on RUS-funded projects"
+      ],
+      "answerIndex": 1,
+      "explanation": "The FEDS captures raw field observations (pole specs, spans, crossings, make-ready flags) in a structured format; the design engineer then uses this input to produce the plan set, cost estimate, and construction unit breakdown — the FEDS comes first and feeds the plan set, not the reverse."
+    },
+    {
+      "id": "T04-L09-Q7",
+      "type": "mc",
+      "prompt": "Why might an RUS district office impose a longer records-retention requirement than the FCC's general minimum, and what does that mean practically for a field crew's documentation?",
+      "choices": [
+        "RUS loan agreements can specify their own retention terms independent of the FCC minimum, meaning field crews should confirm the SPECIFIC project's loan agreement rather than assuming a general FCC figure applies uniformly",
+        "RUS retention requirements are always identical to the FCC minimum with no variation possible",
+        "Retention requirements apply only to accounting records, never to field survey documentation",
+        "Field crews have no role in records retention; it is purely an accounting department responsibility"
+      ],
+      "answerIndex": 0,
+      "explanation": "Because RUS loan agreements can impose retention terms beyond the FCC's general schedule, a field crew (or the project team) should verify the applicable requirement against the SPECIFIC project's loan agreement rather than assuming a general remembered figure applies."
+    },
+    {
+      "id": "T04-L09-Q8",
+      "type": "mc",
+      "prompt": "A deficiency response from RUS requests a 'corrected FEDS and revised unit breakdown' due to a pole-class error. What does this specifically tell the project team about where the error needs to be corrected?",
+      "choices": [
+        "Only the final cost estimate needs correction; the FEDS itself is fine as originally submitted",
+        "The correction must trace back to the FEDS (the field-data source) and then propagate forward through the unit breakdown that depends on it — correcting only the downstream cost estimate without fixing the underlying FEDS would leave the source data wrong for any future reference",
+        "The deficiency only affects the plan set drawings, not any data documents",
+        "RUS deficiency responses never specify which documents require correction"
+      ],
+      "answerIndex": 1,
+      "explanation": "Because the unit breakdown is derived from the FEDS, a genuine fix must correct the FEDS itself (the source data) and then regenerate the dependent unit breakdown — patching only the downstream cost estimate would leave the underlying field-data record incorrect for any future reference or audit."
+    }
+  ]
+}

@@ -1,0 +1,118 @@
+{
+  "assessmentId": "T04-L07",
+  "kind": "lesson",
+  "courseId": "T04",
+  "lessonId": "T04.L07",
+  "drawCount": 4,
+  "passThreshold": 70,
+  "pool": [
+    {
+      "id": "T04-L07-Q1",
+      "type": "mc",
+      "prompt": "Under 47 CFR Part 32, where do route-survey costs (labor, drone rental, subcontract GIS firm) accumulate during the pre-construction engineering phase?",
+      "choices": [
+        "Cable and Wire Facilities (account 2410) — because the survey work is for a cable project",
+        "Motor vehicle expense — because field survey requires trucks and equipment",
+        "Telecommunications Plant Under Construction (account 2003) — a temporary staging account for all in-progress project costs before the plant is placed in service",
+        "Poles (account 2411) — because the survey documents existing poles"
+      ],
+      "answerIndex": 2,
+      "explanation": "Plant Under Construction (47 CFR 32.2003) is the correct temporary account for survey and engineering costs during project development, including AFUDC (Allowance for Funds Used During Construction). Costs transfer to permanent plant accounts (2410 Cable and Wire, 2411 Poles) once the plant is placed in service.",
+      "citation": "47 CFR 32.2003 — Telecommunications plant under construction. NOTE: this corrects a citation error found in the source lesson material, which had cited 32.2230 (actually titled \"transmission\" — radio systems/circuit equipment accounts 2231/2232) for this concept; see T04.md research log."
+    },
+    {
+      "id": "T04-L07-Q2",
+      "type": "mc",
+      "prompt": "A field supervisor submits a weekly timesheet with a single line: 'Survey work, 5 days, Project XYZ.' An RUS auditor later requests source documents supporting cost allocation between Route A (aerial) and Route B (underground). What problem does this create?",
+      "choices": [
+        "No problem — the summary timesheet is sufficient on its own",
+        "The accounting team cannot reconstruct the cost allocation between the two routes without original per-day, per-route source records — the lump timesheet is an audit exposure",
+        "The auditor only checks total project cost, never sub-route allocation",
+        "The problem can be corrected by submitting an amended timesheet years later"
+      ],
+      "answerIndex": 1,
+      "explanation": "An RUS plant audit traces costs back to original source documents. A lump timesheet without per-route, per-phase detail doesn't support the account allocation required by 47 CFR Part 32 — the field supervisor's timesheet should carry per-project and per-phase detail from the day of the work."
+    },
+    {
+      "id": "T04-L07-Q3",
+      "type": "mc",
+      "prompt": "What is the FCC's standardized chart of accounts that assigns a specific account number to every type of telecommunications plant and cost called?",
+      "choices": [
+        "Rural Utilities Service Materials Register",
+        "Uniform System of Accounts (USOA)",
+        "Telecommunications Cost Allocation Manual",
+        "FCC Construction Standards Handbook"
+      ],
+      "answerIndex": 1,
+      "explanation": "The Uniform System of Accounts (USOA) is the core of 47 CFR Part 32. It defines every account number that RUS borrowers and FCC-regulated carriers use to classify and record plant investment and operating costs.",
+      "citation": "47 CFR Part 32 — Uniform System of Accounts."
+    },
+    {
+      "id": "T04-L07-Q4",
+      "type": "mc",
+      "prompt": "You are determining how long to retain field notes and photo logs from a route survey on a RUS-funded project. What is the best approach?",
+      "choices": [
+        "Keep them for 3 years, a standard contract limitation period",
+        "Keep them for 7 years, the standard IRS records retention period",
+        "Keep them for 15 years, a commonly cited FCC retention period",
+        "Confirm the applicable retention period against the current FCC records-retention schedule AND the specific RUS loan agreement, which may impose a longer period"
+      ],
+      "answerIndex": 3,
+      "explanation": "The correct retention period depends on the current FCC retention schedule and the specific RUS loan agreement, which can extend the required period beyond any FCC minimum. Hardcoding a specific number of years without verifying current regulation and loan agreement terms is risky.",
+      "citation": "47 CFR 32.27 (records retention); 7 CFR Part 1755 (RUS loan requirements) — exact FCC Part 42 retention schedule figure not independently pinned down this session; confirm with regulatory counsel or RUS district office."
+    },
+    {
+      "id": "T04-L07-Q5",
+      "type": "mc",
+      "prompt": "Once a project's plant is placed in service, what happens to the costs that had accumulated in the Plant Under Construction account (47 CFR 32.2003)?",
+      "choices": [
+        "They are written off entirely and never appear in any permanent account",
+        "They are transferred from the temporary Plant Under Construction account into the appropriate permanent plant accounts (e.g., Cable and Wire Facilities, Poles) that reflect the actual type of installed infrastructure",
+        "They remain permanently in account 2003 regardless of project completion",
+        "They are automatically converted into a separate depreciation reserve account with no further tracking"
+      ],
+      "answerIndex": 1,
+      "explanation": "Account 2003 is explicitly a temporary staging account for costs before the plant is placed in service. Once construction completes and the plant enters service, the accumulated costs move to the permanent plant accounts matching the actual installed infrastructure type.",
+      "citation": "47 CFR 32.2003."
+    },
+    {
+      "id": "T04-L07-Q6",
+      "type": "mc",
+      "prompt": "Why does the Uniform System of Accounts (USOA) matter to a field survey crew, who might assume accounting is purely an office-side concern?",
+      "choices": [
+        "It doesn't matter at all — field crews have no role in accurate cost accounting",
+        "How a field crew documents and timesheets their work (project, phase, route segment) directly determines whether the accounting team can correctly allocate costs to the right USOA accounts — sloppy field documentation creates downstream audit exposure regardless of good field survey work quality",
+        "USOA account numbers are automatically assigned by GPS coordinates with no human input",
+        "USOA only applies to construction costs, never to survey/engineering costs"
+      ],
+      "answerIndex": 1,
+      "explanation": "Field-level documentation (which project, which route, which phase) is the raw source data the accounting team relies on to correctly allocate costs into USOA accounts — a disconnect between field documentation practice and USOA requirements creates real audit exposure even when the underlying survey work itself was done well."
+    },
+    {
+      "id": "T04-L07-Q7",
+      "type": "mc",
+      "prompt": "An RUS auditor challenges a project's cost allocation because timesheets lack per-route detail. What single change to field documentation practice would have prevented this audit finding?",
+      "choices": [
+        "Nothing could have prevented it; RUS audits always find some issue",
+        "Recording per-day, per-route (or per-phase) detail on timesheets from the start, rather than a single lump-sum daily entry covering the whole project",
+        "Switching from paper timesheets to digital timesheets, regardless of the level of detail recorded",
+        "Having the project manager sign off on timesheets weekly instead of daily"
+      ],
+      "answerIndex": 1,
+      "explanation": "The core issue is granularity, not format or approval workflow — a timesheet needs per-route/per-phase detail captured at the time of the work for the accounting team to defensibly allocate costs to the correct accounts and routes."
+    },
+    {
+      "id": "T04-L07-Q8",
+      "type": "mc",
+      "prompt": "Why should a field supervisor never assume the '15 years' or '7 years' retention figures sometimes cited informally are correct for a specific RUS project's field notes?",
+      "choices": [
+        "Because retention periods are always exactly 3 years with no exceptions",
+        "Because the actual applicable period depends on the CURRENT FCC retention schedule (which can change) AND the specific RUS loan agreement's terms (which can impose a longer period than any general FCC minimum) — an informally-remembered number can be outdated or simply wrong for that specific project",
+        "Because retention periods only apply to accounting records, never to field survey notes",
+        "Because RUS project records never require any retention period at all"
+      ],
+      "answerIndex": 1,
+      "explanation": "Retention requirements are a moving target across two independent sources (the current regulatory schedule and the specific loan agreement's terms) — treating a remembered figure as authoritative risks being wrong in either direction, which is why verifying against current sources for the specific project is the correct practice."
+    }
+  ]
+}
