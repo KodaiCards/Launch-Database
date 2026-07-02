@@ -5,6 +5,7 @@ import React from 'react';
 import LessonLayout from '../../components/LessonLayout.jsx';
 import BranchingScenario from '../../components/primitives/BranchingScenario.jsx';
 import Quiz from '../../components/primitives/Quiz.jsx';
+import GatedAssessment from '../../components/primitives/GatedAssessment.jsx';
 import Flashcard from '../../components/Flashcard.jsx';
 
 export const meta = {
@@ -541,6 +542,11 @@ export default function T04L07_47CFR32RecordKeeping() {
       />
 
       {/* ── PER-LESSON QUIZ ──────────────────────────────────────────────── */}
+      <GatedAssessment
+        courseId="T04"
+        assessmentId="T04-L07"
+        title="T04.L07 Check — 47 CFR 32 Record-Keeping"
+        fallback={
       <Quiz
         title="T04.L07 Check — 47 CFR 32 Record-Keeping"
         mode="multiple-choice"
@@ -605,6 +611,8 @@ export default function T04L07_47CFR32RecordKeeping() {
             citation: '47 CFR Part 32 § 32.27 (records retention); 47 CFR Part 42 (FCC retention schedule); 7 CFR Part 1755 (RUS loan requirements). [confirm — FCC 47 CFR Part 42 retention schedule; RUS loan-life may extend]',
           },
         ]}
+      />
+        }
       />
 
     </LessonLayout>

@@ -6,6 +6,7 @@ import LessonLayout from '../../components/LessonLayout.jsx';
 import BranchingScenario from '../../components/primitives/BranchingScenario.jsx';
 import Sortable from '../../components/primitives/Sortable.jsx';
 import Quiz from '../../components/primitives/Quiz.jsx';
+import GatedAssessment from '../../components/primitives/GatedAssessment.jsx';
 import Flashcard from '../../components/Flashcard.jsx';
 
 export const meta = {
@@ -493,6 +494,11 @@ export default function T04L08_HandoffToDesign() {
       />
 
       {/* ── PER-LESSON QUIZ ──────────────────────────────────────────────── */}
+      <GatedAssessment
+        courseId="T04"
+        assessmentId="T04-L08"
+        title="T04.L08 Check — Handing Off to Design"
+        fallback={
       <Quiz
         title="T04.L08 Check — Handing Off to Design"
         mode="multiple-choice"
@@ -553,6 +559,8 @@ export default function T04L08_HandoffToDesign() {
               'Design constraints are documented for one reason: to prevent the design engineer from creating a plan that can\'t be built because a field condition wasn\'t communicated. A low-clearance conductor at Pole 14 may require the attachment height to be moved, a make-ready request to the utility, or a span re-route. The engineer can only make those decisions if they know the constraint exists. Discovering the constraint during construction, after the plan is drawn and materials are ordered, multiplies the cost of resolution by ten.',
           },
         ]}
+      />
+        }
       />
 
     </LessonLayout>

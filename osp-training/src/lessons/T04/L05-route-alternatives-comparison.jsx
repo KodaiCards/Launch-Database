@@ -6,6 +6,7 @@ import LessonLayout from '../../components/LessonLayout.jsx';
 import BranchingScenario from '../../components/primitives/BranchingScenario.jsx';
 import Sortable from '../../components/primitives/Sortable.jsx';
 import Quiz from '../../components/primitives/Quiz.jsx';
+import GatedAssessment from '../../components/primitives/GatedAssessment.jsx';
 import Flashcard from '../../components/Flashcard.jsx';
 
 export const meta = {
@@ -449,6 +450,11 @@ Which route do you recommend documenting as the preferred option in the handoff 
       />
 
       {/* ── PER-LESSON QUIZ ──────────────────────────────────────────────── */}
+      <GatedAssessment
+        courseId="T04"
+        assessmentId="T04-L05"
+        title="T04.L05 Check — Route Alternatives Analysis"
+        fallback={
       <Quiz
         title="T04.L05 Check — Route Alternatives Analysis"
         mode="multiple-choice"
@@ -511,6 +517,8 @@ Which route do you recommend documenting as the preferred option in the handoff 
             citation: 'USACE NWP 57 — Electric Utility Line and Telecommunications Activities (post-2021 reissuance); 33 CFR Part 330.1(b) (NWP covers Section 10 and 404 jointly); 33 CFR Part 320-332.',
           },
         ]}
+      />
+        }
       />
 
     </LessonLayout>

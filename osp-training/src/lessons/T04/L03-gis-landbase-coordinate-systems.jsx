@@ -5,6 +5,7 @@ import React from 'react';
 import LessonLayout from '../../components/LessonLayout.jsx';
 import Sortable from '../../components/primitives/Sortable.jsx';
 import Quiz from '../../components/primitives/Quiz.jsx';
+import GatedAssessment from '../../components/primitives/GatedAssessment.jsx';
 import Flashcard from '../../components/Flashcard.jsx';
 
 export const meta = {
@@ -408,6 +409,11 @@ export default function T04L03_GISLandbaseCoordinateSystems() {
       />
 
       {/* ── PER-LESSON QUIZ ──────────────────────────────────────────────── */}
+      <GatedAssessment
+        courseId="T04"
+        assessmentId="T04-L03"
+        title="T04.L03 Check — GIS Landbase and Coordinate Systems"
+        fallback={
       <Quiz
         title="T04.L03 Check — GIS Landbase and Coordinate Systems"
         mode="multiple-choice"
@@ -470,6 +476,8 @@ export default function T04L03_GISLandbaseCoordinateSystems() {
               'Mississippi lies in UTM Zone 16 (longitude −84° to −90°). This zone covers central and southern Mississippi, Alabama, parts of Tennessee, and western Florida. Most OSP work in central Mississippi uses "NAD83 / UTM Zone 16N" as the project CRS. Source: USGS NGS coordinate reference system documentation (ngs.noaa.gov).',
           },
         ]}
+      />
+        }
       />
 
     </LessonLayout>
