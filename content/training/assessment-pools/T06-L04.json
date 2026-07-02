@@ -1,0 +1,115 @@
+{
+  "assessmentId": "T06-L04",
+  "kind": "lesson",
+  "courseId": "T06",
+  "lessonId": "T06.L04",
+  "drawCount": 4,
+  "passThreshold": 70,
+  "pool": [
+    {
+      "id": "T06-L04-Q1",
+      "type": "mc",
+      "prompt": "A 1.25-inch Schedule 40 PVC innerduct has an ID of 1.380 inches. Three 0.47-inch OD micro-cables are to be installed. Using Fill% = (total cable area / conduit area) x 100%, what is the approximate fill percentage, and is it compliant with a 40% fill rule?",
+      "choices": [
+        "~18% — well under the 40% limit",
+        "~34.8% — near the 40% limit but compliant: conduit area = pi x 0.690^2 = 1.496 in^2; each cable area = pi x 0.235^2 = 0.1735 in^2; three cables = 0.5205 in^2; fill = 0.5205/1.496 = 34.8%",
+        "~51% — over the 40% limit, select larger innerduct",
+        "~67% — far over the limit"
+      ],
+      "answerIndex": 1,
+      "explanation": "Conduit area = pi x (1.380/2)^2 = pi x 0.690^2 = 1.496 in^2. Each cable area = pi x (0.47/2)^2 = pi x 0.235^2 = 0.1735 in^2. Three cables total = 3 x 0.1735 = 0.5205 in^2. Fill% = 0.5205/1.496 x 100% = 34.8% — near but under the 40% limit, and compliant. This is standard cross-sectional-area arithmetic on stated inputs, independently re-derivable by hand."
+    },
+    {
+      "id": "T06-L04-Q2",
+      "type": "mc",
+      "prompt": "Why does pull tension grow exponentially (not linearly) with the number of bends in a conduit route?",
+      "choices": [
+        "Each bend increases the effective weight of cable being pulled by adding a catenary sag",
+        "At each bend, friction acts on the FULL ACCUMULATED tension from all previous bends and straight sections, multiplying it rather than adding to it — the capstan equation (T_out = T_in x e^(mu*theta)) captures this: if straight-section tension is 40 lbf and one 90-degree bend multiplies it to 88 lbf, a second 90-degree bend multiplies THOSE 88 lbf further, not just adding another fixed increment",
+        "Bends reduce the effective conduit ID, increasing the fill percentage and therefore the friction force",
+        "Cable jackets elongate at bends, adding extra length that must be pulled"
+      ],
+      "answerIndex": 1,
+      "explanation": "The capstan equation shows tension is MULTIPLIED (not added to) at each bend — the exponential term e^(mu*theta) acts on whatever tension has already accumulated from upstream, which is why a route with multiple bends can see tension compound rapidly rather than growing in fixed increments per bend."
+    },
+    {
+      "id": "T06-L04-Q3",
+      "type": "mc",
+      "prompt": "A cable pull calculation shows a required pull tension of 780 lbf on a single-end pull. The cable is rated for 600 lbf maximum. What is the correct response?",
+      "choices": [
+        "Proceed — the 600 lbf rating has a built-in safety factor, so 780 lbf is acceptable",
+        "First optimize what can be optimized: add cable lubricant to reduce the friction coefficient and recalculate; if the recalculated tension still exceeds 600 lbf, add a mid-assist pull point at an intermediate structure to break the route into two shorter pulls, each within the cable's rated tension — exceeding the cable's rated maximum is not acceptable, since it risks fiber microbending/jacket damage that may not be immediately detectable",
+        "Use a smaller conduit — the fill percentage must be too high, which is causing the excess friction",
+        "Split the cable into two separate smaller cables and pull them individually"
+      ],
+      "answerIndex": 1,
+      "explanation": "The correct sequence is optimize first (lubricant reduces the friction coefficient, meaningfully lowering required tension), then add a mid-assist pull point if still over the rated limit — exceeding a cable's rated maximum pull tension risks real, potentially undetected fiber damage (microbending, jacket cracking) that degrades performance over time, so it is never an acceptable shortcut."
+    },
+    {
+      "id": "T06-L04-Q4",
+      "type": "mc",
+      "prompt": "What is the jam ratio, and why does it matter for conduit fill planning even when the fill percentage rule is satisfied?",
+      "choices": [
+        "Jam ratio is the ratio of conduit OD to conduit ID; it determines wall thickness adequacy",
+        "Jam ratio is conduit ID divided by cable OD; values between approximately 2.8 and 3.2 indicate a real risk of three same-size cables jamming in a triangular lock at a bend — a fill calculation that comes in comfortably under the 40% rule can still fall in this dangerous jam-ratio range, so both checks must be done independently",
+        "Jam ratio is the fill percentage above which cables can no longer be pulled; it always equals 40% for three cables",
+        "Jam ratio is the number of bends above which a mid-assist pull is required"
+      ],
+      "answerIndex": 1,
+      "explanation": "Jam ratio (conduit ID / cable OD) and fill percentage are two DIFFERENT checks measuring different failure modes — three cables can pass the 40% fill rule comfortably while still landing in the 2.8-3.2 jam-ratio danger zone, where they can wedge into a triangular lock at a bend and stop the pull entirely, which is why a thorough design checks both independently.",
+      "citation": "Jam ratio danger zone approximately 2.8-3.2 (WebSearch-verified: Polywater cable jam ratio technical paper, multiple independent electrical-installation trade references)."
+    },
+    {
+      "id": "T06-L04-Q5",
+      "type": "mc",
+      "prompt": "A design places three same-OD micro-cables in a conduit with a calculated jam ratio of 3.0 — squarely in the danger zone. What are the two general strategies to reduce jamming risk?",
+      "choices": [
+        "There is no way to reduce jamming risk once three same-size cables are chosen; the design must switch to a completely different cable type",
+        "Change the conduit size (larger, to move the jam ratio out of the 2.8-3.2 range) or use cables of differing OD (e.g., triplexed/bundled cable rather than three loose same-size cables) — either approach avoids the triangular-lock condition that causes jamming",
+        "Increase the pull tension to force the cables through regardless of the jam ratio",
+        "Add more lubricant only; conduit size and cable configuration have no effect on jam ratio"
+      ],
+      "answerIndex": 1,
+      "explanation": "Since jamming specifically results from three same-size cables forming a triangular lock, the two levers that address it directly are changing the conduit ID (moving the jam ratio out of the 2.8-3.2 range) or changing the cable configuration (e.g., a pre-bundled/triplexed cable rather than three independent same-OD cables) — simply increasing pull tension against a jammed condition risks cable damage rather than resolving the jam."
+    },
+    {
+      "id": "T06-L04-Q6",
+      "type": "mc",
+      "prompt": "A designer checks only fill percentage (came in at 32%, well under 40%) and concludes the conduit/cable combination is safe to specify. What is the gap in this check?",
+      "choices": [
+        "There is no gap; fill percentage under 40% is the only design requirement for conduit/cable compatibility",
+        "The fill-percentage check alone doesn't rule out a dangerous jam ratio — three same-size cables can have a comfortable fill percentage while their conduit-ID-to-cable-OD ratio still falls in the 2.8-3.2 jamming danger zone; a complete check verifies both fill percentage AND jam ratio independently",
+        "The gap is that fill percentage should have been calculated using cable OD squared rather than cable OD, which would have caught the issue",
+        "There is no jam-ratio concept for cables under 1 inch OD, so the fill check alone is sufficient at this scale"
+      ],
+      "answerIndex": 1,
+      "explanation": "This is the T06.L04 core teaching point applied at the QA level: fill percentage and jam ratio are independent checks measuring different physical failure modes, and a design that only verifies one (even comfortably) can still carry the other's risk — a thorough conduit/cable design check verifies both."
+    },
+    {
+      "id": "T06-L04-Q7",
+      "type": "mc",
+      "prompt": "Why does adding a mid-assist pull point break a route into two shorter pulls that are each within a cable's rated tension, rather than simply reducing the total distance pulled by some smaller amount?",
+      "choices": [
+        "It doesn't actually reduce tension; mid-assist points are purely a labor-saving convenience with no tension benefit",
+        "Because tension accumulates progressively along a pull (compounding at each bend and straight section per the capstan relationship), starting a fresh pull at the mid-assist point resets the accumulated tension to a new baseline for that second segment — rather than one continuous pull where tension keeps compounding from the very start, the mid-assist point creates two independent tension-accumulation runs, each of which can stay within the cable's rated limit even though the combined route wouldn't have",
+        "Mid-assist points only work for HDD installations, never for straight open-cut conduit runs",
+        "A mid-assist point doubles the cable's rated tension automatically"
+      ],
+      "answerIndex": 1,
+      "explanation": "Because pull tension compounds progressively along the route (accumulating through friction at each bend and straight section), breaking a long pull into two segments via a mid-assist point means each segment's tension calculation restarts from a fresh baseline — this is why splitting the pull can bring an otherwise over-limit single pull into two separately compliant pulls, rather than just marginally reducing the tension."
+    },
+    {
+      "id": "T06-L04-Q8",
+      "type": "mc",
+      "prompt": "A 2-inch Schedule 40 PVC innerduct has an ID of 2.047 inches. Two 0.60-inch OD cables are to be installed. What is the approximate fill percentage?",
+      "choices": [
+        "~17.2% — conduit area = pi x 1.0235^2 = 3.291 in^2; each cable area = pi x 0.30^2 = 0.2827 in^2; two cables = 0.5655 in^2; fill = 0.5655/3.291 = 17.2%",
+        "~34.4%",
+        "~8.6%",
+        "~51.6%"
+      ],
+      "answerIndex": 0,
+      "explanation": "Conduit area = pi x (2.047/2)^2 = pi x 1.0235^2 = 3.291 in^2. Each cable area = pi x (0.60/2)^2 = pi x 0.30^2 = 0.2827 in^2. Two cables total = 0.5655 in^2. Fill% = 0.5655/3.291 x 100% = 17.2% — well under the 40% limit. Same cross-sectional-area method as Q1, applied to different stated inputs."
+    }
+  ]
+}

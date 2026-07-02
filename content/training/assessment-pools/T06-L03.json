@@ -1,0 +1,118 @@
+{
+  "assessmentId": "T06-L03",
+  "kind": "lesson",
+  "courseId": "T06",
+  "lessonId": "T06.L03",
+  "drawCount": 4,
+  "passThreshold": 70,
+  "pool": [
+    {
+      "id": "T06-L03-Q1",
+      "type": "mc",
+      "prompt": "A fiber conduit must be installed via HDD bore through 800 feet of mixed clay and gravel, with two 90-degree bends in the path profile. Which conduit material is most appropriate?",
+      "choices": [
+        "Rigid Schedule 40 PVC — maximum rigidity ensures the straightest possible bore path",
+        "HDPE (high-density polyethylene) — its flexibility allows it to follow the curved bore path through the bends without joints failing, and its continuous-length reel format avoids the multiple joints a rigid pipe would require",
+        "Cast iron pipe — maximum crush resistance for underground installation",
+        "Rigid Schedule 80 PVC — thicker walls provide the strength needed for HDD installation"
+      ],
+      "answerIndex": 1,
+      "explanation": "HDPE's flexibility is precisely what makes it suitable for HDD installation with bends — it can be pulled through a curved bore path in continuous reel lengths without the multiple joints a rigid PVC pipe would require, and rigid pipe generally cannot follow a bent bore path without joint failure."
+    },
+    {
+      "id": "T06-L03-Q2",
+      "type": "mc",
+      "prompt": "What is the practical difference between Schedule 40 and Schedule 80 PVC conduit for the same trade size (e.g., 2-inch)?",
+      "choices": [
+        "There is no practical difference; the schedule number is purely a manufacturer's catalog designation",
+        "Schedule 80 has a thicker wall (and correspondingly smaller interior diameter) than Schedule 40 at the same trade size, giving it greater crush resistance and impact strength — appropriate for higher-stress installations (e.g., under roads, in high-traffic areas), while Schedule 40 is standard for typical direct-buried applications",
+        "Schedule 40 is only rated for indoor use; Schedule 80 is required for any outdoor or buried application",
+        "Schedule 80 is always a larger outer diameter than Schedule 40 at the same trade size"
+      ],
+      "answerIndex": 1,
+      "explanation": "The schedule number reflects wall thickness at a given trade (nominal) size — Schedule 80's thicker wall provides greater crush/impact resistance at the cost of a smaller interior diameter (and higher cost), making it the appropriate choice for higher-stress installations, while Schedule 40 serves typical direct-buried conditions."
+    },
+    {
+      "id": "T06-L03-Q3",
+      "type": "mc",
+      "prompt": "Three fiber cables from three different carriers need to share a single outer conduit in an urban duct bank. What is the correct way to separate them?",
+      "choices": [
+        "No separation is needed; fiber cables from different carriers can share the same conduit space directly",
+        "Each carrier's cable is placed inside its own separate innerduct within the shared outer conduit — this provides physical separation, protects each carrier's cable from installation/removal activity by the others, and allows any one carrier's cable to be pulled or replaced without disturbing the others",
+        "The three cables are bundled together with cable ties inside the single conduit with no innerduct",
+        "Separation is only required if the cables belong to competing carriers; cables from affiliated companies can share space freely"
+      ],
+      "answerIndex": 1,
+      "explanation": "Separate innerducts within a shared outer conduit is the standard approach for multi-carrier duct-bank sharing — each carrier gets an isolated sub-conduit, protecting their cable from installation/maintenance activity on the others' cables and allowing independent pulls or replacements without disturbing the shared structure."
+    },
+    {
+      "id": "T06-L03-Q4",
+      "type": "mc",
+      "prompt": "A new conduit is being installed for a route expected to be upgraded to air-blown micro-cable in 3-5 years. What design feature should be included in the conduit system now?",
+      "choices": [
+        "Nothing extra is needed; any standard conduit installation can be upgraded to air-blown micro-cable at any time with no advance planning",
+        "A pull string or mule tape (and ideally spare innerduct capacity) should be installed now, along with sizing the innerduct appropriately for future micro-duct/micro-cable bundles — planning for the future upgrade at initial installation avoids the cost of a full re-excavation just to add capacity later",
+        "The conduit should be left completely empty with no pull string, since air-blown installation requires a clear conduit",
+        "Air-blown micro-cable requires an entirely separate trench and cannot share a conduit system with any other installation"
+      ],
+      "answerIndex": 1,
+      "explanation": "Installing a pull string/mule tape and appropriately sizing spare innerduct capacity at initial construction is a low-cost way to avoid a full re-excavation later — since air-blown micro-cable installation requires accessible clear duct pathway, planning this at initial installation (when the trench is already open) is far cheaper than adding capacity after the fact."
+    },
+    {
+      "id": "T06-L03-Q5",
+      "type": "drag-match",
+      "prompt": "Match each conduit type to its primary application.",
+      "items": [
+        { "id": "i_sch40", "label": "Direct-buried residential or utility-easement conduit" },
+        { "id": "i_hdpe", "label": "HDD bore installation requiring continuous flexible lengths" },
+        { "id": "i_sch80", "label": "High-stress installation (under roads, high-traffic areas)" }
+      ],
+      "targets": [
+        { "id": "t_sch40", "label": "Schedule 40 PVC" },
+        { "id": "t_hdpe", "label": "HDPE" },
+        { "id": "t_sch80", "label": "Schedule 80 PVC" }
+      ],
+      "correctMap": { "t_sch40": "i_sch40", "t_hdpe": "i_hdpe", "t_sch80": "i_sch80" },
+      "explanation": "Each conduit type fits a distinct installation context: Schedule 40 PVC for typical direct-buried applications, HDPE for HDD installation requiring flexible continuous lengths through bends, and Schedule 80 PVC for higher-stress installations needing greater crush resistance."
+    },
+    {
+      "id": "T06-L03-Q6",
+      "type": "mc",
+      "prompt": "Why might a designer choose to under-fill a conduit relative to its rated capacity when initially specifying a design for a route expected to grow?",
+      "choices": [
+        "There is no reason to under-fill; conduits should always be filled to the maximum allowable percentage at initial installation",
+        "Reserving spare capacity (via additional innerduct or lower initial fill percentage) allows future cable additions without a costly re-excavation, trading a modest upfront cost increase (larger conduit or more innerducts) for significant future flexibility — a common design tradeoff on routes anticipated to grow",
+        "Under-filling is required by code on every single conduit installation regardless of growth expectations",
+        "Under-filling only matters for HDPE conduit, never for PVC"
+      ],
+      "answerIndex": 1,
+      "explanation": "Reserving spare capacity at initial installation is a deliberate design tradeoff — a modest upfront cost increase (larger conduit, additional innerducts) avoids the much larger cost of a future re-excavation to add capacity, which is why routes anticipated to grow are commonly designed with intentional headroom rather than filled to the maximum allowable percentage immediately."
+    },
+    {
+      "id": "T06-L03-Q7",
+      "type": "mc",
+      "prompt": "A design specifies HDPE conduit for a route that includes both an HDD crossing and a straightforward open-cut residential segment. Is HDPE also the correct choice for the open-cut segment, or should the design use a different material there?",
+      "choices": [
+        "HDPE is mandatory for the entire route once specified for the HDD segment, since mixing conduit materials on a single route is never done",
+        "The material choice can reasonably differ by segment — HDPE's flexibility benefit is specific to the HDD bore geometry, while the straightforward open-cut segment may use Schedule 40 PVC (or HDPE, depending on cost/consistency preference) since it doesn't need to navigate a curved bore path — a designer can choose based on each segment's actual requirements rather than assuming one material fits the whole route",
+        "Schedule 40 PVC is illegal to use anywhere on a route that includes any HDD segment",
+        "The open-cut segment must always use a completely different conduit trade size than the HDD segment"
+      ],
+      "answerIndex": 1,
+      "explanation": "This reinforces the segment-specific selection principle: HDPE's key advantage (flexibility for curved bore paths) is specific to the HDD context — an open-cut segment with no bend geometry constraint doesn't require that same property, so a designer can reasonably choose the material that best fits each segment's actual installation method rather than assuming uniformity across the whole route."
+    },
+    {
+      "id": "T06-L03-Q8",
+      "type": "mc",
+      "prompt": "A duct bank design places innerducts for four different carriers inside a single shared outer conduit, but one carrier requests to add a fifth cable without adding a new innerduct — sharing an existing carrier's innerduct space instead. What is the concern with this request?",
+      "choices": [
+        "There is no concern; any number of cables can share a single innerduct as long as the outer conduit has room",
+        "Sharing a single innerduct between two carriers' cables defeats the purpose of the separate-innerduct design — it removes the physical separation that protects each carrier's cable during the other's future installation/maintenance activity, and removes the ability to pull or replace one carrier's cable independently without disturbing the other's",
+        "The concern only applies to fiber cable, never to copper cable sharing an innerduct",
+        "This request is always acceptable as long as both carriers are affiliated companies"
+      ],
+      "answerIndex": 1,
+      "explanation": "The entire rationale for separate innerducts per carrier (Q3) is physical isolation — allowing two carriers' cables to share one innerduct undoes that isolation benefit, reintroducing the risk that one carrier's future maintenance or cable pull disturbs the other's active service, which is exactly what the separate-innerduct design was meant to prevent."
+    }
+  ]
+}

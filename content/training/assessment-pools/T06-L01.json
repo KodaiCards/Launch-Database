@@ -1,0 +1,118 @@
+{
+  "assessmentId": "T06-L01",
+  "kind": "lesson",
+  "courseId": "T06",
+  "lessonId": "T06.L01",
+  "drawCount": 4,
+  "passThreshold": 70,
+  "pool": [
+    {
+      "id": "T06-L01-Q1",
+      "type": "mc",
+      "prompt": "A fiber route must cross a Class I railroad (active, freight traffic). The railroad requires no surface disturbance to the trackbed. Which construction method is required?",
+      "choices": [
+        "Open-cut trench — it gives the most control over conduit placement depth",
+        "HDD (horizontal directional drilling) — it crosses under the trackbed without surface disruption",
+        "Plowing — it is the fastest method and causes the least delay to train traffic",
+        "Either open-cut or plowing — both are permitted under railroad ROW by default"
+      ],
+      "answerIndex": 1,
+      "explanation": "Railroads almost universally require HDD (or a casing bore) for utility crossings because open-cut and plowing both require trackbed excavation, which disrupts rail operations and creates ballast-settlement risk. HDD crosses under the trackbed at depth without surface contact."
+    },
+    {
+      "id": "T06-L01-Q2",
+      "type": "mc",
+      "prompt": "A 6-mile rural route runs through deep clay/loam farmland with no major crossings and a water table 8 feet down. Which construction method typically wins on cost in this scenario?",
+      "choices": [
+        "HDD — most accurate depth control",
+        "Open-cut trench — most flexible for conduit count",
+        "Vibratory plowing — fast, low restoration cost in cooperative soil",
+        "All three methods cost the same per foot in flat farmland"
+      ],
+      "answerIndex": 2,
+      "explanation": "Deep clay/loam farmland with a low water table is exactly the condition where vibratory plowing excels — the blade tracks straight in cooperative soil and the furrow closes behind it with minimal restoration cost, allowing production rates that can exceed a mile per day in open farmland."
+    },
+    {
+      "id": "T06-L01-Q3",
+      "type": "mc",
+      "prompt": "A pre-bid soil investigation shows bedrock at 3 feet below grade along 40% of a proposed plow route. What is the most likely consequence for the plow option on those segments?",
+      "choices": [
+        "The plow proceeds normally — vibratory plows are designed for rock",
+        "The plow blade deflects sharply in rock — the method fails for those segments and an alternative (open-cut with rock saw, or HDD) is required",
+        "Bedrock at 3 feet is fine as long as target burial depth is only 24 inches",
+        "The plow can be swapped for a trencher blade at no additional mobilization cost"
+      ],
+      "answerIndex": 1,
+      "explanation": "Vibratory plows are designed for soil, not rock — when the blade encounters bedrock or heavy ledge, it deflects, producing an unpredictable conduit depth or stalling entirely. Segments with shallow bedrock require an alternative method, both of which carry higher cost than a clean plow run."
+    },
+    {
+      "id": "T06-L01-Q4",
+      "type": "mc",
+      "prompt": "The 811 utility locate ticket is cleared and the crew is ready to plow. A crew member notices utility flags in the residential yard that do not match any marked-up utility on the locate sheet. What is the correct next step?",
+      "choices": [
+        "Proceed — the 811 ticket was cleared and those flags may be old",
+        "Stop and pothole-expose the flagged location before proceeding",
+        "Move the plow blade 12 inches to the side of the flags and continue",
+        "Call 811 again and wait for a new ticket before proceeding, but leave the equipment in place"
+      ],
+      "answerIndex": 1,
+      "explanation": "Unidentified utility flags are a warning sign — private laterals (irrigation, propane services, electric drops to outbuildings) are not in the 811 system and won't appear on the locate ticket. The correct response is to stop and manually expose (pothole) the location to identify the utility before mechanical excavation resumes; shifting the blade sideways does not protect against a strike on an unidentified line."
+    },
+    {
+      "id": "T06-L01-Q5",
+      "type": "drag-match",
+      "prompt": "Match each construction method to its primary best-fit condition.",
+      "items": [
+        { "id": "i_hdd", "label": "Road, river, or railroad crossing where surface disturbance is prohibited" },
+        { "id": "i_opencut", "label": "Short urban run with multiple conduits and complex crossing geometry" },
+        { "id": "i_plow", "label": "Long rural run in cooperative clay/loam soil with no major crossings" }
+      ],
+      "targets": [
+        { "id": "t_hdd", "label": "HDD (horizontal directional drilling)" },
+        { "id": "t_opencut", "label": "Open-cut trench" },
+        { "id": "t_plow", "label": "Vibratory plowing" }
+      ],
+      "correctMap": { "t_hdd": "i_hdd", "t_opencut": "i_opencut", "t_plow": "i_plow" },
+      "explanation": "Each method has a distinct best-fit condition: HDD for obstacle crossings where surface disturbance is prohibited, open-cut for short complex urban runs needing flexible conduit placement, and vibratory plowing for long, cooperative-soil rural runs with no major crossings."
+    },
+    {
+      "id": "T06-L01-Q6",
+      "type": "mc",
+      "prompt": "Why does an experienced designer evaluate soil conditions and crossing types BEFORE committing to a single construction method for an entire route, rather than choosing one method for the whole project upfront?",
+      "choices": [
+        "Because construction method choice has no real cost impact regardless of soil or crossing conditions",
+        "Because different segments of the same route can have fundamentally different best-fit methods — a route with cooperative farmland AND a railroad crossing AND bedrock pockets may require plowing, HDD, and open-cut on different segments respectively, and locking in a single method upfront risks forcing an expensive or infeasible method onto segments that don't suit it",
+        "Because only one construction method is ever legally permitted per project regardless of conditions",
+        "Because soil conditions only affect underground construction cost, never method feasibility"
+      ],
+      "answerIndex": 1,
+      "explanation": "A single route commonly spans varied conditions (cooperative soil, bedrock pockets, railroad/road crossings) that each favor a different construction method — evaluating conditions segment-by-segment (rather than picking one method for the whole route) is what allows a design to use the most cost-effective, feasible method for each specific segment."
+    },
+    {
+      "id": "T06-L01-Q7",
+      "type": "mc",
+      "prompt": "A crew plowing a residential route notices unmarked utility flags that don't appear on the 811 locate sheet, but decides to proceed anyway since 'the ticket was cleared and we're already behind schedule.' What is the risk of this decision?",
+      "choices": [
+        "There is no risk — an 811 clearance is a complete guarantee that no utility conflict exists anywhere along the route",
+        "A real risk of striking an unidentified private lateral (irrigation, propane, electric drop) that isn't in the 811 system — an 811 clearance only covers utilities registered in that system, not every buried line, which is exactly why unmarked flags require manual investigation before proceeding regardless of schedule pressure",
+        "The only risk is a minor delay, since private laterals are never hazardous",
+        "The risk only applies to gas lines, never to other utility types"
+      ],
+      "answerIndex": 1,
+      "explanation": "An 811 ticket clearance only accounts for utilities registered in that locate system — private laterals are a well-known gap, which is exactly why unidentified flags are a specific, real signal requiring manual pothole investigation rather than being dismissed as a scheduling inconvenience."
+    },
+    {
+      "id": "T06-L01-Q8",
+      "type": "mc",
+      "prompt": "A designer specifies vibratory plowing for a route that includes 800 feet under a state highway. What is the correct scope for the plowing specification, and why?",
+      "choices": [
+        "The entire route, including the highway crossing, since plowing is the fastest overall method",
+        "Plowing for the cooperative-soil segments only, with a separate HDD or bore method specified for the highway crossing — a state highway crossing typically requires no surface disturbance to the road surface, which plowing does not provide, so the crossing segment needs a different method regardless of how well plowing performs on the rest of the route",
+        "The entire route should default to open-cut trenching to keep the method consistent",
+        "Plowing is prohibited on any route that includes any road crossing, regardless of crossing type"
+      ],
+      "answerIndex": 1,
+      "explanation": "This reinforces the segment-by-segment method selection principle: a state highway crossing has its own surface-disturbance and permitting requirements that plowing doesn't satisfy, so the correct design specifies plowing for the segments where it fits and a crossing-appropriate method (typically HDD or bore) for the highway segment — not a single method forced across the entire route."
+    }
+  ]
+}
