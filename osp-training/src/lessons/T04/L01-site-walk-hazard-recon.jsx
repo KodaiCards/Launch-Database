@@ -5,6 +5,7 @@ import React from 'react';
 import LessonLayout from '../../components/LessonLayout.jsx';
 import BranchingScenario from '../../components/primitives/BranchingScenario.jsx';
 import Quiz from '../../components/primitives/Quiz.jsx';
+import GatedAssessment from '../../components/primitives/GatedAssessment.jsx';
 import Flashcard from '../../components/Flashcard.jsx';
 
 export const meta = {
@@ -502,6 +503,11 @@ export default function T04L01_SiteWalkHazardRecon() {
       />
 
       {/* ── PER-LESSON QUIZ ──────────────────────────────────────────────── */}
+      <GatedAssessment
+        courseId="T04"
+        assessmentId="T04-L01"
+        title="T04.L01 Check — The Site Walk"
+        fallback={
       <Quiz
         title="T04.L01 Check — The Site Walk"
         mode="multiple-choice"
@@ -564,6 +570,8 @@ export default function T04L01_SiteWalkHazardRecon() {
             citation: '29 CFR 1910.268(g)(1) — fall protection at poles; RUS Bulletin 1751F-630 § 7.',
           },
         ]}
+      />
+        }
       />
 
     </LessonLayout>

@@ -5,6 +5,7 @@ import React from 'react';
 import LessonLayout from '../../components/LessonLayout.jsx';
 import SideBySide from '../../components/primitives/SideBySide.jsx';
 import Quiz from '../../components/primitives/Quiz.jsx';
+import GatedAssessment from '../../components/primitives/GatedAssessment.jsx';
 import Flashcard from '../../components/Flashcard.jsx';
 
 export const meta = {
@@ -426,6 +427,11 @@ export default function T04L06_KmzShapefilePdfDeliverables() {
       />
 
       {/* ── PER-LESSON QUIZ ──────────────────────────────────────────────── */}
+      <GatedAssessment
+        courseId="T04"
+        assessmentId="T04-L06"
+        title="T04.L06 Check — Delivery Formats"
+        fallback={
       <Quiz
         title="T04.L06 Check — Delivery Formats"
         mode="multiple-choice"
@@ -505,6 +511,8 @@ export default function T04L06_KmzShapefilePdfDeliverables() {
             citation: 'ISO/IEC 19005-1 (PDF/A-1); FCC 47 CFR Part 42 records retention.',
           },
         ]}
+      />
+        }
       />
 
     </LessonLayout>

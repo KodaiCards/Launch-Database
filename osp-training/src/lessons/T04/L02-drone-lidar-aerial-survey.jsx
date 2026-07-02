@@ -5,6 +5,7 @@ import React from 'react';
 import LessonLayout from '../../components/LessonLayout.jsx';
 import WorkedExample from '../../components/primitives/WorkedExample.jsx';
 import Quiz from '../../components/primitives/Quiz.jsx';
+import GatedAssessment from '../../components/primitives/GatedAssessment.jsx';
 import Flashcard from '../../components/Flashcard.jsx';
 
 export const meta = {
@@ -445,6 +446,11 @@ export default function T04L02_DroneLidarAerialSurvey() {
       </div>
 
       {/* ── PER-LESSON QUIZ ──────────────────────────────────────────────── */}
+      <GatedAssessment
+        courseId="T04"
+        assessmentId="T04-L02"
+        title="T04.L02 Check — Drone and LiDAR Survey"
+        fallback={
       <Quiz
         title="T04.L02 Check — Drone and LiDAR Survey"
         mode="multiple-choice"
@@ -507,6 +513,8 @@ export default function T04L02_DroneLidarAerialSurvey() {
               'GSD — Ground Sample Distance — is the key metric for planning a survey flight. A lower GSD means more detail per image. The formula GSD = (pixel size × altitude) / focal length lets you choose the right altitude for the required detail level. For OSP corridor surveys, a GSD of 1–3 cm is typically sufficient to identify poles, structures, and major utility attachments.',
           },
         ]}
+      />
+        }
       />
 
     </LessonLayout>
