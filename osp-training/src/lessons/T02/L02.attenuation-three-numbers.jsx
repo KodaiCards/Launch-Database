@@ -61,7 +61,7 @@ export default function T02L02_AttenuationThreeNumbers() {
           you the framework to keep them straight.
         </p>
 
-        <h3 className="mt-5 font-semibold">Building on Why Light Travels in Glass and T01 fundamentals</h3>
+        <h3 className="mt-5 font-semibold">Building on Why Light Travels in Glass and Fundamentals &amp; Vocabulary</h3>
         <p className="text-sm text-slate-300/90">
           In Why Light Travels in Glass, you learned how light travels through a fiber <strong>core</strong> via <strong>total internal reflection</strong>, and how the <strong>cladding</strong> around it confines the light. This lesson explains what happens when some of that light is <em>not</em> confined — it gets absorbed or scattered, causing <strong>attenuation</strong>. The <strong>fiber</strong> types (like <strong>SMF</strong>, introduced in Key Acronyms Field Reference) have different attenuation rates. Attenuation is the foundation of the link-budget calculations you'll use in the Link Budget lesson later in this topic.
         </p>

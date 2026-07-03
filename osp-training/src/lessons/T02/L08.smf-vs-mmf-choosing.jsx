@@ -55,7 +55,7 @@ export default function T02L08_SMFvsMMFChoosing() {
         <h2>In Plain English</h2>
 
         <div className="mb-4 p-3 bg-amber-900/20 border-l-4 border-amber-500 rounded text-amber-100 text-sm">
-          <strong>Quick refresher:</strong> In <em>Attenuation — Three Numbers Framework</em> you learned attenuation limits distance by loss. In <em>Dispersion — Why Fast Signals Blur</em> you learned dispersion (modal + chromatic) also limits distance. In <em>Wavelength Windows</em> you learned different wavelengths have different properties. This lesson applies all those concepts to answer: why do some projects use single-mode fiber (SMF) and others use multimode (MMF)?
+          <strong>Quick refresher:</strong> In <em>Attenuation — Three Numbers Framework</em> you learned attenuation limits distance by loss. In <em>Dispersion — Why Fast Signals Blur</em> you learned dispersion (modal + chromatic) also limits distance. In <em>Wavelength Windows — 850 / 1310 / 1490 / 1550 / 1625 nm</em> you learned different wavelengths have different properties. This lesson applies all those concepts to answer: why do some projects use single-mode fiber (SMF) and others use multimode (MMF)?
         </div>
 
         <p>
@@ -256,7 +256,7 @@ export default function T02L08_SMFvsMMFChoosing() {
           feeder is still G.652.D (OS2) — the distinction matters if you're performing link-budget
           coordination across the OSP↔carrier handoff. G.655 behaves differently from G.652.D
           at high bit rates. The long-haul and DWDM context is covered in the Wavelength
-          Windows lesson (Advanced section).
+          Windows — 850 / 1310 / 1490 / 1550 / 1625 nm lesson (Advanced section).
         </p>
         <p className="text-sm mt-2 text-slate-400">
           <strong>OSP default:</strong> Specify G.652.D (OS2) for every OSP run you design.

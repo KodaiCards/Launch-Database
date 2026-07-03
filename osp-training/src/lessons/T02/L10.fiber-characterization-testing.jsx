@@ -52,7 +52,7 @@ export default function T02L10_FiberCharacterizationTesting() {
         <h2>In Plain English</h2>
 
         <div className="mb-4 p-3 bg-amber-900/20 border-l-4 border-amber-500 rounded text-amber-100 text-sm">
-          <strong>Quick refresher:</strong> In <em>Attenuation — Three Numbers Framework</em> you learned attenuation (loss per km). In <em>Dispersion — Why Fast Signals Blur</em> you learned chromatic dispersion. In <em>Polarization Mode Dispersion</em> you learned PMD. This lesson answers: how do you actually measure these fiber properties in the field to validate fiber health?
+          <strong>Quick refresher:</strong> In <em>Attenuation — Three Numbers Framework</em> you learned attenuation (loss per km). In <em>Dispersion — Why Fast Signals Blur</em> you learned chromatic dispersion. In <em>Polarization Mode Dispersion (PMD) — Advanced</em> you learned PMD. This lesson answers: how do you actually measure these fiber properties in the field to validate fiber health?
         </div>
 
         <p>

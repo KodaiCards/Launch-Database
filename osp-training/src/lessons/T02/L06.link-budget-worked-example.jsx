@@ -152,7 +152,7 @@ export default function T02L06_LinkBudgetWorkedExample() {
           4 connector pairs, and standard planning values.
         </p>
         <p className="text-sm text-slate-400 italic">
-          (This brings together attenuation from the Attenuation lesson, dB notation from Decibels Without the Algebra Fear, and the wavelength choice from the upcoming Wavelength Windows lesson.)
+          (This brings together attenuation from Attenuation — Three Numbers Framework, dB notation from Decibels Without the Algebra Fear, and the wavelength choice from the upcoming Wavelength Windows — 850 / 1310 / 1490 / 1550 / 1625 nm lesson.)
         </p>
 
         <h3 className="mt-5 font-semibold">Step 1: Identify the optical budget</h3>
