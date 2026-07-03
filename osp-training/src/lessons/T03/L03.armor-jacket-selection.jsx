@@ -133,7 +133,7 @@ export default function T03L03_ArmorJacketSelection() {
             <strong>CST armor layer</strong> — Corrugated steel tape (CST) is wrapped around the inner assembly in a longitudinal fold. The corrugations give it flexibility to bend while maintaining crush resistance. Steel provides rodent protection — gnawing teeth cannot penetrate the steel before the animal gives up. (OCC D-Series product documentation; ICEA S-87-640)
           </li>
           <li>
-            <strong>Ripcord</strong> — An internal ripcord (typically a strong yarn or cord under the steel armor) lets the installer score and split the armor layer without needing metal cutters that could nick the fibers. "The steel-armor is easily removed with an internal ripcord." (OCC D-Series product documentation — verified)
+            <strong>Ripcord</strong> — An internal ripcord (typically a strong yarn or cord under the steel armor) lets the installer score and split the armor layer without needing metal cutters that could nick the fibers. "The steel-armor is easily removed with an internal ripcord." (OCC D-Series product documentation)
           </li>
           <li>
             <strong>Outer HDPE jacket</strong> — The final outer jacket — HDPE with 2–3% carbon black for UV stabilization. Provides waterproofing, UV resistance, and mechanical abrasion resistance. In a direct-burial application, this is the first line of defense against soil abrasion as the cable shifts. (ICEA S-87-640)
@@ -169,8 +169,8 @@ export default function T03L03_ArmorJacketSelection() {
           NEC §770.179(B) covers cable type designations and marking requirements
           (what designations like OFNR, OFNP, and OFN mean and how cables must be
           marked), not a separate "permitted armor" rule. (Source: OCC D-Series
-          product page: "UL listed in accordance with NEC section 770.179(b)" —
-          verified; NEC NFPA 70-2023 Article 770 §770.179)
+          product page: "UL listed in accordance with NEC section 770.179(b)";
+          NEC NFPA 70-2023 Article 770 §770.179)
         </p>
 
         <h3 className="mt-5 font-semibold">Interlocked armor — indoor-outdoor and campus use</h3>
@@ -187,7 +187,7 @@ export default function T03L03_ArmorJacketSelection() {
           suitable for running from outdoor duct into a building riser shaft without
           a transition. (Source: fiberoptics4sale.com F1-LK12D product
           description: "OFCR Riser Rated, rodent protection suitable for outdoor direct
-          burial" — verified via vendor datasheet)
+          burial")
         </p>
 
         <h3 className="mt-5 font-semibold">No armor — aerial and duct use</h3>
@@ -251,8 +251,8 @@ export default function T03L03_ArmorJacketSelection() {
             armor are described as two distinct construction types with different application
             ranges. The standard is paywalled (2016/2023 editions) — values confirmed via
             the 2006 publicly-accessible archive.org edition and multiple vendor datasheets.
-            Mark [confirm against ICEA S-87-640 2023 edition for current thickness
-            requirements] when specifying for a contract.
+            Confirm against ICEA S-87-640 2023 edition for current thickness
+            requirements when specifying for a contract.
           </p>
           <p className="text-slate-300/90 mt-2">
             <strong>Field:</strong> In practice, RUS project managers often specify "armored
@@ -394,7 +394,7 @@ export default function T03L03_ArmorJacketSelection() {
           {
             id: 'T03-L03-fc-ripcord',
             front: 'What does the ripcord inside a CST-armored cable do?',
-            back: 'An internal ripcord (strong yarn or cord) under the steel armor lets installers score and remove the armor layer without metal cutters that could nick the fiber bundle. "The steel-armor is easily removed with an internal ripcord." (Source: OCC D-Series product documentation — verified)',
+            back: 'An internal ripcord (strong yarn or cord) under the steel armor lets installers score and remove the armor layer without metal cutters that could nick the fiber bundle. "The steel-armor is easily removed with an internal ripcord." (Source: OCC D-Series product documentation)',
           },
         ]}
       />

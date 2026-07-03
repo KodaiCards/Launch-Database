@@ -160,7 +160,7 @@ export default function T03L09_ADSSSpanWindIceLoading() {
             <td>0 in.</td>
             <td>9 lb/ft²</td>
             <td>30°F</td>
-            <td>Southeastern U.S. (including Macon, GA — central Georgia), Pacific coast, southwest. No ice load, but higher wind pressure than Heavy/Medium (9 vs. 4 lb/ft²). [Confirm via NESC C2-2023 loading district map or local AHJ]</td>
+            <td>Southeastern U.S. (including Macon, GA — central Georgia), Pacific coast, southwest. No ice load, but higher wind pressure than Heavy/Medium (9 vs. 4 lb/ft²).</td>
           </tr>
           <tr>
             <td>Extreme Wind overlay (Rule 250C)</td>
@@ -188,8 +188,8 @@ export default function T03L09_ADSSSpanWindIceLoading() {
         <p className="mt-2 text-sm text-amber-300/90 border-l-4 border-amber-400/30 pl-3">
           Values below confirmed via RUS Bulletin 1724E-150 (which reproduces the NESC
           Table 250-1 data) and IAEI Magazine 2002 NESC article. Exact NESC C2-2023
-          table text is paywalled. [Confirm against NESC C2-2023 Table 250-1 when
-          designing for formal engineering deliverables.]
+          table text is paywalled. Confirm against NESC C2-2023 Table 250-1 when
+          designing for formal engineering deliverables.
         </p>
 
         <div className="mt-4 overflow-x-auto">
@@ -230,7 +230,7 @@ export default function T03L09_ADSSSpanWindIceLoading() {
         </div>
         <p className="mt-2 text-sm text-slate-300/70">
           Source: NESC C2-2023 Table 250-1 via RUS Bulletin 1724E-150 (public) +
-          IAEI Magazine 2002 NESC article (verified via ≥2 independent public sources).
+          IAEI Magazine 2002 NESC article.
         </p>
 
         <h3 className="mt-5 font-semibold">Ice load formula — what that ice weighs</h3>
@@ -304,7 +304,7 @@ export default function T03L09_ADSSSpanWindIceLoading() {
       {/* ── WORKED EXAMPLE: ADSS loading calculator ──────────────────────── */}
       <WorkedExample
         title="ADSS Loading and Sag Calculator — NESC Design Check"
-        description="Calculate ice load, wind load, total transverse load, and midspan sag for an ADSS cable under NESC design conditions. Select your loading district and enter cable parameters. All values are illustrative — verify against your specific cable datasheet and NESC C2-2023 for formal engineering deliverables. [Confirm NESC loading district values against NESC C2-2023 Table 250-1]"
+        description="Calculate ice load, wind load, total transverse load, and midspan sag for an ADSS cable under NESC design conditions. Select your loading district and enter cable parameters. All values are illustrative — verify against your specific cable datasheet and NESC C2-2023 for formal engineering deliverables."
         variables={[
           {
             key: 'district',
@@ -409,7 +409,7 @@ export default function T03L09_ADSSSpanWindIceLoading() {
         <p className="mt-2">
           "If any part of a pole or the conductors attached to it is 60 feet or more above
           the ground, then extreme wind loading has to be considered." (Source: IAEI 2007
-          NESC article — verified)
+          NESC article)
         </p>
         <p className="mt-2">
           For standard FTTH distribution poles (35–55 ft total height), Extreme Wind
@@ -506,7 +506,7 @@ export default function T03L09_ADSSSpanWindIceLoading() {
           {
             id: 'T03-L09-fc-districts',
             front: 'What are the three NESC loading districts and their ice/wind values?',
-            back: 'Heavy: 0.50 in. radial ice + 4 lb/ft² wind + 0°F. Medium: 0.25 in. radial ice + 4 lb/ft² wind + 15°F. Light: 0 in. ice + 9 lb/ft² wind + 30°F. [Confirm against NESC C2-2023 Table 250-1 — values confirmed via RUS 1724E-150 + IAEI Magazine via ≥2 public sources]',
+            back: 'Heavy: 0.50 in. radial ice + 4 lb/ft² wind + 0°F. Medium: 0.25 in. radial ice + 4 lb/ft² wind + 15°F. Light: 0 in. ice + 9 lb/ft² wind + 30°F.',
           },
           {
             id: 'T03-L09-fc-iceformula',
@@ -516,7 +516,7 @@ export default function T03L09_ADSSSpanWindIceLoading() {
           {
             id: 'T03-L09-fc-extreme',
             front: 'When does Extreme Wind loading apply under NESC?',
-            back: 'NESC Rule 250C: Extreme Wind loading must be considered when any part of a pole or its conductors is 60 ft or more above ground. Uses regional ASCE 7 wind speed maps for site-specific design pressure rather than the flat district table values. (IAEI 2007 NESC article; RUS 1724E-150 — verified)',
+            back: 'NESC Rule 250C: Extreme Wind loading must be considered when any part of a pole or its conductors is 60 ft or more above ground. Uses regional ASCE 7 wind speed maps for site-specific design pressure rather than the flat district table values. (IAEI 2007 NESC article; RUS 1724E-150)',
           },
           {
             id: 'T03-L09-fc-mat',
@@ -526,7 +526,7 @@ export default function T03L09_ADSSSpanWindIceLoading() {
           {
             id: 'T03-L09-fc-windpressure',
             front: 'What are the NESC wind pressure values for each loading district?',
-            back: 'Light district: 9 lb/ft² wind pressure (no ice). Medium district: 4 lb/ft² wind pressure + 0.25 in. radial ice. Heavy district: 4 lb/ft² wind pressure + 0.50 in. radial ice. Wind load per unit length = (wind pressure) × (cable projected diameter including ice) ÷ 12. [Confirm against NESC C2-2023 Table 250-1]',
+            back: 'Light district: 9 lb/ft² wind pressure (no ice). Medium district: 4 lb/ft² wind pressure + 0.25 in. radial ice. Heavy district: 4 lb/ft² wind pressure + 0.50 in. radial ice. Wind load per unit length = (wind pressure) × (cable projected diameter including ice) ÷ 12.',
           },
         ]}
       />
@@ -554,7 +554,7 @@ export default function T03L09_ADSSSpanWindIceLoading() {
               ],
               answerIndex: 0,
               explanation:
-                'Light loading district has zero radial ice: t = 0 in. Therefore w_ice = 1.244 × 0 × (D + 0) = 0 lb/ft. No ice load applies. Only wind load (9 lb/ft²) and cable self-weight need to be combined for the total transverse load. [Confirm: Macon, GA is in the Light district — consistent with central Georgia geography; verify via NESC C2-2023 loading district map or RUS engineering support]',
+                'Light loading district has zero radial ice: t = 0 in. Therefore w_ice = 1.244 × 0 × (D + 0) = 0 lb/ft. No ice load applies. Only wind load (9 lb/ft²) and cable self-weight need to be combined for the total transverse load.',
             },
             {
               id: 'T03-L09-Q2',
@@ -579,7 +579,7 @@ export default function T03L09_ADSSSpanWindIceLoading() {
               answer: '60',
               answerDisplay: '60 feet',
               explanation:
-                'NESC Rule 250C: "If any part of a pole or the conductors attached to it is 60 feet or more above the ground, then extreme wind loading has to be considered." (Source: IAEI 2007 NESC article — verified) This uses regional wind speed maps (ASCE 7) rather than the flat district table values.',
+                'NESC Rule 250C: "If any part of a pole or the conductors attached to it is 60 feet or more above the ground, then extreme wind loading has to be considered." (Source: IAEI 2007 NESC article) This uses regional wind speed maps (ASCE 7) rather than the flat district table values.',
             },
             {
               id: 'T03-L09-Q4',

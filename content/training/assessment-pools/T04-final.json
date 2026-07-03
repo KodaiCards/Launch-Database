@@ -168,7 +168,7 @@
       ],
       "answerIndex": 1,
       "explanation": "Account 2003 (Telecommunications Plant Under Construction) is the correct temporary account; costs transfer to permanent accounts matching actual installed infrastructure once the plant enters service.",
-      "citation": "47 CFR 32.2003 — corrects a citation error in the source lesson material (which cited 32.2230, actually \"transmission\"/radio-circuit equipment); see T04.md."
+      "citation": "47 CFR 32.2003 — Telecommunications plant under construction."
     },
     {
       "id": "T04-final-Q13",
@@ -294,7 +294,7 @@
       ],
       "answerIndex": 1,
       "explanation": "This mirrors the T04-L07 lesson point: retention requirements are a moving target across two independent sources (current regulatory schedule and project-specific loan agreement terms), so verifying against current sources for the specific project — rather than trusting a remembered number — is the defensible practice.",
-      "citation": "47 CFR 32.27; 7 CFR Part 1755 — exact FCC Part 42 retention schedule figure not independently pinned down this session; confirm with regulatory counsel or RUS district office."
+      "citation": "47 CFR 32.27; 7 CFR Part 1755 — for the exact FCC Part 42 retention schedule figure, confirm with regulatory counsel or the RUS district office."
     },
     {
       "id": "T04-final-Q22",

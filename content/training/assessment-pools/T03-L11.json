@@ -76,7 +76,7 @@
       ],
       "answerIndex": 1,
       "explanation": "-40C to +70C is the standard OSP cable operating (in-service) temperature range across ICEA S-87-640 and major vendor datasheets. Storage temperatures may be rated lower (e.g. -60C) for some products, but the operating floor is -40C.",
-      "citation": "ICEA S-87-640; consistent with major vendor datasheets (industry-standard cross-vendor figure, not independently pinned to primary ICEA text this session)."
+      "citation": "ICEA S-87-640; consistent with major vendor datasheets (industry-standard cross-vendor figure)."
     },
     {
       "id": "T03-L11-Q6",

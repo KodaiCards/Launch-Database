@@ -18,7 +18,7 @@
       ],
       "answerIndex": 2,
       "explanation": "Fiber is a telecom cable and attaches in the communication space, the lowest zone on a shared pole. Supply (power) lines occupy the top zone. A mandatory climbing space separates the two zones so linemen can climb without their body bridging high-voltage and telecom equipment.",
-      "citation": "NESC C2-2023 (general clearance/space-separation rules for shared poles — see T01.md research log for verification scope)."
+      "citation": "NESC C2-2023 (general clearance/space-separation rules for shared poles)."
     },
     {
       "id": "T01-L02-Q2",
@@ -32,7 +32,7 @@
       ],
       "answerIndex": 1,
       "explanation": "Ground clearance is measured at midspan — the lowest point of the cable's sag — not at the attachment height on the pole. This is why crews must always clarify whether a stated height is \"attachment height\" or \"midspan clearance\"; they are different numbers, and only the midspan number determines compliance with minimum clearance rules over roads and other surfaces.",
-      "citation": "NESC C2-2023 (clearance measurement convention — exact rule/table number not independently verified this session; verify against the adopted edition before design lock)."
+      "citation": "NESC C2-2023 (clearance measurement convention — verify against the adopted edition before design lock)."
     },
     {
       "id": "T01-L02-Q3",
@@ -46,7 +46,7 @@
       ],
       "answerIndex": 1,
       "explanation": "Climbing space is a mandatory clearance zone — nothing is attached in it. It exists purely so a lineman climbing the pole never has their body bridging the gap between high-voltage supply conductors and telecom equipment. Violating climbing-space requirements is a serious compliance failure that endangers anyone who climbs that pole.",
-      "citation": "NESC C2-2023 (climbing-space requirement — document-level verified; exact rule number not independently confirmed, see T01.md)."
+      "citation": "NESC C2-2023 (climbing-space requirement)."
     },
     {
       "id": "T01-L02-Q4",
@@ -60,7 +60,7 @@
       ],
       "answerIndex": 1,
       "explanation": "In most US markets the electric utility owns the pole, and fiber companies are \"attachers\" who pay annual attachment fees. The core rate formula lives in 47 CFR 1.1406; 47 CFR 1.1409 governs a specific cost-apportionment input that feeds into that formula. (47 CFR 1.1411 governs the *timeline* for a utility to process a pole-access application — a procedural rule, not the fee-setting rule; do not cite 1.1411 for attachment fees.)",
-      "citation": "47 CFR 1.1406 (pole attachment rate formula); 47 CFR 1.1409 (cost-apportionment input); contrast with 47 CFR 1.1411 (application/survey timeline — see T01.md research log for the correction)."
+      "citation": "47 CFR 1.1406 (pole attachment rate formula); 47 CFR 1.1409 (cost-apportionment input); contrast with 47 CFR 1.1411 (application/survey timeline)."
     },
     {
       "id": "T01-L02-Q5",
@@ -106,7 +106,7 @@
       ],
       "correctMap": { "t_top": "i_supply", "t_mid": "i_climbing", "t_bottom": "i_comm" },
       "explanation": "A shared pole is divided top-to-bottom: supply space (high-voltage power, licensed electricians only), climbing space (a mandatory empty gap for safe climbing), and communication space (telecom cables, where fiber attaches, typically at the bottom).",
-      "citation": "NESC C2-2023 (pole zone structure — document-level verified)."
+      "citation": "NESC C2-2023 (pole zone structure)."
     },
     {
       "id": "T01-L02-Q8",

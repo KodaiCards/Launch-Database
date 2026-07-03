@@ -18,7 +18,7 @@
       ],
       "answerIndex": 2,
       "explanation": "Plant Under Construction (47 CFR 32.2003) is the correct temporary account for survey and engineering costs during project development, including AFUDC (Allowance for Funds Used During Construction). Costs transfer to permanent plant accounts (2410 Cable and Wire, 2411 Poles) once the plant is placed in service.",
-      "citation": "47 CFR 32.2003 — Telecommunications plant under construction. NOTE: this corrects a citation error found in the source lesson material, which had cited 32.2230 (actually titled \"transmission\" — radio systems/circuit equipment accounts 2231/2232) for this concept; see T04.md research log."
+      "citation": "47 CFR 32.2003 — Telecommunications plant under construction."
     },
     {
       "id": "T04-L07-Q2",
@@ -59,7 +59,7 @@
       ],
       "answerIndex": 3,
       "explanation": "The correct retention period depends on the current FCC retention schedule and the specific RUS loan agreement, which can extend the required period beyond any FCC minimum. Hardcoding a specific number of years without verifying current regulation and loan agreement terms is risky.",
-      "citation": "47 CFR 32.27 (records retention); 7 CFR Part 1755 (RUS loan requirements) — exact FCC Part 42 retention schedule figure not independently pinned down this session; confirm with regulatory counsel or RUS district office."
+      "citation": "47 CFR 32.27 (records retention); 7 CFR Part 1755 (RUS loan requirements) — for the exact FCC Part 42 retention schedule figure, confirm with regulatory counsel or the RUS district office."
     },
     {
       "id": "T04-L07-Q5",

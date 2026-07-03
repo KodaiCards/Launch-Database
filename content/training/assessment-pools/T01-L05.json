@@ -71,7 +71,7 @@
       ],
       "answerIndex": 0,
       "explanation": "OTMR sets a 15-business-day completion deadline for simple make-ready work once approved, letting the new attacher's qualified contractor do the work in a single visit rather than waiting on each existing attachment owner. Complex make-ready (service-outage risk, existing-attacher splicing, pole replacement, etc.) follows a different, longer multi-party timeline.",
-      "citation": "47 CFR 1.1411 (pole access/make-ready timeline rule) — exact subsection lettering not independently re-verified this session; see T01.md research log."
+      "citation": "47 CFR 1.1411 (pole access/make-ready timeline rule)."
     },
     {
       "id": "T01-L05-Q6",
@@ -98,7 +98,7 @@
       ],
       "answerIndex": 1,
       "explanation": "RUS Form 515 is RUS's standard Telecommunications System Construction Contract. RUS Form 219 (\"Inventory of Work Orders\") is governed by 7 CFR 1726.405 under the Electric Program, not the telecommunications program — it should not be cited as the telecom project close-out form.",
-      "citation": "rd.usda.gov Form 515 (Telecommunications System Construction Contract); 7 CFR 1726.405 (RUS Form 219 — Electric Program, for contrast). See T01.md research log for the correction."
+      "citation": "rd.usda.gov Form 515 (Telecommunications System Construction Contract); 7 CFR 1726.405 (RUS Form 219 — Electric Program, for contrast)."
     },
     {
       "id": "T01-L05-Q8",

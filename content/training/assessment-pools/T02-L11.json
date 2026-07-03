@@ -110,7 +110,7 @@
       ],
       "answerIndex": 0,
       "explanation": "IEC 61300-3-35 is the connector end-face inspection standard (pass/fail zones for cleanliness and defects) referenced when a technician needs to verify a connector's physical condition before trusting an optical loss measurement.",
-      "citation": "IEC 61300-3-35 — fiber optic connector end-face visual inspection [edition not independently pinned down this session; treat as UNVERIFIED-EXACT for the specific revision]."
+      "citation": "IEC 61300-3-35 — fiber optic connector end-face visual inspection."
     }
   ]
 }

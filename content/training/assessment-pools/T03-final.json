@@ -86,7 +86,7 @@
       ],
       "answerIndex": 1,
       "explanation": "G.657.A2's 7.5mm rating exactly satisfies the stated requirement. G.657.B3 would technically also work but is over-spec'd for this need and, unlike A1/A2, isn't guaranteed splice-compatible with G.652.D without measurable loss risk.",
-      "citation": "ITU-T G.657 (A1=10mm, A2=7.5mm, B3=5mm — independently verified); G.652.D's ~30mm figure is an industry-convention rule of thumb, not independently pinned to a single ITU-T clause this session (see T03.md)."
+      "citation": "ITU-T G.657 (A1=10mm, A2=7.5mm, B3=5mm); G.652.D's ~30mm figure is an industry-convention rule of thumb, not tied to a single ITU-T clause."
     },
     {
       "id": "T03-final-Q7",
@@ -213,16 +213,16 @@
     {
       "id": "T03-final-Q16",
       "type": "mc",
-      "prompt": "What does the ISO/IEC 11801 OS1/OS2 fiber category mapping to ITU-T G.652 sub-grades tell you, and why is precision about this mapping important given a documented cross-lesson inconsistency found in this course's own material?",
+      "prompt": "What is the correct ISO/IEC 11801 OS1/OS2 fiber category mapping to ITU-T G.652 sub-grades?",
       "choices": [
-        "OS1 = G.652.A/B (older, higher attenuation), OS2 = G.652.C/D (low/zero water-peak, current standard); an independent verification pass across this course's T01/T02/T03 material caught an inconsistent claim in one lesson's own prose ('OS1 = G.652.B/C'), underscoring why citations should be independently re-checked rather than trusted from any single source, including this course's own text",
+        "OS1 = G.652.A/B (older, higher attenuation), OS2 = G.652.C/D (low/zero water-peak, current standard)",
         "OS1 and OS2 are unrelated to any ITU-T standard",
         "OS1 = G.657, OS2 = G.652 — entirely separate fiber families",
         "There is no meaningful difference between OS1 and OS2"
       ],
       "answerIndex": 0,
-      "explanation": "The correct mapping (OS1=G.652.A/B, OS2=G.652.C/D) was independently verified via WebSearch. A separate lesson in this course's own source material stated an inconsistent mapping, which the citation-gate process caught and corrected — a concrete example of why the gate exists.",
-      "citation": "ISO/IEC 11801 OS1/OS2 to ITU-T G.652 sub-grade mapping — see T01.md/T02.md research logs for the original finding."
+      "explanation": "The correct mapping is OS1 = G.652.A/B and OS2 = G.652.C/D. OS1 is the older, higher-attenuation single-mode grade; OS2 is the low/zero-water-peak grade that modern OSP builds specify.",
+      "citation": "ISO/IEC 11801 OS1/OS2 to ITU-T G.652 sub-grade mapping."
     },
     {
       "id": "T03-final-Q17",

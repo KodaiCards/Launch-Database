@@ -87,7 +87,7 @@
       ],
       "answerIndex": 1,
       "explanation": "TIA-568 connector loss values have changed across revisions and distinguish standard-grade from reference-grade connectors. Without a revision letter, the number is too vague for budget planning — the practical workaround is a tested loss certificate per connector/cord from the vendor.",
-      "citation": "TIA-568.3-D [edition not independently pinned down this session — treat as UNVERIFIED-EXACT for the specific revision; the ambiguity itself is the point of this question]."
+      "citation": "TIA-568.3-D — confirm the specific revision against the edition adopted for your project."
     },
     {
       "id": "T02-L02-Q7",

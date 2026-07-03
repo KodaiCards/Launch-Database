@@ -192,7 +192,7 @@ export default function T02L04_MacrobendAndMicrobend() {
           </table>
         </div>
         <p className="text-xs text-slate-400 mt-2">
-          Source: ITU-T G.652 (2024 edition — [confirm edition]) and ITU-T G.657 (08/2024 edition). Test conditions are per the respective standard.
+          Source: ITU-T G.652 (2024 edition) and ITU-T G.657 (08/2024 edition). Test conditions are per the respective standard.
           <strong> Common confusion:</strong> the "10 turns at 10 mm radius" combination is sometimes
           cited, but it is not a published G.657.A1 test condition. The two real conditions are listed
           above: 1 turn at 10 mm radius (tight bend, single wrap) and 10 turns at 15 mm radius

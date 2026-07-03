@@ -120,8 +120,8 @@
         "G.652.D's minimum bend radius (30 mm) is actually smaller than G.657.A1's (10 mm)"
       ],
       "answerIndex": 0,
-      "explanation": "G.652.D's minimum installation bend radius is commonly cited around 30 mm across vendor/industry sources — meaningfully larger (i.e., less bend-tolerant) than G.657's specialized sub-grades (A1=10mm, A2=7.5mm, B3=5mm), which is precisely why G.657 was developed for tight-bend applications like FTTH drops and in-building routing. This ~30mm figure is an industry-convention rule of thumb rather than a single ITU-T G.652.D clause number; verify against the specific cable manufacturer's datasheet before design lock, consistent with the same hedge applied to the T01 bend-radius questions.",
-      "citation": "Industry-convention figure (vendor/FOA-style OSP installation guidance) for G.652.D minimum installation bend radius — not independently pinned to a single ITU-T G.652.D clause this session; contrast with G.657 sub-grade radii (ITU-T G.657, independently verified, see T03.md)."
+      "explanation": "G.652.D's minimum installation bend radius is commonly cited around 30 mm across vendor/industry sources — meaningfully larger (i.e., less bend-tolerant) than G.657's specialized sub-grades (A1=10mm, A2=7.5mm, B3=5mm), which is precisely why G.657 was developed for tight-bend applications like FTTH drops and in-building routing. This ~30mm figure is an industry-convention rule of thumb rather than a single ITU-T G.652.D clause number; verify against the specific cable manufacturer's datasheet before design lock.",
+      "citation": "Industry-convention figure (vendor/FOA-style OSP installation guidance) for G.652.D minimum installation bend radius — not tied to a single ITU-T G.652.D clause; contrast with G.657 sub-grade radii (ITU-T G.657)."
     }
   ]
 }

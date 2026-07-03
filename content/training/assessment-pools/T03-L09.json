@@ -32,7 +32,7 @@
       ],
       "answerIndex": 2,
       "explanation": "w_ice = 1.244 x t x (D+t) = 1.244 x 0.50 x (0.71+0.50) = 1.244 x 0.50 x 1.21 ~= 0.752 lb/ft. Note: the exact K constant derives from an assumed ice density (commonly cited as 56-57 lb/ft^3 depending on NESC edition), so always confirm the constant against the specific adopted NESC edition before a final design calculation.",
-      "citation": "NESC ice-loading formula (K constant UNVERIFIED-EXACT across NESC editions this session — verify against adopted edition)."
+      "citation": "NESC ice-loading formula (K constant varies across NESC editions — verify against the adopted edition)."
     },
     {
       "id": "T03-L09-Q3",

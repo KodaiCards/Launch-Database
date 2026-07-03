@@ -32,7 +32,7 @@
       ],
       "answerIndex": 1,
       "explanation": "RUS maintains accepted-materials requirements for funded projects under 7 CFR Part 1755. Cable not on the accepted list generally cannot be used on a funded project without specific RUS approval. (RUS Bulletin 1753F-201 is a distinct bulletin covering acceptance TESTING of completed telecommunications plant — not the materials-acceptance list itself; do not conflate the two.)",
-      "citation": "7 CFR Part 1755 (Telecommunications Policies on Specifications, Acceptable Materials, and Standard Contract Forms); RUS Bulletin 1753F-201 correctly identified as \"Acceptance Tests and Measurements of Telecommunications Plant\" — see T01.md research log for this correction."
+      "citation": "7 CFR Part 1755 (Telecommunications Policies on Specifications, Acceptable Materials, and Standard Contract Forms); RUS Bulletin 1753F-201, \"Acceptance Tests and Measurements of Telecommunications Plant\"."
     },
     {
       "id": "T01-L09-Q3",

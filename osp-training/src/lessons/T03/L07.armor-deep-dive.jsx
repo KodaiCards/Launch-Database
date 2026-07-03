@@ -112,8 +112,8 @@ export default function T03L07_ArmorDeepDive() {
         </p>
         <p className="mt-2">
           <strong>Why this matters:</strong> "No metal in the cable, therefore no bonding
-          and grounding is required." (Source: CommScope ADSS documentation; 7 CFR 1755.902 —
-          verified) Bonding every dead-end pole is a real labor and material cost. On a new
+          and grounding is required." (Source: CommScope ADSS documentation; 7 CFR 1755.902)
+          Bonding every dead-end pole is a real labor and material cost. On a new
           FTTH aerial build with 150 poles, each bonding assembly (ground rod, clamp, bond
           wire) might cost $50–$150 in materials and 30–60 minutes of labor. That's $7,500–
           $22,500 in bonding alone — before counting the inspection and documentation for
@@ -143,7 +143,7 @@ export default function T03L07_ArmorDeepDive() {
         <p className="mt-2 text-sm">
           Example from real product documentation: OCC D-Series CST-armored cables are
           "UL listed in accordance with NEC section 770.179(b)." (Source: OCC D-Series
-          product page — verified) This means the steel armor + HDPE jacket combination has
+          product page) This means the steel armor + HDPE jacket combination has
           been tested and passes the riser flame-spread requirement alongside the armor.
         </p>
         <p className="mt-2 text-sm text-amber-300/90 border-l-4 border-amber-400/30 pl-3">
@@ -197,8 +197,8 @@ export default function T03L07_ArmorDeepDive() {
           <p className="text-slate-300/90">
             <strong>Book (ICEA S-87-640):</strong> Defines armor geometry, material grades,
             corrosion protection requirements, and minimum coverage for each armor type.
-            The 2016/2023 editions are paywalled. [Confirm armor thickness and coverage
-            requirements against ICEA S-87-640 current edition for formal specs.]
+            The 2016/2023 editions are paywalled. Confirm armor thickness and coverage
+            requirements against ICEA S-87-640 current edition for formal specs.
           </p>
           <p className="text-slate-300/90 mt-2">
             <strong>Field:</strong> The most common armor mistake isn't the wrong type —
@@ -333,7 +333,7 @@ export default function T03L07_ArmorDeepDive() {
           {
             id: 'T03-L07-fc-nec770',
             front: 'What does NEC §770.179(B) govern?',
-            back: 'The NEC provision listing permitted armor configurations for indoor fiber optic cable in building riser shafts. CST-armored cables UL-listed per §770.179(B) can be installed in risers despite containing metal armor — the armor + jacket combination has passed the UL 1666 riser flame test. (OCC D-Series product documentation — verified)',
+            back: 'The NEC provision listing permitted armor configurations for indoor fiber optic cable in building riser shafts. CST-armored cables UL-listed per §770.179(B) can be installed in risers despite containing metal armor — the armor + jacket combination has passed the UL 1666 riser flame test. (OCC D-Series product documentation)',
           },
         ]}
       />
@@ -386,7 +386,7 @@ export default function T03L07_ArmorDeepDive() {
               answer: 'dielectric',
               answerDisplay: 'dielectric',
               explanation:
-                'A dielectric cable has zero metal content. No bonding or grounding is required at any attachment or entry point. ADSS aerial cables are dielectric. Dielectric duct cables are also available for underground runs in conduit where no bonding is desired and the conduit provides mechanical protection. (7 CFR 1755.902; CommScope ADSS documentation — verified)',
+                'A dielectric cable has zero metal content. No bonding or grounding is required at any attachment or entry point. ADSS aerial cables are dielectric. Dielectric duct cables are also available for underground runs in conduit where no bonding is desired and the conduit provides mechanical protection. (7 CFR 1755.902; CommScope ADSS documentation)',
             },
             {
               id: 'T03-L07-Q4',

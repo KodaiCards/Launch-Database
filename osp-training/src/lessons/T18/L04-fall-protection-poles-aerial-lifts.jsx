@@ -369,7 +369,7 @@ export default function T18L04_FallProtectionPolesAerialLifts() {
           <li>
             <strong>Full-body harness</strong> — Distributes fall arrest forces across the chest,
             shoulders, and thighs. Required for fall arrest applications — body belts are NOT
-            acceptable for arrest, only for positioning (ANSI Z359.1 [confirm current edition]).
+            acceptable for arrest, only for positioning (ANSI Z359.1).
             The harness connects to both the positioning strap and the PFAS lanyard via separate
             D-rings.
           </li>

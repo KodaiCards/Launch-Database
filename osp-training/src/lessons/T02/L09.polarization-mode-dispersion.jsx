@@ -353,7 +353,7 @@ Step 4:          = 1.41 ps`}
               answerIndex: 0,
               explanation:
                 'DGD_rms = 0.8 ps/√km × √150 km = 0.8 × 12.25 = 9.8 ps. At 40 Gb/s, the bit period is 25 ps; 10% tolerance = 2.5 ps max DGD. 9.8 ps >> 2.5 ps — this link will likely fail or require PMD compensation hardware (PMD compensators are expensive and complex). The upgrade should be evaluated carefully before commitment.',
-              citation: 'ITU-T G.652.D; 40G PMD budget analysis; ITU-T G.Sup39 [confirm edition].',
+              citation: 'ITU-T G.652.D; 40G PMD budget analysis; ITU-T G.Sup39.',
             },
             {
               id: 'T02-L09-Q3',

@@ -278,7 +278,7 @@ export default function T18L08_HazardousMaterialsOSP() {
               respirator with P100 filters for higher-exposure cutting operations. Safety glasses.
             </p>
             <p className="text-xs text-slate-400 mt-1">
-              Source: 29 CFR 1910.1053 (ecfr.gov) — VERIFIED primary source; current 2016 rule
+              Source: 29 CFR 1910.1053 (ecfr.gov). Current 2016 rule
               PEL = 50 µg/m³ TWA (NOT the pre-2016 PEL of 100 µg/m³ which appears in older
               training materials).
             </p>
@@ -304,7 +304,7 @@ export default function T18L08_HazardousMaterialsOSP() {
               per OSHA 29 CFR 1910.151(c).
             </p>
             <p className="text-xs text-slate-400 mt-1">
-              Source: 29 CFR 1910.1000 Table Z-1 (ecfr.gov) — VERIFIED primary source.
+              Source: 29 CFR 1910.1000 Table Z-1 (ecfr.gov).
             </p>
           </div>
 
@@ -489,7 +489,7 @@ export default function T18L08_HazardousMaterialsOSP() {
               explanation:
                 'The current OSHA PEL for crystalline silica is 50 µg/m³ as an 8-hour TWA, per 29 CFR 1910.1053 (the 2016 revised silica standard). The pre-2016 PEL was 100 µg/m³ — that value appears in older training materials and should not be cited. The ACGIH TLV of 25 µg/m³ is more conservative and is often used as the best-practice target, but it is not legally binding.',
               citation:
-                '29 CFR 1910.1053 (ecfr.gov) — VERIFIED primary source; 2016 OSHA silica rule.',
+                '29 CFR 1910.1053 (ecfr.gov); 2016 OSHA silica rule.',
               fieldNote:
                 'Wet-cutting is the primary engineering control for silica. If visible dust is generated during saw-cutting, switch to wet-cutting immediately — visible dust is far above the PEL.',
             },
@@ -520,7 +520,7 @@ export default function T18L08_HazardousMaterialsOSP() {
               explanation:
                 'OSHA adopted the Globally Harmonized System (GHS) for chemical classification and labeling under HazCom 2012 (29 CFR 1910.1200), effective June 2015 for most industries. This is why all modern SDS documents in the U.S. use the same 16-section structure and standardized pictograms (flame, skull-and-crossbones, health hazard symbol, etc.) regardless of manufacturer or country of origin.',
               citation:
-                '29 CFR 1910.1200 (HazCom 2012); GHS adoption in the U.S. (ecfr.gov — VERIFIED primary source).',
+                '29 CFR 1910.1200 (HazCom 2012); GHS adoption in the U.S. (ecfr.gov).',
             },
             {
               id: 'T18-L08-Q5',

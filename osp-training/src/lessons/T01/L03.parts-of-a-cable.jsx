@@ -177,7 +177,7 @@ export default function T01L03_PartsOfACable() {
         <div className="mt-4 p-4 border border-amber-400/30 bg-amber-400/5 rounded-lg text-sm">
           <p className="font-semibold text-amber-300 mb-1">Book vs. Field</p>
           <p className="text-slate-300/90">
-            <strong>Book:</strong> Standards describe the cable anatomy in detail. ICEA S-87-640 [confirm edition]
+            <strong>Book:</strong> Standards describe the cable anatomy in detail. ICEA S-87-640
             (OSP fiber cable construction) and TIA-598-D (fiber color coding) define what goes
             where and how it's labeled.
           </p>
@@ -267,7 +267,7 @@ export default function T01L03_PartsOfACable() {
           (Details in T03.L01.)
         </p>
         <p className="mt-2 text-sm text-slate-300/90">
-          Source: TIA-598-D (color code for ribbon fiber); ICEA S-87-640 [confirm edition] (construction standards).
+          Source: TIA-598-D (color code for ribbon fiber); ICEA S-87-640 (construction standards).
         </p>
       </section>
 
