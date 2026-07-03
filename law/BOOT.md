@@ -25,3 +25,8 @@ Partner: **Fable / high**. Registrar: **Opus / medium** → **Sonnet 5 / medium*
 
 ## Skills (`.claude/skills/` — procedure cribs, loaded just-in-time)
 Repo skills travel with every clone: `board` (gh protocol) · `readability-pass` (PRODUCT_BAR §1 procedure) · `vo-verify` (lens checklist + verdict template) · `craft` (working discipline, every role) · `premerge` (once WO-3 lands). Two rules: **skills CITE law, never restate it** (one source of truth), and **no agent mints skills** — they enter only via Carter + Partner, merged by the Registrar.
+
+## Environment + spawn rules (Carter 2026-07-03 — usage protection)
+- **No heavy environment setup in worker sessions.** Never `playwright install` / browser downloads / global installs. **`npm run premerge` (Playwright) runs ONLY on the Registrar's persistent environment** — foremen/VOs never run it themselves. `npm ci` only when your package actually requires a build; content-only packages (prose, pools, JSON) need NO install — edit + grep + commit.
+- **Spawns NEVER inherit your model.** Task-tool subagents default to the parent's model — ALWAYS set the model explicitly per the loadout (Sonnet 5 for judgment-bearing subtasks, Haiku 4.5 for mechanical). An unset spawn model is a law §5 violation.
+- Playthroughs when your environment can't run the app: state it plainly in your `built` comment ("playthrough deferred to VO — no runtime here"); the VO/Registrar playthrough covers it. Never fake a playthrough.
