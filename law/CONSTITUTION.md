@@ -30,6 +30,8 @@
 ## How work flows
 Carter ⇄ Partner (sessions → law/specs) → Registrar decomposes ratified specs into board issues → foremen self-claim + build + Tier-1 → VO Tier-2 (`built`→`verified` / `fix-needed`) → Registrar stamp-checks + merges + live-smokes → Carter green-lights flips. Board mechanics: `ops/COMMS.md`. Ideas from Carter to ANY agent → written to `specs/ideas/` **verbatim** + flagged to Partner; never acted on directly.
 
+**New work enters the board exactly two ways:** decomposition of a RATIFIED spec, or a Registrar-VALIDATED `bug` against existing intended behavior. An out-of-scope finding by any agent: broken → `bug` (Registrar validates; the validated issue IS the job) · off-spec → `deviation` (Registrar rules by citation) · "should also X" → `specs/ideas/` (Partner + Carter decide; becomes work only via a ratified spec). **No agent mints its own scope.**
+
 ## `*` call-ups
 Open-ended items are marked `*` with a trigger, registered in `specs/CALLUPS.md`. Carter asks "anything to discuss / waiting on?" → Partner pulls code state, sweeps the registry, answers.
 
