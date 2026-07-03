@@ -7,6 +7,7 @@ import SideBySide from '../../components/primitives/SideBySide.jsx';
 import Quiz from '../../components/primitives/Quiz.jsx';
 import GatedAssessment from '../../components/primitives/GatedAssessment.jsx';
 import Flashcard from '../../components/Flashcard.jsx';
+import ReferencesBlock from '../../components/ReferencesBlock.jsx';
 
 export const meta = {
   id: 'T02.L08',
@@ -54,11 +55,11 @@ export default function T02L08_SMFvsMMFChoosing() {
         <h2>In Plain English</h2>
 
         <div className="mb-4 p-3 bg-amber-900/20 border-l-4 border-amber-500 rounded text-amber-100 text-sm">
-          <strong>Quick refresher:</strong> In <strong>T02.L02</strong> you learned attenuation limits distance by loss. In <strong>T02.L03</strong> you learned dispersion (modal + chromatic) also limits distance. In <strong>T02.L07</strong> you learned different wavelengths have different properties. This lesson applies all those concepts to answer: why do some projects use single-mode fiber (SMF) and others use multimode (MMF)?
+          <strong>Quick refresher:</strong> In <em>Attenuation — Three Numbers Framework</em> you learned attenuation limits distance by loss. In <em>Dispersion — Why Fast Signals Blur</em> you learned dispersion (modal + chromatic) also limits distance. In <em>Wavelength Windows</em> you learned different wavelengths have different properties. This lesson applies all those concepts to answer: why do some projects use single-mode fiber (SMF) and others use multimode (MMF)?
         </div>
 
         <p>
-          You've been hearing "SMF" (single-mode fiber) and "MMF" (multimode fiber) since T01.
+          You've been hearing "SMF" (single-mode fiber) and "MMF" (multimode fiber) since the Fundamentals & Vocabulary topic.
           Now that you know the physics (total internal reflection, attenuation, dispersion,
           wavelengths), you can understand WHY you'd choose one over the other — and what goes
           wrong when you mix them up.
@@ -254,8 +255,8 @@ export default function T02L08_SMFvsMMFChoosing() {
           long-haul backbone, the carrier may be running G.655 fiber on their end. Your OSP
           feeder is still G.652.D (OS2) — the distinction matters if you're performing link-budget
           coordination across the OSP↔carrier handoff. G.655 behaves differently from G.652.D
-          at high bit rates. The long-haul and DWDM context is covered in T02.L07 (Wavelength
-          Windows — Advanced section).
+          at high bit rates. The long-haul and DWDM context is covered in the Wavelength
+          Windows lesson (Advanced section).
         </p>
         <p className="text-sm mt-2 text-slate-400">
           <strong>OSP default:</strong> Specify G.652.D (OS2) for every OSP run you design.
@@ -386,6 +387,16 @@ export default function T02L08_SMFvsMMFChoosing() {
             left: 'Future upgrades to 100G+ are expected on the same cable',
             right: 'The application is OM5 SWDM4 for 100G at ≤ 150 m',
           },
+        ]}
+      />
+
+      <ReferencesBlock
+        items={[
+          { citation: 'ITU-T G.652.D', note: 'Standard OSP single-mode fiber, corresponds to OS2 grade.' },
+          { citation: 'ITU-T G.655', note: 'Non-Zero Dispersion-Shifted SMF (NZ-DSF) — carrier long-haul DWDM fiber referenced at the OSP-carrier handoff.' },
+          { citation: 'TIA-492AAAD', note: 'OM4 multimode fiber specification.' },
+          { citation: 'TIA-492AAAE', note: 'OM5 multimode fiber specification, including the 953 nm SWDM4 bandwidth spec.' },
+          { citation: 'IEEE 802.3', note: 'Ethernet standard defining reach tables and effective modal bandwidth (EMB) methodology by fiber grade.' },
         ]}
       />
 

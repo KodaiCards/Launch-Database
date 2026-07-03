@@ -7,6 +7,7 @@ import BranchingScenario from '../../components/primitives/BranchingScenario.jsx
 import Quiz from '../../components/primitives/Quiz.jsx';
 import GatedAssessment from '../../components/primitives/GatedAssessment.jsx';
 import Flashcard from '../../components/Flashcard.jsx';
+import ReferencesBlock from '../../components/ReferencesBlock.jsx';
 
 export const meta = {
   id: 'T02.L11',
@@ -35,6 +36,11 @@ export const meta = {
     'Apply field-specific rules: add 0.5–1.5 dB margin above theoretical loss to account for aging and temperature stress',
     'Distinguish spec-sheet maximums (guaranteed worst-case) from typical field experience',
     'Develop realistic link budgets by using conservative field numbers rather than best-case textbook numbers',
+    // FLAG-FOR-FOREMAN: these three entries look like they were meant for
+    // vocabulary_assumed (below) rather than learning_objectives — they are
+    // { term, source_lesson_id } shape, not learning-objective strings.
+    // Left as-is; not a citation-location issue, so not fixed as part of the
+    // readability pass.
     { term: 'safety margin', source_lesson_id: 'T02.L06' },
     { term: 'G.657', source_lesson_id: 'T02.L04' },
     { term: 'SMF', source_lesson_id: 'T01.L08' },
@@ -51,11 +57,11 @@ export default function T02L11_FiberPhysicsFieldVsBook() {
         <h2>In Plain English</h2>
 
         <div className="mb-4 p-3 bg-amber-900/20 border-l-4 border-amber-500 rounded text-amber-100 text-sm">
-          <strong>Quick refresher:</strong> In <strong>T02.L02</strong>, you learned that fiber attenuation is measured in dB/km and that real cable specs list a max and a typical value. In <strong>T02.L04</strong>, you saw that macrobend and microbend losses add on top of that baseline — bends, kinks, and jacket stress all raise the loss number. In <strong>T02.L06</strong>, you built a link budget that added all those losses up and compared them against available optical power, leaving a safety margin for unknowns. This lesson is about what fills that margin in the real world: temperature swings, fiber aging, installation tension, connector contamination, and batch-to-batch variation. The <strong>SMF</strong> from <strong>T01.L08</strong> and the <strong>G.657</strong> bend-insensitive variants from <strong>T02.L04</strong> each behave somewhat differently in the field than their datasheets suggest.
+          <strong>Quick refresher:</strong> In <em>Attenuation — Three Numbers Framework</em>, you learned that fiber attenuation is measured in dB/km and that real cable specs list a max and a typical value. In <em>Macrobend and Microbend Loss</em>, you saw that macrobend and microbend losses add on top of that baseline — bends, kinks, and jacket stress all raise the loss number. In <em>Link Budget — Worked Example</em>, you built a link budget that added all those losses up and compared them against available optical power, leaving a safety margin for unknowns. This lesson is about what fills that margin in the real world: temperature swings, fiber aging, installation tension, connector contamination, and batch-to-batch variation. The <strong>SMF</strong> from <em>Key Acronyms Field Reference</em> and the <strong>G.657</strong> bend-insensitive variants from <em>Macrobend and Microbend Loss</em> each behave somewhat differently in the field than their datasheets suggest.
         </div>
 
         <p>
-          This lesson pulls together the "book vs. field" notes scattered across T02 and
+          This lesson pulls together the "book vs. field" notes scattered across this Fiber Physics topic and
           gives you a practical map of where fiber physics bites crews in the real world.
           Textbooks give you clean numbers. The field gives you variables. The gap between
           them is where link budgets fail, troubleshooting gets hard, and expensive re-splices
@@ -132,7 +138,7 @@ export default function T02L11_FiberPhysicsFieldVsBook() {
           <li>
             <strong>Tight bend in the splice case or patch panel</strong> (very common).
             The excess pigtail is coiled too tightly. Open the case and re-route. This is
-            macrobend loss — T02.L04 covers it in detail.
+            macrobend loss — the Macrobend and Microbend Loss lesson covers it in detail.
           </li>
           <li>
             <strong>Bad fusion splice</strong> (less common with modern splicers, but happens).
@@ -160,7 +166,7 @@ export default function T02L11_FiberPhysicsFieldVsBook() {
 
         <h3 className="mt-5 font-semibold">Bend-insensitive SMF in OSP — gotchas</h3>
         <p>
-          G.657.A1/A2 bend-insensitive SMF (remember from T02.L04) is becoming more common
+          G.657.A1/A2 bend-insensitive SMF (remember from the Macrobend and Microbend Loss lesson) is becoming more common
           in OSP drop cables and indoor/outdoor dual-rated cable. A few field gotchas:
         </p>
         <ul className="list-disc pl-5 space-y-2 mt-2 text-sm">
@@ -296,6 +302,14 @@ export default function T02L11_FiberPhysicsFieldVsBook() {
             endMessage: 'Key lessons: (1) Always clean connectors first — it\'s the most common and easiest fix. (2) When distributed loss is elevated (not a discrete event), think microbend — conduit overfill, tensioned installation, or thermal stress. (3) Compare measured values against your planning conservatism — 0.30 dB/km planning on fiber that actually runs 0.22 dB/km gives you a hidden 0.24 dB buffer on a 3 km run. Sometimes "over budget" is actually the planning assumption being conservative.',
           },
         }}
+      />
+
+      <ReferencesBlock
+        items={[
+          { citation: 'IEC 61300-3-35', note: 'End-face inspection standard — pass/fail criteria for connector cleanliness, the #1 field troubleshooting step.' },
+          { citation: 'ITU-T G.652.D', note: 'Standard single-mode fiber — temperature-dependent attenuation figures referenced in the field-vs-book comparisons.' },
+          { citation: 'ITU-T G.657', note: 'Bend-insensitive single-mode fiber standard — splice-compatibility notes for G.657.A1/A2/B2/B3 mixed with G.652.D.' },
+        ]}
       />
 
       {/* ── PER-LESSON QUIZ ──────────────────────────────────────────────── */}

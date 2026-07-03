@@ -7,6 +7,7 @@ import SliderExploration from '../../components/primitives/SliderExploration.jsx
 import Quiz from '../../components/primitives/Quiz.jsx';
 import GatedAssessment from '../../components/primitives/GatedAssessment.jsx';
 import Flashcard from '../../components/Flashcard.jsx';
+import ReferencesBlock from '../../components/ReferencesBlock.jsx';
 
 export const meta = {
   id: 'T02.L09',
@@ -50,7 +51,7 @@ export default function T02L09_PolarizationModeDispersion() {
         <h2>In Plain English</h2>
 
         <div className="mb-4 p-3 bg-amber-900/20 border-l-4 border-amber-500 rounded text-amber-100 text-sm">
-          <strong>Quick refresher:</strong> In <strong>T02.L03</strong>, you learned chromatic dispersion — the blurring that happens when different wavelengths travel at different speeds. This lesson covers a sibling problem: when the same wavelength's two polarization modes travel at different speeds (PMD). Both mechanisms blur signals; both limit link distance at high bit rates.
+          <strong>Quick refresher:</strong> In <em>Dispersion — Why Fast Signals Blur</em>, you learned chromatic dispersion — the blurring that happens when different wavelengths travel at different speeds. This lesson covers a sibling problem: when the same wavelength's two polarization modes travel at different speeds (PMD). Both mechanisms blur signals; both limit link distance at high bit rates.
         </div>
 
         <p>
@@ -60,7 +61,7 @@ export default function T02L09_PolarizationModeDispersion() {
           or troubleshoot mysterious high-bit-rate link failures, this lesson will help.
         </p>
         <p className="mt-2">
-          You learned in T02.L03 that chromatic dispersion blurs signals because different
+          You learned in the Dispersion lesson that chromatic dispersion blurs signals because different
           wavelengths travel at different speeds. <strong>Polarization Mode Dispersion (PMD)</strong>
           is a third dispersion mechanism where the two "polarization orientations" of the same
           light wave travel at slightly different speeds through the fiber.
@@ -104,7 +105,7 @@ export default function T02L09_PolarizationModeDispersion() {
         <h2>PMD — The Details</h2>
 
         <p className="text-slate-400 text-sm mb-3 p-3 border-l-4 border-slate-500">
-          <strong>Callback:</strong> From <strong>T02.L03 (Dispersion)</strong>, you learned that chromatic dispersion blurs signals because different WAVELENGTHS travel at different speeds. PMD is a sibling impairment where the two POLARIZATION states of the same wavelength travel at different speeds. Both limit long-distance, high-bit-rate transmission.
+          <strong>Callback:</strong> From the Dispersion lesson, you learned that chromatic dispersion blurs signals because different WAVELENGTHS travel at different speeds. PMD is a sibling impairment where the two POLARIZATION states of the same wavelength travel at different speeds. Both limit long-distance, high-bit-rate transmission.
         </p>
 
         <h3 className="mt-4 font-semibold">Polarization of light — very briefly</h3>
@@ -312,6 +313,13 @@ Step 4:          = 1.41 ps`}
           chronic mechanical stress.
         </p>
       </section>
+
+      <ReferencesBlock
+        items={[
+          { citation: 'ITU-T G.652.D', note: 'Standard single-mode fiber — PMD coefficient specification maximum (0.2 ps/√km) used throughout this lesson.' },
+          { citation: 'FOA Reference Guide — PMD section', note: 'General industry reference for PMD fundamentals.' },
+        ]}
+      />
 
       {/* ── PER-LESSON QUIZ ──────────────────────────────────────────────── */}
       <GatedAssessment

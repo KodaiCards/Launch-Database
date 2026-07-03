@@ -7,6 +7,7 @@ import WorkedExample from '../../components/primitives/WorkedExample.jsx';
 import Quiz from '../../components/primitives/Quiz.jsx';
 import GatedAssessment from '../../components/primitives/GatedAssessment.jsx';
 import Flashcard from '../../components/Flashcard.jsx';
+import ReferencesBlock from '../../components/ReferencesBlock.jsx';
 
 export const meta = {
   id: 'T02.L02',
@@ -47,10 +48,10 @@ export default function T02L02_AttenuationThreeNumbers() {
       <section data-tier="foundations">
         <h2>In Plain English</h2>
         <p>
-          Recall from T01.L03 that <strong>fiber</strong> is the optical glass strand at the center of a cable, where light actually travels. Every time light travels through fiber, some of it is lost — absorbed or scattered
+          Recall from the Parts of a Cable lesson that <strong>fiber</strong> is the optical glass strand at the center of a cable, where light actually travels. Every time light travels through fiber, some of it is lost — absorbed or scattered
           by the glass molecules. This loss is called <strong>attenuation</strong>. It's measured
-          in <strong>dB/km</strong> (decibels per kilometer — a unit we'll fully unpack in
-          T02.L05). For now, think of dB/km as a "loss rate": the higher the number, the more
+          in <strong>dB/km</strong> (decibels per kilometer — a unit we'll fully unpack in the
+          Decibels lesson coming up later in this topic). For now, think of dB/km as a "loss rate": the higher the number, the more
           signal you lose per kilometer of cable.
         </p>
         <p className="mt-2">
@@ -60,17 +61,17 @@ export default function T02L02_AttenuationThreeNumbers() {
           you the framework to keep them straight.
         </p>
 
-        <h3 className="mt-5 font-semibold">Building on T02.L01 and T01 fundamentals</h3>
+        <h3 className="mt-5 font-semibold">Building on Why Light Travels in Glass and T01 fundamentals</h3>
         <p className="text-sm text-slate-300/90">
-          In T02.L01, you learned how light travels through a fiber <strong>core</strong> via <strong>total internal reflection</strong>, and how the <strong>cladding</strong> around it confines the light. This lesson explains what happens when some of that light is <em>not</em> confined — it gets absorbed or scattered, causing <strong>attenuation</strong>. The <strong>fiber</strong> types (like <strong>SMF</strong>, introduced in T01.L08) have different attenuation rates. Attenuation is the foundation of link-budget calculations you'll use in T02.L06.
+          In Why Light Travels in Glass, you learned how light travels through a fiber <strong>core</strong> via <strong>total internal reflection</strong>, and how the <strong>cladding</strong> around it confines the light. This lesson explains what happens when some of that light is <em>not</em> confined — it gets absorbed or scattered, causing <strong>attenuation</strong>. The <strong>fiber</strong> types (like <strong>SMF</strong>, introduced in Key Acronyms Field Reference) have different attenuation rates. Attenuation is the foundation of the link-budget calculations you'll use in the Link Budget lesson later in this topic.
         </p>
 
         <div className="mt-4 p-4 border border-blue-400/30 bg-blue-400/5 rounded-lg text-sm">
           <p className="font-semibold text-blue-300 mb-2">Refresher: Key prerequisites</p>
           <ul className="text-slate-300/90 space-y-1 list-disc pl-5">
-            <li><strong>Total internal reflection:</strong> The mirror-like effect that confines light inside the fiber core (from T02.L01)</li>
-            <li><strong>Single-Mode Fiber (SMF):</strong> A 9 µm core fiber used for long-distance OSP (from T01.L08)</li>
-            <li><strong>Core and cladding:</strong> The two glass layers that create the TIR effect (from T02.L01)</li>
+            <li><strong>Total internal reflection:</strong> The mirror-like effect that confines light inside the fiber core (from Why Light Travels in Glass)</li>
+            <li><strong>Single-Mode Fiber (SMF):</strong> A 9 µm core fiber used for long-distance OSP (from Key Acronyms Field Reference)</li>
+            <li><strong>Core and cladding:</strong> The two glass layers that create the TIR effect (from Why Light Travels in Glass)</li>
           </ul>
         </div>
 
@@ -313,6 +314,13 @@ export default function T02L02_AttenuationThreeNumbers() {
         resultDecimals={2}
       />
 
+      <ReferencesBlock
+        items={[
+          { citation: 'ITU-T G.652.D', note: 'Standard single-mode fiber — the attenuation spec-maximum column in the three-numbers table.' },
+          { citation: 'TIA-568.3-D', note: 'Cabling standard covering connector loss categories (standard vs. reference-grade).' },
+        ]}
+      />
+
       {/* ── PER-LESSON QUIZ ──────────────────────────────────────────────── */}
       <GatedAssessment
         courseId="T02"
@@ -404,7 +412,7 @@ export default function T02L02_AttenuationThreeNumbers() {
       <div className="lesson-callout mt-8 bg-blue-400/5 border border-blue-400/30">
         <h4>Tying It Together: Three Numbers, One Fiber</h4>
         <p className="text-sm text-slate-300/90">
-          Attenuation is the signal loss rate built into the fiber material itself. A standards body publishes a spec maximum (the worst fiber allowed to pass). A vendor publishes a typical value (what they actually ship). A designer chooses a planning value (a margin above typical, below spec-max) to use in link-budget calculations. Mixing these three up is one of the fastest ways to fail a link-budget: using spec-max in the math makes the budget look ten times worse than reality. Next lesson (T02.L03) you'll add dispersion to this picture, and then T02.L05–L06 will show you how to build a full link budget with both attenuation and dispersion together.
+          Attenuation is the signal loss rate built into the fiber material itself. A standards body publishes a spec maximum (the worst fiber allowed to pass). A vendor publishes a typical value (what they actually ship). A designer chooses a planning value (a margin above typical, below spec-max) to use in link-budget calculations. Mixing these three up is one of the fastest ways to fail a link-budget: using spec-max in the math makes the budget look ten times worse than reality. The next lesson, on dispersion, adds a second piece to this picture, and later lessons on decibels and link budgets will show you how to combine attenuation and dispersion into a full link budget.
         </p>
       </div>
 
