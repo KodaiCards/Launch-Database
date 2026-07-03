@@ -3,6 +3,7 @@
 
 import React from 'react';
 import LessonLayout from '../../components/LessonLayout.jsx';
+import ReferencesBlock from '../../components/ReferencesBlock.jsx';
 import Quiz from '../../components/primitives/Quiz.jsx';
 import GatedAssessment from '../../components/primitives/GatedAssessment.jsx';
 import Flashcard from '../../components/Flashcard.jsx';
@@ -183,11 +184,11 @@ export default function T18L08_HazardousMaterialsOSP() {
         <h2>The Chemicals You Actually Encounter on an OSP Job</h2>
 
         <div className="border-l-4 border-blue-400/30 bg-blue-400/5 p-3 my-3 text-sm">
-          <p className="font-semibold text-blue-300 mb-1">Refresher from T18</p>
+          <p className="font-semibold text-blue-300 mb-1">Refresher</p>
           <ul className="text-slate-300/90 space-y-1 list-disc pl-5">
-            <li><strong>SDS:</strong> (from L01) Safety Data Sheet — the reference document for chemical exposure limits and first-aid info</li>
-            <li><strong>Hazard recognition:</strong> (from L01) identifying dangers before they cause harm</li>
-            <li><strong>Hierarchy of controls:</strong> (from L01) the order of hazard management: elimination first, PPE last</li>
+            <li><strong>SDS:</strong> Safety Data Sheet — the reference document for chemical exposure limits and first-aid info</li>
+            <li><strong>Hazard recognition:</strong> identifying dangers before they cause harm</li>
+            <li><strong>Hierarchy of controls:</strong> the order of hazard management: elimination first, PPE last</li>
           </ul>
         </div>
 
@@ -216,10 +217,6 @@ export default function T18L08_HazardousMaterialsOSP() {
               mineral oil absorbs through cracked skin. Do not use gasoline or acetone to clean
               gel (adds a solvent exposure hazard on top of the gel).
             </p>
-            <p className="text-xs text-slate-400 mt-1">
-              Source: Manufacturer SDS (Corning, OFS, AFL — publicly posted on manufacturer
-              websites); NIOSH International Chemical Safety Cards for mineral oil.
-            </p>
           </div>
 
           <div className="p-4 border border-white/10 rounded-lg">
@@ -241,14 +238,10 @@ export default function T18L08_HazardousMaterialsOSP() {
               spatter). Heat-resistant gloves during fusion work. If working in a confined vault
               with heat fusion, the confined space atmospheric monitoring requirements also apply:
               CO buildup from HDPE fumes in a poorly ventilated vault can approach hazardous
-              concentrations. <em>See T18.L03 (Confined Space Entry) for full atmospheric
+              concentrations. <em>See the Confined Space Entry lesson for full atmospheric
               monitoring procedures and IDLH thresholds — the forced-air blower requirement
-              from 29 CFR 1910.268(o)(2) and the atmospheric testing protocol apply
-              simultaneously with any heat fusion or cutting work in an enclosed vault.</em>
-            </p>
-            <p className="text-xs text-slate-400 mt-1">
-              Source: OSHA eTool on plastic fumes; manufacturer safety bulletins for HDPE conduit
-              systems.
+              and atmospheric testing protocol for manhole entry apply simultaneously with any
+              heat fusion or cutting work in an enclosed vault.</em>
             </p>
           </div>
 
@@ -277,11 +270,6 @@ export default function T18L08_HazardousMaterialsOSP() {
               if engineering controls alone cannot maintain exposure below the PEL; a half-face
               respirator with P100 filters for higher-exposure cutting operations. Safety glasses.
             </p>
-            <p className="text-xs text-slate-400 mt-1">
-              Source: 29 CFR 1910.1053 (ecfr.gov). Current 2016 rule
-              PEL = 50 µg/m³ TWA (NOT the pre-2016 PEL of 100 µg/m³ which appears in older
-              training materials).
-            </p>
           </div>
 
           <div className="p-4 border border-white/10 rounded-lg">
@@ -302,9 +290,6 @@ export default function T18L08_HazardousMaterialsOSP() {
               nitrile). No open flames or sparks in battery rooms (hydrogen explosion risk).
               Eye wash station required within 10 seconds travel time of battery work area
               per OSHA 29 CFR 1910.151(c).
-            </p>
-            <p className="text-xs text-slate-400 mt-1">
-              Source: 29 CFR 1910.1000 Table Z-1 (ecfr.gov).
             </p>
           </div>
 
@@ -348,12 +333,17 @@ export default function T18L08_HazardousMaterialsOSP() {
           provide a meaningfully better health outcome for their crews. This is standard
           practice in responsible industrial hygiene programs.
         </p>
-        <p className="mt-2 text-sm text-slate-300/70">
-          Source: ACGIH Threshold Limit Values and Biological Exposure Indices — the TLV
-          booklet (updated annually, paywalled); 29 CFR 1910.1000 Table Z-1 (ecfr.gov — free
-          primary source for OSHA PELs).
-        </p>
       </section>
+
+      <ReferencesBlock
+        items={[
+          { citation: '29 CFR 1910.1200', note: 'OSHA HazCom 2012 — GHS-format SDS requirement, 16-section structure.' },
+          { citation: '29 CFR 1910.1053', note: 'Crystalline silica standard — current PEL of 50 µg/m³ TWA (not the pre-2016 value of 100 µg/m³).' },
+          { citation: '29 CFR 1910.1000 Table Z-1', note: 'OSHA PELs for air contaminants, including sulfuric acid (1 mg/m³).' },
+          { citation: '29 CFR 1910.151(c)', note: 'Emergency eyewash/shower — required within 10 seconds travel time of a battery work area.' },
+          { citation: 'ACGIH Threshold Limit Values (TLV booklet)', note: 'Recommended, non-binding exposure limits — often more conservative than OSHA PELs; used as a best-practice benchmark.' },
+        ]}
+      />
 
       {/* ── MCQ — SDS required or not? ────────────────────────────────────── */}
       <Quiz

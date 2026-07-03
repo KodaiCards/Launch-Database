@@ -3,6 +3,7 @@
 
 import React from 'react';
 import LessonLayout from '../../components/LessonLayout.jsx';
+import ReferencesBlock from '../../components/ReferencesBlock.jsx';
 import WorkedExample from '../../components/primitives/WorkedExample.jsx';
 import Quiz from '../../components/primitives/Quiz.jsx';
 import GatedAssessment from '../../components/primitives/GatedAssessment.jsx';
@@ -142,13 +143,13 @@ export default function T18L07_WorkingNearEnergizedConductors() {
         <h2>The MAD — How It's Calculated (Not a Simple Lookup)</h2>
 
         <div className="border-l-4 border-blue-400/30 bg-blue-400/5 p-3 my-3 text-sm">
-          <p className="font-semibold text-blue-300 mb-1">Refresher from T18 and T01</p>
+          <p className="font-semibold text-blue-300 mb-1">Refresher — Plus Fundamentals &amp; Vocabulary</p>
           <ul className="text-slate-300/90 space-y-1 list-disc pl-5">
-            <li><strong>Hazard recognition:</strong> (from L01) identifying dangers before they cause harm</li>
-            <li><strong>Hierarchy of controls:</strong> (from L01) the order of hazard management: elimination first, PPE last</li>
-            <li><strong>PPG glove class:</strong> (from L05) electrical protection rating (0, 1, 2, 3, 4) for rubber insulating gloves based on voltage</li>
-            <li><strong>ANSI Z89.1 Class E:</strong> (from L05) hard hat rating that provides electrical protection up to 20,000 volts</li>
-            <li><strong>Pole:</strong> (from T01) the wooden or concrete support structure for overhead OSP fiber and power lines</li>
+            <li><strong>Hazard recognition:</strong> identifying dangers before they cause harm</li>
+            <li><strong>Hierarchy of controls:</strong> the order of hazard management: elimination first, PPE last</li>
+            <li><strong>PPG glove class:</strong> electrical protection rating (0, 1, 2, 3, 4) for rubber insulating gloves based on voltage</li>
+            <li><strong>ANSI Z89.1 Class E:</strong> hard hat rating that provides electrical protection up to 20,000 volts</li>
+            <li><strong>Pole:</strong> the wooden or concrete support structure for overhead OSP fiber and power lines</li>
           </ul>
         </div>
 
@@ -190,9 +191,8 @@ export default function T18L07_WorkingNearEnergizedConductors() {
           <li><strong>46–72 kV (sub-transmission):</strong> approximately 3 ft or more — substantially farther</li>
         </ul>
         <p className="mt-2 text-sm text-slate-300/70">
-          Source: OSHA MAD Calculator (osha.gov — free public tool); 29 CFR 1910.269(l)(2) and
-          Appendix B (ecfr.gov; osha.gov). Note: always use the calculator for the specific
-          voltage at your job site — do not rely on range-based approximations.
+          Always use the calculator for the specific voltage at your job site — do not rely on
+          range-based approximations.
         </p>
 
         <div className="mt-4 p-4 border border-amber-400/30 bg-amber-400/5 rounded-lg text-sm">
@@ -309,12 +309,16 @@ export default function T18L07_WorkingNearEnergizedConductors() {
           <li>A ground rod tester can detect induced voltage — clip one probe to the messenger and one to a confirmed ground before cutting.</li>
           <li>Never assume a cut messenger is at zero voltage just because it's de-stranded from the pole. The parallel induction from a live power line continues until the messenger is grounded.</li>
         </ul>
-        <p className="mt-2 text-sm text-slate-300/70">
-          Source: RUS Bulletin 1751F-810 (Electrical Protection of Communication Facilities);
-          NESC Rule 230 (bonding and grounding of communication conductors); 29 CFR 1910.269(a)(1)
-          scope (applies to telecom work on joint-use poles with energized supply conductors).
-        </p>
       </section>
+
+      <ReferencesBlock
+        items={[
+          { citation: '29 CFR 1910.269(l)(2) and Appendix B', note: 'The MAD formula for a qualified worker at a given system voltage; use the OSHA MAD Calculator to apply it.' },
+          { citation: '29 CFR 1910.269(a)(1)', note: 'Scope — applies to telecom work on joint-use poles with energized supply conductors.' },
+          { citation: 'NESC Rule 230', note: 'Bonding and grounding of communication conductors, including messenger bonding at parallel-exposure spans.' },
+          { citation: 'RUS Bulletin 1751F-810', note: 'Electrical Protection of Communication Facilities — messenger bonding/grounding at splice points.' },
+        ]}
+      />
 
       {/* ── WORKED EXAMPLE ───────────────────────────────────────────────── */}
       <WorkedExample
@@ -421,7 +425,7 @@ export default function T18L07_WorkingNearEnergizedConductors() {
                 'The OSHA Minimum Approach Distance (MAD) for a specific energized conductor is determined by:',
               choices: [
                 'A fixed table based on voltage ranges (e.g., "1–15 kV = 2 ft 2 in")',
-                'The Appendix B formula in 29 CFR 1910.269(l)(2), applied using the OSHA MAD Calculator for the specific system voltage',
+                'A voltage-specific formula applied using the OSHA MAD Calculator for the exact system voltage at the job site',
                 'The NESC clearance rules for the applicable loading district',
                 'The utility\'s internal safety policy, which supersedes OSHA rules',
               ],

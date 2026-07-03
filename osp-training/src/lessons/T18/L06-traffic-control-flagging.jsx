@@ -3,6 +3,7 @@
 
 import React from 'react';
 import LessonLayout from '../../components/LessonLayout.jsx';
+import ReferencesBlock from '../../components/ReferencesBlock.jsx';
 import BranchingScenario from '../../components/primitives/BranchingScenario.jsx';
 import Quiz from '../../components/primitives/Quiz.jsx';
 import GatedAssessment from '../../components/primitives/GatedAssessment.jsx';
@@ -205,10 +206,10 @@ export default function T18L06_TrafficControlFlagging() {
         <h2>The Flagger's Role — What MUTCD Chapter 6E Requires</h2>
 
         <div className="border-l-4 border-blue-400/30 bg-blue-400/5 p-3 my-3 text-sm">
-          <p className="font-semibold text-blue-300 mb-1">Refresher from T18</p>
+          <p className="font-semibold text-blue-300 mb-1">Refresher</p>
           <ul className="text-slate-300/90 space-y-1 list-disc pl-5">
-            <li><strong>Hazard recognition:</strong> (from L01) identifying dangers before they cause harm</li>
-            <li><strong>Hi-vis vest:</strong> (from L05) bright orange or yellow safety garment that makes you visible to drivers in poor light or from distance</li>
+            <li><strong>Hazard recognition:</strong> identifying dangers before they cause harm</li>
+            <li><strong>Hi-vis vest:</strong> bright orange or yellow safety garment that makes you visible to drivers in poor light or from distance</li>
           </ul>
         </div>
 
@@ -283,7 +284,6 @@ export default function T18L06_TrafficControlFlagging() {
             </tbody>
           </table>
           <p className="text-xs text-slate-400 mt-1">
-            Source: MUTCD 11th Edition (2023), Table 6C-1 (mutcd.fhwa.dot.gov — free public PDF).
             Exact values vary by road type and state amendments; always check the applicable AHJ.
           </p>
         </div>
@@ -327,11 +327,17 @@ export default function T18L06_TrafficControlFlagging() {
           <li>Is there a sight-distance problem (curve, hill) that prevents drivers from seeing the work zone early enough?</li>
           <li>Are nighttime conditions involved? If yes, upgrade all devices and hi-vis class.</li>
         </ul>
-        <p className="mt-2 text-sm text-slate-300/70">
-          Source: MUTCD 11th Edition (2023), Part 6, Chapter 6G — Short-Duration Work
-          (mutcd.fhwa.dot.gov — free public PDF).
-        </p>
       </section>
+
+      <ReferencesBlock
+        items={[
+          { citation: 'MUTCD 11th Edition (2023), Part 6', note: 'Temporary Traffic Control (TTC) — the governing chapter for all work zone setups on public roads.' },
+          { citation: 'MUTCD Table 6C-1', note: 'Advance warning sign spacing by road type and posted speed.' },
+          { citation: 'MUTCD Chapter 6E', note: 'Flagger requirements — STOP/SLOW paddle, certification, and uniform.' },
+          { citation: 'MUTCD Chapter 6B', note: 'General requirements — TTC responsibility and device removal sequence.' },
+          { citation: 'MUTCD Chapter 6G', note: 'Short-duration work provisions — simplified but still-compliant device arrangements for jobs under about one hour.' },
+        ]}
+      />
 
       {/* ── LABELED LIST — work zone elements with MUTCD requirements ────── */}
       <div className="lesson-callout">

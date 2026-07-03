@@ -3,6 +3,7 @@
 
 import React from 'react';
 import LessonLayout from '../../components/LessonLayout.jsx';
+import ReferencesBlock from '../../components/ReferencesBlock.jsx';
 import Sortable from '../../components/primitives/Sortable.jsx';
 import Quiz from '../../components/primitives/Quiz.jsx';
 import GatedAssessment from '../../components/primitives/GatedAssessment.jsx';
@@ -176,10 +177,10 @@ export default function T18L05_PPEHandsHeadEyesFeet() {
         <h2>What Each PPE Type Actually Protects Against</h2>
 
         <div className="border-l-4 border-blue-400/30 bg-blue-400/5 p-3 my-3 text-sm">
-          <p className="font-semibold text-blue-300 mb-1">Refresher from T18</p>
+          <p className="font-semibold text-blue-300 mb-1">Refresher</p>
           <ul className="text-slate-300/90 space-y-1 list-disc pl-5">
-            <li><strong>Hierarchy of controls:</strong> (from L01) the order of hazard management: elimination first, PPE last</li>
-            <li><strong>Fall protection harness:</strong> (from L04) body-wear equipment that catches a falling worker when a lanyard is attached</li>
+            <li><strong>Hierarchy of controls:</strong> the order of hazard management: elimination first, PPE last</li>
+            <li><strong>Fall protection harness:</strong> body-wear equipment that catches a falling worker when a lanyard is attached</li>
           </ul>
         </div>
 
@@ -243,7 +244,6 @@ export default function T18L05_PPEHandsHeadEyesFeet() {
               </tr>
             </tbody>
           </table>
-          <p className="text-xs text-slate-400 mt-1">Source: 29 CFR 1910.137 + OSHA eTool (osha.gov/etools/electric-power).</p>
         </div>
 
         <div className="mt-4 p-4 border border-amber-400/30 bg-amber-400/5 rounded-lg text-sm">
@@ -287,12 +287,6 @@ export default function T18L05_PPEHandsHeadEyesFeet() {
             and hot-environment work where venting matters more than electrical protection.
           </li>
         </ul>
-        <p className="mt-2 text-sm text-slate-300/70">
-          Source: ANSI/ISEA Z89.1-2014 (R2019) — paywalled; OSHA SHIB (Safety and Health
-          Information Bulletin) confirms Class E = 20,000V, Class G = 2,200V. 29 CFR
-          1910.268(b) PPE table references ANSI Z89.1 requirements for telecom work.
-        </p>
-
         <h3 className="mt-5 font-semibold">EYES — ANSI Z87.1 Safety Glasses</h3>
         <p className="mt-2">
           Safety eyewear rated under ANSI Z87.1 is required for tasks with eye hazard potential:
@@ -312,11 +306,6 @@ export default function T18L05_PPEHandsHeadEyesFeet() {
           incidental contact with energized surfaces. EH-rated boots are required on OSP
           aerial line work and grounding work near energized equipment.
         </p>
-        <p className="mt-2 text-sm text-slate-300/70">
-          Source: 29 CFR 1910.136 — Foot protection (ecfr.gov); ASTM F2413 referenced by
-          OSHA.gov for EH-rated footwear requirements.
-        </p>
-
         <h3 className="mt-5 font-semibold">HI-VIS — ANSI/ISEA 107 Classes</h3>
         <p className="mt-2">
           Any worker in or adjacent to a roadway must wear high-visibility safety apparel
@@ -327,10 +316,6 @@ export default function T18L05_PPEHandsHeadEyesFeet() {
           <li><strong>Class 2:</strong> Minimum for daytime roadway work; also meets MUTCD Part 6 requirements for workers in temporary traffic control zones. This is the floor for any OSP job on a public road.</li>
           <li><strong>Class 3:</strong> Required for nighttime roadway work, high-speed roadways (posted speed &gt; 50 mph), or poor-visibility conditions. Includes both vest and pants/sleeves in some configurations.</li>
         </ul>
-        <p className="mt-2 text-sm text-slate-300/70">
-          Source: ANSI/ISEA 107 — paywalled; confirmed via MUTCD 11th Edition
-          (2023) Part 6 and OSHA 29 CFR 1910.268(b) PPE table references.
-        </p>
       </section>
 
       {/* ── ADVANCED ────────────────────────────────────────────────────── */}
@@ -367,11 +352,19 @@ export default function T18L05_PPEHandsHeadEyesFeet() {
             again.
           </li>
         </ul>
-        <p className="mt-2 text-sm text-slate-300/70">
-          Source: 29 CFR 1910.132 (general PPE); ASTM D120 (rubber insulating gloves inspection);
-          29 CFR 1910.140 (personal fall protection inspection requirements).
-        </p>
       </section>
+
+      <ReferencesBlock
+        items={[
+          { citation: '29 CFR 1910.137', note: 'Electrical protective equipment — rubber insulating glove class ratings and re-test intervals (with ASTM D120).' },
+          { citation: '29 CFR 1910.132', note: 'General PPE standard — employer hazard assessment and PPE provided at no cost to the employee.' },
+          { citation: 'ANSI/ISEA Z89.1', note: 'Hard hat types and classes (E/G/C) — electrical and impact ratings.' },
+          { citation: 'ASTM F2412 / F2413', note: 'Foot protection test method and performance spec — EH (electrical hazard) rating.' },
+          { citation: 'ANSI/ISEA 107 [confirm edition]', note: 'High-visibility apparel classes 1–3 for roadway work; also referenced by MUTCD Part 6.' },
+          { citation: 'ASTM D120', note: 'Rubber insulating glove specification and in-service inspection/re-test requirements.' },
+          { citation: '29 CFR 1910.140', note: 'Personal fall protection systems — inspection requirements.' },
+        ]}
+      />
 
       {/* ── LABELED LIST — PPE by body zone ──────────────────────────────── */}
       <div className="lesson-callout">
