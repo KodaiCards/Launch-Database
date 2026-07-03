@@ -42,8 +42,15 @@ button{font-family:inherit;cursor:pointer;border:none;background:none;color:inhe
   border-radius:6px;border:1px solid var(--gray-border);background:transparent;color:var(--text-secondary)}
 .btn-icon:hover{background:var(--surface-1)}
 
-.page-body{padding:20px 24px;max-width:760px;margin:0 auto}
+.page-body{padding:20px 24px;max-width:1120px;margin:0 auto}
 .page-title{font-size:20px;font-weight:700;margin-bottom:20px}
+
+/* Grouped multi-column layout: use the horizontal space instead of a thin
+   vertical column (PRODUCT_BAR §2.1). Quick links run full-width; the two
+   compact cards (Appearance, System info) sit side by side below. */
+.settings-two{display:grid;grid-template-columns:1fr 1fr;gap:18px;align-items:start}
+.settings-two .section{margin-bottom:0}
+@media(max-width:720px){.settings-two{grid-template-columns:1fr}}
 
 .section{background:var(--white);border:1px solid var(--gray-border);border-radius:10px;
   overflow:hidden;margin-bottom:18px}
@@ -95,18 +102,6 @@ button{font-family:inherit;cursor:pointer;border:none;background:none;color:inhe
 <div class="page-body" role="main">
   <h1 class="page-title">Settings &amp; System Info</h1>
 
-  <!-- Theme -->
-  <div class="section">
-    <div class="section-header"><i class="fa-solid fa-palette"></i> Appearance</div>
-    <div class="theme-row">
-      <span style="color:var(--text-muted)">Color theme</span>
-      <div class="theme-toggle">
-        <button class="theme-btn" id="theme-light" onclick="setTheme('light')">Light</button>
-        <button class="theme-btn" id="theme-dark"  onclick="setTheme('dark')">Dark</button>
-      </div>
-    </div>
-  </div>
-
   <!-- Quick links -->
   <div class="section">
     <div class="section-header"><i class="fa-solid fa-link"></i> Quick links</div>
@@ -126,16 +121,31 @@ button{font-family:inherit;cursor:pointer;border:none;background:none;color:inhe
     </div>
   </div>
 
-  <!-- System info -->
-  <div class="section" id="sysinfo-section">
-    <div class="section-header"><i class="fa-solid fa-server"></i> System info</div>
-    <div class="kv"><span class="kv-key">App</span><span class="kv-val" id="si-app"><span class="skeleton" style="width:140px"></span></span></div>
-    <div class="kv"><span class="kv-key">Version</span><span class="kv-val mono" id="si-version"><span class="skeleton" style="width:60px"></span></span></div>
-    <div class="kv"><span class="kv-key">Node.js</span><span class="kv-val mono" id="si-node"><span class="skeleton" style="width:60px"></span></span></div>
-    <div class="kv"><span class="kv-key">Environment</span><span class="kv-val" id="si-env"><span class="skeleton" style="width:90px"></span></span></div>
-    <div class="kv"><span class="kv-key">Portal mode</span><span class="kv-val" id="si-portal"><span class="skeleton" style="width:80px"></span></span></div>
-    <div class="kv"><span class="kv-key">Uptime</span><span class="kv-val" id="si-uptime"><span class="skeleton" style="width:80px"></span></span></div>
-    <div class="kv"><span class="kv-key">Database</span><span class="kv-val" id="si-db"><span class="skeleton" style="width:120px"></span></span></div>
+  <!-- Compact cards side by side: theme control + system status -->
+  <div class="settings-two">
+    <!-- Theme -->
+    <div class="section">
+      <div class="section-header"><i class="fa-solid fa-palette"></i> Appearance</div>
+      <div class="theme-row">
+        <span style="color:var(--text-muted)">Color theme</span>
+        <div class="theme-toggle">
+          <button class="theme-btn" id="theme-light" onclick="setTheme('light')">Light</button>
+          <button class="theme-btn" id="theme-dark"  onclick="setTheme('dark')">Dark</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- System info -->
+    <div class="section" id="sysinfo-section">
+      <div class="section-header"><i class="fa-solid fa-server"></i> System info</div>
+      <div class="kv"><span class="kv-key">App</span><span class="kv-val" id="si-app"><span class="skeleton" style="width:140px"></span></span></div>
+      <div class="kv"><span class="kv-key">Version</span><span class="kv-val mono" id="si-version"><span class="skeleton" style="width:60px"></span></span></div>
+      <div class="kv"><span class="kv-key">Node.js</span><span class="kv-val mono" id="si-node"><span class="skeleton" style="width:60px"></span></span></div>
+      <div class="kv"><span class="kv-key">Environment</span><span class="kv-val" id="si-env"><span class="skeleton" style="width:90px"></span></span></div>
+      <div class="kv"><span class="kv-key">Portal mode</span><span class="kv-val" id="si-portal"><span class="skeleton" style="width:80px"></span></span></div>
+      <div class="kv"><span class="kv-key">Uptime</span><span class="kv-val" id="si-uptime"><span class="skeleton" style="width:80px"></span></span></div>
+      <div class="kv"><span class="kv-key">Database</span><span class="kv-val" id="si-db"><span class="skeleton" style="width:120px"></span></span></div>
+    </div>
   </div>
 </div>
 

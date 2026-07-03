@@ -72,7 +72,7 @@ export default function InteractiveQuiz({ title, questions, onComplete }) {
                        'Review the module before retaking. Pay attention to where field practice diverges from the spec.'}
         </p>
         <button className="btn-primary mt-4" onClick={() => { setIdx(0); setAnswers({}); setDone(false); }}>
-          Retry
+          Try again
         </button>
       </div>
     );
