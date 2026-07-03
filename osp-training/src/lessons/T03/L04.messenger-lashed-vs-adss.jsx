@@ -8,6 +8,7 @@ import WorkedExample from '../../components/primitives/WorkedExample.jsx';
 import Quiz from '../../components/primitives/Quiz.jsx';
 import GatedAssessment from '../../components/primitives/GatedAssessment.jsx';
 import Flashcard from '../../components/Flashcard.jsx';
+import ReferencesBlock from '../../components/ReferencesBlock.jsx';
 
 export const meta = {
   id: 'T03.L04',
@@ -164,7 +165,6 @@ export default function T03L04_MessengerLashedVsADSS() {
           ground at every dead-end pole and at intervals along the span per NESC requirements.
           This adds labor and material cost — every pole needs a ground rod, bonding clamp,
           and ground wire. On a 100-pole aerial section, that's 100 bonding assemblies.
-          (Source: RUS Bulletin 1751F-630 construction methods; NESC)
         </p>
 
         <h3 className="mt-5 font-semibold">ADSS cable — no metal, no bonding</h3>
@@ -177,9 +177,8 @@ export default function T03L04_MessengerLashedVsADSS() {
         </p>
         <p className="mt-2">
           <strong>No metal = no bonding required.</strong> There is literally no metal
-          in an ADSS cable — no steel, no aluminum, no copper. "No metal in the cable,
-          therefore no bonding and grounding is required." (Source: CommScope ADSS vs.
-          Lashed Fiber blog, commscope.com)
+          in an ADSS cable — no steel, no aluminum, no copper. No metal means no bonding
+          or grounding is required at any pole.
         </p>
         <p className="mt-2">
           This is a major cost advantage on joint-use aerial plant where utility poles
@@ -188,11 +187,10 @@ export default function T03L04_MessengerLashedVsADSS() {
           assemblies can save several thousand dollars in a single aerial section.
         </p>
         <p className="mt-2">
-          <strong>ADSS fiber count limit:</strong> ADSS is "usually a loose tube design
-          that have fiber counts up to 432F." (Source: CommScope ADSS blog)
-          For higher fiber counts, lashed ribbon cable wins because the ribbon packing
-          density exceeds what ADSS strength-member geometry can accommodate at reasonable
-          cable OD.
+          <strong>ADSS fiber count limit:</strong> ADSS is usually a loose-tube design
+          with fiber counts up to about 432F. For higher fiber counts, lashed ribbon cable
+          wins because the ribbon packing density exceeds what ADSS strength-member
+          geometry can accommodate at reasonable cable OD.
         </p>
 
         <h3 className="mt-5 font-semibold">EDS — Everyday Stress and vibration</h3>
@@ -210,14 +208,12 @@ export default function T03L04_MessengerLashedVsADSS() {
           <li>
             <strong>Below 16% RTS EDS:</strong> The cable is loose enough that aeolian
             vibration (wind-induced oscillation, like a guitar string) is self-damped.
-            Vibration dampers typically not required. (Source: gl-fibercable.com ADSS
-            technical parameters)
+            Vibration dampers typically not required.
           </li>
           <li>
             <strong>16–25% RTS EDS:</strong> Vibration amplitude is higher. Vibration
             dampers (Stockbridge-type) should be installed near the clamp points to
             absorb the oscillation energy and prevent fatigue cracking at the clamp.
-            (Source: gl-fibercable.com; gl-fiber.com)
           </li>
           <li>
             <strong>Above 25% RTS EDS:</strong> Not a recommended design zone. The cable
@@ -285,12 +281,12 @@ export default function T03L04_MessengerLashedVsADSS() {
           {
             attribute: 'Bonding/grounding at poles',
             left: 'Required at every dead-end and at NESC-specified intervals — labor + material cost',
-            right: 'None required — no metal in cable (CommScope ADSS documentation)',
+            right: 'None required — no metal in cable',
           },
           {
             attribute: 'Maximum fiber count',
             left: 'Essentially unlimited with ribbon cable — 1,728F+ possible',
-            right: 'Typically up to 432F; limited by strength-member geometry at higher counts (CommScope)',
+            right: 'Typically up to 432F; limited by strength-member geometry at higher counts',
           },
           {
             attribute: 'Installation approach',
@@ -322,11 +318,10 @@ export default function T03L04_MessengerLashedVsADSS() {
         <h3 className="mt-4 font-semibold">ADSS span capability — up to 700 m</h3>
         <p>
           ADSS cables can span up to approximately 700 m between support structures for
-          some designs (e.g., crossing wide rivers, transmission line corridors). (Source:
-          ADSS design literature — incabamerica.com ACES CATS paper: "lengths of up to
-          700 metres") This is far beyond typical distribution pole spans of
-          150–300 m. Long-span ADSS designs use fiberglass rods as strength members
-          (instead of aramid yarn) for higher tensile stiffness.
+          some designs (e.g., crossing wide rivers, transmission line corridors). This is
+          far beyond typical distribution pole spans of 150–300 m. Long-span ADSS designs
+          use fiberglass rods as strength members (instead of aramid yarn) for higher
+          tensile stiffness.
         </p>
         <p className="mt-2">
           For standard joint-use distribution spans of 100–300 m, aramid yarn ADSS is
@@ -344,8 +339,8 @@ export default function T03L04_MessengerLashedVsADSS() {
         </p>
         <p className="mt-2">
           The advantage: no separate messenger pre-installation step. You string one cable
-          and you're done. "Reduces time and costs to install, by as much as fifty percent."
-          (Source: outsideplantcabling.com + fibereast.com aerial installation guides)
+          and you're done — reducing install time and cost by as much as fifty percent
+          compared to pre-installing a separate messenger strand.
         </p>
         <p className="mt-2">
           The tradeoff: figure-8 cables have an integrated steel messenger, so they still
@@ -412,6 +407,14 @@ export default function T03L04_MessengerLashedVsADSS() {
           </p>
         </section>
       </section>
+
+      <ReferencesBlock
+        items={[
+          { citation: 'RUS Bulletin 1751F-630', note: 'RUS construction methods for aerial plant, including messenger bonding practice.' },
+          { citation: 'NESC', note: 'Sets bonding/grounding intervals and clearance requirements for aerial messenger and cable.' },
+          { citation: '7 CFR 1755.902', note: 'RUS minimum performance specification referenced for ADSS/dielectric cable on RUS-financed projects.' },
+        ]}
+      />
 
       {/* ── KEY TERMS FLASHCARDS ──────────────────────────────────────────── */}
       <Flashcard

@@ -7,6 +7,7 @@ import Flashcard from '../../components/Flashcard.jsx';
 import Quiz from '../../components/primitives/Quiz.jsx';
 import GatedAssessment from '../../components/primitives/GatedAssessment.jsx';
 import WorkedExample from '../../components/primitives/WorkedExample.jsx';
+import ReferencesBlock from '../../components/ReferencesBlock.jsx';
 
 export const meta = {
   id: 'T03.L11',
@@ -267,7 +268,8 @@ export default function T03L11_DatasheetReading() {
           radius violations happen most often. A pigtail looped too tightly around an anchor
           post inside the splice tray may look fine on day one and show up as 0.3 dB of
           unexpected loss at the next OTDR inspection. Route pigtails in gentle coils, always
-          greater than the long-term bend radius. See T03.L04 for the ADSS installation context.
+          greater than the long-term bend radius. See the Messenger Cable — Lashed vs. ADSS
+          lesson for the ADSS installation context.
         </p>
       </section>
 
@@ -346,6 +348,14 @@ export default function T03L11_DatasheetReading() {
           </p>
         </section>
       </section>
+
+      <ReferencesBlock
+        items={[
+          { citation: 'ICEA S-87-640', note: 'Construction standard referenced in the compliance-declarations section of a cable datasheet; sets the standard operating temperature range and tensile-rating tiers.' },
+          { citation: '7 CFR 1755.902', note: 'RUS minimum performance specification — the MFD tolerance and color-coding requirements a datasheet must meet on RUS-financed projects.' },
+          { citation: 'FOA Reference Guide', note: 'Industry source for the 0.02–0.05 dB/km aging-factor guidance used to convert datasheet attenuation into planning attenuation.' },
+        ]}
+      />
 
       {/* FLASHCARDS */}
       <Flashcard

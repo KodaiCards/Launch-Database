@@ -8,6 +8,7 @@ import TimelineSequence from '../../components/primitives/TimelineSequence.jsx';
 import Quiz from '../../components/primitives/Quiz.jsx';
 import GatedAssessment from '../../components/primitives/GatedAssessment.jsx';
 import Flashcard from '../../components/Flashcard.jsx';
+import ReferencesBlock from '../../components/ReferencesBlock.jsx';
 
 export const meta = {
   id: 'T03.L08',
@@ -82,8 +83,9 @@ export default function T03L08_DropCableSelection() {
         <p className="mt-2">
           This lesson focuses on sizing and specifying the cable at all three tiers —
           with emphasis on the drop segment, since that's where G.657 bend-insensitive
-          fiber (T03.L05) and the right aerial type (T03.L04 figure-8 vs. ADSS) have
-          the biggest impact on installation speed and long-term reliability.
+          fiber (from the G.652 vs. G.657 lesson) and the right aerial type (figure-8
+          vs. ADSS, from the Messenger Cable lesson) have the biggest impact on
+          installation speed and long-term reliability.
         </p>
 
         <h3 className="mt-5 font-semibold">Acronyms in this lesson</h3>
@@ -134,7 +136,7 @@ export default function T03L08_DropCableSelection() {
           Typical specs:
         </p>
         <ul className="list-disc pl-5 space-y-1 mt-2 text-sm">
-          <li><strong>Fiber count:</strong> 96F–864F, or higher in dense urban builds. Ribbon construction is common at 432F+ for splice speed. (Source: FOA FTTH design guide; splice.me FTTH design article)</li>
+          <li><strong>Fiber count:</strong> 96F–864F, or higher in dense urban builds. Ribbon construction is common at 432F+ for splice speed.</li>
           <li><strong>Fiber type:</strong> G.652.D (OS2). Feeder runs are generally straight enough that bend-insensitive fiber isn't needed.</li>
           <li><strong>Construction:</strong> Typically aerial lashed ribbon or direct-burial loose-tube depending on route type.</li>
           <li><strong>Dark fiber:</strong> Feeder cables are almost always sized with significant dark-fiber reserve — it's far cheaper to pull a 432F feeder once than a 144F feeder and return in 5 years to pull another.</li>
@@ -150,7 +152,7 @@ export default function T03L08_DropCableSelection() {
           Typical specs:
         </p>
         <ul className="list-disc pl-5 space-y-1 mt-2 text-sm">
-          <li><strong>Fiber count:</strong> 24F–96F (Source: FOA FTTH design guide, thefoa.org). Sized for the number of subscribers the distribution segment serves, plus growth margin.</li>
+          <li><strong>Fiber count:</strong> 24F–96F. Sized for the number of subscribers the distribution segment serves, plus growth margin.</li>
           <li><strong>Fiber type:</strong> G.652.D or G.657.A1. At the distribution level, bends at splice closures or pedestals make G.657.A1 a common choice for its splice-compatibility and moderate bend tolerance.</li>
           <li><strong>Construction:</strong> Aerial loose-tube (lashed or ADSS) or direct-burial depending on route.</li>
         </ul>
@@ -165,20 +167,20 @@ export default function T03L08_DropCableSelection() {
         </p>
         <ul className="list-disc pl-5 space-y-1 mt-2 text-sm">
           <li>
-            <strong>Fiber count:</strong> 2–12F for residential premises. (Source: FOA FTTH
-            design guide) Most residential homes need 1–2 active fibers plus
-            1–2 dark. 2F or 4F drops are most common in FTTH residential builds.
+            <strong>Fiber count:</strong> 2–12F for residential premises. Most residential
+            homes need 1–2 active fibers plus 1–2 dark. 2F or 4F drops are most common in
+            FTTH residential builds.
           </li>
           <li>
             <strong>Fiber type:</strong> G.657.A1 or G.657.A2, depending on the bend
-            environment at the premises entry. Review T03.L05 — a 7.5 mm bend at a wall
-            entry requires A2.
+            environment at the premises entry. Review the G.652 vs. G.657 lesson — a
+            7.5 mm bend at a wall entry requires A2.
           </li>
           <li>
             <strong>Aerial drop type:</strong> Figure-8 (integrated messenger) for faster
-            installation on short spans (50–150 ft from pole to house). ADSS for dielectric
-            requirements or longer spans. (Source: outsideplantcabling.com; fibereast.com —
-            figure-8 "reduces time and costs to install, by as much as fifty percent")
+            installation on short spans (50–150 ft from pole to house) — reducing install
+            time and cost by as much as fifty percent versus pre-installing a separate
+            messenger. ADSS for dielectric requirements or longer spans.
           </li>
           <li>
             <strong>Underground drop:</strong> Small-diameter HDPE-jacketed direct-burial
@@ -360,12 +362,13 @@ export default function T03L08_DropCableSelection() {
             load — it lasts only as long as the pull takes. Governed by Telcordia{' '}
             <strong>GR-20 (Generic Requirements for Optical Fiber and Optical Fiber Cable)</strong>,
             which specifies minimum tensile rating requirements for OSP fiber cable products.
-            ICEA S-87-640 (T03.L01) is the complementary construction standard; GR-20 sets the
-            performance floor the cable must meet. Confirm the GR-20 issue with your cable supplier's
-            datasheet — issue numbers update periodically.
+            ICEA S-87-640 (introduced in the Loose-Tube vs. Tight-Buffer vs. Ribbon lesson)
+            is the complementary construction standard; GR-20 sets the performance floor the
+            cable must meet. [confirm GR-20 issue with your cable supplier's
+            datasheet — issue numbers update periodically]
           </li>
           <li>
-            <strong>Long-term EDS (Everyday Stress, from T03.L04):</strong> The sustained
+            <strong>Long-term EDS (Everyday Stress, introduced in the Messenger Cable lesson):</strong> The sustained
             tension the cable must tolerate indefinitely when installed on a span. EDS is
             typically 16–25% of RTS — a much lower value than the installation tension limit.
           </li>
@@ -435,6 +438,15 @@ export default function T03L08_DropCableSelection() {
           </p>
         </section>
       </section>
+
+      <ReferencesBlock
+        items={[
+          { citation: 'FOA FTTH Design Guide', note: 'Industry tier-by-tier fiber-count guidance (feeder/distribution/drop) referenced throughout this lesson.' },
+          { citation: 'RUS Bulletin 1751F-630', note: 'RUS aerial construction methods for FTTH builds.' },
+          { citation: '7 CFR 1755.902', note: 'RUS minimum cable performance specification for RUS-financed FTTH builds.' },
+          { citation: 'Telcordia GR-20', note: 'Generic requirements setting minimum installation (short-term) tensile rating for OSP fiber cable products.' },
+        ]}
+      />
 
       {/* ── KEY TERMS FLASHCARDS ──────────────────────────────────────────── */}
       <Flashcard

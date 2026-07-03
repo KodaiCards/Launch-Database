@@ -8,6 +8,7 @@ import SliderExploration from '../../components/primitives/SliderExploration.jsx
 import Quiz from '../../components/primitives/Quiz.jsx';
 import GatedAssessment from '../../components/primitives/GatedAssessment.jsx';
 import Flashcard from '../../components/Flashcard.jsx';
+import ReferencesBlock from '../../components/ReferencesBlock.jsx';
 
 export const meta = {
   id: 'T03.L09',
@@ -228,10 +229,6 @@ export default function T03L09_ADSSSpanWindIceLoading() {
             </tbody>
           </table>
         </div>
-        <p className="mt-2 text-sm text-slate-300/70">
-          Source: NESC C2-2023 Table 250-1 via RUS Bulletin 1724E-150 (public) +
-          IAEI Magazine 2002 NESC article.
-        </p>
 
         <h3 className="mt-5 font-semibold">Ice load formula — what that ice weighs</h3>
         <p>
@@ -407,9 +404,9 @@ export default function T03L09_ADSSSpanWindIceLoading() {
           the flat 4 or 9 lb/ft² from the district table.
         </p>
         <p className="mt-2">
-          "If any part of a pole or the conductors attached to it is 60 feet or more above
-          the ground, then extreme wind loading has to be considered." (Source: IAEI 2007
-          NESC article)
+          The rule is a simple height trigger: if any part of a pole or the conductors
+          attached to it is 60 feet or more above the ground, extreme wind loading has to
+          be considered.
         </p>
         <p className="mt-2">
           For standard FTTH distribution poles (35–55 ft total height), Extreme Wind
@@ -498,6 +495,14 @@ export default function T03L09_ADSSSpanWindIceLoading() {
           </p>
         </section>
       </section>
+
+      <ReferencesBlock
+        items={[
+          { citation: 'NESC (ANSI C2) Table 250-1 / Rule 250B', note: 'Defines the Heavy/Medium/Light loading district ice, wind, and temperature design values.' },
+          { citation: 'NESC Rule 250C', note: 'Extreme Wind loading requirement for structures/conductors 60 ft or more above ground.' },
+          { citation: 'RUS Bulletin 1724E-150', note: 'RUS engineering bulletin reproducing the NESC loading-district table values.' },
+        ]}
+      />
 
       {/* ── KEY TERMS FLASHCARDS ──────────────────────────────────────────── */}
       <Flashcard

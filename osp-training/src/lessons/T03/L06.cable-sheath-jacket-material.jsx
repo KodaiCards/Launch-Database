@@ -7,6 +7,7 @@ import BranchingScenario from '../../components/primitives/BranchingScenario.jsx
 import Quiz from '../../components/primitives/Quiz.jsx';
 import GatedAssessment from '../../components/primitives/GatedAssessment.jsx';
 import Flashcard from '../../components/Flashcard.jsx';
+import ReferencesBlock from '../../components/ReferencesBlock.jsx';
 
 export const meta = {
   id: 'T03.L06',
@@ -139,26 +140,23 @@ export default function T03L06_CableSheathJacketMaterial() {
             <strong>UV resistance via carbon black:</strong> 2–3% carbon black is added
             to the HDPE compound specifically to absorb UV radiation. Without it, the HDPE
             would oxidize and become brittle within a few years of sun exposure. This is
-            why all outdoor OSP cables are black. (Source: bwnfiber.com HDPE vs. LDPE
-            comparison; shobeirshimi.com: "carbon black (2–3%) is added to both MDPE and
-            HDPE for UV stabilization")
+            why all outdoor OSP cables are black.
           </li>
           <li>
             <strong>Crush resistance:</strong> HDPE's semi-crystalline structure gives it
             good compressive strength, which matters for direct-burial applications where
-            soil loads act on the cable jacket. (Source: ICEA S-87-640; Corning SMF-28
-            Ultra datasheet)
+            soil loads act on the cable jacket.
           </li>
           <li>
             <strong>Operating temperature:</strong> Standard OSP HDPE jackets are rated
-            −40°C to +70°C. (Source: ICEA S-87-640; Corning SMF-28 Ultra datasheet —
-            confirmed as −40°C to +70°C via vendor datasheets)
+            −40°C to +70°C.
           </li>
           <li>
             <strong>Not fire-rated for indoor use:</strong> HDPE can burn and produce
             significant smoke. It does not pass NEC Article 770 fire tests (UL 910 or UL
             1666). Standard OSP HDPE cable is unlisted for indoor use beyond the 50-ft
-            exemption. (T03.L02 covered this in full.)
+            exemption. (The OSP vs. Riser vs. Indoor/Outdoor Rating lesson covered this
+            in full.)
           </li>
         </ul>
 
@@ -173,8 +171,7 @@ export default function T03L06_CableSheathJacketMaterial() {
         <p className="mt-2">
           LSZH is required where halogen-free mandates apply: hospitals, airports, train
           stations, public assembly buildings. In some European standards, LSZH is the
-          default for any indoor cable regardless of space type. (Source: cbcables.com LSZH
-          guide; comms-express.com LSZH article)
+          default for any indoor cable regardless of space type.
         </p>
         <p className="mt-2 text-sm text-amber-300/90 border-l-4 border-amber-400/30 pl-3">
           <strong>Important distinction:</strong> LSZH is a <em>material property</em>, not
@@ -207,9 +204,9 @@ export default function T03L06_CableSheathJacketMaterial() {
               gel cleanup is a significant fraction of total splice time.
             </p>
             <p className="text-sm text-slate-300/90 mt-1">
-              <strong>High-count tubes:</strong> "When working with buffer tubes that have
-              more than 12 fibers in the same tube, the gel acts as an adhesive by keeping
-              the fiber bundles grouped." (Source: stl.tech dry vs. gel comparison)
+              <strong>High-count tubes:</strong> In buffer tubes with more than 12 fibers,
+              the gel does double duty as a light adhesive, helping keep the fiber bundles
+              grouped together instead of tangling.
             </p>
           </div>
 
@@ -222,9 +219,9 @@ export default function T03L06_CableSheathJacketMaterial() {
               further migration. No liquid gel, no cleanup.
             </p>
             <p className="text-sm text-slate-300/90 mt-1">
-              <strong>Splice speed:</strong> "Accomplished in approximately one third the
-              time required for the same operation in a 'wet' tube cable." (Source:
-              remee.com gel-free loose-tube article)
+              <strong>Splice speed:</strong> Splice prep on dry-block tubes is typically
+              accomplished in about one-third the time required for the same operation on
+              a gel-filled tube.
             </p>
             <p className="text-sm text-slate-300/90 mt-1">
               <strong>The tradeoff:</strong> Dry-block cables can be slightly more
@@ -289,7 +286,7 @@ export default function T03L06_CableSheathJacketMaterial() {
           },
           'db-rodent': {
             id: 'db-rodent',
-            text: 'In rodent-active areas, add CST armor (from T03.L03). Final spec: HDPE-jacketed, CST-armored, direct-burial, gel or dry-block loose-tube. The HDPE outer jacket still provides UV protection on any above-grade portion; the CST handles rodent gnawing underground.',
+            text: 'In rodent-active areas, add CST armor (from the Armor and Jacket Selection lesson). Final spec: HDPE-jacketed, CST-armored, direct-burial, gel or dry-block loose-tube. The HDPE outer jacket still provides UV protection on any above-grade portion; the CST handles rodent gnawing underground.',
             choices: [{ label: 'Back to start', nextId: 'start' }],
           },
           hospital: {
@@ -346,6 +343,12 @@ export default function T03L06_CableSheathJacketMaterial() {
           </p>
         </section>
       </section>
+
+      <ReferencesBlock
+        items={[
+          { citation: 'ICEA S-87-640', note: 'Specifies flooding-compound viscosity/coverage and dry-block SAP tape swell requirements, plus HDPE jacket crush/temperature performance.' },
+        ]}
+      />
 
       {/* ── KEY TERMS FLASHCARDS ──────────────────────────────────────────── */}
       <Flashcard

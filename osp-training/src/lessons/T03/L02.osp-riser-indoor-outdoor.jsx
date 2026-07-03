@@ -8,6 +8,7 @@ import Sortable from '../../components/primitives/Sortable.jsx';
 import Quiz from '../../components/primitives/Quiz.jsx';
 import GatedAssessment from '../../components/primitives/GatedAssessment.jsx';
 import Flashcard from '../../components/Flashcard.jsx';
+import ReferencesBlock from '../../components/ReferencesBlock.jsx';
 
 export const meta = {
   id: 'T03.L02',
@@ -172,7 +173,7 @@ export default function T03L02_OSPRiserIndoorOutdoor() {
               pass the UL 1666 vertical flame propagation test — the cable must not carry
               flame upward more than a specified distance when a burner is applied at the
               bottom. Typically uses LSZH (Low Smoke Zero Halogen) or similar low-smoke
-              jacket compound. (Source: NEC Art. 770 — confirmed via public NEC commentary)
+              jacket compound.
             </p>
           </div>
           <div className="border border-amber-400/20 rounded-lg p-4 bg-amber-400/5">
@@ -182,14 +183,12 @@ export default function T03L02_OSPRiserIndoorOutdoor() {
               dropped ceilings or below raised floors that HVAC air circulates through.
               Must pass UL 910 / NFPA 262 test: both flame spread and smoke density are
               measured. Plenum jacket compounds are the most restrictive and most expensive.
-              (Source: NEC Art. 770 — confirmed via public NEC commentary; UL 910 test standard)
             </p>
             <p className="text-sm text-slate-300/90 mt-1">
               <strong>OFNP can substitute for OFNR</strong> — a higher-rated cable can
               always replace a lower-rated one. The substitution hierarchy: OFNP can go
               anywhere; OFNR can go in risers and general areas but not plenums; OFNG
-              goes only in limited unlisted locations. (Source: NEC Art. 770 substitution
-              hierarchy — confirmed via industry commentary)
+              goes only in limited unlisted locations.
             </p>
           </div>
         </div>
@@ -203,9 +202,7 @@ export default function T03L02_OSPRiserIndoorOutdoor() {
         </p>
         <p className="mt-2">
           This carbon-black loading is mandatory for any cable exposed to direct sunlight.
-          It's one reason OSP cables are black. (Source: bwnfiber.com HDPE vs. LDPE
-          comparison; shobeirshimi.com: "carbon black (2–3%) is added to both MDPE and
-          HDPE for UV stabilization")
+          It's one reason OSP cables are black.
         </p>
         <p className="mt-2">
           A dual-rated cable adds an indoor fire-rated jacket compound (LSZH or plenum
@@ -358,6 +355,14 @@ export default function T03L02_OSPRiserIndoorOutdoor() {
         ]}
         correctOrder={['ofng', 'ofnr', 'ofnp']}
         explanation="From lowest to highest: OFNG (no indoor rating, ≤50 ft unlisted use) → OFNR (passes UL 1666 riser test, used in vertical shafts) → OFNP (passes UL 910 plenum test, required in air-handling spaces). A higher-rated cable can always substitute downward: OFNP can go anywhere OFNR or OFNG is required. (NEC Art. 770 substitution hierarchy)"
+      />
+
+      <ReferencesBlock
+        items={[
+          { citation: 'NEC (NFPA 70) Article 770 §770.48(A)', note: 'The 50-ft unlisted-cable building-entry allowance and the OFNR/OFNP fire-rating requirements.' },
+          { citation: 'UL 1666', note: 'Vertical flame propagation test that OFNR (riser-rated) cable must pass.' },
+          { citation: 'UL 910 / NFPA 262', note: 'Steiner tunnel flame-and-smoke test that OFNP (plenum-rated) cable must pass.' },
+        ]}
       />
 
       {/* ── KEY TERMS FLASHCARDS ──────────────────────────────────────────── */}

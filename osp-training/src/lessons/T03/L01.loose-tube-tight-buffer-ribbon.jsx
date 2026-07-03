@@ -7,6 +7,7 @@ import SideBySide from '../../components/primitives/SideBySide.jsx';
 import Quiz from '../../components/primitives/Quiz.jsx';
 import GatedAssessment from '../../components/primitives/GatedAssessment.jsx';
 import Flashcard from '../../components/Flashcard.jsx';
+import ReferencesBlock from '../../components/ReferencesBlock.jsx';
 
 export const meta = {
   id: 'T03.L01',
@@ -137,7 +138,7 @@ export default function T03L01_LooseTubeTightBufferRibbon() {
             <strong>Loose-tube</strong> — fibers float in an oversize tube. The tube is bigger
             than the fiber bundle on purpose. That slack is what keeps the fibers safe when
             the cable contracts in cold weather or stretches during installation. This is the
-            standard for OSP trunks. (Source: ICEA S-87-640; FOA Reference Guide to OSP design)
+            standard for OSP trunks.
           </li>
           <li>
             <strong>Tight-buffer</strong> — a thick plastic coating is pressed directly against
@@ -151,7 +152,7 @@ export default function T03L01_LooseTubeTightBufferRibbon() {
             side-by-side into a flat matrix, like a section of window blinds. The big payoff:
             a splicer can fuse all 12 fibers at once using a mass-fusion splicer. When you're
             building a high-count feeder and need to splice 144 or 288 fibers at a closure,
-            ribbon cable cuts splicing time dramatically. (Source: ICEA S-87-640; TIA-598-D)
+            ribbon cable cuts splicing time dramatically.
           </li>
         </ul>
 
@@ -162,8 +163,9 @@ export default function T03L01_LooseTubeTightBufferRibbon() {
           between fibers intermittent — think of a perforated sheet versus a solid sheet.
           In the tube, it rolls into a cylinder for easy handling. On the splice table, it
           unrolls flat for mass-fusion splicing. You get the density and speed of ribbon
-          with the handling of a loose fiber bundle. (Source: OFS Optics rollable ribbon
-          documentation — states "doubling fiber density" compared to loose individual fibers)
+          with the handling of a loose fiber bundle — manufacturer documentation puts rollable
+          ribbon at roughly double the fiber density of loose individual fibers in the same
+          tube space.
         </p>
       </section>
 
@@ -173,18 +175,18 @@ export default function T03L01_LooseTubeTightBufferRibbon() {
 
         <h5 className="mt-3 font-semibold">1. Loose-Tube</h5>
         <ul>
-          <li><strong>Buffer tube:</strong> The polymer buffer tube is intentionally larger in diameter than the fiber bundle inside it. That extra space — plus gel or dry-block water-blocking compound — lets fibers move freely as the cable expands, contracts, or bends. Standard for OSP trunk cables. (ICEA S-87-640)</li>
-          <li><strong>Fibers in gel/dry-block:</strong> Typically 2–12 fibers per loose tube, each with its 250 µm primary coating. In gel-filled designs, flooding compound fills the remaining space to block water migration. Dry-block cables substitute SAP (superabsorbent polymer) tape and yarns — faster to splice because there's no gel to clean. (7 CFR 1755.902; ICEA S-87-640)</li>
+          <li><strong>Buffer tube:</strong> The polymer buffer tube is intentionally larger in diameter than the fiber bundle inside it. That extra space — plus gel or dry-block water-blocking compound — lets fibers move freely as the cable expands, contracts, or bends. Standard for OSP trunk cables.</li>
+          <li><strong>Fibers in gel/dry-block:</strong> Typically 2–12 fibers per loose tube, each with its 250 µm primary coating. In gel-filled designs, flooding compound fills the remaining space to block water migration. Dry-block cables substitute SAP (superabsorbent polymer) tape and yarns — faster to splice because there's no gel to clean.</li>
         </ul>
 
         <h5 className="mt-3 font-semibold">2. Tight-Buffer</h5>
         <ul>
-          <li><strong>900 µm coating:</strong> A secondary plastic jacket is extruded directly onto the 250 µm primary coating, building the fiber up to 900 µm OD. Tough and easy to terminate individually. No slack — suited for indoor or short-run applications where temperature variation is controlled. (FOA Reference Guide; NEC Article 770)</li>
+          <li><strong>900 µm coating:</strong> A secondary plastic jacket is extruded directly onto the 250 µm primary coating, building the fiber up to 900 µm OD. Tough and easy to terminate individually. No slack — suited for indoor or short-run applications where temperature variation is controlled.</li>
         </ul>
 
         <h5 className="mt-3 font-semibold">3. Ribbon</h5>
         <ul>
-          <li><strong>Ribbon matrix:</strong> Fibers are bonded side-by-side into a flat matrix (typically 12 fibers per ribbon). A mass-fusion splicer clamps the entire ribbon and splices all 12 fibers simultaneously in one cycle, compared to 12 separate cycles for loose fibers. Efficiency gain is significant on high-count splices. (ICEA S-87-640; TIA-598-D)</li>
+          <li><strong>Ribbon matrix:</strong> Fibers are bonded side-by-side into a flat matrix (typically 12 fibers per ribbon). A mass-fusion splicer clamps the entire ribbon and splices all 12 fibers simultaneously in one cycle, compared to 12 separate cycles for loose fibers. Efficiency gain is significant on high-count splices.</li>
         </ul>
       </div>
 
@@ -205,8 +207,7 @@ export default function T03L01_LooseTubeTightBufferRibbon() {
           The loose-tube design breaks that coupling. The fiber floats free inside the tube.
           When the tube shrinks, the fiber just straightens out the tiny slack built into it
           — the fiber itself is never pulled. That's why <strong>loose-tube is the dominant
-          OSP trunk cable construction</strong> worldwide. (Source: FOA Reference Guide to
-          OSP design, thefoa.org)
+          OSP trunk cable construction</strong> worldwide.
         </p>
 
         <h3 className="mt-5 font-semibold">Fiber count per tube — RUS color coding</h3>
@@ -218,14 +219,17 @@ export default function T03L01_LooseTubeTightBufferRibbon() {
           1 Blue · 2 Orange · 3 Green · 4 Brown · 5 Slate · 6 White ·<br/>
           7 Red · 8 Black · 9 Yellow · 10 Violet · 11 Rose · 12 Aqua
         </div>
-        <p className="mt-2 text-sm text-slate-300/80">
-          Source: 7 CFR 1755.902 (eCFR) — "The cable shall be fully color coded so that each
-          fiber is distinguishable from every other fiber. A basic color scheme of twelve colors
-          shall be used."
+        <p className="mt-2">
+          This color coding isn't just tidy bookkeeping — it's a federal requirement on
+          RUS-financed projects: every fiber has to be individually distinguishable from
+          every other fiber in the cable, using this 12-color scheme. That requirement is
+          what lets a splicer at a closure, or an inspector checking the work months later,
+          match "fiber 7" on one end of a reel to "fiber 7" on the other without tracing the
+          whole strand by hand.
         </p>
         <p className="mt-2">
           For cables with more than 12 fibers per tube, fibers repeat the 12-color sequence
-          with a stripe or ring added (confirmed: "dot coding" or "dash coding" methods) to
+          with a stripe or ring added ("dot coding" or "dash coding" methods) to
           distinguish tube-2 from tube-1.
         </p>
 
@@ -294,7 +298,7 @@ export default function T03L01_LooseTubeTightBufferRibbon() {
           {
             attribute: 'Fiber density',
             left: 'Good — up to 12 fibers per loose tube in a standard design',
-            right: 'Higher — rollable ribbon doubles fiber density vs. loose individual fibers (OFS documentation)',
+            right: 'Higher — rollable ribbon roughly doubles fiber density vs. loose individual fibers',
           },
           {
             attribute: 'Typical OSP use case',
@@ -315,10 +319,10 @@ export default function T03L01_LooseTubeTightBufferRibbon() {
 
         <h3 className="mt-4 font-semibold">How construction type shapes your entire field workflow</h3>
         <p>
-          The cable construction you choose here in L01 doesn't exist in isolation. It interlocks with the physics you learned in T02 (fiber bend sensitivity + thermal behavior), the splicing techniques you'll learn in T11 (individual fusion vs. mass-fusion), and the inspection procedures you'll follow in T13. A designer or crew lead must know these connections cold: the construction decision drives the splice schedule, the labor hours, and the field reliability.
+          The cable construction you choose doesn't exist in isolation. It interlocks with the fiber-bend and thermal-behavior physics you learned in Fiber Physics, the splicing techniques covered later in the Splicing topic (individual fusion vs. mass-fusion), and the inspection procedures covered later in Inspection & Quality Assurance. A designer or crew lead must know these connections cold: the construction decision drives the splice schedule, the labor hours, and the field reliability.
         </p>
         <p className="mt-2">
-          Consider a concrete field scenario: you're assigned to build a 288-fiber feeder route with a tight 3-week schedule. T02 taught you that macrobend loss grows worse at 1550 nm (the long-wavelength you transmit on). T03.L01 taught you that loose-tube cable dominates OSP trunks. Now, here's the decision point: do you spec loose-tube individual fibers (288 splice cycles at 1.5 min each = 7+ hours of continuous fusion splicing) or do you spec ribbon cable (24 ribbons at 3 min per cycle = roughly 1.5 hours of fusion splicing)? The construction choice from this lesson maps directly to the splicing labor from T11. Over a 3-week timeline with crew costs, that's tens of thousands of dollars. And the inspection acceptance criteria from T13 will check the visible cable construction on-site to verify the spec was delivered.
+          Consider a concrete field scenario: you're assigned to build a 288-fiber feeder route with a tight 3-week schedule. Fiber Physics taught you that macrobend loss grows worse at 1550 nm (the long-wavelength you transmit on). Earlier in this lesson, you learned that loose-tube cable dominates OSP trunks. Now, here's the decision point: do you spec loose-tube individual fibers (288 splice cycles at 1.5 min each = 7+ hours of continuous fusion splicing) or do you spec ribbon cable (24 ribbons at 3 min per cycle = roughly 1.5 hours of fusion splicing)? The construction choice from this lesson maps directly to the splicing labor covered in the Splicing topic. Over a 3-week timeline with crew costs, that's tens of thousands of dollars. And the inspection acceptance criteria taught in Inspection & Quality Assurance will check the visible cable construction on-site to verify the spec was delivered.
         </p>
         <p className="mt-2">
           This Advanced section goes deeper into the mechanics of each construction type so you understand the tradeoffs at a level that feeds real project decisions.
@@ -338,7 +342,7 @@ export default function T03L01_LooseTubeTightBufferRibbon() {
           from both conventional ribbon and loose individual fibers in high-count feeder
           builds. A 432-fiber cable in rollable-ribbon construction can fit in a smaller
           conduit than the equivalent loose-tube design because the rollable-ribbon tubes
-          pack more densely. (Source: OFS Optics AccuTube+ Rollable Ribbon documentation)
+          pack more densely.
         </p>
 
         <h3 className="mt-5 font-semibold">Why tight-buffer survives in the industry</h3>
@@ -367,6 +371,16 @@ export default function T03L01_LooseTubeTightBufferRibbon() {
           </p>
         </section>
       </section>
+
+      <ReferencesBlock
+        items={[
+          { citation: 'ICEA S-87-640', note: 'Construction standard for OSP fiber cable — buffer tube dimensions, jacket thickness, tensile ratings, armor, and water-blocking.' },
+          { citation: 'TIA-598-D', note: 'Optical fiber cable color-coding standard — defines the 12-color fiber identification sequence used in OSP cables.' },
+          { citation: '7 CFR 1755.902', note: 'RUS minimum performance specification — requires every fiber be individually distinguishable using the 12-color scheme.' },
+          { citation: 'FOA Reference Guide to OSP Design', note: 'Field/industry reference explaining why loose-tube construction dominates OSP trunk cable.' },
+          { citation: 'OFS Optics rollable-ribbon product documentation', note: 'Manufacturer documentation on rollable-ribbon fiber density and tube packing.' },
+        ]}
+      />
 
       {/* ── KEY TERMS FLASHCARDS ──────────────────────────────────────────── */}
       <Flashcard

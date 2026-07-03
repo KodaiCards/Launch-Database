@@ -154,9 +154,6 @@ export default function T03L10_StandardsCompliance() {
             green, brown, slate, white, red, black, yellow, violet, rose, aqua.)
           </li>
         </ul>
-        <p className="mt-3 text-sm text-gray-600">
-          Source: 7 CFR 1755.902 (eCFR.gov)
-        </p>
       </section>
 
       <section data-tier="working" className="mt-6">
