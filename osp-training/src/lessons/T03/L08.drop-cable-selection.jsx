@@ -83,8 +83,9 @@ export default function T03L08_DropCableSelection() {
         <p className="mt-2">
           This lesson focuses on sizing and specifying the cable at all three tiers —
           with emphasis on the drop segment, since that's where G.657 bend-insensitive
-          fiber (from the G.652 vs. G.657 lesson) and the right aerial type (figure-8
-          vs. ADSS, from the Messenger Cable lesson) have the biggest impact on
+          fiber (from the G.652 vs. G.657 — When Bend-Insensitive Fiber Matters lesson) and the
+          right aerial type (figure-8 vs. ADSS, from the Messenger Cable — Lashed vs. ADSS
+          lesson) have the biggest impact on
           installation speed and long-term reliability.
         </p>
 
@@ -173,8 +174,8 @@ export default function T03L08_DropCableSelection() {
           </li>
           <li>
             <strong>Fiber type:</strong> G.657.A1 or G.657.A2, depending on the bend
-            environment at the premises entry. Review the G.652 vs. G.657 lesson — a
-            7.5 mm bend at a wall entry requires A2.
+            environment at the premises entry. Review the G.652 vs. G.657 — When
+            Bend-Insensitive Fiber Matters lesson — a 7.5 mm bend at a wall entry requires A2.
           </li>
           <li>
             <strong>Aerial drop type:</strong> Figure-8 (integrated messenger) for faster
@@ -368,7 +369,7 @@ export default function T03L08_DropCableSelection() {
             datasheet — issue numbers update periodically]
           </li>
           <li>
-            <strong>Long-term EDS (Everyday Stress, introduced in the Messenger Cable lesson):</strong> The sustained
+            <strong>Long-term EDS (Everyday Stress, introduced in the Messenger Cable — Lashed vs. ADSS lesson):</strong> The sustained
             tension the cable must tolerate indefinitely when installed on a span. EDS is
             typically 16–25% of RTS — a much lower value than the installation tension limit.
           </li>
