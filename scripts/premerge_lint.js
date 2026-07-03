@@ -51,7 +51,13 @@ function walk(dir, filter) {
   }
   return out;
 }
-const topicOf = (p) => (path.basename(p).match(/T(\d{2})/) ? 'T' + path.basename(p).match(/T(\d{2})/)[1] : null);
+// Topic id lives in the DIRECTORY for lesson files (osp-training/.../T04/L02.*.jsx)
+// and in the BASENAME for pool files (assessment-pools/T04-L02.json) — check both.
+const topicOf = (p) => {
+  const rel = path.relative(ROOT, p);
+  const m = rel.match(/(?:^|[/\\])T(\d{2})[/\\]/) || path.basename(p).match(/T(\d{2})/);
+  return m ? 'T' + m[1] : null;
+};
 const inScope = (p) => SCOPED_TOPICS.includes(topicOf(p));
 
 // Body of a lesson file = everything after `export default function` (what renders).
@@ -137,8 +143,9 @@ function scanGameability() {
   for (const f of walk(POOL_DIR, (p) => p.endsWith('.json'))) {
     let json; try { json = JSON.parse(fs.readFileSync(f, 'utf8')); } catch { continue; }
     const mc = (json.pool || []).filter((q) => q.type === 'mc' && Number.isInteger(q.answerIndex) && Array.isArray(q.choices));
-    // (a) all answers at same index (only meaningful with several questions)
-    if (mc.length >= 4) {
+    // (a) all answers at same index (a pool where every drawable answer shares an
+    // index is positionally gameable regardless of size; 3 is a conservative floor)
+    if (mc.length >= 3) {
       const idxs = new Set(mc.map((q) => q.answerIndex));
       if (idxs.size === 1) fail('gameability', f, `all ${mc.length} MC answers sit at index ${[...idxs][0]} (positionally gameable)`);
     }

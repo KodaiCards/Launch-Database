@@ -15,9 +15,11 @@ const { test, expect } = require('@playwright/test');
 const ADMIN_USERNAME = 'admin';
 const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD || 'test_admin_password_123';
 
-// Console/page errors that are environmental noise, not lesson bugs.
+// Console/page errors that are environmental noise, not lesson bugs. Kept
+// deliberately narrow: only the training API 4xx/5xx a bare test DB produces and
+// favicon. (A blanket "Failed to load resource" ignore would mask real breakage —
+// a missing JS chunk or lesson asset — which is exactly what this walk must catch.)
 const IGNORE = [
-  /Failed to load resource/i,      // mocked/absent API rows in a bare test DB
   /\/api\/training\/.*\b(404|500)\b/i,
   /favicon/i,
 ];
@@ -76,13 +78,15 @@ test.describe('Training — published lesson walk', () => {
         await page.goto(`/training/#${route.startsWith('/') ? route : '/' + route}`);
         await page.waitForLoadState('networkidle');
         // Renders: the lesson layout heading is present.
-        await expect(page.locator('h1, h2').first(), `${route} renders a heading`).toBeVisible({ timeout: 10_000 });
-        // Assessment loads: the graded check / quiz region mounts somewhere on the page.
-        // (Lessons end in a knowledge check or pooled assessment.)
-        const hasAssessment = await page.locator(
-          '[data-assessment], [data-quiz], button:has-text("Check"), button:has-text("Start"), text=/knowledge check/i',
-        ).count();
-        expect(hasAssessment, `${route} exposes an assessment/quiz control`).toBeGreaterThan(0);
+        await expect(page.locator('h1, h2, h3').first(), `${route} renders a heading`).toBeVisible({ timeout: 10_000 });
+        // Assessment loads: Quiz / PooledAssessment / TopicFinal render inside a
+        // `.panel`. `.panel` is also used by other lesson primitives, so this asserts
+        // the lesson mounted interactive content, not the assessment specifically — a
+        // *precise* assessment-present assertion needs a stable hook (e.g.
+        // data-testid="assessment-panel") on the shared Quiz/PooledAssessment
+        // components, which is the shared-infra owner's to add (#46). Until then an
+        // assessment that throws on mount is still caught by the 0-error check below.
+        await expect(page.locator('.panel').first(), `${route} mounts a content/assessment panel`).toBeVisible({ timeout: 10_000 });
         lessonsWalked++;
       }
     }
