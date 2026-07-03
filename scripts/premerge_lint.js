@@ -199,6 +199,24 @@ function scanVisibleIds() {
     for (const m of body.matchAll(/title=["']([^"']*)["']/g))
       if (/\bT\d\d\.L\d\d\b|\bL\d\d\b/.test(m[1])) fail('visible-id', f, `rendered title prop has raw ID: "${m[1]}"`);
   }
+  // lesson body PROSE (in scope) — rendered cross-references. Trainee-visible prose
+  // writes cross-refs in the DOTTED form ("T03.L01 taught you…", "<li>T04.L02 …").
+  // Pool/deck/assessment IDs use the HYPHEN form (assessmentId="T03-L11") in code
+  // props and are NOT rendered, so we scan the dotted form ONLY, after stripping
+  // attribute values, JSX expressions, and comments — high precision, no code-ID
+  // false positives (matches the VO's guidance to anchor on T\d\d.L\d\d).
+  for (const f of walk(LESSON_DIR, (p) => p.endsWith('.jsx'))) {
+    if (!inScope(f)) continue;
+    const prose = stripComments(lessonBody(fs.readFileSync(f, 'utf8')))
+      .replace(/\w[\w-]*=(["']).*?\1/gs, ' ') // strip attribute values (deckId="T03-L01", title="…")
+      .replace(/\{[^{}]*\}/g, ' ');           // strip simple JSX expressions
+    const seen = new Set();
+    for (const m of prose.matchAll(/\bT\d\d\.L\d\d\b/g)) {
+      if (seen.has(m[0])) continue;
+      seen.add(m[0]);
+      fail('visible-id', f, `raw internal ID "${m[0]}" in rendered lesson prose`);
+    }
+  }
 }
 
 // ── run ──────────────────────────────────────────────────────────────────────
