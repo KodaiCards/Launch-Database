@@ -4,6 +4,7 @@
 
 import React from 'react';
 import LessonLayout from '../../components/LessonLayout.jsx';
+import ReferencesBlock from '../../components/ReferencesBlock.jsx';
 import Flashcard from '../../components/Flashcard.jsx';
 import Quiz from '../../components/primitives/Quiz.jsx';
 import GatedAssessment from '../../components/primitives/GatedAssessment.jsx';
@@ -138,7 +139,7 @@ export default function T01L07_ReadingAStrandMap() {
             <strong>Field:</strong> On older networks or projects with poor documentation,
             a technician may arrive at a NAP and find cables with no label, splice cases
             with no records, and no strand map on file. They're starting blind. This is why
-            as-built documentation discipline (Lesson T01.L05) matters — every hour a
+            as-built documentation discipline (covered in The OSP Project Lifecycle) matters — every hour a
             documentation team doesn't spend on the as-built becomes ten hours a field
             technician spends troubleshooting blind in the dark.
           </p>
@@ -202,7 +203,7 @@ export default function T01L07_ReadingAStrandMap() {
           of splitter loss plus all the fiber and connector losses along the route.
         </p>
         <p className="mt-2 text-sm text-slate-300/90">
-          Source: ITU-T G.984 (GPON standard); TIA-568.3-D (loss budget approach for PON).
+          Source: ITU-T G.984 [confirm edition] (GPON standard).
         </p>
       </section>
 
@@ -221,11 +222,18 @@ export default function T01L07_ReadingAStrandMap() {
           can see what's already in the ground before designing a new route.
         </p>
         <p className="mt-2 text-sm text-slate-300/90">
-          For RUS-program projects, ANSI/TIA-606-C (administration standard; "TIA-606-D" is a BICSI TDMM shorthand) provides the framework
+          For RUS-program projects, an administration standard provides the framework
           for labeling and record-keeping for fiber infrastructure. The as-built GIS export
-          is part of the close-out package. (Covered in T16 — As-Built Documentation &amp; GIS.)
+          is part of the close-out package. (Covered in As-Built Documentation &amp; GIS.)
         </p>
       </section>
+
+      <ReferencesBlock
+        items={[
+          { citation: 'TIA-568.3-D', note: 'Cabling standard whose Annex covers the loss-budget approach used for PON link engineering.' },
+          { citation: 'ANSI/TIA-606-C', note: 'Administration standard for labeling and record-keeping of fiber infrastructure. ("TIA-606-D" is a BICSI TDMM shorthand, not a separately published edition.)' },
+        ]}
+      />
 
       {/* ── KEY TERMS FLASHCARDS ────────────────────────────────────────── */}
       <Flashcard

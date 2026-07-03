@@ -4,6 +4,7 @@
 
 import React from 'react';
 import LessonLayout from '../../components/LessonLayout.jsx';
+import ReferencesBlock from '../../components/ReferencesBlock.jsx';
 import Flashcard from '../../components/Flashcard.jsx';
 import Quiz from '../../components/primitives/Quiz.jsx';
 import GatedAssessment from '../../components/primitives/GatedAssessment.jsx';
@@ -291,138 +292,45 @@ export default function T01L09_OspStandardsLandscape() {
         </p>
 
         <h3 className="mt-5 font-semibold">Quick reference: standards by work activity</h3>
-        <table className="w-full text-sm border border-white/10 rounded-lg mt-2">
-          <thead className="bg-white/5 text-slate-200">
-            <tr>
-              <th className="px-3 py-2 text-left">Activity</th>
-              <th className="px-3 py-2 text-left">Primary standard(s)</th>
-            </tr>
-          </thead>
-          <tbody className="text-slate-300/90">
-            <tr className="border-t border-white/10">
-              <td className="px-3 py-2">Aerial attachment design</td>
-              <td className="px-3 py-2">NESC C2-2023 §§23, 25, 26; ANSI O5.1 (pole specs)</td>
-            </tr>
-            <tr className="border-t border-white/10">
-              <td className="px-3 py-2">Cable specification (fiber type)</td>
-              <td className="px-3 py-2">ITU-T G.652.D (standard SMF); ITU-T G.657.A1 (bend-insensitive)</td>
-            </tr>
-            <tr className="border-t border-white/10">
-              <td className="px-3 py-2">Cable construction</td>
-              <td className="px-3 py-2">ICEA S-87-640; 7 CFR Part 1755 + RUS Bulletin 344-2 (RUS-funded projects, accepted materials)</td>
-            </tr>
-            <tr className="border-t border-white/10">
-              <td className="px-3 py-2">Fiber color coding</td>
-              <td className="px-3 py-2">TIA-598-D</td>
-            </tr>
-            <tr className="border-t border-white/10">
-              <td className="px-3 py-2">Acceptance testing (loss + OTDR)</td>
-              <td className="px-3 py-2">TIA-568.3-D Annex</td>
-            </tr>
-            <tr className="border-t border-white/10">
-              <td className="px-3 py-2">Connector inspection</td>
-              <td className="px-3 py-2">IEC 61300-3-35</td>
-            </tr>
-            <tr className="border-t border-white/10">
-              <td className="px-3 py-2">Grounding at building entry</td>
-              <td className="px-3 py-2">NEC Article 770 (optical fiber cables and raceways), NEC Article 250 (GES)</td>
-            </tr>
-            <tr className="border-t border-white/10">
-              <td className="px-3 py-2">Overhead line grounding / bonding</td>
-              <td className="px-3 py-2">NESC §9 + §215; RUS 1751F-630 §6</td>
-            </tr>
-            <tr className="border-t border-white/10">
-              <td className="px-3 py-2">Water-crossing permits</td>
-              <td className="px-3 py-2">USACE NWP 57 (2021 NWP package; reissued 2026 NWP package eff. March 15, 2026; replaces NWP 12 for telecom)</td>
-            </tr>
-            <tr className="border-t border-white/10">
-              <td className="px-3 py-2">Pole attachment fees/timeline</td>
-              <td className="px-3 py-2">47 CFR 1.1406 (fee formula); 47 CFR 1.1411 (FCC OTMR/access timeline)</td>
-            </tr>
-            <tr className="border-t border-white/10">
-              <td className="px-3 py-2">Infrastructure documentation</td>
-              <td className="px-3 py-2">ANSI/TIA-606-C; 7 CFR 1753.49 (RUS-funded close-out)</td>
-            </tr>
-            <tr className="border-t border-white/10">
-              <td className="px-3 py-2">RUS-funded project design</td>
-              <td className="px-3 py-2">RUS 1751F-630 (aerial + general); 1751F-635 (underground)</td>
-            </tr>
-          </tbody>
-        </table>
+        <p className="mt-2 text-sm text-slate-300/90">
+          Rather than memorizing citation numbers, use this as a map of which body owns which
+          part of the job — the exact standard designations are in the References block at the
+          end of this lesson if you need to look one up:
+        </p>
+        <ul className="list-disc pl-5 space-y-2 mt-2 text-sm text-slate-300/90">
+          <li><strong>Aerial attachment design</strong> — NESC clearance, loading, and grade rules, plus the wood-pole specification standard.</li>
+          <li><strong>Cable specification (fiber type)</strong> — ITU-T's fiber performance specs for standard and bend-insensitive single-mode fiber.</li>
+          <li><strong>Cable construction</strong> — the ICEA construction standard, plus the RUS accepted-materials program for RUS-funded projects.</li>
+          <li><strong>Fiber color coding</strong> — TIA's fiber color-code standard.</li>
+          <li><strong>Acceptance testing (loss + OTDR)</strong> — the TIA cabling standard's Tier 1/Tier 2 test annex.</li>
+          <li><strong>Connector inspection</strong> — the IEC end-face inspection standard.</li>
+          <li><strong>Grounding at building entry</strong> — the NEC's rules for optical fiber entries and grounding electrode systems.</li>
+          <li><strong>Overhead line grounding / bonding</strong> — NESC grounding rules plus the RUS aerial construction bulletin.</li>
+          <li><strong>Water-crossing permits</strong> — the USACE nationwide permit for telecommunications line crossings.</li>
+          <li><strong>Pole attachment fees/timeline</strong> — the FCC's fee formula and OTMR access-timeline rules.</li>
+          <li><strong>Infrastructure documentation</strong> — the TIA administration standard, plus the RUS close-out regulation for funded projects.</li>
+          <li><strong>RUS-funded project design</strong> — the RUS engineering bulletins for aerial/general and underground plant.</li>
+        </ul>
       </section>
 
       {/* ── ADVANCED ────────────────────────────────────────────────────── */}
       <section data-tier="advanced">
         <h2>RUS Forms Landscape — Documentation in RUS-Funded Projects</h2>
         <p>
-          RUS-funded projects require specific administrative forms at different stages of the
-          project lifecycle. Understanding which form applies when, and who fills it out, is
-          critical for project close-out and audit compliance. The following 8 forms form the
-          RUS documentation landscape:
+          RUS-funded projects require specific administrative paperwork at different stages of
+          the project lifecycle. Knowing roughly when each piece of paperwork happens — and who
+          signs it — matters more day-to-day than memorizing the form numbers themselves (those
+          are in the References block at the end of this lesson):
         </p>
-        <table className="w-full text-sm border border-white/10 rounded-lg mt-3 mb-6">
-          <thead className="bg-white/5 text-slate-200">
-            <tr>
-              <th className="px-3 py-2 text-left">Form Number</th>
-              <th className="px-3 py-2 text-left">Title</th>
-              <th className="px-3 py-2 text-left">Purpose</th>
-              <th className="px-3 py-2 text-left">Triggering Phase</th>
-            </tr>
-          </thead>
-          <tbody className="text-slate-300/90">
-            <tr className="border-t border-white/10">
-              <td className="px-3 py-2 font-mono">Form 307</td>
-              <td className="px-3 py-2">Bid Bond</td>
-              <td className="px-3 py-2">Required surety with bid submission — guarantees the contractor will enter into the construction contract at the bid price if awarded. Standard federal procurement requirement.</td>
-              <td className="px-3 py-2">Bid phase</td>
-            </tr>
-            <tr className="border-t border-white/10">
-              <td className="px-3 py-2 font-mono">Form 740</td>
-              <td className="px-3 py-2">Construction Contract</td>
-              <td className="px-3 py-2">Awarded construction agreement between borrower and contractor — establishes scope, schedule, payment terms, and RUS oversight rights. The master document binding all parties to the project.</td>
-              <td className="px-3 py-2">Pre-construction phase</td>
-            </tr>
-            <tr className="border-t border-white/10">
-              <td className="px-3 py-2 font-mono">Form 740c</td>
-              <td className="px-3 py-2">Contractor Closeout</td>
-              <td className="px-3 py-2">Contractor declares work complete and releases borrower from contractor claims — final contractor certification before RUS final inspection. Reconciles all change orders and extras against the original Form 740 contract.</td>
-              <td className="px-3 py-2">Closeout phase</td>
-            </tr>
-            <tr className="border-t border-white/10">
-              <td className="px-3 py-2 font-mono">7 CFR 1753.49</td>
-              <td className="px-3 py-2">Closeout Documents</td>
-              <td className="px-3 py-2">Certified as-built drawings, splice records, and OTDR test records showing what was actually built vs. what was contracted — cross-checked against all invoices, PE-signed, triggers final RUS loan advancement. (RUS Form 219 is a distinct Electric Program form and does not apply to telecom close-out.)</td>
-              <td className="px-3 py-2">Final phase</td>
-            </tr>
-            <tr className="border-t border-white/10">
-              <td className="px-3 py-2 font-mono">Form 565</td>
-              <td className="px-3 py-2">Compliance Statement</td>
-              <td className="px-3 py-2">Borrower certifies project complied with all approved requirements, standards, and RUS conditions — the final compliance affidavit confirming the project met all loan and design conditions. Foundation of RUS audit defensibility.</td>
-              <td className="px-3 py-2">Closeout phase</td>
-            </tr>
-            <tr className="border-t border-white/10">
-              <td className="px-3 py-2 font-mono">Form 524</td>
-              <td className="px-3 py-2">Plans + Specifications Approval Request</td>
-              <td className="px-3 py-2">Plans and specifications submitted to RUS for review and approval before construction — RUS must approve design before construction begins. The formal design document carrying PE stamp and RUS approval signature.</td>
-              <td className="px-3 py-2">Pre-construction phase</td>
-            </tr>
-            <tr className="border-t border-white/10">
-              <td className="px-3 py-2 font-mono">Form 1744</td>
-              <td className="px-3 py-2">Loan Agreement Certifications</td>
-              <td className="px-3 py-2">Borrower certifies loan-agreement-specific compliance items at advance — certifies the borrower has met all loan preconditions before RUS advances funds for construction. May be submitted multiple times as milestones are reached.</td>
-              <td className="px-3 py-2">Construction phase</td>
-            </tr>
-            <tr className="border-t border-white/10">
-              <td className="px-3 py-2 font-mono">Form 1755-A</td>
-              <td className="px-3 py-2">Materials Approval</td>
-              <td className="px-3 py-2">Pre-approved materials list and materials acceptance certification — RUS approves the cable type, conduit, poles, and other long-lead items BEFORE the contractor procures them. Ensures materials comply with RUS standards and approved products lists.</td>
-              <td className="px-3 py-2">Pre-construction phase</td>
-            </tr>
-          </tbody>
-        </table>
+        <ul className="list-disc pl-5 space-y-2 mt-3 mb-6 text-sm text-slate-300/90">
+          <li><strong>Bid phase:</strong> the contractor posts a bid bond — a surety guaranteeing they'll honor their bid price if awarded the job.</li>
+          <li><strong>Pre-construction phase:</strong> RUS reviews and approves the plans and specifications before construction can start, the construction contract is executed between the borrower and contractor, and RUS approves the materials (cable, conduit, poles, and other long-lead items) before the contractor can procure them.</li>
+          <li><strong>Construction phase:</strong> the borrower periodically certifies to RUS that loan-agreement conditions are being met as funds are advanced.</li>
+          <li><strong>Closeout phase:</strong> the contractor certifies the work is complete and reconciles all change orders, the borrower certifies the whole project complied with every approved requirement, and the certified as-built drawings, splice records, and OTDR test records are assembled and cross-checked against invoices before RUS releases final funds.</li>
+        </ul>
 
         <p className="text-sm text-slate-300/90 mb-4">
-          <strong>Book vs. Field:</strong> The textbook sequence is: Form 1744 (A/E agreement) → Form 524 (construction contract) → Form 307 (bid bond) → Forms 565 &amp; 740 (daily inspection and inventory during construction) → Form 1755-A (easement, usually already obtained) → 7 CFR 1753.49 closeout documents (final close-out). In practice, easement acquisition and design can overlap with bidding, timelines compress, and a single delay in any one form can halt project funding. The PE and borrower's project manager spend as much time managing paper as managing the work itself.
+          <strong>Book vs. Field:</strong> The textbook sequence follows the phases above in strict order. In practice, easement acquisition and design can overlap with bidding, timelines compress, and a delay in any single piece of paperwork can halt project funding. The PE and borrower's project manager spend as much time managing paper as managing the work itself.
         </p>
 
         <h3 className="mt-6 font-semibold">When Standards Conflict</h3>
@@ -443,6 +351,38 @@ export default function T01L09_OspStandardsLandscape() {
           compliance disputes and protects the engineering firm from liability.
         </p>
       </section>
+
+      <ReferencesBlock
+        items={[
+          { citation: 'NESC C2-2023 §§23, 25, 26', note: 'Aerial attachment design — clearances, loading, and grades of construction.' },
+          { citation: 'ANSI O5.1', note: 'Wood utility pole specifications (class, species, dimensions).' },
+          { citation: 'ITU-T G.652.D', note: 'Standard single-mode fiber optical performance specification.' },
+          { citation: 'ITU-T G.657.A1', note: 'Bend-insensitive single-mode fiber optical performance specification.' },
+          { citation: 'ICEA S-87-640', note: 'OSP fiber cable construction standard (physical, mechanical, optical, environmental performance).' },
+          { citation: '7 CFR Part 1755 + RUS Bulletin 344-2', note: 'RUS accepted-materials program — cable and other materials must be on the RUS accepted products list (or separately approved) for use on funded projects.' },
+          { citation: 'TIA-598-D', note: 'Fiber color-coding standard — the 12-color sequence for buffer tubes and individual fibers.' },
+          { citation: 'TIA-568.3-D Annex', note: 'Tier 1 (OLTS) and Tier 2 (OTDR) acceptance-testing requirements for fiber links.' },
+          { citation: 'IEC 61300-3-35', note: 'Connector end-face inspection standard — cleanliness zones and pass/fail criteria.' },
+          { citation: 'NEC Article 770', note: 'Optical fiber cables and raceways at building entries.' },
+          { citation: 'NEC Article 250', note: 'Grounding Electrode System (GES) requirements.' },
+          { citation: 'NESC §9 + §215', note: 'Overhead line grounding and bonding requirements.' },
+          { citation: 'RUS Bulletin 1751F-630 §6', note: 'RUS-specific overhead grounding/bonding requirements.' },
+          { citation: 'USACE NWP 57', note: '"Electric Utility Line and Telecommunications Activities" — pre-authorizes telecommunications line crossings of waters of the US, including most fiber conduit HDD bores (2021 NWP package; reissued in the 2026 NWP package effective March 15, 2026; replaces the former NWP 12 telecom scope).' },
+          { citation: '47 CFR 1.1406', note: 'FCC pole-attachment fee/rate formula.' },
+          { citation: '47 CFR 1.1411', note: 'FCC one-touch make-ready (OTMR) access-timeline rules.' },
+          { citation: 'ANSI/TIA-606-C', note: 'Administration standard for labeling and record-keeping of fiber infrastructure.' },
+          { citation: '7 CFR 1753.49', note: 'RUS-funded telecom project closeout documentation requirement.' },
+          { citation: 'RUS Bulletin 1751F-630', note: 'Primary RUS engineering bulletin for aerial and general OSP construction.' },
+          { citation: 'RUS Bulletin 1751F-635', note: 'RUS engineering bulletin for underground OSP construction.' },
+          { citation: 'Form 307', note: 'Bid Bond — surety submitted with a bid, guaranteeing the contractor will honor the bid price if awarded.' },
+          { citation: 'Form 740', note: 'Construction Contract — the awarded agreement between RUS borrower and contractor.' },
+          { citation: 'Form 740c', note: 'Contractor Closeout — contractor’s completion certification, reconciling change orders against Form 740.' },
+          { citation: 'Form 565', note: 'Compliance Statement — borrower’s final affidavit that the project met all approved requirements and RUS conditions.' },
+          { citation: 'Form 524', note: 'Plans + Specifications Approval Request — RUS design approval required before construction begins.' },
+          { citation: 'Form 1744', note: 'Loan Agreement Certifications — borrower certifies loan preconditions are met at each funding advance.' },
+          { citation: 'Form 1755-A', note: 'Materials Approval — RUS approval of materials before the contractor procures them.' },
+        ]}
+      />
 
       {/* ── KEY TERMS FLASHCARDS ────────────────────────────────────────── */}
       <Flashcard

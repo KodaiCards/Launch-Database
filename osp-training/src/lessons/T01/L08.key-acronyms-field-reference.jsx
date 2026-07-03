@@ -4,6 +4,7 @@
 
 import React from 'react';
 import LessonLayout from '../../components/LessonLayout.jsx';
+import ReferencesBlock from '../../components/ReferencesBlock.jsx';
 import Flashcard from '../../components/Flashcard.jsx';
 import Quiz from '../../components/primitives/Quiz.jsx';
 import GatedAssessment from '../../components/primitives/GatedAssessment.jsx';
@@ -82,11 +83,11 @@ export default function T01L08_KeyAcronymsFieldReference() {
           OSP is acronym-heavy. Walk into a project meeting without knowing what NESC, RUS,
           OTDR, and MGN stand for, and you'll spend half the time decoding the conversation
           instead of contributing to it. This lesson is your reference sheet — all the acronyms
-          you'll encounter across T01–T18, organized by category. Use the flashcards below
-          to drill them until they're automatic.
+          you'll encounter throughout this training program, organized by category. Use the
+          flashcards below to drill them until they're automatic.
         </p>
         <p className="mt-2">
-          Every acronym here has been introduced in earlier T01 lessons or will appear in
+          Every acronym here has been introduced in earlier lessons in this topic or will appear in
           subsequent topics. Think of this lesson as a cheat-sheet you can return to whenever
           a term appears in a later lesson and you need a quick reminder.
         </p>
@@ -338,7 +339,7 @@ export default function T01L08_KeyAcronymsFieldReference() {
             <tr className="border-t border-white/10">
               <td className="px-3 py-2 font-mono">RCDD</td>
               <td className="px-3 py-2">Registered Communications Distribution Designer</td>
-              <td className="px-3 py-2">BICSI credential for ISP/data-center designers. Covers TIA-568/569/606/607, firestopping, EMC, power-telecom separation. Career credential for ISP and data-center designers. Requires experience + exam + ongoing CEUs.</td>
+              <td className="px-3 py-2">BICSI credential for ISP/data-center designers. Covers structured cabling, pathways and spaces, administration, and bonding/grounding standards for inside plant, plus firestopping and EMC separation. Career credential for ISP and data-center designers. Requires experience + exam + ongoing CEUs.</td>
             </tr>
             <tr className="border-t border-white/10">
               <td className="px-3 py-2 font-mono">CFOT</td>
@@ -358,6 +359,12 @@ export default function T01L08_KeyAcronymsFieldReference() {
           </tbody>
         </table>
       </section>
+
+      <ReferencesBlock
+        items={[
+          { citation: 'TIA-568/569/606/607', note: 'Structured cabling (568), pathways and spaces (569), administration (606), and bonding/grounding (607) standards covered by the RCDD credential.' },
+        ]}
+      />
 
       {/* ── FLASHCARDS ───────────────────────────────────────────────────── */}
       <Flashcard
