@@ -3,6 +3,7 @@
 
 import React from 'react';
 import LessonLayout from '../../components/LessonLayout.jsx';
+import ReferencesBlock from '../../components/ReferencesBlock.jsx';
 import SideBySide from '../../components/primitives/SideBySide.jsx';
 import Quiz from '../../components/primitives/Quiz.jsx';
 import GatedAssessment from '../../components/primitives/GatedAssessment.jsx';
@@ -392,6 +393,15 @@ export default function T04L06_KmzShapefilePdfDeliverables() {
           .laz natively.
         </p>
       </section>
+
+      <ReferencesBlock
+        items={[
+          { citation: 'ISO/IEC 19005-1 (PDF/A-1)', note: 'The archival PDF standard — self-contained, fonts embedded, required by many RUS and permit-agency submittals.' },
+          { citation: 'FCC 47 CFR Part 42', note: 'Records retention schedule referenced by RUS and permit-agency archival requirements.' },
+          { citation: 'ESRI Shapefile Technical Description', note: 'The published specification for the .shp/.shx/.dbf/.prj shapefile format.' },
+          { citation: 'OGC KML Standard 2.3', note: 'Open Geospatial Consortium standard defining the KML format used inside a KMZ.' },
+        ]}
+      />
 
       {/* ── SIDE BY SIDE ────────────────────────────────────────────────── */}
       <SideBySide

@@ -3,6 +3,7 @@
 
 import React from 'react';
 import LessonLayout from '../../components/LessonLayout.jsx';
+import ReferencesBlock from '../../components/ReferencesBlock.jsx';
 import BranchingScenario from '../../components/primitives/BranchingScenario.jsx';
 import Quiz from '../../components/primitives/Quiz.jsx';
 import GatedAssessment from '../../components/primitives/GatedAssessment.jsx';
@@ -431,6 +432,16 @@ export default function T04L07_47CFR32RecordKeeping() {
         </p>
       </section>
 
+      <ReferencesBlock
+        items={[
+          { citation: '47 CFR Part 32', note: 'The FCC Uniform System of Accounts (USOA) — the plant-account chart of accounts RUS borrowers must follow.' },
+          { citation: '47 CFR Part 32 § 32.27', note: 'Plant-records retention requirement.' },
+          { citation: '47 CFR Part 42', note: 'FCC records retention schedule referenced alongside RUS loan-term requirements.' },
+          { citation: 'RUS Form 1755-A', note: 'The construction cost ledger form used to reconcile actual costs to the approved loan budget.' },
+          { citation: '7 CFR Part 1755', note: 'RUS telecommunications construction and loan requirements.' },
+        ]}
+      />
+
       {/* ── BRANCHING SCENARIO ──────────────────────────────────────────── */}
       <BranchingScenario
         scenarioId="T04-L07-scenario-1"
@@ -551,6 +562,12 @@ export default function T04L07_47CFR32RecordKeeping() {
         title="Check — 47 CFR 32 Record-Keeping"
         mode="multiple-choice"
         questions={[
+          // FLAG-FOR-FOREMAN: this explanation previously read "(see T13.L10 and T16.L08 for
+          // detailed account hierarchy)". T13.L10 is the T13 topic's capstone quiz ("Capstone
+          // Quiz: Inspection & Quality Assurance") — not a content lesson about account
+          // hierarchy. That pointer was inaccurate and has been dropped (same class of
+          // forward-reference defect tracked for T03 under issue #56). The T16.L08 pointer was
+          // accurate and has been kept, renamed to its real lesson title.
           {
             id: 'T04-L07-Q1',
             type: 'mc',
@@ -564,7 +581,7 @@ export default function T04L07_47CFR32RecordKeeping() {
             ],
             answerIndex: 2,
             explanation:
-              'Plant Under Construction (§ 32.2003) is the correct temporary account for all survey and engineering costs during the project development phase. It accumulates costs until the plant is placed in service, at which point the accounting team transfers costs to the permanent plant accounts (§ 32.2410 for cable and wire facilities, § 32.2411 for poles, § 32.2111 for land, etc.). Cable and Wire Facilities (§ 32.2410) and Poles (§ 32.2411) are permanent plant accounts for installed infrastructure, not for pre-construction survey costs. Note: §32.2210 is Central office—switching — not cable; §32.2420 is the parent-category heading "Cable and Wire Facilities" (see T13.L10 and T16.L08 for detailed account hierarchy).',
+              'Plant Under Construction (§ 32.2003) is the correct temporary account for all survey and engineering costs during the project development phase. It accumulates costs until the plant is placed in service, at which point the accounting team transfers costs to the permanent plant accounts (§ 32.2410 for cable and wire facilities, § 32.2411 for poles, § 32.2111 for land, etc.). Cable and Wire Facilities (§ 32.2410) and Poles (§ 32.2411) are permanent plant accounts for installed infrastructure, not for pre-construction survey costs. Note: §32.2210 is Central office—switching — not cable; §32.2420 is the parent-category heading "Cable and Wire Facilities" (see the 47 CFR Part 32 — Plant Accounting and As-Built Records lesson for detailed account hierarchy).',
             citation: '47 CFR 32 § 32.2003 (Telecommunications Plant Under Construction); FCC USOA (ecfr.gov/current/title-47/chapter-I/subchapter-B/part-32).',
           },
           {

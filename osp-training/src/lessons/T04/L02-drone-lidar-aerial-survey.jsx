@@ -3,6 +3,7 @@
 
 import React from 'react';
 import LessonLayout from '../../components/LessonLayout.jsx';
+import ReferencesBlock from '../../components/ReferencesBlock.jsx';
 import WorkedExample from '../../components/primitives/WorkedExample.jsx';
 import Quiz from '../../components/primitives/Quiz.jsx';
 import GatedAssessment from '../../components/primitives/GatedAssessment.jsx';
@@ -418,7 +419,7 @@ export default function T04L02_DroneLidarAerialSurvey() {
           The classified point cloud is then used to extract deliverables: the bare-earth layer
           becomes the digital terrain model (DTM) for sag and tension calculations; the
           utility/structure layer identifies pole locations and approximate heights for the
-          GIS layer that feeds the pole audit in L04.
+          GIS layer that feeds the upcoming pole audit.
         </p>
       </section>
 
@@ -440,10 +441,21 @@ export default function T04L02_DroneLidarAerialSurvey() {
             <strong>High Canopy</strong> — Points from the tops of tall trees. High canopy is the most relevant vegetation layer for OSP aerial design because tall trees near a span affect wind loading (trees can fall on a cable in a storm) and future vegetation management. Canopy height minus bare-earth elevation gives individual tree height — useful for identifying which trees need trimming to clear the future cable catenary.
           </li>
           <li>
-            <strong>Structures &amp; Utilities</strong> — Buildings, poles, power lines, and other man-made structures. For OSP work, this layer identifies existing utility poles (height and approximate location) and aerial conductors. Accuracy depends on point density — high-density scans (100+ pts/m²) can resolve individual conductors; lower-density scans may miss thin wires. This layer feeds the pole audit in T04.L04 by providing initial height estimates that field crews then verify with ground-truth measurements.
+            <strong>Structures &amp; Utilities</strong> — Buildings, poles, power lines, and other man-made structures. For OSP work, this layer identifies existing utility poles (height and approximate location) and aerial conductors. Accuracy depends on point density — high-density scans (100+ pts/m²) can resolve individual conductors; lower-density scans may miss thin wires. This layer feeds the Pole Audit — Field vs. Records lesson by providing initial height estimates that field crews then verify with ground-truth measurements.
           </li>
         </ol>
       </div>
+
+      <ReferencesBlock
+        items={[
+          { citation: 'FAA Part 107', note: 'The commercial drone operating rule — covers pilot certification, altitude, airspace, and visual line-of-sight requirements.' },
+          { citation: '14 CFR 107.51', note: '400 ft AGL default altitude ceiling, and the narrow structure exception near a pole.' },
+          { citation: '14 CFR 107.41', note: 'Prior authorization requirement for flight in controlled (Class B/C/D/E) airspace.' },
+          { citation: '14 CFR 107.31', note: 'Visual line-of-sight (VLOS) requirement for the remote pilot.' },
+          { citation: '14 CFR 107.23', note: '"Reckless operation" finding — can apply even in uncontrolled Class G airspace.' },
+          { citation: 'NOAA NGS CORS technical documentation', note: 'Published accuracy specification for RTK GNSS network corrections.' },
+        ]}
+      />
 
       {/* ── PER-LESSON QUIZ ──────────────────────────────────────────────── */}
       <GatedAssessment
