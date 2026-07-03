@@ -1,4 +1,5 @@
 # PRODUCT BAR — the quality floor for everything user-facing
+> ✔ **RATIFIED** — Carter, 2026-07-02 (canon walkthrough sign-off).
 > Law. Owned by Carter. Every gate references this file; failing it blocks merge/flip. If a check here is ambiguous for a given piece of work, that's a `*` — ask, don't guess.
 
 ## 1. Training content — "User Readability"

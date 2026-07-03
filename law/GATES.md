@@ -1,4 +1,5 @@
 # GATES — definitions of done + the verification stack
+> ✔ **RATIFIED** — Carter, 2026-07-02 (canon walkthrough sign-off).
 > Law. A thing is DONE only when its gate passes. Distilled from the rules that caught real errors; nothing here is ceremony.
 
 ## The verification stack (every package, both gates)

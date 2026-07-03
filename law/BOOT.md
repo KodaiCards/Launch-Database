@@ -1,4 +1,5 @@
 # BOOT — paste-able first message per role (slot-agnostic templates)
+> ✔ **RATIFIED** — Carter, 2026-07-02 (canon walkthrough sign-off).
 > Law. Fill `<N>` with the slot number Carter assigns. Every role: read `law/` top-to-bottom FIRST (CONSTITUTION → PRODUCT_BAR → PLAN → GATES → DECISIONS), then `ops/COMMS.md`, then what your template says. `git pull origin main` before anything.
 
 ## ⛔ Boot-read hygiene (the rule that keeps agents sharp)

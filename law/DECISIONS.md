@@ -1,4 +1,5 @@
 # DECISIONS — law-level only, append-only
+> ✔ **RATIFIED** — Carter, 2026-07-02 (canon walkthrough sign-off).
 > A decision lands here only if it changes scope, standards, sequence, or governance. Operational trivia never does. Each entry: decision · why · date. Superseding = new entry referencing the old. (Pre-canon history: `archive/planning-2026-06/decisions.md` — reference, not law.)
 
 **L-001 (2026-07-02) — Governance reset.** Carter > Partner (law) > Registrar (enforcement/merge) > Foreman (throughput) > B1/B2 > Auditor. Law in `law/`, specs in `specs/`, ops in `ops/`. Sessions disposable; files are the memory; Carter signs files. *Why:* the prior single-planner model lost banked requirements to context churn and bottlenecked on one agent.

@@ -1,4 +1,5 @@
 # PLAN — the spine (sequence + spec index)
+> ✔ **RATIFIED** — Carter, 2026-07-02 (canon walkthrough sign-off).
 > Law. The authoritative order of work. Detail lives in `specs/` (one doc per system, DRAFT→RATIFIED→BUILT); this page only says WHAT and WHEN. Where old docs (ROADMAP / PRODUCT_PLAN / IMPLEMENTATION_PLAN) disagree with a ratified spec, the spec wins.
 
 ## The two pillars (unchanged, founder-validated)

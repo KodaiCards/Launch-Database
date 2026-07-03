@@ -1,4 +1,5 @@
 # CONSTITUTION — Launch Fiber software governance
+> ✔ **RATIFIED** — Carter, 2026-07-02 (canon walkthrough sign-off).
 > Law. Changes only in a Carter × Partner session, landing as a commit Carter approved. Everything every agent does is subordinate to this file. ~1 page, forever.
 
 ## Roles (SLOTS, not headcount — Carter scales within caps)

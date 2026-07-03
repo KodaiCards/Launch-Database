@@ -1,4 +1,5 @@
 # CALLUPS — the `*` registry (open-ended items awaiting a Carter × Partner moment)
+> ✔ **RATIFIED** — Carter, 2026-07-02 (canon walkthrough sign-off).
 > Owned by Partner. When Carter asks "anything we need to discuss or waiting on?", Partner pulls current code state, sweeps this list, raises what's ripe. Each row: item · trigger · what's needed.
 
 | * | Item | Trigger | Needed |
