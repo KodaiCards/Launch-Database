@@ -454,7 +454,7 @@ export default function T03L05_G652VsG657BendInsensitive() {
 
       {/* ── PER-LESSON QUIZ ───────────────────────────────────────────────── */}
       <Quiz
-        title="T03.L05 Check — G.652 vs. G.657 Bend-Insensitive Fiber"
+        title="Check — G.652 vs. G.657 Bend-Insensitive Fiber"
         mode="multiple-choice"
         questions={[
           {

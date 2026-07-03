@@ -497,10 +497,10 @@ export default function T04L08_HandoffToDesign() {
       <GatedAssessment
         courseId="T04"
         assessmentId="T04-L08"
-        title="T04.L08 Check — Handing Off to Design"
+        title="Check — Handing Off to Design"
         fallback={
       <Quiz
-        title="T04.L08 Check — Handing Off to Design"
+        title="Check — Handing Off to Design"
         mode="multiple-choice"
         questions={[
           {

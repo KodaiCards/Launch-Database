@@ -342,10 +342,10 @@ export default function T03L07_ArmorDeepDive() {
       <GatedAssessment
         courseId="T03"
         assessmentId="T03-L07"
-        title="T03.L07 Check — Armor Selection Deep-Dive"
+        title="Check — Armor Selection Deep-Dive"
         fallback={
         <Quiz
-          title="T03.L07 Check — Armor Selection Deep-Dive"
+          title="Check — Armor Selection Deep-Dive"
           mode="multiple-choice"
           questions={[
             {

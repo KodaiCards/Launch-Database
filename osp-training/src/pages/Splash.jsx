@@ -69,7 +69,6 @@ function LockedCourseTile({ course }) {
 
         <div className="flex-1 min-w-0">
           <div className="flex items-baseline gap-2 flex-wrap">
-            <span className="font-mono text-xs text-slate-500">{course.id}</span>
             <h3 className="text-base font-semibold text-slate-400 truncate">
               {course.title}
             </h3>
@@ -110,7 +109,6 @@ function CourseTile({ course, progressPct }) {
 
         <div className="flex-1 min-w-0">
           <div className="flex items-baseline gap-2 flex-wrap">
-            <span className="font-mono text-xs text-slate-400">{course.id}</span>
             <h3 className="text-base font-semibold text-slate-100 truncate group-hover:text-amber-200 transition">
               {course.title}
             </h3>
@@ -121,7 +119,7 @@ function CourseTile({ course, progressPct }) {
             {course.prerequisites?.length > 0 && (
               <>
                 <span>&middot;</span>
-                <span>Prereq: {course.prerequisites.join(', ')}</span>
+                <span>Prereq: {course.prerequisites.map(id => courses.find(c => c.id === id)?.title || id).join(', ')}</span>
               </>
             )}
           </div>
@@ -197,7 +195,6 @@ function ISPComingSoon({ ispCourses }) {
                   </div>
                   <div className="flex-1 min-w-0">
                     <div className="flex items-baseline gap-2 flex-wrap">
-                      <span className="font-mono text-xs text-slate-500">{course.id}</span>
                       <h3 className="text-base font-semibold text-slate-400 truncate">
                         {course.title}
                       </h3>
@@ -265,7 +262,7 @@ export default function Splash({ section = 'osp' }) {
         <h1 className="text-3xl font-bold mb-1">OSP Course</h1>
         <p className="text-slate-400 text-sm">
           Outside Plant engineering — from fundamentals to construction, testing, and program compliance.
-          Follow the teaching order: start at T01 and work through to T20.
+          Follow the teaching order: start at the top of the list and work down.
         </p>
       </div>
 

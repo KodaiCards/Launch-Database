@@ -318,10 +318,10 @@ export default function T02L01_WhyLightTravelsInGlass() {
       <GatedAssessment
         courseId="T02"
         assessmentId="T02-L01"
-        title="T02.L01 Check — Why Light Travels in Glass"
+        title="Check — Why Light Travels in Glass"
         fallback={
         <Quiz
-          title="T02.L01 Check — Why Light Travels in Glass"
+          title="Check — Why Light Travels in Glass"
           mode="multiple-choice"
           questions={[
             {

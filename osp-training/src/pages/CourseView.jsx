@@ -113,7 +113,7 @@ export default function CourseView() {
                   <>
                     <Link to={back.to} className="hover:text-amber-300 transition">{back.label}</Link>
                     {' → '}
-                    <span className="font-mono">{courseId}</span>
+                    <span>{course.title}</span>
                   </>
                 );
               })()}
@@ -146,7 +146,7 @@ export default function CourseView() {
           {course.prerequisites?.length > 0 && (
             <>
               <span>&middot;</span>
-              <span>Prereq topics: {course.prerequisites.join(', ')}</span>
+              <span>Prereq topics: {course.prerequisites.map(id => courses.find(c => c.id === id)?.title || id).join(', ')}</span>
             </>
           )}
         </div>

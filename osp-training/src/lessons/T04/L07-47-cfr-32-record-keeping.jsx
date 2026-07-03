@@ -545,10 +545,10 @@ export default function T04L07_47CFR32RecordKeeping() {
       <GatedAssessment
         courseId="T04"
         assessmentId="T04-L07"
-        title="T04.L07 Check — 47 CFR 32 Record-Keeping"
+        title="Check — 47 CFR 32 Record-Keeping"
         fallback={
       <Quiz
-        title="T04.L07 Check — 47 CFR 32 Record-Keeping"
+        title="Check — 47 CFR 32 Record-Keeping"
         mode="multiple-choice"
         questions={[
           {

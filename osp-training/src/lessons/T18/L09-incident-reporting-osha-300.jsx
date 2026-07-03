@@ -365,10 +365,10 @@ export default function T18L09_IncidentReportingOSHA300() {
       <GatedAssessment
         courseId="T18"
         assessmentId="T18-L09"
-        title="T18.L09 Check — Incident Reporting & OSHA 300"
+        title="Check — Incident Reporting & OSHA 300"
         fallback={
         <Quiz
-          title="T18.L09 Check — Incident Reporting &amp; OSHA 300"
+          title="Check — Incident Reporting &amp; OSHA 300"
           mode="multiple-choice"
           questions={[
             {

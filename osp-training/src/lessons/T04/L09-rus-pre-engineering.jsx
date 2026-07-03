@@ -458,10 +458,10 @@ export default function T04L09_RusPreEngineering() {
       <GatedAssessment
         courseId="T04"
         assessmentId="T04-L09"
-        title="T04.L09 Check — Pre-Engineering for RUS Jobs"
+        title="Check — Pre-Engineering for RUS Jobs"
         fallback={
       <Quiz
-        title="T04.L09 Check — Pre-Engineering for RUS Jobs"
+        title="Check — Pre-Engineering for RUS Jobs"
         mode="multiple-choice"
         questions={[
           {

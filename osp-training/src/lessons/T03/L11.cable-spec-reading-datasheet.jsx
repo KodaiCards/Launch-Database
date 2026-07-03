@@ -368,10 +368,10 @@ export default function T03L11_DatasheetReading() {
       <GatedAssessment
         courseId="T03"
         assessmentId="T03-L11"
-        title="L11 Knowledge Check"
+        title="Knowledge Check"
         fallback={
         <Quiz
-          title="L11 Knowledge Check"
+          title="Knowledge Check"
           mode="multiple-choice"
           questions={[
             {

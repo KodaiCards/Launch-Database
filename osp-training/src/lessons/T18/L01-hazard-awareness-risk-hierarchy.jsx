@@ -335,10 +335,10 @@ export default function T18L01_HazardAwarenessRiskHierarchy() {
       <GatedAssessment
         courseId="T18"
         assessmentId="T18-L01"
-        title="T18.L01 Check — Hazard Awareness & the Risk Hierarchy"
+        title="Check — Hazard Awareness & the Risk Hierarchy"
         fallback={
         <Quiz
-          title="T18.L01 Check — Hazard Awareness & the Risk Hierarchy"
+          title="Check — Hazard Awareness & the Risk Hierarchy"
           mode="multiple-choice"
           questions={[
             {

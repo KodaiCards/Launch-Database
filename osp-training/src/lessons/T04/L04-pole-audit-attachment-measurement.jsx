@@ -476,10 +476,10 @@ export default function T04L04_PoleAuditAttachmentMeasurement() {
       <GatedAssessment
         courseId="T04"
         assessmentId="T04-L04"
-        title="T04.L04 Check — Pole Audit and Attachment Measurement"
+        title="Check — Pole Audit and Attachment Measurement"
         fallback={
       <Quiz
-        title="T04.L04 Check — Pole Audit and Attachment Measurement"
+        title="Check — Pole Audit and Attachment Measurement"
         mode="multiple-choice"
         questions={[
           {

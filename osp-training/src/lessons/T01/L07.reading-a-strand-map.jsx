@@ -298,10 +298,10 @@ export default function T01L07_ReadingAStrandMap() {
       <GatedAssessment
         courseId="T01"
         assessmentId="T01-L07"
-        title="T01.L07 Check — Reading a Strand Map"
+        title="Check — Reading a Strand Map"
         fallback={
         <Quiz
-          title="T01.L07 Check — Reading a Strand Map"
+          title="Check — Reading a Strand Map"
           mode="multiple-choice"
           questions={[
             {

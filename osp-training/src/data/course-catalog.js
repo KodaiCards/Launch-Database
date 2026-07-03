@@ -362,7 +362,7 @@ export const courses = [
     lesson_count: 1,
     prerequisites: ['T01','T02','T03','T04','T05','T06','T07','T08','T09','T10','T11','T12','T13','T14','T15','T16','T17','T18','T19'],
     description:
-      '60-question comprehensive final exam covering all general OSP topics T01–T19. Passing threshold: 80%. Fixed-answer assessment to confirm mastery before certification prep tracks.',
+      '60-question comprehensive final exam covering every general OSP topic, Fundamentals through Headend / CO + Rack-Side Hardware Basics. Passing threshold: 80%. Fixed-answer assessment to confirm mastery before certification prep tracks.',
   },
 ];
 
@@ -757,7 +757,7 @@ export const lessonTitleIndex = {
   'T02.L09': 'Polarization Mode Dispersion (PMD) — Advanced',
   'T02.L10': 'Fiber Characterization Testing',
   'T02.L11': 'Fiber Physics in the Field vs. the Book',
-  'T02.L12': 'T02 Capstone Quiz — Fiber Physics',
+  'T02.L12': 'Capstone Quiz — Fiber Physics',
   // ── T01 Fundamentals & Vocabulary ──────────────────────────────────
   'T01.L01': 'What is OSP vs. ISP?',
   'T01.L02': 'Parts of a Pole',
@@ -768,7 +768,7 @@ export const lessonTitleIndex = {
   'T01.L07': 'Reading a Strand Map',
   'T01.L08': 'Key Acronyms Field Reference',
   'T01.L09': 'OSP Standards Landscape',
-  'T01.L10': 'T01 Capstone Quiz — Fundamentals & Vocabulary',
+  'T01.L10': 'Capstone Quiz — Fundamentals & Vocabulary',
   // ── T03 Cable Selection & Materials ────────────────────────────────
   'T03.L01': 'Loose-Tube vs. Tight-Buffer vs. Ribbon',
   'T03.L02': 'OSP vs. Riser vs. Indoor/Outdoor Rating',
@@ -781,7 +781,7 @@ export const lessonTitleIndex = {
   'T03.L09': 'ADSS Span, Wind, and Ice Loading',
   'T03.L10': 'ICEA S-87-640 & 7 CFR 1755.902 — Standards Compliance',
   'T03.L11': 'Cable Specification Reading — Real Datasheet',
-  'T03.L12': 'T03 Capstone Quiz — Cable Selection & Materials',
+  'T03.L12': 'Capstone Quiz — Cable Selection & Materials',
   // ── T04 Route Survey & Pre-Engineering ─────────────────────────────
   'T04.L01': 'The Site Walk — What You\'re Looking For',
   'T04.L02': 'Drone and LiDAR Survey Methods',
@@ -792,7 +792,7 @@ export const lessonTitleIndex = {
   'T04.L07': 'Record-Keeping Requirements — 47 CFR Part 32',
   'T04.L08': 'Handing Off to Design',
   'T04.L09': 'Pre-Engineering for RUS Jobs',
-  'T04.L10': 'T04 Capstone Quiz — Route Survey & Pre-Engineering',
+  'T04.L10': 'Capstone Quiz — Route Survey & Pre-Engineering',
   // ── T05 OSP Design — Aerial ────────────────────────────────────────
   'T05.L01': 'What NESC Is and How to Read It',
   'T05.L02': 'Vertical Clearance — Rule 232',
@@ -869,7 +869,7 @@ export const lessonTitleIndex = {
   'T18.L07': 'Working Near Energized Conductors — MAD/MAB',
   'T18.L08': 'Hazardous Materials on an OSP Job',
   'T18.L09': 'Incident Reporting & OSHA 300',
-  'T18.L10': 'T18 Capstone Quiz — Safety & OSHA',
+  'T18.L10': 'Capstone Quiz — Safety & OSHA',
   // ── T19 Headend / CO + Rack-Side Hardware Basics ───────────────────
   'T19.L01': 'CO / Hut / Headend — What the Building Is',
   'T19.L02': 'OLT and CMTS as Black Boxes',

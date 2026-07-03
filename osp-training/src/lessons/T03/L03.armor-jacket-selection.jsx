@@ -403,10 +403,10 @@ export default function T03L03_ArmorJacketSelection() {
       <GatedAssessment
         courseId="T03"
         assessmentId="T03-L03"
-        title="T03.L03 Check — Armor and Jacket Selection"
+        title="Check — Armor and Jacket Selection"
         fallback={
         <Quiz
-          title="T03.L03 Check — Armor and Jacket Selection"
+          title="Check — Armor and Jacket Selection"
           mode="multiple-choice"
           questions={[
             {

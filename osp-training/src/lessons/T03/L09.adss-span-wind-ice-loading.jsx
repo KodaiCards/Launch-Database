@@ -535,10 +535,10 @@ export default function T03L09_ADSSSpanWindIceLoading() {
       <GatedAssessment
         courseId="T03"
         assessmentId="T03-L09"
-        title="T03.L09 Check — ADSS Span, Wind, and Ice Loading"
+        title="Check — ADSS Span, Wind, and Ice Loading"
         fallback={
         <Quiz
-          title="T03.L09 Check — ADSS Span, Wind, and Ice Loading"
+          title="Check — ADSS Span, Wind, and Ice Loading"
           mode="multiple-choice"
           questions={[
             {

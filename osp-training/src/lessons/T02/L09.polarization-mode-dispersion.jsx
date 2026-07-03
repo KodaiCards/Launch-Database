@@ -317,10 +317,10 @@ Step 4:          = 1.41 ps`}
       <GatedAssessment
         courseId="T02"
         assessmentId="T02-L09"
-        title="T02.L09 Check — PMD"
+        title="Check — PMD"
         fallback={
         <Quiz
-          title="T02.L09 Check — PMD"
+          title="Check — PMD"
           mode="multiple-choice"
           questions={[
             {

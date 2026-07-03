@@ -332,10 +332,10 @@ Step 5: ΔT = 170 ps`}
       <GatedAssessment
         courseId="T02"
         assessmentId="T02-L03"
-        title="T02.L03 Check — Dispersion"
+        title="Check — Dispersion"
         fallback={
         <Quiz
-          title="T02.L03 Check — Dispersion"
+          title="Check — Dispersion"
           mode="multiple-choice"
           questions={[
             {

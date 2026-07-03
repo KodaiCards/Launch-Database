@@ -16,6 +16,7 @@
 import React, { useState, useEffect, createContext, useContext, useCallback } from 'react';
 import { Link, useNavigate, useParams } from 'react-router-dom';
 import { useProgress } from '../hooks/useProgress.js';
+import { courses, lessonTitleIndex } from '../data/course-catalog.js';
 
 // Lets Quiz (and other interactive primitives) report their score to the parent
 // lesson so markComplete() is called with a real score once the learner passes.
@@ -128,14 +129,15 @@ function PrereqStrip({ prerequisites, courseId }) {
         // prereqId format: "T02.L01" → course T02, lesson L01
         const [topicId, lessonPart] = prereqId.split('.');
         const lessonId = lessonPart?.replace('L', '') || '01';
+        const lessonTitle = lessonTitleIndex[prereqId] || `Lesson ${Number(lessonId)}`;
         return (
           <React.Fragment key={prereqId}>
             {idx > 0 && <span className="text-slate-500 mx-1">·</span>}
             <Link
               to={`/course/${topicId}/lesson/${String(Number(lessonId)).padStart(2, '0')}`}
-              className="font-mono text-amber-300/90 hover:text-amber-200 underline decoration-dotted"
+              className="text-amber-300/90 hover:text-amber-200 underline decoration-dotted"
             >
-              {prereqId}
+              {lessonTitle}
             </Link>
           </React.Fragment>
         );
@@ -251,7 +253,7 @@ export function LessonLayout({ meta, children }) {
           <div className="flex items-start justify-between gap-4 flex-wrap">
             <div>
               <div className="text-xs uppercase tracking-widest text-slate-300/60 mb-1">
-                {meta.course_id} &middot; L{String(meta.order).padStart(2, '0')}
+                {(courses.find(c => c.id === meta.course_id)?.title || meta.course_id)} &middot; Lesson {meta.order}
               </div>
               <h1 className="text-2xl font-bold text-slate-50">{meta.title}</h1>
             </div>

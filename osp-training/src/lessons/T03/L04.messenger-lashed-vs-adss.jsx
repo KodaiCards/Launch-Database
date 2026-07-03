@@ -460,10 +460,10 @@ export default function T03L04_MessengerLashedVsADSS() {
       <GatedAssessment
         courseId="T03"
         assessmentId="T03-L04"
-        title="T03.L04 Check — Messenger Cable, Lashed vs. ADSS"
+        title="Check — Messenger Cable, Lashed vs. ADSS"
         fallback={
         <Quiz
-          title="T03.L04 Check — Messenger Cable, Lashed vs. ADSS"
+          title="Check — Messenger Cable, Lashed vs. ADSS"
           mode="multiple-choice"
           questions={[
             {

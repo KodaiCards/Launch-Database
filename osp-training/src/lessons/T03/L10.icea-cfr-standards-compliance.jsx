@@ -3,6 +3,7 @@
 
 import React from 'react';
 import LessonLayout from '../../components/LessonLayout.jsx';
+import ReferencesBlock from '../../components/ReferencesBlock.jsx';
 import Flashcard from '../../components/Flashcard.jsx';
 import Quiz from '../../components/primitives/Quiz.jsx';
 import GatedAssessment from '../../components/primitives/GatedAssessment.jsx';
@@ -324,6 +325,14 @@ export default function T03L10_StandardsCompliance() {
         </section>
       </section>
 
+      <ReferencesBlock
+        items={[
+          { citation: 'ICEA S-87-640', note: 'Construction standard for OSP fiber cable — physical, mechanical, optical, and environmental performance requirements.' },
+          { citation: '7 CFR 1755.902', note: 'RUS minimum performance specification for fiber optic cable — the federal compliance floor on RUS-financed projects.' },
+          { citation: 'RUS Bulletin 1753F-201', note: 'Acceptance tests and measurements for telecommunications plant — what gets verified on each cable shipment.' },
+        ]}
+      />
+
       {/* FLASHCARDS */}
       <Flashcard
         deckId="T03-L10"
@@ -350,10 +359,10 @@ export default function T03L10_StandardsCompliance() {
       <GatedAssessment
         courseId="T03"
         assessmentId="T03-L10"
-        title="L10 Knowledge Check"
+        title="Knowledge Check"
         fallback={
         <Quiz
-          title="L10 Knowledge Check"
+          title="Knowledge Check"
           mode="multiple-choice"
           questions={[
             {

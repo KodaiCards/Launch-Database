@@ -357,10 +357,10 @@ Total loss:                               9.60 dB`}
       <GatedAssessment
         courseId="T02"
         assessmentId="T02-L06"
-        title="T02.L06 Check — Link Budget"
+        title="Check — Link Budget"
         fallback={
         <Quiz
-          title="T02.L06 Check — Link Budget"
+          title="Check — Link Budget"
           mode="multiple-choice"
           questions={[
             {

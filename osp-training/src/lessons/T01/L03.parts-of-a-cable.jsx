@@ -317,10 +317,10 @@ export default function T01L03_PartsOfACable() {
       <GatedAssessment
         courseId="T01"
         assessmentId="T01-L03"
-        title="T01.L03 Check — Parts of a Cable"
+        title="Check — Parts of a Cable"
         fallback={
         <Quiz
-          title="T01.L03 Check — Parts of a Cable"
+          title="Check — Parts of a Cable"
           mode="multiple-choice"
           questions={[
             {

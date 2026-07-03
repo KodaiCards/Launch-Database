@@ -302,10 +302,10 @@ export default function T02L11_FiberPhysicsFieldVsBook() {
       <GatedAssessment
         courseId="T02"
         assessmentId="T02-L11"
-        title="T02.L11 Check — Field vs. Book"
+        title="Check — Field vs. Book"
         fallback={
         <Quiz
-          title="T02.L11 Check — Field vs. Book"
+          title="Check — Field vs. Book"
           mode="multiple-choice"
           questions={[
             {

@@ -571,10 +571,10 @@ export default function T18L03_ConfinedSpaceEntry() {
       <GatedAssessment
         courseId="T18"
         assessmentId="T18-L03"
-        title="T18.L03 Check — Confined Space Entry"
+        title="Check — Confined Space Entry"
         fallback={
         <Quiz
-          title="T18.L03 Check — Confined Space Entry"
+          title="Check — Confined Space Entry"
           mode="multiple-choice"
           questions={[
             {

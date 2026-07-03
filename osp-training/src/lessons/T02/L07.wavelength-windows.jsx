@@ -360,10 +360,10 @@ export default function T02L07_WavelengthWindows() {
       <GatedAssessment
         courseId="T02"
         assessmentId="T02-L07"
-        title="T02.L07 Check — Wavelength Windows"
+        title="Check — Wavelength Windows"
         fallback={
         <Quiz
-          title="T02.L07 Check — Wavelength Windows"
+          title="Check — Wavelength Windows"
           mode="multiple-choice"
           questions={[
             {

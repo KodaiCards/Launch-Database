@@ -430,10 +430,10 @@ export default function T04L06_KmzShapefilePdfDeliverables() {
       <GatedAssessment
         courseId="T04"
         assessmentId="T04-L06"
-        title="T04.L06 Check — Delivery Formats"
+        title="Check — Delivery Formats"
         fallback={
       <Quiz
-        title="T04.L06 Check — Delivery Formats"
+        title="Check — Delivery Formats"
         mode="multiple-choice"
         questions={[
           {

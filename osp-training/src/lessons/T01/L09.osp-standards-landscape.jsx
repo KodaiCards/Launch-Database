@@ -472,10 +472,10 @@ export default function T01L09_OspStandardsLandscape() {
       <GatedAssessment
         courseId="T01"
         assessmentId="T01-L09"
-        title="T01.L09 Check — OSP Standards Landscape"
+        title="Check — OSP Standards Landscape"
         fallback={
         <Quiz
-          title="T01.L09 Check — OSP Standards Landscape"
+          title="Check — OSP Standards Landscape"
           mode="multiple-choice"
           questions={[
             {

@@ -285,10 +285,10 @@ Total:                               7.95 dB`}
       <GatedAssessment
         courseId="T02"
         assessmentId="T02-L05"
-        title="T02.L05 Check — Decibels"
+        title="Check — Decibels"
         fallback={
         <Quiz
-          title="T02.L05 Check — Decibels"
+          title="Check — Decibels"
           mode="multiple-choice"
           questions={[
             {
