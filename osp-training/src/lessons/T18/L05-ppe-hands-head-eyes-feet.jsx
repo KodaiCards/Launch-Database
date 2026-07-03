@@ -359,6 +359,7 @@ export default function T18L05_PPEHandsHeadEyesFeet() {
           { citation: '29 CFR 1910.137', note: 'Electrical protective equipment — rubber insulating glove class ratings and re-test intervals (with ASTM D120).' },
           { citation: '29 CFR 1910.132', note: 'General PPE standard — employer hazard assessment and PPE provided at no cost to the employee.' },
           { citation: 'ANSI/ISEA Z89.1', note: 'Hard hat types and classes (E/G/C) — electrical and impact ratings.' },
+          { citation: '29 CFR 1910.136', note: 'Foot protection standard — when protective footwear is required.' },
           { citation: 'ASTM F2412 / F2413', note: 'Foot protection test method and performance spec — EH (electrical hazard) rating.' },
           { citation: 'ANSI/ISEA 107 [confirm edition]', note: 'High-visibility apparel classes 1–3 for roadway work; also referenced by MUTCD Part 6.' },
           { citation: 'ASTM D120', note: 'Rubber insulating glove specification and in-service inspection/re-test requirements.' },

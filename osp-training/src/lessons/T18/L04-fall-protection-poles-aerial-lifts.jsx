@@ -455,7 +455,7 @@ export default function T18L04_FallProtectionPolesAerialLifts() {
               id: 'T18-L04-Q1',
               type: 'mc',
               prompt:
-                'Under 29 CFR 1910.268(g)(1), fall protection is required when working on a pole at what height above ground?',
+                'Fall protection is required when working on a pole at what height above ground?',
               choices: [
                 '6 feet (same as construction industry)',
                 '10 feet',

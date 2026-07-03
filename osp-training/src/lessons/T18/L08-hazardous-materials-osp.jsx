@@ -238,8 +238,8 @@ export default function T18L08_HazardousMaterialsOSP() {
               spatter). Heat-resistant gloves during fusion work. If working in a confined vault
               with heat fusion, the confined space atmospheric monitoring requirements also apply:
               CO buildup from HDPE fumes in a poorly ventilated vault can approach hazardous
-              concentrations. <em>See the Confined Space Entry lesson for full atmospheric
-              monitoring procedures and IDLH thresholds — the forced-air blower requirement
+              concentrations. <em>See the Confined Space Entry — Manholes &amp; Vaults lesson for full
+              atmospheric monitoring procedures and IDLH thresholds — the forced-air blower requirement
               and atmospheric testing protocol for manhole entry apply simultaneously with any
               heat fusion or cutting work in an enclosed vault.</em>
             </p>

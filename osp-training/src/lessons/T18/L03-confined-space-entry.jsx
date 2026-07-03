@@ -228,7 +228,7 @@ export default function T18L03_ConfinedSpaceEntry() {
         </div>
 
         <p>
-          This is the most important book-vs-field gap in the entire T18 topic. Getting this
+          This is the most important book-vs-field gap in this entire safety topic. Getting this
           wrong causes one of two equally bad outcomes: crews who skip atmospheric testing
           entirely ("we don't need a permit for manholes"), or crews who grind work to a halt
           with full PRCS permit paperwork every time they open a manhole cover.
@@ -382,6 +382,7 @@ export default function T18L03_ConfinedSpaceEntry() {
           { citation: '29 CFR 1910.5(c)(1)', note: 'A specific standard (1910.268) supersedes a more general standard (1910.146) when both could apply.' },
           { citation: '29 CFR 1910.146(d)(11) + Appendix E', note: 'Multi-employer worksite coordination for confined space entry.' },
           { citation: 'NIOSH IDLH — CAS 7783-06-4 (H₂S)', note: '100 ppm IDLH for hydrogen sulfide (cdc.gov/niosh/idlh/7783064.html).' },
+          { citation: 'NIOSH Pocket Guide to Chemical Hazards — H₂S entry', note: 'cdc.gov/niosh/npg/npgd0337.html.' },
           { citation: '29 CFR 1926.55', note: 'Construction industry H₂S permissible exposure limit — 10 ppm TWA.' },
           { citation: '29 CFR 1910.1000 Table Z-2', note: 'General industry H₂S limits — 20 ppm ceiling, 50 ppm 10-minute peak.' },
         ]}
