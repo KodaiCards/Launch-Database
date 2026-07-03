@@ -30,3 +30,5 @@ A trainee can take all 5 topics: natural lesson names, plain teach-then-apply pr
 WO-1 (leak strip) and WO-3 (premerge script) — parallel-safe, claim immediately. WO-2 — one issue per topic (5), rolling; T0x/L0x rename touches `course-catalog.js` → belongs to the wave's `shared-infra` claimant. WO-4 (settings layout) — independent. Pin the `shared-infra` issue first.
 
 ## Then (same crew, no pause): wave 2 = T09 → T05 → T06 authored under PRODUCT_BAR §1 from the start.
+
+**⚠ Wave-2 stranded value (found at branch prune, 2026-07-02):** the pre-canon org left UNMERGED work at tag `archive/2026-07-02/claude-ceo-fresh-instance-boot-u2zw28` — T05/T06 wiring + red-team, T19 pools, a T05-L03 formative-quiz grading fix, T09 material. First wave-2 package = **evaluate integrating that work through the NEW gate** (VO verifies vs PRODUCT_BAR + citations) rather than re-authoring — it passed the old accuracy gate but predates the readability bar. Salvage what verifies; re-author what doesn't.
