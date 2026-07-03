@@ -1,5 +1,5 @@
 # SPEC: training-fix — make the live 5 topics fully operational
-> Status: **DRAFT** (ratifies at canon walkthrough). The new org's FIRST MISSION. Scope: T01 Fundamentals · T18 Safety/OSHA · T02 Fiber Physics · T03 Cable Selection · T04 Route Survey — live on launchfiber.app right now with known defects. Done = a trainee experiences a clean, readable, honest course. Rolling: ship fixes as they clear, don't hold the batch.
+> Status: **RATIFIED** (Carter, 2026-07-02, canon walkthrough sign-off). The new org's FIRST MISSION. Scope: T01 Fundamentals · T18 Safety/OSHA · T02 Fiber Physics · T03 Cable Selection · T04 Route Survey — live on launchfiber.app right now with known defects. Done = a trainee experiences a clean, readable, honest course. Rolling: ship fixes as they clear, don't hold the batch.
 
 ## WO-1 — Strip internal-note leakage (mechanical, first)
 ~95 occurrences in `content/training/assessment-pools/*.json` answer explanations + lesson prose (worst known: `osp-training/src/lessons/T03/L05...jsx:371`): "see TXX research log", "UNVERIFIED-EXACT", bracketed audit hedges, "not a graded quiz"-class process notes.
