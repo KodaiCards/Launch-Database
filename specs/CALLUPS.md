@@ -18,4 +18,3 @@
 | *12 | Topic-scope ranking beyond the DAG | As Track 1 wave 2 closes | Carter ranks/cuts the remaining tail if speed demands |
 | *13 | Theme light-set + unification (engine/picker/4 dark skins LIVE — remaining: 4 light themes, training-admin + SPA onto the catalog) | UI-pass spec session (2.1) | ~15 min; seed = specs/ideas/theme-picker.md |
 | *14 | RUS daily paperwork tool — build or consciously skip (field-first PWA; merges with L-009 one-mobile-flow) | THE MOMENT the next construction contract is approved, or Carter raises it | priority call; seed = specs/ideas/rus-daily-paperwork.md |
-| *15 | Hours rounding policy — silent 0.25 snap vs reject vs store-raw (timeclock stores raw today) | Hours spec session (2.6) | 5-min policy call; seed = specs/ideas/hours-rounding-policy.md |

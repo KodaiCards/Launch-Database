@@ -1,2 +1,2 @@
-# Hours rounding — a CARTER policy decision (rescued: O22, pre-canon)
+# Hours rounding — DECIDED (L-014, 2026-07-03): 0.25 snap platform-wide
 Manual + CSV hours snap to 0.25h (snapHoursToQuarter, test-locked intentional) but the TIMECLOCK stores raw 2-decimal; editing a timeclock entry silently snaps it. Inconsistent + silent = trust risk in the linchpin system. Decision needed: silent-snap everywhere vs reject-non-grid vs store-raw-display-snapped. Changing it updates hours_quarter_snap.test.js. → Call-up *15 (hours spec session 2.6).
