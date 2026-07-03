@@ -13,10 +13,11 @@
  *   ]} />
  */
 
-import React, { useState } from 'react';
+import React, { useId, useState } from 'react';
 
 export default function ReferencesBlock({ items = [], title = 'References', children }) {
   const [open, setOpen] = useState(false);
+  const bodyId = `references-block-body-${useId()}`;
 
   if ((!items || items.length === 0) && !children) return null;
 
@@ -27,7 +28,7 @@ export default function ReferencesBlock({ items = [], title = 'References', chil
         onClick={() => setOpen(o => !o)}
         className="w-full flex items-center gap-2 px-4 py-2.5 text-left"
         aria-expanded={open}
-        aria-controls="references-block-body"
+        aria-controls={bodyId}
       >
         <span className="text-xs font-bold uppercase tracking-widest text-slate-300">
           {title}
@@ -46,7 +47,7 @@ export default function ReferencesBlock({ items = [], title = 'References', chil
       </button>
 
       {open && (
-        <div id="references-block-body" className="px-4 pb-4 space-y-2 text-sm text-slate-300/90">
+        <div id={bodyId} className="px-4 pb-4 space-y-2 text-sm text-slate-300/90">
           {items.map((item, i) => (
             <div
               key={item.citation || i}
