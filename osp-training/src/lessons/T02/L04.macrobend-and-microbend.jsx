@@ -375,10 +375,10 @@ export default function T02L04_MacrobendAndMicrobend() {
       <GatedAssessment
         courseId="T02"
         assessmentId="T02-L04"
-        title="T02.L04 Check — Macrobend and Microbend"
+        title="Check — Macrobend and Microbend"
         fallback={
         <Quiz
-          title="T02.L04 Check — Macrobend and Microbend"
+          title="Check — Macrobend and Microbend"
           mode="multiple-choice"
           questions={[
             {

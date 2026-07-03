@@ -453,10 +453,10 @@ Which route do you recommend documenting as the preferred option in the handoff 
       <GatedAssessment
         courseId="T04"
         assessmentId="T04-L05"
-        title="T04.L05 Check — Route Alternatives Analysis"
+        title="Check — Route Alternatives Analysis"
         fallback={
       <Quiz
-        title="T04.L05 Check — Route Alternatives Analysis"
+        title="Check — Route Alternatives Analysis"
         mode="multiple-choice"
         questions={[
           {

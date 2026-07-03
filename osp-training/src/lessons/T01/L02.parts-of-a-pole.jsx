@@ -336,10 +336,10 @@ export default function T01L02_PartsOfAPole() {
       <GatedAssessment
         courseId="T01"
         assessmentId="T01-L02"
-        title="T01.L02 Check — Parts of a Pole"
+        title="Check — Parts of a Pole"
         fallback={
         <Quiz
-          title="T01.L02 Check — Parts of a Pole"
+          title="Check — Parts of a Pole"
           mode="multiple-choice"
           questions={[
             {

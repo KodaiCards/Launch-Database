@@ -434,10 +434,10 @@ export default function T18L05_PPEHandsHeadEyesFeet() {
       <GatedAssessment
         courseId="T18"
         assessmentId="T18-L05"
-        title="T18.L05 Check — PPE: Hands, Head, Eyes, Feet"
+        title="Check — PPE: Hands, Head, Eyes, Feet"
         fallback={
         <Quiz
-          title="T18.L05 Check — PPE: Hands, Head, Eyes, Feet"
+          title="Check — PPE: Hands, Head, Eyes, Feet"
           mode="multiple-choice"
           questions={[
             {

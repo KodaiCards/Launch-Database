@@ -324,10 +324,10 @@ export default function T01L01_OspVsIsp() {
       <GatedAssessment
         courseId="T01"
         assessmentId="T01-L01"
-        title="T01.L01 Check — OSP vs. ISP"
+        title="Check — OSP vs. ISP"
         fallback={
         <Quiz
-          title="T01.L01 Check — OSP vs. ISP"
+          title="Check — OSP vs. ISP"
           mode="multiple-choice"
           questions={[
             {

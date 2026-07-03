@@ -451,10 +451,10 @@ export default function T18L08_HazardousMaterialsOSP() {
       <GatedAssessment
         courseId="T18"
         assessmentId="T18-L08"
-        title="T18.L08 Check — Hazardous Materials on an OSP Job"
+        title="Check — Hazardous Materials on an OSP Job"
         fallback={
         <Quiz
-          title="T18.L08 Check — Hazardous Materials on an OSP Job"
+          title="Check — Hazardous Materials on an OSP Job"
           mode="multiple-choice"
           questions={[
             {

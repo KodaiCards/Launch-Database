@@ -315,10 +315,10 @@ export default function T02L10_FiberCharacterizationTesting() {
       <GatedAssessment
         courseId="T02"
         assessmentId="T02-L10"
-        title="T02.L10 Check — Fiber Characterization"
+        title="Check — Fiber Characterization"
         fallback={
         <Quiz
-          title="T02.L10 Check — Fiber Characterization"
+          title="Check — Fiber Characterization"
           mode="multiple-choice"
           questions={[
             {

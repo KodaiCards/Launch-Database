@@ -311,10 +311,10 @@ export default function T01L04_InsideASpliceCase() {
       <GatedAssessment
         courseId="T01"
         assessmentId="T01-L04"
-        title="T01.L04 Check — Inside a Splice Case"
+        title="Check — Inside a Splice Case"
         fallback={
         <Quiz
-          title="T01.L04 Check — Inside a Splice Case"
+          title="Check — Inside a Splice Case"
           mode="multiple-choice"
           questions={[
             {

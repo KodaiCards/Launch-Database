@@ -425,10 +425,10 @@ export default function T18L02_LockoutTagout() {
       <GatedAssessment
         courseId="T18"
         assessmentId="T18-L02"
-        title="T18.L02 Check — Lockout/Tagout"
+        title="Check — Lockout/Tagout"
         fallback={
         <Quiz
-          title="T18.L02 Check — Lockout/Tagout"
+          title="Check — Lockout/Tagout"
           mode="multiple-choice"
           questions={[
             {

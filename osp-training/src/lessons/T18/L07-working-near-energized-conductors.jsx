@@ -389,10 +389,10 @@ export default function T18L07_WorkingNearEnergizedConductors() {
       <GatedAssessment
         courseId="T18"
         assessmentId="T18-L07"
-        title="T18.L07 Check — Working Near Energized Conductors"
+        title="Check — Working Near Energized Conductors"
         fallback={
         <Quiz
-          title="T18.L07 Check — Working Near Energized Conductors"
+          title="Check — Working Near Energized Conductors"
           mode="multiple-choice"
           questions={[
             {

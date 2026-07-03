@@ -383,10 +383,10 @@ export default function T03L06_CableSheathJacketMaterial() {
       <GatedAssessment
         courseId="T03"
         assessmentId="T03-L06"
-        title="T03.L06 Check — Cable Sheath & Jacket Material"
+        title="Check — Cable Sheath & Jacket Material"
         fallback={
         <Quiz
-          title="T03.L06 Check — Cable Sheath & Jacket Material"
+          title="Check — Cable Sheath & Jacket Material"
           mode="multiple-choice"
           questions={[
             {

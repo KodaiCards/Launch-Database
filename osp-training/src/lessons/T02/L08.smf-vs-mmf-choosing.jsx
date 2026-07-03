@@ -393,10 +393,10 @@ export default function T02L08_SMFvsMMFChoosing() {
       <GatedAssessment
         courseId="T02"
         assessmentId="T02-L08"
-        title="T02.L08 Check — SMF vs. MMF"
+        title="Check — SMF vs. MMF"
         fallback={
         <Quiz
-          title="T02.L08 Check — SMF vs. MMF"
+          title="Check — SMF vs. MMF"
           mode="multiple-choice"
           questions={[
             {

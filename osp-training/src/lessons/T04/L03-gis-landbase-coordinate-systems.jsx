@@ -412,10 +412,10 @@ export default function T04L03_GISLandbaseCoordinateSystems() {
       <GatedAssessment
         courseId="T04"
         assessmentId="T04-L03"
-        title="T04.L03 Check — GIS Landbase and Coordinate Systems"
+        title="Check — GIS Landbase and Coordinate Systems"
         fallback={
       <Quiz
-        title="T04.L03 Check — GIS Landbase and Coordinate Systems"
+        title="Check — GIS Landbase and Coordinate Systems"
         mode="multiple-choice"
         questions={[
           {

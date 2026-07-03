@@ -443,10 +443,10 @@ export default function T18L04_FallProtectionPolesAerialLifts() {
       <GatedAssessment
         courseId="T18"
         assessmentId="T18-L04"
-        title="T18.L04 Check — Fall Protection"
+        title="Check — Fall Protection"
         fallback={
         <Quiz
-          title="T18.L04 Check — Fall Protection"
+          title="Check — Fall Protection"
           mode="multiple-choice"
           questions={[
             {

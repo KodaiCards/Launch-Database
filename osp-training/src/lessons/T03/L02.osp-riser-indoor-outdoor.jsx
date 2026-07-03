@@ -392,10 +392,10 @@ export default function T03L02_OSPRiserIndoorOutdoor() {
       <GatedAssessment
         courseId="T03"
         assessmentId="T03-L02"
-        title="T03.L02 Check — OSP vs. Riser vs. Indoor/Outdoor"
+        title="Check — OSP vs. Riser vs. Indoor/Outdoor"
         fallback={
         <Quiz
-          title="T03.L02 Check — OSP vs. Riser vs. Indoor/Outdoor"
+          title="Check — OSP vs. Riser vs. Indoor/Outdoor"
           mode="multiple-choice"
           questions={[
             {

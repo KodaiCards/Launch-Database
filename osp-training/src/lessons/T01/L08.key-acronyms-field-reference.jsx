@@ -404,10 +404,10 @@ export default function T01L08_KeyAcronymsFieldReference() {
       <GatedAssessment
         courseId="T01"
         assessmentId="T01-L08"
-        title="T01.L08 Check — Key Acronyms"
+        title="Check — Key Acronyms"
         fallback={
         <Quiz
-          title="T01.L08 Check — Key Acronyms"
+          title="Check — Key Acronyms"
           mode="drag-match"
           questions={[
             {

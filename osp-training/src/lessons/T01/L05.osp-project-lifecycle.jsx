@@ -386,10 +386,10 @@ export default function T01L05_OspProjectLifecycle() {
       <GatedAssessment
         courseId="T01"
         assessmentId="T01-L05"
-        title="T01.L05 Check — OSP Project Lifecycle"
+        title="Check — OSP Project Lifecycle"
         fallback={
         <Quiz
-          title="T01.L05 Check — OSP Project Lifecycle"
+          title="Check — OSP Project Lifecycle"
           mode="multiple-choice"
           questions={[
             {

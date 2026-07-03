@@ -506,10 +506,10 @@ export default function T04L01_SiteWalkHazardRecon() {
       <GatedAssessment
         courseId="T04"
         assessmentId="T04-L01"
-        title="T04.L01 Check — The Site Walk"
+        title="Check — The Site Walk"
         fallback={
       <Quiz
-        title="T04.L01 Check — The Site Walk"
+        title="Check — The Site Walk"
         mode="multiple-choice"
         questions={[
           {

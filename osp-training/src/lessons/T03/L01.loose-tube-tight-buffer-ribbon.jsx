@@ -414,10 +414,10 @@ export default function T03L01_LooseTubeTightBufferRibbon() {
       <GatedAssessment
         courseId="T03"
         assessmentId="T03-L01"
-        title="T03.L01 Check — Cable Construction Types"
+        title="Check — Cable Construction Types"
         fallback={
         <Quiz
-          title="T03.L01 Check — Cable Construction Types"
+          title="Check — Cable Construction Types"
           mode="multiple-choice"
           questions={[
             {

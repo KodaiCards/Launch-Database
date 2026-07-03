@@ -12,7 +12,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { Link, useParams, Navigate } from 'react-router-dom';
-import { lessonFileIndex } from '../data/course-catalog.js';
+import { lessonFileIndex, courses } from '../data/course-catalog.js';
 import ErrorBoundary from '../components/ErrorBoundary.jsx';
 import { useMyContent } from '../hooks/useMyContent.js';
 
@@ -44,18 +44,19 @@ function LessonSkeleton() {
 
 // ── Not-yet-authored placeholder ─────────────────────────────────────────────
 function LessonPlaceholder({ courseId, lessonOrder }) {
+  const courseTitle = courses.find(c => c.id === courseId)?.title || courseId;
   return (
     <div className="space-y-4">
       <div className="panel">
         <div className="text-xs uppercase tracking-widest text-slate-300/60 mb-1">
           <Link to="/" className="hover:text-amber-300 transition">All courses</Link>
           {' → '}
-          <Link to={`/course/${courseId}`} className="hover:text-amber-300 transition font-mono">{courseId}</Link>
+          <Link to={`/course/${courseId}`} className="hover:text-amber-300 transition">{courseTitle}</Link>
           {' → '}
-          <span className="font-mono">Lesson {lessonOrder}</span>
+          <span>Lesson {lessonOrder}</span>
         </div>
         <h1 className="text-2xl font-bold text-slate-50">
-          {courseId} · Lesson {lessonOrder}
+          {courseTitle} &middot; Lesson {lessonOrder}
         </h1>
       </div>
       <div className="panel text-center py-12 text-slate-400">

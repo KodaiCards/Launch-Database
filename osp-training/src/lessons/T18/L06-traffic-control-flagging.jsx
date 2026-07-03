@@ -449,10 +449,10 @@ export default function T18L06_TrafficControlFlagging() {
       <GatedAssessment
         courseId="T18"
         assessmentId="T18-L06"
-        title="T18.L06 Check — Traffic Control & Flagging"
+        title="Check — Traffic Control & Flagging"
         fallback={
         <Quiz
-          title="T18.L06 Check — Traffic Control &amp; Flagging"
+          title="Check — Traffic Control &amp; Flagging"
           mode="multiple-choice"
           questions={[
             {

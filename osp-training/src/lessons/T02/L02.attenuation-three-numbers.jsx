@@ -317,10 +317,10 @@ export default function T02L02_AttenuationThreeNumbers() {
       <GatedAssessment
         courseId="T02"
         assessmentId="T02-L02"
-        title="T02.L02 Check — Attenuation Three Numbers"
+        title="Check — Attenuation Three Numbers"
         fallback={
         <Quiz
-          title="T02.L02 Check — Attenuation Three Numbers"
+          title="Check — Attenuation Three Numbers"
           mode="multiple-choice"
           questions={[
             {

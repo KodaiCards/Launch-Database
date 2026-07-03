@@ -468,10 +468,10 @@ export default function T03L08_DropCableSelection() {
       <GatedAssessment
         courseId="T03"
         assessmentId="T03-L08"
-        title="T03.L08 Check — Drop Cable Selection"
+        title="Check — Drop Cable Selection"
         fallback={
         <Quiz
-          title="T03.L08 Check — Drop Cable Selection"
+          title="Check — Drop Cable Selection"
           mode="multiple-choice"
           questions={[
             {

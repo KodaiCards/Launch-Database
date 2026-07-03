@@ -336,10 +336,10 @@ export default function T01L06_WhoDoesWhat() {
       <GatedAssessment
         courseId="T01"
         assessmentId="T01-L06"
-        title="T01.L06 Check — Who Does What"
+        title="Check — Who Does What"
         fallback={
         <Quiz
-          title="T01.L06 Check — Who Does What"
+          title="Check — Who Does What"
           mode="multiple-choice"
           questions={[
             {

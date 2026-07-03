@@ -449,10 +449,10 @@ export default function T04L02_DroneLidarAerialSurvey() {
       <GatedAssessment
         courseId="T04"
         assessmentId="T04-L02"
-        title="T04.L02 Check — Drone and LiDAR Survey"
+        title="Check — Drone and LiDAR Survey"
         fallback={
       <Quiz
-        title="T04.L02 Check — Drone and LiDAR Survey"
+        title="Check — Drone and LiDAR Survey"
         mode="multiple-choice"
         questions={[
           {
