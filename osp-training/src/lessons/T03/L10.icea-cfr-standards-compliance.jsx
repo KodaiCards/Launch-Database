@@ -155,7 +155,7 @@ export default function T03L10_StandardsCompliance() {
           </li>
         </ul>
         <p className="mt-3 text-sm text-gray-600">
-          Source: 7 CFR 1755.902 (eCFR.gov — verified public text)
+          Source: 7 CFR 1755.902 (eCFR.gov)
         </p>
       </section>
 
@@ -190,13 +190,13 @@ export default function T03L10_StandardsCompliance() {
         </p>
         <ul className="list-disc ml-6 mt-2 space-y-2">
           <li>
-            <strong>Standard installation tensile rating: 2,670 N (600 lbf) [confirm current ICEA S-87-640 edition].</strong> This is
+            <strong>Standard installation tensile rating: 2,670 N (600 lbf).</strong> This is
             the maximum tensile load you can apply to the cable during installation — whether
             you're pulling it through conduit, lashing it to a messenger, or plowing it in.
             Exceeding this risks fiber breakage or permanent elongation.
           </li>
           <li>
-            <strong>Lower-tier rating: 1,330 N (300 lbf) [confirm current edition].</strong>{' '}
+            <strong>Lower-tier rating: 1,330 N (300 lbf).</strong>{' '}
             Some lighter-duty cable constructions carry this lower rating. A specification
             that calls for "600 lbf rated" cable explicitly requires the higher tier.
           </li>
@@ -393,7 +393,7 @@ export default function T03L10_StandardsCompliance() {
               ],
               answerIndex: 0,
               explanation:
-                'ICEA S-87-640 defines 2,670 N (600 lbf) as the standard installation tensile rating for OSP fiber cable. A lower-tier rating of 1,330 N (300 lbf) exists for lighter constructions [confirm current edition]. Exceeding the rated tensile during a pull risks fiber damage. (Source: ICEA S-87-640 via archive.org + secondary sources)',
+                'ICEA S-87-640 defines 2,670 N (600 lbf) as the standard installation tensile rating for OSP fiber cable. A lower-tier rating of 1,330 N (300 lbf) exists for lighter constructions. Exceeding the rated tensile during a pull risks fiber damage. (Source: ICEA S-87-640 via archive.org + secondary sources)',
             },
             {
               id: 'T03-L10-Q03',

@@ -46,7 +46,7 @@
       ],
       "answerIndex": 0,
       "explanation": "The demarcation point (demarc) is the formal handoff between OSP and ISP. In a residential FTTH deployment it is typically the ONT (or a small fiber termination box) at the customer premises entry. As-built documentation must clearly identify the demarc location — arguments about which side of the demarc a bad splice sits on are common on job sites.",
-      "citation": "Standard industry/BICSI OSP-vs-ISP demarcation convention referenced consistently across the sources checked for this pool (see T01.md research log)."
+      "citation": "Standard industry/BICSI OSP-vs-ISP demarcation convention."
     },
     {
       "id": "T01-L01-Q4",

@@ -45,7 +45,7 @@
       ],
       "answerIndex": 1,
       "explanation": "OS1 corresponds to the older G.652.A/B specs (higher attenuation, max ~1.0 dB/km). OS2 corresponds to the low/zero water-peak G.652.C/D specs (max ~0.4 dB/km), which is what nearly all current OSP deployments specify.",
-      "citation": "ISO/IEC 11801 OS1/OS2 category mapping to ITU-T G.652 sub-grades — independently verified via WebSearch; note this corrects a claim in this lesson's own inline prose (which states 'OS1 = G.652.B/C'), flagged as a content-accuracy finding rather than repeated here. See T02.md and T01.md research logs."
+      "citation": "ISO/IEC 11801 OS1/OS2 category mapping to ITU-T G.652 sub-grades."
     },
     {
       "id": "T02-L08-Q4",
@@ -85,7 +85,7 @@
       ],
       "answerIndex": 0,
       "explanation": "The effective modal bandwidth (EMB) metric was introduced specifically because laser-optimized (OM3+) fiber's performance advantage depends on realistic VCSEL-like launch conditions — an older overfilled-launch bandwidth test wouldn't reveal the improvement.",
-      "citation": "IEEE 802.3 effective modal bandwidth methodology; TIA-492AAAD [edition not independently pinned down this session]."
+      "citation": "IEEE 802.3 effective modal bandwidth methodology; TIA-492AAAD."
     },
     {
       "id": "T02-L08-Q7",

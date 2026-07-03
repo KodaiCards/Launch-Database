@@ -67,7 +67,7 @@
       ],
       "answerIndex": 1,
       "explanation": "NEC (National Electrical Code, NFPA 70) governs indoor/building electrical installations, including where OSP cable enters a building and how it must be grounded. NESC (National Electrical Safety Code, IEEE C2) governs outdoor overhead utility line construction — clearances, loading, attachment heights for aerial fiber. Both apply to a single fiber project, at different points along the route.",
-      "citation": "NFPA 70 (NEC) scope; IEEE C2 (NESC) scope — both independently verified this session (see T01.md)."
+      "citation": "NFPA 70 (NEC) scope; IEEE C2 (NESC) scope."
     },
     {
       "id": "T01-L08-Q5",
@@ -107,7 +107,7 @@
       ],
       "answerIndex": 1,
       "explanation": "OS2 (ISO/IEC 11801) corresponds to G.652.C or G.652.D single-mode fiber (low/zero water-peak) — the standard for OSP trunk and feeder runs, with maximum attenuation specified at 0.4 dB/km. OS1 maps to earlier G.652.A/B specs (max 1.0 dB/km), now rare in new installations.",
-      "citation": "ISO/IEC 11801 OS1/OS2 fiber category mapping to ITU-T G.652 sub-categories, corroborated via multiple independent fiber-industry technical summaries (see T01.md)."
+      "citation": "ISO/IEC 11801 OS1/OS2 fiber category mapping to ITU-T G.652 sub-categories."
     },
     {
       "id": "T01-L08-Q8",

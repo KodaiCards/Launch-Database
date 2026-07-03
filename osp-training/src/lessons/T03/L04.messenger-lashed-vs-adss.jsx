@@ -179,7 +179,7 @@ export default function T03L04_MessengerLashedVsADSS() {
           <strong>No metal = no bonding required.</strong> There is literally no metal
           in an ADSS cable — no steel, no aluminum, no copper. "No metal in the cable,
           therefore no bonding and grounding is required." (Source: CommScope ADSS vs.
-          Lashed Fiber blog, commscope.com — verified)
+          Lashed Fiber blog, commscope.com)
         </p>
         <p className="mt-2">
           This is a major cost advantage on joint-use aerial plant where utility poles
@@ -189,7 +189,7 @@ export default function T03L04_MessengerLashedVsADSS() {
         </p>
         <p className="mt-2">
           <strong>ADSS fiber count limit:</strong> ADSS is "usually a loose tube design
-          that have fiber counts up to 432F." (Source: CommScope ADSS blog — verified)
+          that have fiber counts up to 432F." (Source: CommScope ADSS blog)
           For higher fiber counts, lashed ribbon cable wins because the ribbon packing
           density exceeds what ADSS strength-member geometry can accommodate at reasonable
           cable OD.
@@ -211,13 +211,13 @@ export default function T03L04_MessengerLashedVsADSS() {
             <strong>Below 16% RTS EDS:</strong> The cable is loose enough that aeolian
             vibration (wind-induced oscillation, like a guitar string) is self-damped.
             Vibration dampers typically not required. (Source: gl-fibercable.com ADSS
-            technical parameters — verified)
+            technical parameters)
           </li>
           <li>
             <strong>16–25% RTS EDS:</strong> Vibration amplitude is higher. Vibration
             dampers (Stockbridge-type) should be installed near the clamp points to
             absorb the oscillation energy and prevent fatigue cracking at the clamp.
-            (Source: gl-fibercable.com; gl-fiber.com — verified via ≥2 independent sources)
+            (Source: gl-fibercable.com; gl-fiber.com)
           </li>
           <li>
             <strong>Above 25% RTS EDS:</strong> Not a recommended design zone. The cable
@@ -324,7 +324,7 @@ export default function T03L04_MessengerLashedVsADSS() {
           ADSS cables can span up to approximately 700 m between support structures for
           some designs (e.g., crossing wide rivers, transmission line corridors). (Source:
           ADSS design literature — incabamerica.com ACES CATS paper: "lengths of up to
-          700 metres" — verified) This is far beyond typical distribution pole spans of
+          700 metres") This is far beyond typical distribution pole spans of
           150–300 m. Long-span ADSS designs use fiberglass rods as strength members
           (instead of aramid yarn) for higher tensile stiffness.
         </p>
@@ -345,8 +345,7 @@ export default function T03L04_MessengerLashedVsADSS() {
         <p className="mt-2">
           The advantage: no separate messenger pre-installation step. You string one cable
           and you're done. "Reduces time and costs to install, by as much as fifty percent."
-          (Source: outsideplantcabling.com + fibereast.com aerial installation guides —
-          verified via ≥2 independent sources)
+          (Source: outsideplantcabling.com + fibereast.com aerial installation guides)
         </p>
         <p className="mt-2">
           The tradeoff: figure-8 cables have an integrated steel messenger, so they still
@@ -431,7 +430,7 @@ export default function T03L04_MessengerLashedVsADSS() {
           {
             id: 'T03-L04-fc-eds',
             front: 'What is EDS (Everyday Stress) for an ADSS cable?',
-            back: 'The long-term tension at zero wind, zero ice, at the annual average temperature, expressed as a % of RTS. Design target: 16–25% of RTS. Below 16%: vibration damping generally not required. 16–25%: Stockbridge dampers recommended. (gl-fibercable.com — verified)',
+            back: 'The long-term tension at zero wind, zero ice, at the annual average temperature, expressed as a % of RTS. Design target: 16–25% of RTS. Below 16%: vibration damping generally not required. 16–25%: Stockbridge dampers recommended. (gl-fibercable.com)',
           },
           {
             id: 'T03-L04-fc-fig8',
@@ -479,7 +478,7 @@ export default function T03L04_MessengerLashedVsADSS() {
               ],
               answerIndex: 2,
               explanation:
-                'ADSS has no metallic components. "No metal in the cable, therefore no bonding and grounding is required." (Source: CommScope ADSS vs. Lashed Fiber blog — verified). Figure-8 and lashed cables both include steel, requiring bonding.',
+                'ADSS has no metallic components. "No metal in the cable, therefore no bonding and grounding is required." (Source: CommScope ADSS vs. Lashed Fiber blog). Figure-8 and lashed cables both include steel, requiring bonding.',
               citation: 'CommScope ADSS vs. Lashed Fiber blog; 7 CFR 1755.902.',
             },
             {
@@ -495,7 +494,7 @@ export default function T03L04_MessengerLashedVsADSS() {
               ],
               answerIndex: 1,
               explanation:
-                '16–25% of RTS is the recommended EDS design target range. Below 16%: vibration damping generally not required. 16–25%: Stockbridge dampers recommended to prevent aeolian vibration fatigue. Above 25%: not recommended design territory. (Source: gl-fibercable.com ADSS technical parameters — verified via ≥2 independent sources)',
+                '16–25% of RTS is the recommended EDS design target range. Below 16%: vibration damping generally not required. 16–25%: Stockbridge dampers recommended to prevent aeolian vibration fatigue. Above 25%: not recommended design territory. (Source: gl-fibercable.com ADSS technical parameters)',
             },
             {
               id: 'T03-L04-Q3',

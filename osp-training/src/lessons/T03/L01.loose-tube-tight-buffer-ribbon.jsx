@@ -221,7 +221,7 @@ export default function T03L01_LooseTubeTightBufferRibbon() {
         <p className="mt-2 text-sm text-slate-300/80">
           Source: 7 CFR 1755.902 (eCFR) — "The cable shall be fully color coded so that each
           fiber is distinguishable from every other fiber. A basic color scheme of twelve colors
-          shall be used." (Verified via eCFR public text)
+          shall be used."
         </p>
         <p className="mt-2">
           For cables with more than 12 fibers per tube, fibers repeat the 12-color sequence
@@ -395,12 +395,12 @@ export default function T03L01_LooseTubeTightBufferRibbon() {
           {
             id: 'T03-L01-fc-tia598',
             front: 'What is TIA-598-D and what does it define?',
-            back: 'TIA-598 is the Optical Fiber Cable Color Coding standard. It defines the 12-color fiber identification sequence used in OSP cables: Blue, Orange, Green, Brown, Slate, White, Red, Black, Yellow, Violet, Rose, Aqua. Fibers beyond 12 per tube use a stripe or dot to distinguish repeating sequences. [confirm current edition — tiaonline.org]',
+            back: 'TIA-598 is the Optical Fiber Cable Color Coding standard. It defines the 12-color fiber identification sequence used in OSP cables: Blue, Orange, Green, Brown, Slate, White, Red, Black, Yellow, Violet, Rose, Aqua. Fibers beyond 12 per tube use a stripe or dot to distinguish repeating sequences.',
           },
           {
             id: 'T03-L01-fc-icea',
             front: 'What is ICEA S-87-640 and why does it matter on RUS projects?',
-            back: 'ICEA S-87-640 is the Insulated Cable Engineers Association construction standard for OSP fiber optic cable. It specifies buffer tube dimensions, jacket thickness, tensile ratings, armor requirements, and water-blocking performance. All cable on RUS-financed projects must meet ICEA S-87-640 as incorporated by 7 CFR 1755.902. [confirm current edition]',
+            back: 'ICEA S-87-640 is the Insulated Cable Engineers Association construction standard for OSP fiber optic cable. It specifies buffer tube dimensions, jacket thickness, tensile ratings, armor requirements, and water-blocking performance. All cable on RUS-financed projects must meet ICEA S-87-640 as incorporated by 7 CFR 1755.902.',
           },
           {
             id: 'T03-L01-fc-fiber-count',

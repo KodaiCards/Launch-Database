@@ -269,7 +269,7 @@ export default function T18L09_IncidentReportingOSHA300() {
             </tbody>
           </table>
           <p className="text-xs text-slate-400 mt-1">
-            Source: 29 CFR 1904.39 (ecfr.gov) — VERIFIED primary source.
+            Source: 29 CFR 1904.39 (ecfr.gov).
           </p>
         </div>
 
@@ -306,8 +306,7 @@ export default function T18L09_IncidentReportingOSHA300() {
           A crew that doesn't report near-misses finds out about hazards the hard way.
         </p>
         <p className="mt-2 text-sm text-slate-300/70">
-          Source: OSHA Near Miss Reporting Systems (osha.gov/near-miss-reporting) —
-          VERIFIED free public source.
+          Source: OSHA Near Miss Reporting Systems (osha.gov/near-miss-reporting).
         </p>
       </section>
 
@@ -340,7 +339,7 @@ export default function T18L09_IncidentReportingOSHA300() {
         </p>
         <p className="mt-2 text-sm text-slate-300/70">
           Source: 29 CFR 1904.1–1904.2 (size and industry exemptions); 29 CFR 1904.39
-          (severe incident reporting — all employers); ecfr.gov — VERIFIED primary sources.
+          (severe incident reporting — all employers); ecfr.gov.
         </p>
       </section>
 
@@ -401,7 +400,7 @@ export default function T18L09_IncidentReportingOSHA300() {
               answerIndex: 1,
               explanation:
                 '29 CFR 1904.39 requires in-patient hospitalization to be reported to OSHA within 24 hours. A fatality is 8-hour reportable. Amputations and loss of an eye are also 24-hour reportable. These timelines apply to ALL employers regardless of size — including firms with ≤ 10 employees who are otherwise exempt from routine 300 log recordkeeping.',
-              citation: '29 CFR 1904.39 (ecfr.gov) — VERIFIED primary source.',
+              citation: '29 CFR 1904.39 (ecfr.gov).',
             },
             {
               id: 'T18-L09-Q3',

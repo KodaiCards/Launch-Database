@@ -134,7 +134,7 @@ export default function T03L08_DropCableSelection() {
           Typical specs:
         </p>
         <ul className="list-disc pl-5 space-y-1 mt-2 text-sm">
-          <li><strong>Fiber count:</strong> 96F–864F, or higher in dense urban builds. Ribbon construction is common at 432F+ for splice speed. (Source: FOA FTTH design guide; splice.me FTTH design article — verified)</li>
+          <li><strong>Fiber count:</strong> 96F–864F, or higher in dense urban builds. Ribbon construction is common at 432F+ for splice speed. (Source: FOA FTTH design guide; splice.me FTTH design article)</li>
           <li><strong>Fiber type:</strong> G.652.D (OS2). Feeder runs are generally straight enough that bend-insensitive fiber isn't needed.</li>
           <li><strong>Construction:</strong> Typically aerial lashed ribbon or direct-burial loose-tube depending on route type.</li>
           <li><strong>Dark fiber:</strong> Feeder cables are almost always sized with significant dark-fiber reserve — it's far cheaper to pull a 432F feeder once than a 144F feeder and return in 5 years to pull another.</li>
@@ -150,7 +150,7 @@ export default function T03L08_DropCableSelection() {
           Typical specs:
         </p>
         <ul className="list-disc pl-5 space-y-1 mt-2 text-sm">
-          <li><strong>Fiber count:</strong> 24F–96F (Source: FOA FTTH design guide, thefoa.org — verified). Sized for the number of subscribers the distribution segment serves, plus growth margin.</li>
+          <li><strong>Fiber count:</strong> 24F–96F (Source: FOA FTTH design guide, thefoa.org). Sized for the number of subscribers the distribution segment serves, plus growth margin.</li>
           <li><strong>Fiber type:</strong> G.652.D or G.657.A1. At the distribution level, bends at splice closures or pedestals make G.657.A1 a common choice for its splice-compatibility and moderate bend tolerance.</li>
           <li><strong>Construction:</strong> Aerial loose-tube (lashed or ADSS) or direct-burial depending on route.</li>
         </ul>
@@ -166,7 +166,7 @@ export default function T03L08_DropCableSelection() {
         <ul className="list-disc pl-5 space-y-1 mt-2 text-sm">
           <li>
             <strong>Fiber count:</strong> 2–12F for residential premises. (Source: FOA FTTH
-            design guide — verified) Most residential homes need 1–2 active fibers plus
+            design guide) Most residential homes need 1–2 active fibers plus
             1–2 dark. 2F or 4F drops are most common in FTTH residential builds.
           </li>
           <li>
@@ -178,8 +178,7 @@ export default function T03L08_DropCableSelection() {
             <strong>Aerial drop type:</strong> Figure-8 (integrated messenger) for faster
             installation on short spans (50–150 ft from pole to house). ADSS for dielectric
             requirements or longer spans. (Source: outsideplantcabling.com; fibereast.com —
-            figure-8 "reduces time and costs to install, by as much as fifty percent" —
-            verified via ≥2 sources)
+            figure-8 "reduces time and costs to install, by as much as fifty percent")
           </li>
           <li>
             <strong>Underground drop:</strong> Small-diameter HDPE-jacketed direct-burial
@@ -362,8 +361,8 @@ export default function T03L08_DropCableSelection() {
             <strong>GR-20 (Generic Requirements for Optical Fiber and Optical Fiber Cable)</strong>,
             which specifies minimum tensile rating requirements for OSP fiber cable products.
             ICEA S-87-640 (T03.L01) is the complementary construction standard; GR-20 sets the
-            performance floor the cable must meet. [confirm GR-20 issue with your cable supplier's
-            datasheet — issue numbers update periodically]
+            performance floor the cable must meet. Confirm the GR-20 issue with your cable supplier's
+            datasheet — issue numbers update periodically.
           </li>
           <li>
             <strong>Long-term EDS (Everyday Stress, from T03.L04):</strong> The sustained
@@ -395,7 +394,7 @@ export default function T03L08_DropCableSelection() {
             </tr>
             <tr className="border-t border-white/10">
               <td className="px-3 py-2">OSP loose-tube distribution cable (24–96F)</td>
-              <td className="px-3 py-2">~1,300–2,700 N (290–600 lbf) [verify on product datasheet]</td>
+              <td className="px-3 py-2">~1,300–2,700 N (290–600 lbf)</td>
               <td className="px-3 py-2">GR-20 short-term install tension — NOT the long-term span EDS rating</td>
             </tr>
           </tbody>
@@ -487,7 +486,7 @@ export default function T03L08_DropCableSelection() {
               ],
               answerIndex: 1,
               explanation:
-                '2–12 fibers is the standard drop count for residential premises. (Source: FOA FTTH design guide — verified). Most residential homes need 2–4 fibers (1–2 active + spares). Higher fiber counts belong at the distribution and feeder tiers, not individual residential drops.',
+                '2–12 fibers is the standard drop count for residential premises. (Source: FOA FTTH design guide). Most residential homes need 2–4 fibers (1–2 active + spares). Higher fiber counts belong at the distribution and feeder tiers, not individual residential drops.',
             },
             {
               id: 'T03-L08-Q2',
@@ -502,7 +501,7 @@ export default function T03L08_DropCableSelection() {
               ],
               answerIndex: 1,
               explanation:
-                'A figure-8 cable integrates the messenger into the jacket, so the installer strings one cable rather than pre-installing a separate strand and then lashing the fiber. "Reduces time and costs to install, by as much as fifty percent." (Source: outsideplantcabling.com + fibereast.com — verified via ≥2 sources). Note: the integrated steel messenger still requires bonding at dead-ends.',
+                'A figure-8 cable integrates the messenger into the jacket, so the installer strings one cable rather than pre-installing a separate strand and then lashing the fiber. "Reduces time and costs to install, by as much as fifty percent." (Source: outsideplantcabling.com + fibereast.com). Note: the integrated steel messenger still requires bonding at dead-ends.',
             },
             {
               id: 'T03-L08-Q3',

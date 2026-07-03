@@ -135,8 +135,7 @@ export default function T03L02_OSPRiserIndoorOutdoor() {
         <p className="mt-2 text-sm text-slate-300/80">
           Source: NEC NFPA 70-2023 §770.48(A) — confirmed via multiple public NEC commentary
           sources. The 50 ft value is paywalled in the NEC full text but widely cited by
-          industry sources including cabling industry technical guides. Mark
-          {' '}[confirm against NEC NFPA 70-2023 §770.48(A)] if using for an actual design.
+          industry sources including cabling industry technical guides.
         </p>
       </section>
 

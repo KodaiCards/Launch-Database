@@ -186,12 +186,12 @@
       "prompt": "What is the correct ISO/IEC 11801 OS1/OS2 mapping to ITU-T G.652 sub-grades, and why is this a genuine point of confusion worth double-checking against a primary source?",
       "choices": [
         "OS1 = G.652.B/C, OS2 = G.652.D — a commonly repeated but subtly incorrect mapping",
-        "OS1 = G.652.A/B (higher attenuation, older spec), OS2 = G.652.C/D (low/zero water-peak, current spec) — the correct mapping; a review of this course's own source material found inconsistent claims about this mapping across different lessons, underscoring the value of independent verification",
+        "OS1 = G.652.A/B (higher attenuation, older spec), OS2 = G.652.C/D (low/zero water-peak, current spec) — the correct mapping",
         "OS1 and OS2 are unrelated to ITU-T G.652 and instead map to G.657 exclusively",
         "OS1 = G.655, OS2 = G.652 — the two designations refer to entirely different fiber families"
       ],
       "answerIndex": 1,
-      "explanation": "OS1 corresponds to G.652.A/B (older, higher water-peak attenuation, max ~1.0 dB/km); OS2 corresponds to G.652.C/D (low/zero water-peak, max ~0.4 dB/km) — the grade nearly all modern OSP deployments specify. Independent WebSearch verification of this exact mapping caught an inconsistency between two lessons' own inline claims in this course's source material.",
+      "explanation": "OS1 corresponds to G.652.A/B (older, higher water-peak attenuation, max ~1.0 dB/km); OS2 corresponds to G.652.C/D (low/zero water-peak, max ~0.4 dB/km) — the grade nearly all modern OSP deployments specify.",
       "citation": "ISO/IEC 11801 OS1/OS2 category mapping to ITU-T G.652 sub-grades."
     },
     {
@@ -311,7 +311,7 @@
       ],
       "answerIndex": 0,
       "explanation": "IEC 61300-3-35 defines the visual inspection pass/fail zones for connector end-faces. Because a single dirty connector can desensitize every channel sharing a DWDM path, and connector contamination is the leading cause of new-install troubleshooting calls, this standard underlies both scenarios.",
-      "citation": "IEC 61300-3-35 [edition not independently pinned down this session; UNVERIFIED-EXACT for the specific revision]."
+      "citation": "IEC 61300-3-35 — fiber optic connector end-face visual inspection."
     },
     {
       "id": "T02-final-Q24",

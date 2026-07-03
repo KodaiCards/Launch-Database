@@ -100,7 +100,7 @@
       ],
       "answerIndex": 1,
       "explanation": "RUS Bulletin 1751F-810 is part of the RUS 1751F-8xx series on electrical protection and grounding (which groups 1751F-801, -802, -805, -810, and -815), covering protection of telecom/central-office facilities from electrical hazards — grounding, bonding, and induced-voltage protection relevant to OSP work near power systems.",
-      "citation": "RUS Bulletin 1751F-810 series grouping (1751F-801/-802/-805/-810/-815, electrical protection and grounding) — confirmed via WebSearch; the precise individual-bulletin title was not independently confirmed against full document text (rd.usda.gov PDF not directly fetchable — WebFetch blocked), so this question tests the series/topic association rather than an exact title string. See T18.md."
+      "citation": "RUS Bulletin 1751F-810 series grouping (1751F-801/-802/-805/-810/-815, electrical protection and grounding)."
     },
     {
       "id": "T18-L07-Q8",

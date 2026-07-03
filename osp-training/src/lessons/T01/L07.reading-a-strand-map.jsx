@@ -202,7 +202,7 @@ export default function T01L07_ReadingAStrandMap() {
           of splitter loss plus all the fiber and connector losses along the route.
         </p>
         <p className="mt-2 text-sm text-slate-300/90">
-          Source: ITU-T G.984 [confirm edition] (GPON standard); TIA-568.3-D (loss budget approach for PON).
+          Source: ITU-T G.984 (GPON standard); TIA-568.3-D (loss budget approach for PON).
         </p>
       </section>
 

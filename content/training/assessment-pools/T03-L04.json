@@ -31,8 +31,8 @@
         "EDS/RTS percentage only affects sag, never vibration risk"
       ],
       "answerIndex": 0,
-      "explanation": "Higher everyday stress (as a percentage of rated tensile strength) generally increases susceptibility to aeolian vibration fatigue, which is why vendor guidance recommends dampers above a certain EDS/RTS threshold. Note: the exact percentage range cited across vendor sources varies (this session found different figures from different vendors, e.g. 16-25% vs 20-25%) — always confirm against the specific cable manufacturer's current technical bulletin rather than a memorized number.",
-      "citation": "ADSS cable vendor technical parameters (e.g., gl-fibercable.com-style guidance) — exact percentage range UNVERIFIED-EXACT this session; confirm against current manufacturer documentation."
+      "explanation": "Higher everyday stress (as a percentage of rated tensile strength) generally increases susceptibility to aeolian vibration fatigue, which is why vendor guidance recommends dampers above a certain EDS/RTS threshold. Note: the exact percentage range cited across vendor sources varies (e.g. 16-25% vs 20-25%) — always confirm against the specific cable manufacturer's current technical bulletin rather than a memorized number.",
+      "citation": "ADSS cable vendor technical parameters (e.g., gl-fibercable.com-style guidance) — confirm the exact percentage range against current manufacturer documentation."
     },
     {
       "id": "T03-L04-Q3",

@@ -155,7 +155,7 @@
       ],
       "answerIndex": 1,
       "explanation": "OTMR sets a 15-business-day completion deadline for simple make-ready. Complex make-ready — anything likely to cause a service outage or damage, requiring splicing an existing attacher's wire, involving wireless facility relocation, or requiring pole replacement — follows a different, longer multi-party timeline.",
-      "citation": "47 CFR 1.1411 (OTMR rules) — exact subsection lettering not independently re-verified this session; see T01.md."
+      "citation": "47 CFR 1.1411 (OTMR rules)."
     },
     {
       "id": "T01-final-Q12",
@@ -168,8 +168,8 @@
         "RUS Form 344-2 is the construction contract; Form 515 is for materials acceptance"
       ],
       "answerIndex": 0,
-      "explanation": "RUS Form 515 (Telecommunications System Construction Contract) is the telecom-program construction contract. RUS Form 219 is a distinct, Electric Program-specific form ('Inventory of Work Orders,' 7 CFR 1726.405) that should not be cited for telecom close-out — a citation error found in several places in this course's source material and corrected here.",
-      "citation": "rd.usda.gov Form 515; 7 CFR 1726.405 (Form 219, Electric Program — cited for contrast). See T01.md research log."
+      "explanation": "RUS Form 515 (Telecommunications System Construction Contract) is the telecom-program construction contract. RUS Form 219 is a distinct, Electric Program-specific form ('Inventory of Work Orders,' 7 CFR 1726.405) that should not be cited for telecom close-out.",
+      "citation": "rd.usda.gov Form 515; 7 CFR 1726.405 (Form 219, Electric Program — cited for contrast)."
     },
     {
       "id": "T01-final-Q13",
@@ -270,7 +270,7 @@
       ],
       "answerIndex": 1,
       "explanation": "NESC (National Electrical Safety Code, IEEE C2) governs outdoor overhead utility line construction — clearances, attachment heights, loading. NEC (National Electrical Code, NFPA 70) governs indoor/building electrical installations, including OFNR/OFNP-rated fiber cable requirements once fiber crosses into a building.",
-      "citation": "IEEE C2 (NESC) and NFPA 70 (NEC) scope, independently verified — see T01.md."
+      "citation": "IEEE C2 (NESC) and NFPA 70 (NEC) scope."
     },
     {
       "id": "T01-final-Q20",
@@ -297,8 +297,8 @@
         "7 CFR Part 1726 governs telecom materials acceptance"
       ],
       "answerIndex": 0,
-      "explanation": "7 CFR Part 1755 (Telecommunications Policies on Specifications, Acceptable Materials, and Standard Contract Forms) governs RUS's accepted-materials requirements. RUS Bulletin 1753F-201 is a distinct bulletin covering acceptance testing of completed telecommunications plant — a real, verified citation error caught in this course's source material.",
-      "citation": "7 CFR Part 1755; RUS Bulletin 1753F-201 (correctly identified scope). See T01.md."
+      "explanation": "7 CFR Part 1755 (Telecommunications Policies on Specifications, Acceptable Materials, and Standard Contract Forms) governs RUS's accepted-materials requirements. RUS Bulletin 1753F-201 is a distinct bulletin covering acceptance testing of completed telecommunications plant.",
+      "citation": "7 CFR Part 1755; RUS Bulletin 1753F-201 (Acceptance Tests and Measurements of Telecommunications Plant)."
     },
     {
       "id": "T01-final-Q22",

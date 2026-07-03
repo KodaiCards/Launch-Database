@@ -141,13 +141,13 @@ export default function T03L06_CableSheathJacketMaterial() {
             would oxidize and become brittle within a few years of sun exposure. This is
             why all outdoor OSP cables are black. (Source: bwnfiber.com HDPE vs. LDPE
             comparison; shobeirshimi.com: "carbon black (2–3%) is added to both MDPE and
-            HDPE for UV stabilization" — verified)
+            HDPE for UV stabilization")
           </li>
           <li>
             <strong>Crush resistance:</strong> HDPE's semi-crystalline structure gives it
             good compressive strength, which matters for direct-burial applications where
             soil loads act on the cable jacket. (Source: ICEA S-87-640; Corning SMF-28
-            Ultra datasheet — verified)
+            Ultra datasheet)
           </li>
           <li>
             <strong>Operating temperature:</strong> Standard OSP HDPE jackets are rated
@@ -174,7 +174,7 @@ export default function T03L06_CableSheathJacketMaterial() {
           LSZH is required where halogen-free mandates apply: hospitals, airports, train
           stations, public assembly buildings. In some European standards, LSZH is the
           default for any indoor cable regardless of space type. (Source: cbcables.com LSZH
-          guide; comms-express.com LSZH article — verified via secondary sources)
+          guide; comms-express.com LSZH article)
         </p>
         <p className="mt-2 text-sm text-amber-300/90 border-l-4 border-amber-400/30 pl-3">
           <strong>Important distinction:</strong> LSZH is a <em>material property</em>, not
@@ -209,7 +209,7 @@ export default function T03L06_CableSheathJacketMaterial() {
             <p className="text-sm text-slate-300/90 mt-1">
               <strong>High-count tubes:</strong> "When working with buffer tubes that have
               more than 12 fibers in the same tube, the gel acts as an adhesive by keeping
-              the fiber bundles grouped." (Source: stl.tech dry vs. gel comparison — verified)
+              the fiber bundles grouped." (Source: stl.tech dry vs. gel comparison)
             </p>
           </div>
 
@@ -224,7 +224,7 @@ export default function T03L06_CableSheathJacketMaterial() {
             <p className="text-sm text-slate-300/90 mt-1">
               <strong>Splice speed:</strong> "Accomplished in approximately one third the
               time required for the same operation in a 'wet' tube cable." (Source:
-              remee.com gel-free loose-tube article — verified)
+              remee.com gel-free loose-tube article)
             </p>
             <p className="text-sm text-slate-300/90 mt-1">
               <strong>The tradeoff:</strong> Dry-block cables can be slightly more
@@ -240,9 +240,9 @@ export default function T03L06_CableSheathJacketMaterial() {
           <p className="text-slate-300/90">
             <strong>Book (ICEA S-87-640):</strong> Specifies flooding compound viscosity,
             coverage requirements, and dry-block SAP tape minimum swell specifications.
-            The 2016/2023 editions are paywalled — core requirements verified via the 2006
-            archive.org edition and multiple vendor datasheets. [Confirm exact compound
-            specs against ICEA S-87-640 current edition for formal contract specifications.]
+            The 2016/2023 editions are paywalled — core requirements are drawn from the 2006
+            archive.org edition and multiple vendor datasheets. Confirm exact compound
+            specs against the ICEA S-87-640 current edition for formal contract specifications.
           </p>
           <p className="text-slate-300/90 mt-2">
             <strong>Field:</strong> The dry-block vs. gel decision is increasingly
@@ -369,12 +369,12 @@ export default function T03L06_CableSheathJacketMaterial() {
           {
             id: 'T03-L06-fc-dryblock',
             front: 'What is a dry-block cable and its main field advantage?',
-            back: 'SAP (superabsorbent polymer) tapes and yarns replace gel in the buffer tubes, swelling on contact with water to block migration. No gel cleanup needed before splicing — prep time is approximately 1/3 of gel-filled cable. Increasingly preferred on high-count closures where splice labor time is significant. (remee.com — verified)',
+            back: 'SAP (superabsorbent polymer) tapes and yarns replace gel in the buffer tubes, swelling on contact with water to block migration. No gel cleanup needed before splicing — prep time is approximately 1/3 of gel-filled cable. Increasingly preferred on high-count closures where splice labor time is significant. (remee.com)',
           },
           {
             id: 'T03-L06-fc-carbon',
             front: 'Why is carbon black added to HDPE cable jacket?',
-            back: '2–3% carbon black is added to HDPE jacket compound to absorb UV radiation and prevent oxidative photodegradation. Without it, the polyethylene jacket would become brittle and crack within a few years of sun exposure. This is the primary reason all outdoor OSP cables are black. (bwnfiber.com; shobeirshimi.com — verified)',
+            back: '2–3% carbon black is added to HDPE jacket compound to absorb UV radiation and prevent oxidative photodegradation. Without it, the polyethylene jacket would become brittle and crack within a few years of sun exposure. This is the primary reason all outdoor OSP cables are black. (bwnfiber.com; shobeirshimi.com)',
           },
         ]}
       />
@@ -402,7 +402,7 @@ export default function T03L06_CableSheathJacketMaterial() {
               ],
               answerIndex: 2,
               explanation:
-                'HDPE with 2–3% carbon black is the standard outdoor OSP jacket. The carbon black absorbs UV radiation to prevent oxidative degradation. PVC is a common indoor jacket but poor for outdoor UV. LSZH is a fire-safety material choice, not an UV-resistance solution. LDPE has lower compressive strength than HDPE. (Source: ICEA S-87-640; bwnfiber.com; shobeirshimi.com — verified)',
+                'HDPE with 2–3% carbon black is the standard outdoor OSP jacket. The carbon black absorbs UV radiation to prevent oxidative degradation. PVC is a common indoor jacket but poor for outdoor UV. LSZH is a fire-safety material choice, not an UV-resistance solution. LDPE has lower compressive strength than HDPE. (Source: ICEA S-87-640; bwnfiber.com; shobeirshimi.com)',
             },
             {
               id: 'T03-L06-Q2',
@@ -417,7 +417,7 @@ export default function T03L06_CableSheathJacketMaterial() {
               ],
               answerIndex: 1,
               explanation:
-                'Dry-block (gel-free) cables eliminate gel cleanup from splice prep. "Accomplished in approximately one third the time required for the same operation in a \'wet\' tube cable." (Source: remee.com gel-free loose-tube article — verified). On a high-count 288F or 432F closure, the time savings per tube adds up to hours.',
+                'Dry-block (gel-free) cables eliminate gel cleanup from splice prep. "Accomplished in approximately one third the time required for the same operation in a \'wet\' tube cable." (Source: remee.com gel-free loose-tube article). On a high-count 288F or 432F closure, the time savings per tube adds up to hours.',
             },
             {
               id: 'T03-L06-Q3',
@@ -446,7 +446,7 @@ export default function T03L06_CableSheathJacketMaterial() {
               answer: 'carbon black',
               answerDisplay: 'carbon black',
               explanation:
-                '2–3% carbon black is compounded into the HDPE jacket. Carbon black absorbs UV radiation, shielding the polymer chains from the oxidative damage that sunlight would otherwise cause. It is why all OSP cables are black — not for looks, but for longevity. (bwnfiber.com; shobeirshimi.com — verified)',
+                '2–3% carbon black is compounded into the HDPE jacket. Carbon black absorbs UV radiation, shielding the polymer chains from the oxidative damage that sunlight would otherwise cause. It is why all OSP cables are black — not for looks, but for longevity. (bwnfiber.com; shobeirshimi.com)',
             },
           ]}
         />

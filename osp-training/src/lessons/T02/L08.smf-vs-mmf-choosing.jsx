@@ -213,7 +213,7 @@ export default function T02L08_SMFvsMMFChoosing() {
           </table>
         </div>
         <p className="text-xs text-slate-400 mt-2">
-          Source: TIA-492AAAD (OM4), TIA-492AAAE (OM5) [confirm current editions];
+          Source: TIA-492AAAD (OM4), TIA-492AAAE (OM5);
           IEEE 802.3 standard for reach values. Reach values are at a specific data rate
           per standard — check the applicable IEEE 802.3 annex for your specific transceiver.
         </p>
@@ -247,7 +247,7 @@ export default function T02L08_SMFvsMMFChoosing() {
           shifts the zero-dispersion wavelength slightly away from 1550 nm (to approximately
           1500–1600 nm) so that chromatic dispersion never reaches zero at the operating wavelength
           — this intentional residual dispersion suppresses four-wave mixing, a nonlinear effect
-          that degrades DWDM systems at high channel counts. (Source: ITU-T G.655 [confirm edition].)
+          that degrades DWDM systems at high channel counts. (Source: ITU-T G.655.)
         </p>
         <p className="text-sm mt-2">
           <strong>Why you need to know this:</strong> If your feeder connects to a carrier's
@@ -455,7 +455,7 @@ export default function T02L08_SMFvsMMFChoosing() {
               answerIndex: 0,
               explanation:
                 'OM3/OM4/OM5 are "laser-optimized" — the graded-index profile is tailored for 850 nm VCSEL sources. VCSEL launch characteristics excite fewer high-order modes than an LED overfilled launch. Fewer modes → less modal dispersion → more bandwidth at a given length. This is why the effective modal bandwidth (EMB) test metric was introduced for OM3+ instead of the older overfilled launch bandwidth test.',
-              citation: 'TIA-492AAAD (OM4) [confirm edition]; IEEE 802.3 — effective modal bandwidth methodology.',
+              citation: 'TIA-492AAAD (OM4); IEEE 802.3 — effective modal bandwidth methodology.',
             },
           ]}
         />

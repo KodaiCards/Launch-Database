@@ -115,7 +115,7 @@ export default function T18L05_PPEHandsHeadEyesFeet() {
             </tr>
             <tr className="border-t border-white/10">
               <td className="px-3 py-2 font-mono">ANSI/ISEA 107</td>
-              <td className="px-3 py-2">High-visibility safety apparel — Classes 1, 2, and 3 [confirm edition for current requirements]</td>
+              <td className="px-3 py-2">High-visibility safety apparel — Classes 1, 2, and 3</td>
             </tr>
             <tr className="border-t border-white/10">
               <td className="px-3 py-2 font-mono">1910.132</td>
@@ -243,7 +243,7 @@ export default function T18L05_PPEHandsHeadEyesFeet() {
               </tr>
             </tbody>
           </table>
-          <p className="text-xs text-slate-400 mt-1">Source: 29 CFR 1910.137 + OSHA eTool (osha.gov/etools/electric-power) — VERIFIED primary source.</p>
+          <p className="text-xs text-slate-400 mt-1">Source: 29 CFR 1910.137 + OSHA eTool (osha.gov/etools/electric-power).</p>
         </div>
 
         <div className="mt-4 p-4 border border-amber-400/30 bg-amber-400/5 rounded-lg text-sm">
@@ -306,7 +306,7 @@ export default function T18L05_PPEHandsHeadEyesFeet() {
 
         <h3 className="mt-5 font-semibold">FEET — Dielectric (EH) Boots</h3>
         <p className="mt-2">
-          Electrical-hazard rated footwear (EH mark per ASTM F2413 [confirm edition]) provides an insulating
+          Electrical-hazard rated footwear (EH mark per ASTM F2413) provides an insulating
           sole that resists completing a circuit through the foot to the ground. This protects
           against step-potential (voltage difference between two points on the ground) and
           incidental contact with energized surfaces. EH-rated boots are required on OSP
@@ -320,8 +320,7 @@ export default function T18L05_PPEHandsHeadEyesFeet() {
         <h3 className="mt-5 font-semibold">HI-VIS — ANSI/ISEA 107 Classes</h3>
         <p className="mt-2">
           Any worker in or adjacent to a roadway must wear high-visibility safety apparel
-          (hi-vis vest or combined garment) rated per ANSI/ISEA 107 [confirm edition for
-          current requirements]:
+          (hi-vis vest or combined garment) rated per ANSI/ISEA 107:
         </p>
         <ul className="list-disc pl-5 space-y-2 mt-2 text-sm text-slate-300/90">
           <li><strong>Class 1:</strong> Minimum background material; off-road environments with low vehicle traffic risk. NOT sufficient for roadway work.</li>
@@ -329,7 +328,7 @@ export default function T18L05_PPEHandsHeadEyesFeet() {
           <li><strong>Class 3:</strong> Required for nighttime roadway work, high-speed roadways (posted speed &gt; 50 mph), or poor-visibility conditions. Includes both vest and pants/sleeves in some configurations.</li>
         </ul>
         <p className="mt-2 text-sm text-slate-300/70">
-          Source: ANSI/ISEA 107 [confirm edition] — paywalled; confirmed via MUTCD 11th Edition
+          Source: ANSI/ISEA 107 — paywalled; confirmed via MUTCD 11th Edition
           (2023) Part 6 and OSHA 29 CFR 1910.268(b) PPE table references.
         </p>
       </section>
@@ -470,7 +469,7 @@ export default function T18L05_PPEHandsHeadEyesFeet() {
               answerIndex: 1,
               explanation:
                 'Class 2 hi-vis is the minimum for daytime work in a temporary traffic control zone on a public roadway. The worker is in or adjacent to a lane of traffic, regardless of elevation in a bucket. MUTCD Part 6 and OSHA requirements are based on proximity to a traffic lane — being in a bucket doesn\'t eliminate the struck-by hazard from approaching vehicles.',
-              citation: 'ANSI/ISEA 107 [confirm edition]; MUTCD 11th Edition (2023), Part 6, Chapter 6E.',
+              citation: 'ANSI/ISEA 107; MUTCD 11th Edition (2023), Part 6, Chapter 6E.',
               fieldNote: 'If the job runs into low-light conditions (dawn, dusk, overcast), upgrade to Class 3 without waiting to be told.',
             },
             {

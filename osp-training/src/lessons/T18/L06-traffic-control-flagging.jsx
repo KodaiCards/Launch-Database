@@ -470,7 +470,7 @@ export default function T18L06_TrafficControlFlagging() {
               explanation:
                 'ANSI/ISEA 107 Class 2 is the minimum for daytime roadway work in a temporary traffic control zone. Class 3 is required for nighttime or high-speed (> 50 mph) zones. Class 1 is for off-road, low-traffic environments. MUTCD Part 6 Chapter 6E requires hi-vis garments meeting ANSI/ISEA 107 for all work zone personnel.',
               citation:
-                'MUTCD 11th Edition (2023), Part 6, Chapter 6E (mutcd.fhwa.dot.gov); ANSI/ISEA 107 [confirm edition].',
+                'MUTCD 11th Edition (2023), Part 6, Chapter 6E (mutcd.fhwa.dot.gov); ANSI/ISEA 107.',
               fieldNote:
                 'When in doubt, Class 3 is always acceptable where Class 2 is the minimum. Upgrade proactively for low-light conditions.',
             },

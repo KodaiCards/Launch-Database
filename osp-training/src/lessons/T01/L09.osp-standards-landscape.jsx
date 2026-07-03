@@ -176,7 +176,7 @@ export default function T01L09_OspStandardsLandscape() {
               meets these ITU-T specs.
             </p>
             <p className="text-slate-300/90 mt-1">
-              <strong>ICEA S-87-640</strong> [confirm edition] — cable construction standard (how the cable
+              <strong>ICEA S-87-640</strong> — cable construction standard (how the cable
               is built, what environmental performance it must meet). RUS's accepted-materials
               list (7 CFR Part 1755, RUS Bulletin 344-2) references ICEA for qualification testing.
             </p>

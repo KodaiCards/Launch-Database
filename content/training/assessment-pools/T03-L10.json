@@ -32,7 +32,7 @@
       ],
       "answerIndex": 0,
       "explanation": "ICEA S-87-640 defines 2,670 N (~600 lbf) as the standard installation tensile rating for OSP fiber cable, with a lighter-construction tier commonly cited around 1,330 N (~300 lbf). Exceeding the rated tensile during a pull risks fiber damage. Verify against the current edition before design lock.",
-      "citation": "ICEA S-87-640 — exact figure sourced from secondary/vendor technical literature this session, not independently confirmed against the paywalled primary standard text; treat as UNVERIFIED-EXACT and verify against the current edition."
+      "citation": "ICEA S-87-640 — figure sourced from secondary/vendor technical literature; verify against the current edition of the primary standard."
     },
     {
       "id": "T03-L10-Q3",
@@ -63,7 +63,7 @@
         { "id": "t_colors", "label": "Fiber color coding (so each fiber is distinguishable)" }
       ],
       "correctMap": { "t_mfd": "i_mfd", "t_coating": "i_coating", "t_colors": "i_colors" },
-      "explanation": "7 CFR 1755.902 covers all three: MFD default (9.2 +/- 0.5 um at 1310 nm, independently confirmed this session), the standard fiber coating OD (250 um is a near-universal industry base value), and the requirement that fiber color coding make every fiber individually identifiable — consistent with the TIA-598 12-color scheme referenced elsewhere in this course.",
+      "explanation": "7 CFR 1755.902 covers all three: MFD default (9.2 +/- 0.5 um at 1310 nm), the standard fiber coating OD (250 um is a near-universal industry base value), and the requirement that fiber color coding make every fiber individually identifiable — consistent with the TIA-598 12-color scheme referenced elsewhere in this course.",
       "citation": "7 CFR 1755.902."
     },
     {
