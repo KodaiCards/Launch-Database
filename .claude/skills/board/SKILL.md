@@ -37,3 +37,8 @@ Claim two packages at once · touch a `shared-infra`-guarded file unless you cla
 3. **Verify, don't trust:** diff the branch; a step claimed done with no artifact (no RT report, no commit) gets REDONE.
 4. `gh issue comment <N> --body "RESUMED f1 @ <sha> · state: <what exists> · next: <step>"` → continue.
 5. Blocked mid-work yourself? Push `WIP:` commit with a state-bearing message FIRST, then comment/HANDOFF. Never stall silently.
+
+## Decompose a ratified spec into issues (Registrar)
+- One issue ≈ ≤1 foreman-day; body = spec file+section pointer, done-when, constraints. Never paraphrase the spec into the issue — point at it.
+- Order by dependency: shared components FIRST as a pinned `shared-infra` issue (its claimant = sole toucher of shared files that wave); independent packages marked parallel-safe; per-unit work (per topic/page) = one issue each, rolling.
+- A decomposition judgment call that shades the spec (bundling, splitting, sequencing not in the spec) → state it on the issue and flag Partner — proceed unless overruled, don't wait.
