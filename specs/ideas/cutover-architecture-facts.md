@@ -1,0 +1,9 @@
+# Cutover/billing architecture facts (rescued: O16–O20, I2, I6 — the old audit's hard-won map)
+Feed these into the 2.3 cutover + 2.7 billing spec sessions — re-deriving them cost weeks last time:
+- **O20 ⭐ #1 billing-cutover blocker:** invoice data assembly + the RUS PDF are legacy-projects-ONLY (`invoice_generator.js`: 0 service_area_job refs). A keystone-billed invoice has NO submittable RUS PDF. PORT assembly to service_area_jobs BEFORE retiring legacy.
+- **O18 ⭐ parallel structures = the true cutover scope:** SA-ish tables ×3 (service_areas / concentrators / ec_service_areas — O17), contracts ×2, dashboards ×2, **SIX invoice-creation paths** (billing.js:34 bill-multiple · projects.js:1411 monthly · project_billing.js:129 bill-and-clone · service_areas.js:904 :id/bill [orphans invoices — O16] · billing_keystone.js:112 /run · billing.js:343/481 batch), money reporting ×2, projections parity gap (legacy automation.js sparklines/forecast RICHER than keystone projections.js — PORT, don't reroute). One reconciliation map before cutover.
+- **O16:** service_areas.js :id/bill leaves invoices + lines unlinked to keystone → invisible to reporting. Retire/delegate to keystone /run.
+- **I2/chunk-16:** the full stranded-in-legacy inventory = archive/planning-2026-06/codebase/16-legacy-admin.md (pricing/jobs/portal-access/invoice-templates/CC catalog/client-links/staff/user-CRUD all have working backends — the work is cluster UI, not backend).
+- **I6:** the projection/allocation ENGINE is already built (contract_allocations per-mile, computeEstimate map×catalog, budget burn) — map feature = render+sync onto it.
+- **I5:** invoice template engine exists (sample PDF → template → puppeteer) but reads LEGACY data — D015 custom-fields + Excel export RIDES the O20 port.
+- O19: dead shadowed GET /api/billing/report in billing.js (mount-shadowed; delete at billing rebuild).

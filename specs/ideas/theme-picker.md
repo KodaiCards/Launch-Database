@@ -1,12 +1,11 @@
-# Theme picker / theme engine — RECOVERED decision (Carter 2026-06-30, pre-canon; rescued 2026-07-03)
-> Canon-drafting miss: this Carter-validated direction was archived inside `archive/planning-2026-06/redesign_ui.md` without being carried into law/PLAN. Rescued when Carter caught f2's settings page still showing Light/Dark.
+# Theme picker / engine — AS-BUILT CORRECTED (Carter caught it live, 2026-07-03)
+> Lesson recorded: the first version of this file declared the picker "unbuilt" off one narrow grep. Craft #1 — verify against ground truth — applies to the Partner too.
 
-**Carter's words (2026-06-30):** NOT one chosen theme — a user-selectable THEME PICKER (a catalog). "The button to change your theme will replace light and dark mode."
+**LIVE on main (verified in code):** theme ENGINE + PICKER + **4 dark skins** — graphite (Graphite steel, default) · obsidian · nightsky (stars pattern) · blueprint (grid pattern) — app-shell.js THEMES catalog via data-skin, picker replacing the light/dark toggle (app-shell.js:251), legacy dark→graphite mapping, **server persistence live** (users.theme column; auth accepts catalog ids).
 
-- **Default theme = B · Graphite steel** (decided). Dark variants mocked: B / Emerald / Amber dusk. **NEXT: 4 light-mode themes** into the same picker.
-- **Build = a THEME ENGINE (D013-clean):** each theme = CSS-variable token set (data, not code) · theme catalog + picker UI (swatch menu replacing the toggle) · per-user persistence — extend `/api/auth/me/theme` from light|dark → theme id (migration; default 'B') · **unify the 3 duplicated theme systems** (app-shell.js `lfs-theme`, training-admin.html `lfs_theme`, the osp-training SPA) onto ONE catalog.
-- **Theme-independent structural mods (keep regardless):** PUSH-sidebar reflow, logo-click nav collapse, sidebar hover bubble/tooltip; logo keeps fixed brand colors (silver wordmark / azure / cyan spark) across all themes.
-- Full detail + mockup notes: `archive/planning-2026-06/redesign_ui.md`.
-- **Interim ruling (2026-07-03):** #49's settings layout lands as-is; its Light/Dark control is an acknowledged placeholder until the theme-engine package. Building MORE light/dark UI elsewhere = wasted motion; flag it.
+**REMAINING from the 2026-06-30 decision:**
+1. **4 LIGHT-mode themes** into the same picker (only the legacy light base exists).
+2. **Unify the remaining theme systems:** training-admin.html still runs its own legacy lfs_theme; the osp-training SPA has its own — both onto the shell catalog.
+3. **New surfaces must use the picker, not reintroduce Light/Dark** — the mobile settings rebuild did exactly that → deviation #58 (routes with #49).
 
-Status: awaiting spec session (rides PLAN 2.1). Call-up *13.
+Structural mods (logo-click collapse etc.) tracked separately: ui-redesign-remnants.md. Full pre-canon context: archive/planning-2026-06/redesign_ui.md. Slot: 2.1 ui-pass spec; call-up *13 narrows to light-set + unification choices.

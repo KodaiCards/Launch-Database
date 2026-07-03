@@ -1,0 +1,2 @@
+# "Did I bill this?" — billing status per project at a glance (rescued: I3, pre-canon — was APPROVED to build)
+Carter's worst daily pain: billed / amount / ready-to-bill visible at a glance per project/SA. Existed in old admin.html ("should've been in the plan"); not RUS-dependent; de-risks the bus-factor (others can see billing state). Pre-canon status was APPROVED. Slot: rides the cutover billing UI (2.3/2.7) — flag priority to Carter at the cutover spec session.

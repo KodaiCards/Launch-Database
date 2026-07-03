@@ -1,0 +1,2 @@
+# Demo/dev access — assemble existing pieces, not a build (rescued: I7, pre-canon)
+Carter wants demo+dev app access before features go live. Pieces exist: client demo via client_portal_v2 tokens (revocable, org-branded); staff demo via impersonation or a scoped demo user; hide-unfinished via PORTAL_MODE/feature-flag precedent (TRAINING_ONLY_LOCKDOWN). Design = wire together + a demo-mode toggle. Med-High, parked until Carter calls it.
