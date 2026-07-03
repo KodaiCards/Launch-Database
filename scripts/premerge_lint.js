@@ -199,22 +199,27 @@ function scanVisibleIds() {
     for (const m of body.matchAll(/title=["']([^"']*)["']/g))
       if (/\bT\d\d\.L\d\d\b|\bL\d\d\b/.test(m[1])) fail('visible-id', f, `rendered title prop has raw ID: "${m[1]}"`);
   }
-  // lesson body PROSE (in scope) — rendered cross-references. Trainee-visible prose
-  // writes cross-refs in the DOTTED form ("T03.L01 taught you…", "<li>T04.L02 …").
-  // Pool/deck/assessment IDs use the HYPHEN form (assessmentId="T03-L11") in code
-  // props and are NOT rendered, so we scan the dotted form ONLY, after stripping
-  // attribute values, JSX expressions, and comments — high precision, no code-ID
-  // false positives (matches the VO's guidance to anchor on T\d\d.L\d\d).
+  // lesson body RENDERED content (in scope) — both prose cross-references
+  // ("T03.L01 taught you…", "<li>T04.L02 …", "covered in T05") AND inline-quiz
+  // visible fields (prompt/explanation/citation/choices render to the trainee).
+  // Isolate rendered text by stripping comments, JSX attribute VALUES, and object
+  // id-property values — all the HYPHEN-form code IDs (assessmentId="T03-L11",
+  // deckId="…", question `id:'T03-L01-Q1'`). Inline-quiz objects are object literals
+  // (`prompt:`/`explanation:`), left intact, so their IDs are caught — a blanket
+  // brace-strip would erase them. Then apply the same ID_RE the pool scan uses, so
+  // lesson bodies are held to the identical visible-ID standard (dotted, hyphen, and
+  // bare T0x/L0x). Verified: 0 code-context false positives across the live-5.
+  const bodyIdRe = new RegExp(ID_RE.source, 'g');
   for (const f of walk(LESSON_DIR, (p) => p.endsWith('.jsx'))) {
     if (!inScope(f)) continue;
-    const prose = stripComments(lessonBody(fs.readFileSync(f, 'utf8')))
-      .replace(/\w[\w-]*=(["']).*?\1/gs, ' ') // strip attribute values (deckId="T03-L01", title="…")
-      .replace(/\{[^{}]*\}/g, ' ');           // strip simple JSX expressions
+    const rendered = stripComments(lessonBody(fs.readFileSync(f, 'utf8')))
+      .replace(/\w[\w-]*=(["']).*?\1/gs, ' ')      // strip JSX attribute values (title="…", assessmentId="T03-L11")
+      .replace(/\b\w*[iI]d:\s*([`"']).*?\1/g, ' '); // strip object id-property values incl. template literals (id: `T04-L07-fc-${…}`)
     const seen = new Set();
-    for (const m of prose.matchAll(/\bT\d\d\.L\d\d\b/g)) {
+    for (const m of rendered.matchAll(bodyIdRe)) {
       if (seen.has(m[0])) continue;
       seen.add(m[0]);
-      fail('visible-id', f, `raw internal ID "${m[0]}" in rendered lesson prose`);
+      fail('visible-id', f, `raw internal ID "${m[0]}" in rendered lesson body`);
     }
   }
 }
