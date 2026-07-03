@@ -120,7 +120,7 @@ export default function T04L01_SiteWalkHazardRecon() {
             <tr className="border-t border-white/10">
               <td className="px-3 py-2 font-mono">LOTO</td>
               <td className="px-3 py-2">Lockout/Tagout</td>
-              <td className="px-3 py-2">The energy isolation procedure required before any work near energized equipment; introduced in the Lockout/Tagout (LOTO) lesson</td>
+              <td className="px-3 py-2">The energy isolation procedure required before any work near energized equipment; introduced in the Lockout/Tagout (LOTO) — 1910.147 lesson</td>
             </tr>
             <tr className="border-t border-white/10">
               <td className="px-3 py-2 font-mono">GIS</td>

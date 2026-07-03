@@ -257,8 +257,7 @@ export default function T04L06_KmzShapefilePdfDeliverables() {
         <div className="mt-5 p-4 border border-amber-400/30 bg-amber-400/5 rounded-lg text-sm">
           <p className="font-semibold text-amber-300 mb-2">Book vs. Field — Archival Standard vs. Everyday PDF</p>
           <p className="text-slate-300/90">
-            <strong>Book (ISO/IEC 19005-1 PDF/A standard; FCC 47 CFR Part 42 records retention;
-            RUS loan documentation requirements):</strong> Long-term archival of engineering
+            <strong>Book:</strong> Long-term archival of engineering
             documents should use PDF/A because it is self-contained and cannot have its
             appearance altered by missing fonts, broken links, or software changes over a
             20–30 year loan life. A standard PDF can look different on a system without the

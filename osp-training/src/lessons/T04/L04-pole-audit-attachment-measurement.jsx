@@ -48,7 +48,7 @@ export const meta = {
     {
       term: 'midspan clearance',
       definition:
-        'The vertical distance between the bottom of a cable or conductor and whatever is directly below it — road surface, water, vegetation, or another wire — measured at the lowest point of the span (the midpoint between poles, where the cable sags deepest). Midspan clearance is the governing safety measurement for aerial plant: it determines whether a cable is high enough for vehicles, watercraft, or pedestrians to pass safely underneath. The field auditor records pole heights and attachment heights; the design engineer calculates midspan clearance using sag tables and loading conditions (T05 scope). Field crews flag any span where the cable appears to hang unusually low.',
+        'The vertical distance between the bottom of a cable or conductor and whatever is directly below it — road surface, water, vegetation, or another wire — measured at the lowest point of the span (the midpoint between poles, where the cable sags deepest). Midspan clearance is the governing safety measurement for aerial plant: it determines whether a cable is high enough for vehicles, watercraft, or pedestrians to pass safely underneath. The field auditor records pole heights and attachment heights; the design engineer calculates midspan clearance using sag tables and loading conditions (covered in OSP Design — Aerial). Field crews flag any span where the cable appears to hang unusually low.',
     },
     {
       term: 'pole class',
