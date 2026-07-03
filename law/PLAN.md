@@ -18,7 +18,7 @@
 ## Track 2 — PLATFORM (opens alongside Track 1; usage-conscious)
 | # | Work | Spec | State |
 |---|---|---|---|
-| 2.1 | UI/interaction pass on the ops cluster: Settings layout, unused-tab kill list `*`, visible-organization fixes (PRODUCT_BAR §2) | specs/ui-pass.md | ▶ with 1.1 |
+| 2.1 | UI/interaction pass on the ops cluster: Settings layout, unused-tab kill list `*`, visible-organization fixes (PRODUCT_BAR §2) + **theme ENGINE/PICKER** (replaces light/dark; recovered decision — seed: specs/ideas/theme-picker.md, call-up *13) | specs/ui-pass.md | ▶ with 1.1 |
 | 2.2 | Legacy cleanup: delete legacy inspection/permits routes; audit-page zombie check; kill AI assistant + setting-requests (pre-authorized) | specs/cutover.md | queued |
 | 2.3 | **Keystone cutover completion** — verify R10–R13 UI, close gaps, redirect admin.html, archive legacy data (nothing else migrates unless a MIGRATE row proves need `*`) | 〃 | queued |
 | 2.4 | **Events + nudges** — manual events w/ custom field + per-event "remind in X days"; stale-job nudges default **14 days** | 〃 (section) | rides 2.3 |

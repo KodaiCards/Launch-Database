@@ -16,3 +16,4 @@
 | *10 | Legacy MIGRATE rows re-check | Cutover (2.3) | Confirm budgets/permits-tracking rework still wanted vs "old admin sucked, migrate nothing" |
 | *11 | Cert topics revival | After entire main project rollout | Whether T21/T22/C04/C05 get built at all |
 | *12 | Topic-scope ranking beyond the DAG | As Track 1 wave 2 closes | Carter ranks/cuts the remaining tail if speed demands |
+| *13 | Theme picker/engine — confirm the 4-preset catalog (B·Graphite default + dark/light variants) | UI-pass spec session (2.1) | ~20 min; seed = specs/ideas/theme-picker.md |
