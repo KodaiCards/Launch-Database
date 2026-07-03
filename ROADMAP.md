@@ -1,3 +1,5 @@
+> ⚖ **REFERENCE ONLY (2026-07-02).** Authoritative sequence = `law/PLAN.md`; ratified `specs/` supersede this doc where they differ. Do not boot-read.
+
 # Launch Database — Streamline & Rebuild Roadmap
 
 > Single source of truth for where this product is going. Any Claude (or person) opening this repo should read `CLAUDE.md` first (what the product is + how we work), then this file (what we're building, in order).

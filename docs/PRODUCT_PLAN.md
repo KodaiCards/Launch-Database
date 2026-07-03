@@ -1,3 +1,5 @@
+> ⚖ **REFERENCE ONLY (2026-07-02).** Authoritative sequence = `law/PLAN.md`; ratified `specs/` supersede this doc where they differ. Do not boot-read.
+
 # Launch Fiber — Product Plan (canonical, refined)
 
 > **Read order:** `CLAUDE.md` → `HANDOFF.md` → **this file** → `ROADMAP.md` (phase mechanics) → `docs/map_requirements.md`.

@@ -769,7 +769,7 @@ require('./routes/projections')(app, pool, { requireManagerOrAdmin });
 // map units (13 handholes → catalog → $). See docs/map_requirements.md.
 require('./routes/map_integration')(app, pool, { requireManagerOrAdmin, upload });
 
-// Projects tab (docs/projects_tab_design.md): nested Client→EC→CC→SA→Route→project
+// Projects tab: nested Client→EC→CC→SA→Route→project
 // rollup for the renamed map-first Projects tab. Migration 0074.
 require('./routes/projects_tree')(app, pool, { requireManagerOrAdmin });
 

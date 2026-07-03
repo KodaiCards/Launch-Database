@@ -1,6 +1,6 @@
 // routes/projects_tree.js — the nested rollup behind the Projects tab.
 //
-// docs/projects_tab_design.md. Returns Client → EC → CC → SA → Route → project,
+// Returns Client → EC → CC → SA → Route → project,
 // where a "project" is a permitting/design service_area_job (the leaf). EC/CC/
 // Route are optional layers; an SA is always present. SA nodes carry the map
 // fields (center + has_boundary) so the tab can plot + zoom from one call.

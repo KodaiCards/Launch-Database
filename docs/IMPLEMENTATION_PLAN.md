@@ -1,3 +1,5 @@
+> ⚖ **REFERENCE ONLY (2026-07-02).** Authoritative sequence = `law/PLAN.md`; ratified `specs/` supersede this doc where they differ. Do not boot-read.
+
 # Launch Fiber — Implementation Plan (concrete, buildable)
 
 > **Why this doc exists (META-RULE — honor it forever):** plans get passed over on handoff/compaction when they state *intent* ("model billing per job") but not the *system* (tables, endpoints, UI, steps). **Every system below is specified concretely enough to build without re-deriving it.** When you add to this doc, keep that bar: actual schema, actual routes, actual UI, ordered steps, done-when. No vague verbs.
@@ -6,7 +8,7 @@
 > Last updated **2026-06-26**.
 
 ## Conventions (apply to every system)
-- **Migrations:** `migrations/00NN_*.sql`, ordered, **idempotent** (`ADD COLUMN IF NOT EXISTS`, `CREATE TABLE IF NOT EXISTS`). Next free number = **0079** (0078 = access_requests). **Step 0 of every migration: confirm exact existing columns against `schema.sql` / the live DB first** — don't trust this doc's column lists blindly; they're the design, verify before writing DDL. Apply with `node -r dotenv/config scripts/run_migrations.js --target <file>`; Railway `startCommand` skips auto-migrate, so apply deliberately.
+- **Migrations:** `migrations/00NN_*.sql`, ordered, **idempotent** (`ADD COLUMN IF NOT EXISTS`, `CREATE TABLE IF NOT EXISTS`). ⚠ Migration numbers in this doc are STALE (0079–0084 are taken) — ALWAYS take the next free number at build time. **Step 0 of every migration: confirm exact existing columns against `schema.sql` / the live DB first** — don't trust this doc's column lists blindly; they're the design, verify before writing DDL. Apply with `node -r dotenv/config scripts/run_migrations.js --target <file>`; ⚠ CORRECTED: migrations AUTO-RUN on deploy (`start()`→`runMigrations()`); `npm start` also migrates via `prestart`.
 - **Routes:** one module per area, `module.exports = function(app, pool, mw){…}`, mounted in `server.js` (CEO wires the mount; workers can't touch server.js). **`requireAuth` is a FACTORY** → `requireAuth()` / `requireAuth(['admin'])`; **`requireAdmin` is middleware** (use directly). New: `requireCapability('x')` (System F).
 - **Money math is server-side only.** JS never computes `$`. Client renders server numbers.
 - **UI:** no confirmation pop-ups (optimistic + undo bar `public/js/undo_bar.js`); auto-populate derivable fields; `esc(JSON.stringify(id))` in any onclick; operations pages share `public/js/app_nav.js` rail.
