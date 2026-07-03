@@ -33,7 +33,7 @@ Claim two packages at once · touch a `shared-infra`-guarded file unless you cla
 
 ## Resume a stale claim (successor session, same slot)
 1. `gh issue list --label "claimed:f1" --state open` → your inherited claims.
-2. Per issue: `gh issue view <N> --comments` + `git fetch origin && git log origin/<branch> --oneline -15` — WIP commit messages carry the dead session's state.
+2. Per issue: read the comment TAIL, not the whole thread — `gh issue view <N> --comments` and use the last ~5 comments + `git fetch origin && git log origin/<branch> --oneline -15` — WIP commit messages carry the dead session's state. Older comments are history, not state.
 3. **Verify, don't trust:** diff the branch; a step claimed done with no artifact (no RT report, no commit) gets REDONE.
 4. `gh issue comment <N> --body "RESUMED f1 @ <sha> · state: <what exists> · next: <step>"` → continue.
 5. Blocked mid-work yourself? Push `WIP:` commit with a state-bearing message FIRST, then comment/HANDOFF. Never stall silently.
