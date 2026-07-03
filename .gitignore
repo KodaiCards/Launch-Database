@@ -31,6 +31,8 @@ Thumbs.db
 .claude/*
 !.claude/agents/
 !.claude/agents/**
+!.claude/skills/
+!.claude/skills/**
 package-lock.json
 # desktop/package-lock.json is REQUIRED — GH Actions caches against it
 # and npm ci needs it for reproducible installs. Un-ignore explicitly.

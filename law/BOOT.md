@@ -22,3 +22,6 @@ Ideas/plan/"anything to discuss?" → Partner. Bugs/ops/status → Registrar (or
 
 ## Models + thinking (Carter-set, 2026-07-02; changing this = a law amendment)
 Partner: **Fable / high**. Registrar: **Opus / medium** → **Sonnet 5 / medium** after 2 clean batches. Foremen: **f1 Opus / high** (platform/schema/shared-infra) · **f2 Sonnet 5 / high** (content) — swap by mission mix; boot an Opus foreman for any architecture-heavy package. Verification Owner: **Sonnet 5 / high** (proven; never economize verification thinking). Spawns: Sonnet 5 / medium for authoring, red-team, citation lenses; Haiku 4.5 / low ONLY for mechanical work with zero judgment (greps, exact-spec substitutions, diffs). **Ultracode: off everywhere** — the caps in CONSTITUTION §5 are the control.
+
+## Skills (`.claude/skills/` — procedure cribs, loaded just-in-time)
+Repo skills travel with every clone: `board` (gh protocol) · `readability-pass` (PRODUCT_BAR §1 procedure) · `vo-verify` (lens checklist + verdict template) · `craft` (working discipline, every role) · `premerge` (once WO-3 lands). Two rules: **skills CITE law, never restate it** (one source of truth), and **no agent mints skills** — they enter only via Carter + Partner, merged by the Registrar.
