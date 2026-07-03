@@ -426,9 +426,9 @@ export default function T03L08_DropCableSelection() {
             Drop cable design cascades from upstream to customer premise:
           </p>
           <ul className="space-y-2 text-slate-300 text-sm list-disc ml-5">
-            <li><strong>T02.L05 G.657.A1 Bend-Insensitive Fiber</strong> — Drop cables MUST use G.657 because customer premises bend radii are 5–10 mm. Standard G.652.D at those bends creates unacceptable loss within months.</li>
-            <li><strong>T12.L03 FTTH Network Planning</strong> — Drop cable budget is typically 5–10 dB of the total link loss. Over-thin drop cable or poor routing choices sacrifice that budget; a thick, well-routed drop cable gives you headroom for repairs and future upgrades.</li>
-            <li><strong>T19.L08 Handoff to ISP — Customer Premise Equipment</strong> — The drop cable terminates into the customer's ONT (Optical Network Terminal). That ONT has connector loss (0.3–0.5 dB) + splice loss (0.2–0.3 dB); together with the drop cable loss, they determine whether the path reaches minimum power levels for the provisioned service tier.</li>
+            <li><strong>G.657.A1 Bend-Insensitive Fiber</strong> — Drop cables MUST use G.657 because customer premises bend radii are 5–10 mm. Standard G.652.D at those bends creates unacceptable loss within months.</li>
+            <li><strong>FTTH Network Planning</strong> — Drop cable budget is typically 5–10 dB of the total link loss. Over-thin drop cable or poor routing choices sacrifice that budget; a thick, well-routed drop cable gives you headroom for repairs and future upgrades.</li>
+            <li><strong>Handoff to ISP — Customer Premise Equipment</strong> — The drop cable terminates into the customer's ONT (Optical Network Terminal). That ONT has connector loss (0.3–0.5 dB) + splice loss (0.2–0.3 dB); together with the drop cable loss, they determine whether the path reaches minimum power levels for the provisioned service tier.</li>
           </ul>
           <p className="text-slate-200 mt-3 text-sm italic">
             Drop cable is the customer's first fiber experience. Thin cable + poor routing = a decade of field problems and callbacks.

@@ -362,9 +362,9 @@ export default function T03L03_ArmorJacketSelection() {
             Armor and jacket selection cascades through the rest of your design:
           </p>
           <ul className="space-y-2 text-slate-300 text-sm list-disc ml-5">
-            <li><strong>T04.L07 Site Selection &amp; Environmental Factors</strong> — Soil conditions (rodent pressure, chloride saturation, pH) and installation method (conduit vs. direct-bury) determine whether armor is needed and which type (CST steel vs. aluminum).</li>
-            <li><strong>T06.L04 Underground Make-Ready</strong> — Direct-burial cable reduces the conduit cost; conduit-in-duct allows lighter armor (aluminum) or dielectric. The choice changes your permit scope and crew days-on-site.</li>
-            <li><strong>T14.L02 Bonding Metallic Cable Armor</strong> — Every metallic armor at a pole attachment (aerial) or splitter (underground) requires bonding to ground per NEC 770.48 and RUS 1753.18. Dielectric cable completely avoids this cost and labor; metallic armor adds recurring work.</li>
+            <li><strong>Site Selection &amp; Environmental Factors</strong> — Soil conditions (rodent pressure, chloride saturation, pH) and installation method (conduit vs. direct-bury) determine whether armor is needed and which type (CST steel vs. aluminum).</li>
+            <li><strong>Underground Make-Ready</strong> — Direct-burial cable reduces the conduit cost; conduit-in-duct allows lighter armor (aluminum) or dielectric. The choice changes your permit scope and crew days-on-site.</li>
+            <li><strong>Bonding Metallic Cable Armor</strong> — Every metallic armor at a pole attachment (aerial) or splitter (underground) requires bonding to ground per NEC 770.48 and RUS 1753.18. Dielectric cable completely avoids this cost and labor; metallic armor adds recurring work.</li>
           </ul>
           <p className="text-slate-200 mt-3 text-sm italic">
             The armor choice is not cosmetic — it's the primary cost driver for underground installation labor and ongoing bond maintenance.
