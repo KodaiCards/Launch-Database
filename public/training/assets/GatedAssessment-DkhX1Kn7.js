@@ -1,0 +1,1 @@
+import{d as r,j as l,P as m}from"./index-z1gu7uWd.js";function x({courseId:t,assessmentId:s,title:a,fallback:e=null}){const{assessments:o,isLoading:i}=r(t);return i||!o.some(n=>n.assessmentId===s&&n.kind==="lesson")?e:l.jsx(m,{assessmentId:s,title:a})}export{x as G};
