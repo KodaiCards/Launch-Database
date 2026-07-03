@@ -4,6 +4,7 @@
 
 import React from 'react';
 import LessonLayout from '../../components/LessonLayout.jsx';
+import ReferencesBlock from '../../components/ReferencesBlock.jsx';
 import Flashcard from '../../components/Flashcard.jsx';
 import Quiz from '../../components/primitives/Quiz.jsx';
 import GatedAssessment from '../../components/primitives/GatedAssessment.jsx';
@@ -266,10 +267,14 @@ export default function T01L03_PartsOfACable() {
           format that gives mass-splice speed with the handling flexibility of loose-tube.
           (Details in Loose-Tube vs. Tight-Buffer vs. Ribbon.)
         </p>
-        <p className="mt-2 text-sm text-slate-300/90">
-          Source: TIA-598-D (color code for ribbon fiber); ICEA S-87-640 (construction standards).
-        </p>
       </section>
+
+      <ReferencesBlock
+        items={[
+          { citation: 'TIA-598-D', note: 'Fiber color-coding standard — the 12-color sequence used for buffer tubes and, here, ribbon fiber.' },
+          { citation: 'ICEA S-87-640 [confirm edition]', note: 'OSP fiber cable construction standard — covers ribbon and loose-tube cable construction requirements.' },
+        ]}
+      />
 
       {/* ── KEY TERMS FLASHCARDS ────────────────────────────────────────── */}
       <Flashcard
