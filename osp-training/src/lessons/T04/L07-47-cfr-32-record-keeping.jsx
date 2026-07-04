@@ -63,7 +63,7 @@ export const meta = {
   {
     term: 'record retention',
     definition:
-      'The requirement to keep financial, operational, and engineering records for a minimum period defined by regulation. Under 47 CFR Part 32 § 32.27, telecommunications plant records must be retained for specified periods tied to the life of the plant or the regulatory cycle. RUS loan agreements may impose extended retention requirements beyond the FCC minimum because the loan may span decades. The specific retention period depends on the applicable FCC schedule (47 CFR Part 42) and the RUS loan term — always confirm the current requirement with the company\'s regulatory counsel rather than relying on a hardcoded number. [confirm — FCC 47 CFR Part 42 retention schedule; RUS loan-life may extend]',
+      'The requirement to keep financial, operational, and engineering records for a minimum period defined by regulation. Under 47 CFR Part 32 § 32.27, telecommunications plant records must be retained for specified periods tied to the life of the plant or the regulatory cycle. RUS loan agreements may impose extended retention requirements beyond the FCC minimum because the loan may span decades. The specific retention period depends on the applicable FCC schedule (47 CFR Part 42) and the RUS loan term — always confirm the current requirement with the company\'s regulatory counsel rather than relying on a hardcoded number.',
   },
   {
     term: 'RUS Form 1755-A',
@@ -334,7 +334,7 @@ export default function T04L07_47CFR32RecordKeeping() {
             which can change. RUS loan terms can extend the required retention period beyond
             the FCC minimum. Always confirm the current requirement with your company's
             regulatory counsel or RUS district office before establishing a records retention
-            schedule. [confirm — FCC 47 CFR Part 42 retention schedule; RUS loan-life may extend]
+            schedule.
           </p>
         </div>
         <p className="mt-3">
@@ -625,7 +625,7 @@ export default function T04L07_47CFR32RecordKeeping() {
             answerIndex: 3,
             explanation:
               'The correct retention period for telecommunications plant records depends on the current FCC 47 CFR Part 42 schedule and the specific RUS loan agreement. RUS loan terms can extend the required retention period beyond the FCC minimum. Hardcoding a specific number of years (3, 7, or 15) without verifying the current regulation and loan agreement is risky — the applicable period may be longer. Always confirm with your company\'s regulatory counsel or the RUS district office.',
-            citation: '47 CFR Part 32 § 32.27 (records retention); 47 CFR Part 42 (FCC retention schedule); 7 CFR Part 1755 (RUS loan requirements). [confirm — FCC 47 CFR Part 42 retention schedule; RUS loan-life may extend]',
+            citation: '47 CFR Part 32 § 32.27 (records retention); 47 CFR Part 42 (FCC retention schedule); 7 CFR Part 1755 (RUS loan requirements).',
           },
         ]}
       />
