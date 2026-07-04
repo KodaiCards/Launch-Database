@@ -39,6 +39,19 @@
 // the business operates in a different zone.
 const BUSINESS_TZ = process.env.BUSINESS_TZ || 'America/Chicago';
 
+// ── Hours snap (law/DECISIONS.md L-014) ────────────────────────────────────
+// Quarter-hour snap is the policy EVERYWHERE hours enter or change, platform-
+// wide, no exceptions. The timeclock is not exempt: a session's elapsed
+// duration is converted to decimal hours and snapped to the 0.25 grid at write
+// time, so stored and displayed hours match and the timeclock is consistent
+// with manual entry + CSV import (which already snap via this same helper).
+// Negative/zero durations clamp to 0 (snapHoursToQuarter handles that).
+const { snapHoursToQuarter } = require('./routes/_helpers');
+
+function sessionEntryHours(durationMs) {
+  return snapHoursToQuarter(Math.max(0, durationMs / 3600000));
+}
+
 // Convert a Date (or ISO string) into the business-local 'YYYY-MM-DD' for use
 // as time_entries.entry_date. Uses Intl rather than manual offset math so DST
 // transitions are handled automatically.
@@ -490,9 +503,10 @@ function installTimeClockRoutes(app, pool, requireAuth) {
   // Closes the user's active session and creates a corresponding
   // time_entries row so the hours flow into the existing Hours pipeline.
   //
-  // Rounding policy: hours computed as decimal hours (ms / 3600000), kept
-  // to 2 decimals. We don't round to nearest 0.25 etc — admin can enforce
-  // company policy if needed via a settings flag in a later round.
+  // Rounding policy (L-014): hours computed as decimal hours (ms / 3600000)
+  // and snapped to the 0.25 grid at write time via sessionEntryHours — the
+  // same platform-wide snap manual entry + CSV import use. Storage and display
+  // stay consistent; editing the entry later re-snaps to the same grid.
   // ─────────────────────────────────────────────────────────────────────────
   app.post('/api/timeclock/clock-out', requireAuth(), async (req, res) => {
     const { notes } = req.body || {};
@@ -532,7 +546,7 @@ function installTimeClockRoutes(app, pool, requireAuth) {
         });
       }
       const needsReview = rawHours > CLOCK_OUT_REVIEW_THRESHOLD_HOURS;
-      const hours = Math.round(rawHours * 100) / 100;
+      const hours = sessionEntryHours(durationMs);
 
       // Combine session notes + clock-out notes
       const finalNotes = [
@@ -630,7 +644,7 @@ function installTimeClockRoutes(app, pool, requireAuth) {
           });
         }
         const needsReview = rawHours > CLOCK_OUT_REVIEW_THRESHOLD_HOURS;
-        const hours = Math.round(rawHours * 100) / 100;
+        const hours = sessionEntryHours(durationMs);
 
         if (hours > 0) {
           // Same tz-correct entry_date logic as clock-out.
@@ -854,4 +868,5 @@ module.exports = {
   bootstrapTimeClockSchema,
   installTimeClockRoutes,
   makeAuditLogger,
+  sessionEntryHours,
 };
