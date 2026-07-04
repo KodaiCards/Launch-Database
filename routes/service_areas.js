@@ -63,6 +63,7 @@ function costCategoryFor(team) {
 
 module.exports = function installServiceAreaRoutes(app, pool, mw) {
   const { logAudit } = require('./_audit');
+  const { snapHoursToQuarter } = require('./_helpers');
   const requireAdmin = (mw && mw.requireAdmin) || ((req, res, next) => next());
   const requireManagerOrAdmin = (mw && mw.requireManagerOrAdmin) || requireAdmin;
   const requireAuth = (mw && mw.requireAuth) || (() => (req, res, next) => next());
@@ -812,6 +813,11 @@ module.exports = function installServiceAreaRoutes(app, pool, mw) {
     const b = req.body || {};
     const hrs = Number(b.hours);
     if (!hrs || hrs <= 0) return res.status(400).json({ error: 'hours (> 0) required' });
+    // L-014: hours snap to the 0.25 grid platform-wide, no exceptions. Snap
+    // after the >0 guard (raw input validates, canonical value is stored) —
+    // mirrors the manual path (time_entries.js:177). Note: sub-0.125 inputs
+    // like 0.1 pass the guard then snap to 0, same as the manual path today.
+    const snappedHrs = snapHoursToQuarter(hrs);
     const isContractor = req.user && req.user.role === 'contractor';
     try {
       // Resolve the caller's own staff_id once.
@@ -838,11 +844,11 @@ module.exports = function installServiceAreaRoutes(app, pool, mw) {
       const ins = await pool.query(
         `INSERT INTO time_entries (service_area_job_id, staff_id, user_id, entry_date, hours, notes, is_billable)
          VALUES ($1,$2,$3,COALESCE($4, now()::date),$5,$6,COALESCE($7,true)) RETURNING *`,
-        [req.params.id, staffId, uid(req), b.entry_date || null, hrs, b.notes || null, b.is_billable]
+        [req.params.id, staffId, uid(req), b.entry_date || null, snappedHrs, b.notes || null, b.is_billable]
       );
       const updated = await recomputeJob(req.params.id);
       logAudit(pool, { req, action: 'time_entry.create', entity_type: 'time_entry', entity_id: ins.rows[0].id,
-        after: { job: req.params.id, staff_id: staffId, hours: hrs }, source: 'admin' }).catch(() => {});
+        after: { job: req.params.id, staff_id: staffId, hours: snappedHrs }, source: 'admin' }).catch(() => {});
       // Contractors get a money-free job summary (hours/status only) — the
       // recompute result carries actual_amount, which they must not see.
       const job = updated && isContractor

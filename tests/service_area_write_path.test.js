@@ -55,6 +55,16 @@ test('service-area routes / materials / finalize write-path', { skip: DB ? false
     assert.equal(r.json.route_id, routeId, 'job carries route_id');
     const jobId = r.json.id;
 
+    // L-014 money path: SA-job hours snap to the 0.25 grid at write time, no
+    // exceptions. Log an off-grid value and confirm the STORED entry is
+    // canonical (8.3 → 8.25). This is the keystone SA-job → billing path.
+    r = await call('POST', `/api/service-area-jobs/${jobId}/time-entries`, { hours: 8.3 });
+    assert.equal(r.status, 201, 'log SA-job hours');
+    assert.equal(Number(r.json.entry.hours), 8.25, 'off-grid SA-job hours snap to 0.25 on write (L-014)');
+    // The persisted row (not just the response) is snapped.
+    const storedHrs = (await pool.query('SELECT hours FROM time_entries WHERE id = $1', [r.json.entry.id])).rows[0].hours;
+    assert.equal(Number(storedHrs), 8.25, 'DB row stores the snapped value');
+
     r = await call('POST', `/api/service-areas/${saId}/jobs`, { team: 'design', rate: 110 });
     assert.equal(r.json.cost_category, 'engineering', 'design discipline → engineering cost');
 
