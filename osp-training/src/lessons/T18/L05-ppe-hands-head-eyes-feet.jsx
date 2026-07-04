@@ -53,7 +53,7 @@ export const meta = {
     {
       term: 'hi-vis vest',
       definition:
-        'High-visibility safety apparel rated per ANSI/ISEA 107 [confirm edition]. Class 2 is the minimum for daytime roadway work. Class 3 is required for nighttime roadway work or work in high-speed (> 50 mph) traffic zones. Required on any job site where the worker is in or adjacent to a roadway.',
+        'High-visibility safety apparel rated per ANSI/ISEA 107. Class 2 is the minimum for daytime roadway work. Class 3 is required for nighttime roadway work or work in high-speed (> 50 mph) traffic zones. Required on any job site where the worker is in or adjacent to a roadway.',
     },
   ],
   vocabulary_assumed: [
@@ -361,7 +361,7 @@ export default function T18L05_PPEHandsHeadEyesFeet() {
           { citation: 'ANSI/ISEA Z89.1', note: 'Hard hat types and classes (E/G/C) — electrical and impact ratings.' },
           { citation: '29 CFR 1910.136', note: 'Foot protection standard — when protective footwear is required.' },
           { citation: 'ASTM F2412 / F2413', note: 'Foot protection test method and performance spec — EH (electrical hazard) rating.' },
-          { citation: 'ANSI/ISEA 107 [confirm edition]', note: 'High-visibility apparel classes 1–3 for roadway work; also referenced by MUTCD Part 6.' },
+          { citation: 'ANSI/ISEA 107', note: 'High-visibility apparel classes 1–3 for roadway work; also referenced by MUTCD Part 6.' },
           { citation: 'ASTM D120', note: 'Rubber insulating glove specification and in-service inspection/re-test requirements.' },
           { citation: '29 CFR 1910.140', note: 'Personal fall protection systems — inspection requirements.' },
         ]}
