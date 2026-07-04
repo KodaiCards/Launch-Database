@@ -135,7 +135,7 @@ module.exports = function installAiRoutes(app, pool, mw) {
   // surfaced immediately at startup rather than at first chat.
   const anthropic = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
 
-  const { updateProjectHours, batchUpdateProjectHours, calcProjectFinancials, collectProjectTree } = require('./_helpers');
+  const { updateProjectHours, batchUpdateProjectHours, calcProjectFinancials, collectProjectTree, snapHoursToQuarter } = require('./_helpers');
   const { csvStage, CSV_STAGE_TTL_MS } = require('./_csv_stage');
   const csvHelpers = require('./hours_csv')._helpers;
   const { normalizeName, normalizeWO, detectColumns, parseDateCell } = csvHelpers;
@@ -1617,9 +1617,11 @@ async function executeTool(toolName, toolInput, actor = {}) {
           await client.query('BEGIN');
           let count = 0;
           for (const e of toolInput.entries) {
+            // L-014: snap to the 0.25 grid before storing, no exceptions —
+            // mirrors the CSV commit path so AI-logged hours are canonical.
             await client.query(
               'INSERT INTO time_entries (project_id, staff_id, entry_date, hours, job_title, import_batch) VALUES ($1,$2,$3,$4,$5,$6)',
-              [e.project_id, e.staff_id || null, e.entry_date, e.hours, e.job_title || null, importBatch]
+              [e.project_id, e.staff_id || null, e.entry_date, snapHoursToQuarter(e.hours), e.job_title || null, importBatch]
             );
             count++;
           }
