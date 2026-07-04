@@ -365,8 +365,7 @@ export default function T03L08_DropCableSelection() {
             which specifies minimum tensile rating requirements for OSP fiber cable products.
             ICEA S-87-640 (introduced in the Loose-Tube vs. Tight-Buffer vs. Ribbon lesson)
             is the complementary construction standard; GR-20 sets the performance floor the
-            cable must meet. [confirm GR-20 issue with your cable supplier's
-            datasheet — issue numbers update periodically]
+            cable must meet.
           </li>
           <li>
             <strong>Long-term EDS (Everyday Stress, introduced in the Messenger Cable — Lashed vs. ADSS lesson):</strong> The sustained

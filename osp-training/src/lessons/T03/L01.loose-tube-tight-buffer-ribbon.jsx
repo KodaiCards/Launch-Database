@@ -68,7 +68,7 @@ export const meta = {
     {
       term: 'TIA-598-D',
       definition:
-        'TIA-598 — Optical Fiber Cable Color Coding. Defines the 12-color fiber identification sequence (Blue, Orange, Green, Brown, Slate, White, Red, Black, Yellow, Violet, Rose, Aqua) used in OSP cables. [confirm current edition against tiaonline.org]',
+        'TIA-598 — Optical Fiber Cable Color Coding. Defines the 12-color fiber identification sequence (Blue, Orange, Green, Brown, Slate, White, Red, Black, Yellow, Violet, Rose, Aqua) used in OSP cables.',
     },
     {
       term: 'fiber count',
@@ -78,7 +78,7 @@ export const meta = {
     {
       term: 'ICEA S-87-640',
       definition:
-        'Insulated Cable Engineers Association standard S-87-640 — the primary construction standard for OSP fiber optic cable. Covers buffer tube dimensions, jacket thickness, tensile ratings, armor requirements, and water-blocking. Every RUS-funded project requires cable meeting this standard. [confirm current edition]',
+        'Insulated Cable Engineers Association standard S-87-640 — the primary construction standard for OSP fiber optic cable. Covers buffer tube dimensions, jacket thickness, tensile ratings, armor requirements, and water-blocking. Every RUS-funded project requires cable meeting this standard.',
     },
   ],
   estimated_minutes: 22,

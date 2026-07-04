@@ -246,8 +246,6 @@ export default function T03L03_ArmorJacketSelection() {
             armor are described as two distinct construction types with different application
             ranges. The standard is paywalled (2016/2023 editions) — values confirmed via
             the 2006 publicly-accessible archive.org edition and multiple vendor datasheets.
-            Confirm against ICEA S-87-640 2023 edition for current thickness
-            requirements when specifying for a contract.
           </p>
           <p className="text-slate-300/90 mt-2">
             <strong>Field:</strong> In practice, RUS project managers often specify "armored

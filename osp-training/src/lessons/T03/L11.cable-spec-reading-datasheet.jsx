@@ -24,7 +24,7 @@ export const meta = {
     'Navigate the major sections of an OSP fiber cable datasheet (optical, mechanical, environmental)',
     'Apply the tolerance band concept to determine whether a measured attenuation value passes the spec',
     'Add an aging factor to datasheet attenuation to compute planning attenuation for a link budget',
-    'Cross-reference TIA-526 [confirm edition] optical loss measurement test conditions with datasheet values',
+    'Cross-reference TIA-526 optical loss measurement test conditions with datasheet values',
     'Identify the three datasheet numbers that most often lead to field planning errors (max attenuation, MFD tolerance, tensile rating)',
   ],
   vocabulary_introduced: [
