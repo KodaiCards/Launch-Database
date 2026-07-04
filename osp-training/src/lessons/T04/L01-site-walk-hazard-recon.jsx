@@ -3,6 +3,7 @@
 
 import React from 'react';
 import LessonLayout from '../../components/LessonLayout.jsx';
+import ReferencesBlock from '../../components/ReferencesBlock.jsx';
 import BranchingScenario from '../../components/primitives/BranchingScenario.jsx';
 import Quiz from '../../components/primitives/Quiz.jsx';
 import GatedAssessment from '../../components/primitives/GatedAssessment.jsx';
@@ -119,7 +120,7 @@ export default function T04L01_SiteWalkHazardRecon() {
             <tr className="border-t border-white/10">
               <td className="px-3 py-2 font-mono">LOTO</td>
               <td className="px-3 py-2">Lockout/Tagout</td>
-              <td className="px-3 py-2">The energy isolation procedure required before any work near energized equipment; introduced in T18.L02</td>
+              <td className="px-3 py-2">The energy isolation procedure required before any work near energized equipment; introduced in the Lockout/Tagout (LOTO) — 1910.147 lesson</td>
             </tr>
             <tr className="border-t border-white/10">
               <td className="px-3 py-2 font-mono">GIS</td>
@@ -154,7 +155,7 @@ export default function T04L01_SiteWalkHazardRecon() {
           <li>
             <strong>Pole conditions</strong> — Does the pole look structurally sound?
             Are there signs of woodpecker damage, rot at the base, or existing over-attachment?
-            Any pole that looks questionable gets flagged for formal audit in L04.
+            Any pole that looks questionable gets flagged for a formal pole audit later in the survey.
           </li>
           <li>
             <strong>ROW status</strong> — Is the proposed route in public ROW (road shoulder,
@@ -208,19 +209,19 @@ export default function T04L01_SiteWalkHazardRecon() {
         <ul className="list-disc pl-5 space-y-2 mt-2 text-sm">
           <li>Pull the project's preliminary route map (even a rough sketch helps).</li>
           <li>Check county GIS or One-Call records for known buried utilities in the corridor.</li>
-          <li>Know the T18 safety rules: fall protection at any pole over 4 ft, confined-space
+          <li>Know the Safety &amp; OSHA rules: fall protection at any pole over 4 ft, confined-space
             indicators at manholes, LOTO requirements before any contact with energized equipment.
-            You covered these in T18 — carry that knowledge into every field visit.</li>
+            You covered these in Safety &amp; OSHA — carry that knowledge into every field visit.</li>
           <li>Put on your PPE: hard hat (Class E for joint-use aerial corridors), safety glasses,
-            ANSI Class 2 hi-vis vest minimum (Class 3 near high-speed traffic per MUTCD Part 6),
+            ANSI Class 2 hi-vis vest minimum (Class 3 near high-speed traffic),
             steel-toed boots.</li>
           <li>Have your field notebook, camera or phone with GPS-geotagging enabled, and a measuring
             tape or rangefinder.</li>
         </ul>
 
-        <h3 className="mt-5 font-semibold">Safety integration — T18 in practice</h3>
+        <h3 className="mt-5 font-semibold">Safety integration — putting Safety &amp; OSHA into practice</h3>
         <p>
-          Reviewing T18 topics before every site walk is mandatory, not a suggestion.
+          Reviewing Safety &amp; OSHA topics before every site walk is mandatory, not a suggestion.
           Three situations require immediate action rather than documentation-only:
         </p>
 
@@ -231,16 +232,16 @@ export default function T04L01_SiteWalkHazardRecon() {
               If a power line sags to a height that looks unsafe for a crew or a boom truck,
               flag it and note the GPS location. Do NOT approach with a measuring pole or any
               conductive object. The design engineer will coordinate with the power company for
-              clearance verification. Reference: 29 CFR 1910.268(b) and T18.L07 (energized
-              conductor proximity).
+              clearance verification. This is the same minimum-approach-distance hazard covered in
+              Working Near Energized Conductors — MAD/MAB.
             </p>
           </div>
           <div>
             <p className="font-semibold text-red-300">Confined-space indicators at manholes or handholes</p>
             <p className="text-slate-300/90 mt-1">
               If a manhole or handhole is on your route and needs to be opened for inspection,
-              this triggers permit-required confined-space entry rules (29 CFR 1910.146 — covered
-              in T18.L03). Survey teams should only open accessible handholes for visual inspection
+              this triggers permit-required confined-space entry rules — the same framework covered
+              in Confined Space Entry — Manholes &amp; Vaults. Survey teams should only open accessible handholes for visual inspection
               from above. Full entry into a manhole requires a confined-space permit, atmospheric
               testing, and a trained attendant. If you need interior dimensions, mark it as
               "requires confined-space entry team" in your notes rather than improvising.
@@ -297,7 +298,7 @@ export default function T04L01_SiteWalkHazardRecon() {
         <div className="mt-4 p-4 border border-amber-400/30 bg-amber-400/5 rounded-lg text-sm">
           <p className="font-semibold text-amber-300 mb-2">Book vs. Field</p>
           <p className="text-slate-300/90">
-            <strong>Book (RUS 1751F-630 § 7 and standard survey practice):</strong> A formal
+            <strong>Book (formal RUS survey practice):</strong> A formal
             route survey follows a systematic station-by-station procedure, records every
             utility in the corridor, flags every clearance concern, and produces a documented
             deliverable package before design begins. The walk is thorough and standardized.
@@ -359,7 +360,7 @@ export default function T04L01_SiteWalkHazardRecon() {
           For routes through forested corridors, river crossings, or areas with heavy tree
           canopy, the on-foot site walk often can't see the ground conditions clearly enough
           to locate buried utilities or identify erosion-prone terrain. That's where drone
-          LiDAR (covered in L02) fills the gap — it can "see through" moderate canopy to
+          LiDAR (covered in the Drone and LiDAR Survey Methods lesson) fills the gap — it can "see through" moderate canopy to
           the ground surface and detect buried infrastructure markers.
         </p>
         <p className="mt-2">
@@ -387,6 +388,16 @@ export default function T04L01_SiteWalkHazardRecon() {
           utilities helps the field crew know where to look and what to confirm.
         </p>
       </section>
+
+      <ReferencesBlock
+        items={[
+          { citation: '29 CFR 1910.268(b)', note: 'OSHA telecom standard — minimum approach distance to energized conductors.' },
+          { citation: '29 CFR 1910.146', note: 'OSHA permit-required confined-space entry rules — applies when a manhole or handhole must be opened.' },
+          { citation: '29 CFR 1910.268(g)(1)', note: 'OSHA fall-protection requirement at poles.' },
+          { citation: 'MUTCD Part 6', note: 'Temporary traffic control standard governing flagging and TTC setup around an open manhole in a traffic lane.' },
+          { citation: 'RUS Bulletin 1751F-630 § 7', note: 'RUS aerial-plant design specification — the standard for a formal, station-by-station route survey.' },
+        ]}
+      />
 
       {/* ── HAZARD IDENTIFICATION QUIZ ───────────────────────────────────── */}
       <Quiz
@@ -477,7 +488,7 @@ export default function T04L01_SiteWalkHazardRecon() {
             outcome: 'success',
             outcomeLabel: 'Correct approach',
             explanation:
-              'Photographing from a safe distance and flagging for design-engineer follow-up is the right call. You provided useful documentation without putting yourself or the data at risk. The engineer can coordinate with the utility company using your GPS coordinate and photos. OSHA 29 CFR 1910.268(b) and T18.L07 both prohibit approaching energized conductors without proper clearance and authorization.',
+              'Photographing from a safe distance and flagging for design-engineer follow-up is the right call. You provided useful documentation without putting yourself or the data at risk. The engineer can coordinate with the utility company using your GPS coordinate and photos. OSHA 29 CFR 1910.268(b) and the Working Near Energized Conductors — MAD/MAB lesson both cover why you never approach energized conductors without proper clearance and authorization.',
           },
           'measure-unsafe': {
             id: 'measure-unsafe',

@@ -3,6 +3,7 @@
 
 import React from 'react';
 import LessonLayout from '../../components/LessonLayout.jsx';
+import ReferencesBlock from '../../components/ReferencesBlock.jsx';
 import WorkedExample from '../../components/primitives/WorkedExample.jsx';
 import Quiz from '../../components/primitives/Quiz.jsx';
 import GatedAssessment from '../../components/primitives/GatedAssessment.jsx';
@@ -344,15 +345,15 @@ export default function T04L02_DroneLidarAerialSurvey() {
         </p>
         <ul className="list-disc pl-5 space-y-2 mt-2 text-sm">
           <li><strong>Remote pilot certificate.</strong> The pilot-in-command must hold a FAA Part 107 remote pilot certificate (requires passing a knowledge test at an FAA-approved testing center).</li>
-          <li><strong>400 ft AGL maximum altitude.</strong> FAA 14 CFR 107.51 sets 400 ft AGL as the default ceiling for UAS operations in uncontrolled airspace. OSP corridor surveys typically fly <strong>60–120 m AGL (200–400 ft)</strong> to stay within this limit. Flying above 120 m AGL (above 400 ft) requires either a Part 107 altitude waiver or the narrow structure exception: per 14 CFR 107.51(b), a drone may fly up to 400 ft <em>above the topmost point of a structure</em>, but ONLY while within a 400-foot horizontal radius of that structure. For a corridor survey with poles spaced 200–400 ft apart, the structure exception applies briefly near each pole — the drone must otherwise remain at or below 400 ft AGL between poles. Flights planned at 150 m AGL (492 ft) require a Part 107 altitude waiver regardless of pole proximity along the route.</li>
-          <li><strong>Visual line-of-sight (VLOS).</strong> Part 107.31 requires the pilot to maintain unaided visual contact with the drone at all times during flight, unless a BVLOS (Beyond Visual Line of Sight) waiver has been granted. Long corridor surveys may need a visual observer positioned along the route.</li>
+          <li><strong>400 ft AGL maximum altitude.</strong> The default ceiling for UAS operations in uncontrolled airspace is 400 ft AGL. OSP corridor surveys typically fly <strong>60–120 m AGL (200–400 ft)</strong> to stay within this limit. Flying above 120 m AGL (above 400 ft) requires either an altitude waiver or the narrow structure exception: a drone may fly up to 400 ft <em>above the topmost point of a structure</em>, but ONLY while within a 400-foot horizontal radius of that structure. For a corridor survey with poles spaced 200–400 ft apart, the structure exception applies briefly near each pole — the drone must otherwise remain at or below 400 ft AGL between poles. Flights planned at 150 m AGL (492 ft) require an altitude waiver regardless of pole proximity along the route.</li>
+          <li><strong>Visual line-of-sight (VLOS).</strong> The rule requires the pilot to maintain unaided visual contact with the drone at all times during flight, unless a BVLOS (Beyond Visual Line of Sight) waiver has been granted. Long corridor surveys may need a visual observer positioned along the route.</li>
           <li><strong>Controlled airspace authorization (LAANC or waiver).</strong> Any flight in Class B, C, D, or E airspace surface area requires prior authorization. The LAANC (Low Altitude Authorization and Notification Capability) system provides near-instant digital authorization via FAA DroneZone or LAANC-enabled apps (such as Aloft). Most rural OSP routes are in Class G airspace, which requires no prior authorization.</li>
         </ul>
 
         <div className="mt-4 p-4 border border-amber-400/30 bg-amber-400/5 rounded-lg text-sm">
           <p className="font-semibold text-amber-300 mb-2">Book vs. Field — FAA Part 107 and Class G Practice</p>
           <p className="text-slate-300/90">
-            <strong>Book (FAA Part 107.51 and 107.41):</strong> LAANC pre-flight authorization
+            <strong>Book:</strong> LAANC pre-flight authorization
             is required for any UAS operation in controlled airspace (Class B/C/D/E surface area).
             The digital authorization via FAA DroneZone or a LAANC-enabled app (e.g., Aloft) is
             required before flight. Failure to obtain authorization is a federal violation.
@@ -375,7 +376,7 @@ export default function T04L02_DroneLidarAerialSurvey() {
           </p>
           <p className="text-slate-300/90 mt-2">
             <strong>The risk of skipping the check:</strong> Even a Class G flight can trigger
-            a Part 107.23 "reckless operation" finding if the flight endangers a manned aircraft.
+            a "reckless operation" finding if the flight endangers a manned aircraft.
             If you didn't verify Class G before launch, your defense ("I thought we were in
             Class G") is weaker than if you have a B4UFLY screenshot showing Class G airspace
             at the time of launch. The 60-second check is worth it.
@@ -418,7 +419,7 @@ export default function T04L02_DroneLidarAerialSurvey() {
           The classified point cloud is then used to extract deliverables: the bare-earth layer
           becomes the digital terrain model (DTM) for sag and tension calculations; the
           utility/structure layer identifies pole locations and approximate heights for the
-          GIS layer that feeds the pole audit in L04.
+          GIS layer that feeds the upcoming pole audit.
         </p>
       </section>
 
@@ -440,10 +441,21 @@ export default function T04L02_DroneLidarAerialSurvey() {
             <strong>High Canopy</strong> — Points from the tops of tall trees. High canopy is the most relevant vegetation layer for OSP aerial design because tall trees near a span affect wind loading (trees can fall on a cable in a storm) and future vegetation management. Canopy height minus bare-earth elevation gives individual tree height — useful for identifying which trees need trimming to clear the future cable catenary.
           </li>
           <li>
-            <strong>Structures &amp; Utilities</strong> — Buildings, poles, power lines, and other man-made structures. For OSP work, this layer identifies existing utility poles (height and approximate location) and aerial conductors. Accuracy depends on point density — high-density scans (100+ pts/m²) can resolve individual conductors; lower-density scans may miss thin wires. This layer feeds the pole audit in T04.L04 by providing initial height estimates that field crews then verify with ground-truth measurements.
+            <strong>Structures &amp; Utilities</strong> — Buildings, poles, power lines, and other man-made structures. For OSP work, this layer identifies existing utility poles (height and approximate location) and aerial conductors. Accuracy depends on point density — high-density scans (100+ pts/m²) can resolve individual conductors; lower-density scans may miss thin wires. This layer feeds the Pole Audit — Field vs. Records lesson by providing initial height estimates that field crews then verify with ground-truth measurements.
           </li>
         </ol>
       </div>
+
+      <ReferencesBlock
+        items={[
+          { citation: 'FAA Part 107', note: 'The commercial drone operating rule — covers pilot certification, altitude, airspace, and visual line-of-sight requirements.' },
+          { citation: '14 CFR 107.51', note: '400 ft AGL default altitude ceiling, and the narrow structure exception near a pole.' },
+          { citation: '14 CFR 107.41', note: 'Prior authorization requirement for flight in controlled (Class B/C/D/E) airspace.' },
+          { citation: '14 CFR 107.31', note: 'Visual line-of-sight (VLOS) requirement for the remote pilot.' },
+          { citation: '14 CFR 107.23', note: '"Reckless operation" finding — can apply even in uncontrolled Class G airspace.' },
+          { citation: 'NOAA NGS CORS technical documentation', note: 'Published accuracy specification for RTK GNSS network corrections.' },
+        ]}
+      />
 
       {/* ── PER-LESSON QUIZ ──────────────────────────────────────────────── */}
       <GatedAssessment

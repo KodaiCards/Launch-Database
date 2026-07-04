@@ -3,6 +3,7 @@
 
 import React from 'react';
 import LessonLayout from '../../components/LessonLayout.jsx';
+import ReferencesBlock from '../../components/ReferencesBlock.jsx';
 import WorkedExample from '../../components/primitives/WorkedExample.jsx';
 import Quiz from '../../components/primitives/Quiz.jsx';
 import GatedAssessment from '../../components/primitives/GatedAssessment.jsx';
@@ -47,7 +48,7 @@ export const meta = {
     {
       term: 'midspan clearance',
       definition:
-        'The vertical distance between the bottom of a cable or conductor and whatever is directly below it — road surface, water, vegetation, or another wire — measured at the lowest point of the span (the midpoint between poles, where the cable sags deepest). Midspan clearance is the governing safety measurement for aerial plant: it determines whether a cable is high enough for vehicles, watercraft, or pedestrians to pass safely underneath. The field auditor records pole heights and attachment heights; the design engineer calculates midspan clearance using sag tables and loading conditions (T05 scope). Field crews flag any span where the cable appears to hang unusually low.',
+        'The vertical distance between the bottom of a cable or conductor and whatever is directly below it — road surface, water, vegetation, or another wire — measured at the lowest point of the span (the midpoint between poles, where the cable sags deepest). Midspan clearance is the governing safety measurement for aerial plant: it determines whether a cable is high enough for vehicles, watercraft, or pedestrians to pass safely underneath. The field auditor records pole heights and attachment heights; the design engineer calculates midspan clearance using sag tables and loading conditions (covered in OSP Design — Aerial). Field crews flag any span where the cable appears to hang unusually low.',
     },
     {
       term: 'pole class',
@@ -102,12 +103,12 @@ export default function T04L04_PoleAuditAttachmentMeasurement() {
           the engineer is the interpreter.
         </p>
         <p className="mt-2">
-          The single most important rule of the T04 pole audit: <strong>a field walker measures;
+          The single most important rule of the pole audit: <strong>a field walker measures;
           a design engineer applies the code.</strong> You record pole height, existing attachment
           heights, and proposed attachment zone. You flag anything that looks tight. The engineer
           then computes whether the clearance margins are sufficient and orders make-ready work
           if needed. You do not apply specific code numbers in the field — that comes in
-          T05 (NESC and Pole Loading), after the engineer has your measurements.
+          OSP Design — Aerial (NESC clearances and pole loading), after the engineer has your measurements.
         </p>
 
         <h3 className="mt-5 font-semibold">Acronyms in this lesson</h3>
@@ -147,7 +148,7 @@ export default function T04L04_PoleAuditAttachmentMeasurement() {
             <strong>Neutral / grounding zone.</strong> The power company's neutral wire.
             Also the reference height that defines the top of the communications space.
             Telecom attachments must maintain a required separation from the neutral —
-            the specific distance is a design-engineer question (T05 scope), but your job
+            the specific distance is a design-engineer question (covered in OSP Design — Aerial), but your job
             is to measure and record where the neutral currently is.
           </li>
           <li>
@@ -192,7 +193,7 @@ export default function T04L04_PoleAuditAttachmentMeasurement() {
             {
               id: 'T04-L04-fc-midspan-clearance',
               front: 'What is midspan clearance?',
-              back: 'The vertical distance between the bottom of a cable or conductor and whatever is directly below it — road surface, water, vegetation, or another wire — measured at the lowest point of the span (midpoint between poles, where the cable sags deepest). Midspan clearance governs whether a cable is high enough for vehicles, watercraft, or pedestrians to pass underneath safely. Field crews record pole heights; design engineers calculate clearance using sag tables (T05 scope).',
+              back: 'The vertical distance between the bottom of a cable or conductor and whatever is directly below it — road surface, water, vegetation, or another wire — measured at the lowest point of the span (midpoint between poles, where the cable sags deepest). Midspan clearance governs whether a cable is high enough for vehicles, watercraft, or pedestrians to pass underneath safely. Field crews record pole heights; design engineers calculate clearance using sag tables (covered in OSP Design — Aerial).',
             },
             {
               id: 'T04-L04-fc-pole-class',
@@ -213,7 +214,7 @@ export default function T04L04_PoleAuditAttachmentMeasurement() {
           <li><strong>Pole height calculator / conversion chart</strong> — if the pole has a height stencil at the butt (often the case on newer poles), you can cross-check your measurement. Older poles may have no stencil.</li>
           <li><strong>Field data sheet or mobile data collection app</strong> — a standardized form with fields for pole ID, GPS coordinate, pole class, pole height (measured and record), and a row for each attachment (who, type, measured height). Consistency across crew members is essential — everyone records the same fields in the same units (feet).</li>
           <li><strong>Camera</strong> — photograph the pole from the base up and from each side. A straight-on shot of each attachment zone.</li>
-          <li><strong>PPE</strong> — hard hat (Class E for joint-use poles), safety glasses, hi-vis vest, steel-toed boots. You are not climbing the pole in T04 — you are measuring from the ground. But energized conductors are above you, so the hard hat is non-optional.</li>
+          <li><strong>PPE</strong> — hard hat (Class E for joint-use poles), safety glasses, hi-vis vest, steel-toed boots. You are not climbing the pole during a route survey — you are measuring from the ground. But energized conductors are above you, so the hard hat is non-optional.</li>
         </ul>
 
         <h3 className="mt-5 font-semibold">What to measure and record</h3>
@@ -237,7 +238,7 @@ export default function T04L04_PoleAuditAttachmentMeasurement() {
             are extra-heavy-duty poles used for transmission and very long spans. Lower-class poles
             (Class 4 or 5) may not be able to carry the horizontal tension load of a new fiber
             attachment without replacement or additional guying — record the class so the design
-            engineer can include it in the formal pole-loading analysis (T05 scope).
+            engineer can include it in the formal pole-loading analysis (covered in OSP Design — Aerial).
             <br />
             Record the stenciled height from the pole butt. If no stencil is visible, measure from
             the ground line to the top. Record BOTH the stenciled value AND your field measurement
@@ -285,7 +286,7 @@ export default function T04L04_PoleAuditAttachmentMeasurement() {
             </ul>
             Record the identified owner in the audit and note the identification method used.
             If ownership is uncertain, flag as "owner unknown — confirm before OTMR application."
-            Cross-reference: T08 (Make-Ready &amp; Pole Attachment) covers the full OTMR process.
+            Cross-reference: the Make-Ready &amp; Pole Attachment topic covers the full OTMR process.
           </li>
           <li>
             <strong>Calculate the gap to proposed attachment zone.</strong> If the design team
@@ -471,6 +472,14 @@ export default function T04L04_PoleAuditAttachmentMeasurement() {
           existing-occupancy documentation protects everyone downstream.
         </p>
       </section>
+
+      <ReferencesBlock
+        items={[
+          { citation: 'ANSI O5.1', note: 'Wood pole classification standard — defines Class 1–6 and H-class load ratings.' },
+          { citation: 'RUS Bulletin 1751F-630 § 7', note: 'RUS aerial-plant design specification — attachment spacing and pole-loading data requirements.' },
+          { citation: 'FCC Order 18-111 (47 CFR 1.1411)', note: 'One-Touch Make-Ready (OTMR) process and the pole owner\'s authorization role.' },
+        ]}
+      />
 
       {/* ── PER-LESSON QUIZ ──────────────────────────────────────────────── */}
       <GatedAssessment

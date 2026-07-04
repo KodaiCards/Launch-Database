@@ -3,6 +3,7 @@
 
 import React from 'react';
 import LessonLayout from '../../components/LessonLayout.jsx';
+import ReferencesBlock from '../../components/ReferencesBlock.jsx';
 import Sortable from '../../components/primitives/Sortable.jsx';
 import Quiz from '../../components/primitives/Quiz.jsx';
 import GatedAssessment from '../../components/primitives/GatedAssessment.jsx';
@@ -334,7 +335,7 @@ export default function T04L09_RusPreEngineering() {
           <li>
             <strong>Design constraints and hazards:</strong> Everything flagged during
             the site walk and pole audit that limits the design engineer's options,
-            in the format described in T04.L08.
+            in the format described in the Handing Off to Design lesson.
           </li>
         </ol>
       </section>
@@ -372,7 +373,7 @@ export default function T04L09_RusPreEngineering() {
         <ul className="list-disc pl-5 space-y-1 mt-2 text-sm">
           <li><strong>RUS Form 740:</strong> Contract for construction of telecommunications lines (telecommunications system construction contract). The standard RUS construction agreement between the borrower and the construction contractor.</li>
           <li><strong>RUS Form 307:</strong> Bid Bond — a 10% surety instrument required from contractors submitting bids on RUS-funded construction projects. The Bid Bond guarantees that if the low bidder is awarded the contract, they will execute the contract and provide the required performance and payment bonds. Do not confuse Form 307 with the completeness checklist; the completeness check is performed against the RUS construction standards (7 CFR 1755) directly, not via a discrete checklist form.</li>
-          <li><strong>RUS Form 1755-A:</strong> Construction cost ledger (covered in T04.L07) — reconciles actual construction costs against the authorized budget.</li>
+          <li><strong>RUS Form 1755-A:</strong> Construction cost ledger (covered in the Record-Keeping Requirements — 47 CFR Part 32 lesson) — reconciles actual construction costs against the authorized budget.</li>
         </ul>
         <p className="mt-2 text-sm text-slate-300/70">
           Form numbers and submission procedures are subject to RUS revision. Always confirm
@@ -383,33 +384,34 @@ export default function T04L09_RusPreEngineering() {
         </p>
 
         <div className="mt-6 p-4 border border-sky-400/30 bg-sky-400/5 rounded-lg text-sm">
-          <p className="font-semibold text-sky-300 mb-2">Federal Compliance Awareness — Topics Beyond T04 Scope</p>
+          <p className="font-semibold text-sky-300 mb-2">Federal Compliance Awareness — Topics Beyond This Course's Scope</p>
           <p className="text-slate-300/90">
             RUS pre-engineering intersects with a wide range of federal compliance obligations
-            that T04 introduces only at a high level. The following are real exposure areas
+            that this course introduces only at a high level. The following are real exposure areas
             that require specialized consultation <strong>before</strong> the final design and
             construction package is submitted. Do not self-navigate these without your
             engineering firm's designated compliance specialist, environmental consultant,
             legal counsel, or OSHA safety officer:
           </p>
           <ul className="list-disc pl-5 mt-2 space-y-1 text-slate-300/80">
-            <li><strong>Multi-employer OSHA obligations</strong> (29 CFR Part 1910 / 1926) — contractor and subcontractor safety accountability on RUS construction sites</li>
+            <li><strong>Multi-employer OSHA obligations</strong> — contractor and subcontractor safety accountability on RUS construction sites</li>
             <li><strong>Job Hazard Analysis (JHA)</strong> requirements for OSP construction activities</li>
-            <li><strong>Permit-Required Confined Space (PRCS) inventory</strong> (29 CFR 1910.146) — handholes, vaults, and manholes along the route</li>
+            <li><strong>Permit-Required Confined Space (PRCS) inventory</strong> — handholes, vaults, and manholes along the route</li>
             <li><strong>False Claims Act (FCA) implied certification</strong> — cost certifications submitted to RUS carry federal fraud exposure</li>
-            <li><strong>NEPA Categorical Exclusion (CatEx) per 7 CFR Part 1970</strong> — RUS-specific NEPA implementing regulations and CatEx criteria for telecom projects</li>
+            <li><strong>NEPA Categorical Exclusion (CatEx)</strong> — RUS-specific NEPA implementing regulations and CatEx criteria for telecom projects</li>
             <li><strong>Endangered Species Act §7 / §9 consultation</strong> (via USFWS IPaC tool)</li>
-            <li><strong>Tribal consultation</strong> (EO 13175 + 36 CFR Part 800) — separate from SHPO; federal nexus triggers nation-to-nation consultation obligations</li>
+            <li><strong>Tribal consultation</strong> — separate from SHPO; federal nexus triggers nation-to-nation consultation obligations</li>
             <li><strong>ASCE 38 SUE Quality Levels</strong> for subsurface utility engineering on underground segments</li>
             <li><strong>FEMA FIRM floodplain</strong> considerations for underground routes in flood zones</li>
-            <li><strong>47 U.S.C. §224 / 47 CFR Part 1, Subpart J §§1.1401–1.1416 (pole attachment rate formula)</strong> for make-ready cost attribution</li>
-            <li><strong>DBE / Section 3 requirements</strong> (49 CFR Part 26 / 24 CFR Part 75) if federal-nexus funding triggers disadvantaged-business or labor-hiring obligations</li>
+            <li><strong>Pole attachment rate formula</strong> for make-ready cost attribution</li>
+            <li><strong>DBE / Section 3 requirements</strong> if federal-nexus funding triggers disadvantaged-business or labor-hiring obligations</li>
           </ul>
           <p className="text-slate-300/80 mt-2">
             Deeper coverage of these topics is planned for future compliance-focused course
             modules. For current projects, reference the USDA RUS General Field Representative
             handbook, USFWS IPaC portal, and your firm's environmental + legal team before
-            finalizing any RUS submission.
+            finalizing any RUS submission. See the References section below for the specific
+            federal citations behind each area.
           </p>
         </div>
       </section>
@@ -436,6 +438,25 @@ export default function T04L09_RusPreEngineering() {
           </li>
         </ol>
       </div>
+
+      <ReferencesBlock
+        items={[
+          { citation: '7 CFR Part 1755', note: 'RUS telecommunications construction standards — materials, methods, and documentation requirements.' },
+          { citation: 'RUS Bulletin 1751F-630', note: 'Aerial-plant construction standard, including the Appendix referenced for construction unit codes and submittal requirements.' },
+          { citation: 'RUS Form 740', note: 'Standard RUS construction contract between borrower and contractor.' },
+          { citation: 'RUS Form 307', note: 'Bid Bond — surety instrument required from bidders on RUS-funded construction.' },
+          { citation: 'RUS Form 1755-A', note: 'Construction cost ledger reconciling actual costs to the authorized budget.' },
+          { citation: 'ANSI O5.1', note: 'Wood pole classes and dimensions referenced by construction unit codes.' },
+          { citation: 'NEPA; 7 CFR Part 1970', note: 'National Environmental Policy Act and RUS-specific NEPA implementing regulations, including Categorical Exclusion (CatEx) criteria.' },
+          { citation: '29 CFR Part 1910 / 1926', note: 'Multi-employer OSHA obligations for contractors and subcontractors on RUS construction sites.' },
+          { citation: '29 CFR 1910.146', note: 'Permit-Required Confined Space rules — applies to handholes, vaults, and manholes along the route.' },
+          { citation: 'Endangered Species Act §7 / §9', note: 'Consultation requirement, typically screened through the USFWS IPaC tool.' },
+          { citation: 'Executive Order 13175; 36 CFR Part 800', note: 'Nation-to-nation tribal consultation requirement — separate from SHPO review.' },
+          { citation: 'ASCE 38', note: 'Subsurface Utility Engineering (SUE) quality-level standard for underground segments.' },
+          { citation: '47 U.S.C. §224; 47 CFR Part 1, Subpart J §§1.1401–1.1416', note: 'Pole attachment rate formula relevant to make-ready cost attribution.' },
+          { citation: '49 CFR Part 26; 24 CFR Part 75', note: 'DBE / Section 3 disadvantaged-business and labor-hiring obligations on federal-nexus funding.' },
+        ]}
+      />
 
       {/* ── SORTABLE ─────────────────────────────────────────────────────── */}
       <Sortable

@@ -362,7 +362,7 @@ export default function T04L03_GISLandbaseCoordinateSystems() {
           NAVD88 or to the WGS84 ellipsoid (which needs a geoid correction to convert to NAVD88).
         </p>
         <p className="mt-2">
-          For T04 scope (field data collection), you don't need to calculate geoid corrections —
+          For route-survey field work (field data collection), you don't need to calculate geoid corrections —
           that's a GIS post-processing step. The takeaway: when you order a LiDAR survey, specify
           "deliver elevations in NAVD88" in the scope so the GIS team doesn't have to
           re-process the data after delivery.

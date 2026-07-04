@@ -3,6 +3,7 @@
 
 import React from 'react';
 import LessonLayout from '../../components/LessonLayout.jsx';
+import ReferencesBlock from '../../components/ReferencesBlock.jsx';
 import BranchingScenario from '../../components/primitives/BranchingScenario.jsx';
 import Sortable from '../../components/primitives/Sortable.jsx';
 import Quiz from '../../components/primitives/Quiz.jsx';
@@ -89,7 +90,7 @@ export default function T04L05_RouteAlternativesComparison() {
         <p className="mt-2">
           The <strong>route alternatives analysis</strong> is how you compare those options
           side by side — in the field, during the survey, before anyone draws a design.
-          At the T04 level, this is a field-level evaluation: you're walking the routes,
+          At the route-survey level, this is a field-level evaluation: you're walking the routes,
           reading the terrain, and asking practical questions like "Can a boring machine
           get in there?" and "How many agencies are going to want a piece of this permit?"
         </p>
@@ -177,7 +178,7 @@ export default function T04L05_RouteAlternativesComparison() {
 
         <h3 className="mt-4 font-semibold">The four field-comparison criteria</h3>
         <p>
-          At the T04 field-survey level, you can assess four key criteria for each route
+          At the field-survey level, you can assess four key criteria for each route
           alternative without needing design engineering calculations:
         </p>
 
@@ -242,7 +243,7 @@ export default function T04L05_RouteAlternativesComparison() {
               <li>Railroad crossing → railroad company permit and possible third-party crossing contractor</li>
               <li>Navigable waterway crossing → USACE NWP 57 or individual permit (90 days to 18 months)</li>
               <li>Wetland delineation markers → Section 404 USACE review</li>
-              <li>Historic district signage or recorded historic property in corridor → Section 106 NHPA review (coordinated with State Historic Preservation Office / SHPO). Note: SHPO concurrence does NOT substitute for tribal consultation — if the project has a federal nexus, Executive Order 13175 and 36 CFR Part 800 require separate nation-to-nation tribal consultation with any federally recognized tribe with interest in the project area. Flag both triggers when you observe the indicator; they are handled through separate processes.</li>
+              <li>Historic district signage or recorded historic property in corridor → Section 106 NHPA review (coordinated with State Historic Preservation Office / SHPO). Note: SHPO concurrence does NOT substitute for tribal consultation — if the project has a federal nexus, separate federal rules require nation-to-nation tribal consultation with any federally recognized tribe with interest in the project area. Flag both triggers when you observe the indicator; they are handled through separate processes.</li>
             </ul>
           </div>
 
@@ -316,9 +317,9 @@ export default function T04L05_RouteAlternativesComparison() {
           <li><strong>Preliminary field recommendation</strong> — aerial (low make-ready), aerial (significant make-ready), underground (easy terrain), underground (complex terrain), or "requires formal tradeoff analysis."</li>
         </ul>
         <p className="mt-2 text-sm text-slate-300/70">
-          This documentation becomes part of the handoff package (T04.L08). The design engineer
-          uses it as the starting point for the formal route alternatives analysis and weighted
-          scoring matrix.
+          This documentation becomes part of the handoff package described in the Handing Off to
+          Design lesson. The design engineer uses it as the starting point for the formal route
+          alternatives analysis and weighted scoring matrix.
         </p>
       </section>
 
@@ -367,6 +368,17 @@ export default function T04L05_RouteAlternativesComparison() {
           to capture information that should have been documented the first time.
         </p>
       </section>
+
+      <ReferencesBlock
+        items={[
+          { citation: 'USACE NWP 57', note: 'Nationwide Permit — Electric Utility Line and Telecommunications Activities; bundles Section 10 (Rivers and Harbors Act) and Section 404 (Clean Water Act) review for qualifying telecom crossings.' },
+          { citation: '33 CFR Part 320-332', note: 'USACE Section 404 wetland-permit framework.' },
+          { citation: '33 CFR Part 330.1(b)', note: 'Confirms a Nationwide Permit covers Section 10 and Section 404 jointly.' },
+          { citation: '40 CFR Part 1500-1508', note: 'NEPA implementing regulations.' },
+          { citation: 'Section 106 NHPA', note: 'Historic-property review, coordinated with the State Historic Preservation Office (SHPO).' },
+          { citation: 'Executive Order 13175; 36 CFR Part 800', note: 'Nation-to-nation tribal consultation requirement on federal-nexus projects — separate from, and not satisfied by, SHPO concurrence.' },
+        ]}
+      />
 
       {/* ── SORTABLE ─────────────────────────────────────────────────────── */}
       <Sortable
