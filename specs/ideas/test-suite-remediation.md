@@ -1,17 +1,23 @@
-# Test-suite remediation — make `npm test` / premerge reliably green (Partner: scope into PLAN)
+# Test-suite remediation — how do we verify DB-backed code at all? (Partner: scope into PLAN)
 
-**Raised by:** Registrar, 2026-07-03 (Carter chose "raise to Partner as a scoped item"). Not a drive-by `bug` — it's a test-infra project.
+**Raised by:** Registrar, 2026-07-03 (Carter chose "raise to Partner as a scoped item"). Not a drive-by `bug` — it's a test-infra + verification-method project.
 
-**What:** The DB-backed `npm test` suite has pre-existing failures + structural fragility. Uncovered the moment the local premerge Postgres made it runnable (CI has been dead for months, so nobody had run the full suite locally). **Independent of the #59/#48 merges** — those touch `timeclock_module.js` + a pure-fn test + `scripts/` tooling, not billing/audit_log routes.
+**⚠ Constraint from law `e8c62e0e` (Registrar ACCESS, 2026-07-03):** "NEVER create accounts, databases, or services; **a private/local Postgres verifies NOTHING (one shared DB, dev=prod)**." So the answer here **cannot** be "spin up a local test DB" — that path is now closed by law. That is precisely what makes this a real problem worth Partner scoping, not a quick fix.
 
-**The specific findings (all reproduced on a pristine local PG 16.6, port 5433):**
-- `audit_log.test.js` — **11/32 fail reproducibly, even alone.** audit_log is on the PLAN **2.2 cutover kill list**, so these are plausibly stale tests for a doomed feature, not a live regression. Triage before "fixing."
-- `billing.test.js` — **0/39 alone (before-hook throws) but only 2/39 in the full suite** → the file is **not self-contained**; it leans on state/seed data created by earlier-running files. Order-dependence runs through the suite.
-- `schema_sync.test.js` — errors "already exists" (42P07/42723) unless the DB is dropped/recreated pristine per run.
-- Whole suite is **slow (~40+ min)** — every one of ~60 files boots `server.js` and re-runs the full 630-statement schema bootstrap; many files hang on teardown (open handles), so single-file `node --test` doesn't self-exit.
+**What:** The DB-backed `npm test` suite has pre-existing failures + structural fragility, and there is **no law-compliant environment to run it in**. Discovered 2026-07-03 (CI dead for months → nobody had run the full suite). **Independent of #59/#48/#60** — those touch `timeclock_module.js` / `service_areas.js` / `ai.js` + a pure-fn test + `scripts/` tooling.
 
-**Why it matters:** GATES §4 makes "`premerge` green" a merge gate, but full premerge/`npm test` **cannot be reliably green today** in any environment. Tonight's merges rested on the correct sub-floor (pure-fn unit test + premerge lint + post-deploy live smoke) — but that shouldn't be the permanent answer for money/schema packages.
+**The tension:**
+- The full suite boots `server.js` per file → runs migrations. Against the **shared prod DB** (`.env` DATABASE_URL) that's slow (first test hit the 180s timeout → whole suite wedged with "pool after end") AND unsafe (schema churn on prod; dev=prod).
+- A separate/local DB is now **forbidden by law** (verifies nothing; dev=prod is the reality).
+- So today the only law-compliant verification for DB-backed logic is: **pure-function unit tests** (DB-free, e.g. `hours_quarter_snap.test.js` ran 11/11) + **premerge lint** + **VO trace/lens review** + **post-deploy live smoke against the real app**. That worked for #59/#60 but doesn't scale to full-suite regression coverage.
 
-**What it touches:** `tests/_helpers.js` (per-file DB isolation or documented fresh-DB-per-run + faster boot/teardown), `tests/audit_log.test.js` + `tests/billing.test.js` (self-containment; retire/fix audit_log tests per the 2.2 kill decision), possibly a `premerge` doc on the fresh-DB step. Registrar env now has the local PG to validate any fix.
+**Pre-existing suite failures observed (surfaced during the one exploratory run):**
+- `audit_log.test.js` — ~11/32 fail (audit_log is on the PLAN **2.2 cutover kill list** → plausibly stale tests for a doomed feature).
+- `billing.test.js` — not self-contained; depends on state seeded by earlier files (fails in isolation, mostly passes mid-suite).
+- `schema_sync.test.js` — expects a pristine DB.
 
-**Status:** awaiting Partner scoping into PLAN (likely a Track-2 item, coordinate with 2.2 cutover which removes audit_log). Reference: registrar memory `reference_test_suite_fragility` + `reference_premerge_local_postgres`.
+**Why it matters:** GATES §4 makes "`premerge` green" a merge gate, but full premerge/`npm test` **cannot currently run in any law-compliant way**. Either (a) GATES needs an explicit "how DB-backed tests are verified given dev=prod" answer, or (b) the suite needs a sanctioned ephemeral-DB exception, or (c) tests get restructured toward pure-fn + a thin sanctioned integration layer. **This is a Partner/Carter decision, not a Registrar one.**
+
+**What it touches:** `tests/_helpers.js`, `tests/audit_log.test.js` + `tests/billing.test.js`, GATES (verification-method clarification), law `e8c62e0e` (if an ephemeral-DB exception is wanted). Reference: registrar memory `reference_test_suite_fragility`.
+
+**Status:** awaiting Partner scoping into PLAN (coordinate with 2.2 cutover, which removes audit_log).

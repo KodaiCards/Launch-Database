@@ -53,7 +53,7 @@
 | 1099 inspectors — dead-simple mobile clock app (kills texting) | 📋 | Contractor-timeclock work is the base | — |
 | W2 inspection hours via Workforce CSV import | 📋 | — | **Does Workforce export CSV?** |
 | Confidence layer (no orphan hours, weekly confirm loop, anomaly flags, audit trail) | 📋 | Feeds A/B/E | — |
-| **L-014 quarter-hour snap — timeclock write paths** | ✅ | **#59 merged 2026-07-03** (`9f662301`): `sessionEntryHours` snaps clock-out + switch to 0.25 via canonical `snapHoursToQuarter`; pure-fn test green. **L-014 NOT fully closed — #60 still open** (2 raw-hours writes remain: `service_areas.js:839` billing money-path + `ai.js:1621`). | — |
+| **L-014 quarter-hour snap — ALL write paths** | ✅ | **CLOSED platform-wide 2026-07-03.** #59 (`9f662301`): timeclock clock-out/switch via `sessionEntryHours`. #60 (`88068156`): `service_areas.js` SA-job hours (billing money-path — VO money-lens PASS) + `ai.js` log_time_entries, both via shared `snapHoursToQuarter`. VO fresh class-grep confirms no raw-hours write remains. | — |
 
 ## 5. System F — Roles & access (assignment-driven + capability grants)
 | Area | Status | Notes / gaps | Open Qs |
