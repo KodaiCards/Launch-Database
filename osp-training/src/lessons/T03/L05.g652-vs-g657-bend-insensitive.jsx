@@ -171,8 +171,6 @@ export default function T03L05_G652VsG657BendInsensitive() {
             <strong>Bend loss limit (ITU-T G.657 specified test conditions):</strong>
             {' '}1 turn at 10 mm radius: ≤ 0.75 dB at 1550 nm, ≤ 1.5 dB at 1625 nm;
             10 turns at 15 mm radius: ≤ 0.25 dB at 1550 nm, ≤ 1.0 dB at 1625 nm.
-            Exact test conditions are in ITU-T G.657 2024 §6 (paywalled); confirm against
-            the current ITU-T G.657 2024 edition for design use.
           </li>
           <li><strong>Splice compatibility:</strong> Fully backward-compatible with G.652.D for splicing. Same MFD specification — no intrinsic splice loss penalty at a G.657.A1/G.652.D interface.</li>
         </ul>
@@ -300,8 +298,6 @@ export default function T03L05_G652VsG657BendInsensitive() {
             <strong>Book (ITU-T G.657 2024):</strong> Defines three active subcategories
             (A1, A2, B3), exact bend test conditions, acceptable loss limits at 1550 nm
             and 1625 nm, and MFD tolerances. The 2024 edition merged B2 into A2.
-            Exact test thresholds are paywalled; confirm against the current ITU-T G.657 2024
-            edition for design specifications.
           </p>
           <p className="text-slate-300/90 mt-2">
             <strong>Field:</strong> Most OSP crews don't think about G.657 subcategories

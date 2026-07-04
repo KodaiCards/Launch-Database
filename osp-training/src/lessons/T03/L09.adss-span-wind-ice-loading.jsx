@@ -43,7 +43,7 @@ export const meta = {
     {
       term: 'NESC loading district',
       definition:
-        'A geographic classification in NESC C2 Section 25 (Rule 250B Table 250-1) defining the simultaneous ice, wind, and temperature design loading a pole line must withstand. Three districts: Heavy (0.50 in. radial ice + 4 lb/ft² wind + 0°F), Medium (0.25 in. radial ice + 4 lb/ft² wind + 15°F), Light (0 in. ice + 9 lb/ft² wind + 30°F). [Confirm against NESC C2-2023 Table 250-1 — values confirmed via RUS 1724E-150 + IAEI Magazine]',
+        'A geographic classification in NESC C2 Section 25 (Rule 250B Table 250-1) defining the simultaneous ice, wind, and temperature design loading a pole line must withstand. Three districts: Heavy (0.50 in. radial ice + 4 lb/ft² wind + 0°F), Medium (0.25 in. radial ice + 4 lb/ft² wind + 15°F), Light (0 in. ice + 9 lb/ft² wind + 30°F).',
     },
     {
       term: 'Extreme Wind loading',
@@ -189,8 +189,7 @@ export default function T03L09_ADSSSpanWindIceLoading() {
         <p className="mt-2 text-sm text-amber-300/90 border-l-4 border-amber-400/30 pl-3">
           Values below confirmed via RUS Bulletin 1724E-150 (which reproduces the NESC
           Table 250-1 data) and IAEI Magazine 2002 NESC article. Exact NESC C2-2023
-          table text is paywalled. Confirm against NESC C2-2023 Table 250-1 when
-          designing for formal engineering deliverables.
+          table text is paywalled.
         </p>
 
         <div className="mt-4 overflow-x-auto">

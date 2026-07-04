@@ -197,8 +197,7 @@ export default function T03L07_ArmorDeepDive() {
           <p className="text-slate-300/90">
             <strong>Book (ICEA S-87-640):</strong> Defines armor geometry, material grades,
             corrosion protection requirements, and minimum coverage for each armor type.
-            The 2016/2023 editions are paywalled. Confirm armor thickness and coverage
-            requirements against ICEA S-87-640 current edition for formal specs.
+            The 2016/2023 editions are paywalled.
           </p>
           <p className="text-slate-300/90 mt-2">
             <strong>Field:</strong> The most common armor mistake isn't the wrong type —
