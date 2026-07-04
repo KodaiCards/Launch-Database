@@ -178,7 +178,7 @@ export default function T02L02_AttenuationThreeNumbers() {
           </table>
         </div>
         <p className="text-xs text-slate-400 mt-2">
-          Sources: ITU-T G.652 (2024 edition — [confirm edition for current release]) for
+          Sources: ITU-T G.652 (2024 edition) for
           spec-max column. Typical-datasheet column based on published vendor datasheets (Corning
           SMF-28, Prysmian, OFS). Designer planning values are standard OSP practice; always
           confirm with the project's actual fiber datasheet.
@@ -262,7 +262,7 @@ export default function T02L02_AttenuationThreeNumbers() {
                 <td className="px-3 py-2">Connector (mated pair)</td>
                 <td className="px-3 py-2">0.75 dB (TIA-568 legacy max)</td>
                 <td className="px-3 py-2">0.30–0.50 dB</td>
-                <td className="px-3 py-2">TIA-568.3-D [confirm edition] introduced reference-grade class with tighter max</td>
+                <td className="px-3 py-2">TIA-568.3-D introduced reference-grade class with tighter max</td>
               </tr>
               <tr className="border-t border-white/10">
                 <td className="px-3 py-2">Fusion splice</td>
@@ -375,7 +375,7 @@ export default function T02L02_AttenuationThreeNumbers() {
               answerDisplay: 'ambiguous / cannot be determined without knowing the revision and connector grade',
               explanation:
                 'TIA-568 connector loss values have changed across revisions and now distinguish between standard and reference-grade connector categories. "TIA-568 compliant" without a revision letter is too vague for planning — the difference between connector grades can be a factor of two or more in loss budget terms.',
-              citation: 'TIA-568.3-D [confirm current edition] — reference-grade connector loss categories.',
+              citation: 'TIA-568.3-D — reference-grade connector loss categories.',
               fieldNote:
                 'The practical workaround: ask for a tested loss certificate per connector/cord from the vendor. That sidesteps the revision ambiguity entirely.',
             },

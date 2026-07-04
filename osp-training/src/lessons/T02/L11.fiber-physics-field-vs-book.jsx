@@ -133,7 +133,7 @@ export default function T02L11_FiberPhysicsFieldVsBook() {
             <strong>Dirty/contaminated connectors</strong> (most common cause of high point loss).
             A fingerprint or dust particle on an APC or UPC connector face can add 1–5 dB.
             Always clean and inspect connectors before assuming the fiber is bad. Use an
-            end-face inspection scope per IEC 61300-3-35 [confirm edition].
+            end-face inspection scope per IEC 61300-3-35.
           </li>
           <li>
             <strong>Tight bend in the splice case or patch panel</strong> (very common).
@@ -335,7 +335,7 @@ export default function T02L11_FiberPhysicsFieldVsBook() {
               ],
               answerIndex: 2,
               explanation:
-                'Contaminated connector end-faces are the most common cause of unexpected loss on new installations. A dirty connector can add 1–5 dB of loss in a single mated pair. Before pulling cable, re-doing splices, or ordering replacement materials, clean all connectors with a proper dry + wet method and inspect with an IEC 61300-3-35 [confirm edition] compliant scope.',
+                'Contaminated connector end-faces are the most common cause of unexpected loss on new installations. A dirty connector can add 1–5 dB of loss in a single mated pair. Before pulling cable, re-doing splices, or ordering replacement materials, clean all connectors with a proper dry + wet method and inspect with an IEC 61300-3-35 compliant scope.',
               fieldNote:
                 'Experienced OSP crews clean connectors as a reflex — before every mating, before every OTDR test, before sign-off. It takes 30 seconds per connector and saves hours of troubleshooting on bad days.',
             },
@@ -369,7 +369,7 @@ export default function T02L11_FiberPhysicsFieldVsBook() {
               answerIndex: 1,
               explanation:
                 'G.657.B3 is optimized for bend insensitivity and has a different MFD from G.652.D (smaller MFD). When splicing G.657.B3 to G.652.D, there is an inherent mode-field mismatch loss in addition to any geometric splice imperfection. Depending on the specific fibers, this mismatch can contribute 0.05–0.20 dB of loss that cannot be reduced by re-splicing. Check the fiber manufacturer\'s splice loss table for the specific G.657.B3 product before declaring a 0.12 dB splice as a rework candidate.',
-              citation: 'ITU-T G.657 (2016 — [confirm edition]); fiber manufacturer splice loss tables for G.657/G.652 mixing.',
+              citation: 'ITU-T G.657 (2016); fiber manufacturer splice loss tables for G.657/G.652 mixing.',
             },
           ]}
         />

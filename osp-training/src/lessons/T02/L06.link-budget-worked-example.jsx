@@ -247,7 +247,7 @@ Total loss:                               9.60 dB`}
           ORL (dB) = −10 × log₁₀ (P_reflected / P_input)
         </div>
         <p className="text-sm text-slate-300/80">
-          TIA-568.3-D [confirm edition] specifies minimum ORL for connectors; typical UPC
+          TIA-568.3-D specifies minimum ORL for connectors; typical UPC
           connectors achieve ≥ 50 dB ORL; APC connectors achieve ≥ 60 dB. APC (angled physical
           contact — the green connectors) are required in PON/FTTH applications and anywhere
           back-reflection sensitivity is critical. UPC (blue) is standard for most OSP

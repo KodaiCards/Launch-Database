@@ -435,7 +435,7 @@ export default function T02L07_WavelengthWindows() {
               explanation:
                 'DWDM channels are 0.4–0.8 nm apart. A back-reflection that\'s negligible on a standard SMF link can be within the laser\'s frequency response on a DWDM system, causing noise and sensitivity degradation. APC connectors (≥ 60 dB ORL) are standard practice on DWDM routes for this reason.',
               fieldNote:
-                'On a DWDM installation, end-face inspection with an IEC 61300-3-35 [confirm edition] compliant scope is not optional — it\'s the standard. A single dirty APC connector can take down multiple 100G channels simultaneously.',
+                'On a DWDM installation, end-face inspection with an IEC 61300-3-35 compliant scope is not optional — it\'s the standard. A single dirty APC connector can take down multiple 100G channels simultaneously.',
             },
           ]}
         />

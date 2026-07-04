@@ -95,7 +95,7 @@ export default function T02L10_FiberCharacterizationTesting() {
             </tr>
             <tr className="border-t border-white/10">
               <td className="px-3 py-2 font-mono">IEC 61280-4-2</td>
-              <td className="px-3 py-2">International standard for single-mode fiber field attenuation and optical return loss measurement [confirm current edition]</td>
+              <td className="px-3 py-2">International standard for single-mode fiber field attenuation and optical return loss measurement</td>
             </tr>
           </tbody>
         </table>
@@ -134,7 +134,7 @@ export default function T02L10_FiberCharacterizationTesting() {
         <p className="mt-2">
           Field alternative: two-point OTDR measurement, averaging both directions to cancel
           connector contributions. This gives a good attenuation coefficient estimate without
-          destructive testing. Per IEC 61280-4-2 [confirm current edition], the measurement
+          destructive testing. Per IEC 61280-4-2, the measurement
           uncertainty is typically ±0.02 dB/km for well-calibrated instruments.
         </p>
 
@@ -187,7 +187,7 @@ export default function T02L10_FiberCharacterizationTesting() {
           </li>
           <li>
             <strong>Interferometric method (GINTY):</strong> Uses broadband source + polarization
-            optics. Good for installed fiber characterization. IEC 61282-9 [confirm current edition]
+            optics. Good for installed fiber characterization. IEC 61282-9
             standardizes this method.
           </li>
           <li>
@@ -305,7 +305,7 @@ export default function T02L10_FiberCharacterizationTesting() {
           loss is the average, never negative.
         </p>
         <p className="mt-2">
-          Bidirectional averaging is standard practice (IEC 61280-4-2 [confirm current edition])
+          Bidirectional averaging is standard practice (IEC 61280-4-2)
           for exactly this reason. A splice that looks like −0.3 dB in one direction might be
           +0.3 dB in the other — the true loss is 0.0 dB (a perfect splice) if the "gainer"
           is purely a backscatter artifact.
@@ -345,7 +345,7 @@ export default function T02L10_FiberCharacterizationTesting() {
               answerIndex: 1,
               explanation:
                 'For a DWDM upgrade, the critical parameters are: (1) CD profile per channel to calculate how much dispersion compensation is needed, and (2) PMD to confirm the fiber is within the 100G coherent system\'s tolerance. A standard OTDR trace won\'t reveal the CD or PMD of the fiber — those require dedicated characterization instruments. Connector inspection is also important but isn\'t the characterization gap.',
-              citation: 'ITU-T G.652.D; ITU-T G.Sup39 [confirm edition] — field test methods for WDM transmission.',
+              citation: 'ITU-T G.652.D; ITU-T G.Sup39 — field test methods for WDM transmission.',
             },
             {
               id: 'T02-L10-Q2',
