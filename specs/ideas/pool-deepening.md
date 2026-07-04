@@ -1,0 +1,2 @@
+# Assessment pool deepening — the post-launch dial (rescued launch decision)
+Per-attempt random draw is LIVE (server-authoritative; lesson 4-of-8, topic-final 15-of-~22) — different questions per attempt and per account; the anti-cheat Carter asked for exists and runs today. The LAUNCH DIAL was deliberately light to ship faster; the settled full sizing is **lesson 6-of-~10, topic-final 25-of-~35** — deepening = authoring more gated pool questions per topic, a data change, no engine work. Slot: after wave 2 momentum, or per-topic as content crews free (*16).

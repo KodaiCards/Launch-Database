@@ -11,9 +11,9 @@
 |---|---|---|---|
 | 1.1 | **Live-5 made fully operational** (leak strip → readability retrofit per PRODUCT_BAR §1 → premerge green → playthrough) | specs/training-fix.md | ▶ FIRST MISSION |
 | 1.2 | Next wave through the gate: T09 → T05 → T06, under the new bar from authoring | specs/training-content.md | queued |
-| 1.3 | Remaining topics, Basics→Advanced DAG order, rolling release; T20 RUS/Federal pulled earlier (RUS-aware) | 〃 | queued |
+| 1.3 | **ALL remaining OSP topics — the full new-bar treatment, none exempt (Carter 2026-07-04):** T07 Staking · T08 Make-Ready · T10 Construction · T11 Splicing · T12 Testing · T13 Inspection · T14 Grounding · T15 Restoration · T16 As-Built/GIS · T17 Estimation · T19 Headend · T20 RUS (pulled RUS-aware). Authored ones get the same retrofit the live-5 got (verbiage, readability, tool/interaction quality, PRODUCT_BAR); unauthored ones are written under the bar from word one. Basics→Advanced, rolling flips. | 〃 | queued |
 | 1.4 | I11 training dashboard (scores prominent, per-lesson timing, >45min flag) | specs/training-dashboard.md | after 1.2 |
-| — | Certs (T21/T22/C04/C05): **DEFERRED until after the entire main project rollout** (Carter) | — | parked |
+| — | Certs (T21/T22/C04/C05): **STAGE-4 TIER (Carter 2026-07-04)** — after the entire main rollout; sequenced with/after the ISP track (cert content presumes ISP is learned first) | — | stage 4 |
 
 ## Track 2 — PLATFORM (opens alongside Track 1; usage-conscious)
 | # | Work | Spec | State |
@@ -32,7 +32,7 @@
 | 2.12 | Diagnostics logger (kept per Carter): clickstream + JS errors, toggle + purge | specs/diagnostics.md | fits with 2.3 |
 
 ## Later (post-map-delivery / post-core)
-Map integration + BOM/draw + production tracker + daily cards + report-out → splice-as-map-layer (+ printable diagrams) → KMZ folder-sync → real-time consolidation → global search → materials auto-populate → mobile/PWA wrap. RUS-specific items pass the **RUS-sunset review** (every phase boundary: justify against remaining RUS runway or cut).
+Map integration + BOM/draw + production tracker + daily cards + report-out → splice-as-map-layer (+ printable diagrams) → **THE ISP TRACK (Carter 2026-07-04): the entire ISP curriculum built to OSP depth or deeper (ISP is the more complex subject; likely MORE content than OSP) — the natural continuation of the training doc and the prerequisite for its cert track; specifics deferred to a Carter+Partner scoping session when its build approaches (call-up *17)** → cert-prep topics → KMZ folder-sync → real-time consolidation → global search → materials auto-populate → mobile/PWA wrap. RUS-specific items pass the **RUS-sunset review** (every phase boundary: justify against remaining RUS runway or cut).
 
 ## Standing inputs (`*` call-ups — see specs/CALLUPS.md)
 Workforce CSV sample → 2.6 · submission samples ×3 + RUS code list → 2.7 · cockpit thresholds → 2.9 · unused-tab kill list → 2.1 · county design session → 2.10 · map internals → map delivery.

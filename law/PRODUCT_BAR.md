@@ -24,6 +24,7 @@ Working ≠ done. The bar is **interaction quality**, judged with a human's atti
 4. **Visible organization.** A user landing on a page should see what it's for and where things are without instruction. Disorganization is a defect even when every button works.
 5. **Light + dark, mobile-responsive** on anything the field touches.
 6. **Human-lens review is part of done** for UI surfaces: Foreman plays it as a user; significant surfaces get a Carter (or Partner-with-mockups) pass before flip.
+7. **Visibility/contrast standard (Carter 2026-07-04, from the washed-out-dropdown miss):** every interactive control readable in BOTH themes — no OS-default native control styling on any user surface (native select/option lists take OS colors; style them or use the design-system control). User-tests and VO playthroughs explicitly check contrast/readability of every control they touch, both themes. Washed-out = a defect even when functional.
 
 ## 3. Platform data / money (standing)
 - Money math server-side only; client/customer surfaces never show internal cost, margin, or rates.
