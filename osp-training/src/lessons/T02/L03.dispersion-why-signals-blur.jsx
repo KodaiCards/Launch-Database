@@ -7,6 +7,7 @@ import SliderExploration from '../../components/primitives/SliderExploration.jsx
 import Quiz from '../../components/primitives/Quiz.jsx';
 import GatedAssessment from '../../components/primitives/GatedAssessment.jsx';
 import Flashcard from '../../components/Flashcard.jsx';
+import ReferencesBlock from '../../components/ReferencesBlock.jsx';
 
 export const meta = {
   id: 'T02.L03',
@@ -51,11 +52,11 @@ export default function T02L03_DispersionWhySignalsBlur() {
         <h2>In Plain English</h2>
 
         <div className="mb-4 p-3 bg-amber-900/20 border-l-4 border-amber-500 rounded text-amber-100 text-sm">
-          <strong>Quick refresher:</strong> In <strong>T02.L01</strong>, you learned how light travels through fiber via total internal reflection. In <strong>T02.L02</strong>, you learned attenuation (loss per km). This lesson tackles a different problem: even when enough light arrives, it may be smeared and unreadable. That smearing is dispersion.
+          <strong>Quick refresher:</strong> In <em>Why Light Travels in Glass</em>, you learned how light travels through fiber via total internal reflection. In <em>Attenuation — Three Numbers Framework</em>, you learned attenuation (loss per km). This lesson tackles a different problem: even when enough light arrives, it may be smeared and unreadable. That smearing is dispersion.
         </div>
 
         <p>
-          Recall from T02.L02 that <strong>attenuation</strong> tells you how much signal power you lose over distance, measured in <strong>dB/km</strong>. But there's a second problem: even if enough light arrives at the far end, it might
+          Recall from the Attenuation lesson that <strong>attenuation</strong> tells you how much signal power you lose over distance, measured in <strong>dB/km</strong>. But there's a second problem: even if enough light arrives at the far end, it might
           arrive <em>smeared out in time</em>. That smearing is called <strong>dispersion</strong>.
         </p>
         <p className="mt-2">
@@ -125,14 +126,14 @@ export default function T02L03_DispersionWhySignalsBlur() {
         <div className="mt-3 p-4 border border-blue-400/30 bg-blue-400/5 rounded-lg text-sm">
           <p className="font-semibold text-blue-300 mb-2">Refresher: Key prerequisites</p>
           <ul className="text-slate-300/90 space-y-1 list-disc pl-5">
-            <li><strong>Core:</strong> The inner glass cylinder where light travels via total internal reflection (from T02.L01)</li>
-            <li><strong>Total internal reflection:</strong> The mirror effect that confines light in the core (from T02.L01)</li>
-            <li><strong>Single-Mode Fiber (SMF):</strong> The 9 µm core fiber used for long-distance OSP (from T01.L08)</li>
+            <li><strong>Core:</strong> The inner glass cylinder where light travels via total internal reflection (from Why Light Travels in Glass)</li>
+            <li><strong>Total internal reflection:</strong> The mirror effect that confines light in the core (from Why Light Travels in Glass)</li>
+            <li><strong>Single-Mode Fiber (SMF):</strong> The 9 µm core fiber used for long-distance OSP (from Key Acronyms Field Reference)</li>
           </ul>
         </div>
 
         <p className="text-slate-400 text-sm mb-3 p-3 border-l-4 border-slate-500 mt-4">
-          <strong>Callback:</strong> From <strong>T02.L02 (Attenuation)</strong>, you learned that signal loses POWER over distance. Now: dispersion is the problem where signal arrives with enough POWER but blurred in time. These are TWO SEPARATE link-limiting mechanisms — you must design for both.
+          <strong>Callback:</strong> From the Attenuation lesson, you learned that signal loses POWER over distance. Now: dispersion is the problem where signal arrives with enough POWER but blurred in time. These are TWO SEPARATE link-limiting mechanisms — you must design for both.
         </p>
 
         <p>
@@ -286,7 +287,7 @@ Step 5: ΔT = 170 ps`}
 
         <h3 className="mt-5 font-semibold">Modal dispersion — the multimode version</h3>
         <p>
-          Recall from T01.L08 that <strong>multimode fiber (MMF)</strong> has a 50 or 62.5 µm core. In MMF, there's a completely different dispersion mechanism:
+          Recall from the Key Acronyms Field Reference lesson that <strong>multimode fiber (MMF)</strong> has a 50 or 62.5 µm core. In MMF, there's a completely different dispersion mechanism:
           <strong> modal dispersion</strong>. Different modes (light paths at different angles)
           travel different path lengths. The fundamental mode (straight through) arrives first;
           higher-order modes (bouncing at wider angles) arrive later. The result is the same
@@ -327,6 +328,13 @@ Step 5: ΔT = 170 ps`}
           The OTDR can't directly measure PMD — it requires a dedicated PMD test instrument.
         </p>
       </section>
+
+      <ReferencesBlock
+        items={[
+          { citation: 'ITU-T G.652.D', note: 'Standard single-mode fiber — zero-dispersion wavelength window, chromatic dispersion coefficient, and PMD cap referenced throughout this lesson.' },
+          { citation: 'FOA Reference Guide — Fiber Optic Fundamentals', note: 'General industry reference used for dispersion-type definitions.' },
+        ]}
+      />
 
       {/* ── PER-LESSON QUIZ ──────────────────────────────────────────────── */}
       <GatedAssessment

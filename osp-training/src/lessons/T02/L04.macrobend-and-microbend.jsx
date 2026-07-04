@@ -7,6 +7,7 @@ import BranchingScenario from '../../components/primitives/BranchingScenario.jsx
 import Quiz from '../../components/primitives/Quiz.jsx';
 import GatedAssessment from '../../components/primitives/GatedAssessment.jsx';
 import Flashcard from '../../components/Flashcard.jsx';
+import ReferencesBlock from '../../components/ReferencesBlock.jsx';
 
 export const meta = {
   id: 'T02.L04',
@@ -48,7 +49,7 @@ export default function T02L04_MacrobendAndMicrobend() {
       <section data-tier="foundations">
         <h2>In Plain English</h2>
         <p>
-          You learned in T02.L01 that total internal reflection (TIR) keeps light inside
+          You learned in Why Light Travels in Glass that total internal reflection (TIR) keeps light inside
           the fiber. TIR works perfectly when the fiber is straight. But bend the fiber,
           and you're changing the geometry at the core-cladding boundary — some rays hit at
           angles that no longer satisfy TIR, and light leaks out. The result: extra loss
@@ -109,9 +110,9 @@ export default function T02L04_MacrobendAndMicrobend() {
         <div className="mt-3 p-4 border border-blue-400/30 bg-blue-400/5 rounded-lg text-sm">
           <p className="font-semibold text-blue-300 mb-2">Refresher: Key prerequisites</p>
           <ul className="text-slate-300/90 space-y-1 list-disc pl-5">
-            <li><strong>Total internal reflection (TIR):</strong> The mirror effect that confines light in the core when the fiber is straight (from T02.L01)</li>
-            <li><strong>Critical angle:</strong> The boundary angle at which TIR begins; bends change this geometry (from T02.L01)</li>
-            <li><strong>Attenuation (dB/km):</strong> Baseline signal loss per kilometer; bends ADD extra loss on top (from T02.L02)</li>
+            <li><strong>Total internal reflection (TIR):</strong> The mirror effect that confines light in the core when the fiber is straight (from Why Light Travels in Glass)</li>
+            <li><strong>Critical angle:</strong> The boundary angle at which TIR begins; bends change this geometry (from Why Light Travels in Glass)</li>
+            <li><strong>Attenuation (dB/km):</strong> Baseline signal loss per kilometer; bends ADD extra loss on top (from Attenuation — Three Numbers Framework)</li>
           </ul>
         </div>
 
@@ -369,6 +370,14 @@ export default function T02L04_MacrobendAndMicrobend() {
             endMessage: 'Key lesson: a 0.8 dB loss event starting 2 m past a splice case, on a subset of fibers, is a classic macrobend signature inside the splice case. Always inspect fiber routing inside the case before re-doing splices. Slack loops inside splice trays should follow the cable manufacturer\'s minimum bend radius — not whatever fits in the tray.',
           },
         }}
+      />
+
+      <ReferencesBlock
+        items={[
+          { citation: 'ITU-T G.652.D', note: 'Standard single-mode fiber — mandrel test bend-loss limits used as the macrobend baseline.' },
+          { citation: 'ITU-T G.657', note: 'Bend-insensitive single-mode fiber standard (A1/A2/B2/B3 sub-categories) — tighter bend-radius tolerance for FTTH drop cable.' },
+          { citation: 'NEC 358/352', note: 'Conduit fill limits — referenced when microbend loss traces back to overfilled conduit.' },
+        ]}
       />
 
       {/* ── PER-LESSON QUIZ ──────────────────────────────────────────────── */}

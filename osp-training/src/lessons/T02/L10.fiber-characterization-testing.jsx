@@ -7,6 +7,7 @@ import SliderExploration from '../../components/primitives/SliderExploration.jsx
 import Quiz from '../../components/primitives/Quiz.jsx';
 import GatedAssessment from '../../components/primitives/GatedAssessment.jsx';
 import Flashcard from '../../components/Flashcard.jsx';
+import ReferencesBlock from '../../components/ReferencesBlock.jsx';
 
 export const meta = {
   id: 'T02.L10',
@@ -51,7 +52,7 @@ export default function T02L10_FiberCharacterizationTesting() {
         <h2>In Plain English</h2>
 
         <div className="mb-4 p-3 bg-amber-900/20 border-l-4 border-amber-500 rounded text-amber-100 text-sm">
-          <strong>Quick refresher:</strong> In <strong>T02.L02</strong> you learned attenuation (loss per km). In <strong>T02.L03</strong> you learned chromatic dispersion. In <strong>T02.L09</strong> you learned PMD. This lesson answers: how do you actually measure these fiber properties in the field to validate fiber health?
+          <strong>Quick refresher:</strong> In <em>Attenuation — Three Numbers Framework</em> you learned attenuation (loss per km). In <em>Dispersion — Why Fast Signals Blur</em> you learned chromatic dispersion. In <em>Polarization Mode Dispersion (PMD) — Advanced</em> you learned PMD. This lesson answers: how do you actually measure these fiber properties in the field to validate fiber health?
         </div>
 
         <p>
@@ -63,7 +64,7 @@ export default function T02L10_FiberCharacterizationTesting() {
           or as required by the contract spec.
         </p>
         <p className="mt-2">
-          Think of it like this: OTDR acceptance testing (T12) tells you where each splice
+          Think of it like this: OTDR acceptance testing (covered in the Testing — OLTS, OTDR, Inspection topic) tells you where each splice
           and connector is, and how much loss each one has — it's the per-foot inspection.
           Characterization testing tells you the fundamental optical properties of the fiber
           itself (how much it disperses a signal, how much PMD it has) — it's the material
@@ -82,7 +83,7 @@ export default function T02L10_FiberCharacterizationTesting() {
           <tbody className="text-slate-300/90">
             <tr className="border-t border-white/10">
               <td className="px-3 py-2 font-mono">CD</td>
-              <td className="px-3 py-2">Chromatic Dispersion — remember from T02.L03</td>
+              <td className="px-3 py-2">Chromatic Dispersion — remember from the Dispersion lesson</td>
             </tr>
             <tr className="border-t border-white/10">
               <td className="px-3 py-2 font-mono">MFD</td>
@@ -90,7 +91,7 @@ export default function T02L10_FiberCharacterizationTesting() {
             </tr>
             <tr className="border-t border-white/10">
               <td className="px-3 py-2 font-mono">OTDR</td>
-              <td className="px-3 py-2">Optical Time-Domain Reflectometer — the main field test instrument (covered fully in T12)</td>
+              <td className="px-3 py-2">Optical Time-Domain Reflectometer — the main field test instrument (covered fully in the Testing — OLTS, OTDR, Inspection topic)</td>
             </tr>
             <tr className="border-t border-white/10">
               <td className="px-3 py-2 font-mono">IEC 61280-4-2</td>
@@ -310,6 +311,15 @@ export default function T02L10_FiberCharacterizationTesting() {
           is purely a backscatter artifact.
         </p>
       </section>
+
+      <ReferencesBlock
+        items={[
+          { citation: 'IEC 61280-4-2', note: 'Single-mode fiber field attenuation and optical return loss measurement — basis for bidirectional OTDR averaging practice.' },
+          { citation: 'IEC 61282-9', note: 'Standardizes the interferometric (GINTY) method for PMD measurement.' },
+          { citation: 'ITU-T G.652.D', note: 'Standard single-mode fiber — zero-dispersion wavelength and dispersion-slope specs used to derive the ~17 ps/(nm·km) field approximation at 1550 nm.' },
+          { citation: 'ITU-T G.Sup39', note: 'Field test methods for WDM transmission systems.' },
+        ]}
+      />
 
       {/* ── PER-LESSON QUIZ ──────────────────────────────────────────────── */}
       <GatedAssessment

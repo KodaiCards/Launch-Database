@@ -6,6 +6,7 @@ import LessonLayout from '../../components/LessonLayout.jsx';
 import Quiz from '../../components/primitives/Quiz.jsx';
 import GatedAssessment from '../../components/primitives/GatedAssessment.jsx';
 import Flashcard from '../../components/Flashcard.jsx';
+import ReferencesBlock from '../../components/ReferencesBlock.jsx';
 
 export const meta = {
   id: 'T02.L07',
@@ -60,7 +61,7 @@ export default function T02L07_WavelengthWindows() {
         <h2>In Plain English</h2>
 
         <div className="mb-4 p-3 bg-amber-900/20 border-l-4 border-amber-500 rounded text-amber-100 text-sm">
-          <strong>Quick refresher:</strong> In <strong>T02.L02</strong>, you learned that attenuation — signal loss measured in dB/km — varies by wavelength; some wavelengths travel farther in the same fiber. In <strong>T02.L03</strong>, you learned that chromatic dispersion (pulse broadening) also depends on wavelength, with a zero-dispersion point around 1310 nm for standard SMF. In <strong>T02.L04</strong>, you saw that macrobend loss grows at longer wavelengths, making 1625 nm particularly sensitive to bends. This lesson maps those properties to the specific wavelength windows that OSP systems actually use — 850, 1310, 1490, 1550, and 1625 nm — and explains why each one gets chosen for its job. The <strong>SMF</strong> and <strong>MMF</strong> fiber types introduced in <strong>T01.L08</strong> each favor different windows.
+          <strong>Quick refresher:</strong> In <em>Attenuation — Three Numbers Framework</em>, you learned that attenuation — signal loss measured in dB/km — varies by wavelength; some wavelengths travel farther in the same fiber. In <em>Dispersion — Why Fast Signals Blur</em>, you learned that chromatic dispersion (pulse broadening) also depends on wavelength, with a zero-dispersion point around 1310 nm for standard SMF. In <em>Macrobend and Microbend Loss</em>, you saw that macrobend loss grows at longer wavelengths, making 1625 nm particularly sensitive to bends. This lesson maps those properties to the specific wavelength windows that OSP systems actually use — 850, 1310, 1490, 1550, and 1625 nm — and explains why each one gets chosen for its job. The <strong>SMF</strong> and <strong>MMF</strong> fiber types introduced in <em>Key Acronyms Field Reference</em> each favor different windows.
         </div>
 
         <p>
@@ -113,7 +114,7 @@ export default function T02L07_WavelengthWindows() {
             <tr className="border-t border-white/10">
               <td className="px-3 py-2 font-mono">OTDR</td>
               <td className="px-3 py-2">Optical Time-Domain Reflectometer</td>
-              <td className="px-3 py-2">Test instrument that shoots a laser pulse and measures reflections to locate faults — covered in T12</td>
+              <td className="px-3 py-2">Test instrument that shoots a laser pulse and measures reflections to locate faults — covered in Testing — OLTS, OTDR, Inspection</td>
             </tr>
           </tbody>
         </table>
@@ -140,7 +141,7 @@ export default function T02L07_WavelengthWindows() {
         <h2>The Five Key Wavelengths</h2>
 
         <p className="text-slate-400 text-sm mb-3 p-3 border-l-4 border-slate-500">
-          <strong>Callback:</strong> Recall from <strong>T02.L02 (Attenuation)</strong> and <strong>T02.L03 (Dispersion)</strong> — the fiber's loss and pulse broadening both depend on which wavelength you use. This lesson shows you why OSP systems pick specific wavelengths to balance low attenuation (e.g., 1550 nm) against acceptable dispersion (e.g., prefer 1310 nm for short runs to avoid dispersion penalty).
+          <strong>Callback:</strong> Recall from the Attenuation lesson and the Dispersion lesson — the fiber's loss and pulse broadening both depend on which wavelength you use. This lesson shows you why OSP systems pick specific wavelengths to balance low attenuation (e.g., 1550 nm) against acceptable dispersion (e.g., prefer 1310 nm for short runs to avoid dispersion penalty).
         </p>
 
         <h3 className="mt-4 font-semibold">850 nm — Multimode short-reach</h3>
@@ -355,6 +356,15 @@ export default function T02L07_WavelengthWindows() {
           </tr>
         </tbody>
       </table>
+
+      <ReferencesBlock
+        items={[
+          { citation: 'ITU-T G.652.D', note: 'Standard single-mode fiber — attenuation figures per wavelength window in the summary table.' },
+          { citation: 'ITU-T G.692', note: 'Defines the optical band designations (O/S/C/L-bands) referenced throughout this lesson.' },
+          { citation: 'ITU-T G.984', note: 'GPON standard — defines the 1310/1490 nm upstream/downstream wavelength plan.' },
+          { citation: 'IEC 61300-3-35', note: 'End-face inspection standard — pass/fail criteria for connector cleanliness, critical on DWDM routes.' },
+        ]}
+      />
 
       {/* ── PER-LESSON QUIZ ──────────────────────────────────────────────── */}
       <GatedAssessment

@@ -46,7 +46,7 @@ export default function T02L05_DecibelsWithoutAlgebraFear() {
         <h2>In Plain English</h2>
 
         <div className="mb-4 p-3 bg-amber-900/20 border-l-4 border-amber-500 rounded text-amber-100 text-sm">
-          <strong>Quick refresher:</strong> In <strong>T02.L02</strong>, you learned that <strong>attenuation</strong> is signal loss as light travels through fiber, measured in <strong>dB/km</strong>. That lesson introduced the term "dB/km" without fully unpacking what a decibel is. This lesson explains the dB unit itself — and how to use dB math to predict optical power levels across a link. The <strong>SMF</strong> fiber types you first saw in <strong>T01.L08</strong> carry signals over these links; this math tells you how much signal survives the journey.
+          <strong>Quick refresher:</strong> In <em>Attenuation — Three Numbers Framework</em>, you learned that <strong>attenuation</strong> is signal loss as light travels through fiber, measured in <strong>dB/km</strong>. That lesson introduced the term "dB/km" without fully unpacking what a decibel is. This lesson explains the dB unit itself — and how to use dB math to predict optical power levels across a link. The <strong>SMF</strong> fiber types you first saw in <em>Key Acronyms Field Reference</em> carry signals over these links; this math tells you how much signal survives the journey.
         </div>
 
         <p>
@@ -142,9 +142,9 @@ export default function T02L05_DecibelsWithoutAlgebraFear() {
         <div className="mt-3 p-4 border border-blue-400/30 bg-blue-400/5 rounded-lg text-sm">
           <p className="font-semibold text-blue-300 mb-2">Refresher: Key prerequisites</p>
           <ul className="text-slate-300/90 space-y-1 list-disc pl-5">
-            <li><strong>Attenuation:</strong> Signal loss as light travels through fiber, measured in dB/km (from T02.L02)</li>
+            <li><strong>Attenuation:</strong> Signal loss as light travels through fiber, measured in dB/km (from Attenuation — Three Numbers Framework)</li>
             <li><strong>dB/km and dB:</strong> How to measure loss; in this lesson we unpack the "dB" unit itself</li>
-            <li><strong>Single-Mode Fiber (SMF):</strong> The fiber type used for long-distance OSP links (from T01.L08)</li>
+            <li><strong>Single-Mode Fiber (SMF):</strong> The fiber type used for long-distance OSP links (from Key Acronyms Field Reference)</li>
           </ul>
         </div>
 
@@ -196,7 +196,7 @@ Result: −28 dBm ≈ 1.58 µW`}
         <h3 className="mt-5 font-semibold">Why dB makes link budgets easy</h3>
         <p>
           A link has: 15 km of fiber, 4 fusion splices, 2 connectors, and a 3 dB safety margin.
-          Using the planning values from T02.L02 (0.25 dB/km at 1550 nm):
+          Using the planning values from the Attenuation lesson (0.25 dB/km at 1550 nm):
         </p>
         <div className="rounded-lg bg-black/30 border border-white/10 p-4 font-mono text-sm leading-7 text-slate-200 my-3">
           {`Fiber loss:      15 km × 0.25 dB/km = 3.75 dB

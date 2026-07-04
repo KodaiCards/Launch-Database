@@ -8,6 +8,7 @@ import WorkedExample from '../../components/primitives/WorkedExample.jsx';
 import Quiz from '../../components/primitives/Quiz.jsx';
 import GatedAssessment from '../../components/primitives/GatedAssessment.jsx';
 import Flashcard from '../../components/Flashcard.jsx';
+import ReferencesBlock from '../../components/ReferencesBlock.jsx';
 
 export const meta = {
   id: 'T02.L06',
@@ -50,7 +51,7 @@ export default function T02L06_LinkBudgetWorkedExample() {
         <h2>In Plain English</h2>
 
         <div className="mb-4 p-3 bg-amber-900/20 border-l-4 border-amber-500 rounded text-amber-100 text-sm">
-          <strong>Quick refresher:</strong> In <strong>T02.L02</strong>, you learned that attenuation is signal loss measured in dB/km — the rate at which fiber consumes optical power per kilometer. In <strong>T02.L04</strong>, you saw that macrobend and microbend losses add on top of that baseline. In <strong>T02.L05</strong>, you learned how decibels work — so all those losses simply add together rather than multiplying as fractions. This lesson brings those concepts into a single calculation that tells you whether a link actually works. The <strong>SMF</strong> from <strong>T01.L08</strong> is the fiber type at the center of every OSP link budget.
+          <strong>Quick refresher:</strong> In <em>Attenuation — Three Numbers Framework</em>, you learned that attenuation is signal loss measured in dB/km — the rate at which fiber consumes optical power per kilometer. In <em>Macrobend and Microbend Loss</em>, you saw that macrobend and microbend losses add on top of that baseline. In <em>Decibels Without the Algebra Fear</em>, you learned how decibels work — so all those losses simply add together rather than multiplying as fractions. This lesson brings those concepts into a single calculation that tells you whether a link actually works. The <strong>SMF</strong> from <em>Key Acronyms Field Reference</em> is the fiber type at the center of every OSP link budget.
         </div>
 
         <p>
@@ -97,9 +98,9 @@ export default function T02L06_LinkBudgetWorkedExample() {
         <div className="mt-5 p-4 border border-blue-400/30 bg-blue-400/5 rounded-lg text-sm">
           <p className="font-semibold text-blue-300 mb-2">Refresher: Key prerequisites</p>
           <ul className="text-slate-300/90 space-y-1 list-disc pl-5">
-            <li><strong>dB, dBm:</strong> Decibels and absolute power levels — the math that makes losses add (from T02.L05)</li>
-            <li><strong>Attenuation (dB/km):</strong> Signal loss per kilometer of fiber (from T02.L02)</li>
-            <li><strong>SMF:</strong> Single-Mode Fiber used for long-distance FTTH feeder runs (from T01.L08)</li>
+            <li><strong>dB, dBm:</strong> Decibels and absolute power levels — the math that makes losses add (from Decibels Without the Algebra Fear)</li>
+            <li><strong>Attenuation (dB/km):</strong> Signal loss per kilometer of fiber (from Attenuation — Three Numbers Framework)</li>
+            <li><strong>SMF:</strong> Single-Mode Fiber used for long-distance FTTH feeder runs (from Key Acronyms Field Reference)</li>
           </ul>
         </div>
 
@@ -142,7 +143,7 @@ export default function T02L06_LinkBudgetWorkedExample() {
         <h2>A Complete Worked Budget</h2>
 
         <p className="text-slate-400 text-sm mb-3 p-3 border-l-4 border-slate-500">
-          <strong>Callback:</strong> Recall from <strong>T02.L02 Lesson (Attenuation)</strong> — signal loses power as it travels through fiber, and losses are measured in dB/km. Recall from <strong>T02.L05 (Decibels Without the Algebra Fear)</strong> — the dB unit lets us add losses instead of multiplying them. Now we'll use both concepts together in a single calculation.
+          <strong>Callback:</strong> Recall from the Attenuation lesson — signal loses power as it travels through fiber, and losses are measured in dB/km. Recall from Decibels Without the Algebra Fear — the dB unit lets us add losses instead of multiplying them. Now we'll use both concepts together in a single calculation.
         </p>
 
         <p>
@@ -151,7 +152,7 @@ export default function T02L06_LinkBudgetWorkedExample() {
           4 connector pairs, and standard planning values.
         </p>
         <p className="text-sm text-slate-400 italic">
-          (This brings together attenuation from T02.L02, dB notation from T02.L05, and the wavelength choice from T02.L07.)
+          (This brings together attenuation from Attenuation — Three Numbers Framework, dB notation from Decibels Without the Algebra Fear, and the wavelength choice from the upcoming Wavelength Windows — 850 / 1310 / 1490 / 1550 / 1625 nm lesson.)
         </p>
 
         <h3 className="mt-5 font-semibold">Step 1: Identify the optical budget</h3>
@@ -351,6 +352,12 @@ Total loss:                               9.60 dB`}
         resultLabel="Headroom"
         resultUnit="dB"
         resultDecimals={2}
+      />
+
+      <ReferencesBlock
+        items={[
+          { citation: 'TIA-568.3-D', note: 'Cabling standard specifying connector loss maximums and minimum optical return loss (ORL).' },
+        ]}
       />
 
       {/* ── PER-LESSON QUIZ ──────────────────────────────────────────────── */}

@@ -7,6 +7,7 @@ import LessonLayout from '../../components/LessonLayout.jsx';
 import Quiz from '../../components/primitives/Quiz.jsx';
 import GatedAssessment from '../../components/primitives/GatedAssessment.jsx';
 import Flashcard from '../../components/Flashcard.jsx';
+import ReferencesBlock from '../../components/ReferencesBlock.jsx';
 
 export const meta = {
   id: 'T02.L01',
@@ -52,7 +53,7 @@ export default function T02L01_WhyLightTravelsInGlass() {
         <h2>In Plain English</h2>
 
         <div className="mb-4 p-3 bg-amber-900/20 border-l-4 border-amber-500 rounded text-amber-100 text-sm">
-          <strong>Building on T01:</strong> In <strong>T01.L01</strong>, you were introduced to the OSP network — OLTs, ONTs, and the fiber plant that connects them. In <strong>T01.L03</strong>, you learned that a fiber cable's inner glass strand (the <em>fiber</em>) is what carries the optical signal. In <strong>T01.L08</strong>, you saw the distinction between single-mode fiber (<strong>SMF</strong>) and multimode fiber (<strong>MMF</strong>). This lesson explains the physics behind how light actually stays inside that glass strand — the mechanism that makes the whole system work.
+          <strong>Building on what you already know:</strong> In <em>What is OSP vs. ISP?</em>, you were introduced to the OSP network — OLTs, ONTs, and the fiber plant that connects them. In <em>Parts of a Cable</em>, you learned that a fiber cable's inner glass strand (the <em>fiber</em>) is what carries the optical signal. In <em>Key Acronyms Field Reference</em>, you saw the distinction between single-mode fiber (<strong>SMF</strong>) and multimode fiber (<strong>MMF</strong>). This lesson explains the physics behind how light actually stays inside that glass strand — the mechanism that makes the whole system work.
         </div>
 
         <p>
@@ -290,7 +291,7 @@ export default function T02L01_WhyLightTravelsInGlass() {
           Single-mode fiber carries only one mode (the fundamental mode). Modal dispersion is
           zero by definition. Single-mode fiber doesn't need a bandwidth rating because
           bandwidth is limited by chromatic dispersion (a different mechanism, covered in
-          T02.L03), not by modal path differences.
+          the Dispersion lesson coming up next), not by modal path differences.
         </p>
       </section>
 
@@ -313,6 +314,14 @@ export default function T02L01_WhyLightTravelsInGlass() {
           </li>
         </ol>
       </div>
+
+      <ReferencesBlock
+        items={[
+          { citation: 'ITU-T G.652.D', note: 'Standard defining single-mode fiber — core/cladding index targets, NA range, and mode field diameter (MFD).' },
+          { citation: '7 CFR 1755.902', note: 'RUS minimum performance spec — sets the MFD manufacturing tolerance referenced for splice-loss discussion.' },
+          { citation: 'FOA Reference Guide — Fiber Optic Technology', note: 'General industry reference for TIR, NA, and fiber construction basics.' },
+        ]}
+      />
 
       {/* ── PER-LESSON QUIZ ──────────────────────────────────────────────── */}
       <GatedAssessment
