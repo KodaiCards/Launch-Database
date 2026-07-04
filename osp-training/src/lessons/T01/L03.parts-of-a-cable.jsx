@@ -272,7 +272,7 @@ export default function T01L03_PartsOfACable() {
       <ReferencesBlock
         items={[
           { citation: 'TIA-598-D', note: 'Fiber color-coding standard — the 12-color sequence used for buffer tubes and, here, ribbon fiber.' },
-          { citation: 'ICEA S-87-640 [confirm edition]', note: 'OSP fiber cable construction standard — covers ribbon and loose-tube cable construction requirements.' },
+          { citation: 'ICEA S-87-640', note: 'OSP fiber cable construction standard — covers ribbon and loose-tube cable construction requirements.' },
         ]}
       />
 

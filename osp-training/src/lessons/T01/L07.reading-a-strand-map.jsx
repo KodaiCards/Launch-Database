@@ -203,7 +203,7 @@ export default function T01L07_ReadingAStrandMap() {
           of splitter loss plus all the fiber and connector losses along the route.
         </p>
         <p className="mt-2 text-sm text-slate-300/90">
-          Source: ITU-T G.984 [confirm edition] (GPON standard).
+          Source: ITU-T G.984 (GPON standard).
         </p>
       </section>
 
