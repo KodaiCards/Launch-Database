@@ -20,3 +20,5 @@
 | *14 | RUS daily paperwork tool — build or consciously skip (field-first PWA; merges with L-009 one-mobile-flow) | THE MOMENT the next construction contract is approved, or Carter raises it | priority call; seed = specs/ideas/rus-daily-paperwork.md |
 | *16 | Pool deepening to full sizing (6/10 lesson · 25/35 final) — authoring-only, engine ready | After wave 2 / per-topic as crews free | priority call; seed = specs/ideas/pool-deepening.md |
 | *17 | ISP track scoping session (whole curriculum, OSP depth+) | When its stage-4 build approaches | working session; seed = specs/ideas/isp-track.md |
+| *18 | PHASE REVIEW (Partner, Fable): bounce-rate + protocol-error + resume-cost metrics from board history; did the gates hold; skills ROI verdict | Live-5 completes + Carter green-lights the republish | Partner runs it; deliver numbers not vibes |
+| *19 | premerge SKILL (the reserved 6th slot) — running + interpreting the merge-floor script + the L-015 regression harness | Next Partner session / with *18 | Partner writes it; Registrar is the audience |
