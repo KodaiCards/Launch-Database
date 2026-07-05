@@ -42,8 +42,15 @@ button{font-family:inherit;cursor:pointer;border:none;background:none;color:inhe
   border-radius:6px;border:1px solid var(--gray-border);background:transparent;color:var(--text-secondary)}
 .btn-icon:hover{background:var(--surface-1)}
 
-.page-body{padding:20px 24px;max-width:760px;margin:0 auto}
+.page-body{padding:20px 24px;max-width:1120px;margin:0 auto}
 .page-title{font-size:20px;font-weight:700;margin-bottom:20px}
+
+/* Grouped multi-column layout: use the horizontal space instead of a thin
+   vertical column (PRODUCT_BAR §2.1). Quick links run full-width; the two
+   compact cards (Appearance, System info) sit side by side below. */
+.settings-two{display:grid;grid-template-columns:1fr 1fr;gap:18px;align-items:start}
+.settings-two .section{margin-bottom:0}
+@media(max-width:720px){.settings-two{grid-template-columns:1fr}}
 
 .section{background:var(--white);border:1px solid var(--gray-border);border-radius:10px;
   overflow:hidden;margin-bottom:18px}
@@ -69,11 +76,18 @@ button{font-family:inherit;cursor:pointer;border:none;background:none;color:inhe
 .quick-link:hover{background:var(--primary-light);border-color:var(--primary);color:var(--primary)}
 .quick-link i{font-size:14px;color:var(--primary);width:16px;text-align:center}
 
-.theme-row{display:flex;align-items:center;justify-content:space-between;padding:10px 16px;font-size:13px}
-.theme-toggle{display:flex;gap:6px}
-.theme-btn{padding:6px 14px;border-radius:6px;border:1px solid var(--gray-border);font-size:12px;
-  font-weight:500;background:transparent;color:var(--text-secondary);cursor:pointer;font-family:inherit}
-.theme-btn.active{background:var(--primary);color:#fff;border-color:var(--primary)}
+.theme-catalog{display:grid;grid-template-columns:repeat(2,1fr);gap:8px;padding:12px 16px}
+.theme-opt{display:flex;align-items:center;gap:10px;padding:9px 11px;border-radius:8px;
+  border:1px solid var(--gray-border);background:transparent;color:var(--text);cursor:pointer;
+  font-size:13px;font-family:inherit;text-align:left;transition:border-color .12s,background .12s}
+.theme-opt:hover{border-color:var(--primary)}
+.theme-opt.active{border-color:var(--primary);background:var(--primary-light)}
+.theme-swatch{width:16px;height:16px;border-radius:5px;flex-shrink:0;border:1px solid rgba(128,128,128,.35)}
+.theme-opt-name{flex:1}
+.theme-opt .fa-check{opacity:0;color:var(--primary);font-size:12px}
+.theme-opt.active .fa-check{opacity:1}
+.theme-hint{padding:0 16px 12px;margin:0;font-size:11px;color:var(--text-muted)}
+@media(max-width:420px){.theme-catalog{grid-template-columns:1fr}}
 
 .skeleton{background:var(--surface-1);border-radius:4px;height:13px;animation:pulse 1.5s infinite;display:inline-block}
 @keyframes pulse{0%,100%{opacity:1}50%{opacity:.4}}
@@ -85,27 +99,11 @@ button{font-family:inherit;cursor:pointer;border:none;background:none;color:inhe
   <div class="header-left">
     <span class="header-title"><i class="fa-solid fa-sliders"></i> Settings</span>
   </div>
-  <div class="header-right">
-    <button class="btn-icon" onclick="toggleDark()" title="Toggle dark mode" aria-label="Toggle dark mode">
-      <i id="dm-icon" class="fa-solid fa-moon"></i>
-    </button>
-  </div>
+  <div class="header-right"></div>
 </div>
 
 <div class="page-body" role="main">
   <h1 class="page-title">Settings &amp; System Info</h1>
-
-  <!-- Theme -->
-  <div class="section">
-    <div class="section-header"><i class="fa-solid fa-palette"></i> Appearance</div>
-    <div class="theme-row">
-      <span style="color:var(--text-muted)">Color theme</span>
-      <div class="theme-toggle">
-        <button class="theme-btn" id="theme-light" onclick="setTheme('light')">Light</button>
-        <button class="theme-btn" id="theme-dark"  onclick="setTheme('dark')">Dark</button>
-      </div>
-    </div>
-  </div>
 
   <!-- Quick links -->
   <div class="section">
@@ -126,25 +124,36 @@ button{font-family:inherit;cursor:pointer;border:none;background:none;color:inhe
     </div>
   </div>
 
-  <!-- System info -->
-  <div class="section" id="sysinfo-section">
-    <div class="section-header"><i class="fa-solid fa-server"></i> System info</div>
-    <div class="kv"><span class="kv-key">App</span><span class="kv-val" id="si-app"><span class="skeleton" style="width:140px"></span></span></div>
-    <div class="kv"><span class="kv-key">Version</span><span class="kv-val mono" id="si-version"><span class="skeleton" style="width:60px"></span></span></div>
-    <div class="kv"><span class="kv-key">Node.js</span><span class="kv-val mono" id="si-node"><span class="skeleton" style="width:60px"></span></span></div>
-    <div class="kv"><span class="kv-key">Environment</span><span class="kv-val" id="si-env"><span class="skeleton" style="width:90px"></span></span></div>
-    <div class="kv"><span class="kv-key">Portal mode</span><span class="kv-val" id="si-portal"><span class="skeleton" style="width:80px"></span></span></div>
-    <div class="kv"><span class="kv-key">Uptime</span><span class="kv-val" id="si-uptime"><span class="skeleton" style="width:80px"></span></span></div>
-    <div class="kv"><span class="kv-key">Database</span><span class="kv-val" id="si-db"><span class="skeleton" style="width:120px"></span></span></div>
+  <!-- Compact cards side by side: theme control + system status -->
+  <div class="settings-two">
+    <!-- Theme -->
+    <div class="section">
+      <div class="section-header"><i class="fa-solid fa-palette"></i> Appearance</div>
+      <div class="theme-catalog" id="theme-catalog" role="radiogroup" aria-label="Color theme"></div>
+      <p class="theme-hint">Pick a theme — it applies everywhere and syncs across your devices.</p>
+    </div>
+
+    <!-- System info -->
+    <div class="section" id="sysinfo-section">
+      <div class="section-header"><i class="fa-solid fa-server"></i> System info</div>
+      <div class="kv"><span class="kv-key">App</span><span class="kv-val" id="si-app"><span class="skeleton" style="width:140px"></span></span></div>
+      <div class="kv"><span class="kv-key">Version</span><span class="kv-val mono" id="si-version"><span class="skeleton" style="width:60px"></span></span></div>
+      <div class="kv"><span class="kv-key">Node.js</span><span class="kv-val mono" id="si-node"><span class="skeleton" style="width:60px"></span></span></div>
+      <div class="kv"><span class="kv-key">Environment</span><span class="kv-val" id="si-env"><span class="skeleton" style="width:90px"></span></span></div>
+      <div class="kv"><span class="kv-key">Portal mode</span><span class="kv-val" id="si-portal"><span class="skeleton" style="width:80px"></span></span></div>
+      <div class="kv"><span class="kv-key">Uptime</span><span class="kv-val" id="si-uptime"><span class="skeleton" style="width:80px"></span></span></div>
+      <div class="kv"><span class="kv-key">Database</span><span class="kv-val" id="si-db"><span class="skeleton" style="width:120px"></span></span></div>
+    </div>
   </div>
 </div>
 
+<script src="/js/app-shell.js"></script>
 <script>
 (function(){
   'use strict';
 
   document.addEventListener('DOMContentLoaded', function(){
-    applyStoredTheme();
+    initThemeCatalog();
     loadSysInfo();
   });
 
@@ -183,37 +192,67 @@ button{font-family:inherit;cursor:pointer;border:none;background:none;color:inhe
     return String(s??'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
   }
 
-  window.setTheme = function(t){
-    document.documentElement.setAttribute('data-theme', t);
-    localStorage.setItem('lfs_theme', t);
-    updateThemeBtns();
-    updateDmIcon();
-  };
+  // Mount the shared app-shell theme picker/catalog (PLAN 2.1: replaces the
+  // deprecated light/dark toggle). Catalog + persistence are owned by
+  // app-shell.js — this only renders the catalog into the Appearance card.
+  function initThemeCatalog(){
+    var cat = document.getElementById('theme-catalog');
+    if(!cat) return;
+    if(!window.AppShell || !AppShell.themes){
+      cat.innerHTML = '<p class="theme-hint" style="padding:0">Theme options are unavailable right now.</p>';
+      return;
+    }
+    AppShell.initTheme();                       // apply the stored theme from localStorage
+    var themes = AppShell.themes;
+    var order = ['graphite','obsidian','nightsky','blueprint'];
+    Object.keys(themes).forEach(function(id){ if(order.indexOf(id) < 0) order.push(id); });
 
-  window.toggleDark = function(){
-    var dark = document.documentElement.getAttribute('data-theme')==='dark';
-    setTheme(dark ? 'light' : 'dark');
-  };
+    cat.innerHTML = '';
+    order.forEach(function(id){
+      var t = themes[id];
+      if(!t) return;
+      var b = document.createElement('button');
+      b.type = 'button';
+      b.className = 'theme-opt';
+      b.setAttribute('role','radio');
+      b.setAttribute('data-theme-id', id);
+      b.innerHTML = '<span class="theme-swatch" style="background:'+esc(t.dot)+'"></span>'+
+                    '<span class="theme-opt-name">'+esc(t.label)+'</span>'+
+                    '<i class="fa-solid fa-check" aria-hidden="true"></i>';
+      b.addEventListener('click', function(){ AppShell.setTheme(id); markActive(currentThemeId()); });
+      cat.appendChild(b);
+    });
+    markActive(currentThemeId());
 
-  function applyStoredTheme(){
-    var stored = localStorage.getItem('lfs_theme');
-    if(stored) document.documentElement.setAttribute('data-theme', stored);
-    updateThemeBtns();
-    updateDmIcon();
+    // Reflect the server-saved preference (cross-device) once available.
+    if(AppShell.getUser){
+      AppShell.getUser().then(function(u){
+        if(u && u.theme){ AppShell.setTheme(u.theme); }
+        markActive(currentThemeId());
+      });
+    }
+
+    // Keep the card highlight in sync if the theme is changed elsewhere
+    // (e.g. the shared top-bar picker) and focus returns to this page.
+    window.addEventListener('focus', function(){ markActive(currentThemeId()); });
+    document.addEventListener('visibilitychange', function(){
+      if(!document.hidden) markActive(currentThemeId());
+    });
   }
 
-  function updateThemeBtns(){
-    var dark = document.documentElement.getAttribute('data-theme')==='dark';
-    var lb = document.getElementById('theme-light'), db = document.getElementById('theme-dark');
-    if(lb){ lb.className = 'theme-btn'+(dark?'':' active'); }
-    if(db){ db.className = 'theme-btn'+(dark?' active':''); }
+  function currentThemeId(){
+    var root = document.documentElement;
+    return root.getAttribute('data-skin') ||
+      (root.getAttribute('data-theme') === 'light' ? 'light' : 'graphite');
   }
 
-  function updateDmIcon(){
-    var icon = document.getElementById('dm-icon');
-    if(!icon) return;
-    var dark = document.documentElement.getAttribute('data-theme')==='dark';
-    icon.className = dark ? 'fa-solid fa-sun' : 'fa-solid fa-moon';
+  function markActive(id){
+    var items = document.querySelectorAll('#theme-catalog .theme-opt');
+    for(var i=0;i<items.length;i++){
+      var on = items[i].getAttribute('data-theme-id') === id;
+      items[i].classList.toggle('active', on);
+      items[i].setAttribute('aria-checked', on ? 'true' : 'false');
+    }
   }
 })();
 </script>

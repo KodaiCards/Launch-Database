@@ -102,7 +102,7 @@ export default function Quiz({ title, mode = 'multiple-choice', questions, onCom
           className="btn-primary mt-4"
           onClick={() => { setIdx(0); setAnswers({}); setDone(false); setRevealed(false); }}
         >
-          Retry
+          Try again
         </button>
       </div>
     );

@@ -236,7 +236,7 @@ function Result({ title, attempt, result, onRetry }) {
         })}
       </ul>
 
-      <button className="btn-primary mt-4" onClick={onRetry}>Retry</button>
+      <button className="btn-primary mt-4" onClick={onRetry}>Try again</button>
     </div>
   );
 }
