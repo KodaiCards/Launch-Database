@@ -9,7 +9,7 @@
 ## Track 1 — TRAINING (top priority now; rolling release)
 | # | Work | Spec | State |
 |---|---|---|---|
-| 1.1 | **Live-5 made fully operational** (leak strip → readability retrofit per PRODUCT_BAR §1 → premerge green → playthrough) | specs/training-fix.md | ▶ FIRST MISSION |
+| 1.1 | **Live-5 made fully operational** (leak strip → readability retrofit per PRODUCT_BAR §1 → premerge green → playthrough) | specs/training-fix.md | ▶ IN PROGRESS — WO-1 + shared + WO-2 T02/T04 merged (lint 197→134); WO-2 T01/T03/T18 escalated (hedge conflict), WO-4 in flight |
 | 1.2 | Next wave through the gate: T09 → T05 → T06, under the new bar from authoring | specs/training-content.md | queued |
 | 1.3 | **ALL remaining OSP topics — the full new-bar treatment, none exempt (Carter 2026-07-04):** T07 Staking · T08 Make-Ready · T10 Construction · T11 Splicing · T12 Testing · T13 Inspection · T14 Grounding · T15 Restoration · T16 As-Built/GIS · T17 Estimation · T19 Headend · T20 RUS (pulled RUS-aware). Authored ones get the same retrofit the live-5 got (verbiage, readability, tool/interaction quality, PRODUCT_BAR); unauthored ones are written under the bar from word one. Basics→Advanced, rolling flips. | 〃 | queued |
 | 1.4 | I11 training dashboard (scores prominent, per-lesson timing, >45min flag) | specs/training-dashboard.md | after 1.2 |
