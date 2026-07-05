@@ -42,3 +42,6 @@ Claim two packages at once · touch a `shared-infra`-guarded file unless you cla
 - One issue ≈ ≤1 foreman-day; body = spec file+section pointer, done-when, constraints. Never paraphrase the spec into the issue — point at it.
 - Order by dependency: shared components FIRST as a pinned `shared-infra` issue (its claimant = sole toucher of shared files that wave); independent packages marked parallel-safe; per-unit work (per topic/page) = one issue each, rolling.
 - A decomposition judgment call that shades the spec (bundling, splitting, sequencing not in the spec) → state it on the issue and flag Partner — proceed unless overruled, don't wait.
+
+## Scoping rule (from the #65 collision)
+Packages that edit the SAME FILES are never independent — even when their concerns differ (a class-sweep + a per-topic retrofit touching the same lessons WILL collide at merge). Sequence them (sweep first, topics after) or merge scopes. Class-sweep grep patterns go into the premerge lint immediately regardless — the lint never collides.
