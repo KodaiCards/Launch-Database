@@ -1,3 +1,5 @@
+> ⭐ **RULED — Carter 2026-07-05: option (b)-of-this-doc / (a)-of-the-Partner-framing = SANCTIONED EPHEMERAL DB.** L-015: disposable local Postgres, Registrar-only, fresh per run, never the shared URL. The constraint paragraph below is superseded; remediation (fix billing coupling, retire audit_log tests with 2.2, schema_sync fresh-DB now natural) can be scoped.
+
 # Test-suite remediation — how do we verify DB-backed code at all? (Partner: scope into PLAN)
 
 **Raised by:** Registrar, 2026-07-03 (Carter chose "raise to Partner as a scoped item"). Not a drive-by `bug` — it's a test-infra + verification-method project.
