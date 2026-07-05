@@ -183,10 +183,10 @@
     {
       "id": "T02-final-Q14",
       "type": "mc",
-      "prompt": "What is the correct ISO/IEC 11801 OS1/OS2 mapping to ITU-T G.652 sub-grades, and why is this a genuine point of confusion worth double-checking against a primary source?",
+      "prompt": "What is the correct ISO/IEC 11801 OS1/OS2 fiber category mapping to ITU-T G.652 sub-grades?",
       "choices": [
-        "OS1 = G.652.B/C, OS2 = G.652.D — a commonly repeated but subtly incorrect mapping",
-        "OS1 = G.652.A/B (higher attenuation, older spec), OS2 = G.652.C/D (low/zero water-peak, current spec) — the correct mapping",
+        "OS1 = G.652.B/C; OS2 = G.652.D only",
+        "OS1 = G.652.A/B (higher attenuation, older spec); OS2 = G.652.C/D (low/zero water-peak, current spec)",
         "OS1 and OS2 are unrelated to ITU-T G.652 and instead map to G.657 exclusively",
         "OS1 = G.655, OS2 = G.652 — the two designations refer to entirely different fiber families"
       ],

@@ -23,7 +23,7 @@ export const meta = {
     { term: 'OM3', definition: 'Multimode fiber grade: 50 µm laser-optimized core. EMB (Effective Modal Bandwidth) = 2000 MHz·km @ 850 nm — the value that governs 10G/40G/100G reach. OFL (Overfilled Launch) = 1500 MHz·km — legacy LED test, not used for modern laser applications. Max reach: 300 m at 10GbE. Aqua jacket.' },
     { term: 'OM4', definition: 'Multimode fiber grade: 50 µm laser-optimized core, 4700 MHz-km bandwidth @ 850 nm, max 400 m at 10GbE. Aqua jacket (sometimes magenta in some regions). Use when run distance exceeds OM3\'s 300 m limit.' },
     { term: 'OM5', definition: 'Multimode fiber grade: 50 µm laser-optimized core. EMB = 4,700 MHz·km @ 850 nm (identical to OM4 — intentional backward-compat design per TIA-492AAAE) + 2,470 MHz·km @ 953 nm (new spec unique to OM5, enabling SWDM4 short-wavelength WDM). Lime green jacket. OM5\'s differentiator is ADDING the 953 nm spec, not increasing 850 nm bandwidth. Rate-specific reach: 10GbE up to ~400 m, 25GbE up to ~100 m (per IEEE 802.3by), 100GbE SWDM4 up to ~150 m (per SWDM MSA).' },
-    { term: 'OS2', definition: 'Single-mode fiber grade corresponding to ITU-T G.652.D -- the current standard OSP SMF. Maximum attenuation 0.4 dB/km @ 1310 nm, 0.3 dB/km @ 1550 nm. Reduced water peak. When a spec says "SMF" in an OSP context, it almost always means OS2/G.652.D. Yellow jacket.' },
+    { term: 'OS2', definition: 'Single-mode fiber grade corresponding to the low-water-peak ITU-T G.652.C/D grade -- the current OSP standard is G.652.D. Maximum attenuation 0.4 dB/km @ 1310 nm, 0.3 dB/km @ 1550 nm. Reduced water peak. When a spec says "SMF" in an OSP context, it almost always means OS2/G.652.D. Yellow jacket.' },
     { term: 'reach table', definition: 'A table showing the maximum distance a given fiber type (OM1-OM5, OS2) can support for a specific Ethernet speed (1GbE, 10GbE, 40GbE, 100GbE) per IEEE 802.3. Used to quickly determine if MMF or SMF is required for a given application and distance.' },
     { term: 'laser-optimized MMF', definition: 'OM3/OM4/OM5 multimode fiber with a graded-index core profile specifically optimized for 850 nm VCSEL launch conditions. OM3/OM4 are optimized for 850 nm VCSEL; OM5 additionally supports 953 nm VCSEL for SWDM4 short-wavelength wavelength-division multiplexing. This reduces modal dispersion by restricting which modes are excited, dramatically increasing effective bandwidth vs. older LED-compatible OM1/OM2.' },
     { term: 'G.655 (NZ-DSF)', definition: 'ITU-T G.655 Non-Zero Dispersion-Shifted SMF — a single-mode fiber used in carrier DWDM backbones where the zero-dispersion wavelength is intentionally shifted away from 1550 nm to suppress four-wave mixing at high channel counts. OSP engineers specify G.652.D (OS2); G.655 is a carrier-side fiber they coordinate with at the OSP↔carrier handoff point.' },
@@ -131,7 +131,7 @@ export default function T02L08_SMFvsMMFChoosing() {
           cards={[
             { id: 'T02-L08-fc-om1', front: 'What is OM1 fiber?', back: 'Multimode fiber grade: 62.5 µm core, 200 MHz-km bandwidth @ 850 nm, max 33 m at 10GbE. Orange jacket. Legacy grade -- do not specify for new 10G+ installations.' },
             { id: 'T02-L08-fc-om2', front: 'What is OM2 fiber?', back: 'Multimode fiber grade: 50 µm core, 500 MHz-km bandwidth @ 850 nm, max 82 m at 10GbE. Orange jacket. Legacy grade -- use OM3 or OM4 for modern 10G+ data center work.' },
-            { id: 'T02-L08-fc-os2', front: 'What is OS2 fiber?', back: 'Single-mode fiber grade per ITU-T G.652.D -- the current standard for OSP work. Max attenuation 0.4 dB/km @ 1310 nm and 0.3 dB/km @ 1550 nm. Reduced water peak. Yellow patch cord jacket. When a spec says "SMF" in an OSP context, it almost always means OS2/G.652.D.' },
+            { id: 'T02-L08-fc-os2', front: 'What is OS2 fiber?', back: 'Single-mode fiber grade per the low-water-peak ITU-T G.652.C/D spec -- G.652.D is the current standard for OSP work. Max attenuation 0.4 dB/km @ 1310 nm and 0.3 dB/km @ 1550 nm. Reduced water peak. Yellow patch cord jacket. When a spec says "SMF" in an OSP context, it almost always means OS2/G.652.D.' },
             { id: 'T02-L08-fc-om3', front: 'What is OM3 fiber, and what do EMB vs. OFL mean?', back: 'Multimode fiber grade: 50 µm laser-optimized core, max 300 m at 10GbE. Aqua jacket. EMB (Effective Modal Bandwidth) = 2000 MHz·km — measured with a laser/VCSEL launch; the spec that governs 10G/40G/100G applications. OFL (Overfilled Launch) = 1500 MHz·km — measured with a legacy LED launch; lower number, not relevant for modern transceivers. Not usable for OSP runs over a few hundred meters.' },
             { id: 'T02-L08-fc-om4', front: 'What is OM4 fiber?', back: 'Multimode fiber grade: 50 µm laser-optimized core, 4700 MHz-km bandwidth @ 850 nm, max 400 m at 10GbE. Aqua jacket. Use when OM3\'s 300 m limit is insufficient. Still only for data center/campus -- not OSP.' },
             { id: 'T02-L08-fc-om5', front: 'What is OM5 fiber, and what are its EMB specs?', back: 'Multimode fiber grade: 50 µm laser-optimized core, lime green jacket. EMB = 4,700 MHz·km @ 850 nm (same as OM4 — backward-compat by design per TIA-492AAAE) + 2,470 MHz·km @ 953 nm (new OM5-only spec enabling SWDM4). OM5\'s value is the ADDED 953 nm spec for short-wavelength WDM, not a higher 850 nm number. Rate-specific reach: 10GbE up to ~400 m, 25GbE up to ~100 m (per IEEE 802.3by), 100GbE SWDM4 up to ~150 m (per SWDM MSA). Not for OSP runs.' },
@@ -225,14 +225,14 @@ export default function T02L08_SMFvsMMFChoosing() {
         </p>
         <ul className="list-disc pl-5 space-y-2 mt-2 text-sm">
           <li>
-            <strong>OS1</strong> — specified in ITU-T G.652.B/C (older). Maximum attenuation
+            <strong>OS1</strong> — specified in ITU-T G.652.A/B (older, conventional). Maximum attenuation
             1.0 dB/km @ 1310 nm. Primarily for indoor/tight-buffer cable.
           </li>
           <li>
-            <strong>OS2</strong> — specified in ITU-T G.652.D (current standard). Maximum
+            <strong>OS2</strong> — specified in ITU-T G.652.C/D (low/zero water peak). Maximum
             attenuation 0.4 dB/km @ 1310 nm, 0.3 dB/km @ 1550 nm. Reduced water peak
-            (1383 nm). This is the standard OSP SMF grade — when a spec says "SMF" in
-            an OSP context, it almost always means OS2/G.652.D.
+            (1383 nm). This is the standard OSP SMF grade — modern OSP builds specify
+            G.652.D, so when a spec says "SMF" in an OSP context it almost always means OS2/G.652.D.
           </li>
         </ul>
         <p className="mt-2 text-sm text-slate-300/80">
@@ -450,7 +450,7 @@ export default function T02L08_SMFvsMMFChoosing() {
               answer: /os2|g\.652\.d|g652d|g652\.d/i,
               answerDisplay: 'OS2 (ITU-T G.652.D)',
               explanation:
-                'OS2 corresponds to ITU-T G.652.D — the "water-peak reduced" standard SMF with ≤ 0.40 dB/km @ 1310 nm and ≤ 0.30 dB/km @ 1550 nm. OS1 (G.652.B/C) is the older, less performant variant. Almost all new OSP deployments specify OS2/G.652.D.',
+                'OS2 corresponds to the low-water-peak ITU-T G.652.C/D grade — the "water-peak reduced" standard SMF with ≤ 0.40 dB/km @ 1310 nm and ≤ 0.30 dB/km @ 1550 nm; modern OSP deployments specify G.652.D. OS1 (G.652.A/B) is the older, less performant variant.',
             },
             {
               id: 'T02-L08-Q4',
