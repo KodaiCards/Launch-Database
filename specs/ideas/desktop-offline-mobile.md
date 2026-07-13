@@ -23,8 +23,16 @@ Status: **IN PLAN** (2026-07-13) — now PLAN rows 2.13 (desktop) + 2.14 (mobile
 - **Same-record money conflicts are NEVER auto-resolved.** No newest-wins on dollars: the colliding value lands as a flagged conflict ("Carter $4,500 2:10p vs Jake $5,200 2:45p — pick one") in a human review queue; audit trail keeps both. (Capabilities 2.5 gates who can override at all, shrinking the surface.)
 - **Offline maps:** base map visible offline via pre-download — desktop app gets "download this county/SA for offline" (county = the natural unit, per law §7). Basemap licensing is a spec decision: OSM-style tiles cacheable offline, Google's contractually not. Drawing offline = pure data, works fully; features queue append-only (conflict-proof) and on sync the EXISTING map-unit→estimate engines (`projections.js`/`_map_estimate.js`) populate the project server-side. These are REQUIREMENTS handed to map integration (*9, integrate-as-delivered) — not pre-designed internals.
 
+## Carter's expansion ideas (2026-07-13, same night — verbatim + shape)
+> **Carter (verbatim):** "I had a though about syncing launches every employees folders automatically so admin can pull anytime. I'd like a system that automatically tracks their production when possible. that might be impossible though because everything does in stages, prelem draw, then final, the bom etc."
+
+- **Employee folder sync** — every employee gets a Launch WORKSPACE folder that syncs continuously; admin pulls any file anytime. Absorbs three banked needs in one engine: documents-storage (memory seed), KMZ watch-folder, CSV ingest. Adds bus-factor insurance (versioned server copies of all work product; who-saved-what-when = free RUS deliverable audit trail). **Partner line (pending Carter): sync the Launch folder, never the machine** — backup tool, not surveillance.
+- **Passive production tracking via file events** — Carter thought stages made it impossible; stages are the SENSOR: prelim KMZ appears in the SA folder → suggest "mark prelim complete"; final drawing → final stage; BOM export → construction handoff. + map units drawn + hours = passive production data for the cockpit/PROD tracker/nudges ("no file activity on claimed job in 10 days"). Requirements: light folder-per-SA/naming convention; **SUGGEST-never-auto-flip** (human confirms every stage; a mis-named file can never complete a job or move money).
+- Also unlocked by the same agent: tray timeclock punches, local splice-diagram printing (post-map), offline county packs.
+
 ## Open questions for the spec session
 - Does admin ever truly need offline WRITE beyond capture? (Named scenario, or it stays out.)
+- Storage/cost model for continuous employee-folder sync (where files live, retention, size caps) — UPLOAD_DIR vs object storage.
 - Desktop distribution: unsigned installer + SmartScreen "run anyway" acceptable, or budget for code signing?
 - Which watched-folder ingests are v1 vs later (KMZ? CSV? photos?)
 - Mobile admin-lite exact tab list (Carter strikes the list, *1-style).
