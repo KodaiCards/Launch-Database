@@ -332,7 +332,7 @@ export default function T03L06_CableSheathJacketMaterial() {
           </p>
           <ul className="space-y-2 text-slate-300 text-sm list-disc ml-5">
             <li><strong>OSP Design — Aerial</strong> (and its underground counterpart) — MDPE vs. HDPE choice depends on the deployment: MDPE for aerial where cold-temperature flexibility matters; HDPE for buried where crush resistance is the constraint. The material properties directly affect real-world failure modes.</li>
-            <li><strong>OSP Design — Aerial</strong> — Jacket stiffness (HDPE is stiffer) affects how the cable hangs on a span. Stiffer jackets reduce initial sag but can increase micro-bend loss if the fiber inside is over-bent. Flex-favorable designs (MDPE) may require larger sag allowances.</li>
+            <li><strong>Sag-Tension — How Cable Hangs</strong> — Jacket stiffness (HDPE is stiffer) affects how the cable hangs on a span. Stiffer jackets reduce initial sag but can increase micro-bend loss if the fiber inside is over-bent. Flex-favorable designs (MDPE) may require larger sag allowances.</li>
             <li><strong>Material and Hardware Acceptance</strong> — During construction closeout, you verify that received cable matches spec — HDPE vs. MDPE is a first-sight inspection item, and gel type (petroleum vs. non-petroleum) matters if the splice case or heat-shrink has specific material compatibility requirements.</li>
           </ul>
           <p className="text-slate-200 mt-3 text-sm italic">

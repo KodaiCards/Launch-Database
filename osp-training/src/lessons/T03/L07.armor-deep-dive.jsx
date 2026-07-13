@@ -303,7 +303,7 @@ export default function T03L07_ArmorDeepDive() {
           </p>
           <ul className="space-y-2 text-slate-300 text-sm list-disc ml-5">
             <li><strong>Route Survey &amp; Pre-Engineering</strong> — Soil conductivity and pH testing should feed armor material selection. High-chloride coastal soil (like sea-salt spray zones) → aluminum armor or dielectric. Neutral pH agricultural soil with rodent pressure → steel CST.</li>
-            <li><strong>Messenger Bonding Rules</strong> — Bonding metallic armor to ground is mandatory per NEC 770.48; but THAT BOND is where galvanic corrosion becomes a 30-year problem if the armor touches dissimilar metals in the conduit. Proper isolation sleeves and material selection prevent it.</li>
+            <li><strong>Bonding, Grounding &amp; Electrical Protection</strong> — Bonding metallic armor to ground is mandatory per NEC 770.48; but THAT BOND is where galvanic corrosion becomes a 30-year problem if the armor touches dissimilar metals in the conduit. Proper isolation sleeves and material selection prevent it.</li>
             <li><strong>Underground Construction Inspection</strong> — During construction inspection, verify that buried conduit configuration matches the approved design. CST armor in a conduit shared with copper grounding wire (without isolation) is a hidden corrosion time-bomb that won't fail for 10+ years.</li>
           </ul>
           <p className="text-slate-200 mt-3 text-sm italic">
