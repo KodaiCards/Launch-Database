@@ -18,6 +18,11 @@ Status: **IN PLAN** (2026-07-13) — now PLAN rows 2.13 (desktop) + 2.14 (mobile
 3. **Mobile = PWA wrap first, not native.** The vanilla-JS portals wrap cheap; app stores add cost/friction. Scope: the L-009 timeclock/daily-card flow + admin-lite (approve hours, billing-status glance, nudges). Offline-tolerant punch queue.
 4. **Sequencing:** mobile timeclock rides 2.6 (already planned). Desktop file-ingest pairs with map/KMZ arrival + RUS daily paperwork. Full wraps AFTER cutover 2.3 (never wrap the legacy admin being retired). Offline-capture layer is a cross-cutting spec section in both.
 
+## Sync rules from Carter's scenario questions (2026-07-13, same night — spec inputs)
+- **New records created offline may carry money fields** (e.g., a new project's manual bill override) — conflict-impossible until first sync; they arrive intact.
+- **Same-record money conflicts are NEVER auto-resolved.** No newest-wins on dollars: the colliding value lands as a flagged conflict ("Carter $4,500 2:10p vs Jake $5,200 2:45p — pick one") in a human review queue; audit trail keeps both. (Capabilities 2.5 gates who can override at all, shrinking the surface.)
+- **Offline maps:** base map visible offline via pre-download — desktop app gets "download this county/SA for offline" (county = the natural unit, per law §7). Basemap licensing is a spec decision: OSM-style tiles cacheable offline, Google's contractually not. Drawing offline = pure data, works fully; features queue append-only (conflict-proof) and on sync the EXISTING map-unit→estimate engines (`projections.js`/`_map_estimate.js`) populate the project server-side. These are REQUIREMENTS handed to map integration (*9, integrate-as-delivered) — not pre-designed internals.
+
 ## Open questions for the spec session
 - Does admin ever truly need offline WRITE beyond capture? (Named scenario, or it stays out.)
 - Desktop distribution: unsigned installer + SmartScreen "run anyway" acceptable, or budget for code signing?
