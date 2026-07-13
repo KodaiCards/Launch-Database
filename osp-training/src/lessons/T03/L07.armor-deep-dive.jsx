@@ -147,9 +147,7 @@ export default function T03L07_ArmorDeepDive() {
           and passes the riser flame-spread requirement alongside the armor.
         </p>
         <p className="mt-2 text-sm text-amber-300/90 border-l-4 border-amber-400/30 pl-3">
-          <strong>Note:</strong> NEC §770.179(B) is paywalled (NFPA 70-2023). The product
-          documentation citation above confirms the reference and the application. Confirm
-          exact section text against the current NEC edition for formal contract work.
+          <strong>Note:</strong> Governing code — NEC §770.179(B) (NFPA 70-2023).
         </p>
 
         <h3 className="mt-5 font-semibold">Armor selection matrix — complete picture</h3>
@@ -197,7 +195,6 @@ export default function T03L07_ArmorDeepDive() {
           <p className="text-slate-300/90">
             <strong>Book (ICEA S-87-640):</strong> Defines armor geometry, material grades,
             corrosion protection requirements, and minimum coverage for each armor type.
-            The 2016/2023 editions are paywalled.
           </p>
           <p className="text-slate-300/90 mt-2">
             <strong>Field:</strong> The most common armor mistake isn't the wrong type —
@@ -388,7 +385,7 @@ export default function T03L07_ArmorDeepDive() {
               ],
               answerIndex: 2,
               explanation:
-                'Any metallic cable component — including CST armor — must be bonded to the building\'s grounding electrode system at the building entry. The UL listing confirms the cable is suitable for riser use, but it does not exempt the armor from the NEC bonding requirement. (NEC Art. 770 bonding requirements; confirmed via product documentation)',
+                'Any metallic cable component — including CST armor — must be bonded to the building\'s grounding electrode system at the building entry. The UL listing confirms the cable is suitable for riser use, but it does not exempt the armor from the NEC bonding requirement. (NEC Art. 770 bonding requirements)',
             },
             {
               id: 'T03-L07-Q3',
