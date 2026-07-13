@@ -22,3 +22,5 @@
 | *17 | ISP track scoping session (whole curriculum, OSP depth+) | When its stage-4 build approaches | working session; seed = specs/ideas/isp-track.md |
 | *18 | PHASE REVIEW (Partner, Fable): bounce-rate + protocol-error + resume-cost metrics from board history; did the gates hold; skills ROI verdict | Live-5 completes + Carter green-lights the republish | Partner runs it; deliver numbers not vibes |
 | *19 | premerge SKILL (the reserved 6th slot) — running + interpreting the merge-floor script + the L-015 regression harness | Next Partner session / with *18 | Partner writes it; Registrar is the audience |
+| *20 | Desktop-app spec session (2.13) — v1 watched-folder ingest list, offline-capture scope, installer/signing call | Carter calls it (pulled forward — may precede Track-2 opening) | working session; seed = specs/ideas/desktop-offline-mobile.md |
+| *21 | Mobile tab-list + scope session (2.14) — Carter strikes the admin-lite list; BEFORE any mobile build (Carter 2026-07-13) | Before 2.14 build (timeclock flow rides 2.6) | ~15 min strike-the-list; same seed |
