@@ -395,9 +395,9 @@ export default function T03L05_G652VsG657BendInsensitive() {
             The bend-insensitive fiber choice directly impacts two downstream design phases:
           </p>
           <ul className="space-y-2 text-slate-300 text-sm list-disc ml-5">
-            <li><strong>Conduit &amp; Duct Sizing</strong> — Bend-insensitive fiber (G.657.A1/A2) enables tighter conduit bends, which may allow smaller/cheaper duct in congested underground runs. Tight bends with G.652.D = unacceptable loss, forcing larger/more-expensive duct.</li>
-            <li><strong>Fusion Splicing Margins</strong> — G.657.B3 has a slightly different MFD than G.652.D. When splicing mixed cable types (legacy G.652 + new G.657 at a distribution point), you must measure each splice; the trench-assisted profile changes attenuation by up to 0.1 dB per splice.</li>
-            <li><strong>Drop Cable Design</strong> — FTTH drop cables are almost always G.657.A1 or A2 because the customer's drop terminal inside the home tolerates only 5–10 mm bends. Standard G.652.D drops would guarantee damage at those radii.</li>
+            <li><strong>OSP Design — Underground</strong> — Bend-insensitive fiber (G.657.A1/A2) enables tighter conduit bends, which may allow smaller/cheaper duct in congested underground runs. Tight bends with G.652.D = unacceptable loss, forcing larger/more-expensive duct.</li>
+            <li><strong>Splicing</strong> — G.657.B3 has a slightly different MFD than G.652.D. When splicing mixed cable types (legacy G.652 + new G.657 at a distribution point), you must measure each splice; the trench-assisted profile changes attenuation by up to 0.1 dB per splice.</li>
+            <li><strong>Drop Cable Selection</strong> — FTTH drop cables are almost always G.657.A1 or A2 because the customer's drop terminal inside the home tolerates only 5–10 mm bends. Standard G.652.D drops would guarantee damage at those radii.</li>
           </ul>
           <p className="text-slate-200 mt-3 text-sm italic">
             The choice between G.652 and G.657 is not a fiber specification technicality — it drives duct cost, splicing labor, and field reliability.

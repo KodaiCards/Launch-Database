@@ -362,9 +362,9 @@ export default function T03L01_LooseTubeTightBufferRibbon() {
             The cable construction you learned here doesn't stand alone — it interlocks with:
           </p>
           <ul className="space-y-2 text-slate-300 text-sm list-disc ml-5">
-            <li><strong>OSP Cable Types &amp; Selection</strong> — Cable construction drives your make-or-buy decision when designing a feeder route. Loose-tube dominates, but you'll spec ribbon when the splice closure timeline is the cost lever.</li>
-            <li><strong>Mass-Fusion Splicing Fundamentals</strong> — Ribbon cables enable the 12-fiber-per-cycle mass-fusion technique you'll learn; loose-tube requires individual splicing, making site duration 7–10× longer on high-count cables.</li>
-            <li><strong>Material &amp; Hardware Acceptance</strong> — During construction inspection, you verify that cable received matches the project specification — and loose-tube vs. tight-buffer is the first visible check on site.</li>
+            <li><strong>OSP Design — Aerial</strong> (and its underground counterpart) — Cable construction drives your make-or-buy decision when designing a feeder route. Loose-tube dominates, but you'll spec ribbon when the splice closure timeline is the cost lever.</li>
+            <li><strong>Ribbon / Mass Fusion Splicing</strong> — Ribbon cables enable the 12-fiber-per-cycle mass-fusion technique you'll learn; loose-tube requires individual splicing, making site duration 7–10× longer on high-count cables.</li>
+            <li><strong>Material and Hardware Acceptance</strong> — During construction inspection, you verify that cable received matches the project specification — and loose-tube vs. tight-buffer is the first visible check on site.</li>
           </ul>
           <p className="text-slate-200 mt-3 text-sm italic">
             A site manager must know these constructions cold: the difference between loose-tube and tight-buffer determines project duration and long-term fiber reliability.
