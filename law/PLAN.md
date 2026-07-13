@@ -26,7 +26,7 @@
 | 2.6 | **System D hours** — manual-entry-first UX; three attribution targets (job / **area-WO** / overhead); 1099 mobile app = **one flow: clock-in + daily card** (I-1); Workforce CSV import (sample `*`); confirm loop + anomalies | specs/hours.md | after 2.3 |
 | 2.7 | **System A billing** — job types + rate catalog + per-instance codes + submissions (samples + RUS code list `*`); per-client formats configurable (D015) | specs/billing.md | after 2.6 |
 | 2.8 | System B projections (backend largely built; UI + pace slider) | specs/projections.md | after 2.7 |
-| 2.9 | System E cockpit — per-person cost rate w/ universal preset (locked); utilization = **profitability metric for hybrid roles**, not peer ranking; thresholds `*` | specs/cockpit.md | after 2.6/2.7 |
+| 2.9 | System E cockpit — per-person cost rate w/ universal preset (locked); utilization = **profitability metric for hybrid roles**, never PEER-VISIBLE ranking; **admin/director-only production leaderboard OK (Carter 2026-07-13)** — per-discipline, rate-based, descriptive-not-gamified, capabilities-gated; thresholds `*` | specs/cockpit.md | after 2.6/2.7 |
 | 2.10 | **County-universal pass** — county as the first grouping level everywhere (schema + UX) `*`(design session) | specs/county.md | slot at 2.3 or after — Partner raises |
 | 2.11 | Interim **full-screen map preview** (big, easy view of the early map, data linked to ops projects) `*`(scope small) | specs/map-preview.md | when Carter calls it |
 | 2.12 | Diagnostics logger (kept per Carter): clickstream + JS errors, toggle + purge | specs/diagnostics.md | fits with 2.3 |

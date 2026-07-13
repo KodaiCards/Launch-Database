@@ -44,6 +44,10 @@ Status: **IN PLAN** (2026-07-13) — now PLAN rows 2.13 (desktop) + 2.14 (mobile
   (d) **Private-by-default** — own breakdown visible to self + admin/director only (capabilities 2.5); peers never see each other; cockpit consumes job-level aggregates only (utilization = profitability metric, never peer ranking — Carter's standing framing).
   Payoff: actual-hours-vs-billed per job = the core cockpit 2.9 profitability number.
 
+> **Carter (verbatim, same night):** "What if I do want a leaderboard for admins to see"
+
+- **Admin-only production leaderboard — GRANTED, amends the standing framing** (PLAN 2.9 updated): "never peer ranking" survives as **never PEER-VISIBLE** — crew never sees ranked names; admin/director get a capabilities-gated leaderboard in the cockpit. Design rules: per-discipline cuts (designer vs inspector on raw output = meaningless; hard SA vs easy SA lies), rate-based metrics (production/hour, actual-vs-billed) over raw totals, descriptive-not-gamified (sortable table; no badges/streaks), and **don't announce that checkoffs feed a ranking** (Goodhart: scored checkoffs = inflated checkoffs = dead production signal; private view keeps the data honest).
+
 ## Open questions for the spec session
 - Does admin ever truly need offline WRITE beyond capture? (Named scenario, or it stays out.)
 - Storage/cost model for continuous employee-folder sync (where files live, retention, size caps) — UPLOAD_DIR vs object storage.
