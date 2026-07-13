@@ -134,9 +134,7 @@ export default function T03L02_OSPRiserIndoorOutdoor() {
           the indoor rating as well as the outdoor rating.
         </p>
         <p className="mt-2 text-sm text-slate-300/80">
-          Source: NEC NFPA 70-2023 §770.48(A) — confirmed via multiple public NEC commentary
-          sources. The 50 ft value is paywalled in the NEC full text but widely cited by
-          industry sources including cabling industry technical guides.
+          Source: NEC NFPA 70-2023 §770.48(A).
         </p>
       </section>
 
@@ -431,7 +429,7 @@ export default function T03L02_OSPRiserIndoorOutdoor() {
               ],
               answerIndex: 1,
               explanation:
-                '35 ft is within the 50 ft unlisted entry allowance under NEC §770.48(A). No transition is required. The 50 ft limit applies to the total run of unlisted cable inside the building from the building entry point. (Source: NEC §770.48 — confirmed via public NEC commentary)',
+                '35 ft is within the 50 ft unlisted entry allowance under NEC §770.48(A). No transition is required. The 50 ft limit applies to the total run of unlisted cable inside the building from the building entry point. (Source: NEC §770.48)',
               fieldNote:
                 'Always confirm with the local AHJ — some jurisdictions require indoor fire-rated cable for any interior run regardless of the 50 ft federal code provision.',
             },

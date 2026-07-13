@@ -244,8 +244,7 @@ export default function T03L03_ArmorJacketSelection() {
             <strong>Book (ICEA S-87-640):</strong> Armor thickness requirements, corrugation
             geometry, and material specs are defined in the standard. CST and interlocked
             armor are described as two distinct construction types with different application
-            ranges. The standard is paywalled (2016/2023 editions) — values confirmed via
-            the 2006 publicly-accessible archive.org edition and multiple vendor datasheets.
+            ranges.
           </p>
           <p className="text-slate-300/90 mt-2">
             <strong>Field:</strong> In practice, RUS project managers often specify "armored

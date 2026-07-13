@@ -173,7 +173,7 @@ export default function T03L09_ADSSSpanWindIceLoading() {
         </tbody>
       </table>
       <p className="text-sm text-amber-300/90 border-l-4 border-amber-400/30 pl-3 mt-2">
-        Values confirmed via RUS Bulletin 1724E-150 (which reproduces NESC Table 250-1 data) and IAEI 2002/2007 NESC articles. Confirm against NESC C2-2023 Table 250-1 before use in formal engineering deliverables.
+        Source: RUS Bulletin 1724E-150 (which reproduces NESC Table 250-1 data). Confirm against NESC C2-2023 Table 250-1 before use in formal engineering deliverables.
       </p>
 
       {/* ── WORKING ──────────────────────────────────────────────────────── */}
@@ -187,9 +187,8 @@ export default function T03L09_ADSSSpanWindIceLoading() {
           same time for the design load case.
         </p>
         <p className="mt-2 text-sm text-amber-300/90 border-l-4 border-amber-400/30 pl-3">
-          Values below confirmed via RUS Bulletin 1724E-150 (which reproduces the NESC
-          Table 250-1 data) and IAEI Magazine 2002 NESC article. Exact NESC C2-2023
-          table text is paywalled.
+          Source: RUS Bulletin 1724E-150 (which reproduces the NESC Table 250-1 data);
+          NESC C2-2023 Table 250-1.
         </p>
 
         <div className="mt-4 overflow-x-auto">

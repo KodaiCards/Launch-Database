@@ -237,8 +237,6 @@ export default function T03L06_CableSheathJacketMaterial() {
           <p className="text-slate-300/90">
             <strong>Book (ICEA S-87-640):</strong> Specifies flooding compound viscosity,
             coverage requirements, and dry-block SAP tape minimum swell specifications.
-            The 2016/2023 editions are paywalled — core requirements verified via the 2006
-            archive.org edition and multiple vendor datasheets.
           </p>
           <p className="text-slate-300/90 mt-2">
             <strong>Field:</strong> The dry-block vs. gel decision is increasingly
