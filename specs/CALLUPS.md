@@ -4,7 +4,7 @@
 
 | * | Item | Trigger | Needed |
 |---|---|---|---|
-| *1 | Unused-tabs kill list | UI pass (2.1) / mockup walkthrough | Carter strikes the list Partner proposes from the nav code |
+| *1 | Unused-tabs kill list — **STRUCK by Carter 2026-07-13**: rail 16→9 (specs/ui-pass.md) | fired + delivered | archive row |
 | *2 | Workforce CSV sample | Hours spec session (2.6) | One export file from Carter ("no idea how it will look") |
 | *3 | Submission samples ×3 + RUS code list | Billing spec session (2.7) | RUS inspection, RUS design, non-RUS permitting samples |
 | *4 | Cockpit alert thresholds | Cockpit spec session (2.9) | fixed-fee %, RUS-cap %, utilization framing |
@@ -16,7 +16,7 @@
 | *10 | Legacy MIGRATE rows re-check | Cutover (2.3) | Confirm budgets/permits-tracking rework still wanted vs "old admin sucked, migrate nothing" |
 | *11 | Cert topics revival | After entire main project rollout | Whether T21/T22/C04/C05 get built at all |
 | *12 | Topic-scope ranking beyond the DAG | As Track 1 wave 2 closes | Carter ranks/cuts the remaining tail if speed demands |
-| *13 | Theme light-set + unification (engine/picker/4 dark skins LIVE — remaining: 4 light themes, training-admin + SPA onto the catalog) | UI-pass spec session (2.1) | ~15 min; seed = specs/ideas/theme-picker.md |
+| *13 | Themes — **RULED 2026-07-13**: dark-only, unify training-admin+SPA onto the 4-skin catalog; light set consciously skipped (revisit on field complaints) | fired + delivered | archive row |
 | *14 | RUS daily paperwork tool — build or consciously skip (field-first PWA; merges with L-009 one-mobile-flow) | THE MOMENT the next construction contract is approved, or Carter raises it | priority call; seed = specs/ideas/rus-daily-paperwork.md |
 | *16 | Pool deepening to full sizing (6/10 lesson · 25/35 final) — authoring-only, engine ready | After wave 2 / per-topic as crews free | priority call; seed = specs/ideas/pool-deepening.md |
 | *17 | ISP track scoping session (whole curriculum, OSP depth+) | When its stage-4 build approaches | working session; seed = specs/ideas/isp-track.md |
