@@ -24,4 +24,4 @@
 | *19 | premerge SKILL — **DELIVERED 2026-07-13**: .claude/skills/premerge/SKILL.md (merge floor + L-015 harness + lint interpretation; Registrar audience) | fired + delivered | archive row |
 | *20 | Desktop-app spec session — **HELD 2026-07-13**: specs/desktop-app.md RATIFIED (files-only v1, object storage, sync-first, unsigned) | fired + delivered | archive row |
 | *21 | Mobile tab-list + scope session (2.14) — Carter strikes the admin-lite list; BEFORE any mobile build (Carter 2026-07-13) | Before 2.14 build (timeclock flow rides 2.6) | ~15 min strike-the-list; same seed |
-| *22 | Mini-jobs spec session (schema/templates under jobs + employee workload list + CAD-close prompt + low-key time draft) — Job Board domain work the desktop agent consumes | After desktop D1/D2 roll, or Carter calls it | working session; raw material = specs/ideas/desktop-offline-mobile.md |
+| *22 | Mini-jobs spec session — **HELD 2026-07-13**: specs/mini-jobs.md RATIFIED (self-claim board, claimable mini-jobs, per-job clock, anti-gaming, behind wave-2/with D2) | fired + delivered | archive row |
