@@ -4,6 +4,7 @@
 
 import React from 'react';
 import LessonLayout from '../../components/LessonLayout.jsx';
+import ReferencesBlock from '../../components/ReferencesBlock.jsx';
 import Flashcard from '../../components/Flashcard.jsx';
 import BranchingScenario from '../../components/primitives/BranchingScenario.jsx';
 import Quiz from '../../components/primitives/Quiz.jsx';
@@ -55,7 +56,7 @@ export default function T01L05_OspProjectLifecycle() {
           No OSP fiber project builds itself. From the first day a design engineer walks the route to the moment a splicer closes the last splice case, there are seven distinct stages. Each stage has different people doing different work, different deliverables, and different risks. Understanding the sequence — and what happens if one stage fails — is what separates a field crew that knows their job from one that just shows up.
         </p>
 
-        <h3 className="font-semibold">Building on T01.L01–L04</h3>
+        <h3 className="font-semibold">Building on What You've Learned So Far</h3>
         <p className="text-sm text-slate-300/90">
           You've learned what <strong>OSP</strong> means, how poles are structured, what cables are made of, and how fibers are spliced in <strong>splice cases</strong>. You know about <strong>attachments</strong> on poles and the signal path from <strong>OLT</strong> at the headend to <strong>ONT</strong> at the customer. Now you'll see how all those pieces fit together in a real project timeline.
         </p>
@@ -223,7 +224,7 @@ export default function T01L05_OspProjectLifecycle() {
           authorized contractors. The fiber company funds it but doesn't control the timeline
           (within FCC-regulated limits: under OTMR, simple make-ready must be completed
           within 15 business days of approval — the 15 days is the completion deadline,
-          not a start window; complex attachments follow a multi-party timeline). (Detail in T08.)
+          not a start window; complex attachments follow a multi-party timeline). (Detail in Make-Ready &amp; Pole Attachment.)
         </p>
         <p className="text-sm text-slate-300/90 mt-1">
           <strong>Key output:</strong> Completed make-ready (each pole brought into compliance
@@ -276,13 +277,13 @@ export default function T01L05_OspProjectLifecycle() {
 
         <h3 className="mt-4 font-semibold">Why understanding all seven stages matters even if you do only one</h3>
         <p>
-          The seven-stage lifecycle you learned here sits downstream of the cable selection decision from T03. T03 taught you loose-tube vs. ribbon vs. dielectric cable — that decision is made in Stage 2 (Design). But why do you care about this connection as a field worker? Because a crew member who understands the full lifecycle can recognize when a design choice has downstream consequences for their work.
+          The seven-stage lifecycle you learned here sits downstream of the cable selection decision from Cable Selection &amp; Materials. That topic taught you loose-tube vs. ribbon vs. dielectric cable — that decision is made in Stage 2 (Design). But why do you care about this connection as a field worker? Because a crew member who understands the full lifecycle can recognize when a design choice has downstream consequences for their work.
         </p>
         <p className="mt-2">
           Here's a concrete example: the designer specifies ribbon cable (high-count feeder, 288 fibers) to save splicing time. That decision gets made in Design (Stage 2). By the time construction crews arrive (Stage 5), they're unloading ribbon cable. By Stage 6 (Testing), they're doing the splicing. A crew lead who understands Stage 2's choice can anticipate Stage 5 and Stage 6 challenges: mass-fusion splicing (which requires specific training), ribbon handling (which is different from loose-tube), and tight schedules (because the designer promised management the project saves 6 hours at the splice closure — and the crew is now on the hook to deliver it). Without that context, the crew just unloads whatever cable is on the truck and splices it.
         </p>
         <p className="mt-2">
-          Additionally, the permitting and make-ready stages (Stages 3–4) are where T05 (NESC) standards and T18 (Safety) rules get enforced. Make-ready is when existing pole attachments are moved to meet NESC clearance. LOTO from T18 applies during make-ready if powered equipment is involved. A field worker who knows the full lifecycle can read the Stage 3 permit package and understand which specific NESC clauses drove the Stage 4 make-ready scope.
+          Additionally, the permitting and make-ready stages (Stages 3–4) are where OSP Design — Aerial's NESC standards and Safety &amp; OSHA's safety rules get enforced. Make-ready is when existing pole attachments are moved to meet NESC clearance. LOTO from Safety &amp; OSHA applies during make-ready if powered equipment is involved. A field worker who knows the full lifecycle can read the Stage 3 permit package and understand which specific NESC clauses drove the Stage 4 make-ready scope.
         </p>
 
         <h2 className="mt-6">The As-Designed vs. As-Built Gap</h2>
@@ -305,11 +306,16 @@ export default function T01L05_OspProjectLifecycle() {
           closing it and fill in splice records accurately are building a future-proof network.
           Splicers who skip documentation are creating a time bomb.
         </p>
-        <p className="mt-2 text-sm text-slate-300/90">
-          Source: RUS Bulletin 1751F-630 §14 (close-out documentation requirements);
-          ANSI/TIA-606-C (administration standard for fiber infrastructure documentation; "TIA-606-D" is a BICSI TDMM shorthand, not a published edition).
-        </p>
       </section>
+
+      <ReferencesBlock
+        items={[
+          { citation: 'RUS Bulletin 1751F-630 §14', note: 'RUS engineering bulletin section covering close-out documentation requirements.' },
+          { citation: 'ANSI/TIA-606-C', note: 'Administration standard for labeling and record-keeping of fiber infrastructure documentation. ("TIA-606-D" is a BICSI TDMM shorthand, not a separately published edition.)' },
+          { citation: '7 CFR 1753.49', note: 'RUS telecom-program closeout regulation — certified as-built drawings, splice records, OTDR test records, and permit copies required before RUS advances final funds.' },
+          { citation: '47 CFR 1.1411', note: 'FCC one-touch make-ready (OTMR) rule setting the make-ready completion timeline for simple attachments.' },
+        ]}
+      />
 
       {/* ── KEY TERMS FLASHCARDS ────────────────────────────────────────── */}
       <Flashcard

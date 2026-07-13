@@ -4,6 +4,7 @@
 
 import React from 'react';
 import LessonLayout from '../../components/LessonLayout.jsx';
+import ReferencesBlock from '../../components/ReferencesBlock.jsx';
 import Flashcard from '../../components/Flashcard.jsx';
 import Quiz from '../../components/primitives/Quiz.jsx';
 import GatedAssessment from '../../components/primitives/GatedAssessment.jsx';
@@ -311,11 +312,13 @@ export default function T01L06_WhoDoesWhat() {
           and why engineers push back when clients ask them to stamp documents they haven't
           actually verified.
         </p>
-        <p className="mt-2 text-sm text-slate-300/90">
-          Source: RUS Bulletin 1751F-630 §2 (PE requirements); state engineering licensing
-          boards (jurisdiction-specific requirements).
-        </p>
       </section>
+
+      <ReferencesBlock
+        items={[
+          { citation: 'RUS Bulletin 1751F-630 §2', note: 'RUS engineering bulletin section defining PE stamping and certification requirements on RUS-program projects.' },
+        ]}
+      />
 
       {/* ── KEY TERMS FLASHCARDS ────────────────────────────────────────── */}
       <Flashcard

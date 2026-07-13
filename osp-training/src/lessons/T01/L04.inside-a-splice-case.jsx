@@ -4,6 +4,7 @@
 
 import React from 'react';
 import LessonLayout from '../../components/LessonLayout.jsx';
+import ReferencesBlock from '../../components/ReferencesBlock.jsx';
 import Flashcard from '../../components/Flashcard.jsx';
 import Quiz from '../../components/primitives/Quiz.jsx';
 import GatedAssessment from '../../components/primitives/GatedAssessment.jsx';
@@ -65,7 +66,7 @@ export default function T01L04_InsideASpliceCase() {
           is where two bare fiber ends are precisely aligned and permanently joined by an electric arc
           that melts and fuses the glass together. The result is a near-invisible joint with very low
           signal loss (typically under 0.1 dB). <em>(The fusion splicer machine, splicing technique,
-          and quality verification are covered in depth in T11.)</em>
+          and quality verification are covered in depth in Splicing.)</em>
         </p>
 
         <h3 className="mt-5 font-semibold">Acronyms and terms in this lesson</h3>
@@ -237,8 +238,7 @@ export default function T01L04_InsideASpliceCase() {
           colors, fiber numbers, splice loss (measured by the fusion splicer and/or OTDR),
           and date/technician. This record follows the splice case for its entire 25-year
           life — a technician opening the case in 2045 needs to know what's in there.
-          Many RUS-program contracts require splice records as part of the close-out package
-          (RUS Form 515 / 7 CFR 1753.49 closeout documentation).
+          Many RUS-program contracts require splice records as part of the project close-out package.
         </p>
       </section>
 
@@ -259,13 +259,19 @@ export default function T01L04_InsideASpliceCase() {
           anticipated and absolute moisture exclusion is required.
         </p>
         <p className="mt-2 text-sm text-slate-300/90">
-          Telcordia GR-771-CORE (Generic Requirements for Fiber Optic Splice Closures) requires
-          that splice enclosures for aerial and underground cable provide mechanical protection
-          and moisture ingress resistance for the life of the cable plant (typically 25+ years).
-          Selection between re-enterable and non-re-enterable is a design decision documented in
-          the construction specs.
+          Splice-closure standards require that enclosures for aerial and underground cable
+          provide mechanical protection and moisture ingress resistance for the life of the
+          cable plant (typically 25+ years). Selection between re-enterable and non-re-enterable
+          is a design decision documented in the construction specs.
         </p>
       </section>
+
+      <ReferencesBlock
+        items={[
+          { citation: 'RUS Form 515 / 7 CFR 1753.49', note: 'RUS telecom construction contract and closeout-documentation requirement that includes splice records in the final project package.' },
+          { citation: 'Telcordia GR-771-CORE', note: 'Generic requirements for fiber optic splice closures — mechanical and moisture-ingress performance requirements.' },
+        ]}
+      />
 
       {/* ── KEY TERMS FLASHCARDS ────────────────────────────────────────── */}
       <Flashcard

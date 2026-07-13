@@ -4,6 +4,7 @@
 
 import React from 'react';
 import LessonLayout from '../../components/LessonLayout.jsx';
+import ReferencesBlock from '../../components/ReferencesBlock.jsx';
 import Flashcard from '../../components/Flashcard.jsx';
 import SideBySide from '../../components/primitives/SideBySide.jsx';
 import Quiz from '../../components/primitives/Quiz.jsx';
@@ -130,8 +131,8 @@ export default function T01L01_OspVsIsp() {
           <li>Equipment in the main distribution frame (MDF) or intermediate distribution frame (IDF)</li>
         </ul>
         <p className="mt-2">
-          ISP is primarily governed by building codes (NEC Article 770 for optical fiber),
-          TIA-568/569 standards for commercial buildings, and local fire codes. OSP crews
+          ISP is primarily governed by the National Electrical Code's rules for optical fiber,
+          TIA's structured cabling standards for commercial buildings, and local fire codes. OSP crews
           generally don't work inside buildings — the ISP trade is a different specialization.
         </p>
 
@@ -156,9 +157,8 @@ export default function T01L01_OspVsIsp() {
           <p className="font-semibold text-amber-300 mb-1">Book vs. Field</p>
           <p className="text-slate-300/90">
             <strong>Book:</strong> Standards treat "OSP" and "ISP" as clean categories with
-            a single demarcation point. 47 CFR Part 32 §§32.2421-32.2423 (the FCC Uniform System
-            of Accounts) classifies OSP plant from the central office to the customer premises.
-            TIA-568.3-D covers ISP.
+            a single demarcation point. The FCC's plant-accounting rules classify OSP plant
+            from the central office to the customer premises. TIA's cabling standards cover ISP.
           </p>
           <p className="text-slate-300/90 mt-2">
             <strong>Field:</strong> In practice, there's a gray zone. The drop cable entering
@@ -219,8 +219,8 @@ export default function T01L01_OspVsIsp() {
           <li>
             <strong>Different codes govern each side.</strong> OSP is governed by NESC (National
             Electrical Safety Code) for aerial attachments and RUS bulletins for construction
-            standards. ISP is governed by NEC Article 770 and TIA-568. Using the wrong code
-            on the wrong side of the demarc is a compliance failure.
+            standards. ISP is governed by the National Electrical Code and TIA's cabling
+            standards. Using the wrong code on the wrong side of the demarc is a compliance failure.
           </li>
           <li>
             <strong>Different cable ratings.</strong> OSP cable is rated for outdoor UV/moisture
@@ -232,10 +232,10 @@ export default function T01L01_OspVsIsp() {
             licenses for OSP vs. ISP work. Know your jurisdiction.
           </li>
           <li>
-            <strong>Different testing standards.</strong> OSP links are tested to TIA-568.3-D
-            Tier 1 (OLTS loss) and Tier 2 (OTDR trace). ISP horizontal links have different
-            acceptance limits. Applying OSP test criteria to ISP runs or vice versa will
-            generate incorrect pass/fail results.
+            <strong>Different testing standards.</strong> OSP links are tested with
+            Tier 1 (OLTS loss) and Tier 2 (OTDR trace) acceptance criteria. ISP horizontal
+            links have different acceptance limits. Applying OSP test criteria to ISP runs or
+            vice versa will generate incorrect pass/fail results.
           </li>
         </ul>
       </section>
@@ -245,13 +245,11 @@ export default function T01L01_OspVsIsp() {
         <h2>Going Deeper — Regulatory Boundaries</h2>
         <p>
           The OSP/ISP boundary has regulatory significance beyond just which standard applies.
-          The <strong>FCC's Part 32</strong> accounting rules define "outside plant" as a
-          specific plant account category for regulated carriers (Account 2421 — Cable, aerial;
-          Account 2422 — Cable, underground; Account 2423 — Cable, buried). Note: Account 2411
-          is “Poles” and Account 2441 is “Conduit” — different plant categories, not cable accounts.
-          These accounts
-          determine depreciation schedules, rate-base inclusion for ratemaking, and how
-          infrastructure is reported to regulators.
+          The <strong>FCC's plant-accounting rules</strong> define "outside plant" as a set of
+          specific plant account categories for regulated carriers — separate accounts exist for
+          aerial cable, underground cable, and buried cable, distinct again from the accounts for
+          poles and conduit. These accounts determine depreciation schedules, rate-base
+          inclusion for ratemaking, and how infrastructure is reported to regulators.
         </p>
         <p className="mt-2">
           For RUS borrowers, the distinction matters for cost allocation between loan-eligible
@@ -259,10 +257,16 @@ export default function T01L01_OspVsIsp() {
           plant account categories are covered under the loan. Misclassifying ISP equipment as
           OSP can constitute a loan compliance violation.
         </p>
-        <p className="mt-2">
-          Source: 47 CFR Part 32 §§32.2421-32.2423 (FCC Uniform System of Accounts).
-        </p>
       </section>
+
+      <ReferencesBlock
+        items={[
+          { citation: '47 CFR Part 32 §§32.2421-32.2423', note: 'FCC Uniform System of Accounts — classifies outside plant into separate aerial (2421), underground (2422), and buried (2423) cable accounts; poles (2411) and conduit (2441) are distinct account categories. Governs depreciation and rate-base treatment.' },
+          { citation: 'NEC Article 770', note: 'National Electrical Code section covering optical fiber cabling inside buildings — the primary ISP electrical code reference.' },
+          { citation: 'TIA-568/569', note: "TIA's structured cabling and pathways/spaces standards for commercial buildings — the primary ISP cabling reference." },
+          { citation: 'TIA-568.3-D', note: 'Defines Tier 1 (OLTS loss) and Tier 2 (OTDR trace) acceptance testing for optical fiber cabling links.' },
+        ]}
+      />
 
       {/* ── KEY TERMS FLASHCARDS ────────────────────────────────────────── */}
       <Flashcard

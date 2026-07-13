@@ -4,6 +4,7 @@
 
 import React from 'react';
 import LessonLayout from '../../components/LessonLayout.jsx';
+import ReferencesBlock from '../../components/ReferencesBlock.jsx';
 import Flashcard from '../../components/Flashcard.jsx';
 import Quiz from '../../components/primitives/Quiz.jsx';
 import GatedAssessment from '../../components/primitives/GatedAssessment.jsx';
@@ -63,9 +64,9 @@ export default function T01L02_PartsOfAPole() {
           you need to know the pole's anatomy cold. This lesson builds that picture.
         </p>
 
-        <h3 className="mt-5 font-semibold">Building on T01.L01</h3>
+        <h3 className="mt-5 font-semibold">Building on What is OSP vs. ISP?</h3>
         <p className="text-sm text-slate-300/90">
-          In T01.L01, we learned that <strong>OSP (Outside Plant)</strong> is all fiber infrastructure between buildings. Now we're zooming in on one of the most critical OSP structures: the utility pole itself.
+          In What is OSP vs. ISP?, we learned that <strong>OSP (Outside Plant)</strong> is all fiber infrastructure between buildings. Now we're zooming in on one of the most critical OSP structures: the utility pole itself.
         </p>
 
         <h3 className="mt-5 font-semibold">Acronyms in this lesson</h3>
@@ -168,7 +169,7 @@ export default function T01L02_PartsOfAPole() {
             <dd>NESC's classification of how strongly a line must be built. Grade B is the
             standard for power lines; Grade C (less stringent) is used for many telecom
             attachments. Grade governs strength factors for the pole, attachments, and guys.
-            (Detail covered in T05.)</dd>
+            (Detail covered in OSP Design — Aerial.)</dd>
           </div>
           <div>
             <dt className="font-semibold text-slate-200">Joint-use</dt>
@@ -243,11 +244,10 @@ export default function T01L02_PartsOfAPole() {
         <p className="mt-2 text-slate-300/90 text-sm">
           In most of the US, the electric utility owns the pole. Telecom companies (including
           fiber ISPs) are <em>attachers</em> — they pay annual attachment fees (set by FCC
-          rules under 47 CFR 1.1406, with §§1.1409-1.1410 apportioning specific cost inputs
-          into that rate formula) for the right to put their cable on someone else's pole.
+          rules) for the right to put their cable on someone else's pole.
           Some joint-use arrangements involve multiple owners. Before any fiber attachment,
           you need a pole attachment agreement and a make-ready permit from the pole owner.
-          (Make-ready is covered in detail in T08.)
+          (Make-ready is covered in detail in Make-Ready &amp; Pole Attachment.)
         </p>
 
         <h3 className="mt-5 font-semibold">Reading a pole tag</h3>
@@ -277,12 +277,18 @@ export default function T01L02_PartsOfAPole() {
         <ul className="list-disc pl-5 space-y-1 mt-1 text-sm text-slate-300/90">
           <li>The neutral is the reference point for measuring communication-space attachment heights in NESC calculations.</li>
           <li>A messenger wire (the steel wire that carries aerial fiber) must maintain NESC-specified clearance from the neutral.</li>
-          <li>In some rural areas (particularly RUS-program electric grids), the neutral wire is also the <strong>MGN (Multi-Grounded Neutral)</strong> — grounded at every pole. Bonding fiber cable messengers to an MGN is common in RUS areas and has specific grounding requirements (covered in T14).</li>
+          <li>In some rural areas (particularly RUS-program electric grids), the neutral wire is also the <strong>MGN (Multi-Grounded Neutral)</strong> — grounded at every pole. Bonding fiber cable messengers to an MGN is common in RUS areas and has specific grounding requirements (covered in Bonding, Grounding &amp; Electrical Protection).</li>
         </ul>
-        <p className="mt-2 text-sm text-slate-300/90">
-          Source: NESC C2-2023 §§23, 235; RUS Bulletin 1751F-630 §6.
-        </p>
       </section>
+
+      <ReferencesBlock
+        items={[
+          { citation: '47 CFR 1.1406', note: 'FCC pole-attachment rate formula that sets what telecom attachers pay pole owners; §§1.1409–1.1410 apportion the specific cost inputs into that formula.' },
+          { citation: 'NESC C2-2023 §§23, 235', note: 'Vertical clearance and separation rules between the neutral, supply space, and communication space on a shared pole.' },
+          { citation: 'RUS Bulletin 1751F-630 §6', note: 'RUS construction bulletin covering messenger bonding to the MGN on RUS-program aerial lines.' },
+          { citation: 'NESC Rule 232 / Table 232-1', note: 'Minimum clearance table for communication cable over roads, sidewalks, and other surfaces, measured at midspan.' },
+        ]}
+      />
 
       {/* ── KEY TERMS FLASHCARDS ────────────────────────────────────────── */}
       <Flashcard
@@ -327,7 +333,7 @@ export default function T01L02_PartsOfAPole() {
             <strong>Fiber cable / bottom attachment</strong> — Aerial fiber is usually the bottom-most attachment in the communication space. The cable hangs between two poles via a steel or dielectric messenger wire. Attachment height is measured at the pole; sag at midspan pulls the cable lower, setting the ground clearance.
           </li>
           <li>
-            <strong>Midspan / sag</strong> — At midspan, the cable sags below the attachment height due to gravity. Ground clearance is measured at this lowest point. NESC Rule 232 / Table 232-1 requires minimum clearances above roads, sidewalks, and other surfaces (approximately 15.5 ft for telecom over traffic lanes per current NESC editions; verify the adopted edition before design lock). Actual sag varies with span length, cable weight, temperature, and ice/wind loading — always calculate sag for each specific span using the installed cable's sag-tension tables.
+            <strong>Midspan / sag</strong> — At midspan, the cable sags below the attachment height due to gravity. Ground clearance is measured at this lowest point. NESC's clearance table requires minimum clearances above roads, sidewalks, and other surfaces (approximately 15.5 ft for telecom over traffic lanes per current NESC editions; verify the adopted edition before design lock). Actual sag varies with span length, cable weight, temperature, and ice/wind loading — always calculate sag for each specific span using the installed cable's sag-tension tables.
           </li>
         </ol>
       </div>
@@ -412,7 +418,7 @@ export default function T01L02_PartsOfAPole() {
       <div className="lesson-callout mt-8 bg-blue-400/5 border border-blue-400/30">
         <h4>Tying It Together: From OSP Concept to Pole Reality</h4>
         <p className="text-sm text-slate-300/90">
-          In T01.L01 we established what OSP means — all fiber outside buildings. In this lesson, you've learned the anatomy of the primary structure that carries OSP fiber in aerial networks: the utility pole. The three zones (supply, climbing, communication), the sag formula, and the NESC clearance rules are the foundation for everything that comes next in fiber design, permitting, and construction. Before staking a route or designing a single span, a field crew must see a pole and instantly know where fiber can attach, what make-ready work is needed, and why clearance matters. That's what this lesson builds.
+          In What is OSP vs. ISP? we established what OSP means — all fiber outside buildings. In this lesson, you've learned the anatomy of the primary structure that carries OSP fiber in aerial networks: the utility pole. The three zones (supply, climbing, communication), the sag formula, and the NESC clearance rules are the foundation for everything that comes next in fiber design, permitting, and construction. Before staking a route or designing a single span, a field crew must see a pole and instantly know where fiber can attach, what make-ready work is needed, and why clearance matters. That's what this lesson builds.
         </p>
       </div>
 
