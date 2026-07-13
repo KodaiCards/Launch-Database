@@ -107,3 +107,99 @@ test('a client-supplied score cannot fake a pass (grade only reads answers)', ()
   assert.equal(r.score, 0);
   assert.equal(r.passed, false);
 });
+
+// ── §1.7 per-attempt MC choice shuffle (#57) ─────────────────────────────────
+// A pool whose authored answers ALL sit at index 0 — the exact positional-gameability
+// shape (§1.7). Choices are labelled so we can track where each authored option lands.
+const RAW4 = {
+  assessmentId: 'unit-shuffle', kind: 'lesson', courseId: 'UNIT', lessonId: 'unit-shuffle',
+  drawCount: 3, passThreshold: 70,
+  pool: [
+    { id: 'q1', type: 'mc', prompt: 'Q1', choices: ['c0', 'c1', 'c2', 'c3'], answerIndex: 0 },
+    { id: 'q2', type: 'mc', prompt: 'Q2', choices: ['d0', 'd1', 'd2', 'd3'], answerIndex: 0 },
+    { id: 'q3', type: 'mc', prompt: 'Q3', choices: ['e0', 'e1', 'e2', 'e3'], answerIndex: 0 },
+    { id: 'm',  type: 'drag-match', prompt: 'M', items: [{ id: 'i1', label: 'A' }], targets: [{ id: 't1', label: 'B' }], correctMap: { t1: 'i1' } },
+  ],
+};
+
+// The displayed position where an authored choice index landed, for a given attempt.
+function displayedPosOfAuthored(q, attemptId, authoredIndex) {
+  return pools.choiceOrder(q, attemptId).indexOf(authoredIndex);
+}
+
+test('choiceOrder is a permutation of the authored indices (no lost/duplicated choices)', () => {
+  const q = RAW4.pool[0];
+  const perm = pools.choiceOrder(q, 12345);
+  assert.deepEqual([...perm].sort((a, b) => a - b), [0, 1, 2, 3]);
+});
+
+test('choiceOrder is deterministic per (attemptId, questionId) — replays at grade time', () => {
+  const q = RAW4.pool[0];
+  assert.deepEqual(pools.choiceOrder(q, 777), pools.choiceOrder(q, 777));
+  // different attempt id ⇒ (very likely) different order; different question id ⇒ independent
+  const sameQ = new Set([0, 1, 2, 3, 4, 5, 6, 7].map(a => pools.choiceOrder(q, a).join(',')));
+  assert.ok(sameQ.size > 1, 'orders vary across attempts');
+});
+
+test('drawnQuestionsForClient shuffles MC choices per attempt but keeps the same set + strips keys', () => {
+  const p = pools.validatePool(RAW4);
+  const client = pools.drawnQuestionsForClient(p, ['q1'], 42);
+  const q = client[0];
+  assert.equal('answerIndex' in q, false, 'answer key still stripped');
+  assert.deepEqual([...q.choices].sort(), ['c0', 'c1', 'c2', 'c3'], 'same choices, order may differ');
+  // the displayed order matches choiceOrder applied to the authored choices
+  const perm = pools.choiceOrder(RAW4.pool[0], 42);
+  assert.deepEqual(q.choices, perm.map(a => RAW4.pool[0].choices[a]));
+});
+
+test('grade maps the displayed pick back through the shuffle — correct answer grades correct', () => {
+  const p = pools.validatePool(RAW4);
+  const attemptId = 98765;
+  const drawn = ['q1', 'q2', 'q3'];
+  // Learner picks, for each question, the DISPLAYED position holding the authored answer (index 0).
+  const answers = {};
+  for (const id of drawn) {
+    const q = RAW4.pool.find(x => x.id === id);
+    answers[id] = displayedPosOfAuthored(q, attemptId, q.answerIndex);
+  }
+  const r = pools.grade(p, drawn, answers, attemptId);
+  assert.equal(r.correct, 3);
+  assert.equal(r.score, 100);
+  assert.equal(r.passed, true);
+});
+
+test('grade with the WRONG displayed pick is wrong under the shuffle', () => {
+  const p = pools.validatePool(RAW4);
+  const attemptId = 55;
+  const q = RAW4.pool[0];
+  const correctPos = displayedPosOfAuthored(q, attemptId, q.answerIndex);
+  const wrongPos = (correctPos + 1) % 4;
+  const r = pools.grade(p, ['q1'], { q1: wrongPos }, attemptId);
+  assert.equal(r.correct, 0);
+});
+
+test('positional gameability is closed: "always pick display index 1" does NOT track the key', () => {
+  const q = RAW4.pool[0]; // authored answer at index 0
+  let correctWhenPicking1 = 0;
+  const N = 200;
+  for (let attemptId = 1; attemptId <= N; attemptId++) {
+    // authored index shown at display position 1 for this attempt:
+    if (pools.choiceOrder(q, attemptId)[1] === q.answerIndex) correctWhenPicking1++;
+  }
+  // With a real shuffle, a fixed-position strategy scores ~1/4, never ~100% (the pre-fix bug).
+  assert.ok(correctWhenPicking1 < N * 0.5, `fixed-position strategy should not track the key (got ${correctWhenPicking1}/${N})`);
+});
+
+test('grade without attemptId is unchanged (identity order) — back-compat for legacy callers', () => {
+  const p = pools.validatePool(RAW4);
+  // No attemptId ⇒ choices in authored order ⇒ authored index 0 grades correct at display 0.
+  const r = pools.grade(p, ['q1', 'q2', 'q3'], { q1: 0, q2: 0, q3: 0 });
+  assert.equal(r.correct, 3);
+  assert.equal(r.score, 100);
+});
+
+test('drag-match grading is unaffected by the MC choice shuffle', () => {
+  const p = pools.validatePool(RAW4);
+  const r = pools.grade(p, ['q1', 'm'], { q1: displayedPosOfAuthored(RAW4.pool[0], 9, 0), m: { t1: 'i1' } }, 9);
+  assert.equal(r.correct, 2);
+});

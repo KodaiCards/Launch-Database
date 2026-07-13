@@ -136,6 +136,38 @@ function _shuffle(arr, rng = Math.random) {
   return a;
 }
 
+// Deterministic string-seeded PRNG (xmur3 seed → mulberry32). Pure, dependency-free.
+// Used to derive a STABLE per-attempt choice order so the same shuffle reproduces at
+// grade time (and on I11 dashboard replay) from (attemptId, questionId) alone — nothing
+// extra is stored on the attempt row beyond the drawn ids it already keeps.
+function _seededRng(seedStr) {
+  let h = 1779033703 ^ seedStr.length;
+  for (let i = 0; i < seedStr.length; i++) {
+    h = Math.imul(h ^ seedStr.charCodeAt(i), 3432918353);
+    h = (h << 13) | (h >>> 19);
+  }
+  let a = (h ^ (h >>> 16)) >>> 0;
+  return function () {
+    a |= 0; a = (a + 0x6D2B79F5) | 0;
+    let t = Math.imul(a ^ (a >>> 15), 1 | a);
+    t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t;
+    return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+  };
+}
+
+// Per-attempt display order for an MC question's choices, as a permutation array
+// where perm[displayPos] = authoredIndex (§1.7 — options shuffled, nothing gameable by
+// position). Deterministic in (attemptId, question id): the SAME order is reproduced at
+// grade time so the client's displayed-index answer maps back to the authored key. Returns
+// identity for non-mc questions, when attemptId is absent (keeps legacy callers stable),
+// or for < 2 choices — so grading of those paths is unchanged.
+function choiceOrder(q, attemptId) {
+  const n = (q && q.type === 'mc' && Array.isArray(q.choices)) ? q.choices.length : 0;
+  const identity = Array.from({ length: n }, (_, i) => i);
+  if (n < 2 || attemptId == null) return identity;
+  return _shuffle(identity, _seededRng(String(attemptId) + '|' + q.id));
+}
+
 // Draw `drawCount` question ids at random from the pool (per-attempt). Returns
 // the ORDER to present in, too — questions are shuffled, so the sequence differs
 // across attempts on top of the subset differing.
@@ -143,14 +175,23 @@ function drawQuestionIds(pool, rng = Math.random) {
   return _shuffle(pool.pool.map(q => q.id), rng).slice(0, pool.drawCount);
 }
 
-// Build the client payload for a set of drawn ids: full question minus answer keys.
+// Build the client payload for a set of drawn ids: full question minus answer keys,
+// with each MC question's choices SHUFFLED into its per-attempt display order (§1.7).
 // Missing ids are skipped (defensive — a pool edit shouldn't 500 an open attempt).
-function drawnQuestionsForClient(pool, drawnIds) {
+// `attemptId` seeds the choice order; pass the attempt row id so the same order replays
+// at grade time. Omitting it (legacy callers) leaves choices in authored order.
+function drawnQuestionsForClient(pool, drawnIds, attemptId) {
   const byId = new Map(pool.pool.map(q => [q.id, q]));
   return drawnIds
     .map(id => byId.get(id))
     .filter(Boolean)
-    .map(stripAnswerKey);
+    .map(q => {
+      const out = stripAnswerKey(q);
+      if (q.type === 'mc' && Array.isArray(q.choices)) {
+        out.choices = choiceOrder(q, attemptId).map(a => q.choices[a]);
+      }
+      return out;
+    });
 }
 
 function stripAnswerKey(q) {
@@ -160,10 +201,15 @@ function stripAnswerKey(q) {
 }
 
 // Grade one question against the learner's answer. Returns true/false.
-function _isCorrect(q, given) {
+// For MC, `given` is the DISPLAYED choice index the client picked; map it back through
+// the per-attempt choice order (same (attemptId, id) seed used to build the payload) to
+// the authored index before comparing to the key. Without attemptId the order is identity,
+// so this reduces to the original Number(given) === answerIndex.
+function _isCorrect(q, given, attemptId) {
   if (given == null) return false;
   if (q.type === 'mc') {
-    return Number(given) === q.answerIndex;
+    const authoredIndex = choiceOrder(q, attemptId)[Number(given)];
+    return authoredIndex === q.answerIndex;
   }
   if (q.type === 'drag-match') {
     if (typeof given !== 'object') return false;
@@ -178,13 +224,13 @@ function _isCorrect(q, given) {
 // Only the drawn ids count (an answer to a non-drawn id is ignored). Returns
 // { correct, total, score, passed, perQuestion } — score/passed derived here,
 // never trusted from the client.
-function grade(pool, drawnIds, answers = {}) {
+function grade(pool, drawnIds, answers = {}, attemptId) {
   const byId = new Map(pool.pool.map(q => [q.id, q]));
   const perQuestion = {};
   let correct = 0;
   for (const id of drawnIds) {
     const q = byId.get(id);
-    const ok = q ? _isCorrect(q, answers[id]) : false;
+    const ok = q ? _isCorrect(q, answers[id], attemptId) : false;
     perQuestion[id] = ok;
     if (ok) correct++;
   }
@@ -203,5 +249,7 @@ module.exports = {
   drawnQuestionsForClient,
   stripAnswerKey,
   grade,
+  choiceOrder,
   _shuffle,
+  _seededRng,
 };

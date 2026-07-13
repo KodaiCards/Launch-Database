@@ -24,6 +24,7 @@ const path = require('path');
 
 const ROOT = path.join(__dirname, '..');
 const POOL_DIR = path.join(ROOT, 'content', 'training', 'assessment-pools');
+const ENGINE_FILE = path.join(ROOT, 'routes', '_assessment_pools.js');
 const LESSON_DIR = path.join(ROOT, 'osp-training', 'src', 'lessons');
 const UI_DIRS = [
   path.join(ROOT, 'osp-training', 'src', 'components'),
@@ -135,21 +136,36 @@ function scanLeaks() {
 }
 
 // ── CHECK 2: positional-answer gameability ───────────────────────────────────
-// Static heuristics (runtime shuffle is the real defense; these catch authoring
-// tells): (a) a pool's MC answers all sit at one index; (b) a choice telegraphs
-// itself as correct/incorrect in its own text.
+// (a) RUNTIME-SHUFFLE INVARIANT. Since #57 the engine shuffles each MC question's
+//     choices per attempt at draw time (`choiceOrder` → `drawnQuestionsForClient`) and
+//     inverts the map at grade time, so a learner never sees a fixed position for the
+//     correct answer — the authored index distribution is irrelevant. That replaces the
+//     old "all MC answers sit at one authored index" heuristic, which is now a permanent
+//     false positive. We guard the *defense that made it moot*: fail loudly if the choice
+//     shuffle (or its grade-time inversion) is ever removed from the engine, which would
+//     silently re-open §1.7 positional gameability.
+// (b) a choice that telegraphs itself as correct/incorrect in its own text — still a real
+//     authoring tell regardless of shuffle.
 const TELEGRAPH = /\b(the correct (?:answer|mapping|choice)|correct answer|this is correct|\(correct\)|subtly incorrect|the wrong (?:answer|choice))\b/i;
 function scanGameability() {
+  // (a) engine invariant — the shuffle is the real §1.7 defense; assert it is present.
+  const engineSrc = fs.existsSync(ENGINE_FILE) ? fs.readFileSync(ENGINE_FILE, 'utf8') : '';
+  const src = stripComments(engineSrc);
+  if (!engineSrc) {
+    fail('gameability', ENGINE_FILE, 'assessment engine not found — cannot verify the per-attempt MC choice shuffle (§1.7)');
+  } else {
+    const definesOrder  = /function\s+choiceOrder\b/.test(src);
+    const shufflesDraw  = /\.choices\s*=\s*choiceOrder\(/.test(src);
+    const invertsAtGrade = /choiceOrder\([^)]*\)\[\s*Number\(given\)\s*\]/.test(src);
+    if (!definesOrder || !shufflesDraw)
+      fail('gameability', ENGINE_FILE, 'per-attempt MC choice shuffle missing from the draw path (§1.7 positional defense removed)');
+    if (!invertsAtGrade)
+      fail('gameability', ENGINE_FILE, 'grade path no longer inverts the choice shuffle — displayed-index answers would mis-grade (§1.7)');
+  }
+  // (b) self-telegraphing choice text.
   for (const f of walk(POOL_DIR, (p) => p.endsWith('.json'))) {
     let json; try { json = JSON.parse(fs.readFileSync(f, 'utf8')); } catch { continue; }
-    const mc = (json.pool || []).filter((q) => q.type === 'mc' && Number.isInteger(q.answerIndex) && Array.isArray(q.choices));
-    // (a) all answers at same index (a pool where every drawable answer shares an
-    // index is positionally gameable regardless of size; 3 is a conservative floor)
-    if (mc.length >= 3) {
-      const idxs = new Set(mc.map((q) => q.answerIndex));
-      if (idxs.size === 1) fail('gameability', f, `all ${mc.length} MC answers sit at index ${[...idxs][0]} (positionally gameable)`);
-    }
-    // (b) self-telegraphing choice text
+    const mc = (json.pool || []).filter((q) => q.type === 'mc' && Array.isArray(q.choices));
     for (const q of mc)
       for (const c of q.choices)
         if (typeof c === 'string' && TELEGRAPH.test(c))
