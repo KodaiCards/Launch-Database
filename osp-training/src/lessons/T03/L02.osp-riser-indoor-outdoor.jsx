@@ -8,6 +8,7 @@ import Sortable from '../../components/primitives/Sortable.jsx';
 import Quiz from '../../components/primitives/Quiz.jsx';
 import GatedAssessment from '../../components/primitives/GatedAssessment.jsx';
 import Flashcard from '../../components/Flashcard.jsx';
+import ReferencesBlock from '../../components/ReferencesBlock.jsx';
 
 export const meta = {
   id: 'T03.L02',
@@ -172,7 +173,7 @@ export default function T03L02_OSPRiserIndoorOutdoor() {
               pass the UL 1666 vertical flame propagation test — the cable must not carry
               flame upward more than a specified distance when a burner is applied at the
               bottom. Typically uses LSZH (Low Smoke Zero Halogen) or similar low-smoke
-              jacket compound. (Source: NEC Art. 770 — confirmed via public NEC commentary)
+              jacket compound.
             </p>
           </div>
           <div className="border border-amber-400/20 rounded-lg p-4 bg-amber-400/5">
@@ -182,14 +183,12 @@ export default function T03L02_OSPRiserIndoorOutdoor() {
               dropped ceilings or below raised floors that HVAC air circulates through.
               Must pass UL 910 / NFPA 262 test: both flame spread and smoke density are
               measured. Plenum jacket compounds are the most restrictive and most expensive.
-              (Source: NEC Art. 770 — confirmed via public NEC commentary; UL 910 test standard)
             </p>
             <p className="text-sm text-slate-300/90 mt-1">
               <strong>OFNP can substitute for OFNR</strong> — a higher-rated cable can
               always replace a lower-rated one. The substitution hierarchy: OFNP can go
               anywhere; OFNR can go in risers and general areas but not plenums; OFNG
-              goes only in limited unlisted locations. (Source: NEC Art. 770 substitution
-              hierarchy — confirmed via industry commentary)
+              goes only in limited unlisted locations.
             </p>
           </div>
         </div>
@@ -203,9 +202,7 @@ export default function T03L02_OSPRiserIndoorOutdoor() {
         </p>
         <p className="mt-2">
           This carbon-black loading is mandatory for any cable exposed to direct sunlight.
-          It's one reason OSP cables are black. (Source: bwnfiber.com HDPE vs. LDPE
-          comparison; shobeirshimi.com: "carbon black (2–3%) is added to both MDPE and
-          HDPE for UV stabilization")
+          It's one reason OSP cables are black.
         </p>
         <p className="mt-2">
           A dual-rated cable adds an indoor fire-rated jacket compound (LSZH or plenum
@@ -337,9 +334,9 @@ export default function T03L02_OSPRiserIndoorOutdoor() {
             The fire ratings you learned here connect to your broader design practice:
           </p>
           <ul className="space-y-2 text-slate-300 text-sm list-disc ml-5">
-            <li><strong>T04.L05 Indoor Cable Routing</strong> — When you design the interior portion of a project (cables entering the CO/hut), fire ratings determine which cables you can run through plenums vs. riser shafts vs. conduit in open areas.</li>
-            <li><strong>T06.L02 Underground Cable Fill &amp; Conduit</strong> — Underground cable selection parallels the indoor logic: the protection method (direct bury vs. conduit) influences cost and NEC compliance categories.</li>
-            <li><strong>T08.L07 Make-Ready &amp; Pole Attachment</strong> — On joint-use poles, cable routing around power and telephone lines comes with specific clearance rules and fire-rating implications if the plant is near structures.</li>
+            <li><strong>Indoor Cable Routing</strong> — When you design the interior portion of a project (cables entering the CO/hut), fire ratings determine which cables you can run through plenums vs. riser shafts vs. conduit in open areas.</li>
+            <li><strong>Underground Cable Fill &amp; Conduit</strong> — Underground cable selection parallels the indoor logic: the protection method (direct bury vs. conduit) influences cost and NEC compliance categories.</li>
+            <li><strong>Make-Ready &amp; Pole Attachment</strong> — On joint-use poles, cable routing around power and telephone lines comes with specific clearance rules and fire-rating implications if the plant is near structures.</li>
           </ul>
           <p className="text-slate-200 mt-3 text-sm italic">
             Fire ratings are not theoretical — they're the legal boundary between a code-compliant design and a safety liability.
@@ -358,6 +355,14 @@ export default function T03L02_OSPRiserIndoorOutdoor() {
         ]}
         correctOrder={['ofng', 'ofnr', 'ofnp']}
         explanation="From lowest to highest: OFNG (no indoor rating, ≤50 ft unlisted use) → OFNR (passes UL 1666 riser test, used in vertical shafts) → OFNP (passes UL 910 plenum test, required in air-handling spaces). A higher-rated cable can always substitute downward: OFNP can go anywhere OFNR or OFNG is required. (NEC Art. 770 substitution hierarchy)"
+      />
+
+      <ReferencesBlock
+        items={[
+          { citation: 'NEC (NFPA 70) Article 770 §770.48(A)', note: 'The 50-ft unlisted-cable building-entry allowance and the OFNR/OFNP fire-rating requirements.' },
+          { citation: 'UL 1666', note: 'Vertical flame propagation test that OFNR (riser-rated) cable must pass.' },
+          { citation: 'UL 910 / NFPA 262', note: 'Steiner tunnel flame-and-smoke test that OFNP (plenum-rated) cable must pass.' },
+        ]}
       />
 
       {/* ── KEY TERMS FLASHCARDS ──────────────────────────────────────────── */}

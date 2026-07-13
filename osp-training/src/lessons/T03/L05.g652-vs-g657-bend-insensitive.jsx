@@ -6,6 +6,7 @@ import LessonLayout from '../../components/LessonLayout.jsx';
 import SideBySide from '../../components/primitives/SideBySide.jsx';
 import Quiz from '../../components/primitives/Quiz.jsx';
 import Flashcard from '../../components/Flashcard.jsx';
+import ReferencesBlock from '../../components/ReferencesBlock.jsx';
 
 export const meta = {
   id: 'T03.L05',
@@ -54,7 +55,7 @@ export const meta = {
     {
       term: 'trench-assisted profile',
       definition:
-        'A refractive index design in G.657.B3 fibers (and formerly G.657.B2, which was merged into A2 in the 2024 ITU-T G.657 edition) where a low-index "trench" around the core increases confinement of optical modes, reducing bend-induced loss. The trench profile achieves better bend performance at the cost of potentially different splicing behavior with G.652.D. [verify 2024 edition consolidation]',
+        'A refractive index design in G.657.B3 fibers (and formerly G.657.B2, which was merged into A2 in the 2024 ITU-T G.657 edition) where a low-index "trench" around the core increases confinement of optical modes, reducing bend-induced loss. The trench profile achieves better bend performance at the cost of potentially different splicing behavior with G.652.D.',
     },
     {
       term: 'G.655 (NZDSF)',
@@ -78,7 +79,7 @@ export default function T03L05_G652VsG657BendInsensitive() {
       <section data-tier="foundations">
         <h2>In Plain English</h2>
         <p>
-          From T02, you know that bending a fiber too sharply causes light to escape from
+          From Fiber Physics, you know that bending a fiber too sharply causes light to escape from
           the core — macrobend loss. Standard G.652.D fiber starts losing meaningful signal
           if you bend it tighter than about 30 mm radius (roughly the curvature of a golf
           ball). That's fine for a straight aerial span, but what about a fiber going around
@@ -150,13 +151,13 @@ export default function T03L05_G652VsG657BendInsensitive() {
           would give only 5 mm, far tighter than is safe. For a typical OSP loose-tube cable
           with a 12 mm OD, the rule gives 12 mm × 20 = 240 mm (~9.5 inches) for installation
           pulls (dynamic) and 12 mm × 10 = 120 mm for long-term routing (static).
-          (Source: FOA Reference Guide bend radius page)
         </p>
         <p className="mt-2">
           When a G.652.D fiber is bent tighter than its minimum radius, the mode field
           extends out of the core and light energy escapes — macrobend loss. At 1550 nm
           this is worst because longer wavelengths are more susceptible to macrobend
-          loss than shorter ones. (Review: T02.L04 covered macrobend physics in detail.)
+          loss than shorter ones. (Review: the Macrobend and Microbend Loss lesson covered
+          this physics in detail.)
         </p>
 
         <h3 className="mt-5 font-semibold">G.657.A1 — the drop-cable workhorse</h3>
@@ -165,22 +166,19 @@ export default function T03L05_G652VsG657BendInsensitive() {
           drop applications. Its key specs per ITU-T G.657 (2024 edition):
         </p>
         <ul className="list-disc pl-5 space-y-2 mt-2 text-sm">
-          <li><strong>Minimum design bend radius: 10 mm</strong> (Source: ITU-T G.657 2024; itu.int + hengtongglobal.com)</li>
+          <li><strong>Minimum design bend radius: 10 mm</strong></li>
           <li>
             <strong>Bend loss limit (ITU-T G.657 specified test conditions):</strong>
             {' '}1 turn at 10 mm radius: ≤ 0.75 dB at 1550 nm, ≤ 1.5 dB at 1625 nm;
             10 turns at 15 mm radius: ≤ 0.25 dB at 1550 nm, ≤ 1.0 dB at 1625 nm.
-            Exact test conditions are in ITU-T G.657 2024 §6 (paywalled); confirm against
-            the current ITU-T G.657 2024 edition for design use.
           </li>
-          <li><strong>Splice compatibility:</strong> Fully backward-compatible with G.652.D for splicing. Same MFD specification — no intrinsic splice loss penalty at a G.657.A1/G.652.D interface. (Source: ITU-T G.657; hfcl.com G.657 blog)</li>
+          <li><strong>Splice compatibility:</strong> Fully backward-compatible with G.652.D for splicing. Same MFD specification — no intrinsic splice loss penalty at a G.657.A1/G.652.D interface.</li>
         </ul>
 
         <h3 className="mt-5 font-semibold">G.657.A2 — tighter drops, still compatible</h3>
         <p>
           G.657.A2 extends bend tolerance to <strong>7.5 mm minimum radius</strong> while
-          maintaining backward splice compatibility with G.652.D. (Source: ITU-T G.657 2024;
-          weunionfiber.com + fs.com)
+          maintaining backward splice compatibility with G.652.D.
         </p>
         <p className="mt-2">
           Typical use: FTTH aerial drop cables where the cable must navigate a tight bend
@@ -191,15 +189,13 @@ export default function T03L05_G652VsG657BendInsensitive() {
           <strong>2024 standard update:</strong> ITU-T G.657 August 2024 edition merged
           category B2 into category A2. The current standard has three active
           subcategories: A1, A2, B3. G.657.B2 is now absorbed into G.657.A2.
-          {' '}(Source: ITU-T G.657 2024 publication metadata)
         </p>
 
         <h3 className="mt-5 font-semibold">G.657.B3 — ultra-tight bends, premises use</h3>
         <p>
-          G.657.B3 achieves <strong>5 mm minimum bend radius</strong>, with some products
-          rated to 2.5 mm (OFS EZ-Bend Ultra: explicitly rated to 2.5 mm minimum, per
-          OFS product datasheet). At 5 mm radius, this fiber can route around
-          a bend tighter than a dime.
+          G.657.B3 achieves <strong>5 mm minimum bend radius</strong>, with some
+          manufacturer products rated to as tight as 2.5 mm minimum. At 5 mm radius,
+          this fiber can route around a bend tighter than a dime.
         </p>
         <p className="mt-2">
           The engineering tradeoff: G.657.B3 uses a <strong>trench-assisted refractive
@@ -208,8 +204,7 @@ export default function T03L05_G652VsG657BendInsensitive() {
           match the G.652.D MFD specification. As a result, G.657.B3 is
           <strong> NOT guaranteed backward-compatible with G.652.D for zero-loss
           splicing.</strong> Splice loss at a B3/G.652.D interface depends on the
-          specific fiber — it may be negligible or it may be measurable. (Source: hfcl.com
-          G.657 blog; OFS technical literature; industry consensus)
+          specific fiber — it may be negligible or it may be measurable.
         </p>
         <p className="mt-2">
           Practical rule: B3 fiber at the customer premises can be spliced or connectorized
@@ -283,7 +278,7 @@ export default function T03L05_G652VsG657BendInsensitive() {
         <div className="mt-3 p-3 border border-blue-400/20 bg-blue-400/5 rounded-lg text-sm">
           <p className="font-semibold text-blue-300 mb-1">Why G.655 is NOT the right choice for typical OSP</p>
           <ul className="list-disc pl-4 space-y-1 text-slate-300/90">
-            <li><strong>MFD difference:</strong> G.655 typically has a smaller Mode Field Diameter than G.652.D. Splicing G.655 to G.652.D introduces measurable splice loss, which accumulates on multi-splice routes. (Source: ITU-T G.655)</li>
+            <li><strong>MFD difference:</strong> G.655 typically has a smaller Mode Field Diameter than G.652.D. Splicing G.655 to G.652.D introduces measurable splice loss, which accumulates on multi-splice routes.</li>
             <li><strong>DWDM optimization is irrelevant for access:</strong> The reduced dispersion benefit only matters on EDFA-amplified long-haul systems (100+ km spans). A 5-mile FTTH distribution route gains nothing from low dispersion.</li>
             <li><strong>Compatibility problems:</strong> If a future crew splices G.652.D into a G.655 backbone without awareness of the MFD difference, the added splice loss may push a long-haul link budget into failure.</li>
           </ul>
@@ -294,7 +289,7 @@ export default function T03L05_G652VsG657BendInsensitive() {
           unless the project explicitly involves long-haul DWDM transport and your client's network
           engineering team specifies G.655. If you see G.655 in an existing cable plant and need to
           splice into it, measure the actual splice loss — it will likely be higher than a
-          G.652.D-to-G.652.D splice. Budget accordingly. (Source: ITU-T G.655; ITU-T G.656 — itu.int)
+          G.652.D-to-G.652.D splice. Budget accordingly.
         </p>
 
         <div className="mt-4 p-4 border border-amber-400/30 bg-amber-400/5 rounded-lg text-sm">
@@ -303,8 +298,6 @@ export default function T03L05_G652VsG657BendInsensitive() {
             <strong>Book (ITU-T G.657 2024):</strong> Defines three active subcategories
             (A1, A2, B3), exact bend test conditions, acceptable loss limits at 1550 nm
             and 1625 nm, and MFD tolerances. The 2024 edition merged B2 into A2.
-            Exact test thresholds are paywalled; confirm against the current ITU-T G.657 2024
-            edition for design specifications.
           </p>
           <p className="text-slate-300/90 mt-2">
             <strong>Field:</strong> Most OSP crews don't think about G.657 subcategories
@@ -365,13 +358,13 @@ export default function T03L05_G652VsG657BendInsensitive() {
 
         <h3 className="mt-4 font-semibold">The G.652 vs. G.657 decision in the full design workflow</h3>
         <p>
-          The fiber-type choice you make here directly drives downstream design phases that you'll learn in T06 (underground conduit sizing) and T11 (fusion splicing compatibility). Here's why this matters: T02 taught you that macrobend loss is the enemy, especially at 1550 nm. Using the CABLE-level installation (dynamic-pull) rule from T03.L11 — roughly 20&times; the cable's outer diameter — a typical 12 mm OSP cable containing G.652.D fiber has an installation-pull minimum bend radius of roughly 240 mm (9.5 inches). This is a distinct figure from the ~30 mm bare-fiber long-term bend-radius convention cited elsewhere in this lesson (and in the graded quiz below) — the 240 mm number applies to the whole cable during the dynamic stress of pulling, while the ~30 mm figure is an industry-convention long-term/loaded bend-radius reference for the bare fiber itself, not the installed cable. Don't confuse the two: they answer different questions (safe pulling radius for this cable vs. long-term bare-fiber bend tolerance) and are not interchangeable. See T03.L11 for the general installation-vs-long-term bend radius distinction (installation number is larger/less restrictive; long-term is smaller). That's fine for a straight aerial span or a gently curved burial run. But what happens when an OSP feeder cable has to make a 90-degree turn inside a conduit at a distribution handhole? Or when a fiber drop cable has to make a 5 mm radius turn inside a building?
+          The fiber-type choice you make here directly drives downstream design phases you'll learn in the OSP Design — Underground topic (conduit sizing) and the Splicing topic (fusion splicing compatibility). Here's why this matters: Fiber Physics taught you that macrobend loss is the enemy, especially at 1550 nm. Using the cable-level installation (dynamic-pull) rule from Cable Specification Reading — Real Datasheet — roughly 20&times; the cable's outer diameter — a typical 12 mm OSP cable containing G.652.D fiber has an installation-pull minimum bend radius of roughly 240 mm (9.5 inches). This is a distinct figure from the ~30 mm bare-fiber long-term bend-radius convention cited elsewhere in this lesson (and in the graded quiz below) — the 240 mm number applies to the whole cable during the dynamic stress of pulling, while the ~30 mm figure is an industry-convention long-term/loaded bend-radius reference for the bare fiber itself, not the installed cable. Don't confuse the two: they answer different questions (safe pulling radius for this cable vs. long-term bare-fiber bend tolerance) and are not interchangeable. See Cable Specification Reading — Real Datasheet for the general installation-vs-long-term bend radius distinction (installation number is larger/less restrictive; long-term is smaller). That's fine for a straight aerial span or a gently curved burial run. But what happens when an OSP feeder cable has to make a 90-degree turn inside a conduit at a distribution handhole? Or when a fiber drop cable has to make a 5 mm radius turn inside a building?
         </p>
         <p className="mt-2">
           If you specify G.652.D for that tight-bend scenario, you're guaranteeing macrobend loss that will fail the link budget. The fix is either (a) redesign the conduit with larger radius bends (costs $3k–5k in civil work), or (b) re-spec the cable to G.657.A1 or A2 ($0.10–0.20/meter difference, negligible total). Architects and crew leads who understand G.657 subcategories make the right call at design time. Crews who don't end up with tight bends and field-installed cable that fails 6 months later.
         </p>
         <p className="mt-2">
-          Additionally, when you're splicing cables with mixed fiber types (legacy G.652 in the trunk + new G.657.A1/A2 at a distribution point), T11 splicing techniques assume you'll measure the splice loss because MFD differences may add up to 0.1 dB per joint. This Advanced section teaches the physics so you understand the tradeoffs at a level that prevents costly field surprises.
+          Additionally, when you're splicing cables with mixed fiber types (legacy G.652 in the trunk + new G.657.A1/A2 at a distribution point), the splicing techniques covered in the Splicing topic assume you'll measure the splice loss because MFD differences may add up to 0.1 dB per joint. This Advanced section teaches the physics so you understand the tradeoffs at a level that prevents costly field surprises.
         </p>
 
         <h3 className="mt-5 font-semibold">Trench-assisted profile — the physics</h3>
@@ -402,15 +395,24 @@ export default function T03L05_G652VsG657BendInsensitive() {
             The bend-insensitive fiber choice directly impacts two downstream design phases:
           </p>
           <ul className="space-y-2 text-slate-300 text-sm list-disc ml-5">
-            <li><strong>T04.L06 Conduit &amp; Duct Sizing</strong> — Bend-insensitive fiber (G.657.A1/A2) enables tighter conduit bends, which may allow smaller/cheaper duct in congested underground runs. Tight bends with G.652.D = unacceptable loss, forcing larger/more-expensive duct.</li>
-            <li><strong>T11.L03 Fusion Splicing Margins</strong> — G.657.B3 has a slightly different MFD than G.652.D. When splicing mixed cable types (legacy G.652 + new G.657 at a distribution point), you must measure each splice; the trench-assisted profile changes attenuation by up to 0.1 dB per splice.</li>
-            <li><strong>T06.L09 Drop Cable Design</strong> — FTTH drop cables are almost always G.657.A1 or A2 because the customer's drop terminal inside the home tolerates only 5–10 mm bends. Standard G.652.D drops would guarantee damage at those radii.</li>
+            <li><strong>Conduit &amp; Duct Sizing</strong> — Bend-insensitive fiber (G.657.A1/A2) enables tighter conduit bends, which may allow smaller/cheaper duct in congested underground runs. Tight bends with G.652.D = unacceptable loss, forcing larger/more-expensive duct.</li>
+            <li><strong>Fusion Splicing Margins</strong> — G.657.B3 has a slightly different MFD than G.652.D. When splicing mixed cable types (legacy G.652 + new G.657 at a distribution point), you must measure each splice; the trench-assisted profile changes attenuation by up to 0.1 dB per splice.</li>
+            <li><strong>Drop Cable Design</strong> — FTTH drop cables are almost always G.657.A1 or A2 because the customer's drop terminal inside the home tolerates only 5–10 mm bends. Standard G.652.D drops would guarantee damage at those radii.</li>
           </ul>
           <p className="text-slate-200 mt-3 text-sm italic">
             The choice between G.652 and G.657 is not a fiber specification technicality — it drives duct cost, splicing labor, and field reliability.
           </p>
         </section>
       </section>
+
+      <ReferencesBlock
+        items={[
+          { citation: 'ITU-T G.657 (2024 edition)', note: 'Bend-insensitive SMF standard defining the A1/A2/B3 subcategories, minimum bend radii, and splice-loss test conditions.' },
+          { citation: 'ITU-T G.655', note: 'Non-Zero Dispersion-Shifted Fiber (NZDSF) standard — long-haul DWDM fiber, not the standard OSP access/distribution spec.' },
+          { citation: 'ITU-T G.656', note: 'Wideband NZDSF standard — legacy metropolitan WDM fiber, rarely seen in new builds.' },
+          { citation: 'FOA Reference Guide', note: 'Industry field-practice source for the 20×/10× cable-OD bend-radius rule of thumb.' },
+        ]}
+      />
 
       {/* ── KEY TERMS FLASHCARDS ──────────────────────────────────────────── */}
       <Flashcard

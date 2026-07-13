@@ -7,6 +7,7 @@ import Flashcard from '../../components/Flashcard.jsx';
 import Quiz from '../../components/primitives/Quiz.jsx';
 import GatedAssessment from '../../components/primitives/GatedAssessment.jsx';
 import WorkedExample from '../../components/primitives/WorkedExample.jsx';
+import ReferencesBlock from '../../components/ReferencesBlock.jsx';
 
 export const meta = {
   id: 'T03.L11',
@@ -23,7 +24,7 @@ export const meta = {
     'Navigate the major sections of an OSP fiber cable datasheet (optical, mechanical, environmental)',
     'Apply the tolerance band concept to determine whether a measured attenuation value passes the spec',
     'Add an aging factor to datasheet attenuation to compute planning attenuation for a link budget',
-    'Cross-reference TIA-526 [confirm edition] optical loss measurement test conditions with datasheet values',
+    'Cross-reference TIA-526 optical loss measurement test conditions with datasheet values',
     'Identify the three datasheet numbers that most often lead to field planning errors (max attenuation, MFD tolerance, tensile rating)',
   ],
   vocabulary_introduced: [
@@ -267,7 +268,8 @@ export default function T03L11_DatasheetReading() {
           radius violations happen most often. A pigtail looped too tightly around an anchor
           post inside the splice tray may look fine on day one and show up as 0.3 dB of
           unexpected loss at the next OTDR inspection. Route pigtails in gentle coils, always
-          greater than the long-term bend radius. See T03.L04 for the ADSS installation context.
+          greater than the long-term bend radius. See the Messenger Cable — Lashed vs. ADSS
+          lesson for the ADSS installation context.
         </p>
       </section>
 
@@ -337,15 +339,23 @@ export default function T03L11_DatasheetReading() {
             Reading a datasheet correctly is the bridge between design and procurement:
           </p>
           <ul className="space-y-2 text-slate-300 text-sm list-disc ml-5">
-            <li><strong>T04.L10 RUS Cable Specifications &amp; Submittal</strong> — The design engineer must read the datasheet, extract attenuation/dispersion/PMD, and submit it to RUS for approval. Misreading attenuation (e.g., confusing dB/km at 1310 nm with 1550 nm) invalidates the link budget and entire project approval.</li>
-            <li><strong>T11.L02 Fusion Splicing &amp; MFD Matching</strong> — MFD and core-diameter tolerances from the datasheet determine splice loss. A 4.5 dB difference in MFD between cable A and cable B appears as 0.1–0.3 dB per splice. Reading that detail from the datasheet ahead of time prevents field surprises.</li>
-            <li><strong>T13.L02 Acceptance Testing &amp; Verification</strong> — The construction inspector compares received cable against the datasheet specs. Tensile strength, jacket dimensions, attenuation — all must match the approved submittal, or the cable is rejected and returned.</li>
+            <li><strong>RUS Cable Specifications &amp; Submittal</strong> — The design engineer must read the datasheet, extract attenuation/dispersion/PMD, and submit it to RUS for approval. Misreading attenuation (e.g., confusing dB/km at 1310 nm with 1550 nm) invalidates the link budget and entire project approval.</li>
+            <li><strong>Fusion Splicing &amp; MFD Matching</strong> — MFD and core-diameter tolerances from the datasheet determine splice loss. A 4.5 dB difference in MFD between cable A and cable B appears as 0.1–0.3 dB per splice. Reading that detail from the datasheet ahead of time prevents field surprises.</li>
+            <li><strong>Acceptance Testing &amp; Verification</strong> — The construction inspector compares received cable against the datasheet specs. Tensile strength, jacket dimensions, attenuation — all must match the approved submittal, or the cable is rejected and returned.</li>
           </ul>
           <p className="text-slate-200 mt-3 text-sm italic">
             The datasheet is your contract. Every number matters — in design, in splicing, and in project acceptance.
           </p>
         </section>
       </section>
+
+      <ReferencesBlock
+        items={[
+          { citation: 'ICEA S-87-640', note: 'Construction standard referenced in the compliance-declarations section of a cable datasheet; sets the standard operating temperature range and tensile-rating tiers.' },
+          { citation: '7 CFR 1755.902', note: 'RUS minimum performance specification — the MFD tolerance and color-coding requirements a datasheet must meet on RUS-financed projects.' },
+          { citation: 'FOA Reference Guide', note: 'Industry source for the 0.02–0.05 dB/km aging-factor guidance used to convert datasheet attenuation into planning attenuation.' },
+        ]}
+      />
 
       {/* FLASHCARDS */}
       <Flashcard

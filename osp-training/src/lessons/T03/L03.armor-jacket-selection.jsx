@@ -7,6 +7,7 @@ import BranchingScenario from '../../components/primitives/BranchingScenario.jsx
 import Quiz from '../../components/primitives/Quiz.jsx';
 import GatedAssessment from '../../components/primitives/GatedAssessment.jsx';
 import Flashcard from '../../components/Flashcard.jsx';
+import ReferencesBlock from '../../components/ReferencesBlock.jsx';
 
 export const meta = {
   id: 'T03.L03',
@@ -130,13 +131,13 @@ export default function T03L03_ArmorJacketSelection() {
             <strong>Inner cable assembly</strong> — The loose-tube cable core: central strength member, buffer tubes with fibers in gel or dry-block, water-blocking tape or flooding compound, and inner jacket. This is the functional part of the cable — everything else is mechanical protection for it.
           </li>
           <li>
-            <strong>CST armor layer</strong> — Corrugated steel tape (CST) is wrapped around the inner assembly in a longitudinal fold. The corrugations give it flexibility to bend while maintaining crush resistance. Steel provides rodent protection — gnawing teeth cannot penetrate the steel before the animal gives up. (OCC D-Series product documentation; ICEA S-87-640)
+            <strong>CST armor layer</strong> — Corrugated steel tape (CST) is wrapped around the inner assembly in a longitudinal fold. The corrugations give it flexibility to bend while maintaining crush resistance. Steel provides rodent protection — gnawing teeth cannot penetrate the steel before the animal gives up.
           </li>
           <li>
-            <strong>Ripcord</strong> — An internal ripcord (typically a strong yarn or cord under the steel armor) lets the installer score and split the armor layer without needing metal cutters that could nick the fibers. "The steel-armor is easily removed with an internal ripcord." (OCC D-Series product documentation)
+            <strong>Ripcord</strong> — An internal ripcord (typically a strong yarn or cord under the steel armor) lets the installer score and split the armor layer without needing metal cutters that could nick the fibers.
           </li>
           <li>
-            <strong>Outer HDPE jacket</strong> — The final outer jacket — HDPE with 2–3% carbon black for UV stabilization. Provides waterproofing, UV resistance, and mechanical abrasion resistance. In a direct-burial application, this is the first line of defense against soil abrasion as the cable shifts. (ICEA S-87-640)
+            <strong>Outer HDPE jacket</strong> — The final outer jacket — HDPE with 2–3% carbon black for UV stabilization. Provides waterproofing, UV resistance, and mechanical abrasion resistance. In a direct-burial application, this is the first line of defense against soil abrasion as the cable shifts.
           </li>
         </ol>
       </div>
@@ -156,10 +157,8 @@ export default function T03L03_ArmorJacketSelection() {
         <p className="mt-2">
           <strong>Rodent protection:</strong> In areas with documented rodent activity
           (groundhogs, marmots, gophers, squirrels), CST is the standard defense. Rodents
-          gnaw through HDPE jacket relatively easily; steel stops them. Per ICEA S-87-640
-          and the FOA installation guide, armor is required when direct-burial cable is
-          routed through areas with documented rodent problems. (Source: OCC product
-          documentation; ICEA S-87-640 Annex — armor for direct-burial rodent protection)
+          gnaw through HDPE jacket relatively easily; steel stops them. Armor is required
+          when direct-burial cable is routed through areas with documented rodent problems.
         </p>
         <p className="mt-2">
           <strong>UL listing and NEC type marking:</strong> CST-armored cables from
@@ -168,9 +167,7 @@ export default function T03L03_ArmorJacketSelection() {
           steel armor does not prevent the cable from meeting indoor fire ratings.
           NEC §770.179(B) covers cable type designations and marking requirements
           (what designations like OFNR, OFNP, and OFN mean and how cables must be
-          marked), not a separate "permitted armor" rule. (Source: OCC D-Series
-          product page: "UL listed in accordance with NEC section 770.179(b)";
-          NEC NFPA 70-2023 Article 770 §770.179)
+          marked), not a separate "permitted armor" rule.
         </p>
 
         <h3 className="mt-5 font-semibold">Interlocked armor — indoor-outdoor and campus use</h3>
@@ -185,9 +182,7 @@ export default function T03L03_ArmorJacketSelection() {
           underground installations. It can be manufactured and marked as OFNR
           (riser-rated) under NEC Article 770's type-designation scheme, making it
           suitable for running from outdoor duct into a building riser shaft without
-          a transition. (Source: fiberoptics4sale.com F1-LK12D product
-          description: "OFCR Riser Rated, rodent protection suitable for outdoor direct
-          burial")
+          a transition.
         </p>
 
         <h3 className="mt-5 font-semibold">No armor — aerial and duct use</h3>
@@ -251,8 +246,6 @@ export default function T03L03_ArmorJacketSelection() {
             armor are described as two distinct construction types with different application
             ranges. The standard is paywalled (2016/2023 editions) — values confirmed via
             the 2006 publicly-accessible archive.org edition and multiple vendor datasheets.
-            Confirm against ICEA S-87-640 2023 edition for current thickness
-            requirements when specifying for a contract.
           </p>
           <p className="text-slate-300/90 mt-2">
             <strong>Field:</strong> In practice, RUS project managers often specify "armored
@@ -335,7 +328,7 @@ export default function T03L03_ArmorJacketSelection() {
           and grounding requirements for metallic cable components add engineering and field
           labor cost. ADSS (All-Dielectric Self-Supporting) aerial cables are dielectric —
           no metal means no bonding requirement at every pole, which is a significant
-          installation cost reduction. (Source: 7 CFR 1755.902; CommScope ADSS documentation)
+          installation cost reduction.
         </p>
         <p className="mt-2">
           For underground duct applications, a dielectric cable also avoids the need to
@@ -362,15 +355,23 @@ export default function T03L03_ArmorJacketSelection() {
             Armor and jacket selection cascades through the rest of your design:
           </p>
           <ul className="space-y-2 text-slate-300 text-sm list-disc ml-5">
-            <li><strong>T04.L07 Site Selection &amp; Environmental Factors</strong> — Soil conditions (rodent pressure, chloride saturation, pH) and installation method (conduit vs. direct-bury) determine whether armor is needed and which type (CST steel vs. aluminum).</li>
-            <li><strong>T06.L04 Underground Make-Ready</strong> — Direct-burial cable reduces the conduit cost; conduit-in-duct allows lighter armor (aluminum) or dielectric. The choice changes your permit scope and crew days-on-site.</li>
-            <li><strong>T14.L02 Bonding Metallic Cable Armor</strong> — Every metallic armor at a pole attachment (aerial) or splitter (underground) requires bonding to ground per NEC 770.48 and RUS 1753.18. Dielectric cable completely avoids this cost and labor; metallic armor adds recurring work.</li>
+            <li><strong>Site Selection &amp; Environmental Factors</strong> — Soil conditions (rodent pressure, chloride saturation, pH) and installation method (conduit vs. direct-bury) determine whether armor is needed and which type (CST steel vs. aluminum).</li>
+            <li><strong>Underground Make-Ready</strong> — Direct-burial cable reduces the conduit cost; conduit-in-duct allows lighter armor (aluminum) or dielectric. The choice changes your permit scope and crew days-on-site.</li>
+            <li><strong>Bonding Metallic Cable Armor</strong> — Every metallic armor at a pole attachment (aerial) or splitter (underground) requires bonding to ground per NEC 770.48 and RUS 1753.18. Dielectric cable completely avoids this cost and labor; metallic armor adds recurring work.</li>
           </ul>
           <p className="text-slate-200 mt-3 text-sm italic">
             The armor choice is not cosmetic — it's the primary cost driver for underground installation labor and ongoing bond maintenance.
           </p>
         </section>
       </section>
+
+      <ReferencesBlock
+        items={[
+          { citation: 'ICEA S-87-640', note: 'Construction standard covering armor thickness, corrugation geometry, and material specs for OSP cable.' },
+          { citation: '7 CFR 1755.902', note: 'RUS minimum performance specification — direct-burial cable is commonly specified as "armored per 7 CFR 1755.902" without naming an armor type.' },
+          { citation: 'NEC (NFPA 70) Article 770 §770.179(B)', note: 'Cable type-designation and marking requirements (OFNR/OFNP/OFN) — governs whether armored cable can be marked and used as riser-rated.' },
+        ]}
+      />
 
       {/* ── KEY TERMS FLASHCARDS ──────────────────────────────────────────── */}
       <Flashcard

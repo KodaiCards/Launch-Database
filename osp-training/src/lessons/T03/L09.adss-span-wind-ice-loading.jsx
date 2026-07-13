@@ -8,6 +8,7 @@ import SliderExploration from '../../components/primitives/SliderExploration.jsx
 import Quiz from '../../components/primitives/Quiz.jsx';
 import GatedAssessment from '../../components/primitives/GatedAssessment.jsx';
 import Flashcard from '../../components/Flashcard.jsx';
+import ReferencesBlock from '../../components/ReferencesBlock.jsx';
 
 export const meta = {
   id: 'T03.L09',
@@ -42,7 +43,7 @@ export const meta = {
     {
       term: 'NESC loading district',
       definition:
-        'A geographic classification in NESC C2 Section 25 (Rule 250B Table 250-1) defining the simultaneous ice, wind, and temperature design loading a pole line must withstand. Three districts: Heavy (0.50 in. radial ice + 4 lb/ft² wind + 0°F), Medium (0.25 in. radial ice + 4 lb/ft² wind + 15°F), Light (0 in. ice + 9 lb/ft² wind + 30°F). [Confirm against NESC C2-2023 Table 250-1 — values confirmed via RUS 1724E-150 + IAEI Magazine]',
+        'A geographic classification in NESC C2 Section 25 (Rule 250B Table 250-1) defining the simultaneous ice, wind, and temperature design loading a pole line must withstand. Three districts: Heavy (0.50 in. radial ice + 4 lb/ft² wind + 0°F), Medium (0.25 in. radial ice + 4 lb/ft² wind + 15°F), Light (0 in. ice + 9 lb/ft² wind + 30°F).',
     },
     {
       term: 'Extreme Wind loading',
@@ -188,8 +189,7 @@ export default function T03L09_ADSSSpanWindIceLoading() {
         <p className="mt-2 text-sm text-amber-300/90 border-l-4 border-amber-400/30 pl-3">
           Values below confirmed via RUS Bulletin 1724E-150 (which reproduces the NESC
           Table 250-1 data) and IAEI Magazine 2002 NESC article. Exact NESC C2-2023
-          table text is paywalled. Confirm against NESC C2-2023 Table 250-1 when
-          designing for formal engineering deliverables.
+          table text is paywalled.
         </p>
 
         <div className="mt-4 overflow-x-auto">
@@ -228,10 +228,6 @@ export default function T03L09_ADSSSpanWindIceLoading() {
             </tbody>
           </table>
         </div>
-        <p className="mt-2 text-sm text-slate-300/70">
-          Source: NESC C2-2023 Table 250-1 via RUS Bulletin 1724E-150 (public) +
-          IAEI Magazine 2002 NESC article.
-        </p>
 
         <h3 className="mt-5 font-semibold">Ice load formula — what that ice weighs</h3>
         <p>
@@ -407,9 +403,9 @@ export default function T03L09_ADSSSpanWindIceLoading() {
           the flat 4 or 9 lb/ft² from the district table.
         </p>
         <p className="mt-2">
-          "If any part of a pole or the conductors attached to it is 60 feet or more above
-          the ground, then extreme wind loading has to be considered." (Source: IAEI 2007
-          NESC article)
+          The rule is a simple height trigger: if any part of a pole or the conductors
+          attached to it is 60 feet or more above the ground, extreme wind loading has to
+          be considered.
         </p>
         <p className="mt-2">
           For standard FTTH distribution poles (35–55 ft total height), Extreme Wind
@@ -489,15 +485,23 @@ export default function T03L09_ADSSSpanWindIceLoading() {
             Wind and ice loading analysis is the foundation for safe pole design:
           </p>
           <ul className="space-y-2 text-slate-300 text-sm list-disc ml-5">
-            <li><strong>T05.L02 NESC Loading District Selection</strong> — Light / Medium / Heavy districts define design wind speed (88 / 100 / 120 mph) and ice load (0.5 / 1.0 / 2.0 in). Your ADSS cable choice must match the district. Heavy-district ADSS requires heavier strength members or shorter spans than Light-district ADSS.</li>
-            <li><strong>T05.L03 Pole Strength Calculation</strong> — ADSS span tensioning (determined by wind/ice loads) feeds into pole selection. The pole must support the cable tension PLUS all the guys and other cables. Wrong load assumption = under-specified pole = failure risk.</li>
-            <li><strong>T07.L01 Staking &amp; Guy Specification</strong> — High-EDS ADSS in windy/icy regions requires multiple guys on certain poles. Load analysis determines how many guys and at what angles. Under-guying = cable sag increase + potential splice-closure movement.</li>
+            <li><strong>NESC Loading District Selection</strong> — Light / Medium / Heavy districts define design wind speed (88 / 100 / 120 mph) and ice load (0.5 / 1.0 / 2.0 in). Your ADSS cable choice must match the district. Heavy-district ADSS requires heavier strength members or shorter spans than Light-district ADSS.</li>
+            <li><strong>Pole Strength Calculation</strong> — ADSS span tensioning (determined by wind/ice loads) feeds into pole selection. The pole must support the cable tension PLUS all the guys and other cables. Wrong load assumption = under-specified pole = failure risk.</li>
+            <li><strong>Staking &amp; Guy Specification</strong> — High-EDS ADSS in windy/icy regions requires multiple guys on certain poles. Load analysis determines how many guys and at what angles. Under-guying = cable sag increase + potential splice-closure movement.</li>
           </ul>
           <p className="text-slate-200 mt-3 text-sm italic">
             Weather loading is not a theory exercise — it's the physical basis for whether your plant survives the next ice storm or high-wind event.
           </p>
         </section>
       </section>
+
+      <ReferencesBlock
+        items={[
+          { citation: 'NESC (ANSI C2) Table 250-1 / Rule 250B', note: 'Defines the Heavy/Medium/Light loading district ice, wind, and temperature design values.' },
+          { citation: 'NESC Rule 250C', note: 'Extreme Wind loading requirement for structures/conductors 60 ft or more above ground.' },
+          { citation: 'RUS Bulletin 1724E-150', note: 'RUS engineering bulletin reproducing the NESC loading-district table values.' },
+        ]}
+      />
 
       {/* ── KEY TERMS FLASHCARDS ──────────────────────────────────────────── */}
       <Flashcard

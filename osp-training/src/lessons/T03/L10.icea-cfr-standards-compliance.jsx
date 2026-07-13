@@ -154,9 +154,6 @@ export default function T03L10_StandardsCompliance() {
             green, brown, slate, white, red, black, yellow, violet, rose, aqua.)
           </li>
         </ul>
-        <p className="mt-3 text-sm text-gray-600">
-          Source: 7 CFR 1755.902 (eCFR.gov)
-        </p>
       </section>
 
       <section data-tier="working" className="mt-6">
@@ -315,9 +312,9 @@ export default function T03L10_StandardsCompliance() {
             Standards compliance is not a paperwork box — it's the legal requirement for RUS funding:
           </p>
           <ul className="space-y-2 text-slate-300 text-sm list-disc ml-5">
-            <li><strong>T04.L09 RUS-Eligible Projects &amp; Funding</strong> — All RUS-funded cable must meet ICEA S-87-640 as incorporated in 7 CFR 1755.902. Non-compliant cable makes the entire project ineligible for RUS reimbursement — a six-figure financial hit.</li>
-            <li><strong>T13.L05 Material &amp; Hardware Acceptance Testing</strong> — During construction, every cable spool is verified against ICEA S-87-640 specs. Tensile strength, jacket thickness, water-blocking performance testing confirms compliance before installation.</li>
-            <li><strong>T19.L10 Project Closeout &amp; Certification</strong> — Final as-built paperwork includes cable certifications (ICEA compliance + fiber-count + attenuation verification). The RUS inspector reviews these to sign off on project completion and trigger reimbursement.</li>
+            <li><strong>RUS-Eligible Projects &amp; Funding</strong> — All RUS-funded cable must meet ICEA S-87-640 as incorporated in 7 CFR 1755.902. Non-compliant cable makes the entire project ineligible for RUS reimbursement — a six-figure financial hit.</li>
+            <li><strong>Material &amp; Hardware Acceptance Testing</strong> — During construction, every cable spool is verified against ICEA S-87-640 specs. Tensile strength, jacket thickness, water-blocking performance testing confirms compliance before installation.</li>
+            <li><strong>Project Closeout &amp; Certification</strong> — Final as-built paperwork includes cable certifications (ICEA compliance + fiber-count + attenuation verification). The RUS inspector reviews these to sign off on project completion and trigger reimbursement.</li>
           </ul>
           <p className="text-slate-200 mt-3 text-sm italic">
             One non-compliant cable spool can disqualify millions of dollars in RUS funding. Standards are the safety net for your project economics.

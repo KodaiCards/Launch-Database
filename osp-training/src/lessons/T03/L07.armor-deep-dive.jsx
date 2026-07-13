@@ -6,6 +6,7 @@ import LessonLayout from '../../components/LessonLayout.jsx';
 import Quiz from '../../components/primitives/Quiz.jsx';
 import GatedAssessment from '../../components/primitives/GatedAssessment.jsx';
 import Flashcard from '../../components/Flashcard.jsx';
+import ReferencesBlock from '../../components/ReferencesBlock.jsx';
 
 export const meta = {
   id: 'T03.L07',
@@ -63,10 +64,10 @@ export default function T03L07_ArmorDeepDive() {
       <section data-tier="foundations">
         <h2>In Plain English</h2>
         <p>
-          T03.L03 introduced the two main armor types — CST for direct-burial and
-          interlocked for indoor-outdoor riser. This lesson goes deeper: three armor
-          types total (adding corrugated aluminum tape), plus the important cases where
-          <em>no armor at all</em> is the right answer.
+          The Armor and Jacket Selection lesson introduced the two main armor types — CST
+          for direct-burial and interlocked for indoor-outdoor riser. This lesson goes
+          deeper: three armor types total (adding corrugated aluminum tape), plus the
+          important cases where <em>no armor at all</em> is the right answer.
         </p>
         <p className="mt-2">
           The core skill here is matching armor to environment without over-specifying.
@@ -79,12 +80,12 @@ export default function T03L07_ArmorDeepDive() {
       <section data-tier="working">
         <h2>Three Armor Types + No Armor — The Full Matrix</h2>
 
-        <h3 className="mt-4 font-semibold">Quick review: CST and interlocked armor (T03.L03 recap)</h3>
+        <h3 className="mt-4 font-semibold">Quick review: CST and interlocked armor (recap)</h3>
         <p className="text-sm text-slate-300/80">
-          From T03.L03: CST (corrugated steel tape) wraps around the cable longitudinally;
-          best for direct-burial and rodent protection. Interlocked armor uses helical metal
-          strips; best for indoor-outdoor riser with NEC §770.179(B) listing.
-          Both provide crush resistance and rodent protection.
+          From the Armor and Jacket Selection lesson: CST (corrugated steel tape) wraps
+          around the cable longitudinally; best for direct-burial and rodent protection.
+          Interlocked armor uses helical metal strips; best for indoor-outdoor riser with
+          NEC §770.179(B) listing. Both provide crush resistance and rodent protection.
         </p>
 
         <h3 className="mt-5 font-semibold">Corrugated aluminum tape (CAT) — the lighter option</h3>
@@ -101,7 +102,6 @@ export default function T03L07_ArmorDeepDive() {
           (where the conduit already handles the mechanical threat, and aluminum's lighter
           weight and corrosion resistance are advantages). For direct-burial in rodent-active
           areas, steel CST remains the preferred choice over CAT.
-          (Source: ICEA S-87-640 armor options; vendor product lines)
         </p>
 
         <h3 className="mt-5 font-semibold">No armor — when dielectric wins</h3>
@@ -111,9 +111,9 @@ export default function T03L07_ArmorDeepDive() {
           (Kevlar) or fiberglass rods provide all the structural function.
         </p>
         <p className="mt-2">
-          <strong>Why this matters:</strong> "No metal in the cable, therefore no bonding
-          and grounding is required." (Source: CommScope ADSS documentation; 7 CFR 1755.902)
-          Bonding every dead-end pole is a real labor and material cost. On a new
+          <strong>Why this matters:</strong> With no metal in the cable, no bonding or
+          grounding is required anywhere along the route. Bonding every dead-end pole is a
+          real labor and material cost. On a new
           FTTH aerial build with 150 poles, each bonding assembly (ground rod, clamp, bond
           wire) might cost $50–$150 in materials and 30–60 minutes of labor. That's $7,500–
           $22,500 in bonding alone — before counting the inspection and documentation for
@@ -141,10 +141,10 @@ export default function T03L07_ArmorDeepDive() {
           per this section can be used in building risers despite containing metal.
         </p>
         <p className="mt-2 text-sm">
-          Example from real product documentation: OCC D-Series CST-armored cables are
-          "UL listed in accordance with NEC section 770.179(b)." (Source: OCC D-Series
-          product page) This means the steel armor + HDPE jacket combination has
-          been tested and passes the riser flame-spread requirement alongside the armor.
+          Example from real product documentation: some manufacturers' CST-armored cables
+          (e.g., OCC's D-Series) are UL listed specifically in accordance with NEC section
+          770.179(b). This means the steel armor + HDPE jacket combination has been tested
+          and passes the riser flame-spread requirement alongside the armor.
         </p>
         <p className="mt-2 text-sm text-amber-300/90 border-l-4 border-amber-400/30 pl-3">
           <strong>Note:</strong> NEC §770.179(B) is paywalled (NFPA 70-2023). The product
@@ -197,8 +197,7 @@ export default function T03L07_ArmorDeepDive() {
           <p className="text-slate-300/90">
             <strong>Book (ICEA S-87-640):</strong> Defines armor geometry, material grades,
             corrosion protection requirements, and minimum coverage for each armor type.
-            The 2016/2023 editions are paywalled. Confirm armor thickness and coverage
-            requirements against ICEA S-87-640 current edition for formal specs.
+            The 2016/2023 editions are paywalled.
           </p>
           <p className="text-slate-300/90 mt-2">
             <strong>Field:</strong> The most common armor mistake isn't the wrong type —
@@ -274,8 +273,13 @@ export default function T03L07_ArmorDeepDive() {
         <h2>Going Deeper</h2>
 
         <h3 className="mt-4 font-semibold">How armor selection ripples through design and field work</h3>
+        {/* FLAG-FOR-FOREMAN: original text cited "T18" for the bonding/grounding
+            downstream connection below. Per course-catalog.js, T18 = Safety & OSHA;
+            bonding/grounding content lives in T14 (Bonding, Grounding & Electrical
+            Protection). Left as a generic phrase pending accuracy-gate confirmation —
+            looks like the same class of mismatch tracked under issue #56. */}
         <p>
-          The armor type you pick in this lesson connects to three downstream phases: (a) T03.L04 messenger and strength member selection (armored cables are heavier → higher sag → may require heavier messenger), (b) T06 underground routing decisions (CST armor in corrosive soil → long-term reliability risk), and (c) T18 bonding and grounding (armored CST entering a building must be bonded per NEC 770.48 — but THAT bond is exactly where galvanic corrosion becomes a hidden 30-year problem if the armor touches dissimilar metals in the conduit).
+          The armor type you pick in this lesson connects to three downstream phases: (a) the strength-member and messenger selection covered in Messenger Cable — Lashed vs. ADSS (armored cables are heavier → higher sag → may require heavier messenger), (b) underground routing decisions covered in OSP Design — Underground (CST armor in corrosive soil → long-term reliability risk), and (c) bonding and grounding practice covered later in the course (armored CST entering a building must be bonded per NEC 770.48 — but THAT bond is exactly where galvanic corrosion becomes a hidden 30-year problem if the armor touches dissimilar metals in the conduit).
         </p>
         <p className="mt-2">
           Consider a real scenario: an aerial cable transitions to a direct-burial conduit run under a city street. The design calls for CST-armored cable (good for rodents in the burial section). But the conduit also carries a copper grounding wire (installed decades ago for water main bonding). Over time, the steel CST and copper wire corrode galvanically in wet soil. The armor loses strength silently. Twenty years later, a road cut cracks the conduit, water infiltrates, and the cable fails — far downstream of the original design decision. Designers and crew leads who understand armor selection tradeoffs catch this risk at design time: either isolate the armor from the copper wire, or spec aluminum (CAT) armor or fully dielectric cable in corrosive environments.
@@ -306,15 +310,23 @@ export default function T03L07_ArmorDeepDive() {
             Galvanic corrosion knowledge connects to long-term plant reliability:
           </p>
           <ul className="space-y-2 text-slate-300 text-sm list-disc ml-5">
-            <li><strong>T04.L07 Site Survey &amp; Environmental Analysis</strong> — Soil conductivity and pH testing should feed armor material selection. High-chloride coastal soil (like sea-salt spray zones) → aluminum armor or dielectric. Neutral pH agricultural soil with rodent pressure → steel CST.</li>
-            <li><strong>T14.L01 Bonding &amp; Galvanic Isolation</strong> — Bonding metallic armor to ground is mandatory per NEC 770.48; but THAT BOND is where galvanic corrosion becomes a 30-year problem if the armor touches dissimilar metals in the conduit. Proper isolation sleeves and material selection prevent it.</li>
-            <li><strong>T13.L02 Construction Acceptance Testing</strong> — During make-ready inspection, verify that buried conduit configuration matches the approved design. CST armor in a conduit shared with copper grounding wire (without isolation) is a hidden corrosion time-bomb that won't fail for 10+ years.</li>
+            <li><strong>Site Survey &amp; Environmental Analysis</strong> — Soil conductivity and pH testing should feed armor material selection. High-chloride coastal soil (like sea-salt spray zones) → aluminum armor or dielectric. Neutral pH agricultural soil with rodent pressure → steel CST.</li>
+            <li><strong>Bonding &amp; Galvanic Isolation</strong> — Bonding metallic armor to ground is mandatory per NEC 770.48; but THAT BOND is where galvanic corrosion becomes a 30-year problem if the armor touches dissimilar metals in the conduit. Proper isolation sleeves and material selection prevent it.</li>
+            <li><strong>Construction Acceptance Testing</strong> — During make-ready inspection, verify that buried conduit configuration matches the approved design. CST armor in a conduit shared with copper grounding wire (without isolation) is a hidden corrosion time-bomb that won't fail for 10+ years.</li>
           </ul>
           <p className="text-slate-200 mt-3 text-sm italic">
             The armor you choose today determines whether a 30-year plant stays reliable or degrades silently into failure.
           </p>
         </section>
       </section>
+
+      <ReferencesBlock
+        items={[
+          { citation: 'ICEA S-87-640', note: 'Defines armor geometry, material grades, corrosion protection requirements, and minimum coverage for CST, interlocked, and CAT armor.' },
+          { citation: 'NEC (NFPA 70) §770.179(B)', note: 'Lists the permitted armor configurations for indoor fiber cable in riser applications.' },
+          { citation: '7 CFR 1755.902', note: 'RUS minimum performance specification, referenced for dielectric/ADSS cable on RUS-financed projects.' },
+        ]}
+      />
 
       {/* ── KEY TERMS FLASHCARDS ──────────────────────────────────────────── */}
       <Flashcard
