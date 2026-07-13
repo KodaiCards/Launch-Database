@@ -35,6 +35,15 @@ Status: **IN PLAN** (2026-07-13) — now PLAN rows 2.13 (desktop) + 2.14 (mobile
 - **Always-on companion + close-of-CAD prompt** — the suggest mechanism made concrete: agent watches the workspace; DWG saved + AutoCAD releases the file → prompt "mark <mini-job> complete?" One click at the natural moment of completion. Misfire-safe: dismissible, dismissed = stays on the list. Watch scope stays workspace-files-only (not app surveillance). Signed-in + active workspace doubles as an hours/presence signal.
 - **⭐ MINI-JOBS + employee workload list** — the real new feature (employee-facing Job Board): each employee sees THEIR jobs decomposed into mini-jobs (prelim draw → final → BOM …) and checks them off. Rules: (a) mini-job sets are **templates as data per job type** (law §7), admin can add one-offs; (b) the CAD prompt is sugar on the dumb reliable list — the list works without files/CAD/prompts. Payoff: checkoffs = per-person per-stage timestamped production signal → cockpit, projections pace, billing-readiness ("all mini-jobs checked = ready to bill" feeds the billing-status glance). Schema note: mini-jobs are a new concept UNDER jobs — spec belongs with Job Board/keystone, surfaced by the desktop app.
 
+> **Carter (verbatim, same night):** "I want to have time attached to each job and mini job and show where my hours are going each day but our job is low key and thta might feel invasive"
+
+- **Time per job/mini-job, kept low-key** — job-level time is ALREADY law (L-004 attribution, lands with 2.6); this adds mini-job grain + a daily "where my hours went" view. Anti-invasive design (Partner shape, pending spec):
+  (a) **No stopwatch, ever** — no per-minute tracking, no idle detection; grain = the 0.25h snap (L-014).
+  (b) **Draft-and-confirm** — at clock-out the companion drafts the day's split from punches + files touched ("~4h SA-12, ~2.5h SA-9, ~0.5h overhead — adjust?"); employee corrects + confirms. Their timesheet, auto-drafted. Pitch: "never reconstruct your day from memory again."
+  (c) Mini-job tagging is OPTIONAL refinement (job-level required per L-004); the checkoff prompt can offer it free ("the 2h since last checkoff → BOM?").
+  (d) **Private-by-default** — own breakdown visible to self + admin/director only (capabilities 2.5); peers never see each other; cockpit consumes job-level aggregates only (utilization = profitability metric, never peer ranking — Carter's standing framing).
+  Payoff: actual-hours-vs-billed per job = the core cockpit 2.9 profitability number.
+
 ## Open questions for the spec session
 - Does admin ever truly need offline WRITE beyond capture? (Named scenario, or it stays out.)
 - Storage/cost model for continuous employee-folder sync (where files live, retention, size caps) — UPLOAD_DIR vs object storage.
