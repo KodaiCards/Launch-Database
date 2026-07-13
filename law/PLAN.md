@@ -13,6 +13,7 @@
 | 1.2 | Next wave through the gate: T09 → T05 → T06, under the new bar from authoring | specs/training-content.md | queued |
 | 1.3 | **ALL remaining OSP topics — the full new-bar treatment, none exempt (Carter 2026-07-04):** T07 Staking · T08 Make-Ready · T10 Construction · T11 Splicing · T12 Testing · T13 Inspection · T14 Grounding · T15 Restoration · T16 As-Built/GIS · T17 Estimation · T19 Headend · T20 RUS (pulled RUS-aware). Authored ones get the same retrofit the live-5 got (verbiage, readability, tool/interaction quality, PRODUCT_BAR); unauthored ones are written under the bar from word one. Basics→Advanced, rolling flips. | 〃 | queued |
 | 1.4 | I11 training dashboard (scores prominent, per-lesson timing, >45min flag) | specs/training-dashboard.md | after 1.2 |
+| 1.5 | **Completion certificate + public verify** — approved visual draft (navy/logo-blue, Rudy Douglas · Director); issue/list/revoke + `/verify` lookup page; v2 = auto-issue + PDF via Puppeteer | specs/certificates.md | **RATIFIED 2026-07-13** — small package, decompose after live-5 clears |
 | — | Certs (T21/T22/C04/C05): **STAGE-4 TIER (Carter 2026-07-04)** — after the entire main rollout; sequenced with/after the ISP track (cert content presumes ISP is learned first) | — | stage 4 |
 
 ## Track 2 — PLATFORM (opens alongside Track 1; usage-conscious)
