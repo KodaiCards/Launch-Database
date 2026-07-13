@@ -19,7 +19,7 @@
 1. **Law and specs exist only as repo files.** A decision in chat is not a decision. Carter signs FILES.
 2. **Foremen build only from RATIFIED specs.** Ambiguity → escalate, never improvise.
 3. **No package merges verified only from inside its own session.** Tier-1 (foreman's spawns, author≠RT, playthrough) + Tier-2 (VO) + cross-foreman playthrough, every time.
-4. **Only the Registrar merges `main`. Only Carter flips visibility.**
+4. **Only the Registrar merges `main`. Only Carter flips visibility.** The Partner's direct law/spec commits are the one exception — and ONLY while no Registrar session is live. A Registrar online = main has exactly one writer: the Partner pushes a `partner/…` branch instead and the Registrar lands it at its next boundary. (2026-07-12: a Partner main-push mid-merge-batch tripped the Registrar.)
 5. **Caps are absolute:** ≤3 foremen, ≤2 VOs, ≤4 total, ≤2 spawns per instance. (A past agent burned all usage on dozens of spawns.)
 6. **No process/plumbing changes without Carter.** `ops/COMMS.md` is FROZEN. Meta-work is not work.
 7. **Configurability is law:** domain specifics are data, not code. **RUS is a program profile, never a client assumption. County is the universal first grouping level.**
