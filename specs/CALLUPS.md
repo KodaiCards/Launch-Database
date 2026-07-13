@@ -7,8 +7,8 @@
 | *1 | Unused-tabs kill list — **STRUCK by Carter 2026-07-13**: rail 16→9 (specs/ui-pass.md) | fired + delivered | archive row |
 | *2 | Workforce CSV sample | Hours spec session (2.6) | One export file from Carter ("no idea how it will look") |
 | *3 | Submission samples ×3 + RUS code list | Billing spec session (2.7) | RUS inspection, RUS design, non-RUS permitting samples |
-| *4 | Cockpit alert thresholds | Cockpit spec session (2.9) | fixed-fee %, RUS-cap %, utilization framing |
-| *5 | County-universal design session | Before/with cutover completion (2.10) | Schema + UX: county on work units, grouping in views, autofill later w/ map |
+| *4 | Cockpit thresholds — RULED 2026-07-13: 80/85 defaults, utilization display-only (specs/cockpit.md) | fired + delivered | archive row |
+| *5 | County design — HELD 2026-07-13: required-forward + backfill (specs/county.md) | fired + delivered | archive row |
 | *6 | WO/area-level hours — exact model | Hours spec session (2.6) | How area-billed work enters + rolls into SA billing |
 | *7 | Events/nudges design detail | Cutover spec (2.4) | Event fields, where surfaced, notification style |
 | *8 | Map-preview scope | When Carter calls for it (2.11) | Keep it a preview surface, not internals |
@@ -23,5 +23,5 @@
 | *18 | PHASE REVIEW — **DELIVERED 2026-07-13** (chat, on republish green-light): 18 closed issues, 14 merges/108 commits since canon, lint 197→11, 12 pre-merge fix rounds (gates catching, not escaping), 0 known post-canon trainee-facing escapes, 5 protocol errors each patched into law | fired + delivered | archive row |
 | *19 | premerge SKILL — **DELIVERED 2026-07-13**: .claude/skills/premerge/SKILL.md (merge floor + L-015 harness + lint interpretation; Registrar audience) | fired + delivered | archive row |
 | *20 | Desktop-app spec session — **HELD 2026-07-13**: specs/desktop-app.md RATIFIED (files-only v1, object storage, sync-first, unsigned) | fired + delivered | archive row |
-| *21 | Mobile tab-list + scope session (2.14) — Carter strikes the admin-lite list; BEFORE any mobile build (Carter 2026-07-13) | Before 2.14 build (timeclock flow rides 2.6) | ~15 min strike-the-list; same seed |
+| *21 | Mobile tab-list — HELD 2026-07-13: all 4 admin tabs IN + whole-workforce expansion (specs/mobile-app.md) | fired + delivered | archive row |
 | *22 | Mini-jobs spec session — **HELD 2026-07-13**: specs/mini-jobs.md RATIFIED (self-claim board, claimable mini-jobs, per-job clock, anti-gaming, behind wave-2/with D2) | fired + delivered | archive row |
