@@ -3,6 +3,7 @@
 
 import React from 'react';
 import LessonLayout from '../../components/LessonLayout.jsx';
+import ReferencesBlock from '../../components/ReferencesBlock.jsx';
 import BranchingScenario from '../../components/primitives/BranchingScenario.jsx';
 import Quiz from '../../components/primitives/Quiz.jsx';
 import GatedAssessment from '../../components/primitives/GatedAssessment.jsx';
@@ -199,7 +200,7 @@ export default function T18L02_LockoutTagout() {
         <h2>How Re-energization and Group LOTO Work</h2>
 
         <div className="border-l-4 border-blue-400/30 bg-blue-400/5 p-3 my-3 text-sm">
-          <p className="font-semibold text-blue-300 mb-1">Refresher from T18</p>
+          <p className="font-semibold text-blue-300 mb-1">Refresher</p>
           <ul className="text-slate-300/90 space-y-1 list-disc pl-5">
             <li><strong>Hazard recognition:</strong> Spotting the physical, electrical, or chemical danger before it causes harm</li>
             <li><strong>Hierarchy of controls:</strong> Elimination → Substitution → Engineering → Administrative → PPE (in order of effectiveness)</li>
@@ -259,10 +260,10 @@ export default function T18L02_LockoutTagout() {
 
         <h3 className="mt-4 font-semibold">How LOTO connects to electrical hazard awareness and grounding</h3>
         <p>
-          The LOTO procedure you learned in the Working section doesn't exist in a vacuum. It's the mechanical enforcement of the hazard-control principles from T18.L01 (hazard recognition → hierarchy of controls). T18.L01 taught you the electrical hazard categories and emphasized elimination of the hazard as the strongest control. LOTO is elimination for maintenance work — you physically remove the energy source for the duration of the work. Once the work is done and you're clear, T15 (outage response) logic applies: the system is re-energized in a controlled sequence by qualified personnel.
+          The LOTO procedure you learned in the Working section doesn't exist in a vacuum. It's the mechanical enforcement of the hazard-control principles from the Hazard Awareness & the Risk Hierarchy lesson (hazard recognition → hierarchy of controls). That lesson taught you the electrical hazard categories and emphasized elimination of the hazard as the strongest control. LOTO is elimination for maintenance work — you physically remove the energy source for the duration of the work. Once the work is done and you're clear, Restoration & Outage Response logic applies: the system is re-energized in a controlled sequence by qualified personnel.
         </p>
         <p className="mt-2">
-          Additionally, T14 (bonding and grounding) teaches you why a CST-armored cable entering a building must be bonded to ground. That bond is the primary means of discharging surge currents when lightning strikes the plant. LOTO is different — LOTO eliminates the hazard of unexpected re-energization while a worker is inside the danger zone. The two are complementary: bonding protects against external surge; LOTO protects against internal maintenance hazards. A crew member who understands both knows when each applies and why both matter.
+          Additionally, the Bonding, Grounding & Electrical Protection topic teaches you why a CST-armored cable entering a building must be bonded to ground. That bond is the primary means of discharging surge currents when lightning strikes the plant. LOTO is different — LOTO eliminates the hazard of unexpected re-energization while a worker is inside the danger zone. The two are complementary: bonding protects against external surge; LOTO protects against internal maintenance hazards. A crew member who understands both knows when each applies and why both matter.
         </p>
         <p className="mt-2">
           This Advanced section explores the nuances of LOTO enforcement and the boundary between lockout and tagout so you can make the right call in field scenarios where both are technically possible but one is the correct choice.
@@ -288,10 +289,16 @@ export default function T18L02_LockoutTagout() {
           switches have a lockout hasp built in or available as an accessory. There is almost
           never a legitimate reason for tagout-only on OSP electrical work.
         </p>
-        <p className="mt-2 text-sm text-slate-300/70">
-          Source: 29 CFR 1910.147(d)(1)–(d)(6), (e)(1)–(e)(3), (f)(3), (c)(3) (ecfr.gov; osha.gov LOTO eTool).
-        </p>
       </section>
+
+      <ReferencesBlock
+        items={[
+          { citation: '29 CFR 1910.147(d)(1)–(d)(6)', note: 'The six-step LOTO sequence — notify, identify energy sources, shut down, isolate, apply lock, release/verify stored energy.' },
+          { citation: '29 CFR 1910.147(e)(1)–(e)(3)', note: 'Re-energization sequence — clear the area, remove locks, notify, restore energy.' },
+          { citation: '29 CFR 1910.147(f)(3)', note: 'Group lockout — each authorized employee applies their own lock to a group hasp.' },
+          { citation: '29 CFR 1910.147(c)(3)', note: 'When tagout-only is permitted, and the additional safety measures required beyond the tag.' },
+        ]}
+      />
 
       {/* ── BRANCHING SCENARIO ──────────────────────────────────────────── */}
       <BranchingScenario

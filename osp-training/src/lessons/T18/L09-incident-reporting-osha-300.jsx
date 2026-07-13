@@ -3,6 +3,7 @@
 
 import React from 'react';
 import LessonLayout from '../../components/LessonLayout.jsx';
+import ReferencesBlock from '../../components/ReferencesBlock.jsx';
 import Quiz from '../../components/primitives/Quiz.jsx';
 import GatedAssessment from '../../components/primitives/GatedAssessment.jsx';
 import Sortable from '../../components/primitives/Sortable.jsx';
@@ -189,10 +190,10 @@ export default function T18L09_IncidentReportingOSHA300() {
         <h2>Recordable vs. Not Recordable — The Line That Matters</h2>
 
         <div className="border-l-4 border-blue-400/30 bg-blue-400/5 p-3 my-3 text-sm">
-          <p className="font-semibold text-blue-300 mb-1">Refresher from T18</p>
+          <p className="font-semibold text-blue-300 mb-1">Refresher</p>
           <ul className="text-slate-300/90 space-y-1 list-disc pl-5">
-            <li><strong>Hazard recognition:</strong> (from L01) identifying dangers before they cause harm</li>
-            <li><strong>1910.268:</strong> (from L01) OSHA's telecommunications standard — the primary federal rule for OSP field work</li>
+            <li><strong>Hazard recognition:</strong> identifying dangers before they cause harm</li>
+            <li><strong>1910.268:</strong> OSHA's telecommunications standard — the primary federal rule for OSP field work</li>
           </ul>
         </div>
 
@@ -268,9 +269,6 @@ export default function T18L09_IncidentReportingOSHA300() {
               </tr>
             </tbody>
           </table>
-          <p className="text-xs text-slate-400 mt-1">
-            Source: 29 CFR 1904.39 (ecfr.gov).
-          </p>
         </div>
 
         <div className="mt-5 p-4 border border-amber-400/30 bg-amber-400/5 rounded-lg text-sm">
@@ -305,9 +303,6 @@ export default function T18L09_IncidentReportingOSHA300() {
           reports near-misses catches hazards before the next event is a recordable incident.
           A crew that doesn't report near-misses finds out about hazards the hard way.
         </p>
-        <p className="mt-2 text-sm text-slate-300/70">
-          Source: OSHA Near Miss Reporting Systems (osha.gov/near-miss-reporting).
-        </p>
       </section>
 
       {/* ── ADVANCED ────────────────────────────────────────────────────── */}
@@ -337,11 +332,18 @@ export default function T18L09_IncidentReportingOSHA300() {
           but it does NOT exempt them from severe incident reporting, and it does NOT exempt
           them from industry-specific safety standards (1910.268, 1910.147, 1910.269).
         </p>
-        <p className="mt-2 text-sm text-slate-300/70">
-          Source: 29 CFR 1904.1–1904.2 (size and industry exemptions); 29 CFR 1904.39
-          (severe incident reporting — all employers); ecfr.gov.
-        </p>
       </section>
+
+      <ReferencesBlock
+        items={[
+          { citation: '29 CFR 1904.7(a)', note: 'The recordable-vs-first-aid line — what treatment types make an incident recordable.' },
+          { citation: '29 CFR 1904.39', note: 'Severe incident notification timelines — fatality (8 hr); hospitalization, amputation, or eye loss (24 hr). Applies to all employers regardless of size.' },
+          { citation: '29 CFR 1904.1–1904.2', note: 'Size and low-hazard-industry exemptions from routine 300-log recordkeeping (does not cover severe-incident reporting).' },
+          { citation: '29 CFR 1904.35(b)(1)(i)', note: 'Employee involvement / anti-retaliation provisions referenced in OSHA\'s near-miss reporting policy.' },
+          { citation: 'OSH Act § 11(c)', note: 'Whistleblower protection referenced alongside OSHA\'s voluntary near-miss reporting policy.' },
+          { citation: 'OSHA Near Miss Reporting Systems (osha.gov/near-miss-reporting)', note: 'OSHA\'s public guidance on voluntary near-miss programs.' },
+        ]}
+      />
 
       {/* ── SORTABLE — Classify the Incident ────────────────────────────── */}
       <Sortable

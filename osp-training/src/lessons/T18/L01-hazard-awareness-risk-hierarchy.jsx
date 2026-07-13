@@ -3,6 +3,7 @@
 
 import React from 'react';
 import LessonLayout from '../../components/LessonLayout.jsx';
+import ReferencesBlock from '../../components/ReferencesBlock.jsx';
 import Sortable from '../../components/primitives/Sortable.jsx';
 import Quiz from '../../components/primitives/Quiz.jsx';
 import GatedAssessment from '../../components/primitives/GatedAssessment.jsx';
@@ -212,7 +213,7 @@ export default function T18L01_HazardAwarenessRiskHierarchy() {
         <h2>The Hierarchy of Controls — Applying It in the Field</h2>
 
         <div className="border-l-4 border-blue-400/30 bg-blue-400/5 p-3 my-3 text-sm">
-          <p className="font-semibold text-blue-300 mb-1">Refresher from T01</p>
+          <p className="font-semibold text-blue-300 mb-1">Refresher from Fundamentals &amp; Vocabulary</p>
           <ul className="text-slate-300/90 space-y-1 list-disc pl-5">
             <li><strong>OSP:</strong> Outside Plant — fiber cables and equipment on poles and underground</li>
             <li><strong>RUS:</strong> Rural Utilities Service — the federal loan program that funds many fiber projects</li>
@@ -286,8 +287,9 @@ export default function T18L01_HazardAwarenessRiskHierarchy() {
           Every employer is required to maintain SDS files accessible to all workers for every
           hazardous chemical on site — per 29 CFR 1910.1200 (OSHA HazCom 2012). You don't need
           to memorize the SDS for every product, but you need to know where to find them and how
-          to read the four key sections above. L08 of this topic goes into full SDS detail for the
-          specific chemicals you'll encounter on OSP jobs.
+          to read the four key sections above. The Hazardous Materials on an OSP Job lesson later
+          in this topic goes into full SDS detail for the specific chemicals you'll encounter on
+          OSP jobs.
         </p>
       </section>
 
@@ -308,11 +310,16 @@ export default function T18L01_HazardAwarenessRiskHierarchy() {
           administrative controls (layer 4). That's a citation waiting to happen —
           and more importantly, it's a preventable fatality waiting to happen.
         </p>
-        <p className="mt-2">
-          Source: OSH Act § 5(a)(1) (osha.gov); 29 CFR 1910.268(a) scope
-          (ecfr.gov); NIOSH Hierarchy of Controls (cdc.gov/niosh).
-        </p>
       </section>
+
+      <ReferencesBlock
+        items={[
+          { citation: '29 CFR 1910.268(a)', note: 'OSHA Subpart R (Telecommunications) — scope; the primary federal safety standard for OSP field work.' },
+          { citation: 'OSH Act § 5(a)(1)', note: 'The General Duty Clause — requires protection from recognized hazards even when no specific OSHA rule applies.' },
+          { citation: '29 CFR 1910.1200', note: 'OSHA HazCom 2012 — governs the SDS format and the employer\'s duty to keep SDS files accessible.' },
+          { citation: 'NIOSH Hierarchy of Controls', note: 'Source for the elimination-through-PPE control ordering used in this lesson.' },
+        ]}
+      />
 
       {/* ── SORTABLE: Hierarchy of Controls ────────────────────────────── */}
       <Sortable
@@ -390,16 +397,16 @@ export default function T18L01_HazardAwarenessRiskHierarchy() {
               id: 'T18-L01-Q4',
               type: 'mc',
               prompt:
-                'Which OSHA regulation is the primary safety standard specifically covering telecom OSP field work — overhead lines, manholes, and grounding requirements for crews like fiber and telephone crews?',
+                'A fiber and telephone crew needs the standard that specifically covers their trade — overhead line safety, manhole work, and grounding requirements for telecom field crews — not a general-industry rule written for a different hazard class. Which of the following best describes that standard?',
               choices: [
-                '29 CFR 1910.146 — Permit-Required Confined Spaces',
-                '29 CFR 1910.268 — Telecommunications (Subpart R)',
-                '29 CFR 1926 Subpart M — Fall Protection (Construction)',
-                '29 CFR 1910.269 — Electric Power Generation, Transmission, and Distribution',
+                'A standard focused on permit-required confined spaces, applied across all industries regardless of trade',
+                'The telecommunications-specific standard covering overhead line safety, manhole entry, grounding, and PPE for telecom crews',
+                'A construction-industry fall protection standard for scaffolds and roofing work',
+                'A standard covering electric utility power generation, transmission, and distribution work',
               ],
               answerIndex: 1,
               explanation:
-                '29 CFR 1910.268 (Subpart R — Telecommunications) is the primary OSHA standard for telecom field work. It covers overhead line safety, underground manhole work, atmospheric testing before manhole entry, fall protection on poles, and PPE requirements for telecom crews. The other listed standards are real and important, but they are supplementary or apply to different trades.',
+                'The telecommunications-specific OSHA standard is the primary standard for telecom field work. It covers overhead line safety, underground manhole work, atmospheric testing before manhole entry, fall protection on poles, and PPE requirements for telecom crews. The other standards described are real and important, but they are supplementary or apply to different trades.',
               citation: '29 CFR 1910.268(a) — Scope and Application (ecfr.gov; osha.gov).',
             },
           ]}

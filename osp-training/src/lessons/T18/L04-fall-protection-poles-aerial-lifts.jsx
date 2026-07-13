@@ -3,6 +3,7 @@
 
 import React from 'react';
 import LessonLayout from '../../components/LessonLayout.jsx';
+import ReferencesBlock from '../../components/ReferencesBlock.jsx';
 import SideBySide from '../../components/primitives/SideBySide.jsx';
 import Quiz from '../../components/primitives/Quiz.jsx';
 import GatedAssessment from '../../components/primitives/GatedAssessment.jsx';
@@ -183,11 +184,11 @@ export default function T18L04_FallProtectionPolesAerialLifts() {
         <h2>Positioning System vs. Personal Fall Arrest System</h2>
 
         <div className="border-l-4 border-blue-400/30 bg-blue-400/5 p-3 my-3 text-sm">
-          <p className="font-semibold text-blue-300 mb-1">Refresher from T18</p>
+          <p className="font-semibold text-blue-300 mb-1">Refresher</p>
           <ul className="text-slate-300/90 space-y-1 list-disc pl-5">
-            <li><strong>Hazard recognition:</strong> (from L01) identifying dangers before they cause harm</li>
-            <li><strong>Hierarchy of controls:</strong> (from L01) removal, substitution, engineering, administrative, PPE — in order</li>
-            <li><strong>Competent person:</strong> (from L01) someone trained AND authorized to identify hazards and stop unsafe work</li>
+            <li><strong>Hazard recognition:</strong> identifying dangers before they cause harm</li>
+            <li><strong>Hierarchy of controls:</strong> removal, substitution, engineering, administrative, PPE — in order</li>
+            <li><strong>Competent person:</strong> someone trained AND authorized to identify hazards and stop unsafe work</li>
           </ul>
         </div>
 
@@ -299,11 +300,6 @@ export default function T18L04_FallProtectionPolesAerialLifts() {
             without documentation. Use rated, dedicated fall-arrest anchors whenever practical.
           </p>
         </div>
-        <p className="mt-2 text-sm text-slate-300/70">
-          Source: 29 CFR 1910.67(c)(2)(v) — Aerial lifts (ecfr.gov); 29 CFR 1910.268(g)(1) —
-          Pole climbing fall protection (osha.gov + OSHA interpretation letter 2012-08-27);
-          29 CFR 1910.140(c)(13) — PFAS anchor point strength requirement (ecfr.gov).
-        </p>
       </section>
 
       {/* ── ADVANCED ────────────────────────────────────────────────────── */}
@@ -356,11 +352,17 @@ export default function T18L04_FallProtectionPolesAerialLifts() {
           </p>
         </div>
 
-        <p className="mt-3 text-sm text-slate-300/70">
-          Source: 29 CFR 1910.268(g)(1) (osha.gov); OSHA interpretation letter 2012-08-27
-          (osha.gov/laws-regs/standardinterpretations/2012-08-27).
-        </p>
       </section>
+
+      <ReferencesBlock
+        items={[
+          { citation: '29 CFR 1910.268(g)(1)', note: 'Fall protection required for telecom pole/structure work more than 4 feet above ground; free-climb allowance to the work position.' },
+          { citation: '29 CFR 1910.67(c)(2)(v)', note: 'Aerial lifts — PFAS or travel restraint required while elevated, attached to the boom or basket.' },
+          { citation: '29 CFR 1910.140(c)(13)', note: 'PFAS anchor point strength — ≥5,000 lbf per worker, or engineered with a 2:1 safety factor.' },
+          { citation: 'ANSI Z359.1 / Z359.11', note: 'The Fall Protection Code and Full Body Harness standard — body-belt restrictions and harness performance requirements.' },
+          { citation: 'OSHA interpretation letter 2012-08-27', note: 'Clarifies that 1910.268 permits free-climbing to a work position; fall protection is required at the work position itself.' },
+        ]}
+      />
 
       {/* ── LABELED LIST — fall protection components ─────────────────────── */}
       <div className="lesson-callout">
@@ -453,7 +455,7 @@ export default function T18L04_FallProtectionPolesAerialLifts() {
               id: 'T18-L04-Q1',
               type: 'mc',
               prompt:
-                'Under 29 CFR 1910.268(g)(1), fall protection is required when working on a pole at what height above ground?',
+                'Fall protection is required when working on a pole at what height above ground?',
               choices: [
                 '6 feet (same as construction industry)',
                 '10 feet',

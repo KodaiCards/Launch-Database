@@ -3,6 +3,7 @@
 
 import React from 'react';
 import LessonLayout from '../../components/LessonLayout.jsx';
+import ReferencesBlock from '../../components/ReferencesBlock.jsx';
 import BranchingScenario from '../../components/primitives/BranchingScenario.jsx';
 import Quiz from '../../components/primitives/Quiz.jsx';
 import GatedAssessment from '../../components/primitives/GatedAssessment.jsx';
@@ -179,11 +180,6 @@ export default function T18L03_ConfinedSpaceEntry() {
             </tbody>
           </table>
         </div>
-        <p className="mt-2 text-sm text-slate-300/70">
-          Source: 29 CFR 1910.146(b) — Acceptable oxygen range; 29 CFR 1910.268(o)(2) —
-          Atmospheric testing for telecom manholes (osha.gov; ecfr.gov).
-        </p>
-
         {/* ── FLASHCARDS ──────────────────────────────────────────────────── */}
         <Flashcard
           deckId="T18-L03"
@@ -222,17 +218,17 @@ export default function T18L03_ConfinedSpaceEntry() {
         <h2>The Critical Legal Distinction: 1910.268(o) vs. 1910.146</h2>
 
         <div className="border-l-4 border-blue-400/30 bg-blue-400/5 p-3 my-3 text-sm">
-          <p className="font-semibold text-blue-300 mb-1">Refresher from T18</p>
+          <p className="font-semibold text-blue-300 mb-1">Refresher</p>
           <ul className="text-slate-300/90 space-y-1 list-disc pl-5">
-            <li><strong>Hazard recognition:</strong> (from L01) identifying dangers before they cause harm</li>
-            <li><strong>Hierarchy of controls:</strong> (from L01) removal, substitution, engineering, administrative, PPE — in order</li>
-            <li><strong>LOTO:</strong> (from L02) the lockout/tagout procedure for de-energizing equipment before servicing</li>
-            <li><strong>Energy isolating device:</strong> (from L02) the mechanical device (breaker, switch, valve) you apply a lock to</li>
+            <li><strong>Hazard recognition:</strong> identifying dangers before they cause harm</li>
+            <li><strong>Hierarchy of controls:</strong> removal, substitution, engineering, administrative, PPE — in order</li>
+            <li><strong>LOTO:</strong> the lockout/tagout procedure for de-energizing equipment before servicing</li>
+            <li><strong>Energy isolating device:</strong> the mechanical device (breaker, switch, valve) you apply a lock to</li>
           </ul>
         </div>
 
         <p>
-          This is the most important book-vs-field gap in the entire T18 topic. Getting this
+          This is the most important book-vs-field gap in this entire safety topic. Getting this
           wrong causes one of two equally bad outcomes: crews who skip atmospheric testing
           entirely ("we don't need a permit for manholes"), or crews who grind work to a halt
           with full PRCS permit paperwork every time they open a manhole cover.
@@ -377,15 +373,20 @@ export default function T18L03_ConfinedSpaceEntry() {
             keep you out of the space before you approach any regulatory limit.
           </p>
         </div>
-        <p className="mt-2 text-sm text-slate-300/70">
-          Source: 29 CFR 1910.146(b) — Acceptable O₂ range definition; 29 CFR 1910.268(o)(2) —
-          Atmospheric testing requirement; 29 CFR 1910.5(c)(1) — specific standard supersedes
-          general standard; NIOSH IDLH documentation CAS 7783-06-4 (H₂S, revised 1994) — 100 ppm IDLH
-          (cdc.gov/niosh/idlh/7783064.html); NIOSH Pocket Guide to Chemical Hazards, H₂S entry
-          (cdc.gov/niosh/npg/npgd0337.html); 29 CFR 1926.55 — Construction H₂S PEL (10 ppm TWA);
-          29 CFR 1910.1000 Table Z-2 — General Industry H₂S limits (20 ppm ceiling / 50 ppm peak).
-        </p>
       </section>
+
+      <ReferencesBlock
+        items={[
+          { citation: '29 CFR 1910.146(b)', note: 'Definitions — acceptable oxygen range (19.5%–23.5%) and oxygen-deficient atmosphere.' },
+          { citation: '29 CFR 1910.268(o)(2)', note: 'Atmospheric testing and forced ventilation requirements for telecom manhole entry.' },
+          { citation: '29 CFR 1910.5(c)(1)', note: 'A specific standard (1910.268) supersedes a more general standard (1910.146) when both could apply.' },
+          { citation: '29 CFR 1910.146(d)(11) + Appendix E', note: 'Multi-employer worksite coordination for confined space entry.' },
+          { citation: 'NIOSH IDLH — CAS 7783-06-4 (H₂S)', note: '100 ppm IDLH for hydrogen sulfide (cdc.gov/niosh/idlh/7783064.html).' },
+          { citation: 'NIOSH Pocket Guide to Chemical Hazards — H₂S entry', note: 'cdc.gov/niosh/npg/npgd0337.html.' },
+          { citation: '29 CFR 1926.55', note: 'Construction industry H₂S permissible exposure limit — 10 ppm TWA.' },
+          { citation: '29 CFR 1910.1000 Table Z-2', note: 'General industry H₂S limits — 20 ppm ceiling, 50 ppm 10-minute peak.' },
+        ]}
+      />
 
       {/* ── LABELED LIST — manhole entry setup components ────────────────── */}
       <div className="lesson-callout">
@@ -581,16 +582,16 @@ export default function T18L03_ConfinedSpaceEntry() {
               id: 'T18-L03-Q1',
               type: 'mc',
               prompt:
-                'Under OSHA rules, which standard governs atmospheric testing requirements before a telecom crew enters a routine manhole to splice fiber?',
+                'Under OSHA rules, which approach governs atmospheric testing requirements before a telecom crew enters a routine manhole to splice fiber?',
               choices: [
-                '29 CFR 1910.146 — Permit-Required Confined Spaces (full permit procedure required)',
-                '29 CFR 1910.268(o) — Telecommunications (test, ventilate, attend; no written permit for routine entry)',
-                '29 CFR 1910.147 — Control of Hazardous Energy (LOTO required before entry)',
-                '29 CFR 1910.269 — Electric Power Generation (applies only near energized conductors)',
+                'The general permit-required confined space procedure — a full written permit is required before any manhole entry',
+                'The telecom-specific approach — test the atmosphere, ventilate if needed, keep an attendant posted; no written permit for routine entry',
+                'The control-of-hazardous-energy procedure — lockout/tagout is required before entry',
+                'The electric-utility approach — applies only when working near energized conductors',
               ],
               answerIndex: 1,
               explanation:
-                '29 CFR 1910.268(o) is the specific standard for telecom manhole work. Per 29 CFR 1910.5(c)(1), specific standards supersede general ones — when a specific standard (1910.268) covers a condition, it supersedes the more general standard (1910.146) for that condition. The 1910.146 full PRCS procedure applies only when conditions cannot be made safe under 1910.268(o) — e.g., chemical contamination that cannot be cleared by ventilation.',
+                'The telecommunications-specific standard is the standard for telecom manhole work. A specific standard supersedes a general one — when a specific standard covers a condition, it supersedes the more general confined-space standard for that condition. The full permit-required confined space procedure applies only when conditions cannot be made safe under the telecom-specific approach — e.g., chemical contamination that cannot be cleared by ventilation.',
               citation: '29 CFR 1910.268(o) (ecfr.gov; osha.gov); 29 CFR 1910.5(c)(1) — specific standard supersedes general standard (ecfr.gov).',
             },
             {
