@@ -332,9 +332,9 @@ export default function T03L02_OSPRiserIndoorOutdoor() {
             The fire ratings you learned here connect to your broader design practice:
           </p>
           <ul className="space-y-2 text-slate-300 text-sm list-disc ml-5">
-            <li><strong>Indoor Cable Routing</strong> — When you design the interior portion of a project (cables entering the CO/hut), fire ratings determine which cables you can run through plenums vs. riser shafts vs. conduit in open areas.</li>
-            <li><strong>Underground Cable Fill &amp; Conduit</strong> — Underground cable selection parallels the indoor logic: the protection method (direct bury vs. conduit) influences cost and NEC compliance categories.</li>
-            <li><strong>Make-Ready &amp; Pole Attachment</strong> — On joint-use poles, cable routing around power and telephone lines comes with specific clearance rules and fire-rating implications if the plant is near structures.</li>
+            <li><strong>Headend / CO + Rack-Side Hardware Basics</strong> — When you design the interior portion of a project (cables entering the CO/hut), fire ratings determine which cables you can run through plenums vs. riser shafts vs. conduit in open areas.</li>
+            <li><strong>OSP Design — Underground</strong> — Underground cable selection parallels the indoor logic: the protection method (direct bury vs. conduit) influences cost and code compliance categories.</li>
+            <li><strong>Comm-to-Supply Separation — Rule 235</strong> — On joint-use poles, cable routing around power lines comes with specific NESC clearance rules that define where communications space ends and the power space begins.</li>
           </ul>
           <p className="text-slate-200 mt-3 text-sm italic">
             Fire ratings are not theoretical — they're the legal boundary between a code-compliant design and a safety liability.

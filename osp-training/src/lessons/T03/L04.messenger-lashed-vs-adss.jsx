@@ -398,9 +398,9 @@ export default function T03L04_MessengerLashedVsADSS() {
             The choice between messenger-lashed and ADSS cables drives multiple downstream decisions:
           </p>
           <ul className="space-y-2 text-slate-300 text-sm list-disc ml-5">
-            <li><strong>Pole Loading &amp; Design Wind Speed</strong> — ADSS cable has engineered EDS (Equivalent Diameter for Wind Load); design wind speed determines whether you can exceed 250 m ADSS spans safely. Messenger-lashed is more forgiving for high-wind locations because the messenger carries the load, not the cable itself.</li>
-            <li><strong>Staking Requirements</strong> — ADSS installations in high-EDS environments require dampers; those dampers add staking labor and cost. Messenger-lashed cable doesn't require dampers, reducing field labor.</li>
-            <li><strong>Make-Ready &amp; Pole Bond Requirements</strong> — ADSS cable is dielectric (no metallic messenger), so NO grounding/bonding required at poles. Messenger-lashed requires bonding of the metallic messenger to ground per NEC 770.48 — that's labor and ongoing maintenance cost every pole.</li>
+            <li><strong>ADSS Span, Wind, and Ice Loading</strong> — ADSS cable has engineered EDS (Equivalent Diameter for Wind Load); design wind speed determines whether you can exceed 250 m ADSS spans safely. Messenger-lashed is more forgiving for high-wind locations because the messenger carries the load, not the cable itself.</li>
+            <li><strong>ADSS Aerial Design</strong> — ADSS installations in high-EDS environments require vibration dampers; those dampers add installation labor and cost. Messenger-lashed cable doesn't require dampers, reducing field labor.</li>
+            <li><strong>Messenger Bonding Rules</strong> — ADSS cable is dielectric (no metallic messenger), so NO grounding/bonding required at poles. Messenger-lashed requires bonding of the metallic messenger to ground per NEC 770.48 — that's labor and ongoing maintenance cost every pole.</li>
           </ul>
           <p className="text-slate-200 mt-3 text-sm italic">
             ADSS is more expensive per-foot, but the elimination of bonding labor and damper cost often makes it cheaper overall on large projects.

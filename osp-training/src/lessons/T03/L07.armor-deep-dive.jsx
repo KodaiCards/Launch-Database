@@ -270,13 +270,8 @@ export default function T03L07_ArmorDeepDive() {
         <h2>Going Deeper</h2>
 
         <h3 className="mt-4 font-semibold">How armor selection ripples through design and field work</h3>
-        {/* FLAG-FOR-FOREMAN: original text cited "T18" for the bonding/grounding
-            downstream connection below. Per course-catalog.js, T18 = Safety & OSHA;
-            bonding/grounding content lives in T14 (Bonding, Grounding & Electrical
-            Protection). Left as a generic phrase pending accuracy-gate confirmation —
-            looks like the same class of mismatch tracked under issue #56. */}
         <p>
-          The armor type you pick in this lesson connects to three downstream phases: (a) the strength-member and messenger selection covered in Messenger Cable — Lashed vs. ADSS (armored cables are heavier → higher sag → may require heavier messenger), (b) underground routing decisions covered in OSP Design — Underground (CST armor in corrosive soil → long-term reliability risk), and (c) bonding and grounding practice covered later in the course (armored CST entering a building must be bonded per NEC 770.48 — but THAT bond is exactly where galvanic corrosion becomes a hidden 30-year problem if the armor touches dissimilar metals in the conduit).
+          The armor type you pick in this lesson connects to three downstream phases: (a) the strength-member and messenger selection covered in Messenger Cable — Lashed vs. ADSS (armored cables are heavier → higher sag → may require heavier messenger), (b) underground routing decisions covered in OSP Design — Underground (CST armor in corrosive soil → long-term reliability risk), and (c) bonding and grounding practice covered in Bonding, Grounding &amp; Electrical Protection (armored CST entering a building must be bonded per NEC 770.48 — but THAT bond is exactly where galvanic corrosion becomes a hidden 30-year problem if the armor touches dissimilar metals in the conduit).
         </p>
         <p className="mt-2">
           Consider a real scenario: an aerial cable transitions to a direct-burial conduit run under a city street. The design calls for CST-armored cable (good for rodents in the burial section). But the conduit also carries a copper grounding wire (installed decades ago for water main bonding). Over time, the steel CST and copper wire corrode galvanically in wet soil. The armor loses strength silently. Twenty years later, a road cut cracks the conduit, water infiltrates, and the cable fails — far downstream of the original design decision. Designers and crew leads who understand armor selection tradeoffs catch this risk at design time: either isolate the armor from the copper wire, or spec aluminum (CAT) armor or fully dielectric cable in corrosive environments.
@@ -307,9 +302,9 @@ export default function T03L07_ArmorDeepDive() {
             Galvanic corrosion knowledge connects to long-term plant reliability:
           </p>
           <ul className="space-y-2 text-slate-300 text-sm list-disc ml-5">
-            <li><strong>Site Survey &amp; Environmental Analysis</strong> — Soil conductivity and pH testing should feed armor material selection. High-chloride coastal soil (like sea-salt spray zones) → aluminum armor or dielectric. Neutral pH agricultural soil with rodent pressure → steel CST.</li>
-            <li><strong>Bonding &amp; Galvanic Isolation</strong> — Bonding metallic armor to ground is mandatory per NEC 770.48; but THAT BOND is where galvanic corrosion becomes a 30-year problem if the armor touches dissimilar metals in the conduit. Proper isolation sleeves and material selection prevent it.</li>
-            <li><strong>Construction Acceptance Testing</strong> — During make-ready inspection, verify that buried conduit configuration matches the approved design. CST armor in a conduit shared with copper grounding wire (without isolation) is a hidden corrosion time-bomb that won't fail for 10+ years.</li>
+            <li><strong>Route Survey &amp; Pre-Engineering</strong> — Soil conductivity and pH testing should feed armor material selection. High-chloride coastal soil (like sea-salt spray zones) → aluminum armor or dielectric. Neutral pH agricultural soil with rodent pressure → steel CST.</li>
+            <li><strong>Bonding, Grounding &amp; Electrical Protection</strong> — Bonding metallic armor to ground is mandatory per NEC 770.48; but THAT BOND is where galvanic corrosion becomes a 30-year problem if the armor touches dissimilar metals in the conduit. Proper isolation sleeves and material selection prevent it.</li>
+            <li><strong>Underground Construction Inspection</strong> — During construction inspection, verify that buried conduit configuration matches the approved design. CST armor in a conduit shared with copper grounding wire (without isolation) is a hidden corrosion time-bomb that won't fail for 10+ years.</li>
           </ul>
           <p className="text-slate-200 mt-3 text-sm italic">
             The armor you choose today determines whether a 30-year plant stays reliable or degrades silently into failure.
