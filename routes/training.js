@@ -551,7 +551,9 @@ module.exports = function installTrainingRoutes(app, pool, { requireAuth }) {
         course_id: pool.courseId,
         lesson_id: pool.lessonId,
         pass_threshold: pool.passThreshold,
-        questions: pools.drawnQuestionsForClient(pool, drawnIds), // answer keys stripped
+        // Pass the attempt id so MC choices ship in a per-attempt shuffled order (§1.7);
+        // the same seed reproduces the order at grade time on submit.
+        questions: pools.drawnQuestionsForClient(pool, drawnIds, rows[0].id), // answer keys stripped
       });
     } catch (err) {
       console.error('[training] POST /assessment/start error:', err.message);
@@ -599,7 +601,9 @@ module.exports = function installTrainingRoutes(app, pool, { requireAuth }) {
       const drawnIds = Array.isArray(attempt.drawn_question_ids)
         ? attempt.drawn_question_ids
         : JSON.parse(attempt.drawn_question_ids);
-      const result = pools.grade(poolDef, drawnIds, ans);
+      // Same attempt id used at /start — re-derives each MC question's choice order so the
+      // learner's displayed-index answer maps back to the authored key (§1.7 shuffle).
+      const result = pools.grade(poolDef, drawnIds, ans, attempt.id);
 
       const { rows: uRows } = await pool.query(
         `UPDATE training_assessment_attempts
