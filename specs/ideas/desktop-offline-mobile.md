@@ -2,7 +2,10 @@
 
 > **Carter, 2026-07-13 (verbatim):** "I want to make the launch software a full desktop app that runs offline and accesses local files to pull contents into the DB for admin to access. I want a mobile version too, less features mainly just for admin stuff or timeclocks"
 
-Status: SEED — Partner + Carter to spec when its stage arrives (or Carter pulls it forward).
+Status: **IN PLAN** (2026-07-13) — now PLAN rows 2.13 (desktop) + 2.14 (mobile); call-ups *20/*21. Carter's same-night rulings:
+1. **Sync:** wants "full sync in real time" — accepted the physics: real-time while connected, offline = capture queue + read-only cache syncing on reconnect, **money edits online-only**. (True offline real-time is impossible; offline money replica rejected.)
+2. **Timing:** desktop pulled forward — its spec session may run ahead of Track-2 opening.
+3. **Mobile:** tab-list/scope session with Carter happens BEFORE any build.
 
 ## What already exists (don't rebuild)
 - `desktop/` — Electron scaffold v0.1.0: login flow against the backend, sync-engine skeleton (`sync/engine.js`, `manifest.js`, tray), electron-builder Windows installer. Founded as "file sync + workspace." Peripheral today; this seed is its mission.
