@@ -4,6 +4,7 @@
 
 Status: **IN PLAN** (2026-07-13) — now PLAN rows 2.13 (desktop) + 2.14 (mobile); call-ups *20/*21. Carter's same-night rulings:
 1. **Sync:** wants "full sync in real time" — accepted the physics: real-time while connected, offline = capture queue + read-only cache syncing on reconnect, **money edits online-only**. (True offline real-time is impossible; offline money replica rejected.)
+   **Clarified (Carter's follow-up, same night):** the line is *work vs accounting*. Money-AFFECTING work actions sync fine offline — completing a project (→ arrives at billing as ready-to-bill), changing status/hours/quantities that feed projections (server recalcs on sync; the on-screen projection is just cached-stale until reconnect). Online-only = money-RECORD edits: generate/void invoice, rate catalog, contract $ amounts, billing ledger. "Work happens anywhere and syncs; accounting requires a connection."
 2. **Timing:** desktop pulled forward — its spec session may run ahead of Track-2 opening.
 3. **Mobile:** tab-list/scope session with Carter happens BEFORE any build.
 
