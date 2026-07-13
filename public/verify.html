@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Certificate Verification — Launch Fiber Services</title>
+<style>
+  :root{--navy:#0b1d3a;--steel:#1f3a5f;--blue:#4e8ec6;--paper:#fdfcf8;--ink:#16233a;--bad:#b3454a;--good:#2e7d4f}
+  *{box-sizing:border-box}
+  body{margin:0;min-height:100vh;background:var(--navy);font-family:Georgia,'Times New Roman',serif;
+       display:flex;align-items:center;justify-content:center;padding:24px}
+  .card{background:var(--paper);border-radius:6px;max-width:560px;width:100%;padding:40px 44px 36px;
+        box-shadow:0 10px 50px rgba(0,0,0,.5);text-align:center;border-top:5px solid var(--blue)}
+  .logo{width:220px;max-width:70%;margin:0 auto 10px;display:block}
+  h1{font-size:19px;letter-spacing:.24em;text-indent:.24em;color:var(--navy);font-weight:400;margin:14px 0 4px}
+  p.sub{font-family:'Segoe UI',system-ui,sans-serif;font-size:13px;color:#5a6675;margin:0 0 24px}
+  form{display:flex;gap:10px}
+  input{flex:1;font:16px Consolas,monospace;letter-spacing:.06em;padding:11px 13px;border:1.5px solid #c8cdd5;
+        border-radius:4px;background:#fff;color:var(--ink);text-transform:uppercase}
+  input:focus{outline:2px solid var(--blue);outline-offset:1px;border-color:var(--blue)}
+  button{font:600 14px 'Segoe UI',system-ui,sans-serif;color:#fff;background:var(--steel);border:none;
+         border-radius:4px;padding:0 22px;cursor:pointer}
+  button:hover{background:var(--navy)}
+  button:focus-visible{outline:2px solid var(--blue);outline-offset:2px}
+  #result{margin-top:26px;min-height:20px;font-family:'Segoe UI',system-ui,sans-serif}
+  .valid .mark{color:var(--good);font-size:34px;line-height:1}
+  .valid h2{font:italic 26px Georgia,serif;color:var(--ink);margin:10px 0 2px}
+  .valid .course{font-size:14px;color:var(--steel);margin:2px 0}
+  .valid .date{font-size:13px;color:#5a6675}
+  .valid .no{font:11px Consolas,monospace;color:#8b94a0;letter-spacing:.1em;margin-top:10px}
+  .invalid{color:var(--bad);font-size:14px}
+  .err{color:var(--bad);font-size:13px}
+</style>
+</head>
+<body>
+<main class="card">
+  <img class="logo" src="/img/launch-fiber-logo-transparent.png" alt="Launch Fiber Services">
+  <h1>CERTIFICATE VERIFICATION</h1>
+  <p class="sub">Enter the certificate number printed on the document (e.g. LFS-OSP-2026-0001).</p>
+  <form id="f">
+    <label for="cert" style="position:absolute;left:-9999px">Certificate number</label>
+    <input id="cert" name="cert" placeholder="LFS-OSP-2026-0001" autocomplete="off" required>
+    <button type="submit">Verify</button>
+  </form>
+  <div id="result" aria-live="polite"></div>
+</main>
+<script>
+  const f = document.getElementById('f'), input = document.getElementById('cert'), out = document.getElementById('result');
+  async function lookup(no) {
+    out.innerHTML = '<span class="sub">Checking…</span>';
+    try {
+      const r = await fetch('/api/certificates/verify/' + encodeURIComponent(no.trim().toUpperCase()));
+      if (r.status === 429) { out.innerHTML = '<div class="err">Too many lookups — wait a minute and try again.</div>'; return; }
+      const d = await r.json();
+      if (d.valid) {
+        const dt = new Date(d.completed_on + 'T00:00:00')
+          .toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' });
+        out.innerHTML = '<div class="valid"><div class="mark">✓</div><h2></h2>' +
+          '<div class="course">successfully completed the <b></b></div>' +
+          '<div class="date">on ' + dt + '</div><div class="no"></div></div>';
+        out.querySelector('h2').textContent = d.recipient_name;
+        out.querySelector('.course b').textContent = d.course_title;
+        out.querySelector('.no').textContent = d.cert_no;
+      } else {
+        out.innerHTML = '<div class="invalid">No valid certificate was found for that number. Check the number and try again.</div>';
+      }
+    } catch { out.innerHTML = '<div class="err">Lookup failed — check your connection and try again.</div>'; }
+  }
+  f.addEventListener('submit', e => { e.preventDefault(); if (input.value.trim()) lookup(input.value); });
+  const q = new URLSearchParams(location.search).get('cert');
+  if (q) { input.value = q; lookup(q); }
+</script>
+</body>
+</html>
