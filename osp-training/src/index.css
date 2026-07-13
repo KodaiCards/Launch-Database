@@ -2,6 +2,22 @@
 @tailwind components;
 @tailwind utilities;
 
+@layer base {
+  /* Native form controls follow the app's dark palette instead of the visitor's
+     OS light/dark chrome. The training app is dark-only (body.bg-ospnavy) but
+     never declared color-scheme, so native <select> option lists and number
+     spinners inherited OS-default light-grey and washed out against the dark UI
+     — the match-question dropdown miss (bug #64; PRODUCT_BAR §2.7). */
+  :root { color-scheme: dark; }
+
+  /* The native <option> popup ignores most CSS, so set its palette explicitly:
+     every choice stays legible regardless of the visitor's OS theme. */
+  select option {
+    background-color: #0b1d3a; /* ospnavy — matches the app background */
+    color: #e2e8f0;            /* slate-200 */
+  }
+}
+
 @layer components {
   .panel {
     @apply rounded-xl bg-ospsteel/40 border border-white/10 p-5 shadow-lg;
