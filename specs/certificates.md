@@ -3,11 +3,13 @@
 > ✔ **RATIFIED** — Carter, 2026-07-13 (Partner session; verbatim ask: "Make sure you include the code for that actual verification system and have it done right so it says the name of the person and everything when they enter the cert number in.")
 > Visual draft approved same session (artifact `dfc3bb9b`): navy/logo-blue, Rudy Douglas · Director signature, no seal. Seed history: `specs/ideas/completion-certificate.md`.
 
+## ⚠ URGENCY — Carter 2026-07-13 12:42: "This needs to be fully operational ASAP… I need to take the course and have the cert today or tomorrow. This is critical." Decompose as ONE issue, label `urgent` (queue-jump lane). Cert no. **LFS-OSP-2026-0001 is reserved for Carter** — when the system lands, issue his certificate FIRST so the number on his already-printed paper resolves correctly.
+
 ## What ships (v1 — one foreman package)
 1. `training_certificates` table (migration 0083 — renumber if taken at claim time).
 2. `routes/certificates.js` — PUBLIC verify endpoint + admin issue/list/revoke.
 3. `public/verify.html` — branded lookup page: enter cert number → recipient name, course, completion date.
-4. Registrar wires the mount in `server.js` at merge (foremen never touch server.js).
+4. Registrar wires the mount in `server.js` at merge (foremen never touch server.js). **⚠ PUBLIC-ACCESS REQUIREMENT (verified 2026-07-13: prod redirects even static assets to /login):** `/verify.html` and `GET /api/certificates/verify/*` MUST be exempt from every auth wall / login redirect / PORTAL_MODE lockdown — an anonymous browser must reach both. Done-when includes an UNAUTHENTICATED curl of each returning 200.
 
 **v2 (separate, later):** auto-issue when the final gated assessment of the last published OSP topic passes (definition must track rolling topic flips) + PDF render of the approved draft through the existing Puppeteer pipeline. NOT in this package.
 
@@ -232,7 +234,7 @@ require('./routes/certificates')(app, pool, { requireAdmin });
 - `/verify.html?cert=<issued number>` shows recipient name + course + long-form date; unknown/revoked/garbage input → the not-found message; 31st lookup in a minute → 429 message.
 - Admin issue → unique number `LFS-OSP-<year>-<seq>`; second issue for the same user returns the SAME cert (`existing:true`); revoke → verify says not found.
 - No PII beyond name/course/date on the public wire (VO checks the raw response).
-- `npm run premerge` green; live smoke: real lookup on launchfiber.app after deploy.
+- `npm run premerge` green; live smoke: real lookup on launchfiber.app after deploy, **from a logged-out session**.
 
 ## Decomposition note (Registrar)
 One foreman package (files above + Tier-1) → VO (security invariants above are the lens list) → Registrar mounts in server.js at merge. The `/verify` path on the printed certificate resolves to `/verify.html` — either name the file to match or add the redirect at mount time (Registrar's call, note it in the merge row).
