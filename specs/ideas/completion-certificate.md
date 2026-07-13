@@ -2,7 +2,7 @@
 
 > **Carter, 2026-07-13 (verbatim):** "The training needs a completion certificate. An official looking one with our logo and color scheme that shows completion of the OSP design course."
 
-Status: SEED + APPROVED DRAFT PENDING — visual draft delivered same day (artifact `dfc3bb9b`, Partner-designed: ospnavy/ospamber palette, real logo embedded, landscape letter, engraved-serif, spark seal, cert ID + verify line). Carter reviews the draft; his edits land here.
+Status: **SUPERSEDED by specs/certificates.md (RATIFIED 2026-07-13)** — draft approved with edits (no seal, raised footer, Rudy Douglas · Director, logo-blue #4e8ec6); v1 code in the spec. Was: SEED + APPROVED DRAFT PENDING — visual draft delivered same day (artifact `dfc3bb9b`, Partner-designed: ospnavy/ospamber palette, real logo embedded, landscape letter, engraved-serif, spark seal, cert ID + verify line). Carter reviews the draft; his edits land here.
 
 ## Implementation shape (when ratified)
 - Render: HTML → PDF through the EXISTING Puppeteer pipeline (same as invoices) — the draft is already print-clean (`@page letter landscape`).
