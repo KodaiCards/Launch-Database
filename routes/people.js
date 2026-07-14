@@ -22,9 +22,11 @@
 
 module.exports = function installPeopleRoutes(app, pool, mw) {
   const requireAdmin = (mw && mw.requireAdmin) || ((req, res, next) => next());
+  // #77: people administration → people.manage (admin still passes).
+  const canManagePeople = require('./_permissions').requirePermission(pool, 'people.manage');
 
   // GET /api/people — the unified roster. Admin-only (people management).
-  app.get('/api/people', requireAdmin, async (req, res) => {
+  app.get('/api/people', canManagePeople, async (req, res) => {
     try {
       const { rows } = await pool.query(`
         SELECT

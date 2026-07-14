@@ -16,6 +16,8 @@ module.exports = function installAccessRequestRoutes(app, pool, mw) {
   // → role-gated). requireAdmin is already middleware. See routes/training.js.
   const requireAuth = (mw && mw.requireAuth) || (() => (req, res, next) => next());
   const requireAdmin = (mw && mw.requireAdmin) || requireAuth();
+  // #77: access-request administration → people.manage (admin still passes).
+  const canManagePeople = require('./_permissions').requirePermission(pool, 'people.manage');
   const rateLimitOk = mw && mw.rateLimitOk;
 
   const UUID_RE = /^[0-9a-fA-F-]{36}$/;
@@ -49,7 +51,7 @@ module.exports = function installAccessRequestRoutes(app, pool, mw) {
   });
 
   // ── Admin: list ───────────────────────────────────────────────────────────
-  app.get('/api/admin/access-requests', requireAdmin, async (req, res) => {
+  app.get('/api/admin/access-requests', canManagePeople, async (req, res) => {
     try {
       const status = String(req.query.status || 'pending');
       const params = [];
@@ -77,7 +79,7 @@ module.exports = function installAccessRequestRoutes(app, pool, mw) {
   });
 
   // ── Admin: pending count (badge) ──────────────────────────────────────────
-  app.get('/api/admin/access-requests/count', requireAdmin, async (req, res) => {
+  app.get('/api/admin/access-requests/count', canManagePeople, async (req, res) => {
     try {
       const { rows } = await pool.query(
         `SELECT COUNT(*)::int AS c FROM access_requests WHERE status = 'pending'`
@@ -89,7 +91,7 @@ module.exports = function installAccessRequestRoutes(app, pool, mw) {
   });
 
   // ── Admin: resolve ────────────────────────────────────────────────────────
-  app.patch('/api/admin/access-requests/:id', requireAdmin, async (req, res) => {
+  app.patch('/api/admin/access-requests/:id', canManagePeople, async (req, res) => {
     try {
       const id = String(req.params.id || '');
       if (!UUID_RE.test(id)) return res.status(400).json({ error: 'Bad id' });

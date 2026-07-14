@@ -16,6 +16,9 @@ const { logAudit } = require('./_audit');
 
 module.exports = function installPortalAccessRoutes(app, pool, mw, portalDefs) {
   const requireAdmin = (mw && mw.requireAdmin) || ((req, res, next) => next());
+  // #77: user/access administration → people.manage (admin passes via admin=all;
+  // now delegable). requireAdmin retained for the fallback default above.
+  const canManagePeople = require('./_permissions').requirePermission(pool, 'people.manage');
 
   function serverError(res, e, where) {
     console.error(`[portal-access:${where}]`, e && e.message);
@@ -26,7 +29,7 @@ module.exports = function installPortalAccessRoutes(app, pool, mw, portalDefs) {
   // Wave 15: returns [{user_id}] rows for the __cap_create_projects__ sentinel.
   // Admin-only. Used by the Settings → Portal Access matrix to render the
   // capability column without requiring a new table or migration.
-  app.get('/api/portal-access/capabilities', requireAdmin, async (req, res) => {
+  app.get('/api/portal-access/capabilities', canManagePeople, async (req, res) => {
     try {
       const { rows } = await pool.query(
         `SELECT user_id FROM user_portal_access WHERE portal_key = $1`,
@@ -43,7 +46,7 @@ module.exports = function installPortalAccessRoutes(app, pool, mw, portalDefs) {
   // GET /api/portal-access
   // Returns the full matrix of non-customer users x portals.
   // Each row has { user_id, username, full_name, role, portals: [{key, label, hasRoleDefault, hasOverride}] }
-  app.get('/api/portal-access', requireAdmin, async (req, res) => {
+  app.get('/api/portal-access', canManagePeople, async (req, res) => {
     try {
       const { rows: users } = await pool.query(`
         SELECT id, username, full_name, role
@@ -91,7 +94,7 @@ module.exports = function installPortalAccessRoutes(app, pool, mw, portalDefs) {
   // POST /api/users/:userId/portal-access/:portalKey
   // Idempotent — ON CONFLICT DO NOTHING.
   // Also accepts capability sentinel keys (e.g. __cap_create_projects__).
-  app.post('/api/users/:userId/portal-access/:portalKey', requireAdmin, async (req, res) => {
+  app.post('/api/users/:userId/portal-access/:portalKey', canManagePeople, async (req, res) => {
     const { userId, portalKey } = req.params;
     const knownKeys = portalDefs.filter(p => p.audience === 'employee').map(p => p.id);
     if (!knownKeys.includes(portalKey) && !CAPABILITY_KEYS.has(portalKey)) {
@@ -121,7 +124,7 @@ module.exports = function installPortalAccessRoutes(app, pool, mw, portalDefs) {
   // DELETE /api/users/:userId/portal-access/:portalKey
   // Refuses to remove a role-default access (would have no effect but clarifies intent).
   // Capability sentinel keys are never role-defaults so they skip the check.
-  app.delete('/api/users/:userId/portal-access/:portalKey', requireAdmin, async (req, res) => {
+  app.delete('/api/users/:userId/portal-access/:portalKey', canManagePeople, async (req, res) => {
     const { userId, portalKey } = req.params;
     try {
       const { rows: userRows } = await pool.query(
