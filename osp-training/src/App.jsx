@@ -52,7 +52,10 @@ function AppLayout() {
 
   return (
     <div className="min-h-screen flex flex-col">
-      <header className="border-b border-white/10 bg-ospnavy/90 backdrop-blur sticky top-0 z-10">
+      <header
+        className="border-b border-white/10 backdrop-blur sticky top-0 z-10"
+        style={{ backgroundColor: 'var(--osp-canvas)' }}
+      >
         <div className="max-w-7xl mx-auto flex items-center justify-between px-6 py-3">
           <div>
             <div className="text-xs uppercase tracking-widest text-amber-300/80">

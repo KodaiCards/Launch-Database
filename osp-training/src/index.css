@@ -4,23 +4,43 @@
 
 @layer base {
   /* Native form controls follow the app's dark palette instead of the visitor's
-     OS light/dark chrome. The training app is dark-only (body.bg-ospnavy) but
-     never declared color-scheme, so native <select> option lists and number
-     spinners inherited OS-default light-grey and washed out against the dark UI
-     — the match-question dropdown miss (bug #64; PRODUCT_BAR §2.7). */
+     OS light/dark chrome. The training app is dark-only but never declared
+     color-scheme, so native <select> option lists and number spinners inherited
+     OS-default light-grey and washed out against the dark UI — the match-question
+     dropdown miss (bug #64; PRODUCT_BAR §2.7). */
   :root { color-scheme: dark; }
 
-  /* The native <option> popup ignores most CSS, so set its palette explicitly:
-     every choice stays legible regardless of the visitor's OS theme. */
+  /* ── Skin surfaces (ui-pass #72: canvas + panels ride the app-shell engine) ──
+     AppShell.initTheme() (loaded in index.html) reads the shared `lfs-theme` key
+     and stamps `data-skin` on <html> — the same engine + registry the rest of the
+     platform uses (no parallel switcher). We colocate just the two surface token
+     values per skin here (canvas + panel) rather than importing app-shell.css,
+     so the SPA's Tailwind component layer can't collide with app-shell's. Values
+     mirror app-shell.css --surface-1 (canvas) / --surface-2 (panel) for the 4
+     active skins. The training-amber accent (ospamber) is deliberately unchanged
+     (canvas-only, keep amber — Carter 2026-07-14). Default = graphite (dark);
+     a 'light' global pref maps to graphite here since the SPA is dark-only. */
+  :root                         { --osp-canvas:#131517; --osp-panel:#1C2024; } /* graphite (default) */
+  :root[data-skin="graphite"]   { --osp-canvas:#131517; --osp-panel:#1C2024; }
+  :root[data-skin="obsidian"]   { --osp-canvas:#0A0C0F; --osp-panel:#15191E; }
+  :root[data-skin="nightsky"]   { --osp-canvas:#070B14; --osp-panel:#111726; }
+  :root[data-skin="blueprint"]  { --osp-canvas:#0B1424; --osp-panel:#0F1B30; }
+
+  /* Canvas tracks the chosen skin (was a fixed body.bg-ospnavy utility). */
+  body { background-color: var(--osp-canvas); }
+
+  /* The native <option> popup ignores most CSS, so set its palette explicitly;
+     track the skin's panel surface so dropdowns match the themed panels. */
   select option {
-    background-color: #0b1d3a; /* ospnavy — matches the app background */
+    background-color: var(--osp-panel);
     color: #e2e8f0;            /* slate-200 */
   }
 }
 
 @layer components {
   .panel {
-    @apply rounded-xl bg-ospsteel/40 border border-white/10 p-5 shadow-lg;
+    @apply rounded-xl border border-white/10 p-5 shadow-lg;
+    background-color: var(--osp-panel); /* tracks the chosen skin (was bg-ospsteel/40) */
   }
   .badge {
     @apply inline-block px-2 py-0.5 rounded text-[11px] font-semibold uppercase tracking-wider;
