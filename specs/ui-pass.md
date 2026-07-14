@@ -11,6 +11,9 @@ Killed/folded: Billing (KS) + Money + Invoices → views inside Billing · Impor
 - **Theme unification is standalone + parallel-safe:** move `training-admin.html` and the training SPA onto the `data-skin` catalog (app-shell engine). No new skins. PRODUCT_BAR §2.7 (both-skins contrast, no OS-default controls) is the acceptance lens on every touched surface.
 - Visible-organization fixes per PRODUCT_BAR §2 apply to every page this pass touches: county-first grouping where lists group (law §7), consistent empty states, no dead links to killed tabs.
 
+## Deferred (recorded so nothing is forgotten)
+- **#72 fenced-out tail:** full SPA accent unification (adopting each skin's accent instead of keeping training-amber) — explicitly OPTIONAL future scope per Carter's canvas-only/keep-amber steer (2026-07-14). Revisit only if Carter raises it; it is NOT owed.
+
 ## Done-when
 - Rail shows exactly the 9 items; every killed tab's function reachable inside its new home (VO playthrough per killed tab: "do the thing you used to do there").
 - Rail search still resolves old destinations to the new homes (no dead results).

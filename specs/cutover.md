@@ -30,6 +30,7 @@
 - `admin.html` redirects; every daily workflow demonstrably possible in the cluster (VO playthrough: create client → EC → SA → jobs → hours → invoice with RUS PDF → money reports agree).
 - Exactly ONE invoice-creation path remains reachable; O16 orphan path gone; legacy tables empty (step 6 verified) or dropped.
 - Money math: keystone invoice totals = Σ jobs (SA rollup) — VO money lens on every step-2/3 package.
+- **The three #71-deferred routes are DELETED (setting-requests, legacy permits routes, inspection.js)** — each dies in the same package that lands its cluster replacement (steps 5–7). **The cutover is NOT done while any of the three remains** — this line exists so the deferral can't be forgotten (Carter 2026-07-14).
 - premerge green; live smoke post-deploy.
 
 ## Decomposition guidance (Registrar)
