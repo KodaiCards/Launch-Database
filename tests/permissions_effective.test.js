@@ -1,0 +1,87 @@
+// Pure-function tests for the System F effective-permission resolver
+// (routes/_permissions.js computeEffective). No DB, no network — this proves
+// the base ∪ role-grant ∪ personal-grant math + the admin-holds-everything rule
+// before we trust it on every gated route (spec: roles-capabilities.md).
+
+const { test } = require('node:test');
+const assert = require('node:assert/strict');
+const {
+  computeEffective,
+  ALL_KEYS,
+  CATALOG,
+  CATALOG_KEYS,
+} = require('../routes/_permissions');
+
+test('admin holds every catalog key, regardless of grants', () => {
+  const eff = computeEffective({ role: 'admin' });
+  assert.equal(eff.size, ALL_KEYS.length);
+  for (const k of ALL_KEYS) assert.ok(eff.has(k), `admin missing ${k}`);
+});
+
+test('a base engineer with no grants has nothing', () => {
+  const eff = computeEffective({ role: 'design_engineer' });
+  assert.equal(eff.size, 0);
+});
+
+test('managers base-hold minijobs.add and nothing else by default', () => {
+  for (const role of ['design_manager', 'permitting_manager']) {
+    const eff = computeEffective({ role });
+    assert.deepEqual([...eff].sort(), ['minijobs.add']);
+  }
+});
+
+test('role grants union onto the base seed', () => {
+  const eff = computeEffective({
+    role: 'design_manager',
+    roleGrants: ['hours.edit_subordinates'],
+  });
+  assert.ok(eff.has('minijobs.add'));        // base
+  assert.ok(eff.has('hours.edit_subordinates')); // role grant
+  assert.equal(eff.size, 2);
+});
+
+test('personal grants union in (Carter’s one-person mini-jobs case)', () => {
+  const eff = computeEffective({
+    role: 'design_engineer',
+    userGrants: ['minijobs.add'],
+  });
+  assert.deepEqual([...eff], ['minijobs.add']);
+});
+
+test('role + personal grants both apply and de-dupe', () => {
+  const eff = computeEffective({
+    role: 'permitting_engineer',
+    roleGrants: ['projects.view_all'],
+    userGrants: ['projects.view_all', 'cockpit.view'],
+  });
+  assert.deepEqual([...eff].sort(), ['cockpit.view', 'projects.view_all']);
+});
+
+test('unknown / stale keys not in the catalog are ignored (defense-in-depth)', () => {
+  const eff = computeEffective({
+    role: 'design_engineer',
+    roleGrants: ['money.view', 'not.a.real.key'],
+    userGrants: ['also.bogus'],
+  });
+  assert.deepEqual([...eff], ['money.view']);
+});
+
+test('Rudy Douglas (Director) personal-grant shape: oversight, NOT billing', () => {
+  // Rudy is a person (no "director" role), so his grants are personal.
+  const eff = computeEffective({
+    role: 'permitting_engineer', // whatever base account role he holds
+    userGrants: ['cockpit.view', 'hours.view_all', 'projects.view_all'],
+  });
+  assert.ok(eff.has('cockpit.view'));
+  assert.ok(eff.has('hours.view_all'));
+  assert.ok(eff.has('projects.view_all'));
+  assert.ok(!eff.has('money.manage_billing'), 'Rudy must NOT hold billing');
+});
+
+test('catalog is internally consistent: 16 unique keys, all grouped', () => {
+  assert.equal(CATALOG.length, 16);
+  assert.equal(CATALOG_KEYS.size, 16); // no dupes
+  for (const c of CATALOG) {
+    assert.ok(c.key && c.area && c.label, `catalog row incomplete: ${JSON.stringify(c)}`);
+  }
+});
