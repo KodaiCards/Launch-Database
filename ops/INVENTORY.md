@@ -22,7 +22,7 @@
 | Service-area + jobs write-path (CRUD, routes, materials, finalize, cost rollups, `/workspace`) | ✅ | Built + dev-tested | — |
 | Client / EC create-edit in cluster | 🟡 | Backend shipped; UI fanned to workers — verify | — |
 | Per-team status pipelines (permitting, design), optimistic + undo, no pop-ups | 🟡 | Pipelines defined; legacy pop-up pipeline still around | — |
-| **Cutover: retire legacy `admin.html` rollup tree → cluster** | 📋 | The big unfinished move; decisions settled in `cutover_inventory.md` | Migrate legacy project data or archive read-only? |
+| **Cutover: retire legacy `admin.html` rollup tree → cluster** | 🟡 | **Step-1 dead-items MERGED 2026-07-14 (#70, `11d28f02`):** AI assistant + audit-log viewer + dead billing report deleted (~5,700 lines) + server.js unwired (boot-safe). Steps 2–7 (O20 port, invoice consolidation, cluster UI gap-close, legacy-data delete, hard redirect) remain; setting-requests/permits/inspection.js retire there (#71). | Migrate legacy project data or archive read-only? |
 | Stale-job nudges ("permit submitted >30d", "approved not billed") | 📋 | — | — |
 
 ## 2. PILLAR 2 — The Map (construction / inspection side)
@@ -138,5 +138,7 @@
 | **Training wave-2 (T09→T05→T06, 1.2)** then wave-3 (all remaining OSP, 1.3) | PLAN §Track-1 | wave-2: when **#66** (last live-5 deviation) clears |
 | **specs/certificates.md ↔ code**: "main authoritative over spec snippets" declared | `specs/certificates.md` header | on any future cert rebuild — read code, not stale snippet |
 | **System F hours-override owner NOTIFICATION display** (change-log is v1 compliance; the in-app notify is deferred) | #75 + this ledger | rides **2.4** (Events + nudges) when built |
+| **#70 admin.html excision — prod render playthrough** (the ~452-line AI/audit UI removal; highest-risk edit; vo1 verified in preview, prod smoke not yet) | closed #70 | Railway deploys resume |
+| **UI-pass 2.1 theme** — training-admin (#69) + SPA canvas-only (#72) MERGED (`29a9ad12`); nav-consolidation slice still rides the cutover wave | PLAN 2.1 + cutover | nav slice: with cutover steps 2–3 |
 | **Rudy Douglas (Director) initial grants** — RESOLVED (Carter 2026-07-14): = the `Douglas` account (`b346f865`, active). Registrar applies personal grants `cockpit.view`+`hours.view_all`+`projects.view_all` (NOT billing) at #73-core merge (interim). A real reusable "Director" **bundle** can replace the personal grants once #76+#74 land. | #73 ruling | seed applies at #73-core merge; upgrade to a Director bundle when #76/#74 ship |
 | **Custom roles = grant bundles** — now SPECCED (roles-capabilities §5.5, `4b759b53`) + decomposed: backend **#76** (role_bundles/keys/assignment + CRUD API + resolver union, behind #73), UI folds into **#74** (Settings page). Self-serve new permission KEYS remains deliberately OUT (feature-born). | #76 + #74 | ships with #76→#74 |
