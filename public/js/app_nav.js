@@ -117,7 +117,6 @@
     + link('invoices', '/invoices.html', 'fa-file-invoice', 'Invoices')
     + link('people', '/people.html', 'fa-id-badge', 'People', true)
     + link('training', '/training-admin.html', 'fa-graduation-cap', 'Training')
-    + link('audit', '/audit.html', 'fa-clock-rotate-left', 'Audit log')
     + link('settings', '/settings.html', 'fa-sliders', 'Settings')
     + '<a class="app-nav" data-admin-only="1" data-tip="Admin" style="margin-top:auto;display:none" href="/admin.html"><i class="fa-solid fa-gear"></i> <span>Admin</span></a>';
 

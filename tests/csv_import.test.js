@@ -5,11 +5,10 @@
 // path including the would-modify classification (new / duplicate /
 // modify) added in commit 016f662.
 //
-// Why this exists: the CSV import + AI tools blocks are still inline
-// in server.js (~750 + ~1200 lines). Track 1.3 plans to extract them
-// into routes/hours_csv.js + routes/ai.js. Without a smoke test, a
-// blind extraction could silently break the admin's most-used import
-// surface. This file is the safety net.
+// Why this exists: the CSV import block was extracted from server.js
+// into routes/hours_csv.js. Without a smoke test, that extraction could
+// silently break the admin's most-used import surface. This file is the
+// safety net.
 
 const test = require('node:test');
 const assert = require('node:assert/strict');
