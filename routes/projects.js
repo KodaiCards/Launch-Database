@@ -26,7 +26,11 @@ module.exports = function installProjectsRoutes(app, pool, mw) {
   // could create or mutate projects. requireAuth() gates both handlers.
   const { requireAdmin, requireAuth, requireManagerOrAdmin } = mw;
   const { canCreateProjects, requireStaff } = require('../auth'); // O34: requireStaff = staff-only (excludes trainee/customer)
-  const { getEffective, omitUnless } = require('./_permissions');
+  const { getEffective, omitUnless, requirePermission } = require('./_permissions');
+  // #75 regressive gate (enumerated for VO): invoice generation is a billing
+  // mutation → money.manage_billing (admin passes via admin=all; managers need
+  // the grant). Closes the #73-core red-team's total_amount leak.
+  const canManageBilling = requirePermission(pool, 'money.manage_billing');
 
   // System F (#73): money.view field-strip (hard rule 8). The SAME project API
   // returns these $ columns to money.view holders and OMITS them entirely from
@@ -1436,7 +1440,7 @@ module.exports = function installProjectsRoutes(app, pool, mw) {
   // Admin-triggered invoice for an ongoing project's current (or specified) month.
   // Body: { month?: 1-12, year?: YYYY } — defaults to current month/year.
   // Idempotent: returns existing invoice row when one already covers this period.
-  app.post('/api/projects/:id/generate-monthly-invoice', requireManagerOrAdmin, async (req, res) => {
+  app.post('/api/projects/:id/generate-monthly-invoice', canManageBilling, async (req, res) => {
     if (!validateUUID(req.params.id, res)) return;
     const projectId = req.params.id;
     const now = new Date();
