@@ -6,7 +6,7 @@
 |---|---|---|---|
 | *1 | Unused-tabs kill list — **STRUCK by Carter 2026-07-13**: rail 16→9 (specs/ui-pass.md) | fired + delivered | archive row |
 | *2 | Workforce CSV sample — DELIVERED 2026-07-13 (June report; jobcode hierarchy mapped in specs/hours.md; fixture scrubbed of PII) | fired + delivered | archive row |
-| *3 | Submission samples ×3 + RUS code list | Billing spec session (2.7) | RUS inspection, RUS design, non-RUS permitting samples |
+| *3 | Submission samples + RUS code list — DELIVERED 2026-07-13 (Tri-co ×2, COX, Palmetto ×2, 154-code list; archetypes decoded in specs/billing.md; raw files stay off-repo) | fired + delivered | archive row |
 | *4 | Cockpit thresholds — RULED 2026-07-13: 80/85 defaults, utilization display-only (specs/cockpit.md) | fired + delivered | archive row |
 | *5 | County design — HELD 2026-07-13: required-forward + backfill (specs/county.md) | fired + delivered | archive row |
 | *6 | WO/area-level hours model — ANSWERED 2026-07-13: CSV jobcode_4-without-_5 rows suggest area-WO attribution; unbilled bucket reattributable (specs/hours.md) | fired + delivered | archive row |
