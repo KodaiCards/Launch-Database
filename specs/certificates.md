@@ -19,6 +19,7 @@
 - Rate-limited (in-module, 30/min/IP) — no enumeration farming.
 - issue/list/revoke are `requireAdmin`. Cert numbers unique, race-safe (23505 retry loop).
 - One active cert per user per course — re-issue returns the existing cert (idempotent), never a duplicate number.
+- **HARDENED per #68 (Partner ruling 2026-07-13):** limiter uses `req.ip` (trust-proxy, spoof-resistant) + `Retry-After`; allocation = MAX+1 with random jitter on retries (lockstep-concurrency safe, 8 attempts); `completed_on` calendar-validated. **Accepted risk, on the record:** sequential cert numbers are enumerable over hours even rate-limited — tolerated BY DESIGN because the public endpoint only returns what the printed paper already shows; if opacity is ever wanted, v2 switches to random-suffix numbers.
 
 ## Reference implementation (foreman applies verbatim, then red-teams + playthrough as usual)
 
@@ -47,14 +48,15 @@ CREATE INDEX IF NOT EXISTS idx_training_certificates_user ON training_certificat
 // Public verify + admin issue/list/revoke. Registrar wires the mount in server.js.
 
 // Fixed-window limiter for the PUBLIC verify endpoint: 30 lookups/min/IP.
+// HARDENED per #68 finding 2: req.ip (trust proxy is already on, server.js:54;
+// matches auth.js's login limiters) — never client-settable X-Forwarded-For.
 const hits = new Map();
 function verifyLimiter(req, res, next) {
-  const ip = (req.headers['x-forwarded-for'] || '').split(',')[0].trim()
-    || req.socket.remoteAddress || 'unknown';
+  const ip = req.ip || 'unknown';
   const now = Date.now();
   const b = hits.get(ip);
   if (!b || now - b.start > 60000) { hits.set(ip, { start: now, n: 1 }); return next(); }
-  if (++b.n > 30) return res.status(429).json({ error: 'Too many lookups — try again in a minute.' });
+  if (++b.n > 30) return res.set('Retry-After', '60').status(429).json({ error: 'Too many lookups — try again in a minute.' });
   next();
 }
 setInterval(() => {
@@ -88,7 +90,10 @@ module.exports = function (app, pool, { requireAdmin }) {
     const userId = parseInt(req.body.user_id, 10);
     if (!userId) return res.status(400).json({ error: 'user_id required' });
     const completedOn = req.body.completed_on || new Date().toISOString().slice(0, 10);
-    if (!/^\d{4}-\d{2}-\d{2}$/.test(completedOn)) return res.status(400).json({ error: 'completed_on must be YYYY-MM-DD' });
+    // HARDENED per #68 minor: calendar-valid, not just digit-shaped (2026-13-40 → 400, not a 500 at INSERT).
+    const dchk = new Date(completedOn + 'T00:00:00Z');
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(completedOn) || isNaN(dchk) || dchk.toISOString().slice(0, 10) !== completedOn)
+      return res.status(400).json({ error: 'completed_on must be a valid YYYY-MM-DD date' });
     try {
       const { rows: urows } = await pool.query(
         `SELECT id, COALESCE(NULLIF(TRIM(full_name), ''), username) AS recipient FROM users WHERE id = $1`, [userId]);
@@ -101,11 +106,17 @@ module.exports = function (app, pool, { requireAdmin }) {
 
       const year = new Date().getFullYear();
       let cert = null;
-      for (let attempt = 0; attempt < 5 && !cert; attempt++) {
-        const { rows: [{ n }] } = await pool.query(
-          `SELECT COUNT(*)::int AS n FROM training_certificates WHERE cert_no LIKE $1`,
+      // HARDENED per #68 finding 1: MAX+1 (COUNT undercounts once numbers gap) and
+      // RANDOM jitter on retries — lockstep concurrent issues no longer collide on
+      // every attempt (the reproduced 5×-collision → 500). Gaps in numbering under
+      // contention are acceptable; uniqueness stays constraint-guaranteed.
+      for (let attempt = 0; attempt < 8 && !cert; attempt++) {
+        const { rows: [{ maxn }] } = await pool.query(
+          `SELECT COALESCE(MAX((SUBSTRING(cert_no FROM '[0-9]{4}$'))::int), 0) AS maxn
+             FROM training_certificates WHERE cert_no LIKE $1`,
           [`LFS-OSP-${year}-%`]);
-        const certNo = `LFS-OSP-${year}-${String(n + 1 + attempt).padStart(4, '0')}`;
+        const step = attempt === 0 ? 1 : 1 + Math.floor(Math.random() * 10);
+        const certNo = `LFS-OSP-${year}-${String(maxn + step).padStart(4, '0')}`;
         try {
           const { rows: [row] } = await pool.query(
             `INSERT INTO training_certificates
