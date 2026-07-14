@@ -7,6 +7,7 @@ const { test } = require('node:test');
 const assert = require('node:assert/strict');
 const {
   computeEffective,
+  isSelfGrant,
   ALL_KEYS,
   CATALOG,
   CATALOG_KEYS,
@@ -76,6 +77,30 @@ test('Rudy Douglas (Director) personal-grant shape: oversight, NOT billing', () 
   assert.ok(eff.has('hours.view_all'));
   assert.ok(eff.has('projects.view_all'));
   assert.ok(!eff.has('money.manage_billing'), 'Rudy must NOT hold billing');
+});
+
+// ── isSelfGrant: "nobody grants themselves" on BOTH paths (red-team BLOCKER 1) ──
+test('self-grant BLOCKED on the user path (own id, string or number)', () => {
+  const user = { id: 'uuid-abc', role: 'design_manager' };
+  assert.equal(isSelfGrant(user, 'user', 'uuid-abc'), true);
+  assert.equal(isSelfGrant({ id: 5, role: 'x' }, 'user', '5'), true); // normalized
+});
+
+test('self-grant BLOCKED on the ROLE path (own role) — the escalation the user-only guard missed', () => {
+  const user = { id: 'uuid-abc', role: 'design_manager' };
+  assert.equal(isSelfGrant(user, 'role', 'design_manager'), true);
+});
+
+test('granting to ANOTHER user or a role you do NOT hold is allowed (legit delegation)', () => {
+  const user = { id: 'uuid-abc', role: 'design_manager' };
+  assert.equal(isSelfGrant(user, 'user', 'uuid-other'), false);
+  assert.equal(isSelfGrant(user, 'role', 'permitting_manager'), false);
+  assert.equal(isSelfGrant(user, 'role', 'admin'), false);
+});
+
+test('isSelfGrant is safe on missing user / unknown subject_type', () => {
+  assert.equal(isSelfGrant(null, 'user', 'x'), false);
+  assert.equal(isSelfGrant({ id: 1, role: 'admin' }, 'bogus', '1'), false);
 });
 
 test('catalog is internally consistent: 16 unique keys, all grouped', () => {

@@ -114,6 +114,23 @@ async function getEffective(pool, user) {
 }
 
 /**
+ * Would granting `key` to (subjectType, subjectId) escalate the CALLER themselves?
+ * "Nobody grants themselves" (spec §VO lenses) — enforced on BOTH paths:
+ *   - user path: granting to your own user id;
+ *   - role path: granting to your OWN role (which unions straight back onto your
+ *     effective set via getEffective's role match — the escalation the user-only
+ *     guard missed). Granting to a role you DON'T hold, or to another user, is
+ *     legitimate delegation and is allowed.
+ * PURE + string-normalized so a number/string id can't slip past. Unit-tested.
+ */
+function isSelfGrant(user, subjectType, subjectId) {
+  if (!user) return false;
+  if (subjectType === 'user') return String(subjectId) === String(user.id);
+  if (subjectType === 'role') return String(subjectId) === String(user.role);
+  return false;
+}
+
+/**
  * Middleware factory: gate a route on a single permission key.
  * The API is the gate (spec §Model). FAILS CLOSED — a DB error denies non-admins.
  */
@@ -147,5 +164,6 @@ module.exports = {
   BASE_ROLE_SEED,
   computeEffective,
   getEffective,
+  isSelfGrant,
   requirePermission,
 };

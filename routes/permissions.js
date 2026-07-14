@@ -13,6 +13,7 @@ const {
   CATALOG,
   CATALOG_KEYS,
   getEffective,
+  isSelfGrant,
   requirePermission,
 } = require('./_permissions');
 
@@ -67,9 +68,11 @@ module.exports = function (app, pool) {
     const err = validateTarget(permission_key, subject_type, subject_id);
     if (err) return res.status(400).json({ error: err });
 
-    // No self-granting: a people.manage holder cannot grant to their OWN account.
-    if (subject_type === 'user' && String(subject_id) === String(req.user.id)) {
-      return res.status(403).json({ error: 'You cannot grant a permission to yourself.' });
+    // No self-granting: a people.manage holder cannot escalate their OWN account
+    // OR their own role (the role path unions straight back onto their effective
+    // set — see isSelfGrant). Delegating to other people/roles is allowed.
+    if (isSelfGrant(req.user, subject_type, subject_id)) {
+      return res.status(403).json({ error: 'You cannot grant a permission to yourself or your own role.' });
     }
 
     try {
