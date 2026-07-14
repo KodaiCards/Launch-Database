@@ -1,0 +1,402 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>Permissions — Launch Fiber</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+<link rel="stylesheet" href="/css/app-shell.css">
+<!-- Shared 4-skin (dark-only) app-shell engine — no bespoke/parallel palette (PRODUCT_BAR §2.7). -->
+<script src="/js/app-shell.js"></script>
+<script>AppShell.initTheme();</script>
+<style>
+/* Palette tokens come from the shared app-shell.css data-skin engine; this page
+   consumes them directly so it renders in whatever skin the user picked globally. */
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{font-family:var(--font);background:var(--gray-light);color:var(--text);min-height:100vh}
+button{font-family:inherit;cursor:pointer}
+a{color:var(--primary);text-decoration:none}
+
+.wrap{max-width:1500px;margin:0 auto;padding:20px 24px 80px}
+
+/* ── Header ── */
+.page-head{display:flex;align-items:center;gap:16px;flex-wrap:wrap;margin-bottom:6px}
+.page-head h1{font-size:22px;font-weight:700}
+.page-head .sub{color:var(--text-muted);font-size:13px;flex:1;min-width:220px}
+.head-actions{display:flex;align-items:center;gap:8px}
+.btn{border:1px solid var(--gray-border);background:var(--white);color:var(--text);
+     border-radius:8px;padding:7px 12px;font-size:13px;font-weight:600;display:inline-flex;align-items:center;gap:6px}
+.btn:hover{border-color:var(--primary)}
+.btn-icon{width:36px;height:36px;justify-content:center;padding:0}
+
+/* ── Toolbar: search + legend ── */
+.toolbar{display:flex;align-items:center;gap:14px;flex-wrap:wrap;margin:14px 0 18px}
+.search{position:relative;flex:1;min-width:240px;max-width:420px}
+.search i{position:absolute;left:12px;top:50%;transform:translateY(-50%);color:var(--text-muted);font-size:13px}
+.search input{width:100%;border:1px solid var(--gray-border);background:var(--white);color:var(--text);
+     border-radius:8px;padding:9px 12px 9px 34px;font-size:13px;font-family:var(--font)}
+.search input:focus{outline:none;border-color:var(--primary)}
+.legend{display:flex;gap:16px;flex-wrap:wrap;font-size:12px;color:var(--text-muted)}
+.legend b{color:var(--text-secondary);font-weight:600}
+
+/* ── Area sections + matrix ── */
+.area{background:var(--white);border:1px solid var(--gray-border);border-radius:12px;
+      margin-bottom:16px;overflow:hidden}
+.area-head{display:flex;align-items:center;gap:10px;padding:12px 16px;border-bottom:1px solid var(--gray-border);
+      background:var(--gray-light)}
+.area-head h2{font-size:14px;font-weight:700;letter-spacing:.02em;text-transform:uppercase;color:var(--text-secondary)}
+.area-head .count{font-size:12px;color:var(--text-muted);background:var(--surface-1);border:1px solid var(--gray-border);
+      border-radius:20px;padding:1px 9px}
+.matrix-scroll{overflow-x:auto}
+table.matrix{width:100%;border-collapse:collapse;font-size:13px;min-width:820px}
+table.matrix th,table.matrix td{padding:9px 10px;text-align:center;border-bottom:1px solid var(--gray-border);vertical-align:middle}
+table.matrix thead th{position:sticky;top:0;background:var(--white);z-index:1;font-size:11px;font-weight:600;
+      color:var(--text-muted);text-transform:uppercase;letter-spacing:.03em;white-space:nowrap}
+table.matrix tbody tr:last-child td{border-bottom:none}
+table.matrix tbody tr:hover{background:var(--surface-1)}
+.perm-cell{text-align:left;min-width:230px}
+.perm-cell .label{font-weight:600;color:var(--text)}
+.perm-cell .key{font-size:11px;color:var(--text-muted);font-family:ui-monospace,Menlo,Consolas,monospace}
+.role-col{min-width:64px}
+.people-col{text-align:left;min-width:220px}
+
+/* checkbox — styled via accent-color so it's legible in every skin (no OS-default control, §2.7) */
+input[type=checkbox].grant-cb{width:17px;height:17px;accent-color:var(--primary);cursor:pointer;margin:0}
+input[type=checkbox].grant-cb:disabled{cursor:not-allowed;opacity:.6}
+.default-mark{font-size:10px;color:var(--text-muted);display:block;margin-top:2px}
+
+/* people chips + picker */
+.chips{display:flex;flex-wrap:wrap;gap:6px;align-items:center}
+.chip{display:inline-flex;align-items:center;gap:6px;background:var(--primary-light);color:var(--text);
+      border:1px solid var(--gray-border);border-radius:16px;padding:3px 6px 3px 10px;font-size:12px}
+.chip button{border:none;background:none;color:var(--text-muted);font-size:12px;line-height:1;padding:2px;border-radius:50%}
+.chip button:hover{color:var(--danger)}
+.addbtn{border:1px dashed var(--gray-border);background:transparent;color:var(--text-secondary);border-radius:16px;
+      padding:3px 10px;font-size:12px;font-weight:600}
+.addbtn:hover{border-color:var(--primary);color:var(--primary)}
+
+/* custom person picker (NOT a native select — §2.7) */
+.picker{position:relative;display:inline-block}
+.picker-pop{position:absolute;z-index:20;top:calc(100% + 4px);left:0;width:260px;background:var(--white);
+      border:1px solid var(--gray-border);border-radius:10px;box-shadow:0 8px 28px rgba(0,0,0,.28);padding:8px;display:none}
+.picker-pop.open{display:block}
+.picker-pop input{width:100%;border:1px solid var(--gray-border);background:var(--surface-1);color:var(--text);
+      border-radius:7px;padding:7px 9px;font-size:13px;margin-bottom:6px;font-family:var(--font)}
+.picker-pop input:focus{outline:none;border-color:var(--primary)}
+.picker-list{max-height:220px;overflow-y:auto}
+.picker-item{padding:7px 9px;border-radius:6px;cursor:pointer;font-size:13px;display:flex;justify-content:space-between;gap:8px}
+.picker-item:hover{background:var(--primary-light)}
+.picker-item .r{color:var(--text-muted);font-size:11px}
+.picker-empty{padding:10px;color:var(--text-muted);font-size:12px;text-align:center}
+
+/* states */
+.state{max-width:520px;margin:80px auto;text-align:center;color:var(--text-muted)}
+.state i{font-size:40px;color:var(--text-muted);margin-bottom:14px}
+.state h2{color:var(--text);font-size:18px;margin-bottom:6px}
+.hidden{display:none!important}
+
+/* undo bar (optimistic, no confirm pop-ups — §2.3) */
+.undo-bar{position:fixed;left:50%;bottom:24px;transform:translateX(-50%);background:var(--text);color:var(--white);
+      border-radius:10px;padding:10px 14px;display:none;align-items:center;gap:14px;box-shadow:0 8px 28px rgba(0,0,0,.3);
+      font-size:13px;z-index:40;max-width:92vw}
+.undo-bar.show{display:flex}
+.undo-bar button{background:none;border:none;color:#fff;font-weight:700;text-decoration:underline}
+.toast{position:fixed;left:50%;bottom:24px;transform:translateX(-50%);background:var(--danger);color:#fff;
+      border-radius:10px;padding:10px 16px;font-size:13px;z-index:41;display:none;box-shadow:0 8px 28px rgba(0,0,0,.3)}
+.toast.show{display:block}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="page-head">
+    <h1><i class="fa-solid fa-user-shield" style="color:var(--primary);margin-right:8px"></i>Permissions</h1>
+    <div class="sub">Give any capability to a <b>role</b> or a specific <b>person</b>. Changes take effect immediately — no deploy. The server is always the gate; this page is the control surface.</div>
+    <div class="head-actions">
+      <button class="btn btn-icon" onclick="AppShell.toggleTheme()" title="Switch theme"><i class="fa-solid fa-palette"></i></button>
+      <a class="btn" href="/settings.html"><i class="fa-solid fa-arrow-left"></i> Settings</a>
+    </div>
+  </div>
+
+  <!-- Access-denied state (server is the real gate; this is UX only) -->
+  <div id="denied" class="state hidden">
+    <i class="fa-solid fa-lock"></i>
+    <h2>You don’t have access to this page</h2>
+    <p>Managing permissions requires the <b>People &amp; permissions</b> capability. Ask an admin to grant it to you.</p>
+  </div>
+
+  <!-- Loading -->
+  <div id="loading" class="state">
+    <i class="fa-solid fa-spinner fa-spin"></i>
+    <h2>Loading permissions…</h2>
+  </div>
+
+  <!-- Main -->
+  <div id="content" class="hidden">
+    <div class="toolbar">
+      <div class="search">
+        <i class="fa-solid fa-magnifying-glass"></i>
+        <input id="filter" type="text" placeholder="Filter permissions…" aria-label="Filter permissions" oninput="applyFilter()">
+      </div>
+      <div class="legend">
+        <span><b>Checkbox</b> = granted to that role</span>
+        <span><b>People</b> = granted to specific individuals</span>
+        <span><b>Admin</b> holds everything by default</span>
+      </div>
+    </div>
+    <div id="areas"></div>
+  </div>
+</div>
+
+<div id="undo" class="undo-bar"><span id="undo-msg"></span><button onclick="doUndo()">Undo</button></div>
+<div id="toast" class="toast"></div>
+
+<script src="/js/api.js"></script>
+<script>
+// ── Roles rendered as matrix columns. Mirrors GRANTABLE_ROLES in routes/permissions.js.
+// admin is shown but non-editable (it holds every key by role — see computeEffective).
+const ROLES = [
+  { id:'admin',               label:'Admin',      adminAll:true },
+  { id:'design_manager',      label:'Design Mgr' },
+  { id:'permitting_manager',  label:'Permit Mgr' },
+  { id:'design_engineer',     label:'Design Eng' },
+  { id:'permitting_engineer', label:'Permit Eng' },
+  { id:'contractor',          label:'Contractor' },
+  { id:'customer',            label:'Customer' },
+  { id:'trainee',             label:'Trainee' },
+];
+
+let CATALOG = [];          // [{key, area, label}]
+let BASE_SEEDS = {};       // { role: [keys] }  — code defaults (shown disabled if the API exposes them)
+let USERS = [];            // [{id, full_name, username, role}]
+// active grants indexed for O(1) lookup
+const roleGrant = {};      // roleGrant[key] = Set(role)
+const userGrant = {};      // userGrant[key] = [{id, name, granted_by, granted_at}]
+let lastAction = null;     // for undo
+
+function esc(s){ return String(s==null?'':s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
+function fmtDate(d){ try{ return new Date(d).toLocaleDateString(undefined,{year:'numeric',month:'short',day:'numeric'}); }catch(e){ return d||''; } }
+
+async function boot(){
+  // Gate the page on the caller's own effective perms (UX only — every mutation is
+  // server-gated on people.manage regardless of what this page shows).
+  let me;
+  try { me = await api('/api/permissions/me'); }
+  catch(e){ return fail(); }
+  const perms = new Set((me && me.permissions) || []);
+  if (!perms.has('people.manage')) { show('denied'); return; }
+
+  try {
+    const [cat, grants, users] = await Promise.all([
+      api('/api/permissions/catalog'),
+      api('/api/permissions/grants'),
+      api('/api/users').catch(()=>[]),   // people picker degrades gracefully if unavailable
+    ]);
+    CATALOG = (cat && cat.catalog) || [];
+    BASE_SEEDS = (cat && cat.base_seeds) || {};      // forward-compatible: used only if #73 exposes it
+    USERS = (Array.isArray(users) ? users : (users && users.users) || [])
+              .filter(u => u && u.id && u.active !== false);
+    indexGrants((grants && grants.grants) || []);
+    render();
+    show('content');
+  } catch(e){ fail(e); }
+}
+
+function fail(e){
+  document.getElementById('loading').innerHTML =
+    '<i class="fa-solid fa-triangle-exclamation"></i><h2>Couldn’t load permissions</h2><p>'+esc(e&&e.message||'Please retry.')+'</p>';
+}
+function show(id){ ['loading','denied','content'].forEach(x=>document.getElementById(x).classList.toggle('hidden', x!==id)); }
+
+function indexGrants(rows){
+  for (const k in roleGrant) delete roleGrant[k];
+  for (const k in userGrant) delete userGrant[k];
+  for (const g of rows){
+    if (g.subject_type === 'role'){
+      (roleGrant[g.permission_key] = roleGrant[g.permission_key] || new Set()).add(g.subject_id);
+    } else if (g.subject_type === 'user'){
+      (userGrant[g.permission_key] = userGrant[g.permission_key] || []).push({
+        id: g.subject_id,
+        name: g.subject_name || nameOf(g.subject_id),
+        granted_by: g.granted_by, granted_at: g.granted_at,
+      });
+    }
+  }
+}
+function nameOf(uid){ const u = USERS.find(x=>String(x.id)===String(uid)); return u ? (u.full_name||u.username) : ('user '+String(uid).slice(0,8)); }
+
+function render(){
+  // Group by area, preserving catalog order → new keys/areas auto-appear, no page edit (spec §Model).
+  const order = []; const groups = {};
+  for (const c of CATALOG){ if(!groups[c.area]){ groups[c.area]=[]; order.push(c.area); } groups[c.area].push(c); }
+  const host = document.getElementById('areas');
+  host.innerHTML = order.map(area => areaHtml(area, groups[area])).join('');
+}
+
+function areaHtml(area, items){
+  const roleHead = ROLES.map(r=>`<th class="role-col" title="${esc(r.label)}">${esc(r.label)}</th>`).join('');
+  const rows = items.map(rowHtml).join('');
+  return `
+  <section class="area" data-area="${esc(area)}">
+    <div class="area-head"><h2>${esc(area)}</h2><span class="count">${items.length}</span></div>
+    <div class="matrix-scroll">
+      <table class="matrix">
+        <thead><tr><th class="perm-cell">Permission</th>${roleHead}<th class="people-col">People</th></tr></thead>
+        <tbody>${rows}</tbody>
+      </table>
+    </div>
+  </section>`;
+}
+
+function rowHtml(c){
+  const cells = ROLES.map(r => roleCell(c.key, r)).join('');
+  return `<tr data-key="${esc(c.key)}" data-search="${esc((c.label+' '+c.key).toLowerCase())}">
+    <td class="perm-cell"><div class="label">${esc(c.label)}</div><div class="key">${esc(c.key)}</div></td>
+    ${cells}
+    <td class="people-col">${peopleCell(c.key)}</td>
+  </tr>`;
+}
+
+function roleCell(key, r){
+  if (r.adminAll){
+    return `<td class="role-col"><input type="checkbox" class="grant-cb" checked disabled
+              title="Admin holds every permission by default"><span class="default-mark">default</span></td>`;
+  }
+  const seeded = (BASE_SEEDS[r.id]||[]).includes(key);
+  if (seeded){
+    return `<td class="role-col"><input type="checkbox" class="grant-cb" checked disabled
+              title="Granted by default for this role (a code default, not revocable here)"><span class="default-mark">default</span></td>`;
+  }
+  const on = roleGrant[key] && roleGrant[key].has(r.id);
+  return `<td class="role-col"><input type="checkbox" class="grant-cb" ${on?'checked':''}
+            onchange="toggleRole('${esc(key)}','${esc(r.id)}',this)"
+            aria-label="${esc(r.label)} — ${esc(key)}"></td>`;
+}
+
+function peopleCell(key){
+  const list = userGrant[key] || [];
+  const chips = list.map(u => `<span class="chip" title="Granted by ${esc(u.granted_by||'?')} on ${esc(fmtDate(u.granted_at))}">
+      ${esc(u.name)}<button onclick="revokeUser('${esc(key)}','${esc(u.id)}')" aria-label="Revoke ${esc(u.name)}"><i class="fa-solid fa-xmark"></i></button></span>`).join('');
+  return `<div class="chips">${chips}
+    <span class="picker">
+      <button class="addbtn" onclick="openPicker(event,'${esc(key)}')"><i class="fa-solid fa-plus"></i> Add</button>
+      <div class="picker-pop" data-key="${esc(key)}">
+        <input type="text" placeholder="Search people…" oninput="filterPicker(this)" aria-label="Search people">
+        <div class="picker-list"></div>
+      </div>
+    </span></div>`;
+}
+
+// ── Grant / revoke (optimistic; server is the source of truth) ──────────────
+async function toggleRole(key, role, cb){
+  const want = cb.checked;
+  cb.disabled = true;
+  try {
+    await api('/api/permissions/' + (want?'grant':'revoke'), 'POST',
+      { permission_key:key, subject_type:'role', subject_id:role });
+    if (want) (roleGrant[key]=roleGrant[key]||new Set()).add(role);
+    else if (roleGrant[key]) roleGrant[key].delete(role);
+    offerUndo(`${want?'Granted':'Revoked'} ${key} ${want?'to':'from'} ${role}`,
+              () => toggleRoleSilent(key, role, !want));
+  } catch(e){
+    cb.checked = !want;                       // revert the optimistic flip
+    toast(e && e.message || 'Change failed');
+  } finally { cb.disabled = false; }
+}
+async function toggleRoleSilent(key, role, want){
+  await api('/api/permissions/' + (want?'grant':'revoke'), 'POST',
+    { permission_key:key, subject_type:'role', subject_id:role });
+  if (want) (roleGrant[key]=roleGrant[key]||new Set()).add(role);
+  else if (roleGrant[key]) roleGrant[key].delete(role);
+  refreshRow(key);
+}
+
+async function grantUser(key, uid){
+  try {
+    await api('/api/permissions/grant','POST',{ permission_key:key, subject_type:'user', subject_id:uid });
+    (userGrant[key]=userGrant[key]||[]).push({ id:uid, name:nameOf(uid), granted_by:'you', granted_at:new Date().toISOString() });
+    refreshRow(key);
+    offerUndo(`Granted ${key} to ${nameOf(uid)}`, async ()=>{ await api('/api/permissions/revoke','POST',{permission_key:key,subject_type:'user',subject_id:uid}); userGrant[key]=(userGrant[key]||[]).filter(u=>String(u.id)!==String(uid)); refreshRow(key); });
+  } catch(e){ toast(e && e.message || 'Grant failed'); }
+}
+async function revokeUser(key, uid){
+  const prev = (userGrant[key]||[]).find(u=>String(u.id)===String(uid));
+  try {
+    await api('/api/permissions/revoke','POST',{ permission_key:key, subject_type:'user', subject_id:uid });
+    userGrant[key] = (userGrant[key]||[]).filter(u=>String(u.id)!==String(uid));
+    refreshRow(key);
+    offerUndo(`Revoked ${key} from ${prev?prev.name:'user'}`, async ()=>{ await api('/api/permissions/grant','POST',{permission_key:key,subject_type:'user',subject_id:uid}); (userGrant[key]=userGrant[key]||[]).push(prev||{id:uid,name:nameOf(uid),granted_by:'you',granted_at:new Date().toISOString()}); refreshRow(key); });
+  } catch(e){ toast(e && e.message || 'Revoke failed'); }
+}
+
+function refreshRow(key){
+  const tr = document.querySelector(`tr[data-key="${cssEscape(key)}"]`);
+  if (!tr) return;
+  tr.querySelector('.people-col').innerHTML = peopleCell(key);
+}
+function cssEscape(s){ return String(s).replace(/["\\]/g,'\\$&'); }
+
+// ── Person picker (custom — no native <select>, §2.7) ──
+let openPop = null;
+function openPicker(ev, key){
+  ev.stopPropagation();
+  closePicker();
+  const pop = ev.currentTarget.parentNode.querySelector('.picker-pop');
+  pop.classList.add('open'); openPop = pop;
+  renderPickerList(pop, '');
+  const inp = pop.querySelector('input'); inp.value=''; inp.focus();
+}
+function closePicker(){ if(openPop){ openPop.classList.remove('open'); openPop=null; } }
+function filterPicker(inp){ renderPickerList(inp.closest('.picker-pop'), inp.value.toLowerCase()); }
+function renderPickerList(pop, q){
+  const key = pop.getAttribute('data-key');
+  const have = new Set((userGrant[key]||[]).map(u=>String(u.id)));
+  const matches = USERS.filter(u => !have.has(String(u.id)) &&
+      ((u.full_name||'')+' '+(u.username||'')+' '+(u.role||'')).toLowerCase().includes(q));
+  const list = pop.querySelector('.picker-list');
+  if (!matches.length){ list.innerHTML = `<div class="picker-empty">${USERS.length?'No matching people':'No people available'}</div>`; return; }
+  list.innerHTML = matches.slice(0,50).map(u =>
+    `<div class="picker-item" onclick="pick('${esc(key)}','${esc(u.id)}')">
+       <span>${esc(u.full_name||u.username)}</span><span class="r">${esc(u.role||'')}</span></div>`).join('');
+}
+function pick(key, uid){ closePicker(); grantUser(key, uid); }
+document.addEventListener('click', e=>{ if(openPop && !e.target.closest('.picker')) closePicker(); });
+
+// ── Filter ──
+function applyFilter(){
+  const q = document.getElementById('filter').value.toLowerCase();
+  document.querySelectorAll('section.area').forEach(sec=>{
+    let visible = 0;
+    sec.querySelectorAll('tbody tr').forEach(tr=>{
+      const hit = tr.getAttribute('data-search').includes(q);
+      tr.classList.toggle('hidden', !hit); if(hit) visible++;
+    });
+    sec.classList.toggle('hidden', visible===0);
+  });
+}
+
+// ── Undo bar + toast (§2.3 optimistic, no confirm dialogs) ──
+let undoTimer=null;
+function offerUndo(msg, fn){
+  lastAction = fn;
+  document.getElementById('undo-msg').textContent = msg;
+  const bar = document.getElementById('undo'); bar.classList.add('show');
+  clearTimeout(undoTimer); undoTimer = setTimeout(()=>bar.classList.remove('show'), 6000);
+}
+async function doUndo(){
+  const fn = lastAction; lastAction=null;
+  document.getElementById('undo').classList.remove('show');
+  if (fn) { try { await fn(); } catch(e){ toast(e && e.message || 'Undo failed'); } }
+}
+let toastTimer=null;
+function toast(msg){
+  const t=document.getElementById('toast'); t.textContent=msg; t.classList.add('show');
+  clearTimeout(toastTimer); toastTimer=setTimeout(()=>t.classList.remove('show'),4000);
+}
+
+boot();
+</script>
+</body>
+</html>
