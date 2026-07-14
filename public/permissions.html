@@ -171,6 +171,7 @@ const ROLES = [
 let CATALOG = [];          // [{key, area, label}]
 let BASE_SEEDS = {};       // { role: [keys] }  — code defaults (shown disabled if the API exposes them)
 let USERS = [];            // [{id, full_name, username, role}]
+let usersLoadError = false; // /api/users is admin-gated; a delegated people.manage holder may not get it
 // active grants indexed for O(1) lookup
 const roleGrant = {};      // roleGrant[key] = Set(role)
 const userGrant = {};      // userGrant[key] = [{id, name, granted_by, granted_at}]
@@ -184,20 +185,26 @@ async function boot(){
   // server-gated on people.manage regardless of what this page shows).
   let me;
   try { me = await api('/api/permissions/me'); }
-  catch(e){ return fail(); }
+  catch(e){ return fail(e); }
   const perms = new Set((me && me.permissions) || []);
   if (!perms.has('people.manage')) { show('denied'); return; }
 
   try {
-    const [cat, grants, users] = await Promise.all([
+    const [cat, grants] = await Promise.all([
       api('/api/permissions/catalog'),
       api('/api/permissions/grants'),
-      api('/api/users').catch(()=>[]),   // people picker degrades gracefully if unavailable
     ]);
     CATALOG = (cat && cat.catalog) || [];
     BASE_SEEDS = (cat && cat.base_seeds) || {};      // forward-compatible: used only if #73 exposes it
-    USERS = (Array.isArray(users) ? users : (users && users.users) || [])
-              .filter(u => u && u.id && u.active !== false);
+    // People list is a separate, more-restrictive fetch: GET /api/users is
+    // admin-gated (auth.js), so a delegated (non-admin) people.manage holder
+    // may be denied it. Track that so the picker distinguishes "no people"
+    // from "couldn't load the list" instead of showing a misleading empty state.
+    try {
+      const users = await api('/api/users');
+      USERS = (Array.isArray(users) ? users : (users && users.users) || [])
+                .filter(u => u && u.id && u.active !== false);
+    } catch(e){ USERS = []; usersLoadError = true; }
     indexGrants((grants && grants.grants) || []);
     render();
     show('content');
@@ -334,7 +341,17 @@ async function revokeUser(key, uid){
 function refreshRow(key){
   const tr = document.querySelector(`tr[data-key="${cssEscape(key)}"]`);
   if (!tr) return;
-  tr.querySelector('.people-col').innerHTML = peopleCell(key);
+  const c = CATALOG.find(x => x.key === key);
+  if (!c){ const pc = tr.querySelector('.people-col'); if (pc) pc.innerHTML = peopleCell(key); return; }
+  // Rebuild the WHOLE row from current in-memory state so both the role
+  // checkboxes AND the people cell reflect truth — fixes the Undo desync where
+  // only the people column was refreshed and an undone role toggle left a stale
+  // checkbox. data-key / data-search stay on the <tr> (only innerHTML changes).
+  const cells = ROLES.map(r => roleCell(c.key, r)).join('');
+  tr.innerHTML =
+    `<td class="perm-cell"><div class="label">${esc(c.label)}</div><div class="key">${esc(c.key)}</div></td>`
+    + cells
+    + `<td class="people-col">${peopleCell(c.key)}</td>`;
 }
 function cssEscape(s){ return String(s).replace(/["\\]/g,'\\$&'); }
 
@@ -356,7 +373,12 @@ function renderPickerList(pop, q){
   const matches = USERS.filter(u => !have.has(String(u.id)) &&
       ((u.full_name||'')+' '+(u.username||'')+' '+(u.role||'')).toLowerCase().includes(q));
   const list = pop.querySelector('.picker-list');
-  if (!matches.length){ list.innerHTML = `<div class="picker-empty">${USERS.length?'No matching people':'No people available'}</div>`; return; }
+  if (!matches.length){
+    const msg = USERS.length ? 'No matching people'
+      : (usersLoadError ? 'Can’t load the people list — this may need admin rights. Role grants still work.'
+                        : 'No people available');
+    list.innerHTML = `<div class="picker-empty">${msg}</div>`; return;
+  }
   list.innerHTML = matches.slice(0,50).map(u =>
     `<div class="picker-item" onclick="pick('${esc(key)}','${esc(u.id)}')">
        <span>${esc(u.full_name||u.username)}</span><span class="r">${esc(u.role||'')}</span></div>`).join('');
