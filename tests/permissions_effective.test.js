@@ -27,21 +27,21 @@ test('a base engineer with no grants has nothing', () => {
   assert.equal(eff.size, 0);
 });
 
-test('managers base-hold minijobs.add and nothing else by default', () => {
+test('L-016 NO BAKING: a manager holds NOTHING by default (defaults are data rows, not code)', () => {
   for (const role of ['design_manager', 'permitting_manager']) {
     const eff = computeEffective({ role });
-    assert.deepEqual([...eff].sort(), ['minijobs.add']);
+    assert.equal(eff.size, 0);
   }
 });
 
-test('role grants union onto the base seed', () => {
+test('a role default like managers→minijobs.add arrives as a role-grant ROW, not baked', () => {
+  // What used to be BASE_ROLE_SEED is now an editable permission_grants row that
+  // flows in via roleGrants — same effect, but revocable on the page (L-016).
   const eff = computeEffective({
     role: 'design_manager',
-    roleGrants: ['hours.edit_subordinates'],
+    roleGrants: ['minijobs.add', 'hours.edit_subordinates'],
   });
-  assert.ok(eff.has('minijobs.add'));        // base
-  assert.ok(eff.has('hours.edit_subordinates')); // role grant
-  assert.equal(eff.size, 2);
+  assert.deepEqual([...eff].sort(), ['hours.edit_subordinates', 'minijobs.add']);
 });
 
 test('personal grants union in (Carter’s one-person mini-jobs case)', () => {
@@ -91,14 +91,14 @@ test('bundle keys union onto base + grants (the "Director" bundle case)', () => 
   assert.deepEqual([...eff].sort(), ['cockpit.view', 'hours.view_all', 'projects.view_all']);
 });
 
-test('bundle keys de-dupe with role/personal grants and honor base seed', () => {
+test('bundle keys de-dupe with role + personal grants (all data, no baked base)', () => {
   const eff = computeEffective({
-    role: 'design_manager',                 // base: minijobs.add
+    role: 'design_manager',                 // L-016: no baked base
     roleGrants: ['projects.view_all'],
     userGrants: ['cockpit.view'],
     bundleKeys: ['cockpit.view', 'files.browse_all'],
   });
-  assert.deepEqual([...eff].sort(), ['cockpit.view', 'files.browse_all', 'minijobs.add', 'projects.view_all']);
+  assert.deepEqual([...eff].sort(), ['cockpit.view', 'files.browse_all', 'projects.view_all']);
 });
 
 test('unknown bundle keys are filtered (bundles compose catalog keys only)', () => {

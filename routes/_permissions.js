@@ -54,36 +54,28 @@ const CATALOG = [
 const ALL_KEYS = CATALOG.map((c) => c.key);
 const CATALOG_KEYS = new Set(ALL_KEYS);
 
-// ── Base-role seeds (spec §Model + rulings) ──────────────────────────────────
-// Only what the spec says a role holds BY DEFAULT. admin = everything (special-
-// cased in computeEffective, not listed here). Managers get minijobs.add "by
-// default" (ruling #4). Everything else is granted case-by-case (role or personal
-// grants seeded in the migration + editable on the Settings page) — kept minimal
-// so capability stays data-driven (D013), not hardcoded.
-//   NOTE for VO/Registrar: whether managers should ALSO base-hold
-//   hours.edit_subordinates (ruling #3) vs receive it as a seeded ROLE GRANT is
-//   flagged on the issue — this file seeds it as a role grant (configurable),
-//   NOT a base seed, so it shows on the Settings page and can be revoked.
-const BASE_ROLE_SEED = {
-  design_manager:     ['minijobs.add'],
-  permitting_manager: ['minijobs.add'],
-};
-
 /**
  * PURE effective-permission resolver.
+ *
+ * L-016 NO BAKING: the ONLY coded permission behavior is the admin bootstrap
+ * (admin implicitly holds everything, so the first grant can be made). NO role
+ * defaults are baked here — a role default like "managers get minijobs.add" is
+ * DATA (an editable, revocable role-grant ROW in permission_grants), not code,
+ * and flows in through `roleGrants`. Effective = role grants ∪ personal grants ∪
+ * custom-role bundle keys, filtered to registered catalog keys.
+ *
  * @param {Object} p
- * @param {string} p.role         the user's base role
- * @param {string[]} [p.roleGrants] permission keys granted to that role (non-revoked)
- * @param {string[]} [p.userGrants] permission keys granted to the user personally (non-revoked)
+ * @param {string} p.role         the user's base role (only 'admin' is special)
+ * @param {string[]} [p.roleGrants] permission keys granted to that role (non-revoked rows)
+ * @param {string[]} [p.userGrants] permission keys granted to the user personally (non-revoked rows)
+ * @param {string[]} [p.bundleKeys] permission keys from the user's assigned bundles (#76)
  * @returns {Set<string>} the effective permission keys
  */
 function computeEffective({ role, roleGrants = [], userGrants = [], bundleKeys = [] }) {
-  // admin holds every catalog key, unconditionally.
+  // Admin bootstrap — the only coded default (L-016).
   if (role === 'admin') return new Set(ALL_KEYS);
 
-  // Effective = base-role seed ∪ role grants ∪ personal grants ∪ custom-role
-  // bundle keys (#76). All unioned, filtered to registered catalog keys.
-  const eff = new Set(BASE_ROLE_SEED[role] || []);
+  const eff = new Set();
   for (const list of [roleGrants, userGrants, bundleKeys]) {
     for (const k of list) if (CATALOG_KEYS.has(k)) eff.add(k);
   }
@@ -225,7 +217,6 @@ module.exports = {
   CATALOG,
   ALL_KEYS,
   CATALOG_KEYS,
-  BASE_ROLE_SEED,
   capabilityGrantsTimeEdit,
   computeEffective,
   getEffective,
