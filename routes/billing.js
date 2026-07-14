@@ -1,4 +1,4 @@
-// routes/billing.js — bulk billing + saved batches + monthly report.
+// routes/billing.js — bulk billing + saved batches.
 //
 // Endpoints:
 //   POST /api/billing/bill-multiple        — bill N projects as one invoice
@@ -7,7 +7,6 @@
 //   POST /api/billing/batches              — save a new batch
 //   DELETE /api/billing/batches/:id        — delete a batch (cascades items)
 //   POST /api/billing/batches/:id/confirm  — turn a batch into a real invoice
-//   GET  /api/billing/report               — monthly invoices + YTD totals
 //
 // All manager+admin. The bulk endpoint is the canonical path for the
 // admin "bill these projects now" flow (cadence-aware: monthly projects
@@ -617,50 +616,4 @@ module.exports = function installBillingRoutes(app, pool, mw) {
     }
   });
 
-  // ─── BILLING REPORT ───────────────────────────────────────────────────────
-
-  app.get('/api/billing/report', requireManagerOrAdmin, async (req, res) => {
-    const month = req.query.month ? parseInt(req.query.month, 10) : null;
-    const year = req.query.year ? parseInt(req.query.year, 10) : new Date().getFullYear();
-    try {
-      let where, params;
-      if (month) {
-        where = `WHERE EXTRACT(MONTH FROM invoice_date) = $1 AND EXTRACT(YEAR FROM invoice_date) = $2`;
-        params = [month, year];
-      } else {
-        where = `WHERE EXTRACT(YEAR FROM invoice_date) = $1`;
-        params = [year];
-      }
-      const invR = await pool.query(`
-        SELECT inv.id, inv.invoice_number, inv.invoice_date, inv.total_amount, inv.status, inv.notes,
-               cl.name as client_name
-        FROM invoices inv
-        LEFT JOIN clients cl ON cl.id = inv.client_id
-        ${where}
-        ORDER BY inv.invoice_date ASC, inv.created_at ASC
-      `, params);
-
-      // Sum in integer cents to avoid float drift on large monthly rollups.
-      const monthlyRev = month
-        ? invR.rows.reduce((s, r) => s + Math.round(parseFloat(r.total_amount || 0) * 100), 0) / 100
-        : null;
-
-      const ytdR = await pool.query(`
-        SELECT COALESCE(SUM(total_amount), 0)::float AS ytd
-        FROM invoices
-        WHERE EXTRACT(YEAR FROM invoice_date) = $1
-      `, [year]);
-
-      res.json({
-        year,
-        month,
-        monthly_revenue: monthlyRev,
-        ytd_revenue: parseFloat(ytdR.rows[0].ytd) || 0,
-        invoices: invR.rows
-      });
-    } catch (e) {
-      console.error('[billing:report]', e && e.message);
-      res.status(500).json({ error: 'Internal error.' });
-    }
-  });
 };

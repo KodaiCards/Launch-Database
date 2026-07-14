@@ -422,38 +422,6 @@ textarea{resize:vertical;min-height:72px}
 .modal-body{padding:22px}
 .modal-footer{padding:14px 22px;border-top:1px solid var(--gray-border);display:flex;justify-content:flex-end;gap:8px;background:var(--gray-light);border-radius:0 0 12px 12px}
 
-/* AI CHAT PANEL */
-.ai-panel{width:360px;position:fixed;top:100px;right:0;bottom:0;border-left:1px solid var(--gray-border);background:var(--white);display:flex;flex-direction:column;transition:transform .2s;z-index:18;transform:translateX(0)}
-.ai-panel.collapsed{transform:translateX(100%);overflow:hidden;border:none}
-/* When AI panel is open on desktop, push the page content left to make room */
-body.ai-open .main{padding-right:360px}
-.ai-header{padding:14px 16px;border-bottom:1px solid var(--gray-border);display:flex;align-items:center;gap:8px;background:var(--primary);color:#fff;flex-shrink:0}
-.ai-header-title{font-weight:600;font-size:14px;flex:1}
-.ai-dot{width:8px;height:8px;border-radius:50%;background:#4AE54A;flex-shrink:0}
-.ai-messages{flex:1;overflow-y:auto;padding:14px;display:flex;flex-direction:column;gap:10px}
-/* flex-shrink:0 — without it, .ai-msg children inside a column flex container
-   shrink to ~0px when the container's accumulated children would overflow.
-   The bulk_create_projects approval card has tall inner content (99-spec
-   <details><pre>) and was collapsing to height:3px, hiding the approval
-   header, the rows, and the Apply button. The user reported "nothing's
-   working" — the card was actually rendered, just zero-height. */
-.ai-msg{max-width:94%;font-size:13px;line-height:1.5;flex-shrink:0}
-.ai-msg.user{align-self:flex-end;background:var(--primary);color:#fff;padding:8px 12px;border-radius:12px 12px 3px 12px}
-.ai-msg.assistant{align-self:flex-start;background:var(--gray-light);color:var(--text);padding:8px 12px;border-radius:3px 12px 12px 12px}
-.ai-msg.assistant strong{color:var(--primary)}
-.ai-action-btn{display:block;margin-top:8px;padding:7px 12px;background:var(--primary);color:#fff;border:none;border-radius:7px;cursor:pointer;font-size:12px;font-weight:600;width:100%}
-.ai-action-btn:hover{background:var(--primary-dark)}
-.ai-input-area{padding:12px;border-top:1px solid var(--gray-border);display:flex;flex-direction:column;gap:6px;flex-shrink:0}
-.ai-input-row{display:flex;gap:6px}
-.ai-input{flex:1;border:1px solid var(--gray-border);border-radius:8px;padding:8px 10px;font-size:13px;font-family:var(--font);resize:none;height:56px}
-.ai-send{width:40px;height:40px;background:var(--primary);color:#fff;border:none;border-radius:8px;cursor:pointer;font-size:16px;flex-shrink:0}
-.ai-send:hover{background:var(--primary-dark)}
-.ai-toggle{position:fixed;bottom:24px;right:24px;width:48px;height:48px;background:var(--primary);color:#fff;border-radius:50%;border:none;cursor:pointer;font-size:20px;box-shadow:0 4px 16px rgba(0,0,0,.2);z-index:500;display:none}
-.ai-thinking{display:flex;gap:4px;padding:8px 12px;background:var(--gray-light);border-radius:3px 12px 12px 12px;align-self:flex-start}
-.ai-thinking span{width:7px;height:7px;border-radius:50%;background:var(--text-muted);animation:think .8s infinite}
-.ai-thinking span:nth-child(2){animation-delay:.15s}
-.ai-thinking span:nth-child(3){animation-delay:.3s}
-@keyframes think{0%,100%{opacity:.3;transform:translateY(0)}50%{opacity:1;transform:translateY(-4px)}}
 
 /* PIPELINE */
 .pipeline{display:flex;align-items:center;gap:0}
@@ -506,7 +474,7 @@ select.filter{border:1px solid var(--gray-border);border-radius:7px;padding:7px 
    drawers, undo bar, AI panel, action buttons), and let tables break
    across pages cleanly. */
 @media print {
-  .nav,.ai-panel,.header,.btn,.modal-overlay,#audit-drawer,#audit-drawer-backdrop,#lfs-undo-bar,#bill-selected-bar{display:none!important}
+  .nav,.header,.btn,.modal-overlay,#audit-drawer,#audit-drawer-backdrop,#lfs-undo-bar,#bill-selected-bar{display:none!important}
   .view{display:block!important;padding:0;overflow:visible}
   .card{border:1px solid #ccc;break-inside:avoid;box-shadow:none}
   body{background:#fff;color:#000}
@@ -533,7 +501,6 @@ select.filter{border:1px solid var(--gray-border);border-radius:7px;padding:7px 
 }
 
 /* RESPONSIVE */
-@media(max-width:900px){.ai-panel{display:none}.ai-toggle{display:flex;align-items:center;justify-content:center}}
 
 /* Mobile (≤640px) — phone landscape and smaller. The admin was desktop-
    first; below this breakpoint it falls apart without overrides. We keep
@@ -543,7 +510,7 @@ select.filter{border:1px solid var(--gray-border);border-radius:7px;padding:7px 
 @media(max-width:640px){
   /* Header: tighten padding and hide button text labels (icon stays).
      The header has a logo + "Project Management System" tagline + the
-     user pill + clock + Settings/Approvals/AI Assistant buttons. The
+     user pill + clock + Settings/Approvals buttons. The
      tagline + user pill text get hidden so the right-side icon buttons
      fit on a 360px-wide phone. */
   .header{padding:0 10px;gap:6px}
@@ -603,9 +570,6 @@ select.filter{border:1px solid var(--gray-border);border-radius:7px;padding:7px 
   /* Buttons: slightly tighter so multiple-button rows fit */
   .btn{padding:6px 10px;font-size:12px}
   .btn-sm{padding:5px 8px;font-size:11px}
-
-  /* AI Assistant panel was already hidden ≤900px. The toggle button
-     remains visible in the header for opening the chat. */
 }
 
 /* User requested: remove the small explanatory text under manual fields.
@@ -709,7 +673,6 @@ body { background: var(--surface-1); color: var(--text-1); font-family: 'Inter',
         </a>
       </div>
     </div>
-    <button class="btn btn-secondary btn-sm" onclick="toggleAI()"><i class="fa-solid fa-robot"></i> AI Assistant</button>
   </div>
 </header>
 
@@ -1507,46 +1470,7 @@ body { background: var(--surface-1); color: var(--text-1); font-family: 'Inter',
     </div>
   </div><!-- end flex col -->
 
-  <!-- AI CHAT PANEL -->
-  <div class="ai-panel collapsed" id="ai-panel">
-    <div class="ai-header">
-      <div class="ai-dot"></div>
-      <span class="ai-header-title">AI Assistant</span>
-      <button onclick="toggleAI()" aria-label="Close AI panel" style="background:none;border:none;color:rgba(255,255,255,.7);cursor:pointer;font-size:16px"><i class="fa-solid fa-xmark" aria-hidden="true"></i></button>
-    </div>
-    <div class="ai-messages" id="ai-messages">
-      <div class="ai-msg assistant">Hi! I'm your AI project manager. I can:<br><br>
-        • <strong>Create projects</strong>: <em>"Add permitting SR 49, 8,000 LF for PSC"</em><br>
-        • <strong>Update projects</strong>: <em>"Change WO-001 status to completed"</em><br>
-        • <strong>Import Excel/CSV files</strong>: Upload workforce reports and I'll match employees to projects, create missing jobs, and log hours<br>
-        • <strong>Add clients, staff & contracts</strong><br>
-        • <strong>Query data</strong>: <em>"Show me all active PSC projects"</em><br>
-        • <strong>Manage permits</strong>: advance stages, track pipeline<br><br>
-        Use the <strong>Upload</strong> button below to attach an Excel file, then tell me what to do with it.
-      </div>
-    </div>
-    <div class="ai-input-area">
-      <textarea class="ai-input" id="ai-input" placeholder="Ask anything or describe a project..." onkeydown="aiKeydown(event)" aria-label="AI assistant message"></textarea>
-      <div style="display:flex;justify-content:space-between;align-items:center">
-        <div style="display:flex;align-items:center;gap:6px">
-          <input type="file" id="ai-file-input" accept=".xlsx,.xls,.csv,.tsv,.txt" aria-label="Upload file for AI" style="display:none" onchange="handleAIFileUpload(event)">
-          <button id="ai-file-upload-btn" class="btn btn-secondary btn-sm" onclick="document.getElementById('ai-file-input').click()" title="Upload Excel/CSV file"><i class="fa-solid fa-file-excel"></i> Upload</button>
-          <span style="font-size:11px;color:var(--text-muted)">Enter to send</span>
-        </div>
-        <button class="btn btn-primary btn-sm" onclick="sendAI()"><i class="fa-solid fa-paper-plane"></i> Send</button>
-      </div>
-      <div id="ai-file-preview" style="display:none;padding:6px 8px;background:var(--primary-light);border-radius:6px;font-size:12px;display:none">
-        <div style="display:flex;align-items:center;justify-content:space-between">
-          <span><i class="fa-solid fa-file-excel" style="color:var(--primary)"></i> <span id="ai-file-name"></span></span>
-          <button class="btn btn-sm btn-icon" onclick="clearAIFile()" aria-label="Clear attached file" style="width:20px;height:20px;font-size:10px"><i class="fa-solid fa-xmark" aria-hidden="true"></i></button>
-        </div>
-      </div>
-    </div>
-  </div>
 </main><!-- end main -->
-
-<!-- ═══ FLOATING AI TOGGLE (mobile) ═══ -->
-<button class="ai-toggle" onclick="toggleAI()" aria-label="Open AI assistant"><i class="fa-solid fa-robot" aria-hidden="true"></i></button>
 
 <!-- ═══════════════════════════════════════════════════════
      MODALS
@@ -2909,14 +2833,6 @@ body { background: var(--surface-1); color: var(--text-1); font-family: 'Inter',
         </div>
       </div>
 
-      <!-- ── Audit Log (Wave 41) ── Government-grade compliance trail ── -->
-      <div class="settings-section" id="audit-log-section" style="margin-top:24px">
-        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px">
-          <h4 style="font-size:14px;font-weight:600;margin:0"><i class="fa-solid fa-receipt" style="margin-right:6px;color:var(--text-muted)"></i>Audit Log</h4>
-          <button class="btn btn-primary btn-sm" onclick="window.AuditLogAdmin && window.AuditLogAdmin.open()"><i class="fa-solid fa-magnifying-glass"></i> View Log</button>
-        </div>
-        <p style="font-size:12px;color:var(--text-muted);margin:0 0 12px 0">Government-grade compliance trail. View all user actions, project changes, invoice generations, and AI tool executions. Rows cannot be deleted.</p>
-      </div>
 
       <!-- ── Training Progress (Wave 43) ── OSP training course + cert tracking ── -->
       <div class="settings-section" id="training-progress-section" style="margin-top:24px">
@@ -3095,7 +3011,6 @@ body { background: var(--surface-1); color: var(--text-1); font-family: 'Inter',
 <script src="/js/revenue_tab.js"></script>
 <script src="/js/hours_tab.js"></script>
 <script src="/js/projects_tab.js?v=w11"></script>
-<script src="/js/audit_log_admin.js"></script>
 <script src="/js/training_admin.js"></script>
 <script src="/js/admin_project_files.js"></script>
 <script src="/js/admin_project_photos.js"></script>
@@ -3277,8 +3192,6 @@ const TYPE_RATES = {inspection:90,re:100};
 const PROGRAM_LABELS = {rus:'RUS',bau:'BAU',gfr:'GF(R)',other:'Other'};
 const MONTH_NAMES = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
 const MONTH_FULL = ['January','February','March','April','May','June','July','August','September','October','November','December'];
-let aiMessages = [];
-let aiSessionId = 'session_' + Date.now();
 let currentView = 'dashboard';
 
 // ═══════════════════════════════════════════════════════════
@@ -8692,374 +8605,6 @@ window.addEventListener('load', () => {
   });
 });
 
-// ═══════════════════════════════════════════════════════════
-// AI CHAT
-// ═══════════════════════════════════════════════════════════
-function toggleAI() {
-  const panel = document.getElementById('ai-panel');
-  panel.classList.toggle('collapsed');
-  document.body.classList.toggle('ai-open', !panel.classList.contains('collapsed'));
-}
-
-function aiKeydown(e) {
-  if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendAI(); }
-}
-
-// ─── FILE UPLOAD HANDLING ────────────────────────────────────────────────────
-let pendingFileData = null;
-
-async function handleAIFileUpload(event) {
-  const file = event.target.files[0];
-  if (!file) return;
-
-  const btn = document.getElementById('ai-file-upload-btn');
-  if (btn?.dataset.uploading === '1') return;
-  if (btn) { btn.dataset.uploading = '1'; btn.disabled = true; btn.dataset.label = btn.innerHTML; btn.innerHTML = '<i class="fa-solid fa-file-excel"></i> Uploading…'; }
-
-  // Show preview
-  document.getElementById('ai-file-preview').style.display = 'block';
-  document.getElementById('ai-file-name').textContent = file.name + ' (' + (file.size / 1024).toFixed(1) + ' KB)';
-
-  // Upload and parse the file
-  const fd = new FormData();
-  fd.append('file', file);
-
-  appendAIMessage('assistant', `📄 Parsing **${file.name}**...`);
-
-  try {
-    const response = await fetch('/api/ai/upload', { method: 'POST', body: fd });
-    if (!response.ok) throw new Error(await response.text());
-    pendingFileData = await response.json();
-
-    // Show parse summary
-    let summary = `✓ **${pendingFileData.filename}** parsed successfully\n`;
-    if (pendingFileData.row_count !== undefined) {
-      summary += `• ${pendingFileData.row_count} rows found\n`;
-      summary += `• Columns: ${pendingFileData.headers?.join(', ') || 'unknown'}\n`;
-      if (pendingFileData.sheets && pendingFileData.sheets.length > 1) {
-        summary += `• Sheets: ${pendingFileData.sheets.join(', ')}\n`;
-      }
-    }
-    summary += `\nType a message like **"Import this workforce data"** or **"Assign these hours to projects"** and I'll analyze it.`;
-    appendAIMessage('assistant', summary);
-
-  } catch (e) {
-    appendAIMessage('assistant', '⚠ Failed to parse file: ' + e.message);
-    clearAIFile();
-  } finally {
-    if (btn) { btn.disabled = false; btn.innerHTML = btn.dataset.label || '<i class="fa-solid fa-file-excel"></i> Upload'; btn.dataset.uploading = '0'; }
-    // Reset the input so the same file can be re-uploaded
-    event.target.value = '';
-  }
-}
-
-function clearAIFile() {
-  pendingFileData = null;
-  document.getElementById('ai-file-preview').style.display = 'none';
-  document.getElementById('ai-file-input').value = '';
-}
-
-async function sendAI() {
-  const input = document.getElementById('ai-input');
-  let text = input.value.trim();
-  if (!text && !pendingFileData) return;
-  input.value = '';
-
-  // If there's a file attached, include only the summary and upload_id
-  let userMessage = text || 'Process this uploaded file';
-  if (pendingFileData) {
-    const fileContext = `\n\n[UPLOADED FILE: ${pendingFileData.filename}]\n` +
-      `Upload ID: ${pendingFileData.upload_id}\n` +
-      `Row count: ${pendingFileData.row_count || 'N/A'}\n` +
-      `Headers: ${JSON.stringify(pendingFileData.headers || [])}\n` +
-      `Sample rows (first 5):\n${JSON.stringify(pendingFileData.preview || [], null, 2)}\n` +
-      `\nUse the get_upload_data tool with upload_id "${pendingFileData.upload_id}" to fetch the full data in batches of 50 rows.`;
-    userMessage += fileContext;
-    clearAIFile();
-  }
-
-  appendAIMessage('user', text || 'Process this uploaded file');
-  aiMessages.push({ role: 'user', content: userMessage });
-  callAI(aiMessages);
-}
-
-// ─── AI approval card ─────────────────────────────────────────────────
-// Renders the bundle of proposed actions Claude wants to take. Each action
-// is a row with a checkbox (defaults checked), a one-line summary, and an
-// expandable JSON view of the raw input. Footer has Apply Selected and
-// Reject All. On Apply, posts decisions back to /api/ai/chat with the
-// approval_id; the chat loop resumes from there.
-function renderApprovalCard(res) {
-  const msgs = document.getElementById('ai-messages');
-  const card = document.createElement('div');
-  card.className = 'ai-msg assistant';
-  card.style.background = 'var(--white,#fff)';
-  card.style.border = '2px solid var(--primary,#1B5FA0)';
-  card.style.padding = '0';
-  card.style.overflow = 'hidden';
-
-  const actions = res.proposed_actions || [];
-  const header = `
-    <div style="background:var(--primary-light,#E3F2FD);padding:10px 14px;font-weight:600;display:flex;align-items:center;gap:8px">
-      <i class="fa-solid fa-shield-halved" style="color:var(--primary,#1B5FA0)"></i>
-      <span>Claude wants to do ${actions.length} thing${actions.length !== 1 ? 's' : ''}</span>
-      <span style="margin-left:auto;font-size:11px;color:var(--text-muted);font-weight:500">Review and apply</span>
-    </div>`;
-
-  const rows = actions.map((a, i) => {
-    const summary = esc(a.summary || a.tool_name);
-    const inputJson = esc(JSON.stringify(a.tool_input, null, 2));
-    const danger = a.is_destructive ? 'background:var(--warning-light);' : '';
-    return `<div data-action-id="${esc(a.id)}" style="${danger}border-top:1px solid var(--gray-border);padding:10px 14px">
-      <label style="display:flex;align-items:flex-start;gap:8px;cursor:pointer">
-        <input type="checkbox" class="ai-approve-cb" data-id="${esc(a.id)}" checked style="margin-top:3px">
-        <div style="flex:1">
-          <div style="font-weight:500;font-size:13px">${summary}</div>
-          <div style="font-size:11px;color:var(--text-muted);margin-top:2px;font-family:monospace">${esc(a.tool_name)}</div>
-          <details style="margin-top:6px">
-            <summary style="font-size:11px;color:var(--primary,#1B5FA0);cursor:pointer">Show raw input</summary>
-            <pre style="margin:6px 0 0 0;padding:8px;background:var(--gray-light);border-radius:4px;font-size:11px;white-space:pre-wrap;word-break:break-word">${inputJson}</pre>
-          </details>
-        </div>
-      </label>
-    </div>`;
-  }).join('');
-
-  const footer = `
-    <div style="padding:10px 14px;display:flex;gap:8px;justify-content:flex-end;background:var(--gray-light)">
-      <button class="btn btn-sm btn-secondary" data-act="reject-all">Reject all</button>
-      <button class="btn btn-sm btn-primary" data-act="apply"><i class="fa-solid fa-check"></i> Apply selected</button>
-    </div>`;
-
-  card.innerHTML = header + rows + footer;
-  msgs.appendChild(card);
-  scrollAI();
-
-  card.querySelector('[data-act="reject-all"]').addEventListener('click', () => {
-    card.querySelectorAll('.ai-approve-cb').forEach(cb => { cb.checked = false; });
-    submitApproval(card, res.approval_id);
-  });
-  card.querySelector('[data-act="apply"]').addEventListener('click', () => {
-    submitApproval(card, res.approval_id);
-  });
-}
-
-async function submitApproval(cardEl, approvalId) {
-  const decisions = {};
-  cardEl.querySelectorAll('.ai-approve-cb').forEach(cb => {
-    decisions[cb.getAttribute('data-id')] = !!cb.checked;
-  });
-  // Lock the card so duplicate clicks don't double-fire
-  cardEl.querySelectorAll('button, input').forEach(el => { el.disabled = true; });
-  cardEl.style.opacity = '0.7';
-  const approvedCount = Object.values(decisions).filter(Boolean).length;
-  const totalCount = Object.keys(decisions).length;
-
-  // Reuse the same chat endpoint with approval_id + decisions
-  const thinking = document.createElement('div');
-  thinking.className = 'ai-thinking';
-  thinking.innerHTML = '<span></span><span></span><span></span>';
-  document.getElementById('ai-messages').appendChild(thinking);
-  scrollAI();
-
-  try {
-    const res = await api('/api/ai/chat', 'POST', { approval_id: approvalId, decisions });
-    thinking.remove();
-    // Visual receipt on the card
-    const status = document.createElement('div');
-    status.style.cssText = 'padding:8px 14px;background:var(--gray-light);border-top:1px solid var(--gray-border);font-size:12px;color:var(--text-muted)';
-    status.textContent = `Applied ${approvedCount} of ${totalCount} action${totalCount !== 1 ? 's' : ''}.`;
-    cardEl.appendChild(status);
-
-    // Then handle the resumed response — same branching as initial callAI
-    if (res.kind === 'pending_approval') {
-      if (res.preamble_text) appendAIMessage('assistant', res.preamble_text);
-      renderApprovalCard(res);
-      return;
-    }
-    const content = res.content || '';
-    appendAIMessage('assistant', content);
-    aiMessages.push({ role: 'assistant', content });
-    if (res.toolResults && res.toolResults.length) renderToolReceipts(res.toolResults);
-  } catch (e) {
-    thinking.remove();
-    appendAIMessage('assistant', '⚠ Approval failed: ' + e.message);
-  }
-}
-
-// Pulled out of callAI so submitApproval can reuse it for resumed responses.
-function renderToolReceipts(toolResults) {
-  for (const tr of toolResults) {
-    if (tr.tool === 'query_database') continue;
-    const successDiv = document.createElement('div');
-    successDiv.className = 'ai-msg assistant';
-    if (tr.result && tr.result.success) {
-      successDiv.style.background = '#D4EDDA';
-      successDiv.style.color = '#155724';
-      successDiv.innerHTML = '<strong>✓ ' + esc(tr.tool) + '</strong>';
-      // Trigger any view refreshes that match the tool
-      if (['create_project','update_project','delete_project','update_project_status','bulk_update_projects'].includes(tr.tool)) {
-        if (typeof loadProjects === 'function') loadProjects();
-        if (typeof loadDashboard === 'function') loadDashboard();
-      }
-      if (tr.tool === 'create_client' && typeof loadClients === 'function') loadClients();
-      if (tr.tool === 'create_engineering_contract' && typeof loadEngineeringContracts === 'function') loadEngineeringContracts();
-    } else if (tr.result && !tr.result.success) {
-      successDiv.style.background = '#F8D7DA';
-      successDiv.style.color = '#721C24';
-      successDiv.innerHTML = '<strong>✗ ' + esc(tr.tool) + ':</strong> ' + esc(tr.result.error || 'Unknown error');
-    }
-    document.getElementById('ai-messages').appendChild(successDiv);
-  }
-  scrollAI();
-}
-
-async function callAI(messages) {
-  const thinking = document.createElement('div');
-  thinking.className = 'ai-thinking';
-  thinking.innerHTML = '<span></span><span></span><span></span>';
-  document.getElementById('ai-messages').appendChild(thinking);
-  scrollAI();
-
-  try {
-    const res = await api('/api/ai/chat', 'POST', { messages, session_id: aiSessionId });
-    thinking.remove();
-
-    // ─── Branch on response kind ─────────────────────────────────────
-    // kind='pending_approval' → AI proposed destructive actions; render
-    // an approval card with one toggle per action plus Apply/Reject all.
-    // kind='final' (or omitted, for backwards compat) → normal text response.
-    if (res.kind === 'pending_approval') {
-      if (res.preamble_text) appendAIMessage('assistant', res.preamble_text);
-      renderApprovalCard(res);
-      return;
-    }
-
-    const content = res.content || '';
-
-    // Show the text response
-    appendAIMessage('assistant', content);
-    aiMessages.push({ role:'assistant', content });
-
-    // If Claude executed tools, show what was saved
-    if (res.toolResults && res.toolResults.length > 0) {
-      for (const tr of res.toolResults) {
-        // Skip query_database results (the AI summarizes those in its text)
-        if (tr.tool === 'query_database') continue;
-
-        const successDiv = document.createElement('div');
-        successDiv.className = 'ai-msg assistant';
-
-        if (tr.result && tr.result.success) {
-          successDiv.style.background = '#D4EDDA';
-          successDiv.style.color = '#155724';
-
-          if (tr.tool === 'create_project') {
-            successDiv.innerHTML = '<strong>✓ Project created:</strong> ' + esc(tr.result.project?.name || 'Project');
-            loadProjects(); loadDashboard();
-            if (tr.result.project?.project_type === 'permitting') loadPermits();
-          } else if (tr.tool === 'update_project') {
-            successDiv.innerHTML = '<strong>✓ Project updated:</strong> ' + esc(tr.result.project?.name || 'Project');
-            loadProjects(); loadDashboard(); loadPermits();
-          } else if (tr.tool === 'delete_project') {
-            successDiv.innerHTML = '<strong>✓ Project deleted:</strong> ' + esc(tr.result.deleted || '');
-            loadProjects(); loadDashboard(); loadPermits();
-          } else if (tr.tool === 'create_client') {
-            successDiv.innerHTML = '<strong>✓ Client created:</strong> ' + esc(tr.result.client?.name || '');
-            loadClients();
-          } else if (tr.tool === 'create_staff') {
-            successDiv.innerHTML = '<strong>✓ Staff member added:</strong> ' + esc(tr.result.staff?.name || '');
-            loadStaff();
-          } else if (tr.tool === 'create_contract') {
-            successDiv.innerHTML = '<strong>✓ Contract created:</strong> ' + esc(tr.result.contract?.contract_number || '');
-          } else if (tr.tool === 'log_time_entries') {
-            successDiv.innerHTML = '<strong>✓ Time entries saved:</strong> ' + tr.result.inserted + ' entries logged';
-            loadHours();
-          } else if (tr.tool === 'update_project_status') {
-            successDiv.innerHTML = '<strong>✓ Status updated:</strong> ' + esc(tr.result.project?.name || '') + ' → ' + esc(tr.result.project?.status || '');
-            loadProjects(); loadDashboard(); loadRevenue();
-          } else if (tr.tool === 'advance_permit_stage') {
-            successDiv.innerHTML = '<strong>✓ Stage advanced:</strong> ' + esc(tr.result.previous) + ' → ' + esc(tr.result.current); // MED-1
-            loadPermits();
-          } else if (tr.tool === 'create_budget') {
-            successDiv.innerHTML = '<strong>✓ Budget created:</strong> ' + esc(tr.result.budget?.name || '');
-          } else if (tr.tool === 'create_budget_code') {
-            successDiv.innerHTML = '<strong>✓ Budget code added:</strong> ' + esc(tr.result.budget_code?.code || '') + ' — ' + fmtMoney(tr.result.budget_code?.allocated_amount || 0);
-          } else if (tr.tool === 'update_budget_code') {
-            successDiv.innerHTML = '<strong>✓ Budget code updated:</strong> ' + esc(tr.result.budget_code?.code || '');
-          } else {
-            successDiv.innerHTML = '<strong>✓ Action completed</strong>';
-          }
-        } else if (tr.result && !tr.result.success) {
-          successDiv.style.background = '#F8D7DA';
-          successDiv.style.color = '#721C24';
-          successDiv.innerHTML = '<strong>✗ Error:</strong> ' + esc(tr.result.error || tr.result.message || 'Unknown error');
-        }
-
-        document.getElementById('ai-messages').appendChild(successDiv);
-        scrollAI();
-      }
-    }
-  } catch (e) {
-    thinking.remove();
-    appendAIMessage('assistant', '⚠ Error: ' + e.message);
-  }
-}
-
-function appendAIMessage(role, text, action=null) {
-  const msgs = document.getElementById('ai-messages');
-  const div = document.createElement('div');
-  div.className = 'ai-msg ' + role;
-  const escaped = esc(text); // HIGH-1: HTML-encode before markdown transforms (& < > " neutralised)
-  div.innerHTML = escaped.replace(/\n/g,'<br>').replace(/\*\*(.*?)\*\*/g,'<strong>$1</strong>').replace(/\*(.*?)\*/g,'<em>$1</em>');
-  if (action) {
-    const btn = document.createElement('button');
-    btn.className = 'ai-action-btn';
-    btn.textContent = '✓ Confirm: ' + action.label;
-    btn.onclick = () => executeAIAction(action, btn);
-    div.appendChild(btn);
-  }
-  msgs.appendChild(div);
-  scrollAI();
-}
-
-function scrollAI() {
-  const msgs = document.getElementById('ai-messages');
-  msgs.scrollTop = msgs.scrollHeight;
-}
-
-async function executeAIAction(action, btn) {
-  btn.disabled = true;
-  btn.textContent = 'Processing...';
-  try {
-    let data;
-    try { data = JSON.parse(action.data); } catch(e) { data = {}; }
-    if (action.type === 'create_project') {
-      await api('/api/projects', 'POST', data);
-      btn.textContent = '✓ Project created';
-      btn.style.background = 'var(--success)';
-      loadProjects(); loadDashboard();
-    } else if (action.type === 'bulk_time_entries') {
-      await api('/api/time-entries/bulk', 'POST', { entries: data });
-      btn.textContent = '✓ Hours imported';
-      btn.style.background = 'var(--success)';
-      loadHours();
-    } else if (action.type === 'advance_permit_stage') {
-      await api('/api/permits/'+data.project_id+'/advance', 'PUT', data);
-      btn.textContent = '✓ Stage advanced';
-      btn.style.background = 'var(--success)';
-      loadPermits();
-    } else if (action.type === 'mark_billed') {
-      await api('/api/projects/'+data.project_id+'/mark-billed', 'PUT', {});
-      btn.textContent = '✓ Marked as billed';
-      btn.style.background = 'var(--success)';
-      loadRevenue();
-    }
-  } catch(e) {
-    btn.textContent = '✗ Error: ' + e.message;
-    btn.style.background = 'var(--danger)';
-  }
-}
 
 // ═══════════════════════════════════════════════════════════
 // FORM DRAFT PERSISTENCE
