@@ -59,7 +59,7 @@
 | Area | Status | Notes / gaps | Open Qs |
 |---|---|---|---|
 | Role-aware operations rail (admin-only links, fail-closed) | ✅ | Seam exists | — |
-| `user_capabilities` grants (cockpit / all_hours / manage_billing / manage_users / all_projects / production_compiler) + `requireCapability` | 📋 | — | — |
+| **System F permissions — `permission_grants` + `requirePermission` + catalog + custom-role bundles** | 🟡 | **MERGED 2026-07-14 (#73/#74/#75 closed; #76 backend):** resolver (base ∪ role ∪ personal ∪ bundle, admin=all) · grant/revoke + catalog API · Settings page grant surfaces · enforcement core (certificates.issue, money.manage_billing invoice gate, hours-override AUGMENT) · migrations 0084/0085 (L-016: zero baked grants). **Owed:** #76 bundle-mgmt UI · #77 broad ~25-file delegation spread + Partner grant-policy · prod deploy/live-smoke (Railway down). | Partner rules role-default grants (L-016 editable rows) |
 | Assignment-driven everyday views (inspector↔engineer flip needs no relabel) | 📋 | — | — |
 | **Unified staff management** (one concept: person + perms + team designations; admin create/edit/delete) | 🟡 | Carter: no user/staff split. **Backend already exists** (auth.js full user CRUD incl. `DELETE /api/users/:id`; `users.staff_id` links login↔staff) — CEO triage Correction B. Gap = a **unified People UI** + combined "add person", not plumbing. Unified layer (no table-merge). | — |
 
