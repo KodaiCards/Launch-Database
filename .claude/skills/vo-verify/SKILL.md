@@ -13,6 +13,7 @@ You verify from OUTSIDE the foreman's context. Do not read the foreman's reasoni
 3. **Citations (gov content only):** primary-source verify exact citations (law.cornell.edu mirror for CFR when direct sources 403). Check the research-log by MECHANICAL DIFF: every distinct citation string in the content ↔ a log row. Never sign off by reading through.
 4. **Class-check:** if the package fixed an error CLASS, fresh-grep the whole class yourself across the topic — never re-check the foreman's inventory.
 5. **Money/auth/schema (when touched):** server-side money only; no internal $ client-side; migration idempotent + matches live schema; auth fail-closed.
+6. **L-016 NO BAKING (every package with migrations/seeds/gating code):** grep the diff for person-specific rows (names, emails, account ids) and role/feature defaults hardcoded in route logic — **any hit = FAIL.** Defaults are legal ONLY as editable data rows changeable on an admin page; the sole coded permission behavior is the admin bootstrap. "Which role/person gets what" questions route to the Partner, never get answered in code.
 
 ## Verdict artifact (comment on the issue — durable, Carter-readable)
 ```
