@@ -510,7 +510,7 @@ select.filter{border:1px solid var(--gray-border);border-radius:7px;padding:7px 
 @media(max-width:640px){
   /* Header: tighten padding and hide button text labels (icon stays).
      The header has a logo + "Project Management System" tagline + the
-     user pill + clock + Settings/Approvals/AI Assistant buttons. The
+     user pill + clock + Settings/Approvals buttons. The
      tagline + user pill text get hidden so the right-side icon buttons
      fit on a 360px-wide phone. */
   .header{padding:0 10px;gap:6px}
@@ -570,9 +570,6 @@ select.filter{border:1px solid var(--gray-border);border-radius:7px;padding:7px 
   /* Buttons: slightly tighter so multiple-button rows fit */
   .btn{padding:6px 10px;font-size:12px}
   .btn-sm{padding:5px 8px;font-size:11px}
-
-  /* AI Assistant panel was already hidden ≤900px. The toggle button
-     remains visible in the header for opening the chat. */
 }
 
 /* User requested: remove the small explanatory text under manual fields.
@@ -3195,8 +3192,6 @@ const TYPE_RATES = {inspection:90,re:100};
 const PROGRAM_LABELS = {rus:'RUS',bau:'BAU',gfr:'GF(R)',other:'Other'};
 const MONTH_NAMES = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
 const MONTH_FULL = ['January','February','March','April','May','June','July','August','September','October','November','December'];
-let aiMessages = [];
-let aiSessionId = 'session_' + Date.now();
 let currentView = 'dashboard';
 
 // ═══════════════════════════════════════════════════════════
