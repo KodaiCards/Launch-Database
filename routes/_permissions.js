@@ -157,6 +157,21 @@ function requirePermission(pool, key) {
   };
 }
 
+/**
+ * Server-side field-strip (hard rule 8): return `obj` with `fields` OMITTED
+ * ENTIRELY unless `allowed` is true. PURE — never mutates the input; returns a
+ * shallow copy without the dropped keys (so the value is absent from the JSON
+ * wire, not nulled/hidden). Used by the money.view project-list strip; reusable
+ * by #75's cross-route application. Callers FAIL CLOSED (allowed=false on error).
+ */
+function omitUnless(obj, fields, allowed) {
+  if (allowed || !obj) return obj;
+  const drop = fields instanceof Set ? fields : new Set(fields);
+  const out = {};
+  for (const k in obj) if (!drop.has(k)) out[k] = obj[k];
+  return out;
+}
+
 module.exports = {
   CATALOG,
   ALL_KEYS,
@@ -165,5 +180,6 @@ module.exports = {
   computeEffective,
   getEffective,
   isSelfGrant,
+  omitUnless,
   requirePermission,
 };

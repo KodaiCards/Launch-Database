@@ -26,6 +26,23 @@ module.exports = function installProjectsRoutes(app, pool, mw) {
   // could create or mutate projects. requireAuth() gates both handlers.
   const { requireAdmin, requireAuth, requireManagerOrAdmin } = mw;
   const { canCreateProjects, requireStaff } = require('../auth'); // O34: requireStaff = staff-only (excludes trainee/customer)
+  const { getEffective, omitUnless } = require('./_permissions');
+
+  // System F (#73): money.view field-strip (hard rule 8). The SAME project API
+  // returns these $ columns to money.view holders and OMITS them entirely from
+  // the JSON for everyone else — stripping is server-side, never CSS-hidden.
+  // (These are the numeric $ / rate columns on projects + the computed
+  // ytd_revenue; billing_type / billing_cadence are categories, not $.)
+  const PROJECT_MONEY_FIELDS = [
+    'billing_rate', 'expected_revenue', 'actual_revenue',
+    'projected_revenue', 'manual_invoice_amount', 'ytd_revenue',
+  ];
+  // Resolve once per request. FAILS CLOSED: on any error we hide money rather
+  // than risk leaking $ (hard rule 8). admin/holders → true via getEffective.
+  async function canViewMoney(req) {
+    try { return (await getEffective(pool, req.user)).has('money.view'); }
+    catch (e) { console.error('[projects:money.view resolve]', e && e.message); return false; }
+  }
 
   // Wave 15: async middleware — 401 if not logged in, 403 if not permitted.
   // On DB error falls back to role-only check so transient failures don't
@@ -172,7 +189,8 @@ module.exports = function installProjectsRoutes(app, pool, mw) {
         ORDER BY COALESCE(p.parent_id, p.id), p.parent_id NULLS FIRST, p.created_at DESC
         ${limitClause}
       `, params);
-      res.json(rows);
+      const canMoney = await canViewMoney(req);
+      res.json(rows.map((r) => omitUnless(r, PROJECT_MONEY_FIELDS, canMoney)));
     } catch (e) {
       console.error('[projects:list]', e && e.message);
       res.status(500).json({ error: 'Failed to load projects.' });
@@ -205,7 +223,10 @@ module.exports = function installProjectsRoutes(app, pool, mw) {
         WHERE p.id = $1
       `, [req.params.id]);
       if (!rows.length) return res.status(404).json({ error: 'Not found' });
-      res.json(rows[0]);
+      // Same money.view field-strip as the list — a no-money.view user must not
+      // read $ via the detail route either (hard rule 8).
+      const canMoney = await canViewMoney(req);
+      res.json(omitUnless(rows[0], PROJECT_MONEY_FIELDS, canMoney));
     } catch (e) {
       console.error('[projects:get]', e && e.message);
       res.status(500).json({ error: 'Failed to load project.' });

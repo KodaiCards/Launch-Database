@@ -8,6 +8,7 @@ const assert = require('node:assert/strict');
 const {
   computeEffective,
   isSelfGrant,
+  omitUnless,
   ALL_KEYS,
   CATALOG,
   CATALOG_KEYS,
@@ -101,6 +102,33 @@ test('granting to ANOTHER user or a role you do NOT hold is allowed (legit deleg
 test('isSelfGrant is safe on missing user / unknown subject_type', () => {
   assert.equal(isSelfGrant(null, 'user', 'x'), false);
   assert.equal(isSelfGrant({ id: 1, role: 'admin' }, 'bogus', '1'), false);
+});
+
+// ── omitUnless: the money.view field-strip (hard rule 8) ─────────────────────
+const MONEY = ['billing_rate', 'expected_revenue', 'actual_revenue', 'projected_revenue', 'manual_invoice_amount', 'ytd_revenue'];
+
+test('allowed=true returns the row untouched ($ visible to money.view holders)', () => {
+  const row = { id: 'p1', name: 'Job', billing_rate: 90, ytd_revenue: 1200 };
+  assert.equal(omitUnless(row, MONEY, true), row); // same ref, nothing stripped
+});
+
+test('allowed=false OMITS every money field ENTIRELY (absent, not nulled)', () => {
+  const row = { id: 'p1', name: 'Job', billing_rate: 90, expected_revenue: 5, actual_revenue: 3, projected_revenue: 7, manual_invoice_amount: 2, ytd_revenue: 1200, status: 'active' };
+  const out = omitUnless(row, MONEY, false);
+  for (const k of MONEY) assert.ok(!(k in out), `${k} must be absent from the wire`);
+  // non-money fields survive
+  assert.deepEqual({ id: out.id, name: out.name, status: out.status }, { id: 'p1', name: 'Job', status: 'active' });
+});
+
+test('omitUnless never mutates the input row', () => {
+  const row = { id: 'p1', billing_rate: 90 };
+  omitUnless(row, MONEY, false);
+  assert.equal(row.billing_rate, 90, 'original row must be unchanged');
+});
+
+test('omitUnless is null-safe', () => {
+  assert.equal(omitUnless(null, MONEY, false), null);
+  assert.equal(omitUnless(undefined, MONEY, true), undefined);
 });
 
 test('catalog is internally consistent: 16 unique keys, all grouped', () => {
