@@ -26,6 +26,27 @@ module.exports = function installProjectsRoutes(app, pool, mw) {
   // could create or mutate projects. requireAuth() gates both handlers.
   const { requireAdmin, requireAuth, requireManagerOrAdmin } = mw;
   const { canCreateProjects, requireStaff } = require('../auth'); // O34: requireStaff = staff-only (excludes trainee/customer)
+  const { getEffective, omitUnless, requirePermission } = require('./_permissions');
+  // #75 regressive gate (enumerated for VO): invoice generation is a billing
+  // mutation → money.manage_billing (admin passes via admin=all; managers need
+  // the grant). Closes the #73-core red-team's total_amount leak.
+  const canManageBilling = requirePermission(pool, 'money.manage_billing');
+
+  // System F (#73): money.view field-strip (hard rule 8). The SAME project API
+  // returns these $ columns to money.view holders and OMITS them entirely from
+  // the JSON for everyone else — stripping is server-side, never CSS-hidden.
+  // (These are the numeric $ / rate columns on projects + the computed
+  // ytd_revenue; billing_type / billing_cadence are categories, not $.)
+  const PROJECT_MONEY_FIELDS = [
+    'billing_rate', 'expected_revenue', 'actual_revenue',
+    'projected_revenue', 'manual_invoice_amount', 'ytd_revenue',
+  ];
+  // Resolve once per request. FAILS CLOSED: on any error we hide money rather
+  // than risk leaking $ (hard rule 8). admin/holders → true via getEffective.
+  async function canViewMoney(req) {
+    try { return (await getEffective(pool, req.user)).has('money.view'); }
+    catch (e) { console.error('[projects:money.view resolve]', e && e.message); return false; }
+  }
 
   // Wave 15: async middleware — 401 if not logged in, 403 if not permitted.
   // On DB error falls back to role-only check so transient failures don't
@@ -172,7 +193,8 @@ module.exports = function installProjectsRoutes(app, pool, mw) {
         ORDER BY COALESCE(p.parent_id, p.id), p.parent_id NULLS FIRST, p.created_at DESC
         ${limitClause}
       `, params);
-      res.json(rows);
+      const canMoney = await canViewMoney(req);
+      res.json(rows.map((r) => omitUnless(r, PROJECT_MONEY_FIELDS, canMoney)));
     } catch (e) {
       console.error('[projects:list]', e && e.message);
       res.status(500).json({ error: 'Failed to load projects.' });
@@ -205,7 +227,10 @@ module.exports = function installProjectsRoutes(app, pool, mw) {
         WHERE p.id = $1
       `, [req.params.id]);
       if (!rows.length) return res.status(404).json({ error: 'Not found' });
-      res.json(rows[0]);
+      // Same money.view field-strip as the list — a no-money.view user must not
+      // read $ via the detail route either (hard rule 8).
+      const canMoney = await canViewMoney(req);
+      res.json(omitUnless(rows[0], PROJECT_MONEY_FIELDS, canMoney));
     } catch (e) {
       console.error('[projects:get]', e && e.message);
       res.status(500).json({ error: 'Failed to load project.' });
@@ -475,7 +500,9 @@ module.exports = function installProjectsRoutes(app, pool, mw) {
       logAudit(pool, { req, action: 'create', entity_type: 'project', entity_id: rows[0].id,
         after: { id: rows[0].id, name: rows[0].name, client_id: rows[0].client_id, program: rows[0].program },
         source: 'admin_ui' });
-      res.json(rows[0]);
+      // The RETURNING * echo carries $ — strip it for non-money.view editors too
+      // (project-create capability is independent of money.view; hard rule 8).
+      res.json(omitUnless(rows[0], PROJECT_MONEY_FIELDS, await canViewMoney(req)));
     } catch (e) {
       console.error('[projects:create]', e && e.message);
       res.status(500).json({ error: 'Failed to create project.' });
@@ -754,7 +781,8 @@ module.exports = function installProjectsRoutes(app, pool, mw) {
       logAudit(pool, { req, action: 'update', entity_type: 'project', entity_id: rows[0].id,
         after: { id: rows[0].id, name: rows[0].name, status: rows[0].status, program: rows[0].program },
         source: 'admin_ui' });
-      res.json(rows[0]);
+      // The RETURNING * echo carries $ — strip it for non-money.view editors (hard rule 8).
+      res.json(omitUnless(rows[0], PROJECT_MONEY_FIELDS, await canViewMoney(req)));
     } catch (e) {
       console.error('[projects:update]', e && e.message);
       res.status(500).json({ error: 'Failed to update project.' });
@@ -1397,7 +1425,11 @@ module.exports = function installProjectsRoutes(app, pool, mw) {
         GROUP BY year, month
         ORDER BY year, month
       `, [req.params.id]);
-      res.json(rows);
+      // `revenue` is a computed $ (hours × billing_rate) — omit it for non-money.view
+      // staff; hours/year/month stay (hard rule 8). Gating the whole endpoint by a
+      // key is #75's cross-route scope; the $ field-strip is #73-core's.
+      const canMoney = await canViewMoney(req);
+      res.json(rows.map((r) => omitUnless(r, ['revenue'], canMoney)));
     } catch (e) {
       console.error('[projects:monthly-hours-breakdown]', e && e.message);
       res.status(500).json({ error: 'Failed to load monthly breakdown.' });
@@ -1408,7 +1440,7 @@ module.exports = function installProjectsRoutes(app, pool, mw) {
   // Admin-triggered invoice for an ongoing project's current (or specified) month.
   // Body: { month?: 1-12, year?: YYYY } — defaults to current month/year.
   // Idempotent: returns existing invoice row when one already covers this period.
-  app.post('/api/projects/:id/generate-monthly-invoice', requireManagerOrAdmin, async (req, res) => {
+  app.post('/api/projects/:id/generate-monthly-invoice', canManageBilling, async (req, res) => {
     if (!validateUUID(req.params.id, res)) return;
     const projectId = req.params.id;
     const now = new Date();
