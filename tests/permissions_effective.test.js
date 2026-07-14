@@ -80,6 +80,35 @@ test('Rudy Douglas (Director) personal-grant shape: oversight, NOT billing', () 
   assert.ok(!eff.has('money.manage_billing'), 'Rudy must NOT hold billing');
 });
 
+// ── bundle keys union onto the effective set (#76 custom-role bundles) ───────
+test('bundle keys union onto base + grants (the "Director" bundle case)', () => {
+  const eff = computeEffective({
+    role: 'permitting_engineer',
+    bundleKeys: ['cockpit.view', 'hours.view_all', 'projects.view_all'],
+  });
+  assert.deepEqual([...eff].sort(), ['cockpit.view', 'hours.view_all', 'projects.view_all']);
+});
+
+test('bundle keys de-dupe with role/personal grants and honor base seed', () => {
+  const eff = computeEffective({
+    role: 'design_manager',                 // base: minijobs.add
+    roleGrants: ['projects.view_all'],
+    userGrants: ['cockpit.view'],
+    bundleKeys: ['cockpit.view', 'files.browse_all'],
+  });
+  assert.deepEqual([...eff].sort(), ['cockpit.view', 'files.browse_all', 'minijobs.add', 'projects.view_all']);
+});
+
+test('unknown bundle keys are filtered (bundles compose catalog keys only)', () => {
+  const eff = computeEffective({ role: 'design_engineer', bundleKeys: ['money.view', 'not.a.key'] });
+  assert.deepEqual([...eff], ['money.view']);
+});
+
+test('admin ignores bundles too — still holds exactly the catalog', () => {
+  const eff = computeEffective({ role: 'admin', bundleKeys: ['money.view'] });
+  assert.equal(eff.size, ALL_KEYS.length);
+});
+
 // ── isSelfGrant: "nobody grants themselves" on BOTH paths (red-team BLOCKER 1) ──
 test('self-grant BLOCKED on the user path (own id, string or number)', () => {
   const user = { id: 'uuid-abc', role: 'design_manager' };

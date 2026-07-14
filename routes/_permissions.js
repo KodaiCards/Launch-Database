@@ -77,13 +77,16 @@ const BASE_ROLE_SEED = {
  * @param {string[]} [p.userGrants] permission keys granted to the user personally (non-revoked)
  * @returns {Set<string>} the effective permission keys
  */
-function computeEffective({ role, roleGrants = [], userGrants = [] }) {
+function computeEffective({ role, roleGrants = [], userGrants = [], bundleKeys = [] }) {
   // admin holds every catalog key, unconditionally.
   if (role === 'admin') return new Set(ALL_KEYS);
 
+  // Effective = base-role seed ∪ role grants ∪ personal grants ∪ custom-role
+  // bundle keys (#76). All unioned, filtered to registered catalog keys.
   const eff = new Set(BASE_ROLE_SEED[role] || []);
-  for (const k of roleGrants) if (CATALOG_KEYS.has(k)) eff.add(k);
-  for (const k of userGrants) if (CATALOG_KEYS.has(k)) eff.add(k);
+  for (const list of [roleGrants, userGrants, bundleKeys]) {
+    for (const k of list) if (CATALOG_KEYS.has(k)) eff.add(k);
+  }
   return eff;
 }
 
@@ -110,7 +113,30 @@ async function getEffective(pool, user) {
   for (const r of rows) {
     (r.subject_type === 'user' ? userGrants : roleGrants).push(r.permission_key);
   }
-  return computeEffective({ role: user.role, roleGrants, userGrants });
+  const bundleKeys = await getBundleKeys(pool, user);
+  return computeEffective({ role: user.role, roleGrants, userGrants, bundleKeys });
+}
+
+/**
+ * Permission keys the user gains from every custom-role BUNDLE they're assigned
+ * (#76). DEGRADES to [] (never throws) if the bundle tables aren't present yet
+ * (migration ordering) or on a transient error — bundles are ADDITIVE, so their
+ * absence must never deny a user their base/grant permissions. Errors are logged.
+ */
+async function getBundleKeys(pool, user) {
+  try {
+    const { rows } = await pool.query(
+      `SELECT rbk.permission_key
+         FROM user_role_bundles urb
+         JOIN role_bundle_keys rbk ON rbk.bundle_id = urb.bundle_id
+        WHERE urb.user_id = $1`,
+      [String(user.id)]
+    );
+    return rows.map((r) => r.permission_key);
+  } catch (e) {
+    console.error('[permissions:getBundleKeys] (degrading to no-bundles)', e && e.message);
+    return [];
+  }
 }
 
 /**
