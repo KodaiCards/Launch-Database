@@ -4,10 +4,15 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Launch Fiber · Training</title>
-    <script type="module" crossorigin src="/training/assets/index-DtOoSrqi.js"></script>
-    <link rel="stylesheet" crossorigin href="/training/assets/index-lv7JuvIQ.css">
+    <!-- Ride the shared app-shell theme engine: stamp the user's chosen skin
+         (data-skin, from the shared `lfs-theme` key) on <html> before render so
+         the SPA canvas/panels match the rest of the platform (ui-pass #72). -->
+    <script src="/js/app-shell.js"></script>
+    <script>if (window.AppShell) AppShell.initTheme();</script>
+    <script type="module" crossorigin src="/training/assets/index-BcKfJtf8.js"></script>
+    <link rel="stylesheet" crossorigin href="/training/assets/index-CWULnQ68.css">
   </head>
-  <body class="bg-ospnavy text-slate-100 antialiased">
+  <body class="text-slate-100 antialiased">
     <div id="root"></div>
   </body>
 </html>
