@@ -514,7 +514,7 @@ app.use((req, res, next) => {
 // Must be BEFORE express.static so blocked endpoints return 403 before static files
 if (PORTAL_MODE) {
   // Generic API blocks (entire endpoint families admin-only).
-  const blocked = ['/api/revenue', '/api/invoices', '/api/billing', '/api/ai', '/api/hours', '/api/dashboard'];
+  const blocked = ['/api/revenue', '/api/invoices', '/api/billing', '/api/hours', '/api/dashboard'];
   // Specific upload endpoints — Option B: all file uploads route through the
   // admin service, never hit portal containers (which have ephemeral storage).
   // The portal frontend POSTs cross-origin to ADMIN_API_BASE for these.
@@ -637,16 +637,6 @@ app.use('/uploads', requireAuth(), (req, res) => {
   }
   res.sendFile(resolved);
 });
-
-// ─── Anthropic client ─────────────────────────────────────────────────────────
-// The actual `anthropic` instance lives inside routes/ai.js (Track 1.3
-// extraction). We keep the boot-time API-key check here so missing env
-// surfaces immediately at startup rather than on the first /api/ai/chat
-// request — much easier to diagnose in Railway logs.
-if (!process.env.ANTHROPIC_API_KEY) {
-  console.error('WARNING: ANTHROPIC_API_KEY is not set. AI assistant will not work.');
-  console.error('Add it in Railway dashboard → Variables → ANTHROPIC_API_KEY');
-}
 
 // ─────────────────────────────────────────────────────────────────────────────
 // HELPERS
@@ -798,8 +788,7 @@ require('./routes/export_bundle')(app, pool, { requireAdmin });
 require('./routes/cluster_views')(app, pool, { requireManagerOrAdmin });
 require('./routes/search')(app, pool, { requireManagerOrAdmin });
 
-// Admin observability: GET /api/audit/log (activity viewer) + GET /api/system/info (build/db info, no secrets).
-require('./routes/audit_view')(app, pool, { requireManagerOrAdmin });
+// Admin observability: GET /api/system/info (build/db info, no secrets).
 require('./routes/system_info')(app, pool, { requireManagerOrAdmin });
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -836,15 +825,6 @@ app.locals.csvHelpers = require('./routes/hours_csv')._helpers;
 // each row to a service_area_job so hours land in time_entries.service_area_job_id
 // (not the retiring projects tree). Coexists with hours_csv during cutover.
 require('./routes/hours_import')(app, pool, { requireAdmin, upload });
-
-// ─────────────────────────────────────────────────────────────────────────────
-// AI CHAT — extracted to routes/ai.js (Track 1.3 final). Tool-using
-// Claude assistant + multipart file upload + per-tool approval gate.
-// Smoke tests in tests/ai_upload.test.js cover the upload + uploadStore
-// surface; the chat tool loop needs an Anthropic client mock and is
-// queued for a follow-up.
-// ─────────────────────────────────────────────────────────────────────────────
-require('./routes/ai')(app, pool, { requireAdmin, upload });
 
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -887,9 +867,6 @@ require('./routes/recent_activity')(app, pool, { requireAuth, requireAdmin });
 
 // Revenue endpoints extracted to routes/revenue.js (Track 1.3).
 require('./routes/revenue')(app, pool, { requireManagerOrAdmin });
-
-// Audit log viewer (read-only admin UI for compliance trail — Wave 41).
-require('./routes/audit_log')(app, pool, { requireAdmin });
 
 // Project photos — mobile PWA uploads (Wave 55).
 require('./routes/project_photos')(app, pool, { requireAuth, requireAdmin });
