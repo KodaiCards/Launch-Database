@@ -19,7 +19,17 @@ function mount({ requireAdmin } = {}) {
     get: (path, ...handlers) => routes.push({ method: 'GET', path, handlers }),
     post: (path, ...handlers) => routes.push({ method: 'POST', path, handlers }),
   };
-  const pool = { calls: [], impl: null, query(sql, params) { this.calls.push({ sql, params }); return this.impl(sql, params); } };
+  const pool = {
+    calls: [], impl: null,
+    query(sql, params) { this.calls.push({ sql, params }); return this.impl(sql, params); },
+    // issue() now serializes allocation in a transaction on a dedicated client
+    // (advisory lock, #68 fix). The client shares the pool's impl + call log so
+    // tests drive both the same way.
+    async connect() {
+      const self = this;
+      return { query: (sql, params) => { self.calls.push({ sql, params }); return self.impl(sql, params); }, release() {} };
+    },
+  };
   // default admin gate = authed admin (individual tests can override)
   makeCerts(app, pool, { requireAdmin: requireAdmin || ((req, res, next) => next()) });
   return { routes, pool };
@@ -40,11 +50,15 @@ function matchPath(pattern, actual) {
 async function invoke(routes, method, path, { body = {}, headers = {}, user = { username: 'admin' } } = {}) {
   const route = findRoute(routes, method, path);
   if (!route) throw new Error(`no route for ${method} ${path}`);
+  // req.ip is what Express derives via `trust proxy` — the limiter now uses it
+  // (#68 fix). Simulate it from the test's x-forwarded-for so per-IP tests hold.
   const req = { params: matchPath(route.path, path), body, headers,
+                ip: headers['x-forwarded-for'] || '10.0.0.1',
                 socket: { remoteAddress: headers['x-forwarded-for'] || '10.0.0.1' }, user };
   const res = {
-    statusCode: 200, body: undefined, _done: false,
+    statusCode: 200, body: undefined, _done: false, headers: {},
     status(n) { this.statusCode = n; return this; },
+    set(k, v) { this.headers[k] = v; return this; },
     json(o) { this.body = o; this._done = true; return this; },
   };
   let idx = 0;
@@ -127,11 +141,15 @@ test('verify: rate limiter allows 30/min/IP then 429s the 31st', async () => {
 });
 
 // ── ADMIN issue ──────────────────────────────────────────────────────────────
-function issuePool({ user = { id: 42, recipient: 'Rudy Douglas' }, existing = [], count = 0, insert } = {}) {
+const UID = '42424242-4242-4242-4242-424242424242';         // valid-shape UUID, a "known" user
+const UID_MISSING = '00000000-0000-0000-0000-000000000999';  // valid-shape UUID, a nonexistent user
+function issuePool({ user = { id: UID, recipient: 'Rudy Douglas' }, existing = [], maxseq = 0, insert } = {}) {
   return (sql) => {
+    // transaction control + the per-year advisory lock (#68 serialization) are no-ops for the mock
+    if (/BEGIN|COMMIT|ROLLBACK|advisory_xact_lock/.test(sql)) return { rows: [] };
     if (sql.includes('FROM users')) return { rows: user ? [user] : [] };
     if (sql.includes('AND NOT revoked')) return { rows: existing };
-    if (sql.includes('COUNT(*)')) return { rows: [{ n: count }] };
+    if (sql.includes('MAX(')) return { rows: [{ maxseq }] };   // gap-safe allocation (#68 finding 1)
     if (sql.includes('INSERT INTO training_certificates')) return insert();
     throw new Error('unexpected sql: ' + sql);
   };
@@ -140,16 +158,26 @@ function issuePool({ user = { id: 42, recipient: 'Rudy Douglas' }, existing = []
 test('issue: new cert gets a formatted unique number LFS-OSP-<year>-0001', async () => {
   const { routes, pool } = mount();
   const year = new Date().getFullYear();
-  pool.impl = issuePool({ count: 0, insert: () => ({ rows: [{ ...CERT_ROW, cert_no: `LFS-OSP-${year}-0001` }] }) });
-  const res = await invoke(routes, 'POST', '/api/certificates/issue', { body: { user_id: 42, completed_on: '2026-07-13' } });
+  pool.impl = issuePool({ maxseq: 0, insert: () => ({ rows: [{ ...CERT_ROW, cert_no: `LFS-OSP-${year}-0001` }] }) });
+  const res = await invoke(routes, 'POST', '/api/certificates/issue', { body: { user_id: UID, completed_on: '2026-07-13' } });
   assert.equal(res.body.certificate.cert_no, `LFS-OSP-${year}-0001`);
   assert.ok(!res.body.existing);
+});
+
+test('issue: allocates MAX(seq)+1 (gap-safe) under the per-year advisory lock', async () => {
+  const { routes, pool } = mount();
+  const year = new Date().getFullYear();
+  // highest existing seq is 7 (even with gaps) → next is 0008
+  pool.impl = issuePool({ maxseq: 7, insert: () => ({ rows: [{ ...CERT_ROW, cert_no: `LFS-OSP-${year}-0008` }] }) });
+  const res = await invoke(routes, 'POST', '/api/certificates/issue', { body: { user_id: UID } });
+  assert.equal(res.body.certificate.cert_no, `LFS-OSP-${year}-0008`);
+  assert.ok(pool.calls.some(c => /advisory_xact_lock/.test(c.sql)), 'allocation serialized under an advisory lock');
 });
 
 test('issue: idempotent — an active cert for the same user is returned, never duplicated', async () => {
   const { routes, pool } = mount();
   pool.impl = issuePool({ existing: [CERT_ROW], insert: () => { throw new Error('must NOT insert when a cert already exists'); } });
-  const res = await invoke(routes, 'POST', '/api/certificates/issue', { body: { user_id: 42 } });
+  const res = await invoke(routes, 'POST', '/api/certificates/issue', { body: { user_id: UID } });
   assert.equal(res.body.existing, true);
   assert.equal(res.body.certificate.cert_no, 'LFS-OSP-2026-0001');
   assert.ok(!pool.calls.some(c => c.sql.includes('INSERT')), 'no INSERT on the idempotent path');
@@ -158,29 +186,20 @@ test('issue: idempotent — an active cert for the same user is returned, never 
 test('issue: unknown user → 404', async () => {
   const { routes, pool } = mount();
   pool.impl = issuePool({ user: null });
-  const res = await invoke(routes, 'POST', '/api/certificates/issue', { body: { user_id: 999 } });
+  const res = await invoke(routes, 'POST', '/api/certificates/issue', { body: { user_id: UID_MISSING } });
   assert.equal(res.statusCode, 404);
 });
 
-test('issue: missing user_id → 400; bad completed_on → 400', async () => {
+test('issue: missing user_id → 400; non-UUID user_id → 400; bad completed_on → 400', async () => {
   const { routes, pool } = mount();
-  pool.impl = () => ({ rows: [] });
+  pool.impl = issuePool({});
   assert.equal((await invoke(routes, 'POST', '/api/certificates/issue', { body: {} })).statusCode, 400);
+  assert.equal((await invoke(routes, 'POST', '/api/certificates/issue', { body: { user_id: '42' } })).statusCode, 400);
   assert.equal((await invoke(routes, 'POST', '/api/certificates/issue',
-    { body: { user_id: 42, completed_on: '07/13/2026' } })).statusCode, 400);
-});
-
-test('issue: retries on a 23505 unique collision and still allocates a number', async () => {
-  const { routes, pool } = mount();
-  const year = new Date().getFullYear();
-  let inserts = 0;
-  pool.impl = issuePool({
-    count: 0,
-    insert: () => { inserts++; if (inserts === 1) { const e = new Error('dup'); e.code = '23505'; throw e; } return { rows: [{ ...CERT_ROW, cert_no: `LFS-OSP-${year}-0002` }] }; },
-  });
-  const res = await invoke(routes, 'POST', '/api/certificates/issue', { body: { user_id: 42 } });
-  assert.equal(inserts, 2, 'first INSERT raced (23505), retried once');
-  assert.equal(res.body.certificate.cert_no, `LFS-OSP-${year}-0002`);
+    { body: { user_id: UID, completed_on: '07/13/2026' } })).statusCode, 400);
+  // #68 minor: shape-valid but not a real calendar date
+  assert.equal((await invoke(routes, 'POST', '/api/certificates/issue',
+    { body: { user_id: UID, completed_on: '2026-13-40' } })).statusCode, 400);
 });
 
 // ── ADMIN list + revoke ──────────────────────────────────────────────────────

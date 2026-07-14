@@ -456,6 +456,12 @@ function pageRequiresAuth(reqPath) {
   // Stakeholders click a share link; the token in the path is the auth.
   if (reqPath.startsWith('/splice/view/')) return false;
   if (reqPath.startsWith('/api/splice/view/')) return false;
+  // Public certificate verification (specs/certificates.md): the printed cert's
+  // /verify link, the branded lookup page, and the public verify API must reach
+  // an anonymous browser. Admin issue/list/revoke stay gated (requireAdmin in-route);
+  // only the /verify/ subpath of the API is exempt, never /api/certificates itself.
+  if (reqPath === '/verify' || reqPath === '/verify.html') return false;
+  if (reqPath.startsWith('/api/certificates/verify/')) return false;
   // Block everything else (HTML pages and API endpoints) until logged in
   return true;
 }
@@ -534,6 +540,13 @@ app.get(['/login', '/login.html'], (req, res) => {
   const inPublic = path.join(__dirname, 'public', 'login.html');
   const inRoot = path.join(__dirname, 'login.html');
   res.sendFile(fs.existsSync(inPublic) ? inPublic : inRoot);
+});
+
+// Public certificate verification page (specs/certificates.md). The number
+// printed on the certificate resolves to /verify (?cert=… auto-looks-up);
+// serve the branded lookup page there. Public per pageRequiresAuth above.
+app.get('/verify', (req, res) => {
+  res.sendFile(path.join(__dirname, 'public', 'verify.html'));
 });
 
 // Auth-gated static serve for the OSP Design Training SPA.
@@ -676,6 +689,11 @@ const invoiceGenerator = require('./invoice_generator');
 // Clients CRUD lives in routes/clients.js (extracted as part of
 // CLEANUP_PLAN.md Track 1.3).
 require('./routes/clients')(app, pool, { requireAdmin, requireAuth, requireStaff }); // H-1: requireAuth added — GET /api/clients was unauthenticated; O34: GETs gated to requireStaff (no trainee/customer leak)
+
+// OSP completion certificates (specs/certificates.md). Public verify + admin
+// issue/list/revoke. The public /verify page + /api/certificates/verify/* are
+// auth-exempted in pageRequiresAuth; issue/list/revoke enforce requireAdmin in-route.
+require('./routes/certificates')(app, pool, { requireAdmin });
 
 // ─────────────────────────────────────────────────────────────────────────────
 // CONTRACTS + ENGINEERING CONTRACTS — extracted as part of Track 1.3.

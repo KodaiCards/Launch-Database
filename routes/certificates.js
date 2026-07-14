@@ -2,14 +2,19 @@
 // Public verify + admin issue/list/revoke. Registrar wires the mount in server.js.
 
 // Fixed-window limiter for the PUBLIC verify endpoint: 30 lookups/min/IP.
+// #68 finding 2: use req.ip (Express derives it via `trust proxy`, set in
+// server.js) — NOT a raw x-forwarded-for split, which is client-spoofable and
+// would defeat the "no enumeration farming" invariant. Matches auth.js's limiters.
 const hits = new Map();
 function verifyLimiter(req, res, next) {
-  const ip = (req.headers['x-forwarded-for'] || '').split(',')[0].trim()
-    || req.socket.remoteAddress || 'unknown';
+  const ip = req.ip || 'unknown';
   const now = Date.now();
   const b = hits.get(ip);
   if (!b || now - b.start > 60000) { hits.set(ip, { start: now, n: 1 }); return next(); }
-  if (++b.n > 30) return res.status(429).json({ error: 'Too many lookups — try again in a minute.' });
+  if (++b.n > 30) {
+    res.set('Retry-After', '60'); // #68 minor: tell honest clients when to retry
+    return res.status(429).json({ error: 'Too many lookups — try again in a minute.' });
+  }
   next();
 }
 setInterval(() => {
@@ -40,41 +45,61 @@ module.exports = function (app, pool, { requireAdmin }) {
   // ADMIN — issue for a trainee. Idempotent: an active cert for the same
   // user+course is returned as-is, never duplicated.
   app.post('/api/certificates/issue', requireAdmin, async (req, res) => {
-    const userId = parseInt(req.body.user_id, 10);
+    // #68/Registrar merge-fix: user ids are UUIDs — do NOT parseInt (that mangled
+    // the id and broke issuance against the real schema). Validate the UUID shape.
+    const userId = String(req.body.user_id || '').trim();
     if (!userId) return res.status(400).json({ error: 'user_id required' });
+    if (!/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(userId)) {
+      return res.status(400).json({ error: 'user_id must be a valid UUID' });
+    }
     const completedOn = req.body.completed_on || new Date().toISOString().slice(0, 10);
+    // #68 minor: shape AND calendar validity (2026-13-40 passes the regex but is not a real date).
     if (!/^\d{4}-\d{2}-\d{2}$/.test(completedOn)) return res.status(400).json({ error: 'completed_on must be YYYY-MM-DD' });
-    try {
-      const { rows: urows } = await pool.query(
-        `SELECT id, COALESCE(NULLIF(TRIM(full_name), ''), username) AS recipient FROM users WHERE id = $1`, [userId]);
-      if (!urows.length) return res.status(404).json({ error: 'user not found' });
+    const parsed = new Date(completedOn + 'T00:00:00Z');
+    if (isNaN(parsed.getTime()) || parsed.toISOString().slice(0, 10) !== completedOn) {
+      return res.status(400).json({ error: 'completed_on must be a valid calendar date (YYYY-MM-DD)' });
+    }
 
-      const { rows: existing } = await pool.query(
-        `SELECT * FROM training_certificates
-          WHERE user_id = $1 AND course_code = 'OSP_DESIGN' AND NOT revoked`, [userId]);
-      if (existing.length) return res.json({ certificate: existing[0], existing: true });
+    // #68 finding 1: serialize cert-no allocation in a transaction under a
+    // per-year advisory lock, so concurrent issues (double-click / batch) can
+    // never compute the same candidate and exhaust the retry loop into a 500.
+    // The lock ALSO closes the latent same-user double-issue race (the old
+    // idempotency check ran outside any lock). Gap-safe MAX+1 numbering.
+    const client = await pool.connect();
+    try {
+      const { rows: urows } = await client.query(
+        `SELECT id, COALESCE(NULLIF(TRIM(full_name), ''), username) AS recipient FROM users WHERE id = $1`, [userId]);
+      if (!urows.length) { client.release(); return res.status(404).json({ error: 'user not found' }); }
 
       const year = new Date().getFullYear();
-      let cert = null;
-      for (let attempt = 0; attempt < 5 && !cert; attempt++) {
-        const { rows: [{ n }] } = await pool.query(
-          `SELECT COUNT(*)::int AS n FROM training_certificates WHERE cert_no LIKE $1`,
-          [`LFS-OSP-${year}-%`]);
-        const certNo = `LFS-OSP-${year}-${String(n + 1 + attempt).padStart(4, '0')}`;
-        try {
-          const { rows: [row] } = await pool.query(
-            `INSERT INTO training_certificates
-               (cert_no, user_id, recipient_name, completed_on, issued_by)
-             VALUES ($1, $2, $3, $4, $5) RETURNING *`,
-            [certNo, userId, urows[0].recipient, completedOn, req.user.username]);
-          cert = row;
-        } catch (e) { if (e.code !== '23505') throw e; /* number raced — retry */ }
+      await client.query('BEGIN');
+      await client.query(`SELECT pg_advisory_xact_lock(hashtext($1))`, [`cert:OSP:${year}`]);
+
+      const { rows: existing } = await client.query(
+        `SELECT * FROM training_certificates
+          WHERE user_id = $1 AND course_code = 'OSP_DESIGN' AND NOT revoked`, [userId]);
+      if (existing.length) {
+        await client.query('COMMIT');
+        return res.json({ certificate: existing[0], existing: true });
       }
-      if (!cert) return res.status(500).json({ error: 'could not allocate certificate number' });
-      res.json({ certificate: cert });
+
+      const { rows: [{ maxseq }] } = await client.query(
+        `SELECT COALESCE(MAX(CAST(SPLIT_PART(cert_no, '-', 4) AS INT)), 0) AS maxseq
+           FROM training_certificates WHERE cert_no LIKE $1`, [`LFS-OSP-${year}-%`]);
+      const certNo = `LFS-OSP-${year}-${String(maxseq + 1).padStart(4, '0')}`;
+      const { rows: [row] } = await client.query(
+        `INSERT INTO training_certificates
+           (cert_no, user_id, recipient_name, completed_on, issued_by)
+         VALUES ($1, $2, $3, $4, $5) RETURNING *`,
+        [certNo, userId, urows[0].recipient, completedOn, req.user.username]);
+      await client.query('COMMIT');
+      res.json({ certificate: row });
     } catch (e) {
+      await client.query('ROLLBACK').catch(() => {});
       console.error('[certificates] issue failed:', e.message);
       res.status(500).json({ error: 'issue failed' });
+    } finally {
+      client.release();
     }
   });
 
