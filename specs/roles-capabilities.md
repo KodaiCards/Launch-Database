@@ -1,6 +1,8 @@
 # SPEC — Permissions system: catalog, role/person grants, the Settings permissions page (PLAN 2.5, System F)
 
-> ✔ **RATIFIED** — Carter, 2026-07-13 (Partner spec session, succession-sprint batch; **expanded same day** from the initial grants model on Carter's follow-up, verbatim below). Initial grants ruling stands: **Carter = admin (everything). Rudy Douglas (Director) = cockpit + all-hours + all-projects — NOT manage-billing.** Everyone else: base, granted case-by-case.
+> ✔ **RATIFIED** — Carter, 2026-07-13 (Partner spec session, succession-sprint batch; **expanded same day** from the initial grants model on Carter's follow-up, verbatim below). **SUPERSEDED 2026-07-14 — the NO-BAKING principle (Carter, verbatim below): nothing person-specific ever ships in code, seeds, or migrations.** The ONLY code-level permission behavior is the bootstrap: admin (Carter) implicitly holds everything. Every other grant — Rudy included — is DATA Carter creates on the page (create a role bundle, add keys to it, assign it; or grant keys individually). Role defaults (e.g. managers get minijobs.add) ship only as editable seed ROWS in the grants table, visible and revocable on the page like any other grant — never as behavior in route code.
+
+> **Carter (verbatim, 2026-07-14 15:57):** "Why bake those keys in when I can just give him perms on a perm by perm biases? seems stupid to bake a perm into code when its all fluid... Everyone keeps baking perms into roles, let me just create a role, add perms to it and change perms individually for people. that simple"
 
 > **Carter (verbatim, 2026-07-13 15:14):** "when viewing a project as me with perms I can see the money stuff in the actual project list but people without perms cant. None of this stuff can just live in your head either. On the job board everything is visible so design and permitting teams can easily float between each other, I want the capability for managers to override someone working on something though, just to void or change their subordinates time, admins can change everyone's time. I want managers able to add mini jobs but the ability to give that permission to other people individually. There should be a whole page in settings where permissions for literally everything can be given to a role or person. Just lists of lots and basically all the different perms."
 
@@ -22,7 +24,7 @@
 `money.view` · `money.manage_billing` · `hours.edit_subordinates` · `hours.edit_all` · `hours.view_all` · `projects.view_all` · `projects.manage` · `minijobs.add` · `minijobs.template_manage` · `cockpit.view` (incl. leaderboard at 2.9) · `training.admin` · `files.browse_all` (desktop D1 admin browse) · `events.manage` · `people.manage` · `system.logger_toggle` · `certificates.issue`.
 
 ## Done-when
-- Rudy's account sees cockpit/all-hours/all-projects and CANNOT reach billing mutations (verified by direct API call).
+- NO person-specific grants exist in any migration/seed (VO greps them); post-#74 Carter creates a Director bundle + assigns Rudy ON THE PAGE, after which Rudy sees those surfaces and still CANNOT reach billing mutations (direct API call).
 - A no-`money.view` user fetching the project list gets **no $ fields in the JSON** (VO checks the raw wire, not the rendered page).
 - Manager voids a direct report's segment → succeeds, change-logged, report notified; same manager editing a NON-report's time → 403. Admin edits anyone's → succeeds, logged, notified.
 - Personal grant of `minijobs.add` to a non-manager → they can add; revoke → 403; all visible on the Settings page.
