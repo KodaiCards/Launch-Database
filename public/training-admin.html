@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en" data-theme="light">
+<html lang="en" data-theme="dark">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1.0">
@@ -9,26 +9,11 @@
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 <link rel="stylesheet" href="/css/app-shell.css">
+<script src="/js/app-shell.js"></script>
+<script>AppShell.initTheme();</script>
 <style>
-:root{
-  --primary:#1B5FA0;--primary-dark:#134880;--primary-light:#E8F0FB;
-  --surface-1:#F5F7FA;--surface-2:#FFFFFF;
-  --white:#FFFFFF;--gray-light:#F5F7FA;--gray-border:#DEE2E6;
-  --text:#212529;--text-secondary:#495057;--text-muted:#5A6470;
-  --success:#28A745;--success-light:#E8F5E9;--success-text:#1B5E20;
-  --warning:#FFC107;--warning-light:#FFF8E1;--warning-text:#7A4F0E;
-  --danger:#DC3545;--danger-light:#FDECEA;--danger-text:#842029;
-  --font:'Inter',sans-serif;
-}
-html[data-theme="dark"]{
-  --primary:#4A90D9;--primary-dark:#1B5FA0;--primary-light:#1E3A5C;
-  --surface-1:#1A1F26;--surface-2:#1D2430;
-  --white:#1D2430;--gray-light:#1A1F26;--gray-border:#2D3540;
-  --text:#E8EAED;--text-secondary:#C2C7CD;--text-muted:#9BA1A8;
-  --success:#5DD27A;--success-light:#1B3D24;--success-text:#A5D6A7;
-  --danger:#FF6B6B;--danger-light:#3D1A1A;--danger-text:#FFCDD2;
-  color-scheme:dark;
-}
+/* Palette tokens come from the shared app-shell.css data-skin engine (4-skin, dark-only);
+   this page consumes them directly so it renders in whatever skin the user picked globally. */
 *{box-sizing:border-box;margin:0;padding:0}
 html,body{font-family:var(--font);background:var(--gray-light);color:var(--text);min-height:100vh}
 button{font-family:inherit;cursor:pointer;border:none;background:none;color:inherit}
@@ -148,7 +133,7 @@ tr.prow td:first-child{position:relative}
     <button class="btn" onclick="openDefaultVis()" title="What a brand-new signup sees"><i class="fa-solid fa-user-plus"></i> New-user default</button>
     <button class="btn" onclick="openPresets()" title="Reusable named content bundles"><i class="fa-solid fa-layer-group"></i> Presets</button>
     <button class="btn" onclick="load()"><i class="fa-solid fa-rotate"></i> Refresh</button>
-    <button class="btn-icon" onclick="toggleDark()" title="Toggle theme"><i class="fa-solid fa-moon" id="dm-icon"></i></button>
+    <button class="btn-icon" onclick="AppShell.toggleTheme()" title="Switch theme"><i class="fa-solid fa-palette"></i></button>
   </div>
 </div>
 
@@ -407,15 +392,6 @@ tr.prow td:first-child{position:relative}
     document.getElementById('d-body').innerHTML = html;
     if (window.renderAccessSection) window.renderAccessSection(u.id, u.role);
   }
-
-  window.toggleDark = function(){
-    var dark = document.documentElement.getAttribute('data-theme')==='dark';
-    document.documentElement.setAttribute('data-theme', dark?'light':'dark');
-    localStorage.setItem('lfs_theme', dark?'light':'dark');
-    updateDmIcon();
-  };
-  function updateDmIcon(){ var i=document.getElementById('dm-icon'); if(i) i.className = document.documentElement.getAttribute('data-theme')==='dark'?'fa-solid fa-sun':'fa-solid fa-moon'; }
-  (function(){ var s=localStorage.getItem('lfs_theme'); if(s) document.documentElement.setAttribute('data-theme',s); updateDmIcon(); })();
 
   // ─── Content access (presets + per-user) ───────────────────────────────────
   var _tree=null, _subjTrack={}, _presets=[], _pchecks=new Set(), _editingId=null, _ov=new Map(), _accUser=null;
