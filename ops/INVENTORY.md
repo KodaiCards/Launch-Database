@@ -137,3 +137,5 @@
 | **Desktop D1/D2 (2.13) · mini-jobs M1/M2 (2.15) · mobile PWA (2.14)** | PLAN + specs | wave-2 start / desktop D2 |
 | **Training wave-2 (T09→T05→T06, 1.2)** then wave-3 (all remaining OSP, 1.3) | PLAN §Track-1 | wave-2: when **#66** (last live-5 deviation) clears |
 | **specs/certificates.md ↔ code**: "main authoritative over spec snippets" declared | `specs/certificates.md` header | on any future cert rebuild — read code, not stale snippet |
+| **System F hours-override owner NOTIFICATION display** (change-log is v1 compliance; the in-app notify is deferred) | #75 + this ledger | rides **2.4** (Events + nudges) when built |
+| **Rudy Douglas (Director) initial permission grants** — account identity ambiguous (`full_name='Rudy Douglas'` = INACTIVE admin `6043ec56`; active is `Douglas`/"Rudy"/trainee `b346f865`) | #73 ruling; Registrar applies seed at merge | Carter confirms which account = Rudy the Director |
