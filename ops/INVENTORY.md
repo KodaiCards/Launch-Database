@@ -135,7 +135,7 @@
 | **Cutover steps 2–7** (O20 port · invoice consolidation · parallel-structure reconcile · cluster UI gap-close · legacy data delete · hard redirect) | `specs/cutover.md` + PLAN 2.3 | as step-1 (#70) lands / Carter waves |
 | **Dependency-blocked Track-2 specs**: hours 2.6 · billing 2.7 · projections 2.8 · cockpit 2.9 · county 2.10 · events 2.4 · diagnostics 2.12 (all RATIFIED) | PLAN §Track-2 | after **2.3 keystone cutover** |
 | **Desktop D1/D2 (2.13) · mini-jobs M1/M2 (2.15) · mobile PWA (2.14)** | PLAN + specs | wave-2 start / desktop D2 |
-| **Training wave-2 (T09→T05→T06, 1.2)** then wave-3 (all remaining OSP, 1.3) | PLAN §Track-1 | wave-2: when **#66** (last live-5 deviation) clears |
+| **Training wave-2 (T09→T05→T06, 1.2)** — **DECOMPOSED 2026-07-14 (Partner ruling): #78 salvage + #79 T09, NOT gated on #66.** Queues AHEAD of #77 for the next free foreman; System F in-flight (#73–#76) lands first. vo1 rules #66 separately. Then T05/T06 + wave-3 (all remaining OSP, 1.3). | #78/#79 + PLAN §Track-1 | T05/T06 after T09; wave-3 rolling as crews free |
 | **specs/certificates.md ↔ code**: "main authoritative over spec snippets" declared | `specs/certificates.md` header | on any future cert rebuild — read code, not stale snippet |
 | **System F hours-override owner NOTIFICATION display** (change-log is v1 compliance; the in-app notify is deferred) | #75 + this ledger | rides **2.4** (Events + nudges) when built |
 | **#70 admin.html excision — prod render playthrough** (the ~452-line AI/audit UI removal; highest-risk edit; vo1 verified in preview, prod smoke not yet) | closed #70 | Railway deploys resume |
