@@ -6,6 +6,7 @@
 const { test } = require('node:test');
 const assert = require('node:assert/strict');
 const {
+  capabilityGrantsTimeEdit,
   computeEffective,
   isSelfGrant,
   mayEditBundleKeys,
@@ -173,6 +174,21 @@ test('non-admin who does NOT hold the bundle may edit its keys (normal delegatio
 test('admin may edit any bundle keys — already holds every key, cannot escalate', () => {
   assert.equal(mayEditBundleKeys({ role: 'admin', holdsBundle: true }), true);
   assert.equal(mayEditBundleKeys({ role: 'admin', holdsBundle: false }), true);
+});
+
+// ── capabilityGrantsTimeEdit: hours-override layers ON TOP (#75 Flag-B) ───────
+test('hours.edit_all grants the edit regardless of direct-report status', () => {
+  assert.equal(capabilityGrantsTimeEdit({ editAll: true, editSubordinates: false, isDirectReport: false }), true);
+});
+
+test('hours.edit_subordinates grants ONLY for a direct report', () => {
+  assert.equal(capabilityGrantsTimeEdit({ editAll: false, editSubordinates: true, isDirectReport: true }), true);
+  assert.equal(capabilityGrantsTimeEdit({ editAll: false, editSubordinates: true, isDirectReport: false }), false);
+});
+
+test('no hours capability → no bypass (existing team/ownership scope still runs)', () => {
+  assert.equal(capabilityGrantsTimeEdit({ editAll: false, editSubordinates: false, isDirectReport: true }), false);
+  assert.equal(capabilityGrantsTimeEdit({}), false);
 });
 
 test('catalog is internally consistent: 16 unique keys, all grouped', () => {

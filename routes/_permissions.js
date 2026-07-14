@@ -157,6 +157,16 @@ function isSelfGrant(user, subjectType, subjectId) {
 }
 
 /**
+ * Does the caller's HOURS capability grant them a time edit/void — layered ON TOP
+ * of the existing team/ownership scope (#75, Flag-B AUGMENT ruling; never removes
+ * existing access)? `hours.edit_all` → anyone; `hours.edit_subordinates` → their
+ * `manager_id` direct reports (isDirectReport resolved by the caller). PURE + tested.
+ */
+function capabilityGrantsTimeEdit({ editAll, editSubordinates, isDirectReport }) {
+  return !!editAll || (!!editSubordinates && !!isDirectReport);
+}
+
+/**
  * May this caller REWRITE a bundle's key set (#76)? A non-admin who currently
  * HOLDS the bundle must not — editing a bundle you wear to add keys self-grants
  * them (the #73 BLOCKER-1 self-escalation class, via bundle-edit instead of a
@@ -216,6 +226,7 @@ module.exports = {
   ALL_KEYS,
   CATALOG_KEYS,
   BASE_ROLE_SEED,
+  capabilityGrantsTimeEdit,
   computeEffective,
   getEffective,
   isSelfGrant,

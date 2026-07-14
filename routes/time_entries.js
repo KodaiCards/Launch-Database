@@ -13,6 +13,51 @@
 const { updateProjectHours, saveUndoBucket, snapHoursToQuarter } = require('./_helpers');
 const { broadcast } = require('./_sse');
 const { logAudit } = require('./_audit');
+const { getEffective, capabilityGrantsTimeEdit } = require('./_permissions');
+
+// #75 hours-override (Flag-B AUGMENT): does the entry's SUBJECT report to this
+// manager via users.manager_id? Subject = staff_id→user, else the creator user_id.
+// Resilient — returns false on any error (e.g. manager_id column absent pre-#73
+// migration) so we simply fall through to the existing team/ownership scope. NEVER
+// throws, NEVER widens access on error.
+async function subjectReportsTo(pool, entry, managerUserId) {
+  try {
+    const { rowCount } = await pool.query(
+      `SELECT 1 FROM users u
+        WHERE u.manager_id = $1
+          AND ( ($2 IS NOT NULL AND u.staff_id = $2::uuid)
+             OR ($2 IS NULL AND u.id = $3::uuid) )
+        LIMIT 1`,
+      [managerUserId, entry.staff_id || null, entry.user_id || null]
+    );
+    return rowCount > 0;
+  } catch (e) {
+    console.error('[time-entries:subjectReportsTo]', e && e.message);
+    return false;
+  }
+}
+
+// Resolve whether the caller's HOURS capability lets them bypass the team/ownership
+// scope for THIS entry, and on what basis (recorded in the audit trail). Layered on
+// top of the existing scope — capability only ADDS access (#75 Flag-B ruling).
+async function timeEditCapability(pool, req, entry) {
+  let eff;
+  try { eff = await getEffective(pool, req.user); }
+  catch (e) { return { bypass: false, basis: null }; }
+  const editAll = eff.has('hours.edit_all');
+  const editSub = eff.has('hours.edit_subordinates');
+  const directReport = editSub ? await subjectReportsTo(pool, entry, req.user.id) : false;
+  if (!capabilityGrantsTimeEdit({ editAll, editSubordinates: editSub, isDirectReport: directReport })) {
+    return { bypass: false, basis: null };
+  }
+  return { bypass: true, basis: editAll ? 'all' : 'sub' };
+}
+
+// Grant-basis stamped into the audit `source` (capped at 20 chars, schema).
+function auditSource(portalMode, basis) {
+  const base = String(portalMode || 'admin');
+  return basis ? `${base.slice(0, 15)}:${basis}` : base;
+}
 
 module.exports = function installTimeEntriesRoutes(app, pool, mw) {
   const { requireAuth, auditTimeEntry, portalMode } = mw;
@@ -347,28 +392,35 @@ module.exports = function installTimeEntriesRoutes(app, pool, mw) {
       // their own entries. Managers are scoped via jobs.team (see below) so
       // they never hit the user_id check.
 
-      // Ownership check for engineers — they can only edit their own
-      if (req.user?.role === 'design_engineer' || req.user?.role === 'permitting_engineer') {
-        if (String(before.user_id) !== String(req.user.id)) {
-          return res.status(403).json({ error: 'You can only edit your own time entries' });
+      // #75 hours-override (AUGMENT): hours.edit_all → edit anyone;
+      // hours.edit_subordinates → edit a manager_id direct report. When the
+      // capability grants it, skip the team/ownership restrictions below; when it
+      // doesn't, the existing scope runs UNCHANGED (no one loses current access).
+      const cap = await timeEditCapability(pool, req, before);
+      if (!cap.bypass) {
+        // Ownership check for engineers — they can only edit their own
+        if (req.user?.role === 'design_engineer' || req.user?.role === 'permitting_engineer') {
+          if (String(before.user_id) !== String(req.user.id)) {
+            return res.status(403).json({ error: 'You can only edit your own time entries' });
+          }
         }
-      }
 
-      // TE-1: Manager team-scope check. Managers may only edit entries that
-      // belong to projects on their team (via the project's job.team).
-      // Projects with job.team='both' or NULL are shared. Admin bypasses this.
-      if (req.user?.role === 'design_manager' || req.user?.role === 'permitting_manager') {
-        const managerTeam = req.user.role === 'design_manager' ? 'design' : 'permitting';
-        const { rows: scopeCheck } = await pool.query(
-          `SELECT te.id FROM time_entries te
-           LEFT JOIN projects p ON p.id = te.project_id
-           LEFT JOIN jobs j ON j.id = p.job_id
-           WHERE te.id = $1
-             AND (j.team = $2 OR j.team = 'both' OR j.team IS NULL OR p.job_id IS NULL)`,
-          [req.params.id, managerTeam]
-        );
-        if (!scopeCheck.length) {
-          return res.status(404).json({ error: 'Entry not found' });
+        // TE-1: Manager team-scope check. Managers may only edit entries that
+        // belong to projects on their team (via the project's job.team).
+        // Projects with job.team='both' or NULL are shared. Admin bypasses this.
+        if (req.user?.role === 'design_manager' || req.user?.role === 'permitting_manager') {
+          const managerTeam = req.user.role === 'design_manager' ? 'design' : 'permitting';
+          const { rows: scopeCheck } = await pool.query(
+            `SELECT te.id FROM time_entries te
+             LEFT JOIN projects p ON p.id = te.project_id
+             LEFT JOIN jobs j ON j.id = p.job_id
+             WHERE te.id = $1
+               AND (j.team = $2 OR j.team = 'both' OR j.team IS NULL OR p.job_id IS NULL)`,
+            [req.params.id, managerTeam]
+          );
+          if (!scopeCheck.length) {
+            return res.status(404).json({ error: 'Entry not found' });
+          }
         }
       }
 
@@ -417,7 +469,7 @@ module.exports = function installTimeEntriesRoutes(app, pool, mw) {
         await auditTimeEntry({
           req, timeEntryId: req.params.id, action: 'updated',
           before, after: updated,
-          source: portalMode || 'admin',
+          source: auditSource(portalMode, cap.basis),
         });
       } catch (auditErr) {
         console.error('[time-entries:update-audit]', auditErr && auditErr.message);
@@ -452,30 +504,37 @@ module.exports = function installTimeEntriesRoutes(app, pool, mw) {
       before = existing[0] || null;
       if (!before) return res.status(404).json({ error: 'Entry not found.' });
 
-      // Engineer-scope: own entries only. Mirrors the PUT handler's check.
-      if (req.user?.role === 'design_engineer' || req.user?.role === 'permitting_engineer') {
-        if (String(before.user_id) !== String(req.user.id)) {
-          return res.status(403).json({ error: 'You can only delete your own time entries.' });
+      // #75 hours-override (AUGMENT): same layering as PUT — capability
+      // (edit_all / edit_subordinates→direct report) ADDS void access on top of
+      // the existing team/ownership scope; otherwise the existing checks run.
+      const cap = await timeEditCapability(pool, req, before);
+      if (!cap.bypass) {
+        // Engineer-scope: own entries only. Mirrors the PUT handler's check.
+        if (req.user?.role === 'design_engineer' || req.user?.role === 'permitting_engineer') {
+          if (String(before.user_id) !== String(req.user.id)) {
+            return res.status(403).json({ error: 'You can only delete your own time entries.' });
+          }
         }
-      }
 
-      // TE-1: Manager team-scope check for single delete. Managers may only
-      // delete entries that belong to projects on their team (via job.team).
-      // Projects with job.team='both' or NULL are shared. Admin bypasses this.
-      if (req.user?.role === 'design_manager' || req.user?.role === 'permitting_manager') {
-        const managerTeam = req.user.role === 'design_manager' ? 'design' : 'permitting';
-        const { rows: scopeCheck } = await pool.query(
-          `SELECT te.id FROM time_entries te
-           LEFT JOIN projects p ON p.id = te.project_id
-           LEFT JOIN jobs j ON j.id = p.job_id
-           WHERE te.id = $1
-             AND (j.team = $2 OR j.team = 'both' OR j.team IS NULL OR p.job_id IS NULL)`,
-          [req.params.id, managerTeam]
-        );
-        if (!scopeCheck.length) {
-          return res.status(404).json({ error: 'Entry not found.' });
+        // TE-1: Manager team-scope check for single delete. Managers may only
+        // delete entries that belong to projects on their team (via job.team).
+        // Projects with job.team='both' or NULL are shared. Admin bypasses this.
+        if (req.user?.role === 'design_manager' || req.user?.role === 'permitting_manager') {
+          const managerTeam = req.user.role === 'design_manager' ? 'design' : 'permitting';
+          const { rows: scopeCheck } = await pool.query(
+            `SELECT te.id FROM time_entries te
+             LEFT JOIN projects p ON p.id = te.project_id
+             LEFT JOIN jobs j ON j.id = p.job_id
+             WHERE te.id = $1
+               AND (j.team = $2 OR j.team = 'both' OR j.team IS NULL OR p.job_id IS NULL)`,
+            [req.params.id, managerTeam]
+          );
+          if (!scopeCheck.length) {
+            return res.status(404).json({ error: 'Entry not found.' });
+          }
         }
       }
+      req._auditBasis = cap.basis;
 
       const { rows } = await pool.query('DELETE FROM time_entries WHERE id=$1 RETURNING project_id', [req.params.id]);
       if (rows[0] && rows[0].project_id) {
@@ -508,7 +567,7 @@ module.exports = function installTimeEntriesRoutes(app, pool, mw) {
         await auditTimeEntry({
           req, timeEntryId: req.params.id, action: 'deleted',
           before, after: null,
-          source: portalMode || 'admin',
+          source: auditSource(portalMode, req._auditBasis),
         });
       } catch (auditErr) {
         console.error('[time-entries:delete-audit]', auditErr && auditErr.message);
