@@ -1,6 +1,12 @@
 // routes/certificates.js — OSP completion certificates (specs/certificates.md).
 // Public verify + admin issue/list/revoke. Registrar wires the mount in server.js.
 
+// System F (#75): issue/list/revoke gate on the `certificates.issue` permission
+// key (was requireAdmin). Non-regressive — admin holds every key, so admins still
+// pass; this just lets `certificates.issue` be delegated to a non-admin (e.g. a
+// training lead) via the Settings page without handing them full admin.
+const { requirePermission } = require('./_permissions');
+
 // Fixed-window limiter for the PUBLIC verify endpoint: 30 lookups/min/IP.
 // #68 finding 2: use req.ip (Express derives it via `trust proxy`, set in
 // server.js) — NOT a raw x-forwarded-for split, which is client-spoofable and
@@ -23,6 +29,8 @@ setInterval(() => {
 }, 60000).unref();
 
 module.exports = function (app, pool, { requireAdmin }) {
+  // The write/list surfaces gate on certificates.issue (admin passes via admin=all).
+  const canIssueCerts = requirePermission(pool, 'certificates.issue');
 
   // PUBLIC — answers exactly what the printed certificate shows, nothing else.
   app.get('/api/certificates/verify/:certNo', verifyLimiter, async (req, res) => {
@@ -44,7 +52,7 @@ module.exports = function (app, pool, { requireAdmin }) {
 
   // ADMIN — issue for a trainee. Idempotent: an active cert for the same
   // user+course is returned as-is, never duplicated.
-  app.post('/api/certificates/issue', requireAdmin, async (req, res) => {
+  app.post('/api/certificates/issue', canIssueCerts, async (req, res) => {
     // #68/Registrar merge-fix: user ids are UUIDs — do NOT parseInt (that mangled
     // the id and broke issuance against the real schema). Validate the UUID shape.
     const userId = String(req.body.user_id || '').trim();
@@ -104,7 +112,7 @@ module.exports = function (app, pool, { requireAdmin }) {
   });
 
   // ADMIN — list + revoke.
-  app.get('/api/certificates', requireAdmin, async (_req, res) => {
+  app.get('/api/certificates', canIssueCerts, async (_req, res) => {
     try {
       const { rows } = await pool.query(
         `SELECT * FROM training_certificates ORDER BY issued_at DESC`);
@@ -112,7 +120,7 @@ module.exports = function (app, pool, { requireAdmin }) {
     } catch (e) { res.status(500).json({ error: 'list failed' }); }
   });
 
-  app.post('/api/certificates/:id/revoke', requireAdmin, async (req, res) => {
+  app.post('/api/certificates/:id/revoke', canIssueCerts, async (req, res) => {
     try {
       const { rows } = await pool.query(
         `UPDATE training_certificates
