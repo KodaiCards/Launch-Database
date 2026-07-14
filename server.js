@@ -685,6 +685,12 @@ require('./routes/clients')(app, pool, { requireAdmin, requireAuth, requireStaff
 // auth-exempted in pageRequiresAuth; issue/list/revoke enforce requireAdmin in-route.
 require('./routes/certificates')(app, pool, { requireAdmin });
 
+// System F permissions (#73/#76): grant/revoke + catalog API, and custom-role bundle
+// CRUD/assign. Both gate internally via requirePermission('people.manage') — the API is
+// the gate. permission_grants + role_bundles tables land in migrations 0084/0085.
+require('./routes/permissions')(app, pool);
+require('./routes/role_bundles')(app, pool);
+
 // ─────────────────────────────────────────────────────────────────────────────
 // CONTRACTS + ENGINEERING CONTRACTS — extracted as part of Track 1.3.
 // ─────────────────────────────────────────────────────────────────────────────
