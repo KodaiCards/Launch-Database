@@ -8,6 +8,7 @@ const assert = require('node:assert/strict');
 const {
   computeEffective,
   isSelfGrant,
+  mayEditBundleKeys,
   omitUnless,
   ALL_KEYS,
   CATALOG,
@@ -158,6 +159,20 @@ test('omitUnless never mutates the input row', () => {
 test('omitUnless is null-safe', () => {
   assert.equal(omitUnless(null, MONEY, false), null);
   assert.equal(omitUnless(undefined, MONEY, true), undefined);
+});
+
+// ── mayEditBundleKeys: no self-escalation via editing a bundle you hold (#76) ──
+test('non-admin who HOLDS the bundle cannot rewrite its keys', () => {
+  assert.equal(mayEditBundleKeys({ role: 'design_manager', holdsBundle: true }), false);
+});
+
+test('non-admin who does NOT hold the bundle may edit its keys (normal delegation)', () => {
+  assert.equal(mayEditBundleKeys({ role: 'design_manager', holdsBundle: false }), true);
+});
+
+test('admin may edit any bundle keys — already holds every key, cannot escalate', () => {
+  assert.equal(mayEditBundleKeys({ role: 'admin', holdsBundle: true }), true);
+  assert.equal(mayEditBundleKeys({ role: 'admin', holdsBundle: false }), true);
 });
 
 test('catalog is internally consistent: 16 unique keys, all grouped', () => {

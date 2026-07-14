@@ -157,6 +157,19 @@ function isSelfGrant(user, subjectType, subjectId) {
 }
 
 /**
+ * May this caller REWRITE a bundle's key set (#76)? A non-admin who currently
+ * HOLDS the bundle must not — editing a bundle you wear to add keys self-grants
+ * them (the #73 BLOCKER-1 self-escalation class, via bundle-edit instead of a
+ * direct grant). Renaming is unaffected (caller passes holdsBundle only when
+ * keys are being changed). admin is unrestricted — it already holds every key,
+ * so no edit can escalate it. PURE + unit-tested.
+ */
+function mayEditBundleKeys({ role, holdsBundle }) {
+  if (role === 'admin') return true;
+  return !holdsBundle;
+}
+
+/**
  * Middleware factory: gate a route on a single permission key.
  * The API is the gate (spec §Model). FAILS CLOSED — a DB error denies non-admins.
  */
@@ -206,6 +219,7 @@ module.exports = {
   computeEffective,
   getEffective,
   isSelfGrant,
+  mayEditBundleKeys,
   omitUnless,
   requirePermission,
 };

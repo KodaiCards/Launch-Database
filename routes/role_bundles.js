@@ -11,7 +11,7 @@
 // Creating new permission KEYS is deliberately OUT (keys are feature-born); a
 // bundle may only compose keys already in the catalog.
 
-const { CATALOG_KEYS, requirePermission, isSelfGrant } = require('./_permissions');
+const { CATALOG_KEYS, requirePermission, isSelfGrant, mayEditBundleKeys } = require('./_permissions');
 
 module.exports = function (app, pool) {
   const peopleManage = requirePermission(pool, 'people.manage');
@@ -90,6 +90,25 @@ module.exports = function (app, pool) {
     const name = hasName ? req.body.name.trim() : null;
     if (hasName && !name) return res.status(400).json({ error: 'Bundle name cannot be blank.' });
     const keys = hasKeys ? cleanKeys(req.body.keys) : null;
+
+    // Self-escalation guard (#76 / #73 BLOCKER-1 class): a non-admin cannot rewrite
+    // the KEYS of a bundle they personally hold (that self-grants those keys).
+    // Renaming is fine; admins are unrestricted (they already hold every key).
+    if (hasKeys) {
+      try {
+        const held = await pool.query(
+          'SELECT 1 FROM user_role_bundles WHERE user_id = $1::uuid AND bundle_id = $2',
+          [String(req.user.id), id]
+        );
+        if (!mayEditBundleKeys({ role: req.user.role, holdsBundle: held.rowCount > 0 })) {
+          return res.status(403).json({ error: 'You cannot change the permissions of a bundle you are assigned — ask an admin.' });
+        }
+      } catch (e) {
+        // Fail closed on the security guard: if we can't verify membership, deny the key edit.
+        console.error('[role_bundles:holder-check]', e && e.message);
+        return res.status(500).json({ error: 'Could not verify bundle membership.' });
+      }
+    }
 
     const client = await pool.connect();
     try {
