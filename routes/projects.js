@@ -496,7 +496,9 @@ module.exports = function installProjectsRoutes(app, pool, mw) {
       logAudit(pool, { req, action: 'create', entity_type: 'project', entity_id: rows[0].id,
         after: { id: rows[0].id, name: rows[0].name, client_id: rows[0].client_id, program: rows[0].program },
         source: 'admin_ui' });
-      res.json(rows[0]);
+      // The RETURNING * echo carries $ — strip it for non-money.view editors too
+      // (project-create capability is independent of money.view; hard rule 8).
+      res.json(omitUnless(rows[0], PROJECT_MONEY_FIELDS, await canViewMoney(req)));
     } catch (e) {
       console.error('[projects:create]', e && e.message);
       res.status(500).json({ error: 'Failed to create project.' });
@@ -775,7 +777,8 @@ module.exports = function installProjectsRoutes(app, pool, mw) {
       logAudit(pool, { req, action: 'update', entity_type: 'project', entity_id: rows[0].id,
         after: { id: rows[0].id, name: rows[0].name, status: rows[0].status, program: rows[0].program },
         source: 'admin_ui' });
-      res.json(rows[0]);
+      // The RETURNING * echo carries $ — strip it for non-money.view editors (hard rule 8).
+      res.json(omitUnless(rows[0], PROJECT_MONEY_FIELDS, await canViewMoney(req)));
     } catch (e) {
       console.error('[projects:update]', e && e.message);
       res.status(500).json({ error: 'Failed to update project.' });
@@ -1418,7 +1421,11 @@ module.exports = function installProjectsRoutes(app, pool, mw) {
         GROUP BY year, month
         ORDER BY year, month
       `, [req.params.id]);
-      res.json(rows);
+      // `revenue` is a computed $ (hours × billing_rate) — omit it for non-money.view
+      // staff; hours/year/month stay (hard rule 8). Gating the whole endpoint by a
+      // key is #75's cross-route scope; the $ field-strip is #73-core's.
+      const canMoney = await canViewMoney(req);
+      res.json(rows.map((r) => omitUnless(r, ['revenue'], canMoney)));
     } catch (e) {
       console.error('[projects:monthly-hours-breakdown]', e && e.message);
       res.status(500).json({ error: 'Failed to load monthly breakdown.' });
