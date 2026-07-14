@@ -19,7 +19,7 @@
 - Rate-limited (in-module, 30/min/IP) — no enumeration farming.
 - issue/list/revoke are `requireAdmin`. Cert numbers unique, race-safe (23505 retry loop).
 - One active cert per user per course — re-issue returns the existing cert (idempotent), never a duplicate number.
-- **HARDENED per #68 (Partner ruling 2026-07-13):** limiter uses `req.ip` (trust-proxy, spoof-resistant) + `Retry-After`; allocation = MAX+1 with random jitter on retries (lockstep-concurrency safe, 8 attempts); `completed_on` calendar-validated. **Accepted risk, on the record:** sequential cert numbers are enumerable over hours even rate-limited — tolerated BY DESIGN because the public endpoint only returns what the printed paper already shows; if opacity is ever wanted, v2 switches to random-suffix numbers.
+- **HARDENED per #68 (Partner rulings 2026-07-13/14, all three findings):** limiter uses `req.ip` (trust-proxy, spoof-resistant) + `Retry-After`; allocation serialized by a **per-year advisory lock** (lockstep-safe AND double-click double-issue-safe — mechanism adopted from the authoritative merged code `05ecb4f8`); `completed_on` calendar-validated; **F3: `user_id` is UUID** (users.id was never INTEGER — a rebuild from the pre-fix spec would abort the deploy). Where this spec's snippets and merged main ever diverge, **main is authoritative**; the spec follows. **Accepted risk, on the record:** sequential cert numbers are enumerable over hours even rate-limited — tolerated BY DESIGN because the public endpoint only returns what the printed paper already shows; if opacity is ever wanted, v2 switches to random-suffix numbers.
 
 ## Reference implementation (foreman applies verbatim, then red-teams + playthrough as usual)
 
@@ -29,7 +29,7 @@
 CREATE TABLE IF NOT EXISTS training_certificates (
   id SERIAL PRIMARY KEY,
   cert_no TEXT UNIQUE NOT NULL,
-  user_id INTEGER REFERENCES users(id) ON DELETE SET NULL,
+  user_id UUID REFERENCES users(id) ON DELETE SET NULL, -- #68 F3: users.id is UUID, never INTEGER
   recipient_name TEXT NOT NULL,
   course_code TEXT NOT NULL DEFAULT 'OSP_DESIGN',
   course_title TEXT NOT NULL DEFAULT 'Outside Plant (OSP) Fiber Design Course',
@@ -87,8 +87,10 @@ module.exports = function (app, pool, { requireAdmin }) {
   // ADMIN — issue for a trainee. Idempotent: an active cert for the same
   // user+course is returned as-is, never duplicated.
   app.post('/api/certificates/issue', requireAdmin, async (req, res) => {
-    const userId = parseInt(req.body.user_id, 10);
-    if (!userId) return res.status(400).json({ error: 'user_id required' });
+    // #68 F3: users.id is UUID — validate shape, never parseInt.
+    const userId = String(req.body.user_id || '').trim();
+    if (!/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(userId))
+      return res.status(400).json({ error: 'user_id must be a UUID' });
     const completedOn = req.body.completed_on || new Date().toISOString().slice(0, 10);
     // HARDENED per #68 minor: calendar-valid, not just digit-shaped (2026-13-40 → 400, not a 500 at INSERT).
     const dchk = new Date(completedOn + 'T00:00:00Z');
@@ -105,28 +107,32 @@ module.exports = function (app, pool, { requireAdmin }) {
       if (existing.length) return res.json({ certificate: existing[0], existing: true });
 
       const year = new Date().getFullYear();
-      let cert = null;
-      // HARDENED per #68 finding 1: MAX+1 (COUNT undercounts once numbers gap) and
-      // RANDOM jitter on retries — lockstep concurrent issues no longer collide on
-      // every attempt (the reproduced 5×-collision → 500). Gaps in numbering under
-      // contention are acceptable; uniqueness stays constraint-guaranteed.
-      for (let attempt = 0; attempt < 8 && !cert; attempt++) {
-        const { rows: [{ maxn }] } = await pool.query(
+      // HARDENED per #68 F1 (mechanism upgraded at merge, spec now matches the
+      // AUTHORITATIVE merged code 05ecb4f8): a per-year advisory lock serializes
+      // allocation — lockstep concurrency AND same-user double-click double-issue
+      // are both impossible. MAX+1 inside the lock (COUNT undercounts once numbers gap).
+      const client = await pool.connect();
+      let cert;
+      try {
+        await client.query('BEGIN');
+        await client.query(`SELECT pg_advisory_xact_lock(hashtext($1))`, ['cert_no_' + year]);
+        const { rows: dup } = await client.query(
+          `SELECT * FROM training_certificates
+            WHERE user_id = $1 AND course_code = 'OSP_DESIGN' AND NOT revoked`, [userId]);
+        if (dup.length) { await client.query('COMMIT'); return res.json({ certificate: dup[0], existing: true }); }
+        const { rows: [{ maxn }] } = await client.query(
           `SELECT COALESCE(MAX((SUBSTRING(cert_no FROM '[0-9]{4}$'))::int), 0) AS maxn
-             FROM training_certificates WHERE cert_no LIKE $1`,
-          [`LFS-OSP-${year}-%`]);
-        const step = attempt === 0 ? 1 : 1 + Math.floor(Math.random() * 10);
-        const certNo = `LFS-OSP-${year}-${String(maxn + step).padStart(4, '0')}`;
-        try {
-          const { rows: [row] } = await pool.query(
-            `INSERT INTO training_certificates
-               (cert_no, user_id, recipient_name, completed_on, issued_by)
-             VALUES ($1, $2, $3, $4, $5) RETURNING *`,
-            [certNo, userId, urows[0].recipient, completedOn, req.user.username]);
-          cert = row;
-        } catch (e) { if (e.code !== '23505') throw e; /* number raced — retry */ }
-      }
-      if (!cert) return res.status(500).json({ error: 'could not allocate certificate number' });
+             FROM training_certificates WHERE cert_no LIKE $1`, [`LFS-OSP-${year}-%`]);
+        const certNo = `LFS-OSP-${year}-${String(maxn + 1).padStart(4, '0')}`;
+        const { rows: [row] } = await client.query(
+          `INSERT INTO training_certificates
+             (cert_no, user_id, recipient_name, completed_on, issued_by)
+           VALUES ($1, $2, $3, $4, $5) RETURNING *`,
+          [certNo, userId, urows[0].recipient, completedOn, req.user.username]);
+        await client.query('COMMIT');
+        cert = row;
+      } catch (e) { try { await client.query('ROLLBACK'); } catch (_) {} throw e; }
+      finally { client.release(); }
       res.json({ certificate: cert });
     } catch (e) {
       console.error('[certificates] issue failed:', e.message);
