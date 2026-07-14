@@ -116,3 +116,24 @@
 - Cockpit alert thresholds.
 - Legacy project data at cutover: migrate or archive read-only?
 - Add-staff: self-signup only, or admin provisioning too?
+
+---
+
+## Deferred & revisit ledger (Registrar-maintained — nothing gets forgotten)
+> Every item consciously deferred/optional/parked, its durable home, and what un-defers it. Registrar reconciles this each turn as work progresses (Carter 2026-07-14: "keep foremen fed; don't forget anything that needs a revisit"). When a trigger fires, decompose/act; when an item ships, strike its row.
+
+| Deferred item | Durable home | Revisit trigger |
+|---|---|---|
+| **#72 SPA full-accent unification** (adopt each skin's accent vs the chosen canvas-only/keep-amber) — OPTIONAL, not-owed | `specs/ui-pass.md` "Deferred" + #72 | ONLY if Carter raises it |
+| **Cutover: delete `setting-requests` / permits routes / `inspection.js`** (load-bearing on live surfaces now) | `specs/cutover.md` step-1 done-when ("not done while any remains") + #71 ruling | cutover **steps 5–7** (die with their cluster replacements) |
+| **#64 prod live-smoke** (merged; washout fix banked) | open #64 | Railway deploys resume |
+| **#67 cert `LFS-OSP-2026-0001` → issue to Carter FIRST + logged-out live-smoke + VO lockstep probe** | open #67 | VO probe clears **and** deploys resume |
+| **#63 residual: 3 CHECK-1 authoring-note strings in UNPUBLISHED pools** | #63 closed comment | when those topics come through the gate |
+| **Safari/WebKit native-control chrome** (cert `/verify` + training; option-(a) is Chromium-scoped) | #64 comment | if Safari/iOS users matter → `specs/ideas/` |
+| **Republish flip of live-5 + WO-2 retrofit** (Carter-only) | INVENTORY §7 row | Carter green-light after deploys resume |
+| **#74 System F Settings page** (needs #73's catalog + grant API) | open #74 | #73 merges |
+| **Cutover steps 2–7** (O20 port · invoice consolidation · parallel-structure reconcile · cluster UI gap-close · legacy data delete · hard redirect) | `specs/cutover.md` + PLAN 2.3 | as step-1 (#70) lands / Carter waves |
+| **Dependency-blocked Track-2 specs**: hours 2.6 · billing 2.7 · projections 2.8 · cockpit 2.9 · county 2.10 · events 2.4 · diagnostics 2.12 (all RATIFIED) | PLAN §Track-2 | after **2.3 keystone cutover** |
+| **Desktop D1/D2 (2.13) · mini-jobs M1/M2 (2.15) · mobile PWA (2.14)** | PLAN + specs | wave-2 start / desktop D2 |
+| **Training wave-2 (T09→T05→T06, 1.2)** then wave-3 (all remaining OSP, 1.3) | PLAN §Track-1 | wave-2: when **#66** (last live-5 deviation) clears |
+| **specs/certificates.md ↔ code**: "main authoritative over spec snippets" declared | `specs/certificates.md` header | on any future cert rebuild — read code, not stale snippet |
