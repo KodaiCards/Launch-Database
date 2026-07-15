@@ -6,7 +6,9 @@
 import React from 'react';
 import LessonLayout from '../../components/LessonLayout.jsx';
 import BranchingScenario from '../../components/primitives/BranchingScenario.jsx';
+import ReferencesBlock from '../../components/ReferencesBlock.jsx';
 import Quiz from '../../components/primitives/Quiz.jsx';
+import GatedAssessment from '../../components/primitives/GatedAssessment.jsx';
 import Flashcard from '../../components/Flashcard.jsx';
 
 export const meta = {
@@ -357,11 +359,6 @@ export default function T09L03_Section106() {
           properties that may be affected, and the agency agrees to specific protective
           measures as conditions of the comment.
         </p>
-        <p className="mt-2 text-sm text-slate-300/70">
-          Source: 36 CFR §800.14(e) (program comments); 54 USC §306108 (NHPA §106). See
-          also ACHP guidance on Section 106 program comments at achp.gov [confirm current
-          guidance at time of project].
-        </p>
       </section>
 
       {/* ── BRANCHING SCENARIO ──────────────────────────────────────────── */}
@@ -436,11 +433,28 @@ export default function T09L03_Section106() {
         ]}
       />
 
+      <ReferencesBlock
+        items={[
+          { citation: '54 USC §306108', note: 'NHPA Section 106 — the statute requiring federal agencies to consider a project\'s effects on historic properties before proceeding.' },
+          { citation: '36 CFR Part 800', note: 'The ACHP\'s Section 106 implementing regulations — the six-step consultation sequence used on every fiber route with a federal nexus.' },
+          { citation: '36 CFR §800.4(b)(2)', note: 'The rule that the SHPO\'s 30-day response clock starts on receipt of an adequate package, not on the applicant\'s submission date.' },
+          { citation: '36 CFR §800.16(d)', note: 'The Area of Potential Effect (APE) definition — the geographic zone, including visual/setting effects, that determines which historic properties get evaluated.' },
+          { citation: '36 CFR §§800.5–800.6', note: 'The adverse-effect finding and resolution process — project modification, a Memorandum of Agreement, or a Programmatic Agreement.' },
+          { citation: '36 CFR §800.2(c)', note: 'Who counts as a consulting party — the SHPO, THPOs, local governments with jurisdiction, and other parties with a demonstrated interest.' },
+          { citation: '36 CFR §800.14(e)', note: 'The program comment mechanism — lets a statewide broadband program clear Section 106 once, program-wide, instead of route by route.' },
+        ]}
+      />
+
       {/* ── PER-LESSON QUIZ ──────────────────────────────────────────────── */}
-      <Quiz
-        title="T09.L03 Check — Section 106 — Historic Properties"
-        mode="multiple-choice"
-        questions={[
+      <GatedAssessment
+        courseId="T09"
+        assessmentId="T09-L03"
+        title="Check — Section 106 — Historic Properties"
+        fallback={
+        <Quiz
+          title="Check — Section 106 — Historic Properties"
+          mode="multiple-choice"
+          questions={[
           {
             id: 'T09-L03-Q1',
             type: 'mc',
@@ -506,6 +520,8 @@ export default function T09L03_Section106() {
             citation: '36 CFR §800.2(c) (consulting parties); 54 USC §306108.',
           },
         ]}
+        />
+        }
       />
 
     </LessonLayout>
