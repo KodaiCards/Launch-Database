@@ -43,6 +43,10 @@ function localRateLimitOk(ip) {
 
 module.exports = function installEventLogRoutes(app, pool, mw) {
   const requireAdmin = (mw && mw.requireAdmin) || ((req, res, next) => next());
+  // System F (#77): the diagnostics-log admin reads/prune are delegable via the
+  // catalog key — admin still passes (requirePermission admits admin by role).
+  const { requirePermission } = require('./_permissions');
+  const canToggleLogger = requirePermission(pool, 'system.logger_toggle');
   // rateLimitOk from auth.js: rateLimitOk(key, limit, windowMs) → boolean
   const externalRateLimitOk = (mw && typeof mw.rateLimitOk === 'function') ? mw.rateLimitOk : null;
 
@@ -137,7 +141,7 @@ module.exports = function installEventLogRoutes(app, pool, mw) {
   //   offset           int    default 0
   // Returns: { rows, total, limit, offset }
   // ─────────────────────────────────────────────────────────────────────────
-  app.get('/api/admin/logs', requireAdmin, async (req, res) => {
+  app.get('/api/admin/logs', canToggleLogger, async (req, res) => {
     try {
       const limit  = Math.min(Math.max(parseInt(req.query.limit  || '100', 10), 1), 500);
       const offset = Math.max(parseInt(req.query.offset || '0', 10), 0);
@@ -231,7 +235,7 @@ module.exports = function installEventLogRoutes(app, pool, mw) {
   // Must be registered BEFORE /api/admin/logs/:id so Express does not
   // interpret 'meta' as an :id param.
   // ─────────────────────────────────────────────────────────────────────────
-  app.get('/api/admin/logs/meta', requireAdmin, async (req, res) => {
+  app.get('/api/admin/logs/meta', canToggleLogger, async (req, res) => {
     try {
       const ERROR_TYPES = ['js_error', 'api_error', 'promise_rejection', 'login_failed'];
 
@@ -263,7 +267,7 @@ module.exports = function installEventLogRoutes(app, pool, mw) {
   // Must be registered BEFORE /api/admin/logs/:id.
   // Returns: { deleted }
   // ─────────────────────────────────────────────────────────────────────────
-  app.post('/api/admin/logs/prune', requireAdmin, async (req, res) => {
+  app.post('/api/admin/logs/prune', canToggleLogger, async (req, res) => {
     try {
       const deleted = await pruneOldEvents(pool);
       res.json({ deleted });
@@ -277,7 +281,7 @@ module.exports = function installEventLogRoutes(app, pool, mw) {
   // GET /api/admin/logs/:id
   // Single row detail with redacted meta. 404 if not found.
   // ─────────────────────────────────────────────────────────────────────────
-  app.get('/api/admin/logs/:id', requireAdmin, async (req, res) => {
+  app.get('/api/admin/logs/:id', canToggleLogger, async (req, res) => {
     try {
       const id = parseInt(req.params.id, 10);
       if (!Number.isInteger(id) || id < 1) {

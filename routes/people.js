@@ -22,9 +22,13 @@
 
 module.exports = function installPeopleRoutes(app, pool, mw) {
   const requireAdmin = (mw && mw.requireAdmin) || ((req, res, next) => next());
+  // System F (#77): the people directory is delegable via people.manage (admin
+  // still passes — requirePermission admits admin by role).
+  const { requirePermission } = require('./_permissions');
+  const canManagePeople = requirePermission(pool, 'people.manage');
 
   // GET /api/people — the unified roster. Admin-only (people management).
-  app.get('/api/people', requireAdmin, async (req, res) => {
+  app.get('/api/people', canManagePeople, async (req, res) => {
     try {
       const { rows } = await pool.query(`
         SELECT

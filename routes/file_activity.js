@@ -52,6 +52,10 @@ function placeholders(arr, startAt = 1) {
 
 module.exports = function installFileActivityRoutes(app, pool, mw) {
   const requireAdmin = (mw && mw.requireAdmin) || ((req, res, next) => next());
+  // System F (#77): admin file-activity browse is delegable via files.browse_all
+  // (admin still passes — requirePermission admits admin by role).
+  const { requirePermission } = require('./_permissions');
+  const canBrowseFiles = requirePermission(pool, 'files.browse_all');
 
   // ─────────────────────────────────────────────────────────────────────────
   // GET /api/admin/file-activity
@@ -65,7 +69,7 @@ module.exports = function installFileActivityRoutes(app, pool, mw) {
   //   to           ISO date <= filter on at column
   //   q            string   ILIKE search across action, entity_type, entity_id
   // ─────────────────────────────────────────────────────────────────────────
-  app.get('/api/admin/file-activity', requireAdmin, async (req, res) => {
+  app.get('/api/admin/file-activity', canBrowseFiles, async (req, res) => {
     try {
       const limit  = Math.min(Math.max(parseInt(req.query.limit  || '100', 10), 1), 500);
       const offset = Math.max(parseInt(req.query.offset || '0', 10), 0);
@@ -166,7 +170,7 @@ module.exports = function installFileActivityRoutes(app, pool, mw) {
   // Returns the full audit_log row including before_data and after_data jsonb.
   // All three jsonb columns are PII-redacted before transmission.
   // ─────────────────────────────────────────────────────────────────────────
-  app.get('/api/admin/file-activity/:id', requireAdmin, async (req, res) => {
+  app.get('/api/admin/file-activity/:id', canBrowseFiles, async (req, res) => {
     try {
       const { rows } = await pool.query(
         'SELECT * FROM audit_log WHERE id = $1',

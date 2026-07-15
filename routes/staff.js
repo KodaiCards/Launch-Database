@@ -17,6 +17,10 @@ const { logAudit } = require('./_audit');
 
 module.exports = function installStaffRoutes(app, pool, mw) {
   const requireAdmin = (mw && mw.requireAdmin) || ((req, res, next) => next());
+  // System F (#77): staff management is delegable via people.manage (admin still
+  // passes — requirePermission admits admin by role).
+  const { requirePermission } = require('./_permissions');
+  const canManagePeople = requirePermission(pool, 'people.manage');
   // Wave 1.5 [UNGATED]: GET /api/staff was missing auth. Staff list is used
   // by time-entry dropdowns across all portals, so requireAuth() (any role).
   const requireAuth = (mw && mw.requireAuth) || (() => (req, res, next) => next());
@@ -33,7 +37,7 @@ module.exports = function installStaffRoutes(app, pool, mw) {
 
   // Include inactive staff. Used by admin Settings to surface soft-deleted
   // rows so admin can reactivate or hard-delete them.
-  app.get('/api/staff/all', requireAdmin, async (req, res) => {
+  app.get('/api/staff/all', canManagePeople, async (req, res) => {
     try {
       const { rows } = await pool.query('SELECT id, name, active, created_at FROM staff ORDER BY active DESC, name');
       res.json(rows);
@@ -44,7 +48,7 @@ module.exports = function installStaffRoutes(app, pool, mw) {
   });
 
   // Item 2 fix: requireAdmin added — creating staff is an admin operation
-  app.post('/api/staff', requireAdmin, async (req, res) => {
+  app.post('/api/staff', canManagePeople, async (req, res) => {
     const { name } = req.body;
     if (!name || !String(name).trim()) {
       return res.status(400).json({ error: 'name required' });
@@ -69,7 +73,7 @@ module.exports = function installStaffRoutes(app, pool, mw) {
   // PUT — rename and/or toggle active. Partial update: only fields present
   // in the body are touched. Useful for reactivating a soft-deleted staff
   // (PUT { active: true }) or fixing a typo (PUT { name: '...' }).
-  app.put('/api/staff/:id', requireAdmin, async (req, res) => {
+  app.put('/api/staff/:id', canManagePeople, async (req, res) => {
     const { name, active } = req.body || {};
     const sets = [];
     const params = [req.params.id];
@@ -113,7 +117,7 @@ module.exports = function installStaffRoutes(app, pool, mw) {
   //   • ?preview=1 (no DELETE): returns the count of time_entries +
   //     pending_project_request linkage so the UI can show what will
   //     be affected before the actual delete.
-  app.delete('/api/staff/:id', requireAdmin, async (req, res) => {
+  app.delete('/api/staff/:id', canManagePeople, async (req, res) => {
     const { id } = req.params;
     const hard = req.query.hard === '1' || req.query.hard === 'true';
     const preview = req.query.preview === '1' || req.query.preview === 'true';
