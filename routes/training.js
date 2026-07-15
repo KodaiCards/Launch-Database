@@ -710,7 +710,7 @@ module.exports = function installTrainingRoutes(app, pool, { requireAuth }) {
   // Returns per-user aggregated progress: lessons_completed, last_seen_at,
   // and a per-course breakdown.
 
-  app.get('/api/training/admin/progress-overview', requireAuth(['admin', 'design_manager', 'permitting_manager']), async (req, res) => {
+  app.get('/api/training/admin/progress-overview', canAdminTraining, async (req, res) => {
 
     try {
       // Per-user, per-course rollup: lessons_completed, last_seen_at
@@ -763,7 +763,7 @@ module.exports = function installTrainingRoutes(app, pool, { requireAuth }) {
   // including those who haven't started → 0%) with completed/in-progress lesson
   // counts + last activity. Drives the per-person progress bars in the admin
   // Training view. Denominator = curriculum total (available lessons).
-  app.get('/api/training/admin/overview', requireAuth(['admin', 'design_manager', 'permitting_manager']), async (req, res) => {
+  app.get('/api/training/admin/overview', canAdminTraining, async (req, res) => {
     try {
       const { rows } = await pool.query(
         `SELECT u.id AS user_id, u.username, u.full_name, u.role, u.created_at,
@@ -817,7 +817,7 @@ module.exports = function installTrainingRoutes(app, pool, { requireAuth }) {
   // Per-user training breakdown. Returns the user identity plus all their
   // lesson progress (grouped by course), cert attempts, and capstone attempts.
   // Gated to: admin, design_manager, permitting_manager.
-  app.get('/api/training/admin/user/:userId/detail', requireAuth(['admin', 'design_manager', 'permitting_manager']), async (req, res) => {
+  app.get('/api/training/admin/user/:userId/detail', canAdminTraining, async (req, res) => {
     const userId = String(req.params.userId || '');
     if (!/^[0-9a-fA-F-]{36}$/.test(userId)) {
       return res.status(400).json({ error: 'userId must be a valid id' });
@@ -945,7 +945,7 @@ module.exports = function installTrainingRoutes(app, pool, { requireAuth }) {
   // ─── GET /api/training/admin/cert-attempts ───────────────────────────────────
   // Cert attempt history across all users (admin). Optional ?user_id= filter.
   // Gated to: admin, design_manager, permitting_manager.
-  app.get('/api/training/admin/cert-attempts', requireAuth(['admin', 'design_manager', 'permitting_manager']), async (req, res) => {
+  app.get('/api/training/admin/cert-attempts', canAdminTraining, async (req, res) => {
     const userIdRaw = req.query.user_id;
     let userId = null;
     if (userIdRaw !== undefined && userIdRaw !== '') {
