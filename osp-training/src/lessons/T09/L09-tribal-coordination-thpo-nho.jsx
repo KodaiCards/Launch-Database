@@ -4,7 +4,9 @@
 
 import React from 'react';
 import LessonLayout from '../../components/LessonLayout.jsx';
+import ReferencesBlock from '../../components/ReferencesBlock.jsx';
 import Quiz from '../../components/primitives/Quiz.jsx';
+import GatedAssessment from '../../components/primitives/GatedAssessment.jsx';
 import Flashcard from '../../components/Flashcard.jsx';
 
 export const meta = {
@@ -81,7 +83,8 @@ export default function T09L09_TribalCoordinationThpoNho() {
       <section data-tier="foundations">
         <h2>Tribal Coordination — THPO and NHO</h2>
         <p>
-          Section 106 of the National Historic Preservation Act (NHPA) — which you covered in L03 —
+          Section 106 of the National Historic Preservation Act (NHPA) — which you covered in the
+          Historic Properties lesson —
           requires federal agencies to consult with stakeholders when a federal undertaking (including
           a BEAD-funded or RUS-funded fiber project) could affect historic properties. You learned that
           the SHPO (State Historic Preservation Officer) is the primary consulting party. But there
@@ -197,7 +200,7 @@ export default function T09L09_TribalCoordinationThpoNho() {
       <section data-tier="working">
         <h3>THPO: When Tribes Replace the SHPO</h3>
         <p>
-          Under the NHPA (54 USC § 302702 and § 302706), a federally recognized tribe can establish
+          Under the NHPA (54 USC § 302702), a federally recognized tribe can establish
           a <strong>Tribal Historic Preservation Office (THPO)</strong> and formally assume the SHPO's
           responsibilities for historic preservation on tribal lands. When a tribe has an approved
           THPO program:
@@ -367,75 +370,95 @@ export default function T09L09_TribalCoordinationThpoNho() {
         </p>
       </section>
 
-      {/* QUIZ */}
-      <Quiz
-        title="L09 Practice Quiz — Tribal Coordination"
-        mode="multiple-choice"
-        questions={[
-          {
-            id: 'T09-L09-Q01',
-            type: 'mc',
-            prompt:
-              'A BEAD-funded fiber project crosses tribal land belonging to a federally recognized tribe that has an approved THPO program. Who is the primary Section 106 consulting party for the portion of the route on tribal land?',
-            choices: [
-              'The State Historic Preservation Officer (SHPO) — Section 106 always goes through the SHPO',
-              'The Tribal Historic Preservation Officer (THPO) — for undertakings on tribal land, the THPO assumes the SHPO\'s role as primary consulting party',
-              'The Bureau of Indian Affairs (BIA) — BIA speaks for tribes in all federal consultations',
-              'The Advisory Council on Historic Preservation (ACHP) — the ACHP leads all tribal consultations',
-            ],
-            answerIndex: 1,
-            explanation:
-              'Under the NHPA (54 USC § 302702/§ 302706), a tribe with an approved THPO program assumes the SHPO\'s consulting party role for historic properties on tribal land. The SHPO is still notified, but the THPO leads the tribal land review. For the off-tribal-land portions of the same route, the SHPO remains the primary consulting party — the THPO becomes an additional consulting party for areas of cultural concern. T09.L09.',
-          },
-          {
-            id: 'T09-L09-Q02',
-            type: 'mc',
-            prompt:
-              'Why does government-to-government tribal consultation often extend the Section 106 timeline beyond the standard 30-day SHPO window?',
-            choices: [
-              'Because federal regulations give tribes unlimited time to respond, with no deadlines',
-              'Because tribal governments are sovereign nations with distinct consultation protocols — many require specific levels of federal official to initiate contact, face-to-face meetings, and cultural assessment time that exceeds 30 days',
-              'Because the ACHP requires a secondary review after every tribal consultation',
-              'Because tribes are always required to conduct archaeological field surveys before responding',
-            ],
-            answerIndex: 1,
-            explanation:
-              'Tribes are sovereign nations with formal consultation protocols — not interest groups that respond to a standard letter within 30 days. Many tribes require a specific level of federal official to initiate, request in-person meetings, or need 60–180 days to conduct their own cultural assessment of the APE. While technical 30-day clocks exist in the regulations, invoking them against tribal governments is a high-risk approach that can stall projects through political channels. Build 60–120 days of buffer for routes near tribal cultural areas. T09.L09.',
-          },
-          {
-            id: 'T09-L09-Q03',
-            type: 'mc',
-            prompt:
-              'A fiber project in rural Georgia crosses an area that a federally recognized tribe in Alabama has identified as an ancestral hunting territory (not tribal land). The route has a federal nexus (BEAD funding). How does this affect the Section 106 process?',
-            choices: [
-              'No effect — the tribe\'s territory is in Alabama; the project is in Georgia',
-              'The SHPO handles it and the tribe has no role because they\'re not the SHPO for Georgia',
-              'The tribe is an additional consulting party alongside the Georgia SHPO — the area of tribal cultural concern is within the APE even though it\'s not tribal land, and the lead agency must seek tribal input',
-              'The tribe can veto the project entirely because ancestral territories have the same protection as tribal land',
-            ],
-            answerIndex: 2,
-            explanation:
-              'Section 106 consulting party status is not limited to tribal land. A tribe with cultural connections to an area — ancestral territories, traditional cultural properties, sacred sites — is a consulting party for undertakings within that area, regardless of which state the area is in or whether it\'s currently tribal land. The Georgia SHPO remains the primary consulting party, but the Alabama tribe is an additional consulting party whose concerns about the ancestral territory must be considered. T09.L09.',
-          },
-          {
-            id: 'T09-L09-Q04',
-            type: 'mc',
-            prompt:
-              'When does NHO (Native Hawaiian Organization) consultation apply to a fiber project on the continental United States?',
-            choices: [
-              'Never — NHO consultation only applies to projects physically in Hawaii',
-              'For any project within 100 miles of a Pacific coastline',
-              'For projects that may affect documented sites of Native Hawaiian ancestral or cultural significance, even if those sites are outside Hawaii',
-              'For any project funded by any federal agency',
-            ],
-            answerIndex: 2,
-            explanation:
-              'NHO consultation can apply outside Hawaii when a project may affect documented sites of Native Hawaiian cultural or ancestral significance. This is uncommon on the continental US but is possible — for example, near heiau (temple) sites, burial sites, or other documented cultural properties connected to Native Hawaiian history outside Hawaii. The applicability is tied to the APE and the known cultural properties within it, not to geographic proximity to Hawaii. T09.L09.',
-          },
+      <ReferencesBlock
+        items={[
+          { citation: '54 USC §302702', note: 'NHPA — lets a federally recognized tribe assume the SHPO’s historic-preservation functions on tribal land. This is the statutory basis for a tribe running its own Section 106 review through a THPO.' },
+          { citation: '54 USC §§302302–302303', note: 'The historic-preservation program certification procedures a tribal (or state) program must meet — the requirements §302702 points to before a THPO can take over SHPO functions.' },
+          { citation: '54 USC §306108', note: 'Section 106 itself — the review that triggers all SHPO/THPO/NHO consultation when a federal undertaking may affect historic properties.' },
+          { citation: '36 CFR Part 800', note: 'The Advisory Council on Historic Preservation regulations that implement Section 106 — the step-by-step consultation process.' },
+          { citation: '36 CFR §800.2(c)(2)(ii)', note: 'Defines the Native Hawaiian Organization (and Indian tribe) consulting-party role in Section 106.' },
+          { citation: 'Executive Order 13007 (Indian Sacred Sites, 1996)', note: 'Directs federal agencies to accommodate access to and ceremonial use of sacred sites and to avoid harming their physical integrity — can add consultation beyond standard Section 106.' },
+          { citation: 'Presidential Memorandum on Tribal Consultation (Jan. 26, 2021), 86 FR 7491', note: 'Reaffirms the government-to-government consultation policy that shapes how tribal consultation is conducted. Confirm current federal guidance at project time.' },
+          { citation: 'ACHP, “Consultation with Indian Tribes in the Section 106 Review Process: A Handbook”', note: 'The public ACHP guidance for identifying and engaging THPOs and tribes — available at achp.gov.' },
         ]}
-        onComplete={(result) => {
-          console.info('T09 L09 Quiz complete:', result);
-        }}
+      />
+
+      {/* QUIZ */}
+      <GatedAssessment
+        courseId="T09"
+        assessmentId="T09-L09"
+        title="Practice Quiz — Tribal Coordination"
+        fallback={
+        <Quiz
+          title="Practice Quiz — Tribal Coordination"
+          mode="multiple-choice"
+          questions={[
+            {
+              id: 'T09-L09-Q01',
+              type: 'mc',
+              prompt:
+                'A BEAD-funded fiber project crosses tribal land belonging to a federally recognized tribe that has an approved THPO program. Who is the primary Section 106 consulting party for the portion of the route on tribal land?',
+              choices: [
+                'The State Historic Preservation Officer (SHPO) — Section 106 always goes through the SHPO',
+                'The Tribal Historic Preservation Officer (THPO) — for undertakings on tribal land, the THPO assumes the SHPO\'s role as primary consulting party',
+                'The Bureau of Indian Affairs (BIA) — BIA speaks for tribes in all federal consultations',
+                'The Advisory Council on Historic Preservation (ACHP) — the ACHP leads all tribal consultations',
+              ],
+              answerIndex: 1,
+              explanation:
+                'Under the NHPA (54 USC § 302702), a tribe with an approved THPO program assumes the SHPO\'s consulting party role for historic properties on tribal land. The SHPO is still notified, but the THPO leads the tribal land review. For the off-tribal-land portions of the same route, the SHPO remains the primary consulting party — the THPO becomes an additional consulting party for areas of cultural concern.',
+            },
+            {
+              id: 'T09-L09-Q02',
+              type: 'mc',
+              prompt:
+                'Why does government-to-government tribal consultation often extend the Section 106 timeline beyond the standard 30-day SHPO window?',
+              choices: [
+                'Because federal regulations give tribes unlimited time to respond, with no deadlines',
+                'Because tribal governments are sovereign nations with distinct consultation protocols — many require specific levels of federal official to initiate contact, face-to-face meetings, and cultural assessment time that exceeds 30 days',
+                'Because the ACHP requires a secondary review after every tribal consultation',
+                'Because tribes are always required to conduct archaeological field surveys before responding',
+              ],
+              answerIndex: 1,
+              explanation:
+                'Tribes are sovereign nations with formal consultation protocols — not interest groups that respond to a standard letter within 30 days. Many tribes require a specific level of federal official to initiate, request in-person meetings, or need 60–180 days to conduct their own cultural assessment of the APE. While technical 30-day clocks exist in the regulations, invoking them against tribal governments is a high-risk approach that can stall projects through political channels. Build 60–120 days of buffer for routes near tribal cultural areas.',
+            },
+            {
+              id: 'T09-L09-Q03',
+              type: 'mc',
+              prompt:
+                'A fiber project in rural Georgia crosses an area that a federally recognized tribe in Alabama has identified as an ancestral hunting territory (not tribal land). The route has a federal nexus (BEAD funding). How does this affect the Section 106 process?',
+              choices: [
+                'No effect — the tribe\'s territory is in Alabama; the project is in Georgia',
+                'The SHPO handles it and the tribe has no role because they\'re not the SHPO for Georgia',
+                'The tribe is an additional consulting party alongside the Georgia SHPO — the area of tribal cultural concern is within the APE even though it\'s not tribal land, and the lead agency must seek tribal input',
+                'The tribe can veto the project entirely because ancestral territories have the same protection as tribal land',
+              ],
+              answerIndex: 2,
+              explanation:
+                'Section 106 consulting party status is not limited to tribal land. A tribe with cultural connections to an area — ancestral territories, traditional cultural properties, sacred sites — is a consulting party for undertakings within that area, regardless of which state the area is in or whether it\'s currently tribal land. The Georgia SHPO remains the primary consulting party, but the Alabama tribe is an additional consulting party whose concerns about the ancestral territory must be considered.',
+            },
+            {
+              id: 'T09-L09-Q04',
+              type: 'mc',
+              prompt:
+                'When does NHO (Native Hawaiian Organization) consultation apply to a fiber project on the continental United States?',
+              choices: [
+                'Never — NHO consultation only applies to projects physically in Hawaii',
+                'For any project within 100 miles of a Pacific coastline',
+                'For projects that may affect documented sites of Native Hawaiian ancestral or cultural significance, even if those sites are outside Hawaii',
+                'For any project funded by any federal agency',
+              ],
+              answerIndex: 2,
+              explanation:
+                'NHO consultation can apply outside Hawaii when a project may affect documented sites of Native Hawaiian cultural or ancestral significance. This is uncommon on the continental US but is possible — for example, near heiau (temple) sites, burial sites, or other documented cultural properties connected to Native Hawaiian history outside Hawaii. The applicability is tied to the APE and the known cultural properties within it, not to geographic proximity to Hawaii.',
+            },
+          ]}
+          onComplete={(result) => {
+            console.info('T09 L09 Quiz complete:', result);
+          }}
+        />
+        }
       />
 
     </LessonLayout>
