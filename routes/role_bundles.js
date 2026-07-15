@@ -48,6 +48,30 @@ module.exports = function (app, pool) {
     }
   });
 
+  // List the users who currently hold a bundle (Settings-page assign/unassign UI,
+  // #76). Read-only + `people.manage`-gated like every sibling route; returns only
+  // display fields (id/name/role) — the manage surface needs to show who to remove.
+  app.get('/api/role-bundles/:id/members', peopleManage, async (req, res) => {
+    const id = parseId(req.params.id);
+    if (!id) return res.status(400).json({ error: 'Invalid bundle id.' });
+    try {
+      const b = await pool.query('SELECT 1 FROM role_bundles WHERE id = $1', [id]);
+      if (!b.rowCount) return res.status(404).json({ error: 'No such bundle.' });
+      const { rows } = await pool.query(
+        `SELECT u.id, u.full_name, u.username, u.role, urb.assigned_at
+           FROM user_role_bundles urb
+           JOIN users u ON u.id = urb.user_id
+          WHERE urb.bundle_id = $1
+          ORDER BY COALESCE(NULLIF(u.full_name, ''), u.username)`,
+        [id]
+      );
+      res.json({ members: rows });
+    } catch (e) {
+      console.error('[role_bundles:members]', e && e.message);
+      res.status(500).json({ error: 'Could not load bundle members.' });
+    }
+  });
+
   // Create a bundle. name required + unique; keys optional (validated to catalog).
   app.post('/api/role-bundles', peopleManage, async (req, res) => {
     const name = String((req.body && req.body.name) || '').trim();

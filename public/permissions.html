@@ -107,6 +107,52 @@ input[type=checkbox].grant-cb:disabled{cursor:not-allowed;opacity:.6}
 .toast{position:fixed;left:50%;bottom:24px;transform:translateX(-50%);background:var(--danger);color:#fff;
       border-radius:10px;padding:10px 16px;font-size:13px;z-index:41;display:none;box-shadow:0 8px 28px rgba(0,0,0,.3)}
 .toast.show{display:block}
+
+/* ── Custom roles (bundles) — a named set of permissions assignable to people ── */
+.bundles{background:var(--white);border:1px solid var(--gray-border);border-radius:12px;margin-bottom:20px;overflow:hidden}
+.bundles-head{display:flex;align-items:center;gap:12px;padding:12px 16px;border-bottom:1px solid var(--gray-border);background:var(--gray-light);flex-wrap:wrap}
+.bundles-head h2{font-size:14px;font-weight:700;letter-spacing:.02em;text-transform:uppercase;color:var(--text-secondary)}
+.bundles-head .sub{color:var(--text-muted);font-size:12px;flex:1;min-width:200px}
+.bundle-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(320px,1fr));gap:14px;padding:16px}
+.bundle-card{border:1px solid var(--gray-border);border-radius:10px;background:var(--surface-1);padding:12px 14px;display:flex;flex-direction:column;gap:11px}
+.bc-head{display:flex;align-items:flex-start;gap:8px}
+.bc-name{font-weight:700;font-size:15px;color:var(--text);flex:1;word-break:break-word;line-height:1.3}
+.bc-actions{display:flex;gap:5px}
+.bc-actions button{border:1px solid var(--gray-border);background:var(--white);color:var(--text-secondary);border-radius:7px;width:30px;height:30px;display:inline-flex;align-items:center;justify-content:center;font-size:12px}
+.bc-actions button:hover{border-color:var(--primary);color:var(--primary)}
+.bc-actions button.del:hover{border-color:var(--danger);color:var(--danger)}
+.bc-group{display:flex;flex-direction:column;gap:6px}
+.bc-group .glabel{font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.03em;color:var(--text-muted)}
+.keychips{display:flex;flex-wrap:wrap;gap:5px}
+.keychip{background:var(--primary-light);color:var(--text);border:1px solid var(--gray-border);border-radius:6px;padding:2px 8px;font-size:12px}
+.bc-empty{color:var(--text-muted);font-size:12px;font-style:italic}
+.bc-meta{font-size:11px;color:var(--text-muted);border-top:1px solid var(--gray-border);padding-top:8px}
+
+/* modal editor (create / edit a role) — an EDITOR, not a confirmation dialog (§2.3) */
+.modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,.55);z-index:50;display:none;align-items:flex-start;justify-content:center;padding:40px 16px;overflow-y:auto}
+.modal-overlay.open{display:flex}
+.modal{background:var(--white);border:1px solid var(--gray-border);border-radius:14px;width:100%;max-width:560px;box-shadow:0 12px 40px rgba(0,0,0,.45);display:flex;flex-direction:column;max-height:calc(100vh - 80px)}
+.modal-head{display:flex;align-items:center;gap:10px;padding:15px 18px;border-bottom:1px solid var(--gray-border)}
+.modal-head h3{font-size:16px;font-weight:700;flex:1;word-break:break-word}
+.modal-head button.x{border:none;background:none;color:var(--text-muted);font-size:22px;line-height:1;padding:0 4px}
+.modal-head button.x:hover{color:var(--danger)}
+.modal-body{padding:16px 18px;overflow-y:auto}
+.modal-body label.fld{display:block;font-size:12px;font-weight:600;color:var(--text-secondary);margin-bottom:6px}
+.modal-body input.name{width:100%;border:1px solid var(--gray-border);background:var(--surface-1);color:var(--text);border-radius:8px;padding:9px 12px;font-size:14px;font-family:var(--font);margin-bottom:16px}
+.modal-body input.name:focus,.keysearch input:focus{outline:none;border-color:var(--primary)}
+.keysearch{margin-bottom:10px}
+.keysearch input{width:100%;border:1px solid var(--gray-border);background:var(--surface-1);color:var(--text);border-radius:8px;padding:8px 12px;font-size:13px;font-family:var(--font)}
+.keypick{border:1px solid var(--gray-border);border-radius:8px;max-height:300px;overflow-y:auto}
+.keypick .karea{padding:6px 12px;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.03em;color:var(--text-muted);background:var(--gray-light);border-bottom:1px solid var(--gray-border);position:sticky;top:0}
+.keypick label.krow{display:flex;align-items:center;gap:10px;padding:8px 12px;border-bottom:1px solid var(--gray-border);cursor:pointer;font-size:13px;color:var(--text)}
+.keypick label.krow:hover{background:var(--primary-light)}
+.keypick label.krow:last-child{border-bottom:none}
+.keypick input[type=checkbox]{width:16px;height:16px;accent-color:var(--primary);cursor:pointer;margin:0;flex:none}
+.keypick .krow .kk{color:var(--text-muted);font-size:11px;font-family:ui-monospace,Menlo,Consolas,monospace;margin-left:auto;flex:none}
+.modal-foot{display:flex;justify-content:flex-end;gap:8px;padding:14px 18px;border-top:1px solid var(--gray-border)}
+.btn-primary{background:var(--primary);border:1px solid var(--primary);color:#fff}
+.btn-primary:hover{filter:brightness(1.08);border-color:var(--primary)}
+.btn-primary:disabled{opacity:.6;cursor:not-allowed}
 </style>
 </head>
 <body>
@@ -135,6 +181,17 @@ input[type=checkbox].grant-cb:disabled{cursor:not-allowed;opacity:.6}
 
   <!-- Main -->
   <div id="content" class="hidden">
+
+    <!-- Custom roles (bundles) — define a named set of permissions, assign to people -->
+    <section class="bundles" id="bundles-section">
+      <div class="bundles-head">
+        <h2>Custom roles</h2>
+        <span class="sub">Named bundles of permissions you can assign to people. Editing a role updates everyone who has it — no deploy.</span>
+        <button class="btn btn-primary" onclick="openBundleEditor(null)"><i class="fa-solid fa-plus"></i> New role</button>
+      </div>
+      <div id="bundle-grid" class="bundle-grid"></div>
+    </section>
+
     <div class="toolbar">
       <div class="search">
         <i class="fa-solid fa-magnifying-glass"></i>
@@ -152,6 +209,29 @@ input[type=checkbox].grant-cb:disabled{cursor:not-allowed;opacity:.6}
 
 <div id="undo" class="undo-bar"><span id="undo-msg"></span><button onclick="doUndo()">Undo</button></div>
 <div id="toast" class="toast"></div>
+
+<!-- Create / edit a custom role -->
+<div id="editor-overlay" class="modal-overlay">
+  <div class="modal" role="dialog" aria-modal="true" aria-labelledby="editor-title">
+    <div class="modal-head">
+      <h3 id="editor-title">New custom role</h3>
+      <button class="x" onclick="closeBundleEditor()" aria-label="Close editor">&times;</button>
+    </div>
+    <div class="modal-body">
+      <label class="fld" for="editor-name">Role name</label>
+      <input id="editor-name" class="name" type="text" placeholder="e.g. Director" maxlength="120" autocomplete="off">
+      <label class="fld">Permissions in this role</label>
+      <div class="keysearch">
+        <input id="editor-search" type="text" placeholder="Filter permissions…" aria-label="Filter permissions" oninput="filterKeyPicker(this.value)">
+      </div>
+      <div id="editor-keys" class="keypick"></div>
+    </div>
+    <div class="modal-foot">
+      <button class="btn" onclick="closeBundleEditor()">Cancel</button>
+      <button id="editor-save" class="btn btn-primary" onclick="saveBundle()">Save role</button>
+    </div>
+  </div>
+</div>
 
 <script src="/js/api.js"></script>
 <script>
@@ -208,6 +288,7 @@ async function boot(){
     indexGrants((grants && grants.grants) || []);
     render();
     show('content');
+    loadBundles();   // custom-role bundles section (#76) — consumes /api/role-bundles
   } catch(e){ fail(e); }
 }
 
@@ -417,6 +498,209 @@ function toast(msg){
   const t=document.getElementById('toast'); t.textContent=msg; t.classList.add('show');
   clearTimeout(toastTimer); toastTimer=setTimeout(()=>t.classList.remove('show'),4000);
 }
+
+// ── Custom roles (bundles) — #76 UI section ────────────────────────────────
+// Consumes the merged /api/role-bundles API (all people.manage-gated server-side;
+// this UI is a control surface only). Effective permission = base ∪ role grants ∪
+// personal grants ∪ bundle keys — bundles are the "custom role" composer.
+let BUNDLES = [];              // [{id, name, keys:[], holder_count, members:[{id,full_name,username,role}]}]
+let editorBundleId = null;     // null = create; else the bundle id being edited
+let editorSelected = new Set();// keys ticked in the open editor (survives filtering)
+
+function labelOf(k){ const c = CATALOG.find(x=>x.key===k); return c ? c.label : k; }
+
+async function loadBundles(){
+  const host = document.getElementById('bundle-grid');
+  try {
+    const r = await api('/api/role-bundles');
+    BUNDLES = (r && r.bundles) || [];
+    // Members aren't in the list payload (only holder_count) — fetch each in
+    // parallel so the assign/unassign chips can render who currently holds it.
+    await Promise.all(BUNDLES.map(async b => {
+      try { const m = await api('/api/role-bundles/'+b.id+'/members'); b.members = (m && m.members) || []; }
+      catch(e){ b.members = []; }
+    }));
+    renderBundles();
+  } catch(e){
+    host.innerHTML = '<div class="bc-empty">Couldn’t load custom roles: '+esc(e && e.message || 'please retry')+'</div>';
+  }
+}
+
+function renderBundles(){
+  const host = document.getElementById('bundle-grid');
+  if (!BUNDLES.length){
+    host.innerHTML = '<div class="bc-empty">No custom roles yet. Create one to bundle permissions and assign them to people.</div>';
+    return;
+  }
+  host.innerHTML = BUNDLES.map(bundleCard).join('');
+}
+
+function bundleCard(b){
+  const keys = b.keys || [], members = b.members || [];
+  const keyChips = keys.length
+    ? keys.map(k => `<span class="keychip" title="${esc(k)}">${esc(labelOf(k))}</span>`).join('')
+    : '<span class="bc-empty">No permissions yet</span>';
+  const memChips = members.map(u => `<span class="chip" title="${esc(u.role||'')}">${esc(u.full_name||u.username)}<button onclick="unassignMember(${b.id},'${esc(u.id)}')" aria-label="Remove ${esc(u.full_name||u.username)}"><i class="fa-solid fa-xmark"></i></button></span>`).join('');
+  return `<div class="bundle-card" data-bundle="${b.id}">
+    <div class="bc-head">
+      <div class="bc-name">${esc(b.name)}</div>
+      <div class="bc-actions">
+        <button onclick="openBundleEditor(${b.id})" title="Edit role" aria-label="Edit ${esc(b.name)}"><i class="fa-solid fa-pen"></i></button>
+        <button class="del" onclick="deleteBundle(${b.id})" title="Delete role" aria-label="Delete ${esc(b.name)}"><i class="fa-solid fa-trash"></i></button>
+      </div>
+    </div>
+    <div class="bc-group"><span class="glabel">Permissions</span><div class="keychips">${keyChips}</div></div>
+    <div class="bc-group"><span class="glabel">People with this role</span>
+      <div class="chips">${memChips}
+        <span class="picker">
+          <button class="addbtn" onclick="openMemberPicker(event,${b.id})"><i class="fa-solid fa-plus"></i> Assign</button>
+          <div class="picker-pop" data-bundle="${b.id}">
+            <input type="text" placeholder="Search people…" oninput="filterMemberPicker(this)" aria-label="Search people">
+            <div class="picker-list"></div>
+          </div>
+        </span>
+      </div>
+    </div>
+    <div class="bc-meta">${keys.length} permission${keys.length===1?'':'s'} · ${members.length} ${members.length===1?'person':'people'}</div>
+  </div>`;
+}
+
+// ── Assign / unassign members (optimistic + undo; server gates people.manage) ──
+function openMemberPicker(ev, bid){
+  ev.stopPropagation();
+  closePicker();                                   // reuse the shared picker singleton
+  const pop = ev.currentTarget.parentNode.querySelector('.picker-pop');
+  pop.classList.add('open'); openPop = pop;
+  renderMemberPickerList(pop, '');
+  const inp = pop.querySelector('input'); inp.value=''; inp.focus();
+}
+function filterMemberPicker(inp){ renderMemberPickerList(inp.closest('.picker-pop'), inp.value.toLowerCase()); }
+function renderMemberPickerList(pop, q){
+  const bid = Number(pop.getAttribute('data-bundle'));
+  const b = BUNDLES.find(x => x.id === bid);
+  const have = new Set(((b && b.members) || []).map(u => String(u.id)));
+  const matches = USERS.filter(u => !have.has(String(u.id)) &&
+      ((u.full_name||'')+' '+(u.username||'')+' '+(u.role||'')).toLowerCase().includes(q));
+  const list = pop.querySelector('.picker-list');
+  if (!matches.length){
+    const msg = USERS.length ? 'No matching people'
+      : (usersLoadError ? 'Can’t load the people list — this may need admin rights.'
+                        : 'No people available');
+    list.innerHTML = `<div class="picker-empty">${msg}</div>`; return;
+  }
+  list.innerHTML = matches.slice(0,50).map(u =>
+    `<div class="picker-item" onclick="assignMember(${bid},'${esc(u.id)}')">
+       <span>${esc(u.full_name||u.username)}</span><span class="r">${esc(u.role||'')}</span></div>`).join('');
+}
+async function assignMember(bid, uid){
+  closePicker();
+  const b = BUNDLES.find(x => x.id === bid); if (!b) return;
+  try {
+    await api('/api/role-bundles/'+bid+'/assign','POST',{ user_id:uid });
+    const u = USERS.find(x => String(x.id) === String(uid)) || { id:uid };
+    b.members = b.members || [];
+    if (!b.members.some(m => String(m.id) === String(uid)))
+      b.members.push({ id:uid, full_name:u.full_name, username:u.username, role:u.role });
+    renderBundles();
+    offerUndo(`Assigned ${nameOf(uid)} to “${b.name}”`, async ()=>{
+      await api('/api/role-bundles/'+bid+'/unassign','POST',{ user_id:uid });
+      b.members = (b.members||[]).filter(m => String(m.id) !== String(uid)); renderBundles();
+    });
+  } catch(e){ toast(e && e.message || 'Assign failed'); }
+}
+async function unassignMember(bid, uid){
+  const b = BUNDLES.find(x => x.id === bid); if (!b) return;
+  const prev = (b.members||[]).find(m => String(m.id) === String(uid));
+  try {
+    await api('/api/role-bundles/'+bid+'/unassign','POST',{ user_id:uid });
+    b.members = (b.members||[]).filter(m => String(m.id) !== String(uid)); renderBundles();
+    offerUndo(`Removed ${prev ? (prev.full_name||prev.username) : 'person'} from “${b.name}”`, async ()=>{
+      await api('/api/role-bundles/'+bid+'/assign','POST',{ user_id:uid });
+      b.members = b.members || [];
+      if (!b.members.some(m => String(m.id) === String(uid))) b.members.push(prev || { id:uid });
+      renderBundles();
+    });
+  } catch(e){ toast(e && e.message || 'Remove failed'); }
+}
+
+// ── Delete (optimistic + undo; no confirm dialog — §2.3) ──
+async function deleteBundle(bid){
+  const idx = BUNDLES.findIndex(x => x.id === bid); if (idx < 0) return;
+  const b = BUNDLES[idx];
+  try {
+    await api('/api/role-bundles/'+bid,'DELETE');
+    BUNDLES.splice(idx,1); renderBundles();
+    offerUndo(`Deleted “${b.name}”`, async ()=>{
+      // Recreate the role (name + keys) and restore its former members.
+      const r = await api('/api/role-bundles','POST',{ name:b.name, keys:b.keys||[] });
+      if (r && r.id){
+        b.id = r.id;
+        for (const m of (b.members||[])){
+          try { await api('/api/role-bundles/'+r.id+'/assign','POST',{ user_id:m.id }); } catch(e){}
+        }
+      }
+      BUNDLES.splice(idx,0,b); renderBundles();
+    });
+  } catch(e){ toast(e && e.message || 'Delete failed'); }
+}
+
+// ── Create / edit editor ──
+function openBundleEditor(bid){
+  editorBundleId = (bid == null) ? null : bid;
+  const b = (bid == null) ? null : BUNDLES.find(x => x.id === bid);
+  document.getElementById('editor-title').textContent = b ? ('Edit “'+b.name+'”') : 'New custom role';
+  document.getElementById('editor-name').value = b ? b.name : '';
+  editorSelected = new Set(b ? (b.keys||[]) : []);
+  document.getElementById('editor-search').value = '';
+  renderKeyPicker('');
+  document.getElementById('editor-overlay').classList.add('open');
+  document.getElementById('editor-name').focus();
+}
+function closeBundleEditor(){ document.getElementById('editor-overlay').classList.remove('open'); editorBundleId = null; }
+function filterKeyPicker(q){ renderKeyPicker(String(q||'').toLowerCase()); }
+function renderKeyPicker(q){
+  // Group the live CATALOG by area, preserving order; selection lives in
+  // editorSelected so filtering never drops a tick.
+  const order = [], groups = {};
+  for (const c of CATALOG){
+    if (q && !((c.label+' '+c.key).toLowerCase().includes(q))) continue;
+    if (!groups[c.area]){ groups[c.area]=[]; order.push(c.area); }
+    groups[c.area].push(c);
+  }
+  const host = document.getElementById('editor-keys');
+  if (!order.length){ host.innerHTML = '<div class="picker-empty">No matching permissions</div>'; return; }
+  host.innerHTML = order.map(area => {
+    const rows = groups[area].map(c =>
+      `<label class="krow"><input type="checkbox" value="${esc(c.key)}" ${editorSelected.has(c.key)?'checked':''} onchange="onKeyToggle(this)"><span>${esc(c.label)}</span><span class="kk">${esc(c.key)}</span></label>`).join('');
+    return `<div class="karea">${esc(area)}</div>${rows}`;
+  }).join('');
+}
+function onKeyToggle(cb){ if (cb.checked) editorSelected.add(cb.value); else editorSelected.delete(cb.value); }
+
+async function saveBundle(){
+  const name = document.getElementById('editor-name').value.trim();
+  if (!name){ toast('Give the role a name'); document.getElementById('editor-name').focus(); return; }
+  const keys = [...editorSelected];
+  const btn = document.getElementById('editor-save'); btn.disabled = true;
+  try {
+    if (editorBundleId == null){
+      const r = await api('/api/role-bundles','POST',{ name, keys });
+      BUNDLES.push({ id: r && r.id, name, keys, holder_count:0, members:[] });
+    } else {
+      await api('/api/role-bundles/'+editorBundleId,'PUT',{ name, keys });
+      const b = BUNDLES.find(x => x.id === editorBundleId);
+      if (b){ b.name = name; b.keys = keys; }
+    }
+    BUNDLES.sort((a,b) => String(a.name).localeCompare(String(b.name)));
+    renderBundles();
+    closeBundleEditor();
+  } catch(e){ toast(e && e.message || 'Save failed'); }
+  finally { btn.disabled = false; }
+}
+// Close the editor on Escape (it's an editor, not a trap).
+document.addEventListener('keydown', e => {
+  if (e.key === 'Escape' && document.getElementById('editor-overlay').classList.contains('open')) closeBundleEditor();
+});
 
 boot();
 </script>
