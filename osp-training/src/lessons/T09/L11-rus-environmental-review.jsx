@@ -5,7 +5,9 @@
 
 import React from 'react';
 import LessonLayout from '../../components/LessonLayout.jsx';
+import ReferencesBlock from '../../components/ReferencesBlock.jsx';
 import Quiz from '../../components/primitives/Quiz.jsx';
+import GatedAssessment from '../../components/primitives/GatedAssessment.jsx';
 import Flashcard from '../../components/Flashcard.jsx';
 
 export const meta = {
@@ -19,7 +21,7 @@ export const meta = {
     'Explain the difference between RUS/USDA 7 CFR Part 1b NEPA procedures and NTIA/BEAD NEPA procedures',
     'Complete a RUS CE determination checklist for a sample aerial-fiber project',
     'Identify which circumstances trigger an Environmental Impact Memorandum (EIM) rather than a CE checklist',
-    'Describe what RUS Form 307 documents and when it is required',
+    'Describe what the RUS construction closeout certification documents and when it is required',
   ],
   estimated_minutes: 20,
   vocabulary_introduced: [
@@ -79,7 +81,7 @@ export default function T09L11_RusEnvironmentalReview() {
           If your fiber project is financed through the USDA Rural Utilities Service (RUS) —
           via a RUS loan, a ReConnect grant, or a similar USDA rural broadband program — you
           have an additional layer of environmental review on top of the general NEPA framework
-          you learned in L02. This is the RUS-specific implementation of NEPA, codified in
+          you learned in the NEPA lesson. This is the RUS-specific implementation of NEPA, codified in
           7 CFR Part 1b (effective April 3, 2026; this regulation replaced the prior 7 CFR Part
           1970 — verify current section numbers against eCFR at time of application).
         </p>
@@ -223,21 +225,22 @@ export default function T09L11_RusEnvironmentalReview() {
           fill above NWP thresholds, or documented impacts on T&amp;E species critical habitat.
         </p>
 
-        <h3 className="mt-6">RUS Form 307 — Construction and Operation Report</h3>
+        <h3 className="mt-6">The Construction Closeout Certification</h3>
         <p>
-          RUS Form 307 (Construction and Operation Report) is a required closeout document for
-          RUS telecommunications projects. It documents that construction was completed in
-          accordance with the approved loan/grant conditions, including the environmental
-          review findings.
+          At the end of a RUS-financed project, the borrower files a construction closeout
+          certification — documentation that the project was built in accordance with the
+          approved loan/grant conditions, including the environmental review findings.
         </p>
         <p className="mt-2">
-          The Form 307 is not an environmental review document itself — it's an attestation
-          that the project was built as approved. However, it includes a section confirming
-          that all environmental conditions (from the CE, EIM, or EA) were satisfied during
-          construction. This is where mitigation commitments made during the environmental
-          review become binding: "construction followed the tree-clearing avoidance window"
-          or "the wetland crossing was completed by bore in accordance with the NWP 57 PCN
-          conditions." If a condition was not met, it must be disclosed in Form 307.
+          The closeout certification is not an environmental review document itself — it's an
+          attestation that the project was built as approved. But it is where the environmental
+          conditions from the CE, EIM, or EA (the tree-clearing avoidance window, the bore
+          required at a wetland crossing under the NWP 57 conditions) get confirmed as actually
+          satisfied during construction. This is the moment mitigation commitments made on paper
+          during the review become binding on the field crew: if a condition was not met, that
+          has to be disclosed at closeout rather than quietly ignored. The lesson for the field
+          is simple — the promises made to win the environmental clearance are the promises the
+          crew has to keep on the ground.
         </p>
 
         <h3 className="mt-6">RUS NEPA vs. NTIA/BEAD NEPA — Are They the Same CE?</h3>
@@ -246,20 +249,20 @@ export default function T09L11_RusEnvironmentalReview() {
           when a project team has done BEAD NEPA work and wants to know if RUS accepts it.
         </p>
         <p className="mt-2">
-          <strong>Important clarification on CE C-8 and NTIA:</strong> The term "CE C-8" is
-          RUS nomenclature — it appears in 7 CFR Part 1b (formerly Part 1970) as a specific
-          categorical exclusion class designation used by USDA Rural Development. <em>NTIA did
-          not adopt CE C-8</em> when it established its BEAD NEPA procedures. NTIA's 2024
-          CE rulemaking explicitly excluded CE C-8: the notice stated that NTIA is "not including
-          CE C-8 because the actions they cover are encompassed by existing Department-wide CEs."
-          NTIA instead uses Commerce Department-level CEs for BEAD environmental review.
+          <strong>Important clarification — RUS and NTIA use different CE frameworks:</strong>{' '}
+          RUS runs its categorical exclusions under the USDA NEPA rules (7 CFR Part 1b). NTIA
+          established its own NEPA procedures for BEAD in 2024 — a separate set of categorical
+          exclusions with its own numbering, not RUS's. Because the two agencies use different
+          CE frameworks, a categorical-exclusion designation that applies to a RUS-financed
+          project does not automatically carry over to a BEAD determination, even when both cover
+          the same kind of work.
         </p>
         <p className="mt-2">
           <strong>The practical answer:</strong> Both RUS (7 CFR Part 1b) and NTIA/BEAD cover
           the same general category — aerial or buried utility and communications construction
           within or adjacent to existing rights-of-way. But they use different CE designations
-          and different procedural frameworks. Do not assume "CE C-8" applies to a BEAD project
-          just because it applies to a RUS project.
+          and different procedural frameworks. Do not assume a RUS categorical-exclusion
+          designation applies to a BEAD project just because it applies to the RUS-financed one.
         </p>
         <p className="mt-2">
           <strong>Procedural differences:</strong>
@@ -275,7 +278,7 @@ export default function T09L11_RusEnvironmentalReview() {
             <strong>BEAD/NTIA:</strong> The state broadband office is the lead federal agency
             for BEAD NEPA. The subgrantee prepares the required environmental documentation,
             but the state broadband office makes the NEPA determination (or delegates to NTIA).
-            NTIA uses Commerce Department-level CEs — not RUS CE numbering. The process and
+            NTIA uses its own BEAD categorical exclusions — not RUS CE numbering. The process and
             forms differ by state broadband office.
           </li>
           <li>
@@ -305,8 +308,8 @@ export default function T09L11_RusEnvironmentalReview() {
             <strong>Screen for extraordinary circumstances.</strong> Go through every item in
             7 CFR Part 1b systematically (verify current section reference against eCFR). For each item: document whether it applies, and if
             it applies, what the impact is. This is where your prior environmental work pays off:
-            IPaC results (L04), SHPO pre-consultation (L03), and route survey documentation
-            (T04) all feed into this screening.
+            IPaC results (from the ESA lesson), SHPO pre-consultation (from the Section 106 lesson),
+            and route survey documentation (from the Route Survey topic) all feed into this screening.
           </li>
           <li>
             <strong>Document the agency consultations completed.</strong> Even for a CE,
@@ -364,75 +367,94 @@ export default function T09L11_RusEnvironmentalReview() {
         </p>
       </section>
 
-      {/* QUIZ */}
-      <Quiz
-        title="L11 Practice Quiz — RUS Environmental Review"
-        mode="multiple-choice"
-        questions={[
-          {
-            id: 'T09-L11-Q01',
-            type: 'mc',
-            prompt:
-              'A RUS-financed aerial-fiber project follows an existing highway ROW for 15 miles. An IPaC screen reveals a documented population of Northern Long-Eared Bat (NLEB) within the route corridor. The proposed construction includes 2 miles of tree clearing on a forested segment adjacent to the ROW. What is the most likely outcome for the RUS environmental review?',
-            choices: [
-              'The CE automatically applies because the project is in existing ROW — bat species presence in the corridor doesn\'t affect the CE determination',
-              'An extraordinary circumstance (T&E species) is triggered — the CE checklist cannot be completed without either an EIM documenting limited impact or a formal ESA §7 consultation with USFWS. The CE may still apply after the ESA screen resolves, but it is not automatic at this point',
-              'The project requires a full Environmental Impact Statement (EIS) because NLEB was present',
-              'The CE is cancelled entirely; the project must convert to an EA before any construction can begin',
-            ],
-            answerIndex: 1,
-            explanation:
-              'NLEB presence triggers an extraordinary circumstance under 7 CFR Part 1b (T&E species). The CE is not automatic when an extraordinary circumstance is present. The applicant must either: (a) complete an EIM documenting that the impact is limited (e.g., construction avoids the tree-clearing window, IPaC shows the route corridor is not critical habitat), or (b) complete ESA §7 informal consultation. If the consultation results in a no-jeopardy finding with standard conditions (tree-clearing avoidance window), the CE may still apply after the consultation. Note: confirm current NLEB listing status at fws.gov/species at time of project — species status is dynamic. T09.L11.',
-          },
-          {
-            id: 'T09-L11-Q02',
-            type: 'mc',
-            prompt:
-              'What is the key difference between the Environmental Impact Memorandum (EIM) and a full Environmental Assessment (EA) in the 7 CFR Part 1b framework?',
-            choices: [
-              'They are the same document with different names — the EIM is just an older term for EA',
-              'An EIM is used when extraordinary circumstances are triggered but limited analysis can document that the actual impact is not significant — it\'s an intermediate tier between the CE checklist and a full EA. A full EA is required when the EIM analysis cannot demonstrate limited impact',
-              'An EA is required only for projects over 50 miles in length; an EIM applies to shorter projects',
-              'An EIM is prepared by the RUS agency; an EA is prepared by the project applicant',
-            ],
-            answerIndex: 1,
-            explanation:
-              'The EIM is a USDA-specific intermediate review tier — not found in the CEQ rules as a separate document type. It\'s used when an extraordinary circumstance applies but the applicant can demonstrate through limited analysis (IPaC consultation, agency communication, field observation) that the impact is not significant. A full EA is needed when that demonstration cannot be made. The EIM saves the applicant from a full EA process when the extraordinary circumstance is real but the impact is clearly limited. T09.L11.',
-          },
-          {
-            id: 'T09-L11-Q03',
-            type: 'mc',
-            prompt:
-              'A project is funded by both RUS (ReConnect grant) and BEAD (NTIA/state broadband office). Both programs use the same categorical exclusion language (CE for existing ROW aerial fiber). Does this mean the project only needs ONE NEPA determination?',
-            choices: [
-              'Yes — if both programs use the same CE language, one CE determination applies to both',
-              'No — RUS and NTIA/state broadband office are separate federal agencies; both must independently make their NEPA determinations, though they may cooperate on a joint environmental review to avoid duplicating the analysis',
-              'No — BEAD NEPA is a state process, not a federal process, so it doesn\'t count as NEPA',
-              'Yes — once the state broadband office approves the CE, RUS automatically accepts it under an MOU between USDA and NTIA',
-            ],
-            answerIndex: 1,
-            explanation:
-              'RUS (USDA) and NTIA/state broadband offices are separate federal agencies. Both must make independent NEPA determinations — they cannot simply adopt each other\'s determination without formal interagency coordination. However, they CAN cooperate on a joint environmental review that satisfies both agencies\' requirements in a single document. Coordinate with both agencies early in the project — ask explicitly whether a joint review is possible — to avoid duplicating the same analysis twice. T09.L11.',
-          },
-          {
-            id: 'T09-L11-Q04',
-            type: 'mc',
-            prompt:
-              'RUS Form 307 (Construction and Operation Report) is filed at what point in the project lifecycle, and what does it document regarding environmental review?',
-            choices: [
-              'Filed before construction begins — it documents the NEPA determination and authorizes construction',
-              'Filed after construction is complete — it attests that construction was completed in accordance with approved conditions, including that all environmental mitigation commitments (tree-clearing avoidance windows, bore requirements at wetland crossings, etc.) were satisfied',
-              'Filed annually during the project\'s operating life — it documents ongoing environmental compliance',
-              'Filed only when an EIM or EA was required — CE projects don\'t require Form 307',
-            ],
-            answerIndex: 1,
-            explanation:
-              'RUS Form 307 is a construction closeout document — filed after the project is built. It attests that the project was constructed according to the approved plans and that all environmental conditions were met. If the CE or EIM required a tree-clearing avoidance window (April–October for NLEB), Form 307 confirms that clearing occurred outside that window. If the wetland crossing required a bore per the NWP 57 PCN conditions, Form 307 confirms bore was used. Environmental commitments made during the review process become enforceable through the Form 307 closeout. T09.L11.',
-          },
+      <ReferencesBlock
+        items={[
+          { citation: '7 CFR Part 1b', note: 'The USDA department-wide NEPA regulation (final rule effective April 3, 2026, FR 2026-06537) that replaced the RUS-specific 7 CFR Part 1970 — the rulebook RUS now uses to decide whether a financed project gets a CE, an EIM, or a full EA. Confirm current section numbers on eCFR.' },
+          { citation: '42 USC §4321 et seq.', note: 'NEPA itself — the underlying law that 7 CFR Part 1b implements for RUS-financed projects.' },
+          { citation: '16 USC §1536', note: 'ESA Section 7 — the consultation triggered when a listed species (e.g. the northern long-eared bat) is an extraordinary circumstance in a RUS review.' },
+          { citation: '87 FR 73488 (Nov. 30, 2022); 88 FR 5528', note: 'Northern long-eared bat reclassification from threatened to endangered (listing rule; effective date delayed to March 31, 2023) — the example extraordinary-circumstance in this lesson. Confirm current status at fws.gov/species.' },
+          { citation: '54 USC §306108', note: 'Section 106 of the NHPA — the historic-properties review that is another extraordinary circumstance under 7 CFR Part 1b.' },
+          { citation: '33 USC §1344; USACE Nationwide Permit 57', note: 'CWA Section 404 and the telecommunications nationwide permit — the wetland/waterway extraordinary circumstance.' },
+          { citation: 'NTIA BEAD NEPA procedures (2024)', note: 'NTIA’s own categorical exclusions for BEAD (established 2024, effective April 2, 2024) — a separate CE framework from RUS’s, which is why a RUS CE designation does not automatically carry to a BEAD determination.' },
         ]}
-        onComplete={(result) => {
-          console.info('T09 L11 Quiz complete:', result);
-        }}
+      />
+
+      {/* QUIZ */}
+      <GatedAssessment
+        courseId="T09"
+        assessmentId="T09-L11"
+        title="Practice Quiz — RUS Environmental Review"
+        fallback={
+        <Quiz
+          title="Practice Quiz — RUS Environmental Review"
+          mode="multiple-choice"
+          questions={[
+            {
+              id: 'T09-L11-Q01',
+              type: 'mc',
+              prompt:
+                'A RUS-financed aerial-fiber project follows an existing highway ROW for 15 miles. An IPaC screen reveals a documented population of Northern Long-Eared Bat (NLEB) within the route corridor. The proposed construction includes 2 miles of tree clearing on a forested segment adjacent to the ROW. What is the most likely outcome for the RUS environmental review?',
+              choices: [
+                'The CE automatically applies because the project is in existing ROW — bat species presence in the corridor doesn\'t affect the CE determination',
+                'An extraordinary circumstance (T&E species) is triggered — the CE checklist cannot be completed without either an EIM documenting limited impact or a formal ESA §7 consultation with USFWS. The CE may still apply after the ESA screen resolves, but it is not automatic at this point',
+                'The project requires a full Environmental Impact Statement (EIS) because NLEB was present',
+                'The CE is cancelled entirely; the project must convert to an EA before any construction can begin',
+              ],
+              answerIndex: 1,
+              explanation:
+                'NLEB presence triggers an extraordinary circumstance under 7 CFR Part 1b (T&E species). The CE is not automatic when an extraordinary circumstance is present. The applicant must either: (a) complete an EIM documenting that the impact is limited (e.g., construction avoids the tree-clearing window, IPaC shows the route corridor is not critical habitat), or (b) complete ESA §7 informal consultation. If the consultation results in a no-jeopardy finding with standard conditions (tree-clearing avoidance window), the CE may still apply after the consultation. Note: confirm current NLEB listing status at fws.gov/species at time of project — species status is dynamic.',
+            },
+            {
+              id: 'T09-L11-Q02',
+              type: 'mc',
+              prompt:
+                'What is the key difference between the Environmental Impact Memorandum (EIM) and a full Environmental Assessment (EA) in the 7 CFR Part 1b framework?',
+              choices: [
+                'They are the same document with different names — the EIM is just an older term for EA',
+                'An EIM is used when extraordinary circumstances are triggered but limited analysis can document that the actual impact is not significant — it\'s an intermediate tier between the CE checklist and a full EA. A full EA is required when the EIM analysis cannot demonstrate limited impact',
+                'An EA is required only for projects over 50 miles in length; an EIM applies to shorter projects',
+                'An EIM is prepared by the RUS agency; an EA is prepared by the project applicant',
+              ],
+              answerIndex: 1,
+              explanation:
+                'The EIM is a USDA-specific intermediate review tier — not found in the CEQ rules as a separate document type. It\'s used when an extraordinary circumstance applies but the applicant can demonstrate through limited analysis (IPaC consultation, agency communication, field observation) that the impact is not significant. A full EA is needed when that demonstration cannot be made. The EIM saves the applicant from a full EA process when the extraordinary circumstance is real but the impact is clearly limited.',
+            },
+            {
+              id: 'T09-L11-Q03',
+              type: 'mc',
+              prompt:
+                'A project is funded by both RUS (ReConnect grant) and BEAD (NTIA/state broadband office). Both programs cover the same kind of work (existing-ROW aerial fiber). Does this mean the project only needs ONE NEPA determination?',
+              choices: [
+                'Yes — if both programs cover the same kind of work, one CE determination applies to both',
+                'No — RUS and NTIA/state broadband office are separate federal agencies; both must independently make their NEPA determinations, though they may cooperate on a joint environmental review to avoid duplicating the analysis',
+                'No — BEAD NEPA is a state process, not a federal process, so it doesn\'t count as NEPA',
+                'Yes — once the state broadband office approves the CE, RUS automatically accepts it under an MOU between USDA and NTIA',
+              ],
+              answerIndex: 1,
+              explanation:
+                'RUS (USDA) and NTIA/state broadband offices are separate federal agencies. Both must make independent NEPA determinations — they cannot simply adopt each other\'s determination without formal interagency coordination. However, they CAN cooperate on a joint environmental review that satisfies both agencies\' requirements in a single document. Coordinate with both agencies early in the project — ask explicitly whether a joint review is possible — to avoid duplicating the same analysis twice.',
+            },
+            {
+              id: 'T09-L11-Q04',
+              type: 'mc',
+              prompt:
+                'RUS requires a construction closeout certification at the end of a financed project. At what point in the project lifecycle is it filed, and what does it document regarding environmental review?',
+              choices: [
+                'Filed before construction begins — it documents the NEPA determination and authorizes construction',
+                'Filed after construction is complete — it attests that construction was completed in accordance with approved conditions, including that all environmental mitigation commitments (tree-clearing avoidance windows, bore requirements at wetland crossings, etc.) were satisfied',
+                'Filed annually during the project\'s operating life — it documents ongoing environmental compliance',
+                'Filed only when an EIM or EA was required — CE projects have no closeout certification',
+              ],
+              answerIndex: 1,
+              explanation:
+                'The RUS construction closeout certification is filed after the project is built. It attests that the project was constructed according to the approved plans and that all environmental conditions were met. If the CE or EIM required a tree-clearing avoidance window (April–October for NLEB), the closeout confirms that clearing occurred outside that window. If the wetland crossing required a bore per the NWP 57 conditions, the closeout confirms bore was used. Environmental commitments made during the review process become enforceable through the closeout.',
+            },
+          ]}
+          onComplete={(result) => {
+            console.info('T09 L11 Quiz complete:', result);
+          }}
+        />
+        }
       />
 
     </LessonLayout>
