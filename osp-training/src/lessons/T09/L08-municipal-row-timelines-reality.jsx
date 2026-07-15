@@ -4,8 +4,10 @@
 
 import React from 'react';
 import LessonLayout from '../../components/LessonLayout.jsx';
+import ReferencesBlock from '../../components/ReferencesBlock.jsx';
 import BranchingScenario from '../../components/primitives/BranchingScenario.jsx';
 import Quiz from '../../components/primitives/Quiz.jsx';
+import GatedAssessment from '../../components/primitives/GatedAssessment.jsx';
 import Flashcard from '../../components/Flashcard.jsx';
 
 export const meta = {
@@ -382,8 +384,8 @@ export default function T09L08_MunicipalRowTimelinesReality() {
             execution — a new FCC order could change the legal landscape for municipal ROW negotiations.
           </p>
           <p className="text-slate-300/90 mt-2 text-xs text-slate-400">
-            Source: FCC WC Docket No. 25-253, Notice of Inquiry (September 2025). Check FCC ECFS for
-            current proceeding status: https://www.fcc.gov/ecfs/search/search-filings/filing?q=%2225-253%22
+            This is an active proceeding — confirm its current status before relying on it on a live project.
+            The exact docket is in this lesson's References.
           </p>
         </div>
       </section>
@@ -447,90 +449,108 @@ export default function T09L08_MunicipalRowTimelinesReality() {
         ]}
       />
 
-      {/* QUIZ */}
-      <Quiz
-        title="L08 Practice Quiz — Municipal ROW"
-        mode="multiple-choice"
-        questions={[
-          {
-            id: 'T09-L08-Q01',
-            type: 'mc',
-            prompt:
-              'A new ISP wants to build fiber in a mid-size city. The city tells them "you need a franchise agreement before we\'ll issue any ROW permits." Under federal law (47 USC §253(a)), what is the legal limitation on this requirement?',
-            choices: [
-              'The city can legally require a franchise agreement for any telecommunications provider — federal law has no jurisdiction over municipal ROW decisions',
-              '47 USC §253(a) prohibits state or local laws that effectively prohibit the provision of telecommunications service — a municipality cannot use franchise requirements as an indefinite barrier to market entry, though reasonable franchise negotiations are permitted',
-              'A franchise agreement is only required for cable TV companies — ISPs are completely exempt from any municipal franchise requirement under federal law',
-              'The FCC automatically issues a franchise waiver to any ISP that requests one',
-            ],
-            answerIndex: 1,
-            explanation:
-              '47 USC §253(a) prohibits legal or regulatory requirements that have the effect of prohibiting telecommunications service. A franchise requirement used as an indefinite delay tactic may violate this provision. However, reasonable franchise negotiations — with reasonable terms and timelines — are permissible. The law limits abuse of the franchise process, not the process itself. T09.L08.',
-          },
-          {
-            id: 'T09-L08-Q02',
-            type: 'mc',
-            prompt:
-              'A fiber route crosses a city street that was resurfaced 2 years ago. The city has a 5-year pavement cut moratorium. What construction method is the permittee most likely required to use for this street crossing?',
-            choices: [
-              'Open-cut trench and backfill — the standard method',
-              'Horizontal directional bore under the road — open-cut is prohibited during the moratorium period',
-              'No permit is required during the moratorium period — the company can self-help',
-              'The company must wait until the moratorium expires in 3 years before crossing the street',
-            ],
-            answerIndex: 1,
-            explanation:
-              'A pavement cut moratorium prohibits open-cut trenching in recently resurfaced streets. The permittee must bore under the road. This adds cost (bores are 4–10× more expensive per foot than open-cut) but is not optional — moratorium enforcement is a legitimate municipal authority. Moratorium status should be checked in the route survey phase, not discovered at permit time. T09.L08.',
-          },
-          {
-            id: 'T09-L08-Q03',
-            type: 'mc',
-            prompt:
-              'The FCC BDAC Model Code (2018 edition) proposes a 60-day review period for municipal ROW permit applications. What does "complete application" mean in the context of this shot clock?',
-            choices: [
-              'Any application submitted to the city, whether or not all required documents are included',
-              'An application that includes all documents required by the city\'s ROW ordinance — an incomplete application returned for additional information does not start the 60-day clock',
-              'A completed application form only — drawings and bonds are submitted separately after the clock starts',
-              'The 60-day clock starts automatically when the applicant mails the application, regardless of completeness',
-            ],
-            answerIndex: 1,
-            explanation:
-              'The 60-day shot clock (modeled on FCC wireless siting clocks) starts only when the municipality receives a complete application — all required documents, fees, drawings, bonds, and certifications. If the city returns an application as incomplete, the clock has not started and does not start until a complete resubmission is received. This is why using the city\'s published checklist verbatim is critical — a complete first submission starts the clock immediately. T09.L08.',
-          },
-          {
-            id: 'T09-L08-Q04',
-            type: 'mc',
-            prompt:
-              'A city\'s ROW permit includes a condition requiring the fiber company to pay a monthly fee of $2 per linear foot of fiber installed in the ROW. This is most accurately described as:',
-            choices: [
-              'A standard permit processing fee — all cities charge this',
-              'A municipal fiber fee — a recurring ROW occupancy charge that goes beyond a one-time permit processing fee and functions like a franchise condition regardless of the label',
-              'An ROW restoration bond — required to guarantee pavement repair',
-              'A traffic control plan fee — covering the city\'s cost to review the TCP',
-            ],
-            answerIndex: 1,
-            explanation:
-              'A recurring per-linear-foot monthly charge for fiber in the ROW is a municipal fiber fee — a franchise-like condition imposed through the permit. This is distinct from a one-time permit processing fee. These fees are legally contested in many jurisdictions; some states cap them or prohibit them entirely for telecom. Before accepting, verify whether your state\'s ROW law limits such charges. T09.L08.',
-          },
-          {
-            id: 'T09-L08-Q05',
-            type: 'mc',
-            prompt:
-              'Which of the following is NOT typically part of a complete municipal ROW permit application packet for a fiber project?',
-            choices: [
-              'Traffic Control Plan (TCP) showing lane closures and pedestrian protection',
-              'ROW restoration bond or cash deposit guaranteeing pavement restoration',
-              'Section 106 consultation letter from SHPO',
-              'Insurance certificates naming the municipality as additional insured',
-            ],
-            answerIndex: 2,
-            explanation:
-              'Section 106 consultation letters (from SHPO — the State Historic Preservation Officer) are a federal NHPA requirement, not a municipal ROW permit component. Section 106 is part of the federal environmental review process (T09.L03), not the municipal permit packet. TCP, restoration bond, and insurance certificates are standard municipal ROW permit components. T09.L08.',
-          },
+      <ReferencesBlock
+        items={[
+          { citation: '47 USC §253(a)', note: 'Communications Act — prohibits state or local laws that “prohibit or have the effect of prohibiting” telecommunications service. This is the federal limit on how far a city can push franchise/ROW conditions before they become an illegal barrier to entry.' },
+          { citation: '47 USC §332(c)(7)(B)(ii)', note: 'The FCC wireless-siting “shot clock” — the review-deadline model the 60-day municipal ROW clock is patterned on.' },
+          { citation: 'FCC BDAC Model Code (2018)', note: 'The Broadband Deployment Advisory Committee’s model code proposing a 60-day ROW permit shot clock. Adopted by some states, no legal force in others — always check your state.' },
+          { citation: 'Cable Communications Policy Act of 1984', note: 'The federal cable law that historically required franchise agreements — the origin of the franchise instrument now contested for broadband ISPs.' },
+          { citation: 'MUTCD (Manual on Uniform Traffic Control Devices)', note: 'The national standard a Traffic Control Plan follows; it does not itself require a PE stamp on the TCP.' },
+          { citation: 'FCC WC Docket No. 25-253', note: '“Eliminating Barriers to Wireline Deployments,” Notice of Inquiry released September 30, 2025 — the active FCC proceeding examining §253 preemption of state/local ROW fees and franchise-like conditions. Confirm current status before relying on it.' },
         ]}
-        onComplete={(result) => {
-          console.info('T09 L08 Quiz complete:', result);
-        }}
+      />
+
+      {/* QUIZ */}
+      <GatedAssessment
+        courseId="T09"
+        assessmentId="T09-L08"
+        title="Practice Quiz — Municipal ROW"
+        fallback={
+        <Quiz
+          title="Practice Quiz — Municipal ROW"
+          mode="multiple-choice"
+          questions={[
+            {
+              id: 'T09-L08-Q01',
+              type: 'mc',
+              prompt:
+                'A new ISP wants to build fiber in a mid-size city. The city tells them "you need a franchise agreement before we\'ll issue any ROW permits." Under federal law (47 USC §253(a)), what is the legal limitation on this requirement?',
+              choices: [
+                'The city can legally require a franchise agreement for any telecommunications provider — federal law has no jurisdiction over municipal ROW decisions',
+                '47 USC §253(a) prohibits state or local laws that effectively prohibit the provision of telecommunications service — a municipality cannot use franchise requirements as an indefinite barrier to market entry, though reasonable franchise negotiations are permitted',
+                'A franchise agreement is only required for cable TV companies — ISPs are completely exempt from any municipal franchise requirement under federal law',
+                'The FCC automatically issues a franchise waiver to any ISP that requests one',
+              ],
+              answerIndex: 1,
+              explanation:
+                '47 USC §253(a) prohibits legal or regulatory requirements that have the effect of prohibiting telecommunications service. A franchise requirement used as an indefinite delay tactic may violate this provision. However, reasonable franchise negotiations — with reasonable terms and timelines — are permissible. The law limits abuse of the franchise process, not the process itself.',
+            },
+            {
+              id: 'T09-L08-Q02',
+              type: 'mc',
+              prompt:
+                'A fiber route crosses a city street that was resurfaced 2 years ago. The city has a 5-year pavement cut moratorium. What construction method is the permittee most likely required to use for this street crossing?',
+              choices: [
+                'Open-cut trench and backfill — the standard method',
+                'Horizontal directional bore under the road — open-cut is prohibited during the moratorium period',
+                'No permit is required during the moratorium period — the company can self-help',
+                'The company must wait until the moratorium expires in 3 years before crossing the street',
+              ],
+              answerIndex: 1,
+              explanation:
+                'A pavement cut moratorium prohibits open-cut trenching in recently resurfaced streets. The permittee must bore under the road. This adds cost (bores are 4–10× more expensive per foot than open-cut) but is not optional — moratorium enforcement is a legitimate municipal authority. Moratorium status should be checked in the route survey phase, not discovered at permit time.',
+            },
+            {
+              id: 'T09-L08-Q03',
+              type: 'mc',
+              prompt:
+                'The FCC BDAC Model Code (2018 edition) proposes a 60-day review period for municipal ROW permit applications. What does "complete application" mean in the context of this shot clock?',
+              choices: [
+                'Any application submitted to the city, whether or not all required documents are included',
+                'An application that includes all documents required by the city\'s ROW ordinance — an incomplete application returned for additional information does not start the 60-day clock',
+                'A completed application form only — drawings and bonds are submitted separately after the clock starts',
+                'The 60-day clock starts automatically when the applicant mails the application, regardless of completeness',
+              ],
+              answerIndex: 1,
+              explanation:
+                'The 60-day shot clock (modeled on FCC wireless siting clocks) starts only when the municipality receives a complete application — all required documents, fees, drawings, bonds, and certifications. If the city returns an application as incomplete, the clock has not started and does not start until a complete resubmission is received. This is why using the city\'s published checklist verbatim is critical — a complete first submission starts the clock immediately.',
+            },
+            {
+              id: 'T09-L08-Q04',
+              type: 'mc',
+              prompt:
+                'A city\'s ROW permit includes a condition requiring the fiber company to pay a monthly fee of $2 per linear foot of fiber installed in the ROW. This is most accurately described as:',
+              choices: [
+                'A standard permit processing fee — all cities charge this',
+                'A municipal fiber fee — a recurring ROW occupancy charge that goes beyond a one-time permit processing fee and functions like a franchise condition regardless of the label',
+                'An ROW restoration bond — required to guarantee pavement repair',
+                'A traffic control plan fee — covering the city\'s cost to review the TCP',
+              ],
+              answerIndex: 1,
+              explanation:
+                'A recurring per-linear-foot monthly charge for fiber in the ROW is a municipal fiber fee — a franchise-like condition imposed through the permit. This is distinct from a one-time permit processing fee. These fees are legally contested in many jurisdictions; some states cap them or prohibit them entirely for telecom. Before accepting, verify whether your state\'s ROW law limits such charges.',
+            },
+            {
+              id: 'T09-L08-Q05',
+              type: 'mc',
+              prompt:
+                'Which of the following is NOT typically part of a complete municipal ROW permit application packet for a fiber project?',
+              choices: [
+                'Traffic Control Plan (TCP) showing lane closures and pedestrian protection',
+                'ROW restoration bond or cash deposit guaranteeing pavement restoration',
+                'Section 106 consultation letter from SHPO',
+                'Insurance certificates naming the municipality as additional insured',
+              ],
+              answerIndex: 2,
+              explanation:
+                'Section 106 consultation letters (from SHPO — the State Historic Preservation Officer) are a federal NHPA requirement, not a municipal ROW permit component. Section 106 is part of the federal environmental review process (covered in the Section 106 lesson), not the municipal permit packet. TCP, restoration bond, and insurance certificates are standard municipal ROW permit components.',
+            },
+          ]}
+          onComplete={(result) => {
+            console.info('T09 L08 Quiz complete:', result);
+          }}
+        />
+        }
       />
 
     </LessonLayout>
