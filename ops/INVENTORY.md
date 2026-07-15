@@ -127,6 +127,7 @@
 | **#72 SPA full-accent unification** (adopt each skin's accent vs the chosen canvas-only/keep-amber) — OPTIONAL, not-owed | `specs/ui-pass.md` "Deferred" + #72 | ONLY if Carter raises it |
 | **Cutover: delete `setting-requests` / permits routes / `inspection.js`** (load-bearing on live surfaces now) | `specs/cutover.md` step-1 done-when ("not done while any remains") + #71 ruling | cutover **steps 5–7** (die with their cluster replacements) |
 | **#64 prod live-smoke** (merged; washout fix banked) | open #64 | Railway deploys resume |
+| **#80 prod live-smoke** (MERGED `3d16d22`; Quiz `stem` resolver fix → T22/L01+L02 blank prompts, SPA rebuilt; VO PASS `2f0ae25`. Cherry-picked clean off f1's shared #79 branch — #79 T09 work left behind, still `built`) | open #80 | Railway deploys resume (render a T22 quiz; confirm prompts show) |
 | **#67 cert `LFS-OSP-2026-0001` → issue to Carter FIRST + logged-out live-smoke + VO lockstep probe** | open #67 | VO probe clears **and** deploys resume |
 | **#63 residual: 3 CHECK-1 authoring-note strings in UNPUBLISHED pools** | #63 closed comment | when those topics come through the gate |
 | **Safari/WebKit native-control chrome** (cert `/verify` + training; option-(a) is Chromium-scoped) | #64 comment | if Safari/iOS users matter → `specs/ideas/` |
