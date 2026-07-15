@@ -150,7 +150,7 @@ module.exports = function installProjectPhotoRoutes(app, pool, mw) {
   // Form fields: project_id (uuid), caption (text), taken_at (ISO timestamp),
   //              gps_lat (float), gps_lon (float), gps_accuracy_m (float)
   // File field: photo
-  app.post('/api/project-photos', requireAuth, upload.single('photo'), async (req, res) => {
+  app.post('/api/project-photos', requireAuth(), upload.single('photo'), async (req, res) => {
     try {
       if (!req.file) {
         return res.status(400).json({ error: 'No photo file provided' });
@@ -242,7 +242,7 @@ module.exports = function installProjectPhotoRoutes(app, pool, mw) {
   });
 
   // GET /api/project-photos?project_id=X&limit=N&offset=N — list photos for project
-  app.get('/api/project-photos', requireAuth, async (req, res) => {
+  app.get('/api/project-photos', requireAuth(), async (req, res) => {
     try {
       const { project_id } = req.query;
       if (!project_id) {
@@ -287,7 +287,7 @@ module.exports = function installProjectPhotoRoutes(app, pool, mw) {
   });
 
   // GET /api/project-photos/:id/download — stream photo
-  app.get('/api/project-photos/:id/download', requireAuth, async (req, res) => {
+  app.get('/api/project-photos/:id/download', requireAuth(), async (req, res) => {
     try {
       const photoId = req.params.id;
 
@@ -333,7 +333,7 @@ module.exports = function installProjectPhotoRoutes(app, pool, mw) {
   });
 
   // DELETE /api/project-photos/:id — soft-archive
-  app.delete('/api/project-photos/:id', requireAuth, async (req, res) => {
+  app.delete('/api/project-photos/:id', requireAuth(), async (req, res) => {
     try {
       const photoId = req.params.id;
       const userId = req.user && req.user.id;
