@@ -23,6 +23,10 @@
 ## Catalog v1 (seed; grows with every feature)
 `money.view` · `money.manage_billing` · `hours.edit_subordinates` · `hours.edit_all` · `hours.view_all` · `projects.view_all` · `projects.manage` · `minijobs.add` · `minijobs.template_manage` · `cockpit.view` (incl. leaderboard at 2.9) · `training.admin` · `files.browse_all` (desktop D1 admin browse) · `events.manage` · `people.manage` · `system.logger_toggle` · `certificates.issue`.
 
+## Ratified default-grant seed (Partner, 2026-07-14 — #77; rows are L-016-editable on the page, this table is their PROVENANCE not their prison)
+- projects.view_all → all 4 staff roles (NOT contractor — Carter's 1099-scoping ruling overrides status quo). projects.manage → all 4 staff roles (engineers advance pipelines daily; slight coarse-key expansion accepted on the record). money.view → both manager roles. money.manage_billing → NO rows (Carter sole biller). hours.view_all + hours.edit_subordinates → both manager roles. Everything else → no rows (admin bootstrap). Conscious regressions on the record: manager billing-writes removed; contractor read-all removed; manager training-progress reads removed (add a narrow training.view_progress key if needed).
+- Merge mechanics: swap batch lands WITH the seed rows (no lockout window); search.js → projects.view_all; audit_view.js untouched (dies at cutover step-1); system_info.js keeps its role-gate until cutover.
+
 ## Done-when
 - NO person-specific grants exist in any migration/seed (VO greps them); post-#74 Carter creates a Director bundle + assigns Rudy ON THE PAGE, after which Rudy sees those surfaces and still CANNOT reach billing mutations (direct API call).
 - A no-`money.view` user fetching the project list gets **no $ fields in the JSON** (VO checks the raw wire, not the rendered page).
