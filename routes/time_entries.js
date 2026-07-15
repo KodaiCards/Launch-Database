@@ -13,7 +13,7 @@
 const { updateProjectHours, saveUndoBucket, snapHoursToQuarter } = require('./_helpers');
 const { broadcast } = require('./_sse');
 const { logAudit } = require('./_audit');
-const { getEffective, capabilityGrantsTimeEdit } = require('./_permissions');
+const { getEffective, capabilityGrantsTimeEdit, requirePermission } = require('./_permissions');
 
 // #75 hours-override (Flag-B AUGMENT): does the entry's SUBJECT report to this
 // manager via users.manager_id? Subject = staff_id→user, else the creator user_id.
@@ -61,6 +61,10 @@ function auditSource(portalMode, basis) {
 
 module.exports = function installTimeEntriesRoutes(app, pool, mw) {
   const { requireAuth, auditTimeEntry, portalMode } = mw;
+  // System F (#77, ruling 2): the bulk-delete-by-staff route is gated on
+  // hours.edit_subordinates (admin passes by role); the in-handler manager_id
+  // scope check below restricts a subordinate-only holder to their direct reports.
+  const canEditSubordinateHours = requirePermission(pool, 'hours.edit_subordinates');
 
   // Wave 1.5 [UNGATED]: GET /api/time-entries was missing auth. The role-scoping
   // logic below already gates engineers to their own entries — but only once
@@ -599,21 +603,33 @@ module.exports = function installTimeEntriesRoutes(app, pool, mw) {
   // called it with (req, res, next), which produced a middleware that
   // never ran. The endpoint was silently auth-bypassed for weeks. Fixed
   // by calling the factory with the manager+admin role set.
-  app.delete('/api/time-entries/by-staff/:staffId', requireAuth(['admin', 'design_manager', 'permitting_manager']), async (req, res) => {
+  app.delete('/api/time-entries/by-staff/:staffId', canEditSubordinateHours, async (req, res) => {
     const { month, year } = req.query;
 
-    // TE-2: Manager team-scope check. Managers may only bulk-delete entries
-    // for staff members who are linked to their team via users.team.
-    // The staff table has no team column; the link is through users.staff_id.
-    // Admins bypass this check.
-    if (req.user?.role === 'design_manager' || req.user?.role === 'permitting_manager') {
-      const managerTeam = req.user.role === 'design_manager' ? 'design' : 'permitting';
-      const { rows: userCheck } = await pool.query(
-        `SELECT id FROM users WHERE staff_id = $1 AND team = $2`,
-        [req.params.staffId, managerTeam]
-      );
-      if (!userCheck.length) {
-        return res.status(404).json({ error: 'Staff member not found on your team.' });
+    // #77 (ruling 2) — manager-override applied literally, replacing the old
+    // users.team scope with the manager_id chain Carter ruled on. The route gate
+    // (hours.edit_subordinates) admits admin + subordinate-editors; here we bound
+    // WHOSE time it reaches: admin / hours.edit_all → any staff; a subordinate-only
+    // holder → ONLY a direct report (users.manager_id). 403 otherwise. Fail-closed.
+    if (req.user?.role !== 'admin') {
+      let eff;
+      try { eff = await getEffective(pool, req.user); }
+      catch (e) { return res.status(403).json({ error: 'Could not verify your hours permissions.' }); }
+      if (!eff.has('hours.edit_all')) {
+        let isDirectReport = false;
+        try {
+          const { rowCount } = await pool.query(
+            `SELECT 1 FROM users WHERE staff_id = $1 AND manager_id = $2 LIMIT 1`,
+            [req.params.staffId, req.user.id]
+          );
+          isDirectReport = rowCount > 0;
+        } catch (e) {
+          console.error('[time-entries:bulk-delete-scope]', e && e.message);
+          isDirectReport = false;
+        }
+        if (!isDirectReport) {
+          return res.status(403).json({ error: 'You can only bulk-delete time for your direct reports.' });
+        }
       }
     }
 
