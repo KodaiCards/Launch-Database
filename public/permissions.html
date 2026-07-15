@@ -540,21 +540,24 @@ function bundleCard(b){
   const keyChips = keys.length
     ? keys.map(k => `<span class="keychip" title="${esc(k)}">${esc(labelOf(k))}</span>`).join('')
     : '<span class="bc-empty">No permissions yet</span>';
-  const memChips = members.map(u => `<span class="chip" title="${esc(u.role||'')}">${esc(u.full_name||u.username)}<button onclick="unassignMember(${b.id},'${esc(u.id)}')" aria-label="Remove ${esc(u.full_name||u.username)}"><i class="fa-solid fa-xmark"></i></button></span>`).join('');
-  return `<div class="bundle-card" data-bundle="${b.id}">
+  // Bundle ids are BIGSERIAL → node-postgres returns them as STRINGS. Quote them
+  // in every handler and compare with String() throughout (same discipline the
+  // UUID user ids already use) so a "6"===6 mismatch can't silently no-op a click.
+  const memChips = members.map(u => `<span class="chip" title="${esc(u.role||'')}">${esc(u.full_name||u.username)}<button onclick="unassignMember('${esc(b.id)}','${esc(u.id)}')" aria-label="Remove ${esc(u.full_name||u.username)}"><i class="fa-solid fa-xmark"></i></button></span>`).join('');
+  return `<div class="bundle-card" data-bundle="${esc(b.id)}">
     <div class="bc-head">
       <div class="bc-name">${esc(b.name)}</div>
       <div class="bc-actions">
-        <button onclick="openBundleEditor(${b.id})" title="Edit role" aria-label="Edit ${esc(b.name)}"><i class="fa-solid fa-pen"></i></button>
-        <button class="del" onclick="deleteBundle(${b.id})" title="Delete role" aria-label="Delete ${esc(b.name)}"><i class="fa-solid fa-trash"></i></button>
+        <button onclick="openBundleEditor('${esc(b.id)}')" title="Edit role" aria-label="Edit ${esc(b.name)}"><i class="fa-solid fa-pen"></i></button>
+        <button class="del" onclick="deleteBundle('${esc(b.id)}')" title="Delete role" aria-label="Delete ${esc(b.name)}"><i class="fa-solid fa-trash"></i></button>
       </div>
     </div>
     <div class="bc-group"><span class="glabel">Permissions</span><div class="keychips">${keyChips}</div></div>
     <div class="bc-group"><span class="glabel">People with this role</span>
       <div class="chips">${memChips}
         <span class="picker">
-          <button class="addbtn" onclick="openMemberPicker(event,${b.id})"><i class="fa-solid fa-plus"></i> Assign</button>
-          <div class="picker-pop" data-bundle="${b.id}">
+          <button class="addbtn" onclick="openMemberPicker(event,'${esc(b.id)}')"><i class="fa-solid fa-plus"></i> Assign</button>
+          <div class="picker-pop" data-bundle="${esc(b.id)}">
             <input type="text" placeholder="Search people…" oninput="filterMemberPicker(this)" aria-label="Search people">
             <div class="picker-list"></div>
           </div>
@@ -576,8 +579,8 @@ function openMemberPicker(ev, bid){
 }
 function filterMemberPicker(inp){ renderMemberPickerList(inp.closest('.picker-pop'), inp.value.toLowerCase()); }
 function renderMemberPickerList(pop, q){
-  const bid = Number(pop.getAttribute('data-bundle'));
-  const b = BUNDLES.find(x => x.id === bid);
+  const bid = pop.getAttribute('data-bundle');            // string (BIGSERIAL id)
+  const b = BUNDLES.find(x => String(x.id) === String(bid));
   const have = new Set(((b && b.members) || []).map(u => String(u.id)));
   const matches = USERS.filter(u => !have.has(String(u.id)) &&
       ((u.full_name||'')+' '+(u.username||'')+' '+(u.role||'')).toLowerCase().includes(q));
@@ -589,12 +592,12 @@ function renderMemberPickerList(pop, q){
     list.innerHTML = `<div class="picker-empty">${msg}</div>`; return;
   }
   list.innerHTML = matches.slice(0,50).map(u =>
-    `<div class="picker-item" onclick="assignMember(${bid},'${esc(u.id)}')">
+    `<div class="picker-item" onclick="assignMember('${esc(bid)}','${esc(u.id)}')">
        <span>${esc(u.full_name||u.username)}</span><span class="r">${esc(u.role||'')}</span></div>`).join('');
 }
 async function assignMember(bid, uid){
   closePicker();
-  const b = BUNDLES.find(x => x.id === bid); if (!b) return;
+  const b = BUNDLES.find(x => String(x.id) === String(bid)); if (!b) return;
   try {
     await api('/api/role-bundles/'+bid+'/assign','POST',{ user_id:uid });
     const u = USERS.find(x => String(x.id) === String(uid)) || { id:uid };
@@ -606,10 +609,10 @@ async function assignMember(bid, uid){
       await api('/api/role-bundles/'+bid+'/unassign','POST',{ user_id:uid });
       b.members = (b.members||[]).filter(m => String(m.id) !== String(uid)); renderBundles();
     });
-  } catch(e){ toast(e && e.message || 'Assign failed'); }
+  } catch(e){ toast(errMsg(e)); }
 }
 async function unassignMember(bid, uid){
-  const b = BUNDLES.find(x => x.id === bid); if (!b) return;
+  const b = BUNDLES.find(x => String(x.id) === String(bid)); if (!b) return;
   const prev = (b.members||[]).find(m => String(m.id) === String(uid));
   try {
     await api('/api/role-bundles/'+bid+'/unassign','POST',{ user_id:uid });
@@ -620,34 +623,40 @@ async function unassignMember(bid, uid){
       if (!b.members.some(m => String(m.id) === String(uid))) b.members.push(prev || { id:uid });
       renderBundles();
     });
-  } catch(e){ toast(e && e.message || 'Remove failed'); }
+  } catch(e){ toast(errMsg(e)); }
 }
 
 // ── Delete (optimistic + undo; no confirm dialog — §2.3) ──
 async function deleteBundle(bid){
-  const idx = BUNDLES.findIndex(x => x.id === bid); if (idx < 0) return;
+  const idx = BUNDLES.findIndex(x => String(x.id) === String(bid)); if (idx < 0) return;
   const b = BUNDLES[idx];
+  const wanted = (b.members||[]).slice();      // who to restore on undo
   try {
     await api('/api/role-bundles/'+bid,'DELETE');
     BUNDLES.splice(idx,1); renderBundles();
     offerUndo(`Deleted “${b.name}”`, async ()=>{
-      // Recreate the role (name + keys) and restore its former members.
+      // Recreate the role (name + keys), best-effort restore its former members,
+      // then RE-FETCH members so the card reflects the server truth — a member
+      // that couldn't be restored (e.g. the actor themselves → self-assign 403)
+      // must not linger as a phantom chip.
       const r = await api('/api/role-bundles','POST',{ name:b.name, keys:b.keys||[] });
       if (r && r.id){
         b.id = r.id;
-        for (const m of (b.members||[])){
+        for (const m of wanted){
           try { await api('/api/role-bundles/'+r.id+'/assign','POST',{ user_id:m.id }); } catch(e){}
         }
+        try { const mr = await api('/api/role-bundles/'+r.id+'/members'); b.members = (mr && mr.members) || []; } catch(e){}
+        if ((b.members||[]).length < wanted.length) toast(`Restored “${b.name}”, but some people couldn’t be re-added.`);
       }
       BUNDLES.splice(idx,0,b); renderBundles();
     });
-  } catch(e){ toast(e && e.message || 'Delete failed'); }
+  } catch(e){ toast(errMsg(e)); }
 }
 
 // ── Create / edit editor ──
 function openBundleEditor(bid){
   editorBundleId = (bid == null) ? null : bid;
-  const b = (bid == null) ? null : BUNDLES.find(x => x.id === bid);
+  const b = (bid == null) ? null : BUNDLES.find(x => String(x.id) === String(bid));
   document.getElementById('editor-title').textContent = b ? ('Edit “'+b.name+'”') : 'New custom role';
   document.getElementById('editor-name').value = b ? b.name : '';
   editorSelected = new Set(b ? (b.keys||[]) : []);
@@ -687,15 +696,30 @@ async function saveBundle(){
       const r = await api('/api/role-bundles','POST',{ name, keys });
       BUNDLES.push({ id: r && r.id, name, keys, holder_count:0, members:[] });
     } else {
-      await api('/api/role-bundles/'+editorBundleId,'PUT',{ name, keys });
-      const b = BUNDLES.find(x => x.id === editorBundleId);
-      if (b){ b.name = name; b.keys = keys; }
+      const b = BUNDLES.find(x => String(x.id) === String(editorBundleId));
+      // Only send keys when they actually CHANGED. Sending an unchanged key set
+      // trips the server's self-escalation guard on a bundle the caller holds and
+      // would block a legitimate rename-only edit — so a pure rename sends {name}
+      // alone (the server explicitly permits that for holders).
+      const keysChanged = !setsEqual(new Set(keys), new Set((b && b.keys) || []));
+      const body = { name };
+      if (keysChanged) body.keys = keys;
+      await api('/api/role-bundles/'+editorBundleId,'PUT', body);
+      if (b){ b.name = name; if (keysChanged) b.keys = keys; }
     }
     BUNDLES.sort((a,b) => String(a.name).localeCompare(String(b.name)));
     renderBundles();
     closeBundleEditor();
-  } catch(e){ toast(e && e.message || 'Save failed'); }
+  } catch(e){ toast(errMsg(e)); }
   finally { btn.disabled = false; }
+}
+function setsEqual(a, b){ if (a.size !== b.size) return false; for (const x of a) if (!b.has(x)) return false; return true; }
+// Pull a clean message out of the API client's Error (its body is often JSON
+// `{error:"…"}`) so a server 403/409 reads as plain English, not raw JSON.
+function errMsg(e){
+  const m = (e && e.message) || '';
+  try { const j = JSON.parse(m); if (j && j.error) return j.error; } catch(_){}
+  return m || 'Something went wrong';
 }
 // Close the editor on Escape (it's an editor, not a trap).
 document.addEventListener('keydown', e => {
