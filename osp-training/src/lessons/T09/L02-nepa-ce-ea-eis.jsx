@@ -7,7 +7,9 @@
 import React from 'react';
 import LessonLayout from '../../components/LessonLayout.jsx';
 import BranchingScenario from '../../components/primitives/BranchingScenario.jsx';
+import ReferencesBlock from '../../components/ReferencesBlock.jsx';
 import Quiz from '../../components/primitives/Quiz.jsx';
+import GatedAssessment from '../../components/primitives/GatedAssessment.jsx';
 import Flashcard from '../../components/Flashcard.jsx';
 
 export const meta = {
@@ -227,8 +229,6 @@ export default function T09L02_NepaTypes() {
           or highway ROW, the applicable categorical exclusion is{' '}
           <strong>CE C-8</strong> — the CE covering "aerial or buried utility and
           communications construction within or adjacent to existing rights-of-way."
-          (Source: 7 CFR Part 1b [eff. April 3, 2026; replaced 7 CFR Part 1970] for RUS;
-          NTIA BEAD program NEPA procedures [confirm current NTIA CE designation at time of project].)
         </p>
         <p className="mt-2">
           Applying CE C-8 means you're arguing that your fiber route is routine utility
@@ -287,12 +287,6 @@ export default function T09L02_NepaTypes() {
             </tbody>
           </table>
         </div>
-        <p className="mt-2 text-sm text-slate-300/70">
-          Source: 40 CFR §1508.4 (CEQ extraordinary circumstances definition — note: 40 CFR
-          Parts 1500–1508 removed eff. January 8, 2026; extraordinary circumstances concept
-          survives in agency procedures); 7 CFR Part 1b (eff. April 3, 2026; replaced 7 CFR
-          Part 1970 RUS NEPA procedures).
-        </p>
 
         {/* Book vs. Field — eastern US extraordinary-circumstance trigger rates */}
         <div className="mt-5 p-4 border border-amber-400/30 bg-amber-400/5 rounded-lg text-sm">
@@ -656,11 +650,6 @@ export default function T09L02_NepaTypes() {
               saved at the back end.
             </p>
           </div>
-          <p className="mt-2 text-xs text-slate-400">
-            Citations: 47 USC §224 (Pole Attachment Act); 54 USC §306108 (NHPA §106);
-            36 CFR Part 800 (§106 implementing regs); Executive Order 13175 (tribal consultation);
-            36 CFR §800.2(c)(2) (tribal consulting party requirements).
-          </p>
         </div>
 
         {/* ── SCENARIO B ──────────────────────────────────────────────── */}
@@ -776,12 +765,6 @@ export default function T09L02_NepaTypes() {
               any other permit.
             </p>
           </div>
-          <p className="mt-2 text-xs text-slate-400">
-            Citations: 33 USC §1344 (CWA §404); 33 CFR Part 330 (USACE NWP program);
-            NWP 12 "Utility Line Activities" — verify current thresholds against most recent
-            USACE NWP reissuance at time of project; 7 CFR Part 1b (eff. April 3, 2026;
-            replaced 7 CFR Part 1970); AREMA Manual Ch. 1 (Roadway and Ballast).
-          </p>
         </div>
 
         {/* ── SCENARIO C ──────────────────────────────────────────────── */}
@@ -895,11 +878,6 @@ export default function T09L02_NepaTypes() {
               or make-ready uncertainty.
             </p>
           </div>
-          <p className="mt-2 text-xs text-slate-400">
-            Citations: 47 USC §224 (Pole Attachment Act); 36 CFR §800.16(d) (APE definition);
-            54 USC §306108 (NHPA §106); 7 CFR Part 1b (eff. April 3, 2026; replaced 7 CFR Part 1970);
-            33 USC §1344 (CWA §404 for underground segments with wetland crossings).
-          </p>
         </div>
 
         {/* ── END WORKED SCENARIOS ──────────────────────────────────────── */}
@@ -973,17 +951,7 @@ export default function T09L02_NepaTypes() {
             Confirm with the applicable FCC authorization bureau when a federal nexus flows
             from an FCC action rather than a USDA or NTIA funding source.
           </p>
-          <p className="mt-1 text-xs text-slate-400">
-            Source: 47 CFR §1.1306 (FCC environmental NEPA CE); verify current applicability
-            at ecfr.gov and with the relevant FCC bureau at time of project.
-          </p>
         </div>
-
-        <p className="mt-2 text-sm text-slate-300/70">
-          Source: 7 CFR Part 1b (effective April 3, 2026; FR 2026-06537) [verify current
-          section numbers against ecfr.gov at time of project]. NTIA BEAD procedures [confirm
-          with state's BEAD volume 2 environmental compliance documents at time of project].
-        </p>
       </section>
 
       {/* ── BRANCHING SCENARIO ──────────────────────────────────────────── */}
@@ -1095,11 +1063,30 @@ export default function T09L02_NepaTypes() {
         ]}
       />
 
+      <ReferencesBlock
+        items={[
+          { citation: '42 USC §4332', note: 'The NEPA action-forcing section — the statutory anchor for CE/EA/EIS review tiers, independent of any agency-specific implementing regulation.' },
+          { citation: '7 CFR Part 1b', note: 'RUS/USDA NEPA implementing procedures (eff. April 3, 2026; replaced 7 CFR Part 1970 §1970.54) — the source of CE C-8 for RUS-financed fiber construction in existing ROW.' },
+          { citation: '40 CFR §1508.4 (removed eff. Jan. 8, 2026)', note: 'The former CEQ definition of "extraordinary circumstances" — the concept survives in each agency\'s own NEPA procedures even though this specific CFR section was removed.' },
+          { citation: '16 USC §1536', note: 'ESA Section 7 consultation — triggered when a categorical exclusion\'s extraordinary-circumstances check turns up T&E species habitat.' },
+          { citation: '54 USC §306108', note: 'NHPA Section 106 — triggered when the extraordinary-circumstances check turns up historic properties in the Area of Potential Effect (covered in full in the Section 106 lesson).' },
+          { citation: '33 USC §1344; 33 CFR Part 330', note: 'CWA Section 404 and the USACE nationwide-permit framework — triggered when the extraordinary-circumstances check turns up wetlands or waterways (covered in full in the USACE Wetlands lesson).' },
+          { citation: '47 USC §224', note: 'The Pole Attachment Act — governs joint-use/pole-attachment applications to an investor-owned utility. This process runs on its own track and is not gated by NEPA or state DOT review.' },
+          { citation: '36 CFR Part 800; 36 CFR §800.2(c)(2); 36 CFR §800.16(d)', note: 'The Section 106 implementing regulations — consulting-party and Area of Potential Effect rules that apply when a route touches tribal land or a historic district.' },
+          { citation: '47 CFR §1.1306', note: 'FCC categorical exclusion for aerial or underground wire installed along an existing corridor of prior or permitted use — the applicable CE when the federal nexus comes from an FCC authorization rather than BEAD/RUS funding.' },
+        ]}
+      />
+
       {/* ── PER-LESSON QUIZ ──────────────────────────────────────────────── */}
-      <Quiz
-        title="T09.L02 Check — NEPA: CE, EA, and EIS"
-        mode="multiple-choice"
-        questions={[
+      <GatedAssessment
+        courseId="T09"
+        assessmentId="T09-L02"
+        title="Check — NEPA: CE, EA, and EIS"
+        fallback={
+        <Quiz
+          title="Check — NEPA: CE, EA, and EIS"
+          mode="multiple-choice"
+          questions={[
           {
             id: 'T09-L02-Q1',
             type: 'mc',
@@ -1114,7 +1101,7 @@ export default function T09L02_NepaTypes() {
             answerIndex: 1,
             explanation:
               'The three NEPA tiers from least to most intensive are: (1) Categorical Exclusion (CE) — no EA/EIS required, pre-determined non-significant; (2) Environmental Assessment (EA) — mid-level analysis leading to FONSI or requirement for EIS; (3) Environmental Impact Statement (EIS) — full-scale analysis for actions that may significantly affect the environment. FONSI is an outcome of a successful EA, not a separate tier.',
-            citation: '42 USC §4332 (NEPA statutory tiers). [Note: CEQ implementing regulations at 40 CFR Parts 1500–1508 removed eff. January 8, 2026 — NEPA tiers now implemented through agency-specific procedures.]',
+            citation: '42 USC §4332 (NEPA statutory tiers).',
           },
           {
             id: 'T09-L02-Q2',
@@ -1161,7 +1148,7 @@ export default function T09L02_NepaTypes() {
             ],
             answerIndex: 1,
             explanation:
-              'CE C-8 specifically covers aerial or buried utility and communications construction within or adjacent to existing rights-of-way. It applies to both aerial (pole-mounted fiber) and buried (direct-buried or conduit) construction in existing utility corridors. It does NOT apply to any federally-funded project generally — the project type must match the CE\'s scope, and extraordinary circumstances must still be checked. [Confirm current CE C-8 language against NTIA and 7 CFR Part 1b (eff. April 3, 2026; replaced 7 CFR Part 1970) at time of project.]',
+              'CE C-8 specifically covers aerial or buried utility and communications construction within or adjacent to existing rights-of-way. It applies to both aerial (pole-mounted fiber) and buried (direct-buried or conduit) construction in existing utility corridors. It does NOT apply to any federally-funded project generally — the project type must match the CE\'s scope, and extraordinary circumstances must still be checked.',
             citation: '7 CFR Part 1b (eff. April 3, 2026; replaced 7 CFR §1970.54); NTIA BEAD NEPA procedures.',
           },
           {
@@ -1181,6 +1168,8 @@ export default function T09L02_NepaTypes() {
             citation: 'NHPA §106 procedure per 54 USC §306108; ESA §7 consultation per 16 USC §1536; CWA §404 permitting per 33 USC §1344; 7 CFR Part 1b (eff. April 3, 2026; replaced 7 CFR Part 1970).',
           },
         ]}
+        />
+        }
       />
 
     </LessonLayout>
