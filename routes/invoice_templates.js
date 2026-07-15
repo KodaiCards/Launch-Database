@@ -31,6 +31,9 @@ const { logAudit } = require('./_audit');
 
 module.exports = function installInvoiceTemplatesRoutes(app, pool, mw) {
   const { requireManagerOrAdmin, uploadDir } = mw;
+  const { requirePermission } = require('./_permissions');
+  const moneyView = requirePermission(pool, 'money.view');
+  const manageBilling = requirePermission(pool, 'money.manage_billing');
 
   // ─── Multer: PDF upload (5 MB cap, .pdf only) ─────────────────────────
   const TEMPLATE_DIR = path.join(uploadDir || path.join(__dirname, '..', 'uploads'), 'invoice-templates');
@@ -114,7 +117,7 @@ module.exports = function installInvoiceTemplatesRoutes(app, pool, mw) {
   }
 
   // ─── List ──────────────────────────────────────────────────────────────
-  app.get('/api/invoice-templates', requireManagerOrAdmin, async (req, res) => {
+  app.get('/api/invoice-templates', moneyView, async (req, res) => {
     try {
       const { rows } = await pool.query(`
         SELECT it.id, it.job_id, it.client_id, it.name,
@@ -136,7 +139,7 @@ module.exports = function installInvoiceTemplatesRoutes(app, pool, mw) {
   });
 
   // ─── Detail ────────────────────────────────────────────────────────────
-  app.get('/api/invoice-templates/:id', requireManagerOrAdmin, async (req, res) => {
+  app.get('/api/invoice-templates/:id', moneyView, async (req, res) => {
     try {
       const { rows } = await pool.query(`
         SELECT it.*,
@@ -158,7 +161,7 @@ module.exports = function installInvoiceTemplatesRoutes(app, pool, mw) {
   });
 
   // ─── Create + analyze ─────────────────────────────────────────────────
-  app.post('/api/invoice-templates', requireManagerOrAdmin, upload.single('pdf'), async (req, res) => {
+  app.post('/api/invoice-templates', manageBilling, upload.single('pdf'), async (req, res) => {
     if (!req.file) return res.status(400).json({ error: 'PDF file required (field name "pdf").' });
     const { job_id, client_id, name, notes } = req.body || {};
     if (!job_id || !client_id) {
@@ -240,7 +243,7 @@ module.exports = function installInvoiceTemplatesRoutes(app, pool, mw) {
   });
 
   // ─── Update (name, notes, manually-edited HTML) ───────────────────────
-  app.put('/api/invoice-templates/:id', requireManagerOrAdmin, async (req, res) => {
+  app.put('/api/invoice-templates/:id', manageBilling, async (req, res) => {
     const { name, notes, generated_html } = req.body || {};
     const sanitized_html = generated_html ? tplEngine.sanitizeTemplateHtml(generated_html) : null;
     try {
@@ -271,7 +274,7 @@ module.exports = function installInvoiceTemplatesRoutes(app, pool, mw) {
   });
 
   // ─── Regenerate via Claude analysis ───────────────────────────────────
-  app.post('/api/invoice-templates/:id/regenerate', requireManagerOrAdmin, async (req, res) => {
+  app.post('/api/invoice-templates/:id/regenerate', manageBilling, async (req, res) => {
     try {
       const { rows } = await pool.query(
         `SELECT id, reference_pdf_path FROM invoice_templates WHERE id = $1`,
@@ -302,7 +305,7 @@ module.exports = function installInvoiceTemplatesRoutes(app, pool, mw) {
   });
 
   // ─── Delete ───────────────────────────────────────────────────────────
-  app.delete('/api/invoice-templates/:id', requireManagerOrAdmin, async (req, res) => {
+  app.delete('/api/invoice-templates/:id', manageBilling, async (req, res) => {
     try {
       const { rows } = await pool.query(
         `DELETE FROM invoice_templates WHERE id = $1 RETURNING reference_pdf_path`,
@@ -327,7 +330,7 @@ module.exports = function installInvoiceTemplatesRoutes(app, pool, mw) {
   });
 
   // ─── Download the original PDF reference ──────────────────────────────
-  app.get('/api/invoice-templates/:id/reference', requireManagerOrAdmin, async (req, res) => {
+  app.get('/api/invoice-templates/:id/reference', moneyView, async (req, res) => {
     try {
       const { rows } = await pool.query(
         `SELECT reference_pdf_path, reference_pdf_filename FROM invoice_templates WHERE id = $1`,
@@ -371,7 +374,7 @@ module.exports = function installInvoiceTemplatesRoutes(app, pool, mw) {
   // Returns: { html, has_template, template_id?, data }
   // The frontend renders `html` in an iframe; admin can hand-edit before
   // POSTing it back to /render-pdf-from-html for the final PDF.
-  app.post('/api/invoices/preview-template', requireManagerOrAdmin, async (req, res) => {
+  app.post('/api/invoices/preview-template', manageBilling, async (req, res) => {
     const { engineering_contract_id, job_id, period_start, period_end, contract_ids } = req.body || {};
     if (!engineering_contract_id || !job_id || !period_start || !period_end) {
       return res.status(400).json({ error: 'engineering_contract_id, job_id, period_start, period_end required' });
@@ -425,7 +428,7 @@ module.exports = function installInvoiceTemplatesRoutes(app, pool, mw) {
   //   { has_template: false, makeup }                            ← caller should fall back
   // Called from the billing flow before deciding whether to use the
   // template path or the legacy hardcoded PSC RUS pdfkit generator.
-  app.post('/api/invoices/preview-from-projects', requireManagerOrAdmin, async (req, res) => {
+  app.post('/api/invoices/preview-from-projects', manageBilling, async (req, res) => {
     const { project_ids, period_start, period_end } = req.body || {};
     if (!Array.isArray(project_ids) || !project_ids.length) {
       return res.status(400).json({ error: 'project_ids array required' });
@@ -494,7 +497,7 @@ module.exports = function installInvoiceTemplatesRoutes(app, pool, mw) {
   // Streams the rendered PDF back. The HTML is whatever the operator
   // edited in the preview UI; we don't substitute placeholders here.
   // Manager+admin only — same gate as the legacy generator.
-  app.post('/api/invoices/render-pdf-from-html', requireManagerOrAdmin, async (req, res) => {
+  app.post('/api/invoices/render-pdf-from-html', manageBilling, async (req, res) => {
     const { html, filename } = req.body || {};
     if (!html || typeof html !== 'string') {
       return res.status(400).json({ error: 'html (string) required' });

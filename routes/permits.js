@@ -27,10 +27,13 @@ const UPLOAD_DIR = process.env.UPLOAD_DIR || path.join(__dirname, '..', 'uploads
 
 module.exports = function installPermitsRoutes(app, pool, mw) {
   const { upload } = mw;
+  // System F (#77): the permits list read is delegable via projects.view_all (admin passes).
+  const { requirePermission } = require('./_permissions');
+  const viewProjects = requirePermission(pool, 'projects.view_all');
   const requireAuth = (mw && mw.requireAuth) || (() => (req, res, next) => next());
 
   // Wave 1.5 [UNGATED]: GET /api/permits was missing auth.
-  app.get('/api/permits', requireAuth(['admin', 'permitting_manager', 'permitting_engineer']), async (req, res) => {
+  app.get('/api/permits', viewProjects, async (req, res) => {
     try {
       const { rows } = await pool.query(`
         SELECT p.*,

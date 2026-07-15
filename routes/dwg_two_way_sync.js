@@ -6,6 +6,8 @@ const path = require('path');
 module.exports = function installDwgSyncRoutes(app, pool, mw) {
   const requireAuth = (mw && mw.requireAuth) || ((req, res, next) => next());
   const requireManagerOrAdmin = (mw && mw.requireManagerOrAdmin) || ((req, res, next) => next());
+  const { requirePermission } = require('./_permissions');
+  const manageProjects = requirePermission(pool, 'projects.manage');
 
 // Helpers
 function isValidUUID(str) {
@@ -285,7 +287,7 @@ app.get('/api/dwg-sync/v2/staging', requireAuth(), async (req, res) => {
 // HIGH-2 fix: removed inner isManager check — req.user.roles is undefined (auth.js sets
 // req.user.role as a string, not roles array). requireManagerOrAdmin middleware already
 // correctly gates this route; the inner check was redundant and always-403.
-app.post('/api/dwg-sync/v2/promote/:staging_id', requireManagerOrAdmin, async (req, res) => {
+app.post('/api/dwg-sync/v2/promote/:staging_id', manageProjects, async (req, res) => {
   try {
     const { staging_id } = req.params;
 
@@ -398,7 +400,7 @@ app.post('/api/dwg-sync/v2/promote/:staging_id', requireManagerOrAdmin, async (r
 });
 
 // POST /api/dwg-sync/v2/reject/:staging_id
-app.post('/api/dwg-sync/v2/reject/:staging_id', requireManagerOrAdmin, async (req, res) => {
+app.post('/api/dwg-sync/v2/reject/:staging_id', manageProjects, async (req, res) => {
   try {
     const { staging_id } = req.params;
     const { notes } = req.body || {};

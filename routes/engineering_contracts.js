@@ -34,8 +34,11 @@ module.exports = function installEngineeringContractsRoutes(app, pool, mw) {
   // Wave 1.5 [UNGATED]: GET /api/engineering-contracts was missing auth.
   const requireAuth = (mw && mw.requireAuth) || (() => (req, res, next) => next());
   const requireStaff = (mw && mw.requireStaff) || requireAuth(); // O34: staff-only reads (excludes trainee/customer)
+  const { requirePermission } = require('./_permissions');
+  const viewProjects = requirePermission(pool, 'projects.view_all');
+  const manageProjects = requirePermission(pool, 'projects.manage');
 
-  app.get('/api/engineering-contracts', requireStaff, async (req, res) => {
+  app.get('/api/engineering-contracts', viewProjects, async (req, res) => {
     const { client_id } = req.query;
     try {
       // For each engineering contract, also surface a count of child contracts
@@ -62,7 +65,7 @@ module.exports = function installEngineeringContractsRoutes(app, pool, mw) {
     }
   });
 
-  app.get('/api/engineering-contracts/:id', requireStaff, async (req, res) => {
+  app.get('/api/engineering-contracts/:id', viewProjects, async (req, res) => {
     try {
       const { rows: ec } = await pool.query(
         `SELECT ec.*, cl.name AS client_name
@@ -92,7 +95,7 @@ module.exports = function installEngineeringContractsRoutes(app, pool, mw) {
     }
   });
 
-  app.post('/api/engineering-contracts', requireAdmin, async (req, res) => {
+  app.post('/api/engineering-contracts', manageProjects, async (req, res) => {
     const { client_id, name, contract_number, loan_name, notes, program } = req.body || {};
     if (!client_id) return res.status(400).json({ error: 'client_id required' });
     if (!name || !String(name).trim()) return res.status(400).json({ error: 'name required' });
@@ -120,7 +123,7 @@ module.exports = function installEngineeringContractsRoutes(app, pool, mw) {
     }
   });
 
-  app.put('/api/engineering-contracts/:id', requireAdmin, async (req, res) => {
+  app.put('/api/engineering-contracts/:id', manageProjects, async (req, res) => {
     const { name, contract_number, loan_name, notes, active, program } = req.body || {};
     try {
       const sets = [];
@@ -159,7 +162,7 @@ module.exports = function installEngineeringContractsRoutes(app, pool, mw) {
     }
   });
 
-  app.delete('/api/engineering-contracts/:id', requireAdmin, async (req, res) => {
+  app.delete('/api/engineering-contracts/:id', manageProjects, async (req, res) => {
     try {
       // Pre-check: refuse to delete if contracts, budgets, or billing batches
       // still reference this EC. Explicit counts give the admin a friendlier
@@ -207,7 +210,7 @@ module.exports = function installEngineeringContractsRoutes(app, pool, mw) {
 
   // ─── EC-SCOPED SERVICE AREAS ────────────────────────────────────────────────
 
-  app.get('/api/engineering-contracts/:id/service-areas', requireStaff, async (req, res) => {
+  app.get('/api/engineering-contracts/:id/service-areas', viewProjects, async (req, res) => {
     try {
       const { rows } = await pool.query(
         `SELECT id, name, notes, work_order_number, contract_id, created_at FROM ec_service_areas
@@ -222,7 +225,7 @@ module.exports = function installEngineeringContractsRoutes(app, pool, mw) {
     }
   });
 
-  app.post('/api/engineering-contracts/:id/service-areas', requireAdmin, async (req, res) => {
+  app.post('/api/engineering-contracts/:id/service-areas', manageProjects, async (req, res) => {
     const { name, notes, work_order_number } = req.body || {};
     if (!name || !String(name).trim()) {
       return res.status(400).json({ error: 'name required' });
@@ -241,7 +244,7 @@ module.exports = function installEngineeringContractsRoutes(app, pool, mw) {
     }
   });
 
-  app.put('/api/ec-service-areas/:id', requireAdmin, async (req, res) => {
+  app.put('/api/ec-service-areas/:id', manageProjects, async (req, res) => {
     const { name, notes, work_order_number } = req.body || {};
     try {
       const sets = [];
@@ -264,7 +267,7 @@ module.exports = function installEngineeringContractsRoutes(app, pool, mw) {
     }
   });
 
-  app.delete('/api/ec-service-areas/:id', requireAdmin, async (req, res) => {
+  app.delete('/api/ec-service-areas/:id', manageProjects, async (req, res) => {
     try {
       const { rows } = await pool.query(
         `DELETE FROM ec_service_areas WHERE id = $1 RETURNING id`,
@@ -280,7 +283,7 @@ module.exports = function installEngineeringContractsRoutes(app, pool, mw) {
 
   // ─── EC-SCOPED WORK ORDERS ───────────────────────────────────────────────────
 
-  app.get('/api/engineering-contracts/:id/work-orders', requireAdmin, async (req, res) => {
+  app.get('/api/engineering-contracts/:id/work-orders', viewProjects, async (req, res) => {
     const { service_area_id } = req.query;
     try {
       const where = service_area_id
@@ -302,7 +305,7 @@ module.exports = function installEngineeringContractsRoutes(app, pool, mw) {
     }
   });
 
-  app.post('/api/engineering-contracts/:id/work-orders', requireAdmin, async (req, res) => {
+  app.post('/api/engineering-contracts/:id/work-orders', manageProjects, async (req, res) => {
     const { number, description, service_area_id } = req.body || {};
     if (!number || !String(number).trim()) {
       return res.status(400).json({ error: 'number required' });
@@ -321,7 +324,7 @@ module.exports = function installEngineeringContractsRoutes(app, pool, mw) {
     }
   });
 
-  app.put('/api/ec-work-orders/:id', requireAdmin, async (req, res) => {
+  app.put('/api/ec-work-orders/:id', manageProjects, async (req, res) => {
     const { number, description, service_area_id } = req.body || {};
     try {
       // Validate service_area_id belongs to the same EC as the work order.
@@ -360,7 +363,7 @@ module.exports = function installEngineeringContractsRoutes(app, pool, mw) {
     }
   });
 
-  app.delete('/api/ec-work-orders/:id', requireAdmin, async (req, res) => {
+  app.delete('/api/ec-work-orders/:id', manageProjects, async (req, res) => {
     try {
       const { rows } = await pool.query(
         `DELETE FROM ec_work_orders WHERE id = $1 RETURNING id`,
@@ -386,7 +389,7 @@ module.exports = function installEngineeringContractsRoutes(app, pool, mw) {
 
   // GET /api/engineering-contracts/:ecId/jobs
   // Returns all jobs visible to this EC via 3-tier precedence.
-  app.get('/api/engineering-contracts/:ecId/jobs', requireStaff, async (req, res) => {
+  app.get('/api/engineering-contracts/:ecId/jobs', viewProjects, async (req, res) => {
     const { ecId } = req.params;
     try {
       // Look up the EC's client_id and program for use in legacy fallback.
@@ -454,7 +457,7 @@ module.exports = function installEngineeringContractsRoutes(app, pool, mw) {
 
   // GET /api/engineering-contracts/:ecId/job-visibility
   // Lists explicit ec_job_visibility rows (admin use — shows what's opted-in).
-  app.get('/api/engineering-contracts/:ecId/job-visibility', requireStaff, async (req, res) => {
+  app.get('/api/engineering-contracts/:ecId/job-visibility', viewProjects, async (req, res) => {
     try {
       const { rows: ecCheck } = await pool.query(
         `SELECT id FROM engineering_contracts WHERE id = $1`,
@@ -478,7 +481,7 @@ module.exports = function installEngineeringContractsRoutes(app, pool, mw) {
 
   // POST /api/engineering-contracts/:ecId/job-visibility
   // Add one job to this EC's explicit visibility list. Idempotent (409 on dup).
-  app.post('/api/engineering-contracts/:ecId/job-visibility', requireAdmin, async (req, res) => {
+  app.post('/api/engineering-contracts/:ecId/job-visibility', manageProjects, async (req, res) => {
     const { job_id } = req.body || {};
     if (!job_id) return res.status(400).json({ error: 'job_id required' });
 
@@ -512,7 +515,7 @@ module.exports = function installEngineeringContractsRoutes(app, pool, mw) {
 
   // DELETE /api/engineering-contracts/:ecId/job-visibility/:jobId
   // Remove one job from this EC's explicit visibility list.
-  app.delete('/api/engineering-contracts/:ecId/job-visibility/:jobId', requireAdmin, async (req, res) => {
+  app.delete('/api/engineering-contracts/:ecId/job-visibility/:jobId', manageProjects, async (req, res) => {
     try {
       const { rows } = await pool.query(
         `DELETE FROM ec_job_visibility
@@ -531,7 +534,7 @@ module.exports = function installEngineeringContractsRoutes(app, pool, mw) {
   // PUT /api/engineering-contracts/:ecId/job-visibility
   // Bulk-replace the entire visibility list (checkbox-list save UX).
   // Body: { job_ids: [uuid, ...] }  — empty array clears the list (reverts to legacy filters).
-  app.put('/api/engineering-contracts/:ecId/job-visibility', requireAdmin, async (req, res) => {
+  app.put('/api/engineering-contracts/:ecId/job-visibility', manageProjects, async (req, res) => {
     const { job_ids } = req.body || {};
     if (!Array.isArray(job_ids)) return res.status(400).json({ error: 'job_ids must be an array' });
 
@@ -593,7 +596,7 @@ module.exports = function installEngineeringContractsRoutes(app, pool, mw) {
   // GET /api/engineering-contracts/:ecId/construction-contracts
   // Lists contracts explicitly attached to this EC plus unscoped contracts at
   // the same client (legacy fallback).
-  app.get('/api/engineering-contracts/:ecId/construction-contracts', requireStaff, async (req, res) => {
+  app.get('/api/engineering-contracts/:ecId/construction-contracts', viewProjects, async (req, res) => {
     const { ecId } = req.params;
     try {
       const { rows: ecRows } = await pool.query(
@@ -623,7 +626,7 @@ module.exports = function installEngineeringContractsRoutes(app, pool, mw) {
   // POST /api/engineering-contracts/:ecId/construction-contracts
   // Attach an existing contract to this EC (sets contracts.engineering_contract_id).
   // Body: { contract_id: uuid }
-  app.post('/api/engineering-contracts/:ecId/construction-contracts', requireAdmin, async (req, res) => {
+  app.post('/api/engineering-contracts/:ecId/construction-contracts', manageProjects, async (req, res) => {
     const { contract_id } = req.body || {};
     if (!contract_id) return res.status(400).json({ error: 'contract_id required' });
 
@@ -669,7 +672,7 @@ module.exports = function installEngineeringContractsRoutes(app, pool, mw) {
   // DELETE /api/engineering-contracts/:ecId/construction-contracts/:contractId
   // Detach a contract from this EC (sets engineering_contract_id = NULL).
   // Returns 404 if contract is not attached to this specific EC.
-  app.delete('/api/engineering-contracts/:ecId/construction-contracts/:contractId', requireAdmin, async (req, res) => {
+  app.delete('/api/engineering-contracts/:ecId/construction-contracts/:contractId', manageProjects, async (req, res) => {
     const { ecId, contractId } = req.params;
     try {
       const { rows } = await pool.query(

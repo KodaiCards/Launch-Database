@@ -20,8 +20,11 @@ module.exports = function installClientsRoutes(app, pool, mw) {
   // client list access (portal create forms), so requireAuth() (any role).
   const requireAuth = (mw && mw.requireAuth) || (() => (req, res, next) => next());
   const requireStaff = (mw && mw.requireStaff) || requireAuth(); // O34: staff-only reads (excludes trainee/customer)
+  const { requirePermission } = require('./_permissions');
+  const viewProjects = requirePermission(pool, 'projects.view_all');
+  const manageProjects = requirePermission(pool, 'projects.manage');
 
-  app.get('/api/clients', requireStaff, async (req, res) => {
+  app.get('/api/clients', viewProjects, async (req, res) => {
     try {
       const { rows } = await pool.query('SELECT * FROM clients ORDER BY name');
       res.json(rows);
@@ -37,7 +40,7 @@ module.exports = function installClientsRoutes(app, pool, mw) {
   // any incoming `is_rus` in the request body is silently ignored
   // (req.body destructure simply doesn't read it).
   // Item 2 fix: requireAdmin added — creating clients is an admin-only operation
-  app.post('/api/clients', requireAdmin, async (req, res) => {
+  app.post('/api/clients', manageProjects, async (req, res) => {
     const { name, notes } = req.body;
 
     // CL-2 LOW: validate required fields
@@ -70,7 +73,7 @@ module.exports = function installClientsRoutes(app, pool, mw) {
   });
 
   // Item 2 fix: requireAdmin added — updating clients is an admin-only operation
-  app.put('/api/clients/:id', requireAdmin, async (req, res) => {
+  app.put('/api/clients/:id', manageProjects, async (req, res) => {
     const { name, notes, show_contract, show_work_order } = req.body;
     try {
       const { rows } = await pool.query(
@@ -116,7 +119,7 @@ module.exports = function installClientsRoutes(app, pool, mw) {
   //
   // Auth: any authenticated non-customer role. Cascade pickers are internal
   // tooling; customers access their own portal surfaces, not picker endpoints.
-  app.get('/api/clients/:client_id/service-areas', requireStaff, async (req, res) => {
+  app.get('/api/clients/:client_id/service-areas', viewProjects, async (req, res) => {
     if (req.user && req.user.role === 'customer') {
       return res.status(403).json({ error: 'Insufficient permissions for this action' });
     }
@@ -159,7 +162,7 @@ module.exports = function installClientsRoutes(app, pool, mw) {
 
   // Delete a client. Cascades to contracts, projects, time entries, invoices.
   // Returns counts of what would be deleted as a confirmation aid (preview=true).
-  app.delete('/api/clients/:id', requireAdmin, async (req, res) => {
+  app.delete('/api/clients/:id', manageProjects, async (req, res) => {
     try {
       if (req.query.preview === 'true') {
         // Project count excludes is_rollup folders — they're organizational

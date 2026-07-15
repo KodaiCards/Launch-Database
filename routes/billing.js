@@ -23,6 +23,9 @@ const { logAudit } = require('./_audit');
 
 module.exports = function installBillingRoutes(app, pool, mw) {
   const { requireManagerOrAdmin, invoiceGenerator } = mw;
+  const { requirePermission } = require('./_permissions');
+  const moneyView = requirePermission(pool, 'money.view');
+  const manageBilling = requirePermission(pool, 'money.manage_billing');
 
   // ─────────────────────────────────────────────────────────────────────────
   // BULK INVOICE — bill multiple projects as a single invoice
@@ -30,7 +33,7 @@ module.exports = function installBillingRoutes(app, pool, mw) {
   //         items: [{project_id, description, amount, ...}] }
   // Each project gets a line item; the invoice gets one invoice_number.
   // ─────────────────────────────────────────────────────────────────────────
-  app.post('/api/billing/bill-multiple', requireManagerOrAdmin, async (req, res) => {
+  app.post('/api/billing/bill-multiple', manageBilling, async (req, res) => {
     const { project_ids, invoice_number, invoice_date, invoice_name, items } = req.body;
     if (!Array.isArray(project_ids) || project_ids.length === 0) {
       return res.status(400).json({ error: 'project_ids must be a non-empty array' });
@@ -281,7 +284,7 @@ module.exports = function installBillingRoutes(app, pool, mw) {
   // & bill later" path off the Print PDF modal.
   // ─────────────────────────────────────────────────────────────────────────
 
-  app.get('/api/billing/batches', requireManagerOrAdmin, async (req, res) => {
+  app.get('/api/billing/batches', moneyView, async (req, res) => {
     try {
       const { rows } = await pool.query(
         `SELECT b.*,
@@ -304,7 +307,7 @@ module.exports = function installBillingRoutes(app, pool, mw) {
     }
   });
 
-  app.get('/api/billing/batches/:id', requireManagerOrAdmin, async (req, res) => {
+  app.get('/api/billing/batches/:id', moneyView, async (req, res) => {
     try {
       const { rows: batch } = await pool.query(
         `SELECT b.*, cl.name AS client_name,
@@ -339,7 +342,7 @@ module.exports = function installBillingRoutes(app, pool, mw) {
   // If items omitted, snapshot_amount falls back to project's current
   // earned amount. Inferred client/EC/job/period from project_ids via the
   // same logic as the PDF generator.
-  app.post('/api/billing/batches', requireManagerOrAdmin, async (req, res) => {
+  app.post('/api/billing/batches', manageBilling, async (req, res) => {
     const { name, project_ids, items, notes } = req.body || {};
     if (!name || !String(name).trim()) return res.status(400).json({ error: 'name required' });
     if (!Array.isArray(project_ids) || !project_ids.length) return res.status(400).json({ error: 'project_ids array required' });
@@ -427,7 +430,7 @@ module.exports = function installBillingRoutes(app, pool, mw) {
 
   // DELETE /api/billing/batches/:id — break a batch (does NOT bill). The
   // projects return to the unbilled queue. Items are cascade-deleted.
-  app.delete('/api/billing/batches/:id', requireManagerOrAdmin, async (req, res) => {
+  app.delete('/api/billing/batches/:id', manageBilling, async (req, res) => {
     try {
       // M-4 fix: verify the batch belongs to the requesting user unless they
       // are an admin. Managers can only delete their own batches.
@@ -477,7 +480,7 @@ module.exports = function installBillingRoutes(app, pool, mw) {
   // POST /api/billing/batches/:id/confirm — bill the batch (creates an
   // invoice via the same code path as bill-multiple) and then deletes the
   // batch. Body: { invoice_number, invoice_date?, invoice_name? }
-  app.post('/api/billing/batches/:id/confirm', requireManagerOrAdmin, async (req, res) => {
+  app.post('/api/billing/batches/:id/confirm', manageBilling, async (req, res) => {
     const { invoice_number, invoice_date, invoice_name } = req.body || {};
     if (!invoice_number || !String(invoice_number).trim()) {
       return res.status(400).json({ error: 'invoice_number required' });

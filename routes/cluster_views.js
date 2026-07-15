@@ -3,11 +3,13 @@
 
 module.exports = function installClusterViews(app, pool, mw) {
   const { requireManagerOrAdmin } = mw;
+  const { requirePermission } = require('./_permissions');
+  const moneyView = requirePermission(pool, 'money.view');
 
   // ── Invoice list ─────────────────────────────────────────────────────────────
   // GET /api/cluster/invoices?status=&client_id=&year=
   // Lightweight list — no items aggregation (use /api/money/invoice/:id for drill-in).
-  app.get('/api/cluster/invoices', requireManagerOrAdmin, async (req, res) => {
+  app.get('/api/cluster/invoices', moneyView, async (req, res) => {
     const { status, client_id, year } = req.query;
     const conditions = [];
     const params = [];
@@ -37,7 +39,7 @@ module.exports = function installClusterViews(app, pool, mw) {
   // ── Client list ──────────────────────────────────────────────────────────────
   // GET /api/cluster/clients
   // Returns all clients with aggregated counts + financials.
-  app.get('/api/cluster/clients', requireManagerOrAdmin, async (req, res) => {
+  app.get('/api/cluster/clients', moneyView, async (req, res) => {
     try {
       const { rows } = await pool.query(`
         SELECT

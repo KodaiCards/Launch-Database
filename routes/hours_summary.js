@@ -60,8 +60,10 @@ function csvCell(v) {
 module.exports = function installHoursSummaryRoutes(app, pool, mw) {
   const requireManagerOrAdmin =
     (mw && mw.requireManagerOrAdmin) || ((_req, _res, next) => next());
+  const { requirePermission } = require('./_permissions');
+  const viewAllHours = requirePermission(pool, 'hours.view_all');
 
-  app.get('/api/hours/summary', requireManagerOrAdmin, async (req, res) => {
+  app.get('/api/hours/summary', viewAllHours, async (req, res) => {
     try {
       const rows = await querySummary(pool, req.query.from || null, req.query.to || null);
       const totalHours = rows.reduce((sum, r) => sum + (r.total_hours || 0), 0);
@@ -72,7 +74,7 @@ module.exports = function installHoursSummaryRoutes(app, pool, mw) {
     }
   });
 
-  app.get('/api/hours/summary.csv', requireManagerOrAdmin, async (req, res) => {
+  app.get('/api/hours/summary.csv', viewAllHours, async (req, res) => {
     try {
       const from  = req.query.from || null;
       const to    = req.query.to   || null;

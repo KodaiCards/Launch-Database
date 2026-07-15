@@ -43,8 +43,11 @@ module.exports = function installInspectionRoutes(app, pool, mw) {
   // Wave 1.5 [UNGATED]: GET /api/inspection was missing requireAuth.
   // Gated to admin + managers (who use the Inspection tab).
   const requireAuth = (mw && mw.requireAuth) || (() => (req, res, next) => next());
+  // System F (#77): the inspection list read is delegable via projects.view_all (admin passes).
+  const { requirePermission } = require('./_permissions');
+  const viewProjects = requirePermission(pool, 'projects.view_all');
 
-  app.get('/api/inspection', requireAuth(['admin', 'design_manager', 'permitting_manager']), async (req, res) => {
+  app.get('/api/inspection', viewProjects, async (req, res) => {
     const period = (req.query.period || 'ytd').toLowerCase();
     let monthYear = req.query.month;  // 'YYYY-MM'
     let startDate, endDate;

@@ -23,6 +23,8 @@ const { logAudit } = require('./_audit');
 
 module.exports = function installProjectBillingRoutes(app, pool, mw) {
   const { requireManagerOrAdmin } = mw;
+  const { requirePermission } = require('./_permissions');
+  const manageBilling = requirePermission(pool, 'money.manage_billing');
 
   // PB-3: verify that a manager is scoped to the project's team.
   // Admins bypass this check. design_manager may only act on design-team
@@ -45,7 +47,7 @@ module.exports = function installProjectBillingRoutes(app, pool, mw) {
   }
 
   // Unbill a single project (reverse billing, keep hours)
-  app.post('/api/projects/:id/unbill', requireManagerOrAdmin, async (req, res) => {
+  app.post('/api/projects/:id/unbill', manageBilling, async (req, res) => {
     const projectId = req.params.id;
     try {
       // PB-3: manager team-scope check
@@ -83,7 +85,7 @@ module.exports = function installProjectBillingRoutes(app, pool, mw) {
     }
   });
 
-  app.put('/api/projects/:id/mark-billed', requireManagerOrAdmin, async (req, res) => {
+  app.put('/api/projects/:id/mark-billed', manageBilling, async (req, res) => {
     const projectId = req.params.id;
     try {
       // PB-3: manager team-scope check
@@ -126,7 +128,7 @@ module.exports = function installProjectBillingRoutes(app, pool, mw) {
   // and creates a follow-on project for the next billing period so ongoing hourly
   // work (inspection, RE) can keep accumulating without re-entering all the metadata.
   // Body: { invoice_number?, invoice_date?, billed_amount, create_follow_on?, follow_on_name? }
-  app.post('/api/projects/:id/bill-and-clone', requireManagerOrAdmin, async (req, res) => {
+  app.post('/api/projects/:id/bill-and-clone', manageBilling, async (req, res) => {
     const { invoice_number, invoice_date, create_follow_on, follow_on_name } = req.body;
     const rawBilledAmount = req.body.billed_amount;
 

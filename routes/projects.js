@@ -31,6 +31,7 @@ module.exports = function installProjectsRoutes(app, pool, mw) {
   // mutation → money.manage_billing (admin passes via admin=all; managers need
   // the grant). Closes the #73-core red-team's total_amount leak.
   const canManageBilling = requirePermission(pool, 'money.manage_billing');
+  const viewProjects = requirePermission(pool, 'projects.view_all');
 
   // System F (#73): money.view field-strip (hard rule 8). The SAME project API
   // returns these $ columns to money.view holders and OMITS them entirely from
@@ -67,7 +68,7 @@ module.exports = function installProjectsRoutes(app, pool, mw) {
   }
 
   // Wave 1.5 [UNGATED]: GET /api/projects and GET /api/projects/:id were missing auth.
-  app.get('/api/projects', requireStaff, async (req, res) => {
+  app.get('/api/projects', viewProjects, async (req, res) => {
     const { status, client_id, project_type } = req.query;
     let where = [];
     let params = [];
@@ -211,7 +212,7 @@ module.exports = function installProjectsRoutes(app, pool, mw) {
     return true;
   }
 
-  app.get('/api/projects/:id', requireStaff, async (req, res) => {
+  app.get('/api/projects/:id', viewProjects, async (req, res) => {
     if (!validateUUID(req.params.id, res)) return;
     try {
       const { rows } = await pool.query(`
@@ -1409,7 +1410,7 @@ module.exports = function installProjectsRoutes(app, pool, mw) {
   // time entries, not just is_ongoing=true — the UI gates visibility, but the
   // endpoint is unrestricted so the same data feeds the monthly breakdown table.
   // M-3 fix: validateUUID on id parameter.
-  app.get('/api/projects/:id/monthly-hours-breakdown', requireStaff, async (req, res) => {
+  app.get('/api/projects/:id/monthly-hours-breakdown', viewProjects, async (req, res) => {
     if (!validateUUID(req.params.id, res)) return;
     try {
       const { rows } = await pool.query(`

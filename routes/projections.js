@@ -41,9 +41,11 @@ const JOB_SQL = (where) => `
 
 module.exports = function installProjectionsRoutes(app, pool, mw) {
   const gate = (mw && mw.requireManagerOrAdmin) || ((req, res, next) => next());
+  const { requirePermission } = require('./_permissions');
+  const viewProjects = requirePermission(pool, 'projects.view_all');
 
   // ── Per service area ───────────────────────────────────────────────────────
-  app.get('/api/projections/service-area/:id', gate, async (req, res) => {
+  app.get('/api/projections/service-area/:id', viewProjects, async (req, res) => {
     try {
       const { rows } = await pool.query(JOB_SQL('WHERE sa.id = $1 ORDER BY j.name NULLS LAST, saj.created_at'), [req.params.id]);
       if (!rows.length) {
@@ -136,7 +138,7 @@ module.exports = function installProjectionsRoutes(app, pool, mw) {
       disciplines, sa_hourly_expected: CENT(disciplines.reduce((s, d) => s + d.sa_expected, 0)) };
   }
 
-  app.get('/api/projections/service-area/:id/mileage', gate, async (req, res) => {
+  app.get('/api/projections/service-area/:id/mileage', viewProjects, async (req, res) => {
     try {
       const { rows } = await pool.query(
         `SELECT sa.id, sa.name, sa.miles, sa.engineering_contract_id, sa.construction_contract_id,
@@ -155,7 +157,7 @@ module.exports = function installProjectionsRoutes(app, pool, mw) {
   });
 
   // ── EC engineering-budget burn ─────────────────────────────────────────────
-  app.get('/api/projections/ec/:id', gate, async (req, res) => {
+  app.get('/api/projections/ec/:id', viewProjects, async (req, res) => {
     try {
       const ec = await pool.query('SELECT id, name FROM engineering_contracts WHERE id = $1', [req.params.id]);
       if (!ec.rows.length) return res.status(404).json({ error: 'Engineering contract not found' });
@@ -207,7 +209,7 @@ module.exports = function installProjectionsRoutes(app, pool, mw) {
   });
 
   // ── Rollup (modular: only by the chosen key) ───────────────────────────────
-  app.get('/api/projections', gate, async (req, res) => {
+  app.get('/api/projections', viewProjects, async (req, res) => {
     const group = ['client', 'ec', 'program'].includes(req.query.group) ? req.query.group : 'client';
     const keyExpr = { client: 'a.client_id', ec: 'a.engineering_contract_id', program: 'a.program' }[group];
     const lblExpr = { client: 'a.client_name', ec: 'a.ec_name', program: 'a.program' }[group];
@@ -235,7 +237,7 @@ module.exports = function installProjectionsRoutes(app, pool, mw) {
   });
 
   // ── Map data (Service Areas → Map tab; rendering deferred until KMZ sync) ────
-  app.get('/api/map/service-areas', gate, async (req, res) => {
+  app.get('/api/map/service-areas', viewProjects, async (req, res) => {
     try {
       const { rows } = await pool.query(
         `SELECT sa.id, sa.name, sa.program, sa.status, sa.build_finalized_at, sa.closed_at,

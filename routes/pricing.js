@@ -39,6 +39,9 @@ module.exports = function installPricingRoutes(app, pool, mw) {
   // Wave 1.5 [UNGATED]: all three GET pricing endpoints were missing auth.
   const requireAuth = (mw && mw.requireAuth) || (() => (req, res, next) => next());
   const requireStaff = (mw && mw.requireStaff) || requireAuth(); // O34: rates are staff-only (excludes trainee/customer)
+  const { requirePermission } = require('./_permissions');
+  const manageBilling = requirePermission(pool, 'money.manage_billing');
+  const moneyView = requirePermission(pool, 'money.view');
 
   app.get('/api/pricing', requireStaff, async (req, res) => {
     try {
@@ -81,7 +84,7 @@ module.exports = function installPricingRoutes(app, pool, mw) {
   });
 
   // Item 2 fix: requireManagerOrAdmin added
-  app.post('/api/pricing', requireManagerOrAdmin, async (req, res) => {
+  app.post('/api/pricing', manageBilling, async (req, res) => {
     const { job_id, program, billing_code, billing_type, rate, notes } = req.body;
     let normalizedProgram;
     try { normalizedProgram = normalizeProgram(program, { required: true }); }
@@ -103,7 +106,7 @@ module.exports = function installPricingRoutes(app, pool, mw) {
   });
 
   // Item 2 fix: requireManagerOrAdmin added
-  app.put('/api/pricing/:id', requireManagerOrAdmin, async (req, res) => {
+  app.put('/api/pricing/:id', manageBilling, async (req, res) => {
     const { billing_type, rate, notes, billing_code, program } = req.body;
     let normalizedProgram = undefined;
     if (program !== undefined) {
@@ -131,7 +134,7 @@ module.exports = function installPricingRoutes(app, pool, mw) {
   });
 
   // Item 2 fix: requireManagerOrAdmin added
-  app.delete('/api/pricing/:id', requireManagerOrAdmin, async (req, res) => {
+  app.delete('/api/pricing/:id', manageBilling, async (req, res) => {
     try {
       const { rows } = await pool.query('DELETE FROM pricing_entries WHERE id = $1 RETURNING id', [req.params.id]);
       if (rows.length === 0) return res.status(404).json({ error: 'Pricing entry not found' });
@@ -149,7 +152,7 @@ module.exports = function installPricingRoutes(app, pool, mw) {
   // Programs are enumerated from the canonical list (since project_types
   // was dropped in Phase 3b); only programs that admin actually uses will
   // realistically gap, but listing the full enum keeps the UX consistent.
-  app.get('/api/pricing/gaps', requireAuth(['admin', 'design_manager', 'permitting_manager']), async (req, res) => {
+  app.get('/api/pricing/gaps', moneyView, async (req, res) => {
     try {
       // CROSS JOIN against the literal program list. unnest produces a
       // virtual table so the query stays a single round-trip.

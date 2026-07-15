@@ -17,9 +17,12 @@ const { logAudit } = require('./_audit');
 
 module.exports = function installInvoicesRoutes(app, pool, mw) {
   const { requireManagerOrAdmin, requireAdmin } = mw;
+  const { requirePermission } = require('./_permissions');
+  const moneyView = requirePermission(pool, 'money.view');
+  const manageBilling = requirePermission(pool, 'money.manage_billing');
 
   // List invoices with items, grouped by month
-  app.get('/api/invoices', requireManagerOrAdmin, async (req, res) => {
+  app.get('/api/invoices', moneyView, async (req, res) => {
     const year = req.query.year || new Date().getFullYear();
     try {
       const { rows } = await pool.query(`
@@ -56,7 +59,7 @@ module.exports = function installInvoicesRoutes(app, pool, mw) {
   //
   // Manager+admin only. Format is exclusive to RUS-program work — the
   // generator throws if the engineering contract's program isn't 'rus'.
-  app.post('/api/invoices/generate-pdf', requireManagerOrAdmin, async (req, res) => {
+  app.post('/api/invoices/generate-pdf', manageBilling, async (req, res) => {
     const { engineering_contract_id, job_id, period_start, period_end, contract_ids } = req.body || {};
     if (!engineering_contract_id) return res.status(400).json({ error: 'engineering_contract_id required' });
     if (!job_id) return res.status(400).json({ error: 'job_id required' });
@@ -103,7 +106,7 @@ module.exports = function installInvoicesRoutes(app, pool, mw) {
   // period) plus any conflicts that would block PDF generation. Used by
   // the Print PDF modal to show the user what's in the invoice before
   // clicking Generate PDF.
-  app.post('/api/invoices/preview-makeup', requireManagerOrAdmin, async (req, res) => {
+  app.post('/api/invoices/preview-makeup', manageBilling, async (req, res) => {
     const { project_ids } = req.body || {};
     if (!Array.isArray(project_ids) || !project_ids.length) {
       return res.status(400).json({ error: 'project_ids array required' });
@@ -121,7 +124,7 @@ module.exports = function installInvoicesRoutes(app, pool, mw) {
   // /generate-pdf, but scope is inferred from project_ids instead of being
   // passed explicitly. Returns 422 (with the conflict list) if the
   // selection is ambiguous, so the modal can prompt the user to fix.
-  app.post('/api/invoices/generate-pdf-from-projects', requireManagerOrAdmin, async (req, res) => {
+  app.post('/api/invoices/generate-pdf-from-projects', manageBilling, async (req, res) => {
     const { project_ids, period_start, period_end } = req.body || {};
     if (!Array.isArray(project_ids) || !project_ids.length) {
       return res.status(400).json({ error: 'project_ids array required' });
@@ -164,7 +167,7 @@ module.exports = function installInvoicesRoutes(app, pool, mw) {
   // GET /api/invoices/generate-pdf/preview-data — returns the assembled
   // data structure without rendering. Useful for the UI to show a "this
   // is what's in the invoice" preview before the user clicks Generate PDF.
-  app.get('/api/invoices/generate-pdf/preview-data', requireManagerOrAdmin, async (req, res) => {
+  app.get('/api/invoices/generate-pdf/preview-data', moneyView, async (req, res) => {
     const { engineering_contract_id, job_id, period_start, period_end } = req.query || {};
     if (!engineering_contract_id || !job_id || !period_start || !period_end) {
       return res.status(400).json({ error: 'engineering_contract_id, job_id, period_start, period_end required' });
@@ -189,7 +192,7 @@ module.exports = function installInvoicesRoutes(app, pool, mw) {
   // projects (cross-team data destruction) or any manager to silently erase
   // the audit trail for an invoiced period. The base delete (no wipe_hours)
   // remains manager+admin since it only unbills projects — no data is lost.
-  app.delete('/api/invoices/:id', requireManagerOrAdmin, async (req, res) => {
+  app.delete('/api/invoices/:id', manageBilling, async (req, res) => {
     const { wipe_hours } = req.query; // ?wipe_hours=true
     // Guard the destructive wipe_hours path to admin-only inline.
     if (wipe_hours === 'true' && req.user && req.user.role !== 'admin') {

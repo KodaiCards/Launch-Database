@@ -9,8 +9,10 @@
 
 module.exports = function installProjectsTree(app, pool, mw) {
   const gate = (mw && mw.requireManagerOrAdmin) || ((req, res, next) => next());
+  const { requirePermission } = require('./_permissions');
+  const viewProjects = requirePermission(pool, 'projects.view_all');
 
-  app.get('/api/projects-tree', gate, async (req, res) => {
+  app.get('/api/projects-tree', viewProjects, async (req, res) => {
     try {
       const [clients, ecs, ccs, sas, routes, jobs] = await Promise.all([
         pool.query('SELECT id, name FROM clients ORDER BY name'),

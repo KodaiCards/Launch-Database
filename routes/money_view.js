@@ -39,9 +39,11 @@ function sumPrograms(rows) {
 module.exports = function installMoneyViewRoutes(app, pool, mw) {
   const requireManagerOrAdmin =
     (mw && mw.requireManagerOrAdmin) || ((_req, _res, next) => next());
+  const { requirePermission } = require('./_permissions');
+  const moneyView = requirePermission(pool, 'money.view');
 
   // ── Estimate-vs-actual margin, per service area ───────────────────────────
-  app.get('/api/money/margin', requireManagerOrAdmin, async (req, res) => {
+  app.get('/api/money/margin', moneyView, async (req, res) => {
     try {
       const { rows } = await pool.query(
         `SELECT
@@ -79,7 +81,7 @@ module.exports = function installMoneyViewRoutes(app, pool, mw) {
 
   // ── AR aging — non-draft, non-void invoices bucketed by invoice_date age ───
   // Void invoices are excluded: they are not receivable. Days = today − invoice_date.
-  app.get('/api/money/aging', requireManagerOrAdmin, async (req, res) => {
+  app.get('/api/money/aging', moneyView, async (req, res) => {
     try {
       const { rows } = await pool.query(
         `SELECT
@@ -116,7 +118,7 @@ module.exports = function installMoneyViewRoutes(app, pool, mw) {
 
   // ── Revenue rollup ───────────────────────────────────────────────────────
   // GET /api/money/revenue?group=month|client|program (non-draft/void invoices only).
-  app.get('/api/money/revenue', requireManagerOrAdmin, async (req, res) => {
+  app.get('/api/money/revenue', moneyView, async (req, res) => {
     const group = req.query.group || 'month';
     try {
       let sql, label;
@@ -163,7 +165,7 @@ module.exports = function installMoneyViewRoutes(app, pool, mw) {
 
   // ── Client statement ─────────────────────────────────────────────────────
   // GET /api/money/statement?client_id= → per-client service areas, billed, outstanding, aging buckets.
-  app.get('/api/money/statement', requireManagerOrAdmin, async (req, res) => {
+  app.get('/api/money/statement', moneyView, async (req, res) => {
     const { client_id } = req.query;
     if (!client_id) return res.status(400).json({ error: 'client_id required.' });
     try {
@@ -221,7 +223,7 @@ module.exports = function installMoneyViewRoutes(app, pool, mw) {
   });
 
   // ── Invoice detail (line items) — for drill-in modal ─────────────────────
-  app.get('/api/money/invoice/:id', requireManagerOrAdmin, async (req, res) => {
+  app.get('/api/money/invoice/:id', moneyView, async (req, res) => {
     try {
       const { rows: inv } = await pool.query(
         `SELECT i.id, i.invoice_number, i.invoice_date::text, i.status,
@@ -253,7 +255,7 @@ module.exports = function installMoneyViewRoutes(app, pool, mw) {
   // ── Program financials — RUS vs non-RUS margin + revenue ─────────────────
   // GET /api/money/program-financials
   // Returns per-program: estimated/billed from job totals + invoice revenue.
-  app.get('/api/money/program-financials', requireManagerOrAdmin, async (req, res) => {
+  app.get('/api/money/program-financials', moneyView, async (req, res) => {
     try {
       // invoices are client-level only (no service_area_id column), so there is
       // no clean per-program attribution. We return job-based estimated/billed only;
@@ -301,7 +303,7 @@ module.exports = function installMoneyViewRoutes(app, pool, mw) {
   });
 
   // ── Accounting export — all invoices as CSV ───────────────────────────────
-  app.get('/api/money/invoices.csv', requireManagerOrAdmin, async (req, res) => {
+  app.get('/api/money/invoices.csv', moneyView, async (req, res) => {
     try {
       const { rows } = await pool.query(
         `SELECT i.invoice_number, i.invoice_date::text AS invoice_date,

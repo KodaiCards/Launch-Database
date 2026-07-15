@@ -17,10 +17,15 @@ const { logAudit } = require('./_audit');
 
 module.exports = function installDesignPipelineRoutes(app, pool, mw) {
   const requireAuth = (mw && mw.requireAuth) || (() => (req, res, next) => next());
+  // System F (#77): design pipeline read via projects.view_all; the ongoing-flag
+  // write via projects.manage (admin passes by role).
+  const { requirePermission } = require('./_permissions');
+  const viewProjects = requirePermission(pool, 'projects.view_all');
+  const manageProjects = requirePermission(pool, 'projects.manage');
 
   // Wave 1.5 [UNGATED]: GET /api/design was missing requireAuth.
   // Bonus item from audit: gated to design team + admin.
-  app.get('/api/design', requireAuth(['admin', 'design_manager', 'design_engineer']), async (req, res) => {
+  app.get('/api/design', viewProjects, async (req, res) => {
     try {
       const { rows } = await pool.query(`
         SELECT p.*, cl.name as client_name, co.contract_number,
@@ -44,7 +49,7 @@ module.exports = function installDesignPipelineRoutes(app, pool, mw) {
   //   is_ongoing flag (design + permitting). Other project types have no
   //   monthly-invoice workflow; toggling them would trigger erroneous billing.
   // Wave 159 DP-L1: audit trail for toggle.
-  app.put('/api/projects/:id/ongoing', requireAuth(['admin', 'design_manager', 'permitting_manager']), async (req, res) => {
+  app.put('/api/projects/:id/ongoing', manageProjects, async (req, res) => {
     const { is_ongoing } = req.body;
     try {
       // DP-L2: validate project exists and is design or permitting.

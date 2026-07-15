@@ -61,6 +61,9 @@ async function getYtdRevenue(pool, yyyy) {
 
 module.exports = function installDashboardRoutes(app, pool, mw) {
   const { requireAuth } = mw;
+  // System F (#77): dashboard money reads are delegable via money.view (admin passes).
+  const { requirePermission } = require('./_permissions');
+  const moneyView = requirePermission(pool, 'money.view');
 
   // Debug: returns the exact list of projects counted as "active" by the
   // dashboard tile. Visible from the dashboard for troubleshooting.
@@ -69,7 +72,7 @@ module.exports = function installDashboardRoutes(app, pool, mw) {
   // added — the sibling /api/dashboard endpoint was properly gated but
   // /api/dashboard/active-list was not, allowing any authenticated employee
   // to enumerate all active projects with work order numbers and client names.
-  app.get('/api/dashboard/active-list', requireAuth(['admin', 'design_manager', 'permitting_manager']), async (req, res) => {
+  app.get('/api/dashboard/active-list', moneyView, async (req, res) => {
     try {
       const { rows } = await pool.query(`
         SELECT p.id, p.name, p.status, p.work_order_number,
@@ -94,7 +97,7 @@ module.exports = function installDashboardRoutes(app, pool, mw) {
     }
   });
 
-  app.get('/api/dashboard', requireAuth(['admin', 'design_manager', 'permitting_manager']), async (req, res) => {
+  app.get('/api/dashboard', moneyView, async (req, res) => {
     try {
       // Period selection — defaults to current month/YTD if not specified.
       // period: 'ytd' (year-to-date) or 'month' (specific month)

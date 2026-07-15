@@ -15,9 +15,11 @@
 
 module.exports = function installRevenueRoutes(app, pool, mw) {
   const { requireManagerOrAdmin } = mw;
+  const { requirePermission } = require('./_permissions');
+  const moneyView = requirePermission(pool, 'money.view');
 
   // Monthly summary — all months for a given year
-  app.get('/api/revenue/monthly-summary', requireManagerOrAdmin, async (req, res) => {
+  app.get('/api/revenue/monthly-summary', moneyView, async (req, res) => {
     const year = req.query.year || new Date().getFullYear();
     try {
       const { rows } = await pool.query(`
@@ -86,7 +88,7 @@ module.exports = function installRevenueRoutes(app, pool, mw) {
   });
 
   // Revenue by client — filterable by month/year
-  app.get('/api/revenue/by-client', requireManagerOrAdmin, async (req, res) => {
+  app.get('/api/revenue/by-client', moneyView, async (req, res) => {
     const year = req.query.year || new Date().getFullYear();
     const month = req.query.month; // optional
     try {
@@ -178,7 +180,7 @@ module.exports = function installRevenueRoutes(app, pool, mw) {
   });
 
   // Detailed project breakdown for a specific month
-  app.get('/api/revenue/details', requireManagerOrAdmin, async (req, res) => {
+  app.get('/api/revenue/details', moneyView, async (req, res) => {
     const year = req.query.year || new Date().getFullYear();
     const month = req.query.month;
     try {
@@ -247,7 +249,7 @@ module.exports = function installRevenueRoutes(app, pool, mw) {
   // unbilled rows with project_id=NULL still get tallied. Period
   // matches the existing revenue endpoints: ?year=Y[&month=M].
   // Optional ?staff_id=N filters to a single person.
-  app.get('/api/revenue/hours-utilization', requireManagerOrAdmin, async (req, res) => {
+  app.get('/api/revenue/hours-utilization', moneyView, async (req, res) => {
     const year = parseInt(req.query.year, 10) || new Date().getFullYear();
     const month = req.query.month ? parseInt(req.query.month, 10) : null;
     const staffId = req.query.staff_id || null;
@@ -293,7 +295,7 @@ module.exports = function installRevenueRoutes(app, pool, mw) {
     }
   });
 
-  app.get('/api/revenue/projected-total', requireManagerOrAdmin, async (req, res) => {
+  app.get('/api/revenue/projected-total', moneyView, async (req, res) => {
     try {
       // ARC-3: For hourly projects, derive projected_revenue at read time as
       // expected_hours × billing_rate rather than reading the stored column.
@@ -403,7 +405,7 @@ module.exports = function installRevenueRoutes(app, pool, mw) {
     }
   });
 
-  app.get('/api/revenue/unbilled', requireManagerOrAdmin, async (req, res) => {
+  app.get('/api/revenue/unbilled', moneyView, async (req, res) => {
     try {
       // ── ONE-TIME projects: one row per project (existing logic) ──
       // Filter out monthly-cadence projects since they're handled below.

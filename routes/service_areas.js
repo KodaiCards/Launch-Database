@@ -67,6 +67,11 @@ module.exports = function installServiceAreaRoutes(app, pool, mw) {
   const requireAdmin = (mw && mw.requireAdmin) || ((req, res, next) => next());
   const requireManagerOrAdmin = (mw && mw.requireManagerOrAdmin) || requireAdmin;
   const requireAuth = (mw && mw.requireAuth) || (() => (req, res, next) => next());
+  const { requirePermission } = require('./_permissions');
+  const moneyView = requirePermission(pool, 'money.view');
+  const manageBilling = requirePermission(pool, 'money.manage_billing');
+  const manageProjects = requirePermission(pool, 'projects.manage');
+  const viewProjects = requirePermission(pool, 'projects.view_all');
 
   const uid = (req) => (req && req.user && req.user.id) || null;
 
@@ -127,7 +132,7 @@ module.exports = function installServiceAreaRoutes(app, pool, mw) {
 
   // List service areas with rolled-up job totals. Filters: client_id,
   // engineering_contract_id, status, program.
-  app.get('/api/service-areas', requireAuth(STAFF_ROLES), async (req, res) => {
+  app.get('/api/service-areas', viewProjects, async (req, res) => {
     try {
       const conds = [];
       const params = [];
@@ -171,7 +176,7 @@ module.exports = function installServiceAreaRoutes(app, pool, mw) {
   });
 
   // Detail — the service area plus its job line items (with catalog + staff names).
-  app.get('/api/service-areas/:id', requireAuth(STAFF_ROLES), async (req, res) => {
+  app.get('/api/service-areas/:id', viewProjects, async (req, res) => {
     try {
       const sa = await pool.query(
         `SELECT sa.*, c.name AS client_name, ec.name AS ec_name
@@ -201,7 +206,7 @@ module.exports = function installServiceAreaRoutes(app, pool, mw) {
   // Create. Required: client_id, name. If engineering_contract_id is supplied,
   // program is forced to 'rus' (EC ⟺ RUS). Otherwise program comes from the
   // body (bau/gfr/other) or stays null.
-  app.post('/api/service-areas', requireManagerOrAdmin, async (req, res) => {
+  app.post('/api/service-areas', manageProjects, async (req, res) => {
     const b = req.body || {};
     if (!b.client_id) return res.status(400).json({ error: 'client_id is required' });
     if (!b.name || !String(b.name).trim()) return res.status(400).json({ error: 'name is required' });
@@ -240,7 +245,7 @@ module.exports = function installServiceAreaRoutes(app, pool, mw) {
     'completed_date', 'billed_date', 'is_ongoing', 'billing_cadence', 'map_file_path',
     'map_filename', 'client_visible', 'engineering_contract_id'];
 
-  app.put('/api/service-areas/:id', requireManagerOrAdmin, async (req, res) => {
+  app.put('/api/service-areas/:id', manageProjects, async (req, res) => {
     const sets = [], vals = [req.params.id];
     let i = 2;
     for (const f of SA_FIELDS) {
@@ -274,7 +279,7 @@ module.exports = function installServiceAreaRoutes(app, pool, mw) {
     }
   });
 
-  app.delete('/api/service-areas/:id', requireManagerOrAdmin, async (req, res) => {
+  app.delete('/api/service-areas/:id', manageProjects, async (req, res) => {
     try {
       const { rowCount } = await pool.query('DELETE FROM service_areas WHERE id = $1', [req.params.id]);
       if (!rowCount) return res.status(404).json({ error: 'Service area not found' });
@@ -291,7 +296,7 @@ module.exports = function installServiceAreaRoutes(app, pool, mw) {
   // A service area may have routes (physical fiber paths). Jobs + materials carry
   // a nullable route_id; with no routes they attach to the area directly.
 
-  app.get('/api/service-areas/:id/routes', requireAuth(STAFF_ROLES), async (req, res) => {
+  app.get('/api/service-areas/:id/routes', viewProjects, async (req, res) => {
     try {
       const { rows } = await pool.query(
         `SELECT * FROM service_area_routes WHERE service_area_id = $1 ORDER BY sort_order, created_at`,
@@ -300,7 +305,7 @@ module.exports = function installServiceAreaRoutes(app, pool, mw) {
     } catch (e) { console.error('[sa-routes:list]', e && e.message); res.status(500).json({ error: 'Failed to list routes.' }); }
   });
 
-  app.post('/api/service-areas/:id/routes', requireManagerOrAdmin, async (req, res) => {
+  app.post('/api/service-areas/:id/routes', manageProjects, async (req, res) => {
     const b = req.body || {};
     if (!b.name || !String(b.name).trim()) return res.status(400).json({ error: 'name is required' });
     try {
@@ -319,7 +324,7 @@ module.exports = function installServiceAreaRoutes(app, pool, mw) {
   });
 
   const SAROUTE_FIELDS = ['name', 'status', 'sort_order', 'map_file_path', 'map_filename', 'notes', 'client_visible'];
-  app.put('/api/service-area-routes/:id', requireManagerOrAdmin, async (req, res) => {
+  app.put('/api/service-area-routes/:id', manageProjects, async (req, res) => {
     const sets = [], vals = [req.params.id]; let i = 2;
     for (const f of SAROUTE_FIELDS) {
       if (Object.prototype.hasOwnProperty.call(req.body, f)) {
@@ -338,7 +343,7 @@ module.exports = function installServiceAreaRoutes(app, pool, mw) {
   });
 
   // Delete a route — its jobs/materials fall back to area-level (route_id → NULL via FK).
-  app.delete('/api/service-area-routes/:id', requireManagerOrAdmin, async (req, res) => {
+  app.delete('/api/service-area-routes/:id', manageProjects, async (req, res) => {
     try {
       const { rows } = await pool.query('DELETE FROM service_area_routes WHERE id = $1 RETURNING service_area_id', [req.params.id]);
       if (!rows.length) return res.status(404).json({ error: 'Route not found' });
@@ -352,7 +357,7 @@ module.exports = function installServiceAreaRoutes(app, pool, mw) {
   // Per route: set build_finalized_at + status 'complete' (reopen clears it, back
   // to 'active'). Area-level finalize cascades to every route. No confirm prompt.
 
-  app.post('/api/service-area-routes/:id/finalize', requireManagerOrAdmin, async (req, res) => {
+  app.post('/api/service-area-routes/:id/finalize', manageProjects, async (req, res) => {
     const finalize = !(req.body && req.body.finalized === false);
     try {
       const { rows } = await pool.query(
@@ -369,7 +374,7 @@ module.exports = function installServiceAreaRoutes(app, pool, mw) {
     } catch (e) { console.error('[sa-routes:finalize]', e && e.message); res.status(500).json({ error: 'Failed to finalize route.' }); }
   });
 
-  app.post('/api/service-areas/:id/finalize', requireManagerOrAdmin, async (req, res) => {
+  app.post('/api/service-areas/:id/finalize', manageProjects, async (req, res) => {
     const finalize = !(req.body && req.body.finalized === false);
     try {
       await pool.query(
@@ -391,7 +396,7 @@ module.exports = function installServiceAreaRoutes(app, pool, mw) {
   // closed_at = archived: everything billed + settled, nothing more changes.
   // Informational/soft (UI treats as read-only); not a billing trigger —
   // "completed" (build_finalized_at) is what bills close-out jobs.
-  app.post('/api/service-areas/:id/close', requireManagerOrAdmin, async (req, res) => {
+  app.post('/api/service-areas/:id/close', manageProjects, async (req, res) => {
     const close = !(req.body && req.body.closed === false);
     try {
       const { rows } = await pool.query(
@@ -405,7 +410,7 @@ module.exports = function installServiceAreaRoutes(app, pool, mw) {
     } catch (e) { console.error('[service-areas:close]', e && e.message); res.status(500).json({ error: 'Failed to update final status.' }); }
   });
 
-  app.post('/api/service-area-routes/:id/close', requireManagerOrAdmin, async (req, res) => {
+  app.post('/api/service-area-routes/:id/close', manageProjects, async (req, res) => {
     const close = !(req.body && req.body.closed === false);
     try {
       const { rows } = await pool.query(
@@ -423,7 +428,7 @@ module.exports = function installServiceAreaRoutes(app, pool, mw) {
   // quantity = EXPECTED; completed_quantity = installed (auto-rolled from units
   // when a material has units). Remaining is computed client-side (exp − done).
 
-  app.get('/api/service-areas/:id/materials', requireAuth(STAFF_ROLES), async (req, res) => {
+  app.get('/api/service-areas/:id/materials', viewProjects, async (req, res) => {
     try {
       const conds = ['m.service_area_id = $1']; const vals = [req.params.id];
       if (req.query.route_id) { vals.push(req.query.route_id); conds.push(`m.route_id = $${vals.length}`); }
@@ -434,7 +439,7 @@ module.exports = function installServiceAreaRoutes(app, pool, mw) {
     } catch (e) { console.error('[sa-materials:list]', e && e.message); res.status(500).json({ error: 'Failed to list materials.' }); }
   });
 
-  app.post('/api/service-areas/:id/materials', requireManagerOrAdmin, async (req, res) => {
+  app.post('/api/service-areas/:id/materials', manageProjects, async (req, res) => {
     const b = req.body || {};
     if (!b.item || !String(b.item).trim()) return res.status(400).json({ error: 'item is required' });
     const source = ['manual', 'bom_csv', 'map'].includes(b.source) ? b.source : 'manual';
@@ -454,7 +459,7 @@ module.exports = function installServiceAreaRoutes(app, pool, mw) {
   });
 
   const SAMAT_FIELDS = ['route_id', 'item', 'quantity', 'completed_quantity', 'unit', 'unit_cost', 'source', 'map_feature_ref', 'notes'];
-  app.put('/api/service-area-materials/:id', requireManagerOrAdmin, async (req, res) => {
+  app.put('/api/service-area-materials/:id', manageProjects, async (req, res) => {
     const sets = [], vals = [req.params.id]; let i = 2;
     for (const f of SAMAT_FIELDS) {
       if (Object.prototype.hasOwnProperty.call(req.body, f)) {
@@ -471,7 +476,7 @@ module.exports = function installServiceAreaRoutes(app, pool, mw) {
     } catch (e) { console.error('[sa-materials:update]', e && e.message); res.status(500).json({ error: 'Failed to update material.' }); }
   });
 
-  app.delete('/api/service-area-materials/:id', requireManagerOrAdmin, async (req, res) => {
+  app.delete('/api/service-area-materials/:id', manageProjects, async (req, res) => {
     try {
       const { rowCount } = await pool.query('DELETE FROM service_area_materials WHERE id = $1', [req.params.id]);
       if (!rowCount) return res.status(404).json({ error: 'Material not found' });
@@ -484,7 +489,7 @@ module.exports = function installServiceAreaRoutes(app, pool, mw) {
   // Discrete items get one row per physical unit. Mutating a unit re-rolls the
   // parent material's completed_quantity (count of installed units).
 
-  app.get('/api/service-area-materials/:id/units', requireAuth(STAFF_ROLES), async (req, res) => {
+  app.get('/api/service-area-materials/:id/units', viewProjects, async (req, res) => {
     try {
       const { rows } = await pool.query(
         `SELECT * FROM service_area_material_units WHERE material_id = $1 ORDER BY sequence NULLS LAST, created_at`, [req.params.id]);
@@ -492,7 +497,7 @@ module.exports = function installServiceAreaRoutes(app, pool, mw) {
     } catch (e) { console.error('[sa-units:list]', e && e.message); res.status(500).json({ error: 'Failed to list units.' }); }
   });
 
-  app.post('/api/service-area-materials/:id/units', requireManagerOrAdmin, async (req, res) => {
+  app.post('/api/service-area-materials/:id/units', manageProjects, async (req, res) => {
     const b = req.body || {};
     const status = ['pending', 'installed', 'removed'].includes(b.status) ? b.status : 'pending';
     // Installing with no explicit date stamps today (the map sync passes the real one).
@@ -511,7 +516,7 @@ module.exports = function installServiceAreaRoutes(app, pool, mw) {
   });
 
   const SAUNIT_FIELDS = ['label', 'sequence', 'status', 'installed_date', 'map_feature_ref'];
-  app.put('/api/service-area-material-units/:id', requireManagerOrAdmin, async (req, res) => {
+  app.put('/api/service-area-material-units/:id', manageProjects, async (req, res) => {
     const sets = [], vals = [req.params.id]; let i = 2;
     for (const f of SAUNIT_FIELDS) {
       if (Object.prototype.hasOwnProperty.call(req.body, f)) {
@@ -533,7 +538,7 @@ module.exports = function installServiceAreaRoutes(app, pool, mw) {
     } catch (e) { console.error('[sa-units:update]', e && e.message); res.status(500).json({ error: 'Failed to update unit.' }); }
   });
 
-  app.delete('/api/service-area-material-units/:id', requireManagerOrAdmin, async (req, res) => {
+  app.delete('/api/service-area-material-units/:id', manageProjects, async (req, res) => {
     try {
       const { rows } = await pool.query('DELETE FROM service_area_material_units WHERE id = $1 RETURNING material_id', [req.params.id]);
       if (!rows.length) return res.status(404).json({ error: 'Unit not found' });
@@ -550,7 +555,7 @@ module.exports = function installServiceAreaRoutes(app, pool, mw) {
   //   construction_cost = Σ construction-discipline LABOR + installed MATERIALS
   //                       (kept as separate line items; summed into one tile)
   //   total_cost        = engineering + construction
-  app.get('/api/service-areas/:id/workspace', requireAuth(STAFF_ROLES), async (req, res) => {
+  app.get('/api/service-areas/:id/workspace', viewProjects, async (req, res) => {
     const id = req.params.id;
     try {
       const areaQ = await pool.query(
@@ -645,7 +650,7 @@ module.exports = function installServiceAreaRoutes(app, pool, mw) {
 
   // Add a job to a service area. Pass job_id to auto-fill team/billing_type/rate
   // from the jobs catalog + pricing_entries (each override-able via the body).
-  app.post('/api/service-areas/:id/jobs', requireManagerOrAdmin, async (req, res) => {
+  app.post('/api/service-areas/:id/jobs', manageProjects, async (req, res) => {
     const b = req.body || {};
     try {
       const sa = await pool.query('SELECT id, program, name FROM service_areas WHERE id = $1', [req.params.id]);
@@ -710,7 +715,7 @@ module.exports = function installServiceAreaRoutes(app, pool, mw) {
     'billing_type', 'rate', 'status', 'estimated_amount', 'actual_hours', 'actual_amount', 'footage', 'miles',
     'start_date', 'completed_date', 'billed_date', 'notes', 'budget_code_id', 'label'];
 
-  app.put('/api/service-area-jobs/:id', requireManagerOrAdmin, async (req, res) => {
+  app.put('/api/service-area-jobs/:id', manageProjects, async (req, res) => {
     const sets = [], vals = [req.params.id];
     let i = 2;
     for (const f of SAJOB_FIELDS) {
@@ -745,7 +750,7 @@ module.exports = function installServiceAreaRoutes(app, pool, mw) {
     }
   });
 
-  app.delete('/api/service-area-jobs/:id', requireManagerOrAdmin, async (req, res) => {
+  app.delete('/api/service-area-jobs/:id', manageProjects, async (req, res) => {
     try {
       const { rowCount } = await pool.query('DELETE FROM service_area_jobs WHERE id = $1', [req.params.id]);
       if (!rowCount) return res.status(404).json({ error: 'Job not found' });
@@ -761,7 +766,7 @@ module.exports = function installServiceAreaRoutes(app, pool, mw) {
   // Advance a job through its team's pipeline. Body { to: 'revision' } branches
   // to revision (only from 'submitted'); otherwise it steps forward. No
   // confirmation prompt — the frontend pairs this with an undo bar.
-  app.post('/api/service-area-jobs/:id/advance', requireManagerOrAdmin, async (req, res) => {
+  app.post('/api/service-area-jobs/:id/advance', manageProjects, async (req, res) => {
     try {
       const cur = await pool.query('SELECT team, status FROM service_area_jobs WHERE id = $1', [req.params.id]);
       if (!cur.rows.length) return res.status(404).json({ error: 'Job not found' });
@@ -785,7 +790,7 @@ module.exports = function installServiceAreaRoutes(app, pool, mw) {
   });
 
   // Step a job back one stage (undo-style).
-  app.post('/api/service-area-jobs/:id/regress', requireManagerOrAdmin, async (req, res) => {
+  app.post('/api/service-area-jobs/:id/regress', manageProjects, async (req, res) => {
     try {
       const cur = await pool.query('SELECT team, status FROM service_area_jobs WHERE id = $1', [req.params.id]);
       if (!cur.rows.length) return res.status(404).json({ error: 'Job not found' });
@@ -861,7 +866,7 @@ module.exports = function installServiceAreaRoutes(app, pool, mw) {
     }
   });
 
-  app.get('/api/service-area-jobs/:id/time-entries', requireAuth(STAFF_ROLES), async (req, res) => {
+  app.get('/api/service-area-jobs/:id/time-entries', viewProjects, async (req, res) => {
     try {
       const { rows } = await pool.query(
         `SELECT te.*, s.name AS staff_name
@@ -878,7 +883,7 @@ module.exports = function installServiceAreaRoutes(app, pool, mw) {
 
   // Flat list of a team's job line items (across all service areas) with
   // service-area + client context. Powers the per-team pipeline kanban.
-  app.get('/api/service-area-jobs', requireAuth(STAFF_ROLES), async (req, res) => {
+  app.get('/api/service-area-jobs', viewProjects, async (req, res) => {
     try {
       const conds = [], params = [];
       if (req.query.team) { params.push(req.query.team); conds.push(`saj.team = $${params.length}`); }
@@ -907,7 +912,7 @@ module.exports = function installServiceAreaRoutes(app, pool, mw) {
   // Bill a service area: turn its ready-to-bill jobs (done stage, not yet
   // billed) into one invoice, then mark those jobs billed. Amount per item is
   // the job's actual_amount (already type-aware: hourly/footage/fixed).
-  app.post('/api/service-areas/:id/bill', requireManagerOrAdmin, async (req, res) => {
+  app.post('/api/service-areas/:id/bill', manageBilling, async (req, res) => {
     const client = await pool.connect();
     try {
       await client.query('BEGIN');
@@ -952,7 +957,7 @@ module.exports = function installServiceAreaRoutes(app, pool, mw) {
   });
 
   // Invoices list (new model) with line items embedded, for the Billing view.
-  app.get('/api/billing/invoices', requireManagerOrAdmin, async (req, res) => {
+  app.get('/api/billing/invoices', moneyView, async (req, res) => {
     try {
       const inv = await pool.query(
         `SELECT i.*, c.name AS client_name
@@ -973,7 +978,7 @@ module.exports = function installServiceAreaRoutes(app, pool, mw) {
 
   // Dashboard overview (new model): headline totals, pipeline tallies per
   // team/stage, recent service areas, and per-client rollups. Feeds dashboard.html.
-  app.get('/api/dashboard/overview', requireAuth(STAFF_ROLES), async (req, res) => {
+  app.get('/api/dashboard/overview', viewProjects, async (req, res) => {
     try {
       const totals = await pool.query(
         `SELECT
@@ -1053,7 +1058,7 @@ module.exports = function installServiceAreaRoutes(app, pool, mw) {
   });
 
   // Expose the pipeline map so the frontend can render stage chips consistently.
-  app.get('/api/service-area-pipelines', requireAuth(STAFF_ROLES), (req, res) => {
+  app.get('/api/service-area-pipelines', viewProjects, (req, res) => {
     res.json({ pipelines: PIPELINES, approval_stage: APPROVAL_STAGE });
   });
 };

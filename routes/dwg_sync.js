@@ -35,6 +35,11 @@ const DWG_EXT_SQL = `lower(right(d.file_name, 4)) IN ('.dwg', '.dxf')`;
 
 module.exports = function installDwgSyncRoutes(app, pool, mw) {
   const requireAuth = (mw && mw.requireAuth) || (() => (req, res, next) => next());
+  // System F (#77): DWG project sync reads are delegable via projects.view_all
+  // (project-domain work; admin passes by role). DWG_ROLES == the projects.view_all
+  // seed, so this preserves current access.
+  const { requirePermission } = require('./_permissions');
+  const viewProjects = requirePermission(pool, 'projects.view_all');
   const uploadDir = (mw && mw.uploadDir) || process.env.UPLOAD_DIR || path.join(__dirname, '..', 'uploads');
 
   // ─── GET /api/dwg-sync/projects ─────────────────────────────────────────────
@@ -47,7 +52,7 @@ module.exports = function installDwgSyncRoutes(app, pool, mw) {
   // linked via job_assignments or ec_job_visibility (same pattern as
   // project_photos.js userHasProjectAccess).
   app.get('/api/dwg-sync/projects',
-    requireAuth(DWG_ROLES),
+    viewProjects,
     async (req, res) => {
       const role = req.user.role || '';
       const isAdminOrManager = role === 'admin' ||
@@ -113,7 +118,7 @@ module.exports = function installDwgSyncRoutes(app, pool, mw) {
   //
   // HIGH-1 fix: 404 if calling user does not have access to this project.
   app.get('/api/dwg-sync/projects/:id/manifest',
-    requireAuth(DWG_ROLES),
+    viewProjects,
     async (req, res) => {
       const projectId = req.params.id;
       const role = req.user.role || '';
@@ -215,7 +220,7 @@ module.exports = function installDwgSyncRoutes(app, pool, mw) {
   //
   // HIGH-1 fix: lookup file's project, check caller's access. 404 if no access.
   app.get('/api/dwg-sync/files/:docId',
-    requireAuth(DWG_ROLES),
+    viewProjects,
     async (req, res) => {
       const role = req.user.role || '';
       const isAdminOrManager = role === 'admin' ||

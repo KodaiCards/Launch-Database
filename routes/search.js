@@ -3,10 +3,12 @@
 
 module.exports = function installSearch(app, pool, mw) {
   const { requireManagerOrAdmin } = mw;
+  const { requirePermission } = require('./_permissions');
+  const viewProjects = requirePermission(pool, 'projects.view_all');
 
   // GET /api/search?q=<term>
   // Returns up to 10 matches per entity: service areas, clients, invoices.
-  app.get('/api/search', requireManagerOrAdmin, async (req, res) => {
+  app.get('/api/search', viewProjects, async (req, res) => {
     const q = (req.query.q || '').trim();
     if (!q || q.length < 2) return res.json({ results: [] });
 

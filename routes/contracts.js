@@ -14,8 +14,11 @@ module.exports = function installContractsRoutes(app, pool, mw) {
   // Wave 1.5 [UNGATED]: GET /api/contracts was missing auth.
   const requireAuth = (mw && mw.requireAuth) || (() => (req, res, next) => next());
   const requireStaff = (mw && mw.requireStaff) || requireAuth(); // O34: staff-only reads (excludes trainee/customer)
+  const { requirePermission } = require('./_permissions');
+  const viewProjects = requirePermission(pool, 'projects.view_all');
+  const manageProjects = requirePermission(pool, 'projects.manage');
 
-  app.get('/api/contracts', requireStaff, async (req, res) => {
+  app.get('/api/contracts', viewProjects, async (req, res) => {
     const { client_id, engineering_contract_id } = req.query;
     try {
       const where = [];
@@ -46,7 +49,7 @@ module.exports = function installContractsRoutes(app, pool, mw) {
   });
 
   // Item 2 fix: requireAdmin added — creating contracts is an admin-only operation
-  app.post('/api/contracts', requireAdmin, async (req, res) => {
+  app.post('/api/contracts', manageProjects, async (req, res) => {
     const { client_id, contract_number, name, engineering_contract_id, friendly_label } = req.body;
 
     // C-4 LOW: validate required fields
@@ -84,7 +87,7 @@ module.exports = function installContractsRoutes(app, pool, mw) {
 
   // PUT /api/contracts/:id — update a contract. Adds umbrella support so the
   // admin can move a contract under (or out of) an engineering_contract.
-  app.put('/api/contracts/:id', requireAdmin, async (req, res) => {
+  app.put('/api/contracts/:id', manageProjects, async (req, res) => {
     const { contract_number, name, engineering_contract_id, friendly_label, active } = req.body;
     try {
       const sets = [];
@@ -131,7 +134,7 @@ module.exports = function installContractsRoutes(app, pool, mw) {
   // projects.contract_id REFERENCES contracts(id) with no CASCADE, so plain
   // DELETE without ?cascade=1 still gives a friendly message instead of a
   // raw FK error.
-  app.delete('/api/contracts/:id', requireAdmin, async (req, res) => {
+  app.delete('/api/contracts/:id', manageProjects, async (req, res) => {
     const cascade = req.query.cascade === '1' || req.query.cascade === 'true';
     try {
       const { rows: kids } = await pool.query(

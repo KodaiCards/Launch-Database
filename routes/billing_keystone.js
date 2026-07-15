@@ -29,6 +29,9 @@ function parsePeriod(p) {
 module.exports = function installBillingKeystoneRoutes(app, pool, mw) {
   const requireManagerOrAdmin = (mw && mw.requireManagerOrAdmin) || ((req, res, next) => next());
   const uid = (req) => (req && req.user && req.user.id) || null;
+  const { requirePermission } = require('./_permissions');
+  const moneyView = requirePermission(pool, 'money.view');
+  const manageBilling = requirePermission(pool, 'money.manage_billing');
 
   // Earned/billed/billable per job for the period, optionally scoped to SAs.
   // Returns rows grouped by service area.
@@ -95,7 +98,7 @@ module.exports = function installBillingKeystoneRoutes(app, pool, mw) {
   }
 
   // GET /api/billing/worklist?period=YYYY-MM[&service_area_ids=a,b]
-  app.get('/api/billing/worklist', requireManagerOrAdmin, async (req, res) => {
+  app.get('/api/billing/worklist', moneyView, async (req, res) => {
     const period = parsePeriod(req.query.period);
     if (!period) return res.status(400).json({ error: 'period=YYYY-MM required' });
     const saIds = req.query.service_area_ids ? String(req.query.service_area_ids).split(',').filter(Boolean) : null;
@@ -109,7 +112,7 @@ module.exports = function installBillingKeystoneRoutes(app, pool, mw) {
 
   // POST /api/billing/run { period, service_area_ids?[], exclude_job_ids?[] }
   // Creates one DRAFT invoice per concentrator from its billable lines.
-  app.post('/api/billing/run', requireManagerOrAdmin, async (req, res) => {
+  app.post('/api/billing/run', manageBilling, async (req, res) => {
     const period = parsePeriod((req.body || {}).period);
     if (!period) return res.status(400).json({ error: 'period=YYYY-MM required' });
     const saIds = Array.isArray(req.body.service_area_ids) && req.body.service_area_ids.length ? req.body.service_area_ids : null;
@@ -160,7 +163,7 @@ module.exports = function installBillingKeystoneRoutes(app, pool, mw) {
   });
 
   // GET /api/billing/report?group=client|ec|program|month
-  app.get('/api/billing/report', requireManagerOrAdmin, async (req, res) => {
+  app.get('/api/billing/report', moneyView, async (req, res) => {
     const group = ['client', 'ec', 'program', 'month'].includes(req.query.group) ? req.query.group : 'client';
     const sel = {
       client:  `c.name AS label, i.client_id AS key`,
@@ -187,7 +190,7 @@ module.exports = function installBillingKeystoneRoutes(app, pool, mw) {
   });
 
   // ─── Informational "month closed" tag (never locks editing) ────────────────
-  app.get('/api/billing/periods', requireManagerOrAdmin, async (req, res) => {
+  app.get('/api/billing/periods', moneyView, async (req, res) => {
     try {
       const { rows } = await pool.query(`SELECT period_month, closed_at FROM billing_period_close ORDER BY period_month DESC`);
       res.json(rows);
@@ -198,7 +201,7 @@ module.exports = function installBillingKeystoneRoutes(app, pool, mw) {
   });
 
   // POST /api/billing/periods/:month/close  (month = YYYY-MM); body {open:true} reopens.
-  app.post('/api/billing/periods/:month/close', requireManagerOrAdmin, async (req, res) => {
+  app.post('/api/billing/periods/:month/close', manageBilling, async (req, res) => {
     const period = parsePeriod(req.params.month);
     if (!period) return res.status(400).json({ error: 'month=YYYY-MM required' });
     try {

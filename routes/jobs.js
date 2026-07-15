@@ -24,9 +24,12 @@ module.exports = function installJobsRoutes(app, pool, mw) {
   const requireAdmin = (mw && mw.requireAdmin) || ((req, res, next) => next());
   const requireManagerOrAdmin = (mw && mw.requireManagerOrAdmin) || requireAdmin;
   const requireAuth = (mw && mw.requireAuth) || (() => (req, res, next) => next());
+  const { requirePermission } = require('./_permissions');
+  const viewProjects = requirePermission(pool, 'projects.view_all');
+  const manageProjects = requirePermission(pool, 'projects.manage');
 
   // Wave 1.5 [UNGATED]: GET /api/jobs and GET /api/jobs/:id were missing auth.
-  app.get('/api/jobs', requireAuth(['admin', 'design_manager', 'permitting_manager', 'design_engineer', 'permitting_engineer']), async (req, res) => {
+  app.get('/api/jobs', viewProjects, async (req, res) => {
     try {
       // ── Manual assignment override (migration 0032) ────────────────────────
       // If any job_assignments rows exist that overlap the request scope,
@@ -155,7 +158,7 @@ module.exports = function installJobsRoutes(app, pool, mw) {
   // excludes inactive jobs, but the project-edit modal still needs to be
   // able to surface a now-deactivated job that's referenced by an existing
   // project so the user can save without being forced to re-pick the job.
-  app.get('/api/jobs/:id', requireAuth(['admin', 'design_manager', 'permitting_manager', 'design_engineer', 'permitting_engineer']), async (req, res) => {
+  app.get('/api/jobs/:id', viewProjects, async (req, res) => {
     try {
       const { rows } = await pool.query('SELECT * FROM jobs WHERE id = $1', [req.params.id]);
       if (!rows.length) return res.status(404).json({ error: 'Job not found' });
@@ -192,7 +195,7 @@ module.exports = function installJobsRoutes(app, pool, mw) {
   const ALLOWED_PROGRAM_SCOPES = ['rus', 'non_rus', 'shared'];
 
   // Item 2 fix: requireAdmin added (mutation endpoint missing role gate)
-  app.post('/api/jobs', requireAdmin, async (req, res) => {
+  app.post('/api/jobs', manageProjects, async (req, res) => {
     const {
       name, default_billing_type = 'hourly', default_rate = null,
       is_permitting = false, notes = null, team = null,
@@ -257,7 +260,7 @@ module.exports = function installJobsRoutes(app, pool, mw) {
   });
 
   // Item 2 fix: requireAdmin added
-  app.put('/api/jobs/:id', requireAdmin, async (req, res) => {
+  app.put('/api/jobs/:id', manageProjects, async (req, res) => {
     // Only update fields explicitly present in the request body. This makes
     // partial updates safe — e.g. PUT {name:"X"} only changes name, leaves
     // default_rate and notes alone. The previous version always wrote $4/$6
@@ -416,7 +419,7 @@ module.exports = function installJobsRoutes(app, pool, mw) {
     }
   });
 
-  app.delete('/api/jobs/:id', requireAdmin, async (req, res) => {
+  app.delete('/api/jobs/:id', manageProjects, async (req, res) => {
     try {
       // Soft-delete via active=false to preserve historical references in projects
       const { rowCount } = await pool.query('UPDATE jobs SET active = false WHERE id = $1', [req.params.id]);
@@ -440,7 +443,7 @@ module.exports = function installJobsRoutes(app, pool, mw) {
   // returns only the pinned jobs instead of running the program_scope heuristic.
 
   // List all assignment pins for a single job.
-  app.get('/api/jobs/:id/assignments', requireAdmin, async (req, res) => {
+  app.get('/api/jobs/:id/assignments', viewProjects, async (req, res) => {
     try {
       const { rows } = await pool.query(
         `SELECT ja.*,
@@ -464,7 +467,7 @@ module.exports = function installJobsRoutes(app, pool, mw) {
   // Body: { client_id?, engineering_contract_id?, team? }
   // At least one scoping column must be non-null (enforced by DB CHECK, but
   // we validate here first to return a useful 400 rather than a 500).
-  app.post('/api/jobs/:id/assignments', requireAdmin, async (req, res) => {
+  app.post('/api/jobs/:id/assignments', manageProjects, async (req, res) => {
     const jobId = req.params.id;
     const clientId = req.body.client_id || null;
     const ecId     = req.body.engineering_contract_id || null;
@@ -499,7 +502,7 @@ module.exports = function installJobsRoutes(app, pool, mw) {
   });
 
   // Delete a single assignment pin by its own UUID.
-  app.delete('/api/job-assignments/:id', requireAdmin, async (req, res) => {
+  app.delete('/api/job-assignments/:id', manageProjects, async (req, res) => {
     try {
       const { rowCount } = await pool.query(
         'DELETE FROM job_assignments WHERE id = $1',

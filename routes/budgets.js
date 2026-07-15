@@ -20,6 +20,9 @@ module.exports = function installBudgetsRoutes(app, pool, mw) {
   const requireManagerOrAdmin = (mw && mw.requireManagerOrAdmin) || ((req, res, next) => next());
   // Wave 1.5 [UNGATED]: GET budget/budget-code endpoints lacked auth.
   const requireAuth = (mw && mw.requireAuth) || (() => (req, res, next) => next());
+  const { requirePermission } = require('./_permissions');
+  const moneyView = requirePermission(pool, 'money.view');
+  const manageBilling = requirePermission(pool, 'money.manage_billing');
 
   // ── Shared helper: ownership check ──────────────────────────────────────
   // Returns the budget row if the caller has access, else sends 404.
@@ -55,7 +58,7 @@ module.exports = function installBudgetsRoutes(app, pool, mw) {
   }
 
   // ── F4: elevated from requireAuth to requireManagerOrAdmin ───────────────
-  app.get('/api/budgets', requireManagerOrAdmin, async (req, res) => {
+  app.get('/api/budgets', moneyView, async (req, res) => {
     const { project_id, engineering_contract_id } = req.query;
     try {
       const where = [];
@@ -86,7 +89,7 @@ module.exports = function installBudgetsRoutes(app, pool, mw) {
   });
 
   // F2: ownership check guards all :id routes.
-  app.get('/api/budgets/:id/summary', requireManagerOrAdmin, async (req, res) => {
+  app.get('/api/budgets/:id/summary', moneyView, async (req, res) => {
     try {
       // F2: ownership check
       const budget = await checkBudgetOwnership(req, res, req.params.id);
@@ -151,7 +154,7 @@ module.exports = function installBudgetsRoutes(app, pool, mw) {
     }
   });
 
-  app.post('/api/budgets', requireManagerOrAdmin, async (req, res) => {
+  app.post('/api/budgets', manageBilling, async (req, res) => {
     const { project_id, engineering_contract_id, name, total_amount, notes } = req.body;
     // Exactly one of project_id / engineering_contract_id must be set — the
     // CHECK constraint enforces this at the DB level, but rejecting up front
@@ -191,7 +194,7 @@ module.exports = function installBudgetsRoutes(app, pool, mw) {
     }
   });
 
-  app.put('/api/budgets/:id', requireManagerOrAdmin, async (req, res) => {
+  app.put('/api/budgets/:id', manageBilling, async (req, res) => {
     const { name, total_amount, notes } = req.body;
     // F2: ownership check
     const budget = await checkBudgetOwnership(req, res, req.params.id);
@@ -229,7 +232,7 @@ module.exports = function installBudgetsRoutes(app, pool, mw) {
     }
   });
 
-  app.delete('/api/budgets/:id', requireManagerOrAdmin, async (req, res) => {
+  app.delete('/api/budgets/:id', manageBilling, async (req, res) => {
     // F2: ownership check
     const budget = await checkBudgetOwnership(req, res, req.params.id);
     if (!budget) return;
@@ -259,7 +262,7 @@ module.exports = function installBudgetsRoutes(app, pool, mw) {
   // Budget summary broken down by area/concentrator. Used by the budget
   // detail modal's "By area" tab to show per-concentrator spend.
   // F3: elevated to requireManagerOrAdmin + scoped to budget's EC.
-  app.get('/api/budgets/:id/by-area', requireManagerOrAdmin, async (req, res) => {
+  app.get('/api/budgets/:id/by-area', moneyView, async (req, res) => {
     try {
       // F2: ownership check
       const budget = await checkBudgetOwnership(req, res, req.params.id);
@@ -351,7 +354,7 @@ module.exports = function installBudgetsRoutes(app, pool, mw) {
   // ─── BUDGET CODES ─────────────────────────────────────────────────────────
 
   // F5: elevated from requireAuth to requireManagerOrAdmin
-  app.get('/api/budget-codes', requireManagerOrAdmin, async (req, res) => {
+  app.get('/api/budget-codes', moneyView, async (req, res) => {
     const { budget_id } = req.query;
     // F5: when budget_id is supplied, apply ownership check
     if (budget_id) {
@@ -370,7 +373,7 @@ module.exports = function installBudgetsRoutes(app, pool, mw) {
     }
   });
 
-  app.post('/api/budget-codes', requireManagerOrAdmin, async (req, res) => {
+  app.post('/api/budget-codes', manageBilling, async (req, res) => {
     const { budget_id, code, description, allocated_amount, job_id } = req.body;
     // F7: non-negative validation on allocated_amount
     const amount = Number(allocated_amount);
@@ -410,7 +413,7 @@ module.exports = function installBudgetsRoutes(app, pool, mw) {
     }
   });
 
-  app.put('/api/budget-codes/:id', requireManagerOrAdmin, async (req, res) => {
+  app.put('/api/budget-codes/:id', manageBilling, async (req, res) => {
     const { code, description, allocated_amount, job_id } = req.body;
     // F7: non-negative validation on allocated_amount
     const amount = Number(allocated_amount);
@@ -461,7 +464,7 @@ module.exports = function installBudgetsRoutes(app, pool, mw) {
     }
   });
 
-  app.delete('/api/budget-codes/:id', requireManagerOrAdmin, async (req, res) => {
+  app.delete('/api/budget-codes/:id', manageBilling, async (req, res) => {
     try {
       // F1: capture before state for audit; also gives us budget_id for F2 check
       const { rows: beforeRows } = await pool.query(

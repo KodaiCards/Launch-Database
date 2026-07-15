@@ -20,8 +20,13 @@
 
 module.exports = function installReportsRoutes(app, pool, mw) {
   const requireAuth = (mw && mw.requireAuth) || (() => (req, res, next) => next());
+  // System F (#77): reports are delegable — hours report via hours.view_all,
+  // billing report via money.view (admin passes by role).
+  const { requirePermission } = require('./_permissions');
+  const viewAllHours = requirePermission(pool, 'hours.view_all');
+  const moneyView = requirePermission(pool, 'money.view');
 
-  app.get('/api/reports/hours', requireAuth(['admin', 'design_manager', 'permitting_manager']), async (req, res) => {
+  app.get('/api/reports/hours', viewAllHours, async (req, res) => {
     const { month, year } = req.query;
     // F8: validate month/year when supplied as query params
     let m, y;
@@ -67,7 +72,7 @@ module.exports = function installReportsRoutes(app, pool, mw) {
     }
   });
 
-  app.get('/api/reports/billing', requireAuth(['admin', 'design_manager', 'permitting_manager']), async (req, res) => {
+  app.get('/api/reports/billing', moneyView, async (req, res) => {
     const { month, year } = req.query;
     // F8: validate month/year when supplied as query params
     let m, y;

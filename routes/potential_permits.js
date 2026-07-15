@@ -18,8 +18,11 @@ const { logAudit } = require('./_audit');
 module.exports = function installPotentialPermitsRoutes(app, pool, mw) {
   const requireAuth = (mw && mw.requireAuth) || (() => (req, res, next) => next());
   const requireStaff = (mw && mw.requireStaff) || requireAuth(); // O34: staff-only reads (excludes trainee/customer)
+  const { requirePermission } = require('./_permissions');
+  const viewProjects = requirePermission(pool, 'projects.view_all');
+  const manageProjects = requirePermission(pool, 'projects.manage');
 
-  app.get('/api/potential-permits', requireStaff, async (req, res) => {
+  app.get('/api/potential-permits', viewProjects, async (req, res) => {
     const { status } = req.query;
     try {
       const q = status
@@ -34,7 +37,7 @@ module.exports = function installPotentialPermitsRoutes(app, pool, mw) {
   });
 
   // Wave 1.5 [BODY-ACTOR]: submitted_by now derived from req.user, never from body.
-  app.post('/api/potential-permits', requireAuth(['admin', 'design_manager', 'design_engineer', 'permitting_manager', 'permitting_engineer']), async (req, res) => {
+  app.post('/api/potential-permits', manageProjects, async (req, res) => {
     const { sr_hwy, county, route, notes } = req.body;
     // submitted_by is always the authenticated user, not body-supplied.
     const submittedBy = req.user.full_name || req.user.username;
@@ -69,7 +72,7 @@ module.exports = function installPotentialPermitsRoutes(app, pool, mw) {
   });
 
   // Wave 1.5 [BODY-ACTOR]: reviewed_by now derived from req.user, never from body.
-  app.put('/api/potential-permits/:id', requireAuth(['admin', 'permitting_manager']), async (req, res) => {
+  app.put('/api/potential-permits/:id', manageProjects, async (req, res) => {
     const { status, project_id, notes } = req.body;
     // reviewed_by is always the authenticated user, not body-supplied.
     const reviewedBy = req.user.full_name || req.user.username;
@@ -95,7 +98,7 @@ module.exports = function installPotentialPermitsRoutes(app, pool, mw) {
     }
   });
 
-  app.delete('/api/potential-permits/:id', requireAuth(['admin', 'permitting_manager']), async (req, res) => {
+  app.delete('/api/potential-permits/:id', manageProjects, async (req, res) => {
     try {
       const { rowCount } = await pool.query('DELETE FROM potential_permits WHERE id=$1', [req.params.id]);
       // PP-L2: 404 on non-existent ID

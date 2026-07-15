@@ -14,8 +14,11 @@ module.exports = function installConcentratorsRoutes(app, pool, mw) {
   // Wave 1.5 [UNGATED]: GET /api/concentrators was missing auth.
   const requireAuth = (mw && mw.requireAuth) || (() => (req, res, next) => next());
   const requireStaff = (mw && mw.requireStaff) || requireAuth(); // O34: staff-only reads (excludes trainee/customer)
+  const { requirePermission } = require('./_permissions');
+  const viewProjects = requirePermission(pool, 'projects.view_all');
+  const manageProjects = requirePermission(pool, 'projects.manage');
 
-  app.get('/api/concentrators', requireStaff, async (req, res) => {
+  app.get('/api/concentrators', viewProjects, async (req, res) => {
     const { contract_label } = req.query;
     try {
       const q = contract_label
@@ -30,7 +33,7 @@ module.exports = function installConcentratorsRoutes(app, pool, mw) {
   });
 
   // Item 2 fix: requireAdmin added
-  app.post('/api/concentrators', requireAdmin, async (req, res) => {
+  app.post('/api/concentrators', manageProjects, async (req, res) => {
     const { contract_label, area_name, work_order_number, notes } = req.body;
     if (!contract_label || typeof contract_label !== 'string' || !contract_label.trim()) {
       return res.status(400).json({ error: 'contract_label required' });

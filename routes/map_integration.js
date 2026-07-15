@@ -21,16 +21,19 @@ const norm = (s) => String(s == null ? '' : s).trim().toLowerCase().replace(/[\s
 module.exports = function installMapIntegrationRoutes(app, pool, mw) {
   const gate = (mw && mw.requireManagerOrAdmin) || ((req, res, next) => next());
   const upload = mw && mw.upload;
+  const { requirePermission } = require('./_permissions');
+  const viewProjects = requirePermission(pool, 'projects.view_all');
+  const manageProjects = requirePermission(pool, 'projects.manage');
 
   // ── 1. DB-backed window.storage (key → value) ──────────────────────────────
   // The map calls store.get(k) expecting {value} and store.set(k, v) with a string.
-  app.get('/api/map/store/:key', gate, async (req, res) => {
+  app.get('/api/map/store/:key', viewProjects, async (req, res) => {
     try {
       const { rows } = await pool.query('SELECT value FROM map_store WHERE store_key = $1', [req.params.key]);
       res.json(rows.length ? { value: rows[0].value } : null);
     } catch (e) { console.error('[map:store-get]', e && e.message); res.status(500).json({ error: 'store get failed' }); }
   });
-  app.put('/api/map/store/:key', gate, async (req, res) => {
+  app.put('/api/map/store/:key', manageProjects, async (req, res) => {
     const value = req.body && typeof req.body.value === 'string' ? req.body.value
       : (req.body != null ? JSON.stringify(req.body.value ?? req.body) : null);
     try {
@@ -43,7 +46,7 @@ module.exports = function installMapIntegrationRoutes(app, pool, mw) {
   });
 
   // ── 2. Construction contracts + cost catalog ───────────────────────────────
-  app.get('/api/construction-contracts', gate, async (req, res) => {
+  app.get('/api/construction-contracts', viewProjects, async (req, res) => {
     try {
       const { rows } = await pool.query(
         `SELECT cc.*, c.name AS client_name FROM construction_contracts cc
@@ -52,7 +55,7 @@ module.exports = function installMapIntegrationRoutes(app, pool, mw) {
     } catch (e) { console.error('[cc:list]', e && e.message); res.status(500).json({ error: 'Failed to load construction contracts.' }); }
   });
 
-  app.post('/api/construction-contracts', gate, async (req, res) => {
+  app.post('/api/construction-contracts', manageProjects, async (req, res) => {
     const b = req.body || {};
     if (!b.name || !String(b.name).trim()) return res.status(400).json({ error: 'name required' });
     try {
@@ -64,7 +67,7 @@ module.exports = function installMapIntegrationRoutes(app, pool, mw) {
     } catch (e) { console.error('[cc:create]', e && e.message); res.status(500).json({ error: 'Failed to create construction contract.' }); }
   });
 
-  app.get('/api/construction-contracts/:id/catalog', gate, async (req, res) => {
+  app.get('/api/construction-contracts/:id/catalog', viewProjects, async (req, res) => {
     try {
       const { rows } = await pool.query(
         'SELECT * FROM cost_catalog WHERE construction_contract_id = $1 ORDER BY item_key', [req.params.id]);
@@ -74,7 +77,7 @@ module.exports = function installMapIntegrationRoutes(app, pool, mw) {
 
   // Upload the unit price list: multipart Excel/CSV (file) OR JSON { items:[{item_key,label,unit,unit_price}] }.
   // Replaces the CC's catalog. Excel columns matched loosely: item/unit/price.
-  app.post('/api/construction-contracts/:id/catalog', gate, ...(upload ? [upload.single('file')] : []), async (req, res) => {
+  app.post('/api/construction-contracts/:id/catalog', manageProjects, ...(upload ? [upload.single('file')] : []), async (req, res) => {
     let items = [];
     try {
       if (req.file) {
@@ -120,7 +123,7 @@ module.exports = function installMapIntegrationRoutes(app, pool, mw) {
   });
 
   // ── SA boundary + center (hand-drawn on the map; powers the overview) ───────
-  app.put('/api/service-areas/:id/boundary', gate, async (req, res) => {
+  app.put('/api/service-areas/:id/boundary', manageProjects, async (req, res) => {
     const b = req.body || {};
     const bj = b.boundary != null ? JSON.stringify(b.boundary) : null;
     try {
@@ -141,7 +144,7 @@ module.exports = function installMapIntegrationRoutes(app, pool, mw) {
   // GET /api/map/estimate?plan=<planId>&cc=<ccId>
   // Reads the map's stored points (frm_pts_<plan>) + spans (frm_segs_<plan>),
   // counts structures by ptype, prices via the CC catalog, sums span footage.
-  app.get('/api/map/estimate', gate, async (req, res) => {
+  app.get('/api/map/estimate', viewProjects, async (req, res) => {
     const plan = req.query.plan, ccId = req.query.cc;
     if (!plan || !ccId) return res.status(400).json({ error: 'plan and cc required' });
     try {
@@ -151,7 +154,7 @@ module.exports = function installMapIntegrationRoutes(app, pool, mw) {
 
   // ── Per-SA rollup — the loop: derive an SA's construction numbers from its
   // linked map plan + construction contract. Drives projections/budgets.
-  app.get('/api/service-areas/:id/map-rollup', gate, async (req, res) => {
+  app.get('/api/service-areas/:id/map-rollup', viewProjects, async (req, res) => {
     try {
       const { rows } = await pool.query(
         'SELECT id, name, map_plan_id, construction_contract_id FROM service_areas WHERE id = $1', [req.params.id]);
