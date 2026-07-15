@@ -968,7 +968,7 @@ export default function T09L02_NepaTypes() {
           },
           {
             id: 'roe-yes',
-            text: 'Good — CE C-8 type fits. Now run the extraordinary-circumstances check. Your route crosses a segment where the state wildlife agency has mapped documented Northern Long-Eared Bat (NLEB) habitat. The NLEB was reclassified from Threatened to Endangered in February 2023. Does this trigger an extraordinary circumstance?',
+            text: 'Good — CE C-8 type fits. Now run the extraordinary-circumstances check. Your route crosses a segment where the state wildlife agency has mapped documented Northern Long-Eared Bat (NLEB) habitat. The NLEB was reclassified from Threatened to Endangered effective March 31, 2023. Does this trigger an extraordinary circumstance?',
             choices: [
               { label: 'No — bat habitat is common in rural areas; CE still applies', nextId: 'bat-wrong' },
               { label: 'Yes — T&E species habitat is an extraordinary circumstance; CE is suspended pending ESA check', nextId: 'bat-right' },

@@ -43,7 +43,7 @@ export const meta = {
     {
       term: 'PE stamp',
       definition:
-        'Professional Engineer stamp — the seal of a licensed Professional Engineer (PE) applied to design drawings, certifying that the drawings meet applicable engineering standards and that the PE takes professional responsibility for the design. Many state DOTs require PE-stamped plans as part of an encroachment permit application for telecommunications infrastructure in state highway ROW. The PE must be licensed in the state where the work occurs. [Requirements vary by state and DOT district — confirm with AHJ.]',
+        'Professional Engineer stamp — the seal of a licensed Professional Engineer (PE) applied to design drawings, certifying that the drawings meet applicable engineering standards and that the PE takes professional responsibility for the design. Many state DOTs require PE-stamped plans as part of an encroachment permit application for telecommunications infrastructure in state highway ROW. The PE must be licensed in the state where the work occurs. Requirements vary by state and DOT district — confirm with the AHJ.',
     },
     {
       term: 'traffic control plan (TCP)',
@@ -161,7 +161,7 @@ export default function T09L06_StateDOTEncroachmentPermits() {
             {
               id: 'T09-L06-fc-pe',
               front: 'What is a PE stamp and why do DOTs require it?',
-              back: 'Professional Engineer stamp — the seal of a licensed Professional Engineer (PE) applied to design drawings, certifying that the drawings meet applicable engineering standards and that the PE takes professional responsibility for the design. Many state DOTs require PE-stamped plans as part of an encroachment permit application for telecommunications infrastructure in state highway ROW. [Requirements vary by state and DOT district — confirm with AHJ.]',
+              back: 'Professional Engineer stamp — the seal of a licensed Professional Engineer (PE) applied to design drawings, certifying that the drawings meet applicable engineering standards and that the PE takes professional responsibility for the design. Many state DOTs require PE-stamped plans as part of an encroachment permit application for telecommunications infrastructure in state highway ROW. Requirements vary by state and DOT district — confirm with the AHJ.',
             },
             {
               id: 'T09-L06-fc-tcp',
