@@ -44,7 +44,7 @@ export const meta = {
     {
       term: 'categorical exclusion (CE)',
       definition:
-        'A category of federal actions that have been determined, based on experience with similar actions, to have no significant effect on the environment individually or cumulatively. A CE requires no Environmental Assessment (EA) or Environmental Impact Statement (EIS), but extraordinary circumstances must be checked and documented. For BEAD/RUS fiber projects, CE C-8 is the applicable categorical exclusion.',
+        'A category of federal actions that have been determined, based on experience with similar actions, to have no significant effect on the environment individually or cumulatively. A CE requires no Environmental Assessment (EA) or Environmental Impact Statement (EIS), but extraordinary circumstances must be checked and documented. For a BEAD fiber project, CE C-8 (NTIA\'s categorical exclusion) is the applicable CE; a RUS-financed project uses RUS\'s own categorical exclusion under 7 CFR Part 1b.',
     },
     {
       term: 'EA',
@@ -64,17 +64,17 @@ export const meta = {
     {
       term: 'extraordinary circumstances',
       definition:
-        'Specific conditions or factors that, if present in a project\'s footprint, prevent a categorical exclusion from applying and require an elevated NEPA review (EA or EIS). For BEAD/RUS fiber projects under CE C-8, the extraordinary circumstances include: T&E species or critical habitat, historic properties in the project area (APE), wetlands or floodplains, coastal zones, prime farmland, and others listed in the agency\'s CE procedures.',
+        'Specific conditions or factors that, if present in a project\'s footprint, prevent a categorical exclusion from applying and require an elevated NEPA review (EA or EIS). For a BEAD project under CE C-8 (or a RUS project under its 7 CFR Part 1b categorical exclusion), the extraordinary circumstances include: T&E species or critical habitat, historic properties in the project area (APE), wetlands or floodplains, coastal zones, prime farmland, and others listed in the agency\'s CE procedures.',
     },
     {
       term: 'CE C-8',
       definition:
-        'CE C-8 is a categorical exclusion designation in USDA/RUS regulations (7 CFR Part 1b, formerly 7 CFR Part 1970) covering aerial or buried utility and communications construction within or adjacent to existing rights-of-way. It eliminates the need for an EA or EIS for RUS-financed fiber projects provided no extraordinary circumstances are present. Important: CE C-8 is RUS nomenclature. NTIA did not adopt CE C-8 for BEAD — NTIA\'s 2024 CE rulemaking explicitly excluded CE C-8, noting that the actions it covers are encompassed by existing Commerce Department-level CEs. BEAD projects use Commerce Dept-level CEs, not CE C-8. Verify the applicable CE designation with the lead federal agency (RUS or NTIA/state broadband office) at time of project.',
+        'CE C-8 is the NTIA categorical exclusion adopted for BEAD-funded projects, covering aerial or buried utility and communications construction (including fiber optic cable) within or using existing rights-of-way. For a qualifying BEAD fiber route it eliminates the need for an EA or EIS provided no extraordinary circumstances are present. Note the distinction: CE C-8 is NTIA\'s designation for BEAD; a RUS-financed project instead uses RUS\'s own categorical exclusion under 7 CFR Part 1b. Verify the applicable CE with the lead federal agency (NTIA/state broadband office for BEAD, RUS for RUS financing) at time of project.',
     },
     {
       term: 'ESAPTT',
       definition:
-        'Endangered Species Act — Programmatic Threatened and Endangered species consultation, sometimes abbreviated ESAPTT in BEAD environmental documentation. Refers to the process of conducting a programmatic (program-wide) Section 7 consultation with USFWS rather than a project-by-project consultation. Not all BEAD programs use this approach — verify with the NTIA-approved state NEPA process at time of project.',
+        'Environmental Screening and Permitting Tracking Tool — NTIA\'s web-based tool in the BEAD Grants Portal that helps recipients screen grant-funded projects for environmental (NEPA) compliance, identify whether a project can be categorically excluded, and track permitting requirements and timelines. States are required to use ESAPTT for BEAD environmental review.',
     },
   ],
   vocabulary_assumed: [
@@ -183,7 +183,7 @@ export default function T09L02_NepaTypes() {
             {
               id: 'T09-L02-fc-ce',
               front: 'What is a Categorical Exclusion (CE) under NEPA?',
-              back: 'A category of federal actions that have been determined, based on experience with similar actions, to have no significant effect on the environment individually or cumulatively. A CE requires no Environmental Assessment (EA) or Environmental Impact Statement (EIS), but extraordinary circumstances must be checked and documented. For BEAD/RUS fiber projects, CE C-8 is the applicable categorical exclusion.',
+              back: 'A category of federal actions that have been determined, based on experience with similar actions, to have no significant effect on the environment individually or cumulatively. A CE requires no Environmental Assessment (EA) or Environmental Impact Statement (EIS), but extraordinary circumstances must be checked and documented. For a BEAD fiber project, CE C-8 (NTIA\'s categorical exclusion) is the applicable CE; a RUS-financed project uses RUS\'s own categorical exclusion under 7 CFR Part 1b.',
             },
             {
               id: 'T09-L02-fc-ea',
@@ -203,17 +203,17 @@ export default function T09L02_NepaTypes() {
             {
               id: 'T09-L02-fc-extraordinary',
               front: 'What are extraordinary circumstances under NEPA?',
-              back: 'Specific conditions or factors that, if present in a project\'s footprint, prevent a categorical exclusion from applying and require an elevated NEPA review (EA or EIS). For BEAD/RUS fiber projects under CE C-8, the extraordinary circumstances include: T&E species or critical habitat, historic properties in the project area (APE), wetlands or floodplains, coastal zones, prime farmland, and others listed in the agency\'s CE procedures.',
+              back: 'Specific conditions or factors that, if present in a project\'s footprint, prevent a categorical exclusion from applying and require an elevated NEPA review (EA or EIS). For a BEAD project under CE C-8 (or a RUS project under its 7 CFR Part 1b categorical exclusion), the extraordinary circumstances include: T&E species or critical habitat, historic properties in the project area (APE), wetlands or floodplains, coastal zones, prime farmland, and others listed in the agency\'s CE procedures.',
             },
             {
               id: 'T09-L02-fc-ce-c8',
               front: 'What is CE C-8 and who uses it?',
-              back: 'CE C-8 is a USDA/RUS categorical exclusion designation (7 CFR Part 1b, formerly 7 CFR Part 1970) covering aerial or buried utility and communications construction within or adjacent to existing rights-of-way. It is RUS nomenclature — NTIA did not adopt CE C-8 for BEAD; NTIA uses Commerce Department-level CEs instead. For RUS-financed fiber projects, CE C-8 eliminates the need for an EA or EIS provided no extraordinary circumstances are present. Verify the applicable CE designation with the lead federal agency at time of project.',
+              back: 'CE C-8 is NTIA\'s categorical exclusion for BEAD-funded fiber — it covers aerial or buried utility and communications construction (including fiber) within or using existing rights-of-way. For a qualifying BEAD project it eliminates the need for an EA or EIS provided no extraordinary circumstances are present. A RUS-financed project uses RUS\'s own categorical exclusion under 7 CFR Part 1b instead. Verify the applicable CE with the lead federal agency at time of project.',
             },
             {
               id: 'T09-L02-fc-esaptt',
               front: 'What is ESAPTT?',
-              back: 'Endangered Species Act — Programmatic Threatened and Endangered species consultation, sometimes abbreviated ESAPTT in BEAD environmental documentation. Refers to the process of conducting a programmatic (program-wide) Section 7 consultation with USFWS rather than a project-by-project consultation. Not all BEAD programs use this approach — verify with the NTIA-approved state NEPA process at time of project.',
+              back: 'Environmental Screening and Permitting Tracking Tool — NTIA\'s web-based tool in the BEAD Grants Portal that helps recipients screen grant-funded projects for environmental (NEPA) compliance, identify whether a project can be categorically excluded, and track permitting requirements and timelines. States are required to use ESAPTT for BEAD environmental review.',
             },
           ]}
         />
@@ -256,12 +256,12 @@ export default function T09L02_NepaTypes() {
             <tbody className="text-slate-300/90">
               <tr className="border-t border-white/10">
                 <td className="px-3 py-2">Threatened or Endangered species / critical habitat</td>
-                <td className="px-3 py-2">Run IPaC DKey tool on project footprint (covered in T09.L04)</td>
+                <td className="px-3 py-2">Run IPaC DKey tool on project footprint (covered in the ESA lesson)</td>
                 <td className="px-3 py-2">Section 7 consultation with USFWS; CE may not apply</td>
               </tr>
               <tr className="border-t border-white/10">
                 <td className="px-3 py-2">Historic properties in the APE (Area of Potential Effect)</td>
-                <td className="px-3 py-2">Section 106 records search + SHPO coordination (covered in T09.L03)</td>
+                <td className="px-3 py-2">Section 106 records search + SHPO coordination (covered in the Section 106 lesson)</td>
                 <td className="px-3 py-2">Section 106 consultation process; CE may not apply until §106 concludes</td>
               </tr>
               <tr className="border-t border-white/10">
@@ -293,8 +293,8 @@ export default function T09L02_NepaTypes() {
           <p className="font-semibold text-amber-300 mb-2">Book vs. Field — CE Is the Goal, Not the Assumption</p>
 
           <p className="text-slate-300/90">
-            <strong>Book (42 U.S.C. §4332; 7 CFR Part 1b [eff. April 3, 2026]):</strong> CE C-8
-            applies to aerial and buried utility construction within or adjacent to existing ROW,
+            <strong>Book (42 U.S.C. §4332; NTIA BEAD CE procedures):</strong> CE C-8
+            applies to aerial and buried utility construction within or using existing ROW,
             provided no extraordinary circumstances are present. The rule is national — the same
             checklist applies in Nevada as in North Carolina.
           </p>
@@ -478,7 +478,7 @@ export default function T09L02_NepaTypes() {
         <div className="mt-4 p-4 border border-amber-400/30 bg-amber-400/5 rounded-lg text-sm">
           <p className="font-semibold text-amber-300 mb-2">Book vs. Field</p>
           <p className="text-slate-300/90">
-            <strong>Book (7 CFR Part 1b [eff. April 3, 2026; formerly 7 CFR 1970.54] / NTIA CE procedures):</strong> CE C-8 is automatic
+            <strong>Book (NTIA BEAD CE procedures):</strong> CE C-8 is automatic
             for utility construction in existing ROW provided no extraordinary circumstances
             apply. The CE checklist is the mechanism; check the boxes, document the result,
             submit to the lead federal agency.
@@ -701,7 +701,7 @@ export default function T09L02_NepaTypes() {
           <p className="text-sm text-slate-300/90 mb-2">
             Under RUS NEPA procedures (7 CFR Part 1b, eff. April 3, 2026), the lead federal agency (RUS)
             coordinates the NEPA review. The USACE Section 404 wetland permit is required before construction
-            in any jurisdictional water of the U.S. — but the NEPA categorical exclusion (CE C-8 for this
+            in any jurisdictional water of the U.S. — but the NEPA categorical exclusion (the RUS categorical exclusion under 7 CFR Part 1b for this
             underground bore in existing ROW) can be evaluated in parallel with the USACE NWP application,
             not sequentially. The CE can be issued while the NWP PCN is in process, but <strong>construction
             cannot begin on the wetland segment until BOTH the CE AND the NWP authorization are in hand</strong>.
@@ -713,7 +713,7 @@ export default function T09L02_NepaTypes() {
           <ol className="list-decimal pl-5 space-y-1 text-sm text-slate-300/90">
             <li>
               <strong>Day 1:</strong> Submit USACE NWP 12 Pre-Construction Notification (PCN) for the
-              0.08-acre wetland impact. Also initiate the RUS NEPA CE C-8 checklist with the extraordinary-
+              0.08-acre wetland impact. Also initiate the RUS categorical-exclusion checklist (7 CFR Part 1b) with the extraordinary-
               circumstances documentation (the wetland presence is the extraordinary circumstance; NWP PCN
               submission demonstrates you are addressing it). Also submit railroad crossing application to
               the Class I carrier.
@@ -725,7 +725,7 @@ export default function T09L02_NepaTypes() {
               Department now knows the Section 404 issue is resolved and will process the encroachment permit.
             </li>
             <li>
-              <strong>Days 14–30 (concurrent with USACE):</strong> RUS issues CE C-8 once extraordinary-
+              <strong>Days 14–30 (concurrent with USACE):</strong> RUS issues its categorical exclusion once extraordinary-
               circumstance analysis confirms NWP coverage of the wetland. CE clearance and NWP can land
               within days of each other.
             </li>
@@ -922,15 +922,12 @@ export default function T09L02_NepaTypes() {
         <ul className="list-disc pl-5 space-y-1 mt-2 text-sm">
           <li>
             <strong>RUS:</strong> 7 CFR Part 1b (effective April 3, 2026; replaced 7 CFR Part
-            1970, 2016 rule). RUS uses its own CE designation (CE C-8 is RUS nomenclature).
+            1970, 2016 rule). RUS uses its own categorical exclusion under 7 CFR Part 1b (a RUS designation — not CE C-8, which is NTIA\'s).
             CE checklist and extraordinary-circumstances review are agency-internal processes
             coordinated with the RUS Area Director.
           </li>
           <li>
-            <strong>NTIA/BEAD:</strong> NTIA's 2024 CE rulemaking adopted Commerce
-            Department-level CEs — it explicitly did NOT adopt CE C-8, noting that CE C-8
-            actions are covered by existing Department-wide CEs. NTIA/state broadband office
-            NEPA processes vary by state BEAD plan. Verify the state's specific NEPA process
+            <strong>NTIA/BEAD:</strong> NTIA's 2024 CE rulemaking adopted a set of categorical exclusions for BEAD, including CE C-8, which covers aerial and buried fiber in existing ROW. For a BEAD project, CE C-8 is the applicable exclusion and the NTIA/state broadband office makes the determination; processes vary by state BEAD plan. Verify the state's specific NEPA process
             with the NTIA-approved state broadband office before starting.
           </li>
         </ul>
@@ -1066,7 +1063,8 @@ export default function T09L02_NepaTypes() {
       <ReferencesBlock
         items={[
           { citation: '42 USC §4332', note: 'The NEPA action-forcing section — the statutory anchor for CE/EA/EIS review tiers, independent of any agency-specific implementing regulation.' },
-          { citation: '7 CFR Part 1b', note: 'RUS/USDA NEPA implementing procedures (eff. April 3, 2026; replaced 7 CFR Part 1970 §1970.54) — the source of CE C-8 for RUS-financed fiber construction in existing ROW.' },
+          { citation: '7 CFR Part 1b', note: 'RUS/USDA NEPA implementing procedures (eff. April 3, 2026; replaced 7 CFR Part 1970) — the source of RUS\'s own categorical exclusion for RUS-financed fiber in existing ROW. Distinct from NTIA\'s CE C-8.' },
+          { citation: 'NTIA BEAD categorical exclusions (2024)', note: 'The source of CE C-8 — NTIA\'s categorical exclusion for aerial and buried fiber in existing rights-of-way on BEAD-funded projects.' },
           { citation: '40 CFR §1508.4 (removed eff. Jan. 8, 2026)', note: 'The former CEQ definition of "extraordinary circumstances" — the concept survives in each agency\'s own NEPA procedures even though this specific CFR section was removed.' },
           { citation: '16 USC §1536', note: 'ESA Section 7 consultation — triggered when a categorical exclusion\'s extraordinary-circumstances check turns up T&E species habitat.' },
           { citation: '54 USC §306108', note: 'NHPA Section 106 — triggered when the extraordinary-circumstances check turns up historic properties in the Area of Potential Effect (covered in full in the Section 106 lesson).' },

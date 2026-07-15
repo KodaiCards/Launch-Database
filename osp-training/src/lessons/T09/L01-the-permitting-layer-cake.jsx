@@ -119,12 +119,12 @@ export default function T09L01_ThePermittingLayerCake() {
             <tr className="border-t border-white/10">
               <td className="px-3 py-2 font-mono">NEPA</td>
               <td className="px-3 py-2">National Environmental Policy Act</td>
-              <td className="px-3 py-2">Federal law requiring environmental review for federal actions — covered in depth in T09.L02</td>
+              <td className="px-3 py-2">Federal law requiring environmental review for federal actions — covered in depth in the NEPA lesson</td>
             </tr>
             <tr className="border-t border-white/10">
               <td className="px-3 py-2 font-mono">USACE</td>
               <td className="px-3 py-2">U.S. Army Corps of Engineers</td>
-              <td className="px-3 py-2">Federal agency that issues wetland crossing permits; covered in T09.L05</td>
+              <td className="px-3 py-2">Federal agency that issues wetland crossing permits; covered in the USACE Wetlands lesson</td>
             </tr>
             <tr className="border-t border-white/10">
               <td className="px-3 py-2 font-mono">DOT</td>

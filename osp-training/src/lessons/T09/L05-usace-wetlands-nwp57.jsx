@@ -57,12 +57,12 @@ export const meta = {
     {
       term: 'NWP 57',
       definition:
-        'Nationwide Permit 57 — the USACE permit authorizing utility line activities for electric utility lines, telecommunications lines, and other utility lines, issued as part of the 2021 nationwide permit reissuance. NWP 57 replaced NWP 12 coverage for telecom activities (NWP 12 post-2021 covers oil/gas pipelines only). NWP 57 is a general permit — it pre-authorizes qualifying activities without requiring individual-permit review, subject to conditions including PCN requirements for larger impacts. [Verify current NWP number, conditions, and PCN thresholds against the USACE reissuance current at time of project — NWPs are reissued on 5-year cycles.]',
+        'Nationwide Permit 57 — the USACE permit authorizing utility line activities for electric utility lines, telecommunications lines, and other utility lines, issued as part of the 2021 nationwide permit reissuance. NWP 57 replaced NWP 12 coverage for telecom activities (NWP 12 post-2021 covers oil/gas pipelines only). NWP 57 is a general permit — it pre-authorizes qualifying activities without requiring individual-permit review, subject to conditions including PCN requirements for larger impacts. Verify current NWP number, conditions, and PCN thresholds against the USACE reissuance current at time of project — NWPs are reissued on 5-year cycles.',
     },
     {
       term: 'PCN (pre-construction notification)',
       definition:
-        'Pre-construction notification — a notification submitted to the USACE district office before beginning work authorized under a nationwide permit (including NWP 57) when specific conditions trigger the PCN requirement. PCN is required when a project exceeds certain acreage or linear-foot thresholds, affects wetlands above a set area, or when listed conditions (species habitat, cultural resources, proximity to special aquatic sites) are present. USACE has 45 days to respond to a PCN; the applicant may proceed after 45 days if no USACE objection is received. [Confirm current PCN thresholds against the active USACE NWP reissuance.]',
+        'Pre-construction notification — a notification submitted to the USACE district office before beginning work authorized under a nationwide permit (including NWP 57) when specific conditions trigger the PCN requirement. PCN is required when a project exceeds certain acreage or linear-foot thresholds, affects wetlands above a set area, or when listed conditions (species habitat, cultural resources, proximity to special aquatic sites) are present. USACE has 45 days to respond to a PCN; the applicant may proceed after 45 days if no USACE objection is received. Confirm current PCN thresholds against the active USACE NWP reissuance.',
     },
     {
       term: 'individual permit',
@@ -203,12 +203,12 @@ export default function T09L05_USACEWetlandsNWP57() {
             {
               id: 'T09-L05-fc-nwp57',
               front: 'What is NWP 57 and what replaced NWP 12 for telecom?',
-              back: 'Nationwide Permit 57 — the USACE permit authorizing utility line activities for telecom lines (and other utility lines), issued in the 2021 nationwide permit reissuance. NWP 57 replaced NWP 12 coverage for telecom activities (NWP 12 post-2021 covers oil/gas pipelines only). [Verify current NWP number and conditions against the USACE reissuance current at time of project — NWPs are reissued on 5-year cycles.]',
+              back: 'Nationwide Permit 57 — the USACE permit authorizing utility line activities for telecom lines (and other utility lines), issued in the 2021 nationwide permit reissuance. NWP 57 replaced NWP 12 coverage for telecom activities (NWP 12 post-2021 covers oil/gas pipelines only). Verify current NWP number and conditions against the USACE reissuance current at time of project — NWPs are reissued on 5-year cycles.',
             },
             {
               id: 'T09-L05-fc-pcn',
               front: 'What is a PCN and when is it required under NWP 57?',
-              back: 'Pre-construction notification — a notification submitted to the USACE district office before beginning work authorized under NWP 57 when specific conditions trigger the PCN requirement. PCN is required when a project exceeds certain acreage or linear-foot thresholds, affects wetlands above a set area, or when listed conditions are present. USACE has 45 days to respond to a PCN. [Confirm current PCN thresholds against the active USACE NWP reissuance.]',
+              back: 'Pre-construction notification — a notification submitted to the USACE district office before beginning work authorized under NWP 57 when specific conditions trigger the PCN requirement. PCN is required when a project exceeds certain acreage or linear-foot thresholds, affects wetlands above a set area, or when listed conditions are present. USACE has 45 days to respond to a PCN. Confirm current PCN thresholds against the active USACE NWP reissuance.',
             },
             {
               id: 'T09-L05-fc-individual-permit',

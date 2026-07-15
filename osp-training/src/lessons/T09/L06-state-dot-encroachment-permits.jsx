@@ -207,8 +207,8 @@ export default function T09L06_StateDOTEncroachmentPermits() {
             <p className="text-sm text-slate-300/90 mt-1">
               The DOT's standard permit application: project description, applicant info,
               contractor info, bond amount, insurance coverage. Every state has a different
-              form — download from the state DOT's permit portal before starting. [Confirm
-              with AHJ for current form version.]
+              form — download from the state DOT's permit portal before starting. Confirm
+              with AHJ for current form version.
             </p>
           </div>
           <div className="p-3 border border-white/10 rounded-lg bg-white/3">
@@ -218,8 +218,8 @@ export default function T09L06_StateDOTEncroachmentPermits() {
               placement. Vertical profile showing conduit depth, bore entry/exit geometry,
               clearance from pavement subgrade, and utility conflicts. Drawings must be
               to scale. Many states require PE stamp from a PE licensed in that state.
-              [Confirm PE stamp requirement and licensing requirements with AHJ — varies
-              by state and sometimes by DOT district within the state.]
+              Confirm PE stamp requirement and licensing requirements with AHJ — varies
+              by state and sometimes by DOT district within the state.
             </p>
           </div>
           <div className="p-3 border border-white/10 rounded-lg bg-white/3">
@@ -229,7 +229,7 @@ export default function T09L06_StateDOTEncroachmentPermits() {
               work-zone signing sequence, and night-work restrictions. Must reference and
               comply with the MUTCD (current edition) and any state DOT TCP supplement.
               For overnight work: additional requirements for lighting, reflective signing,
-              and advanced warning distances. [Confirm state-specific TCP requirements with AHJ.]
+              and advanced warning distances. Confirm state-specific TCP requirements with AHJ.
             </p>
           </div>
           <div className="p-3 border border-white/10 rounded-lg bg-white/3">
@@ -238,8 +238,8 @@ export default function T09L06_StateDOTEncroachmentPermits() {
               Bond amount set by the DOT based on scope. Insurance minimums typically include
               commercial general liability (CGL) of at least $1M–$2M per occurrence, auto
               liability, and workers' compensation. The DOT is typically named as an
-              additional insured on the CGL policy. [Confirm bond amount and insurance
-              minimums with the specific DOT district — varies by state and project scope.]
+              additional insured on the CGL policy. Confirm bond amount and insurance
+              minimums with the specific DOT district — varies by state and project scope.
             </p>
           </div>
           <div className="p-3 border border-white/10 rounded-lg bg-white/3">
@@ -256,7 +256,7 @@ export default function T09L06_StateDOTEncroachmentPermits() {
             <p className="text-sm text-slate-300/90 mt-1">
               State DOT permit fees range from a few hundred dollars to several thousand
               dollars per crossing, depending on the state and the complexity of the work.
-              Fee schedules are published by each DOT. [Confirm current fee schedule with AHJ.]
+              Fee schedules are published by each DOT. Confirm current fee schedule with AHJ.
             </p>
           </div>
         </div>
@@ -308,8 +308,8 @@ export default function T09L06_StateDOTEncroachmentPermits() {
           "AS BUILT," GPS coordinates of bore entry and exit pits, recorded conduit depths
           at specified intervals, and any deviations from the permitted design with explanation.
           Format requirements vary by state (some accept PDF; others require GIS files or
-          CADD). [Confirm as-built format requirements with AHJ before construction starts
-          — easier to collect during construction than to reconstruct afterward.]
+          CADD). Confirm as-built format requirements with AHJ before construction starts
+          — easier to collect during construction than to reconstruct afterward.
         </p>
 
         <div className="mt-4 p-4 border border-amber-400/30 bg-amber-400/5 rounded-lg text-sm">
@@ -354,8 +354,8 @@ export default function T09L06_StateDOTEncroachmentPermits() {
           qualifies as "significant") varies by state and FHWA division office — some states
           have programmatic agreements with FHWA that allow most telecom encroachments to
           proceed without per-project FHWA concurrence; others require it for every crossing
-          of a federal-aid route. [Confirm FHWA concurrence requirement with the DOT district
-          for each federal-aid road crossing on your route.]
+          of a federal-aid route. Confirm FHWA concurrence requirement with the DOT district
+          for each federal-aid road crossing on your route.
         </p>
 
         <h3 className="mt-5 font-semibold">PE stamp requirements by state — the variation problem</h3>

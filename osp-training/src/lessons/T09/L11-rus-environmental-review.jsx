@@ -1,7 +1,7 @@
 // T09.L11 — RUS Environmental Review
 // Advanced lesson: 7 CFR Part 1b (formerly Part 1970) RUS NEPA; CE checklist; EIM vs. full report; BEAD vs. RUS procedures
 // Sources: net-new; 7 CFR Part 1b (effective April 3, 2026, FR 2026-06537, replaces 7 CFR Part 1970); RUS Form 307; NTIA BEAD NEPA
-// Note: NTIA adopted its own Commerce Dept-level CEs for BEAD; it did NOT adopt CE C-8 (RUS nomenclature) — see body text
+// Note: CE C-8 is NTIA's BEAD categorical exclusion; RUS uses its own CE under 7 CFR Part 1b — see body text
 
 import React from 'react';
 import LessonLayout from '../../components/LessonLayout.jsx';
@@ -59,7 +59,7 @@ export const meta = {
     {
       term: '7 CFR Part 1b',
       definition:
-        'Title 7, Code of Federal Regulations, Part 1b — the USDA/RUS Environmental Policies and Procedures regulation, effective April 3, 2026 (FR 2026-06537). Part 1b replaced 7 CFR Part 1970 (which itself replaced 7 CFR Part 1794) and governs how RUS and USDA Rural Development implement NEPA for all financed projects, including telecommunications, electric, and water/waste programs. It defines categorical exclusions and extraordinary circumstances for RUS project review. [Verify current section numbers and CE class designations against eCFR at time of application.]',
+        'Title 7, Code of Federal Regulations, Part 1b — the USDA/RUS Environmental Policies and Procedures regulation, effective April 3, 2026 (FR 2026-06537). Part 1b replaced 7 CFR Part 1970 (which itself replaced 7 CFR Part 1794) and governs how RUS and USDA Rural Development implement NEPA for all financed projects, including telecommunications, electric, and water/waste programs. It defines categorical exclusions and extraordinary circumstances for RUS project review. Verify current section numbers and CE class designations against eCFR at time of application.',
     },
     {
       term: 'Environmental Impact Memorandum (EIM)',
