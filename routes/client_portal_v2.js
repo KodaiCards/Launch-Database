@@ -73,6 +73,10 @@ module.exports = function installClientPortalV2(app, pool, { requireAuth }) {
   const { logAudit } = require('./_audit');
 
   const requireClientAuthMW = requireClientAuth(pool);
+  // System F (#77): the client-org admin endpoints are delegable via people.manage
+  // (admin still passes — requirePermission admits admin by role).
+  const { requirePermission } = require('./_permissions');
+  const canManagePeople = requirePermission(pool, 'people.manage');
 
   function clientCookieOpts() {
     return {
@@ -325,7 +329,7 @@ module.exports = function installClientPortalV2(app, pool, { requireAuth }) {
   // ══════════════════════════════════════════════════════════════════════
 
   // ── List orgs ──────────────────────────────────────────────────────────
-  app.get('/api/admin/client-orgs', requireAuth(['admin']), async (req, res) => {
+  app.get('/api/admin/client-orgs', canManagePeople, async (req, res) => {
     try {
       const { rows } = await pool.query(`
         SELECT
@@ -361,7 +365,7 @@ module.exports = function installClientPortalV2(app, pool, { requireAuth }) {
   });
 
   // ── Create org ─────────────────────────────────────────────────────────
-  app.post('/api/admin/client-orgs', requireAuth(['admin']), async (req, res) => {
+  app.post('/api/admin/client-orgs', canManagePeople, async (req, res) => {
     const { name, short_name, logo_url, theme_color } = req.body || {};
     if (!name || !name.trim()) return res.status(400).json({ error: 'name required' });
     try {
@@ -378,7 +382,7 @@ module.exports = function installClientPortalV2(app, pool, { requireAuth }) {
   });
 
   // ── Get org detail (with users + token info) ──────────────────────────
-  app.get('/api/admin/client-orgs/:id', requireAuth(['admin']), async (req, res) => {
+  app.get('/api/admin/client-orgs/:id', canManagePeople, async (req, res) => {
     try {
       // W45-MED-2: UUID validation.
       if (!isValidUUID(req.params.id)) return res.status(400).json({ error: 'invalid id' });
@@ -427,7 +431,7 @@ module.exports = function installClientPortalV2(app, pool, { requireAuth }) {
   });
 
   // ── Update org ─────────────────────────────────────────────────────────
-  app.put('/api/admin/client-orgs/:id', requireAuth(['admin']), async (req, res) => {
+  app.put('/api/admin/client-orgs/:id', canManagePeople, async (req, res) => {
     // W45-MED-2: UUID validation.
     if (!isValidUUID(req.params.id)) return res.status(400).json({ error: 'invalid id' });
     const { name, short_name, logo_url, theme_color, status } = req.body || {};
@@ -462,7 +466,7 @@ module.exports = function installClientPortalV2(app, pool, { requireAuth }) {
   });
 
   // ── Create client user ─────────────────────────────────────────────────
-  app.post('/api/admin/client-orgs/:id/users', requireAuth(['admin']), async (req, res) => {
+  app.post('/api/admin/client-orgs/:id/users', canManagePeople, async (req, res) => {
     // W45-MED-2: UUID validation.
     if (!isValidUUID(req.params.id)) return res.status(400).json({ error: 'invalid id' });
     const { email, name, is_primary } = req.body || {};
@@ -494,7 +498,7 @@ module.exports = function installClientPortalV2(app, pool, { requireAuth }) {
   // ── Generate token for a user ──────────────────────────────────────────
   // Returns raw token ONCE. Admin copies + sends to client.
   // After this response the raw value is never seen again (only hash stored).
-  app.post('/api/admin/client-orgs/:id/users/:uid/tokens', requireAuth(['admin']), async (req, res) => {
+  app.post('/api/admin/client-orgs/:id/users/:uid/tokens', canManagePeople, async (req, res) => {
     // W45-MED-2: UUID validation for both :id and :uid.
     if (!isValidUUID(req.params.id) || !isValidUUID(req.params.uid)) {
       return res.status(400).json({ error: 'invalid id' });
@@ -541,7 +545,7 @@ module.exports = function installClientPortalV2(app, pool, { requireAuth }) {
   });
 
   // ── Revoke token ───────────────────────────────────────────────────────
-  app.post('/api/admin/client-tokens/:tid/revoke', requireAuth(['admin']), async (req, res) => {
+  app.post('/api/admin/client-tokens/:tid/revoke', canManagePeople, async (req, res) => {
     // W45-MED-2: UUID validation.
     if (!isValidUUID(req.params.tid)) return res.status(400).json({ error: 'invalid id' });
     try {
@@ -838,7 +842,7 @@ module.exports = function installClientPortalV2(app, pool, { requireAuth }) {
   });
 
   // ── Create approval (admin only) ────────────────────────────────────────
-  app.post('/api/admin/client-orgs/:id/approvals', requireAuth(['admin']), async (req, res) => {
+  app.post('/api/admin/client-orgs/:id/approvals', canManagePeople, async (req, res) => {
     try {
       if (!isValidUUID(req.params.id)) return res.status(400).json({ error: 'invalid org id' });
 

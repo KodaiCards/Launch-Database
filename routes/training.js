@@ -171,6 +171,11 @@ function deriveVisible(lessonSet, tree) {
 const PASS_THRESHOLD = 70;
 
 module.exports = function installTrainingRoutes(app, pool, { requireAuth }) {
+  // System F (#77): training content administration (catalog/publish/default/
+  // presets/access) is delegable via training.admin (admin still passes —
+  // requirePermission admits admin by role).
+  const { requirePermission } = require('./_permissions');
+  const canAdminTraining = requirePermission(pool, 'training.admin');
 
   // ─── GET /api/training/progress ─────────────────────────────────────────────
   // Returns the current user's full progress map: an array of training_progress
@@ -1071,7 +1076,7 @@ module.exports = function installTrainingRoutes(app, pool, { requireAuth }) {
   });
 
   // Full content tree (tracks → subjects → lessons) for the admin toggles.
-  app.get('/api/training/catalog-tree', requireAuth(['admin']), (req, res) => {
+  app.get('/api/training/catalog-tree', canAdminTraining, (req, res) => {
     res.json({ tracks: curriculumTree().tracks });
   });
 
@@ -1115,7 +1120,7 @@ module.exports = function installTrainingRoutes(app, pool, { requireAuth }) {
   }
 
   // ── Publish — the lessons that are live to trainees at all (per-lesson + bulk track/subject).
-  app.get('/api/training/published', requireAuth(['admin']), async (req, res) => {
+  app.get('/api/training/published', canAdminTraining, async (req, res) => {
     try {
       res.json({ tracks: curriculumTree().tracks, published_lessons: Array.from(await publishedLessonSet()) });
     } catch (err) {
@@ -1125,7 +1130,7 @@ module.exports = function installTrainingRoutes(app, pool, { requireAuth }) {
   });
   // PUT { lesson_ids:[...] } → REPLACE the published set (lesson-granular). Track/subject
   // bulk toggles are expanded to lesson ids client-side, so Publish stays exact + global.
-  app.put('/api/training/published', requireAuth(['admin']), async (req, res) => {
+  app.put('/api/training/published', canAdminTraining, async (req, res) => {
     if (!Array.isArray(req.body && req.body.lesson_ids)) return res.status(400).json({ error: 'lesson_ids must be an array' });
     try {
       const tree = curriculumTree();
@@ -1146,7 +1151,7 @@ module.exports = function installTrainingRoutes(app, pool, { requireAuth }) {
   // default = the OSP subject, stored as a track/subject scope; NOT a hard-coded lesson
   // list). GET returns the saved scopes + the resolved lessons + published set so the
   // editor can show per-subject selection and flag "defaulted but not yet published".
-  app.get('/api/training/default', requireAuth(['admin']), async (req, res) => {
+  app.get('/api/training/default', canAdminTraining, async (req, res) => {
     try {
       const scopes = await defaultIntentScopes();
       const intent = scopesToLessonSet(scopes, curriculumTree());
@@ -1165,7 +1170,7 @@ module.exports = function installTrainingRoutes(app, pool, { requireAuth }) {
   // PUT { scopes:[{scope_type,scope_id}] } → REPLACE the new-user-default subjects (stored
   // as-is; the resolver intersects with published). NOT clamped to published (Q1). Accepts
   // lesson scopes too (finer control), but the primary UX is subject/track selection.
-  app.put('/api/training/default', requireAuth(['admin']), async (req, res) => {
+  app.put('/api/training/default', canAdminTraining, async (req, res) => {
     const scopes = (req.body && req.body.scopes);
     if (!Array.isArray(scopes)) return res.status(400).json({ error: 'scopes must be an array' });
     try {
@@ -1182,7 +1187,7 @@ module.exports = function installTrainingRoutes(app, pool, { requireAuth }) {
 
   // ── Presets (named reusable bundles) — kept for convenience; the resolver no longer
   // depends on them. The two reserved presets are hidden + non-editable here.
-  app.get('/api/training/presets', requireAuth(['admin']), async (req, res) => {
+  app.get('/api/training/presets', canAdminTraining, async (req, res) => {
     try {
       const presets = (await pool.query(
         "SELECT id, name, description, created_at FROM training_presets WHERE name <> ALL($1) ORDER BY name",
@@ -1209,7 +1214,7 @@ module.exports = function installTrainingRoutes(app, pool, { requireAuth }) {
   }
   function reservedName(name) { return RESERVED_PRESET_NAMES.has(String(name || '').trim()); }
 
-  app.post('/api/training/presets', requireAuth(['admin']), async (req, res) => {
+  app.post('/api/training/presets', canAdminTraining, async (req, res) => {
     const name = String((req.body && req.body.name) || '').trim();
     if (!name || name.length > 120) return res.status(400).json({ error: 'name required (≤120 chars)' });
     if (reservedName(name)) return res.status(400).json({ error: 'that name is reserved' });
@@ -1235,7 +1240,7 @@ module.exports = function installTrainingRoutes(app, pool, { requireAuth }) {
     } finally { client.release(); }
   });
 
-  app.put('/api/training/presets/:id', requireAuth(['admin']), async (req, res) => {
+  app.put('/api/training/presets/:id', canAdminTraining, async (req, res) => {
     const id = String(req.params.id || '');
     if (!UUID_RE.test(id)) return res.status(400).json({ error: 'bad id' });
     const name = String((req.body && req.body.name) || '').trim();
@@ -1268,7 +1273,7 @@ module.exports = function installTrainingRoutes(app, pool, { requireAuth }) {
     } finally { client.release(); }
   });
 
-  app.delete('/api/training/presets/:id', requireAuth(['admin']), async (req, res) => {
+  app.delete('/api/training/presets/:id', canAdminTraining, async (req, res) => {
     const id = String(req.params.id || '');
     if (!UUID_RE.test(id)) return res.status(400).json({ error: 'bad id' });
     try {
@@ -1285,7 +1290,7 @@ module.exports = function installTrainingRoutes(app, pool, { requireAuth }) {
   // ── Per-user grant/revoke — add/remove tracks & lessons for ONE person.
   // overrides: [{scope_type:'track'|'subject'|'lesson', scope_id, mode:'show'|'hide'}].
   // SHOW grants on top of the default; HIDE revokes and ALWAYS wins (even if already seen).
-  app.get('/api/training/access/:userId', requireAuth(['admin']), async (req, res) => {
+  app.get('/api/training/access/:userId', canAdminTraining, async (req, res) => {
     const userId = String(req.params.userId || '');
     if (!UUID_RE.test(userId)) return res.status(400).json({ error: 'bad userId' });
     try {
@@ -1304,7 +1309,7 @@ module.exports = function installTrainingRoutes(app, pool, { requireAuth }) {
     }
   });
 
-  app.put('/api/training/access/:userId', requireAuth(['admin']), async (req, res) => {
+  app.put('/api/training/access/:userId', canAdminTraining, async (req, res) => {
     const userId = String(req.params.userId || '');
     if (!UUID_RE.test(userId)) return res.status(400).json({ error: 'bad userId' });
     const overrides = (req.body && req.body.overrides) || [];

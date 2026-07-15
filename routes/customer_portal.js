@@ -34,6 +34,11 @@ function isValidUUID(v) { return UUID_RE.test(v); }
 
 module.exports = function installCustomerPortalRoutes(app, pool, mw) {
   const { requireAuth, requireAdmin } = mw;
+  // System F (#77): customer-client admin (progress + customer↔client links) is
+  // delegable via people.manage (admin still passes — requirePermission admits
+  // admin by role). The customer self-portal routes below stay as-is.
+  const { requirePermission } = require('./_permissions');
+  const canManagePeople = requirePermission(pool, 'people.manage');
 
   // --- Helper: load the client_id list for the current user ---
   // Returns []  when the user has no customer_clients rows.
@@ -396,7 +401,7 @@ module.exports = function installCustomerPortalRoutes(app, pool, mw) {
 
   // --- Admin: Client Progress view ---
   // NOTE: expected_revenue intentionally retained — admin-only endpoint.
-  app.get('/api/admin/client-progress', requireAdmin, async (req, res) => {
+  app.get('/api/admin/client-progress', canManagePeople, async (req, res) => {
     try {
       const { rows } = await pool.query(`
         SELECT
@@ -477,7 +482,7 @@ module.exports = function installCustomerPortalRoutes(app, pool, mw) {
 
   // --- Admin: manage customer <-> client links ---
   // F8: UUID guard on user_id.
-  app.get('/api/customer-clients/:user_id', requireAdmin, async (req, res) => {
+  app.get('/api/customer-clients/:user_id', canManagePeople, async (req, res) => {
     if (!isValidUUID(req.params.user_id)) {
       return res.status(400).json({ error: 'Invalid user_id.' });
     }
@@ -497,7 +502,7 @@ module.exports = function installCustomerPortalRoutes(app, pool, mw) {
   });
 
   // F9: audit-log authorization-control grant.
-  app.post('/api/customer-clients', requireAdmin, async (req, res) => {
+  app.post('/api/customer-clients', canManagePeople, async (req, res) => {
     const { user_id, client_id } = req.body || {};
     if (!user_id || !client_id) return res.status(400).json({ error: 'user_id and client_id required' });
     try {
@@ -531,7 +536,7 @@ module.exports = function installCustomerPortalRoutes(app, pool, mw) {
   // F8: UUID guards on both params.
   // F9: audit-log authorization-control revoke.
   // F10: 404 when link does not exist (rowCount === 0).
-  app.delete('/api/customer-clients/:user_id/:client_id', requireAdmin, async (req, res) => {
+  app.delete('/api/customer-clients/:user_id/:client_id', canManagePeople, async (req, res) => {
     if (!isValidUUID(req.params.user_id)) {
       return res.status(400).json({ error: 'Invalid user_id.' });
     }

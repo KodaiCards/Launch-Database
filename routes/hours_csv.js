@@ -246,8 +246,14 @@ function inferJobTitle(filename, rows2d, headerIdx) {
 
 module.exports = function installHoursCsvRoutes(app, pool, mw) {
   const { requireAdmin, upload, auditTimeEntry } = mw;
+  // System F (#77): CSV hours edit/commit is delegable via hours.edit_all; the
+  // review-queue READS via hours.view_all (admin still passes on both —
+  // requirePermission admits admin by role).
+  const { requirePermission } = require('./_permissions');
+  const canEditAllHours = requirePermission(pool, 'hours.edit_all');
+  const canViewAllHours = requirePermission(pool, 'hours.view_all');
 
-  app.post('/api/hours/csv-validate', requireAdmin, upload.single('file'), async (req, res) => {
+  app.post('/api/hours/csv-validate', canEditAllHours, upload.single('file'), async (req, res) => {
     if (!req.file) return res.status(400).json({ error: 'No file uploaded' });
     const overrideYear = req.body.override_year ? parseInt(req.body.override_year, 10) : null;
 
@@ -830,7 +836,7 @@ module.exports = function installHoursCsvRoutes(app, pool, mw) {
     }
   });
 
-  app.post('/api/hours/csv-edit-row', requireAdmin, async (req, res) => {
+  app.post('/api/hours/csv-edit-row', canEditAllHours, async (req, res) => {
     const { stage_id, row_num, patch } = req.body;
     if (!stage_id || !row_num || !patch) return res.status(400).json({ error: 'stage_id, row_num, patch required' });
     const staged = csvStage.get(stage_id);
@@ -881,7 +887,7 @@ module.exports = function installHoursCsvRoutes(app, pool, mw) {
     }
   });
 
-  app.post('/api/hours/csv-commit', requireAdmin, async (req, res) => {
+  app.post('/api/hours/csv-commit', canEditAllHours, async (req, res) => {
     const {
       stage_id,
       create_staff = [],
@@ -1193,7 +1199,7 @@ module.exports = function installHoursCsvRoutes(app, pool, mw) {
 
   // Persist unmatched rows from a completed CSV import session into the
   // review queue so admins can manually map them instead of silently losing them.
-  app.post('/api/hours/csv-queue-unmatched', requireAdmin, async (req, res) => {
+  app.post('/api/hours/csv-queue-unmatched', canEditAllHours, async (req, res) => {
     const { stage_id, csv_filename } = req.body;
     if (!stage_id) return res.status(400).json({ error: 'stage_id required' });
     const staged = csvStage.get(stage_id);
@@ -1245,7 +1251,7 @@ module.exports = function installHoursCsvRoutes(app, pool, mw) {
   });
 
   // List queued rows, optionally filtered by status.
-  app.get('/api/csv-review-queue', requireAdmin, async (req, res) => {
+  app.get('/api/csv-review-queue', canViewAllHours, async (req, res) => {
     const { status = 'pending', limit = 100, offset = 0 } = req.query;
     const validStatuses = ['pending', 'matched', 'discarded', 'all'];
     const statusFilter = validStatuses.includes(status) ? status : 'pending';
@@ -1280,7 +1286,7 @@ module.exports = function installHoursCsvRoutes(app, pool, mw) {
   });
 
   // Admin manually matches a queued row to a project → creates time_entry + marks matched.
-  app.post('/api/csv-review-queue/:id/match', requireAdmin, async (req, res) => {
+  app.post('/api/csv-review-queue/:id/match', canEditAllHours, async (req, res) => {
     const { project_id } = req.body;
     if (!project_id) return res.status(400).json({ error: 'project_id required' });
 
@@ -1356,7 +1362,7 @@ module.exports = function installHoursCsvRoutes(app, pool, mw) {
   });
 
   // Admin discards a queued row — it won't be imported.
-  app.post('/api/csv-review-queue/:id/discard', requireAdmin, async (req, res) => {
+  app.post('/api/csv-review-queue/:id/discard', canEditAllHours, async (req, res) => {
     try {
       const result = await pool.query(
         `UPDATE csv_review_queue
@@ -1391,7 +1397,7 @@ module.exports = function installHoursCsvRoutes(app, pool, mw) {
   });
 
   // Convenience: get pending count for the badge/notification in the UI.
-  app.get('/api/csv-review-queue/pending-count', requireAdmin, async (req, res) => {
+  app.get('/api/csv-review-queue/pending-count', canViewAllHours, async (req, res) => {
     try {
       const { rows } = await pool.query(
         `SELECT COUNT(*) AS count FROM csv_review_queue WHERE status = 'pending'`

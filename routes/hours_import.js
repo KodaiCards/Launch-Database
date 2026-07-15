@@ -34,6 +34,10 @@ const STAGE_TTL_MS = 60 * 60 * 1000; // 1h, matches the legacy stage lifetime
 
 module.exports = function installHoursImportRoutes(app, pool, mw) {
   const { requireAdmin, upload } = mw;
+  // System F (#77): CSV hours import is delegable via hours.edit_all (admin still
+  // passes — requirePermission admits admin by role).
+  const { requirePermission } = require('./_permissions');
+  const canEditAllHours = requirePermission(pool, 'hours.edit_all');
   const uid = (req) => (req && req.user && req.user.id) || null;
 
   // Build the three lookup maps the matcher needs, from current DB state.
@@ -81,7 +85,7 @@ module.exports = function installHoursImportRoutes(app, pool, mw) {
   }
 
   // ─── Validate: parse + match → staged preview ──────────────────────────────
-  app.post('/api/hours/import/validate', requireAdmin, upload.single('file'), async (req, res) => {
+  app.post('/api/hours/import/validate', canEditAllHours, upload.single('file'), async (req, res) => {
     if (!req.file) return res.status(400).json({ error: 'No file uploaded' });
     const overrideYear = req.body.override_year ? parseInt(req.body.override_year, 10) : null;
     try {
@@ -157,7 +161,7 @@ module.exports = function installHoursImportRoutes(app, pool, mw) {
 
   // ─── Commit: insert matched + inline-resolved rows → recompute ─────────────
   // Body: { stageId, overrides?: { "<rowIndex>": "<service_area_job_id>" }, skip?: [rowIndex,...] }
-  app.post('/api/hours/import/commit', requireAdmin, async (req, res) => {
+  app.post('/api/hours/import/commit', canEditAllHours, async (req, res) => {
     const { stageId } = req.body || {};
     const overrides = (req.body && req.body.overrides) || {};
     const skip = new Set(((req.body && req.body.skip) || []).map(Number));
