@@ -228,45 +228,49 @@ export default function T22L01_CFOTOverview() {
             id: 'Q1',
             stem: 'What is the primary difference between CFOT and CFOS-O certifications?',
             options: [
-              { text: 'CFOT is generalist (all fiber types, all environments); CFOS-O is specialist (OSP-focused).', correct: true },
-              { text: 'CFOT is OSP-only; CFOS-O covers inside plant and data centers.', correct: false },
-              { text: 'CFOT requires a practical exam; CFOS-O is written only.', correct: false },
-              { text: 'CFOT is for installers; CFOS-O is for designers only.', correct: false },
+              'CFOT is generalist (all fiber types, all environments); CFOS-O is specialist (OSP-focused).',
+              'CFOT is OSP-only; CFOS-O covers inside plant and data centers.',
+              'CFOT requires a practical exam; CFOS-O is written only.',
+              'CFOT is for installers; CFOS-O is for designers only.',
             ],
-            rationale: 'CFOT is the entry-level generalist cert covering all fiber environments. CFOS-O is a specialist cert focused on OSP engineering knowledge. CFOS-O assumes CFOT baseline.'
+            answerIndex: 0,
+            explanation: 'CFOT is the entry-level generalist cert covering all fiber environments. CFOS-O is a specialist cert focused on OSP engineering knowledge. CFOS-O assumes CFOT baseline.'
           },
           {
             id: 'Q2',
             stem: 'How many questions are on the CFOT written exam, and what is the time limit?',
             options: [
-              { text: '75 questions, 60 minutes', correct: true },
-              { text: '100 questions, 90 minutes', correct: false },
-              { text: '50 questions, 45 minutes', correct: false },
-              { text: '75 questions, 90 minutes', correct: false },
+              '75 questions, 60 minutes',
+              '100 questions, 90 minutes',
+              '50 questions, 45 minutes',
+              '75 questions, 90 minutes',
             ],
-            rationale: 'CFOT is 75 MC questions in 60 minutes (48 sec/question). CFOS-O is 100 questions in 90 minutes.'
+            answerIndex: 0,
+            explanation: 'CFOT is 75 MC questions in 60 minutes (48 sec/question). CFOS-O is 100 questions in 90 minutes.'
           },
           {
             id: 'Q3',
             stem: 'What approximate passing score is required for CFOT?',
             options: [
-              { text: '60% (~45 questions correct)', correct: false },
-              { text: '70% (~53 questions correct)', correct: true },
-              { text: '80% (~60 questions correct)', correct: false },
-              { text: '90% (~68 questions correct)', correct: false },
+              '60% (~45 questions correct)',
+              '70% (~53 questions correct)',
+              '80% (~60 questions correct)',
+              '90% (~68 questions correct)',
             ],
-            rationale: 'CFOT requires ~70% to pass, roughly 53 out of 75 questions. Passing once earns a 5-year credential.'
+            answerIndex: 1,
+            explanation: 'CFOT requires ~70% to pass, roughly 53 out of 75 questions. Passing once earns a 5-year credential.'
           },
           {
             id: 'Q4',
             stem: 'The five major CFOT exam domains are fiber basics, splicing, testing, installation, and…?',
             options: [
-              { text: 'Design principles', correct: false },
-              { text: 'Electrical grounding', correct: false },
-              { text: 'Safety & workmanship standards', correct: true },
-              { text: 'Cable manufacturing', correct: false },
+              'Design principles',
+              'Electrical grounding',
+              'Safety & workmanship standards',
+              'Cable manufacturing',
             ],
-            rationale: 'The five domains are Fiber Basics (13%), Splicing (27%), Testing (27%), Installation (20%), and Safety/Workmanship (13%). Safety is emphasized heavily because field injuries are real.'
+            answerIndex: 2,
+            explanation: 'The five domains are Fiber Basics (13%), Splicing (27%), Testing (27%), Installation (20%), and Safety/Workmanship (13%). Safety is emphasized heavily because field injuries are real.'
           },
         ]}
       />
