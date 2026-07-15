@@ -5,6 +5,7 @@
 import React from 'react';
 import LessonLayout from '../../components/LessonLayout.jsx';
 import Quiz from '../../components/primitives/Quiz.jsx';
+import GatedAssessment from '../../components/primitives/GatedAssessment.jsx';
 import Flashcard from '../../components/Flashcard.jsx';
 
 export const meta = {
@@ -185,8 +186,15 @@ export default function T09L07_RowEasementsPrivateProperty() {
 
       <section data-tier="foundations">
         <h3>Check Your Understanding</h3>
-        <Quiz
-          questions={[
+        <GatedAssessment
+          courseId="T09"
+          assessmentId="T09-L07"
+          title="Check — ROW, Easements, and Private Property"
+          fallback={
+          <Quiz
+            title="Check — ROW, Easements, and Private Property"
+            mode="multiple-choice"
+            questions={[
             {
               id: 'T09-L07-Q1',
               question: 'Which access instrument is the gold standard for long-term fiber routes across private property because it is recorded and binds future owners?',
@@ -238,6 +246,8 @@ export default function T09L07_RowEasementsPrivateProperty() {
               ],
             },
           ]}
+          />
+          }
         />
       </section>
 
