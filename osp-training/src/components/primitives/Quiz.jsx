@@ -44,7 +44,7 @@ export default function Quiz({ title, mode = 'multiple-choice', questions, onCom
   const q = rawQ ? {
     ...rawQ,
     id: rawQ.id ?? `q-${idx}`,
-    prompt: rawQ.prompt ?? rawQ.text ?? rawQ.question ?? '',
+    prompt: rawQ.prompt ?? rawQ.text ?? rawQ.question ?? rawQ.stem ?? '',
     choices: rawQ.choices ?? rawQ.options,
     answerIndex: rawQ.answerIndex ?? rawQ.correct ?? rawQ.correctIndex ??
       (rawQ.correctId && rawQ.options
