@@ -101,7 +101,7 @@
         "The project must pay a fee to the SHPO to waive the finding"
       ],
       "answerIndex": 1,
-      "explanation": "This synthesizes two T09.L03 concepts: an adverse-effect finding triggers further consultation/resolution (design change or MOA), not automatic termination — and the finding was only possible because the APE correctly included the viewshed as a functionally-defined area of potential effect, illustrating why APE scoping decisions have downstream consequences for what gets caught (or missed) in review.",
+      "explanation": "This synthesizes two Section 106 concepts: an adverse-effect finding triggers further consultation/resolution (design change or MOA), not automatic termination — and the finding was only possible because the APE correctly included the viewshed as a functionally-defined area of potential effect, illustrating why APE scoping decisions have downstream consequences for what gets caught (or missed) in review.",
       "citation": "36 CFR 800.5-800.6; 36 CFR 800.16(d); 54 USC 306108."
     },
     {
@@ -115,7 +115,7 @@
         "Neither party has jurisdiction once any part of the route crosses tribal land"
       ],
       "answerIndex": 1,
-      "explanation": "This combines two T09.L09 principles: consulting-party structure is segment-specific (THPO for on-tribal-land, SHPO for off-tribal-land portions of the same route), and government-to-government consultation follows a distinct protocol that can reasonably extend beyond the routine 30-day SHPO timeline.",
+      "explanation": "This combines two tribal-consultation principles: consulting-party structure is segment-specific (THPO for on-tribal-land, SHPO for off-tribal-land portions of the same route), and government-to-government consultation follows a distinct protocol that can reasonably extend beyond the routine 30-day SHPO timeline.",
       "citation": "54 USC 302702; 54 USC 306108."
     },
     {
@@ -143,7 +143,7 @@
         "Only the depth issue matters; PE licensing is nationally reciprocal by default"
       ],
       "answerIndex": 1,
-      "explanation": "Both issues reflect the same underlying principle from T09.L06: state DOT requirements (PE licensing rules, depth minimums) are binding conditions specific to that jurisdiction, not aspirational guidelines — an out-of-state-only PE stamp and a below-minimum as-built depth are both real compliance problems requiring resolution, not items to be smoothed over administratively."
+      "explanation": "Both issues reflect the same underlying principle from the state-DOT-permit lesson: state DOT requirements (PE licensing rules, depth minimums) are binding conditions specific to that jurisdiction, not aspirational guidelines — an out-of-state-only PE stamp and a below-minimum as-built depth are both real compliance problems requiring resolution, not items to be smoothed over administratively."
     },
     {
       "id": "T09-final-Q11",
@@ -156,7 +156,7 @@
         "Both scenarios are entirely lawful regardless of duration since municipalities have unlimited franchise authority"
       ],
       "answerIndex": 1,
-      "explanation": "The key distinction from T09.L08 is between reasonable ROW management (permissible) and a process that functions as an indefinite, effectively prohibitive barrier (the scenario Section 253(a) targets) — a franchise negotiation with no realistic end point crosses that line, while a bounded, reasonable process does not.",
+      "explanation": "The key distinction from the municipal-ROW lesson is between reasonable ROW management (permissible) and a process that functions as an indefinite, effectively prohibitive barrier (the scenario Section 253(a) targets) — a franchise negotiation with no realistic end point crosses that line, while a bounded, reasonable process does not.",
       "citation": "47 USC 253(a)."
     },
     {
@@ -184,7 +184,7 @@
         "There is no meaningful legal difference between an easement and a license"
       ],
       "answerIndex": 1,
-      "explanation": "This is the core T09.L07 tradeoff: administrative cost now (recording) versus risk exposure later (a license's revocability) — for infrastructure explicitly intended to be permanent, durable binding access across every future ownership change outweighs the heavier initial recording effort."
+      "explanation": "This is the core easement tradeoff: administrative cost now (recording) versus risk exposure later (a license's revocability) — for infrastructure explicitly intended to be permanent, durable binding access across every future ownership change outweighs the heavier initial recording effort."
     },
     {
       "id": "T09-final-Q14",
@@ -210,12 +210,12 @@
         "The PM has no influence over submission timing on either permit"
       ],
       "answerIndex": 1,
-      "explanation": "This is the T09.L10 concurrent-completion principle: differing review-period lengths mean same-day submission produces staggered completions, which creates idle-crew cost in either direction — genuine concurrency is a deliberate scheduling act (offsetting submission dates), not an automatic outcome of simultaneous filing."
+      "explanation": "This is the concurrent-completion principle: differing review-period lengths mean same-day submission produces staggered completions, which creates idle-crew cost in either direction — genuine concurrency is a deliberate scheduling act (offsetting submission dates), not an automatic outcome of simultaneous filing."
     },
     {
       "id": "T09-final-Q16",
       "type": "mc",
-      "prompt": "Under 7 CFR Part 1b, what does RUS Form 307 verify, and why does this closeout role matter beyond being a paperwork formality?",
+      "prompt": "Under 7 CFR Part 1b, what does the RUS construction closeout certification verify, and why does this closeout role matter beyond being a paperwork formality?",
       "choices": [
         "It verifies the applicant's initial funding eligibility before construction begins",
         "It is a post-construction closeout document confirming the project was built per approved plans and that environmental commitments made during review (e.g., a seasonal tree-clearing avoidance window, or a required bore method for a permitted wetland crossing) were actually followed — making environmental commitments made during planning enforceable through the closeout process rather than merely aspirational",
@@ -223,7 +223,7 @@
         "It is filed only when a project fails to meet its environmental commitments"
       ],
       "answerIndex": 1,
-      "explanation": "Form 307's function is to verify — after construction — that the specific environmental conditions attached during the CE/EIM review were actually honored in the field, which is what gives those planning-stage commitments real enforceability rather than leaving them as unverified promises.",
+      "explanation": "The closeout certification's function is to verify — after construction — that the specific environmental conditions attached during the CE/EIM review were actually honored in the field, which is what gives those planning-stage commitments real enforceability rather than leaving them as unverified promises.",
       "citation": "7 CFR Part 1b (eff. April 3, 2026)."
     },
     {
@@ -233,16 +233,16 @@
       "choices": [
         "Proceed with clearing since the CE was already granted before the delay occurred",
         "Stop and resolve the deviation (reschedule or pursue the consultation the EIM was meant to avoid) before clearing in the restricted window — the CE's validity was conditioned on the specific EIM commitment, so a schedule change that breaks that commitment reopens the issue; this mirrors the broader pattern that a field-level party (a construction crew here, a surveyor elsewhere) does not have the authority to unilaterally override a documented determination made through the proper review channel",
-        "Form 307 will simply document whatever actually happened, so no field-level action is needed",
+        "The closeout certification will simply document whatever actually happened, so no field-level action is needed",
         "Only the design engineer needs informal notice; construction may proceed regardless"
       ],
       "answerIndex": 1,
-      "explanation": "A CE granted on the strength of a specific EIM commitment is conditioned on that commitment being honored — deviating from it isn't a paperwork footnote but a real reopening of the extraordinary-circumstances issue, consistent with the broader T09 principle (echoing T04's site-walk pattern) that field-level parties document and route decisions to the appropriate authority rather than proceeding on their own judgment when a documented determination is at stake."
+      "explanation": "A CE granted on the strength of a specific EIM commitment is conditioned on that commitment being honored — deviating from it isn't a paperwork footnote but a real reopening of the extraordinary-circumstances issue, consistent with the broader permitting principle (echoing the route-survey site-walk pattern) that field-level parties document and route decisions to the appropriate authority rather than proceeding on their own judgment when a documented determination is at stake."
     },
     {
       "id": "T09-final-Q18",
       "type": "drag-match",
-      "prompt": "Match each T09 concept to the review/document it governs.",
+      "prompt": "Match each permitting and environmental concept to the review/document it governs.",
       "items": [
         { "id": "i_nexus", "label": "Federal funding or permit connecting a project to NEPA/Section 106/ESA review" },
         { "id": "i_thpo", "label": "Assumes SHPO's consulting-party role on tribal land" },
@@ -253,10 +253,10 @@
         { "id": "t_nexus", "label": "Federal nexus" },
         { "id": "t_thpo", "label": "THPO" },
         { "id": "t_eim", "label": "Environmental Impact Memorandum (EIM)" },
-        { "id": "t_form307", "label": "RUS Form 307" }
+        { "id": "t_form307", "label": "RUS construction closeout certification" }
       ],
       "correctMap": { "t_nexus": "i_nexus", "t_thpo": "i_thpo", "t_eim": "i_eim", "t_form307": "i_form307" },
-      "explanation": "Each concept anchors a distinct stage of the T09 permitting/environmental framework: the federal nexus determines whether federal review applies at all, a THPO can replace the SHPO for tribal-land Section 106 review, an EIM lets a project stay on the CE track despite a narrow extraordinary circumstance, and RUS Form 307 closes the loop by verifying after construction that the environmental commitments made during review were actually honored."
+      "explanation": "Each concept anchors a distinct stage of the permitting/environmental framework: the federal nexus determines whether federal review applies at all, a THPO can replace the SHPO for tribal-land Section 106 review, an EIM lets a project stay on the CE track despite a narrow extraordinary circumstance, and the RUS construction closeout certification closes the loop by verifying after construction that the environmental commitments made during review were actually honored."
     },
     {
       "id": "T09-final-Q19",
@@ -269,7 +269,7 @@
         "Tribal consultation is never part of the critical path regardless of timing"
       ],
       "answerIndex": 1,
-      "explanation": "This combines two T09.L09 points: government-to-government consultation can reasonably extend beyond the routine 30-day SHPO figure, and because the SHPO doesn't necessarily know a distant tribe's ancestral-lands interest in the APE, proactive early identification (rather than waiting for the SHPO to flag it) avoids discovering a schedule-critical requirement late."
+      "explanation": "This combines two tribal-consultation points: government-to-government consultation can reasonably extend beyond the routine 30-day SHPO figure, and because the SHPO doesn't necessarily know a distant tribe's ancestral-lands interest in the APE, proactive early identification (rather than waiting for the SHPO to flag it) avoids discovering a schedule-critical requirement late."
     },
     {
       "id": "T09-final-Q20",
@@ -296,12 +296,12 @@
         "Neither scenario involves any real jurisdictional variation since permitting rules are uniform nationwide"
       ],
       "answerIndex": 1,
-      "explanation": "This synthesizes the T09.L06 and T09.L08 pattern: state DOT requirements and municipal permit checklists are both jurisdiction-specific rather than nationally standardized, so an assumption of direct transferability between jurisdictions (whether states or cities) risks a real compliance or schedule failure — independent confirmation of the specific jurisdiction's current requirements is the defensible practice in both cases."
+      "explanation": "This synthesizes the DOT-permit and municipal-ROW pattern: state DOT requirements and municipal permit checklists are both jurisdiction-specific rather than nationally standardized, so an assumption of direct transferability between jurisdictions (whether states or cities) risks a real compliance or schedule failure — independent confirmation of the specific jurisdiction's current requirements is the defensible practice in both cases."
     },
     {
       "id": "T09-final-Q22",
       "type": "mc",
-      "prompt": "Across T09's regulatory landscape (NEPA, Section 106, ESA, USACE, tribal consultation, state/municipal permitting), what is the single recurring principle that ties together how a field-level or project-management team should handle an ambiguous or borderline finding (a possible wetland feature, an uncertain species impact, an unclear historic-property effect)?",
+      "prompt": "Across this topic's regulatory landscape (NEPA, Section 106, ESA, USACE, tribal consultation, state/municipal permitting), what is the single recurring principle that ties together how a field-level or project-management team should handle an ambiguous or borderline finding (a possible wetland feature, an uncertain species impact, an unclear historic-property effect)?",
       "choices": [
         "Always assume the most conservative, restrictive outcome to avoid any risk of a violation",
         "Always assume the most permissive outcome to avoid delaying the project",
@@ -309,7 +309,7 @@
         "Ignore ambiguous findings unless a regulatory agency proactively raises the issue first"
       ],
       "answerIndex": 2,
-      "explanation": "This is the unifying T09 principle, echoed across L05 (wetland ambiguity, post-Sackett), L04 (species screening), and L03/L09 (historic-property/tribal consulting-party identification): a field or project team's role is to accurately document and route ambiguous findings to the party with the actual authority and expertise to resolve them, not to make the binding determination themselves in either direction — neither over-conservative avoidance nor under-cautious dismissal serves the project as well as an accurate, well-routed record."
+      "explanation": "This is the unifying principle of this topic, echoed across the wetlands lesson (ambiguity post-Sackett), the ESA species-screening lesson, and the historic-property and tribal-consultation lessons: a field or project team's role is to accurately document and route ambiguous findings to the party with the actual authority and expertise to resolve them, not to make the binding determination themselves in either direction — neither over-conservative avoidance nor under-cautious dismissal serves the project as well as an accurate, well-routed record."
     }
   ]
 }
