@@ -36,7 +36,7 @@ export default function InteractiveQuiz({ title, questions, onComplete }) {
   // Defensive normalization: accept both old (question/options/correct) and new (prompt/choices/answerIndex) shapes
   const q = {
     ...rawQ,
-    prompt: rawQ.prompt ?? rawQ.text ?? rawQ.question ?? '',
+    prompt: rawQ.prompt ?? rawQ.text ?? rawQ.question ?? rawQ.stem ?? '',
     choices: rawQ.choices ?? rawQ.options ?? [],
     answerIndex: rawQ.answerIndex ?? rawQ.correct ?? rawQ.correctIndex ?? 0,
   };
