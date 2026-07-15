@@ -103,7 +103,7 @@ export const courses = [
     lesson_count: 12,
     prerequisites: ['T01', 'T04'],
     description:
-      'Permitting layer cake (federal/state/county/municipal), NEPA CE C-8, Section 106 NHPA/SHPO/THPO, ESA & IPaC, USACE NWP 12 (2026 reissue), state DOT encroachment, ROW/easement basics.',
+      'Permitting layer cake (federal/state/county/municipal), NTIA BEAD CE (C-8), Section 106 NHPA/SHPO/THPO, ESA & IPaC, USACE NWP 57 (telecom), state DOT encroachment, ROW/easement basics.',
   },
   // ── Teaching position 7 ──────────────────────────────────────────────────
   {

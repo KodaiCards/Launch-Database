@@ -18,7 +18,7 @@
       ],
       "answerIndex": 1,
       "explanation": "The NEPA statutory tiers run from least to most intensive: a Categorical Exclusion (CE) for actions with no significant environmental effect, an Environmental Assessment (EA) for actions where significance is uncertain, and an Environmental Impact Statement (EIS) for actions with likely significant impact. Most BEAD/RUS aerial fiber-in-existing-ROW projects qualify for a CE.",
-      "citation": "42 USC 4332 (NEPA statutory tiers). NOTE: CEQ's former implementing regulations at 40 CFR Parts 1500-1508 were removed from the CFR effective January 8, 2026; NEPA tiers are now implemented through agency-specific procedures rather than a single CEQ-wide regulation (see T09-L01-Q6 / research log)."
+      "citation": "42 USC 4332 (NEPA statutory tiers). NOTE: CEQ's former implementing regulations at 40 CFR Parts 1500-1508 were removed from the CFR effective January 8, 2026; NEPA tiers are now implemented through agency-specific procedures rather than a single CEQ-wide regulation."
     },
     {
       "id": "T09-L02-Q2",
@@ -79,7 +79,7 @@
     {
       "id": "T09-L02-Q6",
       "type": "mc",
-      "prompt": "Why does the T09.L02 lesson caution against treating a categorical exclusion as fully 'automatic' once a project's general type matches a listed CE category?",
+      "prompt": "Why does this lesson caution against treating a categorical exclusion as fully 'automatic' once a project's general type matches a listed CE category?",
       "choices": [
         "Because CEs were entirely eliminated by the January 2026 CEQ regulation removal",
         "Because a listed CE category is a necessary but not sufficient condition — the extraordinary-circumstances analysis is a separate, mandatory second check, and a documented factor like T&E species presence or a wetland crossing can take an otherwise-qualifying action out of CE eligibility until specifically addressed",

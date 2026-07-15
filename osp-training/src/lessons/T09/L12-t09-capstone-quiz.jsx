@@ -3,14 +3,16 @@
 
 import React from 'react';
 import LessonLayout from '../../components/LessonLayout.jsx';
+import ReferencesBlock from '../../components/ReferencesBlock.jsx';
 import Quiz from '../../components/primitives/Quiz.jsx';
+import GatedAssessment from '../../components/primitives/GatedAssessment.jsx';
 import BranchingScenario from '../../components/primitives/BranchingScenario.jsx';
 import Flashcard from '../../components/Flashcard.jsx';
 
 export const meta = {
   id: 'T09.L12',
   course_id: 'T09',
-  title: 'T09 Capstone Quiz — Permitting & Environmental',
+  title: 'Capstone Quiz — Permitting & Environmental',
   order: 12,
   lesson_type: 'capstone-quiz',
   prerequisites: [
@@ -95,8 +97,8 @@ export const key_terms = [
   { term: 'permit matrix', definition: 'A table documenting all federal, state, and local permits required for the project, their approval agency, timeline, and dependencies; used to track critical path.' },
   { term: 'permit critical path', definition: 'The sequence of permits that determines the minimum possible project schedule; delays on the critical path delay the entire project.' },
   { term: 'permit-to-construction date lag', definition: 'The time between final permit issuance and the ability to begin construction; may include post-permit design refinement, ROW acquisition, and stakeholder notifications.' },
-  { term: '7 CFR 1970', definition: 'USDA regulation covering environmental and cultural review procedures for RUS-funded programs; specifies when NEPA categorical exclusions and NHPA §106 reviews apply.' },
-  { term: 'Environmental Impact Memorandum (EIM)', definition: 'An RUS document summarizing NEPA review results and confirming that a project qualifies for categorical exclusion or other compliance path under 7 CFR 1970.' },
+  { term: '7 CFR Part 1b', definition: 'The USDA department-wide NEPA regulation (effective April 3, 2026) governing environmental and cultural review for RUS-funded programs; it replaced the former RUS-specific 7 CFR Part 1970 and specifies when NEPA categorical exclusions and NHPA §106 reviews apply.' },
+  { term: 'Environmental Impact Memorandum (EIM)', definition: 'An RUS document summarizing NEPA review results and confirming that a project qualifies for categorical exclusion or other compliance path under 7 CFR Part 1b.' },
   { term: 'RUS CE checklist', definition: 'A mandatory RUS form for qualifying projects for categorical exclusion; documents that no extraordinary circumstances are present and all RUS environmental requirements are met.' },
 ];
 
@@ -108,12 +110,13 @@ export default function T09L12_CapstoneQuiz() {
     <LessonLayout meta={meta}>
 
       <section data-tier="foundations">
-        <h2>T09 Capstone — Permitting &amp; Environmental</h2>
+        <h2>Capstone — Permitting &amp; Environmental</h2>
         <p>
-          This capstone covers all of T09.L01–L11. Every question is answerable from content
-          taught in T09 (and the prerequisite topics T01 and T04). If you get stuck, the
-          lesson reference in each explanation shows where to review. Score ≥ 80% (16/20)
-          to consider yourself ready for T10 (OSP Construction).
+          This capstone covers everything in the Permitting &amp; Environmental topic. Every
+          question is answerable from content taught in this topic (and the earlier
+          Fundamentals and Route Survey topics). If you get stuck, each explanation walks
+          through the reasoning. Score ≥ 80% (16/20) to consider yourself ready for the
+          OSP Construction topic.
         </p>
         <p className="mt-2">
           20 multiple-choice questions + 1 multi-permit scenario simulation. The scenario
@@ -122,7 +125,7 @@ export default function T09L12_CapstoneQuiz() {
 
         <h3 className="mt-6 font-semibold text-lg">Key Terms Review</h3>
         <p className="mt-2 text-sm text-slate-400">
-          Before diving into the quiz and scenario, use these flashcards to refresh your memory on core T09 permitting and environmental terminology.
+          Before diving into the quiz and scenario, use these flashcards to refresh your memory on core permitting and environmental terminology.
         </p>
         <Flashcard
           deckId="T09-L12"
@@ -135,10 +138,27 @@ export default function T09L12_CapstoneQuiz() {
       </section>
 
       {/* CAPSTONE QUIZ — 20 questions covering T09.L01-L11 */}
-      <Quiz
-        title="T09 Capstone Quiz — 20 Questions"
-        mode="multiple-choice"
-        questions={[
+      <ReferencesBlock
+        items={[
+          { citation: '42 USC §4321 et seq.', note: 'NEPA — the federal environmental-review law triggered by a federal nexus (BEAD/RUS funding).' },
+          { citation: '54 USC §306108', note: 'Section 106 of the NHPA — historic-properties consultation with the SHPO and, where applicable, THPOs.' },
+          { citation: '16 USC §1536', note: 'ESA Section 7 — endangered-species consultation (e.g. the northern long-eared bat).' },
+          { citation: '33 USC §1344; USACE Nationwide Permit 57', note: 'CWA Section 404 and the telecommunications nationwide permit for wetland/waterway crossings.' },
+          { citation: 'Sackett v. EPA, 598 U.S. 651 (2023)', note: 'Narrowed the definition of jurisdictional Waters of the U.S. — relevant to ambiguous wetland/drainage features.' },
+          { citation: '47 USC §253(a)', note: 'Limits state/local requirements (franchise, ROW fees) that effectively prohibit telecommunications service.' },
+          { citation: '7 CFR Part 1b', note: 'The USDA NEPA regulation (effective April 3, 2026) that replaced RUS 7 CFR Part 1970 — the RUS CE / EIM / EA framework.' },
+        ]}
+      />
+
+      <GatedAssessment
+        courseId="T09"
+        assessmentId="T09-final"
+        title="Capstone Quiz — 20 Questions"
+        fallback={
+        <Quiz
+          title="Capstone Quiz — 20 Questions"
+          mode="multiple-choice"
+          questions={[
           // ── FOUNDATIONS TIER (Q01-Q07) ──────────────────────────────────
           // L01: federal nexus + permit layer cake
           {
@@ -154,7 +174,7 @@ export default function T09L12_CapstoneQuiz() {
             ],
             answerIndex: 0,
             explanation:
-              'Federal funding = federal undertaking = federal nexus. When a project receives federal money (BEAD, RUS, HUD, FHWA, etc.), NEPA requires environmental review and Section 106 (NHPA) requires historic preservation consultation. Projects without federal funding, federal permits, or federal land involvement have no federal nexus and are not subject to NEPA or Section 106. T09.L01.',
+              'Federal funding = federal undertaking = federal nexus. When a project receives federal money (BEAD, RUS, HUD, FHWA, etc.), NEPA requires environmental review and Section 106 (NHPA) requires historic preservation consultation. Projects without federal funding, federal permits, or federal land involvement have no federal nexus and are not subject to NEPA or Section 106.',
           },
           // L02: NEPA tiers
           {
@@ -170,7 +190,7 @@ export default function T09L12_CapstoneQuiz() {
             ],
             answerIndex: 0,
             explanation:
-              'CE (Categorical Exclusion) is the lightest tier — for projects with normally insignificant environmental effects. EA (Environmental Assessment) with FONSI (Finding of No Significant Impact) is the middle tier — for projects where significance is uncertain. EIS (Environmental Impact Statement) is the most intensive tier — for projects with significant environmental effects. T09.L02.',
+              'CE (Categorical Exclusion) is the lightest tier — for projects with normally insignificant environmental effects. EA (Environmental Assessment) with FONSI (Finding of No Significant Impact) is the middle tier — for projects where significance is uncertain. EIS (Environmental Impact Statement) is the most intensive tier — for projects with significant environmental effects.',
           },
           // L02: CE C-8 extraordinary circumstance
           {
@@ -186,7 +206,7 @@ export default function T09L12_CapstoneQuiz() {
             ],
             answerIndex: 1,
             explanation:
-              'CE C-8 (or the equivalent RUS CE) covers aerial or buried utility/communications construction within or adjacent to existing ROW, provided no extraordinary circumstances apply. The screen here is clean: no T&E species (IPaC run completed), no historic properties affected (SHPO pre-consultation complete), and wetland adjacency (not wetland crossing) does not by itself trigger an extraordinary circumstance if there is no direct fill or discharge. Document the screen results thoroughly and proceed with the CE. T09.L02.',
+              'CE C-8 (or the equivalent RUS CE) covers aerial or buried utility/communications construction within or adjacent to existing ROW, provided no extraordinary circumstances apply. The screen here is clean: no T&E species (IPaC run completed), no historic properties affected (SHPO pre-consultation complete), and wetland adjacency (not wetland crossing) does not by itself trigger an extraordinary circumstance if there is no direct fill or discharge. Document the screen results thoroughly and proceed with the CE.',
           },
           // L03: Section 106 clock
           {
@@ -202,7 +222,7 @@ export default function T09L12_CapstoneQuiz() {
             ],
             answerIndex: 2,
             explanation:
-              'The Section 106 clock starts on receipt of an ADEQUATE package — one that includes all required components: initiation letter, project description, APE map, photo log, and prior-records search. The SHPO returned the package as incomplete on Day 5 (missing APE map), which means the clock had not started. It starts on Day 12 when the complete resubmission is received. Earliest SHPO response expected: Day 12 + 30 = Day 42. T09.L03.',
+              'The Section 106 clock starts on receipt of an ADEQUATE package — one that includes all required components: initiation letter, project description, APE map, photo log, and prior-records search. The SHPO returned the package as incomplete on Day 5 (missing APE map), which means the clock had not started. It starts on Day 12 when the complete resubmission is received. Earliest SHPO response expected: Day 12 + 30 = Day 42.',
           },
           // L04: ESA bat trigger
           {
@@ -218,7 +238,7 @@ export default function T09L12_CapstoneQuiz() {
             ],
             answerIndex: 1,
             explanation:
-              'The April–October avoidance window is inclusive of October — October 15 falls within the window. Tree clearing on October 15 is NOT permitted under the standard avoidance measure. Clearing must wait until November 1 or later (verify the precise end-of-window date with the current USFWS program page for NLEB, as guidance can be updated — note: confirm current NLEB listing status and avoidance window at fws.gov/species at time of project). T09.L04.',
+              'The April–October avoidance window is inclusive of October — October 15 falls within the window. Tree clearing on October 15 is NOT permitted under the standard avoidance measure. Clearing must wait until November 1 or later (verify the precise end-of-window date with the current USFWS program page for NLEB, as guidance can be updated — note: confirm current NLEB listing status and avoidance window at fws.gov/species at time of project).',
           },
           // L05: NWP 57 vs. individual permit
           {
@@ -234,7 +254,7 @@ export default function T09L12_CapstoneQuiz() {
             ],
             answerIndex: 1,
             explanation:
-              'The 2021 USACE nationwide permit reissuance moved telecom and electric utility activities from NWP 12 to NWP 57. NWP 12 now covers oil and gas pipeline activities only. Note: The 2021 reissuance expired March 14, 2026; the 2026 reissuance (FR 2026-00121) is now operative. Fiber optic cable installation in wetlands and waters of the US falls under the utility line activities NWP — verify current permit number and conditions against the active USACE NWP reissuance at time of project, as NWPs are reissued on 5-year cycles. T09.L05.',
+              'The 2021 USACE nationwide permit reissuance moved telecom and electric utility activities from NWP 12 to NWP 57. NWP 12 now covers oil and gas pipeline activities only. Note: The 2021 reissuance expired March 14, 2026; the 2026 reissuance (FR 2026-00121) is now operative. Fiber optic cable installation in wetlands and waters of the US falls under the utility line activities NWP — verify current permit number and conditions against the active USACE NWP reissuance at time of project, as NWPs are reissued on 5-year cycles.',
           },
           // L07: easement type
           {
@@ -250,7 +270,7 @@ export default function T09L12_CapstoneQuiz() {
             ],
             answerIndex: 2,
             explanation:
-              'An express easement is a written, recorded instrument that runs with the land and is not revocable at will (unless it has a stated term or condition). A license is revocable at will and generally not recorded. A prescriptive easement before court confirmation is not recorded. A verbal permission agreement is a license. Express easement = the gold standard for permanent fiber routes. T09.L07.',
+              'An express easement is a written, recorded instrument that runs with the land and is not revocable at will (unless it has a stated term or condition). A license is revocable at will and generally not recorded. A prescriptive easement before court confirmation is not recorded. A verbal permission agreement is a license. Express easement = the gold standard for permanent fiber routes.',
           },
           // ── WORKING TIER (Q08-Q17) ─────────────────────────────────────
           // L01: AHJ identification
@@ -267,7 +287,7 @@ export default function T09L12_CapstoneQuiz() {
             ],
             answerIndex: 1,
             explanation:
-              'Each jurisdiction requires its own instrument from its own authority: State DOT encroachment permit for the state highway segment; municipal ROW permit (and possibly franchise agreement) for the city segment; negotiated express easement with the landowner for the private farmland. There is no single permit that covers all three — the permitting layer cake is real, and each layer requires separate engagement with its AHJ. T09.L01 + T09.L06 + T09.L07 + T09.L08.',
+              'Each jurisdiction requires its own instrument from its own authority: State DOT encroachment permit for the state highway segment; municipal ROW permit (and possibly franchise agreement) for the city segment; negotiated express easement with the landowner for the private farmland. There is no single permit that covers all three — the permitting layer cake is real, and each layer requires separate engagement with its AHJ.',
           },
           // L03: adverse effect finding
           {
@@ -283,7 +303,7 @@ export default function T09L12_CapstoneQuiz() {
             ],
             answerIndex: 1,
             explanation:
-              'Three paths resolve an adverse-effect finding: (1) Memorandum of Agreement (MOA) — a negotiated commitment between the lead agency, SHPO, and consulting parties documenting how the adverse effect will be avoided, minimized, or mitigated; (2) Programmatic Agreement (PA) — similar to MOA but covering a broader program or multi-project scope; (3) Project modification that avoids the adverse effect entirely, allowing a return to a "no adverse effect" finding. Stopping the project is not required — Section 106 is a process requirement, not a veto authority. T09.L03.',
+              'Three paths resolve an adverse-effect finding: (1) Memorandum of Agreement (MOA) — a negotiated commitment between the lead agency, SHPO, and consulting parties documenting how the adverse effect will be avoided, minimized, or mitigated; (2) Programmatic Agreement (PA) — similar to MOA but covering a broader program or multi-project scope; (3) Project modification that avoids the adverse effect entirely, allowing a return to a "no adverse effect" finding. Stopping the project is not required — Section 106 is a process requirement, not a veto authority.',
           },
           // L06: DOT permit packet
           {
@@ -294,12 +314,12 @@ export default function T09L12_CapstoneQuiz() {
             choices: [
               'PE-stamped plan-and-profile drawings, Traffic Control Plan (TCP), and surety bond',
               'Environmental assessment, Section 106 consultation letter, and insurance certificate',
-              'PE-stamped drawings, franchise agreement, and RUS Form 307',
+              'PE-stamped drawings, franchise agreement, and a Section 106 clearance letter',
               'As-built drawings, pavement restoration warranty, and 811 confirmation',
             ],
             answerIndex: 0,
             explanation:
-              'State DOT encroachment permits consistently require: (1) PE-stamped plan-and-profile drawings showing the route alignment and construction method; (2) a Traffic Control Plan (TCP) showing lane closure and pedestrian protection measures; (3) a surety bond guaranteeing ROW restoration. Insurance certificates are also common but the surety bond + PE + TCP combination is the most universal required trio. T09.L06.',
+              'State DOT encroachment permits consistently require: (1) PE-stamped plan-and-profile drawings showing the route alignment and construction method; (2) a Traffic Control Plan (TCP) showing lane closure and pedestrian protection measures; (3) a surety bond guaranteeing ROW restoration. Insurance certificates are also common but the surety bond + PE + TCP combination is the most universal required trio.',
           },
           // L08: franchise vs. permit
           {
@@ -315,7 +335,7 @@ export default function T09L12_CapstoneQuiz() {
             ],
             answerIndex: 1,
             explanation:
-              'A recurring per-linear-foot monthly fee for ROW occupancy is a municipal fiber fee — functionally a franchise-like charge imposed through the permit. Many states have adopted ROW access statutes that cap such fees at cost (cost of managing the ROW, not a revenue source for the city). 47 USC §253(a) provides a basis to challenge fees that effectively prohibit telecom service. Not all such fees are illegal — but they are legally contested in many jurisdictions and must be reviewed by telecom counsel before acceptance. T09.L08.',
+              'A recurring per-linear-foot monthly fee for ROW occupancy is a municipal fiber fee — functionally a franchise-like charge imposed through the permit. Many states have adopted ROW access statutes that cap such fees at cost (cost of managing the ROW, not a revenue source for the city). 47 USC §253(a) provides a basis to challenge fees that effectively prohibit telecom service. Not all such fees are illegal — but they are legally contested in many jurisdictions and must be reviewed by telecom counsel before acceptance.',
           },
           // L09: THPO trigger
           {
@@ -331,7 +351,7 @@ export default function T09L12_CapstoneQuiz() {
             ],
             answerIndex: 1,
             explanation:
-              'Section 106 consulting party status is based on cultural connection to the APE, not land ownership. A tribe with traditional cultural properties within the project corridor is a consulting party even if the land is privately owned and outside tribal boundaries. Traditional cultural properties can qualify as historic properties under the NHPA regardless of National Register listing — significance to the tribe is what matters, not listing status. T09.L09.',
+              'Section 106 consulting party status is based on cultural connection to the APE, not land ownership. A tribe with traditional cultural properties within the project corridor is a consulting party even if the land is privately owned and outside tribal boundaries. Traditional cultural properties can qualify as historic properties under the NHPA regardless of National Register listing — significance to the tribe is what matters, not listing status.',
           },
           // L10: permit matrix critical path
           {
@@ -347,23 +367,23 @@ export default function T09L12_CapstoneQuiz() {
             ],
             answerIndex: 1,
             explanation:
-              'MRO: Day 0 + 45 = Day 45. DOT: Day 0 + 90 = Day 90 (critical path). SHPO: Day 15 + 30 = Day 45. PCN: Day 10 + 45 = Day 55. The latest completion is DOT at Day 90. Construction cannot start anywhere until all required permits are in hand (all four are project-wide requirements, not segment-specific here). Earliest start = Day 90 + 7 days = Day 97. T09.L10.',
+              'MRO: Day 0 + 45 = Day 45. DOT: Day 0 + 90 = Day 90 (critical path). SHPO: Day 15 + 30 = Day 45. PCN: Day 10 + 45 = Day 55. The latest completion is DOT at Day 90. Construction cannot start anywhere until all required permits are in hand (all four are project-wide requirements, not segment-specific here). Earliest start = Day 90 + 7 days = Day 97.',
           },
           // L11: RUS CE vs. EIM
           {
             id: 'T09-CAP-Q14',
             type: 'mc',
             prompt:
-              'A RUS ReConnect-funded project crosses 500 feet of prime farmland. The 7 CFR 1970.14 extraordinary-circumstances list includes prime farmland as a potential trigger. However, the route follows an existing buried conduit corridor with no new farmland disturbance beyond the existing trench footprint. What RUS environmental review level is most likely appropriate?',
+              'A RUS ReConnect-funded project crosses 500 feet of prime farmland. The 7 CFR Part 1b extraordinary-circumstances list includes prime farmland as a potential trigger. However, the route follows an existing buried conduit corridor with no new farmland disturbance beyond the existing trench footprint. What RUS environmental review level is most likely appropriate?',
             choices: [
-              'Full Environmental Assessment (EA) — prime farmland always requires an EA under 7 CFR 1970',
+              'Full Environmental Assessment (EA) — prime farmland always requires an EA under 7 CFR Part 1b',
               'Environmental Impact Memorandum (EIM) — an extraordinary circumstance (prime farmland) is triggered, but limited analysis can document that the actual impact is not significant because construction follows an existing disturbed corridor',
-              'CE checklist — prime farmland is not an extraordinary circumstance under 7 CFR 1970',
+              'CE checklist — prime farmland is not an extraordinary circumstance under 7 CFR Part 1b',
               'Environmental Impact Statement (EIS) — prime farmland always requires the highest level of review',
             ],
             answerIndex: 1,
             explanation:
-              'The EIM tier is designed for exactly this situation: an extraordinary circumstance exists (prime farmland), but limited analysis demonstrates that the actual impact is minimal (existing disturbed corridor, no new farmland conversion). The EIM documents the extraordinary circumstance, the analysis performed, and the basis for concluding that the impact is not significant. This avoids a full EA while properly documenting the extraordinary circumstance. T09.L11.',
+              'The EIM tier is designed for exactly this situation: an extraordinary circumstance exists (prime farmland), but limited analysis demonstrates that the actual impact is minimal (existing disturbed corridor, no new farmland conversion). The EIM documents the extraordinary circumstance, the analysis performed, and the basis for concluding that the impact is not significant. This avoids a full EA while properly documenting the extraordinary circumstance.',
           },
           // L07: grantor/grantee recording
           {
@@ -379,7 +399,7 @@ export default function T09L12_CapstoneQuiz() {
             ],
             answerIndex: 1,
             explanation:
-              'A recorded express easement "runs with the land" — it attaches to the property itself, not to the specific owner who granted it. When the property is sold, the buyer takes it subject to all recorded encumbrances that appear in the public record (title search obligation). The new owner had constructive notice of the easement at the time of purchase. The fiber company\'s access rights are fully enforceable against the new owner. This is the core value of recording the easement before construction. T09.L07.',
+              'A recorded express easement "runs with the land" — it attaches to the property itself, not to the specific owner who granted it. When the property is sold, the buyer takes it subject to all recorded encumbrances that appear in the public record (title search obligation). The new owner had constructive notice of the easement at the time of purchase. The fiber company\'s access rights are fully enforceable against the new owner. This is the core value of recording the easement before construction.',
           },
           // L08: pavement moratorium
           {
@@ -395,7 +415,7 @@ export default function T09L12_CapstoneQuiz() {
             ],
             answerIndex: 1,
             explanation:
-              'A pavement cut moratorium prohibits open-cut in recently resurfaced streets — no exceptions based on project type. The only option is a bore. Bores on street crossings typically cost 4–10× more per foot than open-cut. The design must be revised, new PE-stamped drawings submitted, and the permit resubmitted with the bore design — all of which adds weeks. The lesson: moratorium status must be checked in the route survey (T04) so it\'s built into the design and estimate from day one. T09.L08.',
+              'A pavement cut moratorium prohibits open-cut in recently resurfaced streets — no exceptions based on project type. The only option is a bore. Bores on street crossings typically cost 4–10× more per foot than open-cut. The design must be revised, new PE-stamped drawings submitted, and the permit resubmitted with the bore design — all of which adds weeks. The lesson: moratorium status must be checked in the route survey phase so it\'s built into the design and estimate from day one.',
           },
           // L06: as-built obligation
           {
@@ -411,7 +431,7 @@ export default function T09L12_CapstoneQuiz() {
             ],
             answerIndex: 1,
             explanation:
-              'As-built drawings document actual field conditions, not planned conditions. During any construction project, field conditions cause minor deviations from the design — actual bore depth varies, horizontal alignment shifts to avoid a utility conflict, materials are substituted. The as-built captures these actual conditions. The DOT uses the as-built to update their statewide utility atlas (which future contractors and utilities reference when designing in the same corridor). Filing an accurate as-built protects the fiber company — it proves the installation met permit conditions and provides the company\'s own record of where their cable actually is. T09.L06.',
+              'As-built drawings document actual field conditions, not planned conditions. During any construction project, field conditions cause minor deviations from the design — actual bore depth varies, horizontal alignment shifts to avoid a utility conflict, materials are substituted. The as-built captures these actual conditions. The DOT uses the as-built to update their statewide utility atlas (which future contractors and utilities reference when designing in the same corridor). Filing an accurate as-built protects the fiber company — it proves the installation met permit conditions and provides the company\'s own record of where their cable actually is.',
           },
           // ── ADVANCED TIER (Q18-Q20) ────────────────────────────────────
           // L02/L11: dual program NEPA
@@ -419,16 +439,16 @@ export default function T09L12_CapstoneQuiz() {
             id: 'T09-CAP-Q18',
             type: 'mc',
             prompt:
-              'A project receives both RUS ReConnect funding (subject to 7 CFR 1970) and BEAD state broadband office funding. Both programs use analogous CE language for existing-ROW fiber. How should the environmental review be structured?',
+              'A project receives both RUS ReConnect funding (subject to 7 CFR Part 1b) and BEAD state broadband office funding. Both programs use analogous CE language for existing-ROW fiber. How should the environmental review be structured?',
             choices: [
               'Complete one CE determination that satisfies both programs automatically',
               'Coordinate with both agencies early to determine whether a joint environmental review is acceptable to both RUS and the state broadband office. Both agencies must make independent NEPA determinations, but a single environmental review document can feed both determinations if the agencies agree to co-lead or cooperate',
-              'Complete the RUS 7 CFR 1970 CE first; BEAD automatically accepts the RUS determination',
+              'Complete the RUS 7 CFR Part 1b CE first; BEAD automatically accepts the RUS determination',
               'Complete the BEAD CE first; RUS always accepts state broadband office determinations',
             ],
             answerIndex: 1,
             explanation:
-              'RUS and NTIA/state broadband office are separate federal agencies that must each make independent NEPA determinations. However, they can cooperate on a single joint environmental review document that satisfies both agencies\' requirements. Coordinate early — ask both agencies explicitly whether joint review is acceptable and who will serve as lead agency. Without early coordination, you may end up preparing two separate environmental reviews that cover the same analysis. T09.L11.',
+              'RUS and NTIA/state broadband office are separate federal agencies that must each make independent NEPA determinations. However, they can cooperate on a single joint environmental review document that satisfies both agencies\' requirements. Coordinate early — ask both agencies explicitly whether joint review is acceptable and who will serve as lead agency. Without early coordination, you may end up preparing two separate environmental reviews that cover the same analysis.',
           },
           // L09: tribal consultation timeline
           {
@@ -444,7 +464,7 @@ export default function T09L12_CapstoneQuiz() {
             ],
             answerIndex: 2,
             explanation:
-              'Tribal consultation timelines routinely exceed 30 days for good-faith reasons — tribal staff capacity, cultural assessment needs, formal government-to-government protocols. "The clock expired" is technically a basis to proceed, but exercising that right on a BEAD project against sovereign tribal nations is a high-risk move that can trigger political escalation through Congressional delegations. Best practice: budget 60–120 days for tribal consultation in any project near ancestral territories, attempt direct government-to-government contact at the appropriate official level, and document all contact attempts. T09.L09.',
+              'Tribal consultation timelines routinely exceed 30 days for good-faith reasons — tribal staff capacity, cultural assessment needs, formal government-to-government protocols. "The clock expired" is technically a basis to proceed, but exercising that right on a BEAD project against sovereign tribal nations is a high-risk move that can trigger political escalation through Congressional delegations. Best practice: budget 60–120 days for tribal consultation in any project near ancestral territories, attempt direct government-to-government contact at the appropriate official level, and document all contact attempts.',
           },
           // Integrated: full multi-permit scenario
           {
@@ -460,12 +480,14 @@ export default function T09L12_CapstoneQuiz() {
             ],
             answerIndex: 1,
             explanation:
-              '(A) is wrong because CE is not automatic — extraordinary circumstances must be screened. Section 106 covers any federal undertaking\'s potential to affect historic properties — the consultation IS the screen, not a result triggered only if a property is already known. NWP 57 (not "only navigable rivers") covers any waters of the US including wetlands. Prescriptive easements are legally inferior to recorded express easements. (B) is correct on all four points. (C) is wrong: CE is not automatic; SHPO window is 30 days; NWP 57 not NWP 12; licenses are revocable. (D) is wrong: BEAD and RUS use analogous CE language; tribal consultation applies to ancestral territories regardless of land ownership. T09.L02, L03, L05, L07, L11.',
+              '(A) is wrong because CE is not automatic — extraordinary circumstances must be screened. Section 106 covers any federal undertaking\'s potential to affect historic properties — the consultation IS the screen, not a result triggered only if a property is already known. NWP 57 (not "only navigable rivers") covers any waters of the US including wetlands. Prescriptive easements are legally inferior to recorded express easements. (B) is correct on all four points. (C) is wrong: CE is not automatic; SHPO window is 30 days; NWP 57 not NWP 12; licenses are revocable. (D) is wrong: BEAD and RUS use analogous CE language; tribal consultation applies to ancestral territories regardless of land ownership.',
           },
-        ]}
-        onComplete={(result) => {
-          console.info('T09 Capstone complete:', result);
-        }}
+          ]}
+          onComplete={(result) => {
+            console.info('T09 Capstone complete:', result);
+          }}
+        />
+        }
       />
 
       {/* CAPSTONE BRANCHING SCENARIO: multi-permit decision path */}

@@ -7,7 +7,9 @@
 import React from 'react';
 import LessonLayout from '../../components/LessonLayout.jsx';
 import BranchingScenario from '../../components/primitives/BranchingScenario.jsx';
+import ReferencesBlock from '../../components/ReferencesBlock.jsx';
 import Quiz from '../../components/primitives/Quiz.jsx';
+import GatedAssessment from '../../components/primitives/GatedAssessment.jsx';
 import Flashcard from '../../components/Flashcard.jsx';
 
 export const meta = {
@@ -41,7 +43,7 @@ export const meta = {
     {
       term: 'PE stamp',
       definition:
-        'Professional Engineer stamp — the seal of a licensed Professional Engineer (PE) applied to design drawings, certifying that the drawings meet applicable engineering standards and that the PE takes professional responsibility for the design. Many state DOTs require PE-stamped plans as part of an encroachment permit application for telecommunications infrastructure in state highway ROW. The PE must be licensed in the state where the work occurs. [Requirements vary by state and DOT district — confirm with AHJ.]',
+        'Professional Engineer stamp — the seal of a licensed Professional Engineer (PE) applied to design drawings, certifying that the drawings meet applicable engineering standards and that the PE takes professional responsibility for the design. Many state DOTs require PE-stamped plans as part of an encroachment permit application for telecommunications infrastructure in state highway ROW. The PE must be licensed in the state where the work occurs. Requirements vary by state and DOT district — confirm with the AHJ.',
     },
     {
       term: 'traffic control plan (TCP)',
@@ -159,7 +161,7 @@ export default function T09L06_StateDOTEncroachmentPermits() {
             {
               id: 'T09-L06-fc-pe',
               front: 'What is a PE stamp and why do DOTs require it?',
-              back: 'Professional Engineer stamp — the seal of a licensed Professional Engineer (PE) applied to design drawings, certifying that the drawings meet applicable engineering standards and that the PE takes professional responsibility for the design. Many state DOTs require PE-stamped plans as part of an encroachment permit application for telecommunications infrastructure in state highway ROW. [Requirements vary by state and DOT district — confirm with AHJ.]',
+              back: 'Professional Engineer stamp — the seal of a licensed Professional Engineer (PE) applied to design drawings, certifying that the drawings meet applicable engineering standards and that the PE takes professional responsibility for the design. Many state DOTs require PE-stamped plans as part of an encroachment permit application for telecommunications infrastructure in state highway ROW. Requirements vary by state and DOT district — confirm with the AHJ.',
             },
             {
               id: 'T09-L06-fc-tcp',
@@ -205,8 +207,8 @@ export default function T09L06_StateDOTEncroachmentPermits() {
             <p className="text-sm text-slate-300/90 mt-1">
               The DOT's standard permit application: project description, applicant info,
               contractor info, bond amount, insurance coverage. Every state has a different
-              form — download from the state DOT's permit portal before starting. [Confirm
-              with AHJ for current form version.]
+              form — download from the state DOT's permit portal before starting. Confirm
+              with AHJ for current form version.
             </p>
           </div>
           <div className="p-3 border border-white/10 rounded-lg bg-white/3">
@@ -216,8 +218,8 @@ export default function T09L06_StateDOTEncroachmentPermits() {
               placement. Vertical profile showing conduit depth, bore entry/exit geometry,
               clearance from pavement subgrade, and utility conflicts. Drawings must be
               to scale. Many states require PE stamp from a PE licensed in that state.
-              [Confirm PE stamp requirement and licensing requirements with AHJ — varies
-              by state and sometimes by DOT district within the state.]
+              Confirm PE stamp requirement and licensing requirements with AHJ — varies
+              by state and sometimes by DOT district within the state.
             </p>
           </div>
           <div className="p-3 border border-white/10 rounded-lg bg-white/3">
@@ -227,7 +229,7 @@ export default function T09L06_StateDOTEncroachmentPermits() {
               work-zone signing sequence, and night-work restrictions. Must reference and
               comply with the MUTCD (current edition) and any state DOT TCP supplement.
               For overnight work: additional requirements for lighting, reflective signing,
-              and advanced warning distances. [Confirm state-specific TCP requirements with AHJ.]
+              and advanced warning distances. Confirm state-specific TCP requirements with AHJ.
             </p>
           </div>
           <div className="p-3 border border-white/10 rounded-lg bg-white/3">
@@ -236,8 +238,8 @@ export default function T09L06_StateDOTEncroachmentPermits() {
               Bond amount set by the DOT based on scope. Insurance minimums typically include
               commercial general liability (CGL) of at least $1M–$2M per occurrence, auto
               liability, and workers' compensation. The DOT is typically named as an
-              additional insured on the CGL policy. [Confirm bond amount and insurance
-              minimums with the specific DOT district — varies by state and project scope.]
+              additional insured on the CGL policy. Confirm bond amount and insurance
+              minimums with the specific DOT district — varies by state and project scope.
             </p>
           </div>
           <div className="p-3 border border-white/10 rounded-lg bg-white/3">
@@ -254,7 +256,7 @@ export default function T09L06_StateDOTEncroachmentPermits() {
             <p className="text-sm text-slate-300/90 mt-1">
               State DOT permit fees range from a few hundred dollars to several thousand
               dollars per crossing, depending on the state and the complexity of the work.
-              Fee schedules are published by each DOT. [Confirm current fee schedule with AHJ.]
+              Fee schedules are published by each DOT. Confirm current fee schedule with AHJ.
             </p>
           </div>
         </div>
@@ -291,12 +293,6 @@ export default function T09L06_StateDOTEncroachmentPermits() {
             </tbody>
           </table>
         </div>
-        <p className="mt-2 text-sm text-slate-300/70">
-          Source: M03 §3.5; representative timelines based on industry practice.
-          [Confirm with the relevant state DOT district at time of project — timelines vary
-          by state, district workload, and project complexity. Some states have statutory
-          permit review deadlines; many do not.]
-        </p>
 
         <h3 className="mt-5 font-semibold">The as-built obligation — why it matters beyond closeout</h3>
         <p>
@@ -312,8 +308,8 @@ export default function T09L06_StateDOTEncroachmentPermits() {
           "AS BUILT," GPS coordinates of bore entry and exit pits, recorded conduit depths
           at specified intervals, and any deviations from the permitted design with explanation.
           Format requirements vary by state (some accept PDF; others require GIS files or
-          CADD). [Confirm as-built format requirements with AHJ before construction starts
-          — easier to collect during construction than to reconstruct afterward.]
+          CADD). Confirm as-built format requirements with AHJ before construction starts
+          — easier to collect during construction than to reconstruct afterward.
         </p>
 
         <div className="mt-4 p-4 border border-amber-400/30 bg-amber-400/5 rounded-lg text-sm">
@@ -358,8 +354,8 @@ export default function T09L06_StateDOTEncroachmentPermits() {
           qualifies as "significant") varies by state and FHWA division office — some states
           have programmatic agreements with FHWA that allow most telecom encroachments to
           proceed without per-project FHWA concurrence; others require it for every crossing
-          of a federal-aid route. [Confirm FHWA concurrence requirement with the DOT district
-          for each federal-aid road crossing on your route.]
+          of a federal-aid route. Confirm FHWA concurrence requirement with the DOT district
+          for each federal-aid road crossing on your route.
         </p>
 
         <h3 className="mt-5 font-semibold">PE stamp requirements by state — the variation problem</h3>
@@ -385,12 +381,6 @@ export default function T09L06_StateDOTEncroachmentPermits() {
             practice authorization.
           </li>
         </ul>
-        <p className="mt-2 text-sm text-slate-300/70">
-          Source: Representative examples from TxDOT ROW Manual §4 (public document) and
-          common industry practice. [Confirm PE stamp requirement and licensing threshold
-          with the specific state DOT and district for every project — requirements change
-          and state licensing boards sometimes modify reciprocity terms.]
-        </p>
 
         <h3 className="mt-5 font-semibold">Bore depth minimums for state highway crossings</h3>
         <p>
@@ -416,12 +406,6 @@ export default function T09L06_StateDOTEncroachmentPermits() {
           depth goes on the plan-and-profile drawings; the actual achieved depth goes on
           the as-built. If the bore comes up shallower than the designed minimum, you
           need a variance from the DOT before proceeding, not after.
-        </p>
-        <p className="mt-2 text-sm text-slate-300/70">
-          Source: Representative based on common state DOT utility accommodation manuals.
-          [Confirm minimum burial depth with the specific state DOT for each road class on
-          your route — depths vary by state and road classification and are subject to
-          update in each DOT's utility accommodation policy.]
         </p>
       </section>
 
@@ -490,11 +474,22 @@ export default function T09L06_StateDOTEncroachmentPermits() {
         ]}
       />
 
+      <ReferencesBlock
+        items={[
+          { citation: '23 CFR §655.603', note: 'The rule that adopts the Manual on Uniform Traffic Control Devices (MUTCD) as the national standard — the baseline every state DOT traffic control plan (TCP) must meet.' },
+        ]}
+      />
+
       {/* ── PER-LESSON QUIZ ──────────────────────────────────────────────── */}
-      <Quiz
-        title="T09.L06 Check — State DOT Encroachment Permits"
-        mode="multiple-choice"
-        questions={[
+      <GatedAssessment
+        courseId="T09"
+        assessmentId="T09-L06"
+        title="Check — State DOT Encroachment Permits"
+        fallback={
+        <Quiz
+          title="Check — State DOT Encroachment Permits"
+          mode="multiple-choice"
+          questions={[
           {
             id: 'T09-L06-Q1',
             type: 'mc',
@@ -508,8 +503,8 @@ export default function T09L06_StateDOTEncroachmentPermits() {
             ],
             answerIndex: 1,
             explanation:
-              'State DOTs require PE-stamped drawings because the stamp represents professional engineering liability for the design entering the public ROW record. The PE must be licensed in the state where the work occurs (or hold a temporary practice authorization in that state). Waivers are rarely granted for state highway crossings. Using a PE from another state may be valid under reciprocity provisions, but the PE must verify their licensing status in the project state before stamping — reciprocity terms vary by state and are subject to change. [Confirm PE stamp and licensing requirements with the specific DOT district for your project.]',
-            citation: 'M03 §3.5; T09 Brief §2 (L06 source); state PE licensing requirements [confirm with AHJ].',
+              'State DOTs require PE-stamped drawings because the stamp represents professional engineering liability for the design entering the public ROW record. The PE must be licensed in the state where the work occurs (or hold a temporary practice authorization in that state). Waivers are rarely granted for state highway crossings. Using a PE from another state may be valid under reciprocity provisions, but the PE must verify their licensing status in the project state before stamping — reciprocity terms vary by state and are subject to change, so this should be confirmed with the specific DOT district for the project.',
+            citation: 'State DOT utility-accommodation policy; state PE licensing requirements (vary by state).',
           },
           {
             id: 'T09-L06-Q2',
@@ -525,7 +520,6 @@ export default function T09L06_StateDOTEncroachmentPermits() {
             answerIndex: 1,
             explanation:
               'When an in-progress bore comes up shallower than the permitted minimum depth, the correct action is to stop and contact the DOT district before continuing. Proceeding and documenting the non-compliance in the as-built is not an acceptable approach — it means you deliberately installed at a sub-permitted depth and tried to legalize it after the fact. The DOT may require re-drilling, a variance (if the gap is minor and documented), or in the worst case, removal of the installed conduit. Always stop, communicate, and get written DOT direction before continuing.',
-            citation: 'M03 §3.5; representative DOT utility accommodation policy practice.',
           },
           {
             id: 'T09-L06-Q3',
@@ -540,8 +534,7 @@ export default function T09L06_StateDOTEncroachmentPermits() {
             ],
             answerIndex: 1,
             explanation:
-              'A complete DOT encroachment permit package for a state highway fiber bore typically requires: the application form, PE-stamped plan-and-profile drawings, TCP compliant with the MUTCD, surety bond, and insurance certificates. Submitting an incomplete package is the most common cause of permit delays — the DOT returns the package with a deficiency notice and the clock resets on resubmission. [Confirm exact requirements with the specific DOT district — components vary by state.]',
-            citation: 'M03 §3.5; T09 Brief §2 (L06 learning objectives); DOT encroachment permit requirements [confirm with AHJ].',
+              'A complete DOT encroachment permit package for a state highway fiber bore typically requires: the application form, PE-stamped plan-and-profile drawings, TCP compliant with the MUTCD, surety bond, and insurance certificates. Submitting an incomplete package is the most common cause of permit delays — the DOT returns the package with a deficiency notice and the clock resets on resubmission.',
           },
           {
             id: 'T09-L06-Q4',
@@ -557,9 +550,10 @@ export default function T09L06_StateDOTEncroachmentPermits() {
             answerIndex: 1,
             explanation:
               'The as-built submittal documents the actual installed location and depth of the fiber conduit — as opposed to the design drawings submitted before construction. The DOT needs this record when planning future road modifications, bridge replacements, or utility relocations. Inaccurate as-built records can result in future contractors hitting your fiber (causing outages and liability) or in the DOT requiring your conduit to be moved at your expense because its actual location conflicts with road improvements. As-built accuracy is not a formality.',
-            citation: 'M03 §3.5; T09 Brief §2 (L06 vocabulary: as-built submittal); DOT encroachment permit closeout requirements.',
           },
         ]}
+        />
+        }
       />
 
     </LessonLayout>

@@ -5,7 +5,9 @@
 
 import React from 'react';
 import LessonLayout from '../../components/LessonLayout.jsx';
+import ReferencesBlock from '../../components/ReferencesBlock.jsx';
 import Quiz from '../../components/primitives/Quiz.jsx';
+import GatedAssessment from '../../components/primitives/GatedAssessment.jsx';
 import Flashcard from '../../components/Flashcard.jsx';
 
 export const meta = {
@@ -40,7 +42,7 @@ export const meta = {
     {
       term: 'T&E species',
       definition:
-        'Threatened and Endangered species — the two categories of federal protection under the ESA. "Threatened" means likely to become endangered in the foreseeable future throughout all or a significant portion of its range. "Endangered" means in danger of extinction throughout all or a significant portion of its range. Both categories trigger Section 7 consultation for federal actions. [Species listing status is dynamic — always verify at fws.gov/species at time of project.]',
+        'Threatened and Endangered species — the two categories of federal protection under the ESA. "Threatened" means likely to become endangered in the foreseeable future throughout all or a significant portion of its range. "Endangered" means in danger of extinction throughout all or a significant portion of its range. Both categories trigger Section 7 consultation for federal actions. Species listing status is dynamic — always verify at fws.gov/species at time of project.',
     },
     {
       term: 'threatened',
@@ -50,7 +52,7 @@ export const meta = {
     {
       term: 'endangered',
       definition:
-        'A species that is in danger of extinction throughout all or a significant portion of its range. Endangered status triggers the full Section 7 consultation and "take" prohibition under the ESA (16 USC §1538). For fiber permitting, the Northern Long-Eared Bat (NLEB) was reclassified from Threatened to Endangered by final rule published November 30, 2022 (87 FR 73488); the effective date was extended to March 31, 2023 per 88 FR 5528. [Confirm current listing status at fws.gov/species at time of project.]',
+        'A species that is in danger of extinction throughout all or a significant portion of its range. Endangered status triggers the full Section 7 consultation and "take" prohibition under the ESA (16 USC §1538). For fiber permitting, the Northern Long-Eared Bat (NLEB) was reclassified from Threatened to Endangered by final rule published November 30, 2022 (87 FR 73488); the effective date was extended to March 31, 2023 per 88 FR 5528. Confirm current listing status at fws.gov/species at time of project.',
     },
     {
       term: 'IPaC DKey',
@@ -70,7 +72,7 @@ export const meta = {
     {
       term: 'tree-clearing window',
       definition:
-        'The time period during which tree clearing is prohibited or restricted to protect bat species from disturbance during their most sensitive life stages. For the Northern Long-Eared Bat (NLEB) and Tricolored Bat, the standard avoidance window for tree clearing runs from approximately April 1 through October 31 (the active roosting and pup-rearing season). Tree clearing outside this window (November through March) is generally acceptable under standard avoidance measures. [Confirm current IPaC guidance for your specific species and project location — windows can vary by geography and species.]',
+        'The time period during which tree clearing is prohibited or restricted to protect bat species from disturbance during their most sensitive life stages. For the Northern Long-Eared Bat (NLEB) and Tricolored Bat, the standard avoidance window for tree clearing runs from approximately April 1 through October 31 (the active roosting and pup-rearing season). Tree clearing outside this window (November through March) is generally acceptable under standard avoidance measures. Confirm current IPaC guidance for your specific species and project location — windows can vary by geography and species.',
     },
   ],
   vocabulary_assumed: [
@@ -164,7 +166,7 @@ export default function T09L04_ESABatsIPaC() {
             {
               id: 'T09-L04-fc-te',
               front: 'What is the difference between Threatened and Endangered species?',
-              back: 'T&E species — the two categories of federal protection under the ESA. "Threatened" means likely to become endangered in the foreseeable future throughout all or a significant portion of its range. "Endangered" means in danger of extinction throughout all or a significant portion of its range. Both categories trigger Section 7 consultation for federal actions. [Species listing status is dynamic — always verify at fws.gov/species at time of project.]',
+              back: 'T&E species — the two categories of federal protection under the ESA. "Threatened" means likely to become endangered in the foreseeable future throughout all or a significant portion of its range. "Endangered" means in danger of extinction throughout all or a significant portion of its range. Both categories trigger Section 7 consultation for federal actions. Species listing status is dynamic — always verify at fws.gov/species at time of project.',
             },
             {
               id: 'T09-L04-fc-threatened',
@@ -174,7 +176,7 @@ export default function T09L04_ESABatsIPaC() {
             {
               id: 'T09-L04-fc-endangered',
               front: 'What does "Endangered" status mean under the ESA?',
-              back: 'A species that is in danger of extinction throughout all or a significant portion of its range. Endangered status triggers the full Section 7 consultation and "take" prohibition under the ESA (16 USC §1538). For fiber permitting, the Northern Long-Eared Bat (NLEB) was reclassified from Threatened to Endangered by final rule published November 30, 2022 (87 FR 73488); the effective date was extended to March 31, 2023 per 88 FR 5528. [Confirm current listing status at fws.gov/species at time of project.]',
+              back: 'A species that is in danger of extinction throughout all or a significant portion of its range. Endangered status triggers the full Section 7 consultation and "take" prohibition under the ESA (16 USC §1538). For fiber permitting, the Northern Long-Eared Bat (NLEB) was reclassified from Threatened to Endangered by final rule published November 30, 2022 (87 FR 73488); the effective date was extended to March 31, 2023 per 88 FR 5528. Confirm current listing status at fws.gov/species at time of project.',
             },
             {
               id: 'T09-L04-fc-ipac',
@@ -189,7 +191,7 @@ export default function T09L04_ESABatsIPaC() {
             {
               id: 'T09-L04-fc-tree-window',
               front: 'What is the tree-clearing window for bat species protection?',
-              back: 'The time period during which tree clearing is prohibited or restricted to protect bat species from disturbance during their most sensitive life stages. For the Northern Long-Eared Bat (NLEB) and Tricolored Bat, the standard avoidance window for tree clearing runs from approximately April 1 through October 31 (the active roosting and pup-rearing season). Tree clearing outside this window (November through March) is generally acceptable under standard avoidance measures. [Confirm current IPaC guidance for your specific species and project location.]',
+              back: 'The time period during which tree clearing is prohibited or restricted to protect bat species from disturbance during their most sensitive life stages. For the Northern Long-Eared Bat (NLEB) and Tricolored Bat, the standard avoidance window for tree clearing runs from approximately April 1 through October 31 (the active roosting and pup-rearing season). Tree clearing outside this window (November through March) is generally acceptable under standard avoidance measures. Confirm current IPaC guidance for your specific species and project location.',
             },
             {
               id: 'T09-L04-fc-bio-assessment',
@@ -285,12 +287,6 @@ export default function T09L04_ESABatsIPaC() {
             </tbody>
           </table>
         </div>
-        <p className="mt-2 text-sm text-slate-300/70">
-          Source: USFWS IPaC DKey guidance for NLEB and Tricolored Bat; 16 USC §§1531–1544.
-          [Confirm current avoidance window dates via IPaC DKey for your specific project
-          location and species at time of project — windows and guidance can be updated by
-          USFWS as species status and population data evolve.]
-        </p>
 
         <div className="mt-4 p-4 border border-amber-400/30 bg-amber-400/5 rounded-lg text-sm">
           <p className="font-semibold text-amber-300 mb-2">Book vs. Field</p>
@@ -371,14 +367,6 @@ export default function T09L04_ESABatsIPaC() {
           window reduces the risk of take to near zero, which is why the standard mitigation
           is sufficient for informal consultation.
         </p>
-        <p className="mt-2 text-sm text-slate-300/70">
-          Source: 16 USC §§1531–1544 (ESA); 16 USC §1538 (take prohibition); 50 CFR §17.3
-          (harm definition) [confirm current edition against ecfr.gov]. USFWS Northern
-          Long-Eared Bat Final Rule (87 FR 73488, Nov. 30, 2022 — Endangered reclassification;
-          effective March 31, 2023 per 88 FR 5528).
-          [Confirm current NLEB and Tricolored Bat listing status at fws.gov/species at
-          time of project.]
-        </p>
       </section>
 
       {/* ── LABELED LIST — IPaC output sections ──────────────────────────── */}
@@ -426,11 +414,25 @@ export default function T09L04_ESABatsIPaC() {
         </ol>
       </div>
 
+      <ReferencesBlock
+        items={[
+          { citation: '16 USC §§1531–1544', note: 'The Endangered Species Act — the statute prohibiting take of listed species and requiring federal consultation when an action may affect them.' },
+          { citation: '16 USC §1536', note: 'ESA Section 7 — the consultation process with USFWS (informal or formal) that a fiber project runs when a listed species may be affected.' },
+          { citation: '16 USC §1538', note: 'The ESA take prohibition — the reason a tree-clearing window exists: felling an occupied roost tree in the active season can constitute unlawful take.' },
+          { citation: '87 FR 73488 (Nov. 30, 2022); 88 FR 5528 (effective-date delay)', note: 'The Northern Long-Eared Bat\'s reclassification from Threatened to Endangered, effective March 31, 2023 — the reason a stale species check can miss a listing-status change.' },
+        ]}
+      />
+
       {/* ── PER-LESSON QUIZ ──────────────────────────────────────────────── */}
-      <Quiz
-        title="T09.L04 Check — ESA, Bats, and IPaC"
-        mode="multiple-choice"
-        questions={[
+      <GatedAssessment
+        courseId="T09"
+        assessmentId="T09-L04"
+        title="Check — ESA, Bats, and IPaC"
+        fallback={
+        <Quiz
+          title="Check — ESA, Bats, and IPaC"
+          mode="multiple-choice"
+          questions={[
           {
             id: 'T09-L04-Q1',
             type: 'mc',
@@ -444,7 +446,7 @@ export default function T09L04_ESABatsIPaC() {
             ],
             answerIndex: 1,
             explanation:
-              'Tree clearing in documented NLEB Endangered range during the active season (April 1–October 31) can constitute "take" under ESA §9 — specifically, felling a roost tree during the season when bats are present. The standard mitigation is the tree-clearing avoidance window: clear trees outside the April–October window. Starting April 15 means you must either (a) clear the 12 trees before April 1, or (b) delay tree clearing until November 1. Note: The NLEB was reclassified from Threatened to Endangered by final rule published November 30, 2022 (87 FR 73488); effective March 31, 2023 per 88 FR 5528. [Confirm current listing status at fws.gov/species.]',
+              'Tree clearing in documented NLEB Endangered range during the active season (April 1–October 31) can constitute "take" under ESA §9 — specifically, felling a roost tree during the season when bats are present. The standard mitigation is the tree-clearing avoidance window: clear trees outside the April–October window. Starting April 15 means you must either (a) clear the 12 trees before April 1, or (b) delay tree clearing until November 1. The NLEB was reclassified from Threatened to Endangered by final rule published November 30, 2022 (87 FR 73488); effective March 31, 2023 per 88 FR 5528.',
             citation: '16 USC §1538 (take prohibition); USFWS IPaC DKey NLEB guidance; 87 FR 73488 (NLEB Endangered reclassification rule, Nov. 30, 2022; effective March 31, 2023 per 88 FR 5528).',
           },
           {
@@ -492,10 +494,12 @@ export default function T09L04_ESABatsIPaC() {
             ],
             answerIndex: 1,
             explanation:
-              'IPaC (Information for Planning and Consultation) at ipac.ecosphere.fws.gov is the USFWS\'s official project-screening tool for ESA review. It accepts a user-defined project footprint and returns federally listed species potentially present in the area, critical habitat designations, and activity-specific guidance. NWI maps wetlands (useful for USACE permitting, covered in T09.L05). NatureServe and GAP are third-party/USGS tools — useful supplementary references but not the USFWS-official ESA consultation starting point.',
+              'IPaC (Information for Planning and Consultation) at ipac.ecosphere.fws.gov is the USFWS\'s official project-screening tool for ESA review. It accepts a user-defined project footprint and returns federally listed species potentially present in the area, critical habitat designations, and activity-specific guidance. NWI maps wetlands (useful for USACE permitting, covered in the USACE Wetlands lesson). NatureServe and GAP are third-party/USGS tools — useful supplementary references but not the USFWS-official ESA consultation starting point.',
             citation: 'USFWS IPaC (ipac.ecosphere.fws.gov); 16 USC §1536 (ESA §7 consultation trigger).',
           },
         ]}
+        />
+        }
       />
 
     </LessonLayout>

@@ -10,7 +10,9 @@
 import React from 'react';
 import LessonLayout from '../../components/LessonLayout.jsx';
 import BranchingScenario from '../../components/primitives/BranchingScenario.jsx';
+import ReferencesBlock from '../../components/ReferencesBlock.jsx';
 import Quiz from '../../components/primitives/Quiz.jsx';
+import GatedAssessment from '../../components/primitives/GatedAssessment.jsx';
 import Flashcard from '../../components/Flashcard.jsx';
 
 export const meta = {
@@ -55,12 +57,12 @@ export const meta = {
     {
       term: 'NWP 57',
       definition:
-        'Nationwide Permit 57 — the USACE permit authorizing utility line activities for electric utility lines, telecommunications lines, and other utility lines, issued as part of the 2021 nationwide permit reissuance. NWP 57 replaced NWP 12 coverage for telecom activities (NWP 12 post-2021 covers oil/gas pipelines only). NWP 57 is a general permit — it pre-authorizes qualifying activities without requiring individual-permit review, subject to conditions including PCN requirements for larger impacts. [Verify current NWP number, conditions, and PCN thresholds against the USACE reissuance current at time of project — NWPs are reissued on 5-year cycles.]',
+        'Nationwide Permit 57 — the USACE permit authorizing utility line activities for electric utility lines, telecommunications lines, and other utility lines, issued as part of the 2021 nationwide permit reissuance. NWP 57 replaced NWP 12 coverage for telecom activities (NWP 12 post-2021 covers oil/gas pipelines only). NWP 57 is a general permit — it pre-authorizes qualifying activities without requiring individual-permit review, subject to conditions including PCN requirements for larger impacts. Verify current NWP number, conditions, and PCN thresholds against the USACE reissuance current at time of project — NWPs are reissued on 5-year cycles.',
     },
     {
       term: 'PCN (pre-construction notification)',
       definition:
-        'Pre-construction notification — a notification submitted to the USACE district office before beginning work authorized under a nationwide permit (including NWP 57) when specific conditions trigger the PCN requirement. PCN is required when a project exceeds certain acreage or linear-foot thresholds, affects wetlands above a set area, or when listed conditions (species habitat, cultural resources, proximity to special aquatic sites) are present. USACE has 45 days to respond to a PCN; the applicant may proceed after 45 days if no USACE objection is received. [Confirm current PCN thresholds against the active USACE NWP reissuance.]',
+        'Pre-construction notification — a notification submitted to the USACE district office before beginning work authorized under a nationwide permit (including NWP 57) when specific conditions trigger the PCN requirement. PCN is required when a project exceeds certain acreage or linear-foot thresholds, affects wetlands above a set area, or when listed conditions (species habitat, cultural resources, proximity to special aquatic sites) are present. USACE has 45 days to respond to a PCN; the applicant may proceed after 45 days if no USACE objection is received. Confirm current PCN thresholds against the active USACE NWP reissuance.',
     },
     {
       term: 'individual permit',
@@ -201,12 +203,12 @@ export default function T09L05_USACEWetlandsNWP57() {
             {
               id: 'T09-L05-fc-nwp57',
               front: 'What is NWP 57 and what replaced NWP 12 for telecom?',
-              back: 'Nationwide Permit 57 — the USACE permit authorizing utility line activities for telecom lines (and other utility lines), issued in the 2021 nationwide permit reissuance. NWP 57 replaced NWP 12 coverage for telecom activities (NWP 12 post-2021 covers oil/gas pipelines only). [Verify current NWP number and conditions against the USACE reissuance current at time of project — NWPs are reissued on 5-year cycles.]',
+              back: 'Nationwide Permit 57 — the USACE permit authorizing utility line activities for telecom lines (and other utility lines), issued in the 2021 nationwide permit reissuance. NWP 57 replaced NWP 12 coverage for telecom activities (NWP 12 post-2021 covers oil/gas pipelines only). Verify current NWP number and conditions against the USACE reissuance current at time of project — NWPs are reissued on 5-year cycles.',
             },
             {
               id: 'T09-L05-fc-pcn',
               front: 'What is a PCN and when is it required under NWP 57?',
-              back: 'Pre-construction notification — a notification submitted to the USACE district office before beginning work authorized under NWP 57 when specific conditions trigger the PCN requirement. PCN is required when a project exceeds certain acreage or linear-foot thresholds, affects wetlands above a set area, or when listed conditions are present. USACE has 45 days to respond to a PCN. [Confirm current PCN thresholds against the active USACE NWP reissuance.]',
+              back: 'Pre-construction notification — a notification submitted to the USACE district office before beginning work authorized under NWP 57 when specific conditions trigger the PCN requirement. PCN is required when a project exceeds certain acreage or linear-foot thresholds, affects wetlands above a set area, or when listed conditions are present. USACE has 45 days to respond to a PCN. Confirm current PCN thresholds against the active USACE NWP reissuance.',
             },
             {
               id: 'T09-L05-fc-individual-permit',
@@ -289,12 +291,6 @@ export default function T09L05_USACEWetlandsNWP57() {
             </tbody>
           </table>
         </div>
-        <p className="mt-2 text-sm text-slate-300/70">
-          Source: USACE NWP 57 (2021 reissuance); 33 CFR Part 330.
-          [Verify NWP number and PCN thresholds against current USACE reissuance at
-          lesson-publication time — NWPs are reissued on 5-year cycles and conditions
-          can change. See https://www.usace.army.mil/Missions/Civil-Works/Regulatory-Program-and-Permits/Nationwide-Permits/]
-        </p>
 
         <h3 className="mt-5 font-semibold">WOTUS after Sackett v. EPA (2023) — why you can't assume non-jurisdiction</h3>
         <p>
@@ -392,11 +388,6 @@ export default function T09L05_USACEWetlandsNWP57() {
           option for small impacts — banks already have approved sites and can sell credits
           quickly once a permit is issued.
         </p>
-        <p className="mt-2 text-sm text-slate-300/70">
-          Source: 33 CFR Parts 320–332; 40 CFR Part 230 (Section 404(b)(1) guidelines);
-          USACE/EPA 2008 Mitigation Rule (33 CFR Part 332; 40 CFR Part 230, Subpart J).
-          [Confirm current mitigation banking framework with USACE district at time of project.]
-        </p>
       </section>
 
       {/* ── BRANCHING SCENARIO ──────────────────────────────────────────── */}
@@ -457,11 +448,27 @@ export default function T09L05_USACEWetlandsNWP57() {
         ]}
       />
 
+      <ReferencesBlock
+        items={[
+          { citation: '33 USC §1344 (CWA §404)', note: 'The Clean Water Act discharge-permit authority — the reason a bore or trench crossing a jurisdictional wetland or waterway needs USACE authorization.' },
+          { citation: '33 USC §403 (RHA §10)', note: 'Rivers and Harbors Act Section 10 — USACE authority over navigable-waterway crossings, often paired with a Section 404 permit.' },
+          { citation: '33 CFR Parts 320–332; 33 CFR §330.5', note: 'The USACE nationwide-permit regulatory framework — general conditions, PCN triggers, and the 5-year reissuance cycle that governs NWP 57.' },
+          { citation: 'USACE Nationwide Permit 57 (2021 reissuance)', note: '"Electric Utility Line and Telecommunications Activities" — the streamlined authorization most fiber wetland/waterway crossings use; verify the currently operative reissuance before relying on any specific condition.' },
+          { citation: '33 CFR Part 332; 40 CFR Part 230 (incl. Subpart J)', note: 'The 2008 USACE/EPA compensatory-mitigation rule — the framework for mitigation banking, in-lieu fee, and permittee-responsible mitigation when a wetland impact can\'t be avoided.' },
+          { citation: 'Sackett v. EPA, 598 U.S. ___ (2023)', note: 'The Supreme Court decision narrowing Waters of the US (WOTUS) to wetlands with a continuous surface connection to a relatively permanent water body — the reason a district call is the safe standard for an uncertain feature.' },
+        ]}
+      />
+
       {/* ── PER-LESSON QUIZ ──────────────────────────────────────────────── */}
-      <Quiz
-        title="T09.L05 Check — USACE Wetlands Permits: NWP 57"
-        mode="multiple-choice"
-        questions={[
+      <GatedAssessment
+        courseId="T09"
+        assessmentId="T09-L05"
+        title="Check — USACE Wetlands Permits: NWP 57"
+        fallback={
+        <Quiz
+          title="Check — USACE Wetlands Permits: NWP 57"
+          mode="multiple-choice"
+          questions={[
           {
             id: 'T09-L05-Q1',
             type: 'mc',
@@ -475,8 +482,8 @@ export default function T09L05_USACEWetlandsNWP57() {
             ],
             answerIndex: 1,
             explanation:
-              'In the 2021 USACE nationwide permit reissuance, telecom and electric utility line activities were moved from NWP 12 to NWP 57. NWP 12 (post-2021) covers oil and gas pipeline activities. Any team citing "NWP 12 for fiber" on a post-2021 project is using outdated guidance. [Verify current NWP number and conditions against the active USACE NWP reissuance at publication time.]',
-            citation: 'USACE NWP 57 (2021 reissuance); 87 FR 57298 (2022).',
+              'In the 2021 USACE nationwide permit reissuance, telecom and electric utility line activities were moved from NWP 12 to NWP 57. NWP 12 (post-2021) covers oil and gas pipeline activities. Any team citing "NWP 12 for fiber" on a post-2021 project is using outdated guidance.',
+            citation: 'USACE NWP 57 (2021 reissuance).',
           },
           {
             id: 'T09-L05-Q2',
@@ -491,7 +498,7 @@ export default function T09L05_USACEWetlandsNWP57() {
             ],
             answerIndex: 1,
             explanation:
-              'Under NWP 57 (2021 reissuance), a PCN is required when impacts exceed 0.1 acres of WOTUS, or when other triggers (T&E species, §106, navigable waterway) apply. An 0.08-acre impact with no other triggers is below the PCN threshold — NWP 57 authorizes the crossing without a PCN, provided all NWP general conditions are met. [Confirm current PCN thresholds against the active USACE NWP reissuance at publication time.]',
+              'Under NWP 57 (2021 reissuance), a PCN is required when impacts exceed 0.1 acres of WOTUS, or when other triggers (T&E species, §106, navigable waterway) apply. An 0.08-acre impact with no other triggers is below the PCN threshold — NWP 57 authorizes the crossing without a PCN, provided all NWP general conditions are met.',
             citation: 'USACE NWP 57 (2021 reissuance); 33 CFR Part 330.',
           },
           {
@@ -508,7 +515,7 @@ export default function T09L05_USACEWetlandsNWP57() {
             answerIndex: 1,
             explanation:
               'Sackett v. EPA (2023) narrowed the WOTUS definition, but USACE districts vary in how they apply the new standard to specific features. A seasonal ditch connected to a tributary may still be jurisdictional in some districts\' interpretation. The safe standard is to contact the USACE district regulatory office before assuming non-jurisdiction — a pre-application inquiry is free and provides a defensible record. Assuming non-jurisdiction without USACE contact is a compliance gap.',
-            citation: 'Sackett v. EPA, 598 U.S. ___ (2023); 33 USC §1344; T09 Brief §5 (book-vs-field, WOTUS post-Sackett).',
+            citation: 'Sackett v. EPA, 598 U.S. ___ (2023); 33 USC §1344.',
           },
           {
             id: 'T09-L05-Q4',
@@ -527,6 +534,8 @@ export default function T09L05_USACEWetlandsNWP57() {
             citation: 'USACE NWP 57 (2021 reissuance); 33 CFR §330.5 (general conditions); 33 USC §403 (Rivers and Harbors Act §10).',
           },
         ]}
+        />
+        }
       />
 
     </LessonLayout>

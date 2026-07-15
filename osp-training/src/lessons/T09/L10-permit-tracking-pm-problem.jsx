@@ -4,8 +4,10 @@
 
 import React from 'react';
 import LessonLayout from '../../components/LessonLayout.jsx';
+import ReferencesBlock from '../../components/ReferencesBlock.jsx';
 import WorkedExample from '../../components/primitives/WorkedExample.jsx';
 import Quiz from '../../components/primitives/Quiz.jsx';
+import GatedAssessment from '../../components/primitives/GatedAssessment.jsx';
 import Flashcard from '../../components/Flashcard.jsx';
 
 export const meta = {
@@ -472,75 +474,90 @@ export default function T09L10_PermitTrackingPmProblem() {
         </p>
       </section>
 
-      {/* QUIZ */}
-      <Quiz
-        title="L10 Practice Quiz — Permit Tracking"
-        mode="multiple-choice"
-        questions={[
-          {
-            id: 'T09-L10-Q01',
-            type: 'mc',
-            prompt:
-              'A project has four permits in parallel review: Municipal ROW (submitted Day 0, 45-day review), State DOT (submitted Day 0, 90-day review), Section 106 SHPO (submitted Day 15, 30-day review — clock starts Day 15), and USACE PCN (submitted Day 10, 45-day review). Which is the critical-path permit and when does it complete?',
-            choices: [
-              'Municipal ROW — completes Day 45',
-              'State DOT — completes Day 90',
-              'Section 106 SHPO — completes Day 45',
-              'USACE PCN — completes Day 55',
-            ],
-            answerIndex: 1,
-            explanation:
-              'MRO completes Day 0 + 45 = Day 45. DOT completes Day 0 + 90 = Day 90. SHPO completes Day 15 + 30 = Day 45. PCN completes Day 10 + 45 = Day 55. The latest completion is State DOT at Day 90 — that is the critical-path permit. All other permits clear by Day 55. T09.L10.',
-          },
-          {
-            id: 'T09-L10-Q02',
-            type: 'mc',
-            prompt:
-              'Using the same scenario: the project has a 7-day construction mobilization lag after the last permit is issued. If the PE stamp for the DOT permit wasn\'t ready and the DOT permit wasn\'t submitted until Day 30 (instead of Day 0), what is the new earliest construction start date?',
-            choices: [
-              'Day 97 (DOT Day 30 + 90 = Day 120; + 7-day lag = Day 127) — no wait, let me recalculate',
-              'Day 127 — DOT submitted Day 30, review takes 90 days, completes Day 120, plus 7-day mobilization lag',
-              'Day 97 — the DOT review period shortens because of the late submission',
-              'Day 90 — the mobilization lag covers the difference',
-            ],
-            answerIndex: 1,
-            explanation:
-              'DOT submitted Day 30 + 90-day review = Day 120 completion. Plus 7-day mobilization lag = Day 127 earliest construction start. This is 30 days later than the original Day 97 (Day 90 + 7) simply because the PE stamp wasn\'t ready at kickoff. That 30-day slip from a one-day oversight (not scheduling the PE stamp early) is the "PE stamp delay" lesson in action. T09.L10.',
-          },
-          {
-            id: 'T09-L10-Q03',
-            type: 'mc',
-            prompt:
-              'A project PM discovers on Day 80 that the critical-path DOT permit (expected Day 90) has been returned by the DOT district office for a missing surety bond. The PM must resubmit with the bond. A realistic new DOT completion date is Day 120. A customer commitment requires construction to start by Day 100. What should the PM do FIRST?',
-            choices: [
-              'Wait until Day 90 to see if the situation resolves itself before telling the customer',
-              'Notify the customer immediately that there is a 20-day schedule risk, explain the cause, and provide an updated timeline commitment',
-              'Replace the DOT application with a license agreement to avoid the bond requirement',
-              'Begin construction on the non-DOT segments as originally planned and handle the DOT segment later',
-            ],
-            answerIndex: 1,
-            explanation:
-              'A 20-day slip on a customer commitment discovered on Day 80 must be communicated immediately — not held until Day 90 "to see if it resolves." The customer needs time to adjust their own plans, and proactive communication preserves trust. The PM should also simultaneously work to accelerate the resubmission: expedite the surety bond procurement, submit the same day the bond is ready, and call the DOT reviewer to flag the urgency. T09.L10.',
-          },
-          {
-            id: 'T09-L10-Q04',
-            type: 'mc',
-            prompt:
-              'When tracking both a municipal ROW permit and an OTMR make-ready permit on an aerial fiber project, what is the ideal timing relationship between the two?',
-            choices: [
-              'The ROW permit should always complete before the make-ready permit — you can\'t do make-ready without a ROW permit',
-              'The make-ready permit should always complete first so the poles are ready when the ROW permit arrives',
-              'Ideally, make-ready and ROW permits complete within the same week, so the crew can mobilize to both attach and pull cable without idle time between activities',
-              'The order doesn\'t matter — track them separately and deal with whichever finishes last',
-            ],
-            answerIndex: 2,
-            explanation:
-              'Ideal sequencing is concurrent completion: make-ready done and poles ready at the same time the ROW permit clears. If make-ready finishes first, the crew is ready but can\'t enter the ROW — idle time and cost. If the ROW permit clears first, the crew can enter the ROW but can\'t work because make-ready isn\'t done. The PM staggers submission dates to target concurrent completion within the same week. T09.L10.',
-          },
+      <ReferencesBlock
+        items={[
+          { citation: 'FCC 18-111 (One-Touch Make-Ready Order, 2018)', note: 'The FCC “Third Report and Order” that created One-Touch Make-Ready and set the timelines pole owners must meet for make-ready — the clock the PM tracks alongside the permit clocks on an aerial build.' },
+          { citation: '47 USC §224', note: 'The Communications Act pole-attachment provision — the statutory authority behind the FCC’s make-ready rules and attachment timelines.' },
+          { citation: '47 USC §332(c)(7)(B)(ii)', note: 'The FCC wireless-siting “shot clock” — the review-deadline model behind permit shot-clock thinking applied to ROW review.' },
         ]}
-        onComplete={(result) => {
-          console.info('T09 L10 Quiz complete:', result);
-        }}
+      />
+
+      {/* QUIZ */}
+      <GatedAssessment
+        courseId="T09"
+        assessmentId="T09-L10"
+        title="Practice Quiz — Permit Tracking"
+        fallback={
+        <Quiz
+          title="Practice Quiz — Permit Tracking"
+          mode="multiple-choice"
+          questions={[
+            {
+              id: 'T09-L10-Q01',
+              type: 'mc',
+              prompt:
+                'A project has four permits in parallel review: Municipal ROW (submitted Day 0, 45-day review), State DOT (submitted Day 0, 90-day review), Section 106 SHPO (submitted Day 15, 30-day review — clock starts Day 15), and USACE PCN (submitted Day 10, 45-day review). Which is the critical-path permit and when does it complete?',
+              choices: [
+                'Municipal ROW — completes Day 45',
+                'State DOT — completes Day 90',
+                'Section 106 SHPO — completes Day 45',
+                'USACE PCN — completes Day 55',
+              ],
+              answerIndex: 1,
+              explanation:
+                'MRO completes Day 0 + 45 = Day 45. DOT completes Day 0 + 90 = Day 90. SHPO completes Day 15 + 30 = Day 45. PCN completes Day 10 + 45 = Day 55. The latest completion is State DOT at Day 90 — that is the critical-path permit. All other permits clear by Day 55.',
+            },
+            {
+              id: 'T09-L10-Q02',
+              type: 'mc',
+              prompt:
+                'Using the same scenario: the project has a 7-day construction mobilization lag after the last permit is issued. If the PE stamp for the DOT permit wasn\'t ready and the DOT permit wasn\'t submitted until Day 30 (instead of Day 0), what is the new earliest construction start date?',
+              choices: [
+                'Day 97 — the DOT clock runs from Day 0 regardless of when the application is actually submitted',
+                'Day 127 — DOT submitted Day 30, review takes 90 days, completes Day 120, plus 7-day mobilization lag',
+                'Day 97 — the DOT review period shortens because of the late submission',
+                'Day 90 — the mobilization lag covers the difference',
+              ],
+              answerIndex: 1,
+              explanation:
+                'DOT submitted Day 30 + 90-day review = Day 120 completion. Plus 7-day mobilization lag = Day 127 earliest construction start. This is 30 days later than the original Day 97 (Day 90 + 7) simply because the PE stamp wasn\'t ready at kickoff. That 30-day slip from a one-day oversight (not scheduling the PE stamp early) is the "PE stamp delay" lesson in action.',
+            },
+            {
+              id: 'T09-L10-Q03',
+              type: 'mc',
+              prompt:
+                'A project PM discovers on Day 80 that the critical-path DOT permit (expected Day 90) has been returned by the DOT district office for a missing surety bond. The PM must resubmit with the bond. A realistic new DOT completion date is Day 120. A customer commitment requires construction to start by Day 100. What should the PM do FIRST?',
+              choices: [
+                'Wait until Day 90 to see if the situation resolves itself before telling the customer',
+                'Notify the customer immediately that there is a 20-day schedule risk, explain the cause, and provide an updated timeline commitment',
+                'Replace the DOT application with a license agreement to avoid the bond requirement',
+                'Begin construction on the non-DOT segments as originally planned and handle the DOT segment later',
+              ],
+              answerIndex: 1,
+              explanation:
+                'A 20-day slip on a customer commitment discovered on Day 80 must be communicated immediately — not held until Day 90 "to see if it resolves." The customer needs time to adjust their own plans, and proactive communication preserves trust. The PM should also simultaneously work to accelerate the resubmission: expedite the surety bond procurement, submit the same day the bond is ready, and call the DOT reviewer to flag the urgency.',
+            },
+            {
+              id: 'T09-L10-Q04',
+              type: 'mc',
+              prompt:
+                'When tracking both a municipal ROW permit and an OTMR make-ready permit on an aerial fiber project, what is the ideal timing relationship between the two?',
+              choices: [
+                'The ROW permit should always complete before the make-ready permit — you can\'t do make-ready without a ROW permit',
+                'The make-ready permit should always complete first so the poles are ready when the ROW permit arrives',
+                'Ideally, make-ready and ROW permits complete within the same week, so the crew can mobilize to both attach and pull cable without idle time between activities',
+                'The order doesn\'t matter — track them separately and deal with whichever finishes last',
+              ],
+              answerIndex: 2,
+              explanation:
+                'Ideal sequencing is concurrent completion: make-ready done and poles ready at the same time the ROW permit clears. If make-ready finishes first, the crew is ready but can\'t enter the ROW — idle time and cost. If the ROW permit clears first, the crew can enter the ROW but can\'t work because make-ready isn\'t done. The PM staggers submission dates to target concurrent completion within the same week.',
+            },
+          ]}
+          onComplete={(result) => {
+            console.info('T09 L10 Quiz complete:', result);
+          }}
+        />
+        }
       />
 
     </LessonLayout>

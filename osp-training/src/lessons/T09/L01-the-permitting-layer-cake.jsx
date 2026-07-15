@@ -4,7 +4,9 @@
 
 import React from 'react';
 import LessonLayout from '../../components/LessonLayout.jsx';
+import ReferencesBlock from '../../components/ReferencesBlock.jsx';
 import Quiz from '../../components/primitives/Quiz.jsx';
+import GatedAssessment from '../../components/primitives/GatedAssessment.jsx';
 import Flashcard from '../../components/Flashcard.jsx';
 
 export const meta = {
@@ -117,12 +119,12 @@ export default function T09L01_ThePermittingLayerCake() {
             <tr className="border-t border-white/10">
               <td className="px-3 py-2 font-mono">NEPA</td>
               <td className="px-3 py-2">National Environmental Policy Act</td>
-              <td className="px-3 py-2">Federal law requiring environmental review for federal actions — covered in depth in T09.L02</td>
+              <td className="px-3 py-2">Federal law requiring environmental review for federal actions — covered in depth in the NEPA lesson</td>
             </tr>
             <tr className="border-t border-white/10">
               <td className="px-3 py-2 font-mono">USACE</td>
               <td className="px-3 py-2">U.S. Army Corps of Engineers</td>
-              <td className="px-3 py-2">Federal agency that issues wetland crossing permits; covered in T09.L05</td>
+              <td className="px-3 py-2">Federal agency that issues wetland crossing permits; covered in the USACE Wetlands lesson</td>
             </tr>
             <tr className="border-t border-white/10">
               <td className="px-3 py-2 font-mono">DOT</td>
@@ -349,13 +351,16 @@ export default function T09L01_ThePermittingLayerCake() {
           as "cooperating agencies" and their reviews feed into the LFA's single NEPA document
           rather than running as separate processes.
         </p>
-        <p className="mt-2 text-sm text-slate-300/70">
-          Source: CEQ regulations on lead and cooperating agencies in NEPA.
-          [Note: The CEQ regulations previously codified at 40 CFR Parts 1500–1508 (including
-          §1501.7) were removed effective January 8, 2026 (FR 2026-00178). The underlying
-          statutory authority (42 USC §4332) remains in effect. Verify current NEPA implementing
-          guidance at Council on Environmental Quality (ceq.doe.gov) at the time of project
-          execution.]
+        <p className="mt-2">
+          One practical note about the federal rulebook itself. For decades, the government-wide
+          procedures for <em>how</em> to run a NEPA review lived in one shared set of Council on
+          Environmental Quality (CEQ) regulations that every agency followed. Those government-wide
+          procedures were rescinded in 2025–2026, and each federal agency now runs NEPA under its
+          own agency-specific procedures instead. What did <strong>not</strong> change is the law
+          underneath: NEPA itself is still fully in force, and the lead-agency structure above still
+          governs how a multi-agency project is coordinated. The takeaway for a permitting team is
+          simple — confirm the <em>current</em> procedures of your lead agency (NTIA for BEAD, USDA
+          Rural Development for RUS) rather than assuming a single uniform federal rulebook still applies.
         </p>
 
         <h3 className="mt-5 font-semibold">Programmatic vs. project-level review</h3>
@@ -420,87 +425,108 @@ export default function T09L01_ThePermittingLayerCake() {
         </tbody>
       </table>
 
-      {/* ── PER-LESSON QUIZ ──────────────────────────────────────────────── */}
-      <Quiz
-        title="T09.L01 Check — The Permitting Layer Cake"
-        mode="multiple-choice"
-        questions={[
-          {
-            id: 'T09-L01-Q1',
-            type: 'mc',
-            prompt:
-              'A fiber route will receive a BEAD grant from NTIA. Which of the following federal review requirements is automatically triggered by the BEAD funding?',
-            choices: [
-              'USACE Section 404 wetlands review only',
-              'NEPA environmental review, Section 106 historic preservation review, and ESA consultation',
-              'State DOT encroachment permit',
-              'Private landowner easement recording',
-            ],
-            answerIndex: 1,
-            explanation:
-              'BEAD funding creates a federal nexus, which activates all federal environmental review requirements: NEPA (42 USC §4321 et seq.), Section 106 of the NHPA (54 USC §306108), and ESA Section 7 consultation (16 USC §1536). The DOT encroachment permit is a state-layer requirement; private easements are a private-property layer requirement — neither is triggered by the presence of federal funding.',
-            citation: '42 USC §4321 et seq. (NEPA); 54 USC §306108 (NHPA §106); 16 USC §1536 (ESA §7). [Note: CEQ regulations at 40 CFR Parts 1500–1508 were removed effective January 8, 2026 — cite to statutory authority and current agency guidance.]',
-          },
-          {
-            id: 'T09-L01-Q2',
-            type: 'mc',
-            prompt:
-              'A project engineer submits the state DOT encroachment permit application before the NEPA review is complete. Is this allowed?',
-            choices: [
-              'No — NEPA must be fully approved before any state permit applications can be submitted',
-              'Yes — permit submissions can run in parallel; the constraint is that construction cannot begin until all required permits are in hand',
-              'Yes — state permits are completely independent of federal review and can be issued without NEPA',
-              'No — the DOT will reject the application without a NEPA clearance letter attached',
-            ],
-            answerIndex: 1,
-            explanation:
-              'The book rule is sequential in approval, not in submission. Experienced permitting teams submit to all agencies simultaneously to compress the schedule. The DOT may issue the encroachment permit before NEPA concludes — but construction on that DOT-permitted segment cannot begin until the NEPA review also clears (because the federal nexus from BEAD funding applies to the entire project). Parallelizing submissions while enforcing the approval sequence is standard practice.',
-            citation: 'M03 §3.1 (permit timeline management); 42 USC §4332 (NEPA — no irreversible commitments before review conclusion). [CEQ §1506.1 formerly codified at 40 CFR §1506.1; removed effective January 8, 2026 — verify current NEPA guidance at ceq.doe.gov.]',
-          },
-          {
-            id: 'T09-L01-Q3',
-            type: 'mc',
-            prompt:
-              'The Authority Having Jurisdiction (AHJ) for an encroachment permit on a state highway is:',
-            choices: [
-              'The federal EPA',
-              'The county engineer',
-              'The state DOT district office',
-              'The landowner adjacent to the highway',
-            ],
-            answerIndex: 2,
-            explanation:
-              'The AHJ for state highway ROW is the state DOT — specifically the district office responsible for the road segment in question. The federal EPA has no role in DOT encroachment permits. The county engineer handles county roads, not state highways. Landowners adjacent to the highway own the land up to the ROW boundary but have no authority over the ROW itself.',
-            citation: 'M03 §3.1; T09 Brief §2 (L01 source attribution).',
-          },
-          {
-            id: 'T09-L01-Q4',
-            type: 'mc',
-            prompt:
-              'Which jurisdictional trigger activates the requirement for a USACE Section 404 permit?',
-            choices: [
-              'Any project receiving federal funding',
-              'Any project crossing a wetland or navigable waterway (Waters of the US)',
-              'Any project placing conduit in a state highway ROW',
-              'Any project on private farmland',
-            ],
-            answerIndex: 1,
-            explanation:
-              'USACE Section 404 authority (under the Clean Water Act) is triggered by the physical act of discharging dredged or fill material into Waters of the United States — which includes wetlands and navigable waterways. Federal funding alone does not trigger §404; it is the crossing of jurisdictional waters that does. State DOT work triggers state encroachment permits; private farmland triggers easement requirements.',
-            citation: '33 USC §1344 (CWA §404); 33 CFR Part 320–332 (USACE nationwide permit framework).',
-          },
-          {
-            id: 'T09-L01-Q5',
-            type: 'fill-in-blank',
-            prompt:
-              'The legal connection that brings federal environmental review requirements into a project — typically created by federal funding or a federal permit — is called the federal ____.',
-            answer: 'nexus',
-            answerDisplay: 'nexus',
-            explanation:
-              'The federal nexus is the link that connects a project to federal environmental law. Without a nexus, NEPA, Section 106, and ESA Section 7 do not apply. With a nexus — whether from BEAD funding, RUS loans, or a USACE wetlands permit — all applicable federal environmental reviews become mandatory.',
-            citation: 'M03 §3.1; 42 USC §4321 et seq. (NEPA statutory authority). [Note: CEQ regulations at 40 CFR §1508.1 et seq. removed eff. January 8, 2026 — cite to statutory authority and current agency guidance.]',
-          },
+      <ReferencesBlock
+        items={[
+          { citation: '42 USC §4321 et seq.', note: 'National Environmental Policy Act — the federal law that requires environmental review whenever a project has a federal nexus (federal funding, permit, or approval).' },
+          { citation: '42 USC §4332', note: 'The action-forcing section of NEPA — agencies must complete environmental review before making irreversible commitments of resources.' },
+          { citation: '54 USC §306108', note: 'Section 106 of the National Historic Preservation Act — federal agencies must consider a project’s effect on historic properties (covered in the Section 106 lesson).' },
+          { citation: '16 USC §1536', note: 'Section 7 of the Endangered Species Act — federal agencies must consult on effects to listed species (covered in the ESA lesson).' },
+          { citation: '33 USC §1344', note: 'Section 404 of the Clean Water Act — the USACE permit authority triggered by discharging fill into Waters of the U.S. (wetland/waterway crossings; covered in the USACE Wetlands lesson).' },
+          { citation: '33 USC §403', note: 'Section 10 of the Rivers and Harbors Act — USACE authority over work in navigable waters, often paired with a Section 404 permit.' },
+          { citation: '33 CFR Parts 320–332', note: 'The USACE regulatory framework for individual and nationwide permits, including Nationwide Permit 57 for telecommunications line crossings.' },
+          { citation: 'Nationwide Permit 57', note: 'USACE “Electric Utility Line and Telecommunications Activities” nationwide permit — the streamlined authorization most fiber wetland/waterway crossings use.' },
+          { citation: 'Infrastructure Investment and Jobs Act (2021) — BEAD Program', note: 'Creates the $42.45 billion NTIA broadband grant program; BEAD funding is a federal nexus that activates NEPA, Section 106, and ESA review.' },
+          { citation: 'CEQ NEPA regulations (former 40 CFR Parts 1500–1508)', note: 'The government-wide NEPA procedures rescinded in 2025–2026 (interim rule effective April 11, 2025; final rule effective January 8, 2026, following E.O. 14154). Agencies now run NEPA under their own agency-specific procedures; the NEPA statute itself remains in force.' },
         ]}
+      />
+
+      {/* ── PER-LESSON QUIZ ──────────────────────────────────────────────── */}
+      <GatedAssessment
+        courseId="T09"
+        assessmentId="T09-L01"
+        title="Check — The Permitting Layer Cake"
+        fallback={
+        <Quiz
+          title="Check — The Permitting Layer Cake"
+          mode="multiple-choice"
+          questions={[
+            {
+              id: 'T09-L01-Q1',
+              type: 'mc',
+              prompt:
+                'A fiber route will receive a BEAD grant from NTIA. Which of the following federal review requirements is automatically triggered by the BEAD funding?',
+              choices: [
+                'USACE Section 404 wetlands review only',
+                'NEPA environmental review, Section 106 historic preservation review, and ESA consultation',
+                'State DOT encroachment permit',
+                'Private landowner easement recording',
+              ],
+              answerIndex: 1,
+              explanation:
+                'BEAD funding creates a federal nexus, which activates all federal environmental review requirements: NEPA (42 USC §4321 et seq.), Section 106 of the NHPA (54 USC §306108), and ESA Section 7 consultation (16 USC §1536). The DOT encroachment permit is a state-layer requirement; private easements are a private-property layer requirement — neither is triggered by the presence of federal funding.',
+              citation: '42 USC §4321 et seq. (NEPA); 54 USC §306108 (NHPA §106); 16 USC §1536 (ESA §7).',
+            },
+            {
+              id: 'T09-L01-Q2',
+              type: 'mc',
+              prompt:
+                'A project engineer submits the state DOT encroachment permit application before the NEPA review is complete. Is this allowed?',
+              choices: [
+                'No — NEPA must be fully approved before any state permit applications can be submitted',
+                'Yes — permit submissions can run in parallel; the constraint is that construction cannot begin until all required permits are in hand',
+                'Yes — state permits are completely independent of federal review and can be issued without NEPA',
+                'No — the DOT will reject the application without a NEPA clearance letter attached',
+              ],
+              answerIndex: 1,
+              explanation:
+                'The book rule is sequential in approval, not in submission. Experienced permitting teams submit to all agencies simultaneously to compress the schedule. The DOT may issue the encroachment permit before NEPA concludes — but construction on that DOT-permitted segment cannot begin until the NEPA review also clears (because the federal nexus from BEAD funding applies to the entire project). Parallelizing submissions while enforcing the approval sequence is standard practice.',
+              citation: '42 USC §4332 (NEPA — no irreversible commitments before the review concludes).',
+            },
+            {
+              id: 'T09-L01-Q3',
+              type: 'mc',
+              prompt:
+                'The Authority Having Jurisdiction (AHJ) for an encroachment permit on a state highway is:',
+              choices: [
+                'The federal EPA',
+                'The county engineer',
+                'The state DOT district office',
+                'The landowner adjacent to the highway',
+              ],
+              answerIndex: 2,
+              explanation:
+                'The AHJ for state highway ROW is the state DOT — specifically the district office responsible for the road segment in question. The federal EPA has no role in DOT encroachment permits. The county engineer handles county roads, not state highways. Landowners adjacent to the highway own the land up to the ROW boundary but have no authority over the ROW itself.',
+            },
+            {
+              id: 'T09-L01-Q4',
+              type: 'mc',
+              prompt:
+                'Which jurisdictional trigger activates the requirement for a USACE Section 404 permit?',
+              choices: [
+                'Any project receiving federal funding',
+                'Any project crossing a wetland or navigable waterway (Waters of the US)',
+                'Any project placing conduit in a state highway ROW',
+                'Any project on private farmland',
+              ],
+              answerIndex: 1,
+              explanation:
+                'USACE Section 404 authority (under the Clean Water Act) is triggered by the physical act of discharging dredged or fill material into Waters of the United States — which includes wetlands and navigable waterways. Federal funding alone does not trigger §404; it is the crossing of jurisdictional waters that does. State DOT work triggers state encroachment permits; private farmland triggers easement requirements.',
+              citation: '33 USC §1344 (CWA §404); 33 CFR Parts 320–332 (USACE nationwide permit framework).',
+            },
+            {
+              id: 'T09-L01-Q5',
+              type: 'fill-in-blank',
+              prompt:
+                'The legal connection that brings federal environmental review requirements into a project — typically created by federal funding or a federal permit — is called the federal ____.',
+              answer: 'nexus',
+              answerDisplay: 'nexus',
+              explanation:
+                'The federal nexus is the link that connects a project to federal environmental law. Without a nexus, NEPA, Section 106, and ESA Section 7 do not apply. With a nexus — whether from BEAD funding, RUS loans, or a USACE wetlands permit — all applicable federal environmental reviews become mandatory.',
+              citation: '42 USC §4321 et seq. (NEPA statutory authority).',
+            },
+          ]}
+        />
+        }
       />
 
     </LessonLayout>

@@ -92,7 +92,7 @@
     {
       "id": "T09-L01-Q7",
       "type": "mc",
-      "prompt": "A permitting team wants to compress schedule by submitting the municipal ROW permit, the state DOT encroachment permit, and the federal NEPA review all in the same week rather than waiting for each to finish before starting the next. Is this consistent with the correct sequencing rule described in T09.L01?",
+      "prompt": "A permitting team wants to compress schedule by submitting the municipal ROW permit, the state DOT encroachment permit, and the federal NEPA review all in the same week rather than waiting for each to finish before starting the next. Is this consistent with the correct permit sequencing rule?",
       "choices": [
         "No — federal review must always fully conclude before any other permit application is even submitted",
         "Yes — parallel SUBMISSION is standard practice; the actual constraint that must be respected is sequential APPROVAL, meaning construction cannot begin until every required permit (including NEPA) has actually cleared",
@@ -100,7 +100,7 @@
         "Yes, with no constraint at all — once any one permit is issued, construction may begin regardless of the others' status"
       ],
       "answerIndex": 1,
-      "explanation": "The T09.L01 sequencing principle separates submission timing from approval timing: submitting multiple permit applications in parallel is standard practice for schedule compression, but the hard constraint is that construction cannot begin until every applicable permit — including the federal NEPA review triggered by the federal nexus — has actually cleared."
+      "explanation": "The sequencing principle separates submission timing from approval timing: submitting multiple permit applications in parallel is standard practice for schedule compression, but the hard constraint is that construction cannot begin until every applicable permit — including the federal NEPA review triggered by the federal nexus — has actually cleared."
     },
     {
       "id": "T09-L01-Q8",

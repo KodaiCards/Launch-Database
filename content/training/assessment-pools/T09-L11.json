@@ -50,7 +50,7 @@
     {
       "id": "T09-L11-Q4",
       "type": "mc",
-      "prompt": "RUS Form 307 (Construction and Operation Report) is filed at what point in the project lifecycle, and what does it document regarding environmental review?",
+      "prompt": "RUS requires a construction closeout certification at the end of a financed project. At what point in the project lifecycle is it filed, and what does it document regarding environmental review?",
       "choices": [
         "It is filed before construction begins and documents the project's initial NEPA determination",
         "It is a construction closeout document filed after the project is built, attesting the project was constructed according to approved plans and that all environmental conditions were met — for example, confirming tree clearing occurred outside a required avoidance window, or that a wetland crossing used the bore method required by NWP 57 PCN conditions; environmental commitments made during review become enforceable through this closeout",
@@ -58,7 +58,7 @@
         "It replaces the need for any environmental review during project planning"
       ],
       "answerIndex": 1,
-      "explanation": "RUS Form 307 is a closeout document, not a planning-stage document — it confirms after the fact that environmental conditions attached during the review process (seasonal clearing windows, required construction methods for a permitted crossing) were actually followed during construction. This is the mechanism that makes environmental commitments made during planning enforceable rather than merely aspirational."
+      "explanation": "The RUS construction closeout certification is a closeout document, not a planning-stage document — it confirms after the fact that environmental conditions attached during the review process (seasonal clearing windows, required construction methods for a permitted crossing) were actually followed during construction. This is the mechanism that makes environmental commitments made during planning enforceable rather than merely aspirational."
     },
     {
       "id": "T09-L11-Q5",
@@ -68,10 +68,10 @@
         "Yes — an extraordinary-circumstances determination, once made, never needs to be revisited regardless of how much time passes",
         "No — species listing status is not static, and NLEB specifically was reclassified from Threatened to Endangered effective March 31, 2023; a determination made before that reclassification would understate the species' current protections and should be re-verified before a 2026 construction start",
         "Yes, because RUS environmental determinations are valid indefinitely once issued",
-        "No, but only because RUS Form 307 requires a fresh 2026 review regardless of species status"
+        "No, but only because the RUS closeout certification requires a fresh 2026 review regardless of species status"
       ],
       "answerIndex": 1,
-      "explanation": "This mirrors the ESA/IPaC timing principle from T09.L04: species status changes over time, and NLEB's Threatened-to-Endangered reclassification (effective March 31, 2023) is exactly the kind of change that can make a multi-year-old extraordinary-circumstances determination stale — re-verifying current status before a 2026 construction start is the defensible practice, not treating the 2022 determination as permanently valid.",
+      "explanation": "This mirrors the ESA/IPaC timing principle from the ESA lesson: species status changes over time, and NLEB's Threatened-to-Endangered reclassification (effective March 31, 2023) is exactly the kind of change that can make a multi-year-old extraordinary-circumstances determination stale — re-verifying current status before a 2026 construction start is the defensible practice, not treating the 2022 determination as permanently valid.",
       "citation": "87 FR 73488 (NLEB Endangered reclassification, eff. March 31, 2023)."
     },
     {
@@ -80,12 +80,12 @@
       "prompt": "Why does the RUS environmental review framework (7 CFR Part 1b) matter specifically to a field crew or PM working a RUS-funded fiber project, beyond being a planning-stage paperwork exercise?",
       "choices": [
         "It doesn't matter to field/PM staff — environmental review is purely a pre-construction desk exercise with no field-level consequence",
-        "Environmental commitments made during the CE/EIM review (seasonal tree-clearing windows, required construction methods for permitted crossings) become binding conditions that field crews must actually follow, and RUS Form 307 closeout specifically verifies compliance with those conditions after construction — meaning a field crew's actual construction practices, not just the paperwork, determine whether the project's environmental review holds up",
+        "Environmental commitments made during the CE/EIM review (seasonal tree-clearing windows, required construction methods for permitted crossings) become binding conditions that field crews must actually follow, and the RUS construction closeout certification specifically verifies compliance with those conditions after construction — meaning a field crew's actual construction practices, not just the paperwork, determine whether the project's environmental review holds up",
         "It only matters for wetland crossings, never for tree clearing or species-related conditions",
         "RUS environmental review only applies to fully underground routes, never to aerial routes"
       ],
       "answerIndex": 1,
-      "explanation": "The environmental review process generates real, binding field-level conditions (timing restrictions, construction-method requirements) — and Form 307's closeout role means a field crew's actual on-the-ground practices are what get verified and documented, not just the planning-stage paperwork. This is the same principle established elsewhere in T09: documented commitments made during review must be honored during execution, and the closeout process is what confirms they were."
+      "explanation": "The environmental review process generates real, binding field-level conditions (timing restrictions, construction-method requirements) — and the closeout certification's role means a field crew's actual on-the-ground practices are what get verified and documented, not just the planning-stage paperwork. This is the same principle established elsewhere in this course: documented commitments made during review must be honored during execution, and the closeout process is what confirms they were."
     },
     {
       "id": "T09-L11-Q7",
@@ -94,11 +94,11 @@
       "choices": [
         "Proceed with clearing anyway since the CE was already validly granted before construction started",
         "Stop and address the deviation before clearing in the restricted window — the CE's validity was conditioned on the specific commitment made in the EIM (clearing outside the season), so a schedule change that violates that commitment reopens the extraordinary-circumstances issue and requires either rescheduling the clearing or pursuing the consultation that was avoided by the original EIM",
-        "The delay is irrelevant because RUS Form 307 will simply document what actually happened regardless of the original commitment",
+        "The delay is irrelevant because the RUS closeout certification will simply document what actually happened regardless of the original commitment",
         "Only the design engineer needs to be notified; construction can proceed without further environmental review"
       ],
       "answerIndex": 1,
-      "explanation": "A CE granted on the strength of a specific EIM commitment is conditioned on that commitment being honored — an equipment-delay-driven schedule slip into the restricted window isn't a paperwork footnote, it's a deviation from the basis on which the CE was validly used. The correct response is to stop and resolve the deviation (reschedule, or now pursue the ESA consultation the EIM was designed to avoid) rather than treat Form 307 as simply documenting whatever happens after the fact."
+      "explanation": "A CE granted on the strength of a specific EIM commitment is conditioned on that commitment being honored — an equipment-delay-driven schedule slip into the restricted window isn't a paperwork footnote, it's a deviation from the basis on which the CE was validly used. The correct response is to stop and resolve the deviation (reschedule, or now pursue the ESA consultation the EIM was designed to avoid) rather than treat the closeout certification as simply documenting whatever happens after the fact."
     },
     {
       "id": "T09-L11-Q8",
