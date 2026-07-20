@@ -221,45 +221,49 @@ export default function T22L02_FiberFundamentals() {
             id: 'Q1',
             stem: 'What is the typical core diameter of single-mode fiber?',
             options: [
-              { text: '50 µm', correct: false },
-              { text: '62.5 µm', correct: false },
-              { text: '8–9 µm', correct: true },
-              { text: '125 µm', correct: false },
+              '50 µm',
+              '62.5 µm',
+              '8–9 µm',
+              '125 µm',
             ],
-            rationale: 'SMF has a core of ~8–9 µm, much smaller than MMF. The 125 µm is the cladding diameter (outer protective layer on all fiber).'
+            answerIndex: 2,
+            explanation: 'SMF has a core of ~8–9 µm, much smaller than MMF. The 125 µm is the cladding diameter (outer protective layer on all fiber).'
           },
           {
             id: 'Q2',
             stem: 'At 1550 nm, G.652.D fiber has an attenuation of approximately…?',
             options: [
-              { text: '0.05 dB/km', correct: false },
-              { text: '0.2 dB/km', correct: true },
-              { text: '1.0 dB/km', correct: false },
-              { text: '2.0 dB/km', correct: false },
+              '0.05 dB/km',
+              '0.2 dB/km',
+              '1.0 dB/km',
+              '2.0 dB/km',
             ],
-            rationale: 'G.652.D @ 1550 nm is ~0.2 dB/km. This is the lowest-loss wavelength band for standard single-mode fiber in telecom systems.'
+            answerIndex: 1,
+            explanation: 'G.652.D @ 1550 nm is ~0.2 dB/km. This is the lowest-loss wavelength band for standard single-mode fiber in telecom systems.'
           },
           {
             id: 'Q3',
             stem: 'You measure a 10 km G.652.D link with an OLTS @ 1550 nm. Expected fiber loss is?',
             options: [
-              { text: '2 dB', correct: true },
-              { text: '0.2 dB', correct: false },
-              { text: '4 dB', correct: false },
-              { text: '20 dB', correct: false },
+              '2 dB',
+              '0.2 dB',
+              '4 dB',
+              '20 dB',
             ],
-            rationale: 'Loss = attenuation × distance = 0.2 dB/km × 10 km = 2 dB. (Splices and connectors would add to this total.)'
+            answerIndex: 0,
+            explanation: 'Loss = attenuation × distance = 0.2 dB/km × 10 km = 2 dB. (Splices and connectors would add to this total.)'
           },
           {
             id: 'Q4',
             stem: 'Why does multimode fiber have a shorter usable distance than single-mode?',
             options: [
-              { text: 'Multimode has higher attenuation per km.', correct: false },
-              { text: 'Modal dispersion spreads the signal pulse over time, limiting bandwidth-distance product.', correct: true },
-              { text: 'Multimode fiber is more fragile and breaks easier.', correct: false },
-              { text: 'Multimode requires special test equipment that limits reach.', correct: false },
+              'Multimode has higher attenuation per km.',
+              'Modal dispersion spreads the signal pulse over time, limiting bandwidth-distance product.',
+              'Multimode fiber is more fragile and breaks easier.',
+              'Multimode requires special test equipment that limits reach.',
             ],
-            rationale: 'Light bounces at different angles through MMF, arriving at different times and spreading the pulse. This modal dispersion limits distance for a given data rate.'
+            answerIndex: 1,
+            explanation: 'Light bounces at different angles through MMF, arriving at different times and spreading the pulse. This modal dispersion limits distance for a given data rate.'
           },
         ]}
       />

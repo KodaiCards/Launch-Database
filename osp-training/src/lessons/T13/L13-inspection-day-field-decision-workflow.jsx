@@ -441,25 +441,13 @@ export default function T13L13FieldDecisionWorkflow() {
               question:
                 'You discover three deficiencies in a single inspection segment: (1) burial depth 1 inch short, (2) conduit support spacing 1 foot beyond spec max, (3) marking tape missing over 10 feet of the run. What is the correct disposition?',
               options: [
-                {
-                  text: 'Issue three punch-list items and allow the contractor to correct them over the next 3 weeks.',
-                  correct: false,
-                  rationale:
-                    'Wrong. The segment-kick-back rule applies: ≥3 deficiencies = entire segment kicked back. You do not allow piecemeal corrections.',
-                },
-                {
-                  text: 'Only deficiencies 1 and 2 are material; deficiency 3 (marking tape) is cosmetic. Issue two punch-list items.',
-                  correct: false,
-                  rationale:
-                    'Wrong. The count is ≥3 regardless of severity mix. All three count. The segment is kicked back.',
-                },
-                {
-                  text: 'The entire segment must be returned to the contractor for correction before any portion is accepted. Document on Form 565: "Segment kicked back — ≥3 material deficiencies."',
-                  correct: true,
-                  rationale:
-                    'Correct. This is the segment-kick-back rule. ≥3 deficiencies (any mix of HIGH/MED/LOW) = entire segment returns for correction. No partial acceptance.',
-                },
+                'Issue three punch-list items and allow the contractor to correct them over the next 3 weeks.',
+                'Only deficiencies 1 and 2 are material; deficiency 3 (marking tape) is cosmetic. Issue two punch-list items.',
+                'The entire segment must be returned to the contractor for correction before any portion is accepted. Document on Form 565: "Segment kicked back — ≥3 material deficiencies."',
               ],
+              answerIndex: 2,
+              explanation:
+                'Correct. This is the segment-kick-back rule. ≥3 deficiencies (any mix of HIGH/MED/LOW) = entire segment returns for correction. No partial acceptance.',
             },
             {
               id: 'q2',
@@ -467,25 +455,13 @@ export default function T13L13FieldDecisionWorkflow() {
               question:
                 'You observe the contractor crew attempting to test grounding on an energized cable. The crew is not using PPE for electrical work and is standing in wet grass. What is your correct action?',
               options: [
-                {
-                  text: 'Allow the test to proceed. The cable is telecom, not power. Low voltage is low risk.',
-                  correct: false,
-                  rationale:
-                    'Wrong. NESC §01C unsafe condition. Halt work immediately. Voltage level is not an excuse.',
-                },
-                {
-                  text: 'Require the crew to put on electrical PPE and then allow the test.',
-                  correct: false,
-                  rationale:
-                    'Wrong. Even with PPE, the crew member should not be conducting grounding tests on energized infrastructure while standing on wet ground. Halt work and require de-energization / LOTO first.',
-                },
-                {
-                  text: 'Halt work immediately. State: "Work stops. De-energize and lock-out the cable before any grounding tests. Crew: put on dry shoes and electrical PPE. No further action until LOTO is complete." Document on Form 565: "NESC §01C halt: unsafe condition (energized cable, inadequate PPE, crew on wet ground)."',
-                  correct: true,
-                  rationale:
-                    'Correct. NESC §01C gives you halt-work authority. Do not negotiate on safety. Do not let the contractor argue about schedule or cost.',
-                },
+                'Allow the test to proceed. The cable is telecom, not power. Low voltage is low risk.',
+                'Require the crew to put on electrical PPE and then allow the test.',
+                'Halt work immediately. State: "Work stops. De-energize and lock-out the cable before any grounding tests. Crew: put on dry shoes and electrical PPE. No further action until LOTO is complete." Document on Form 565: "NESC §01C halt: unsafe condition (energized cable, inadequate PPE, crew on wet ground)."',
               ],
+              answerIndex: 2,
+              explanation:
+                'Correct. NESC §01C gives you halt-work authority. Do not negotiate on safety. Do not let the contractor argue about schedule or cost.',
             },
             {
               id: 'q3',
@@ -493,25 +469,13 @@ export default function T13L13FieldDecisionWorkflow() {
               question:
                 'You discover a burial-depth shortfall (22 inches measured vs. 24 inches spec) at one location in a 1000-foot aerial span. The spec allows a ±2-inch tolerance (22–26 inches acceptable). How do you categorize this deficiency?',
               options: [
-                {
-                  text: 'HIGH severity. The depth is below the no-tolerance spec of 24 inches.',
-                  correct: false,
-                  rationale:
-                    'Wrong. The spec states 24 inches with a ±2-inch tolerance, meaning 22–26 inches is acceptable. 22 inches is within the tolerance range. This is MED (marginal but conforming), not HIGH.',
-                },
-                {
-                  text: 'MED severity. The depth is within the ±2-inch tolerance range but at the lower edge. Punch-list item for corrective re-burial to 23+ inches.',
-                  correct: true,
-                  rationale:
-                    'Correct. 22 inches is within the 22–26 inch spec range. It is marginal but conforming. This is MED severity. Punch-list item for corrective action.',
-                },
-                {
-                  text: 'LOW severity / cosmetic. Accept as-is because the tolerance allows it.',
-                  correct: false,
-                  rationale:
-                    'Borderline. The depth is conforming per the tolerance, so technically you could accept it. However, being at the lower edge of the tolerance poses marginal plow-up risk. A punch-list item for corrective deepening to 24+ inches is more prudent and shows quality-focused inspection.',
-                },
+                'HIGH severity. The depth is below the no-tolerance spec of 24 inches.',
+                'MED severity. The depth is within the ±2-inch tolerance range but at the lower edge. Punch-list item for corrective re-burial to 23+ inches.',
+                'LOW severity / cosmetic. Accept as-is because the tolerance allows it.',
               ],
+              answerIndex: 1,
+              explanation:
+                'Correct. 22 inches is within the 22–26 inch spec range. It is marginal but conforming. This is MED severity. Punch-list item for corrective action.',
             },
             {
               id: 'q4',

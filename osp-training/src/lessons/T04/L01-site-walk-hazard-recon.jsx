@@ -410,12 +410,13 @@ export default function T04L01_SiteWalkHazardRecon() {
             prompt:
               'During a route walk, you observe a power conductor sagging noticeably close to the road surface — it appears well below typical attachment heights. What is the correct immediate action?',
             choices: [
-              { text: 'Use your measuring tape to confirm the clearance height so you have a number for the design engineer.', correct: false },
-              { text: 'Flag the GPS location, photograph from a safe distance, note "low-clearance conductor — verify with utility before construction," and do not approach with any conductive object.', correct: true },
-              { text: 'Skip this pole and come back after you finish the rest of the route — it may not be on your final route anyway.', correct: false },
-              { text: 'Report it to OSHA immediately — this is always an emergency shutdown condition.', correct: false },
+              'Use your measuring tape to confirm the clearance height so you have a number for the design engineer.',
+              'Flag the GPS location, photograph from a safe distance, note "low-clearance conductor — verify with utility before construction," and do not approach with any conductive object.',
+              'Skip this pole and come back after you finish the rest of the route — it may not be on your final route anyway.',
+              'Report it to OSHA immediately — this is always an emergency shutdown condition.',
             ],
-            rationale:
+            answerIndex: 1,
+            explanation:
               'A low-clearance power conductor is a lethal strike hazard for boom trucks. Never approach with a conductive object or measuring tape. Flag the GPS, photograph from a safe distance, and route the note to the power company for verification and remediation before any construction activity near that span.',
           },
           {
@@ -424,12 +425,13 @@ export default function T04L01_SiteWalkHazardRecon() {
             prompt:
               'You encounter an unmarked manhole cover sitting in an active traffic lane — no cones or TTC (Temporary Traffic Control) markings are present. You need to inspect the duct contents for the design. What must happen before the manhole can be opened?',
             choices: [
-              { text: 'Nothing — pulling the cover only takes a few seconds and is low-risk.', correct: false },
-              { text: 'A flagging team and MUTCD Part 6-compliant TTC setup must be in place before opening; confined-space entry procedures (29 CFR 1910.146) may also apply.', correct: true },
-              { text: 'Traffic can be managed by having one crew member stand nearby and wave cars around.', correct: false },
-              { text: 'The manhole can be opened as long as it is done quickly during a gap in traffic.', correct: false },
+              'Nothing — pulling the cover only takes a few seconds and is low-risk.',
+              'A flagging team and MUTCD Part 6-compliant TTC setup must be in place before opening; confined-space entry procedures (29 CFR 1910.146) may also apply.',
+              'Traffic can be managed by having one crew member stand nearby and wave cars around.',
+              'The manhole can be opened as long as it is done quickly during a gap in traffic.',
             ],
-            rationale:
+            answerIndex: 1,
+            explanation:
               'Opening a manhole in an active traffic lane without proper TTC violates MUTCD Part 6 and exposes crew to traffic hazard. Additionally, any open manhole inspection may trigger confined-space entry requirements per 29 CFR 1910.146. Always schedule a flagging team and compliant TTC setup before opening.',
           },
           {
@@ -438,12 +440,13 @@ export default function T04L01_SiteWalkHazardRecon() {
             prompt:
               'You observe a utility pole leaning noticeably out of plumb. The fiber attachment permit has already been approved for this pole. What is the correct action?',
             choices: [
-              { text: 'Proceed with the fiber attachment — the permit is approved and leaning is cosmetic.', correct: false },
-              { text: 'Flag the pole for formal structural evaluation by the pole owner before any make-ready or fiber attachment; do not climb or work near it until evaluated.', correct: true },
-              { text: 'Add extra guy wire yourself to stabilize it before attaching fiber.', correct: false },
-              { text: 'Attach fiber on the downhill side of the lean to balance the load and self-correct the tilt.', correct: false },
+              'Proceed with the fiber attachment — the permit is approved and leaning is cosmetic.',
+              'Flag the pole for formal structural evaluation by the pole owner before any make-ready or fiber attachment; do not climb or work near it until evaluated.',
+              'Add extra guy wire yourself to stabilize it before attaching fiber.',
+              'Attach fiber on the downhill side of the lean to balance the load and self-correct the tilt.',
             ],
-            rationale:
+            answerIndex: 1,
+            explanation:
               'A pole leaning out of plumb may have rot at the base, vehicle-strike damage, or soil erosion — all of which can cause it to fail under additional attachment load. Flag it for formal structural evaluation by the pole owner. No climbing or working near the pole until the owner clears it.',
           },
           {
@@ -452,12 +455,13 @@ export default function T04L01_SiteWalkHazardRecon() {
             prompt:
               'The route crosses a road shoulder showing active erosion: deep ruts, exposed gravel base, and undercut pavement edge. Your design calls for a buried conduit segment here. What should the route walk note include?',
             choices: [
-              { text: 'No special note needed — buried conduit handles most soil conditions.', correct: false },
-              { text: 'Flag the segment for a geotechnical note in the handoff package — unexpected subsurface voids or unstable ground could affect bore/trench design; photograph from a safe distance.', correct: true },
-              { text: 'Immediately switch the route to aerial to avoid the unstable ground.', correct: false },
-              { text: 'Wait to see if the erosion gets worse before deciding whether to note it.', correct: false },
+              'No special note needed — buried conduit handles most soil conditions.',
+              'Flag the segment for a geotechnical note in the handoff package — unexpected subsurface voids or unstable ground could affect bore/trench design; photograph from a safe distance.',
+              'Immediately switch the route to aerial to avoid the unstable ground.',
+              'Wait to see if the erosion gets worse before deciding whether to note it.',
             ],
-            rationale:
+            answerIndex: 1,
+            explanation:
               'Active shoulder erosion signals potential subsurface voids or unstable ground that could affect boring or trenching operations. Photograph from a safe distance and flag the segment for a geotechnical note in the handoff package so the design engineer can specify appropriate installation methods.',
           },
         ]}

@@ -279,12 +279,13 @@ export default function T06L11_UndergroundDesignQAChecklist() {
             prompt:
               'A road crossing on the plan has no burial depth annotated. The bore crew asks what depth to target. What is the correct QA action BEFORE issuing for bid?',
             choices: [
-              { text: 'Issue for bid — experienced bore crews know the standard depth without a callout', correct: false },
-              { text: 'Return the drawing for revision — add the required depth annotation (e.g., "36\\" cover") with an arrow to the conduit line at that crossing', correct: true },
-              { text: 'Phone the bore crew and verbally tell them the depth; no drawing revision needed', correct: false },
-              { text: 'Add a general note on the title block saying "36-inch cover unless otherwise shown"', correct: false },
+              'Issue for bid — experienced bore crews know the standard depth without a callout',
+              'Return the drawing for revision — add the required depth annotation (e.g., "36\\" cover") with an arrow to the conduit line at that crossing',
+              'Phone the bore crew and verbally tell them the depth; no drawing revision needed',
+              'Add a general note on the title block saying "36-inch cover unless otherwise shown"',
             ],
-            rationale:
+            answerIndex: 1,
+            explanation:
               'Missing depth callouts at road crossings are the most common single QA error in underground designs (RUS 1751F-635 §6). The bore crew cannot be held to a depth that is not on the drawing, and the inspector cannot verify compliance. The drawing must be revised before issue.',
           },
           {
@@ -293,12 +294,13 @@ export default function T06L11_UndergroundDesignQAChecklist() {
             prompt:
               'A 2-inch Schedule 40 PVC conduit (ID = 2.067 in) specifies three 1-inch innerducts (OD ≈ 1.0 in). What is the approximate fill percentage, and does it comply with the 40% limit?',
             choices: [
-              { text: '~56% — does NOT comply; reduce to two innerducts or upgrade to 3-inch conduit', correct: false },
-              { text: '~70% — does NOT comply; the conduit is significantly overfilled', correct: true },
-              { text: '~30% — complies; fill is within the 40% limit', correct: false },
-              { text: '~40% — barely complies; acceptable at the limit', correct: false },
+              '~56% — does NOT comply; reduce to two innerducts or upgrade to 3-inch conduit',
+              '~70% — does NOT comply; the conduit is significantly overfilled',
+              '~30% — complies; fill is within the 40% limit',
+              '~40% — barely complies; acceptable at the limit',
             ],
-            rationale:
+            answerIndex: 1,
+            explanation:
               'Three 1-inch innerducts: area = 3 × π × 0.5² ≈ 2.36 in². 2-inch Sch 40 PVC area = π × 1.034² ≈ 3.36 in². Fill = 2.36 / 3.36 ≈ 70% — far over the 40% NEC/RUS limit. Fix: upgrade to 3-inch conduit (fill drops to ~29%) or reduce to two 1-inch innerducts.',
           },
           {
@@ -307,12 +309,13 @@ export default function T06L11_UndergroundDesignQAChecklist() {
             prompt:
               'Two pedestals on a residential underground route are 380 feet apart (measured along the cable path). RUS 1751F-635 §7 sets a 330-foot maximum. What is the correct fix?',
             choices: [
-              { text: 'Accept it — 380 feet is only 15% over and within rounding tolerance', correct: false },
-              { text: 'Add an intermediate pedestal at approximately 190 feet from each end, bringing both sub-segments to 190 feet', correct: true },
-              { text: 'Move one of the existing pedestals to exactly 330 feet and eliminate the gap', correct: false },
-              { text: 'Document the deviation with an engineering justification and issue as-is', correct: false },
+              'Accept it — 380 feet is only 15% over and within rounding tolerance',
+              'Add an intermediate pedestal at approximately 190 feet from each end, bringing both sub-segments to 190 feet',
+              'Move one of the existing pedestals to exactly 330 feet and eliminate the gap',
+              'Document the deviation with an engineering justification and issue as-is',
             ],
-            rationale:
+            answerIndex: 1,
+            explanation:
               'The 330-foot maximum exists to ensure sufficient access points for future splicing and maintenance. Adding an intermediate pedestal at the midpoint creates two 190-foot segments — both well under the limit. Moving an existing pedestal is often impractical in a developed subdivision.',
           },
           {
@@ -321,12 +324,13 @@ export default function T06L11_UndergroundDesignQAChecklist() {
             prompt:
               'A communication conduit crossing plan shows the comm conduit crossing a direct-buried electric supply line at 4 inches of vertical separation. What is the field best-practice QA flag?',
             choices: [
-              { text: 'Accept it — NESC §35 permits less than 12 inches at conduit crossings', correct: false },
-              { text: 'Flag it and adjust the bore depth profile to achieve 12 inches minimum — the ±18-inch locate tolerance means 4 inches of designed separation could become physical contact in the field', correct: true },
-              { text: 'Add a note to the drawing: "contractor to verify separation in field"', correct: false },
-              { text: 'Flag it only if the electric line is over 50 kV', correct: false },
+              'Accept it — NESC §35 permits less than 12 inches at conduit crossings',
+              'Flag it and adjust the bore depth profile to achieve 12 inches minimum — the ±18-inch locate tolerance means 4 inches of designed separation could become physical contact in the field',
+              'Add a note to the drawing: "contractor to verify separation in field"',
+              'Flag it only if the electric line is over 50 kV',
             ],
-            rationale:
+            answerIndex: 1,
+            explanation:
               'While NESC §35 may technically permit reduced separation at a conduit crossing, field best practice is 12 inches minimum to account for the ±18-inch locate tolerance of buried utilities. A 4-inch designed separation is one locate error away from physical contact — which the design must prevent.',
           },
         ]}
