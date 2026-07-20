@@ -1,0 +1,126 @@
+<!-- CANONICAL TECHNICAL-STYLE REFERENCE — Carter-approved batch-1, 2026-07-20 (T01/L04 dome splice closure).
+     Style locked in specs/diagram-style-guide.md. Uses currentColor throughout so it themes (light=print, dark=reversed-print);
+     the root `color` here is only a standalone-render default — production wiring maps it to SPA theme tokens. No external deps. -->
+<svg viewBox="0 0 480 400" xmlns="http://www.w3.org/2000/svg" role="img" style="color:#1a2431;max-width:640px;font-family:'Arial Narrow','Segoe UI',system-ui,sans-serif">
+  <title>Inside a dome splice closure — sectioned technical view</title>
+  <desc>Cable enters a gel-sealed base port; the central member is clamped to an anchor bracket; buffer tubes fan out to a stacked splice-tray cassette; Detail A magnifies a fusion splice inside its heat-shrink protector sleeve.</desc>
+  <style>
+    .o{stroke:currentColor;fill:none;stroke-width:2.1;stroke-linejoin:round;stroke-linecap:round}
+    .s{stroke:currentColor;fill:none;stroke-width:1.25;stroke-linejoin:round;stroke-linecap:round}
+    .d{stroke:currentColor;fill:none;stroke-width:0.7;stroke-linecap:round}
+    .dash{stroke:currentColor;fill:none;stroke-width:0.9;stroke-dasharray:5 3}
+    .dot{fill:currentColor;stroke:none}
+    .lead line{stroke:currentColor;stroke-width:0.8;opacity:.75}
+    .lead .ld{fill:currentColor;opacity:.75}
+    text{fill:currentColor}
+    .labels text{font-size:8.6px;letter-spacing:.3px}
+    .mini{font-size:6.6px;letter-spacing:.2px;opacity:.85}
+    .det{font-size:10px;letter-spacing:1.5px;font-weight:600}
+    .tb rect,.tb line{stroke:currentColor;fill:none;stroke-width:0.9}
+    .tbsm{font-size:7px;letter-spacing:.3px}
+    .tbig{font-size:9px;letter-spacing:.4px;font-weight:600}
+  </style>
+  <defs>
+    <pattern id="mh" width="4.5" height="4.5" patternUnits="userSpaceOnUse" patternTransform="rotate(45)">
+      <line x1="0" y1="0" x2="0" y2="4.5" stroke="currentColor" stroke-width="0.45"/>
+    </pattern>
+  </defs>
+
+  <!-- housing (molded, section) -->
+  <path class="o" d="M120 300 L120 155 C120 118 136 95 160 95 C184 95 200 118 200 155 L200 300"/>
+  <path class="s" d="M125 300 L125 157 C125 122 139 101 160 101 C181 101 195 122 195 157 L195 300"/>
+  <path class="d" d="M160 95 q4 5 -2 9 q-6 4 0 9 q5 4 -1 8"/>
+
+  <!-- base plate + clamp collar (metal, hatched) -->
+  <rect class="o" x="108" y="300" width="104" height="12" rx="2"/>
+  <rect class="s" x="126" y="286" width="68" height="15" rx="2" fill="url(#mh)"/>
+  <circle class="o" cx="139" cy="294" r="3"/><circle class="dot" cx="139" cy="294" r="0.9"/>
+  <circle class="o" cx="181" cy="294" r="3"/><circle class="dot" cx="181" cy="294" r="0.9"/>
+
+  <!-- cable entry + gel boot + central member -->
+  <line class="o" x1="152" y1="366" x2="152" y2="312"/>
+  <line class="o" x1="168" y1="366" x2="168" y2="312"/>
+  <path class="s" d="M148 312 q-6 -6 2 -10 M172 312 q6 -6 -2 -10"/>
+  <path class="s" d="M150 302 q10 -7 20 0"/>
+  <line class="dash" x1="160" y1="360" x2="160" y2="250"/>
+  <line class="s" x1="150" y1="284" x2="170" y2="284"/>
+
+  <!-- central-member anchor (metal, hatched) -->
+  <rect class="s" x="150" y="270" width="20" height="10" rx="1.5" fill="url(#mh)"/>
+  <circle class="dot" cx="160" cy="275" r="1.4"/>
+
+  <!-- buffer-tube fan-out + color ticks -->
+  <path class="s" d="M160 270 C138 258 128 236 132 222"/>
+  <path class="s" d="M160 270 C146 256 140 236 144 224"/>
+  <path class="s" d="M160 270 C160 254 160 238 160 226"/>
+  <path class="s" d="M160 270 C174 256 180 236 176 224"/>
+  <path class="s" d="M160 270 C182 258 192 236 188 222"/>
+  <line class="d" x1="150" y1="262" x2="146" y2="266"/>
+  <line class="d" x1="156" y1="260" x2="153" y2="265"/>
+  <line class="d" x1="164" y1="260" x2="167" y2="265"/>
+  <line class="d" x1="170" y1="262" x2="174" y2="266"/>
+
+  <!-- splice-tray cassette -->
+  <g>
+    <rect class="s" x="132" y="180" width="56" height="11" rx="2"/>
+    <rect class="s" x="132" y="193" width="56" height="11" rx="2"/>
+    <rect class="s" x="132" y="206" width="56" height="11" rx="2"/>
+    <rect class="s" x="132" y="219" width="56" height="11" rx="2"/>
+    <circle class="dot" cx="132" cy="185.5" r="1.5"/><circle class="dot" cx="132" cy="198.5" r="1.5"/>
+    <circle class="dot" cx="132" cy="211.5" r="1.5"/><circle class="dot" cx="132" cy="224.5" r="1.5"/>
+    <line class="d" x1="140" y1="196" x2="140" y2="201"/><line class="d" x1="146" y1="196" x2="146" y2="201"/>
+    <line class="d" x1="152" y1="196" x2="152" y2="201"/><line class="d" x1="158" y1="196" x2="158" y2="201"/>
+    <line class="d" x1="164" y1="196" x2="164" y2="201"/><line class="d" x1="170" y1="196" x2="170" y2="201"/>
+  </g>
+  <rect class="d" x="146" y="162" width="42" height="14" rx="7"/>
+  <rect class="d" x="152" y="166" width="30" height="8" rx="4"/>
+  <rect class="d" x="140" y="182" width="12" height="4" rx="2" fill="url(#mh)"/>
+  <rect class="d" x="156" y="182" width="12" height="4" rx="2" fill="url(#mh)"/>
+
+  <!-- DETAIL A -->
+  <circle class="s" cx="175" cy="184" r="9"/>
+  <line class="d" x1="183" y1="178" x2="330" y2="110"/>
+  <line class="d" x1="183" y1="190" x2="330" y2="192"/>
+  <circle class="s" cx="392" cy="150" r="62"/>
+  <line class="s" x1="342" y1="150" x2="442" y2="150"/>
+  <rect class="o" x="362" y="142" width="60" height="16" rx="8"/>
+  <line class="d" x1="368" y1="150" x2="416" y2="150"/>
+  <circle class="dot" cx="392" cy="150" r="1.8"/>
+  <text class="mini" x="392" y="132" text-anchor="middle">FUSION SPLICE</text>
+  <text class="mini" x="392" y="176" text-anchor="middle">HEAT-SHRINK SLEEVE</text>
+  <text class="mini" x="392" y="186" text-anchor="middle">(STEEL STRENGTH ROD)</text>
+  <text class="det" x="392" y="80" text-anchor="middle">DETAIL A</text>
+  <text class="mini" x="392" y="222" text-anchor="middle">SCALE 4:1</text>
+
+  <!-- leaders + labels -->
+  <g class="lead">
+    <line x1="102" y1="112" x2="150" y2="120"/><circle class="ld" cx="150" cy="120" r="1.4"/>
+    <line x1="102" y1="176" x2="132" y2="185"/><circle class="ld" cx="132" cy="185" r="1.4"/>
+    <line x1="102" y1="236" x2="134" y2="230"/><circle class="ld" cx="134" cy="230" r="1.4"/>
+    <line x1="102" y1="275" x2="150" y2="275"/><circle class="ld" cx="150" cy="275" r="1.4"/>
+    <line x1="102" y1="312" x2="150" y2="306"/><circle class="ld" cx="150" cy="306" r="1.4"/>
+    <line x1="212" y1="168" x2="188" y2="168"/><circle class="ld" cx="188" cy="168" r="1.4"/>
+  </g>
+  <g class="labels">
+    <text x="98" y="109" text-anchor="end">DOME COVER</text><text x="98" y="119" text-anchor="end">(RE-ENTERABLE)</text>
+    <text x="98" y="173" text-anchor="end">SPLICE-TRAY</text><text x="98" y="183" text-anchor="end">CASSETTE</text>
+    <text x="98" y="233" text-anchor="end">BUFFER-TUBE</text><text x="98" y="243" text-anchor="end">FAN-OUT</text>
+    <text x="98" y="272" text-anchor="end">CENTRAL-MEMBER</text><text x="98" y="282" text-anchor="end">ANCHOR</text>
+    <text x="98" y="309" text-anchor="end">GEL-SEALED</text><text x="98" y="319" text-anchor="end">CABLE ENTRY</text>
+    <text x="216" y="166">SLACK</text><text x="216" y="176">STORAGE</text>
+  </g>
+
+  <!-- title block -->
+  <g class="tb">
+    <rect x="300" y="346" width="172" height="46"/>
+    <line x1="300" y1="362" x2="472" y2="362"/>
+    <line x1="300" y1="378" x2="472" y2="378"/>
+    <line x1="352" y1="378" x2="352" y2="392"/>
+    <line x1="426" y1="378" x2="426" y2="392"/>
+    <text class="tbsm" x="306" y="358">LAUNCH FIBER SERVICES &#183; OSP TRAINING</text>
+    <text class="tbig" x="306" y="374">INSIDE A DOME SPLICE CLOSURE</text>
+    <text class="tbsm" x="306" y="388">FIG. 1</text>
+    <text class="tbsm" x="358" y="388">DWG T01-L04</text>
+    <text class="tbsm" x="432" y="388">NTS</text>
+  </g>
+</svg>
