@@ -127,7 +127,10 @@
 | **#72 SPA full-accent unification** (adopt each skin's accent vs the chosen canvas-only/keep-amber) — OPTIONAL, not-owed | `specs/ui-pass.md` "Deferred" + #72 | ONLY if Carter raises it |
 | **Cutover: delete `setting-requests` / permits routes / `inspection.js`** (load-bearing on live surfaces now) | `specs/cutover.md` step-1 done-when ("not done while any remains") + #71 ruling | cutover **steps 5–7** (die with their cluster replacements) |
 | **#64 prod live-smoke** (merged; washout fix banked) | open #64 | Railway deploys resume |
-| **#80 prod live-smoke** (MERGED `3d16d22`; Quiz `stem` resolver fix → T22/L01+L02 blank prompts, SPA rebuilt; VO PASS `2f0ae25`. Cherry-picked clean off f1's shared #79 branch — #79 T09 work left behind, still `built`) | open #80 | Railway deploys resume (render a T22 quiz; confirm prompts show) |
+| **#80 prod live-smoke** (MERGED `3d16d22`; Quiz `stem` resolver fix → T22/L01+L02 blank prompts, SPA rebuilt; VO PASS `2f0ae25`) | open #80 | Railway deploys resume (render a T22 quiz; confirm prompts show) |
+| **#79 T09 MERGED + republish flip** (T09 Permitting to PRODUCT_BAR §1, 12 lessons + pools; VO Gate-T PASS `f21d311`; catalog NWP12→57 + CE-C-8 fix wired) — Carter flips T09 visibility + prod playthrough | open #79 | Railway deploys resume + Carter green-light |
+| **#78 quiz-grading fix MERGED + prod smoke** (first-option-always-correct bug fixed in 8 lessons incl. live-5 T03/T04; VO PASS `ae3a7619`; routes/L07 correctly excluded) | open #78 | Railway deploys resume (take a fixed quiz; confirm correct grading) |
+| **#81 MERGE HELD pending #84** — #81's photo-endpoint unhang is `verified` but merging it makes #84's unscoped-photo-access leak reachable. Land #81 **with/after** #84's scoped fix. DO NOT FORGET. | open #81 + #84 | #84 lands (its scoped fix merges) → then merge #81 |
 | **#67 cert `LFS-OSP-2026-0001` → issue to Carter FIRST + logged-out live-smoke + VO lockstep probe** | open #67 | VO probe clears **and** deploys resume |
 | **#63 residual: 3 CHECK-1 authoring-note strings in UNPUBLISHED pools** | #63 closed comment | when those topics come through the gate |
 | **Safari/WebKit native-control chrome** (cert `/verify` + training; option-(a) is Chromium-scoped) | #64 comment | if Safari/iOS users matter → `specs/ideas/` |
@@ -136,7 +139,7 @@
 | **Cutover steps 2–7** (O20 port · invoice consolidation · parallel-structure reconcile · cluster UI gap-close · legacy data delete · hard redirect) | `specs/cutover.md` + PLAN 2.3 | as step-1 (#70) lands / Carter waves |
 | **Dependency-blocked Track-2 specs**: hours 2.6 · billing 2.7 · projections 2.8 · cockpit 2.9 · county 2.10 · events 2.4 · diagnostics 2.12 (all RATIFIED) | PLAN §Track-2 | after **2.3 keystone cutover** |
 | **Desktop D1/D2 (2.13) · mini-jobs M1/M2 (2.15) · mobile PWA (2.14)** | PLAN + specs | wave-2 start / desktop D2 |
-| **Training wave-2 (T09→T05→T06, 1.2)** — **DECOMPOSED 2026-07-14 (Partner ruling): #78 salvage + #79 T09, NOT gated on #66.** Queues AHEAD of #77 for the next free foreman; System F in-flight (#73–#76) lands first. vo1 rules #66 separately. Then T05/T06 + wave-3 (all remaining OSP, 1.3). | #78/#79 + PLAN §Track-1 | T05/T06 after T09; wave-3 rolling as crews free |
+| **Training wave-2 (T09→T05→T06, 1.2)** — **#78 salvage + #79 T09 MERGED 2026-07-15** (T09 to the bar; grading-shape bug fixed). **T05→T06 next** (not yet decomposed); wave-3 (all remaining OSP, 1.3) rolling. vo1 rules #66 separately. | PLAN §Track-1 | decompose T05 when a foreman frees; wave-3 rolling as crews free |
 | **specs/certificates.md ↔ code**: "main authoritative over spec snippets" declared | `specs/certificates.md` header | on any future cert rebuild — read code, not stale snippet |
 | **System F hours-override owner NOTIFICATION display** (change-log is v1 compliance; the in-app notify is deferred) | #75 + this ledger | rides **2.4** (Events + nudges) when built |
 | **#70 admin.html excision — prod render playthrough** (the ~452-line AI/audit UI removal; highest-risk edit; vo1 verified in preview, prod smoke not yet) | closed #70 | Railway deploys resume |
