@@ -152,18 +152,24 @@ describe('routes/project_photos.js access predicate — static guard', () => {
     assert.match(src, /projects\.view_all/, 'access gate must check the projects.view_all key');
   });
 
-  it('the unscoped job_assignments / ec_job_visibility leak branches are REMOVED', () => {
-    // #84: these tables have no per-user column, so an EXISTS over them in the
-    // access predicate can only be the unscoped leak. They must not reappear.
+  it('the unscoped job_assignments / ec_job_visibility leak branches are REMOVED (structural, not literal)', () => {
+    // #84: neither table has a per-user column, so ANY query reference to them in
+    // this file can only be the unscoped leak — there is no legitimate post-fix
+    // use. Scan CODE ONLY (the explanatory comment block legitimately names both
+    // tables), so the guard catches JOIN / CTE / aliased / reformatted re-adds,
+    // not just the literal `FROM <table>` token the first version checked.
+    const codeOnly = src
+      .replace(/\/\/[^\n]*/g, '')   // strip JS line comments
+      .replace(/--[^\n]*/g, '');    // strip SQL line comments inside template strings
     assert.doesNotMatch(
-      src,
-      /FROM job_assignments/,
-      'job_assignments EXISTS branch reintroduced — that is the #84 leak (no per-user column exists)'
+      codeOnly,
+      /\bjob_assignments\b/,
+      'job_assignments referenced in CODE — the #84 leak (no per-user column; no legitimate use in this file)'
     );
     assert.doesNotMatch(
-      src,
-      /FROM ec_job_visibility/,
-      'ec_job_visibility EXISTS branch reintroduced — that is the #84 leak (no per-user column exists)'
+      codeOnly,
+      /\bec_job_visibility\b/,
+      'ec_job_visibility referenced in CODE — the #84 leak (no per-user column; no legitimate use in this file)'
     );
   });
 
