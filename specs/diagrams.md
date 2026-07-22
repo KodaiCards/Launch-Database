@@ -61,7 +61,7 @@ The **Illustrator maps onto a Foreman**: an Opus session Carter talks to, that s
 - **Reject path:** a `graphic-idea` the team declines → Illustrator comments the rationale → flip to VO to confirm → close (or reopen to pipeline if VO overrides).
 
 ## Campaign, not permanent headcount
-**One campaign session = the Illustrator** (Opus); scouts are its spawns, not booted roles. Runs within §5 caps (the Illustrator counts against ≤4 workers; ≥1 VO while merging), illustrates the curriculum, then **retires**; re-boot when new topics need it. Scale = boot a **second Illustrator** (still ≤4 workers), never more scouts. **First batch is co-drawn with Carter in the technical style** to set the bar and fill the style guide, *before* the campaign runs at volume.
+**One campaign session = the Illustrator** (Opus); scouts are its spawns, not booted roles. It occupies the **dedicated ≤1 campaign slot** added to §5 (≤5 concurrent with the standing crew; it does NOT displace f1/f2/vo1), illustrates the curriculum, then **retires**; re-boot when new topics need it. Scale = deepen batches, or a **second Illustrator only if Carter opens a second campaign slot**, never more scouts. **First batch is co-drawn with Carter in the technical style** to set the bar and fill the style guide, *before* the campaign runs at volume.
 
 ## Sequencing
 Retrofit the **already-merged** topics first (live-5 set + T09), run **alongside** wave-2 authoring (don't stall T05/T06), and **fold the `graphic-idea` flag + diagram pass into how new topics come to the bar** going forward (born illustrated).

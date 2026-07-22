@@ -13,14 +13,16 @@
 
 **Verification Owners** (≤2 active; ≥1 whenever anything merges) — independent Tier-2 verification of EVERY package, from outside its foreman's context: spec-match, PRODUCT_BAR playthrough in preview, primary-source citations (gov content), money/auth/schema review. May spawn cost-effective verification subagents per lens. Verdicts land as durable artifacts on the issue. **Never builds, ever.** Re-verifies its own flagged items after fixes.
 
-**Total active worker instances ≤4.** Reconfigure freely (e.g., −1 foreman +1 VO) — boot prompts are per-role templates, slot-agnostic.
+**Campaign roles** (≤1 active — currently the **Diagram Illustrator**) — bounded, time-limited roles for a specific push (e.g., illustrating the curriculum). A Foreman-pattern session that spawns its own ≤2 subagents and runs through the standing gates (VO · Registrar · Carter green-light); booted only while its campaign is active, retires when the work is done. **Does NOT occupy a build-crew slot.**
+
+**Total active worker instances ≤4 (standing build crew) + ≤1 campaign role = ≤5 concurrent while a campaign runs.** Reconfigure the standing crew freely (e.g., −1 foreman +1 VO) — boot prompts are per-role templates, slot-agnostic. (2026-07-21, Carter: the diagram campaign needed room without displacing f1/f2/vo1 — a scoped, temporary +1, not a general loosening.)
 
 ## Hard rules (each exists because its absence burned us)
 1. **Law and specs exist only as repo files.** A decision in chat is not a decision. Carter signs FILES.
 2. **Foremen build only from RATIFIED specs.** Ambiguity → escalate, never improvise.
 3. **No package merges verified only from inside its own session.** Tier-1 (foreman's spawns, author≠RT, playthrough) + Tier-2 (VO) + cross-foreman playthrough, every time.
 4. **Only the Registrar merges `main`. Only Carter flips visibility.** The Partner's direct law/spec commits are the one exception — and ONLY while no Registrar session is live. A Registrar online = main has exactly one writer: the Partner pushes a `partner/…` branch instead and the Registrar lands it at its next boundary. (2026-07-12: a Partner main-push mid-merge-batch tripped the Registrar.) **Shared-checkout corollary (2026-07-13):** standing sessions NEVER share a working tree — a shared HEAD put a Partner commit on main mid-Registrar-merge. The repo checkout at Desktop/Launch Database belongs to the REGISTRAR (it owns .env, Playwright, the harness); the Partner works from its own clone (Desktop/Launch-Database-partner); any additional same-machine standing session gets its own clone too (clones, not worktrees — worktrees stay banned).
-5. **Caps are absolute:** ≤3 foremen, ≤2 VOs, ≤4 total, ≤2 spawns per instance. (A past agent burned all usage on dozens of spawns.)
+5. **Caps are absolute:** ≤3 foremen, ≤2 VOs, ≤4 standing total, **+≤1 campaign role (≤5 concurrent while a campaign runs)**, ≤2 spawns per instance. (A past agent burned all usage on dozens of spawns — the caps are the control; a campaign slot is a scoped, temporary +1, not a general loosening.)
 6. **No process/plumbing changes without Carter.** `ops/COMMS.md` is FROZEN. Meta-work is not work.
 7. **Configurability is law:** domain specifics are data, not code. **RUS is a program profile, never a client assumption. County is the universal first grouping level.**
 8. **Money math server-side; client surfaces never leak internal $** (cost, margin, rates).
