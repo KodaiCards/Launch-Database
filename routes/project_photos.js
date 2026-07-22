@@ -12,6 +12,7 @@
 //   DELETE /api/project-photos/:id                — soft-archive (status='archived')
 
 const { logAudit } = require('./_audit');
+const { getEffective } = require('./_permissions');
 const multer = require('multer');
 const path = require('path');
 const fs = require('fs');
@@ -56,11 +57,28 @@ module.exports = function installProjectPhotoRoutes(app, pool, mw) {
   const requireAuth = mw.requireAuth;
   const requireAdmin = (mw && mw.requireAdmin) || ((req, res, next) => next());
 
-  // ── MED-1: Project ownership check ────────────────────────────────────────
+  // ── #84: Project photo read/write access ─────────────────────────────────
   // Returns true if userId may read/write photos on projectId.
-  // Admin and manager roles bypass; customer role is always denied.
-  // Other authenticated users are checked via the project's client/EC linkage
-  // through job_assignments and ec_job_visibility.
+  //   • admin / manager roles bypass; customer is always denied.
+  //   • Holders of the System F `projects.view_all` grant see project photos on
+  //     the same basis they see the rest of the project (Partner ruling on #84,
+  //     Carter-locked 2026-07-20: photos follow projects.view_all — no separate
+  //     key). Resolved live through the #73 permission resolver (getEffective).
+  //   • Everyone else is SCOPED: an internal (client-less) project, or a project
+  //     this user has personally uploaded a photo to.
+  //
+  // ⚠ #84 fix note (deviation from the issue's first fix-direction — see the
+  // issue thread): the former `job_assignments` / `ec_job_visibility` EXISTS
+  // branches were REMOVED, not "scoped to the caller." Those tables carry NO
+  // per-user column — job_assignments (migration 0032) is
+  // job_id/client_id/engineering_contract_id/team; ec_job_visibility (0037) is
+  // engineering_contract_id/job_id/created_by_user_id — so there is literally no
+  // caller predicate to add (the `service_areas.js:833`
+  // assigned_user_id/assigned_staff_id template lives on `service_area_jobs`, a
+  // different table). Left unscoped, those two branches granted EVERY
+  // non-manager employee photo access to ANY project under ANY active EC/client
+  // — exactly the leak. Broad cross-project photo visibility now flows solely
+  // through the projects.view_all grant above (the Carter-locked model).
   async function userHasProjectAccess(userId, userRole, projectId) {
     if (!userId || !projectId) return false;
 
@@ -74,7 +92,18 @@ module.exports = function installProjectPhotoRoutes(app, pool, mw) {
     // Customers never allowed to access project photos
     if (userRole === 'customer') return false;
 
-    // For other employee roles: check project linkage through assignments
+    // System F: a projects.view_all holder sees all project photos. FAIL CLOSED
+    // on a grant-resolution error — never widen access on a DB fault; fall
+    // through to the scoped checks below (themselves least-privilege).
+    try {
+      const eff = await getEffective(pool, { role: userRole, id: userId });
+      if (eff.has('projects.view_all')) return true;
+    } catch (e) {
+      console.error('[project-photos:access] grant resolution failed', e && e.message);
+    }
+
+    // Scoped access: an internal (client-less) project, or a project this user
+    // has personally uploaded a photo to.
     const { rows } = await pool.query(`
       SELECT 1
       FROM projects p
@@ -88,23 +117,6 @@ module.exports = function installProjectPhotoRoutes(app, pool, mw) {
           EXISTS (
             SELECT 1 FROM project_photos pp2
             WHERE pp2.project_id = p.id AND pp2.uploaded_by = $2
-          )
-          OR
-          -- Linked via job_assignments (client or EC scoped assignment)
-          EXISTS (
-            SELECT 1 FROM job_assignments ja
-            WHERE (ja.client_id = p.client_id
-                   OR ja.engineering_contract_id = p.engineering_contract_id)
-              AND ja.engineering_contract_id IS NOT DISTINCT FROM p.engineering_contract_id
-            LIMIT 1
-          )
-          OR
-          -- Linked via EC job visibility
-          EXISTS (
-            SELECT 1 FROM ec_job_visibility ejv
-            WHERE ejv.engineering_contract_id = p.engineering_contract_id
-              AND p.engineering_contract_id IS NOT NULL
-            LIMIT 1
           )
         )
       LIMIT 1
