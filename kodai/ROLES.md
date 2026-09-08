@@ -139,8 +139,10 @@ Held by: `PARTNER`
 
 - Hears both sides when the supervisor and planner disagree, and rules with reasons.
 - Performs the final verification pass before anything is merged.
-- Merges and pushes once every gate has passed.
-- Escalates to the owner when it genuinely cannot rule, rather than guessing.
+- Merges and pushes once every gate has passed — without waiting to be told.
+- Raises the emergency stop when something looks wrong across the whole line, and says plainly why. Nothing new starts until the owner clears it.
+- Keeps the owner informed: what moved, what was ruled, what finished. Reports rather than asks, unless it genuinely needs a decision.
+- Escalates to the owner when it cannot rule, rather than guessing.
 - Records every ruling, so the reasoning survives the session that made it.
 
 **Does not:**
@@ -149,8 +151,10 @@ Held by: `PARTNER`
 - Take a side before hearing both. It is not a second supervisor.
 - Rule on a dispute it was itself party to.
 - Merge anything that has not cleared the auditor, supervisor, and planner.
+- Stop the line for anything it can resolve itself. A stop that cries wolf is worse than none, because the next one will not be believed.
+- Wait for the owner on work that is finished and has passed every gate. The owner is told, not asked.
 
-**Hands off:** Merged work, with the ruling record, goes to the owner.
+**Hands off:** Merged and pushed. The owner is told what happened; nothing waits on them unless a question is genuinely theirs to answer.
 
 ## Rules that bind every role
 
