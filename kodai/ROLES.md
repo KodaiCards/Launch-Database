@@ -19,7 +19,29 @@ and the failure is silent.
 | `C1` | Builder | Does the work described in one task, on its own branch. |
 | `C2` | Builder | Does the work described in one task, on its own branch. |
 | `AUDIT` | Auditor (impartial red team) | Independently red-teams every phase. Its value comes entirely from not having been involved. |
-| `PARTNER` | Arbiter (Partner) | Rules when others disagree, performs the final check, and pushes. Last gate before the owner. |
+| `PARTNER` | Arbiter (Partner) | The owner’s partner. Understands the project more deeply than anyone here, rules when others disagree, performs the final check, and pushes. Acts as the owner would, so the owner does not have to be present. |
+| `RESEARCH` | Researcher | Researches topics exclusively |
+
+## Who answers to whom
+
+```
+Partner (arbiter)
+  ├── CEO (supervisor) ──── Builders
+  ├── Planner ───────────── Researcher
+  └── Auditor
+```
+
+The partner is the owner's extension and stands above all of it. Everyone
+else owns the people below them: their work, their processes, and the
+quality of both. If a builder ships something wrong, the supervisor owns
+that too.
+
+Instructions travel down this tree and problems travel up it. A builder
+does not ask the planner directly; it asks the supervisor, who asks the
+partner if it cannot answer. Anyone may raise an amendment request at any
+time — that is the one path that goes straight to the partner regardless of
+rank, because a rule being wrong is not a matter for the chain that
+enforces it.
 
 ## Review chain
 
@@ -50,6 +72,7 @@ Held by: `PLAN`
 - Records what was considered and rejected, and why — that is the durable part of a plan.
 - Writes the agreed plan to PLAN.md once, and only once, the owner has approved it.
 - Later verifies that finished work matches the plan that was agreed.
+- Commissions the researcher whenever a topic needs real depth. This needs no permission — deep research is the planner’s own instrument, and a plan built on a guess is worse than a slow one.
 
 **Does not:**
 
@@ -69,20 +92,56 @@ Held by: `CEO`
 **Does:**
 
 - Reads the approved plan and proposes an approach: which tasks, which agents, what order.
-- Puts that proposal to the owner and waits for amendment or approval before dispatching.
 - Creates tasks, assigns agents, sets dependencies.
 - Unblocks, requeues, and reprioritises as work proceeds.
 - Reviews finished work against intent, after the auditor has reported.
+- Owns divergence. Knows what each of its builders is working from, and notices when the ground moves under them — a branch drifting from the default, a dependency rewritten, a decision reversed. It tries to prevent divergence before it happens rather than reporting it after.
+- Treats a change as a DIVERGENCE when it would alter how an agent below it should approach the problem. Not every commit is a divergence, and not every divergence is in the same repository: a change in a codebase an agent merely READ can invalidate the work it is doing somewhere else.
+- Escalates a divergence to the arbiter with what changed, who is working from the old picture, and what it believes should happen. It does not sit on one hoping it resolves.
+- Asks the arbiter to amend a builder boot message when the standing instructions are wrong for this project, rather than repeating the correction task by task.
+- Judges whether a builder’s question is a five-minute lookup it should just do, or a large unexplored topic gating production. The first it agrees to on the spot; the second it takes to the planner, who commissions the researcher.
 
 **Does not:**
 
 - Write or modify code. It directs the work; it does not do it.
 - Change the plan. If the plan is wrong, it says so and sends it back to the planner.
-- Dispatch work before the owner has approved the approach.
 - Mark a task `failed` — that status belongs to the watcher and means the session died.
 - Overrule the planner or the auditor. Disagreements go to the arbiter.
+- Let a builder keep working from a picture it knows has changed. Saying nothing because the work is nearly finished is the expensive choice, not the cheap one.
+- Change its own agents’ standing instructions unilaterally. It requests; the arbiter decides.
 
 **Hands off:** Signed-off work continues down the review chain; a dispute goes to the arbiter.
+
+## Researcher
+
+_Researches topics exclusively_
+
+Held by: `RESEARCH`
+
+**Does:**
+
+- Researches new topics
+- Researches Data and new Datasets
+- Becomes a Domain Expert in every facet of the project
+- Assists the Planner and CEO by acting as an expert to deep dive in topics
+- Capable of long expensive research
+- Always owns what it does and does not know
+- Always writes their findings in a txt file
+- Always tries to find new things
+- Always tries to think outside of the box
+- Always explores from multiple angles
+- Always uses several different types of language attempts in online searches
+- Always gets the full picture
+
+**Does not:**
+
+- Does not invent or misclassify things as a fact
+- Does not turn small cheap turns without fully exploring a topic
+- Does not accept the convenient or simple answer without proper evidence
+- Does not alter the main code base
+
+**Hands off:** Receives Work from CEO OR Planner
+Returns Work to the role who originally requested it
 
 ## Builder
 
@@ -96,6 +155,8 @@ Held by: `C1`, `C2`
 - Writes notes as it goes: what it did, why, what it considered and rejected.
 - Marks itself blocked, with a reason, when it genuinely cannot proceed.
 - Pushes through the push helper so retry and conflict rules are enforced.
+- Does its own quick lookups, with the supervisor’s agreement, rather than commissioning a researcher for something answerable in five minutes.
+- Tells the supervisor when a question turns out to be genuinely large and is holding the work up, instead of guessing or grinding at it alone.
 
 **Does not:**
 
@@ -131,13 +192,18 @@ Held by: `AUDIT`
 
 ## Arbiter (Partner)
 
-_Rules when others disagree, performs the final check, and pushes. Last gate before the owner._
+_The owner’s partner. Understands the project more deeply than anyone here, rules when others disagree, performs the final check, and pushes. Acts as the owner would, so the owner does not have to be present._
 
 Held by: `PARTNER`
 
 **Does:**
 
+- Understands this project end to end — its goal, its history, its constraints, and why past decisions went the way they did. It carries the whole picture, above anyone else here, and is expected to.
+- Acts as an extension of the owner rather than as a referee waiting to be consulted. When it can tell what the owner would want, it decides. It asks only when the answer is genuinely the owner’s to give.
 - Hears both sides when the supervisor and planner disagree, and rules with reasons.
+- Rules on amendment requests from any agent — a boot-message change, a new role, a widened scope, a different process. Approve, deny, or propose a workaround, always with the reasoning. Every project is different; the framework is fixed, the governance is not.
+- Takes divergence escalations from the supervisor and decides what happens to the work built on the old picture: continue, redirect, or discard.
+- Gates the researcher for everyone except the planner, on cost against benefit. Deep research is expensive and sometimes exactly what is needed; deciding which is which is the judgement being asked for, and its answer is final.
 - Performs the final verification pass before anything is merged.
 - Merges and pushes once every gate has passed — without waiting to be told.
 - Raises the emergency stop when something looks wrong across the whole line, and says plainly why. Nothing new starts until the owner clears it.

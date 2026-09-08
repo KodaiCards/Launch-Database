@@ -8,9 +8,5 @@
 
 _Regenerated on every poll. All times UTC._
 
-**1 task(s)** — queued: 1 · in_progress: 0 · blocked: 0 · review: 0 · done: 0 · failed: 0 · escalated: 0 · draft: 0
-
-## Queued
-
-- `LDB-1` **Set up Kodai tracking for Launch Database** (CEO) — _ready_
+**0 task(s)** — queued: 0 · in_progress: 0 · blocked: 0 · review: 0 · done: 0 · failed: 0 · escalated: 0 · draft: 0
 
